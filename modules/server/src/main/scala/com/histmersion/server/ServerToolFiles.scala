@@ -10,7 +10,7 @@ import java.nio.file.Files
   * it is not, the old behaviour stands and the operator is told why.
   */
 final class ServerToolFiles(cfg: () => AppConfig) extends ToolFiles:
-  def file(path: com.histmersion.server.ServerToolFiles.FilePath): Either[com.histmersion.server.ServerToolFiles.FileResultPart1, Option[Upload]] =
+  def file(path: com.histmersion.server.ServerToolFiles.FilePath): Either[com.histmersion.server.ServerToolFiles.Problem, Option[Upload]] =
     val root = Option(cfg().corpus.dir).map(_.trim).filter(_.nonEmpty)
     if !SafePath.configured(root) then
       scribe.warn(
@@ -20,7 +20,7 @@ final class ServerToolFiles(cfg: () => AppConfig) extends ToolFiles:
     SafePath.confine(root, path).map(f => Option.when(Files.isRegularFile(f))(Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(f.toFile))))
 
 object ServerToolFiles:
-  type FileResultPart1 = FileResultPart1.T
-  object FileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FilePath = FilePath.T
   object FilePath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -23,25 +23,11 @@ object LlmClient:
   /** Apply an [[LlmCall]] to any sttp-ai builder. Generic in the model type so a plugin's provider and the test kit's
     * scripted model go through the same configuration.
     */
-  type ConfigureResultPart2 = ConfigureResultPart2.T
-  object ConfigureResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConfigureBPart3 = ConfigureBPart3.T
-  object ConfigureBPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConfigureBPart4 = ConfigureBPart4.T
-  object ConfigureBPart4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FactoryProvidersResultPart1 = FactoryProvidersResultPart1.T
-  object FactoryProvidersResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServedByResult = ServedByResult.T
-  object ServedByResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RawAnswerResult = RawAnswerResult.T
-  object RawAnswerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FinishResult = FinishResult.T
-  object FinishResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def configure[M <: AIModel & Capability.All, Out](
-      b: AgentBuilder[Identity, M, com.histmersion.domain.automation.agents.LlmClient.ConfigureBPart3, com.histmersion.domain.automation.agents.LlmClient.ConfigureBPart4],
+      b: AgentBuilder[Identity, M, String, String],
       c: LlmCall[Out]
-  ): Agent[Identity, com.histmersion.domain.automation.agents.LlmClient.ConfigureResultPart2, Out] =
+  ): Agent[Identity, String, Out] =
     b.systemPrompt(c.system)
       .maxIterations(math.max(1, c.maxIterations))
       .maxTokens(math.max(1, c.maxTokens))
@@ -61,7 +47,7 @@ object LlmClient:
     */
   def factory(
       rt: CliRuntime,
-      providers: () => scala.collection.immutable.ListMap[com.histmersion.domain.automation.agents.LlmClient.FactoryProvidersResultPart1, com.histmersion.plugin.AiProvider],
+      providers: () => scala.collection.immutable.ListMap[com.histmersion.domain.automation.ProviderKind.Wire, com.histmersion.plugin.AiProvider],
       http: com.histmersion.plugin.AiHttp = HostAiHttp()
   ): Factory =
     (cfg, ref) =>
@@ -87,18 +73,18 @@ object LlmClient:
     * `model`, claude -p's `modelUsage` keys), the busiest (most output tokens) first, joined by ` + ` when several
     * served it (Claude Code may hand side work to a smaller model). None when no call named one.
     */
-  def servedBy(calls: Seq[LlmCallUsage]): Option[com.histmersion.domain.automation.agents.LlmClient.ServedByResult] =
+  def servedBy(calls: Seq[LlmCallUsage]): Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.ActualModel] =
     val out = calls
       .flatMap(c => c.model.map(_.trim).filter(_.nonEmpty).map(_ -> c.usage.outputTokens.value))
       .groupMapReduce(_._1)(_._2)(_ + _)
     Option.when(out.nonEmpty)(out.toList.sortBy((m, n) => (-n, m)).map(_._1).mkString(" + "))
 
   /** The model's final text, whether or not it parsed as the typed answer. */
-  def rawAnswer[Out](a: Either[AgentFailure, Out])(using io.circe.Encoder[Out]): com.histmersion.domain.automation.agents.LlmClient.RawAnswerResult =
+  def rawAnswer[Out](a: Either[AgentFailure, Out])(using io.circe.Encoder[Out]): String =
     a.fold(_.rawAnswer, out => io.circe.Encoder[Out].apply(out).noSpaces)
 
   /** A [[FinishReason]] as words, for a run's trace. */
-  def finish(r: FinishReason): com.histmersion.domain.automation.agents.LlmClient.FinishResult = r match
+  def finish(r: FinishReason): String = r match
     case FinishReason.NaturalStop    => "answered"
     case FinishReason.MaxIterations  => "iteration limit"
     case FinishReason.TokenLimit     => "token limit"

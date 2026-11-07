@@ -18,46 +18,22 @@ import com.histmersion.util.storage.Store
   * hoc, or arm64 refuses to run it.
   */
 object PgRelocation:
+  type BytePattern = BytePattern.T
+  object BytePattern extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileBytes = FileBytes.T
+  object FileBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MacOsMode = MacOsMode.T
+  object MacOsMode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PatchCount = PatchCount.T
+  object PatchCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Replacement = Replacement.T
+  object Replacement extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type PatchResultPart1 = PatchResultPart1.T
-  object PatchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchBytes = PatchBytes.T
-  object PatchBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchFrom = _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllFrom
-  val PatchFrom: _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllFrom.type = _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllFrom
-  type PatchTo = _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllTo
-  val PatchTo: _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllTo.type = _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllTo
-  type IsMachOB = IsMachOB.T
-  object IsMachOB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LastNulD = LastNulD.T
-  object LastNulD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IndexOfD = IndexOfD.T
-  object IndexOfD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IndexOfP = IndexOfP.T
-  object IndexOfP extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceAllResult = ReplaceAllResult.T
-  object ReplaceAllResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceAllS = ReplaceAllS.T
-  object ReplaceAllS extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceAllFrom = ReplaceAllFrom.T
-  object ReplaceAllFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceAllTo = ReplaceAllTo.T
-  object ReplaceAllTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PatchFrom = _root_.com.histmersion.util.data.maintenance.PgRelocation.BytePattern
+  val PatchFrom: _root_.com.histmersion.util.data.maintenance.PgRelocation.BytePattern.type = _root_.com.histmersion.util.data.maintenance.PgRelocation.BytePattern
+  type PatchTo = _root_.com.histmersion.util.data.maintenance.PgRelocation.Replacement
+  val PatchTo: _root_.com.histmersion.util.data.maintenance.PgRelocation.Replacement.type = _root_.com.histmersion.util.data.maintenance.PgRelocation.Replacement
 
-  type PatchResultPart2 = PatchResultPart2.T
-  object PatchResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RelocateMacOS = RelocateMacOS.T
-  object RelocateMacOS extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsMachOResult = IsMachOResult.T
-  object IsMachOResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LastNulResult = LastNulResult.T
-  object LastNulResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LastNulBefore = LastNulBefore.T
-  object LastNulBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IndexOfResult = IndexOfResult.T
-  object IndexOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IndexOfFrom = IndexOfFrom.T
-  object IndexOfFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Marker = ".prefix"
 
@@ -74,7 +50,7 @@ object PgRelocation:
   /** Rewrite `from` → `to` in `bytes`. Binary data (it holds a NUL) is patched string by string in place; text is
     * replaced outright. Returns the new bytes and how many strings did not fit.
     */
-  def patch(bytes: com.histmersion.util.data.maintenance.PgRelocation.PatchBytes, from: com.histmersion.util.data.maintenance.PgRelocation.PatchFrom, to: com.histmersion.util.data.maintenance.PgRelocation.PatchTo): (com.histmersion.util.data.maintenance.PgRelocation.PatchResultPart1, com.histmersion.util.data.maintenance.PgRelocation.PatchResultPart2) =
+  def patch(bytes: com.histmersion.util.data.maintenance.PgRelocation.FileBytes, from: com.histmersion.util.data.maintenance.PgRelocation.PatchFrom, to: com.histmersion.util.data.maintenance.PgRelocation.PatchTo): (com.histmersion.util.data.maintenance.PgRelocation.FileBytes, com.histmersion.util.data.maintenance.PgRelocation.PatchCount) =
     if !bytes.contains(0.toByte) then
       (String(bytes, UTF_8).replace(String(from, UTF_8), String(to, UTF_8)).getBytes(UTF_8), 0)
     else
@@ -97,7 +73,7 @@ object PgRelocation:
   /** Relocate the PostgreSQL in `pg` if its marker names another place. `None` when there is nothing to do: no marker
     * (a pixi environment used in place) or already at home. The re-signing runs through `processes`.
     */
-  def relocate(pg: Store, macOS: com.histmersion.util.data.maintenance.PgRelocation.RelocateMacOS, processes: Processes): Option[Result] =
+  def relocate(pg: Store, macOS: com.histmersion.util.data.maintenance.PgRelocation.MacOsMode, processes: Processes): Option[Result] =
     val marker = Store.Key.applyUnsafe(Marker)
     val here = pg.onDisk(Store.Key.Root).fold(e => throw IllegalStateException(e.message), _.toRealPath().toString)
     val recorded = if pg.isFile(marker) then pg.get(marker).map(_.text().trim).filter(_.nonEmpty) else None
@@ -130,14 +106,14 @@ object PgRelocation:
 
   private val MachO = List(Array(0xcf, 0xfa, 0xed, 0xfe), Array(0xca, 0xfe, 0xba, 0xbe)).map(_.map(_.toByte))
 
-  private def isMachO(b: com.histmersion.util.data.maintenance.PgRelocation.IsMachOB): com.histmersion.util.data.maintenance.PgRelocation.IsMachOResult = b.length >= 4 && MachO.exists(m => b.take(4).sameElements(m))
+  private def isMachO(b: com.histmersion.util.data.maintenance.PgRelocation.FileBytes): Boolean = b.length >= 4 && MachO.exists(m => b.take(4).sameElements(m))
 
-  private def lastNul(d: com.histmersion.util.data.maintenance.PgRelocation.LastNulD, before: com.histmersion.util.data.maintenance.PgRelocation.LastNulBefore): com.histmersion.util.data.maintenance.PgRelocation.LastNulResult =
+  private def lastNul(d: com.histmersion.util.data.maintenance.PgRelocation.FileBytes, before: Int): Int =
     var j = before - 1
     while j >= 0 && d(j) != 0 do j -= 1
     j
 
-  private def indexOf(d: com.histmersion.util.data.maintenance.PgRelocation.IndexOfD, p: com.histmersion.util.data.maintenance.PgRelocation.IndexOfP, from: com.histmersion.util.data.maintenance.PgRelocation.IndexOfFrom): com.histmersion.util.data.maintenance.PgRelocation.IndexOfResult =
+  private def indexOf(d: com.histmersion.util.data.maintenance.PgRelocation.FileBytes, p: com.histmersion.util.data.maintenance.PgRelocation.BytePattern, from: Int): Int =
     if p.isEmpty then -1
     else
       var i = math.max(0, from)
@@ -148,7 +124,7 @@ object PgRelocation:
         i += 1
       found
 
-  private def replaceAll(s: com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllS, from: com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllFrom, to: com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllTo): com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllResult =
+  private def replaceAll(s: com.histmersion.util.data.maintenance.PgRelocation.FileBytes, from: com.histmersion.util.data.maintenance.PgRelocation.BytePattern, to: com.histmersion.util.data.maintenance.PgRelocation.Replacement): com.histmersion.util.data.maintenance.PgRelocation.FileBytes =
     val out = java.io.ByteArrayOutputStream(s.length + 64)
     var i = 0
     var j = indexOf(s, from, 0)

@@ -147,12 +147,12 @@ final class SchedulerService(
         .filterNot(_.kind == OaIngest)
         .filter(i => i.notBefore.flatMap(ManagerPolicy.parseInstant).forall(!_.isAfter(now)))
     }
-    def targetsOf(id: com.histmersion.domain.automation.scheduler.SchedulerService.InputsTargetsOfId) = perManager.filter(_._1.id == id).flatMap(_._2.map(_.target))
+    def targetsOf(id: com.histmersion.domain.automation.managers.ManagerLight.Id) = perManager.filter(_._1.id == id).flatMap(_._2.map(_.target))
     val articleGoals = agents.focusStore.goalsOf(Goal.Plans.LinkKind.Article.wire, targetsOf(ReviewId))
     val sourceGoals = agents.focusStore.goalsOf(Goal.Plans.LinkKind.Source.wire, targetsOf(EnrichId))
 
     /** The goal an item advances: its manager's, else the best of the goals its target is linked to. */
-    def goalOf(m: ManagerInfo, i: ManagerItem): Option[com.histmersion.domain.automation.scheduler.SchedulerService.InputsGoalOfResult] =
+    def goalOf(m: ManagerInfo, i: ManagerItem): Option[com.histmersion.domain.automation.Goal.Slug] =
       m.goal.orElse {
         val linked = if m.id == ReviewId then articleGoals.getOrElse(i.target, Nil)
         else if m.id == EnrichId then sourceGoals.getOrElse(i.target, Nil)
@@ -311,7 +311,7 @@ final class SchedulerService(
 
   /** The status: the last pass (or a dry one), the first `limit` waiting items (default 50). */
   def status(
-      limit: Option[com.histmersion.domain.automation.scheduler.SchedulerService.StatusLimit] = None,
+      limit: Option[com.histmersion.domain.automation.managers.ManagerContext.Limit] = None,
       now: Instant = Instant.now(agents.clock),
       changes: List[com.histmersion.domain.automation.scheduler.SchedulerService.StatusChanges] = Nil
   ): SchedulerStatus =
@@ -535,10 +535,6 @@ final class SchedulerService(
     }
 
 object SchedulerService:
-  type InputsTargetsOfId = InputsTargetsOfId.T
-  object InputsTargetsOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InputsGoalOfResult = InputsGoalOfResult.T
-  object InputsGoalOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InputsPoolsOfRunP = InputsPoolsOfRunP.T
   object InputsPoolsOfRunP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetDonePart2 = SetDonePart2.T
@@ -564,8 +560,6 @@ object SchedulerService:
   object WantedPoolsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChainPoolsResult = ChainPoolsResult.T
   object ChainPoolsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatusLimit = StatusLimit.T
-  object StatusLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StatusChanges = StatusChanges.T
   object StatusChanges extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WhyRef = WhyRef.T

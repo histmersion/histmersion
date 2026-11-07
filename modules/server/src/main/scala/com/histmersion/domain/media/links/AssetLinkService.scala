@@ -16,36 +16,24 @@ import com.histmersion.api.Api
 trait AssetLinkService:
   def list(
       citekey: Option[com.histmersion.domain.library.Citekey],
-      asset: Option[com.histmersion.domain.media.links.AssetLinkService.ListAsset],
-      targetType: Option[com.histmersion.domain.media.links.AssetLinkService.ListTargetType],
-      targetId: Option[com.histmersion.domain.media.links.AssetLinkService.ListTargetId]
+      asset: Option[com.histmersion.domain.media.assets.AssetService.AssetUid],
+      targetType: Option[com.histmersion.domain.media.assets.AssetService.TargetType],
+      targetId: Option[com.histmersion.domain.media.assets.AssetService.TargetId]
   ): AssetLink.List
 
   /** A link made; refused when the figure it names is not stored. */
   def create(in: AssetLink.Put): Either[Api.Error, AssetLink]
 
   /** Whether there was a link `id` to remove. */
-  def delete(id: com.histmersion.domain.media.links.AssetLinkService.DeleteId): com.histmersion.domain.media.links.AssetLinkService.DeleteResult
+  def delete(id: com.histmersion.domain.media.links.AssetLinkService.LinkId): Boolean
 
 object AssetLinkService:
-  type ListAsset = ListAsset.T
-  object ListAsset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListTargetType = ListTargetType.T
-  object ListTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListTargetId = ListTargetId.T
-  object ListTargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteResult = DeleteResult.T
-  object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteId = DeleteId.T
-  object DeleteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NamedResult = NamedResult.T
-  object NamedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NamedO = NamedO.T
-  object NamedO extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkId = LinkId.T
+  object LinkId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(db: Transactor): AssetLinkService = Implementation(db)
 
-  private def named(o: Option[com.histmersion.domain.media.links.AssetLinkService.NamedO]): Option[com.histmersion.domain.media.links.AssetLinkService.NamedResult] = o.map(_.trim).filter(_.nonEmpty)
+  private def named(o: Option[com.histmersion.domain.media.assets.AssetService.AssetName]): Option[com.histmersion.domain.media.assets.AssetService.AssetName] = o.map(_.trim).filter(_.nonEmpty)
 
   private def noFigure(in: AssetLink.Put): Api.Error =
     Api.Error(s"No asset '${in.citekey}/${in.assetName}'", Some(Write.CodeNotFound))
@@ -53,9 +41,9 @@ object AssetLinkService:
   final private class Implementation(db: Transactor) extends AssetLinkService:
     def list(
         citekey: Option[com.histmersion.domain.library.Citekey],
-        asset: Option[com.histmersion.domain.media.links.AssetLinkService.Implementation.ListAsset],
-        targetType: Option[com.histmersion.domain.media.links.AssetLinkService.Implementation.ListTargetType],
-        targetId: Option[com.histmersion.domain.media.links.AssetLinkService.Implementation.ListTargetId]
+        asset: Option[com.histmersion.domain.media.assets.AssetService.AssetUid],
+        targetType: Option[com.histmersion.domain.media.assets.AssetService.TargetType],
+        targetId: Option[com.histmersion.domain.media.assets.AssetService.TargetId]
     ): AssetLink.List =
       val rows = db.read(AssetLinkRepo.list(named(citekey), named(asset), named(targetType), named(targetId)))
       AssetLink.List.of(rows.size, rows, 0)
@@ -65,27 +53,17 @@ object AssetLinkService:
         if !AssetLinkRepo.figureExists(in.citekey, in.assetName) then Left(noFigure(in))
         else Right(AssetLinkRepo.insert(in))
 
-    def delete(id: com.histmersion.domain.media.links.AssetLinkService.Implementation.DeleteId): com.histmersion.domain.media.links.AssetLinkService.Implementation.DeleteResult = db.transact(AssetLinkRepo.delete(id))
+    def delete(id: com.histmersion.domain.media.links.AssetLinkService.LinkId): Boolean = db.transact(AssetLinkRepo.delete(id))
 
   object Implementation:
-    type ListAsset = ListAsset.T
-    object ListAsset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ListTargetType = ListTargetType.T
-    object ListTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ListTargetId = ListTargetId.T
-    object ListTargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeleteResult = DeleteResult.T
-    object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeleteId = DeleteId.T
-    object DeleteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The links media holds in memory, beside its pictures (the figure a link names is looked up there). */
   final class InMemory(state: AtomicReference[MediaState]) extends AssetLinkService:
     def list(
         citekey: Option[com.histmersion.domain.library.Citekey],
-        asset: Option[com.histmersion.domain.media.links.AssetLinkService.InMemory.ListAsset],
-        targetType: Option[com.histmersion.domain.media.links.AssetLinkService.InMemory.ListTargetType],
-        targetId: Option[com.histmersion.domain.media.links.AssetLinkService.InMemory.ListTargetId]
+        asset: Option[com.histmersion.domain.media.assets.AssetService.AssetUid],
+        targetType: Option[com.histmersion.domain.media.assets.AssetService.TargetType],
+        targetId: Option[com.histmersion.domain.media.assets.AssetService.TargetId]
     ): AssetLink.List =
       val (ck, an, tt, ti) = (named(citekey), named(asset), named(targetType), named(targetId))
       val rows = state.get.assetLinks
@@ -107,18 +85,8 @@ object AssetLinkService:
         }
         Right(after.assetLinks.last)
 
-    def delete(id: com.histmersion.domain.media.links.AssetLinkService.InMemory.DeleteId): com.histmersion.domain.media.links.AssetLinkService.InMemory.DeleteResult =
+    def delete(id: com.histmersion.domain.media.links.AssetLinkService.LinkId): Boolean =
       val before = state.getAndUpdate(_.modify(_.assetLinks).using(_.filterNot(_.id == id)))
       before.assetLinks.exists(_.id == id)
 
   object InMemory:
-    type ListAsset = ListAsset.T
-    object ListAsset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ListTargetType = ListTargetType.T
-    object ListTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ListTargetId = ListTargetId.T
-    object ListTargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeleteResult = DeleteResult.T
-    object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeleteId = DeleteId.T
-    object DeleteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

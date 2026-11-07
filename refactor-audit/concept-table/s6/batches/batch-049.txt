@@ -1,0 +1,477 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.media.Asset.LinkTarget.Wire (String)
+com.histmersion.domain.media.Asset.Uid (UUID)
+com.histmersion.domain.media.MediaRole.Wire (String)
+com.histmersion.domain.media.assets.AssetBundleRow.Caption (String)
+com.histmersion.domain.media.assets.AssetBundleRow.Geom (String)
+com.histmersion.domain.media.assets.AssetBundleRow.Height (Int)
+com.histmersion.domain.media.assets.AssetBundleRow.Kind (String)
+com.histmersion.domain.media.assets.AssetBundleRow.License (String)
+com.histmersion.domain.media.assets.AssetBundleRow.Mime (String)
+com.histmersion.domain.media.assets.AssetBundleRow.Name (String)
+com.histmersion.domain.media.assets.AssetBundleRow.PNull (Boolean)
+com.histmersion.domain.media.assets.AssetBundleRow.UpdatedAt (String)
+com.histmersion.domain.media.assets.AssetBundleRow.Width (Int)
+com.histmersion.domain.media.assets.AssetBytesRow.Bytes (Array[Byte])
+com.histmersion.domain.media.assets.AssetBytesRow.Mime (String)
+com.histmersion.domain.media.assets.AssetDetailRow.Bytes (Int)
+com.histmersion.domain.media.assets.AssetDetailRow.Caption (String)
+com.histmersion.domain.media.assets.AssetDetailRow.Height (Int)
+com.histmersion.domain.media.assets.AssetDetailRow.Kind (String)
+com.histmersion.domain.media.assets.AssetDetailRow.License (String)
+com.histmersion.domain.media.assets.AssetDetailRow.Mime (String)
+com.histmersion.domain.media.assets.AssetDetailRow.Name (String)
+com.histmersion.domain.media.assets.AssetDetailRow.Width (Int)
+com.histmersion.domain.media.assets.AssetInfoRow.Bytes (Int)
+com.histmersion.domain.media.assets.AssetInfoRow.Height (Int)
+com.histmersion.domain.media.assets.AssetInfoRow.Mime (String)
+com.histmersion.domain.media.assets.AssetInfoRow.Name (String)
+com.histmersion.domain.media.assets.AssetInfoRow.Width (Int)
+com.histmersion.domain.media.assets.Known.License (String)
+com.histmersion.domain.media.assets.Known.Uid (String)
+com.histmersion.domain.media.assets.MediaGeoRow.Author (String)
+com.histmersion.domain.media.assets.MediaGeoRow.Caption (String)
+com.histmersion.domain.media.assets.MediaGeoRow.Credit (String)
+com.histmersion.domain.media.assets.MediaGeoRow.HasThumb (Boolean)
+com.histmersion.domain.media.assets.MediaGeoRow.Kind (String)
+com.histmersion.domain.media.assets.MediaGeoRow.License (String)
+com.histmersion.domain.media.assets.MediaGeoRow.LicenseUrl (String)
+com.histmersion.domain.media.assets.MediaGeoRow.Name (String)
+com.histmersion.domain.media.assets.MediaGeoRow.Provider (String)
+com.histmersion.domain.media.assets.MediaGeoRow.SourceUrl (String)
+com.histmersion.domain.media.assets.MediaGeoRow.Uid (String)
+com.histmersion.domain.media.assets.MediaItemRow.Author (String)
+com.histmersion.domain.media.assets.MediaItemRow.Bytes (Int)
+com.histmersion.domain.media.assets.MediaItemRow.Caption (String)
+com.histmersion.domain.media.assets.MediaItemRow.Credit (String)
+com.histmersion.domain.media.assets.MediaItemRow.HasThumb (Boolean)
+com.histmersion.domain.media.assets.MediaItemRow.Height (Int)
+com.histmersion.domain.media.assets.MediaItemRow.Kind (String)
+com.histmersion.domain.media.assets.MediaItemRow.License (String)
+com.histmersion.domain.media.assets.MediaItemRow.LicenseUrl (String)
+com.histmersion.domain.media.assets.MediaItemRow.Mime (String)
+com.histmersion.domain.media.assets.MediaItemRow.Name (String)
+com.histmersion.domain.media.assets.MediaItemRow.OriginalUrl (String)
+com.histmersion.domain.media.assets.MediaItemRow.Provider (String)
+com.histmersion.domain.media.assets.MediaItemRow.ProviderKey (String)
+com.histmersion.domain.media.assets.MediaItemRow.RetrievedAt (String)
+com.histmersion.domain.media.assets.MediaItemRow.SourceUrl (String)
+com.histmersion.domain.media.assets.MediaItemRow.Uid (String)
+com.histmersion.domain.media.assets.MediaItemRow.Width (Int)
+com.histmersion.domain.media.assets.MediaThumbRow.Credit (String)
+com.histmersion.domain.media.assets.MediaThumbRow.Height (Int)
+com.histmersion.domain.media.assets.MediaThumbRow.License (String)
+com.histmersion.domain.media.assets.MediaThumbRow.LicenseUrl (String)
+com.histmersion.domain.media.assets.MediaThumbRow.Role (String)
+com.histmersion.domain.media.assets.MediaThumbRow.SourceUrl (String)
+com.histmersion.domain.media.assets.MediaThumbRow.Uid (String)
+com.histmersion.domain.media.assets.MediaThumbRow.Width (Int)
+com.histmersion.domain.media.assets.NewFigure.Bytes (Array[Byte])
+com.histmersion.domain.media.assets.NewFigure.Height (Int)
+com.histmersion.domain.media.assets.NewFigure.Mime (String)
+com.histmersion.domain.media.assets.NewFigure.Name (String)
+com.histmersion.domain.media.assets.NewFigure.Problem (String)
+com.histmersion.domain.media.assets.NewFigure.Width (Int)
+com.histmersion.domain.media.assets.PictureTarget.Wire (String)
+com.histmersion.domain.media.assets.ProviderAsset.Author (String)
+com.histmersion.domain.media.assets.ProviderAsset.Bytes (Array[Byte])
+com.histmersion.domain.media.assets.ProviderAsset.Credit (String)
+com.histmersion.domain.media.assets.ProviderAsset.Height (Int)
+com.histmersion.domain.media.assets.ProviderAsset.Key (String)
+com.histmersion.domain.media.assets.ProviderAsset.Kind (String)
+com.histmersion.domain.media.assets.ProviderAsset.License (String)
+com.histmersion.domain.media.assets.ProviderAsset.LicenseUrl (String)
+com.histmersion.domain.media.assets.ProviderAsset.Mime (String)
+com.histmersion.domain.media.assets.ProviderAsset.Name (String)
+com.histmersion.domain.media.assets.ProviderAsset.OriginalUrl (String)
+com.histmersion.domain.media.assets.ProviderAsset.Provider (String)
+com.histmersion.domain.media.assets.ProviderAsset.SourceUrl (String)
+com.histmersion.domain.media.assets.ProviderAsset.Thumb (Array[Byte])
+com.histmersion.domain.media.assets.ProviderAsset.ThumbHeight (Int)
+com.histmersion.domain.media.assets.ProviderAsset.ThumbMime (String)
+com.histmersion.domain.media.assets.ProviderAsset.ThumbWidth (Int)
+com.histmersion.domain.media.assets.ProviderAsset.Width (Int)
+com.histmersion.domain.media.assets.Rights.Author (String)
+com.histmersion.domain.media.assets.Rights.Credit (String)
+com.histmersion.domain.media.assets.Rights.License (String)
+com.histmersion.domain.media.assets.Rights.LicenseUrl (String)
+com.histmersion.domain.media.assets.SourceFigure.HasThumb (Boolean)
+com.histmersion.domain.media.assets.SourceFigure.Height (Int)
+com.histmersion.domain.media.assets.SourceFigure.Name (String)
+com.histmersion.domain.media.assets.SourceFigure.Uid (String)
+com.histmersion.domain.media.assets.SourceFigure.Width (Int)
+com.histmersion.domain.media.covers.CoverChoice.Pick.Calibre.Path (String)
+com.histmersion.domain.media.covers.CoverChoice.Pick.OpenLibrary.Id (String)
+com.histmersion.domain.media.covers.CoverChoice.Pick.OpenLibrary.Kind (String)
+com.histmersion.domain.media.covers.CoverKeys.Isbn (String)
+com.histmersion.domain.media.covers.CoverKeys.Oclc (String)
+com.histmersion.domain.media.covers.OpenLibrary.BaseUrl (String)
+com.histmersion.domain.media.covers.OpenLibrary.CoverSize (String)
+com.histmersion.domain.media.covers.OpenLibrary.CoverUrl (String)
+com.histmersion.domain.media.covers.OpenLibrary.Oclc (String)
+com.histmersion.domain.media.covers.OpenLibrary.PageUrl (String)
+com.histmersion.domain.media.figures.FigurePick.ConvertedText (String)
+com.histmersion.domain.media.figures.FigurePick.Figure.FirstAt (Double)
+com.histmersion.domain.media.figures.FigurePick.Figure.Height (Int)
+com.histmersion.domain.media.figures.FigurePick.Figure.Name (String)
+com.histmersion.domain.media.figures.FigurePick.Figure.Refs (Int)
+com.histmersion.domain.media.figures.FigurePick.Figure.Width (Int)
+com.histmersion.domain.media.figures.FigurePick.Order (Int)
+com.histmersion.domain.media.figures.FigurePick.Page (Int)
+com.histmersion.domain.media.figures.FigurePick.Rejection (String)
+com.histmersion.domain.media.figures.FigurePick.Rules.EarlyPages (Int)
+com.histmersion.domain.media.figures.FigurePick.Rules.MaxAspect (Double)
+com.histmersion.domain.media.figures.FigurePick.Rules.MaxRefs (Int)
+com.histmersion.domain.media.figures.FigurePick.Rules.MinArea (Int)
+com.histmersion.domain.media.figures.FigurePick.Rules.MinSide (Int)
+com.histmersion.domain.media.figures.FigurePick.Rules.PageScanMin (Int)
+com.histmersion.domain.media.figures.FigurePick.Score (Double)
+com.histmersion.domain.media.figures.Figures.FileName (String)
+com.histmersion.domain.media.figures.Figures.MdPath (String)
+com.histmersion.domain.media.figures.Figures.NoteText (String)
+com.histmersion.domain.media.imports.MediaMatch.Basis (String)
+com.histmersion.domain.media.imports.MediaMatch.GeographySpecific (Boolean)
+com.histmersion.domain.media.imports.MediaMatch.PeriodText (String)
+com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id (String)
+com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys (String)
+com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label (String)
+com.histmersion.domain.media.imports.MediaMatch.Refusal (String)
+com.histmersion.domain.media.imports.MediaMatch.YearText (String)
+com.histmersion.domain.media.imports.MediaRecord.GeographyPart1 (String)
+com.histmersion.domain.media.imports.MediaRecord.GeographyPart2 (String)
+com.histmersion.domain.media.imports.MediaRecord.ImageUrl (String)
+com.histmersion.domain.media.imports.MediaRecord.Key (String)
+com.histmersion.domain.media.imports.MediaRecord.OriginalUrl (String)
+com.histmersion.domain.media.imports.MediaRecord.PageUrl (String)
+com.histmersion.domain.media.imports.MediaRecord.RightsPart1 (String)
+com.histmersion.domain.media.imports.MediaRecord.Role (String)
+com.histmersion.domain.media.imports.MediaRecord.ThumbUrl (String)
+com.histmersion.domain.media.imports.MediaRecord.Title (String)
+com.histmersion.domain.media.imports.MediaRecord.Withheld (String)
+com.histmersion.domain.media.imports.PlaceFacts.Id (String)
+com.histmersion.domain.media.imports.PlaceFacts.Keys (String)
+com.histmersion.domain.media.imports.PlaceFacts.Label (String)
+com.histmersion.domain.media.imports.Target.Id (String)
+com.histmersion.domain.media.imports.Target.Label (String)
+com.histmersion.domain.media.imports.Target.Qid (String)
+com.histmersion.domain.media.imports.Target.TargetType (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.media.imports.ImportService.CheckedFound | base Int | generated | method-parameter
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.CheckedTargetType
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.Implementation.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.Im
+com.histmersion.domain.media.imports.ImportService.CheckedProvider | base String | generated | method-parameter
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.CheckedTargetType
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.Implementation.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.Im
+com.histmersion.domain.media.imports.ImportService.CheckedQid | base String | generated | method-parameter
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.CheckedTargetType
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.Implementation.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.Im
+com.histmersion.domain.media.imports.ImportService.CheckedTargetId | base String | generated | method-parameter
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.CheckedTargetType
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.Implementation.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.Im
+com.histmersion.domain.media.imports.ImportService.CheckedTargetType | base String | generated | method-parameter
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.CheckedTargetType
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.Implementation.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.Im
+com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck | base String | generated | method-parameter
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck, places: com.histmersion.domain.media.imports.ImportService.Collect
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck, places: com.histmersion.domain.media.imports.Import
+com.histmersion.domain.media.imports.ImportService.CollectionPendingPlaces | base Boolean | generated | method-parameter
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck, places: com.histmersion.domain.media.imports.ImportService.Collect
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck, places: com.histmersion.domain.media.imports.Import
+com.histmersion.domain.media.imports.ImportService.CollectionPendingPleiadesOnly | base Boolean | generated | method-parameter
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck, places: com.histmersion.domain.media.imports.ImportService.Collect
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck, places: com.histmersion.domain.media.imports.Import
+com.histmersion.domain.media.imports.ImportService.CollectionPendingResult | base Int | generated | method-result
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck, places: com.histmersion.domain.media.imports.ImportService.Collect
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck, places: com.histmersion.domain.media.imports.Import
+com.histmersion.domain.media.imports.ImportService.CollectionPendingSince | base Long | generated | method-parameter
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck, places: com.histmersion.domain.media.imports.ImportService.Collect
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck, places: com.histmersion.domain.media.imports.Import
+com.histmersion.domain.media.imports.ImportService.CollectionTargetsCheck | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.CollectionTargetsEvent | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.CollectionTargetsLimit | base Int | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.CollectionTargetsPlace | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.CollectionTargetsPlaces | base Boolean | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.CollectionTargetsPleiadesOnly | base Boolean | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.CollectionTargetsRefresh | base Boolean | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.CollectionTargetsResultPart1 | base String | generated | method-result
+com.histmersion.domain.media.imports.ImportService.CollectionTargetsSince | base Long | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.CommonsCategoryCategory | base String | generated | method-parameter
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.CommonsCategoryCategory, qid: com.his
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.Implementation.CommonsCategoryCategor
+com.histmersion.domain.media.imports.ImportService.CommonsCategoryQid | base String | generated | method-parameter
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.CommonsCategoryCategory, qid: com.his
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.Implementation.CommonsCategoryCategor
+com.histmersion.domain.media.imports.ImportService.CommonsCategoryResult | base Boolean | generated | method-result
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.CommonsCategoryCategory, qid: com.his
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.Implementation.CommonsCategoryCategor
+com.histmersion.domain.media.imports.ImportService.Implementation.CheckedFound | base Int | generated | method-parameter
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.CheckedTargetType
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.Implementation.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.Im
+com.histmersion.domain.media.imports.ImportService.Implementation.CheckedProvider | base String | generated | method-parameter
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.CheckedTargetType
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.Implementation.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.Im
+com.histmersion.domain.media.imports.ImportService.Implementation.CheckedQid | base String | generated | method-parameter
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.CheckedTargetType
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.Implementation.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.Im
+com.histmersion.domain.media.imports.ImportService.Implementation.CheckedTargetId | base String | generated | method-parameter
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.CheckedTargetType
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.Implementation.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.Im
+com.histmersion.domain.media.imports.ImportService.Implementation.CheckedTargetType | base String | generated | method-parameter
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.CheckedTargetType
+    def checked(provider: com.histmersion.domain.media.imports.ImportService.Implementation.CheckedProvider, targetType: com.histmersion.domain.media.imports.ImportService.Im
+com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck | base String | generated | method-parameter
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck, places: com.histmersion.domain.media.imports.ImportService.Collect
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck, places: com.histmersion.domain.media.imports.Import
+com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingPlaces | base Boolean | generated | method-parameter
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck, places: com.histmersion.domain.media.imports.ImportService.Collect
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck, places: com.histmersion.domain.media.imports.Import
+com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingPleiadesOnly | base Boolean | generated | method-parameter
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck, places: com.histmersion.domain.media.imports.ImportService.Collect
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck, places: com.histmersion.domain.media.imports.Import
+com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingResult | base Int | generated | method-result
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck, places: com.histmersion.domain.media.imports.ImportService.Collect
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck, places: com.histmersion.domain.media.imports.Import
+com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingSince | base Long | generated | method-parameter
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck, places: com.histmersion.domain.media.imports.ImportService.Collect
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck, places: com.histmersion.domain.media.imports.Import
+com.histmersion.domain.media.imports.ImportService.Implementation.CollectionTargetsCheck | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.Implementation.CollectionTargetsEvent | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.Implementation.CollectionTargetsLimit | base Int | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.Implementation.CollectionTargetsPlace | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.Implementation.CollectionTargetsPlaces | base Boolean | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.Implementation.CollectionTargetsPleiadesOnly | base Boolean | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.Implementation.CollectionTargetsRefresh | base Boolean | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.Implementation.CollectionTargetsResultPart1 | base String | generated | method-result
+com.histmersion.domain.media.imports.ImportService.Implementation.CollectionTargetsSince | base Long | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.Implementation.CommonsCategoryCategory | base String | generated | method-parameter
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.CommonsCategoryCategory, qid: com.his
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.Implementation.CommonsCategoryCategor
+com.histmersion.domain.media.imports.ImportService.Implementation.CommonsCategoryQid | base String | generated | method-parameter
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.CommonsCategoryCategory, qid: com.his
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.Implementation.CommonsCategoryCategor
+com.histmersion.domain.media.imports.ImportService.Implementation.CommonsCategoryResult | base Boolean | generated | method-result
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.CommonsCategoryCategory, qid: com.his
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.Implementation.CommonsCategoryCategor
+com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesNamedKeys | base String | generated | method-parameter
+    def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.MapPlacesNamedKeys]): Map[com.histmersion.domain.media.imports.ImportService.MapPlacesNam
+    def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesNamedKeys]): Map[com.histmersion.domain.media.imports.ImportServi
+com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesNamedResultPart1 | base String | generated | method-result
+    def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.MapPlacesNamedKeys]): Map[com.histmersion.domain.media.imports.ImportService.MapPlacesNam
+    def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesNamedKeys]): Map[com.histmersion.domain.media.imports.ImportServi
+com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsIdsPart1 | base String | generated | method-parameter
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportService.MapPlacesW
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsIdsPart2 | base String | generated | method-parameter
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportService.MapPlacesW
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsResultPart1Part1 | base String | generated | method-result
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportService.MapPlacesW
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsResultPart1Part2 | base String | generated | method-result
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportService.MapPlacesW
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.Implementation.PendingProvider | base String | generated | method-parameter
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.PendingSince]):
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.Implementation.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.
+com.histmersion.domain.media.imports.ImportService.Implementation.PendingResult | base Int | generated | method-result
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.PendingSince]):
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.Implementation.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.
+com.histmersion.domain.media.imports.ImportService.Implementation.PendingSince | base Long | generated | method-parameter
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.PendingSince]):
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.Implementation.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.
+com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsIds | base String | generated | method-parameter
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceExter
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsResultPart1 | base String | generated | method-result
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceExter
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsResultPart2Part1 | base String | generated | method-result
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceExter
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsResultPart2Part2 | base String | generated | method-result
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceExter
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.Implementation.PlaceFactsIds | base String | generated | method-parameter
+    def placeFacts(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceFactsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceFactsResultPart1,
+    def placeFacts(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceFactsIds]): Map[com.histmersion.domain.media.imports.ImportService.Impleme
+com.histmersion.domain.media.imports.ImportService.Implementation.PlaceFactsResultPart1 | base String | generated | method-result
+    def placeFacts(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceFactsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceFactsResultPart1,
+    def placeFacts(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceFactsIds]): Map[com.histmersion.domain.media.imports.ImportService.Impleme
+com.histmersion.domain.media.imports.ImportService.Implementation.PleiadesIdsIds | base String | generated | method-parameter
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PleiadesIdsResultPar
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.Imple
+com.histmersion.domain.media.imports.ImportService.Implementation.PleiadesIdsResultPart1 | base String | generated | method-result
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PleiadesIdsResultPar
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.Imple
+com.histmersion.domain.media.imports.ImportService.Implementation.PleiadesIdsResultPart2 | base String | generated | method-result
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PleiadesIdsResultPar
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.Imple
+com.histmersion.domain.media.imports.ImportService.Implementation.TargetsEvent | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.Implementation.TargetsLimit | base Int | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.Implementation.TargetsPlace | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.Implementation.TargetsProvider | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.Implementation.TargetsRefresh | base Boolean | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.Implementation.TargetsResultPart1 | base String | generated | method-result
+com.histmersion.domain.media.imports.ImportService.Implementation.TargetsSince | base Long | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.InMemory.CollectionPendingCheck | base String | generated | method-parameter
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck, places: com.histmersion.domain.media.imports.ImportService.Collect
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck, places: com.histmersion.domain.media.imports.Import
+com.histmersion.domain.media.imports.ImportService.InMemory.CollectionPendingPlaces | base Boolean | generated | method-parameter
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck, places: com.histmersion.domain.media.imports.ImportService.Collect
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck, places: com.histmersion.domain.media.imports.Import
+com.histmersion.domain.media.imports.ImportService.InMemory.CollectionPendingPleiadesOnly | base Boolean | generated | method-parameter
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck, places: com.histmersion.domain.media.imports.ImportService.Collect
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck, places: com.histmersion.domain.media.imports.Import
+com.histmersion.domain.media.imports.ImportService.InMemory.CollectionPendingResult | base Int | generated | method-result
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck, places: com.histmersion.domain.media.imports.ImportService.Collect
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck, places: com.histmersion.domain.media.imports.Import
+com.histmersion.domain.media.imports.ImportService.InMemory.CollectionPendingSince | base Long | generated | method-parameter
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CollectionPendingCheck, places: com.histmersion.domain.media.imports.ImportService.Collect
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.Implementation.CollectionPendingCheck, places: com.histmersion.domain.media.imports.Import
+com.histmersion.domain.media.imports.ImportService.InMemory.CollectionTargetsCheck | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.InMemory.CollectionTargetsEvent | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.InMemory.CollectionTargetsLimit | base Int | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.InMemory.CollectionTargetsPlace | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.InMemory.CollectionTargetsPlaces | base Boolean | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.InMemory.CollectionTargetsPleiadesOnly | base Boolean | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.InMemory.CollectionTargetsRefresh | base Boolean | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.InMemory.CollectionTargetsResultPart1 | base String | generated | method-result
+com.histmersion.domain.media.imports.ImportService.InMemory.CollectionTargetsSince | base Long | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.InMemory.CommonsCategoryCategory | base String | generated | method-parameter
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.CommonsCategoryCategory, qid: com.his
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.Implementation.CommonsCategoryCategor
+com.histmersion.domain.media.imports.ImportService.InMemory.CommonsCategoryQid | base String | generated | method-parameter
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.CommonsCategoryCategory, qid: com.his
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.Implementation.CommonsCategoryCategor
+com.histmersion.domain.media.imports.ImportService.InMemory.CommonsCategoryResult | base Boolean | generated | method-result
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.CommonsCategoryCategory, qid: com.his
+    def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: com.histmersion.domain.media.imports.ImportService.Implementation.CommonsCategoryCategor
+com.histmersion.domain.media.imports.ImportService.InMemory.MapPlacesNamedKeys | base String | generated | method-parameter
+    def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.MapPlacesNamedKeys]): Map[com.histmersion.domain.media.imports.ImportService.MapPlacesNam
+    def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesNamedKeys]): Map[com.histmersion.domain.media.imports.ImportServi
+com.histmersion.domain.media.imports.ImportService.InMemory.MapPlacesNamedResultPart1 | base String | generated | method-result
+    def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.MapPlacesNamedKeys]): Map[com.histmersion.domain.media.imports.ImportService.MapPlacesNam
+    def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesNamedKeys]): Map[com.histmersion.domain.media.imports.ImportServi
+com.histmersion.domain.media.imports.ImportService.InMemory.MapPlacesWithIdsIdsPart1 | base String | generated | method-parameter
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportService.MapPlacesW
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.InMemory.MapPlacesWithIdsIdsPart2 | base String | generated | method-parameter
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportService.MapPlacesW
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.InMemory.MapPlacesWithIdsResultPart1Part1 | base String | generated | method-result
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportService.MapPlacesW
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.InMemory.MapPlacesWithIdsResultPart1Part2 | base String | generated | method-result
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportService.MapPlacesW
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.InMemory.OneEvent | base String | generated | method-parameter
+    private def one(place: Option[com.histmersion.domain.media.imports.ImportService.InMemory.OnePlace], event: Option[com.histmersion.domain.media.imports.ImportService.InMe
+com.histmersion.domain.media.imports.ImportService.InMemory.OnePlace | base String | generated | method-parameter
+    private def one(place: Option[com.histmersion.domain.media.imports.ImportService.InMemory.OnePlace], event: Option[com.histmersion.domain.media.imports.ImportService.InMe
+com.histmersion.domain.media.imports.ImportService.InMemory.OneResult | base String | generated | method-result
+    private def one(place: Option[com.histmersion.domain.media.imports.ImportService.InMemory.OnePlace], event: Option[com.histmersion.domain.media.imports.ImportService.InMe
+com.histmersion.domain.media.imports.ImportService.InMemory.PendingProvider | base String | generated | method-parameter
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.PendingSince]):
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.Implementation.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.
+com.histmersion.domain.media.imports.ImportService.InMemory.PendingResult | base Int | generated | method-result
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.PendingSince]):
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.Implementation.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.
+com.histmersion.domain.media.imports.ImportService.InMemory.PendingSince | base Long | generated | method-parameter
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.PendingSince]):
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.Implementation.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.
+com.histmersion.domain.media.imports.ImportService.InMemory.PlaceExternalIdsIds | base String | generated | method-parameter
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceExter
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.InMemory.PlaceExternalIdsResultPart1 | base String | generated | method-result
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceExter
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.InMemory.PlaceExternalIdsResultPart2Part1 | base String | generated | method-result
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceExter
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.InMemory.PlaceExternalIdsResultPart2Part2 | base String | generated | method-result
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceExter
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.InMemory.PlaceFactsIds | base String | generated | method-parameter
+    def placeFacts(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceFactsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceFactsResultPart1,
+    def placeFacts(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceFactsIds]): Map[com.histmersion.domain.media.imports.ImportService.Impleme
+com.histmersion.domain.media.imports.ImportService.InMemory.PlaceFactsResultPart1 | base String | generated | method-result
+    def placeFacts(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceFactsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceFactsResultPart1,
+    def placeFacts(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceFactsIds]): Map[com.histmersion.domain.media.imports.ImportService.Impleme
+com.histmersion.domain.media.imports.ImportService.InMemory.PleiadesIdsIds | base String | generated | method-parameter
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PleiadesIdsResultPar
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.Imple
+com.histmersion.domain.media.imports.ImportService.InMemory.PleiadesIdsResultPart1 | base String | generated | method-result
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PleiadesIdsResultPar
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.Imple
+com.histmersion.domain.media.imports.ImportService.InMemory.PleiadesIdsResultPart2 | base String | generated | method-result
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PleiadesIdsResultPar
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.Imple
+com.histmersion.domain.media.imports.ImportService.InMemory.TargetsEvent | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.InMemory.TargetsLimit | base Int | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.InMemory.TargetsPlace | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.InMemory.TargetsProvider | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.InMemory.TargetsRefresh | base Boolean | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.InMemory.TargetsResultPart1 | base String | generated | method-result
+com.histmersion.domain.media.imports.ImportService.InMemory.TargetsSince | base Long | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.MapPlacesNamedKeys | base String | generated | method-parameter
+    def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.MapPlacesNamedKeys]): Map[com.histmersion.domain.media.imports.ImportService.MapPlacesNam
+    def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesNamedKeys]): Map[com.histmersion.domain.media.imports.ImportServi
+com.histmersion.domain.media.imports.ImportService.MapPlacesNamedResultPart1 | base String | generated | method-result
+    def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.MapPlacesNamedKeys]): Map[com.histmersion.domain.media.imports.ImportService.MapPlacesNam
+    def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesNamedKeys]): Map[com.histmersion.domain.media.imports.ImportServi
+com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsIdsPart1 | base String | generated | method-parameter
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportService.MapPlacesW
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsIdsPart2 | base String | generated | method-parameter
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportService.MapPlacesW
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsResultPart1Part1 | base String | generated | method-result
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportService.MapPlacesW
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsResultPart1Part2 | base String | generated | method-result
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportService.MapPlacesW
+    def mapPlacesWithIds(ids: List[(com.histmersion.domain.media.imports.ImportService.Implementation.MapPlacesWithIdsIdsPart1, com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.PendingProvider | base String | generated | method-parameter
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.PendingSince]):
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.Implementation.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.
+com.histmersion.domain.media.imports.ImportService.PendingResult | base Int | generated | method-result
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.PendingSince]):
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.Implementation.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.
+com.histmersion.domain.media.imports.ImportService.PendingSince | base Long | generated | method-parameter
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.PendingSince]):
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.Implementation.PendingProvider, since: Option[com.histmersion.domain.media.imports.ImportService.
+com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsIds | base String | generated | method-parameter
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceExter
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsResultPart1 | base String | generated | method-result
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceExter
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsResultPart2Part1 | base String | generated | method-result
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceExter
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsResultPart2Part2 | base String | generated | method-result
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceExter
+    def placeExternalIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceExternalIdsIds]): Map[com.histmersion.domain.media.imports.ImportSer
+com.histmersion.domain.media.imports.ImportService.PlaceFactsIds | base String | generated | method-parameter
+    def placeFacts(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceFactsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceFactsResultPart1,
+    def placeFacts(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceFactsIds]): Map[com.histmersion.domain.media.imports.ImportService.Impleme
+com.histmersion.domain.media.imports.ImportService.PlaceFactsResultPart1 | base String | generated | method-result
+    def placeFacts(ids: List[com.histmersion.domain.media.imports.ImportService.PlaceFactsIds]): Map[com.histmersion.domain.media.imports.ImportService.PlaceFactsResultPart1,
+    def placeFacts(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PlaceFactsIds]): Map[com.histmersion.domain.media.imports.ImportService.Impleme
+com.histmersion.domain.media.imports.ImportService.PleiadesIdsIds | base String | generated | method-parameter
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PleiadesIdsResultPar
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.Imple
+com.histmersion.domain.media.imports.ImportService.PleiadesIdsResultPart1 | base String | generated | method-result
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PleiadesIdsResultPar
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.Imple
+com.histmersion.domain.media.imports.ImportService.PleiadesIdsResultPart2 | base String | generated | method-result
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.PleiadesIdsResultPar
+    def pleiadesIds(ids: List[com.histmersion.domain.media.imports.ImportService.Implementation.PleiadesIdsIds]): Map[com.histmersion.domain.media.imports.ImportService.Imple
+com.histmersion.domain.media.imports.ImportService.TargetsEvent | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.TargetsLimit | base Int | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.TargetsPlace | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.TargetsProvider | base String | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.TargetsRefresh | base Boolean | generated | method-parameter
+com.histmersion.domain.media.imports.ImportService.TargetsResultPart1 | base String | generated | method-result
+com.histmersion.domain.media.imports.ImportService.TargetsSince | base Long | generated | method-parameter

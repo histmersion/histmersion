@@ -10,15 +10,11 @@ import com.augustnagro.magnum.*
 
 /** The `read_marks` table. Takes the connection it runs on. */
 private[reading] object ReadingRepo:
+  type Column = Column.T
+  object Column extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type IsoResult = IsoResult.T
-  object IsoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsoCol = IsoCol.T
-  object IsoCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetReadRead = SetReadRead.T
-  object SetReadRead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def iso(col: com.histmersion.domain.personal.reading.ReadingRepo.IsoCol): com.histmersion.domain.personal.reading.ReadingRepo.IsoResult = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
+  private def iso(col: com.histmersion.domain.personal.reading.ReadingRepo.Column): com.histmersion.domain.personal.MarkTime.Iso = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
 
   private val Projection =
     s"""SELECT m.target_kind, m.target_id, m.target_uid, m.target_label, ${iso("m.read_at")}, ${iso("m.opened_at")},
@@ -57,7 +53,7 @@ private[reading] object ReadingRepo:
       .toList
 
   /** Mark read (keeping when it was first marked) or not read yet. */
-  def setRead(user: UserId, ref: ItemRef, targetLabel: Option[TargetLabel], read: com.histmersion.domain.personal.reading.ReadingRepo.SetReadRead, at: MarkTime)(using
+  def setRead(user: UserId, ref: ItemRef, targetLabel: Option[TargetLabel], read: com.histmersion.domain.personal.reading.ReadingService.Read, at: MarkTime)(using
       DbCon
   ): Unit =
     val stamp = at.iso

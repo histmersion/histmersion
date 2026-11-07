@@ -203,12 +203,12 @@ object AcquisitionTools:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object DiscoverInput:
-    type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = com.histmersion.domain.library.search.Search.Query
+    val Query: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
     type WikipediaUrl = WikipediaUrl.T
     object WikipediaUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Since = Since.T
-    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Since = com.histmersion.Year
+    val Since: _root_.com.histmersion.Year.type = _root_.com.histmersion.Year
     type Sort = Sort.T
     object Sort extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Limit = Limit.T
@@ -230,14 +230,14 @@ object AcquisitionTools:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object CandidatesInput:
-    type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goal = com.histmersion.domain.automation.Goal.Slug
+    val Goal: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
     type State = State.T
     object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Limit = Limit.T
     object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Offset = Offset.T
-    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = com.histmersion.Offset
+    val Offset: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
     type Mark = Mark.T
     object Mark extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type As = As.T
@@ -290,8 +290,8 @@ object AcquisitionTools:
   object FollowupsInput:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Since = Since.T
-    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Since = com.histmersion.Year
+    val Since: _root_.com.histmersion.Year.type = _root_.com.histmersion.Year
     type Limit = Limit.T
     object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Apply = Apply.T
@@ -308,8 +308,8 @@ object AcquisitionTools:
   object IngestInput:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Arxiv = Arxiv.T
-    object Arxiv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Arxiv = com.histmersion.domain.library.ArxivId
+    val Arxiv: _root_.com.histmersion.domain.library.ArxivId.type = _root_.com.histmersion.domain.library.ArxivId
     type Refetch = Refetch.T
     object Refetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LegalOnly = LegalOnly.T
@@ -333,10 +333,10 @@ object AcquisitionTools:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object ArchiveInput:
-    type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = com.histmersion.domain.library.search.Search.Query
+    val Query: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
+    type Id = com.histmersion.domain.library.ArchiveId
+    val Id: _root_.com.histmersion.domain.library.ArchiveId.type = _root_.com.histmersion.domain.library.ArchiveId
     type Import = Import.T
     object Import extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Format = Format.T

@@ -65,7 +65,7 @@ final class Bootstrap(
     )
 
   /** The bundled seed's text. */
-  private def bundledSeed: Either[com.histmersion.server.Bootstrap.BundledSeedResultPart1, com.histmersion.server.Bootstrap.BundledSeedResultPart2] =
+  private def bundledSeed: Either[com.histmersion.server.Bootstrap.Problem, com.histmersion.server.Bootstrap.Summary] =
     if !Files.isRegularFile(periodsSeed) then Left(s"no period seed at $periodsSeed (set init.data-dir)")
     else Right(Files.readString(periodsSeed))
 
@@ -106,7 +106,7 @@ final class Bootstrap(
   /** `POST /api/places/load?source=&apply=` — one external source as an init job: a dry run that reports what it would
     * do (the default), or the import itself.
     */
-  def loadGazetteer(source: com.histmersion.server.Bootstrap.LoadGazetteerSource, apply: com.histmersion.server.Bootstrap.LoadGazetteerApply): Either[Api.Error, JobInfo] =
+  def loadGazetteer(source: com.histmersion.server.Bootstrap.Name, apply: com.histmersion.server.Bootstrap.LoadGazetteerApply): Either[Api.Error, JobInfo] =
     maintenance.guard("places/load"):
       Gazetteer.Kind
         .parse(source)
@@ -139,7 +139,7 @@ final class Bootstrap(
       stops = Some(deps.jobStops)
     )((job, note) => run(job.id, p, note))
 
-  private def run(id: com.histmersion.server.Bootstrap.RunId, p: InitPlan, note: com.histmersion.server.Bootstrap.RunNoteArg1 => Unit): BackgroundJob.Outcome =
+  private def run(id: com.histmersion.util.jobs.Job.Id, p: InitPlan, note: com.histmersion.server.Bootstrap.Note => Unit): BackgroundJob.Outcome =
     // the definitions a period import left out go on the job (#771), not just into the log
     def withSkipped(r: Period.ImportResult): Period.ImportResult =
       if r.skippedCount > 0 then
@@ -149,7 +149,7 @@ final class Bootstrap(
             .change(SkippedPeriod.SkippedCount)(_ + r.skippedCount)
         }
       r
-    val steps: List[(com.histmersion.server.Bootstrap.RunStepsPart1, () => Either[com.histmersion.server.Bootstrap.RunStepsPart2ResultPart1, com.histmersion.server.Bootstrap.RunStepsPart2ResultPart2])] =
+    val steps: List[(com.histmersion.server.Bootstrap.StepName, () => Either[com.histmersion.server.Bootstrap.Problem, com.histmersion.server.Bootstrap.Summary])] =
       List(
         Option.when(p.gazetteer)("gazetteer" -> (() => seedPlaces(note))),
         Option.when(p.periodPresets)(
@@ -179,18 +179,18 @@ final class Bootstrap(
     BackgroundJob.Outcome(summary, Option.when(failed.nonEmpty)(failed.mkString("; ")))
 
   /** The bundled gazetteer, the way `histmersion places seed` imports it. */
-  private def seedPlaces(note: com.histmersion.server.Bootstrap.SeedPlacesNoteArg1 => Unit): Either[com.histmersion.server.Bootstrap.SeedPlacesResultPart1, com.histmersion.server.Bootstrap.SeedPlacesResultPart2] =
+  private def seedPlaces(note: com.histmersion.server.Bootstrap.Note => Unit): Either[com.histmersion.server.Bootstrap.Problem, com.histmersion.server.Bootstrap.Summary] =
     gazetteerImports.seed(deps.storage.store(Location.GazetteerSeed), note)
 
-  private def skippedNote(r: Period.ImportResult): com.histmersion.server.Bootstrap.SkippedNoteResult =
+  private def skippedNote(r: Period.ImportResult): com.histmersion.server.Bootstrap.Note =
     if r.skippedCount == 0 then "" else s", ${r.skippedCount} skipped"
 
   private def fetchSource(
-      name: com.histmersion.server.Bootstrap.FetchSourceName,
+      name: com.histmersion.server.Bootstrap.Name,
       periods: Period.ImportResult => Period.ImportResult,
       check: com.histmersion.server.Bootstrap.FetchSourceCheck = false,
-      note: com.histmersion.server.Bootstrap.FetchSourceNoteArg1 => Unit = _ => ()
-  ): Either[com.histmersion.server.Bootstrap.FetchSourceResultPart1, com.histmersion.server.Bootstrap.FetchSourceResultPart2] =
+      note: com.histmersion.server.Bootstrap.Note => Unit = _ => ()
+  ): Either[com.histmersion.server.Bootstrap.Problem, com.histmersion.server.Bootstrap.Summary] =
     val gazetteer = Gazetteer.Kind.parse(name)
     if check && gazetteer.isEmpty then Left(s"'$name' has no dry run (only ${GazetteerLoad.names.mkString(", ")})")
     else
@@ -199,7 +199,7 @@ final class Bootstrap(
           gazetteerImports.load(k, apply = !check, note).map(_.map(_.describe).mkString("; "))
         case None => fetchNetwork(name, periods)
 
-  private def fetchNetwork(name: com.histmersion.server.Bootstrap.FetchNetworkName, periods: Period.ImportResult => Period.ImportResult): Either[com.histmersion.server.Bootstrap.FetchNetworkResultPart1, com.histmersion.server.Bootstrap.FetchNetworkResultPart2] =
+  private def fetchNetwork(name: com.histmersion.server.Bootstrap.Name, periods: Period.ImportResult => Period.ImportResult): Either[com.histmersion.server.Bootstrap.Problem, com.histmersion.server.Bootstrap.Summary] =
     name.trim.toLowerCase match
       case PeriodOFetch.name =>
         periodImports.fetch(Nil).map(periods).map(r => Plural.count(r.periods, "period") + skippedNote(r))
@@ -213,71 +213,43 @@ final class Bootstrap(
           .map(r => s"${r.places} place(s)")
 
 object Bootstrap:
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Note = Note.T
+  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodSeedText = PeriodSeedText.T
+  object PeriodSeedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StepName = StepName.T
+  object StepName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Summary = Summary.T
+  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The `jobs.kind` of an init job — what `histmersion jobs` lists. */
-  type RunStepsPart1 = RunStepsPart1.T
-  object RunStepsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunStepsPart2ResultPart1 = RunStepsPart2ResultPart1.T
-  object RunStepsPart2ResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunStepsPart2ResultPart2 = RunStepsPart2ResultPart2.T
-  object RunStepsPart2ResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type DownloadArg1 = DownloadArg1.T
-  object DownloadArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart1 = DownloadResultPart1.T
-  object DownloadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart2 = DownloadResultPart2.T
-  object DownloadResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadArg1 = com.histmersion.server.HttpDownload.Url
+  val DownloadArg1: _root_.com.histmersion.server.HttpDownload.Url.type = _root_.com.histmersion.server.HttpDownload.Url
+  type DownloadResultPart1 = com.histmersion.server.Bootstrap.Problem
+  val DownloadResultPart1: _root_.com.histmersion.server.Bootstrap.Problem.type = _root_.com.histmersion.server.Bootstrap.Problem
+  type DownloadResultPart2 = com.histmersion.server.Bootstrap.Summary
+  val DownloadResultPart2: _root_.com.histmersion.server.Bootstrap.Summary.type = _root_.com.histmersion.server.Bootstrap.Summary
 
-  type BundledSeedResultPart1 = BundledSeedResultPart1.T
-  object BundledSeedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BundledSeedResultPart2 = BundledSeedResultPart2.T
-  object BundledSeedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InitFetch = InitFetch.T
   object InitFetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadGazetteerSource = LoadGazetteerSource.T
-  object LoadGazetteerSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadGazetteerApply = LoadGazetteerApply.T
   object LoadGazetteerApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlanFetch = PlanFetch.T
   object PlanFetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlanOnlyEmpty = PlanOnlyEmpty.T
   object PlanOnlyEmpty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunId = RunId.T
-  object RunId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunNoteArg1 = RunNoteArg1.T
-  object RunNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeedPlacesResultPart1 = SeedPlacesResultPart1.T
-  object SeedPlacesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeedPlacesResultPart2 = SeedPlacesResultPart2.T
-  object SeedPlacesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeedPlacesNoteArg1 = SeedPlacesNoteArg1.T
-  object SeedPlacesNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SkippedNoteResult = SkippedNoteResult.T
-  object SkippedNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchSourceResultPart1 = FetchSourceResultPart1.T
-  object FetchSourceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchSourceResultPart2 = FetchSourceResultPart2.T
-  object FetchSourceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchSourceName = FetchSourceName.T
-  object FetchSourceName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FetchSourceCheck = FetchSourceCheck.T
   object FetchSourceCheck extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchSourceNoteArg1 = FetchSourceNoteArg1.T
-  object FetchSourceNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchNetworkResultPart1 = FetchNetworkResultPart1.T
-  object FetchNetworkResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchNetworkResultPart2 = FetchNetworkResultPart2.T
-  object FetchNetworkResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchNetworkName = FetchNetworkName.T
-  object FetchNetworkName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PeriodSeed = PeriodSeedValue
-  type PeriodSeedValue = PeriodSeedValue.T
-  object PeriodSeedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodSeedValue = com.histmersion.server.Bootstrap.PeriodSeedText
+  val PeriodSeedValue: _root_.com.histmersion.server.Bootstrap.PeriodSeedText.type = _root_.com.histmersion.server.Bootstrap.PeriodSeedText
   type SkippedListed = SkippedListedValue
   type SkippedListedValue = SkippedListedValue.T
   object SkippedListedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourcesResult = SourcesResult.T
-  object SourcesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val JobKind = InitPlan.JobKind
 
@@ -288,5 +260,5 @@ object Bootstrap:
   val SkippedListed: com.histmersion.server.Bootstrap.SkippedListed = PeriodImports.SkippedListed
 
   /** Every name `init.fetch-sources` may hold (and the sources a plugin registers). */
-  def sources: List[com.histmersion.server.Bootstrap.SourcesResult] =
+  def sources: List[com.histmersion.server.Bootstrap.Name] =
     BuiltinGazetteers.names ++ List(NaturalEarthLand.name, PeriodOFetch.name) ++ GazetteerLoad.names

@@ -1,0 +1,165 @@
+## CONCEPTS NEARBY
+com.histmersion.util.basemap.Mvt.Field.End (Int)
+com.histmersion.util.basemap.Mvt.Field.Number (Int)
+com.histmersion.util.basemap.Mvt.Field.PayloadStart (Int)
+com.histmersion.util.basemap.Mvt.Field.Start (Int)
+com.histmersion.util.basemap.Mvt.Field.WireType (Int)
+com.histmersion.util.basemap.Mvt.Reader.From (Int)
+com.histmersion.util.basemap.Mvt.Reader.Until (Int)
+com.histmersion.util.basemap.Mvt.Rule.Drop (String)
+com.histmersion.util.basemap.Mvt.Rule.Geoms (Int)
+com.histmersion.util.basemap.Mvt.Rule.Keep (String)
+com.histmersion.util.basemap.Mvt.Rule.None (Boolean)
+com.histmersion.util.basemap.Mvt.Rule.Props (String)
+
+## TYPES TO DECIDE
+com.histmersion.util.basemap.Mvt.AnyValueResult | base String | generated | method-result
+    private def anyValue(b: com.histmersion.util.basemap.Mvt.AnyValueB, v: Field): com.histmersion.util.basemap.Mvt.AnyValueResult =
+com.histmersion.util.basemap.Mvt.AttemptResultPart1 | base String | generated | method-result
+    private def attempt[A](a: => A): Either[com.histmersion.util.basemap.Mvt.AttemptResultPart1, A] =
+com.histmersion.util.basemap.Mvt.FeaturesResultPart1 | base String | generated | method-result
+    def features(tile: com.histmersion.util.basemap.Mvt.FeaturesTile): Either[com.histmersion.util.basemap.Mvt.FeaturesResultPart1, List[(com.histmersion.util.basemap.Mvt.Fea
+com.histmersion.util.basemap.Mvt.FeaturesResultPart2Part1 | base String | generated | method-result
+    def features(tile: com.histmersion.util.basemap.Mvt.FeaturesTile): Either[com.histmersion.util.basemap.Mvt.FeaturesResultPart1, List[(com.histmersion.util.basemap.Mvt.Fea
+com.histmersion.util.basemap.Mvt.FeaturesResultPart2Part2 | base Int | generated | method-result
+    def features(tile: com.histmersion.util.basemap.Mvt.FeaturesTile): Either[com.histmersion.util.basemap.Mvt.FeaturesResultPart1, List[(com.histmersion.util.basemap.Mvt.Fea
+com.histmersion.util.basemap.Mvt.FeaturesResultPart2Part3Part1 | base String | generated | method-result
+    def features(tile: com.histmersion.util.basemap.Mvt.FeaturesTile): Either[com.histmersion.util.basemap.Mvt.FeaturesResultPart1, List[(com.histmersion.util.basemap.Mvt.Fea
+com.histmersion.util.basemap.Mvt.FeaturesResultPart2Part3Part2 | base String | generated | method-result
+    def features(tile: com.histmersion.util.basemap.Mvt.FeaturesTile): Either[com.histmersion.util.basemap.Mvt.FeaturesResultPart1, List[(com.histmersion.util.basemap.Mvt.Fea
+com.histmersion.util.basemap.Mvt.FeaturesTile | base Array[Byte] | generated | method-parameter
+    def features(tile: com.histmersion.util.basemap.Mvt.FeaturesTile): Either[com.histmersion.util.basemap.Mvt.FeaturesResultPart1, List[(com.histmersion.util.basemap.Mvt.Fea
+com.histmersion.util.basemap.Mvt.Field.End | base Int | original | constructor-parameter
+    final private case class Field(number: Field.Number, wireType: Field.WireType, start: Field.Start, end: Field.End, payloadStart: Field.PayloadStart)
+com.histmersion.util.basemap.Mvt.Field.Number | base Int | original | constructor-parameter
+    final private case class Field(number: Field.Number, wireType: Field.WireType, start: Field.Start, end: Field.End, payloadStart: Field.PayloadStart)
+com.histmersion.util.basemap.Mvt.Field.PayloadStart | base Int | original | constructor-parameter
+    final private case class Field(number: Field.Number, wireType: Field.WireType, start: Field.Start, end: Field.End, payloadStart: Field.PayloadStart)
+com.histmersion.util.basemap.Mvt.Field.Start | base Int | original | constructor-parameter
+    final private case class Field(number: Field.Number, wireType: Field.WireType, start: Field.Start, end: Field.End, payloadStart: Field.PayloadStart)
+    val fs = fields(b, layer.payloadStart, layer.end)
+com.histmersion.util.basemap.Mvt.Field.WireType | base Int | original | constructor-parameter
+    final private case class Field(number: Field.Number, wireType: Field.WireType, start: Field.Start, end: Field.End, payloadStart: Field.PayloadStart)
+com.histmersion.util.basemap.Mvt.FieldsB | base Array[Byte] | generated | alias,method-parameter
+    val StringB: _root_.com.histmersion.util.basemap.Mvt.FieldsB.type = _root_.com.histmersion.util.basemap.Mvt.FieldsB
+    val NameB: _root_.com.histmersion.util.basemap.Mvt.FieldsB.type = _root_.com.histmersion.util.basemap.Mvt.FieldsB
+com.histmersion.util.basemap.Mvt.FieldsFrom | base Int | generated | method-parameter
+    private def fields(b: com.histmersion.util.basemap.Mvt.FieldsB, from: com.histmersion.util.basemap.Mvt.FieldsFrom, until: com.histmersion.util.basemap.Mvt.FieldsUntil): V
+com.histmersion.util.basemap.Mvt.FieldsUntil | base Int | generated | method-parameter
+    private def fields(b: com.histmersion.util.basemap.Mvt.FieldsB, from: com.histmersion.util.basemap.Mvt.FieldsFrom, until: com.histmersion.util.basemap.Mvt.FieldsUntil): V
+com.histmersion.util.basemap.Mvt.FilterOthers | base Boolean | generated | method-parameter
+    def filter(tile: com.histmersion.util.basemap.Mvt.FilterTile, rules: Map[com.histmersion.util.basemap.Mvt.FilterRulesPart1, Rule], others: com.histmersion.util.basemap.Mv
+com.histmersion.util.basemap.Mvt.FilterResultPart1 | base String | generated | method-result
+    def filter(tile: com.histmersion.util.basemap.Mvt.FilterTile, rules: Map[com.histmersion.util.basemap.Mvt.FilterRulesPart1, Rule], others: com.histmersion.util.basemap.Mv
+com.histmersion.util.basemap.Mvt.FilterResultPart2 | base Array[Byte] | generated | method-result
+    def filter(tile: com.histmersion.util.basemap.Mvt.FilterTile, rules: Map[com.histmersion.util.basemap.Mvt.FilterRulesPart1, Rule], others: com.histmersion.util.basemap.Mv
+com.histmersion.util.basemap.Mvt.FilterRulesPart1 | base String | generated | method-parameter
+    def filter(tile: com.histmersion.util.basemap.Mvt.FilterTile, rules: Map[com.histmersion.util.basemap.Mvt.FilterRulesPart1, Rule], others: com.histmersion.util.basemap.Mv
+com.histmersion.util.basemap.Mvt.FilterTile | base Array[Byte] | generated | method-parameter
+    def filter(tile: com.histmersion.util.basemap.Mvt.FilterTile, rules: Map[com.histmersion.util.basemap.Mvt.FilterRulesPart1, Rule], others: com.histmersion.util.basemap.Mv
+com.histmersion.util.basemap.Mvt.KindsLayerName | base String | generated | method-parameter
+    def kinds(tile: com.histmersion.util.basemap.Mvt.KindsTile, layerName: com.histmersion.util.basemap.Mvt.KindsLayerName): Either[com.histmersion.util.basemap.Mvt.KindsResu
+com.histmersion.util.basemap.Mvt.KindsResultPart1 | base String | generated | method-result
+    def kinds(tile: com.histmersion.util.basemap.Mvt.KindsTile, layerName: com.histmersion.util.basemap.Mvt.KindsLayerName): Either[com.histmersion.util.basemap.Mvt.KindsResu
+com.histmersion.util.basemap.Mvt.KindsResultPart2 | base String | generated | method-result
+    def kinds(tile: com.histmersion.util.basemap.Mvt.KindsTile, layerName: com.histmersion.util.basemap.Mvt.KindsLayerName): Either[com.histmersion.util.basemap.Mvt.KindsResu
+com.histmersion.util.basemap.Mvt.KindsTile | base Array[Byte] | generated | method-parameter
+    def kinds(tile: com.histmersion.util.basemap.Mvt.KindsTile, layerName: com.histmersion.util.basemap.Mvt.KindsLayerName): Either[com.histmersion.util.basemap.Mvt.KindsResu
+com.histmersion.util.basemap.Mvt.LayerFeaturesPart1 | base Int | generated | method-parameter
+    def layer(name: com.histmersion.util.basemap.Mvt.LayerName, features: List[(com.histmersion.util.basemap.Mvt.LayerFeaturesPart1, Vector[com.histmersion.util.basemap.Mvt.L
+com.histmersion.util.basemap.Mvt.LayerFeaturesPart2 | base Int | generated | method-parameter
+    def layer(name: com.histmersion.util.basemap.Mvt.LayerName, features: List[(com.histmersion.util.basemap.Mvt.LayerFeaturesPart1, Vector[com.histmersion.util.basemap.Mvt.L
+com.histmersion.util.basemap.Mvt.LayerFeaturesPart3Part1 | base String | generated | method-parameter
+    def layer(name: com.histmersion.util.basemap.Mvt.LayerName, features: List[(com.histmersion.util.basemap.Mvt.LayerFeaturesPart1, Vector[com.histmersion.util.basemap.Mvt.L
+com.histmersion.util.basemap.Mvt.LayerFeaturesPart3Part2 | base String | generated | method-parameter
+    def layer(name: com.histmersion.util.basemap.Mvt.LayerName, features: List[(com.histmersion.util.basemap.Mvt.LayerFeaturesPart1, Vector[com.histmersion.util.basemap.Mvt.L
+com.histmersion.util.basemap.Mvt.LayerNamesResultPart1 | base String | generated | method-result
+    def layerNames(tile: com.histmersion.util.basemap.Mvt.LayerNamesTile): Either[com.histmersion.util.basemap.Mvt.LayerNamesResultPart1, List[com.histmersion.util.basemap.Mv
+com.histmersion.util.basemap.Mvt.LayerNamesResultPart2 | base String | generated | method-result
+    def layerNames(tile: com.histmersion.util.basemap.Mvt.LayerNamesTile): Either[com.histmersion.util.basemap.Mvt.LayerNamesResultPart1, List[com.histmersion.util.basemap.Mv
+com.histmersion.util.basemap.Mvt.LayerNamesTile | base Array[Byte] | generated | method-parameter
+    def layerNames(tile: com.histmersion.util.basemap.Mvt.LayerNamesTile): Either[com.histmersion.util.basemap.Mvt.LayerNamesResultPart1, List[com.histmersion.util.basemap.Mv
+com.histmersion.util.basemap.Mvt.LayerResult | base Array[Byte] | generated | method-result
+    def layer(name: com.histmersion.util.basemap.Mvt.LayerName, features: List[(com.histmersion.util.basemap.Mvt.LayerFeaturesPart1, Vector[com.histmersion.util.basemap.Mvt.L
+com.histmersion.util.basemap.Mvt.LineGeometryPartsPart1 | base Int | generated | method-parameter
+    def lineGeometry(parts: Seq[Seq[(com.histmersion.util.basemap.Mvt.LineGeometryPartsPart1, com.histmersion.util.basemap.Mvt.LineGeometryPartsPart2)]]): Vector[com.histmers
+com.histmersion.util.basemap.Mvt.LineGeometryPartsPart2 | base Int | generated | method-parameter
+    def lineGeometry(parts: Seq[Seq[(com.histmersion.util.basemap.Mvt.LineGeometryPartsPart1, com.histmersion.util.basemap.Mvt.LineGeometryPartsPart2)]]): Vector[com.histmers
+com.histmersion.util.basemap.Mvt.LineGeometryResult | base Int | generated | method-result
+    def lineGeometry(parts: Seq[Seq[(com.histmersion.util.basemap.Mvt.LineGeometryPartsPart1, com.histmersion.util.basemap.Mvt.LineGeometryPartsPart2)]]): Vector[com.histmers
+com.histmersion.util.basemap.Mvt.NameResult | base String | generated | method-result
+    private def name(b: com.histmersion.util.basemap.Mvt.NameB, layer: Field): com.histmersion.util.basemap.Mvt.NameResult =
+com.histmersion.util.basemap.Mvt.PointGeometryResult | base Int | generated | method-result
+    def pointGeometry(x: com.histmersion.util.basemap.Mvt.PointGeometryX, y: com.histmersion.util.basemap.Mvt.PointGeometryY): Vector[com.histmersion.util.basemap.Mvt.PointGe
+com.histmersion.util.basemap.Mvt.PointGeometryX | base Int | generated | method-parameter
+    def pointGeometry(x: com.histmersion.util.basemap.Mvt.PointGeometryX, y: com.histmersion.util.basemap.Mvt.PointGeometryY): Vector[com.histmersion.util.basemap.Mvt.PointGe
+com.histmersion.util.basemap.Mvt.PointGeometryY | base Int | generated | method-parameter
+    def pointGeometry(x: com.histmersion.util.basemap.Mvt.PointGeometryX, y: com.histmersion.util.basemap.Mvt.PointGeometryY): Vector[com.histmersion.util.basemap.Mvt.PointGe
+com.histmersion.util.basemap.Mvt.Reader.From | base Int | generated | constructor-parameter
+    final private class Reader(val b: Array[Byte], from: Reader.From, until: Reader.Until):
+com.histmersion.util.basemap.Mvt.Reader.HasNextResult | base Boolean | generated | method-result
+    def hasNext: com.histmersion.util.basemap.Mvt.Reader.HasNextResult = pos < until
+com.histmersion.util.basemap.Mvt.Reader.Pos | base Int | generated | variable
+    var pos: com.histmersion.util.basemap.Mvt.Reader.Pos = from // the next unread byte
+com.histmersion.util.basemap.Mvt.Reader.Until | base Int | generated | constructor-parameter
+    final private class Reader(val b: Array[Byte], from: Reader.From, until: Reader.Until):
+com.histmersion.util.basemap.Mvt.Reader.VarintResult | base Long | generated | method-result
+    def varint(): com.histmersion.util.basemap.Mvt.Reader.VarintResult =
+com.histmersion.util.basemap.Mvt.Rule.AllResult | base Boolean | generated | method-result
+    def all: com.histmersion.util.basemap.Mvt.Rule.AllResult = keep.isEmpty && drop.isEmpty && !none && geoms.isEmpty && props.isEmpty
+com.histmersion.util.basemap.Mvt.Rule.Drop | base String | original | constructor-parameter
+com.histmersion.util.basemap.Mvt.Rule.Geoms | base Int | original | constructor-parameter
+com.histmersion.util.basemap.Mvt.Rule.Keep | base String | original | constructor-parameter
+com.histmersion.util.basemap.Mvt.Rule.KeepsKind | base String | generated | method-parameter
+    def keeps(kind: Option[com.histmersion.util.basemap.Mvt.Rule.KeepsKind]): com.histmersion.util.basemap.Mvt.Rule.KeepsResult = kind match
+com.histmersion.util.basemap.Mvt.Rule.KeepsResult | base Boolean | generated | method-result
+    def keeps(kind: Option[com.histmersion.util.basemap.Mvt.Rule.KeepsKind]): com.histmersion.util.basemap.Mvt.Rule.KeepsResult = kind match
+com.histmersion.util.basemap.Mvt.Rule.None | base Boolean | original | constructor-parameter
+    case None    => keep.isEmpty
+    case None if gone.isEmpty => Some(b.slice(layer.payloadStart, layer.end))
+com.histmersion.util.basemap.Mvt.Rule.Props | base String | original | alias,constructor-parameter
+    case Some(wanted)         => Some(withProps(b, fs, keys, gone, wanted))
+    private def withProps(
+com.histmersion.util.basemap.Mvt.StringResult | base String | generated | method-result
+    private def string(b: com.histmersion.util.basemap.Mvt.StringB, f: Field): com.histmersion.util.basemap.Mvt.StringResult =
+com.histmersion.util.basemap.Mvt.StringValueResult | base String | generated | method-result
+    private def stringValue(b: com.histmersion.util.basemap.Mvt.StringValueB, v: Field): Option[com.histmersion.util.basemap.Mvt.StringValueResult] =
+com.histmersion.util.basemap.Mvt.TagsResult | base Int | generated | method-result
+    private def tags(b: com.histmersion.util.basemap.Mvt.TagsB, feature: Field): Vector[com.histmersion.util.basemap.Mvt.TagsResult] =
+com.histmersion.util.basemap.Mvt.ThinLayerDroppedResult | base Boolean | generated | method-result
+    def dropped(feature: Field): com.histmersion.util.basemap.Mvt.ThinLayerDroppedResult =
+com.histmersion.util.basemap.Mvt.ThinLayerGeomTypeResult | base Int | generated | method-result
+    def geomType(feature: Field): com.histmersion.util.basemap.Mvt.ThinLayerGeomTypeResult =
+com.histmersion.util.basemap.Mvt.ThinLayerKindResult | base String | generated | method-result
+    def kind(feature: Field): Option[com.histmersion.util.basemap.Mvt.ThinLayerKindResult] =
+com.histmersion.util.basemap.Mvt.ThinLayerResult | base Array[Byte] | generated | method-result
+    private def thinLayer(b: com.histmersion.util.basemap.Mvt.ThinLayerB, layer: Field, rule: Rule): Option[com.histmersion.util.basemap.Mvt.ThinLayerResult] =
+com.histmersion.util.basemap.Mvt.TileLayers | base Array[Byte] | generated | method-parameter
+    def tile(layers: List[com.histmersion.util.basemap.Mvt.TileLayers]): com.histmersion.util.basemap.Mvt.TileResult =
+com.histmersion.util.basemap.Mvt.TileResult | base Array[Byte] | generated | method-result
+    def tile(layers: List[com.histmersion.util.basemap.Mvt.TileLayers]): com.histmersion.util.basemap.Mvt.TileResult =
+com.histmersion.util.basemap.Mvt.TypedLayerFeaturesPart1 | base Int | generated | method-parameter
+    def typedLayer(name: com.histmersion.util.basemap.Mvt.TypedLayerName, features: List[(com.histmersion.util.basemap.Mvt.TypedLayerFeaturesPart1, Vector[com.histmersion.uti
+com.histmersion.util.basemap.Mvt.TypedLayerFeaturesPart2 | base Int | generated | method-parameter
+    def typedLayer(name: com.histmersion.util.basemap.Mvt.TypedLayerName, features: List[(com.histmersion.util.basemap.Mvt.TypedLayerFeaturesPart1, Vector[com.histmersion.uti
+com.histmersion.util.basemap.Mvt.TypedLayerFeaturesPart3Part1 | base String | generated | method-parameter
+    def typedLayer(name: com.histmersion.util.basemap.Mvt.TypedLayerName, features: List[(com.histmersion.util.basemap.Mvt.TypedLayerFeaturesPart1, Vector[com.histmersion.uti
+com.histmersion.util.basemap.Mvt.TypedLayerName | base String | generated | alias,method-parameter
+    val LayerName: _root_.com.histmersion.util.basemap.Mvt.TypedLayerName.type = _root_.com.histmersion.util.basemap.Mvt.TypedLayerName
+    def typedLayer(name: com.histmersion.util.basemap.Mvt.TypedLayerName, features: List[(com.histmersion.util.basemap.Mvt.TypedLayerFeaturesPart1, Vector[com.histmersion.uti
+com.histmersion.util.basemap.Mvt.TypedLayerResult | base Array[Byte] | generated | method-result
+    def typedLayer(name: com.histmersion.util.basemap.Mvt.TypedLayerName, features: List[(com.histmersion.util.basemap.Mvt.TypedLayerFeaturesPart1, Vector[com.histmersion.uti
+com.histmersion.util.basemap.Mvt.WithPropsGone | base Int | generated | method-parameter
+com.histmersion.util.basemap.Mvt.WithPropsKeys | base String | generated | method-parameter
+com.histmersion.util.basemap.Mvt.WithPropsResult | base Array[Byte] | generated | method-result
+com.histmersion.util.basemap.Mvt.WithPropsWanted | base String | generated | method-parameter
+com.histmersion.util.basemap.Mvt.WriteFieldNumber | base Int | generated | method-parameter
+    private def writeField(out: ByteArrayOutputStream, number: com.histmersion.util.basemap.Mvt.WriteFieldNumber, payload: com.histmersion.util.basemap.Mvt.WriteFieldPayload)
+com.histmersion.util.basemap.Mvt.WriteFieldPayload | base Array[Byte] | generated | method-parameter
+    private def writeField(out: ByteArrayOutputStream, number: com.histmersion.util.basemap.Mvt.WriteFieldNumber, payload: com.histmersion.util.basemap.Mvt.WriteFieldPayload)
+com.histmersion.util.basemap.Mvt.WriteVarintV | base Long | generated | method-parameter
+    private def writeVarint(out: ByteArrayOutputStream, v: com.histmersion.util.basemap.Mvt.WriteVarintV): Unit =
+com.histmersion.util.basemap.Mvt.ZigzagN | base Long | generated | method-parameter
+    def zigzag(n: com.histmersion.util.basemap.Mvt.ZigzagN): com.histmersion.util.basemap.Mvt.ZigzagResult = (n << 1) ^ (n >> 63)
+com.histmersion.util.basemap.Mvt.ZigzagResult | base Long | generated | method-result
+    def zigzag(n: com.histmersion.util.basemap.Mvt.ZigzagN): com.histmersion.util.basemap.Mvt.ZigzagResult = (n << 1) ^ (n >> 63)

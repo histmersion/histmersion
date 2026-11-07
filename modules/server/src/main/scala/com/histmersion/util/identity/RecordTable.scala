@@ -25,7 +25,7 @@ final case class RecordTable(
 ):
   private val uidCol = uid.getOrElse("NULL::uuid")
 
-  private def byKeys(keys: List[com.histmersion.util.identity.RecordTable.ByKeysKeys])(using DbCon): List[(ItemKey, Option[ItemUid], Option[Title])] =
+  private def byKeys(keys: List[com.histmersion.util.identity.RecordTable.Key])(using DbCon): List[(ItemKey, Option[ItemUid], Option[Title])] =
     if keys.isEmpty then Nil
     else
       Sql
@@ -36,7 +36,7 @@ final case class RecordTable(
         .toList
 
   /** Old keys → (the key now, uid, title). */
-  private def byAliases(keys: List[com.histmersion.util.identity.RecordTable.ByAliasesKeys])(using DbCon): Map[ItemKey, (ItemKey, Option[ItemUid], Option[Title])] =
+  private def byAliases(keys: List[com.histmersion.util.identity.RecordTable.Key])(using DbCon): Map[ItemKey, (ItemKey, Option[ItemUid], Option[Title])] =
     aliases.filter(_ => keys.nonEmpty).fold(Map.empty) { a =>
       Sql
         .of(
@@ -99,7 +99,7 @@ final case class RecordTable(
         .map((u, at) => u -> Instant.parse(at))
         .toMap
 
-  def resolve(k: ItemKey)(using DbCon): Either[com.histmersion.util.identity.RecordTable.ResolveResultPart1, ItemRef] =
+  def resolve(k: ItemKey)(using DbCon): Either[com.histmersion.util.identity.RecordTable.Problem, ItemRef] =
     byKeys(List(k.value)).headOption
       .map((_, u, _) => ItemRef(kind, k, u))
       .orElse(byAliases(List(k.value)).get(k).map((_, u, _) => ItemRef(kind, k, u)))
@@ -139,13 +139,9 @@ final case class RecordTable(
     (byUid ++ byKey).toMap
 
 object RecordTable:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** How many merges in a row are followed. */
-  type ByKeysKeys = ByKeysKeys.T
-  object ByKeysKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ByAliasesKeys = ByAliasesKeys.T
-  object ByAliasesKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveResultPart1 = ResolveResultPart1.T
-  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Table = Table.T
   object Table extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -16,9 +16,11 @@ enum PickFailure:
   case Exhausted(message: PickFailure.Exhausted.Message, freesAt: Option[Instant], reason: PauseReason = PauseReason.Allowance)
 
 object PickFailure:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   object Unavailable:
-    type Message = Message.T
-    object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Message = com.histmersion.domain.automation.agents.PickFailure.Problem
+    val Message: _root_.com.histmersion.domain.automation.agents.PickFailure.Problem.type = _root_.com.histmersion.domain.automation.agents.PickFailure.Problem
   object Exhausted:
-    type Message = Message.T
-    object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Message = com.histmersion.domain.automation.agents.PickFailure.Problem
+    val Message: _root_.com.histmersion.domain.automation.agents.PickFailure.Problem.type = _root_.com.histmersion.domain.automation.agents.PickFailure.Problem

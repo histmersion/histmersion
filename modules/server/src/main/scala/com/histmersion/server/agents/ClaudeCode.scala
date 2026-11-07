@@ -14,33 +14,27 @@ import sttp.apispec.circe.*
   * `stream-json` output read back into sttp-ai's result types.
   */
 object ClaudeCode:
+  type Argument = Argument.T
+  object Argument extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModelId = ModelId.T
+  object ModelId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToolId = ToolId.T
+  object ToolId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToolName = ToolName.T
+  object ToolName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The MCP server's name as the CLI sees it; its tools are `mcp__histmersion__<tool>`. */
-  type ParseModel = ParseModel.T
-  object ParseModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseServedPart1 = ParseServedPart1.T
-  object ParseServedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseMcpProblem = ParseMcpProblem.T
   object ParseMcpProblem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseFirstCall = ParseFirstCall.T
   object ParseFirstCall extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseStripN = ParseStripN.T
-  object ParseStripN extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ToolIdResult = ToolIdResult.T
-  object ToolIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToolIdName = ToolIdName.T
-  object ToolIdName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type McpConfigUrl = McpConfigUrl.T
-  object McpConfigUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type McpConfigToken = McpConfigToken.T
   object McpConfigToken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SchemaJsonResult = SchemaJsonResult.T
   object SchemaJsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArgvResult = ArgvResult.T
-  object ArgvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArgvModel = ArgvModel.T
-  object ArgvModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArgvMaxTurns = ArgvMaxTurns.T
   object ArgvMaxTurns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArgvSchema = ArgvSchema.T
@@ -57,28 +51,12 @@ object ClaudeCode:
   object EnvironmentMaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EnvironmentToken = EnvironmentToken.T
   object EnvironmentToken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvironmentQuotaUrl = EnvironmentQuotaUrl.T
-  object EnvironmentQuotaUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvironmentEnvPart1 = EnvironmentEnvPart1.T
-  object EnvironmentEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvironmentEnvPart2 = EnvironmentEnvPart2.T
-  object EnvironmentEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProbeArgvResult = ProbeArgvResult.T
-  object ProbeArgvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProbeArgvModel = ProbeArgvModel.T
-  object ProbeArgvModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProbeEnvironmentMaxTokens = ProbeEnvironmentMaxTokens.T
   object ProbeEnvironmentMaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProbeEnvironmentEnvPart1 = ProbeEnvironmentEnvPart1.T
-  object ProbeEnvironmentEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProbeEnvironmentEnvPart2 = ProbeEnvironmentEnvPart2.T
-  object ProbeEnvironmentEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WatchResult = WatchResult.T
   object WatchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WatchLine = WatchLine.T
   object WatchLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AbortedByGuardResult = AbortedByGuardResult.T
-  object AbortedByGuardResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TokensResult = TokensResult.T
   object TokensResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FirstCallTokensResult = FirstCallTokensResult.T
@@ -91,14 +69,12 @@ object ClaudeCode:
   object JsonInTextText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResultUser = ResultUser.T
   object ResultUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClientResultPart1 = ClientResultPart1.T
-  object ClientResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val McpServer = AgentDefinitions.McpServer
-  def toolId(name: com.histmersion.server.agents.ClaudeCode.ToolIdName): com.histmersion.server.agents.ClaudeCode.ToolIdResult = ToolStyle.Claude.tool(name)
+  def toolId(name: com.histmersion.server.agents.ClaudeCode.ToolName): com.histmersion.server.agents.ClaudeCode.ToolId = ToolStyle.Claude.tool(name)
 
   /** The one MCP server of a run: the agent endpoint, with the step's run token. */
-  def mcpConfig(url: com.histmersion.server.agents.ClaudeCode.McpConfigUrl, token: Option[com.histmersion.server.agents.ClaudeCode.McpConfigToken]): Json =
+  def mcpConfig(url: com.histmersion.server.HttpDownload.Url, token: Option[com.histmersion.server.agents.ClaudeCode.McpConfigToken]): Json =
     val server = Json.obj(
       ("type", "http".asJson) :: ("url", url.asJson) ::
         token.toList.map(k => "headers" -> Json.obj("Authorization" -> s"Bearer $k".asJson))*
@@ -136,7 +112,7 @@ object ClaudeCode:
     */
   def argv(
       cfg: ClaudeCodeConfig,
-      model: com.histmersion.server.agents.ClaudeCode.ArgvModel,
+      model: com.histmersion.server.agents.ClaudeCode.ModelId,
       maxTurns: com.histmersion.server.agents.ClaudeCode.ArgvMaxTurns,
       schema: com.histmersion.server.agents.ClaudeCode.ArgvSchema,
       launch: Launch,
@@ -144,7 +120,7 @@ object ClaudeCode:
       offered: List[com.histmersion.server.agents.ClaudeCode.ArgvOffered],
       all: List[com.histmersion.server.agents.ClaudeCode.ArgvAll],
       web: List[com.histmersion.server.agents.ClaudeCode.ArgvWeb] = Nil
-  ): List[com.histmersion.server.agents.ClaudeCode.ArgvResult] =
+  ): List[com.histmersion.server.agents.ClaudeCode.Argument] =
     val denied = all.filterNot(offered.contains)
     val how = launch match
       case Launch.Agent(dir, name, settings) =>
@@ -189,8 +165,8 @@ object ClaudeCode:
       cfg: ClaudeCodeConfig,
       maxTokens: com.histmersion.server.agents.ClaudeCode.EnvironmentMaxTokens,
       token: Option[com.histmersion.server.agents.ClaudeCode.EnvironmentToken],
-      quotaUrl: com.histmersion.server.agents.ClaudeCode.EnvironmentQuotaUrl,
-      env: java.util.Map[com.histmersion.server.agents.ClaudeCode.EnvironmentEnvPart1, com.histmersion.server.agents.ClaudeCode.EnvironmentEnvPart2]
+      quotaUrl: com.histmersion.server.HttpDownload.Url,
+      env: java.util.Map[com.histmersion.server.GazetteerPaths.EnvName, com.histmersion.server.GazetteerPaths.EnvText]
   )(using com.histmersion.util.system.JvmHome): Unit =
     cfg.envChanges.foreach {
       case (k, Some(v)) => val _ = env.put(k, v)
@@ -217,7 +193,7 @@ object ClaudeCode:
     * prompt in place of Claude Code's, no tools, no MCP server, no skills or settings, one turn, no session kept. Its
     * `rate_limit_event` is the reading.
     */
-  def probeArgv(cfg: ClaudeCodeConfig, model: com.histmersion.server.agents.ClaudeCode.ProbeArgvModel): List[com.histmersion.server.agents.ClaudeCode.ProbeArgvResult] =
+  def probeArgv(cfg: ClaudeCodeConfig, model: com.histmersion.server.agents.ClaudeCode.ModelId): List[com.histmersion.server.agents.ClaudeCode.Argument] =
     List(
       cfg.command,
       "-p",
@@ -245,7 +221,7 @@ object ClaudeCode:
   /** The probe's environment: a run's ([[environment]]: no API key unless asked, no claude.ai connectors, the config
     * dir), with the output capped at `maxTokens` and no run token or quota URL.
     */
-  def probeEnvironment(cfg: ClaudeCodeConfig, maxTokens: com.histmersion.server.agents.ClaudeCode.ProbeEnvironmentMaxTokens, env: java.util.Map[com.histmersion.server.agents.ClaudeCode.ProbeEnvironmentEnvPart1, com.histmersion.server.agents.ClaudeCode.ProbeEnvironmentEnvPart2])(using com.histmersion.util.system.JvmHome): Unit =
+  def probeEnvironment(cfg: ClaudeCodeConfig, maxTokens: com.histmersion.server.agents.ClaudeCode.ProbeEnvironmentMaxTokens, env: java.util.Map[com.histmersion.server.GazetteerPaths.EnvName, com.histmersion.server.GazetteerPaths.EnvText])(using com.histmersion.util.system.JvmHome): Unit =
     environment(cfg, maxTokens, None, "", env)
     val _ = env.remove(AgentGenerator.QuotaUrlEnv)
     val _ = env.remove(AgentGenerator.TokenEnv)
@@ -271,7 +247,7 @@ object ClaudeCode:
   /** A turn the quota-guard mod aborted: not an error result, but `terminal_reason: "aborted_streaming"` with an empty
     * answer (§3a P3).
     */
-  def abortedByGuard(r: Result): com.histmersion.server.agents.ClaudeCode.AbortedByGuardResult =
+  def abortedByGuard(r: Result): Boolean =
     r.terminalReason.contains("aborted_streaming") && r.text.trim.isEmpty && r.structured.isEmpty
 
   // ── the output ─────────────────────────────────────────────────────────────────────────────────
@@ -325,12 +301,12 @@ object ClaudeCode:
   )
 
   object Outcome:
-    type ModelId = ModelId.T
-    object ModelId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ModelId = com.histmersion.server.agents.ClaudeCode.ModelId
+    val ModelId: _root_.com.histmersion.server.agents.ClaudeCode.ModelId.type = _root_.com.histmersion.server.agents.ClaudeCode.ModelId
     type McpProblem = McpProblem.T
     object McpProblem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ServedPart1 = ServedPart1.T
-    object ServedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ServedPart1 = com.histmersion.server.agents.ClaudeCode.ModelId
+    val ServedPart1: _root_.com.histmersion.server.agents.ClaudeCode.ModelId.type = _root_.com.histmersion.server.agents.ClaudeCode.ModelId
     type FirstCall = FirstCall.T
     object FirstCall extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -377,13 +353,13 @@ object ClaudeCode:
     val pending = scala.collection.mutable.LinkedHashMap.empty[String, ToolCall]
     var result: Option[Result] = None
     var usage: Option[TokenUsage] = None
-    var model: Option[com.histmersion.server.agents.ClaudeCode.ParseModel] = None
-    var served: List[(com.histmersion.server.agents.ClaudeCode.ParseServedPart1, TokenUsage)] = Nil
+    var model: Option[com.histmersion.server.agents.ClaudeCode.ModelId] = None
+    var served: List[(com.histmersion.server.agents.ClaudeCode.ModelId, TokenUsage)] = Nil
     var mcpProblem: Option[com.histmersion.server.agents.ClaudeCode.ParseMcpProblem] = None
     var firstCall: Option[com.histmersion.server.agents.ClaudeCode.ParseFirstCall] = None
     val readings = List.newBuilder[com.histmersion.api.automation.PlanQuota.Reading]
     val now = System.currentTimeMillis()
-    def strip(n: com.histmersion.server.agents.ClaudeCode.ParseStripN) = n.stripPrefix(s"mcp__${McpServer}__")
+    def strip(n: com.histmersion.server.agents.ClaudeCode.ToolName) = n.stripPrefix(s"mcp__${McpServer}__")
     events.foreach { e =>
       val c = e.hcursor
       c.downField("type").as[String].getOrElse("") match
@@ -543,7 +519,7 @@ object ClaudeCode:
         )
 
   /** The `claude-code` client for `ref`, or why it cannot be used here. */
-  def client(cfg: ClaudeCodeConfig, rt: CliRuntime, ref: ModelRef): Either[com.histmersion.server.agents.ClaudeCode.ClientResultPart1, LlmClient] =
+  def client(cfg: ClaudeCodeConfig, rt: CliRuntime, ref: ModelRef): Either[com.histmersion.server.agents.ClaudeCode.Problem, LlmClient] =
     if ref.provider != ProviderKind.ClaudeCode then Left(s"${ref.wire} is not a claude-code model")
     else if !rt.loopback && !cfg.allowNonLoopback then
       Left(
@@ -559,11 +535,7 @@ object ClaudeCode:
     */
   object Env:
     /** `127.x`, `::1`, `localhost` — a bind nobody else can reach. `0.0.0.0` (every interface) is not. */
-    type IsLoopbackResult = IsLoopbackResult.T
-    object IsLoopbackResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type IsLoopbackHost = IsLoopbackHost.T
-    object IsLoopbackHost extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def isLoopback(host: com.histmersion.server.agents.ClaudeCode.Env.IsLoopbackHost): com.histmersion.server.agents.ClaudeCode.Env.IsLoopbackResult =
+    def isLoopback(host: com.histmersion.server.Composition.Host): Boolean =
       val h = host.trim.toLowerCase(java.util.Locale.ROOT).stripPrefix("[").stripSuffix("]")
       h == "localhost" || h == "::1" || h.startsWith("127.")

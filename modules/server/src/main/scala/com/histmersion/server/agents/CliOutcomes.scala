@@ -14,24 +14,18 @@ object CliOutcomes:
     */
   type ResultUser = ResultUser.T
   object ResultUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResultModelId = ResultModelId.T
-  object ResultModelId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TextProblemText = TextProblemText.T
   object TextProblemText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StripFenceResult = StripFenceResult.T
   object StripFenceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StripFenceS = StripFenceS.T
   object StripFenceS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsLimitResult = IsLimitResult.T
-  object IsLimitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsLimitMessage = IsLimitMessage.T
-  object IsLimitMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def result[Out](
       o: CliOutcome,
       user: com.histmersion.server.agents.CliOutcomes.ResultUser,
       schema: ResponseSchema[Out],
-      modelId: Option[com.histmersion.server.agents.CliOutcomes.ResultModelId]
+      modelId: Option[com.histmersion.server.agents.ClaudeCode.ModelId]
   ): AgentResult[Either[AgentFailure, Out]] =
     val raw = o.finalText.getOrElse("")
     val parsed = parser.parse(stripFence(raw))
@@ -86,7 +80,7 @@ object CliOutcomes:
     else t
 
   /** A plan's usage limit as a CLI words it ("You've hit your usage limit", "rate limit reached"). */
-  def isLimit(message: com.histmersion.server.agents.CliOutcomes.IsLimitMessage): com.histmersion.server.agents.CliOutcomes.IsLimitResult =
+  def isLimit(message: com.histmersion.server.agents.ClaudeCode.Limit.Message): Boolean =
     val low = message.toLowerCase(java.util.Locale.ROOT)
     low.contains("usage limit") || low.contains("rate limit reached") || low.contains("rate_limit_reached") ||
     low.contains("hit your limit") || low.contains("quota exceeded")

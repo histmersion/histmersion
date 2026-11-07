@@ -37,11 +37,11 @@ final class SeedService(
     */
   def due(
       goals: List[FocusService.Goal],
-      sources: Map[com.histmersion.domain.library.workflows.SeedService.DueSourcesPart1, com.histmersion.domain.library.workflows.SeedService.DueSourcesPart2],
-      watchers: Set[com.histmersion.domain.library.workflows.SeedService.DueWatchers],
-      lastSweep: com.histmersion.domain.library.workflows.SeedService.DueLastSweepArg1 => Option[Instant],
+      sources: Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.workflows.SeedService.DueDays],
+      watchers: Set[com.histmersion.domain.library.workflows.SeedService.Watcher],
+      lastSweep: com.histmersion.domain.library.workflows.SeedService.LastSweep => Option[Instant],
       now: Instant
-  ): List[com.histmersion.domain.library.workflows.SeedService.DueResult] =
+  ): List[com.histmersion.domain.library.workflows.SeedService.DueText] =
     val every = math.max(1, cfg.scheduler.seedEveryHours).toLong * 3600L
     goals
       .filter(g => !GoalFocus.finished(g.status) && sources.getOrElse(g.slug, 0) == 0 && watchers(watchId(g.slug)))
@@ -53,7 +53,7 @@ final class SeedService(
   private val seeded = java.util.concurrent.ConcurrentHashMap[String, Instant]()
 
   /** One tick's seeding; one line per goal seeded. */
-  def tick(now: Instant): List[com.histmersion.domain.library.workflows.SeedService.TickResult] =
+  def tick(now: Instant): List[com.histmersion.domain.library.workflows.SeedService.TickLine] =
     val n = cfg.scheduler.seedGoalsPerTick
     if n <= 0 || !agents.autopilot.on || agents.drain.draining then Nil
     else
@@ -82,7 +82,7 @@ final class SeedService(
       lines
 
   /** Sweep one goal's candidates and queue its legal open-access ones for ingest. */
-  def seed(goal: com.histmersion.domain.library.workflows.SeedService.SeedGoal): Option[com.histmersion.domain.library.workflows.SeedService.SeedResult] =
+  def seed(goal: com.histmersion.domain.automation.Goal.Slug): Option[com.histmersion.domain.library.workflows.SeedService.Seeded] =
     acquisition().sweepCandidates(goal, dryRun = false) match
       case Left(why) =>
         scribe.info(s"seed before the plan: goal $goal not swept: $why")
@@ -113,19 +113,15 @@ final class SeedService(
         Some(line)
 
 object SeedService:
-  type DueResult = DueResult.T
-  object DueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DueSourcesPart1 = DueSourcesPart1.T
-  object DueSourcesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DueSourcesPart2 = DueSourcesPart2.T
-  object DueSourcesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DueWatchers = DueWatchers.T
-  object DueWatchers extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DueLastSweepArg1 = DueLastSweepArg1.T
-  object DueLastSweepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TickResult = TickResult.T
-  object TickResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeedResult = SeedResult.T
-  object SeedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeedGoal = SeedGoal.T
-  object SeedGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DueDays = DueDays.T
+  object DueDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DueText = DueText.T
+  object DueText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastSweep = LastSweep.T
+  object LastSweep extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Seeded = Seeded.T
+  object Seeded extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TickLine = TickLine.T
+  object TickLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Watcher = Watcher.T
+  object Watcher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

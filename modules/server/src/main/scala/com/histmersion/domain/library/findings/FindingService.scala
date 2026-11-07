@@ -10,18 +10,14 @@ import com.histmersion.api.library.{Filter, GeoHit}
   */
 trait FindingService:
   def feed(filter: Filter, scope: PlaceScope): List[GeoHit]
-  def count(filter: Filter, scope: PlaceScope): com.histmersion.domain.library.findings.FindingService.CountResult
+  def count(filter: Filter, scope: PlaceScope): com.histmersion.RowCount
 
 object FindingService:
-  type CountResult = CountResult.T
-  object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(db: Transactor): FindingService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends FindingService:
     def feed(filter: Filter, scope: PlaceScope): List[GeoHit] = db.read(FindingRepo.findingsFor(filter, scope)).toList
-    def count(filter: Filter, scope: PlaceScope): com.histmersion.domain.library.findings.FindingService.Implementation.CountResult = db.read(FindingRepo.findingsCount(filter, scope))
+    def count(filter: Filter, scope: PlaceScope): com.histmersion.RowCount = db.read(FindingRepo.findingsCount(filter, scope))
 
   object Implementation:
-    type CountResult = CountResult.T
-    object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

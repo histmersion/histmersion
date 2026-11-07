@@ -11,8 +11,8 @@ final case class FollowupsInput(id: FollowupsInput.Id, since: Option[FollowupsIn
 object FollowupsInput:
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Since = Since.T
-  object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Since = com.histmersion.Year
+  val Since: _root_.com.histmersion.Year.type = _root_.com.histmersion.Year
   type Limit = Limit.T
   object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

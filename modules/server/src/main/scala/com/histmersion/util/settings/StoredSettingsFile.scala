@@ -37,9 +37,9 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: StoredSe
             yield ConfigFileState(Some(text), FileVersion.of(Some(text)), parsed, AppConfig.writtenIn(file))
           catch case e: IOException => Left(SettingError.Io(e.getMessage))
 
-  def replace(text: com.histmersion.util.settings.StoredSettingsFile.ReplaceText, existed: com.histmersion.util.settings.StoredSettingsFile.ReplaceExisted)(
+  def replace(text: com.histmersion.util.storage.Blob.Text, existed: com.histmersion.util.settings.StoredSettingsFile.TargetExisted)(
       check: SettingsFile.Staged => Either[SettingError, Unit]
-  ): Either[SettingError, Option[com.histmersion.util.settings.StoredSettingsFile.ReplaceResultPart2]] =
+  ): Either[SettingError, Option[com.histmersion.util.settings.StoredSettingsFile.Summary]] =
     try
       store.reserve(key, TempName.Unique, throughLink = true).left.map(io).flatMap { reservation =>
         Using.resource(reservation) { r =>
@@ -60,12 +60,12 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: StoredSe
       }
     catch case e: IOException => Left(SettingError.Io(e.getMessage))
 
-  private def backup(existed: com.histmersion.util.settings.StoredSettingsFile.BackupExisted): Either[SettingError, Option[com.histmersion.util.settings.StoredSettingsFile.BackupResultPart2]] =
+  private def backup(existed: com.histmersion.util.settings.StoredSettingsFile.BackupExisted): Either[SettingError, Option[com.histmersion.util.settings.StoredSettingsFile.BackupFile]] =
     if !existed then Right(None)
     else store.copy(key, key.withSuffix(".bak"), keepAttributes = true).left.map(io).map(_ => Some(s"$shown.bak"))
 
   /** A parse of the file at `where`, its messages naming the settings file. */
-  private def parsed(parse: Either[com.histmersion.util.settings.StoredSettingsFile.ParsedParsePart1, Option[Config]], where: com.histmersion.util.settings.StoredSettingsFile.ParsedWhere): Either[SettingError, Config] =
+  private def parsed(parse: Either[com.histmersion.util.settings.StoredSettingsFile.Problem, Option[Config]], where: com.histmersion.util.storage.Blob.Location): Either[SettingError, Config] =
     parse.left
       .map(m => SettingError.Unreadable(m.replace(where, shown)))
       .flatMap(_.toRight(SettingError.Unreadable(s"$shown: no such file")))
@@ -73,20 +73,16 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: StoredSe
   private def io(e: Store.Error): SettingError = SettingError.Io(e.message)
 
 object StoredSettingsFile:
+  type BackupFile = BackupFile.T
+  object BackupFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Summary = Summary.T
+  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetExisted = TargetExisted.T
+  object TargetExisted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Shown = Shown.T
   object Shown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ReplaceResultPart2 = ReplaceResultPart2.T
-  object ReplaceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceText = ReplaceText.T
-  object ReplaceText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceExisted = ReplaceExisted.T
-  object ReplaceExisted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BackupResultPart2 = BackupResultPart2.T
-  object BackupResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BackupExisted = BackupExisted.T
   object BackupExisted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParsedParsePart1 = ParsedParsePart1.T
-  object ParsedParsePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParsedWhere = ParsedWhere.T
-  object ParsedWhere extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

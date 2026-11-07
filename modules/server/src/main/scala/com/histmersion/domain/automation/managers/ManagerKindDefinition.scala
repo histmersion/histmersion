@@ -27,7 +27,7 @@ trait ManagerKindDefinition:
   def items: List[com.histmersion.domain.automation.managers.ManagerKindDefinition.ItemsResult] = Managers.itemKinds(kind)
 
   /** The cron a new manager of this kind gets when a person names none (UTC); `None`: no cron. */
-  def cron: Option[com.histmersion.domain.automation.managers.ManagerKindDefinition.CronResult] = None
+  def cron: Option[com.histmersion.domain.automation.managers.ManagerLight.Cron] = None
 
   /** A manager's settings when it saves none: the server's defaults for its kind. */
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig
@@ -38,7 +38,7 @@ trait ManagerKindDefinition:
   def settings(c: ManagerConfig, m: ManagerDefaults): ReviewSettings = ReviewSettings.forKind(io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Manager.Kind, com.histmersion.domain.automation.Manager.Kind].transform(kind), c, m)
 
   /** The pipeline an item of `itemKind` runs. */
-  def pipelineOf(itemKind: com.histmersion.domain.automation.managers.ManagerKindDefinition.PipelineOfItemKind): Pipeline
+  def pipelineOf(itemKind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind): Pipeline
 
   /** What a firing of a manager's cron re-opens, one phrase each (the cron event lists them). */
   def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.automation.managers.ManagerKindDefinition.FireResult]
@@ -68,14 +68,14 @@ trait ManagerKindDefinition:
   ): Unit = c.evaluateStep(m, s, item, st, error, now, out, this)
 
   /** What a DONE run of one of its items left. */
-  def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.managers.ManagerKindDefinition.FactsRun): StepFacts
+  def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts
 
   /** What follows one of its items once it is done. */
   def afterDone(
       c: ManagerContext,
       m: ManagerInfo,
       item: ManagerItem,
-      run: Option[com.histmersion.domain.automation.managers.ManagerKindDefinition.AfterDoneRun],
+      run: Option[com.histmersion.domain.automation.Run.Id],
       out: Builder[com.histmersion.domain.automation.managers.ManagerKindDefinition.AfterDoneOutPart1, List[com.histmersion.domain.automation.managers.ManagerKindDefinition.AfterDoneOutPart2]]
   ): Unit = ()
 
@@ -99,10 +99,10 @@ trait ManagerKindDefinition:
   /** The target an item of `itemKind` names when a person adds one to manager `m` (an article's slug, a source's
     * citekey, the manager's goal), checked; or why it cannot be added.
     */
-  def target(m: ManagerInfo, itemKind: com.histmersion.domain.automation.managers.ManagerKindDefinition.TargetItemKind, raw: com.histmersion.domain.automation.managers.ManagerKindDefinition.TargetRaw): Either[Api.Error, com.histmersion.domain.automation.managers.ManagerKindDefinition.TargetResultPart2]
+  def target(m: ManagerInfo, itemKind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind, raw: com.histmersion.domain.automation.managers.ManagerKindDefinition.TargetRaw): Either[Api.Error, com.histmersion.domain.automation.managers.ManagerKindDefinition.TargetResultPart2]
 
   /** A person added (or brought back) an item: what goes with it (the review kind: an infer-filter item first). */
-  def added(c: ManagerContext, m: ManagerInfo, itemKind: com.histmersion.domain.automation.managers.ManagerKindDefinition.AddedItemKind, target: com.histmersion.domain.automation.managers.ManagerKindDefinition.AddedTarget, priority: com.histmersion.domain.automation.managers.ManagerKindDefinition.AddedPriority): Unit = ()
+  def added(c: ManagerContext, m: ManagerInfo, itemKind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind, target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget, priority: com.histmersion.domain.automation.managers.ManagerContext.Priority): Unit = ()
 
   /** What a person's enqueue of this kind names: the targets to add and, for the others named, why they are skipped. */
   def expand(c: ManagerContext, raw: com.histmersion.domain.automation.managers.ManagerKindDefinition.ExpandRaw): Either[Api.Error, (List[com.histmersion.domain.automation.managers.ManagerKindDefinition.ExpandResultPart2Part1], List[com.histmersion.domain.automation.managers.ManagerKindDefinition.ExpandResultPart2Part2])] = Right((List(raw), Nil))
@@ -127,15 +127,11 @@ trait ManagerKindDefinition:
   ): Option[AutopilotPolicy.Verdict] = None
 
   /** Whether a job of this kind's domain is in flight that a drain waits for. */
-  def busy: com.histmersion.domain.automation.managers.ManagerKindDefinition.BusyResult = false
+  def busy: Boolean = false
 
 object ManagerKindDefinition:
   type ItemsResult = ItemsResult.T
   object ItemsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CronResult = CronResult.T
-  object CronResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PipelineOfItemKind = PipelineOfItemKind.T
-  object PipelineOfItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FireResult = FireResult.T
   object FireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefillForce = RefillForce.T
@@ -150,10 +146,6 @@ object ManagerKindDefinition:
   object EvaluateOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EvaluateOutPart2 = EvaluateOutPart2.T
   object EvaluateOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FactsRun = FactsRun.T
-  object FactsRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AfterDoneRun = AfterDoneRun.T
-  object AfterDoneRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AfterDoneOutPart1 = AfterDoneOutPart1.T
   object AfterDoneOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AfterDoneOutPart2 = AfterDoneOutPart2.T
@@ -170,16 +162,8 @@ object ManagerKindDefinition:
   object HouseworkResultPart2Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TargetResultPart2 = TargetResultPart2.T
   object TargetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetItemKind = TargetItemKind.T
-  object TargetItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TargetRaw = TargetRaw.T
   object TargetRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddedItemKind = AddedItemKind.T
-  object AddedItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddedTarget = AddedTarget.T
-  object AddedTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddedPriority = AddedPriority.T
-  object AddedPriority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ExpandResultPart2Part1 = ExpandResultPart2Part1.T
   object ExpandResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ExpandResultPart2Part2 = ExpandResultPart2Part2.T
@@ -194,5 +178,3 @@ object ManagerKindDefinition:
   object BacklogResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IngestedTodayResult = IngestedTodayResult.T
   object IngestedTodayResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BusyResult = BusyResult.T
-  object BusyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

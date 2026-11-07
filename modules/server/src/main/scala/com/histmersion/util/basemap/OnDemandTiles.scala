@@ -37,7 +37,7 @@ final class OnDemandTiles(
     transform: Array[Byte] => Either[OnDemandTiles.TransformResultPart1, Option[Array[Byte]]] = b => Right(Some(b))
 )(using clock: java.time.Clock):
 
-  private def url(): com.histmersion.util.basemap.OnDemandTiles.UrlResult = source match
+  private def url(): com.histmersion.util.basemap.BasemapFetch.Source.Url = source match
     case OnDemandTiles.Source.Planet(u)   => u()
     case OnDemandTiles.Source.Template(u) => u()
 
@@ -74,13 +74,13 @@ final class OnDemandTiles(
     )
 
   /** Whether `z` is one this serves (deeper than the extract's `extractMax`, to the configured depth). */
-  def serves(z: com.histmersion.util.basemap.OnDemandTiles.ServesZ, extractMax: com.histmersion.util.basemap.OnDemandTiles.ServesExtractMax): com.histmersion.util.basemap.OnDemandTiles.ServesResult = cfg().enabled && z > extractMax && z <= cfg().maxZoom
+  def serves(z: com.histmersion.util.basemap.OnDemandTiles.Zoom, extractMax: com.histmersion.util.basemap.BasemapFetch.Plan.MaxZoom): Boolean = cfg().enabled && z > extractMax && z <= cfg().maxZoom
 
   /** Whether it serves tile `z` at all (on, and not deeper than its configured depth) — outside the extract. */
-  def servesAt(z: com.histmersion.util.basemap.OnDemandTiles.ServesAtZ): com.histmersion.util.basemap.OnDemandTiles.ServesAtResult = cfg().enabled && z >= 0 && z <= cfg().maxZoom
+  def servesAt(z: com.histmersion.util.basemap.OnDemandTiles.Zoom): Boolean = cfg().enabled && z >= 0 && z <= cfg().maxZoom
 
   /** One request to the provider: within the concurrency and the rate. */
-  private def request[A](f: => Either[String, A]): Either[com.histmersion.util.basemap.OnDemandTiles.RequestResultPart1, A] =
+  private def request[A](f: => Either[String, A]): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, A] =
     if !gate.tryAcquire(60, TimeUnit.SECONDS) then Left("too many tile requests waiting")
     else
       try
@@ -101,7 +101,7 @@ final class OnDemandTiles(
   )
 
   /** The planet's description: in memory, else from `remote/` (when it names the same URL), else read. */
-  private def described(): Either[com.histmersion.util.basemap.OnDemandTiles.DescribedResultPart1, Remote] =
+  private def described(): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Remote] =
     val u = url()
     remote
       .filter(_.url == u)
@@ -122,7 +122,7 @@ final class OnDemandTiles(
             }
             .toOption
             .filter(_._1 == u)
-          val head: Either[com.histmersion.util.basemap.OnDemandTiles.DescribedHeadPart1, (com.histmersion.util.basemap.OnDemandTiles.DescribedHeadPart2Part1, RemoteFile)] = fromDisk match
+          val head: Either[com.histmersion.util.basemap.OnDemandTiles.Problem, (com.histmersion.util.basemap.OnDemandTiles.HeaderBytes, RemoteFile)] = fromDisk match
             case Some((_, size, etag, h)) => Right((h, RemoteFile(size, etag)))
             case None                     =>
               val _ = remoteFiles.deleteTree(Store.Key.Root)
@@ -155,7 +155,7 @@ final class OnDemandTiles(
     val _ = remoteFiles.deleteTree(Store.Key.Root)
   }
 
-  private def leaf(r: Remote, e: PmTiles.Entry): Either[com.histmersion.util.basemap.OnDemandTiles.LeafResultPart1, Vector[PmTiles.Entry]] =
+  private def leaf(r: Remote, e: PmTiles.Entry): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Vector[PmTiles.Entry]] =
     Option(leaves.get(e.offset)).map(Right(_)).getOrElse {
       val f = Store.Key.applyUnsafe(s"leaf-${e.offset}-${e.length}.bin")
       val raw = remoteFiles.get(f).filter(_.size.value == e.length) match
@@ -175,9 +175,9 @@ final class OnDemandTiles(
     }
 
   /** The planet's entry for a tile, through its leaf directories. */
-  private def entry(r: Remote, z: com.histmersion.util.basemap.OnDemandTiles.EntryZ, x: com.histmersion.util.basemap.OnDemandTiles.EntryX, y: com.histmersion.util.basemap.OnDemandTiles.EntryY): Either[com.histmersion.util.basemap.OnDemandTiles.EntryResultPart1, Option[PmTiles.Entry]] =
+  private def entry(r: Remote, z: com.histmersion.util.basemap.OnDemandTiles.Zoom, x: com.histmersion.util.basemap.OnDemandTiles.EntryX, y: com.histmersion.util.basemap.OnDemandTiles.EntryY): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Option[PmTiles.Entry]] =
     val id = PmTiles.tileId(z, x, y)
-    def walk(d: Vector[PmTiles.Entry], depth: com.histmersion.util.basemap.OnDemandTiles.EntryWalkDepth): Either[com.histmersion.util.basemap.OnDemandTiles.EntryWalkResultPart1, Option[PmTiles.Entry]] =
+    def walk(d: Vector[PmTiles.Entry], depth: com.histmersion.util.basemap.OnDemandTiles.Depth): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Option[PmTiles.Entry]] =
       PmTiles.find(d, id) match
         case None                  => Right(None)
         case Some(e) if !e.isLeaf  => Right(Some(e))
@@ -185,15 +185,15 @@ final class OnDemandTiles(
         case Some(e)               => leaf(r, e).flatMap(walk(_, depth + 1))
     if z < r.header.minZoom || z > r.header.maxZoom then Right(None) else walk(r.root, 0)
 
-  private def read(z: com.histmersion.util.basemap.OnDemandTiles.ReadZ, x: com.histmersion.util.basemap.OnDemandTiles.ReadX, y: com.histmersion.util.basemap.OnDemandTiles.ReadY): Either[com.histmersion.util.basemap.OnDemandTiles.ReadResultPart1, Option[com.histmersion.util.basemap.OnDemandTiles.ReadResultPart2]] =
+  private def read(z: com.histmersion.util.basemap.OnDemandTiles.Zoom, x: com.histmersion.util.basemap.OnDemandTiles.ReadX, y: com.histmersion.util.basemap.OnDemandTiles.ReadY): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Option[com.histmersion.util.basemap.OnDemandTiles.TileBytes]] =
     val raw = source match
       case OnDemandTiles.Source.Planet(_)   => readPlanet(z, x, y)
       case OnDemandTiles.Source.Template(u) =>
         request(http().file(u().replace("{z}", z.toString).replace("{x}", x.toString).replace("{y}", y.toString)))
     raw.flatMap(_.fold(Right(None))(transform))
 
-  private def readPlanet(z: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetZ, x: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetX, y: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetY): Either[com.histmersion.util.basemap.OnDemandTiles.ReadPlanetResultPart1, Option[com.histmersion.util.basemap.OnDemandTiles.ReadPlanetResultPart2]] =
-    def once(): Either[com.histmersion.util.basemap.OnDemandTiles.ReadPlanetOnceResultPart1, Option[com.histmersion.util.basemap.OnDemandTiles.ReadPlanetOnceResultPart2]] =
+  private def readPlanet(z: com.histmersion.util.basemap.OnDemandTiles.Zoom, x: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetX, y: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetY): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Option[com.histmersion.util.basemap.OnDemandTiles.TileBytes]] =
+    def once(): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Option[com.histmersion.util.basemap.OnDemandTiles.TileBytes]] =
       for
         r <- described()
         e <- entry(r, z, x, y)
@@ -210,7 +210,7 @@ final class OnDemandTiles(
   /** The tile `z/x/y`: from the cache, else from the provider (then cached). `Right(None)`: there is none (outside the
     * configured zooms, or the provider has none); `Left`: it could not be read now.
     */
-  def tile(z: com.histmersion.util.basemap.OnDemandTiles.TileZ, x: com.histmersion.util.basemap.OnDemandTiles.TileX, y: com.histmersion.util.basemap.OnDemandTiles.TileY): Either[com.histmersion.util.basemap.OnDemandTiles.TileResultPart1, Option[com.histmersion.util.basemap.OnDemandTiles.TileResultPart2]] =
+  def tile(z: com.histmersion.util.basemap.OnDemandTiles.Zoom, x: com.histmersion.util.basemap.OnDemandTiles.TileX, y: com.histmersion.util.basemap.OnDemandTiles.TileY): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Option[com.histmersion.util.basemap.OnDemandTiles.TileBytes]] =
     val c = cfg()
     if !c.enabled || z > c.maxZoom || x < 0 || y < 0 || x >= (1L << z) || y >= (1L << z) then Right(None)
     else
@@ -245,81 +245,43 @@ final class OnDemandTiles(
               finally { val _ = inflight.remove(key, mine) }
 
 object OnDemandTiles:
-  type DescribedHeadPart1 = DescribedHeadPart1.T
-  object DescribedHeadPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribedHeadPart2Part1 = DescribedHeadPart2Part1.T
-  object DescribedHeadPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EntryWalkResultPart1 = EntryWalkResultPart1.T
-  object EntryWalkResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EntryWalkDepth = EntryWalkDepth.T
-  object EntryWalkDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadPlanetOnceResultPart1 = ReadPlanetOnceResultPart1.T
-  object ReadPlanetOnceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadPlanetOnceResultPart2 = ReadPlanetOnceResultPart2.T
-  object ReadPlanetOnceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Depth = Depth.T
+  object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeaderBytes = HeaderBytes.T
+  object HeaderBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Instant = Instant.T
+  object Instant extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileBytes = TileBytes.T
+  object TileBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UrlTemplate = UrlTemplate.T
+  object UrlTemplate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Zoom = Zoom.T
+  object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ReadResultPart2 = ReadResultPart2.T
-  object ReadResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadPlanetResultPart2 = ReadPlanetResultPart2.T
-  object ReadPlanetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileResultPart2 = TileResultPart2.T
-  object TileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type NowResult = NowResult.T
-  object NowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SleepArg1 = SleepArg1.T
-  object SleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NowResult = com.histmersion.util.basemap.OnDemandTiles.Instant
+  val NowResult: _root_.com.histmersion.util.basemap.OnDemandTiles.Instant.type = _root_.com.histmersion.util.basemap.OnDemandTiles.Instant
+  type SleepArg1 = com.histmersion.util.basemap.BasemapFetch.Pace.GapMs
+  val SleepArg1: _root_.com.histmersion.util.basemap.BasemapFetch.Pace.GapMs.type = _root_.com.histmersion.util.basemap.BasemapFetch.Pace.GapMs
   type Ext = Ext.T
   object Ext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TransformResultPart1 = TransformResultPart1.T
-  object TransformResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TransformResultPart1 = com.histmersion.util.basemap.OnDemandTiles.Problem
+  val TransformResultPart1: _root_.com.histmersion.util.basemap.OnDemandTiles.Problem.type = _root_.com.histmersion.util.basemap.OnDemandTiles.Problem
 
-  type UrlResult = UrlResult.T
-  object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServesResult = ServesResult.T
-  object ServesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServesZ = ServesZ.T
-  object ServesZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServesExtractMax = ServesExtractMax.T
-  object ServesExtractMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServesAtResult = ServesAtResult.T
-  object ServesAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServesAtZ = ServesAtZ.T
-  object ServesAtZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RequestResultPart1 = RequestResultPart1.T
-  object RequestResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribedResultPart1 = DescribedResultPart1.T
-  object DescribedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LeafResultPart1 = LeafResultPart1.T
-  object LeafResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EntryResultPart1 = EntryResultPart1.T
-  object EntryResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EntryZ = EntryZ.T
-  object EntryZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EntryX = EntryX.T
   object EntryX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EntryY = EntryY.T
   object EntryY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadResultPart1 = ReadResultPart1.T
-  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadZ = ReadZ.T
-  object ReadZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadX = ReadX.T
   object ReadX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadY = ReadY.T
   object ReadY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadPlanetResultPart1 = ReadPlanetResultPart1.T
-  object ReadPlanetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadPlanetZ = ReadPlanetZ.T
-  object ReadPlanetZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadPlanetX = ReadPlanetX.T
   object ReadPlanetX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadPlanetY = ReadPlanetY.T
   object ReadPlanetY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileResultPart1 = TileResultPart1.T
-  object TileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileZ = TileZ.T
-  object TileZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TileX = TileX.T
   object TileX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TileY = TileY.T
@@ -342,8 +304,8 @@ object OnDemandTiles:
 
   object Source:
     object Planet:
-      type UrlResult = UrlResult.T
-      object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type UrlResult = com.histmersion.util.basemap.BasemapFetch.Source.Url
+      val UrlResult: _root_.com.histmersion.util.basemap.BasemapFetch.Source.Url.type = _root_.com.histmersion.util.basemap.BasemapFetch.Source.Url
     object Template:
-      type UrlResult = UrlResult.T
-      object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type UrlResult = com.histmersion.util.basemap.OnDemandTiles.UrlTemplate
+      val UrlResult: _root_.com.histmersion.util.basemap.OnDemandTiles.UrlTemplate.type = _root_.com.histmersion.util.basemap.OnDemandTiles.UrlTemplate

@@ -51,7 +51,7 @@ final class EventImports(
     PluginEvents.limits(registered().get(provider), present)
 
   /** A catalogue's terms: a registered one's, else a built-in's (its records outlive its plugin). */
-  def infoOf(provider: com.histmersion.domain.catalogue.events.EventImports.InfoOfProvider): Option[CatalogProviderInfo] = BuiltinCatalogues.info(provider, registered())
+  def infoOf(provider: com.histmersion.domain.catalogue.events.CatalogueRefRow.Provider): Option[CatalogProviderInfo] = BuiltinCatalogues.info(provider, registered())
 
   def catalogues: List[CatalogProviderInfo] = BuiltinCatalogues.infos(registered())
 
@@ -73,7 +73,7 @@ final class EventImports(
     * run) write the part and record it as read.
     */
   def runImport(
-      provider: com.histmersion.domain.catalogue.events.EventImports.RunImportProvider,
+      provider: com.histmersion.domain.catalogue.events.CatalogueRefRow.Provider,
       req: EventImportRequest,
       area: Option[BBox],
       progress: com.histmersion.domain.catalogue.events.EventImports.RunImportProgressArg1 => Unit
@@ -205,7 +205,7 @@ final class EventImports(
       val c = client(PluginEvents.safe(cat.requestIntervalMs).getOrElse(1000))
       val h = PluginEvents.http(c)
       val q = PluginEvents.query(from, to, area)
-      val read: com.histmersion.domain.catalogue.events.EventImports.RunImportRunReadArg1 => com.histmersion.domain.catalogue.events.EventImports.RunImportRunReadResult =
+      val read: com.histmersion.domain.catalogue.events.EventImports.RunImportRunReadArg1 => Boolean =
         if PluginEvents.safe(cat.everyPartEachImport).contains(true) then _ => false else done
       PluginEvents.guard(Right(cat.parts(q))) match
         case Left(why)    => report = report.modify(_.failed).using(_ :+ s"parts: $why")
@@ -250,7 +250,7 @@ final class EventImports(
     * `rederive-batch` records a transaction.
     */
   def runRederive(
-      provider: Option[com.histmersion.domain.catalogue.events.EventImports.RunRederiveProvider],
+      provider: Option[com.histmersion.domain.catalogue.events.CatalogueRefRow.Provider],
       dryRun: com.histmersion.domain.catalogue.events.EventImports.RunRederiveDryRun,
       progress: com.histmersion.domain.catalogue.events.EventImports.RunRederiveProgressArg1 => Unit
   ): EventRederiveReport =
@@ -339,8 +339,6 @@ object EventImports:
   object RunImportHandlePart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunImportRunReadArg1 = RunImportRunReadArg1.T
   object RunImportRunReadArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunImportRunReadResult = RunImportRunReadResult.T
-  object RunImportRunReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type RegisteredResultKey = RegisteredResultKey.T
   object RegisteredResultKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -357,8 +355,6 @@ object EventImports:
   object LimitsOfProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LimitsOfPresent = LimitsOfPresent.T
   object LimitsOfPresent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InfoOfProvider = InfoOfProvider.T
-  object InfoOfProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveResultPart1 = ResolveResultPart1.T
   object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveResultPart2 = ResolveResultPart2.T
@@ -371,12 +367,8 @@ object EventImports:
   object ResolveStoredResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveStoredAsked = ResolveStoredAsked.T
   object ResolveStoredAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunImportProvider = RunImportProvider.T
-  object RunImportProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunImportProgressArg1 = RunImportProgressArg1.T
   object RunImportProgressArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunRederiveProvider = RunRederiveProvider.T
-  object RunRederiveProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunRederiveDryRun = RunRederiveDryRun.T
   object RunRederiveDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunRederiveProgressArg1 = RunRederiveProgressArg1.T

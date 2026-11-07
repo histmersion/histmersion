@@ -32,17 +32,9 @@ final case class AutomationState(
 )
 
 object AutomationState:
-  type InsertApprovalMade = InsertApprovalMade.T
-  object InsertApprovalMade extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Timestamp = Timestamp.T
+  object Timestamp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type InsertApprovalResult = InsertApprovalResult.T
-  object InsertApprovalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InsertApprovalConflictsResult = InsertApprovalConflictsResult.T
-  object InsertApprovalConflictsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InsertApprovalMakeArg1 = InsertApprovalMakeArg1.T
-  object InsertApprovalMakeArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextResult = TextResult.T
-  object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type GoalsKey = GoalsKey.T
   object GoalsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -63,8 +55,8 @@ object AutomationState:
 
   import hearth.kindlings.optics.syntax.*
 
-  def insertApproval(state: java.util.concurrent.atomic.AtomicReference[AutomationState])(conflicts: ApprovalRecord => com.histmersion.domain.automation.AutomationState.InsertApprovalConflictsResult)(make: com.histmersion.domain.automation.AutomationState.InsertApprovalMakeArg1 => ApprovalRecord): Option[com.histmersion.domain.automation.AutomationState.InsertApprovalResult] =
-    var made: Option[com.histmersion.domain.automation.AutomationState.InsertApprovalMade] = None
+  def insertApproval(state: java.util.concurrent.atomic.AtomicReference[AutomationState])(conflicts: ApprovalRecord => Boolean)(make: com.histmersion.domain.automation.Approval.Id => ApprovalRecord): Option[com.histmersion.domain.automation.Approval.Id] =
+    var made: Option[com.histmersion.domain.automation.Approval.Id] = None
     val _ = state.updateAndGet { s =>
       if s.approvals.exists(conflicts) then { made = None; s }
       else
@@ -93,4 +85,4 @@ object AutomationState:
     )
 
   /** An instant as the repositories read one back (`to_char` to the second, UTC). */
-  def text(at: Instant): com.histmersion.domain.automation.AutomationState.TextResult = at.truncatedTo(ChronoUnit.SECONDS).toString
+  def text(at: Instant): com.histmersion.domain.automation.AutomationState.Timestamp = at.truncatedTo(ChronoUnit.SECONDS).toString

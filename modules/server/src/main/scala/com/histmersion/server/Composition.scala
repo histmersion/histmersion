@@ -32,23 +32,19 @@ import com.histmersion.server.hot.Pin
   * builds a server with [[server]].
   */
 object Composition:
+  type Host = Host.T
+  object Host extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Port = Port.T
+  object Port extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Build a configured (not yet started) server. `port = 0` → ephemeral port (tests use
     * `supervised { server(...).start() }`; `main` binds it in its own scope). Its components — the pools above all —
     * belong to the enclosing Ox scope and close with it.
     */
-  type CollectionsControllersSourceCitekey = CollectionsControllersSourceCitekey.T
-  object CollectionsControllersSourceCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CollectionsControllersCreateCitekey = CollectionsControllersCreateCitekey.T
-  object CollectionsControllersCreateCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CollectionsControllersPatchCitekey = CollectionsControllersPatchCitekey.T
-  object CollectionsControllersPatchCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CollectionsControllersPushMetaCitekey = CollectionsControllersPushMetaCitekey.T
-  object CollectionsControllersPushMetaCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CollectionsControllersGapsLimit = CollectionsControllersGapsLimit.T
   object CollectionsControllersGapsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CollectionsControllersOriginalCitekey = CollectionsControllersOriginalCitekey.T
-  object CollectionsControllersOriginalCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CollectionsControllersQueueItemId = CollectionsControllersQueueItemId.T
   object CollectionsControllersQueueItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CollectionsControllersIngestBytes = CollectionsControllersIngestBytes.T
@@ -56,24 +52,12 @@ object Composition:
   type CollectionsControllersPutCoverBytes = CollectionsControllersPutCoverBytes.T
   object CollectionsControllersPutCoverBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ServerHost = ServerHost.T
-  object ServerHost extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerPort = ServerPort.T
-  object ServerPort extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ServerAutoInit = ServerAutoInit.T
   object ServerAutoInit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildHost = BuildHost.T
-  object BuildHost extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildPort = BuildPort.T
-  object BuildPort extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BuildAutoInit = BuildAutoInit.T
   object BuildAutoInit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LeasesResultPart1 = LeasesResultPart1.T
-  object LeasesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LeasesResultPart2 = LeasesResultPart2.T
-  object LeasesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def server(cfg: AppConfig, host: com.histmersion.server.Composition.ServerHost, port: com.histmersion.server.Composition.ServerPort)(using Ox): NettySyncServer =
+  def server(cfg: AppConfig, host: com.histmersion.server.Composition.Host, port: com.histmersion.server.Composition.Port)(using Ox): NettySyncServer =
     build(HotConfig.fixed(cfg), None, host, port, None)
 
   /** Same, with an explicit OCR sidecar client — the seam an HTTP test uses to ingest a document through a fake
@@ -82,8 +66,8 @@ object Composition:
     */
   def server(
       cfg: AppConfig,
-      host: com.histmersion.server.Composition.ServerHost,
-      port: com.histmersion.server.Composition.ServerPort,
+      host: com.histmersion.server.Composition.Host,
+      port: com.histmersion.server.Composition.Port,
       converter: ConverterClient,
       autoInit: com.histmersion.server.Composition.ServerAutoInit = false,
       onWiring: ServerWiring => Unit = _ => (),
@@ -139,8 +123,8 @@ object Composition:
   private[server] def build(
       hc: HotConfig,
       source: Option[ConfigSource],
-      host: com.histmersion.server.Composition.BuildHost,
-      port: com.histmersion.server.Composition.BuildPort,
+      host: com.histmersion.server.Composition.Host,
+      port: com.histmersion.server.Composition.Port,
       converter: Option[ConverterClient],
       autoInit: com.histmersion.server.Composition.BuildAutoInit = false,
       onWiring: ServerWiring => Unit = _ => (),
@@ -238,7 +222,7 @@ object Composition:
     * (and released on the old one when its generation closes); once published, the new database's interrupted jobs are
     * failed and its runs reconciled, as a start does.
     */
-  private def leases(sg: ServerGraph, h: ServerWiring): Either[com.histmersion.server.Composition.LeasesResultPart1, Hot[com.histmersion.server.Composition.LeasesResultPart2]] =
+  private def leases(sg: ServerGraph, h: ServerWiring): Either[com.histmersion.server.Composition.Problem, Hot[Boolean]] =
     val lease = h.agents.lease
     sg.graph.node[Boolean](
       ServerGraph.Leases,
@@ -286,13 +270,13 @@ object Composition:
     import com.histmersion.api.*
     import com.histmersion.domain.library.collections.*
     val library = new CollectionLibrary:
-      def source(citekey: com.histmersion.server.Composition.CollectionsControllersSourceCitekey) = h.library.sources.get(citekey, body = false)
-      def create(citekey: com.histmersion.server.Composition.CollectionsControllersCreateCitekey, put: Source.Put) = h.library.sources.put(citekey, put)
-      def patch(citekey: com.histmersion.server.Composition.CollectionsControllersPatchCitekey, patch: Source.Patch) = h.library.sources.patch(citekey, patch)
-      def pushMeta(citekey: com.histmersion.server.Composition.CollectionsControllersPushMetaCitekey) = h.calibreGaps.pushMeta(citekey)
+      def source(citekey: com.histmersion.domain.library.Citekey) = h.library.sources.get(citekey, body = false)
+      def create(citekey: com.histmersion.domain.library.Citekey, put: Source.Put) = h.library.sources.put(citekey, put)
+      def patch(citekey: com.histmersion.domain.library.Citekey, patch: Source.Patch) = h.library.sources.patch(citekey, patch)
+      def pushMeta(citekey: com.histmersion.domain.library.Citekey) = h.calibreGaps.pushMeta(citekey)
       def pushed(req: CalibrePushRequest) = h.calibreGaps.pushed(req)
       def gaps(limit: Option[com.histmersion.server.Composition.CollectionsControllersGapsLimit]) = h.calibreGaps.gaps(limit)
-      def original(citekey: com.histmersion.server.Composition.CollectionsControllersOriginalCitekey) =
+      def original(citekey: com.histmersion.domain.library.Citekey) =
         h.ingest.controllers.original(citekey).flatMap { (file, disposition) =>
           scala.util
             .Try(file.bytes())

@@ -6,17 +6,15 @@ import com.histmersion.api.Api
 
 /** Settings as the wire shows them ([[SettingShown]]: a credential's value never crosses). */
 object SettingsViews:
+  type Restartable = Restartable.T
+  object Restartable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SectionId = SectionId.T
+  object SectionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SectionText = SectionText.T
+  object SectionText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type PageRestartable = PageRestartable.T
-  object PageRestartable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SectionDocResult = SectionDocResult.T
-  object SectionDocResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SectionDocId = SectionDocId.T
-  object SectionDocId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WrittenRestartable = WrittenRestartable.T
-  object WrittenRestartable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def page(s: SettingsSnapshot, restartable: com.histmersion.util.settings.SettingsViews.PageRestartable): ConfigEdit.Page =
+  def page(s: SettingsSnapshot, restartable: com.histmersion.util.settings.SettingsViews.Restartable): ConfigEdit.Page =
     val fields = s.readings.map(field)
     val sections = fields
       .map(_.section)
@@ -24,7 +22,7 @@ object SettingsViews:
       .map(id => ConfigEdit.Section(id, doc = sectionDoc(id), fields.filter(_.section == id)))
     ConfigEdit.Page(s.file, s.exists, s.version.value, sections, s.problems, restartable, s.setupDue)
 
-  private def sectionDoc(id: com.histmersion.util.settings.SettingsViews.SectionDocId): com.histmersion.util.settings.SettingsViews.SectionDocResult =
+  private def sectionDoc(id: com.histmersion.util.settings.SettingsViews.SectionId): com.histmersion.util.settings.SettingsViews.SectionText =
     SettingKey.either(s"${SettingKey.Root}.$id").toOption.fold("")(ConfigSchema.reference.blockDoc)
 
   def field(r: SettingReading): ConfigEdit.Field =
@@ -49,7 +47,7 @@ object SettingsViews:
   def written(
       o: WriteOutcome,
       reload: Option[com.histmersion.api.settings.ReloadReport],
-      restartable: com.histmersion.util.settings.SettingsViews.WrittenRestartable
+      restartable: com.histmersion.util.settings.SettingsViews.Restartable
   ): ConfigEdit.Written =
     ConfigEdit.Written(
       o.file,

@@ -1,0 +1,610 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.media.Asset.LinkTarget.Wire (String)
+com.histmersion.domain.media.Asset.Uid (UUID)
+com.histmersion.domain.media.MediaRole.Wire (String)
+com.histmersion.domain.media.assets.AssetBundleRow.Caption (String)
+com.histmersion.domain.media.assets.AssetBundleRow.Geom (String)
+com.histmersion.domain.media.assets.AssetBundleRow.Height (Int)
+com.histmersion.domain.media.assets.AssetBundleRow.Kind (String)
+com.histmersion.domain.media.assets.AssetBundleRow.License (String)
+com.histmersion.domain.media.assets.AssetBundleRow.Mime (String)
+com.histmersion.domain.media.assets.AssetBundleRow.Name (String)
+com.histmersion.domain.media.assets.AssetBundleRow.PNull (Boolean)
+com.histmersion.domain.media.assets.AssetBundleRow.UpdatedAt (String)
+com.histmersion.domain.media.assets.AssetBundleRow.Width (Int)
+com.histmersion.domain.media.assets.AssetBytesRow.Bytes (Array[Byte])
+com.histmersion.domain.media.assets.AssetBytesRow.Mime (String)
+com.histmersion.domain.media.assets.AssetDetailRow.Bytes (Int)
+com.histmersion.domain.media.assets.AssetDetailRow.Caption (String)
+com.histmersion.domain.media.assets.AssetDetailRow.Height (Int)
+com.histmersion.domain.media.assets.AssetDetailRow.Kind (String)
+com.histmersion.domain.media.assets.AssetDetailRow.License (String)
+com.histmersion.domain.media.assets.AssetDetailRow.Mime (String)
+com.histmersion.domain.media.assets.AssetDetailRow.Name (String)
+com.histmersion.domain.media.assets.AssetDetailRow.Width (Int)
+com.histmersion.domain.media.assets.AssetInfoRow.Bytes (Int)
+com.histmersion.domain.media.assets.AssetInfoRow.Height (Int)
+com.histmersion.domain.media.assets.AssetInfoRow.Mime (String)
+com.histmersion.domain.media.assets.AssetInfoRow.Name (String)
+com.histmersion.domain.media.assets.AssetInfoRow.Width (Int)
+com.histmersion.domain.media.assets.Known.License (String)
+com.histmersion.domain.media.assets.Known.Uid (String)
+com.histmersion.domain.media.assets.MediaGeoRow.Author (String)
+com.histmersion.domain.media.assets.MediaGeoRow.Caption (String)
+com.histmersion.domain.media.assets.MediaGeoRow.Credit (String)
+com.histmersion.domain.media.assets.MediaGeoRow.HasThumb (Boolean)
+com.histmersion.domain.media.assets.MediaGeoRow.Kind (String)
+com.histmersion.domain.media.assets.MediaGeoRow.License (String)
+com.histmersion.domain.media.assets.MediaGeoRow.LicenseUrl (String)
+com.histmersion.domain.media.assets.MediaGeoRow.Name (String)
+com.histmersion.domain.media.assets.MediaGeoRow.Provider (String)
+com.histmersion.domain.media.assets.MediaGeoRow.SourceUrl (String)
+com.histmersion.domain.media.assets.MediaGeoRow.Uid (String)
+com.histmersion.domain.media.assets.MediaItemRow.Author (String)
+com.histmersion.domain.media.assets.MediaItemRow.Bytes (Int)
+com.histmersion.domain.media.assets.MediaItemRow.Caption (String)
+com.histmersion.domain.media.assets.MediaItemRow.Credit (String)
+com.histmersion.domain.media.assets.MediaItemRow.HasThumb (Boolean)
+com.histmersion.domain.media.assets.MediaItemRow.Height (Int)
+com.histmersion.domain.media.assets.MediaItemRow.Kind (String)
+com.histmersion.domain.media.assets.MediaItemRow.License (String)
+com.histmersion.domain.media.assets.MediaItemRow.LicenseUrl (String)
+com.histmersion.domain.media.assets.MediaItemRow.Mime (String)
+com.histmersion.domain.media.assets.MediaItemRow.Name (String)
+com.histmersion.domain.media.assets.MediaItemRow.OriginalUrl (String)
+com.histmersion.domain.media.assets.MediaItemRow.Provider (String)
+com.histmersion.domain.media.assets.MediaItemRow.ProviderKey (String)
+com.histmersion.domain.media.assets.MediaItemRow.RetrievedAt (String)
+com.histmersion.domain.media.assets.MediaItemRow.SourceUrl (String)
+com.histmersion.domain.media.assets.MediaItemRow.Uid (String)
+com.histmersion.domain.media.assets.MediaItemRow.Width (Int)
+com.histmersion.domain.media.assets.MediaThumbRow.Credit (String)
+com.histmersion.domain.media.assets.MediaThumbRow.Height (Int)
+com.histmersion.domain.media.assets.MediaThumbRow.License (String)
+com.histmersion.domain.media.assets.MediaThumbRow.LicenseUrl (String)
+com.histmersion.domain.media.assets.MediaThumbRow.Role (String)
+com.histmersion.domain.media.assets.MediaThumbRow.SourceUrl (String)
+com.histmersion.domain.media.assets.MediaThumbRow.Uid (String)
+com.histmersion.domain.media.assets.MediaThumbRow.Width (Int)
+com.histmersion.domain.media.assets.NewFigure.Bytes (Array[Byte])
+com.histmersion.domain.media.assets.NewFigure.Height (Int)
+com.histmersion.domain.media.assets.NewFigure.Mime (String)
+com.histmersion.domain.media.assets.NewFigure.Name (String)
+com.histmersion.domain.media.assets.NewFigure.Problem (String)
+com.histmersion.domain.media.assets.NewFigure.Width (Int)
+com.histmersion.domain.media.assets.PictureTarget.Wire (String)
+com.histmersion.domain.media.assets.ProviderAsset.Author (String)
+com.histmersion.domain.media.assets.ProviderAsset.Bytes (Array[Byte])
+com.histmersion.domain.media.assets.ProviderAsset.Credit (String)
+com.histmersion.domain.media.assets.ProviderAsset.Height (Int)
+com.histmersion.domain.media.assets.ProviderAsset.Key (String)
+com.histmersion.domain.media.assets.ProviderAsset.Kind (String)
+com.histmersion.domain.media.assets.ProviderAsset.License (String)
+com.histmersion.domain.media.assets.ProviderAsset.LicenseUrl (String)
+com.histmersion.domain.media.assets.ProviderAsset.Mime (String)
+com.histmersion.domain.media.assets.ProviderAsset.Name (String)
+com.histmersion.domain.media.assets.ProviderAsset.OriginalUrl (String)
+com.histmersion.domain.media.assets.ProviderAsset.Provider (String)
+com.histmersion.domain.media.assets.ProviderAsset.SourceUrl (String)
+com.histmersion.domain.media.assets.ProviderAsset.Thumb (Array[Byte])
+com.histmersion.domain.media.assets.ProviderAsset.ThumbHeight (Int)
+com.histmersion.domain.media.assets.ProviderAsset.ThumbMime (String)
+com.histmersion.domain.media.assets.ProviderAsset.ThumbWidth (Int)
+com.histmersion.domain.media.assets.ProviderAsset.Width (Int)
+com.histmersion.domain.media.assets.Rights.Author (String)
+com.histmersion.domain.media.assets.Rights.Credit (String)
+com.histmersion.domain.media.assets.Rights.License (String)
+com.histmersion.domain.media.assets.Rights.LicenseUrl (String)
+com.histmersion.domain.media.assets.SourceFigure.HasThumb (Boolean)
+com.histmersion.domain.media.assets.SourceFigure.Height (Int)
+com.histmersion.domain.media.assets.SourceFigure.Name (String)
+com.histmersion.domain.media.assets.SourceFigure.Uid (String)
+com.histmersion.domain.media.assets.SourceFigure.Width (Int)
+com.histmersion.domain.media.covers.CoverChoice.Pick.Calibre.Path (String)
+com.histmersion.domain.media.covers.CoverChoice.Pick.OpenLibrary.Id (String)
+com.histmersion.domain.media.covers.CoverChoice.Pick.OpenLibrary.Kind (String)
+com.histmersion.domain.media.covers.CoverKeys.Isbn (String)
+com.histmersion.domain.media.covers.CoverKeys.Oclc (String)
+com.histmersion.domain.media.covers.OpenLibrary.BaseUrl (String)
+com.histmersion.domain.media.covers.OpenLibrary.CoverSize (String)
+com.histmersion.domain.media.covers.OpenLibrary.CoverUrl (String)
+com.histmersion.domain.media.covers.OpenLibrary.Oclc (String)
+com.histmersion.domain.media.covers.OpenLibrary.PageUrl (String)
+com.histmersion.domain.media.figures.FigurePick.ConvertedText (String)
+com.histmersion.domain.media.figures.FigurePick.Figure.FirstAt (Double)
+com.histmersion.domain.media.figures.FigurePick.Figure.Height (Int)
+com.histmersion.domain.media.figures.FigurePick.Figure.Name (String)
+com.histmersion.domain.media.figures.FigurePick.Figure.Refs (Int)
+com.histmersion.domain.media.figures.FigurePick.Figure.Width (Int)
+com.histmersion.domain.media.figures.FigurePick.Order (Int)
+com.histmersion.domain.media.figures.FigurePick.Page (Int)
+com.histmersion.domain.media.figures.FigurePick.Rejection (String)
+com.histmersion.domain.media.figures.FigurePick.Rules.EarlyPages (Int)
+com.histmersion.domain.media.figures.FigurePick.Rules.MaxAspect (Double)
+com.histmersion.domain.media.figures.FigurePick.Rules.MaxRefs (Int)
+com.histmersion.domain.media.figures.FigurePick.Rules.MinArea (Int)
+com.histmersion.domain.media.figures.FigurePick.Rules.MinSide (Int)
+com.histmersion.domain.media.figures.FigurePick.Rules.PageScanMin (Int)
+com.histmersion.domain.media.figures.FigurePick.Score (Double)
+com.histmersion.domain.media.figures.Figures.FileName (String)
+com.histmersion.domain.media.figures.Figures.MdPath (String)
+com.histmersion.domain.media.figures.Figures.NoteText (String)
+com.histmersion.domain.media.imports.MediaMatch.Basis (String)
+com.histmersion.domain.media.imports.MediaMatch.GeographySpecific (Boolean)
+com.histmersion.domain.media.imports.MediaMatch.PeriodText (String)
+com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id (String)
+com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys (String)
+com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label (String)
+com.histmersion.domain.media.imports.MediaMatch.Refusal (String)
+com.histmersion.domain.media.imports.MediaMatch.YearText (String)
+com.histmersion.domain.media.imports.MediaRecord.GeographyPart1 (String)
+com.histmersion.domain.media.imports.MediaRecord.GeographyPart2 (String)
+com.histmersion.domain.media.imports.MediaRecord.ImageUrl (String)
+com.histmersion.domain.media.imports.MediaRecord.Key (String)
+com.histmersion.domain.media.imports.MediaRecord.OriginalUrl (String)
+com.histmersion.domain.media.imports.MediaRecord.PageUrl (String)
+com.histmersion.domain.media.imports.MediaRecord.RightsPart1 (String)
+com.histmersion.domain.media.imports.MediaRecord.Role (String)
+com.histmersion.domain.media.imports.MediaRecord.ThumbUrl (String)
+com.histmersion.domain.media.imports.MediaRecord.Title (String)
+com.histmersion.domain.media.imports.MediaRecord.Withheld (String)
+com.histmersion.domain.media.imports.PlaceFacts.Id (String)
+com.histmersion.domain.media.imports.PlaceFacts.Keys (String)
+com.histmersion.domain.media.imports.PlaceFacts.Label (String)
+com.histmersion.domain.media.imports.Target.Id (String)
+com.histmersion.domain.media.imports.Target.Label (String)
+com.histmersion.domain.media.imports.Target.Qid (String)
+com.histmersion.domain.media.imports.Target.TargetType (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.media.assets.AssetService.AddFiguresResult | base Int | generated | method-result
+    def addFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.AddFiguresResult
+    def addFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.Implementation.AddFiguresResul
+com.histmersion.domain.media.assets.AssetService.DetailName | base String | generated | method-parameter
+    def detail(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.DetailName): Option[AssetDetail]
+    def detail(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.DetailName): Option[AssetDetail] = db.re
+com.histmersion.domain.media.assets.AssetService.FigureCountResult | base Int | generated | method-result
+    def figureCount(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.assets.AssetService.FigureCountResult
+    def figureCount(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.assets.AssetService.Implementation.FigureCountResult = db.read(AssetRepo.co
+com.histmersion.domain.media.assets.AssetService.FigureName | base String | generated | method-parameter
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.FigureName): Option[(com.histmersion.domain.media.asset
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.FigureName): Option[(com.histmersion.dom
+com.histmersion.domain.media.assets.AssetService.FigureResultPart1 | base String | generated | method-result
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.FigureName): Option[(com.histmersion.domain.media.asset
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.FigureName): Option[(com.histmersion.dom
+com.histmersion.domain.media.assets.AssetService.FigureResultPart2 | base Array[Byte] | generated | method-result
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.FigureName): Option[(com.histmersion.domain.media.asset
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.FigureName): Option[(com.histmersion.dom
+com.histmersion.domain.media.assets.AssetService.FileResultPart1 | base String | generated | method-result
+    def file(uid: com.histmersion.domain.media.assets.AssetService.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.FileResultPart1, com.histmersion.domain.
+    def file(uid: com.histmersion.domain.media.assets.AssetService.Implementation.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.FileResult
+com.histmersion.domain.media.assets.AssetService.FileResultPart2 | base Array[Byte] | generated | method-result
+    def file(uid: com.histmersion.domain.media.assets.AssetService.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.FileResultPart1, com.histmersion.domain.
+    def file(uid: com.histmersion.domain.media.assets.AssetService.Implementation.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.FileResult
+com.histmersion.domain.media.assets.AssetService.FileUid | base String | generated | method-parameter
+    def file(uid: com.histmersion.domain.media.assets.AssetService.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.FileResultPart1, com.histmersion.domain.
+    def file(uid: com.histmersion.domain.media.assets.AssetService.Implementation.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.FileResult
+com.histmersion.domain.media.assets.AssetService.GeoLimit | base Int | generated | method-parameter
+    def geo(q: Api.MediaGeoQuery, limit: com.histmersion.domain.media.assets.AssetService.GeoLimit): List[MediaGeoHit]
+    def geo(q: Api.MediaGeoQuery, limit: com.histmersion.domain.media.assets.AssetService.Implementation.GeoLimit): List[MediaGeoHit] = db.read(MediaRepo.geo(q, limit))
+com.histmersion.domain.media.assets.AssetService.GeoOfResultPart1 | base String | generated | method-result
+    def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.GeoOfUids]): Map[com.histmersion.domain.media.assets.AssetService.GeoOfResultPart1, MediaGeoHit]
+    def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.Implementation.GeoOfUids]): Map[com.histmersion.domain.media.assets.AssetService.Implementation.GeoO
+com.histmersion.domain.media.assets.AssetService.GeoOfUids | base String | generated | method-parameter
+    def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.GeoOfUids]): Map[com.histmersion.domain.media.assets.AssetService.GeoOfResultPart1, MediaGeoHit]
+    def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.Implementation.GeoOfUids]): Map[com.histmersion.domain.media.assets.AssetService.Implementation.GeoO
+com.histmersion.domain.media.assets.AssetService.Implementation.AddFiguresResult | base Int | generated | method-result
+    def addFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.AddFiguresResult
+    def addFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.Implementation.AddFiguresResul
+com.histmersion.domain.media.assets.AssetService.Implementation.DetailName | base String | generated | method-parameter
+    def detail(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.DetailName): Option[AssetDetail]
+    def detail(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.DetailName): Option[AssetDetail] = db.re
+com.histmersion.domain.media.assets.AssetService.Implementation.FigureCountResult | base Int | generated | method-result
+    def figureCount(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.assets.AssetService.FigureCountResult
+    def figureCount(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.assets.AssetService.Implementation.FigureCountResult = db.read(AssetRepo.co
+com.histmersion.domain.media.assets.AssetService.Implementation.FigureName | base String | generated | method-parameter
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.FigureName): Option[(com.histmersion.domain.media.asset
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.FigureName): Option[(com.histmersion.dom
+com.histmersion.domain.media.assets.AssetService.Implementation.FigureResultPart1 | base String | generated | method-result
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.FigureName): Option[(com.histmersion.domain.media.asset
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.FigureName): Option[(com.histmersion.dom
+com.histmersion.domain.media.assets.AssetService.Implementation.FigureResultPart2 | base Array[Byte] | generated | method-result
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.FigureName): Option[(com.histmersion.domain.media.asset
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.FigureName): Option[(com.histmersion.dom
+com.histmersion.domain.media.assets.AssetService.Implementation.FileResultPart1 | base String | generated | method-result
+    def file(uid: com.histmersion.domain.media.assets.AssetService.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.FileResultPart1, com.histmersion.domain.
+    def file(uid: com.histmersion.domain.media.assets.AssetService.Implementation.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.FileResult
+com.histmersion.domain.media.assets.AssetService.Implementation.FileResultPart2 | base Array[Byte] | generated | method-result
+    def file(uid: com.histmersion.domain.media.assets.AssetService.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.FileResultPart1, com.histmersion.domain.
+    def file(uid: com.histmersion.domain.media.assets.AssetService.Implementation.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.FileResult
+com.histmersion.domain.media.assets.AssetService.Implementation.FileUid | base String | generated | method-parameter
+    def file(uid: com.histmersion.domain.media.assets.AssetService.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.FileResultPart1, com.histmersion.domain.
+    def file(uid: com.histmersion.domain.media.assets.AssetService.Implementation.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.FileResult
+com.histmersion.domain.media.assets.AssetService.Implementation.GeoLimit | base Int | generated | method-parameter
+    def geo(q: Api.MediaGeoQuery, limit: com.histmersion.domain.media.assets.AssetService.GeoLimit): List[MediaGeoHit]
+    def geo(q: Api.MediaGeoQuery, limit: com.histmersion.domain.media.assets.AssetService.Implementation.GeoLimit): List[MediaGeoHit] = db.read(MediaRepo.geo(q, limit))
+com.histmersion.domain.media.assets.AssetService.Implementation.GeoOfResultPart1 | base String | generated | method-result
+    def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.GeoOfUids]): Map[com.histmersion.domain.media.assets.AssetService.GeoOfResultPart1, MediaGeoHit]
+    def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.Implementation.GeoOfUids]): Map[com.histmersion.domain.media.assets.AssetService.Implementation.GeoO
+com.histmersion.domain.media.assets.AssetService.Implementation.GeoOfUids | base String | generated | method-parameter
+    def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.GeoOfUids]): Map[com.histmersion.domain.media.assets.AssetService.GeoOfResultPart1, MediaGeoHit]
+    def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.Implementation.GeoOfUids]): Map[com.histmersion.domain.media.assets.AssetService.Implementation.GeoO
+com.histmersion.domain.media.assets.AssetService.Implementation.KnownKeys | base String | generated | method-parameter
+    def known(provider: com.histmersion.domain.media.assets.AssetService.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.KnownKeys]): Map[com.histm
+    def known(provider: com.histmersion.domain.media.assets.AssetService.Implementation.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.Implementat
+com.histmersion.domain.media.assets.AssetService.Implementation.KnownProvider | base String | generated | method-parameter
+    def known(provider: com.histmersion.domain.media.assets.AssetService.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.KnownKeys]): Map[com.histm
+    def known(provider: com.histmersion.domain.media.assets.AssetService.Implementation.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.Implementat
+com.histmersion.domain.media.assets.AssetService.Implementation.KnownResultPart1 | base String | generated | method-result
+    def known(provider: com.histmersion.domain.media.assets.AssetService.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.KnownKeys]): Map[com.histm
+    def known(provider: com.histmersion.domain.media.assets.AssetService.Implementation.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.Implementat
+com.histmersion.domain.media.assets.AssetService.Implementation.LinkBasis | base String | generated | method-parameter
+    val LinkBasis: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Basis.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Basis
+com.histmersion.domain.media.assets.AssetService.Implementation.LinkItem | base String | generated | method-parameter
+    val LinkItem: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Item.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Item
+com.histmersion.domain.media.assets.AssetService.Implementation.LinkProperty | base String | generated | method-parameter
+    val LinkProperty: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property
+com.histmersion.domain.media.assets.AssetService.Implementation.LinkRank | base Int | generated | method-parameter
+    val LinkRank: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Rank.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Rank
+com.histmersion.domain.media.assets.AssetService.Implementation.LinkResult | base Boolean | generated | method-result
+com.histmersion.domain.media.assets.AssetService.Implementation.LinkRole | base String | generated | method-parameter
+    val LinkRole: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role
+com.histmersion.domain.media.assets.AssetService.Implementation.LinkTargetId | base String | generated | method-parameter
+    val LinkTargetId: _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetId.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetId
+com.histmersion.domain.media.assets.AssetService.Implementation.LinkTargetType | base String | generated | method-parameter
+    val LinkTargetType: _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetType.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetType
+com.histmersion.domain.media.assets.AssetService.Implementation.LinkUid | base String | generated | method-parameter
+com.histmersion.domain.media.assets.AssetService.Implementation.ListLimit | base Int | generated | method-parameter
+    def list(q: Api.MediaQuery, limit: com.histmersion.domain.media.assets.AssetService.ListLimit): MediaList
+    def list(q: Api.MediaQuery, limit: com.histmersion.domain.media.assets.AssetService.Implementation.ListLimit): MediaList = db.read(MediaRepo.list(q, limit))
+com.histmersion.domain.media.assets.AssetService.Implementation.PatchName | base String | generated | method-parameter
+    def patch(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.PatchName, p: AssetPatch): Either[Api.Error, AssetDetail
+    def patch(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.PatchName, p: AssetPatch): Either[Api.Err
+com.histmersion.domain.media.assets.AssetService.Implementation.PlaceThumbsLimit | base Int | generated | method-parameter
+    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.PlaceThumbsSameSiteKm, limit: com.histmer
+    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.Implementation.PlaceThumbsSameSiteKm, lim
+com.histmersion.domain.media.assets.AssetService.Implementation.PlaceThumbsSameSiteKm | base Double | generated | method-parameter
+    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.PlaceThumbsSameSiteKm, limit: com.histmer
+    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.Implementation.PlaceThumbsSameSiteKm, lim
+com.histmersion.domain.media.assets.AssetService.Implementation.RefreshRightsUid | base String | generated | method-parameter
+    def refreshRights(uid: com.histmersion.domain.media.assets.AssetService.RefreshRightsUid, r: Rights): Unit
+    def refreshRights(uid: com.histmersion.domain.media.assets.AssetService.Implementation.RefreshRightsUid, r: Rights): Unit = db.transact(MediaRepo.refreshRights(uid, r))
+com.histmersion.domain.media.assets.AssetService.Implementation.ReplaceFiguresResult | base Int | generated | method-result
+    def replaceFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.ReplaceFiguresResult
+    def replaceFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.Implementation.ReplaceFigu
+com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart1 | base String | generated | method-parameter
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetService.SaveFirst
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetSe
+com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart2 | base String | generated | method-parameter
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetService.SaveFirst
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetSe
+com.histmersion.domain.media.assets.AssetService.Implementation.SaveResultPart1 | base String | generated | method-result
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetService.SaveFirst
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetSe
+com.histmersion.domain.media.assets.AssetService.Implementation.SaveResultPart2 | base Boolean | generated | method-result
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetService.SaveFirst
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetSe
+com.histmersion.domain.media.assets.AssetService.Implementation.SetSourcePictureProperty | base String | generated | method-parameter
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.SetSourcePictureUid, role: com.histmersion.dom
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetSourcePictureUid, role: com.
+com.histmersion.domain.media.assets.AssetService.Implementation.SetSourcePictureRole | base String | generated | method-parameter
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.SetSourcePictureUid, role: com.histmersion.dom
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetSourcePictureUid, role: com.
+com.histmersion.domain.media.assets.AssetService.Implementation.SetSourcePictureUid | base String | generated | method-parameter
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.SetSourcePictureUid, role: com.histmersion.dom
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetSourcePictureUid, role: com.
+com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbBytes | base Array[Byte] | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersi
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetT
+com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbHeight | base Int | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersi
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetT
+com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbMime | base String | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersi
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetT
+com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid | base String | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersi
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetT
+com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbWidth | base Int | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersi
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetT
+com.histmersion.domain.media.assets.AssetService.Implementation.ShowUid | base String | generated | method-parameter
+    def show(uid: com.histmersion.domain.media.assets.AssetService.ShowUid): Option[MediaItem]
+    def show(uid: com.histmersion.domain.media.assets.AssetService.Implementation.ShowUid): Option[MediaItem] = db.read(MediaRepo.show(uid))
+com.histmersion.domain.media.assets.AssetService.Implementation.SourcePictureResultPart1 | base String | generated | method-result
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.SourcePictureRole): Option[(com.histmersion.doma
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.Implementation.SourcePictureRole): Option[(com.h
+com.histmersion.domain.media.assets.AssetService.Implementation.SourcePictureResultPart2 | base String | generated | method-result
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.SourcePictureRole): Option[(com.histmersion.doma
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.Implementation.SourcePictureRole): Option[(com.h
+com.histmersion.domain.media.assets.AssetService.Implementation.SourcePictureRole | base String | generated | method-parameter
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.SourcePictureRole): Option[(com.histmersion.doma
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.Implementation.SourcePictureRole): Option[(com.h
+com.histmersion.domain.media.assets.AssetService.Implementation.ThumbResultPart1 | base String | generated | method-result
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.ThumbResultPart1, com.histmersion.doma
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.ThumbRes
+com.histmersion.domain.media.assets.AssetService.Implementation.ThumbResultPart2 | base Array[Byte] | generated | method-result
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.ThumbResultPart1, com.histmersion.doma
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.ThumbRes
+com.histmersion.domain.media.assets.AssetService.Implementation.ThumbUid | base String | generated | method-parameter
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.ThumbResultPart1, com.histmersion.doma
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.ThumbRes
+com.histmersion.domain.media.assets.AssetService.Implementation.ThumbsLimit | base Int | generated | method-parameter
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.ThumbsTargetId, limit
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.Implem
+com.histmersion.domain.media.assets.AssetService.Implementation.ThumbsTargetId | base String | generated | method-parameter
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.ThumbsTargetId, limit
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.Implem
+com.histmersion.domain.media.assets.AssetService.Implementation.ThumbsTargetType | base String | generated | method-parameter
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.ThumbsTargetId, limit
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.Implem
+com.histmersion.domain.media.assets.AssetService.InMemory.AddFiguresResult | base Int | generated | method-result
+    def addFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.AddFiguresResult
+    def addFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.Implementation.AddFiguresResul
+com.histmersion.domain.media.assets.AssetService.InMemory.ByUidUid | base String | generated | method-parameter
+    private def byUid(uid: com.histmersion.domain.media.assets.AssetService.InMemory.ByUidUid): Option[HeldAsset] = held.find(_.uid == uid)
+com.histmersion.domain.media.assets.AssetService.InMemory.ChangeUid | base String | generated | method-parameter
+    private def change(uid: com.histmersion.domain.media.assets.AssetService.InMemory.ChangeUid)(f: HeldAsset => HeldAsset): Unit =
+com.histmersion.domain.media.assets.AssetService.InMemory.CleanO | base String | generated | method-parameter
+    private def clean(o: Option[com.histmersion.domain.media.assets.AssetService.InMemory.CleanO]): Option[com.histmersion.domain.media.assets.AssetService.InMemory.CleanResu
+com.histmersion.domain.media.assets.AssetService.InMemory.CleanResult | base String | generated | method-result
+    private def clean(o: Option[com.histmersion.domain.media.assets.AssetService.InMemory.CleanO]): Option[com.histmersion.domain.media.assets.AssetService.InMemory.CleanResu
+com.histmersion.domain.media.assets.AssetService.InMemory.DetailName | base String | generated | method-parameter
+    def detail(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.DetailName): Option[AssetDetail]
+    def detail(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.DetailName): Option[AssetDetail] = db.re
+com.histmersion.domain.media.assets.AssetService.InMemory.FacetsCountedKeys | base String | generated | method-parameter
+    def counted(keys: Vector[com.histmersion.domain.media.assets.AssetService.InMemory.FacetsCountedKeys]): List[MediaCount] =
+com.histmersion.domain.media.assets.AssetService.InMemory.FigureCountResult | base Int | generated | method-result
+    def figureCount(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.assets.AssetService.FigureCountResult
+    def figureCount(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.assets.AssetService.Implementation.FigureCountResult = db.read(AssetRepo.co
+com.histmersion.domain.media.assets.AssetService.InMemory.FigureName | base String | generated | method-parameter
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.FigureName): Option[(com.histmersion.domain.media.asset
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.FigureName): Option[(com.histmersion.dom
+com.histmersion.domain.media.assets.AssetService.InMemory.FigureResultPart1 | base String | generated | method-result
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.FigureName): Option[(com.histmersion.domain.media.asset
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.FigureName): Option[(com.histmersion.dom
+com.histmersion.domain.media.assets.AssetService.InMemory.FigureResultPart2 | base Array[Byte] | generated | method-result
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.FigureName): Option[(com.histmersion.domain.media.asset
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.FigureName): Option[(com.histmersion.dom
+com.histmersion.domain.media.assets.AssetService.InMemory.FileResultPart1 | base String | generated | method-result
+    def file(uid: com.histmersion.domain.media.assets.AssetService.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.FileResultPart1, com.histmersion.domain.
+    def file(uid: com.histmersion.domain.media.assets.AssetService.Implementation.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.FileResult
+com.histmersion.domain.media.assets.AssetService.InMemory.FileResultPart2 | base Array[Byte] | generated | method-result
+    def file(uid: com.histmersion.domain.media.assets.AssetService.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.FileResultPart1, com.histmersion.domain.
+    def file(uid: com.histmersion.domain.media.assets.AssetService.Implementation.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.FileResult
+com.histmersion.domain.media.assets.AssetService.InMemory.FileUid | base String | generated | method-parameter
+    def file(uid: com.histmersion.domain.media.assets.AssetService.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.FileResultPart1, com.histmersion.domain.
+    def file(uid: com.histmersion.domain.media.assets.AssetService.Implementation.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.FileResult
+com.histmersion.domain.media.assets.AssetService.InMemory.GeoLimit | base Int | generated | method-parameter
+    def geo(q: Api.MediaGeoQuery, limit: com.histmersion.domain.media.assets.AssetService.GeoLimit): List[MediaGeoHit]
+    def geo(q: Api.MediaGeoQuery, limit: com.histmersion.domain.media.assets.AssetService.Implementation.GeoLimit): List[MediaGeoHit] = db.read(MediaRepo.geo(q, limit))
+com.histmersion.domain.media.assets.AssetService.InMemory.GeoOfResultPart1 | base String | generated | method-result
+    def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.GeoOfUids]): Map[com.histmersion.domain.media.assets.AssetService.GeoOfResultPart1, MediaGeoHit]
+    def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.Implementation.GeoOfUids]): Map[com.histmersion.domain.media.assets.AssetService.Implementation.GeoO
+com.histmersion.domain.media.assets.AssetService.InMemory.GeoOfUids | base String | generated | method-parameter
+    def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.GeoOfUids]): Map[com.histmersion.domain.media.assets.AssetService.GeoOfResultPart1, MediaGeoHit]
+    def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.Implementation.GeoOfUids]): Map[com.histmersion.domain.media.assets.AssetService.Implementation.GeoO
+com.histmersion.domain.media.assets.AssetService.InMemory.HitPPart1 | base Double | generated | method-parameter
+    private def hit(a: HeldAsset, p: (com.histmersion.domain.media.assets.AssetService.InMemory.HitPPart1, com.histmersion.domain.media.assets.AssetService.InMemory.HitPPart2
+com.histmersion.domain.media.assets.AssetService.InMemory.HitPPart2 | base Double | generated | method-parameter
+    private def hit(a: HeldAsset, p: (com.histmersion.domain.media.assets.AssetService.InMemory.HitPPart1, com.histmersion.domain.media.assets.AssetService.InMemory.HitPPart2
+com.histmersion.domain.media.assets.AssetService.InMemory.KnownKeys | base String | generated | method-parameter
+    def known(provider: com.histmersion.domain.media.assets.AssetService.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.KnownKeys]): Map[com.histm
+    def known(provider: com.histmersion.domain.media.assets.AssetService.Implementation.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.Implementat
+com.histmersion.domain.media.assets.AssetService.InMemory.KnownProvider | base String | generated | method-parameter
+    def known(provider: com.histmersion.domain.media.assets.AssetService.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.KnownKeys]): Map[com.histm
+    def known(provider: com.histmersion.domain.media.assets.AssetService.Implementation.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.Implementat
+com.histmersion.domain.media.assets.AssetService.InMemory.KnownResultPart1 | base String | generated | method-result
+    def known(provider: com.histmersion.domain.media.assets.AssetService.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.KnownKeys]): Map[com.histm
+    def known(provider: com.histmersion.domain.media.assets.AssetService.Implementation.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.Implementat
+com.histmersion.domain.media.assets.AssetService.InMemory.LinkResult | base Boolean | generated | method-result
+com.histmersion.domain.media.assets.AssetService.InMemory.LinkUid | base String | generated | method-parameter
+com.histmersion.domain.media.assets.AssetService.InMemory.ListLimit | base Int | generated | method-parameter
+    def list(q: Api.MediaQuery, limit: com.histmersion.domain.media.assets.AssetService.ListLimit): MediaList
+    def list(q: Api.MediaQuery, limit: com.histmersion.domain.media.assets.AssetService.Implementation.ListLimit): MediaList = db.read(MediaRepo.list(q, limit))
+com.histmersion.domain.media.assets.AssetService.InMemory.NamedName | base String | generated | method-parameter
+    private def named(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.InMemory.NamedName): Option[HeldAsset] = ofSourc
+com.histmersion.domain.media.assets.AssetService.InMemory.OfProviderProvider | base String | generated | method-parameter
+    private def ofProvider(a: HeldAsset, provider: Option[com.histmersion.domain.media.assets.AssetService.InMemory.OfProviderProvider]): com.histmersion.domain.media.assets.
+com.histmersion.domain.media.assets.AssetService.InMemory.OfProviderResult | base Boolean | generated | method-result
+    private def ofProvider(a: HeldAsset, provider: Option[com.histmersion.domain.media.assets.AssetService.InMemory.OfProviderProvider]): com.histmersion.domain.media.assets.
+com.histmersion.domain.media.assets.AssetService.InMemory.OrdResult | base Int | generated | method-result
+    private def ord(role: com.histmersion.domain.media.assets.AssetService.InMemory.OrdRole): com.histmersion.domain.media.assets.AssetService.InMemory.OrdResult =
+com.histmersion.domain.media.assets.AssetService.InMemory.OrdRole | base String | generated | method-parameter
+    private def ord(role: com.histmersion.domain.media.assets.AssetService.InMemory.OrdRole): com.histmersion.domain.media.assets.AssetService.InMemory.OrdResult =
+com.histmersion.domain.media.assets.AssetService.InMemory.PatchName | base String | generated | method-parameter
+    def patch(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.PatchName, p: AssetPatch): Either[Api.Error, AssetDetail
+    def patch(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.PatchName, p: AssetPatch): Either[Api.Err
+com.histmersion.domain.media.assets.AssetService.InMemory.PlaceThumbsLimit | base Int | generated | method-parameter
+    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.PlaceThumbsSameSiteKm, limit: com.histmer
+    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.Implementation.PlaceThumbsSameSiteKm, lim
+com.histmersion.domain.media.assets.AssetService.InMemory.PlaceThumbsSameSiteKm | base Double | generated | method-parameter
+    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.PlaceThumbsSameSiteKm, limit: com.histmer
+    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.Implementation.PlaceThumbsSameSiteKm, lim
+com.histmersion.domain.media.assets.AssetService.InMemory.RefreshRightsUid | base String | generated | method-parameter
+    def refreshRights(uid: com.histmersion.domain.media.assets.AssetService.RefreshRightsUid, r: Rights): Unit
+    def refreshRights(uid: com.histmersion.domain.media.assets.AssetService.Implementation.RefreshRightsUid, r: Rights): Unit = db.transact(MediaRepo.refreshRights(uid, r))
+com.histmersion.domain.media.assets.AssetService.InMemory.ReplaceFiguresResult | base Int | generated | method-result
+    def replaceFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.ReplaceFiguresResult
+    def replaceFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.Implementation.ReplaceFigu
+com.histmersion.domain.media.assets.AssetService.InMemory.SaveFirstTargetPart1 | base String | generated | method-parameter
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetService.SaveFirst
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetSe
+com.histmersion.domain.media.assets.AssetService.InMemory.SaveFirstTargetPart2 | base String | generated | method-parameter
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetService.SaveFirst
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetSe
+com.histmersion.domain.media.assets.AssetService.InMemory.SaveResultPart1 | base String | generated | method-result
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetService.SaveFirst
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetSe
+com.histmersion.domain.media.assets.AssetService.InMemory.SaveResultPart2 | base Boolean | generated | method-result
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetService.SaveFirst
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetSe
+com.histmersion.domain.media.assets.AssetService.InMemory.SetSourcePictureUid | base String | generated | method-parameter
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.SetSourcePictureUid, role: com.histmersion.dom
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetSourcePictureUid, role: com.
+com.histmersion.domain.media.assets.AssetService.InMemory.SetThumbBytes | base Array[Byte] | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersi
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetT
+com.histmersion.domain.media.assets.AssetService.InMemory.SetThumbHeight | base Int | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersi
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetT
+com.histmersion.domain.media.assets.AssetService.InMemory.SetThumbMime | base String | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersi
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetT
+com.histmersion.domain.media.assets.AssetService.InMemory.SetThumbUid | base String | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersi
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetT
+com.histmersion.domain.media.assets.AssetService.InMemory.SetThumbWidth | base Int | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersi
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetT
+com.histmersion.domain.media.assets.AssetService.InMemory.ShowUid | base String | generated | method-parameter
+    def show(uid: com.histmersion.domain.media.assets.AssetService.ShowUid): Option[MediaItem]
+    def show(uid: com.histmersion.domain.media.assets.AssetService.Implementation.ShowUid): Option[MediaItem] = db.read(MediaRepo.show(uid))
+com.histmersion.domain.media.assets.AssetService.InMemory.ShownOnId | base String | generated | method-parameter
+    private def shownOn(a: HeldAsset, targetType: com.histmersion.domain.media.assets.AssetService.InMemory.ShownOnTargetType, id: Option[com.histmersion.domain.media.assets.
+com.histmersion.domain.media.assets.AssetService.InMemory.ShownOnResult | base Boolean | generated | method-result
+    private def shownOn(a: HeldAsset, targetType: com.histmersion.domain.media.assets.AssetService.InMemory.ShownOnTargetType, id: Option[com.histmersion.domain.media.assets.
+com.histmersion.domain.media.assets.AssetService.InMemory.ShownOnTargetType | base String | generated | method-parameter
+    private def shownOn(a: HeldAsset, targetType: com.histmersion.domain.media.assets.AssetService.InMemory.ShownOnTargetType, id: Option[com.histmersion.domain.media.assets.
+com.histmersion.domain.media.assets.AssetService.InMemory.SourcePictureResultPart1 | base String | generated | method-result
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.SourcePictureRole): Option[(com.histmersion.doma
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.Implementation.SourcePictureRole): Option[(com.h
+com.histmersion.domain.media.assets.AssetService.InMemory.SourcePictureResultPart2 | base String | generated | method-result
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.SourcePictureRole): Option[(com.histmersion.doma
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.Implementation.SourcePictureRole): Option[(com.h
+com.histmersion.domain.media.assets.AssetService.InMemory.SourcePictureRole | base String | generated | method-parameter
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.SourcePictureRole): Option[(com.histmersion.doma
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.Implementation.SourcePictureRole): Option[(com.h
+com.histmersion.domain.media.assets.AssetService.InMemory.TargetsOfUid | base String | generated | method-parameter
+    private def targetsOf(uid: com.histmersion.domain.media.assets.AssetService.InMemory.TargetsOfUid): List[MediaTarget] =
+com.histmersion.domain.media.assets.AssetService.InMemory.ThumbResultPart1 | base String | generated | method-result
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.ThumbResultPart1, com.histmersion.doma
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.ThumbRes
+com.histmersion.domain.media.assets.AssetService.InMemory.ThumbResultPart2 | base Array[Byte] | generated | method-result
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.ThumbResultPart1, com.histmersion.doma
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.ThumbRes
+com.histmersion.domain.media.assets.AssetService.InMemory.ThumbUid | base String | generated | method-parameter
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.ThumbResultPart1, com.histmersion.doma
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.ThumbRes
+com.histmersion.domain.media.assets.AssetService.InMemory.ThumbsLimit | base Int | generated | method-parameter
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.ThumbsTargetId, limit
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.Implem
+com.histmersion.domain.media.assets.AssetService.InMemory.ThumbsTargetId | base String | generated | method-parameter
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.ThumbsTargetId, limit
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.Implem
+com.histmersion.domain.media.assets.AssetService.InMemory.ThumbsTargetType | base String | generated | method-parameter
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.ThumbsTargetId, limit
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.Implem
+com.histmersion.domain.media.assets.AssetService.InMemory.UnderLicenceLicense | base String | generated | method-parameter
+    private def underLicence(a: HeldAsset, license: Option[com.histmersion.domain.media.assets.AssetService.InMemory.UnderLicenceLicense]): com.histmersion.domain.media.asset
+com.histmersion.domain.media.assets.AssetService.InMemory.UnderLicenceResult | base Boolean | generated | method-result
+    private def underLicence(a: HeldAsset, license: Option[com.histmersion.domain.media.assets.AssetService.InMemory.UnderLicenceLicense]): com.histmersion.domain.media.asset
+com.histmersion.domain.media.assets.AssetService.KnownKeys | base String | generated | method-parameter
+    def known(provider: com.histmersion.domain.media.assets.AssetService.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.KnownKeys]): Map[com.histm
+    def known(provider: com.histmersion.domain.media.assets.AssetService.Implementation.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.Implementat
+com.histmersion.domain.media.assets.AssetService.KnownProvider | base String | generated | method-parameter
+    def known(provider: com.histmersion.domain.media.assets.AssetService.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.KnownKeys]): Map[com.histm
+    def known(provider: com.histmersion.domain.media.assets.AssetService.Implementation.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.Implementat
+com.histmersion.domain.media.assets.AssetService.KnownResultPart1 | base String | generated | method-result
+    def known(provider: com.histmersion.domain.media.assets.AssetService.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.KnownKeys]): Map[com.histm
+    def known(provider: com.histmersion.domain.media.assets.AssetService.Implementation.KnownProvider, keys: List[com.histmersion.domain.media.assets.AssetService.Implementat
+com.histmersion.domain.media.assets.AssetService.LinkBasis | base String | generated | method-parameter
+    val LinkBasis: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Basis.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Basis
+com.histmersion.domain.media.assets.AssetService.LinkItem | base String | generated | method-parameter
+    val LinkItem: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Item.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Item
+com.histmersion.domain.media.assets.AssetService.LinkProperty | base String | generated | method-parameter
+    val LinkProperty: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property
+com.histmersion.domain.media.assets.AssetService.LinkRank | base Int | generated | method-parameter
+    val LinkRank: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Rank.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Rank
+com.histmersion.domain.media.assets.AssetService.LinkResult | base Boolean | generated | method-result
+com.histmersion.domain.media.assets.AssetService.LinkRole | base String | generated | method-parameter
+    val LinkRole: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role
+com.histmersion.domain.media.assets.AssetService.LinkTargetId | base String | generated | method-parameter
+    val LinkTargetId: _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetId.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetId
+com.histmersion.domain.media.assets.AssetService.LinkTargetType | base String | generated | method-parameter
+    val LinkTargetType: _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetType.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetType
+com.histmersion.domain.media.assets.AssetService.LinkUid | base String | generated | method-parameter
+com.histmersion.domain.media.assets.AssetService.ListLimit | base Int | generated | method-parameter
+    def list(q: Api.MediaQuery, limit: com.histmersion.domain.media.assets.AssetService.ListLimit): MediaList
+    def list(q: Api.MediaQuery, limit: com.histmersion.domain.media.assets.AssetService.Implementation.ListLimit): MediaList = db.read(MediaRepo.list(q, limit))
+com.histmersion.domain.media.assets.AssetService.PatchName | base String | generated | method-parameter
+    def patch(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.PatchName, p: AssetPatch): Either[Api.Error, AssetDetail
+    def patch(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.PatchName, p: AssetPatch): Either[Api.Err
+com.histmersion.domain.media.assets.AssetService.PlaceThumbsLimit | base Int | generated | method-parameter
+    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.PlaceThumbsSameSiteKm, limit: com.histmer
+    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.Implementation.PlaceThumbsSameSiteKm, lim
+com.histmersion.domain.media.assets.AssetService.PlaceThumbsSameSiteKm | base Double | generated | method-parameter
+    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.PlaceThumbsSameSiteKm, limit: com.histmer
+    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.Implementation.PlaceThumbsSameSiteKm, lim
+com.histmersion.domain.media.assets.AssetService.RefreshRightsUid | base String | generated | method-parameter
+    def refreshRights(uid: com.histmersion.domain.media.assets.AssetService.RefreshRightsUid, r: Rights): Unit
+    def refreshRights(uid: com.histmersion.domain.media.assets.AssetService.Implementation.RefreshRightsUid, r: Rights): Unit = db.transact(MediaRepo.refreshRights(uid, r))
+com.histmersion.domain.media.assets.AssetService.ReplaceFiguresResult | base Int | generated | method-result
+    def replaceFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.ReplaceFiguresResult
+    def replaceFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.Implementation.ReplaceFigu
+com.histmersion.domain.media.assets.AssetService.SaveFirstTargetPart1 | base String | generated | method-parameter
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetService.SaveFirst
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetSe
+com.histmersion.domain.media.assets.AssetService.SaveFirstTargetPart2 | base String | generated | method-parameter
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetService.SaveFirst
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetSe
+com.histmersion.domain.media.assets.AssetService.SaveResultPart1 | base String | generated | method-result
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetService.SaveFirst
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetSe
+com.histmersion.domain.media.assets.AssetService.SaveResultPart2 | base Boolean | generated | method-result
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetService.SaveFirst
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetSe
+com.histmersion.domain.media.assets.AssetService.SetSourcePictureProperty | base String | generated | method-parameter
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.SetSourcePictureUid, role: com.histmersion.dom
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetSourcePictureUid, role: com.
+com.histmersion.domain.media.assets.AssetService.SetSourcePictureRole | base String | generated | method-parameter
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.SetSourcePictureUid, role: com.histmersion.dom
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetSourcePictureUid, role: com.
+com.histmersion.domain.media.assets.AssetService.SetSourcePictureUid | base String | generated | method-parameter
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.SetSourcePictureUid, role: com.histmersion.dom
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetSourcePictureUid, role: com.
+com.histmersion.domain.media.assets.AssetService.SetThumbBytes | base Array[Byte] | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersi
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetT
+com.histmersion.domain.media.assets.AssetService.SetThumbHeight | base Int | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersi
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetT
+com.histmersion.domain.media.assets.AssetService.SetThumbMime | base String | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersi
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetT
+com.histmersion.domain.media.assets.AssetService.SetThumbUid | base String | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersi
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetT
+com.histmersion.domain.media.assets.AssetService.SetThumbWidth | base Int | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersi
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetT
+com.histmersion.domain.media.assets.AssetService.ShowUid | base String | generated | method-parameter
+    def show(uid: com.histmersion.domain.media.assets.AssetService.ShowUid): Option[MediaItem]
+    def show(uid: com.histmersion.domain.media.assets.AssetService.Implementation.ShowUid): Option[MediaItem] = db.read(MediaRepo.show(uid))
+com.histmersion.domain.media.assets.AssetService.SourcePictureResultPart1 | base String | generated | method-result
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.SourcePictureRole): Option[(com.histmersion.doma
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.Implementation.SourcePictureRole): Option[(com.h
+com.histmersion.domain.media.assets.AssetService.SourcePictureResultPart2 | base String | generated | method-result
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.SourcePictureRole): Option[(com.histmersion.doma
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.Implementation.SourcePictureRole): Option[(com.h
+com.histmersion.domain.media.assets.AssetService.SourcePictureRole | base String | generated | method-parameter
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.SourcePictureRole): Option[(com.histmersion.doma
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.Implementation.SourcePictureRole): Option[(com.h
+com.histmersion.domain.media.assets.AssetService.ThumbResultPart1 | base String | generated | method-result
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.ThumbResultPart1, com.histmersion.doma
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.ThumbRes
+com.histmersion.domain.media.assets.AssetService.ThumbResultPart2 | base Array[Byte] | generated | method-result
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.ThumbResultPart1, com.histmersion.doma
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.ThumbRes
+com.histmersion.domain.media.assets.AssetService.ThumbUid | base String | generated | method-parameter
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.ThumbResultPart1, com.histmersion.doma
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.ThumbRes
+com.histmersion.domain.media.assets.AssetService.ThumbsLimit | base Int | generated | method-parameter
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.ThumbsTargetId, limit
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.Implem
+com.histmersion.domain.media.assets.AssetService.ThumbsTargetId | base String | generated | method-parameter
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.ThumbsTargetId, limit
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.Implem
+com.histmersion.domain.media.assets.AssetService.ThumbsTargetType | base String | generated | method-parameter
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.ThumbsTargetId, limit
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbsTargetType, targetId: com.histmersion.domain.media.assets.AssetService.Implem

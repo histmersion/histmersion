@@ -25,14 +25,18 @@ enum Halt:
   case Wait(id: Halt.Wait.Id, what: Halt.Wait.What)
 
 object Halt:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitId = WaitId.T
+  object WaitId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   object Pause:
-    type Detail = Detail.T
-    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Detail = com.histmersion.domain.automation.agents.Halt.Problem
+    val Detail: _root_.com.histmersion.domain.automation.agents.Halt.Problem.type = _root_.com.histmersion.domain.automation.agents.Halt.Problem
   object Fail:
-    type Message = Message.T
-    object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Message = com.histmersion.domain.automation.agents.Halt.Problem
+    val Message: _root_.com.histmersion.domain.automation.agents.Halt.Problem.type = _root_.com.histmersion.domain.automation.agents.Halt.Problem
   object Wait:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = com.histmersion.domain.automation.agents.Halt.WaitId
+    val Id: _root_.com.histmersion.domain.automation.agents.Halt.WaitId.type = _root_.com.histmersion.domain.automation.agents.Halt.WaitId
     type What = What.T
     object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

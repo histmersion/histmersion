@@ -36,20 +36,20 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
     SeedManagerKind.plan(lib.seed).managerDefaults(m)
 
-  def pipelineOf(itemKind: com.histmersion.domain.research.workflows.SeedManagerKind.PipelineOfItemKind): Pipeline = itemKind match
+  def pipelineOf(itemKind: com.histmersion.domain.research.workflows.SeedManagerKind.ItemKind): Pipeline = itemKind match
     case ProposeArticles => Pipeline.ProposeArticles
     case ArticleCompile  => Pipeline.CompileArticle
     case PlanGoalItem    => Pipeline.PlanGoal
     case _               => Pipeline.ReviewArticle
 
   /** A firing proposes the goal's next articles. */
-  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.research.workflows.SeedManagerKind.FireResult] =
+  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.research.workflows.SeedManagerKind.Event] =
     m.goal.toList.map { g =>
       val (_, isNew) = c.upsert(m.id, ProposeArticles, g, ItemOrigin.Cron, 0, reopen = true)
       s"$ProposeArticles ${if isNew then "added" else "due"}"
     }
 
-  def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.research.workflows.SeedManagerKind.FactsRun): StepFacts =
+  def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts =
     lazy val progress = c.progress(run)
     item.kind match
       case ProposeArticles =>
@@ -114,7 +114,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         then c.autopilotSoon()
       case _ => ()
 
-  def target(m: ManagerInfo, itemKind: com.histmersion.domain.research.workflows.SeedManagerKind.TargetItemKind, raw: com.histmersion.domain.research.workflows.SeedManagerKind.TargetRaw): Either[Api.Error, com.histmersion.domain.research.workflows.SeedManagerKind.TargetResultPart2] =
+  def target(m: ManagerInfo, itemKind: com.histmersion.domain.research.workflows.SeedManagerKind.ItemKind, raw: com.histmersion.domain.research.workflows.SeedManagerKind.Target): Either[Api.Error, com.histmersion.domain.research.workflows.SeedManagerKind.Target] =
     itemKind match
       case ProposeArticles | PlanGoalItem =>
         val g = Option(raw.trim).filter(_.nonEmpty).orElse(m.goal).getOrElse("")
@@ -202,8 +202,8 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
       s: ReviewSettings,
       item: ManagerItem,
       now: Instant,
-      out: Builder[com.histmersion.domain.research.workflows.SeedManagerKind.DispatchOutPart1, List[com.histmersion.domain.research.workflows.SeedManagerKind.DispatchOutPart2]]
-  ): Option[com.histmersion.domain.research.workflows.SeedManagerKind.DispatchResult] =
+      out: Builder[com.histmersion.domain.research.workflows.SeedManagerKind.Dispatch, List[com.histmersion.domain.research.workflows.SeedManagerKind.Dispatch]]
+  ): Option[com.histmersion.domain.research.workflows.SeedManagerKind.Dispatch] =
     item.kind match
       case ProposeArticles =>
         site.goal(item.target) match
@@ -263,24 +263,14 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         c.settleNow(m, item, ItemStatus.Cancelled, s"'$other' items are not driven by a ${m.kind} manager")
 
 object SeedManagerKind:
+  type Dispatch = Dispatch.T
+  object Dispatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Event = Event.T
+  object Event extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemKind = ItemKind.T
+  object ItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Target = Target.T
+  object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The seeding defaults a seed manager's plan is held to. */
-  type PipelineOfItemKind = PipelineOfItemKind.T
-  object PipelineOfItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FireResult = FireResult.T
-  object FireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FactsRun = FactsRun.T
-  object FactsRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetResultPart2 = TargetResultPart2.T
-  object TargetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetItemKind = TargetItemKind.T
-  object TargetItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetRaw = TargetRaw.T
-  object TargetRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DispatchResult = DispatchResult.T
-  object DispatchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DispatchOutPart1 = DispatchOutPart1.T
-  object DispatchOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DispatchOutPart2 = DispatchOutPart2.T
-  object DispatchOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def plan(seed: AgentSeedConfig): SeedPlanDefaults = seed.transformInto[SeedPlanDefaults]

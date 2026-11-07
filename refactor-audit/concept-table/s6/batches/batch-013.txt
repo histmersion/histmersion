@@ -1,0 +1,528 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.automation.AgentRole.Wire (String)
+com.histmersion.domain.automation.Approval.DecidedBy.Describe (String)
+com.histmersion.domain.automation.Approval.DecidedBy.Wire (String)
+com.histmersion.domain.automation.Approval.Kind.Blocking (Boolean)
+com.histmersion.domain.automation.Approval.Kind.Wire (String)
+com.histmersion.domain.automation.Approval.Mode.Wire (String)
+com.histmersion.domain.automation.Approval.Note (String)
+com.histmersion.domain.automation.Approval.Outcome (String)
+com.histmersion.domain.automation.Approval.State.Wire (String)
+com.histmersion.domain.automation.Goal.LinkKind.Wire (String)
+com.histmersion.domain.automation.Goal.Slug (String)
+com.histmersion.domain.automation.Goal.Status.Wire (String)
+com.histmersion.domain.automation.Goal.Uid (UUID)
+com.histmersion.domain.automation.ItemStatus.Wire (String)
+com.histmersion.domain.automation.Manager.Kind.Wire (String)
+com.histmersion.domain.automation.Manager.State.Wire (String)
+com.histmersion.domain.automation.Pipeline.Describe (String)
+com.histmersion.domain.automation.Pipeline.Version (Int)
+com.histmersion.domain.automation.Pipeline.Wire (String)
+com.histmersion.domain.automation.ProviderKind.Wire (String)
+com.histmersion.domain.automation.Run.Id (String)
+com.histmersion.domain.automation.Run.State.Wire (String)
+com.histmersion.domain.automation.ScheduleKind.Wire (String)
+com.histmersion.domain.automation.Step.Status.Wire (String)
+com.histmersion.domain.automation.TargetKind.Wire (String)
+com.histmersion.domain.automation.agents.AgentRepo.ActiveOnly (Boolean)
+com.histmersion.domain.automation.agents.AgentRepo.ApprovalJobId (String)
+com.histmersion.domain.automation.agents.AgentRepo.CloseReason (String)
+com.histmersion.domain.automation.agents.AgentRepo.CursorProblem (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Content (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.LatencyMs (Int)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.N (Int)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Role (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolInput (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolName (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolResult (String)
+com.histmersion.domain.automation.agents.AgentRepo.OutputChars (Int)
+com.histmersion.domain.automation.agents.AgentRepo.PageCursor (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.ActualModel (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Attempt (Int)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Error (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.FirstCallTokens (Long)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Model (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.PromptHash (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq (Int)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Turns (Int)
+com.histmersion.domain.automation.agents.LeaseRepo.LeaseExpiry (String)
+com.histmersion.domain.automation.agents.LeaseRepo.LeaseName (String)
+com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner (String)
+com.histmersion.domain.automation.agents.LeaseRepo.TtlSeconds (Int)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis (Long)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Floors (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Held (Boolean)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.PlanType (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Refusal (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.RefusalUntil (Long)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshDetail (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshMode (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshTrigger (String)
+com.histmersion.domain.automation.agents.RunQuery.Goal (String)
+com.histmersion.domain.automation.agents.RunQuery.Managers (String)
+com.histmersion.domain.automation.agents.RunQuery.Models (String)
+com.histmersion.domain.automation.agents.RunQuery.Origins (String)
+com.histmersion.domain.automation.agents.RunQuery.Pipelines (String)
+com.histmersion.domain.automation.agents.RunQuery.Providers (String)
+com.histmersion.domain.automation.agents.RunQuery.Q (String)
+com.histmersion.domain.automation.agents.RunQuery.Status (String)
+com.histmersion.domain.automation.agents.ToolUse.Input (String)
+com.histmersion.domain.automation.agents.ToolUse.Tool (String)
+com.histmersion.domain.automation.approvals.ApprovalQuery.Goal (String)
+com.histmersion.domain.automation.approvals.ApprovalQuery.Subject (String)
+com.histmersion.domain.automation.approvals.ProposalEvidence.Evidence (String)
+com.histmersion.domain.automation.approvals.ProposalEvidence.Quote (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Digest (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.DrainSince (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.DrainedAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled (Boolean)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.LastBackupAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.LastEnsureAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.LastLintAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Paused (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.CreatedAt (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.Kind (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.Note (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.Ref (String)
+com.histmersion.domain.automation.goals.BGoalRow.CreatedAt (String)
+com.histmersion.domain.automation.goals.BGoalRow.Notes (String)
+com.histmersion.domain.automation.goals.BGoalRow.PHi (Long)
+com.histmersion.domain.automation.goals.BGoalRow.PLo (Long)
+com.histmersion.domain.automation.goals.BGoalRow.PNull (Boolean)
+com.histmersion.domain.automation.goals.BGoalRow.Plan (String)
+com.histmersion.domain.automation.goals.BGoalRow.PlanApprovedAt (String)
+com.histmersion.domain.automation.goals.BGoalRow.Regions (String)
+com.histmersion.domain.automation.goals.BGoalRow.Slug (String)
+com.histmersion.domain.automation.goals.BGoalRow.Status (String)
+com.histmersion.domain.automation.goals.BGoalRow.Tags (String)
+com.histmersion.domain.automation.goals.BGoalRow.Title (String)
+com.histmersion.domain.automation.goals.BGoalRow.UpdatedAt (String)
+com.histmersion.domain.automation.goals.BGoalScheduleRow.Cron (String)
+com.histmersion.domain.automation.goals.BGoalScheduleRow.Enabled (Boolean)
+com.histmersion.domain.automation.goals.BGoalScheduleRow.Kind (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Active (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.CreatedAt (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.LeftAt (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.LeftWhy (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Parent (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Pinned (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Priority (Int)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Since (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Slug (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Status (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Title (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Why (String)
+com.histmersion.domain.automation.goals.FocusRepo.JoinWhy (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Approval (Long)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ApprovalKind (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.AutoApprove (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.FocusHeld (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Goals (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Id (Long)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Kind (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ManagerId (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ManagerKind (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Person (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.PersonHeld (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Status (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Target (String)
+com.histmersion.domain.automation.goals.GoalLinkRepo.ItemId (Int)
+com.histmersion.domain.automation.goals.GoalRow.Notes (String)
+com.histmersion.domain.automation.goals.GoalRow.ParentSlug (String)
+com.histmersion.domain.automation.goals.GoalRow.Regions (String)
+com.histmersion.domain.automation.goals.GoalRow.Slug (String)
+com.histmersion.domain.automation.goals.GoalRow.Status (String)
+com.histmersion.domain.automation.goals.GoalRow.Tags (String)
+com.histmersion.domain.automation.goals.GoalRow.Title (String)
+com.histmersion.domain.automation.goals.GoalRow.UpdatedAt (String)
+com.histmersion.domain.automation.managers.ManagerLight.Cron (String)
+com.histmersion.domain.automation.managers.ManagerLight.Goal (String)
+com.histmersion.domain.automation.managers.ManagerLight.Id (String)
+com.histmersion.domain.automation.managers.ManagerLight.Kind (String)
+com.histmersion.domain.automation.managers.ManagerLight.PlanItem (Boolean)
+com.histmersion.domain.automation.managers.ManagerLight.State (String)
+com.histmersion.domain.automation.managers.ManagerLight.StatusNote (String)
+com.histmersion.domain.automation.managers.ManagerRepo.CancelReason (String)
+com.histmersion.domain.automation.managers.ManagerRepo.EventCursor (Long)
+com.histmersion.domain.automation.managers.ManagerRepo.ProgressText (String)
+com.histmersion.domain.automation.managers.ManagerRepo.RestaleReason (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Authors (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Goal (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.IsOa (Boolean)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Item (Int)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Job (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.ManagerId (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Text (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Title (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Topic (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Venue (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Why (String)
+com.histmersion.domain.automation.worklists.BQueueRow.CreatedAt (String)
+com.histmersion.domain.automation.worklists.BQueueRow.DoneAt (String)
+com.histmersion.domain.automation.worklists.BQueueRow.List (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Reason (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Status (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Text (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Topic (String)
+com.histmersion.domain.automation.worklists.BQueueRow.UpdatedAt (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.automation.goals.GoalService.ChildrenSlug | base String | generated | method-parameter
+    def children(slug: com.histmersion.domain.automation.goals.GoalService.ChildrenSlug): List[Goal]
+    def children(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.ChildrenSlug): List[Goal] = db.read(GoalRepo.children(slug))
+com.histmersion.domain.automation.goals.GoalService.DeleteResult | base Boolean | generated | method-result
+    def delete(slug: com.histmersion.domain.automation.goals.GoalService.DeleteSlug): com.histmersion.domain.automation.goals.GoalService.DeleteResult
+    def delete(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.DeleteSlug): com.histmersion.domain.automation.goals.GoalService.Implementation.Delete
+com.histmersion.domain.automation.goals.GoalService.DeleteSlug | base String | generated | method-parameter
+    def delete(slug: com.histmersion.domain.automation.goals.GoalService.DeleteSlug): com.histmersion.domain.automation.goals.GoalService.DeleteResult
+    def delete(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.DeleteSlug): com.histmersion.domain.automation.goals.GoalService.Implementation.Delete
+com.histmersion.domain.automation.goals.GoalService.GetSlug | base String | generated | method-parameter
+    def get(slug: com.histmersion.domain.automation.goals.GoalService.GetSlug): Option[Goal]
+    def get(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.GetSlug): Option[Goal] = db.read(GoalRepo.get(slug))
+com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsItems | base Int | generated | method-parameter
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalService.GoalsOfIte
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalSer
+com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsResultPart1 | base Int | generated | method-result
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalService.GoalsOfIte
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalSer
+com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsResultPart2 | base String | generated | method-result
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalService.GoalsOfIte
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalSer
+com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsResultPart3 | base String | generated | method-result
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalService.GoalsOfIte
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalSer
+com.histmersion.domain.automation.goals.GoalService.Implementation.ChildrenSlug | base String | generated | method-parameter
+    def children(slug: com.histmersion.domain.automation.goals.GoalService.ChildrenSlug): List[Goal]
+    def children(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.ChildrenSlug): List[Goal] = db.read(GoalRepo.children(slug))
+com.histmersion.domain.automation.goals.GoalService.Implementation.DeleteResult | base Boolean | generated | method-result
+    def delete(slug: com.histmersion.domain.automation.goals.GoalService.DeleteSlug): com.histmersion.domain.automation.goals.GoalService.DeleteResult
+    def delete(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.DeleteSlug): com.histmersion.domain.automation.goals.GoalService.Implementation.Delete
+com.histmersion.domain.automation.goals.GoalService.Implementation.DeleteSlug | base String | generated | method-parameter
+    def delete(slug: com.histmersion.domain.automation.goals.GoalService.DeleteSlug): com.histmersion.domain.automation.goals.GoalService.DeleteResult
+    def delete(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.DeleteSlug): com.histmersion.domain.automation.goals.GoalService.Implementation.Delete
+com.histmersion.domain.automation.goals.GoalService.Implementation.GetSlug | base String | generated | method-parameter
+    def get(slug: com.histmersion.domain.automation.goals.GoalService.GetSlug): Option[Goal]
+    def get(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.GetSlug): Option[Goal] = db.read(GoalRepo.get(slug))
+com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsItems | base Int | generated | method-parameter
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalService.GoalsOfIte
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalSer
+com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsResultPart1 | base Int | generated | method-result
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalService.GoalsOfIte
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalSer
+com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsResultPart2 | base String | generated | method-result
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalService.GoalsOfIte
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalSer
+com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsResultPart3 | base String | generated | method-result
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalService.GoalsOfIte
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalSer
+com.histmersion.domain.automation.goals.GoalService.Implementation.LinkCountsResultPart1Part1 | base String | generated | method-result
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.LinkCountsResul
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.Implementation.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.
+com.histmersion.domain.automation.goals.GoalService.Implementation.LinkCountsResultPart1Part2 | base String | generated | method-result
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.LinkCountsResul
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.Implementation.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.
+com.histmersion.domain.automation.goals.GoalService.Implementation.LinkCountsResultPart2 | base Int | generated | method-result
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.LinkCountsResul
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.Implementation.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.
+com.histmersion.domain.automation.goals.GoalService.Implementation.LinkGoal | base String | generated | method-parameter
+    val LinkGoal: _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Goal.type = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Goal
+com.histmersion.domain.automation.goals.GoalService.Implementation.LinkNote | base String | generated | method-parameter
+    val LinkNote: _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Note.type = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Note
+com.histmersion.domain.automation.goals.GoalService.Implementation.LinkRef | base String | generated | method-parameter
+    val LinkRef: _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Ref.type = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Ref
+com.histmersion.domain.automation.goals.GoalService.Implementation.LinkResult | base Boolean | generated | method-result
+com.histmersion.domain.automation.goals.GoalService.Implementation.LinksGoal | base String | generated | method-parameter
+    def links(goal: com.histmersion.domain.automation.goals.GoalService.LinksGoal): List[GoalLink]
+    def links(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.LinksGoal): List[GoalLink] = db.read(GoalLinkRepo.links(goal))
+com.histmersion.domain.automation.goals.GoalService.Implementation.PageLimit | base Int | generated | method-parameter
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.PageLimit, offset: com
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.Implementation.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.Impleme
+com.histmersion.domain.automation.goals.GoalService.Implementation.PageOffset | base Int | generated | method-parameter
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.PageLimit, offset: com
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.Implementation.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.Impleme
+com.histmersion.domain.automation.goals.GoalService.Implementation.PageStatus | base String | generated | method-parameter
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.PageLimit, offset: com
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.Implementation.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.Impleme
+com.histmersion.domain.automation.goals.GoalService.Implementation.PatchSlug | base String | generated | method-parameter
+    def patch(slug: com.histmersion.domain.automation.goals.GoalService.PatchSlug, p: Goal.Patch): Either[Api.Error, Unit]
+    def patch(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.PatchSlug, p: Goal.Patch): Either[Api.Error, Unit] = db.transact(GoalRepo.patchIn(slug,
+com.histmersion.domain.automation.goals.GoalService.Implementation.PlanAndBudgetGoal | base String | generated | method-parameter
+    def planAndBudget(goal: com.histmersion.domain.automation.goals.GoalService.PlanAndBudgetGoal): Option[(Option[com.histmersion.domain.automation.goals.GoalService.PlanAnd
+    def planAndBudget(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.PlanAndBudgetGoal): Option[(Option[com.histmersion.domain.automation.goals.Goal
+com.histmersion.domain.automation.goals.GoalService.Implementation.PlanAndBudgetResultPart1 | base String | generated | method-result
+    def planAndBudget(goal: com.histmersion.domain.automation.goals.GoalService.PlanAndBudgetGoal): Option[(Option[com.histmersion.domain.automation.goals.GoalService.PlanAnd
+    def planAndBudget(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.PlanAndBudgetGoal): Option[(Option[com.histmersion.domain.automation.goals.Goal
+com.histmersion.domain.automation.goals.GoalService.Implementation.PlannedResult | base String | generated | method-result
+    def planned(): Set[com.histmersion.domain.automation.goals.GoalService.PlannedResult]
+    def planned(): Set[com.histmersion.domain.automation.goals.GoalService.Implementation.PlannedResult] = db.read(GoalLinkRepo.planned())
+com.histmersion.domain.automation.goals.GoalService.Implementation.PutSlug | base String | generated | method-parameter
+    def put(slug: com.histmersion.domain.automation.goals.GoalService.PutSlug, in: Goal.Put): Either[Api.Error, Unit]
+    def put(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.PutSlug, in: Goal.Put): Either[Api.Error, Unit] = db.transact(GoalRepo.put(slug, in))
+com.histmersion.domain.automation.goals.GoalService.Implementation.RefsGoal | base String | generated | method-parameter
+    def refs(goal: com.histmersion.domain.automation.goals.GoalService.RefsGoal, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.domain.automatio
+    def refs(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.RefsGoal, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.d
+com.histmersion.domain.automation.goals.GoalService.Implementation.RefsResult | base String | generated | method-result
+    def refs(goal: com.histmersion.domain.automation.goals.GoalService.RefsGoal, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.domain.automatio
+    def refs(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.RefsGoal, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.d
+com.histmersion.domain.automation.goals.GoalService.Implementation.RemoveScheduleGoal | base String | generated | method-parameter
+    def removeSchedule(goal: com.histmersion.domain.automation.goals.GoalService.RemoveScheduleGoal, kind: ScheduleKind): com.histmersion.domain.automation.goals.GoalService.
+    def removeSchedule(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.RemoveScheduleGoal, kind: ScheduleKind): com.histmersion.domain.automation.goa
+com.histmersion.domain.automation.goals.GoalService.Implementation.RemoveScheduleResult | base Boolean | generated | method-result
+    def removeSchedule(goal: com.histmersion.domain.automation.goals.GoalService.RemoveScheduleGoal, kind: ScheduleKind): com.histmersion.domain.automation.goals.GoalService.
+    def removeSchedule(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.RemoveScheduleGoal, kind: ScheduleKind): com.histmersion.domain.automation.goa
+com.histmersion.domain.automation.goals.GoalService.Implementation.RenameFrom | base String | generated | method-parameter
+    def rename(from: com.histmersion.domain.automation.goals.GoalService.RenameFrom, to: com.histmersion.domain.automation.goals.GoalService.RenameTo): Either[Api.Error, Unit
+    def rename(from: com.histmersion.domain.automation.goals.GoalService.Implementation.RenameFrom, to: com.histmersion.domain.automation.goals.GoalService.Implementation.Ren
+com.histmersion.domain.automation.goals.GoalService.Implementation.RenameTo | base String | generated | method-parameter
+    def rename(from: com.histmersion.domain.automation.goals.GoalService.RenameFrom, to: com.histmersion.domain.automation.goals.GoalService.RenameTo): Either[Api.Error, Unit
+    def rename(from: com.histmersion.domain.automation.goals.GoalService.Implementation.RenameFrom, to: com.histmersion.domain.automation.goals.GoalService.Implementation.Ren
+com.histmersion.domain.automation.goals.GoalService.Implementation.ScheduleGoalsResult | base String | generated | method-result
+    def scheduleGoals(): List[com.histmersion.domain.automation.goals.GoalService.ScheduleGoalsResult]
+    def scheduleGoals(): List[com.histmersion.domain.automation.goals.GoalService.Implementation.ScheduleGoalsResult] = db.read(GoalLinkRepo.scheduleGoals())
+com.histmersion.domain.automation.goals.GoalService.Implementation.SchedulesGoal | base String | generated | method-parameter
+    def schedules(goal: Option[com.histmersion.domain.automation.goals.GoalService.SchedulesGoal]): List[GoalSchedule]
+    def schedules(goal: Option[com.histmersion.domain.automation.goals.GoalService.Implementation.SchedulesGoal]): List[GoalSchedule] = db.read(GoalLinkRepo.schedules(goal))
+com.histmersion.domain.automation.goals.GoalService.Implementation.SetBudgetGoal | base String | generated | method-parameter
+    def setBudget(goal: com.histmersion.domain.automation.goals.GoalService.SetBudgetGoal, usd: Option[BigDecimal]): Unit
+    def setBudget(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.SetBudgetGoal, usd: Option[BigDecimal]): Unit = db.transact(GoalLinkRepo.setBudget(
+com.histmersion.domain.automation.goals.GoalService.Implementation.SetPlanGoal | base String | generated | method-parameter
+    def setPlan(goal: com.histmersion.domain.automation.goals.GoalService.SetPlanGoal, planJson: com.histmersion.domain.automation.goals.GoalService.SetPlanPlanJson): Unit
+    def setPlan(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.SetPlanGoal, planJson: com.histmersion.domain.automation.goals.GoalService.Implementa
+com.histmersion.domain.automation.goals.GoalService.Implementation.SetPlanPlanJson | base String | generated | method-parameter
+    def setPlan(goal: com.histmersion.domain.automation.goals.GoalService.SetPlanGoal, planJson: com.histmersion.domain.automation.goals.GoalService.SetPlanPlanJson): Unit
+    def setPlan(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.SetPlanGoal, planJson: com.histmersion.domain.automation.goals.GoalService.Implementa
+com.histmersion.domain.automation.goals.GoalService.Implementation.SetScheduleCron | base String | generated | method-parameter
+    val SetScheduleCron: _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Cron.type = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Cron
+com.histmersion.domain.automation.goals.GoalService.Implementation.SetScheduleEnabled | base Boolean | generated | method-parameter
+    val SetScheduleEnabled: _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Enabled.type = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord
+com.histmersion.domain.automation.goals.GoalService.Implementation.SetScheduleGoal | base String | generated | method-parameter
+    val SetScheduleGoal: _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Goal.type = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Goal
+com.histmersion.domain.automation.goals.GoalService.Implementation.TakeSchedulesInGoal | base String | generated | method-parameter
+    def takeSchedulesIn(goal: com.histmersion.domain.automation.goals.GoalService.TakeSchedulesInGoal)(using DbCon): List[GoalSchedule]
+    def takeSchedulesIn(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.TakeSchedulesInGoal)(using DbCon): List[GoalSchedule] = GoalLinkRepo.takeSche
+com.histmersion.domain.automation.goals.GoalService.Implementation.UnlinkGoal | base String | generated | method-parameter
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersion.domain.automa
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersio
+com.histmersion.domain.automation.goals.GoalService.Implementation.UnlinkRef | base String | generated | method-parameter
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersion.domain.automa
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersio
+com.histmersion.domain.automation.goals.GoalService.Implementation.UnlinkResult | base Boolean | generated | method-result
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersion.domain.automa
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersio
+com.histmersion.domain.automation.goals.GoalService.InMemory.ChangeGoalGoal | base String | generated | method-parameter
+    private def changeGoal(goal: com.histmersion.domain.automation.goals.GoalService.InMemory.ChangeGoalGoal)(f: GoalRecord => GoalRecord): Unit =
+com.histmersion.domain.automation.goals.GoalService.InMemory.ChildrenSlug | base String | generated | method-parameter
+    def children(slug: com.histmersion.domain.automation.goals.GoalService.ChildrenSlug): List[Goal]
+    def children(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.ChildrenSlug): List[Goal] = db.read(GoalRepo.children(slug))
+com.histmersion.domain.automation.goals.GoalService.InMemory.DeleteResult | base Boolean | generated | method-result
+    def delete(slug: com.histmersion.domain.automation.goals.GoalService.DeleteSlug): com.histmersion.domain.automation.goals.GoalService.DeleteResult
+    def delete(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.DeleteSlug): com.histmersion.domain.automation.goals.GoalService.Implementation.Delete
+com.histmersion.domain.automation.goals.GoalService.InMemory.DeleteSlug | base String | generated | method-parameter
+    def delete(slug: com.histmersion.domain.automation.goals.GoalService.DeleteSlug): com.histmersion.domain.automation.goals.GoalService.DeleteResult
+    def delete(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.DeleteSlug): com.histmersion.domain.automation.goals.GoalService.Implementation.Delete
+com.histmersion.domain.automation.goals.GoalService.InMemory.GetSlug | base String | generated | method-parameter
+    def get(slug: com.histmersion.domain.automation.goals.GoalService.GetSlug): Option[Goal]
+    def get(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.GetSlug): Option[Goal] = db.read(GoalRepo.get(slug))
+com.histmersion.domain.automation.goals.GoalService.InMemory.GoalsOfItemsItems | base Int | generated | method-parameter
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalService.GoalsOfIte
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalSer
+com.histmersion.domain.automation.goals.GoalService.InMemory.GoalsOfItemsResultPart1 | base Int | generated | method-result
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalService.GoalsOfIte
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalSer
+com.histmersion.domain.automation.goals.GoalService.InMemory.GoalsOfItemsResultPart2 | base String | generated | method-result
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalService.GoalsOfIte
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalSer
+com.histmersion.domain.automation.goals.GoalService.InMemory.GoalsOfItemsResultPart3 | base String | generated | method-result
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalService.GoalsOfIte
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalSer
+com.histmersion.domain.automation.goals.GoalService.InMemory.GoalsResultPart1 | base String | generated | method-result
+    private def goals: Map[com.histmersion.domain.automation.goals.GoalService.InMemory.GoalsResultPart1, GoalRecord] = state.get.goals
+com.histmersion.domain.automation.goals.GoalService.InMemory.KindOrderResult | base Int | generated | method-result
+    private def kindOrder(k: com.histmersion.domain.automation.Goal.LinkKind): com.histmersion.domain.automation.goals.GoalService.InMemory.KindOrderResult = k match
+com.histmersion.domain.automation.goals.GoalService.InMemory.LinkCountsResultPart1Part1 | base String | generated | method-result
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.LinkCountsResul
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.Implementation.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.
+com.histmersion.domain.automation.goals.GoalService.InMemory.LinkCountsResultPart1Part2 | base String | generated | method-result
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.LinkCountsResul
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.Implementation.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.
+com.histmersion.domain.automation.goals.GoalService.InMemory.LinkCountsResultPart2 | base Int | generated | method-result
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.LinkCountsResul
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.Implementation.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.
+com.histmersion.domain.automation.goals.GoalService.InMemory.LinkResult | base Boolean | generated | method-result
+com.histmersion.domain.automation.goals.GoalService.InMemory.LinksGoal | base String | generated | method-parameter
+    def links(goal: com.histmersion.domain.automation.goals.GoalService.LinksGoal): List[GoalLink]
+    def links(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.LinksGoal): List[GoalLink] = db.read(GoalLinkRepo.links(goal))
+com.histmersion.domain.automation.goals.GoalService.InMemory.NotFoundSlug | base String | generated | method-parameter
+    private def notFound(slug: com.histmersion.domain.automation.goals.GoalService.InMemory.NotFoundSlug) = Api.Error(s"No goal '$slug'", Some(Write.CodeNotFound))
+com.histmersion.domain.automation.goals.GoalService.InMemory.PageLimit | base Int | generated | method-parameter
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.PageLimit, offset: com
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.Implementation.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.Impleme
+com.histmersion.domain.automation.goals.GoalService.InMemory.PageOffset | base Int | generated | method-parameter
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.PageLimit, offset: com
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.Implementation.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.Impleme
+com.histmersion.domain.automation.goals.GoalService.InMemory.PageStatus | base String | generated | method-parameter
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.PageLimit, offset: com
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.Implementation.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.Impleme
+com.histmersion.domain.automation.goals.GoalService.InMemory.PatchSlug | base String | generated | method-parameter
+    def patch(slug: com.histmersion.domain.automation.goals.GoalService.PatchSlug, p: Goal.Patch): Either[Api.Error, Unit]
+    def patch(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.PatchSlug, p: Goal.Patch): Either[Api.Error, Unit] = db.transact(GoalRepo.patchIn(slug,
+com.histmersion.domain.automation.goals.GoalService.InMemory.PlanAndBudgetGoal | base String | generated | method-parameter
+    def planAndBudget(goal: com.histmersion.domain.automation.goals.GoalService.PlanAndBudgetGoal): Option[(Option[com.histmersion.domain.automation.goals.GoalService.PlanAnd
+    def planAndBudget(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.PlanAndBudgetGoal): Option[(Option[com.histmersion.domain.automation.goals.Goal
+com.histmersion.domain.automation.goals.GoalService.InMemory.PlanAndBudgetResultPart1 | base String | generated | method-result
+    def planAndBudget(goal: com.histmersion.domain.automation.goals.GoalService.PlanAndBudgetGoal): Option[(Option[com.histmersion.domain.automation.goals.GoalService.PlanAnd
+    def planAndBudget(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.PlanAndBudgetGoal): Option[(Option[com.histmersion.domain.automation.goals.Goal
+com.histmersion.domain.automation.goals.GoalService.InMemory.PlannedResult | base String | generated | method-result
+    def planned(): Set[com.histmersion.domain.automation.goals.GoalService.PlannedResult]
+    def planned(): Set[com.histmersion.domain.automation.goals.GoalService.Implementation.PlannedResult] = db.read(GoalLinkRepo.planned())
+com.histmersion.domain.automation.goals.GoalService.InMemory.PutSlug | base String | generated | method-parameter
+    def put(slug: com.histmersion.domain.automation.goals.GoalService.PutSlug, in: Goal.Put): Either[Api.Error, Unit]
+    def put(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.PutSlug, in: Goal.Put): Either[Api.Error, Unit] = db.transact(GoalRepo.put(slug, in))
+com.histmersion.domain.automation.goals.GoalService.InMemory.RefsGoal | base String | generated | method-parameter
+    def refs(goal: com.histmersion.domain.automation.goals.GoalService.RefsGoal, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.domain.automatio
+    def refs(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.RefsGoal, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.d
+com.histmersion.domain.automation.goals.GoalService.InMemory.RefsResult | base String | generated | method-result
+    def refs(goal: com.histmersion.domain.automation.goals.GoalService.RefsGoal, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.domain.automatio
+    def refs(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.RefsGoal, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.d
+com.histmersion.domain.automation.goals.GoalService.InMemory.RemoveScheduleGoal | base String | generated | method-parameter
+    def removeSchedule(goal: com.histmersion.domain.automation.goals.GoalService.RemoveScheduleGoal, kind: ScheduleKind): com.histmersion.domain.automation.goals.GoalService.
+    def removeSchedule(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.RemoveScheduleGoal, kind: ScheduleKind): com.histmersion.domain.automation.goa
+com.histmersion.domain.automation.goals.GoalService.InMemory.RemoveScheduleResult | base Boolean | generated | method-result
+    def removeSchedule(goal: com.histmersion.domain.automation.goals.GoalService.RemoveScheduleGoal, kind: ScheduleKind): com.histmersion.domain.automation.goals.GoalService.
+    def removeSchedule(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.RemoveScheduleGoal, kind: ScheduleKind): com.histmersion.domain.automation.goa
+com.histmersion.domain.automation.goals.GoalService.InMemory.RenameFrom | base String | generated | method-parameter
+    def rename(from: com.histmersion.domain.automation.goals.GoalService.RenameFrom, to: com.histmersion.domain.automation.goals.GoalService.RenameTo): Either[Api.Error, Unit
+    def rename(from: com.histmersion.domain.automation.goals.GoalService.Implementation.RenameFrom, to: com.histmersion.domain.automation.goals.GoalService.Implementation.Ren
+com.histmersion.domain.automation.goals.GoalService.InMemory.RenameMovedS | base String | generated | method-parameter
+    def moved(s: com.histmersion.domain.automation.goals.GoalService.InMemory.RenameMovedS) = if s == old then now else s
+com.histmersion.domain.automation.goals.GoalService.InMemory.RenameTo | base String | generated | method-parameter
+    def rename(from: com.histmersion.domain.automation.goals.GoalService.RenameFrom, to: com.histmersion.domain.automation.goals.GoalService.RenameTo): Either[Api.Error, Unit
+    def rename(from: com.histmersion.domain.automation.goals.GoalService.Implementation.RenameFrom, to: com.histmersion.domain.automation.goals.GoalService.Implementation.Ren
+com.histmersion.domain.automation.goals.GoalService.InMemory.ScheduleGoalsResult | base String | generated | method-result
+    def scheduleGoals(): List[com.histmersion.domain.automation.goals.GoalService.ScheduleGoalsResult]
+    def scheduleGoals(): List[com.histmersion.domain.automation.goals.GoalService.Implementation.ScheduleGoalsResult] = db.read(GoalLinkRepo.scheduleGoals())
+com.histmersion.domain.automation.goals.GoalService.InMemory.SchedulesGoal | base String | generated | method-parameter
+    def schedules(goal: Option[com.histmersion.domain.automation.goals.GoalService.SchedulesGoal]): List[GoalSchedule]
+    def schedules(goal: Option[com.histmersion.domain.automation.goals.GoalService.Implementation.SchedulesGoal]): List[GoalSchedule] = db.read(GoalLinkRepo.schedules(goal))
+com.histmersion.domain.automation.goals.GoalService.InMemory.SetBudgetGoal | base String | generated | method-parameter
+    def setBudget(goal: com.histmersion.domain.automation.goals.GoalService.SetBudgetGoal, usd: Option[BigDecimal]): Unit
+    def setBudget(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.SetBudgetGoal, usd: Option[BigDecimal]): Unit = db.transact(GoalLinkRepo.setBudget(
+com.histmersion.domain.automation.goals.GoalService.InMemory.SetPlanGoal | base String | generated | method-parameter
+    def setPlan(goal: com.histmersion.domain.automation.goals.GoalService.SetPlanGoal, planJson: com.histmersion.domain.automation.goals.GoalService.SetPlanPlanJson): Unit
+    def setPlan(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.SetPlanGoal, planJson: com.histmersion.domain.automation.goals.GoalService.Implementa
+com.histmersion.domain.automation.goals.GoalService.InMemory.SetPlanPlanJson | base String | generated | method-parameter
+    def setPlan(goal: com.histmersion.domain.automation.goals.GoalService.SetPlanGoal, planJson: com.histmersion.domain.automation.goals.GoalService.SetPlanPlanJson): Unit
+    def setPlan(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.SetPlanGoal, planJson: com.histmersion.domain.automation.goals.GoalService.Implementa
+com.histmersion.domain.automation.goals.GoalService.InMemory.TakeSchedulesInGoal | base String | generated | method-parameter
+    def takeSchedulesIn(goal: com.histmersion.domain.automation.goals.GoalService.TakeSchedulesInGoal)(using DbCon): List[GoalSchedule]
+    def takeSchedulesIn(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.TakeSchedulesInGoal)(using DbCon): List[GoalSchedule] = GoalLinkRepo.takeSche
+com.histmersion.domain.automation.goals.GoalService.InMemory.UnlinkGoal | base String | generated | method-parameter
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersion.domain.automa
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersio
+com.histmersion.domain.automation.goals.GoalService.InMemory.UnlinkRef | base String | generated | method-parameter
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersion.domain.automa
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersio
+com.histmersion.domain.automation.goals.GoalService.InMemory.UnlinkResult | base Boolean | generated | method-result
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersion.domain.automa
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersio
+com.histmersion.domain.automation.goals.GoalService.InMemory.UpdatedTextResult | base String | generated | method-result
+    private def updatedText(at: Instant): com.histmersion.domain.automation.goals.GoalService.InMemory.UpdatedTextResult =
+com.histmersion.domain.automation.goals.GoalService.LinkCountsResultPart1Part1 | base String | generated | method-result
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.LinkCountsResul
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.Implementation.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.
+com.histmersion.domain.automation.goals.GoalService.LinkCountsResultPart1Part2 | base String | generated | method-result
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.LinkCountsResul
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.Implementation.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.
+com.histmersion.domain.automation.goals.GoalService.LinkCountsResultPart2 | base Int | generated | method-result
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.LinkCountsResul
+    def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.Implementation.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.
+com.histmersion.domain.automation.goals.GoalService.LinkGoal | base String | generated | method-parameter
+    val LinkGoal: _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Goal.type = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Goal
+com.histmersion.domain.automation.goals.GoalService.LinkNote | base String | generated | method-parameter
+    val LinkNote: _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Note.type = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Note
+com.histmersion.domain.automation.goals.GoalService.LinkRef | base String | generated | method-parameter
+    val LinkRef: _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Ref.type = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Ref
+com.histmersion.domain.automation.goals.GoalService.LinkResult | base Boolean | generated | method-result
+com.histmersion.domain.automation.goals.GoalService.LinksGoal | base String | generated | method-parameter
+    def links(goal: com.histmersion.domain.automation.goals.GoalService.LinksGoal): List[GoalLink]
+    def links(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.LinksGoal): List[GoalLink] = db.read(GoalLinkRepo.links(goal))
+com.histmersion.domain.automation.goals.GoalService.PageLimit | base Int | generated | method-parameter
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.PageLimit, offset: com
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.Implementation.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.Impleme
+com.histmersion.domain.automation.goals.GoalService.PageOffset | base Int | generated | method-parameter
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.PageLimit, offset: com
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.Implementation.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.Impleme
+com.histmersion.domain.automation.goals.GoalService.PageStatus | base String | generated | method-parameter
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.PageLimit, offset: com
+    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.Implementation.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.Impleme
+com.histmersion.domain.automation.goals.GoalService.PatchSlug | base String | generated | method-parameter
+    def patch(slug: com.histmersion.domain.automation.goals.GoalService.PatchSlug, p: Goal.Patch): Either[Api.Error, Unit]
+    def patch(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.PatchSlug, p: Goal.Patch): Either[Api.Error, Unit] = db.transact(GoalRepo.patchIn(slug,
+com.histmersion.domain.automation.goals.GoalService.PlanAndBudgetGoal | base String | generated | method-parameter
+    def planAndBudget(goal: com.histmersion.domain.automation.goals.GoalService.PlanAndBudgetGoal): Option[(Option[com.histmersion.domain.automation.goals.GoalService.PlanAnd
+    def planAndBudget(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.PlanAndBudgetGoal): Option[(Option[com.histmersion.domain.automation.goals.Goal
+com.histmersion.domain.automation.goals.GoalService.PlanAndBudgetResultPart1 | base String | generated | method-result
+    def planAndBudget(goal: com.histmersion.domain.automation.goals.GoalService.PlanAndBudgetGoal): Option[(Option[com.histmersion.domain.automation.goals.GoalService.PlanAnd
+    def planAndBudget(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.PlanAndBudgetGoal): Option[(Option[com.histmersion.domain.automation.goals.Goal
+com.histmersion.domain.automation.goals.GoalService.PlannedResult | base String | generated | method-result
+    def planned(): Set[com.histmersion.domain.automation.goals.GoalService.PlannedResult]
+    def planned(): Set[com.histmersion.domain.automation.goals.GoalService.Implementation.PlannedResult] = db.read(GoalLinkRepo.planned())
+com.histmersion.domain.automation.goals.GoalService.PutSlug | base String | generated | method-parameter
+    def put(slug: com.histmersion.domain.automation.goals.GoalService.PutSlug, in: Goal.Put): Either[Api.Error, Unit]
+    def put(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.PutSlug, in: Goal.Put): Either[Api.Error, Unit] = db.transact(GoalRepo.put(slug, in))
+com.histmersion.domain.automation.goals.GoalService.RefsGoal | base String | generated | method-parameter
+    def refs(goal: com.histmersion.domain.automation.goals.GoalService.RefsGoal, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.domain.automatio
+    def refs(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.RefsGoal, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.d
+com.histmersion.domain.automation.goals.GoalService.RefsResult | base String | generated | method-result
+    def refs(goal: com.histmersion.domain.automation.goals.GoalService.RefsGoal, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.domain.automatio
+    def refs(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.RefsGoal, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.d
+com.histmersion.domain.automation.goals.GoalService.RemoveScheduleGoal | base String | generated | method-parameter
+    def removeSchedule(goal: com.histmersion.domain.automation.goals.GoalService.RemoveScheduleGoal, kind: ScheduleKind): com.histmersion.domain.automation.goals.GoalService.
+    def removeSchedule(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.RemoveScheduleGoal, kind: ScheduleKind): com.histmersion.domain.automation.goa
+com.histmersion.domain.automation.goals.GoalService.RemoveScheduleResult | base Boolean | generated | method-result
+    def removeSchedule(goal: com.histmersion.domain.automation.goals.GoalService.RemoveScheduleGoal, kind: ScheduleKind): com.histmersion.domain.automation.goals.GoalService.
+    def removeSchedule(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.RemoveScheduleGoal, kind: ScheduleKind): com.histmersion.domain.automation.goa
+com.histmersion.domain.automation.goals.GoalService.RenameFrom | base String | generated | method-parameter
+    def rename(from: com.histmersion.domain.automation.goals.GoalService.RenameFrom, to: com.histmersion.domain.automation.goals.GoalService.RenameTo): Either[Api.Error, Unit
+    def rename(from: com.histmersion.domain.automation.goals.GoalService.Implementation.RenameFrom, to: com.histmersion.domain.automation.goals.GoalService.Implementation.Ren
+com.histmersion.domain.automation.goals.GoalService.RenameTo | base String | generated | method-parameter
+    def rename(from: com.histmersion.domain.automation.goals.GoalService.RenameFrom, to: com.histmersion.domain.automation.goals.GoalService.RenameTo): Either[Api.Error, Unit
+    def rename(from: com.histmersion.domain.automation.goals.GoalService.Implementation.RenameFrom, to: com.histmersion.domain.automation.goals.GoalService.Implementation.Ren
+com.histmersion.domain.automation.goals.GoalService.ScheduleGoalsResult | base String | generated | method-result
+    def scheduleGoals(): List[com.histmersion.domain.automation.goals.GoalService.ScheduleGoalsResult]
+    def scheduleGoals(): List[com.histmersion.domain.automation.goals.GoalService.Implementation.ScheduleGoalsResult] = db.read(GoalLinkRepo.scheduleGoals())
+com.histmersion.domain.automation.goals.GoalService.SchedulesGoal | base String | generated | method-parameter
+    def schedules(goal: Option[com.histmersion.domain.automation.goals.GoalService.SchedulesGoal]): List[GoalSchedule]
+    def schedules(goal: Option[com.histmersion.domain.automation.goals.GoalService.Implementation.SchedulesGoal]): List[GoalSchedule] = db.read(GoalLinkRepo.schedules(goal))
+com.histmersion.domain.automation.goals.GoalService.SetBudgetGoal | base String | generated | method-parameter
+    def setBudget(goal: com.histmersion.domain.automation.goals.GoalService.SetBudgetGoal, usd: Option[BigDecimal]): Unit
+    def setBudget(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.SetBudgetGoal, usd: Option[BigDecimal]): Unit = db.transact(GoalLinkRepo.setBudget(
+com.histmersion.domain.automation.goals.GoalService.SetPlanGoal | base String | generated | method-parameter
+    def setPlan(goal: com.histmersion.domain.automation.goals.GoalService.SetPlanGoal, planJson: com.histmersion.domain.automation.goals.GoalService.SetPlanPlanJson): Unit
+    def setPlan(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.SetPlanGoal, planJson: com.histmersion.domain.automation.goals.GoalService.Implementa
+com.histmersion.domain.automation.goals.GoalService.SetPlanPlanJson | base String | generated | method-parameter
+    def setPlan(goal: com.histmersion.domain.automation.goals.GoalService.SetPlanGoal, planJson: com.histmersion.domain.automation.goals.GoalService.SetPlanPlanJson): Unit
+    def setPlan(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.SetPlanGoal, planJson: com.histmersion.domain.automation.goals.GoalService.Implementa
+com.histmersion.domain.automation.goals.GoalService.SetScheduleCron | base String | generated | method-parameter
+    val SetScheduleCron: _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Cron.type = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Cron
+com.histmersion.domain.automation.goals.GoalService.SetScheduleEnabled | base Boolean | generated | method-parameter
+    val SetScheduleEnabled: _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Enabled.type = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord
+com.histmersion.domain.automation.goals.GoalService.SetScheduleGoal | base String | generated | method-parameter
+    val SetScheduleGoal: _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Goal.type = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Goal
+com.histmersion.domain.automation.goals.GoalService.TakeSchedulesInGoal | base String | generated | method-parameter
+    def takeSchedulesIn(goal: com.histmersion.domain.automation.goals.GoalService.TakeSchedulesInGoal)(using DbCon): List[GoalSchedule]
+    def takeSchedulesIn(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.TakeSchedulesInGoal)(using DbCon): List[GoalSchedule] = GoalLinkRepo.takeSche
+com.histmersion.domain.automation.goals.GoalService.UnlinkGoal | base String | generated | method-parameter
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersion.domain.automa
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersio
+com.histmersion.domain.automation.goals.GoalService.UnlinkRef | base String | generated | method-parameter
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersion.domain.automa
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersio
+com.histmersion.domain.automation.goals.GoalService.UnlinkResult | base Boolean | generated | method-result
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersion.domain.automa
+    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersio

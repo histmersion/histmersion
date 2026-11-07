@@ -25,43 +25,27 @@ import com.histmersion.api.Api
   * job, the sea floor the settings choose, and the providers' client under the product's outbound-HTTP policy.
   */
 object BasemapWiring:
+  type Attempt = Attempt.T
+  object Attempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BusyCode = BusyCode.T
+  object BusyCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobAbout = JobAbout.T
+  object JobAbout extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobWhat = JobWhat.T
+  object JobWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Operation = Operation.T
+  object Operation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartBody = StartBody.T
+  object StartBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The base map of `deps`, reading its providers over the network. */
-  type JobsRunningResult = JobsRunningResult.T
-  object JobsRunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobsGuardedOp = JobsGuardedOp.T
-  object JobsGuardedOp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobsBusyWhat = JobsBusyWhat.T
-  object JobsBusyWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobsBusyBusyCode = JobsBusyBusyCode.T
-  object JobsBusyBusyCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobsStartKind = JobsStartKind.T
-  object JobsStartKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobsStartAbout = JobsStartAbout.T
-  object JobsStartAbout extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobsStartWhat = JobsStartWhat.T
-  object JobsStartWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobsStartBusyCode = JobsStartBusyCode.T
-  object JobsStartBusyCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobsStartBodyArg1Arg1 = JobsStartBodyArg1Arg1.T
-  object JobsStartBodyArg1Arg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobsStartBodyResultPart1 = JobsStartBodyResultPart1.T
-  object JobsStartBodyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobsStartBodyResultPart2 = JobsStartBodyResultPart2.T
-  object JobsStartBodyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ServiceFreeSpaceResult = ServiceFreeSpaceResult.T
-  object ServiceFreeSpaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BackoffMsResult = BackoffMsResult.T
   object BackoffMsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BackoffMsAttempt = BackoffMsAttempt.T
-  object BackoffMsAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SlowDownCode = SlowDownCode.T
   object SlowDownCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SlowDownRetryAfter = SlowDownRetryAfter.T
   object SlowDownRetryAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SlowDownAttempt = SlowDownAttempt.T
-  object SlowDownAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SlowDownMaxRetries = SlowDownMaxRetries.T
   object SlowDownMaxRetries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SlowDownMaxRetryAfterSeconds = SlowDownMaxRetryAfterSeconds.T
@@ -70,7 +54,7 @@ object BasemapWiring:
   def service(deps: Deps): BasemapService = service(deps, () => http(deps.cfg.basemap)(using deps.clock))
 
   /** The base map of `deps`; `http` and `freeSpace` are the seams a test substitutes for the network and the disk. */
-  def service(deps: Deps, http: () => RangeHttp, freeSpace: Store => com.histmersion.server.BasemapWiring.ServiceFreeSpaceResult = _.usableSpace.value): BasemapService =
+  def service(deps: Deps, http: () => RangeHttp, freeSpace: Store => com.histmersion.ByteCount = _.usableSpace.value): BasemapService =
     BasemapService(
       () => deps.cfg.basemap,
       deps.storage,
@@ -104,12 +88,12 @@ object BasemapWiring:
 
   /** [[HttpPolicy]]: 1, 2, 4 … s after a dropped connection; a slow-down answer after its `Retry-After`. */
   val Retries: RetryPolicy = new RetryPolicy:
-    def backoffMs(attempt: com.histmersion.server.BasemapWiring.BackoffMsAttempt): com.histmersion.server.BasemapWiring.BackoffMsResult = HttpPolicy.backoffMs(attempt)
+    def backoffMs(attempt: com.histmersion.server.BasemapWiring.Attempt): com.histmersion.server.BasemapWiring.BackoffMsResult = HttpPolicy.backoffMs(attempt)
 
     def slowDown(
         code: com.histmersion.server.BasemapWiring.SlowDownCode,
         retryAfter: Option[com.histmersion.server.BasemapWiring.SlowDownRetryAfter],
-        attempt: com.histmersion.server.BasemapWiring.SlowDownAttempt,
+        attempt: com.histmersion.server.BasemapWiring.Attempt,
         maxRetries: com.histmersion.server.BasemapWiring.SlowDownMaxRetries,
         maxRetryAfterSeconds: com.histmersion.server.BasemapWiring.SlowDownMaxRetryAfterSeconds,
         now: Instant
@@ -124,14 +108,14 @@ object BasemapWiring:
   def jobs(deps: Deps): BasemapJobs = new BasemapJobs:
     private val slot = BackgroundJob.Slot()
 
-    def running: Option[com.histmersion.server.BasemapWiring.JobsRunningResult] = slot.current
+    def running: Option[com.histmersion.util.jobs.Job.Id] = slot.current
 
-    def guarded[A](op: com.histmersion.server.BasemapWiring.JobsGuardedOp)(body: => Either[Api.Error, A]): Either[Api.Error, A] = deps.maintenance.guard(op)(body)
+    def guarded[A](op: com.histmersion.server.BasemapWiring.Operation)(body: => Either[Api.Error, A]): Either[Api.Error, A] = deps.maintenance.guard(op)(body)
 
-    def busy(what: com.histmersion.server.BasemapWiring.JobsBusyWhat, busyCode: Option[com.histmersion.server.BasemapWiring.JobsBusyBusyCode]): Api.Error = BackgroundJob.busy(what, slot.current, busyCode)
+    def busy(what: com.histmersion.server.BasemapWiring.JobWhat, busyCode: Option[com.histmersion.server.BasemapWiring.BusyCode]): Api.Error = BackgroundJob.busy(what, slot.current, busyCode)
 
-    def start(kind: com.histmersion.server.BasemapWiring.JobsStartKind, about: com.histmersion.server.BasemapWiring.JobsStartAbout, what: com.histmersion.server.BasemapWiring.JobsStartWhat, busyCode: Option[com.histmersion.server.BasemapWiring.JobsStartBusyCode])(
-        body: (com.histmersion.server.BasemapWiring.JobsStartBodyArg1Arg1 => Unit) => Either[com.histmersion.server.BasemapWiring.JobsStartBodyResultPart1, com.histmersion.server.BasemapWiring.JobsStartBodyResultPart2]
+    def start(kind: com.histmersion.util.jobs.Job.Kind, about: com.histmersion.server.BasemapWiring.JobAbout, what: com.histmersion.server.BasemapWiring.JobWhat, busyCode: Option[com.histmersion.server.BasemapWiring.BusyCode])(
+        body: (com.histmersion.server.BasemapWiring.StartBody => Unit) => Either[com.histmersion.server.BasemapWiring.StartBody, com.histmersion.server.BasemapWiring.StartBody]
     ): Either[Api.Error, JobInfo] =
       BackgroundJob.start(
         deps.ds,

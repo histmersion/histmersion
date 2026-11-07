@@ -25,60 +25,66 @@ import com.histmersion.api.library.Source
   */
 trait AgentUpstream:
   /** Upstream metadata of a DOI. */
-  def meta(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.domain.library.workflows.AgentUpstream.MetaResultPart1, WorkRef]
+  def meta(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, WorkRef]
 
   /** `refs --apply`: the deposited reference list, written as `references` edges (`apply = false`, a dry run: read,
     * nothing written).
     */
-  def refs(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.RefsApply = true): Either[com.histmersion.domain.library.workflows.AgentUpstream.RefsResultPart1, RefsResult]
+  def refs(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.RefsApply = true): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, RefsResult]
 
   /** `assess --apply`: the retraction/impact verdict; a retraction overwrites the status (`apply = false`, a dry run:
     * the verdict only — neither applied nor recorded).
     */
-  def assess(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.AssessApply = true): Either[com.histmersion.domain.library.workflows.AgentUpstream.AssessResultPart1, Assessment]
+  def assess(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.AssessApply = true): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, Assessment]
 
   /** The papers citing a source, read only (never `apply`). */
-  def followups(id: com.histmersion.domain.library.workflows.AgentUpstream.FollowupsId, since: Option[com.histmersion.domain.library.workflows.AgentUpstream.FollowupsSince], limit: Option[com.histmersion.domain.library.workflows.AgentUpstream.FollowupsLimit]): Either[com.histmersion.domain.library.workflows.AgentUpstream.FollowupsResultPart1, FollowupsResult]
+  def followups(id: com.histmersion.domain.library.workflows.AgentUpstream.FollowupsId, since: Option[com.histmersion.Year], limit: Option[com.histmersion.domain.library.workflows.FollowupsInput.Limit]): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, FollowupsResult]
 
   /** An OpenAlex search, each hit marked `inDb` (the discover path). */
-  def discover(query: com.histmersion.domain.library.workflows.AgentUpstream.DiscoverQuery, limit: com.histmersion.domain.library.workflows.AgentUpstream.DiscoverLimit): Either[com.histmersion.domain.library.workflows.AgentUpstream.DiscoverResultPart1, DiscoverResult]
+  def discover(query: com.histmersion.domain.library.search.Search.Query, limit: com.histmersion.domain.library.workflows.AgentUpstream.Limit): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, DiscoverResult]
 
   /** A watcher's auto-ingest of one DOI: the LEGAL open-access chain only (never an unauthorised fetcher, whatever
     * `acquire.allow-unauthorised` says), refused when no legal file exists (nothing is stored then). Not connected by
     * default: a fixture that does not answer it ingests nothing.
     */
-  def ingestLegal(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.domain.library.workflows.AgentUpstream.IngestLegalResultPart1, Ingest.Report] = Left("the acquisition toolset is not connected")
+  def ingestLegal(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, Ingest.Report] = Left("the acquisition toolset is not connected")
 
   /** The acquisition list's re-check of one DOI: [[ingestLegal]], fetched and converted into the metadata-only source
     * `into` when there is one (its enrichment stays).
     */
-  def ingestLegalInto(doi: com.histmersion.domain.library.Doi, into: Option[com.histmersion.domain.library.workflows.AgentUpstream.IngestLegalIntoInto]): Either[com.histmersion.domain.library.workflows.AgentUpstream.IngestLegalIntoResultPart1, Ingest.Report] = ingestLegal(doi)
+  def ingestLegalInto(doi: com.histmersion.domain.library.Doi, into: Option[com.histmersion.domain.library.workflows.AgentUpstream.Into]): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, Ingest.Report] = ingestLegal(doi)
 
   /** The legal chain's generation (a digest that changes with a fetcher or a key); "" when not connected. */
-  def fetcherGeneration: com.histmersion.domain.library.workflows.AgentUpstream.FetcherGenerationResult = ""
+  def fetcherGeneration: com.histmersion.domain.library.acquisition.AcquireClients.Generation = ""
 
   /** Whether the acquisition toolset is attached (Offline is not). */
-  def connected: com.histmersion.domain.library.workflows.AgentUpstream.ConnectedResult = true
+  def connected: Boolean = true
 
   /** The deterministic new-source search of a goal (#3761): its watches read from their watermarks, the new candidates
     * stored (a dry run stores nothing). Not connected by default: a fixture that does not answer it keeps the sweep's
     * live search.
     */
-  def sweepCandidates(goal: com.histmersion.domain.library.workflows.AgentUpstream.SweepCandidatesGoal, dryRun: com.histmersion.domain.library.workflows.AgentUpstream.SweepCandidatesDryRun): Either[com.histmersion.domain.library.workflows.AgentUpstream.SweepCandidatesResultPart1, CandidateSweep] = Left(
+  def sweepCandidates(goal: com.histmersion.domain.automation.Goal.Slug, dryRun: com.histmersion.domain.library.workflows.AgentUpstream.SweepCandidatesDryRun): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, CandidateSweep] = Left(
     "the candidate search is not connected"
   )
 
   /** A goal's candidates in one state (`new`: the unseen), oldest first. */
-  def candidates(goal: com.histmersion.domain.library.workflows.AgentUpstream.CandidatesGoal, state: com.histmersion.domain.library.workflows.AgentUpstream.CandidatesState, limit: com.histmersion.domain.library.workflows.AgentUpstream.CandidatesLimit): Either[com.histmersion.domain.library.workflows.AgentUpstream.CandidatesResultPart1, List[Source.Candidate]] = Left(
+  def candidates(goal: com.histmersion.domain.automation.Goal.Slug, state: com.histmersion.domain.library.acquisition.CandidateService.State, limit: com.histmersion.domain.library.workflows.AgentUpstream.Limit): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, List[Source.Candidate]] = Left(
     "the candidate search is not connected"
   )
 
   /** Record a decision on candidates by id. */
-  def markCandidates(ids: List[com.histmersion.domain.library.workflows.AgentUpstream.MarkCandidatesIds], state: com.histmersion.domain.library.workflows.AgentUpstream.MarkCandidatesState): Either[com.histmersion.domain.library.workflows.AgentUpstream.MarkCandidatesResultPart1, com.histmersion.domain.library.workflows.AgentUpstream.MarkCandidatesResultPart2] = Left(
+  def markCandidates(ids: List[com.histmersion.domain.library.workflows.AgentUpstream.MarkCandidatesIds], state: com.histmersion.domain.library.acquisition.CandidateService.State): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, com.histmersion.RowCount] = Left(
     "the candidate search is not connected"
   )
 
 object AgentUpstream:
+  type Into = Into.T
+  object Into extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Not connected (a test, or a server built without the acquisition toolset): every call says so, and the steps that
     * need it record that they were skipped.
@@ -89,71 +95,17 @@ object AgentUpstream:
   object OfAssessApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfFollowupsId = OfFollowupsId.T
   object OfFollowupsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfFollowupsSince = OfFollowupsSince.T
-  object OfFollowupsSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfFollowupsLimit = OfFollowupsLimit.T
-  object OfFollowupsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfDiscoverQuery = OfDiscoverQuery.T
-  object OfDiscoverQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfDiscoverLimit = OfDiscoverLimit.T
-  object OfDiscoverLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type MetaResultPart1 = MetaResultPart1.T
-  object MetaResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefsResultPart1 = RefsResultPart1.T
-  object RefsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefsApply = RefsApply.T
   object RefsApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AssessResultPart1 = AssessResultPart1.T
-  object AssessResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AssessApply = AssessApply.T
   object AssessApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FollowupsResultPart1 = FollowupsResultPart1.T
-  object FollowupsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FollowupsId = FollowupsId.T
   object FollowupsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FollowupsSince = FollowupsSince.T
-  object FollowupsSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FollowupsLimit = FollowupsLimit.T
-  object FollowupsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DiscoverResultPart1 = DiscoverResultPart1.T
-  object DiscoverResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DiscoverQuery = DiscoverQuery.T
-  object DiscoverQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DiscoverLimit = DiscoverLimit.T
-  object DiscoverLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IngestLegalResultPart1 = IngestLegalResultPart1.T
-  object IngestLegalResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IngestLegalIntoResultPart1 = IngestLegalIntoResultPart1.T
-  object IngestLegalIntoResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IngestLegalIntoInto = IngestLegalIntoInto.T
-  object IngestLegalIntoInto extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetcherGenerationResult = FetcherGenerationResult.T
-  object FetcherGenerationResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConnectedResult = ConnectedResult.T
-  object ConnectedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SweepCandidatesResultPart1 = SweepCandidatesResultPart1.T
-  object SweepCandidatesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SweepCandidatesGoal = SweepCandidatesGoal.T
-  object SweepCandidatesGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SweepCandidatesDryRun = SweepCandidatesDryRun.T
   object SweepCandidatesDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CandidatesResultPart1 = CandidatesResultPart1.T
-  object CandidatesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CandidatesGoal = CandidatesGoal.T
-  object CandidatesGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CandidatesState = CandidatesState.T
-  object CandidatesState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CandidatesLimit = CandidatesLimit.T
-  object CandidatesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkCandidatesResultPart1 = MarkCandidatesResultPart1.T
-  object MarkCandidatesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkCandidatesResultPart2 = MarkCandidatesResultPart2.T
-  object MarkCandidatesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MarkCandidatesIds = MarkCandidatesIds.T
   object MarkCandidatesIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkCandidatesState = MarkCandidatesState.T
-  object MarkCandidatesState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Offline extends AgentUpstream:
     type RefsApply = RefsApply.T
@@ -162,21 +114,13 @@ object AgentUpstream:
     object AssessApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FollowupsId = FollowupsId.T
     object FollowupsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FollowupsSince = FollowupsSince.T
-    object FollowupsSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FollowupsLimit = FollowupsLimit.T
-    object FollowupsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DiscoverQuery = DiscoverQuery.T
-    object DiscoverQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DiscoverLimit = DiscoverLimit.T
-    object DiscoverLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     private val off = Left("the acquisition toolset is not connected")
     def meta(doi: com.histmersion.domain.library.Doi) = off
     def refs(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.Offline.RefsApply) = off
     def assess(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.Offline.AssessApply) = off
-    def followups(id: com.histmersion.domain.library.workflows.AgentUpstream.Offline.FollowupsId, since: Option[com.histmersion.domain.library.workflows.AgentUpstream.Offline.FollowupsSince], limit: Option[com.histmersion.domain.library.workflows.AgentUpstream.Offline.FollowupsLimit]) = off
-    def discover(query: com.histmersion.domain.library.workflows.AgentUpstream.Offline.DiscoverQuery, limit: com.histmersion.domain.library.workflows.AgentUpstream.Offline.DiscoverLimit) = off
+    def followups(id: com.histmersion.domain.library.workflows.AgentUpstream.Offline.FollowupsId, since: Option[com.histmersion.Year], limit: Option[com.histmersion.domain.library.workflows.FollowupsInput.Limit]) = off
+    def discover(query: com.histmersion.domain.library.search.Search.Query, limit: com.histmersion.domain.library.workflows.AgentUpstream.Limit) = off
     override def connected = false
 
   /** The server's own acquisition handlers — the same calls `histmersion refs/assess/followups` make. */
@@ -185,9 +129,9 @@ object AgentUpstream:
     def refs(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.OfRefsApply) = a.refs(RefsRequest(citekey, apply = apply)).left.map(_.message)
     def assess(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.OfAssessApply) =
       (if apply then a.assess(AssessRequest(citekey, apply = true)) else a.assessReadOnly(citekey)).left.map(_.message)
-    def followups(id: com.histmersion.domain.library.workflows.AgentUpstream.OfFollowupsId, since: Option[com.histmersion.domain.library.workflows.AgentUpstream.OfFollowupsSince], limit: Option[com.histmersion.domain.library.workflows.AgentUpstream.OfFollowupsLimit]) =
+    def followups(id: com.histmersion.domain.library.workflows.AgentUpstream.OfFollowupsId, since: Option[com.histmersion.Year], limit: Option[com.histmersion.domain.library.workflows.FollowupsInput.Limit]) =
       a.followups(FollowupsRequest(id, since, limit, apply = false)).left.map(_.message)
-    def discover(query: com.histmersion.domain.library.workflows.AgentUpstream.OfDiscoverQuery, limit: com.histmersion.domain.library.workflows.AgentUpstream.OfDiscoverLimit) =
+    def discover(query: com.histmersion.domain.library.search.Search.Query, limit: com.histmersion.domain.library.workflows.AgentUpstream.Limit) =
       a.discover(query, None, None, Some(limit), notInDb = false).left.map(_.message)
     override def ingestLegal(doi: String) = a.ingestLegal(Ingest.Request(doi)).left.map(_.message)
     override def ingestLegalInto(doi: String, into: Option[String]) =

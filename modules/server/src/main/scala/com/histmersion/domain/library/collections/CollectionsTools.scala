@@ -19,8 +19,8 @@ import com.histmersion.api.library.{
 
 /** The collections as one MCP tool, `collection`: the same controllers the REST routes call, every answer Markdown. */
 object CollectionsTools:
-  type ApplyAnswerFResult = ApplyAnswerFResult.T
-  object ApplyAnswerFResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Answer = Answer.T
+  object Answer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   import com.histmersion.util.mcp.ToolInputs.given
 
@@ -45,8 +45,8 @@ object CollectionsTools:
     object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Name = Name.T
     object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = com.histmersion.domain.library.search.Search.Query
+    val Query: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Format = Format.T
@@ -67,7 +67,7 @@ object CollectionsTools:
 
   def apply(c: CollectionsControllers) =
     val me = Caller.Local
-    def answer[A](r: Either[com.histmersion.api.Api.Error, A])(f: A => com.histmersion.domain.library.collections.CollectionsTools.ApplyAnswerFResult) =
+    def answer[A](r: Either[com.histmersion.api.Api.Error, A])(f: A => com.histmersion.domain.library.collections.CollectionsTools.Answer) =
       ToolResult.text(r.fold(McpOut.refusal, f))
     val collection =
       tool("collection")

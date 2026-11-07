@@ -1,0 +1,367 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.automation.AgentRole.Wire (String)
+com.histmersion.domain.automation.Approval.DecidedBy.Describe (String)
+com.histmersion.domain.automation.Approval.DecidedBy.Wire (String)
+com.histmersion.domain.automation.Approval.Kind.Blocking (Boolean)
+com.histmersion.domain.automation.Approval.Kind.Wire (String)
+com.histmersion.domain.automation.Approval.Mode.Wire (String)
+com.histmersion.domain.automation.Approval.Note (String)
+com.histmersion.domain.automation.Approval.Outcome (String)
+com.histmersion.domain.automation.Approval.State.Wire (String)
+com.histmersion.domain.automation.Goal.LinkKind.Wire (String)
+com.histmersion.domain.automation.Goal.Slug (String)
+com.histmersion.domain.automation.Goal.Status.Wire (String)
+com.histmersion.domain.automation.Goal.Uid (UUID)
+com.histmersion.domain.automation.ItemStatus.Wire (String)
+com.histmersion.domain.automation.Manager.Kind.Wire (String)
+com.histmersion.domain.automation.Manager.State.Wire (String)
+com.histmersion.domain.automation.Pipeline.Describe (String)
+com.histmersion.domain.automation.Pipeline.Version (Int)
+com.histmersion.domain.automation.Pipeline.Wire (String)
+com.histmersion.domain.automation.ProviderKind.Wire (String)
+com.histmersion.domain.automation.Run.Id (String)
+com.histmersion.domain.automation.Run.State.Wire (String)
+com.histmersion.domain.automation.ScheduleKind.Wire (String)
+com.histmersion.domain.automation.Step.Status.Wire (String)
+com.histmersion.domain.automation.TargetKind.Wire (String)
+com.histmersion.domain.automation.agents.AgentRepo.ActiveOnly (Boolean)
+com.histmersion.domain.automation.agents.AgentRepo.ApprovalJobId (String)
+com.histmersion.domain.automation.agents.AgentRepo.CloseReason (String)
+com.histmersion.domain.automation.agents.AgentRepo.CursorProblem (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Content (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.LatencyMs (Int)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.N (Int)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Role (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolInput (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolName (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolResult (String)
+com.histmersion.domain.automation.agents.AgentRepo.OutputChars (Int)
+com.histmersion.domain.automation.agents.AgentRepo.PageCursor (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.ActualModel (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Attempt (Int)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Error (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.FirstCallTokens (Long)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Model (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.PromptHash (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq (Int)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Turns (Int)
+com.histmersion.domain.automation.agents.AgentsControllers.Prepared.DryRun (Boolean)
+com.histmersion.domain.automation.agents.AgentsControllers.Prepared.Goal (String)
+com.histmersion.domain.automation.agents.AgentsControllers.Prepared.Model (String)
+com.histmersion.domain.automation.agents.AgentsControllers.Prepared.Target (String)
+com.histmersion.domain.automation.agents.AgentsControllers.Prepared.Tokens (Long)
+com.histmersion.domain.automation.agents.AgentsControllers.Prepared.Usd (Double)
+com.histmersion.domain.automation.agents.LeaseRepo.LeaseExpiry (String)
+com.histmersion.domain.automation.agents.LeaseRepo.LeaseName (String)
+com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner (String)
+com.histmersion.domain.automation.agents.LeaseRepo.TtlSeconds (Int)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis (Long)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Floors (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Held (Boolean)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.PlanType (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Refusal (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.RefusalUntil (Long)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshDetail (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshMode (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshTrigger (String)
+com.histmersion.domain.automation.agents.RunQuery.Goal (String)
+com.histmersion.domain.automation.agents.RunQuery.Managers (String)
+com.histmersion.domain.automation.agents.RunQuery.Models (String)
+com.histmersion.domain.automation.agents.RunQuery.Origins (String)
+com.histmersion.domain.automation.agents.RunQuery.Pipelines (String)
+com.histmersion.domain.automation.agents.RunQuery.Providers (String)
+com.histmersion.domain.automation.agents.RunQuery.Q (String)
+com.histmersion.domain.automation.agents.RunQuery.Status (String)
+com.histmersion.domain.automation.agents.ToolUse.Input (String)
+com.histmersion.domain.automation.agents.ToolUse.Tool (String)
+com.histmersion.domain.automation.approvals.ApprovalQuery.Goal (String)
+com.histmersion.domain.automation.approvals.ApprovalQuery.Subject (String)
+com.histmersion.domain.automation.approvals.ProposalEvidence.Evidence (String)
+com.histmersion.domain.automation.approvals.ProposalEvidence.Quote (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Digest (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.DrainSince (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.DrainedAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled (Boolean)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.LastBackupAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.LastEnsureAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.LastLintAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Paused (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.CreatedAt (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.Kind (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.Note (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.Ref (String)
+com.histmersion.domain.automation.goals.BGoalRow.CreatedAt (String)
+com.histmersion.domain.automation.goals.BGoalRow.Notes (String)
+com.histmersion.domain.automation.goals.BGoalRow.PHi (Long)
+com.histmersion.domain.automation.goals.BGoalRow.PLo (Long)
+com.histmersion.domain.automation.goals.BGoalRow.PNull (Boolean)
+com.histmersion.domain.automation.goals.BGoalRow.Plan (String)
+com.histmersion.domain.automation.goals.BGoalRow.PlanApprovedAt (String)
+com.histmersion.domain.automation.goals.BGoalRow.Regions (String)
+com.histmersion.domain.automation.goals.BGoalRow.Slug (String)
+com.histmersion.domain.automation.goals.BGoalRow.Status (String)
+com.histmersion.domain.automation.goals.BGoalRow.Tags (String)
+com.histmersion.domain.automation.goals.BGoalRow.Title (String)
+com.histmersion.domain.automation.goals.BGoalRow.UpdatedAt (String)
+com.histmersion.domain.automation.goals.BGoalScheduleRow.Cron (String)
+com.histmersion.domain.automation.goals.BGoalScheduleRow.Enabled (Boolean)
+com.histmersion.domain.automation.goals.BGoalScheduleRow.Kind (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Active (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.CreatedAt (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.LeftAt (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.LeftWhy (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Parent (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Pinned (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Priority (Int)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Since (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Slug (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Status (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Title (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Why (String)
+com.histmersion.domain.automation.goals.FocusRepo.JoinWhy (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Approval (Long)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ApprovalKind (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.AutoApprove (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.FocusHeld (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Goals (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Id (Long)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Kind (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ManagerId (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ManagerKind (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Person (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.PersonHeld (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Status (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Target (String)
+com.histmersion.domain.automation.goals.GoalLinkRepo.ItemId (Int)
+com.histmersion.domain.automation.goals.GoalRow.Notes (String)
+com.histmersion.domain.automation.goals.GoalRow.ParentSlug (String)
+com.histmersion.domain.automation.goals.GoalRow.Regions (String)
+com.histmersion.domain.automation.goals.GoalRow.Slug (String)
+com.histmersion.domain.automation.goals.GoalRow.Status (String)
+com.histmersion.domain.automation.goals.GoalRow.Tags (String)
+com.histmersion.domain.automation.goals.GoalRow.Title (String)
+com.histmersion.domain.automation.goals.GoalRow.UpdatedAt (String)
+com.histmersion.domain.automation.managers.ManagerLight.Cron (String)
+com.histmersion.domain.automation.managers.ManagerLight.Goal (String)
+com.histmersion.domain.automation.managers.ManagerLight.Id (String)
+com.histmersion.domain.automation.managers.ManagerLight.Kind (String)
+com.histmersion.domain.automation.managers.ManagerLight.PlanItem (Boolean)
+com.histmersion.domain.automation.managers.ManagerLight.State (String)
+com.histmersion.domain.automation.managers.ManagerLight.StatusNote (String)
+com.histmersion.domain.automation.managers.ManagerRepo.CancelReason (String)
+com.histmersion.domain.automation.managers.ManagerRepo.EventCursor (Long)
+com.histmersion.domain.automation.managers.ManagerRepo.ProgressText (String)
+com.histmersion.domain.automation.managers.ManagerRepo.RestaleReason (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Authors (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Goal (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.IsOa (Boolean)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Item (Int)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Job (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.ManagerId (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Text (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Title (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Topic (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Venue (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Why (String)
+com.histmersion.domain.automation.worklists.BQueueRow.CreatedAt (String)
+com.histmersion.domain.automation.worklists.BQueueRow.DoneAt (String)
+com.histmersion.domain.automation.worklists.BQueueRow.List (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Reason (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Status (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Text (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Topic (String)
+com.histmersion.domain.automation.worklists.BQueueRow.UpdatedAt (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.automation.agents.AgentTrees.ClaudeRoleName | base String | generated | method-parameter
+    def claudeRole(name: com.histmersion.domain.automation.agents.AgentTrees.ClaudeRoleName): Option[Path] =
+com.histmersion.domain.automation.agents.AgentTrees.CodexHomeEnvArg1 | base String | generated | method-parameter
+    def codexHome(app: AppConfig, env: com.histmersion.domain.automation.agents.AgentTrees.CodexHomeEnvArg1 => Option[com.histmersion.domain.automation.agents.AgentTrees.Code
+com.histmersion.domain.automation.agents.AgentTrees.CodexHomeEnvResult | base String | generated | method-parameter
+    def codexHome(app: AppConfig, env: com.histmersion.domain.automation.agents.AgentTrees.CodexHomeEnvArg1 => Option[com.histmersion.domain.automation.agents.AgentTrees.Code
+com.histmersion.domain.automation.agents.AgentTrees.CodexHomeOsName | base String | generated | method-parameter
+    def codexHome(app: AppConfig, env: com.histmersion.domain.automation.agents.AgentTrees.CodexHomeEnvArg1 => Option[com.histmersion.domain.automation.agents.AgentTrees.Code
+com.histmersion.domain.automation.agents.AgentTrees.ExpandInEnvArg1 | base String | generated | method-parameter
+    def expandIn(p: com.histmersion.domain.automation.agents.AgentTrees.ExpandInP, env: com.histmersion.domain.automation.agents.AgentTrees.ExpandInEnvArg1 => Option[com.hist
+com.histmersion.domain.automation.agents.AgentTrees.ExpandInEnvResult | base String | generated | method-parameter
+    def expandIn(p: com.histmersion.domain.automation.agents.AgentTrees.ExpandInP, env: com.histmersion.domain.automation.agents.AgentTrees.ExpandInEnvArg1 => Option[com.hist
+com.histmersion.domain.automation.agents.AgentTrees.ExpandInP | base String | generated | method-parameter
+    def expandIn(p: com.histmersion.domain.automation.agents.AgentTrees.ExpandInP, env: com.histmersion.domain.automation.agents.AgentTrees.ExpandInEnvArg1 => Option[com.hist
+    def expandIn(p: com.histmersion.domain.automation.agents.AgentTrees.ExpandInP, paths: UserPaths): com.histmersion.domain.automation.agents.AgentTrees.ExpandInResult = exp
+com.histmersion.domain.automation.agents.AgentTrees.ExpandInResult | base String | generated | method-result
+    def expandIn(p: com.histmersion.domain.automation.agents.AgentTrees.ExpandInP, env: com.histmersion.domain.automation.agents.AgentTrees.ExpandInEnvArg1 => Option[com.hist
+    def expandIn(p: com.histmersion.domain.automation.agents.AgentTrees.ExpandInP, paths: UserPaths): com.histmersion.domain.automation.agents.AgentTrees.ExpandInResult = exp
+com.histmersion.domain.automation.agents.AgentTrees.ExpandP | base String | generated | method-parameter
+    def expand(p: com.histmersion.domain.automation.agents.AgentTrees.ExpandP)(using home: com.histmersion.util.system.JvmHome): com.histmersion.domain.automation.agents.Agen
+com.histmersion.domain.automation.agents.AgentTrees.ExpandResult | base String | generated | method-result
+    def expand(p: com.histmersion.domain.automation.agents.AgentTrees.ExpandP)(using home: com.histmersion.util.system.JvmHome): com.histmersion.domain.automation.agents.Agen
+com.histmersion.domain.automation.agents.AgentTrees.GenerateKnown | base String | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentTrees.GenerateResultPart1 | base String | generated | method-result
+com.histmersion.domain.automation.agents.AgentTrees.LoadKnown | base String | generated | method-parameter
+    def load(known: Set[com.histmersion.domain.automation.agents.AgentTrees.LoadKnown]): Either[com.histmersion.domain.automation.agents.AgentTrees.LoadResultPart1, AgentGene
+com.histmersion.domain.automation.agents.AgentTrees.LoadResultPart1 | base String | generated | method-result
+    def load(known: Set[com.histmersion.domain.automation.agents.AgentTrees.LoadKnown]): Either[com.histmersion.domain.automation.agents.AgentTrees.LoadResultPart1, AgentGene
+com.histmersion.domain.automation.agents.AgentTrees.OutRaw | base String | generated | method-parameter
+    def out(raw: Option[com.histmersion.domain.automation.agents.AgentTrees.OutRaw], paths: UserPaths): Option[Path] =
+com.histmersion.domain.automation.agents.AgentTrees.RootEnvArg1 | base String | generated | method-parameter
+    def root(app: AppConfig, env: com.histmersion.domain.automation.agents.AgentTrees.RootEnvArg1 => Option[com.histmersion.domain.automation.agents.AgentTrees.RootEnvResult]
+com.histmersion.domain.automation.agents.AgentTrees.RootEnvResult | base String | generated | method-parameter
+    def root(app: AppConfig, env: com.histmersion.domain.automation.agents.AgentTrees.RootEnvArg1 => Option[com.histmersion.domain.automation.agents.AgentTrees.RootEnvResult]
+com.histmersion.domain.automation.agents.AgentTrees.RootOsName | base String | generated | method-parameter
+    def root(app: AppConfig, env: com.histmersion.domain.automation.agents.AgentTrees.RootEnvArg1 => Option[com.histmersion.domain.automation.agents.AgentTrees.RootEnvResult]
+com.histmersion.domain.automation.agents.AgentTrees.ShaResult | base String | generated | method-result
+    def sha(d: AgentGenerator.Defs): com.histmersion.domain.automation.agents.AgentTrees.ShaResult =
+com.histmersion.domain.automation.agents.AgentTrees.WriteResultPart1 | base String | generated | method-result
+    def write(store: com.histmersion.util.storage.Store, tree: Map[com.histmersion.domain.automation.agents.AgentTrees.WriteTreePart1, com.histmersion.domain.automation.agent
+com.histmersion.domain.automation.agents.AgentTrees.WriteRuntimes | base String | generated | method-parameter
+    def write(store: com.histmersion.util.storage.Store, tree: Map[com.histmersion.domain.automation.agents.AgentTrees.WriteTreePart1, com.histmersion.domain.automation.agent
+com.histmersion.domain.automation.agents.AgentTrees.WriteSha | base String | generated | method-parameter
+    def write(store: com.histmersion.util.storage.Store, tree: Map[com.histmersion.domain.automation.agents.AgentTrees.WriteTreePart1, com.histmersion.domain.automation.agent
+com.histmersion.domain.automation.agents.AgentTrees.WriteTreePart1 | base String | generated | method-parameter
+    def write(store: com.histmersion.util.storage.Store, tree: Map[com.histmersion.domain.automation.agents.AgentTrees.WriteTreePart1, com.histmersion.domain.automation.agent
+com.histmersion.domain.automation.agents.AgentTrees.WriteTreePart2 | base String | generated | method-parameter
+    def write(store: com.histmersion.util.storage.Store, tree: Map[com.histmersion.domain.automation.agents.AgentTrees.WriteTreePart1, com.histmersion.domain.automation.agent
+com.histmersion.domain.automation.agents.AgentsControllers.AddGoalLinkSlug | base String | generated | method-parameter
+    def addGoalLink(slug: com.histmersion.domain.automation.agents.AgentsControllers.AddGoalLinkSlug, in: LinkAdd): Either[Api.Error, GoalLink] =
+com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsListLimit | base Int | generated | method-parameter
+    def approvalsList(state: Option[com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsListState], limit: Option[com.histmersion.domain.automation.agents.Age
+com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsListState | base String | generated | method-parameter
+    def approvalsList(state: Option[com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsListState], limit: Option[com.histmersion.domain.automation.agents.Age
+com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsPageBefore | base String | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsPageLimit | base Int | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsPageState | base String | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsPageUpTo | base String | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.AttachToolsNames | base String | generated | method-parameter
+    def attachTools(names: Set[com.histmersion.domain.automation.agents.AgentsControllers.AttachToolsNames]): Unit = knownTools = names ++ toolbox.names.map(_.value)
+com.histmersion.domain.automation.agents.AgentsControllers.BillingOfRef | base String | generated | method-parameter
+    private def billingOf(ref: com.histmersion.domain.automation.agents.AgentsControllers.BillingOfRef): Option[com.histmersion.domain.automation.agents.AgentsControllers.Bil
+com.histmersion.domain.automation.agents.AgentsControllers.BillingOfResult | base String | generated | method-result
+    private def billingOf(ref: com.histmersion.domain.automation.agents.AgentsControllers.BillingOfRef): Option[com.histmersion.domain.automation.agents.AgentsControllers.Bil
+com.histmersion.domain.automation.agents.AgentsControllers.CompareIds | base String | generated | method-parameter
+    def compare(ids: List[com.histmersion.domain.automation.agents.AgentsControllers.CompareIds]): Either[Api.Error, RunCompare.Comparison] =
+com.histmersion.domain.automation.agents.AgentsControllers.ControlAction | base String | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.ControlBudgetTokens | base Long | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.ControlBudgetUsd | base Double | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.ControlId | base String | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.CoversResult | base String | generated | method-result
+    private def covers(p: PlanQuota.PoolId): List[com.histmersion.domain.automation.agents.AgentsControllers.CoversResult] = p match
+com.histmersion.domain.automation.agents.AgentsControllers.CursorC | base String | generated | method-parameter
+    private def cursor(c: Option[com.histmersion.domain.automation.agents.AgentsControllers.CursorC]): Option[com.histmersion.domain.automation.agents.AgentsControllers.Curso
+com.histmersion.domain.automation.agents.AgentsControllers.CursorResult | base String | generated | method-result
+    private def cursor(c: Option[com.histmersion.domain.automation.agents.AgentsControllers.CursorC]): Option[com.histmersion.domain.automation.agents.AgentsControllers.Curso
+com.histmersion.domain.automation.agents.AgentsControllers.DecideDecision | base String | generated | method-parameter
+    def decide(id: com.histmersion.domain.automation.agents.AgentsControllers.DecideId, decision: com.histmersion.domain.automation.agents.AgentsControllers.DecideDecision, r
+com.histmersion.domain.automation.agents.AgentsControllers.DecideId | base Long | generated | method-parameter
+    def decide(id: com.histmersion.domain.automation.agents.AgentsControllers.DecideId, decision: com.histmersion.domain.automation.agents.AgentsControllers.DecideDecision, r
+com.histmersion.domain.automation.agents.AgentsControllers.DoctorOffline | base Boolean | generated | method-parameter
+    def doctor(offline: com.histmersion.domain.automation.agents.AgentsControllers.DoctorOffline): Agents.DoctorReport =
+com.histmersion.domain.automation.agents.AgentsControllers.GoalBudgetGoal | base String | generated | method-parameter
+    private def goalBudget(goal: com.histmersion.domain.automation.agents.AgentsControllers.GoalBudgetGoal): Option[com.histmersion.domain.automation.agents.AgentsControllers
+com.histmersion.domain.automation.agents.AgentsControllers.GoalBudgetResult | base Double | generated | method-result
+    private def goalBudget(goal: com.histmersion.domain.automation.agents.AgentsControllers.GoalBudgetGoal): Option[com.histmersion.domain.automation.agents.AgentsControllers
+com.histmersion.domain.automation.agents.AgentsControllers.GoalOfNamed | base String | generated | method-parameter
+    private def goalOf(p: Pipeline, target: com.histmersion.domain.automation.agents.AgentsControllers.GoalOfTarget, named: Option[com.histmersion.domain.automation.agents.Ag
+com.histmersion.domain.automation.agents.AgentsControllers.GoalOfResultPart2 | base String | generated | method-result
+    private def goalOf(p: Pipeline, target: com.histmersion.domain.automation.agents.AgentsControllers.GoalOfTarget, named: Option[com.histmersion.domain.automation.agents.Ag
+com.histmersion.domain.automation.agents.AgentsControllers.GoalOfTarget | base String | generated | method-parameter
+    private def goalOf(p: Pipeline, target: com.histmersion.domain.automation.agents.AgentsControllers.GoalOfTarget, named: Option[com.histmersion.domain.automation.agents.Ag
+com.histmersion.domain.automation.agents.AgentsControllers.GoalViewSlug | base String | generated | method-parameter
+    def goalView(slug: com.histmersion.domain.automation.agents.AgentsControllers.GoalViewSlug): Either[Api.Error, GoalView] =
+com.histmersion.domain.automation.agents.AgentsControllers.KnownProvidersResult | base String | generated | method-result
+    def knownProviders: Set[com.histmersion.domain.automation.agents.AgentsControllers.KnownProvidersResult] = BuiltinAi.known(site.aiProviders())
+com.histmersion.domain.automation.agents.AgentsControllers.KnownTools | base String | generated | variable
+    @volatile private var knownTools: Set[com.histmersion.domain.automation.agents.AgentsControllers.KnownTools] = toolbox.names.map(_.value).toSet
+com.histmersion.domain.automation.agents.AgentsControllers.ModelsNow | base Long | generated | method-parameter
+    def models(now: com.histmersion.domain.automation.agents.AgentsControllers.ModelsNow): ModelsInfo =
+com.histmersion.domain.automation.agents.AgentsControllers.OverridesResultPart2Part2 | base String | generated | method-result
+    private def overrides(p: Pipeline, asked: List[ModelOverride]): Either[Api.Error, Map[Role, com.histmersion.domain.automation.agents.AgentsControllers.OverridesResultPart
+com.histmersion.domain.automation.agents.AgentsControllers.PoolOfRaw | base String | generated | method-parameter
+    private def poolOf(raw: com.histmersion.domain.automation.agents.AgentsControllers.PoolOfRaw): Either[Api.Error, PlanQuota.PoolId] =
+com.histmersion.domain.automation.agents.AgentsControllers.PositiveResultPart2 | base Double | generated | method-result
+    private def positive(v: com.histmersion.domain.automation.agents.AgentsControllers.PositiveV, what: com.histmersion.domain.automation.agents.AgentsControllers.PositiveWha
+com.histmersion.domain.automation.agents.AgentsControllers.PositiveV | base Double | generated | method-parameter
+    private def positive(v: com.histmersion.domain.automation.agents.AgentsControllers.PositiveV, what: com.histmersion.domain.automation.agents.AgentsControllers.PositiveWha
+com.histmersion.domain.automation.agents.AgentsControllers.PositiveWhat | base String | generated | method-parameter
+    private def positive(v: com.histmersion.domain.automation.agents.AgentsControllers.PositiveV, what: com.histmersion.domain.automation.agents.AgentsControllers.PositiveWha
+com.histmersion.domain.automation.agents.AgentsControllers.Prepared.DryRun | base Boolean | original | constructor-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.Prepared.Goal | base String | original | constructor-parameter
+    def removeAllowance(target: com.histmersion.domain.automation.agents.AgentsControllers.RemoveAllowanceTarget): Either[Api.Error, Goal.Plans.Removed] =
+com.histmersion.domain.automation.agents.AgentsControllers.Prepared.Model | base String | original | constructor-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.Prepared.Target | base String | original | constructor-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.Prepared.Tokens | base Long | original | constructor-parameter
+    case "resume" => enabled.flatMap(_ => engine.resume(id, budgetUsd, budgetTokens))
+com.histmersion.domain.automation.agents.AgentsControllers.Prepared.Usd | base Double | original | constructor-parameter
+    case "resume" => enabled.flatMap(_ => engine.resume(id, budgetUsd, budgetTokens))
+com.histmersion.domain.automation.agents.AgentsControllers.PricesResultPart1 | base String | generated | method-result
+    private def prices: Either[com.histmersion.domain.automation.agents.AgentsControllers.PricesResultPart1, Map[com.histmersion.domain.automation.agents.AgentsControllers.Pr
+com.histmersion.domain.automation.agents.AgentsControllers.PricesResultPart2Part1 | base String | generated | method-result
+    private def prices: Either[com.histmersion.domain.automation.agents.AgentsControllers.PricesResultPart1, Map[com.histmersion.domain.automation.agents.AgentsControllers.Pr
+com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallCallUser | base String | generated | method-parameter
+    def call(user: com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallCallUser) = LlmCall[ProbeAnswer](
+com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallGoAttempt | base Int | generated | method-parameter
+    def go(attempt: com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallGoAttempt, user: com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallG
+com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallGoCalls | base String | generated | method-parameter
+    def go(attempt: com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallGoAttempt, user: com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallG
+com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallGoUser | base String | generated | method-parameter
+    def go(attempt: com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallGoAttempt, user: com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallG
+com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallSystem | base String | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.RemoveAllowanceTarget | base String | generated | method-parameter
+    def removeAllowance(target: com.histmersion.domain.automation.agents.AgentsControllers.RemoveAllowanceTarget): Either[Api.Error, Goal.Plans.Removed] =
+com.histmersion.domain.automation.agents.AgentsControllers.RemoveGoalLinkKind | base String | generated | method-parameter
+    def removeGoalLink(slug: com.histmersion.domain.automation.agents.AgentsControllers.RemoveGoalLinkSlug, kind: com.histmersion.domain.automation.agents.AgentsControllers.R
+com.histmersion.domain.automation.agents.AgentsControllers.RemoveGoalLinkRef | base String | generated | method-parameter
+    def removeGoalLink(slug: com.histmersion.domain.automation.agents.AgentsControllers.RemoveGoalLinkSlug, kind: com.histmersion.domain.automation.agents.AgentsControllers.R
+com.histmersion.domain.automation.agents.AgentsControllers.RemoveGoalLinkSlug | base String | generated | method-parameter
+    def removeGoalLink(slug: com.histmersion.domain.automation.agents.AgentsControllers.RemoveGoalLinkSlug, kind: com.histmersion.domain.automation.agents.AgentsControllers.R
+com.histmersion.domain.automation.agents.AgentsControllers.RemoveScheduleKind | base String | generated | method-parameter
+    def removeSchedule(slug: com.histmersion.domain.automation.agents.AgentsControllers.RemoveScheduleSlug, kind: com.histmersion.domain.automation.agents.AgentsControllers.R
+com.histmersion.domain.automation.agents.AgentsControllers.RemoveScheduleSlug | base String | generated | method-parameter
+    def removeSchedule(slug: com.histmersion.domain.automation.agents.AgentsControllers.RemoveScheduleSlug, kind: com.histmersion.domain.automation.agents.AgentsControllers.R
+com.histmersion.domain.automation.agents.AgentsControllers.ResetChainRole | base String | generated | method-parameter
+    def resetChain(role: com.histmersion.domain.automation.agents.AgentsControllers.ResetChainRole): Either[Api.Error, ModelChains.RoleChain] =
+com.histmersion.domain.automation.agents.AgentsControllers.ResolveResultPart1 | base String | generated | method-result
+    def resolve(m: ModelRef): Either[com.histmersion.domain.automation.agents.AgentsControllers.ResolveResultPart1, (LlmClient, Billing)] =
+com.histmersion.domain.automation.agents.AgentsControllers.RoleOfRaw | base String | generated | method-parameter
+    private def roleOf(raw: com.histmersion.domain.automation.agents.AgentsControllers.RoleOfRaw): Either[Api.Error, Role] =
+com.histmersion.domain.automation.agents.AgentsControllers.RoundsCapResult | base Int | generated | method-result
+    def roundsCap: com.histmersion.domain.automation.agents.AgentsControllers.RoundsCapResult = site.roundsCap
+com.histmersion.domain.automation.agents.AgentsControllers.RunId | base String | generated | method-parameter
+    def run(id: com.histmersion.domain.automation.agents.AgentsControllers.RunId): Either[Api.Error, RunDetail] =
+com.histmersion.domain.automation.agents.AgentsControllers.RunnableOverrideRef | base String | generated | method-parameter
+    def runnable(role: Role, overrideRef: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunnableOverrideRef]): Either[com.histmersion.domain.automation.ag
+com.histmersion.domain.automation.agents.AgentsControllers.RunnableResultPart1 | base String | generated | method-result
+    def runnable(role: Role, overrideRef: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunnableOverrideRef]): Either[com.histmersion.domain.automation.ag
+com.histmersion.domain.automation.agents.AgentsControllers.RunsGoal | base String | generated | method-parameter
+    def runs(status: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunsStatus], limit: Option[com.histmersion.domain.automation.agents.AgentsControllers.R
+com.histmersion.domain.automation.agents.AgentsControllers.RunsLimit | base Int | generated | method-parameter
+    def runs(status: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunsStatus], limit: Option[com.histmersion.domain.automation.agents.AgentsControllers.R
+com.histmersion.domain.automation.agents.AgentsControllers.RunsPageBefore | base String | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.RunsPageGoal | base String | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.RunsPageLimit | base Int | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.RunsPageStatus | base String | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.RunsPageUpTo | base String | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.RunsStatus | base String | generated | method-parameter
+    def runs(status: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunsStatus], limit: Option[com.histmersion.domain.automation.agents.AgentsControllers.R
+com.histmersion.domain.automation.agents.AgentsControllers.ScheduleKindKind | base String | generated | method-parameter
+    private def scheduleKind(kind: com.histmersion.domain.automation.agents.AgentsControllers.ScheduleKindKind): Either[Api.Error, ScheduleKind] =
+com.histmersion.domain.automation.agents.AgentsControllers.SetChainRole | base String | generated | method-parameter
+    def setChain(role: com.histmersion.domain.automation.agents.AgentsControllers.SetChainRole, in: ModelChains.ChainSet): Either[Api.Error, ModelChains.RoleChain] =
+com.histmersion.domain.automation.agents.AgentsControllers.SetFallthroughRole | base String | generated | method-parameter
+    def setFallthrough(role: com.histmersion.domain.automation.agents.AgentsControllers.SetFallthroughRole, in: PlanQuota.FallthroughSet): Either[Api.Error, PlanQuota.QuotaIn
+com.histmersion.domain.automation.agents.AgentsControllers.SetPoolPool | base String | generated | method-parameter
+    def setPool(pool: com.histmersion.domain.automation.agents.AgentsControllers.SetPoolPool, in: PlanQuota.PoolSet): Either[Api.Error, PlanQuota.PoolStatus] =
+com.histmersion.domain.automation.agents.AgentsControllers.SetScheduleKind | base String | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.SetScheduleSlug | base String | generated | method-parameter
+com.histmersion.domain.automation.agents.AgentsControllers.SourcesToPlanResult | base Int | generated | method-result
+    def sourcesToPlan: com.histmersion.domain.automation.agents.AgentsControllers.SourcesToPlanResult = site.sourcesToPlan
+com.histmersion.domain.automation.agents.AgentsControllers.StartResult | base Int | generated | method-result
+    def start(): com.histmersion.domain.automation.agents.AgentsControllers.StartResult =
+com.histmersion.domain.automation.agents.AgentsControllers.TargetOfRaw | base String | generated | method-parameter
+    private def targetOf(p: Pipeline, raw: com.histmersion.domain.automation.agents.AgentsControllers.TargetOfRaw): Either[Api.Error, com.histmersion.domain.automation.agents
+com.histmersion.domain.automation.agents.AgentsControllers.TargetOfResultPart2 | base String | generated | method-result
+    private def targetOf(p: Pipeline, raw: com.histmersion.domain.automation.agents.AgentsControllers.TargetOfRaw): Either[Api.Error, com.histmersion.domain.automation.agents

@@ -59,20 +59,20 @@ final class EventLinksControllers(
 ):
   private def ec = settings().events
 
-  private def notFound(m: com.histmersion.domain.catalogue.evidence.EventLinksControllers.NotFoundM) = Api.Error(m, Some(Write.CodeNotFound))
+  private def notFound(m: com.histmersion.domain.catalogue.evidence.EventLinksControllers.Problem) = Api.Error(m, Some(Write.CodeNotFound))
 
-  private def eventOrFail(id: com.histmersion.domain.catalogue.evidence.EventLinksControllers.EventOrFailId): Either[Api.Error, EventEntry] =
+  private def eventOrFail(id: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, EventEntry] =
     events.get(events.renamedTo(id).getOrElse(id)).toRight(notFound(s"No event '$id'"))
 
   /** The names of an event worth searching for. */
-  private def namesOf(d: EventEntry): List[com.histmersion.domain.catalogue.evidence.EventLinksControllers.NamesOfResult] =
+  private def namesOf(d: EventEntry): List[com.histmersion.domain.catalogue.events.BEventRow.Names] =
     val stored = events.tierAndNames(d.event.id).map(_._2).getOrElse(Nil)
     EventMatcher.searchNames(d.event.label :: stored, ec.links.minNameChars)
 
   /** The passages of `citekey`'s body that name the event — a whole-word, case- and accent-insensitive match of each
     * name.
     */
-  private def passagesIn(citekey: com.histmersion.domain.library.Citekey, names: List[com.histmersion.domain.catalogue.evidence.EventLinksControllers.PassagesInNames]): List[EventPassage] =
+  private def passagesIn(citekey: com.histmersion.domain.library.Citekey, names: List[com.histmersion.domain.catalogue.events.BEventRow.Names]): List[EventPassage] =
     val text = sources.reader(citekey)
     names
       .flatMap { n =>
@@ -116,7 +116,7 @@ final class EventLinksControllers(
     EventLinkList(d.event.id, d.event.label, links.candidates(d.event.id))
 
   /** An event's candidates — computed on the first ask, stored after. */
-  def links(id: com.histmersion.domain.catalogue.evidence.EventLinksControllers.LinksId): Either[Api.Error, EventLinkList] =
+  def links(id: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, EventLinkList] =
     eventOrFail(id).map { d =>
       if links.isChecked(d.event.id) then EventLinkList(d.event.id, d.event.label, links.candidates(d.event.id))
       else compute(d)
@@ -126,7 +126,7 @@ final class EventLinksControllers(
     * (not the stored evidence): the attestation carries that passage's quote and offsets. A source with none is
     * refused, with why.
     */
-  def applyLinks(caller: Caller, id: com.histmersion.domain.catalogue.evidence.EventLinksControllers.ApplyLinksId, req: EventLinksRequest): Either[Api.Error, EventLinksResult] =
+  def applyLinks(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, req: EventLinksRequest): Either[Api.Error, EventLinksResult] =
     maintenance.guard("event_links") {
       eventOrFail(id).map { d =>
         val eid = d.event.id
@@ -134,10 +134,10 @@ final class EventLinksControllers(
         val names = namesOf(d)
         val existing = attestations.list(None, Some(AttestationTarget.Event), Some(eid), 1000, 0).attestations
         @tailrec def confirm(
-            rest: List[com.histmersion.domain.catalogue.evidence.EventLinksControllers.ApplyLinksConfirmRest],
+            rest: List[com.histmersion.domain.catalogue.evidence.EventLinksTools.EventLinksInput.Confirm],
             ok: List[Attestation],
-            no: List[com.histmersion.domain.catalogue.evidence.EventLinksControllers.ApplyLinksConfirmNo]
-        ): (List[Attestation], List[com.histmersion.domain.catalogue.evidence.EventLinksControllers.ApplyLinksConfirmResultPart2]) =
+            no: List[com.histmersion.domain.catalogue.evidence.EventLinksTools.EventLinksInput.Confirm]
+        ): (List[Attestation], List[com.histmersion.domain.catalogue.evidence.EventLinksTools.EventLinksInput.Confirm]) =
           rest match
             case Nil         => (ok, no)
             case raw :: tail =>
@@ -294,7 +294,7 @@ final class EventLinksControllers(
       .setTo(lead)
 
   /** The catalogue events an article's period and region hold that its body never names. */
-  def articleLeads(body: com.histmersion.domain.catalogue.evidence.EventLinksControllers.ArticleLeadsBody, citekeys: List[com.histmersion.domain.catalogue.evidence.EventLinksControllers.ArticleLeadsCitekeys], period: Option[Period]): List[ArticleEventLead] =
+  def articleLeads(body: com.histmersion.domain.catalogue.evidence.EventLinksControllers.ArticleBody, citekeys: List[com.histmersion.domain.library.Citekey], period: Option[Period]): List[ArticleEventLead] =
     leadFacts
       .articleCandidates(
         citekeys,
@@ -319,34 +319,16 @@ final class EventLinksControllers(
       )
 
 object EventLinksControllers:
-  type ApplyLinksConfirmResultPart2 = ApplyLinksConfirmResultPart2.T
-  object ApplyLinksConfirmResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyLinksConfirmRest = ApplyLinksConfirmRest.T
-  object ApplyLinksConfirmRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyLinksConfirmNo = ApplyLinksConfirmNo.T
-  object ApplyLinksConfirmNo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleBody = ArticleBody.T
+  object ArticleBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type InfoArg1 = InfoArg1.T
-  object InfoArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfoArg1 = com.histmersion.domain.catalogue.Event.Id
+  val InfoArg1: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
 
-  type NotFoundM = NotFoundM.T
-  object NotFoundM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventOrFailId = EventOrFailId.T
-  object EventOrFailId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NamesOfResult = NamesOfResult.T
-  object NamesOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PassagesInNames = PassagesInNames.T
-  object PassagesInNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinksId = LinksId.T
-  object LinksId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyLinksId = ApplyLinksId.T
-  object ApplyLinksId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleLeadsBody = ArticleLeadsBody.T
-  object ArticleLeadsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleLeadsCitekeys = ArticleLeadsCitekeys.T
-  object ArticleLeadsCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CandidatesJobKind = CandidatesJobKindValue
-  type CandidatesJobKindValue = CandidatesJobKindValue.T
-  object CandidatesJobKindValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CandidatesJobKindValue = com.histmersion.util.jobs.Job.Kind
+  val CandidatesJobKindValue: _root_.com.histmersion.util.jobs.Job.Kind.type = _root_.com.histmersion.util.jobs.Job.Kind
 
   val CandidatesJobKind: com.histmersion.domain.catalogue.evidence.EventLinksControllers.CandidatesJobKind = com.histmersion.api.catalogue.EvidenceJobKinds.EventsCandidates.kind.value

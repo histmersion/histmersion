@@ -1,0 +1,145 @@
+## CONCEPTS NEARBY
+com.histmersion.server.FullText.Shown.Markdown (String)
+com.histmersion.server.HttpDownload.UserAgent (String)
+com.histmersion.server.IngestWiring.AfterStoreArg1 (String)
+com.histmersion.server.IngestWiring.AfterStoreResult (String)
+com.histmersion.server.LibraryWiring.MentionsArg1 (String)
+com.histmersion.server.LibraryWiring.MentionsResult (String)
+
+## TYPES TO DECIDE
+com.histmersion.server.Composition.BuildAutoInit | base Boolean | generated | method-parameter
+com.histmersion.server.Composition.BuildHost | base String | generated | method-parameter
+com.histmersion.server.Composition.BuildPort | base Int | generated | method-parameter
+com.histmersion.server.Composition.CollectionsControllersCreateCitekey | base String | generated | method-parameter
+    def create(citekey: com.histmersion.server.Composition.CollectionsControllersCreateCitekey, put: Source.Put) = h.library.sources.put(citekey, put)
+com.histmersion.server.Composition.CollectionsControllersGapsLimit | base Int | generated | method-parameter
+    def gaps(limit: Option[com.histmersion.server.Composition.CollectionsControllersGapsLimit]) = h.calibreGaps.gaps(limit)
+com.histmersion.server.Composition.CollectionsControllersIngestBytes | base Array[Byte] | generated | method-parameter
+    def ingest(params: Ingest.Params, bytes: com.histmersion.server.Composition.CollectionsControllersIngestBytes) =
+com.histmersion.server.Composition.CollectionsControllersOriginalCitekey | base String | generated | method-parameter
+    def original(citekey: com.histmersion.server.Composition.CollectionsControllersOriginalCitekey) =
+com.histmersion.server.Composition.CollectionsControllersPatchCitekey | base String | generated | method-parameter
+    def patch(citekey: com.histmersion.server.Composition.CollectionsControllersPatchCitekey, patch: Source.Patch) = h.library.sources.patch(citekey, patch)
+com.histmersion.server.Composition.CollectionsControllersPushMetaCitekey | base String | generated | method-parameter
+    def pushMeta(citekey: com.histmersion.server.Composition.CollectionsControllersPushMetaCitekey) = h.calibreGaps.pushMeta(citekey)
+com.histmersion.server.Composition.CollectionsControllersPutCoverBytes | base Array[Byte] | generated | method-parameter
+    def putCover(params: SourceCoverParams, bytes: com.histmersion.server.Composition.CollectionsControllersPutCoverBytes) = h.media.covers.putCover(params, bytes)
+com.histmersion.server.Composition.CollectionsControllersQueueItemId | base Int | generated | method-parameter
+    def queueItem(id: com.histmersion.server.Composition.CollectionsControllersQueueItemId) = h.workListView.list(Queue.Kind.Acquire.label, all = true).map(_.items.find(_.id 
+com.histmersion.server.Composition.CollectionsControllersSourceCitekey | base String | generated | method-parameter
+    def source(citekey: com.histmersion.server.Composition.CollectionsControllersSourceCitekey) = h.library.sources.get(citekey, body = false)
+com.histmersion.server.Composition.LeasesResultPart1 | base String | generated | method-result
+    private def leases(sg: ServerGraph, h: ServerWiring): Either[com.histmersion.server.Composition.LeasesResultPart1, Hot[com.histmersion.server.Composition.LeasesResultPart
+com.histmersion.server.Composition.LeasesResultPart2 | base Boolean | generated | method-result
+    private def leases(sg: ServerGraph, h: ServerWiring): Either[com.histmersion.server.Composition.LeasesResultPart1, Hot[com.histmersion.server.Composition.LeasesResultPart
+com.histmersion.server.Composition.ServerAutoInit | base Boolean | generated | method-parameter
+com.histmersion.server.Composition.ServerHost | base String | generated | method-parameter
+    def server(cfg: AppConfig, host: com.histmersion.server.Composition.ServerHost, port: com.histmersion.server.Composition.ServerPort)(using Ox): NettySyncServer =
+com.histmersion.server.Composition.ServerPort | base Int | generated | method-parameter
+    def server(cfg: AppConfig, host: com.histmersion.server.Composition.ServerHost, port: com.histmersion.server.Composition.ServerPort)(using Ox): NettySyncServer =
+com.histmersion.server.FullText.Shown.Markdown | base String | generated | constructor-parameter
+    case Shown(markdown: FullText.Shown.Markdown)
+com.histmersion.server.GazetteerPaths.ManifestTextResultPart1 | base String | generated | method-result
+    def manifestText(): Either[com.histmersion.server.GazetteerPaths.ManifestTextResultPart1, com.histmersion.server.GazetteerPaths.ManifestTextResultPart2] =
+com.histmersion.server.GazetteerPaths.ManifestTextResultPart2 | base String | generated | method-result
+    def manifestText(): Either[com.histmersion.server.GazetteerPaths.ManifestTextResultPart1, com.histmersion.server.GazetteerPaths.ManifestTextResultPart2] =
+com.histmersion.server.GazetteerPaths.OfEnvArg1 | base String | generated | method-parameter
+    def of(cfg: AppConfig, env: com.histmersion.server.GazetteerPaths.OfEnvArg1 => Option[com.histmersion.server.GazetteerPaths.OfEnvResult], osName: com.histmersion.server.G
+com.histmersion.server.GazetteerPaths.OfEnvResult | base String | generated | method-parameter
+    def of(cfg: AppConfig, env: com.histmersion.server.GazetteerPaths.OfEnvArg1 => Option[com.histmersion.server.GazetteerPaths.OfEnvResult], osName: com.histmersion.server.G
+com.histmersion.server.GazetteerPaths.OfOrConfigured | base String | generated | method-parameter
+    def or(configured: com.histmersion.server.GazetteerPaths.OfOrConfigured, fallback: Path): Path =
+com.histmersion.server.GazetteerPaths.OfOsName | base String | generated | method-parameter
+    def of(cfg: AppConfig, env: com.histmersion.server.GazetteerPaths.OfEnvArg1 => Option[com.histmersion.server.GazetteerPaths.OfEnvResult], osName: com.histmersion.server.G
+com.histmersion.server.HtmlRender.ArticleRefLabel | base String | generated | method-parameter
+    def articleRef(r: Article.Ref, label: com.histmersion.server.HtmlRender.ArticleRefLabel): com.histmersion.server.HtmlRender.ArticleRefResult = HtmlAtoms.articleLink(r.slu
+com.histmersion.server.HtmlRender.ArticleRefResult | base String | generated | method-result
+    def articleRef(r: Article.Ref): com.histmersion.server.HtmlRender.ArticleRefResult = articleRef(r, r.title)
+    def articleRef(r: Article.Ref, label: com.histmersion.server.HtmlRender.ArticleRefLabel): com.histmersion.server.HtmlRender.ArticleRefResult = HtmlAtoms.articleLink(r.slu
+com.histmersion.server.HtmlRender.ChipResult | base String | generated | method-result
+    def chip(field: ChipField, value: com.histmersion.server.HtmlRender.ChipValue): com.histmersion.server.HtmlRender.ChipResult =
+com.histmersion.server.HtmlRender.ChipValue | base String | generated | method-parameter
+    def chip(field: ChipField, value: com.histmersion.server.HtmlRender.ChipValue): com.histmersion.server.HtmlRender.ChipResult =
+com.histmersion.server.HtmlRender.ChipsResult | base String | generated | method-result
+    def chips(field: ChipField, values: List[com.histmersion.server.HtmlRender.ChipsValues]): com.histmersion.server.HtmlRender.ChipsResult =
+com.histmersion.server.HtmlRender.ChipsValues | base String | generated | method-parameter
+    def chips(field: ChipField, values: List[com.histmersion.server.HtmlRender.ChipsValues]): com.histmersion.server.HtmlRender.ChipsResult =
+com.histmersion.server.HtmlRender.ConfidenceBadgeResult | base String | generated | method-result
+    def confidenceBadge(c: Confidence): com.histmersion.server.HtmlRender.ConfidenceBadgeResult =
+com.histmersion.server.HtmlRender.DanglingLabel | base String | generated | method-parameter
+    def dangling(label: com.histmersion.server.HtmlRender.DanglingLabel): com.histmersion.server.HtmlRender.DanglingResult =
+com.histmersion.server.HtmlRender.DanglingResult | base String | generated | method-result
+    def dangling(label: com.histmersion.server.HtmlRender.DanglingLabel): com.histmersion.server.HtmlRender.DanglingResult =
+com.histmersion.server.HtmlRender.EscResult | base String | generated | method-result
+    def esc(s: com.histmersion.server.HtmlRender.EscS): com.histmersion.server.HtmlRender.EscResult = HtmlAtoms.esc(s)
+com.histmersion.server.HtmlRender.EscS | base String | generated | method-parameter
+    def esc(s: com.histmersion.server.HtmlRender.EscS): com.histmersion.server.HtmlRender.EscResult = HtmlAtoms.esc(s)
+com.histmersion.server.HtmlRender.FindingResult | base String | generated | method-result
+    def finding(f: Finding.Row): com.histmersion.server.HtmlRender.FindingResult =
+com.histmersion.server.HtmlRender.IdentifierCitekey | base String | generated | method-parameter
+    def identifier(citekey: com.histmersion.server.HtmlRender.IdentifierCitekey, doi: Option[com.histmersion.server.HtmlRender.IdentifierDoi]): com.histmersion.server.HtmlRen
+com.histmersion.server.HtmlRender.IdentifierDoi | base String | generated | method-parameter
+    def identifier(citekey: com.histmersion.server.HtmlRender.IdentifierCitekey, doi: Option[com.histmersion.server.HtmlRender.IdentifierDoi]): com.histmersion.server.HtmlRen
+com.histmersion.server.HtmlRender.IdentifierResult | base String | generated | method-result
+    def identifier(r: com.histmersion.api.library.Source.Ref): com.histmersion.server.HtmlRender.IdentifierResult = identifier(r.citekey, r.doi)
+    def identifier(citekey: com.histmersion.server.HtmlRender.IdentifierCitekey, doi: Option[com.histmersion.server.HtmlRender.IdentifierDoi]): com.histmersion.server.HtmlRen
+com.histmersion.server.HtmlRender.ReadableResult | base String | generated | method-result
+    def readable(r: com.histmersion.api.library.Source.Ref): com.histmersion.server.HtmlRender.ReadableResult =
+com.histmersion.server.HtmlRender.SourceLinkCitekey | base String | generated | method-parameter
+    def sourceLink(citekey: com.histmersion.server.HtmlRender.SourceLinkCitekey, doi: Option[com.histmersion.server.HtmlRender.SourceLinkDoi], label: com.histmersion.server.H
+com.histmersion.server.HtmlRender.SourceLinkDoi | base String | generated | method-parameter
+    def sourceLink(citekey: com.histmersion.server.HtmlRender.SourceLinkCitekey, doi: Option[com.histmersion.server.HtmlRender.SourceLinkDoi], label: com.histmersion.server.H
+com.histmersion.server.HtmlRender.SourceLinkLabel | base String | generated | alias,method-parameter
+    val SourceRefLabel: _root_.com.histmersion.server.HtmlRender.SourceLinkLabel.type = _root_.com.histmersion.server.HtmlRender.SourceLinkLabel
+    def sourceLink(citekey: com.histmersion.server.HtmlRender.SourceLinkCitekey, doi: Option[com.histmersion.server.HtmlRender.SourceLinkDoi], label: com.histmersion.server.H
+com.histmersion.server.HtmlRender.SourceLinkResult | base String | generated | method-result
+    def sourceLink(citekey: com.histmersion.server.HtmlRender.SourceLinkCitekey, doi: Option[com.histmersion.server.HtmlRender.SourceLinkDoi], label: com.histmersion.server.H
+com.histmersion.server.HtmlRender.SourceRefResult | base String | generated | method-result
+    def sourceRef(r: com.histmersion.api.library.Source.Ref): com.histmersion.server.HtmlRender.SourceRefResult = sourceLink(r.citekey, r.doi, r.idLabel)
+    def sourceRef(r: com.histmersion.api.library.Source.Ref, label: com.histmersion.server.HtmlRender.SourceRefLabel): com.histmersion.server.HtmlRender.SourceRefResult = sou
+com.histmersion.server.HtmlRender.StatusBadgeResult | base String | generated | method-result
+    def statusBadge(status: Source.Status): com.histmersion.server.HtmlRender.StatusBadgeResult =
+com.histmersion.server.HttpDownload.OpenReadTimeoutMs | base Int | generated | method-parameter
+    private def open(url: com.histmersion.server.HttpDownload.OpenUrl, readTimeoutMs: com.histmersion.server.HttpDownload.OpenReadTimeoutMs): HttpURLConnection =
+com.histmersion.server.HttpDownload.OpenUrl | base String | generated | method-parameter
+    private def open(url: com.histmersion.server.HttpDownload.OpenUrl, readTimeoutMs: com.histmersion.server.HttpDownload.OpenReadTimeoutMs): HttpURLConnection =
+com.histmersion.server.HttpDownload.ReadAllResult | base Array[Byte] | generated | method-result
+    private def readAll(is: InputStream): com.histmersion.server.HttpDownload.ReadAllResult =
+com.histmersion.server.HttpDownload.TextResultPart1 | base String | generated | method-result
+    def text(url: com.histmersion.server.HttpDownload.TextUrl): Either[com.histmersion.server.HttpDownload.TextResultPart1, com.histmersion.server.HttpDownload.TextResultPart
+com.histmersion.server.HttpDownload.TextResultPart2 | base String | generated | method-result
+    def text(url: com.histmersion.server.HttpDownload.TextUrl): Either[com.histmersion.server.HttpDownload.TextResultPart1, com.histmersion.server.HttpDownload.TextResultPart
+com.histmersion.server.HttpDownload.TextUrl | base String | generated | method-parameter
+    def text(url: com.histmersion.server.HttpDownload.TextUrl): Either[com.histmersion.server.HttpDownload.TextResultPart1, com.histmersion.server.HttpDownload.TextResultPart
+com.histmersion.server.HttpDownload.UnzipData | base Array[Byte] | generated | method-parameter
+    private def unzip(data: com.histmersion.server.HttpDownload.UnzipData): Either[com.histmersion.server.HttpDownload.UnzipResultPart1, com.histmersion.server.HttpDownload.U
+com.histmersion.server.HttpDownload.UnzipResultPart1 | base String | generated | method-result
+    private def unzip(data: com.histmersion.server.HttpDownload.UnzipData): Either[com.histmersion.server.HttpDownload.UnzipResultPart1, com.histmersion.server.HttpDownload.U
+com.histmersion.server.HttpDownload.UnzipResultPart2 | base String | generated | method-result
+    private def unzip(data: com.histmersion.server.HttpDownload.UnzipData): Either[com.histmersion.server.HttpDownload.UnzipResultPart1, com.histmersion.server.HttpDownload.U
+com.histmersion.server.HttpDownload.UserAgent | base String | generated | constructor-parameter
+    final class HttpDownload(userAgent: HttpDownload.UserAgent):
+com.histmersion.server.IngestWiring.AfterStoreArg1 | base String | generated | constructor-parameter
+com.histmersion.server.IngestWiring.AfterStoreResult | base String | generated | constructor-parameter
+com.histmersion.server.LibraryWiring.MentionsArg1 | base String | generated | constructor-parameter
+com.histmersion.server.LibraryWiring.MentionsResult | base String | generated | constructor-parameter
+com.histmersion.server.LibraryWorkflowSite.ArticleExistsResult | base Boolean | generated | method-result
+    def articleExists(slug: com.histmersion.server.LibraryWorkflowSite.ArticleExistsSlug): com.histmersion.server.LibraryWorkflowSite.ArticleExistsResult = h.research.article
+com.histmersion.server.LibraryWorkflowSite.ArticleExistsSlug | base String | generated | method-parameter
+    def articleExists(slug: com.histmersion.server.LibraryWorkflowSite.ArticleExistsSlug): com.histmersion.server.LibraryWorkflowSite.ArticleExistsResult = h.research.article
+com.histmersion.server.LibraryWorkflowSite.ArticleSourcesResultPart2 | base String | generated | method-result
+    def articleSources(slug: com.histmersion.server.LibraryWorkflowSite.ArticleSourcesSlug): Either[Api.Error, List[com.histmersion.server.LibraryWorkflowSite.ArticleSourcesR
+com.histmersion.server.LibraryWorkflowSite.ArticleSourcesSlug | base String | generated | method-parameter
+    def articleSources(slug: com.histmersion.server.LibraryWorkflowSite.ArticleSourcesSlug): Either[Api.Error, List[com.histmersion.server.LibraryWorkflowSite.ArticleSourcesR
+com.histmersion.server.LibraryWorkflowSite.CitedSourcesResult | base String | generated | method-result
+    def citedSources(slug: com.histmersion.server.LibraryWorkflowSite.CitedSourcesSlug): List[com.histmersion.server.LibraryWorkflowSite.CitedSourcesResult] =
+com.histmersion.server.LibraryWorkflowSite.CitedSourcesSlug | base String | generated | method-parameter
+    def citedSources(slug: com.histmersion.server.LibraryWorkflowSite.CitedSourcesSlug): List[com.histmersion.server.LibraryWorkflowSite.CitedSourcesResult] =
+com.histmersion.server.LibraryWorkflowSite.GeocodeName | base String | generated | method-parameter
+    def geocode(name: com.histmersion.server.LibraryWorkflowSite.GeocodeName, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
+com.histmersion.server.ListQueries.BadM | base String | generated | method-parameter
+    private def bad(m: com.histmersion.server.ListQueries.BadM): Api.Error = Api.Error(m)
+com.histmersion.server.MarkdownHtml.RenderMd | base String | generated | method-parameter
+    def render(md: com.histmersion.server.MarkdownHtml.RenderMd): com.histmersion.server.MarkdownHtml.RenderResult = renderer.render(MarkdownFlavor.parser.parse(md))
+com.histmersion.server.MarkdownHtml.RenderResult | base String | generated | method-result
+    def render(md: com.histmersion.server.MarkdownHtml.RenderMd): com.histmersion.server.MarkdownHtml.RenderResult = renderer.render(MarkdownFlavor.parser.parse(md))

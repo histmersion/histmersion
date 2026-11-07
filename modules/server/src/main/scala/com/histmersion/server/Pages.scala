@@ -18,81 +18,21 @@ import com.histmersion.api.research.Article
   * done by [[PageBuilder]]) into the [[HtmlRender]] anchors.
   */
 object Pages:
-  type SourceHtmlResult = SourceHtmlResult.T
-  object SourceHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceHtmlMd = SourceHtmlMd.T
-  object SourceHtmlMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitationsBlockAnchor = CitationsBlockAnchor.T
-  object CitationsBlockAnchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitationsBlockTitle = CitationsBlockTitle.T
-  object CitationsBlockTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Anchor = Anchor.T
+  object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeText = TimeText.T
+  object TimeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type LinkProseResult = LinkProseResult.T
-  object LinkProseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkProseMd = LinkProseMd.T
-  object LinkProseMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkProseLinksArg1 = LinkProseLinksArg1.T
-  object LinkProseLinksArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkProseNumberArg1 = LinkProseNumberArg1.T
-  object LinkProseNumberArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkProseNumberResult = LinkProseNumberResult.T
   object LinkProseNumberResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CiteNumberResult = CiteNumberResult.T
-  object CiteNumberResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CiteNumberN = CiteNumberN.T
   object CiteNumberN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumberingResultPart1 = NumberingResultPart1.T
-  object NumberingResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NumberingResultPart2 = NumberingResultPart2.T
   object NumberingResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumberingMd = NumberingMd.T
-  object NumberingMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumberingLinksArg1 = NumberingLinksArg1.T
-  object NumberingLinksArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FormatNoticeResult = FormatNoticeResult.T
-  object FormatNoticeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FormatNoticeWhat = FormatNoticeWhat.T
   object FormatNoticeWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FormatNoticeSlug = FormatNoticeSlug.T
-  object FormatNoticeSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceResult = SourceResult.T
-  object SourceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceLinksArg1 = SourceLinksArg1.T
-  object SourceLinksArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitationsResult = CitationsResult.T
-  object CitationsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindLabelResult = KindLabelResult.T
-  object KindLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindLabelKind = KindLabelKind.T
-  object KindLabelKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitationResult = CitationResult.T
-  object CitationResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleResult = ArticleResult.T
-  object ArticleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleLinksArg1 = ArticleLinksArg1.T
-  object ArticleLinksArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReviewBadgeResult = ReviewBadgeResult.T
-  object ReviewBadgeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalBadgeLinkResult = GoalBadgeLinkResult.T
-  object GoalBadgeLinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadableUtcResult = ReadableUtcResult.T
-  object ReadableUtcResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadableUtcT = ReadableUtcT.T
-  object ReadableUtcT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReviewLineResult = ReviewLineResult.T
-  object ReviewLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReviewHistoryResult = ReviewHistoryResult.T
-  object ReviewHistoryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitedEntriesNumbersPart1 = CitedEntriesNumbersPart1.T
-  object CitedEntriesNumbersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CitedEntriesNumbersPart2 = CitedEntriesNumbersPart2.T
   object CitedEntriesNumbersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitedEntriesLinksArg1 = CitedEntriesLinksArg1.T
-  object CitedEntriesLinksArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourcesCitedResult = SourcesCitedResult.T
-  object SourcesCitedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BacklinksResult = BacklinksResult.T
-  object BacklinksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   import HtmlRender.*
 
@@ -101,7 +41,7 @@ object Pages:
   /** Markdown with every `[[wikilink]]` replaced by its typed anchor (raw inline HTML, which flexmark passes through).
     * `number` appends the citation number to a source reference.
     */
-  def linkProse(md: com.histmersion.server.Pages.LinkProseMd, links: com.histmersion.server.Pages.LinkProseLinksArg1 => Option[LinkTarget], number: com.histmersion.server.Pages.LinkProseNumberArg1 => Option[com.histmersion.server.Pages.LinkProseNumberResult] = _ => None): com.histmersion.server.Pages.LinkProseResult =
+  def linkProse(md: com.histmersion.server.FullText.Shown.Markdown, links: com.histmersion.domain.library.Citekey => Option[LinkTarget], number: com.histmersion.domain.library.Citekey => Option[com.histmersion.server.Pages.LinkProseNumberResult] = _ => None): com.histmersion.server.HtmlRender.Html =
     Article.Links.rewriteLinks(md) { (t, explicit, written) =>
       val own = explicit.filter(_.nonEmpty)
       links(t) match
@@ -111,7 +51,7 @@ object Pages:
         case None                 => dangling(own.getOrElse(Label.display(written)))
     }
 
-  private def citeNumber(n: com.histmersion.server.Pages.CiteNumberN): com.histmersion.server.Pages.CiteNumberResult =
+  private def citeNumber(n: com.histmersion.server.Pages.CiteNumberN): com.histmersion.server.HtmlRender.Html =
     s"""<sup class="cite-num"><a class="cite-jump" href="#cite-$n">[$n]</a></sup>"""
 
   /** A heading that starts the part of an article whose sources are NOT cited in its argument — the wiki's
@@ -121,7 +61,7 @@ object Pages:
   private val NotUsed = """(?im)^#{1,6}\s*not used\b.*$""".r
 
   /** Citation numbers by first appearance in `md` (the argument part of an article). */
-  def numbering(md: com.histmersion.server.Pages.NumberingMd, links: com.histmersion.server.Pages.NumberingLinksArg1 => Option[LinkTarget]): Map[com.histmersion.server.Pages.NumberingResultPart1, com.histmersion.server.Pages.NumberingResultPart2] =
+  def numbering(md: com.histmersion.server.FullText.Shown.Markdown, links: com.histmersion.domain.library.Citekey => Option[LinkTarget]): Map[com.histmersion.domain.library.Citekey, com.histmersion.server.Pages.NumberingResultPart2] =
     Article.Links
       .targets(md)
       .flatMap(t => links(t).collect { case r: Source.Ref => r.citekey })
@@ -136,7 +76,7 @@ object Pages:
     * where, what goes wrong, the offending text. Unobtrusive on purpose (a reader came for the article); nothing at all
     * when the text is clean.
     */
-  def formatNotice(issues: List[FormatIssue], what: com.histmersion.server.Pages.FormatNoticeWhat, slug: Option[com.histmersion.server.Pages.FormatNoticeSlug]): com.histmersion.server.Pages.FormatNoticeResult =
+  def formatNotice(issues: List[FormatIssue], what: com.histmersion.server.Pages.FormatNoticeWhat, slug: Option[com.histmersion.domain.research.Slug]): com.histmersion.server.HtmlRender.Html =
     if issues.isEmpty then ""
     else
       val errs = issues.count(_.severity == FormatSeverity.Error)
@@ -165,7 +105,7 @@ object Pages:
 
   // ── source page ──────────────────────────────────────────────────────────────────────────────
 
-  def source(p: SourcePage, links: com.histmersion.server.Pages.SourceLinksArg1 => Option[LinkTarget]): com.histmersion.server.Pages.SourceResult =
+  def source(p: SourcePage, links: com.histmersion.domain.library.Citekey => Option[LinkTarget]): com.histmersion.server.HtmlRender.Html =
     val r = p.ref
     val period = YearFmt.period(p.periodStart, p.periodEnd)
     val byline = List(
@@ -183,7 +123,7 @@ object Pages:
     ).collect { case (l, c) if c.nonEmpty => s"""<p class="src-chips"><span class="lbl">$l</span> $c</p>""" }
     // the figure pipeline of plan §1.8 (legacy `figures/…` links, numbering, served paths, lazy
     // images) runs over every Markdown part of a source, as it did when the page was one document
-    def html(md: com.histmersion.server.Pages.SourceHtmlMd): com.histmersion.server.Pages.SourceHtmlResult =
+    def html(md: com.histmersion.server.FullText.Shown.Markdown): com.histmersion.server.HtmlRender.Html =
       val linked = AssetLinks.numberFigures(AssetLinks.fromFigures(linkProse(md, links)))
       AssetLinks.lazyImages(MarkdownHtml.render(AssetLinks.toWeb(linked, r.citekey)))
     val prose = (md: Option[String]) => md.map(_.trim).filter(_.nonEmpty).map(html)
@@ -212,15 +152,15 @@ object Pages:
       body
 
   /** "Cites" and "Cited by", each omitted when empty — and nothing at all when both are. */
-  def citations(cites: List[Citation], citedBy: List[Citation]): com.histmersion.server.Pages.CitationsResult =
-    def block(anchor: com.histmersion.server.Pages.CitationsBlockAnchor, title: com.histmersion.server.Pages.CitationsBlockTitle, cs: List[Citation]) =
+  def citations(cites: List[Citation], citedBy: List[Citation]): com.histmersion.server.HtmlRender.Html =
+    def block(anchor: com.histmersion.server.Pages.Anchor, title: com.histmersion.domain.Title, cs: List[Citation]) =
       if cs.isEmpty then ""
       else s"""<h2 id="$anchor">$title (${cs.size})</h2><ul class="citations">${cs.map(citation).mkString}</ul>"""
     block("cites", "Cites", cites) + block("cited-by", "Cited by", citedBy)
 
-  private def kindLabel(kind: com.histmersion.server.Pages.KindLabelKind): com.histmersion.server.Pages.KindLabelResult = s"""<span class="edge-kind">${esc(Label.display(kind))}</span> """
+  private def kindLabel(kind: com.histmersion.domain.library.Edge.Kind.Wire): com.histmersion.server.HtmlRender.Html = s"""<span class="edge-kind">${esc(Label.display(kind))}</span> """
 
-  def citation(c: Citation): com.histmersion.server.Pages.CitationResult = c match
+  def citation(c: Citation): com.histmersion.server.HtmlRender.Html = c match
     case Citation.ToSource(r, kind) =>
       s"""<li>${kindLabel(kind)}${sourceRef(r, readable(r))} <i>${esc(r.title)}</i> """ +
         s"""${statusBadge(
@@ -233,7 +173,7 @@ object Pages:
 
   // ── article page ─────────────────────────────────────────────────────────────────────────────
 
-  def article(p: ArticlePage, links: com.histmersion.server.Pages.ArticleLinksArg1 => Option[LinkTarget]): com.histmersion.server.Pages.ArticleResult =
+  def article(p: ArticlePage, links: com.histmersion.domain.research.Slug => Option[LinkTarget]): com.histmersion.server.HtmlRender.Html =
     val a = p.article
     val body0 = a.body.trim
     val heading = Articles.heading(body0)
@@ -266,7 +206,7 @@ object Pages:
   // ── review ───────────────────────────────────────────────────────────────────────────────────
 
   /** An article's review state as a badge, its meaning on hover. */
-  def reviewBadge(b: ReviewBadge): com.histmersion.server.Pages.ReviewBadgeResult =
+  def reviewBadge(b: ReviewBadge): com.histmersion.server.HtmlRender.Html =
     s"""<span class="job-state review-state state-${b.state.wire}" title="${esc(b.detail)}">${esc(
         Wording.capitalize(b.label)
       )}</span>"""
@@ -274,7 +214,7 @@ object Pages:
   /** A research goal's stage as the goals list draws it, linked to the goal's page (in the web UI a plain click opens
     * its window).
     */
-  def goalBadgeLink(g: ReviewGoal): com.histmersion.server.Pages.GoalBadgeLinkResult =
+  def goalBadgeLink(g: ReviewGoal): com.histmersion.server.HtmlRender.Html =
     val meaning = Goal.Stages.meaning(g.status).fold("")(m => s""" title="${esc(s"${g.status}: $m")}"""")
     s"""<a class="goal-ref" href="/research/goals/${esc(HtmlAtoms.segment(g.slug))}" title="${esc(g.slug)}">""" +
       s"""<span class="job-state goal-status state-${esc(g.status)}"$meaning>${esc(
@@ -283,12 +223,12 @@ object Pages:
       s"""${esc(if g.title.trim.nonEmpty then g.title else g.slug)}</a>"""
 
   /** `2026-10-20T09:00:00Z` as `2026-10-20 09:00 UTC`; anything else as it is. */
-  def readableUtc(t: com.histmersion.server.Pages.ReadableUtcT): com.histmersion.server.Pages.ReadableUtcResult = t match
+  def readableUtc(t: com.histmersion.server.Pages.TimeText): com.histmersion.server.HtmlRender.Text = t match
     case s"${day}T${hh}:${mm}:${_}Z" => s"$day $hh:$mm UTC"
     case other                       => other
 
   /** Under the title: the review badge, and the research goals that link the article. */
-  def reviewLine(r: Article.ReviewView): com.histmersion.server.Pages.ReviewLineResult =
+  def reviewLine(r: Article.ReviewView): com.histmersion.server.HtmlRender.Html =
     val goals = if r.goals.isEmpty then ""
     else
       s""" <span class="muted">· ${if r.goals.size == 1 then "goal" else "goals"}:</span> """ +
@@ -298,7 +238,7 @@ object Pages:
   /** Every finding the review panel raised, run by run and round by round, with what became of it; collapsed, its
     * summary saying how many there were and how many are open.
     */
-  def reviewHistory(r: Article.ReviewView): com.histmersion.server.Pages.ReviewHistoryResult =
+  def reviewHistory(r: Article.ReviewView): com.histmersion.server.HtmlRender.Html =
     if r.rounds.isEmpty then ""
     else
       val all = r.rounds.flatMap(_.findings)
@@ -327,8 +267,8 @@ object Pages:
     */
   def citedEntries(
       cited: List[CitedSource],
-      numbers: Map[com.histmersion.server.Pages.CitedEntriesNumbersPart1, com.histmersion.server.Pages.CitedEntriesNumbersPart2],
-      links: com.histmersion.server.Pages.CitedEntriesLinksArg1 => Option[LinkTarget]
+      numbers: Map[com.histmersion.domain.library.Citekey, com.histmersion.server.Pages.CitedEntriesNumbersPart2],
+      links: com.histmersion.domain.library.Citekey => Option[LinkTarget]
   ): List[CitedEntry] =
     val byCk = cited.map(c => c.citekey -> c).toMap
     val numbered = numbers.toList.sortBy(_._2).flatMap { (ck, n) =>
@@ -373,7 +313,7 @@ object Pages:
       )
     numbered ++ rest
 
-  def sourcesCited(entries: List[CitedEntry]): com.histmersion.server.Pages.SourcesCitedResult =
+  def sourcesCited(entries: List[CitedEntry]): com.histmersion.server.HtmlRender.Html =
     if entries.isEmpty then ""
     else
       val items = entries.map { e =>
@@ -392,7 +332,7 @@ object Pages:
       }
       s"""<h2 id="sources-cited">Sources cited (${entries.size})</h2><ol class="sources-cited">${items.mkString}</ol>"""
 
-  def backlinks(rows: List[Backlink]): com.histmersion.server.Pages.BacklinksResult =
+  def backlinks(rows: List[Backlink]): com.histmersion.server.HtmlRender.Html =
     if rows.isEmpty then ""
     else
       val items = rows.map { b =>

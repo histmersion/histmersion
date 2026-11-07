@@ -14,34 +14,30 @@ enum ConverterState:
   case Down(reason: ConverterState.Down.Reason)
 
   /** The `converter` line of [[Health]]. */
-  def render: com.histmersion.util.ocr.ConverterState.RenderResult = this match
+  def render: com.histmersion.util.ocr.ConverterState.Summary = this match
     case Ok           => "ok"
     case Busy(id)     => s"converter busy: job $id"
     case Down(reason) => reason
 
   /** Busy is healthy: the server is doing exactly what it is for. */
-  def healthy: com.histmersion.util.ocr.ConverterState.HealthyResult = this match
+  def healthy: Boolean = this match
     case Down(_) => false
     case _       => true
 
 object ConverterState:
+  type Probe = Probe.T
+  object Probe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Summary = Summary.T
+  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** From the raw probe answer (`"ok"` or why not) and the job the converter is working on, if any. */
   object Busy:
-    type JobId = JobId.T
-    object JobId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type JobId = com.histmersion.util.jobs.Job.Id
+    val JobId: _root_.com.histmersion.util.jobs.Job.Id.type = _root_.com.histmersion.util.jobs.Job.Id
 
   object Down:
     type Reason = Reason.T
     object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type RenderResult = RenderResult.T
-  object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HealthyResult = HealthyResult.T
-  object HealthyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfProbe = OfProbe.T
-  object OfProbe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfBusyJob = OfBusyJob.T
-  object OfBusyJob extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def of(probe: com.histmersion.util.ocr.ConverterState.OfProbe, busyJob: Option[com.histmersion.util.ocr.ConverterState.OfBusyJob]): ConverterState =
+  def of(probe: com.histmersion.util.ocr.ConverterState.Probe, busyJob: Option[com.histmersion.util.jobs.Job.Id]): ConverterState =
     if probe == "ok" then Ok else busyJob.fold(Down(probe))(Busy(_))

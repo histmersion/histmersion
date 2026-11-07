@@ -1,0 +1,313 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.automation.worklists.BQueueRow.CreatedAt (String)
+com.histmersion.domain.automation.worklists.BQueueRow.DoneAt (String)
+com.histmersion.domain.automation.worklists.BQueueRow.List (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Reason (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Status (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Text (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Topic (String)
+com.histmersion.domain.automation.worklists.BQueueRow.UpdatedAt (String)
+com.histmersion.domain.automation.worklists.ImportCounts.Removed (Int)
+com.histmersion.domain.automation.worklists.ImportCounts.Written (Int)
+com.histmersion.domain.automation.worklists.QueueItemId (Int)
+com.histmersion.domain.automation.worklists.QueueScope.ForGoal.Goal (String)
+com.histmersion.domain.automation.worklists.QueueScope.ForGoal.Linked (String)
+com.histmersion.domain.automation.worklists.QueueScope.ForGoal.WithDone (Boolean)
+com.histmersion.domain.automation.worklists.QueueScope.ForJob.Job (String)
+com.histmersion.domain.automation.worklists.WorkListState.LastId (Int)
+com.histmersion.domain.catalogue.CatalogueJobs.Stoppable (String)
+com.histmersion.domain.catalogue.CatalogueState.CatalogueRecordsPart1 (String)
+com.histmersion.domain.catalogue.CatalogueState.Checked (String)
+com.histmersion.domain.catalogue.CatalogueState.EventAliasesKey (String)
+com.histmersion.domain.catalogue.CatalogueState.EventAliasesValue (String)
+com.histmersion.domain.catalogue.CatalogueState.ImportPartsKey (String)
+com.histmersion.domain.catalogue.CatalogueState.ImportPartsValueKey (String)
+com.histmersion.domain.catalogue.CatalogueState.ImportPartsValueValue (Int)
+com.histmersion.domain.catalogue.CatalogueState.LastAttestationId (Long)
+com.histmersion.domain.catalogue.CatalogueState.LastCorrectionId (Long)
+com.histmersion.domain.catalogue.CatalogueState.PlaceAliasesKey (String)
+com.histmersion.domain.catalogue.CatalogueState.PlaceAliasesValue (String)
+com.histmersion.domain.catalogue.CatalogueState.PlaceRemovals (String)
+com.histmersion.domain.catalogue.CatalogueState.SeedVersionsKey (String)
+com.histmersion.domain.catalogue.CatalogueState.SeedVersionsValue (Int)
+com.histmersion.domain.catalogue.events.BCatalogueRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Deaths (Long)
+com.histmersion.domain.catalogue.events.BCatalogueRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Historicity (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Kind (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Label (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Magnitude (Double)
+com.histmersion.domain.catalogue.events.BCatalogueRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.BCatalogueRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Provider (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.ProviderId (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Record (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.RetrievedAt (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Url (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Vei (Int)
+com.histmersion.domain.catalogue.events.BDatingRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.BDatingRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.BDatingRow.Method (String)
+com.histmersion.domain.catalogue.events.BDatingRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.BDatingRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.BDatingRow.Note (String)
+com.histmersion.domain.catalogue.events.BEventEdgeRow.Kind (String)
+com.histmersion.domain.catalogue.events.BEventEdgeRow.Note (String)
+com.histmersion.domain.catalogue.events.BEventRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.BEventRow.Catalogue (String)
+com.histmersion.domain.catalogue.events.BEventRow.Central (Long)
+com.histmersion.domain.catalogue.events.BEventRow.DatingMethod (String)
+com.histmersion.domain.catalogue.events.BEventRow.Description (String)
+com.histmersion.domain.catalogue.events.BEventRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.BEventRow.Geom (String)
+com.histmersion.domain.catalogue.events.BEventRow.Historicity (String)
+com.histmersion.domain.catalogue.events.BEventRow.Id (String)
+com.histmersion.domain.catalogue.events.BEventRow.Kind (String)
+com.histmersion.domain.catalogue.events.BEventRow.Label (String)
+com.histmersion.domain.catalogue.events.BEventRow.Names (String)
+com.histmersion.domain.catalogue.events.BEventRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.BEventRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.BEventRow.PlusMinus (Long)
+com.histmersion.domain.catalogue.events.BEventRow.Scale (String)
+com.histmersion.domain.catalogue.events.BEventRow.UpdatedAt (String)
+com.histmersion.domain.catalogue.events.BEventRow.Wikidata (String)
+com.histmersion.domain.catalogue.events.BParticipantRow.Actor (String)
+com.histmersion.domain.catalogue.events.BParticipantRow.Role (String)
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.Entry.Name (String)
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.Entry.Plugin (String)
+com.histmersion.domain.catalogue.events.CatalogMerge.Fit.Km (Double)
+com.histmersion.domain.catalogue.events.CatalogMerge.Fit.Score (Double)
+com.histmersion.domain.catalogue.events.CatalogMerge.Fit.Years (Double)
+com.histmersion.domain.catalogue.events.CatalogMerge.Placement.Why (String)
+com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km (Double)
+com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years (Long)
+com.histmersion.domain.catalogue.events.CatalogProvider.Problem (String)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Deaths (Long)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Magnitude (Double)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Provider (String)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.ProviderId (String)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.RetrievedAt (String)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Url (String)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Vei (Int)
+com.histmersion.domain.catalogue.events.CorrectionsTools.EventCorrectionsInput.Id (String)
+com.histmersion.domain.catalogue.events.CorrectionsTools.EventCorrectionsInput.Limit (Int)
+com.histmersion.domain.catalogue.events.CorrectionsTools.EventCorrectionsInput.Status (String)
+com.histmersion.domain.catalogue.events.EventDetailRow.Geometry (String)
+com.histmersion.domain.catalogue.events.EventGeoRow.Anchor (String)
+com.histmersion.domain.catalogue.events.EventGeoRow.Magnitude (Double)
+com.histmersion.domain.catalogue.events.EventGeoRow.PlaceLabel (String)
+com.histmersion.domain.catalogue.events.EventGeoRow.Vei (Int)
+com.histmersion.domain.catalogue.events.EventProviders.Problem (String)
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.OutsideMagnitude (Double)
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.OutsideVei (Int)
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.RegionMagnitude (Double)
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.RegionVei (Int)
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.Problem (String)
+com.histmersion.domain.catalogue.events.EventProviders.WikidataProperty (String)
+com.histmersion.domain.catalogue.events.EventRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.EventRow.Central (Long)
+com.histmersion.domain.catalogue.events.EventRow.DatingMethod (String)
+com.histmersion.domain.catalogue.events.EventRow.Description (String)
+com.histmersion.domain.catalogue.events.EventRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.EventRow.GeometryType (String)
+com.histmersion.domain.catalogue.events.EventRow.Historicity (String)
+com.histmersion.domain.catalogue.events.EventRow.Kind (String)
+com.histmersion.domain.catalogue.events.EventRow.Label (String)
+com.histmersion.domain.catalogue.events.EventRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.EventRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.EventRow.ParentId (String)
+com.histmersion.domain.catalogue.events.EventRow.PlaceKind (String)
+com.histmersion.domain.catalogue.events.EventRow.PlusMinus (Long)
+com.histmersion.domain.catalogue.events.EventRow.Scale (String)
+com.histmersion.domain.catalogue.events.EventRow.Tier (String)
+com.histmersion.domain.catalogue.events.EventRow.Uncertainty (Long)
+com.histmersion.domain.catalogue.events.EventSelection.Historicity (String)
+com.histmersion.domain.catalogue.events.EventSelection.Kind (String)
+com.histmersion.domain.catalogue.events.EventSelection.Text (String)
+com.histmersion.domain.catalogue.events.EventSql.Narrow.Context (Boolean)
+com.histmersion.domain.catalogue.events.EventSql.Narrow.Tier (String)
+com.histmersion.domain.catalogue.events.EventSql.Point (String)
+com.histmersion.domain.catalogue.events.StoredEvent.Catalogue (Boolean)
+com.histmersion.domain.catalogue.events.StoredEvent.Kind (String)
+com.histmersion.domain.catalogue.events.StoredEvent.Label (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.StoredEventRow.Catalogue (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.StoredEventRow.Id (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.Keys (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.Kind (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.Label (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.StoredEventRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.StoredEventRow.Wikidata (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.automation.workflows.Workflows.ByIdPart1 | base String | generated | value
+    private val byId: Map[com.histmersion.domain.automation.workflows.Workflows.ByIdPart1, WorkflowDefinition] = definitions.map(d => (d.id.value: String) -> d).toMap
+com.histmersion.domain.automation.workflows.Workflows.FinishedResult | base String | generated | method-result
+    def finished(): Set[com.histmersion.domain.automation.workflows.Workflows.FinishedResult] = objectives.flatMap(_.finished()).toSet
+com.histmersion.domain.automation.workflows.Workflows.LinkedResultPart1 | base String | generated | method-result
+    def linked(): Map[com.histmersion.domain.automation.workflows.Workflows.LinkedResultPart1, List[com.histmersion.domain.automation.workflows.Workflows.LinkedResultPart2]] 
+com.histmersion.domain.automation.workflows.Workflows.LinkedResultPart2 | base String | generated | method-result
+    def linked(): Map[com.histmersion.domain.automation.workflows.Workflows.LinkedResultPart1, List[com.histmersion.domain.automation.workflows.Workflows.LinkedResultPart2]] 
+com.histmersion.domain.automation.workflows.Workflows.OfResultPart1 | base String | generated | method-result
+    def of(contributions: Contributions): Either[com.histmersion.domain.automation.workflows.Workflows.OfResultPart1, Workflows] =
+com.histmersion.domain.automation.workflows.Workflows.ParseRaw | base String | generated | method-parameter
+    def parse(raw: com.histmersion.domain.automation.workflows.Workflows.ParseRaw): Option[WorkflowDefinition] = byId.get(raw.trim.toLowerCase)
+com.histmersion.domain.automation.worklists.ImportCounts.Removed | base Int | original | constructor-parameter
+    final case class ImportCounts(written: ImportCounts.Written, removed: ImportCounts.Removed)
+com.histmersion.domain.automation.worklists.ImportCounts.Written | base Int | original | constructor-parameter
+    final case class ImportCounts(written: ImportCounts.Written, removed: ImportCounts.Removed)
+com.histmersion.domain.automation.worklists.ImportMode.OfReplace | base Boolean | generated | method-parameter
+    def of(replace: com.histmersion.domain.automation.worklists.ImportMode.OfReplace): ImportMode = if replace then Replace else Append
+com.histmersion.domain.automation.worklists.QueueError.MessageResult | base String | generated | method-result
+    def message: com.histmersion.domain.automation.worklists.QueueError.MessageResult = this match
+com.histmersion.domain.automation.worklists.QueueItemId | base Int | original | constructor-parameter,method-parameter
+com.histmersion.domain.automation.worklists.QueueScope.ForGoal.Goal | base String | generated | constructor-parameter
+    case ForGoal(goal: QueueScope.ForGoal.Goal, linked: Set[QueueScope.ForGoal.Linked], withDone: QueueScope.ForGoal.WithDone)
+com.histmersion.domain.automation.worklists.QueueScope.ForGoal.Linked | base String | generated | constructor-parameter
+    case ForGoal(goal: QueueScope.ForGoal.Goal, linked: Set[QueueScope.ForGoal.Linked], withDone: QueueScope.ForGoal.WithDone)
+com.histmersion.domain.automation.worklists.QueueScope.ForGoal.WithDone | base Boolean | generated | constructor-parameter
+    case ForGoal(goal: QueueScope.ForGoal.Goal, linked: Set[QueueScope.ForGoal.Linked], withDone: QueueScope.ForGoal.WithDone)
+com.histmersion.domain.automation.worklists.QueueScope.ForJob.Job | base String | generated | constructor-parameter
+    case ForJob(job: QueueScope.ForJob.Job)
+com.histmersion.domain.automation.worklists.QueueService.InMemory.ByIdsWanted | base Int | generated | value
+    val wanted: Set[com.histmersion.domain.automation.worklists.QueueService.InMemory.ByIdsWanted] = ids.map(i => i.value: Int).toSet
+com.histmersion.domain.automation.worklists.WorkListControllers.AddList | base String | generated | method-parameter
+    def add(list: com.histmersion.domain.automation.worklists.WorkListControllers.AddList, in: QueueAdd): Either[Api.Error, QueueItem] =
+com.histmersion.domain.automation.worklists.WorkListControllers.DeleteId | base Int | generated | method-parameter
+    def delete(id: com.histmersion.domain.automation.worklists.WorkListControllers.DeleteId): Either[Api.Error, QueueItem] =
+com.histmersion.domain.automation.worklists.WorkListControllers.ExportTextList | base String | generated | method-parameter
+    def exportText(list: com.histmersion.domain.automation.worklists.WorkListControllers.ExportTextList): Either[Api.Error, com.histmersion.domain.automation.worklists.WorkLi
+com.histmersion.domain.automation.worklists.WorkListControllers.ExportTextResultPart2 | base String | generated | method-result
+    def exportText(list: com.histmersion.domain.automation.worklists.WorkListControllers.ExportTextList): Either[Api.Error, com.histmersion.domain.automation.worklists.WorkLi
+com.histmersion.domain.automation.worklists.WorkListControllers.FilesResultPart1 | base String | generated | method-result
+    def files(): List[(com.histmersion.domain.automation.worklists.WorkListControllers.FilesResultPart1, com.histmersion.domain.automation.worklists.WorkListControllers.Files
+com.histmersion.domain.automation.worklists.WorkListControllers.FilesResultPart2 | base String | generated | method-result
+    def files(): List[(com.histmersion.domain.automation.worklists.WorkListControllers.FilesResultPart1, com.histmersion.domain.automation.worklists.WorkListControllers.Files
+com.histmersion.domain.automation.worklists.WorkListControllers.ImportTextList | base String | generated | method-parameter
+    def importText(list: com.histmersion.domain.automation.worklists.WorkListControllers.ImportTextList, req: QueueImport): Either[Api.Error, QueueImported] =
+com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList | base String | generated | method-parameter
+    def kindOf(list: com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList): Either[Api.Error, Kind] =
+com.histmersion.domain.automation.worklists.WorkListControllers.PatchId | base Int | generated | method-parameter
+    def patch(id: com.histmersion.domain.automation.worklists.WorkListControllers.PatchId, p: QueuePatch): Either[Api.Error, QueueItem] =
+com.histmersion.domain.automation.worklists.WorkListState.AddedAllLoopLast | base Int | generated | method-parameter
+    @tailrec def loop(rest: List[QueueAdd], made: Vector[QueueItem], last: com.histmersion.domain.automation.worklists.WorkListState.AddedAllLoopLast): WorkListState = rest m
+com.histmersion.domain.automation.worklists.WorkListState.ItemId | base Int | generated | method-parameter
+    def item(kind: Kind, in: QueueAdd, id: com.histmersion.domain.automation.worklists.WorkListState.ItemId, now: Instant): QueueItem =
+com.histmersion.domain.automation.worklists.WorkListState.LastId | base Int | original | constructor-parameter
+    final case class WorkListState(items: Vector[QueueItem], lastId: WorkListState.LastId):
+com.histmersion.domain.automation.worklists.WorkListState.StampResult | base String | generated | method-result
+    def stamp(at: Instant): com.histmersion.domain.automation.worklists.WorkListState.StampResult = Stamp.format(at.truncatedTo(ChronoUnit.MICROS))
+com.histmersion.domain.catalogue.CatalogueData.OnDemandDirectory | base String | generated | method-parameter
+    private def onDemand(directory: com.histmersion.domain.catalogue.CatalogueData.OnDemandDirectory): CacheHolding =
+com.histmersion.domain.catalogue.CatalogueJobs.AmendId | base String | generated | method-parameter
+    def amend(id: com.histmersion.domain.catalogue.CatalogueJobs.AmendId)(change: JobDetail => JobDetail): Unit = BackgroundJob.amendDetail(ds, id)(change)
+com.histmersion.domain.catalogue.CatalogueJobs.HeldResult | base Boolean | generated | method-result
+    def held: com.histmersion.domain.catalogue.CatalogueJobs.HeldResult = maintenance.active
+com.histmersion.domain.catalogue.CatalogueJobs.StartBodyArg2Arg1 | base String | generated | method-parameter
+com.histmersion.domain.catalogue.CatalogueJobs.StartBodyResultPart1 | base String | generated | method-parameter
+com.histmersion.domain.catalogue.CatalogueJobs.StartBodyResultPart2 | base String | generated | method-parameter
+com.histmersion.domain.catalogue.CatalogueJobs.StartDescribe | base String | generated | method-parameter
+    def start(kind: com.histmersion.domain.catalogue.CatalogueJobs.StartKind, describe: com.histmersion.domain.catalogue.CatalogueJobs.StartDescribe, write: com.histmersion.d
+com.histmersion.domain.catalogue.CatalogueJobs.StartKind | base String | generated | method-parameter
+    def start(kind: com.histmersion.domain.catalogue.CatalogueJobs.StartKind, describe: com.histmersion.domain.catalogue.CatalogueJobs.StartDescribe, write: com.histmersion.d
+com.histmersion.domain.catalogue.CatalogueJobs.StartWrite | base Boolean | generated | method-parameter
+    def start(kind: com.histmersion.domain.catalogue.CatalogueJobs.StartKind, describe: com.histmersion.domain.catalogue.CatalogueJobs.StartDescribe, write: com.histmersion.d
+com.histmersion.domain.catalogue.CatalogueJobs.Stoppable | base String | generated | constructor-parameter
+com.histmersion.domain.catalogue.CatalogueState.CatalogueRecordsPart1 | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.CatalogueState.Checked | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.CatalogueState.EventAliasesKey | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.CatalogueState.EventAliasesValue | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.CatalogueState.ImportPartsKey | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.CatalogueState.ImportPartsValueKey | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.CatalogueState.ImportPartsValueValue | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.CatalogueState.LastAttestationId | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.CatalogueState.LastCorrectionId | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.CatalogueState.PlaceAliasesKey | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.CatalogueState.PlaceAliasesValue | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.CatalogueState.PlaceRemovals | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.CatalogueState.SeedVersionsKey | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.CatalogueState.SeedVersionsValue | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.AliasesPart1 | base String | generated | value
+    val aliases: Map[com.histmersion.domain.catalogue.events.BuiltinCatalogues.AliasesPart1, com.histmersion.domain.catalogue.events.BuiltinCatalogues.AliasesPart2] = Map(
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.AliasesPart2 | base String | generated | value
+    val aliases: Map[com.histmersion.domain.catalogue.events.BuiltinCatalogues.AliasesPart1, com.histmersion.domain.catalogue.events.BuiltinCatalogues.AliasesPart2] = Map(
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.CanonicalAsked | base String | generated | alias,method-parameter
+    val ResolveAsked: _root_.com.histmersion.domain.catalogue.events.BuiltinCatalogues.CanonicalAsked.type = _root_.com.histmersion.domain.catalogue.events.BuiltinCatalogues.
+    def canonical(asked: com.histmersion.domain.catalogue.events.BuiltinCatalogues.CanonicalAsked): com.histmersion.domain.catalogue.events.BuiltinCatalogues.CanonicalResult 
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.CanonicalResult | base String | generated | method-result
+    def canonical(asked: com.histmersion.domain.catalogue.events.BuiltinCatalogues.CanonicalAsked): com.histmersion.domain.catalogue.events.BuiltinCatalogues.CanonicalResult 
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.Entry.Name | base String | original | constructor-parameter
+    final case class Entry(plugin: Entry.Plugin, name: Entry.Name):
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.Entry.Plugin | base String | original | constructor-parameter
+    final case class Entry(plugin: Entry.Plugin, name: Entry.Name):
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.Entry.TitleResult | base String | generated | method-result
+    def title: com.histmersion.domain.catalogue.events.BuiltinCatalogues.Entry.TitleResult = CatalogProvider.info(name).fold(name)(_.title)
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.InfoCataloguesPart1 | base String | generated | alias,method-parameter
+    val InfosCataloguesPart1: _root_.com.histmersion.domain.catalogue.events.BuiltinCatalogues.InfoCataloguesPart1.type = _root_.com.histmersion.domain.catalogue.events.Built
+    def info(name: com.histmersion.domain.catalogue.events.BuiltinCatalogues.InfoName, catalogues: ListMap[com.histmersion.domain.catalogue.events.BuiltinCatalogues.InfoCatal
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.InfoName | base String | generated | method-parameter
+    def info(name: com.histmersion.domain.catalogue.events.BuiltinCatalogues.InfoName, catalogues: ListMap[com.histmersion.domain.catalogue.events.BuiltinCatalogues.InfoCatal
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.OrderedRegistered | base String | generated | method-parameter
+    def ordered(registered: List[com.histmersion.domain.catalogue.events.BuiltinCatalogues.OrderedRegistered]): List[com.histmersion.domain.catalogue.events.BuiltinCatalogues
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.OrderedResult | base String | generated | method-result
+    def ordered(registered: List[com.histmersion.domain.catalogue.events.BuiltinCatalogues.OrderedRegistered]): List[com.histmersion.domain.catalogue.events.BuiltinCatalogues
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.PluginIds | base String | generated | value
+    val pluginIds: Set[com.histmersion.domain.catalogue.events.BuiltinCatalogues.PluginIds] = entries.map(_.plugin).toSet
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.Reserved | base String | generated | value
+    val reserved: Set[com.histmersion.domain.catalogue.events.BuiltinCatalogues.Reserved] = CatalogProvider.all.toSet ++ aliases.keySet
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.ResolveCataloguesPart1 | base String | generated | method-parameter
+    def resolve(asked: com.histmersion.domain.catalogue.events.BuiltinCatalogues.ResolveAsked, catalogues: ListMap[com.histmersion.domain.catalogue.events.BuiltinCatalogues.R
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.ResolveResultPart1 | base String | generated | method-result
+    def resolve(asked: com.histmersion.domain.catalogue.events.BuiltinCatalogues.ResolveAsked, catalogues: ListMap[com.histmersion.domain.catalogue.events.BuiltinCatalogues.R
+com.histmersion.domain.catalogue.events.BuiltinCatalogues.ResolveResultPart2 | base String | generated | method-result
+    def resolve(asked: com.histmersion.domain.catalogue.events.BuiltinCatalogues.ResolveAsked, catalogues: ListMap[com.histmersion.domain.catalogue.events.BuiltinCatalogues.R
+com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListId | base String | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.ListId], status: O
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.Imp
+com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind | base String | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.ListId], status: O
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.Imp
+com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListLimit | base Int | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.ListId], status: O
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.Imp
+com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListOffset | base Int | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.ListId], status: O
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.Imp
+com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListStatus | base String | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.ListId], status: O
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.Imp
+com.histmersion.domain.catalogue.events.CorrectionService.InMemory.ListId | base String | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.ListId], status: O
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.Imp
+com.histmersion.domain.catalogue.events.CorrectionService.InMemory.ListKind | base String | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.ListId], status: O
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.Imp
+com.histmersion.domain.catalogue.events.CorrectionService.InMemory.ListLimit | base Int | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.ListId], status: O
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.Imp
+com.histmersion.domain.catalogue.events.CorrectionService.InMemory.ListOffset | base Int | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.ListId], status: O
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.Imp
+com.histmersion.domain.catalogue.events.CorrectionService.InMemory.ListStatus | base String | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.ListId], status: O
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.Imp
+com.histmersion.domain.catalogue.events.CorrectionService.ListId | base String | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.ListId], status: O
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.Imp
+com.histmersion.domain.catalogue.events.CorrectionService.ListKind | base String | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.ListId], status: O
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.Imp
+com.histmersion.domain.catalogue.events.CorrectionService.ListLimit | base Int | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.ListId], status: O
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.Imp
+com.histmersion.domain.catalogue.events.CorrectionService.ListOffset | base Int | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.ListId], status: O
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.Imp
+com.histmersion.domain.catalogue.events.CorrectionService.ListStatus | base String | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.ListId], status: O
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionService.Implementation.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionService.Imp
+com.histmersion.domain.catalogue.events.CorrectionsTools.EventCorrectionsInput.Id | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CorrectionsTools.EventCorrectionsInput.Limit | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CorrectionsTools.EventCorrectionsInput.Status | base String | original | constructor-parameter

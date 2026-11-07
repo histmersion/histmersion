@@ -41,25 +41,17 @@ final class SourceReadable(db: Transactor) extends Readable:
 
 
 object SourceReadable:
-  type RowCk = RowCk.T
-  object RowCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RowTitle = RowTitle.T
-  object RowTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RowAuthors = RowAuthors.T
-  object RowAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RowStatus = RowStatus.T
-  object RowStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RowStart = RowStart.T
   object RowStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RowEnd = RowEnd.T
   object RowEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private[sources] def row(
-      ck: com.histmersion.domain.library.sources.SourceReadable.RowCk,
-      title: com.histmersion.domain.library.sources.SourceReadable.RowTitle,
-      authors: List[com.histmersion.domain.library.sources.SourceReadable.RowAuthors],
+      ck: com.histmersion.domain.library.Citekey,
+      title: com.histmersion.domain.Title,
+      authors: List[com.histmersion.domain.library.sources.FullSourceRow.Authors],
       year: Option[com.histmersion.Year],
-      status: Option[com.histmersion.domain.library.sources.SourceReadable.RowStatus],
+      status: Option[com.histmersion.domain.library.Source.Status.Wire],
       start: Option[com.histmersion.domain.library.sources.SourceReadable.RowStart],
       end: Option[com.histmersion.domain.library.sources.SourceReadable.RowEnd]
   ): UnreadItem =

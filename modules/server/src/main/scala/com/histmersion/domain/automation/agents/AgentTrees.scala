@@ -30,7 +30,7 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
   def codexHome: Option[Path] = AgentTrees.codexHome(app, paths)
 
   def claudePlugin: Option[Path] = root.map(_.resolve("claude-code").resolve("headless"))
-  def claudeRole(name: com.histmersion.domain.automation.agents.AgentTrees.ClaudeRoleName): Option[Path] =
+  def claudeRole(name: String): Option[Path] =
     root.map(_.resolve("claude-code").resolve("roles").resolve(name).resolve("settings.json"))
   def opencodeXdg: Option[Path] = root.map(_.resolve("opencode").resolve("xdg"))
   def opencodeConfig: Option[Path] = root.map(_.resolve("opencode").resolve("config"))
@@ -51,7 +51,7 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
     )
 
   /** The definitions, loaded and checked; `known` are the MCP tool names placeholders may use. */
-  def load(known: Set[com.histmersion.domain.automation.agents.AgentTrees.LoadKnown]): Either[com.histmersion.domain.automation.agents.AgentTrees.LoadResultPart1, AgentGenerator.Defs] =
+  def load(known: Set[com.histmersion.util.storage.SafePath.Candidate]): Either[com.histmersion.domain.automation.agents.AgentTrees.Problem, AgentGenerator.Defs] =
     for
       as <- defs.agents
       fs <- defs.fragments
@@ -64,10 +64,10 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
 
   /** Generate the trees of `runtimes` (all three by default) into `out` (default [[root]]). */
   def generate(
-      known: Set[com.histmersion.domain.automation.agents.AgentTrees.GenerateKnown],
+      known: Set[com.histmersion.util.storage.SafePath.Candidate],
       runtimes: List[AgentRuntime] = AgentRuntime.Generated,
       out: Option[Path] = None
-  ): Either[com.histmersion.domain.automation.agents.AgentTrees.GenerateResultPart1, GenerateResult] =
+  ): Either[com.histmersion.domain.automation.agents.AgentTrees.Problem, GenerateResult] =
     for
       dir <- out
         .orElse(root)
@@ -79,69 +79,23 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
     yield res
 
 object AgentTrees:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** No environment: the trees only where the settings put them (a test's). */
-  type ClaudeRoleName = ClaudeRoleName.T
-  object ClaudeRoleName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SettingsVersion = _root_.com.histmersion.domain.automation.agents.GenSettings.Version
   val SettingsVersion: _root_.com.histmersion.domain.automation.agents.GenSettings.Version.type = _root_.com.histmersion.domain.automation.agents.GenSettings.Version
-  type LoadResultPart1 = LoadResultPart1.T
-  object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadKnown = LoadKnown.T
-  object LoadKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GenerateResultPart1 = GenerateResultPart1.T
-  object GenerateResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GenerateKnown = GenerateKnown.T
-  object GenerateKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OutRaw = OutRaw.T
-  object OutRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExpandResult = ExpandResult.T
-  object ExpandResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExpandP = ExpandP.T
-  object ExpandP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RootEnvArg1 = RootEnvArg1.T
-  object RootEnvArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RootEnvResult = RootEnvResult.T
-  object RootEnvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RootOsName = RootOsName.T
-  object RootOsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExpandInResult = ExpandInResult.T
-  object ExpandInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExpandInP = ExpandInP.T
-  object ExpandInP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExpandInEnvArg1 = ExpandInEnvArg1.T
-  object ExpandInEnvArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExpandInEnvResult = ExpandInEnvResult.T
-  object ExpandInEnvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CodexHomeEnvArg1 = CodexHomeEnvArg1.T
-  object CodexHomeEnvArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CodexHomeEnvResult = CodexHomeEnvResult.T
-  object CodexHomeEnvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CodexHomeOsName = CodexHomeOsName.T
-  object CodexHomeOsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShaResult = ShaResult.T
-  object ShaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteResultPart1 = WriteResultPart1.T
-  object WriteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteTreePart1 = WriteTreePart1.T
-  object WriteTreePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteTreePart2 = WriteTreePart2.T
-  object WriteTreePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteRuntimes = WriteRuntimes.T
-  object WriteRuntimes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteSha = WriteSha.T
-  object WriteSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val NoEnvironment: UserPaths = UserPaths(com.histmersion.config.Environment.empty, "")
 
   /** The directory a request names for the trees (`~` expanded), absolute; none for a blank one. */
-  def out(raw: Option[com.histmersion.domain.automation.agents.AgentTrees.OutRaw], paths: UserPaths): Option[Path] =
+  def out(raw: Option[String], paths: UserPaths): Option[Path] =
     raw.map(_.trim).filter(_.nonEmpty).map(o => Path.of(expandIn(o, paths)).toAbsolutePath.normalize)
 
   /** `~` as the JVM's home directory: what the command-line runtimes still read (their slice gives them the injected
     * environment, §25).
     */
-  def expand(p: com.histmersion.domain.automation.agents.AgentTrees.ExpandP)(using home: com.histmersion.util.system.JvmHome): com.histmersion.domain.automation.agents.AgentTrees.ExpandResult = home.expand(p)
+  def expand(p: String)(using home: com.histmersion.util.system.JvmHome): String = home.expand(p)
 
   /** `agents.runtimes.dir`, else the data directory the bundle uses (`runtime.data-dir`, else
     * `~/Library/Application Support/Histmersion` on macOS, `$XDG_DATA_HOME/histmersion` elsewhere) + `/agents`.
@@ -149,7 +103,7 @@ object AgentTrees:
   def root(app: AppConfig, paths: UserPaths): Option[Path] = root(app, paths.environment.lookup, paths.osName)
 
   /** [[root]] in the environment `env` of the operating system `osName`. */
-  def root(app: AppConfig, env: com.histmersion.domain.automation.agents.AgentTrees.RootEnvArg1 => Option[com.histmersion.domain.automation.agents.AgentTrees.RootEnvResult], osName: com.histmersion.domain.automation.agents.AgentTrees.RootOsName): Option[Path] =
+  def root(app: AppConfig, env: String => Option[String], osName: String): Option[Path] =
     Option(app.agents.runtimes.dir)
       .map(_.trim)
       .filter(_.nonEmpty)
@@ -158,21 +112,21 @@ object AgentTrees:
       .map(_.toAbsolutePath.normalize)
 
   /** `~` at the start of `p` as the environment's `HOME` (left as it is when there is none). */
-  def expandIn(p: com.histmersion.domain.automation.agents.AgentTrees.ExpandInP, env: com.histmersion.domain.automation.agents.AgentTrees.ExpandInEnvArg1 => Option[com.histmersion.domain.automation.agents.AgentTrees.ExpandInEnvResult]): com.histmersion.domain.automation.agents.AgentTrees.ExpandInResult =
+  def expandIn(p: String, env: String => Option[String]): String =
     env("HOME")
       .map(_.trim)
       .filter(_.nonEmpty)
       .fold(p)(h => p.replaceFirst("^~", java.util.regex.Matcher.quoteReplacement(h)))
 
   /** [[expandIn]] the injected environment. */
-  def expandIn(p: com.histmersion.domain.automation.agents.AgentTrees.ExpandInP, paths: UserPaths): com.histmersion.domain.automation.agents.AgentTrees.ExpandInResult = expandIn(p, paths.environment.lookup)
+  def expandIn(p: String, paths: UserPaths): String = expandIn(p, paths.environment.lookup)
 
   /** The CODEX_HOME of the runs: `agents.providers.codex.home`, else `<runtimes dir>/codex/home`. */
   def codexHome(app: AppConfig, paths: UserPaths): Option[Path] =
     codexHome(app, paths.environment.lookup, paths.osName)
 
   /** [[codexHome]] in the environment `env` of the operating system `osName`. */
-  def codexHome(app: AppConfig, env: com.histmersion.domain.automation.agents.AgentTrees.CodexHomeEnvArg1 => Option[com.histmersion.domain.automation.agents.AgentTrees.CodexHomeEnvResult], osName: com.histmersion.domain.automation.agents.AgentTrees.CodexHomeOsName): Option[Path] =
+  def codexHome(app: AppConfig, env: String => Option[String], osName: String): Option[Path] =
     Option(app.agents.providers.codex.home)
       .map(_.trim)
       .filter(_.nonEmpty)
@@ -180,7 +134,7 @@ object AgentTrees:
       .orElse(root(app, env, osName).map(_.resolve("codex").resolve("home")))
 
   /** The definitions' fingerprint: what the trees were generated from. */
-  def sha(d: AgentGenerator.Defs): com.histmersion.domain.automation.agents.AgentTrees.ShaResult =
+  def sha(d: AgentGenerator.Defs): com.histmersion.Sha256 =
     Prompt.sha256(
       (d.agents.sortBy(_.name).map(a => s"${a.name}\u0000${a.body}\u0000${a.fingerprint}") ++
         d.fragments.toList.sorted.map((k, v) => s"$k\u0000$v") ++
@@ -193,5 +147,5 @@ object AgentTrees:
   /** Write `tree` under `dir`: each file atomically, only when its text changed; a file the previous manifest listed
     * (for one of these runtimes) and this tree does not have is removed.
     */
-  def write(store: com.histmersion.util.storage.Store, tree: Map[com.histmersion.domain.automation.agents.AgentTrees.WriteTreePart1, com.histmersion.domain.automation.agents.AgentTrees.WriteTreePart2], runtimes: List[com.histmersion.domain.automation.agents.AgentTrees.WriteRuntimes], sha: com.histmersion.domain.automation.agents.AgentTrees.WriteSha)(using java.time.Clock): Either[com.histmersion.domain.automation.agents.AgentTrees.WriteResultPart1, GenerateResult] =
+  def write(store: com.histmersion.util.storage.Store, tree: Map[com.histmersion.util.storage.SafePath.Candidate, String], runtimes: List[String], sha: com.histmersion.Sha256)(using java.time.Clock): Either[com.histmersion.domain.automation.agents.AgentTrees.Problem, GenerateResult] =
     AgentTreeWriter.write(store, tree, runtimes, sha)

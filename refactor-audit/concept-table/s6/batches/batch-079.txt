@@ -1,0 +1,345 @@
+## CONCEPTS NEARBY
+com.histmersion.util.basemap.Vp8l.Bits.From (Int)
+com.histmersion.util.basemap.Vp8l.Bits.Until (Int)
+com.histmersion.util.basemap.Vp8l.Code.Single (Int)
+com.histmersion.util.basemap.Vp8l.Decoder.From (Int)
+com.histmersion.util.basemap.Vp8l.Decoder.Until (Int)
+com.histmersion.util.basemap.Vp8l.DistanceMapValue (Array[Int])
+com.histmersion.util.basemap.Vp8l.Image.Height (Int)
+com.histmersion.util.basemap.Vp8l.Image.Pixels (Array[Int])
+com.histmersion.util.basemap.Vp8l.Image.Width (Int)
+com.histmersion.util.basemap.Vp8l.Transform.Bits (Int)
+com.histmersion.util.basemap.Vp8l.Transform.Data (Array[Int])
+com.histmersion.util.basemap.Vp8l.Transform.Kind (Int)
+com.histmersion.util.basemap.Vp8l.Transform.Width (Int)
+com.histmersion.util.basemap.Vp8l.Vp8lError.Msg (String)
+com.histmersion.util.data.DataOwner (String)
+com.histmersion.util.data.TableName (String)
+com.histmersion.util.data.backup.BackupJobs.Job.File (String)
+com.histmersion.util.data.backup.BackupJobs.Job.Started (Long)
+com.histmersion.util.data.diagnostics.StatsRepo.ColumnName (String)
+com.histmersion.util.data.diagnostics.StatsRepo.Count (Long)
+com.histmersion.util.data.exchange.Bundle.Kind.EntryPath (String)
+com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter (String)
+com.histmersion.util.data.exchange.Bundle.Kind.Wire (String)
+com.histmersion.util.data.exchange.Bundle.RangeIsNull (Boolean)
+com.histmersion.util.data.exchange.Bundle.RangeLower (Long)
+com.histmersion.util.data.exchange.Bundle.RangeUpper (Long)
+com.histmersion.util.data.exchange.BundleEntry (String)
+com.histmersion.util.data.exchange.BundleImport.Writer.TargetId (String)
+com.histmersion.util.data.exchange.BundleImport.Writer.TargetType (String)
+com.histmersion.util.data.exchange.BundleImporter.BackupFile (String)
+com.histmersion.util.data.exchange.BundleImporter.IssueName (String)
+com.histmersion.util.data.exchange.BundlePlan.EntityOwnBundle (Boolean)
+com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned (Boolean)
+com.histmersion.util.data.exchange.BundlePlan.Rev (String)
+com.histmersion.util.data.exchange.BundlePlan.TombstoneOwnBundle (Boolean)
+com.histmersion.util.data.exchange.BundleScope.Since.At (String)
+com.histmersion.util.data.exchange.BundleTar.Entry.Name (String)
+com.histmersion.util.data.exchange.BundleTar.Problem (String)
+com.histmersion.util.data.exchange.CarriedKind.OwnedClock (String)
+com.histmersion.util.data.exchange.CarriedKind.RecordsClock (String)
+com.histmersion.util.data.exchange.CarriedKinds.Problem (String)
+com.histmersion.util.data.exchange.CarriedOut.AsOf (String)
+com.histmersion.util.data.exchange.CarriedOut.Payload (Array[Byte])
+com.histmersion.util.data.exchange.DecisionKind.Wire (String)
+com.histmersion.util.data.exchange.Diff3.Hunk.Agreed.Lines (String)
+com.histmersion.util.data.exchange.Diff3.Hunk.Conflict.Base (String)
+com.histmersion.util.data.exchange.Diff3.Hunk.Conflict.Left (String)
+com.histmersion.util.data.exchange.Diff3.Hunk.Conflict.Right (String)
+com.histmersion.util.data.exchange.Diff3.MergeBase (String)
+com.histmersion.util.data.exchange.Diff3.MergeLeft (String)
+com.histmersion.util.data.exchange.Diff3.MergeRight (String)
+com.histmersion.util.data.exchange.Diff3.Result.ConflictCount (Int)
+com.histmersion.util.data.exchange.Diff3.Result.MarkedLeftName (String)
+com.histmersion.util.data.exchange.Diff3.Result.MarkedRightName (String)
+com.histmersion.util.data.exchange.Diff3.Result.MarkedText (String)
+com.histmersion.util.data.exchange.Diff3.Result.MergedText (String)
+com.histmersion.util.data.exchange.ImportAbort.Problem (String)
+com.histmersion.util.data.exchange.ImportOptions.ChunkChars (Int)
+com.histmersion.util.data.exchange.ImportOptions.DryRun (Boolean)
+com.histmersion.util.data.exchange.ImportOptions.ToleranceKm (Double)
+com.histmersion.util.data.exchange.ImportRank (Int)
+com.histmersion.util.data.exchange.Issue.DecidedBy.Wire (String)
+com.histmersion.util.data.exchange.Issue.Kind.Wire (String)
+com.histmersion.util.data.exchange.Issue.Severity.Wire (String)
+com.histmersion.util.data.exchange.LedgerRow.Decision (String)
+com.histmersion.util.data.exchange.LedgerRow.ForeignRev (String)
+com.histmersion.util.data.exchange.LedgerRow.Kind (String)
+com.histmersion.util.data.exchange.LedgerRow.Label (String)
+com.histmersion.util.data.exchange.LedgerRow.LocalRevAfter (String)
+com.histmersion.util.data.exchange.LedgerRow.RecordedAt (String)
+com.histmersion.util.data.exchange.MatchWeights.Alias (Double)
+com.histmersion.util.data.exchange.MatchWeights.AuthorsDisjoint (Double)
+com.histmersion.util.data.exchange.MatchWeights.AuthorsFirst (Double)
+com.histmersion.util.data.exchange.MatchWeights.AuthorsOverlap (Double)
+com.histmersion.util.data.exchange.MatchWeights.AuthorsSame (Double)
+com.histmersion.util.data.exchange.MatchWeights.BodyDiffers (Double)
+com.histmersion.util.data.exchange.MatchWeights.BodyDiffersBelow (Double)
+com.histmersion.util.data.exchange.MatchWeights.BodyEdition (Double)
+com.histmersion.util.data.exchange.MatchWeights.BodyEditionAtLeast (Double)
+com.histmersion.util.data.exchange.MatchWeights.BodySame (Double)
+com.histmersion.util.data.exchange.MatchWeights.BodySameAtLeast (Double)
+com.histmersion.util.data.exchange.MatchWeights.TitleDiffers (Double)
+com.histmersion.util.data.exchange.MatchWeights.TitleFingerprint (Double)
+com.histmersion.util.data.exchange.MatchWeights.TitleMain (Double)
+com.histmersion.util.data.exchange.MatchWeights.TitleSimilar (Double)
+com.histmersion.util.data.exchange.MatchWeights.TitleSimilarAtLeast (Double)
+com.histmersion.util.data.exchange.MatchWeights.TitleTokens (Double)
+com.histmersion.util.data.exchange.MatchWeights.TitleTokensAtLeast (Double)
+com.histmersion.util.data.exchange.MatchWeights.VenueDiffers (Double)
+com.histmersion.util.data.exchange.MatchWeights.VenueEqual (Double)
+com.histmersion.util.data.exchange.MatchWeights.YearEqual (Double)
+com.histmersion.util.data.exchange.MatchWeights.YearFar (Double)
+com.histmersion.util.data.exchange.MatchWeights.YearNear (Double)
+com.histmersion.util.data.exchange.MatchWeights.YearReprint (Double)
+com.histmersion.util.data.exchange.MergeFollowUps.DumpRecordRef (String)
+com.histmersion.util.data.exchange.MergeFollowUps.FromRecordRef (String)
+com.histmersion.util.data.exchange.MergePlans.PlanFileText (String)
+com.histmersion.util.data.exchange.MergeRepo.BundleName (String)
+com.histmersion.util.data.exchange.MergeRepo.DecisionKey (String)
+com.histmersion.util.data.exchange.MergeRepo.Importing (Boolean)
+com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix (String)
+com.histmersion.util.data.exchange.MergeRepo.UidText (String)
+com.histmersion.util.data.exchange.MergeResolutionsFile.Text (String)
+com.histmersion.util.data.exchange.MergeRow.AppliedAt (String)
+com.histmersion.util.data.exchange.MergeRow.Backup (String)
+com.histmersion.util.data.exchange.MergeRow.FromLabel (String)
+com.histmersion.util.data.exchange.MergeRow.PlanHash (String)
+com.histmersion.util.data.exchange.MergeRow.Redirects (Int)
+com.histmersion.util.data.exchange.PairQuestions.InfoLine (String)
+com.histmersion.util.data.exchange.PlanMerge.InfoBundleLabel (String)
+com.histmersion.util.data.exchange.PlanMerge.InfoLabel (String)
+com.histmersion.util.data.exchange.PlanMerge.InfoResult (String)
+com.histmersion.util.data.exchange.PlanQuestions.LabelTakenLabelResult (String)
+com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat (String)
+com.histmersion.util.data.exchange.PlanRelabels.InfoLine (String)
+com.histmersion.util.data.exchange.PlanRelabels.RelabelledLine (String)
+com.histmersion.util.data.exchange.SourceFate.Gate.Issue (String)
+com.histmersion.util.data.exchange.SourceFate.Same.ByLedger (Boolean)
+com.histmersion.util.data.exchange.SourcePair.Basis (String)
+com.histmersion.util.data.exchange.SourcePair.ByKey (Boolean)
+com.histmersion.util.data.exchange.SourcePair.Gate (String)
+com.histmersion.util.data.maintenance.VacuumRepo.Analyze (Boolean)
+com.histmersion.util.data.maintenance.VacuumRepo.TableState.DeadRows (Long)
+com.histmersion.util.data.mirror.Frontmatter.Block (String)
+com.histmersion.util.data.mirror.Frontmatter.Key (String)
+com.histmersion.util.data.mirror.Frontmatter.Note (String)
+com.histmersion.util.data.mirror.Frontmatter.NoteBody (String)
+com.histmersion.util.data.mirror.MirrorPlacement.Directory (String)
+com.histmersion.util.data.mirror.MirrorPlacement.NoteFile (String)
+com.histmersion.util.data.mirror.MirrorPlacement.RecordId (String)
+
+## TYPES TO DECIDE
+com.histmersion.util.basemap.Vp8l.AddPixelsA | base Int | generated | method-parameter
+    private[basemap] def addPixels(a: com.histmersion.util.basemap.Vp8l.AddPixelsA, b: com.histmersion.util.basemap.Vp8l.AddPixelsB): com.histmersion.util.basemap.Vp8l.AddPix
+com.histmersion.util.basemap.Vp8l.AddPixelsB | base Int | generated | method-parameter
+    private[basemap] def addPixels(a: com.histmersion.util.basemap.Vp8l.AddPixelsA, b: com.histmersion.util.basemap.Vp8l.AddPixelsB): com.histmersion.util.basemap.Vp8l.AddPix
+com.histmersion.util.basemap.Vp8l.AddPixelsResult | base Int | generated | method-result
+    private[basemap] def addPixels(a: com.histmersion.util.basemap.Vp8l.AddPixelsA, b: com.histmersion.util.basemap.Vp8l.AddPixelsB): com.histmersion.util.basemap.Vp8l.AddPix
+com.histmersion.util.basemap.Vp8l.Average2A | base Int | generated | method-parameter
+    private[basemap] def average2(a: com.histmersion.util.basemap.Vp8l.Average2A, b: com.histmersion.util.basemap.Vp8l.Average2B): com.histmersion.util.basemap.Vp8l.Average2R
+com.histmersion.util.basemap.Vp8l.Average2B | base Int | generated | method-parameter
+    private[basemap] def average2(a: com.histmersion.util.basemap.Vp8l.Average2A, b: com.histmersion.util.basemap.Vp8l.Average2B): com.histmersion.util.basemap.Vp8l.Average2R
+com.histmersion.util.basemap.Vp8l.Average2Result | base Int | generated | method-result
+    private[basemap] def average2(a: com.histmersion.util.basemap.Vp8l.Average2A, b: com.histmersion.util.basemap.Vp8l.Average2B): com.histmersion.util.basemap.Vp8l.Average2R
+com.histmersion.util.basemap.Vp8l.Bits.Buf | base Long | generated | variable
+    private var buf: com.histmersion.util.basemap.Vp8l.Bits.Buf = 0L
+com.histmersion.util.basemap.Vp8l.Bits.From | base Int | generated | constructor-parameter
+    final private[basemap] class Bits(b: Array[Byte], from: Bits.From, until: Bits.Until):
+    final private class Decoder(b: Array[Byte], from: Decoder.From, until: Decoder.Until):
+com.histmersion.util.basemap.Vp8l.Bits.Nbits | base Int | generated | variable
+    private var nbits: com.histmersion.util.basemap.Vp8l.Bits.Nbits = 0
+com.histmersion.util.basemap.Vp8l.Bits.OverrunResult | base Boolean | generated | method-result
+    def overrun: com.histmersion.util.basemap.Vp8l.Bits.OverrunResult = pos - 8 > until
+com.histmersion.util.basemap.Vp8l.Bits.PeekN | base Int | generated | method-parameter
+    def peek(n: com.histmersion.util.basemap.Vp8l.Bits.PeekN): com.histmersion.util.basemap.Vp8l.Bits.PeekResult =
+com.histmersion.util.basemap.Vp8l.Bits.PeekResult | base Int | generated | method-result
+    def peek(n: com.histmersion.util.basemap.Vp8l.Bits.PeekN): com.histmersion.util.basemap.Vp8l.Bits.PeekResult =
+com.histmersion.util.basemap.Vp8l.Bits.Pos | base Int | generated | variable
+    private var pos: com.histmersion.util.basemap.Vp8l.Bits.Pos = from
+com.histmersion.util.basemap.Vp8l.Bits.ReadN | base Int | generated | method-parameter
+    def read(n: com.histmersion.util.basemap.Vp8l.Bits.ReadN): com.histmersion.util.basemap.Vp8l.Bits.ReadResult =
+com.histmersion.util.basemap.Vp8l.Bits.ReadResult | base Int | generated | method-result
+    def read(n: com.histmersion.util.basemap.Vp8l.Bits.ReadN): com.histmersion.util.basemap.Vp8l.Bits.ReadResult =
+    def read(r: Bits): com.histmersion.util.basemap.Vp8l.Code.ReadResult =
+com.histmersion.util.basemap.Vp8l.Bits.SkipN | base Int | generated | method-parameter
+    def skip(n: com.histmersion.util.basemap.Vp8l.Bits.SkipN): Unit =
+com.histmersion.util.basemap.Vp8l.Bits.Until | base Int | generated | constructor-parameter
+    final private[basemap] class Bits(b: Array[Byte], from: Bits.From, until: Bits.Until):
+    final private class Decoder(b: Array[Byte], from: Decoder.From, until: Decoder.Until):
+com.histmersion.util.basemap.Vp8l.BuildLengths | base Array[Int] | generated | method-parameter
+    private[basemap] def build(lengths: com.histmersion.util.basemap.Vp8l.BuildLengths): Either[com.histmersion.util.basemap.Vp8l.BuildResultPart1, Code] =
+com.histmersion.util.basemap.Vp8l.BuildResultPart1 | base String | generated | method-result
+    private[basemap] def build(lengths: com.histmersion.util.basemap.Vp8l.BuildLengths): Either[com.histmersion.util.basemap.Vp8l.BuildResultPart1, Code] =
+com.histmersion.util.basemap.Vp8l.ChP | base Int | generated | method-parameter
+    private def ch(p: com.histmersion.util.basemap.Vp8l.ChP, s: com.histmersion.util.basemap.Vp8l.ChS): com.histmersion.util.basemap.Vp8l.ChResult = (p >>> s) & 0xff
+com.histmersion.util.basemap.Vp8l.ChResult | base Int | generated | method-result
+    private def ch(p: com.histmersion.util.basemap.Vp8l.ChP, s: com.histmersion.util.basemap.Vp8l.ChS): com.histmersion.util.basemap.Vp8l.ChResult = (p >>> s) & 0xff
+com.histmersion.util.basemap.Vp8l.ChS | base Int | generated | method-parameter
+    private def ch(p: com.histmersion.util.basemap.Vp8l.ChP, s: com.histmersion.util.basemap.Vp8l.ChS): com.histmersion.util.basemap.Vp8l.ChResult = (p >>> s) & 0xff
+com.histmersion.util.basemap.Vp8l.ClampFullA | base Int | generated | method-parameter
+    private[basemap] def clampFull(a: com.histmersion.util.basemap.Vp8l.ClampFullA, b: com.histmersion.util.basemap.Vp8l.ClampFullB, c: com.histmersion.util.basemap.Vp8l.Clam
+com.histmersion.util.basemap.Vp8l.ClampFullB | base Int | generated | method-parameter
+    private[basemap] def clampFull(a: com.histmersion.util.basemap.Vp8l.ClampFullA, b: com.histmersion.util.basemap.Vp8l.ClampFullB, c: com.histmersion.util.basemap.Vp8l.Clam
+com.histmersion.util.basemap.Vp8l.ClampFullC | base Int | generated | method-parameter
+    private[basemap] def clampFull(a: com.histmersion.util.basemap.Vp8l.ClampFullA, b: com.histmersion.util.basemap.Vp8l.ClampFullB, c: com.histmersion.util.basemap.Vp8l.Clam
+com.histmersion.util.basemap.Vp8l.ClampFullResult | base Int | generated | method-result
+    private[basemap] def clampFull(a: com.histmersion.util.basemap.Vp8l.ClampFullA, b: com.histmersion.util.basemap.Vp8l.ClampFullB, c: com.histmersion.util.basemap.Vp8l.Clam
+com.histmersion.util.basemap.Vp8l.ClampHalfA | base Int | generated | method-parameter
+    private[basemap] def clampHalf(a: com.histmersion.util.basemap.Vp8l.ClampHalfA, b: com.histmersion.util.basemap.Vp8l.ClampHalfB): com.histmersion.util.basemap.Vp8l.ClampH
+com.histmersion.util.basemap.Vp8l.ClampHalfB | base Int | generated | method-parameter
+    private[basemap] def clampHalf(a: com.histmersion.util.basemap.Vp8l.ClampHalfA, b: com.histmersion.util.basemap.Vp8l.ClampHalfB): com.histmersion.util.basemap.Vp8l.ClampH
+com.histmersion.util.basemap.Vp8l.ClampHalfResult | base Int | generated | method-result
+    private[basemap] def clampHalf(a: com.histmersion.util.basemap.Vp8l.ClampHalfA, b: com.histmersion.util.basemap.Vp8l.ClampHalfB): com.histmersion.util.basemap.Vp8l.ClampH
+com.histmersion.util.basemap.Vp8l.ClampResult | base Int | generated | method-result
+    private def clamp(v: com.histmersion.util.basemap.Vp8l.ClampV): com.histmersion.util.basemap.Vp8l.ClampResult = if v < 0 then 0 else if v > 255 then 255 else v
+com.histmersion.util.basemap.Vp8l.ClampV | base Int | generated | method-parameter
+    private def clamp(v: com.histmersion.util.basemap.Vp8l.ClampV): com.histmersion.util.basemap.Vp8l.ClampResult = if v < 0 then 0 else if v > 255 then 255 else v
+com.histmersion.util.basemap.Vp8l.Code.ReadResult | base Int | generated | method-result
+    def read(n: com.histmersion.util.basemap.Vp8l.Bits.ReadN): com.histmersion.util.basemap.Vp8l.Bits.ReadResult =
+    def read(r: Bits): com.histmersion.util.basemap.Vp8l.Code.ReadResult =
+com.histmersion.util.basemap.Vp8l.Code.Single | base Int | generated | constructor-parameter
+    final private[basemap] class Code(root: Array[Int], subs: Array[Array[Int]], subBits: Array[Int], val single: Code.Single):
+com.histmersion.util.basemap.Vp8l.ColourH | base Int | generated | method-parameter
+    private def colour(t: Transform, px: com.histmersion.util.basemap.Vp8l.ColourPx, h: com.histmersion.util.basemap.Vp8l.ColourH): Unit =
+com.histmersion.util.basemap.Vp8l.ColourPx | base Array[Int] | generated | method-parameter
+    private def colour(t: Transform, px: com.histmersion.util.basemap.Vp8l.ColourPx, h: com.histmersion.util.basemap.Vp8l.ColourH): Unit =
+com.histmersion.util.basemap.Vp8l.DecodeBytes | base Array[Byte] | generated | method-parameter
+    def decode(bytes: com.histmersion.util.basemap.Vp8l.DecodeBytes): Either[com.histmersion.util.basemap.Vp8l.DecodeResultPart1, Image] =
+com.histmersion.util.basemap.Vp8l.DecodeResultPart1 | base String | generated | method-result
+    def decode(bytes: com.histmersion.util.basemap.Vp8l.DecodeBytes): Either[com.histmersion.util.basemap.Vp8l.DecodeResultPart1, Image] =
+com.histmersion.util.basemap.Vp8l.Decoder.CodeSize | base Int | generated | method-parameter
+    private def code(size: com.histmersion.util.basemap.Vp8l.Decoder.CodeSize): Code =
+com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageH | base Int | generated | method-parameter
+    private def entropyImage(w: com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageW, h: com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageH, top: com.histmersion.util
+com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageResult | base Array[Int] | generated | method-result
+    private def entropyImage(w: com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageW, h: com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageH, top: com.histmersion.util
+com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageTop | base Boolean | generated | method-parameter
+    private def entropyImage(w: com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageW, h: com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageH, top: com.histmersion.util
+com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageW | base Int | generated | method-parameter
+    private def entropyImage(w: com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageW, h: com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageH, top: com.histmersion.util
+com.histmersion.util.basemap.Vp8l.Decoder.From | base Int | generated | constructor-parameter
+    final private[basemap] class Bits(b: Array[Byte], from: Bits.From, until: Bits.Until):
+    final private class Decoder(b: Array[Byte], from: Decoder.From, until: Decoder.Until):
+com.histmersion.util.basemap.Vp8l.Decoder.PixelsCacheBits | base Int | generated | method-parameter
+com.histmersion.util.basemap.Vp8l.Decoder.PixelsGroupAtP | base Int | generated | method-parameter
+    def groupAt(p: com.histmersion.util.basemap.Vp8l.Decoder.PixelsGroupAtP): Group =
+com.histmersion.util.basemap.Vp8l.Decoder.PixelsH | base Int | generated | method-parameter
+com.histmersion.util.basemap.Vp8l.Decoder.PixelsMeta | base Array[Int] | generated | method-parameter
+com.histmersion.util.basemap.Vp8l.Decoder.PixelsMetaBits | base Int | generated | method-parameter
+com.histmersion.util.basemap.Vp8l.Decoder.PixelsResult | base Array[Int] | generated | method-result
+com.histmersion.util.basemap.Vp8l.Decoder.PixelsW | base Int | generated | method-parameter
+com.histmersion.util.basemap.Vp8l.Decoder.PrefixValueResult | base Int | generated | method-result
+    private def prefixValue(symbol: com.histmersion.util.basemap.Vp8l.Decoder.PrefixValueSymbol): com.histmersion.util.basemap.Vp8l.Decoder.PrefixValueResult =
+com.histmersion.util.basemap.Vp8l.Decoder.PrefixValueSymbol | base Int | generated | method-parameter
+    private def prefixValue(symbol: com.histmersion.util.basemap.Vp8l.Decoder.PrefixValueSymbol): com.histmersion.util.basemap.Vp8l.Decoder.PrefixValueResult =
+com.histmersion.util.basemap.Vp8l.Decoder.SubBits | base Int | generated | method-parameter
+    private def sub(size: com.histmersion.util.basemap.Vp8l.Decoder.SubSize, bits: com.histmersion.util.basemap.Vp8l.Decoder.SubBits): com.histmersion.util.basemap.Vp8l.Decod
+com.histmersion.util.basemap.Vp8l.Decoder.SubResult | base Int | generated | method-result
+    private def sub(size: com.histmersion.util.basemap.Vp8l.Decoder.SubSize, bits: com.histmersion.util.basemap.Vp8l.Decoder.SubBits): com.histmersion.util.basemap.Vp8l.Decod
+com.histmersion.util.basemap.Vp8l.Decoder.SubSize | base Int | generated | method-parameter
+    private def sub(size: com.histmersion.util.basemap.Vp8l.Decoder.SubSize, bits: com.histmersion.util.basemap.Vp8l.Decoder.SubBits): com.histmersion.util.basemap.Vp8l.Decod
+com.histmersion.util.basemap.Vp8l.Decoder.UndoH | base Int | generated | method-parameter
+    private def undo(t: Transform, px: com.histmersion.util.basemap.Vp8l.Decoder.UndoPx, h: com.histmersion.util.basemap.Vp8l.Decoder.UndoH): com.histmersion.util.basemap.Vp8
+com.histmersion.util.basemap.Vp8l.Decoder.UndoPx | base Array[Int] | generated | method-parameter
+    private def undo(t: Transform, px: com.histmersion.util.basemap.Vp8l.Decoder.UndoPx, h: com.histmersion.util.basemap.Vp8l.Decoder.UndoH): com.histmersion.util.basemap.Vp8
+com.histmersion.util.basemap.Vp8l.Decoder.UndoResult | base Array[Int] | generated | method-result
+    private def undo(t: Transform, px: com.histmersion.util.basemap.Vp8l.Decoder.UndoPx, h: com.histmersion.util.basemap.Vp8l.Decoder.UndoH): com.histmersion.util.basemap.Vp8
+com.histmersion.util.basemap.Vp8l.Decoder.Until | base Int | generated | constructor-parameter
+    final private[basemap] class Bits(b: Array[Byte], from: Bits.From, until: Bits.Until):
+    final private class Decoder(b: Array[Byte], from: Decoder.From, until: Decoder.Until):
+com.histmersion.util.basemap.Vp8l.DeltaC | base Int | generated | method-parameter
+    private def delta(t: com.histmersion.util.basemap.Vp8l.DeltaT, c: com.histmersion.util.basemap.Vp8l.DeltaC): com.histmersion.util.basemap.Vp8l.DeltaResult = (t.toByte * c
+com.histmersion.util.basemap.Vp8l.DeltaResult | base Int | generated | method-result
+    private def delta(t: com.histmersion.util.basemap.Vp8l.DeltaT, c: com.histmersion.util.basemap.Vp8l.DeltaC): com.histmersion.util.basemap.Vp8l.DeltaResult = (t.toByte * c
+com.histmersion.util.basemap.Vp8l.DeltaT | base Int | generated | method-parameter
+    private def delta(t: com.histmersion.util.basemap.Vp8l.DeltaT, c: com.histmersion.util.basemap.Vp8l.DeltaC): com.histmersion.util.basemap.Vp8l.DeltaResult = (t.toByte * c
+com.histmersion.util.basemap.Vp8l.DistanceCode | base Int | generated | method-parameter
+    private[basemap] def distance(code: com.histmersion.util.basemap.Vp8l.DistanceCode, width: com.histmersion.util.basemap.Vp8l.DistanceWidth): com.histmersion.util.basemap.
+com.histmersion.util.basemap.Vp8l.DistanceMapValue | base Array[Int] | original | alias
+com.histmersion.util.basemap.Vp8l.DistanceResult | base Int | generated | method-result
+    private[basemap] def distance(code: com.histmersion.util.basemap.Vp8l.DistanceCode, width: com.histmersion.util.basemap.Vp8l.DistanceWidth): com.histmersion.util.basemap.
+com.histmersion.util.basemap.Vp8l.DistanceWidth | base Int | generated | method-parameter
+    private[basemap] def distance(code: com.histmersion.util.basemap.Vp8l.DistanceCode, width: com.histmersion.util.basemap.Vp8l.DistanceWidth): com.histmersion.util.basemap.
+com.histmersion.util.basemap.Vp8l.FailMsg | base String | generated | method-parameter
+    private def fail(msg: com.histmersion.util.basemap.Vp8l.FailMsg): Nothing = throw Vp8lError(msg)
+com.histmersion.util.basemap.Vp8l.Image.Height | base Int | original | constructor-parameter
+    final case class Image(width: Image.Width, height: Image.Height, pixels: Image.Pixels)
+com.histmersion.util.basemap.Vp8l.Image.Pixels | base Array[Int] | original | constructor-parameter
+    final case class Image(width: Image.Width, height: Image.Height, pixels: Image.Pixels)
+    private[basemap] def addPixels(a: com.histmersion.util.basemap.Vp8l.AddPixelsA, b: com.histmersion.util.basemap.Vp8l.AddPixelsB): com.histmersion.util.basemap.Vp8l.AddPix
+com.histmersion.util.basemap.Vp8l.Image.Width | base Int | original | constructor-parameter
+    final case class Image(width: Image.Width, height: Image.Height, pixels: Image.Pixels)
+    final private case class Transform(kind: Transform.Kind, width: Transform.Width, bits: Transform.Bits, data: Transform.Data)
+com.histmersion.util.basemap.Vp8l.PredictH | base Int | generated | method-parameter
+    private def predict(t: Transform, px: com.histmersion.util.basemap.Vp8l.PredictPx, h: com.histmersion.util.basemap.Vp8l.PredictH): Unit =
+com.histmersion.util.basemap.Vp8l.PredictPx | base Array[Int] | generated | method-parameter
+    private def predict(t: Transform, px: com.histmersion.util.basemap.Vp8l.PredictPx, h: com.histmersion.util.basemap.Vp8l.PredictH): Unit =
+com.histmersion.util.basemap.Vp8l.PredictorM | base Int | generated | method-parameter
+    private[basemap] def predictor(m: com.histmersion.util.basemap.Vp8l.PredictorM, l: com.histmersion.util.basemap.Vp8l.PredictorL, t: com.histmersion.util.basemap.Vp8l.Pred
+com.histmersion.util.basemap.Vp8l.PredictorResult | base Int | generated | method-result
+    private[basemap] def predictor(m: com.histmersion.util.basemap.Vp8l.PredictorM, l: com.histmersion.util.basemap.Vp8l.PredictorL, t: com.histmersion.util.basemap.Vp8l.Pred
+com.histmersion.util.basemap.Vp8l.PredictorTr | base Int | generated | method-parameter
+    private[basemap] def predictor(m: com.histmersion.util.basemap.Vp8l.PredictorM, l: com.histmersion.util.basemap.Vp8l.PredictorL, t: com.histmersion.util.basemap.Vp8l.Pred
+com.histmersion.util.basemap.Vp8l.ReverseCode | base Int | generated | method-parameter
+    private def reverse(code: com.histmersion.util.basemap.Vp8l.ReverseCode, len: com.histmersion.util.basemap.Vp8l.ReverseLen): com.histmersion.util.basemap.Vp8l.ReverseResu
+com.histmersion.util.basemap.Vp8l.ReverseLen | base Int | generated | method-parameter
+    private def reverse(code: com.histmersion.util.basemap.Vp8l.ReverseCode, len: com.histmersion.util.basemap.Vp8l.ReverseLen): com.histmersion.util.basemap.Vp8l.ReverseResu
+com.histmersion.util.basemap.Vp8l.ReverseResult | base Int | generated | method-result
+    private def reverse(code: com.histmersion.util.basemap.Vp8l.ReverseCode, len: com.histmersion.util.basemap.Vp8l.ReverseLen): com.histmersion.util.basemap.Vp8l.ReverseResu
+com.histmersion.util.basemap.Vp8l.SelectL | base Int | generated | alias,method-parameter
+    val PredictorL: _root_.com.histmersion.util.basemap.Vp8l.SelectL.type = _root_.com.histmersion.util.basemap.Vp8l.SelectL
+    private[basemap] def select(l: com.histmersion.util.basemap.Vp8l.SelectL, t: com.histmersion.util.basemap.Vp8l.SelectT, tl: com.histmersion.util.basemap.Vp8l.SelectTl): c
+com.histmersion.util.basemap.Vp8l.SelectResult | base Int | generated | method-result
+    private[basemap] def select(l: com.histmersion.util.basemap.Vp8l.SelectL, t: com.histmersion.util.basemap.Vp8l.SelectT, tl: com.histmersion.util.basemap.Vp8l.SelectTl): c
+com.histmersion.util.basemap.Vp8l.SelectT | base Int | generated | alias,method-parameter
+    val PredictorT: _root_.com.histmersion.util.basemap.Vp8l.SelectT.type = _root_.com.histmersion.util.basemap.Vp8l.SelectT
+    private[basemap] def select(l: com.histmersion.util.basemap.Vp8l.SelectL, t: com.histmersion.util.basemap.Vp8l.SelectT, tl: com.histmersion.util.basemap.Vp8l.SelectTl): c
+com.histmersion.util.basemap.Vp8l.SelectTl | base Int | generated | alias,method-parameter
+    val PredictorTl: _root_.com.histmersion.util.basemap.Vp8l.SelectTl.type = _root_.com.histmersion.util.basemap.Vp8l.SelectTl
+    private[basemap] def select(l: com.histmersion.util.basemap.Vp8l.SelectL, t: com.histmersion.util.basemap.Vp8l.SelectT, tl: com.histmersion.util.basemap.Vp8l.SelectTl): c
+com.histmersion.util.basemap.Vp8l.Transform.Bits | base Int | original | constructor-parameter
+    final private[basemap] class Bits(b: Array[Byte], from: Bits.From, until: Bits.Until):
+    private var buf: com.histmersion.util.basemap.Vp8l.Bits.Buf = 0L
+com.histmersion.util.basemap.Vp8l.Transform.Data | base Array[Int] | original | constructor-parameter
+    final private case class Transform(kind: Transform.Kind, width: Transform.Width, bits: Transform.Bits, data: Transform.Data)
+com.histmersion.util.basemap.Vp8l.Transform.Kind | base Int | original | constructor-parameter
+    final private case class Transform(kind: Transform.Kind, width: Transform.Width, bits: Transform.Bits, data: Transform.Data)
+com.histmersion.util.basemap.Vp8l.Transform.Width | base Int | original | constructor-parameter
+    final case class Image(width: Image.Width, height: Image.Height, pixels: Image.Pixels)
+    final private case class Transform(kind: Transform.Kind, width: Transform.Width, bits: Transform.Bits, data: Transform.Data)
+com.histmersion.util.basemap.Vp8l.UnindexH | base Int | generated | method-parameter
+    private def unindex(t: Transform, px: com.histmersion.util.basemap.Vp8l.UnindexPx, h: com.histmersion.util.basemap.Vp8l.UnindexH): com.histmersion.util.basemap.Vp8l.Unind
+com.histmersion.util.basemap.Vp8l.UnindexPx | base Array[Int] | generated | method-parameter
+    private def unindex(t: Transform, px: com.histmersion.util.basemap.Vp8l.UnindexPx, h: com.histmersion.util.basemap.Vp8l.UnindexH): com.histmersion.util.basemap.Vp8l.Unind
+com.histmersion.util.basemap.Vp8l.UnindexResult | base Array[Int] | generated | method-result
+    private def unindex(t: Transform, px: com.histmersion.util.basemap.Vp8l.UnindexPx, h: com.histmersion.util.basemap.Vp8l.UnindexH): com.histmersion.util.basemap.Vp8l.Unind
+com.histmersion.util.basemap.Vp8l.Vp8lChunkB | base Array[Byte] | generated | method-parameter
+    private[basemap] def vp8lChunk(b: com.histmersion.util.basemap.Vp8l.Vp8lChunkB): Either[com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart1, (com.histmersion.util.base
+com.histmersion.util.basemap.Vp8l.Vp8lChunkFoundPart1 | base String | generated | variable
+    var found: Either[com.histmersion.util.basemap.Vp8l.Vp8lChunkFoundPart1, (com.histmersion.util.basemap.Vp8l.Vp8lChunkFoundPart2Part1, com.histmersion.util.basemap.Vp8l.Vp
+com.histmersion.util.basemap.Vp8l.Vp8lChunkFoundPart2Part1 | base Int | generated | variable
+    var found: Either[com.histmersion.util.basemap.Vp8l.Vp8lChunkFoundPart1, (com.histmersion.util.basemap.Vp8l.Vp8lChunkFoundPart2Part1, com.histmersion.util.basemap.Vp8l.Vp
+com.histmersion.util.basemap.Vp8l.Vp8lChunkFoundPart2Part2 | base Int | generated | variable
+    var found: Either[com.histmersion.util.basemap.Vp8l.Vp8lChunkFoundPart1, (com.histmersion.util.basemap.Vp8l.Vp8lChunkFoundPart2Part1, com.histmersion.util.basemap.Vp8l.Vp
+com.histmersion.util.basemap.Vp8l.Vp8lChunkLe32I | base Int | generated | method-parameter
+    def le32(i: com.histmersion.util.basemap.Vp8l.Vp8lChunkLe32I) = (b(i) & 0xff) | (b(i + 1) & 0xff) << 8 | (b(i + 2) & 0xff) << 16 | (b(i + 3) & 0xff) << 24
+com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart1 | base String | generated | method-result
+    private[basemap] def vp8lChunk(b: com.histmersion.util.basemap.Vp8l.Vp8lChunkB): Either[com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart1, (com.histmersion.util.base
+com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart2Part1 | base Int | generated | method-result
+    private[basemap] def vp8lChunk(b: com.histmersion.util.basemap.Vp8l.Vp8lChunkB): Either[com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart1, (com.histmersion.util.base
+com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart2Part2 | base Int | generated | method-result
+    private[basemap] def vp8lChunk(b: com.histmersion.util.basemap.Vp8l.Vp8lChunkB): Either[com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart1, (com.histmersion.util.base
+com.histmersion.util.basemap.Vp8l.Vp8lChunkTagI | base Int | generated | method-parameter
+    def tag(i: com.histmersion.util.basemap.Vp8l.Vp8lChunkTagI) = new String(b, i, 4, "US-ASCII")
+com.histmersion.util.basemap.Vp8l.Vp8lError.Msg | base String | generated | constructor-parameter
+    final private class Vp8lError(msg: Vp8lError.Msg) extends Exception(msg)
+com.histmersion.util.data.DataContributions.OfResultPart1 | base String | generated | method-result
+    def of(contributions: List[DataContribution]): Either[List[com.histmersion.util.data.DataContributions.OfResultPart1], DataContributions] =
+com.histmersion.util.data.backup.BackupJobs.Job.File | base String | original | constructor-parameter
+    final private case class Job(file: Job.File, started: Job.Started, result: CompletableFuture[Either[Api.Error, Backup.Result]])
+com.histmersion.util.data.backup.BackupJobs.Job.Started | base Long | original | constructor-parameter
+    final private case class Job(file: Job.File, started: Job.Started, result: CompletableFuture[Either[Api.Error, Backup.Result]])
+com.histmersion.util.data.backup.BackupJobs.RunningResult | base Boolean | generated | method-result
+    def running: com.histmersion.util.data.backup.BackupJobs.RunningResult = current.get().exists(!_.result.isDone)

@@ -8,16 +8,10 @@ final case class CheckOrder(report: List[CheckOrder.Report]):
   def fixing(rules: List[CheckRule]): List[CheckRule] = rules.sortBy(_.fix.fold(Int.MaxValue)(_.rank.value))
 
 object CheckOrder:
-  type RankResult = RankResult.T
-  object RankResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RankNames = RankNames.T
-  object RankNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RankName = RankName.T
-  object RankName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Report = Report.T
   object Report extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def rank(names: List[com.histmersion.util.data.checks.CheckOrder.RankNames], name: com.histmersion.util.data.checks.CheckOrder.RankName): com.histmersion.util.data.checks.CheckOrder.RankResult =
+  private def rank(names: List[com.histmersion.util.data.checks.CheckRule.Name], name: com.histmersion.util.data.checks.CheckRule.Name): com.histmersion.util.data.checks.FixRank =
     val i = names.indexOf(name)
     if i < 0 then Int.MaxValue else i

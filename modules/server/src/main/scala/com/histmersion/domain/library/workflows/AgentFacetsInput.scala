@@ -10,8 +10,8 @@ final case class AgentFacetsInput(field: AgentFacetsInput.Field, prefix: Option[
 object AgentFacetsInput:
   type Field = Field.T
   object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Prefix = Prefix.T
-  object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Prefix = com.histmersion.domain.library.search.FilterSql.FacetPrefix
+  val Prefix: _root_.com.histmersion.domain.library.search.FilterSql.FacetPrefix.type = _root_.com.histmersion.domain.library.search.FilterSql.FacetPrefix
 
   given Schema[AgentFacetsInput] = KindlingsSchema
     .derived[AgentFacetsInput]

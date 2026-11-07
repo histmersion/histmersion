@@ -29,15 +29,17 @@ import com.histmersion.api.library.Rename
   */
 object LibraryTools:
   type StrictDoc = StrictDocValue
-  type StrictDocValue = StrictDocValue.T
-  object StrictDocValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrictDocValue = String
+  object StrictDocValue:
+    inline def apply(v: String): String = v
   type ApplyExportNoteArg1 = ApplyExportNoteArg1.T
   object ApplyExportNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyExportNoteResultPart2 = ApplyExportNoteResultPart2.T
   object ApplyExportNoteResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PassagesDoc = PassagesDocValue
-  type PassagesDocValue = PassagesDocValue.T
-  object PassagesDocValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PassagesDocValue = String
+  object PassagesDocValue:
+    inline def apply(v: String): String = v
   type PassagesMarkdownResult = PassagesMarkdownResult.T
   object PassagesMarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -388,8 +390,8 @@ object LibraryTools:
     )
   object SearchInput:
     // the filter's fields are described once, in FilterDocs (the REST parameters and the CLI flags read it too)
-    type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = com.histmersion.domain.library.search.Search.Query
+    val Query: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
     type Tags = Tags.T
     object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Authors = Authors.T
@@ -420,8 +422,8 @@ object LibraryTools:
     object Sort extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Limit = Limit.T
     object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Offset = Offset.T
-    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = com.histmersion.Offset
+    val Offset: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
     type Title = Title.T
     object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GroupBy = GroupBy.T
@@ -490,8 +492,8 @@ object LibraryTools:
     object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Prefix = Prefix.T
     object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = com.histmersion.domain.library.search.Search.Query
+    val Query: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
     type Tags = Tags.T
     object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Authors = Authors.T
@@ -542,8 +544,8 @@ object LibraryTools:
     object Section extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Heading = Heading.T
     object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Offset = Offset.T
-    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = com.histmersion.Offset
+    val Offset: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
     type Chars = Chars.T
     object Chars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -590,8 +592,8 @@ object LibraryTools:
       context: Option[PassagesInput.Context] = None
   ) derives KindlingsCodecAsObject
   object PassagesInput:
-    type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = com.histmersion.domain.library.search.Search.Query
+    val Query: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
     type Regex = Regex.T
     object Regex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Limit = Limit.T
@@ -665,8 +667,8 @@ object LibraryTools:
         None
       ) // region is folded into places, not passed separately
   object GeoWhenInput:
-    type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = com.histmersion.domain.library.search.Search.Query
+    val Query: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
     type Tags = Tags.T
     object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Authors = Authors.T
@@ -697,8 +699,8 @@ object LibraryTools:
     object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Region = Region.T
     object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Offset = Offset.T
-    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = com.histmersion.Offset
+    val Offset: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
 
     given Schema[GeoWhenInput] = Filter.Docs
       .describe(KindlingsSchema.derived[GeoWhenInput].schema)
@@ -708,8 +710,8 @@ object LibraryTools:
 
   final case class NeighborsInput(citekey: com.histmersion.domain.library.Citekey, kinds: List[NeighborsInput.Kinds] = Nil) derives KindlingsCodecAsObject
   object NeighborsInput:
-    type Kinds = Kinds.T
-    object Kinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kinds = com.histmersion.domain.library.Edge.Kind.Wire
+    val Kinds: _root_.com.histmersion.domain.library.Edge.Kind.Wire.type = _root_.com.histmersion.domain.library.Edge.Kind.Wire
 
     given Schema[NeighborsInput] = KindlingsSchema
       .derived[NeighborsInput]
@@ -781,8 +783,8 @@ object LibraryTools:
 
   final case class RenameSourceInput(citekey: com.histmersion.domain.library.Citekey, newCitekey: RenameSourceInput.NewCitekey) derives KindlingsCodecAsObject
   object RenameSourceInput:
-    type NewCitekey = NewCitekey.T
-    object NewCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NewCitekey = com.histmersion.domain.library.Citekey
+    val NewCitekey: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
 
     given Schema[RenameSourceInput] = KindlingsSchema
       .derived[RenameSourceInput]
@@ -845,8 +847,8 @@ object LibraryTools:
         None
       )
   object HistogramInput:
-    type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = com.histmersion.domain.library.search.Search.Query
+    val Query: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
     type Tags = Tags.T
     object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Authors = Authors.T

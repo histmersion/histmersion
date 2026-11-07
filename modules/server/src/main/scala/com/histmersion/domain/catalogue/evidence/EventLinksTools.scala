@@ -27,8 +27,8 @@ object EventLinksTools:
       limit: Option[EventLinksInput.Limit] = None
   ) derives KindlingsCodecAsObject
   object EventLinksInput:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = com.histmersion.domain.catalogue.Event.Id
+    val Id: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
     type Recompute = Recompute.T
     object Recompute extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Confirm = Confirm.T
@@ -41,8 +41,8 @@ object EventLinksTools:
     object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Kind = Kind.T
     object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = com.histmersion.PageSize
+    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
 
     given Schema[EventLinksInput] = KindlingsSchema
       .derived[EventLinksInput]

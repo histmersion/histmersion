@@ -1,0 +1,234 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.research.Article.Kind (String)
+com.histmersion.domain.research.Article.Uid (UUID)
+com.histmersion.domain.research.DraftMode.Wire (String)
+com.histmersion.domain.research.Slug (String)
+com.histmersion.domain.research.Slug.Problem (String)
+com.histmersion.domain.research.articles.ArticleSummaryRow.Regions (String)
+com.histmersion.domain.research.articles.ArticleSummaryRow.Summary (String)
+com.histmersion.domain.research.articles.ArticleSummaryRow.Tags (String)
+com.histmersion.domain.research.articles.ArticleSummaryRow.UpdatedAt (String)
+com.histmersion.domain.research.articles.ArticlesCarried.Stem (String)
+com.histmersion.domain.research.articles.BArticleRow.Body (String)
+com.histmersion.domain.research.articles.BArticleRow.PNull (Boolean)
+com.histmersion.domain.research.articles.BArticleRow.Regions (String)
+com.histmersion.domain.research.articles.BArticleRow.Summary (String)
+com.histmersion.domain.research.articles.BArticleRow.Tags (String)
+com.histmersion.domain.research.articles.BArticleRow.UpdatedAt (String)
+com.histmersion.domain.research.articles.BVersionRow.CreatedAt (String)
+com.histmersion.domain.research.articles.BVersionRow.Summary (String)
+com.histmersion.domain.research.articles.BVersionRow.VersionOf (String)
+com.histmersion.domain.research.articles.FullArticleRow.Body (String)
+com.histmersion.domain.research.articles.FullArticleRow.Filter (String)
+com.histmersion.domain.research.articles.FullArticleRow.Reasons (String)
+com.histmersion.domain.research.articles.FullArticleRow.Regions (String)
+com.histmersion.domain.research.articles.FullArticleRow.Summary (String)
+com.histmersion.domain.research.articles.FullArticleRow.Tags (String)
+com.histmersion.domain.research.articles.FullArticleRow.UpdatedAt (String)
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.Carry.Applied (Int)
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.Carry.Fixed (Boolean)
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.Carry.RejectedCount (Int)
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.End.Confirmed (Boolean)
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.End.Deferred (String)
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.End.Round (Int)
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.State.Targeted (Boolean)
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.State.Unwritten (String)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.FilterHits (Int)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.Pick.Why (String)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.Escalated (Int)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.MaxReopened (Int)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OnlyMissingCritiques (Boolean)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OpenMajors (Int)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OpenPairs (Int)
+
+## TYPES TO DECIDE
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.AbsorbFullR | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.AbsorbTargetedR | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.BacklogSlug | base String | generated | method-parameter
+    private def backlog(ctx: RunCtx, slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.BacklogSlug, l: Ledger): Ledger =
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.ByResult | base String | generated | method-result
+    private def by(ctx: RunCtx, role: com.histmersion.domain.research.workflows.ReviewArticlePipeline.ByRole): com.histmersion.domain.research.workflows.ReviewArticlePipeline
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.ByRole | base String | generated | method-parameter
+    private def by(ctx: RunCtx, role: com.histmersion.domain.research.workflows.ReviewArticlePipeline.ByRole): com.histmersion.domain.research.workflows.ReviewArticlePipeline
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.Carry.Applied | base Int | original | constructor-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.Carry.Fixed | base Boolean | original | constructor-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.Carry.RejectedCount | base Int | original | constructor-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.ChecklistTextConfirming | base Boolean | generated | method-parameter
+    private def checklistText(s: Snapshot, confirming: com.histmersion.domain.research.workflows.ReviewArticlePipeline.ChecklistTextConfirming): (com.histmersion.domain.resea
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.ChecklistTextResultPart1 | base String | generated | method-result
+    private def checklistText(s: Snapshot, confirming: com.histmersion.domain.research.workflows.ReviewArticlePipeline.ChecklistTextConfirming): (com.histmersion.domain.resea
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.CitedTextResult | base String | generated | method-result
+    private def citedText(s: Snapshot): com.histmersion.domain.research.workflows.ReviewArticlePipeline.CitedTextResult =
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.CritiqueWorkResult | base String | generated | method-result
+    private def critiqueWork(s: Snapshot, m: Merged, l: Ledger): com.histmersion.domain.research.workflows.ReviewArticlePipeline.CritiqueWorkResult =
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.End.Confirmed | base Boolean | original | constructor-parameter
+    final private case class End(state: State, round: End.Round, confirmed: End.Confirmed, deferred: List[End.Deferred] = Nil)
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.End.Deferred | base String | original | constructor-parameter
+    final private case class End(state: State, round: End.Round, confirmed: End.Confirmed, deferred: List[End.Deferred] = Nil)
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.End.Round | base Int | original | constructor-parameter
+    final private case class End(state: State, round: End.Round, confirmed: End.Confirmed, deferred: List[End.Deferred] = Nil)
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.FinishR | base Int | generated | method-parameter
+    private def finish(ctx: RunCtx, slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FinishSlug, r: com.histmersion.domain.research.workflows.ReviewArtic
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.FinishSlug | base String | generated | method-parameter
+    private def finish(ctx: RunCtx, slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FinishSlug, r: com.histmersion.domain.research.workflows.ReviewArtic
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerAnsweredB | base String | generated | method-parameter
+    def answered(b: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerAnsweredB, ref: CritiqueRef) = Critiques.find(pairsOf(b), ref).exists(!_.open)
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerCitesB | base String | generated | method-parameter
+    def cites(b: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerCitesB, ck: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerCitesCk
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerCitesCk | base String | generated | method-parameter
+    def cites(b: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerCitesB, ck: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerCitesCk
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerPairsOfB | base String | generated | method-parameter
+    def pairsOf(b: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerPairsOfB) =
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerR | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.FullFixable | base Boolean | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.FullR | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.FullSlug | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.FullUnwritten | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.GeneratedTextResult | base String | generated | method-result
+    private def generatedText(s: Snapshot): com.histmersion.domain.research.workflows.ReviewArticlePipeline.GeneratedTextResult =
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.IsCitekeyCk | base String | generated | method-parameter
+    private def isCitekey(ck: com.histmersion.domain.research.workflows.ReviewArticlePipeline.IsCitekeyCk): com.histmersion.domain.research.workflows.ReviewArticlePipeline.Is
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.IsCitekeyResult | base Boolean | generated | method-result
+    private def isCitekey(ck: com.histmersion.domain.research.workflows.ReviewArticlePipeline.IsCitekeyCk): com.histmersion.domain.research.workflows.ReviewArticlePipeline.Is
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.IsTargetBody | base String | generated | method-parameter
+    private def isTarget(body: com.histmersion.domain.research.workflows.ReviewArticlePipeline.IsTargetBody): com.histmersion.domain.research.workflows.ReviewArticlePipeline.
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.IsTargetResultArg1 | base String | generated | method-result
+    private def isTarget(body: com.histmersion.domain.research.workflows.ReviewArticlePipeline.IsTargetBody): com.histmersion.domain.research.workflows.ReviewArticlePipeline.
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.IsTargetResultResult | base Boolean | generated | method-result
+    private def isTarget(body: com.histmersion.domain.research.workflows.ReviewArticlePipeline.IsTargetBody): com.histmersion.domain.research.workflows.ReviewArticlePipeline.
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.LedgerTextLookups | base Boolean | generated | method-parameter
+    private def ledgerText(l: Ledger, lookups: com.histmersion.domain.research.workflows.ReviewArticlePipeline.LedgerTextLookups, only: Option[Reviewer] = None): com.histmers
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.LedgerTextResult | base String | generated | method-result
+    private def ledgerText(l: Ledger, lookups: com.histmersion.domain.research.workflows.ReviewArticlePipeline.LedgerTextLookups, only: Option[Reviewer] = None): com.histmers
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.LoadResultPart1 | base String | generated | method-result
+    private def load(slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.LoadSlug): Either[com.histmersion.domain.research.workflows.ReviewArticlePipeline.L
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.LoadSlug | base String | generated | method-parameter
+    private def load(slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.LoadSlug): Either[com.histmersion.domain.research.workflows.ReviewArticlePipeline.L
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.LoopFix | base Boolean | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.LoopR | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.LoopRounds | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.LoopSlug | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.MechanicalOfBefore | base String | generated | method-parameter
+    private def mechanicalOf(ctx: RunCtx, s: Snapshot, r: com.histmersion.domain.research.workflows.ReviewArticlePipeline.MechanicalOfR, before: Option[com.histmersion.domain
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.MechanicalOfR | base Int | generated | method-parameter
+    private def mechanicalOf(ctx: RunCtx, s: Snapshot, r: com.histmersion.domain.research.workflows.ReviewArticlePipeline.MechanicalOfR, before: Option[com.histmersion.domain
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.PanelConfirming | base Boolean | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.PanelFixable | base Boolean | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.PanelLedgerLookups | base Boolean | generated | method-parameter
+    def ledger(lookups: com.histmersion.domain.research.workflows.ReviewArticlePipeline.PanelLedgerLookups, only: Option[Reviewer] = None) = ledgerText(l, lookups, only)
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.PanelR | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.ProposeResult | base String | generated | method-result
+    private def propose(ctx: RunCtx, m: Merged): List[com.histmersion.domain.research.workflows.ReviewArticlePipeline.ProposeResult] =
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.ReasonsTextResult | base String | generated | method-result
+    private def reasonsText(s: Snapshot): com.histmersion.domain.research.workflows.ReviewArticlePipeline.ReasonsTextResult =
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecheckInputResult | base String | generated | method-result
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecheckR | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordResultPart1 | base String | generated | method-result
+    private def record(ctx: RunCtx, slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordSlug, end: End): Either[com.histmersion.domain.research.workfl
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordResultPart2 | base String | generated | method-result
+    private def record(ctx: RunCtx, slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordSlug, end: End): Either[com.histmersion.domain.research.workfl
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordSlug | base String | generated | method-parameter
+    private def record(ctx: RunCtx, slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordSlug, end: End): Either[com.histmersion.domain.research.workfl
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordTextCk | base String | generated | method-parameter
+    private def recordText(ck: com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordTextCk): Option[com.histmersion.domain.research.workflows.ReviewArticlePi
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordTextResult | base String | generated | method-result
+    private def recordText(ck: com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordTextCk): Option[com.histmersion.domain.research.workflows.ReviewArticlePi
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordsResultArg1 | base String | generated | method-result
+    private def records(): com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordsResultArg1 => Option[com.histmersion.domain.research.workflows.ReviewArticle
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordsResultResult | base String | generated | method-result
+    private def records(): com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordsResultArg1 => Option[com.histmersion.domain.research.workflows.ReviewArticle
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.ReviewInputResult | base String | generated | method-result
+    private def reviewInput(s: Snapshot): com.histmersion.domain.research.workflows.ReviewArticlePipeline.ReviewInputResult =
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.RunResultPart2 | base String | generated | method-result
+    def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.research.workflows.ReviewArticlePipeline.RunResultPart2] =
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.SnapshotResultPart1 | base String | generated | method-result
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.SnapshotSlug | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.SnapshotUnwritten | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.State.Targeted | base Boolean | original | constructor-parameter
+    private def absorbTargeted(
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.State.Unwritten | base String | original | constructor-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.StoreReasonsSlug | base String | generated | method-parameter
+    private def storeReasons(ctx: RunCtx, slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.StoreReasonsSlug, rs: List[CritiqueReason]): Unit =
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.TargetedR | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.TargetedSlug | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.TargetedUnwritten | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.WriteR | base Int | generated | method-parameter
+    private def write(ctx: RunCtx, s: Snapshot, f: Fix, r: com.histmersion.domain.research.workflows.ReviewArticlePipeline.WriteR, after: Ledger): Either[com.histmersion.doma
+com.histmersion.domain.research.workflows.ReviewArticlePipeline.WriteResultPart1 | base String | generated | method-result
+    private def write(ctx: RunCtx, s: Snapshot, f: Fix, r: com.histmersion.domain.research.workflows.ReviewArticlePipeline.WriteR, after: Ledger): Either[com.histmersion.doma
+com.histmersion.domain.research.workflows.ReviewLedgerService.GetResultPart1 | base String | generated | method-result
+    def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerService.GetSlug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.GetResultPart1,
+    def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.GetSlug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.
+com.histmersion.domain.research.workflows.ReviewLedgerService.GetSlug | base String | generated | method-parameter
+    def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerService.GetSlug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.GetResultPart1,
+    def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.GetSlug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.
+com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.GetResultPart1 | base String | generated | method-result
+    def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerService.GetSlug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.GetResultPart1,
+    def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.GetSlug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.
+com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.GetSlug | base String | generated | method-parameter
+    def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerService.GetSlug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.GetResultPart1,
+    def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.GetSlug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.
+com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.PassedReviewResult | base String | generated | method-result
+    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.PassedReviewReviewId): Set[com.histmersion.domain.research.workflows.ReviewLedger
+    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.PassedReviewReviewId): Set[com.histmersion.domain.research.workflo
+com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.PassedReviewReviewId | base String | generated | method-parameter
+    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.PassedReviewReviewId): Set[com.histmersion.domain.research.workflows.ReviewLedger
+    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.PassedReviewReviewId): Set[com.histmersion.domain.research.workflo
+com.histmersion.domain.research.workflows.ReviewLedgerService.InMemory.GetResultPart1 | base String | generated | method-result
+    def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerService.GetSlug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.GetResultPart1,
+    def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.GetSlug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.
+com.histmersion.domain.research.workflows.ReviewLedgerService.InMemory.GetSlug | base String | generated | method-parameter
+    def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerService.GetSlug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.GetResultPart1,
+    def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.GetSlug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.
+com.histmersion.domain.research.workflows.ReviewLedgerService.InMemory.PassedReviewResult | base String | generated | method-result
+    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.PassedReviewReviewId): Set[com.histmersion.domain.research.workflows.ReviewLedger
+    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.PassedReviewReviewId): Set[com.histmersion.domain.research.workflo
+com.histmersion.domain.research.workflows.ReviewLedgerService.InMemory.PassedReviewReviewId | base String | generated | method-parameter
+    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.PassedReviewReviewId): Set[com.histmersion.domain.research.workflows.ReviewLedger
+    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.PassedReviewReviewId): Set[com.histmersion.domain.research.workflo
+com.histmersion.domain.research.workflows.ReviewLedgerService.PassedReviewResult | base String | generated | method-result
+    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.PassedReviewReviewId): Set[com.histmersion.domain.research.workflows.ReviewLedger
+    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.PassedReviewReviewId): Set[com.histmersion.domain.research.workflo
+com.histmersion.domain.research.workflows.ReviewLedgerService.PassedReviewReviewId | base String | generated | method-parameter
+    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.PassedReviewReviewId): Set[com.histmersion.domain.research.workflows.ReviewLedger
+    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.PassedReviewReviewId): Set[com.histmersion.domain.research.workflo
+com.histmersion.domain.research.workflows.ReviewManagerKind.BoostedBase | base Int | generated | method-parameter
+    private def boosted(c: ManagerContext, slug: com.histmersion.domain.research.workflows.ReviewManagerKind.BoostedSlug, base: com.histmersion.domain.research.workflows.Revi
+com.histmersion.domain.research.workflows.ReviewManagerKind.BoostedResult | base Int | generated | method-result
+    private def boosted(c: ManagerContext, slug: com.histmersion.domain.research.workflows.ReviewManagerKind.BoostedSlug, base: com.histmersion.domain.research.workflows.Revi
+com.histmersion.domain.research.workflows.ReviewManagerKind.BoostedSlug | base String | generated | method-parameter
+    private def boosted(c: ManagerContext, slug: com.histmersion.domain.research.workflows.ReviewManagerKind.BoostedSlug, base: com.histmersion.domain.research.workflows.Revi
+com.histmersion.domain.research.workflows.ReviewManagerKind.DispatchOutPart1 | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerKind.DispatchOutPart2 | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerKind.DispatchResult | base String | generated | method-result
+com.histmersion.domain.research.workflows.ReviewManagerKind.EvaluateReviewError | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerKind.EvaluateReviewOutPart1 | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerKind.EvaluateReviewOutPart2 | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerKind.ExtensionsOutPart1 | base String | generated | method-parameter
+    private def extensions(c: ManagerContext, m: ManagerInfo, now: Instant, out: Builder[com.histmersion.domain.research.workflows.ReviewManagerKind.ExtensionsOutPart1, List[
+com.histmersion.domain.research.workflows.ReviewManagerKind.ExtensionsOutPart2 | base String | generated | method-parameter
+    private def extensions(c: ManagerContext, m: ManagerInfo, now: Instant, out: Builder[com.histmersion.domain.research.workflows.ReviewManagerKind.ExtensionsOutPart1, List[
+com.histmersion.domain.research.workflows.ReviewManagerKind.FactsRun | base String | generated | method-parameter
+    def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.research.workflows.ReviewManagerKind.FactsRun): StepFacts =
+com.histmersion.domain.research.workflows.ReviewManagerKind.FileTaskResult | base Int | generated | method-result
+    private def fileTask(slug: com.histmersion.domain.research.workflows.ReviewManagerKind.FileTaskSlug, ledger: Option[ReviewLedger.Ledger], text: com.histmersion.domain.res
+com.histmersion.domain.research.workflows.ReviewManagerKind.FileTaskSlug | base String | generated | method-parameter
+    private def fileTask(slug: com.histmersion.domain.research.workflows.ReviewManagerKind.FileTaskSlug, ledger: Option[ReviewLedger.Ledger], text: com.histmersion.domain.res
+com.histmersion.domain.research.workflows.ReviewManagerKind.FileTaskText | base String | generated | method-parameter
+    private def fileTask(slug: com.histmersion.domain.research.workflows.ReviewManagerKind.FileTaskSlug, ledger: Option[ReviewLedger.Ledger], text: com.histmersion.domain.res
+com.histmersion.domain.research.workflows.ReviewManagerKind.FireResult | base String | generated | method-result
+    def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.research.workflows.ReviewManagerKind.FireResult] = List("selection refilled")
+com.histmersion.domain.research.workflows.ReviewManagerKind.PipelineOfItemKind | base String | generated | method-parameter
+    def pipelineOf(itemKind: com.histmersion.domain.research.workflows.ReviewManagerKind.PipelineOfItemKind): Pipeline = itemKind match
+com.histmersion.domain.research.workflows.ReviewManagerKind.StaleArticlesGoal | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerKind.StaleArticlesResultPart1 | base String | generated | method-result
+com.histmersion.domain.research.workflows.ReviewManagerKind.StaleArticlesResultPart2 | base String | generated | method-result
+com.histmersion.domain.research.workflows.ReviewManagerKind.StaleArticlesResultPart3 | base Long | generated | method-result
+com.histmersion.domain.research.workflows.ReviewManagerKind.StaleArticlesRoom | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerKind.StaleArticlesTags | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerKind.TargetItemKind | base String | generated | method-parameter
+    def target(m: ManagerInfo, itemKind: com.histmersion.domain.research.workflows.ReviewManagerKind.TargetItemKind, raw: com.histmersion.domain.research.workflows.ReviewMana
+com.histmersion.domain.research.workflows.ReviewManagerKind.TargetRaw | base String | generated | method-parameter
+    def target(m: ManagerInfo, itemKind: com.histmersion.domain.research.workflows.ReviewManagerKind.TargetItemKind, raw: com.histmersion.domain.research.workflows.ReviewMana
+com.histmersion.domain.research.workflows.ReviewManagerKind.TargetResultPart2 | base String | generated | method-result
+    def target(m: ManagerInfo, itemKind: com.histmersion.domain.research.workflows.ReviewManagerKind.TargetItemKind, raw: com.histmersion.domain.research.workflows.ReviewMana

@@ -17,6 +17,8 @@ import com.histmersion.domain.automation.Run
   * supervisor writes the result.
   */
 object ReviewManagerPolicy:
+  type OpenPairs = OpenPairs.T
+  object OpenPairs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** How many sources an article's coverage filter returns. */
   type FilterHits = FilterHits.T

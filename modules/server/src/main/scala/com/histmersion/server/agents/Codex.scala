@@ -19,48 +19,44 @@ import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 import scala.jdk.CollectionConverters.*
 
 object Codex:
+  type AgentName = AgentName.T
+  object AgentName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApiToken = ApiToken.T
+  object ApiToken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CommandLine = CommandLine.T
+  object CommandLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnvName = EnvName.T
+  object EnvName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnvSetting = EnvSetting.T
+  object EnvSetting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinalText = FinalText.T
+  object FinalText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HomeDir = HomeDir.T
+  object HomeDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastMessageFile = LastMessageFile.T
+  object LastMessageFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModelName = ModelName.T
+  object ModelName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutputLine = OutputLine.T
+  object OutputLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SchemaFile = SchemaFile.T
+  object SchemaFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SchemaJson = SchemaJson.T
+  object SchemaJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WorkingDir = WorkingDir.T
+  object WorkingDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The typed answer's JSON Schema as derived (opencode reads it in the message). */
-  type ParseFinalText = ParseFinalText.T
-  object ParseFinalText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseError = ParseError.T
-  object ParseError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SchemaJsonResult = SchemaJsonResult.T
-  object SchemaJsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OutputSchemaJsonResult = OutputSchemaJsonResult.T
-  object OutputSchemaJsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArgvResult = ArgvResult.T
-  object ArgvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArgvModel = ArgvModel.T
-  object ArgvModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArgvAgent = ArgvAgent.T
-  object ArgvAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArgvSchemaFile = ArgvSchemaFile.T
-  object ArgvSchemaFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArgvCwd = ArgvCwd.T
-  object ArgvCwd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArgvLastFile = ArgvLastFile.T
-  object ArgvLastFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvironmentHome = EnvironmentHome.T
-  object EnvironmentHome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvironmentToken = EnvironmentToken.T
-  object EnvironmentToken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvironmentEnvPart1 = EnvironmentEnvPart1.T
-  object EnvironmentEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvironmentEnvPart2 = EnvironmentEnvPart2.T
-  object EnvironmentEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseLines = ParseLines.T
-  object ParseLines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClientResultPart1 = ClientResultPart1.T
-  object ClientResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def schemaJson(s: ResponseSchema[?]): com.histmersion.server.agents.Codex.SchemaJsonResult = schema(s).noSpaces
+  def schemaJson(s: ResponseSchema[?]): com.histmersion.server.agents.Codex.SchemaJson = schema(s).noSpaces
 
   /** The `--output-schema` file: the derived schema in OpenAI's strict form, the only one Codex's structured output
     * accepts ([[StrictJsonSchema]] says why and how).
     */
-  def outputSchemaJson(s: ResponseSchema[?]): com.histmersion.server.agents.Codex.OutputSchemaJsonResult = StrictJsonSchema(schema(s)).noSpaces
+  def outputSchemaJson(s: ResponseSchema[?]): com.histmersion.server.agents.Codex.SchemaJson = StrictJsonSchema(schema(s)).noSpaces
 
   private def schema(s: ResponseSchema[?]): Json =
     s.schema.asJson.deepDropNullValues.mapObject(_.remove("$schema"))
@@ -70,12 +66,12 @@ object Codex:
     */
   def argv(
       cfg: CodexConfig,
-      model: com.histmersion.server.agents.Codex.ArgvModel,
-      agent: com.histmersion.server.agents.Codex.ArgvAgent,
-      schemaFile: com.histmersion.server.agents.Codex.ArgvSchemaFile,
-      cwd: com.histmersion.server.agents.Codex.ArgvCwd,
-      lastFile: com.histmersion.server.agents.Codex.ArgvLastFile
-  ): List[com.histmersion.server.agents.Codex.ArgvResult] =
+      model: com.histmersion.server.agents.Codex.ModelName,
+      agent: com.histmersion.server.agents.Codex.AgentName,
+      schemaFile: com.histmersion.server.agents.Codex.SchemaFile,
+      cwd: com.histmersion.server.agents.Codex.WorkingDir,
+      lastFile: com.histmersion.server.agents.Codex.LastMessageFile
+  ): List[com.histmersion.server.agents.Codex.CommandLine] =
     List(
       cfg.command,
       "exec",
@@ -97,7 +93,7 @@ object Codex:
   /** The CLI's environment: its own CODEX_HOME (its login, never a copied `auth.json`), the run token the MCP server
     * config names, and no API key unless asked (a key bills the API).
     */
-  def environment(cfg: CodexConfig, home: com.histmersion.server.agents.Codex.EnvironmentHome, token: Option[com.histmersion.server.agents.Codex.EnvironmentToken], env: java.util.Map[com.histmersion.server.agents.Codex.EnvironmentEnvPart1, com.histmersion.server.agents.Codex.EnvironmentEnvPart2]): Unit =
+  def environment(cfg: CodexConfig, home: com.histmersion.server.agents.Codex.HomeDir, token: Option[com.histmersion.server.agents.Codex.ApiToken], env: java.util.Map[com.histmersion.server.agents.Codex.EnvName, com.histmersion.server.agents.Codex.EnvSetting]): Unit =
     if !cfg.useApiKey then
       List("OPENAI_API_KEY", "CODEX_API_KEY").foreach { k =>
         val _ = env.remove(k)
@@ -109,14 +105,14 @@ object Codex:
   /** `codex exec --json` events → the outcome: `item.completed` agent messages (the last is the answer), MCP tool calls
     * with their results, reasoning; `turn.completed.usage`; `turn.failed` and `error` messages.
     */
-  def parse(lines: List[com.histmersion.server.agents.Codex.ParseLines]): CliOutcome =
+  def parse(lines: List[com.histmersion.server.agents.Codex.OutputLine]): CliOutcome =
     val events = lines.map(_.trim).filter(_.startsWith("{")).flatMap(l => parser.parse(l).toOption)
     val entries = Vector.newBuilder[ConversationEntry]
     val calls = Vector.newBuilder[ToolCallRecord]
     // accumulators of ONE parse, over the events in order
-    var finalText: Option[com.histmersion.server.agents.Codex.ParseFinalText] = None
+    var finalText: Option[com.histmersion.server.agents.Codex.FinalText] = None
     var usage = TokenUsage.Zero
-    var error: Option[com.histmersion.server.agents.Codex.ParseError] = None
+    var error: Option[com.histmersion.server.agents.Codex.Problem] = None
     var turns = 0
     events.foreach { e =>
       val c = e.hcursor
@@ -162,7 +158,7 @@ object Codex:
     }
     CliOutcome(entries.result(), calls.result(), finalText, usage, error, turns)
 
-  def client(cfg: CodexConfig, rt: CliRuntime, ref: ModelRef): Either[com.histmersion.server.agents.Codex.ClientResultPart1, LlmClient] =
+  def client(cfg: CodexConfig, rt: CliRuntime, ref: ModelRef): Either[com.histmersion.server.agents.Codex.Problem, LlmClient] =
     if ref.provider != ProviderKind.Codex then Left(s"${ref.wire} is not a codex model")
     else if !rt.loopback then
       Left("codex is refused while the server listens beyond loopback: another client could spend your ChatGPT plan")
@@ -178,23 +174,17 @@ object Codex:
     * said in the report).
     */
   object Home:
+    type Argument = Argument.T
+    object Argument extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CommandOutput = CommandOutput.T
+    object CommandOutput extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExitCode = ExitCode.T
+    object ExitCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReferenceTime = ReferenceTime.T
+    object ReferenceTime extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type RetainNowMs = RetainNowMs.T
-    object RetainNowMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RetainRunArg1 = RetainRunArg1.T
-    object RetainRunArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RetainRunResultPart1 = RetainRunResultPart1.T
-    object RetainRunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RetainRunResultPart2 = RetainRunResultPart2.T
-    object RetainRunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunCommandResultPart1 = RunCommandResultPart1.T
-    object RunCommandResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunCommandResultPart2 = RunCommandResultPart2.T
-    object RunCommandResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunCommandArgv = RunCommandArgv.T
-    object RunCommandArgv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MaybeRetainNowMs = MaybeRetainNowMs.T
-    object MaybeRetainNowMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     private val locks = ConcurrentHashMap[Path, ReentrantReadWriteLock]()
     private val lastPass = ConcurrentHashMap[Path, AtomicLong]()
@@ -218,7 +208,7 @@ object Codex:
         vacuumed: List[(Report.VacuumedPart1, Report.VacuumedPart2, Report.VacuumedPart3)] = Nil,
         problems: List[Report.Problems] = Nil
     ):
-      def summary: com.histmersion.server.agents.Codex.Home.Report.SummaryResult = skipped.getOrElse {
+      def summary: com.histmersion.server.agents.Codex.Home.Report.Summary = skipped.getOrElse {
         val v = vacuumed.map((n, b, a) =>
           s"$n ${com.histmersion.api.backup.Backup.humanBytes(b)} → ${com.histmersion.api.backup.Backup.humanBytes(a)}"
         )
@@ -229,23 +219,29 @@ object Codex:
       }
 
     object Report:
-      type SummaryResult = SummaryResult.T
-      object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Problem = Problem.T
+      object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type SkipReason = SkipReason.T
+      object SkipReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Summary = Summary.T
+      object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type VacuumedFile = VacuumedFile.T
+      object VacuumedFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-      type Skipped = Skipped.T
-      object Skipped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Skipped = com.histmersion.server.agents.Codex.Home.Report.SkipReason
+      val Skipped: _root_.com.histmersion.server.agents.Codex.Home.Report.SkipReason.type = _root_.com.histmersion.server.agents.Codex.Home.Report.SkipReason
       type Deleted = Deleted.T
       object Deleted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type FreedBytes = FreedBytes.T
-      object FreedBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type VacuumedPart1 = VacuumedPart1.T
-      object VacuumedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type VacuumedPart2 = VacuumedPart2.T
-      object VacuumedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type VacuumedPart3 = VacuumedPart3.T
-      object VacuumedPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Problems = Problems.T
-      object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type FreedBytes = com.histmersion.ByteCount
+      val FreedBytes: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
+      type VacuumedPart1 = com.histmersion.server.agents.Codex.Home.Report.VacuumedFile
+      val VacuumedPart1: _root_.com.histmersion.server.agents.Codex.Home.Report.VacuumedFile.type = _root_.com.histmersion.server.agents.Codex.Home.Report.VacuumedFile
+      type VacuumedPart2 = com.histmersion.ByteCount
+      val VacuumedPart2: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
+      type VacuumedPart3 = com.histmersion.ByteCount
+      val VacuumedPart3: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
+      type Problems = com.histmersion.server.agents.Codex.Home.Report.Problem
+      val Problems: _root_.com.histmersion.server.agents.Codex.Home.Report.Problem.type = _root_.com.histmersion.server.agents.Codex.Home.Report.Problem
 
     /** Every regular file under `dir` (none when it is missing), relative to `home`. */
     private def filesUnder(home: Path, dir: Path): List[FileInfo] =
@@ -272,8 +268,8 @@ object Codex:
     def retain(
         home: Path,
         cfg: CodexConfig,
-        nowMs: com.histmersion.server.agents.Codex.Home.RetainNowMs = System.currentTimeMillis(),
-        run: List[com.histmersion.server.agents.Codex.Home.RetainRunArg1] => Either[com.histmersion.server.agents.Codex.Home.RetainRunResultPart1, com.histmersion.server.agents.Codex.Home.RetainRunResultPart2] = runCommand
+        nowMs: com.histmersion.server.agents.Codex.Home.ReferenceTime = System.currentTimeMillis(),
+        run: List[com.histmersion.server.agents.Codex.Home.Argument] => Either[com.histmersion.server.agents.Codex.Home.CommandOutput, com.histmersion.server.agents.Codex.Home.ExitCode] = runCommand
     ): Report =
       val w = lock(home).writeLock()
       if !Files.isDirectory(home) then Report(skipped = Some(s"no Codex home at $home"))
@@ -317,7 +313,7 @@ object Codex:
         finally s.close()
 
     /** A command's exit code; Left when it cannot start or does not end within 10 minutes. */
-    def runCommand(argv: List[com.histmersion.server.agents.Codex.Home.RunCommandArgv]): Either[com.histmersion.server.agents.Codex.Home.RunCommandResultPart1, com.histmersion.server.agents.Codex.Home.RunCommandResultPart2] =
+    def runCommand(argv: List[com.histmersion.server.agents.Codex.Home.Argument]): Either[com.histmersion.server.agents.Codex.Home.Problem, com.histmersion.server.agents.Codex.Home.ExitCode] =
       scala.util
         .Try {
           val p =
@@ -334,7 +330,7 @@ object Codex:
         .flatten
 
     /** After a step: a pass on a virtual thread when one is due ([[CodexRetention.due]]). */
-    def maybeRetain(home: Path, cfg: CodexConfig, nowMs: com.histmersion.server.agents.Codex.Home.MaybeRetainNowMs = System.currentTimeMillis()): Unit =
+    def maybeRetain(home: Path, cfg: CodexConfig, nowMs: com.histmersion.server.agents.Codex.Home.ReferenceTime = System.currentTimeMillis()): Unit =
       val last = lastPass.computeIfAbsent(key(home), _ => AtomicLong(0L))
       val prev = last.get()
       if CodexRetention.due(Option.when(prev > 0)(prev), nowMs, cfg.retentionEveryHours) && last.compareAndSet(

@@ -9,8 +9,8 @@ import sttp.ai.core.agent.ResponseSchema
   * `ResearchAnswers`).
   */
 object LibraryAnswers:
-  type AllPart1 = AllPart1.T
-  object AllPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val classification: ResponseSchema[EnrichSource.Classification] =
     ResponseSchema.derived[EnrichSource.Classification]()
@@ -19,7 +19,7 @@ object LibraryAnswers:
   val ranking: ResponseSchema[AcquisitionSweepRules.Ranking] = ResponseSchema.derived[AcquisitionSweepRules.Ranking]()
 
   /** Its step schemas, by name. */
-  val all: List[(com.histmersion.domain.library.workflows.LibraryAnswers.AllPart1, ResponseSchema[?])] = List(
+  val all: List[(com.histmersion.domain.library.workflows.LibraryAnswers.Name, ResponseSchema[?])] = List(
     "classification" -> classification,
     "findings" -> findings,
     "notes" -> notes,

@@ -29,7 +29,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
 
   private val skeleton = SkeletonIngest(sources)
 
-  def enqueue(copy: Option[FetchedCopy], citekey: com.histmersion.domain.library.Citekey, meta: IngestMeta): Either[com.histmersion.domain.library.ingest.QueuedIngest.EnqueueResultPart1, IngestOutcome] =
+  def enqueue(copy: Option[FetchedCopy], citekey: com.histmersion.domain.library.Citekey, meta: IngestMeta): Either[com.histmersion.domain.library.ingest.QueuedIngest.Problem, IngestOutcome] =
     for
       base <- skeleton.enqueue(None, citekey, meta) // metadata + edges, synchronously
       out <- copy match
@@ -50,7 +50,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
       citekey: com.histmersion.domain.library.Citekey,
       meta: IngestMeta,
       base: IngestOutcome
-  ): Either[com.histmersion.domain.library.ingest.QueuedIngest.ConvertResultPart1, IngestOutcome] =
+  ): Either[com.histmersion.domain.library.ingest.QueuedIngest.Problem, IngestOutcome] =
     // a copy gone from the spool reads as an empty upload, which the ingest refuses
     val upload = spooled(file).getOrElse(Upload.inline(file.key.name, Array.emptyByteArray))
     ingest
@@ -80,7 +80,5 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
       )
 
 object QueuedIngest:
-  type EnqueueResultPart1 = EnqueueResultPart1.T
-  object EnqueueResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConvertResultPart1 = ConvertResultPart1.T
-  object ConvertResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

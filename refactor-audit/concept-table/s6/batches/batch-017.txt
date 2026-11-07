@@ -1,0 +1,936 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.automation.AgentRole.Wire (String)
+com.histmersion.domain.automation.Approval.DecidedBy.Describe (String)
+com.histmersion.domain.automation.Approval.DecidedBy.Wire (String)
+com.histmersion.domain.automation.Approval.Kind.Blocking (Boolean)
+com.histmersion.domain.automation.Approval.Kind.Wire (String)
+com.histmersion.domain.automation.Approval.Mode.Wire (String)
+com.histmersion.domain.automation.Approval.Note (String)
+com.histmersion.domain.automation.Approval.Outcome (String)
+com.histmersion.domain.automation.Approval.State.Wire (String)
+com.histmersion.domain.automation.Goal.LinkKind.Wire (String)
+com.histmersion.domain.automation.Goal.Slug (String)
+com.histmersion.domain.automation.Goal.Status.Wire (String)
+com.histmersion.domain.automation.Goal.Uid (UUID)
+com.histmersion.domain.automation.ItemStatus.Wire (String)
+com.histmersion.domain.automation.Manager.Kind.Wire (String)
+com.histmersion.domain.automation.Manager.State.Wire (String)
+com.histmersion.domain.automation.Pipeline.Describe (String)
+com.histmersion.domain.automation.Pipeline.Version (Int)
+com.histmersion.domain.automation.Pipeline.Wire (String)
+com.histmersion.domain.automation.ProviderKind.Wire (String)
+com.histmersion.domain.automation.Run.Id (String)
+com.histmersion.domain.automation.Run.State.Wire (String)
+com.histmersion.domain.automation.ScheduleKind.Wire (String)
+com.histmersion.domain.automation.Step.Status.Wire (String)
+com.histmersion.domain.automation.TargetKind.Wire (String)
+com.histmersion.domain.automation.agents.AgentRepo.ActiveOnly (Boolean)
+com.histmersion.domain.automation.agents.AgentRepo.ApprovalJobId (String)
+com.histmersion.domain.automation.agents.AgentRepo.CloseReason (String)
+com.histmersion.domain.automation.agents.AgentRepo.CursorProblem (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Content (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.LatencyMs (Int)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.N (Int)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Role (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolInput (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolName (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolResult (String)
+com.histmersion.domain.automation.agents.AgentRepo.OutputChars (Int)
+com.histmersion.domain.automation.agents.AgentRepo.PageCursor (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.ActualModel (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Attempt (Int)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Error (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.FirstCallTokens (Long)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Model (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.PromptHash (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq (Int)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Turns (Int)
+com.histmersion.domain.automation.agents.LeaseRepo.LeaseExpiry (String)
+com.histmersion.domain.automation.agents.LeaseRepo.LeaseName (String)
+com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner (String)
+com.histmersion.domain.automation.agents.LeaseRepo.TtlSeconds (Int)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis (Long)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Floors (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Held (Boolean)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.PlanType (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Refusal (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.RefusalUntil (Long)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshDetail (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshMode (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshTrigger (String)
+com.histmersion.domain.automation.agents.RunQuery.Goal (String)
+com.histmersion.domain.automation.agents.RunQuery.Managers (String)
+com.histmersion.domain.automation.agents.RunQuery.Models (String)
+com.histmersion.domain.automation.agents.RunQuery.Origins (String)
+com.histmersion.domain.automation.agents.RunQuery.Pipelines (String)
+com.histmersion.domain.automation.agents.RunQuery.Providers (String)
+com.histmersion.domain.automation.agents.RunQuery.Q (String)
+com.histmersion.domain.automation.agents.RunQuery.Status (String)
+com.histmersion.domain.automation.agents.ToolUse.Input (String)
+com.histmersion.domain.automation.agents.ToolUse.Tool (String)
+com.histmersion.domain.automation.approvals.ApprovalQuery.Goal (String)
+com.histmersion.domain.automation.approvals.ApprovalQuery.Subject (String)
+com.histmersion.domain.automation.approvals.ProposalEvidence.Evidence (String)
+com.histmersion.domain.automation.approvals.ProposalEvidence.Quote (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Digest (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.DrainSince (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.DrainedAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled (Boolean)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.LastBackupAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.LastEnsureAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.LastLintAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Paused (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.CreatedAt (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.Kind (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.Note (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.Ref (String)
+com.histmersion.domain.automation.goals.BGoalRow.CreatedAt (String)
+com.histmersion.domain.automation.goals.BGoalRow.Notes (String)
+com.histmersion.domain.automation.goals.BGoalRow.PHi (Long)
+com.histmersion.domain.automation.goals.BGoalRow.PLo (Long)
+com.histmersion.domain.automation.goals.BGoalRow.PNull (Boolean)
+com.histmersion.domain.automation.goals.BGoalRow.Plan (String)
+com.histmersion.domain.automation.goals.BGoalRow.PlanApprovedAt (String)
+com.histmersion.domain.automation.goals.BGoalRow.Regions (String)
+com.histmersion.domain.automation.goals.BGoalRow.Slug (String)
+com.histmersion.domain.automation.goals.BGoalRow.Status (String)
+com.histmersion.domain.automation.goals.BGoalRow.Tags (String)
+com.histmersion.domain.automation.goals.BGoalRow.Title (String)
+com.histmersion.domain.automation.goals.BGoalRow.UpdatedAt (String)
+com.histmersion.domain.automation.goals.BGoalScheduleRow.Cron (String)
+com.histmersion.domain.automation.goals.BGoalScheduleRow.Enabled (Boolean)
+com.histmersion.domain.automation.goals.BGoalScheduleRow.Kind (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Active (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.CreatedAt (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.LeftAt (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.LeftWhy (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Parent (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Pinned (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Priority (Int)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Since (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Slug (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Status (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Title (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Why (String)
+com.histmersion.domain.automation.goals.FocusRepo.JoinWhy (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Approval (Long)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ApprovalKind (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.AutoApprove (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.FocusHeld (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Goals (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Id (Long)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Kind (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ManagerId (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ManagerKind (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Person (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.PersonHeld (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Status (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Target (String)
+com.histmersion.domain.automation.goals.GoalLinkRepo.ItemId (Int)
+com.histmersion.domain.automation.goals.GoalRow.Notes (String)
+com.histmersion.domain.automation.goals.GoalRow.ParentSlug (String)
+com.histmersion.domain.automation.goals.GoalRow.Regions (String)
+com.histmersion.domain.automation.goals.GoalRow.Slug (String)
+com.histmersion.domain.automation.goals.GoalRow.Status (String)
+com.histmersion.domain.automation.goals.GoalRow.Tags (String)
+com.histmersion.domain.automation.goals.GoalRow.Title (String)
+com.histmersion.domain.automation.goals.GoalRow.UpdatedAt (String)
+com.histmersion.domain.automation.managers.ManagerLight.Cron (String)
+com.histmersion.domain.automation.managers.ManagerLight.Goal (String)
+com.histmersion.domain.automation.managers.ManagerLight.Id (String)
+com.histmersion.domain.automation.managers.ManagerLight.Kind (String)
+com.histmersion.domain.automation.managers.ManagerLight.PlanItem (Boolean)
+com.histmersion.domain.automation.managers.ManagerLight.State (String)
+com.histmersion.domain.automation.managers.ManagerLight.StatusNote (String)
+com.histmersion.domain.automation.managers.ManagerRepo.CancelReason (String)
+com.histmersion.domain.automation.managers.ManagerRepo.EventCursor (Long)
+com.histmersion.domain.automation.managers.ManagerRepo.ProgressText (String)
+com.histmersion.domain.automation.managers.ManagerRepo.RestaleReason (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Authors (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Goal (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.IsOa (Boolean)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Item (Int)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Job (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.ManagerId (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Text (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Title (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Topic (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Venue (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Why (String)
+com.histmersion.domain.automation.worklists.BQueueRow.CreatedAt (String)
+com.histmersion.domain.automation.worklists.BQueueRow.DoneAt (String)
+com.histmersion.domain.automation.worklists.BQueueRow.List (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Reason (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Status (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Text (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Topic (String)
+com.histmersion.domain.automation.worklists.BQueueRow.UpdatedAt (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.automation.managers.ManagerService.BacklogCountsResultPart1 | base String | generated | method-result
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.ManagerService.Ba
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.BacklogCountsResultPart2Part1 | base Int | generated | method-result
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.ManagerService.Ba
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.BacklogCountsResultPart2Part2 | base Int | generated | method-result
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.ManagerService.Ba
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.BacklogRetryFailures | base Int | generated | method-parameter
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers.ManagerService
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.BacklogRetryItemId | base Long | generated | method-parameter
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers.ManagerService
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.BacklogRetryOutcome | base String | generated | method-parameter
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers.ManagerService
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.BacklogRetryResult | base Boolean | generated | method-result
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers.ManagerService
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.CountEventsAllKind | base String | generated | method-parameter
+    def countEventsAll(kind: com.histmersion.domain.automation.managers.ManagerService.CountEventsAllKind, since: Instant): com.histmersion.domain.automation.managers.Manager
+    def countEventsAll(kind: com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsAllKind, since: Instant): com.histmersion.domain.automation.m
+com.histmersion.domain.automation.managers.ManagerService.CountEventsAllResult | base Int | generated | method-result
+    def countEventsAll(kind: com.histmersion.domain.automation.managers.ManagerService.CountEventsAllKind, since: Instant): com.histmersion.domain.automation.managers.Manager
+    def countEventsAll(kind: com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsAllKind, since: Instant): com.histmersion.domain.automation.m
+com.histmersion.domain.automation.managers.ManagerService.CountEventsByKind | base String | generated | method-parameter
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation.managers.Manag
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation
+com.histmersion.domain.automation.managers.ManagerService.CountEventsByResultPart1 | base String | generated | method-result
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation.managers.Manag
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation
+com.histmersion.domain.automation.managers.ManagerService.CountEventsByResultPart2 | base Int | generated | method-result
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation.managers.Manag
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation
+com.histmersion.domain.automation.managers.ManagerService.CreateCron | base String | generated | method-parameter
+    val CreateCron: _root_.com.histmersion.domain.automation.managers.ManagerRecord.Cron.type = _root_.com.histmersion.domain.automation.managers.ManagerRecord.Cron
+com.histmersion.domain.automation.managers.ManagerService.CreateGoal | base String | generated | method-parameter
+    val CreateGoal: _root_.com.histmersion.domain.automation.managers.ManagerRecord.Goal.type = _root_.com.histmersion.domain.automation.managers.ManagerRecord.Goal
+com.histmersion.domain.automation.managers.ManagerService.CreateId | base String | generated | method-parameter
+    val CreateId: _root_.com.histmersion.domain.automation.managers.ManagerRecord.Id.type = _root_.com.histmersion.domain.automation.managers.ManagerRecord.Id
+com.histmersion.domain.automation.managers.ManagerService.CreateResult | base Boolean | generated | method-result
+com.histmersion.domain.automation.managers.ManagerService.DispatchItemId | base Long | generated | method-parameter
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerService.DispatchRun,
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerServi
+com.histmersion.domain.automation.managers.ManagerService.DispatchResult | base Boolean | generated | method-result
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerService.DispatchRun,
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerServi
+com.histmersion.domain.automation.managers.ManagerService.DispatchRun | base String | generated | method-parameter
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerService.DispatchRun,
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerServi
+com.histmersion.domain.automation.managers.ManagerService.EventItemId | base Long | generated | method-parameter
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.ManagerService.Ev
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.EventKind | base String | generated | method-parameter
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.ManagerService.Ev
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.EventManagerId | base String | generated | method-parameter
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.ManagerService.Ev
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.EventText | base String | generated | method-parameter
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.ManagerService.Ev
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.FocusHeldCountResult | base Int | generated | method-result
+    def focusHeldCount(): com.histmersion.domain.automation.managers.ManagerService.FocusHeldCountResult
+    def focusHeldCount(): com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusHeldCountResult = db.read(ManagerRepo.focusHeldCount())
+com.histmersion.domain.automation.managers.ManagerService.FocusHoldItemId | base Long | generated | method-parameter
+    def focusHold(itemId: com.histmersion.domain.automation.managers.ManagerService.FocusHoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.Focus
+    def focusHold(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusHoldItemId, h: Hold): com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerService.FocusHoldResult | base Boolean | generated | method-result
+    def focusHold(itemId: com.histmersion.domain.automation.managers.ManagerService.FocusHoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.Focus
+    def focusHold(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusHoldItemId, h: Hold): com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerService.FocusReleaseAllResult | base Int | generated | method-result
+    def focusReleaseAll(): com.histmersion.domain.automation.managers.ManagerService.FocusReleaseAllResult
+    def focusReleaseAll(): com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusReleaseAllResult = db.transact(ManagerRepo.focusReleaseAll())
+com.histmersion.domain.automation.managers.ManagerService.FocusReleaseIds | base Long | generated | method-parameter
+    def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerService.FocusReleaseIds]): com.histmersion.domain.automation.managers.ManagerService.FocusRel
+    def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusReleaseIds]): com.histmersion.domain.automation.managers.ManagerS
+com.histmersion.domain.automation.managers.ManagerService.FocusReleaseResult | base Int | generated | method-result
+    def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerService.FocusReleaseIds]): com.histmersion.domain.automation.managers.ManagerService.FocusRel
+    def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusReleaseIds]): com.histmersion.domain.automation.managers.ManagerS
+com.histmersion.domain.automation.managers.ManagerService.ForPersonResult | base Int | generated | method-result
+    def forPerson(): com.histmersion.domain.automation.managers.ManagerService.ForPersonResult
+    def forPerson(): com.histmersion.domain.automation.managers.ManagerService.Implementation.ForPersonResult = db.read(ManagerRepo.forPerson())
+com.histmersion.domain.automation.managers.ManagerService.GetId | base String | generated | method-parameter
+    def get(id: com.histmersion.domain.automation.managers.ManagerService.GetId): Option[ManagerInfo]
+    def get(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.GetId): Option[ManagerInfo] = db.read(ManagerRepo.get(id))
+com.histmersion.domain.automation.managers.ManagerService.HoldItemId | base Long | generated | method-parameter
+    def hold(itemId: com.histmersion.domain.automation.managers.ManagerService.HoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.HoldResult
+    def hold(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.HoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.
+com.histmersion.domain.automation.managers.ManagerService.HoldResult | base Boolean | generated | method-result
+    def hold(itemId: com.histmersion.domain.automation.managers.ManagerService.HoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.HoldResult
+    def hold(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.HoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.
+com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogCountsResultPart1 | base String | generated | method-result
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.ManagerService.Ba
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogCountsResultPart2Part1 | base Int | generated | method-result
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.ManagerService.Ba
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogCountsResultPart2Part2 | base Int | generated | method-result
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.ManagerService.Ba
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryFailures | base Int | generated | method-parameter
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers.ManagerService
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryItemId | base Long | generated | method-parameter
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers.ManagerService
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryOutcome | base String | generated | method-parameter
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers.ManagerService
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryResult | base Boolean | generated | method-result
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers.ManagerService
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsAllKind | base String | generated | method-parameter
+    def countEventsAll(kind: com.histmersion.domain.automation.managers.ManagerService.CountEventsAllKind, since: Instant): com.histmersion.domain.automation.managers.Manager
+    def countEventsAll(kind: com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsAllKind, since: Instant): com.histmersion.domain.automation.m
+com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsAllResult | base Int | generated | method-result
+    def countEventsAll(kind: com.histmersion.domain.automation.managers.ManagerService.CountEventsAllKind, since: Instant): com.histmersion.domain.automation.managers.Manager
+    def countEventsAll(kind: com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsAllKind, since: Instant): com.histmersion.domain.automation.m
+com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsByKind | base String | generated | method-parameter
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation.managers.Manag
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation
+com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsByResultPart1 | base String | generated | method-result
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation.managers.Manag
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation
+com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsByResultPart2 | base Int | generated | method-result
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation.managers.Manag
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation
+com.histmersion.domain.automation.managers.ManagerService.Implementation.CreateCron | base String | generated | method-parameter
+    val CreateCron: _root_.com.histmersion.domain.automation.managers.ManagerRecord.Cron.type = _root_.com.histmersion.domain.automation.managers.ManagerRecord.Cron
+com.histmersion.domain.automation.managers.ManagerService.Implementation.CreateGoal | base String | generated | method-parameter
+    val CreateGoal: _root_.com.histmersion.domain.automation.managers.ManagerRecord.Goal.type = _root_.com.histmersion.domain.automation.managers.ManagerRecord.Goal
+com.histmersion.domain.automation.managers.ManagerService.Implementation.CreateId | base String | generated | method-parameter
+    val CreateId: _root_.com.histmersion.domain.automation.managers.ManagerRecord.Id.type = _root_.com.histmersion.domain.automation.managers.ManagerRecord.Id
+com.histmersion.domain.automation.managers.ManagerService.Implementation.CreateResult | base Boolean | generated | method-result
+com.histmersion.domain.automation.managers.ManagerService.Implementation.DispatchItemId | base Long | generated | method-parameter
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerService.DispatchRun,
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerServi
+com.histmersion.domain.automation.managers.ManagerService.Implementation.DispatchResult | base Boolean | generated | method-result
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerService.DispatchRun,
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerServi
+com.histmersion.domain.automation.managers.ManagerService.Implementation.DispatchRun | base String | generated | method-parameter
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerService.DispatchRun,
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerServi
+com.histmersion.domain.automation.managers.ManagerService.Implementation.EventItemId | base Long | generated | method-parameter
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.ManagerService.Ev
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.Implementation.EventKind | base String | generated | method-parameter
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.ManagerService.Ev
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.Implementation.EventManagerId | base String | generated | method-parameter
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.ManagerService.Ev
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.Implementation.EventText | base String | generated | method-parameter
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.ManagerService.Ev
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusHeldCountResult | base Int | generated | method-result
+    def focusHeldCount(): com.histmersion.domain.automation.managers.ManagerService.FocusHeldCountResult
+    def focusHeldCount(): com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusHeldCountResult = db.read(ManagerRepo.focusHeldCount())
+com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusHoldItemId | base Long | generated | method-parameter
+    def focusHold(itemId: com.histmersion.domain.automation.managers.ManagerService.FocusHoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.Focus
+    def focusHold(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusHoldItemId, h: Hold): com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusHoldResult | base Boolean | generated | method-result
+    def focusHold(itemId: com.histmersion.domain.automation.managers.ManagerService.FocusHoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.Focus
+    def focusHold(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusHoldItemId, h: Hold): com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusReleaseAllResult | base Int | generated | method-result
+    def focusReleaseAll(): com.histmersion.domain.automation.managers.ManagerService.FocusReleaseAllResult
+    def focusReleaseAll(): com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusReleaseAllResult = db.transact(ManagerRepo.focusReleaseAll())
+com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusReleaseIds | base Long | generated | method-parameter
+    def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerService.FocusReleaseIds]): com.histmersion.domain.automation.managers.ManagerService.FocusRel
+    def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusReleaseIds]): com.histmersion.domain.automation.managers.ManagerS
+com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusReleaseResult | base Int | generated | method-result
+    def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerService.FocusReleaseIds]): com.histmersion.domain.automation.managers.ManagerService.FocusRel
+    def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusReleaseIds]): com.histmersion.domain.automation.managers.ManagerS
+com.histmersion.domain.automation.managers.ManagerService.Implementation.ForPersonResult | base Int | generated | method-result
+    def forPerson(): com.histmersion.domain.automation.managers.ManagerService.ForPersonResult
+    def forPerson(): com.histmersion.domain.automation.managers.ManagerService.Implementation.ForPersonResult = db.read(ManagerRepo.forPerson())
+com.histmersion.domain.automation.managers.ManagerService.Implementation.GetId | base String | generated | method-parameter
+    def get(id: com.histmersion.domain.automation.managers.ManagerService.GetId): Option[ManagerInfo]
+    def get(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.GetId): Option[ManagerInfo] = db.read(ManagerRepo.get(id))
+com.histmersion.domain.automation.managers.ManagerService.Implementation.HoldItemId | base Long | generated | method-parameter
+    def hold(itemId: com.histmersion.domain.automation.managers.ManagerService.HoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.HoldResult
+    def hold(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.HoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.
+com.histmersion.domain.automation.managers.ManagerService.Implementation.HoldResult | base Boolean | generated | method-result
+    def hold(itemId: com.histmersion.domain.automation.managers.ManagerService.HoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.HoldResult
+    def hold(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.HoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.
+com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemForKind | base String | generated | method-parameter
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.ItemForManagerId, kind: com.histmersion.domain.automation.managers.ManagerService.ItemFor
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemForManagerId, kind: com.histmersion.domain.automation.managers.Manager
+com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemForManagerId | base String | generated | method-parameter
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.ItemForManagerId, kind: com.histmersion.domain.automation.managers.ManagerService.ItemFor
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemForManagerId, kind: com.histmersion.domain.automation.managers.Manager
+com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemForTarget | base String | generated | method-parameter
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.ItemForManagerId, kind: com.histmersion.domain.automation.managers.ManagerService.ItemFor
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemForManagerId, kind: com.histmersion.domain.automation.managers.Manager
+com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemId | base Long | generated | method-parameter
+    def item(id: com.histmersion.domain.automation.managers.ManagerService.ItemId): Option[ManagerItem]
+    def item(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemId): Option[ManagerItem] = db.read(ManagerRepo.item(id))
+com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemsLimit | base Int | generated | method-parameter
+    def items(managerId: com.histmersion.domain.automation.managers.ManagerService.ItemsManagerId, limit: com.histmersion.domain.automation.managers.ManagerService.ItemsLimit
+    def items(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemsManagerId, limit: com.histmersion.domain.automation.managers.ManagerSer
+com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemsManagerId | base String | generated | method-parameter
+    def items(managerId: com.histmersion.domain.automation.managers.ManagerService.ItemsManagerId, limit: com.histmersion.domain.automation.managers.ManagerService.ItemsLimit
+    def items(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemsManagerId, limit: com.histmersion.domain.automation.managers.ManagerSer
+com.histmersion.domain.automation.managers.ManagerService.Implementation.LastEventOfKind | base String | generated | method-parameter
+    def lastEventOf(managerId: com.histmersion.domain.automation.managers.ManagerService.LastEventOfManagerId, kind: com.histmersion.domain.automation.managers.ManagerService
+    def lastEventOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.LastEventOfManagerId, kind: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.Implementation.LastEventOfManagerId | base String | generated | method-parameter
+    def lastEventOf(managerId: com.histmersion.domain.automation.managers.ManagerService.LastEventOfManagerId, kind: com.histmersion.domain.automation.managers.ManagerService
+    def lastEventOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.LastEventOfManagerId, kind: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.Implementation.LastProgressResultPart1 | base String | generated | method-result
+    def lastProgress(): Map[com.histmersion.domain.automation.managers.ManagerService.LastProgressResultPart1, com.histmersion.domain.automation.managers.ManagerService.LastP
+    def lastProgress(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.LastProgressResultPart1, com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerService.Implementation.LastProgressResultPart2 | base String | generated | method-result
+    def lastProgress(): Map[com.histmersion.domain.automation.managers.ManagerService.LastProgressResultPart1, com.histmersion.domain.automation.managers.ManagerService.LastP
+    def lastProgress(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.LastProgressResultPart1, com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerService.Implementation.OccupyingRunsResultPart1 | base String | generated | method-result
+    def occupyingRuns(): List[(com.histmersion.domain.automation.managers.ManagerService.OccupyingRunsResultPart1, Option[com.histmersion.domain.automation.managers.ManagerSe
+    def occupyingRuns(): List[(com.histmersion.domain.automation.managers.ManagerService.Implementation.OccupyingRunsResultPart1, Option[com.histmersion.domain.automation.man
+com.histmersion.domain.automation.managers.ManagerService.Implementation.OccupyingRunsResultPart2 | base String | generated | method-result
+    def occupyingRuns(): List[(com.histmersion.domain.automation.managers.ManagerService.OccupyingRunsResultPart1, Option[com.histmersion.domain.automation.managers.ManagerSe
+    def occupyingRuns(): List[(com.histmersion.domain.automation.managers.ManagerService.Implementation.OccupyingRunsResultPart1, Option[com.histmersion.domain.automation.man
+com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenForTarget | base String | generated | method-parameter
+    def openFor(target: com.histmersion.domain.automation.managers.ManagerService.OpenForTarget): List[ManagerItem]
+    def openFor(target: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenForTarget): List[ManagerItem] = db.read(ManagerRepo.openFor(target))
+com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenKeysManagerId | base String | generated | method-parameter
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.ManagerService.Open
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.Mana
+com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenKeysResultPart1 | base String | generated | method-result
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.ManagerService.Open
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.Mana
+com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenKeysResultPart2 | base String | generated | method-result
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.ManagerService.Open
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.Mana
+com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfFocusHeld | base Boolean | generated | method-parameter
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.ManagerService.Ope
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfKinds | base String | generated | method-parameter
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.ManagerService.Ope
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId | base String | generated | method-parameter
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.ManagerService.Ope
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfResult | base Int | generated | method-result
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.ManagerService.Ope
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfStatuses | base String | generated | method-parameter
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.ManagerService.Ope
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart1 | base String | generated | method-result
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.PaceResultPart1, (com.histmersion.domain.automation.managers.ManagerService.PaceRe
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart1, (com.histmersion.domain.automation.managers.Manage
+com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart2Part1 | base Int | generated | method-result
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.PaceResultPart1, (com.histmersion.domain.automation.managers.ManagerService.PaceRe
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart1, (com.histmersion.domain.automation.managers.Manage
+com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart2Part2 | base Int | generated | method-result
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.PaceResultPart1, (com.histmersion.domain.automation.managers.ManagerService.PaceRe
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart1, (com.histmersion.domain.automation.managers.Manage
+com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart2Part3 | base String | generated | method-result
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.PaceResultPart1, (com.histmersion.domain.automation.managers.ManagerService.PaceRe
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart1, (com.histmersion.domain.automation.managers.Manage
+com.histmersion.domain.automation.managers.ManagerService.Implementation.PendingManagerId | base String | generated | method-parameter
+    def pending(managerId: com.histmersion.domain.automation.managers.ManagerService.PendingManagerId): List[ManagerItem]
+    def pending(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.PendingManagerId): List[ManagerItem] = db.read(ManagerRepo.pending(manager
+com.histmersion.domain.automation.managers.ManagerService.Implementation.PersonHeldByGoalResultPart1 | base String | generated | method-result
+    def personHeldByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.PersonHeldByGoalResultPart1, com.histmersion.domain.automation.managers.ManagerServi
+    def personHeldByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PersonHeldByGoalResultPart1, com.histmersion.domain.automation.manage
+com.histmersion.domain.automation.managers.ManagerService.Implementation.PersonHeldByGoalResultPart2 | base Int | generated | method-result
+    def personHeldByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.PersonHeldByGoalResultPart1, com.histmersion.domain.automation.managers.ManagerServi
+    def personHeldByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PersonHeldByGoalResultPart1, com.histmersion.domain.automation.manage
+com.histmersion.domain.automation.managers.ManagerService.Implementation.RecentKindsN | base Int | generated | method-parameter
+    def recentKinds(n: com.histmersion.domain.automation.managers.ManagerService.RecentKindsN): List[com.histmersion.domain.automation.managers.ManagerService.RecentKindsResu
+    def recentKinds(n: com.histmersion.domain.automation.managers.ManagerService.Implementation.RecentKindsN): List[com.histmersion.domain.automation.managers.ManagerService.
+com.histmersion.domain.automation.managers.ManagerService.Implementation.RecentKindsResult | base String | generated | method-result
+    def recentKinds(n: com.histmersion.domain.automation.managers.ManagerService.RecentKindsN): List[com.histmersion.domain.automation.managers.ManagerService.RecentKindsResu
+    def recentKinds(n: com.histmersion.domain.automation.managers.ManagerService.Implementation.RecentKindsN): List[com.histmersion.domain.automation.managers.ManagerService.
+com.histmersion.domain.automation.managers.ManagerService.Implementation.ReleaseItemId | base Long | generated | method-parameter
+    def release(itemId: com.histmersion.domain.automation.managers.ManagerService.ReleaseItemId): com.histmersion.domain.automation.managers.ManagerService.ReleaseResult
+    def release(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ReleaseItemId): com.histmersion.domain.automation.managers.ManagerService.Imp
+com.histmersion.domain.automation.managers.ManagerService.Implementation.ReleaseResult | base Boolean | generated | method-result
+    def release(itemId: com.histmersion.domain.automation.managers.ManagerService.ReleaseItemId): com.histmersion.domain.automation.managers.ManagerService.ReleaseResult
+    def release(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ReleaseItemId): com.histmersion.domain.automation.managers.ManagerService.Imp
+com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningByGoalResultPart1 | base String | generated | method-result
+    def runningByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.RunningByGoalResultPart1, com.histmersion.domain.automation.managers.ManagerService.Run
+    def runningByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningByGoalResultPart1, com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningByGoalResultPart2 | base Int | generated | method-result
+    def runningByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.RunningByGoalResultPart1, com.histmersion.domain.automation.managers.ManagerService.Run
+    def runningByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningByGoalResultPart1, com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningId | base String | generated | method-parameter
+    def running(id: com.histmersion.domain.automation.managers.ManagerService.RunningId): com.histmersion.domain.automation.managers.ManagerService.RunningResult
+    def running(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningId): com.histmersion.domain.automation.managers.ManagerService.Implementat
+com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningResult | base Int | generated | method-result
+    def running(id: com.histmersion.domain.automation.managers.ManagerService.RunningId): com.histmersion.domain.automation.managers.ManagerService.RunningResult
+    def running(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningId): com.histmersion.domain.automation.managers.ManagerService.Implementat
+com.histmersion.domain.automation.managers.ManagerService.Implementation.SetConfigCron | base String | generated | method-parameter
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automation.managers.Ma
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automat
+com.histmersion.domain.automation.managers.ManagerService.Implementation.SetConfigId | base String | generated | method-parameter
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automation.managers.Ma
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automat
+com.histmersion.domain.automation.managers.ManagerService.Implementation.SetConfigResult | base Boolean | generated | method-result
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automation.managers.Ma
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automat
+com.histmersion.domain.automation.managers.ManagerService.Implementation.SetItemStateItemId | base Long | generated | method-parameter
+    def setItemState(itemId: com.histmersion.domain.automation.managers.ManagerService.SetItemStateItemId, state: ItemState, from: List[ItemStatus]): com.histmersion.domain.a
+    def setItemState(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetItemStateItemId, state: ItemState, from: List[ItemStatus]): com.histm
+com.histmersion.domain.automation.managers.ManagerService.Implementation.SetItemStateResult | base Boolean | generated | method-result
+    def setItemState(itemId: com.histmersion.domain.automation.managers.ManagerService.SetItemStateItemId, state: ItemState, from: List[ItemStatus]): com.histmersion.domain.a
+    def setItemState(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetItemStateItemId, state: ItemState, from: List[ItemStatus]): com.histm
+com.histmersion.domain.automation.managers.ManagerService.Implementation.SetStateId | base String | generated | method-parameter
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.ManagerService.
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.
+com.histmersion.domain.automation.managers.ManagerService.Implementation.SetStatePauseRuns | base Boolean | generated | method-parameter
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.ManagerService.
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.
+com.histmersion.domain.automation.managers.ManagerService.Implementation.SetStateResult | base Boolean | generated | method-result
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.ManagerService.
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.
+com.histmersion.domain.automation.managers.ManagerService.Implementation.SettleItemId | base Long | generated | method-parameter
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.managers.Manager
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.m
+com.histmersion.domain.automation.managers.ManagerService.Implementation.SettleOutcome | base String | generated | method-parameter
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.managers.Manager
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.m
+com.histmersion.domain.automation.managers.ManagerService.Implementation.SettleResult | base Boolean | generated | method-result
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.managers.Manager
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.m
+com.histmersion.domain.automation.managers.ManagerService.Implementation.SweepOutcomesResultPart1 | base String | generated | method-result
+    def sweepOutcomes(): Map[com.histmersion.domain.automation.managers.ManagerService.SweepOutcomesResultPart1, com.histmersion.domain.automation.managers.ManagerService.Swe
+    def sweepOutcomes(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.SweepOutcomesResultPart1, com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.Implementation.SweepOutcomesResultPart2 | base String | generated | method-result
+    def sweepOutcomes(): Map[com.histmersion.domain.automation.managers.ManagerService.SweepOutcomesResultPart1, com.histmersion.domain.automation.managers.ManagerService.Swe
+    def sweepOutcomes(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.SweepOutcomesResultPart1, com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.Implementation.UpsertKind | base String | generated | method-parameter
+    val UpsertKind: _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Kind.type = _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Kind
+com.histmersion.domain.automation.managers.ManagerService.Implementation.UpsertManagerId | base String | generated | method-parameter
+    val UpsertManagerId: _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.ManagerId.type = _root_.com.histmersion.domain.automation.managers.ManagerItemRec
+com.histmersion.domain.automation.managers.ManagerService.Implementation.UpsertPriority | base Int | generated | method-parameter
+    val UpsertPriority: _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Priority.type = _root_.com.histmersion.domain.automation.managers.ManagerItemRecor
+com.histmersion.domain.automation.managers.ManagerService.Implementation.UpsertReopen | base Boolean | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerService.Implementation.UpsertResultPart1 | base Long | generated | method-result
+com.histmersion.domain.automation.managers.ManagerService.Implementation.UpsertResultPart2 | base Boolean | generated | method-result
+com.histmersion.domain.automation.managers.ManagerService.Implementation.UpsertTarget | base String | generated | method-parameter
+    val UpsertTarget: _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Target.type = _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Ta
+com.histmersion.domain.automation.managers.ManagerService.InMemory.BacklogCountsResultPart1 | base String | generated | method-result
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.ManagerService.Ba
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.InMemory.BacklogCountsResultPart2Part1 | base Int | generated | method-result
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.ManagerService.Ba
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.InMemory.BacklogCountsResultPart2Part2 | base Int | generated | method-result
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.ManagerService.Ba
+    def backlogCounts(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.InMemory.BacklogResult | base Boolean | generated | method-result
+    private def backlog(i: ManagerItemRecord): com.histmersion.domain.automation.managers.ManagerService.InMemory.BacklogResult = i.kind == OaIngest && Open(i.status)
+com.histmersion.domain.automation.managers.ManagerService.InMemory.BacklogRetryFailures | base Int | generated | method-parameter
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers.ManagerService
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.InMemory.BacklogRetryItemId | base Long | generated | method-parameter
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers.ManagerService
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.InMemory.BacklogRetryOutcome | base String | generated | method-parameter
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers.ManagerService
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.InMemory.BacklogRetryResult | base Boolean | generated | method-result
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers.ManagerService
+    def backlogRetry(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.BacklogRetryItemId, failures: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.InMemory.ChangeItemsResult | base Int | generated | method-result
+    private def changeItems(which: ManagerItemRecord => com.histmersion.domain.automation.managers.ManagerService.InMemory.ChangeItemsWhichResult)(f: ManagerItemRecord => Man
+com.histmersion.domain.automation.managers.ManagerService.InMemory.ChangeItemsWhichResult | base Boolean | generated | method-parameter
+    private def changeItems(which: ManagerItemRecord => com.histmersion.domain.automation.managers.ManagerService.InMemory.ChangeItemsWhichResult)(f: ManagerItemRecord => Man
+com.histmersion.domain.automation.managers.ManagerService.InMemory.ChangeManagerId | base String | generated | method-parameter
+    private def changeManager(id: com.histmersion.domain.automation.managers.ManagerService.InMemory.ChangeManagerId)(f: ManagerRecord => ManagerRecord): com.histmersion.doma
+com.histmersion.domain.automation.managers.ManagerService.InMemory.ChangeManagerResult | base Boolean | generated | method-result
+    private def changeManager(id: com.histmersion.domain.automation.managers.ManagerService.InMemory.ChangeManagerId)(f: ManagerRecord => ManagerRecord): com.histmersion.doma
+com.histmersion.domain.automation.managers.ManagerService.InMemory.CountEventsAllKind | base String | generated | method-parameter
+    def countEventsAll(kind: com.histmersion.domain.automation.managers.ManagerService.CountEventsAllKind, since: Instant): com.histmersion.domain.automation.managers.Manager
+    def countEventsAll(kind: com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsAllKind, since: Instant): com.histmersion.domain.automation.m
+com.histmersion.domain.automation.managers.ManagerService.InMemory.CountEventsAllResult | base Int | generated | method-result
+    def countEventsAll(kind: com.histmersion.domain.automation.managers.ManagerService.CountEventsAllKind, since: Instant): com.histmersion.domain.automation.managers.Manager
+    def countEventsAll(kind: com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsAllKind, since: Instant): com.histmersion.domain.automation.m
+com.histmersion.domain.automation.managers.ManagerService.InMemory.CountEventsByKind | base String | generated | method-parameter
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation.managers.Manag
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation
+com.histmersion.domain.automation.managers.ManagerService.InMemory.CountEventsByResultPart1 | base String | generated | method-result
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation.managers.Manag
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation
+com.histmersion.domain.automation.managers.ManagerService.InMemory.CountEventsByResultPart2 | base Int | generated | method-result
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation.managers.Manag
+    def countEventsBy(kind: com.histmersion.domain.automation.managers.ManagerService.Implementation.CountEventsByKind, since: Instant): Map[com.histmersion.domain.automation
+com.histmersion.domain.automation.managers.ManagerService.InMemory.CountedResultPart2 | base Int | generated | method-result
+    private def counted[K](ks: Iterable[K]): Map[K, com.histmersion.domain.automation.managers.ManagerService.InMemory.CountedResultPart2] = ks.groupBy(identity).view.mapValu
+com.histmersion.domain.automation.managers.ManagerService.InMemory.CreateResult | base Boolean | generated | method-result
+com.histmersion.domain.automation.managers.ManagerService.InMemory.DispatchItemId | base Long | generated | method-parameter
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerService.DispatchRun,
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerServi
+com.histmersion.domain.automation.managers.ManagerService.InMemory.DispatchResult | base Boolean | generated | method-result
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerService.DispatchRun,
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerServi
+com.histmersion.domain.automation.managers.ManagerService.InMemory.DispatchRun | base String | generated | method-parameter
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerService.DispatchRun,
+    def dispatch(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.DispatchItemId, run: com.histmersion.domain.automation.managers.ManagerServi
+com.histmersion.domain.automation.managers.ManagerService.InMemory.EventText | base String | generated | method-parameter
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.ManagerService.Ev
+    def event(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.EventManagerId, itemId: Option[com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerService.InMemory.FocusHeldCountResult | base Int | generated | method-result
+    def focusHeldCount(): com.histmersion.domain.automation.managers.ManagerService.FocusHeldCountResult
+    def focusHeldCount(): com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusHeldCountResult = db.read(ManagerRepo.focusHeldCount())
+com.histmersion.domain.automation.managers.ManagerService.InMemory.FocusHeldResult | base Boolean | generated | method-result
+    private def focusHeld(i: ManagerItemRecord): com.histmersion.domain.automation.managers.ManagerService.InMemory.FocusHeldResult = i.status == "held" && i.hold.exists(_.fo
+com.histmersion.domain.automation.managers.ManagerService.InMemory.FocusHoldItemId | base Long | generated | method-parameter
+    def focusHold(itemId: com.histmersion.domain.automation.managers.ManagerService.FocusHoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.Focus
+    def focusHold(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusHoldItemId, h: Hold): com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerService.InMemory.FocusHoldResult | base Boolean | generated | method-result
+    def focusHold(itemId: com.histmersion.domain.automation.managers.ManagerService.FocusHoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.Focus
+    def focusHold(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusHoldItemId, h: Hold): com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerService.InMemory.FocusReleaseAllResult | base Int | generated | method-result
+    def focusReleaseAll(): com.histmersion.domain.automation.managers.ManagerService.FocusReleaseAllResult
+    def focusReleaseAll(): com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusReleaseAllResult = db.transact(ManagerRepo.focusReleaseAll())
+com.histmersion.domain.automation.managers.ManagerService.InMemory.FocusReleaseIds | base Long | generated | method-parameter
+    def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerService.FocusReleaseIds]): com.histmersion.domain.automation.managers.ManagerService.FocusRel
+    def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusReleaseIds]): com.histmersion.domain.automation.managers.ManagerS
+com.histmersion.domain.automation.managers.ManagerService.InMemory.FocusReleaseResult | base Int | generated | method-result
+    def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerService.FocusReleaseIds]): com.histmersion.domain.automation.managers.ManagerService.FocusRel
+    def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerService.Implementation.FocusReleaseIds]): com.histmersion.domain.automation.managers.ManagerS
+com.histmersion.domain.automation.managers.ManagerService.InMemory.ForPersonResult | base Int | generated | method-result
+    def forPerson(): com.histmersion.domain.automation.managers.ManagerService.ForPersonResult
+    def forPerson(): com.histmersion.domain.automation.managers.ManagerService.Implementation.ForPersonResult = db.read(ManagerRepo.forPerson())
+com.histmersion.domain.automation.managers.ManagerService.InMemory.GetId | base String | generated | method-parameter
+    def get(id: com.histmersion.domain.automation.managers.ManagerService.GetId): Option[ManagerInfo]
+    def get(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.GetId): Option[ManagerInfo] = db.read(ManagerRepo.get(id))
+com.histmersion.domain.automation.managers.ManagerService.InMemory.GoalOfResult | base String | generated | method-result
+    private def goalOf(i: ManagerItemRecord): Option[com.histmersion.domain.automation.managers.ManagerService.InMemory.GoalOfResult] = manager(i.managerId).flatMap(_.goal)
+com.histmersion.domain.automation.managers.ManagerService.InMemory.HoldItemId | base Long | generated | method-parameter
+    def hold(itemId: com.histmersion.domain.automation.managers.ManagerService.HoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.HoldResult
+    def hold(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.HoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.
+com.histmersion.domain.automation.managers.ManagerService.InMemory.HoldResult | base Boolean | generated | method-result
+    def hold(itemId: com.histmersion.domain.automation.managers.ManagerService.HoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.HoldResult
+    def hold(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.HoldItemId, h: Hold): com.histmersion.domain.automation.managers.ManagerService.
+com.histmersion.domain.automation.managers.ManagerService.InMemory.ItemForKind | base String | generated | method-parameter
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.ItemForManagerId, kind: com.histmersion.domain.automation.managers.ManagerService.ItemFor
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemForManagerId, kind: com.histmersion.domain.automation.managers.Manager
+com.histmersion.domain.automation.managers.ManagerService.InMemory.ItemForManagerId | base String | generated | method-parameter
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.ItemForManagerId, kind: com.histmersion.domain.automation.managers.ManagerService.ItemFor
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemForManagerId, kind: com.histmersion.domain.automation.managers.Manager
+com.histmersion.domain.automation.managers.ManagerService.InMemory.ItemForTarget | base String | generated | method-parameter
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.ItemForManagerId, kind: com.histmersion.domain.automation.managers.ManagerService.ItemFor
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemForManagerId, kind: com.histmersion.domain.automation.managers.Manager
+com.histmersion.domain.automation.managers.ManagerService.InMemory.ItemId | base Long | generated | method-parameter
+    def item(id: com.histmersion.domain.automation.managers.ManagerService.ItemId): Option[ManagerItem]
+    def item(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemId): Option[ManagerItem] = db.read(ManagerRepo.item(id))
+com.histmersion.domain.automation.managers.ManagerService.InMemory.ItemsLimit | base Int | generated | method-parameter
+    def items(managerId: com.histmersion.domain.automation.managers.ManagerService.ItemsManagerId, limit: com.histmersion.domain.automation.managers.ManagerService.ItemsLimit
+    def items(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemsManagerId, limit: com.histmersion.domain.automation.managers.ManagerSer
+com.histmersion.domain.automation.managers.ManagerService.InMemory.ItemsManagerId | base String | generated | method-parameter
+    def items(managerId: com.histmersion.domain.automation.managers.ManagerService.ItemsManagerId, limit: com.histmersion.domain.automation.managers.ManagerService.ItemsLimit
+    def items(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemsManagerId, limit: com.histmersion.domain.automation.managers.ManagerSer
+com.histmersion.domain.automation.managers.ManagerService.InMemory.LastEventOfKind | base String | generated | method-parameter
+    def lastEventOf(managerId: com.histmersion.domain.automation.managers.ManagerService.LastEventOfManagerId, kind: com.histmersion.domain.automation.managers.ManagerService
+    def lastEventOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.LastEventOfManagerId, kind: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.InMemory.LastEventOfManagerId | base String | generated | method-parameter
+    def lastEventOf(managerId: com.histmersion.domain.automation.managers.ManagerService.LastEventOfManagerId, kind: com.histmersion.domain.automation.managers.ManagerService
+    def lastEventOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.LastEventOfManagerId, kind: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.InMemory.LastProgressResultPart1 | base String | generated | method-result
+    def lastProgress(): Map[com.histmersion.domain.automation.managers.ManagerService.LastProgressResultPart1, com.histmersion.domain.automation.managers.ManagerService.LastP
+    def lastProgress(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.LastProgressResultPart1, com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerService.InMemory.LastProgressResultPart2 | base String | generated | method-result
+    def lastProgress(): Map[com.histmersion.domain.automation.managers.ManagerService.LastProgressResultPart1, com.histmersion.domain.automation.managers.ManagerService.LastP
+    def lastProgress(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.LastProgressResultPart1, com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerService.InMemory.ManagerId | base String | generated | method-parameter
+    private def manager(id: com.histmersion.domain.automation.managers.ManagerService.InMemory.ManagerId): Option[ManagerRecord] = managers.find(_.id == id)
+    val UpsertManagerId: _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.ManagerId.type = _root_.com.histmersion.domain.automation.managers.ManagerItemRec
+com.histmersion.domain.automation.managers.ManagerService.InMemory.OccupyingResult | base Boolean | generated | method-result
+    private def occupying(r: JobRunState): com.histmersion.domain.automation.managers.ManagerService.InMemory.OccupyingResult =
+com.histmersion.domain.automation.managers.ManagerService.InMemory.OccupyingRunsResultPart1 | base String | generated | method-result
+    def occupyingRuns(): List[(com.histmersion.domain.automation.managers.ManagerService.OccupyingRunsResultPart1, Option[com.histmersion.domain.automation.managers.ManagerSe
+    def occupyingRuns(): List[(com.histmersion.domain.automation.managers.ManagerService.Implementation.OccupyingRunsResultPart1, Option[com.histmersion.domain.automation.man
+com.histmersion.domain.automation.managers.ManagerService.InMemory.OccupyingRunsResultPart2 | base String | generated | method-result
+    def occupyingRuns(): List[(com.histmersion.domain.automation.managers.ManagerService.OccupyingRunsResultPart1, Option[com.histmersion.domain.automation.managers.ManagerSe
+    def occupyingRuns(): List[(com.histmersion.domain.automation.managers.ManagerService.Implementation.OccupyingRunsResultPart1, Option[com.histmersion.domain.automation.man
+com.histmersion.domain.automation.managers.ManagerService.InMemory.OpenForTarget | base String | generated | method-parameter
+    def openFor(target: com.histmersion.domain.automation.managers.ManagerService.OpenForTarget): List[ManagerItem]
+    def openFor(target: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenForTarget): List[ManagerItem] = db.read(ManagerRepo.openFor(target))
+com.histmersion.domain.automation.managers.ManagerService.InMemory.OpenKeysManagerId | base String | generated | method-parameter
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.ManagerService.Open
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.Mana
+com.histmersion.domain.automation.managers.ManagerService.InMemory.OpenKeysResultPart1 | base String | generated | method-result
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.ManagerService.Open
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.Mana
+com.histmersion.domain.automation.managers.ManagerService.InMemory.OpenKeysResultPart2 | base String | generated | method-result
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.ManagerService.Open
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.Mana
+com.histmersion.domain.automation.managers.ManagerService.InMemory.OpenOfFocusHeld | base Boolean | generated | method-parameter
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.ManagerService.Ope
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.InMemory.OpenOfKinds | base String | generated | method-parameter
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.ManagerService.Ope
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.InMemory.OpenOfManagerId | base String | generated | method-parameter
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.ManagerService.Ope
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.InMemory.OpenOfResult | base Int | generated | method-result
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.ManagerService.Ope
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.InMemory.OpenOfStatuses | base String | generated | method-parameter
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.ManagerService.Ope
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.InMemory.PaceResultPart1 | base String | generated | method-result
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.PaceResultPart1, (com.histmersion.domain.automation.managers.ManagerService.PaceRe
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart1, (com.histmersion.domain.automation.managers.Manage
+com.histmersion.domain.automation.managers.ManagerService.InMemory.PaceResultPart2Part1 | base Int | generated | method-result
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.PaceResultPart1, (com.histmersion.domain.automation.managers.ManagerService.PaceRe
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart1, (com.histmersion.domain.automation.managers.Manage
+com.histmersion.domain.automation.managers.ManagerService.InMemory.PaceResultPart2Part2 | base Int | generated | method-result
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.PaceResultPart1, (com.histmersion.domain.automation.managers.ManagerService.PaceRe
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart1, (com.histmersion.domain.automation.managers.Manage
+com.histmersion.domain.automation.managers.ManagerService.InMemory.PaceResultPart2Part3 | base String | generated | method-result
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.PaceResultPart1, (com.histmersion.domain.automation.managers.ManagerService.PaceRe
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart1, (com.histmersion.domain.automation.managers.Manage
+com.histmersion.domain.automation.managers.ManagerService.InMemory.PendingManagerId | base String | generated | method-parameter
+    def pending(managerId: com.histmersion.domain.automation.managers.ManagerService.PendingManagerId): List[ManagerItem]
+    def pending(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.PendingManagerId): List[ManagerItem] = db.read(ManagerRepo.pending(manager
+com.histmersion.domain.automation.managers.ManagerService.InMemory.PersonHeldByGoalResultPart1 | base String | generated | method-result
+    def personHeldByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.PersonHeldByGoalResultPart1, com.histmersion.domain.automation.managers.ManagerServi
+    def personHeldByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PersonHeldByGoalResultPart1, com.histmersion.domain.automation.manage
+com.histmersion.domain.automation.managers.ManagerService.InMemory.PersonHeldByGoalResultPart2 | base Int | generated | method-result
+    def personHeldByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.PersonHeldByGoalResultPart1, com.histmersion.domain.automation.managers.ManagerServi
+    def personHeldByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PersonHeldByGoalResultPart1, com.histmersion.domain.automation.manage
+com.histmersion.domain.automation.managers.ManagerService.InMemory.PersonHeldResult | base Boolean | generated | method-result
+    private def personHeld(i: ManagerItemRecord): com.histmersion.domain.automation.managers.ManagerService.InMemory.PersonHeldResult =
+com.histmersion.domain.automation.managers.ManagerService.InMemory.RecentKindsN | base Int | generated | method-parameter
+    def recentKinds(n: com.histmersion.domain.automation.managers.ManagerService.RecentKindsN): List[com.histmersion.domain.automation.managers.ManagerService.RecentKindsResu
+    def recentKinds(n: com.histmersion.domain.automation.managers.ManagerService.Implementation.RecentKindsN): List[com.histmersion.domain.automation.managers.ManagerService.
+com.histmersion.domain.automation.managers.ManagerService.InMemory.RecentKindsResult | base String | generated | method-result
+    def recentKinds(n: com.histmersion.domain.automation.managers.ManagerService.RecentKindsN): List[com.histmersion.domain.automation.managers.ManagerService.RecentKindsResu
+    def recentKinds(n: com.histmersion.domain.automation.managers.ManagerService.Implementation.RecentKindsN): List[com.histmersion.domain.automation.managers.ManagerService.
+com.histmersion.domain.automation.managers.ManagerService.InMemory.ReleaseItemId | base Long | generated | method-parameter
+    def release(itemId: com.histmersion.domain.automation.managers.ManagerService.ReleaseItemId): com.histmersion.domain.automation.managers.ManagerService.ReleaseResult
+    def release(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ReleaseItemId): com.histmersion.domain.automation.managers.ManagerService.Imp
+com.histmersion.domain.automation.managers.ManagerService.InMemory.ReleaseResult | base Boolean | generated | method-result
+    def release(itemId: com.histmersion.domain.automation.managers.ManagerService.ReleaseItemId): com.histmersion.domain.automation.managers.ManagerService.ReleaseResult
+    def release(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ReleaseItemId): com.histmersion.domain.automation.managers.ManagerService.Imp
+com.histmersion.domain.automation.managers.ManagerService.InMemory.RunningByGoalResultPart1 | base String | generated | method-result
+    def runningByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.RunningByGoalResultPart1, com.histmersion.domain.automation.managers.ManagerService.Run
+    def runningByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningByGoalResultPart1, com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.InMemory.RunningByGoalResultPart2 | base Int | generated | method-result
+    def runningByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.RunningByGoalResultPart1, com.histmersion.domain.automation.managers.ManagerService.Run
+    def runningByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningByGoalResultPart1, com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.InMemory.RunningId | base String | generated | method-parameter
+    def running(id: com.histmersion.domain.automation.managers.ManagerService.RunningId): com.histmersion.domain.automation.managers.ManagerService.RunningResult
+    def running(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningId): com.histmersion.domain.automation.managers.ManagerService.Implementat
+com.histmersion.domain.automation.managers.ManagerService.InMemory.RunningResult | base Int | generated | method-result
+    def running(id: com.histmersion.domain.automation.managers.ManagerService.RunningId): com.histmersion.domain.automation.managers.ManagerService.RunningResult
+    def running(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningId): com.histmersion.domain.automation.managers.ManagerService.Implementat
+com.histmersion.domain.automation.managers.ManagerService.InMemory.SetConfigCron | base String | generated | method-parameter
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automation.managers.Ma
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automat
+com.histmersion.domain.automation.managers.ManagerService.InMemory.SetConfigId | base String | generated | method-parameter
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automation.managers.Ma
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automat
+com.histmersion.domain.automation.managers.ManagerService.InMemory.SetConfigResult | base Boolean | generated | method-result
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automation.managers.Ma
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automat
+com.histmersion.domain.automation.managers.ManagerService.InMemory.SetItemStateItemId | base Long | generated | method-parameter
+    def setItemState(itemId: com.histmersion.domain.automation.managers.ManagerService.SetItemStateItemId, state: ItemState, from: List[ItemStatus]): com.histmersion.domain.a
+    def setItemState(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetItemStateItemId, state: ItemState, from: List[ItemStatus]): com.histm
+com.histmersion.domain.automation.managers.ManagerService.InMemory.SetItemStateResult | base Boolean | generated | method-result
+    def setItemState(itemId: com.histmersion.domain.automation.managers.ManagerService.SetItemStateItemId, state: ItemState, from: List[ItemStatus]): com.histmersion.domain.a
+    def setItemState(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetItemStateItemId, state: ItemState, from: List[ItemStatus]): com.histm
+com.histmersion.domain.automation.managers.ManagerService.InMemory.SetStateId | base String | generated | method-parameter
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.ManagerService.
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.
+com.histmersion.domain.automation.managers.ManagerService.InMemory.SetStatePauseRuns | base Boolean | generated | method-parameter
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.ManagerService.
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.
+com.histmersion.domain.automation.managers.ManagerService.InMemory.SetStateResult | base Boolean | generated | method-result
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.ManagerService.
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.
+com.histmersion.domain.automation.managers.ManagerService.InMemory.SettleItemId | base Long | generated | method-parameter
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.managers.Manager
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.m
+com.histmersion.domain.automation.managers.ManagerService.InMemory.SettleOutcome | base String | generated | method-parameter
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.managers.Manager
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.m
+com.histmersion.domain.automation.managers.ManagerService.InMemory.SettleResult | base Boolean | generated | method-result
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.managers.Manager
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.m
+com.histmersion.domain.automation.managers.ManagerService.InMemory.SweepOutcomesResultPart1 | base String | generated | method-result
+    def sweepOutcomes(): Map[com.histmersion.domain.automation.managers.ManagerService.SweepOutcomesResultPart1, com.histmersion.domain.automation.managers.ManagerService.Swe
+    def sweepOutcomes(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.SweepOutcomesResultPart1, com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.InMemory.SweepOutcomesResultPart2 | base String | generated | method-result
+    def sweepOutcomes(): Map[com.histmersion.domain.automation.managers.ManagerService.SweepOutcomesResultPart1, com.histmersion.domain.automation.managers.ManagerService.Swe
+    def sweepOutcomes(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.SweepOutcomesResultPart1, com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.InMemory.TextResult | base String | generated | method-result
+    private def text(at: Instant): com.histmersion.domain.automation.managers.ManagerService.InMemory.TextResult = AutomationState.text(at)
+com.histmersion.domain.automation.managers.ManagerService.InMemory.UpsertReopen | base Boolean | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerService.InMemory.UpsertResultPart1 | base Long | generated | method-result
+com.histmersion.domain.automation.managers.ManagerService.InMemory.UpsertResultPart2 | base Boolean | generated | method-result
+com.histmersion.domain.automation.managers.ManagerService.InMemory.UrgencyResult | base Int | generated | method-result
+    private def urgency(status: com.histmersion.domain.automation.managers.ManagerService.InMemory.UrgencyStatus): com.histmersion.domain.automation.managers.ManagerService.I
+com.histmersion.domain.automation.managers.ManagerService.InMemory.UrgencyStatus | base String | generated | method-parameter
+    private def urgency(status: com.histmersion.domain.automation.managers.ManagerService.InMemory.UrgencyStatus): com.histmersion.domain.automation.managers.ManagerService.I
+com.histmersion.domain.automation.managers.ManagerService.ItemForKind | base String | generated | method-parameter
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.ItemForManagerId, kind: com.histmersion.domain.automation.managers.ManagerService.ItemFor
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemForManagerId, kind: com.histmersion.domain.automation.managers.Manager
+com.histmersion.domain.automation.managers.ManagerService.ItemForManagerId | base String | generated | method-parameter
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.ItemForManagerId, kind: com.histmersion.domain.automation.managers.ManagerService.ItemFor
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemForManagerId, kind: com.histmersion.domain.automation.managers.Manager
+com.histmersion.domain.automation.managers.ManagerService.ItemForTarget | base String | generated | method-parameter
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.ItemForManagerId, kind: com.histmersion.domain.automation.managers.ManagerService.ItemFor
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemForManagerId, kind: com.histmersion.domain.automation.managers.Manager
+com.histmersion.domain.automation.managers.ManagerService.ItemId | base Long | generated | method-parameter
+    def item(id: com.histmersion.domain.automation.managers.ManagerService.ItemId): Option[ManagerItem]
+    def item(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemId): Option[ManagerItem] = db.read(ManagerRepo.item(id))
+com.histmersion.domain.automation.managers.ManagerService.ItemsLimit | base Int | generated | method-parameter
+    def items(managerId: com.histmersion.domain.automation.managers.ManagerService.ItemsManagerId, limit: com.histmersion.domain.automation.managers.ManagerService.ItemsLimit
+    def items(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemsManagerId, limit: com.histmersion.domain.automation.managers.ManagerSer
+com.histmersion.domain.automation.managers.ManagerService.ItemsManagerId | base String | generated | method-parameter
+    def items(managerId: com.histmersion.domain.automation.managers.ManagerService.ItemsManagerId, limit: com.histmersion.domain.automation.managers.ManagerService.ItemsLimit
+    def items(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ItemsManagerId, limit: com.histmersion.domain.automation.managers.ManagerSer
+com.histmersion.domain.automation.managers.ManagerService.LastEventOfKind | base String | generated | method-parameter
+    def lastEventOf(managerId: com.histmersion.domain.automation.managers.ManagerService.LastEventOfManagerId, kind: com.histmersion.domain.automation.managers.ManagerService
+    def lastEventOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.LastEventOfManagerId, kind: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.LastEventOfManagerId | base String | generated | method-parameter
+    def lastEventOf(managerId: com.histmersion.domain.automation.managers.ManagerService.LastEventOfManagerId, kind: com.histmersion.domain.automation.managers.ManagerService
+    def lastEventOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.LastEventOfManagerId, kind: com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerService.LastProgressResultPart1 | base String | generated | method-result
+    def lastProgress(): Map[com.histmersion.domain.automation.managers.ManagerService.LastProgressResultPart1, com.histmersion.domain.automation.managers.ManagerService.LastP
+    def lastProgress(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.LastProgressResultPart1, com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerService.LastProgressResultPart2 | base String | generated | method-result
+    def lastProgress(): Map[com.histmersion.domain.automation.managers.ManagerService.LastProgressResultPart1, com.histmersion.domain.automation.managers.ManagerService.LastP
+    def lastProgress(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.LastProgressResultPart1, com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerService.OccupyingRunsResultPart1 | base String | generated | method-result
+    def occupyingRuns(): List[(com.histmersion.domain.automation.managers.ManagerService.OccupyingRunsResultPart1, Option[com.histmersion.domain.automation.managers.ManagerSe
+    def occupyingRuns(): List[(com.histmersion.domain.automation.managers.ManagerService.Implementation.OccupyingRunsResultPart1, Option[com.histmersion.domain.automation.man
+com.histmersion.domain.automation.managers.ManagerService.OccupyingRunsResultPart2 | base String | generated | method-result
+    def occupyingRuns(): List[(com.histmersion.domain.automation.managers.ManagerService.OccupyingRunsResultPart1, Option[com.histmersion.domain.automation.managers.ManagerSe
+    def occupyingRuns(): List[(com.histmersion.domain.automation.managers.ManagerService.Implementation.OccupyingRunsResultPart1, Option[com.histmersion.domain.automation.man
+com.histmersion.domain.automation.managers.ManagerService.OpenForTarget | base String | generated | method-parameter
+    def openFor(target: com.histmersion.domain.automation.managers.ManagerService.OpenForTarget): List[ManagerItem]
+    def openFor(target: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenForTarget): List[ManagerItem] = db.read(ManagerRepo.openFor(target))
+com.histmersion.domain.automation.managers.ManagerService.OpenKeysManagerId | base String | generated | method-parameter
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.ManagerService.Open
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.Mana
+com.histmersion.domain.automation.managers.ManagerService.OpenKeysResultPart1 | base String | generated | method-result
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.ManagerService.Open
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.Mana
+com.histmersion.domain.automation.managers.ManagerService.OpenKeysResultPart2 | base String | generated | method-result
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.ManagerService.Open
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenKeysManagerId): List[(com.histmersion.domain.automation.managers.Mana
+com.histmersion.domain.automation.managers.ManagerService.OpenOfFocusHeld | base Boolean | generated | method-parameter
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.ManagerService.Ope
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.OpenOfKinds | base String | generated | method-parameter
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.ManagerService.Ope
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId | base String | generated | method-parameter
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.ManagerService.Ope
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.OpenOfResult | base Int | generated | method-result
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.ManagerService.Ope
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.OpenOfStatuses | base String | generated | method-parameter
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.ManagerService.Ope
+    def openOf(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.OpenOfManagerId, kinds: List[com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.PaceResultPart1 | base String | generated | method-result
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.PaceResultPart1, (com.histmersion.domain.automation.managers.ManagerService.PaceRe
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart1, (com.histmersion.domain.automation.managers.Manage
+com.histmersion.domain.automation.managers.ManagerService.PaceResultPart2Part1 | base Int | generated | method-result
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.PaceResultPart1, (com.histmersion.domain.automation.managers.ManagerService.PaceRe
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart1, (com.histmersion.domain.automation.managers.Manage
+com.histmersion.domain.automation.managers.ManagerService.PaceResultPart2Part2 | base Int | generated | method-result
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.PaceResultPart1, (com.histmersion.domain.automation.managers.ManagerService.PaceRe
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart1, (com.histmersion.domain.automation.managers.Manage
+com.histmersion.domain.automation.managers.ManagerService.PaceResultPart2Part3 | base String | generated | method-result
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.PaceResultPart1, (com.histmersion.domain.automation.managers.ManagerService.PaceRe
+    def pace(since: Instant): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PaceResultPart1, (com.histmersion.domain.automation.managers.Manage
+com.histmersion.domain.automation.managers.ManagerService.PendingManagerId | base String | generated | method-parameter
+    def pending(managerId: com.histmersion.domain.automation.managers.ManagerService.PendingManagerId): List[ManagerItem]
+    def pending(managerId: com.histmersion.domain.automation.managers.ManagerService.Implementation.PendingManagerId): List[ManagerItem] = db.read(ManagerRepo.pending(manager
+com.histmersion.domain.automation.managers.ManagerService.PersonHeldByGoalResultPart1 | base String | generated | method-result
+    def personHeldByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.PersonHeldByGoalResultPart1, com.histmersion.domain.automation.managers.ManagerServi
+    def personHeldByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PersonHeldByGoalResultPart1, com.histmersion.domain.automation.manage
+com.histmersion.domain.automation.managers.ManagerService.PersonHeldByGoalResultPart2 | base Int | generated | method-result
+    def personHeldByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.PersonHeldByGoalResultPart1, com.histmersion.domain.automation.managers.ManagerServi
+    def personHeldByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.PersonHeldByGoalResultPart1, com.histmersion.domain.automation.manage
+com.histmersion.domain.automation.managers.ManagerService.RecentKindsN | base Int | generated | method-parameter
+    def recentKinds(n: com.histmersion.domain.automation.managers.ManagerService.RecentKindsN): List[com.histmersion.domain.automation.managers.ManagerService.RecentKindsResu
+    def recentKinds(n: com.histmersion.domain.automation.managers.ManagerService.Implementation.RecentKindsN): List[com.histmersion.domain.automation.managers.ManagerService.
+com.histmersion.domain.automation.managers.ManagerService.RecentKindsResult | base String | generated | method-result
+    def recentKinds(n: com.histmersion.domain.automation.managers.ManagerService.RecentKindsN): List[com.histmersion.domain.automation.managers.ManagerService.RecentKindsResu
+    def recentKinds(n: com.histmersion.domain.automation.managers.ManagerService.Implementation.RecentKindsN): List[com.histmersion.domain.automation.managers.ManagerService.
+com.histmersion.domain.automation.managers.ManagerService.ReleaseItemId | base Long | generated | method-parameter
+    def release(itemId: com.histmersion.domain.automation.managers.ManagerService.ReleaseItemId): com.histmersion.domain.automation.managers.ManagerService.ReleaseResult
+    def release(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ReleaseItemId): com.histmersion.domain.automation.managers.ManagerService.Imp
+com.histmersion.domain.automation.managers.ManagerService.ReleaseResult | base Boolean | generated | method-result
+    def release(itemId: com.histmersion.domain.automation.managers.ManagerService.ReleaseItemId): com.histmersion.domain.automation.managers.ManagerService.ReleaseResult
+    def release(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.ReleaseItemId): com.histmersion.domain.automation.managers.ManagerService.Imp
+com.histmersion.domain.automation.managers.ManagerService.RunningByGoalResultPart1 | base String | generated | method-result
+    def runningByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.RunningByGoalResultPart1, com.histmersion.domain.automation.managers.ManagerService.Run
+    def runningByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningByGoalResultPart1, com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.RunningByGoalResultPart2 | base Int | generated | method-result
+    def runningByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.RunningByGoalResultPart1, com.histmersion.domain.automation.managers.ManagerService.Run
+    def runningByGoal(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningByGoalResultPart1, com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.RunningId | base String | generated | method-parameter
+    def running(id: com.histmersion.domain.automation.managers.ManagerService.RunningId): com.histmersion.domain.automation.managers.ManagerService.RunningResult
+    def running(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningId): com.histmersion.domain.automation.managers.ManagerService.Implementat
+com.histmersion.domain.automation.managers.ManagerService.RunningResult | base Int | generated | method-result
+    def running(id: com.histmersion.domain.automation.managers.ManagerService.RunningId): com.histmersion.domain.automation.managers.ManagerService.RunningResult
+    def running(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.RunningId): com.histmersion.domain.automation.managers.ManagerService.Implementat
+com.histmersion.domain.automation.managers.ManagerService.SetConfigCron | base String | generated | method-parameter
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automation.managers.Ma
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automat
+com.histmersion.domain.automation.managers.ManagerService.SetConfigId | base String | generated | method-parameter
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automation.managers.Ma
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automat
+com.histmersion.domain.automation.managers.ManagerService.SetConfigResult | base Boolean | generated | method-result
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automation.managers.Ma
+    def setConfig(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetConfigId, config: ManagerConfig, cron: Option[com.histmersion.domain.automat
+com.histmersion.domain.automation.managers.ManagerService.SetItemStateItemId | base Long | generated | method-parameter
+    def setItemState(itemId: com.histmersion.domain.automation.managers.ManagerService.SetItemStateItemId, state: ItemState, from: List[ItemStatus]): com.histmersion.domain.a
+    def setItemState(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetItemStateItemId, state: ItemState, from: List[ItemStatus]): com.histm
+com.histmersion.domain.automation.managers.ManagerService.SetItemStateResult | base Boolean | generated | method-result
+    def setItemState(itemId: com.histmersion.domain.automation.managers.ManagerService.SetItemStateItemId, state: ItemState, from: List[ItemStatus]): com.histmersion.domain.a
+    def setItemState(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetItemStateItemId, state: ItemState, from: List[ItemStatus]): com.histm
+com.histmersion.domain.automation.managers.ManagerService.SetStateId | base String | generated | method-parameter
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.ManagerService.
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.
+com.histmersion.domain.automation.managers.ManagerService.SetStatePauseRuns | base Boolean | generated | method-parameter
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.ManagerService.
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.
+com.histmersion.domain.automation.managers.ManagerService.SetStateResult | base Boolean | generated | method-result
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.ManagerService.
+    def setState(id: com.histmersion.domain.automation.managers.ManagerService.Implementation.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.
+com.histmersion.domain.automation.managers.ManagerService.SettleItemId | base Long | generated | method-parameter
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.managers.Manager
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.m
+com.histmersion.domain.automation.managers.ManagerService.SettleOutcome | base String | generated | method-parameter
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.managers.Manager
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.m
+com.histmersion.domain.automation.managers.ManagerService.SettleResult | base Boolean | generated | method-result
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.managers.Manager
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerService.Implementation.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.m
+com.histmersion.domain.automation.managers.ManagerService.SweepOutcomesResultPart1 | base String | generated | method-result
+    def sweepOutcomes(): Map[com.histmersion.domain.automation.managers.ManagerService.SweepOutcomesResultPart1, com.histmersion.domain.automation.managers.ManagerService.Swe
+    def sweepOutcomes(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.SweepOutcomesResultPart1, com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.SweepOutcomesResultPart2 | base String | generated | method-result
+    def sweepOutcomes(): Map[com.histmersion.domain.automation.managers.ManagerService.SweepOutcomesResultPart1, com.histmersion.domain.automation.managers.ManagerService.Swe
+    def sweepOutcomes(): Map[com.histmersion.domain.automation.managers.ManagerService.Implementation.SweepOutcomesResultPart1, com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerService.UpsertKind | base String | generated | method-parameter
+    val UpsertKind: _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Kind.type = _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Kind
+com.histmersion.domain.automation.managers.ManagerService.UpsertManagerId | base String | generated | method-parameter
+    val UpsertManagerId: _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.ManagerId.type = _root_.com.histmersion.domain.automation.managers.ManagerItemRec
+com.histmersion.domain.automation.managers.ManagerService.UpsertPriority | base Int | generated | method-parameter
+    val UpsertPriority: _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Priority.type = _root_.com.histmersion.domain.automation.managers.ManagerItemRecor
+com.histmersion.domain.automation.managers.ManagerService.UpsertReopen | base Boolean | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerService.UpsertResultPart1 | base Long | generated | method-result
+com.histmersion.domain.automation.managers.ManagerService.UpsertResultPart2 | base Boolean | generated | method-result
+com.histmersion.domain.automation.managers.ManagerService.UpsertTarget | base String | generated | method-parameter
+    val UpsertTarget: _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Target.type = _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Ta

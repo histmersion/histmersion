@@ -12,16 +12,10 @@ import sttp.ai.core.agent.*
 import scala.jdk.CollectionConverters.*
 
 object Trace:
-  type MessagesCutS = MessagesCutS.T
-  object MessagesCutS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type MessagesLatencies = MessagesLatencies.T
-  object MessagesLatencies extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MessagesMax = MessagesMax.T
-  object MessagesMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def messages(h: ConversationHistory, latencies: Vector[com.histmersion.domain.automation.agents.Trace.MessagesLatencies], max: com.histmersion.domain.automation.agents.Trace.MessagesMax): List[AgentRepo.MessageRecord] =
-    def cut(s: com.histmersion.domain.automation.agents.Trace.MessagesCutS) = if s.length <= max then s else s.take(max) + s"… (${s.length - max} more chars)"
+  def messages(h: ConversationHistory, latencies: Vector[com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.LatencyMs], max: Int): List[AgentRepo.MessageRecord] =
+    def cut(s: String) = if s.length <= max then s else s.take(max) + s"… (${s.length - max} more chars)"
     // an assistant entry closes one LLM call: hand it that call's latency, in order
     val lat = latencies.iterator
     h.entries.toList

@@ -22,21 +22,17 @@ final case class Note(
     updatedAt: MarkTime
 ):
   /** Its text, its item's title and its item's key hold every word. */
-  def matches(words: SearchWords): com.histmersion.domain.personal.notes.Note.MatchesResult =
+  def matches(words: SearchWords): Boolean =
     words.matches(text.value, title.value, target.itemRef.fold("")(_.key.value))
 
   def wire: WireNote = WireNote(id, target.wire, text, title.value, createdAt.iso, updatedAt.iso)
 
 object Note:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The id a client sent, checked here, once: a note's id is a lower-case UUID. */
-  type MatchesResult = MatchesResult.T
-  object MatchesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IdOfResultPart1 = IdOfResultPart1.T
-  object IdOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IdOfRaw = IdOfRaw.T
-  object IdOfRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def idOf(raw: com.histmersion.domain.personal.notes.Note.IdOfRaw): Either[com.histmersion.domain.personal.notes.Note.IdOfResultPart1, WireNote.Id] =
+  def idOf(raw: com.histmersion.domain.personal.notes.Note.Id): Either[com.histmersion.domain.personal.notes.Note.Id, WireNote.Id] =
     val id = Option(raw).fold("")(_.trim.toLowerCase)
     Either.cond(PersonalUuid.matches(id), WireNote.Id(id), s"not a note id: '$raw'")
 
@@ -53,11 +49,9 @@ object Note:
     * so a note left on an item before its rename is found by the new key.
     */
   final case class Item(key: ItemKey, uids: Set[ItemUid]):
-    def holds(note: StoredNote): com.histmersion.domain.personal.notes.Note.Item.HoldsResult = note.target.itemRef.exists(r => r.key == key || r.uid.exists(uids))
+    def holds(note: StoredNote): Boolean = note.target.itemRef.exists(r => r.key == key || r.uid.exists(uids))
 
   object Item:
-    type HoldsResult = HoldsResult.T
-    object HoldsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A live note as the table answers it. */
   final private[notes] case class Row(

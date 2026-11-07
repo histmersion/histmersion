@@ -26,23 +26,23 @@ import com.histmersion.api.library.Finding
 trait SourceService:
 
   /** The citekey a source has now: `id` itself, or the source an old citekey was renamed to. */
-  def current(id: com.histmersion.domain.library.sources.SourceService.CurrentId): Option[com.histmersion.domain.library.sources.SourceService.CurrentResult]
+  def current(id: com.histmersion.domain.library.sources.SourceService.Id): Option[com.histmersion.domain.library.sources.SourceService.CurrentResult]
 
   /** The source `citekey` was renamed to, when it is an old citekey. */
-  def aliasOf(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.SourceService.AliasOfResult]
+  def aliasOf(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey]
 
   /** The old citekeys that name `citekey` now. */
-  def aliasesOf(citekey: com.histmersion.domain.library.Citekey): Set[com.histmersion.domain.library.sources.SourceService.AliasesOfResult]
+  def aliasesOf(citekey: com.histmersion.domain.library.Citekey): Set[com.histmersion.domain.library.Citekey]
 
   /** Every old citekey and the source it names now, by old citekey. */
   def aliases: List[Source.Alias]
 
-  def citekeys: List[com.histmersion.domain.library.sources.SourceService.CitekeysResult]
+  def citekeys: List[com.histmersion.domain.library.Citekey]
 
   /** `citekey -> its last write` in epoch milliseconds, for the seed's staleness guard. */
-  def updatedAtMillis: Map[com.histmersion.domain.library.sources.SourceService.UpdatedAtMillisResultPart1, com.histmersion.domain.library.sources.SourceService.UpdatedAtMillisResultPart2]
+  def updatedAtMillis: Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.sources.CitekeyMillis.Millis]
 
-  def calibreId(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.SourceService.CalibreIdResult]
+  def calibreId(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.FullSourceRow.CalibreId]
 
   /** A source as read: the record and its findings, in id order. */
   def get(citekey: com.histmersion.domain.library.Citekey): Option[(Source.Detail, List[Finding.Row])]
@@ -51,26 +51,26 @@ trait SourceService:
   def load(citekey: com.histmersion.domain.library.Citekey): Option[Source]
 
   /** The citation-link view of the stored sources among `citekeys`, in citekey order. */
-  def refs(citekeys: List[com.histmersion.domain.library.sources.SourceService.RefsCitekeys]): List[Source.Ref]
+  def refs(citekeys: List[com.histmersion.domain.library.Citekey]): List[Source.Ref]
 
   /** The citekey each wikilink target names: exact, an old citekey, or the one source a short form fits. */
-  def resolveLinks(targets: List[com.histmersion.domain.library.sources.SourceService.ResolveLinksTargets]): Map[com.histmersion.domain.library.sources.SourceService.ResolveLinksResultPart1, com.histmersion.domain.library.sources.SourceService.ResolveLinksResultPart2]
+  def resolveLinks(targets: List[com.histmersion.domain.library.sources.SourceService.LinkTarget]): Map[com.histmersion.domain.library.sources.SourceService.LinkTarget, com.histmersion.domain.library.Citekey]
 
   def toc(citekey: com.histmersion.domain.library.Citekey): List[TocEntry]
-  def bodyText(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.BodyTextResult
-  def bodyUnderHeading(citekey: com.histmersion.domain.library.Citekey, heading: com.histmersion.domain.library.sources.SourceService.BodyUnderHeadingHeading): com.histmersion.domain.library.sources.SourceService.BodyUnderHeadingResult
+  def bodyText(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.BodyText
+  def bodyUnderHeading(citekey: com.histmersion.domain.library.Citekey, heading: com.histmersion.domain.library.sources.SourceService.Heading): com.histmersion.domain.library.sources.SourceService.BodyText
   def bodyChunks(citekey: com.histmersion.domain.library.Citekey): List[Chunk]
 
   /** The source's converted text as stored, where its figures are linked from. */
-  def markdown(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.MarkdownResult
+  def markdown(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.Markdown
 
   /** Replace everything under `source.citekey`; the new last-write token. */
   def put(source: Source, caller: Caller): com.histmersion.domain.library.sources.SourceService.PutResult
 
   /** Merge `patch` into the source `requested` names (an old citekey follows); the new last-write token. */
-  def patch(requested: com.histmersion.domain.library.sources.SourceService.PatchRequested, patch: Source.Patch, caller: Caller): Either[Api.Error, com.histmersion.domain.library.sources.SourceService.PatchResultPart2]
+  def patch(requested: com.histmersion.domain.library.Citekey, patch: Source.Patch, caller: Caller): Either[Api.Error, com.histmersion.domain.library.Citekey]
 
-  def rename(from: com.histmersion.domain.library.sources.SourceService.RenameFrom, to: com.histmersion.domain.library.sources.SourceService.RenameTo, caller: Caller): Either[Api.Error, Rename.Counts]
+  def rename(from: com.histmersion.domain.library.Citekey, to: com.histmersion.domain.library.Citekey, caller: Caller): Either[Api.Error, Rename.Counts]
 
   /** What deleting the source would do; nothing is changed. */
   def deletion(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, SourceDeletePlan]
@@ -78,35 +78,35 @@ trait SourceService:
   /** Delete the source unless something refuses it; `files` names its stored originals, `day` is the log's topic. */
   def delete(
       citekey: com.histmersion.domain.library.Citekey,
-      day: com.histmersion.domain.library.sources.SourceService.DeleteDay,
+      day: com.histmersion.domain.library.sources.referrers.SourceReferrers.Day,
       files: SourceDeletePlan => List[com.histmersion.domain.library.sources.SourceService.DeleteFilesResult],
       caller: Caller
   ): Either[Api.Error, SourceDeletePlan]
 
   /** Promote the parked edges whose target now names one stored source; how many. */
-  def resolveEdges(caller: Caller): com.histmersion.domain.library.sources.SourceService.ResolveEdgesResult
+  def resolveEdges(caller: Caller): com.histmersion.RowCount
 
   // ── what acquisition, ingest and the collections read and write of a source ───────────────
 
-  def exists(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.ExistsResult
+  def exists(citekey: com.histmersion.domain.library.Citekey): Boolean
 
   /** `lower(doi) -> citekey` for the whole corpus. */
-  def doiIndex: Map[com.histmersion.domain.library.sources.SourceService.DoiIndexResultPart1, com.histmersion.domain.library.sources.SourceService.DoiIndexResultPart2]
+  def doiIndex: Map[com.histmersion.domain.library.Doi, com.histmersion.domain.library.Citekey]
 
   /** The citekey of the source holding `doi` (the first by citekey), if one does. */
-  def citekeyOfDoi(doi: com.histmersion.domain.library.Doi): Option[com.histmersion.domain.library.sources.SourceService.CitekeyOfDoiResult]
+  def citekeyOfDoi(doi: com.histmersion.domain.library.Doi): Option[com.histmersion.domain.library.Citekey]
 
   /** Store edges routed by their target (one to a source not stored yet is parked); how many were new. */
-  def addEdges(edges: List[Edge], caller: Caller): com.histmersion.domain.library.sources.SourceService.AddEdgesResult
+  def addEdges(edges: List[Edge], caller: Caller): com.histmersion.RowCount
 
   /** The digest of the source's stored original. */
   def original(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.SourceService.OriginalResult]
 
   /** The source that holds an original with this digest. */
-  def holderOf(sha256: com.histmersion.Sha256): Option[com.histmersion.domain.library.sources.SourceService.HolderOfResult]
+  def holderOf(sha256: com.histmersion.Sha256): Option[com.histmersion.domain.library.Citekey]
 
   /** The digests of the stored originals of those of `citekeys` that have one. */
-  def originals(citekeys: List[com.histmersion.domain.library.sources.SourceService.OriginalsCitekeys]): Map[com.histmersion.domain.library.sources.SourceService.OriginalsResultPart1, com.histmersion.domain.library.sources.SourceService.OriginalsResultPart2]
+  def originals(citekeys: List[com.histmersion.domain.library.Citekey]): Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.sources.SourceService.OriginalsResultPart2]
 
   def setOriginal(citekey: com.histmersion.domain.library.Citekey, sha256: com.histmersion.Sha256, caller: Caller): Unit
 
@@ -114,127 +114,75 @@ trait SourceService:
   def licence(citekey: com.histmersion.domain.library.Citekey): Option[Licence]
 
   /** `licence` recorded as the source's when it has none; `true` when it was written. */
-  def recordLicence(citekey: com.histmersion.domain.library.Citekey, licence: Licence.Id, caller: Caller): com.histmersion.domain.library.sources.SourceService.RecordLicenceResult
+  def recordLicence(citekey: com.histmersion.domain.library.Citekey, licence: Licence.Id, caller: Caller): Boolean
 
   /** The sources not in Calibre yet, in citekey order, at most `limit` (none: all). */
-  def calibreGaps(limit: Option[com.histmersion.domain.library.sources.SourceService.CalibreGapsLimit]): List[CalibreGap]
+  def calibreGaps(limit: Option[com.histmersion.domain.library.sources.SourceService.Limit]): List[CalibreGap]
 
   /** What a push of the source into Calibre names it by. */
   def calibrePushMeta(citekey: com.histmersion.domain.library.Citekey): Option[CalibreGap]
 
   /** The Calibre id written back after a push. */
-  def setCalibreId(citekey: com.histmersion.domain.library.Citekey, calibreId: com.histmersion.domain.library.sources.SourceService.SetCalibreIdCalibreId, caller: Caller): Either[Api.Error, Unit]
+  def setCalibreId(citekey: com.histmersion.domain.library.Citekey, calibreId: com.histmersion.domain.library.sources.FullSourceRow.CalibreId, caller: Caller): Either[Api.Error, Unit]
 
 object SourceService:
+  type BodyText = BodyText.T
+  object BodyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Heading = Heading.T
+  object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkTarget = LinkTarget.T
+  object LinkTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Markdown = Markdown.T
+  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type CurrentResult = CurrentResult.T
   object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CurrentId = CurrentId.T
-  object CurrentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AliasOfResult = AliasOfResult.T
-  object AliasOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AliasesOfResult = AliasesOfResult.T
-  object AliasesOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitekeysResult = CitekeysResult.T
-  object CitekeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdatedAtMillisResultPart1 = UpdatedAtMillisResultPart1.T
-  object UpdatedAtMillisResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdatedAtMillisResultPart2 = UpdatedAtMillisResultPart2.T
-  object UpdatedAtMillisResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CalibreIdResult = CalibreIdResult.T
-  object CalibreIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefsCitekeys = RefsCitekeys.T
-  object RefsCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveLinksResultPart1 = ResolveLinksResultPart1.T
-  object ResolveLinksResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveLinksResultPart2 = ResolveLinksResultPart2.T
-  object ResolveLinksResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveLinksTargets = ResolveLinksTargets.T
-  object ResolveLinksTargets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyTextResult = BodyTextResult.T
-  object BodyTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyUnderHeadingResult = BodyUnderHeadingResult.T
-  object BodyUnderHeadingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyUnderHeadingHeading = BodyUnderHeadingHeading.T
-  object BodyUnderHeadingHeading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PutResult = PutResult.T
   object PutResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchResultPart2 = PatchResultPart2.T
-  object PatchResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchRequested = PatchRequested.T
-  object PatchRequested extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameFrom = RenameFrom.T
-  object RenameFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameTo = RenameTo.T
-  object RenameTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteDay = DeleteDay.T
-  object DeleteDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DeleteFilesResult = DeleteFilesResult.T
   object DeleteFilesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveEdgesResult = ResolveEdgesResult.T
-  object ResolveEdgesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExistsResult = ExistsResult.T
-  object ExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DoiIndexResultPart1 = DoiIndexResultPart1.T
-  object DoiIndexResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DoiIndexResultPart2 = DoiIndexResultPart2.T
-  object DoiIndexResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitekeyOfDoiResult = CitekeyOfDoiResult.T
-  object CitekeyOfDoiResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddEdgesResult = AddEdgesResult.T
-  object AddEdgesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OriginalResult = OriginalResult.T
   object OriginalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HolderOfResult = HolderOfResult.T
-  object HolderOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OriginalsResultPart1 = OriginalsResultPart1.T
-  object OriginalsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OriginalsResultPart2 = OriginalsResultPart2.T
   object OriginalsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OriginalsCitekeys = OriginalsCitekeys.T
-  object OriginalsCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordLicenceResult = RecordLicenceResult.T
-  object RecordLicenceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CalibreGapsLimit = CalibreGapsLimit.T
-  object CalibreGapsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetCalibreIdCalibreId = SetCalibreIdCalibreId.T
-  object SetCalibreIdCalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(db: Transactor, referrers: SourceReferrers, settings: () => SourceSettings): SourceService =
     Implementation(db, referrers, settings)
 
   final private class Implementation(db: Transactor, referrers: SourceReferrers, settings: () => SourceSettings)
       extends SourceService:
-    def current(id: com.histmersion.domain.library.sources.SourceService.Implementation.CurrentId): Option[com.histmersion.domain.library.sources.SourceService.Implementation.CurrentResult] = db.read(SourceRepo.canonical(id))
-    def aliasOf(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.SourceService.Implementation.AliasOfResult] = db.read(SourceRepo.aliasOf(citekey))
-    def aliasesOf(citekey: com.histmersion.domain.library.Citekey): Set[com.histmersion.domain.library.sources.SourceService.Implementation.AliasesOfResult] = db.read(SourceRepo.aliasesOf(citekey))
+    def current(id: com.histmersion.domain.library.sources.SourceService.Id): Option[com.histmersion.domain.library.sources.SourceService.Implementation.CurrentResult] = db.read(SourceRepo.canonical(id))
+    def aliasOf(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.aliasOf(citekey))
+    def aliasesOf(citekey: com.histmersion.domain.library.Citekey): Set[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.aliasesOf(citekey))
     def aliases: List[Source.Alias] = db.read(SourceRepo.aliases)
-    def citekeys: List[com.histmersion.domain.library.sources.SourceService.Implementation.CitekeysResult] = db.read(SourceRepo.citekeys()).toList
-    def updatedAtMillis: Map[com.histmersion.domain.library.sources.SourceService.Implementation.UpdatedAtMillisResultPart1, com.histmersion.domain.library.sources.SourceService.Implementation.UpdatedAtMillisResultPart2] = db.read(SourceRepo.updatedAtMillis())
-    def calibreId(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.SourceService.Implementation.CalibreIdResult] = db.read(SourceRepo.calibreId(citekey))
+    def citekeys: List[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.citekeys()).toList
+    def updatedAtMillis: Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.sources.CitekeyMillis.Millis] = db.read(SourceRepo.updatedAtMillis())
+    def calibreId(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.FullSourceRow.CalibreId] = db.read(SourceRepo.calibreId(citekey))
     def get(citekey: com.histmersion.domain.library.Citekey): Option[(Source.Detail, List[Finding.Row])] =
       db.read(SourceRepo.get(citekey)).map((s, fs) => (s, fs.toList))
     def load(citekey: com.histmersion.domain.library.Citekey): Option[Source] = db.read(SourceRepo.load(citekey))
-    def refs(citekeys: List[com.histmersion.domain.library.sources.SourceService.Implementation.RefsCitekeys]): List[Source.Ref] = db.read(SourceRepo.refs(citekeys))
-    def resolveLinks(targets: List[com.histmersion.domain.library.sources.SourceService.Implementation.ResolveLinksTargets]): Map[com.histmersion.domain.library.sources.SourceService.Implementation.ResolveLinksResultPart1, com.histmersion.domain.library.sources.SourceService.Implementation.ResolveLinksResultPart2] = db.read(SourceRepo.resolveAliases(targets))
+    def refs(citekeys: List[com.histmersion.domain.library.Citekey]): List[Source.Ref] = db.read(SourceRepo.refs(citekeys))
+    def resolveLinks(targets: List[com.histmersion.domain.library.sources.SourceService.LinkTarget]): Map[com.histmersion.domain.library.sources.SourceService.LinkTarget, com.histmersion.domain.library.Citekey] = db.read(SourceRepo.resolveAliases(targets))
     def toc(citekey: com.histmersion.domain.library.Citekey): List[TocEntry] = db.read(SourceRepo.toc(citekey))
-    def bodyText(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.Implementation.BodyTextResult = db.read(SourceRepo.bodyText(citekey))
-    def bodyUnderHeading(citekey: com.histmersion.domain.library.Citekey, heading: com.histmersion.domain.library.sources.SourceService.Implementation.BodyUnderHeadingHeading): com.histmersion.domain.library.sources.SourceService.Implementation.BodyUnderHeadingResult =
+    def bodyText(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.BodyText = db.read(SourceRepo.bodyText(citekey))
+    def bodyUnderHeading(citekey: com.histmersion.domain.library.Citekey, heading: com.histmersion.domain.library.sources.SourceService.Heading): com.histmersion.domain.library.sources.SourceService.BodyText =
       db.read(SourceRepo.bodyUnderHeading(citekey, heading))
     def bodyChunks(citekey: com.histmersion.domain.library.Citekey): List[Chunk] = db.read(SourceRepo.bodyChunks(citekey))
-    def markdown(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.Implementation.MarkdownResult = db.read(SourceRepo.markdown(citekey))
+    def markdown(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.Markdown = db.read(SourceRepo.markdown(citekey))
 
     def put(source: Source, caller: Caller): com.histmersion.domain.library.sources.SourceService.Implementation.PutResult =
       val s = settings()
       db.transact(SourceRepo.putIn(source, s.chunkChars, s.toleranceKm))
 
-    def patch(requested: com.histmersion.domain.library.sources.SourceService.Implementation.PatchRequested, patch: Source.Patch, caller: Caller): Either[Api.Error, com.histmersion.domain.library.sources.SourceService.Implementation.PatchResultPart2] =
+    def patch(requested: com.histmersion.domain.library.Citekey, patch: Source.Patch, caller: Caller): Either[Api.Error, com.histmersion.domain.library.Citekey] =
       val s = settings()
       db.transact(SourceRepo.patchIn(requested, patch, s.chunkChars, s.toleranceKm))
 
-    def rename(from: com.histmersion.domain.library.sources.SourceService.Implementation.RenameFrom, to: com.histmersion.domain.library.sources.SourceService.Implementation.RenameTo, caller: Caller): Either[Api.Error, Rename.Counts] =
+    def rename(from: com.histmersion.domain.library.Citekey, to: com.histmersion.domain.library.Citekey, caller: Caller): Either[Api.Error, Rename.Counts] =
       db.transact(SourceRepo.rename(from, to, referrers))
 
     def deletion(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, SourceDeletePlan] =
@@ -242,111 +190,47 @@ object SourceService:
 
     def delete(
         citekey: com.histmersion.domain.library.Citekey,
-        day: com.histmersion.domain.library.sources.SourceService.Implementation.DeleteDay,
+        day: com.histmersion.domain.library.sources.referrers.SourceReferrers.Day,
         files: SourceDeletePlan => List[com.histmersion.domain.library.sources.SourceService.Implementation.DeleteFilesResult],
         caller: Caller
     ): Either[Api.Error, SourceDeletePlan] =
       db.transact(SourceDeleteRepo.applyIn(citekey, day, files, referrers))
 
-    def resolveEdges(caller: Caller): com.histmersion.domain.library.sources.SourceService.Implementation.ResolveEdgesResult = db.transact(SourceRepo.resolveEdges())
+    def resolveEdges(caller: Caller): com.histmersion.RowCount = db.transact(SourceRepo.resolveEdges())
 
-    def exists(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.Implementation.ExistsResult = db.read(SourceRepo.exists(citekey))
-    def doiIndex: Map[com.histmersion.domain.library.sources.SourceService.Implementation.DoiIndexResultPart1, com.histmersion.domain.library.sources.SourceService.Implementation.DoiIndexResultPart2] = db.read(SourceRepo.doiIndex())
-    def citekeyOfDoi(doi: com.histmersion.domain.library.Doi): Option[com.histmersion.domain.library.sources.SourceService.Implementation.CitekeyOfDoiResult] = db.read(SourceRepo.citekeyOfDoi(doi))
-    def addEdges(edges: List[Edge], caller: Caller): com.histmersion.domain.library.sources.SourceService.Implementation.AddEdgesResult =
+    def exists(citekey: com.histmersion.domain.library.Citekey): Boolean = db.read(SourceRepo.exists(citekey))
+    def doiIndex: Map[com.histmersion.domain.library.Doi, com.histmersion.domain.library.Citekey] = db.read(SourceRepo.doiIndex())
+    def citekeyOfDoi(doi: com.histmersion.domain.library.Doi): Option[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.citekeyOfDoi(doi))
+    def addEdges(edges: List[Edge], caller: Caller): com.histmersion.RowCount =
       if edges.isEmpty then 0 else db.transact(SourceRepo.insertEdges(edges))
     def original(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.SourceService.Implementation.OriginalResult] = db.read(SourceRepo.sha256Of(citekey))
-    def holderOf(sha256: com.histmersion.Sha256): Option[com.histmersion.domain.library.sources.SourceService.Implementation.HolderOfResult] = db.read(SourceRepo.citekeyOfSha256(sha256))
-    def originals(citekeys: List[com.histmersion.domain.library.sources.SourceService.Implementation.OriginalsCitekeys]): Map[com.histmersion.domain.library.sources.SourceService.Implementation.OriginalsResultPart1, com.histmersion.domain.library.sources.SourceService.Implementation.OriginalsResultPart2] =
+    def holderOf(sha256: com.histmersion.Sha256): Option[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.citekeyOfSha256(sha256))
+    def originals(citekeys: List[com.histmersion.domain.library.Citekey]): Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.sources.SourceService.Implementation.OriginalsResultPart2] =
       if citekeys.isEmpty then Map.empty else db.read(SourceRepo.sha256s(citekeys))
     def setOriginal(citekey: com.histmersion.domain.library.Citekey, sha256: com.histmersion.Sha256, caller: Caller): Unit =
       db.transact(SourceRepo.setSha256(citekey, sha256))
     def licence(citekey: com.histmersion.domain.library.Citekey): Option[Licence] =
       db.read(SourceRepo.licenceOf(citekey)).map(_.trim).filter(_.nonEmpty).map(Licence.classify)
-    def recordLicence(citekey: com.histmersion.domain.library.Citekey, licence: Licence.Id, caller: Caller): com.histmersion.domain.library.sources.SourceService.Implementation.RecordLicenceResult =
+    def recordLicence(citekey: com.histmersion.domain.library.Citekey, licence: Licence.Id, caller: Caller): Boolean =
       val v = licence.value.trim
       v.nonEmpty && db.transact(SourceRepo.recordLicence(citekey, v))
-    def calibreGaps(limit: Option[com.histmersion.domain.library.sources.SourceService.Implementation.CalibreGapsLimit]): List[CalibreGap] = db.read(SourceRepo.calibreGaps(limit))
+    def calibreGaps(limit: Option[com.histmersion.domain.library.sources.SourceService.Limit]): List[CalibreGap] = db.read(SourceRepo.calibreGaps(limit))
     def calibrePushMeta(citekey: com.histmersion.domain.library.Citekey): Option[CalibreGap] = db.read(SourceRepo.calibrePushMeta(citekey))
-    def setCalibreId(citekey: com.histmersion.domain.library.Citekey, calibreId: com.histmersion.domain.library.sources.SourceService.Implementation.SetCalibreIdCalibreId, caller: Caller): Either[Api.Error, Unit] =
+    def setCalibreId(citekey: com.histmersion.domain.library.Citekey, calibreId: com.histmersion.domain.library.sources.FullSourceRow.CalibreId, caller: Caller): Either[Api.Error, Unit] =
       db.transact:
         if SourceRepo.setCalibreId(citekey, calibreId) == 0 then Left(Write.notFound(citekey)) else Right(())
 
   object Implementation:
     type CurrentResult = CurrentResult.T
     object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CurrentId = CurrentId.T
-    object CurrentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AliasOfResult = AliasOfResult.T
-    object AliasOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AliasesOfResult = AliasesOfResult.T
-    object AliasesOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CitekeysResult = CitekeysResult.T
-    object CitekeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdatedAtMillisResultPart1 = UpdatedAtMillisResultPart1.T
-    object UpdatedAtMillisResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdatedAtMillisResultPart2 = UpdatedAtMillisResultPart2.T
-    object UpdatedAtMillisResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CalibreIdResult = CalibreIdResult.T
-    object CalibreIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RefsCitekeys = RefsCitekeys.T
-    object RefsCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveLinksResultPart1 = ResolveLinksResultPart1.T
-    object ResolveLinksResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveLinksResultPart2 = ResolveLinksResultPart2.T
-    object ResolveLinksResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveLinksTargets = ResolveLinksTargets.T
-    object ResolveLinksTargets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BodyTextResult = BodyTextResult.T
-    object BodyTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BodyUnderHeadingResult = BodyUnderHeadingResult.T
-    object BodyUnderHeadingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BodyUnderHeadingHeading = BodyUnderHeadingHeading.T
-    object BodyUnderHeadingHeading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MarkdownResult = MarkdownResult.T
-    object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PutResult = PutResult.T
     object PutResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PatchResultPart2 = PatchResultPart2.T
-    object PatchResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PatchRequested = PatchRequested.T
-    object PatchRequested extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenameFrom = RenameFrom.T
-    object RenameFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenameTo = RenameTo.T
-    object RenameTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeleteDay = DeleteDay.T
-    object DeleteDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DeleteFilesResult = DeleteFilesResult.T
     object DeleteFilesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveEdgesResult = ResolveEdgesResult.T
-    object ResolveEdgesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ExistsResult = ExistsResult.T
-    object ExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DoiIndexResultPart1 = DoiIndexResultPart1.T
-    object DoiIndexResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DoiIndexResultPart2 = DoiIndexResultPart2.T
-    object DoiIndexResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CitekeyOfDoiResult = CitekeyOfDoiResult.T
-    object CitekeyOfDoiResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AddEdgesResult = AddEdgesResult.T
-    object AddEdgesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OriginalResult = OriginalResult.T
     object OriginalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type HolderOfResult = HolderOfResult.T
-    object HolderOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OriginalsResultPart1 = OriginalsResultPart1.T
-    object OriginalsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OriginalsResultPart2 = OriginalsResultPart2.T
     object OriginalsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OriginalsCitekeys = OriginalsCitekeys.T
-    object OriginalsCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RecordLicenceResult = RecordLicenceResult.T
-    object RecordLicenceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CalibreGapsLimit = CalibreGapsLimit.T
-    object CalibreGapsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetCalibreIdCalibreId = SetCalibreIdCalibreId.T
-    object SetCalibreIdCalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The sources the library holds in memory, as a database holding only the library's rows answers: no other domain
     * stores anything of a source, so a rename rewrites no other record and nothing refuses a delete; `clock` stands in
@@ -356,18 +240,18 @@ object SourceService:
       extends SourceService:
 
     private val Token = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'").withZone(ZoneOffset.UTC)
-    private def token(at: Instant): com.histmersion.domain.library.sources.SourceService.InMemory.TokenResult = Token.format(at)
+    private def token(at: Instant): String = Token.format(at)
 
-    private def currentIn(st: LibraryState, id: com.histmersion.domain.library.sources.SourceService.InMemory.CurrentInId): Option[com.histmersion.domain.library.sources.SourceService.InMemory.CurrentInResult] =
+    private def currentIn(st: LibraryState, id: com.histmersion.domain.library.sources.SourceService.Id): Option[com.histmersion.domain.library.sources.SourceService.InMemory.CurrentInResult] =
       if st.sources.contains(id) then Some(id) else st.aliases.get(id)
 
-    def current(id: com.histmersion.domain.library.sources.SourceService.InMemory.CurrentId): Option[com.histmersion.domain.library.sources.SourceService.InMemory.CurrentResult] = currentIn(state.get, id)
-    def aliasOf(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.SourceService.InMemory.AliasOfResult] = state.get.aliases.get(citekey)
-    def aliasesOf(citekey: com.histmersion.domain.library.Citekey): Set[com.histmersion.domain.library.sources.SourceService.InMemory.AliasesOfResult] = state.get.aliases.collect { case (a, ck) if ck == citekey => a }.toSet
+    def current(id: com.histmersion.domain.library.sources.SourceService.Id): Option[com.histmersion.domain.library.sources.SourceService.InMemory.CurrentResult] = currentIn(state.get, id)
+    def aliasOf(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey] = state.get.aliases.get(citekey)
+    def aliasesOf(citekey: com.histmersion.domain.library.Citekey): Set[com.histmersion.domain.library.Citekey] = state.get.aliases.collect { case (a, ck) if ck == citekey => a }.toSet
     def aliases: List[Source.Alias] = state.get.aliases.toList.sortBy(_._1).map((alias, citekey) => Source.Alias(alias, com.histmersion.api.library.Citekey(citekey)))
-    def citekeys: List[com.histmersion.domain.library.sources.SourceService.InMemory.CitekeysResult] = state.get.sources.keys.toList.sorted
-    def updatedAtMillis: Map[com.histmersion.domain.library.sources.SourceService.InMemory.UpdatedAtMillisResultPart1, com.histmersion.domain.library.sources.SourceService.InMemory.UpdatedAtMillisResultPart2] = state.get.sources.view.mapValues(_.updatedAt.toEpochMilli).toMap
-    def calibreId(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.SourceService.InMemory.CalibreIdResult] = state.get.sources.get(citekey).flatMap(_.source.calibreId)
+    def citekeys: List[com.histmersion.domain.library.Citekey] = state.get.sources.keys.toList.sorted
+    def updatedAtMillis: Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.sources.CitekeyMillis.Millis] = state.get.sources.view.mapValues(_.updatedAt.toEpochMilli).toMap
+    def calibreId(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.FullSourceRow.CalibreId] = state.get.sources.get(citekey).flatMap(_.source.calibreId)
 
     def get(citekey: com.histmersion.domain.library.Citekey): Option[(Source.Detail, List[Finding.Row])] =
       state.get.sources.get(citekey).map { st =>
@@ -425,7 +309,7 @@ object SourceService:
 
     def load(citekey: com.histmersion.domain.library.Citekey): Option[Source] = loadIn(state.get, citekey)
 
-    def refs(citekeys: List[com.histmersion.domain.library.sources.SourceService.InMemory.RefsCitekeys]): List[Source.Ref] =
+    def refs(citekeys: List[com.histmersion.domain.library.Citekey]): List[Source.Ref] =
       val st = state.get
       citekeys.distinct.sorted.flatMap(ck =>
         st.sources
@@ -434,7 +318,7 @@ object SourceService:
       )
 
     /** The precedence of the database's resolution: the citekey itself, an old citekey, a short form. */
-    private def resolveIn(st: LibraryState, targets: List[com.histmersion.domain.library.sources.SourceService.InMemory.ResolveInTargets]): Map[com.histmersion.domain.library.sources.SourceService.InMemory.ResolveInResultPart1, com.histmersion.domain.library.sources.SourceService.InMemory.ResolveInResultPart2] =
+    private def resolveIn(st: LibraryState, targets: List[com.histmersion.domain.library.sources.SourceService.LinkTarget]): Map[com.histmersion.domain.library.sources.SourceService.LinkTarget, com.histmersion.domain.library.Citekey] =
       targets
         .map(_.trim.toLowerCase)
         .filter(_.nonEmpty)
@@ -453,7 +337,7 @@ object SourceService:
         }
         .toMap
 
-    def resolveLinks(targets: List[com.histmersion.domain.library.sources.SourceService.InMemory.ResolveLinksTargets]): Map[com.histmersion.domain.library.sources.SourceService.InMemory.ResolveLinksResultPart1, com.histmersion.domain.library.sources.SourceService.InMemory.ResolveLinksResultPart2] = resolveIn(state.get, targets)
+    def resolveLinks(targets: List[com.histmersion.domain.library.sources.SourceService.LinkTarget]): Map[com.histmersion.domain.library.sources.SourceService.LinkTarget, com.histmersion.domain.library.Citekey] = resolveIn(state.get, targets)
 
     private def chunksOf(citekey: com.histmersion.domain.library.Citekey): List[Chunk] = state.get.sources.get(citekey).fold(Nil)(_.chunks)
 
@@ -465,12 +349,12 @@ object SourceService:
         .map((h, cs) => TocEntry(h, cs.map(_.ord).min, cs.map(_.body.length).sum))
         .sortBy(_.ord)
 
-    def bodyText(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.InMemory.BodyTextResult =
+    def bodyText(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.BodyText =
       chunksOf(citekey) match
         case Nil => markdown(citekey)
         case cs  => cs.sortBy(_.ord).map(_.body).mkString("\n\n")
 
-    def bodyUnderHeading(citekey: com.histmersion.domain.library.Citekey, heading: com.histmersion.domain.library.sources.SourceService.InMemory.BodyUnderHeadingHeading): com.histmersion.domain.library.sources.SourceService.InMemory.BodyUnderHeadingResult =
+    def bodyUnderHeading(citekey: com.histmersion.domain.library.Citekey, heading: com.histmersion.domain.library.sources.SourceService.Heading): com.histmersion.domain.library.sources.SourceService.BodyText =
       val lower = heading.trim.toLowerCase
       chunksOf(citekey)
         .sortBy(_.ord)
@@ -485,7 +369,7 @@ object SourceService:
         case Nil => Option(markdown(citekey)).filter(_.nonEmpty).map(Chunk(0, None, _)).toList
         case cs  => cs.sortBy(_.ord)
 
-    def markdown(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.InMemory.MarkdownResult = state.get.sources.get(citekey).flatMap(_.source.ocrMarkdown).getOrElse("")
+    def markdown(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.Markdown = state.get.sources.get(citekey).flatMap(_.source.ocrMarkdown).getOrElse("")
 
     // ── writes ───────────────────────────────────────────────────────────────────────────────
 
@@ -548,9 +432,9 @@ object SourceService:
       val _ = state.updateAndGet(written(_, source, at))
       token(at)
 
-    def patch(requested: com.histmersion.domain.library.sources.SourceService.InMemory.PatchRequested, patch: Source.Patch, caller: Caller): Either[Api.Error, com.histmersion.domain.library.sources.SourceService.InMemory.PatchResultPart2] =
+    def patch(requested: com.histmersion.domain.library.Citekey, patch: Source.Patch, caller: Caller): Either[Api.Error, com.histmersion.domain.library.Citekey] =
       val at = clock.instant()
-      var answer: Either[Api.Error, com.histmersion.domain.library.sources.SourceService.InMemory.PatchAnswerPart2] = Left(Write.notFound(requested))
+      var answer: Either[Api.Error, com.histmersion.domain.library.Citekey] = Left(Write.notFound(requested))
       val _ = state.updateAndGet { st =>
         val citekey = currentIn(st, requested).getOrElse(requested)
         loadIn(st, citekey) match
@@ -565,7 +449,7 @@ object SourceService:
       }
       answer
 
-    def rename(from: com.histmersion.domain.library.sources.SourceService.InMemory.RenameFrom, to: com.histmersion.domain.library.sources.SourceService.InMemory.RenameTo, caller: Caller): Either[Api.Error, Rename.Counts] =
+    def rename(from: com.histmersion.domain.library.Citekey, to: com.histmersion.domain.library.Citekey, caller: Caller): Either[Api.Error, Rename.Counts] =
       Citekeys.renameTo(from, to).left.map(Write.invalid).flatMap { validated =>
         val at = clock.instant()
         var answer: Either[Api.Error, Rename.Counts] = Left(Write.notFound(from))
@@ -579,8 +463,8 @@ object SourceService:
 
     private def renamedIn(
         st: LibraryState,
-        from: com.histmersion.domain.library.sources.SourceService.InMemory.RenamedInFrom,
-        to: com.histmersion.domain.library.sources.SourceService.InMemory.RenamedInTo,
+        from: com.histmersion.domain.library.Citekey,
+        to: com.histmersion.domain.library.Citekey,
         at: Instant
     ): Either[Api.Error, (LibraryState, Rename.Counts)] =
       val idTaken = st.sources.values.flatMap(_.source.findings).map(_.id).find(_.startsWith(to + "#"))
@@ -612,12 +496,12 @@ object SourceService:
                   else st
                 Right(renamedNow(unaliased, from, to, at))
 
-    private def renamedNow(st: LibraryState, from: com.histmersion.domain.library.sources.SourceService.InMemory.RenamedNowFrom, to: com.histmersion.domain.library.sources.SourceService.InMemory.RenamedNowTo, at: Instant): (LibraryState, Rename.Counts) =
+    private def renamedNow(st: LibraryState, from: com.histmersion.domain.library.Citekey, to: com.histmersion.domain.library.Citekey, at: Instant): (LibraryState, Rename.Counts) =
       val shorts = resolveIn(st, Rename.shortForms(from)).collect { case (f, ck) if ck == from => f }.toSet
       val prefix = from + "#"
       val stored = st.sources(from)
       val renumbered = stored.source.findings.count(_.id.startsWith(prefix))
-      def newId(id: com.histmersion.domain.library.sources.SourceService.InMemory.RenamedNowNewIdId): com.histmersion.domain.library.sources.SourceService.InMemory.RenamedNowNewIdResult = if id.startsWith(prefix) then to + id.drop(from.length) else id
+      def newId(id: com.histmersion.domain.library.sources.SourceService.Id): com.histmersion.domain.library.Citekey = if id.startsWith(prefix) then to + id.drop(from.length) else id
       val moved = stored
         .modify(_.source.citekey)
         .setTo(to)
@@ -644,7 +528,7 @@ object SourceService:
       val promoting = keyed.parked.filter(e => promotable(e.dst) && e.src != to)
       val newEdges = promoting.map(_.modify(_.dst).setTo(to)).filterNot(keyed.edges)
       val linked = keyed.modify(_.edges).using(_ ++ newEdges).modify(_.parked).using(_ -- promoting)
-      val target: com.histmersion.domain.library.sources.SourceService.InMemory.RenamedNowTargetArg1 => Option[com.histmersion.domain.library.sources.SourceService.InMemory.RenamedNowTargetResult] = t => Option.when(t == from || shorts(t))(to)
+      val target: com.histmersion.domain.library.Citekey => Option[com.histmersion.domain.library.Citekey] = t => Option.when(t == from || shorts(t))(to)
       val needle = from.takeWhile(_ != '_')
       val retargeted = linked.sources.toList.sortBy(_._1).flatMap { (ck, x) =>
         val text = (x.source.notes.getOrElse("") + " " + x.source.summary.getOrElse("")).toLowerCase
@@ -675,10 +559,10 @@ object SourceService:
 
     // ── delete ───────────────────────────────────────────────────────────────────────────────
 
-    private def doiKey(doi: Option[com.histmersion.domain.library.Doi]): Option[com.histmersion.domain.library.sources.SourceService.InMemory.DoiKeyResult] =
+    private def doiKey(doi: Option[com.histmersion.domain.library.Doi]): Option[com.histmersion.domain.library.Doi] =
       doi.map(_.trim.toLowerCase.replaceFirst("^(https?://(dx\\.)?doi\\.org/|doi:\\s*)", "")).filter(_.nonEmpty)
 
-    private def planIn(st: LibraryState, requested: com.histmersion.domain.library.sources.SourceService.InMemory.PlanInRequested): Either[Api.Error, SourceDeletePlan] =
+    private def planIn(st: LibraryState, requested: com.histmersion.domain.library.Citekey): Either[Api.Error, SourceDeletePlan] =
       st.sources.get(requested) match
         case None =>
           Left(st.aliases.get(requested) match
@@ -714,7 +598,7 @@ object SourceService:
 
     def delete(
         citekey: com.histmersion.domain.library.Citekey,
-        day: com.histmersion.domain.library.sources.SourceService.InMemory.DeleteDay,
+        day: com.histmersion.domain.library.sources.referrers.SourceReferrers.Day,
         files: SourceDeletePlan => List[com.histmersion.domain.library.sources.SourceService.InMemory.DeleteFilesResult],
         caller: Caller
     ): Either[Api.Error, SourceDeletePlan] =
@@ -738,7 +622,7 @@ object SourceService:
       }
       answer
 
-    def resolveEdges(caller: Caller): com.histmersion.domain.library.sources.SourceService.InMemory.ResolveEdgesResult =
+    def resolveEdges(caller: Caller): com.histmersion.RowCount =
       var moved = 0
       val _ = state.updateAndGet { st =>
         val targets = resolveIn(st, st.parked.toList.map(_.dst))
@@ -753,21 +637,21 @@ object SourceService:
 
     // ── what acquisition, ingest and the collections read and write of a source ─────────────
 
-    def exists(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.InMemory.ExistsResult = state.get.sources.contains(citekey)
+    def exists(citekey: com.histmersion.domain.library.Citekey): Boolean = state.get.sources.contains(citekey)
 
-    def citekeyOfDoi(doi: com.histmersion.domain.library.Doi): Option[com.histmersion.domain.library.sources.SourceService.InMemory.CitekeyOfDoiResult] =
+    def citekeyOfDoi(doi: com.histmersion.domain.library.Doi): Option[com.histmersion.domain.library.Citekey] =
       val d = doi.trim.toLowerCase
       state.get.sources.toList.sortBy(_._1).collectFirst {
         case (ck, x) if x.source.doi.exists(_.toLowerCase == d) => ck
       }
 
-    def doiIndex: Map[com.histmersion.domain.library.sources.SourceService.InMemory.DoiIndexResultPart1, com.histmersion.domain.library.sources.SourceService.InMemory.DoiIndexResultPart2] =
+    def doiIndex: Map[com.histmersion.domain.library.Doi, com.histmersion.domain.library.Citekey] =
       state.get.sources.toList
         .sortBy(_._1)
         .flatMap((ck, x) => x.source.doi.filter(_.nonEmpty).map(_.toLowerCase -> ck))
         .toMap
 
-    def addEdges(edges: List[Edge], caller: Caller): com.histmersion.domain.library.sources.SourceService.InMemory.AddEdgesResult =
+    def addEdges(edges: List[Edge], caller: Caller): com.histmersion.RowCount =
       val es = edges.distinct
       if es.isEmpty then 0
       else
@@ -783,13 +667,13 @@ object SourceService:
 
     def original(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.SourceService.InMemory.OriginalResult] = stored(citekey).flatMap(_.sha256)
 
-    def holderOf(sha256: com.histmersion.Sha256): Option[com.histmersion.domain.library.sources.SourceService.InMemory.HolderOfResult] =
+    def holderOf(sha256: com.histmersion.Sha256): Option[com.histmersion.domain.library.Citekey] =
       state.get.sources.toList.sortBy(_._1).collectFirst { case (ck, x) if x.sha256.contains(sha256) => ck }
 
-    def originals(citekeys: List[com.histmersion.domain.library.sources.SourceService.InMemory.OriginalsCitekeys]): Map[com.histmersion.domain.library.sources.SourceService.InMemory.OriginalsResultPart1, com.histmersion.domain.library.sources.SourceService.InMemory.OriginalsResultPart2] =
+    def originals(citekeys: List[com.histmersion.domain.library.Citekey]): Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.sources.SourceService.InMemory.OriginalsResultPart2] =
       citekeys.flatMap(ck => original(ck).map(ck -> _)).toMap
 
-    private def updated(citekey: com.histmersion.domain.library.Citekey)(f: LibraryState.Stored => LibraryState.Stored): com.histmersion.domain.library.sources.SourceService.InMemory.UpdatedResult =
+    private def updated(citekey: com.histmersion.domain.library.Citekey)(f: LibraryState.Stored => LibraryState.Stored): Boolean =
       val before = state.getAndUpdate(st =>
         st.modify(_.sources).using(ss => ss.get(citekey).fold(ss)(x => ss.updated(citekey, f(x))))
       )
@@ -801,7 +685,7 @@ object SourceService:
     def licence(citekey: com.histmersion.domain.library.Citekey): Option[Licence] =
       stored(citekey).flatMap(_.licence).map(_.trim).filter(_.nonEmpty).map(Licence.classify)
 
-    def recordLicence(citekey: com.histmersion.domain.library.Citekey, licence: Licence.Id, caller: Caller): com.histmersion.domain.library.sources.SourceService.InMemory.RecordLicenceResult =
+    def recordLicence(citekey: com.histmersion.domain.library.Citekey, licence: Licence.Id, caller: Caller): Boolean =
       val v = licence.value.trim
       val open = stored(citekey).exists(_.licence.forall(_.trim.isEmpty))
       v.nonEmpty && open && updated(citekey)(
@@ -823,7 +707,7 @@ object SourceService:
         s.calibreId.filter(_.nonEmpty)
       )
 
-    def calibreGaps(limit: Option[com.histmersion.domain.library.sources.SourceService.InMemory.CalibreGapsLimit]): List[CalibreGap] =
+    def calibreGaps(limit: Option[com.histmersion.domain.library.sources.SourceService.Limit]): List[CalibreGap] =
       state.get.sources.toList
         .sortBy(_._1)
         .map(_._2)
@@ -833,7 +717,7 @@ object SourceService:
 
     def calibrePushMeta(citekey: com.histmersion.domain.library.Citekey): Option[CalibreGap] = stored(citekey).map(gapOf)
 
-    def setCalibreId(citekey: com.histmersion.domain.library.Citekey, calibreId: com.histmersion.domain.library.sources.SourceService.InMemory.SetCalibreIdCalibreId, caller: Caller): Either[Api.Error, Unit] =
+    def setCalibreId(citekey: com.histmersion.domain.library.Citekey, calibreId: com.histmersion.domain.library.sources.FullSourceRow.CalibreId, caller: Caller): Either[Api.Error, Unit] =
       if updated(citekey)(
           _.modify(_.source.calibreId).setTo(Some(calibreId)).modify(_.updatedAt).setTo(clock.instant())
         )
@@ -841,114 +725,16 @@ object SourceService:
       else Left(Write.notFound(citekey))
 
   object InMemory:
-    type PatchAnswerPart2 = PatchAnswerPart2.T
-    object PatchAnswerPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenamedNowNewIdResult = RenamedNowNewIdResult.T
-    object RenamedNowNewIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenamedNowNewIdId = RenamedNowNewIdId.T
-    object RenamedNowNewIdId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenamedNowTargetArg1 = RenamedNowTargetArg1.T
-    object RenamedNowTargetArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenamedNowTargetResult = RenamedNowTargetResult.T
-    object RenamedNowTargetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type TokenResult = TokenResult.T
-    object TokenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CurrentInResult = CurrentInResult.T
     object CurrentInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CurrentInId = CurrentInId.T
-    object CurrentInId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CurrentResult = CurrentResult.T
     object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CurrentId = CurrentId.T
-    object CurrentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AliasOfResult = AliasOfResult.T
-    object AliasOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AliasesOfResult = AliasesOfResult.T
-    object AliasesOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CitekeysResult = CitekeysResult.T
-    object CitekeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdatedAtMillisResultPart1 = UpdatedAtMillisResultPart1.T
-    object UpdatedAtMillisResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdatedAtMillisResultPart2 = UpdatedAtMillisResultPart2.T
-    object UpdatedAtMillisResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CalibreIdResult = CalibreIdResult.T
-    object CalibreIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RefsCitekeys = RefsCitekeys.T
-    object RefsCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveInResultPart1 = ResolveInResultPart1.T
-    object ResolveInResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveInResultPart2 = ResolveInResultPart2.T
-    object ResolveInResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveInTargets = ResolveInTargets.T
-    object ResolveInTargets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveLinksResultPart1 = ResolveLinksResultPart1.T
-    object ResolveLinksResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveLinksResultPart2 = ResolveLinksResultPart2.T
-    object ResolveLinksResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveLinksTargets = ResolveLinksTargets.T
-    object ResolveLinksTargets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BodyTextResult = BodyTextResult.T
-    object BodyTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BodyUnderHeadingResult = BodyUnderHeadingResult.T
-    object BodyUnderHeadingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BodyUnderHeadingHeading = BodyUnderHeadingHeading.T
-    object BodyUnderHeadingHeading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MarkdownResult = MarkdownResult.T
-    object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PutResult = PutResult.T
     object PutResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PatchResultPart2 = PatchResultPart2.T
-    object PatchResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PatchRequested = PatchRequested.T
-    object PatchRequested extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenameFrom = RenameFrom.T
-    object RenameFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenameTo = RenameTo.T
-    object RenameTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenamedInFrom = RenamedInFrom.T
-    object RenamedInFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenamedInTo = RenamedInTo.T
-    object RenamedInTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenamedNowFrom = RenamedNowFrom.T
-    object RenamedNowFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenamedNowTo = RenamedNowTo.T
-    object RenamedNowTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DoiKeyResult = DoiKeyResult.T
-    object DoiKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PlanInRequested = PlanInRequested.T
-    object PlanInRequested extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeleteDay = DeleteDay.T
-    object DeleteDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DeleteFilesResult = DeleteFilesResult.T
     object DeleteFilesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveEdgesResult = ResolveEdgesResult.T
-    object ResolveEdgesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ExistsResult = ExistsResult.T
-    object ExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CitekeyOfDoiResult = CitekeyOfDoiResult.T
-    object CitekeyOfDoiResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DoiIndexResultPart1 = DoiIndexResultPart1.T
-    object DoiIndexResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DoiIndexResultPart2 = DoiIndexResultPart2.T
-    object DoiIndexResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AddEdgesResult = AddEdgesResult.T
-    object AddEdgesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OriginalResult = OriginalResult.T
     object OriginalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type HolderOfResult = HolderOfResult.T
-    object HolderOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OriginalsResultPart1 = OriginalsResultPart1.T
-    object OriginalsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OriginalsResultPart2 = OriginalsResultPart2.T
     object OriginalsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OriginalsCitekeys = OriginalsCitekeys.T
-    object OriginalsCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdatedResult = UpdatedResult.T
-    object UpdatedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RecordLicenceResult = RecordLicenceResult.T
-    object RecordLicenceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CalibreGapsLimit = CalibreGapsLimit.T
-    object CalibreGapsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetCalibreIdCalibreId = SetCalibreIdCalibreId.T
-    object SetCalibreIdCalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -15,41 +15,31 @@ trait ConverterClient:
   /** Convert one document. `Left` carries a message that names the converter URL, because "the OCR job failed" without
     * saying where it tried to go is useless in a log.
     */
-  def convert(file: Blob, filename: com.histmersion.util.ocr.ConverterClient.ConvertFilename, quality: com.histmersion.util.ocr.ConverterClient.ConvertQuality): Either[com.histmersion.util.ocr.ConverterClient.ConvertResultPart1, ConvertedDoc]
+  def convert(file: Blob, filename: com.histmersion.util.ocr.ConverterClient.Filename, quality: com.histmersion.util.ocr.ConverterClient.HighQuality): Either[com.histmersion.util.ocr.ConverterClient.Problem, ConvertedDoc]
 
   /** Sidecar liveness for `/api/health`. */
-  def health: Either[com.histmersion.util.ocr.ConverterClient.HealthResultPart1, com.histmersion.util.ocr.ConverterClient.HealthResultPart2]
+  def health: Either[com.histmersion.util.ocr.ConverterClient.Problem, com.histmersion.util.ocr.ConverterClient.HealthSummary]
 
   /** A thumbnail of an image, no side longer than `maxPx` (the sidecar's Pillow — the native server has no working
     * image codec of its own). A converter that cannot make one says so; the picture is then shown from its own bytes.
     */
-  def thumbnail(bytes: com.histmersion.util.ocr.ConverterClient.ThumbnailBytes, filename: com.histmersion.util.ocr.ConverterClient.ThumbnailFilename, maxPx: com.histmersion.util.ocr.ConverterClient.ThumbnailMaxPx): Either[com.histmersion.util.ocr.ConverterClient.ThumbnailResultPart1, ConverterClient.Thumb] =
+  def thumbnail(bytes: com.histmersion.util.ocr.ConverterClient.DocumentBytes, filename: com.histmersion.util.ocr.ConverterClient.Filename, maxPx: com.histmersion.util.ocr.Pixels): Either[com.histmersion.util.ocr.ConverterClient.Problem, ConverterClient.Thumb] =
     Left("this converter makes no thumbnails")
 
 object ConverterClient:
+  type DocumentBytes = DocumentBytes.T
+  object DocumentBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Filename = Filename.T
+  object Filename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HealthSummary = HealthSummary.T
+  object HealthSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HighQuality = HighQuality.T
+  object HighQuality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A thumbnail the sidecar made. */
-  type ThumbnailBytes = ThumbnailBytes.T
-  object ThumbnailBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ConvertResultPart1 = ConvertResultPart1.T
-  object ConvertResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConvertFilename = ConvertFilename.T
-  object ConvertFilename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConvertQuality = ConvertQuality.T
-  object ConvertQuality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HealthResultPart1 = HealthResultPart1.T
-  object HealthResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HealthResultPart2 = HealthResultPart2.T
-  object HealthResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbnailResultPart1 = ThumbnailResultPart1.T
-  object ThumbnailResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbnailFilename = ThumbnailFilename.T
-  object ThumbnailFilename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbnailMaxPx = ThumbnailMaxPx.T
-  object ThumbnailMaxPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeoutForQuality = TimeoutForQuality.T
-  object TimeoutForQuality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Thumb(bytes: Thumb.Bytes, mime: Thumb.Mime, width: Thumb.Width, height: Thumb.Height)
 
@@ -77,7 +67,7 @@ object ConverterClient:
     * that to be more — a scanned page at the scanned rate (the quality path OCRs everything at its own rate). Unknown
     * pages ⇒ the configured timeout.
     */
-  def timeoutFor(cfg: ConverterSettings, count: Option[PageCount], quality: com.histmersion.util.ocr.ConverterClient.TimeoutForQuality): Duration =
+  def timeoutFor(cfg: ConverterSettings, count: Option[PageCount], quality: com.histmersion.util.ocr.ConverterClient.HighQuality): Duration =
     val perPage = cfg.perPage.value
     val scaled = count
       .map { c =>

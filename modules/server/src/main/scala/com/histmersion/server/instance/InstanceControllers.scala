@@ -89,7 +89,7 @@ final class InstanceControllers(
     * something looks wrong.
     */
   def about(now: Instant = Instant.now(deps.clock)): About =
-    def attempt[A](what: com.histmersion.server.instance.InstanceControllers.AboutAttemptWhat)(a: => A): Either[com.histmersion.server.instance.InstanceControllers.AboutAttemptResultPart1, A] =
+    def attempt[A](what: com.histmersion.server.instance.InstanceControllers.Operation)(a: => A): Either[com.histmersion.server.instance.InstanceControllers.Problem, A] =
       Try(a).toEither.left.map(e => s"$what: ${e.getMessage}")
     val jobs = attempt("job counts")(
       JobCounts.of(diagnostics.figures(JobsData.owner).counts.map(c => c.noun -> c.count.toInt))
@@ -127,7 +127,7 @@ final class InstanceControllers(
   /** The corpus About counts: what the owners count of their records. */
   private def corpusCounts: CorpusCounts =
     val figures = Deps.data.owners.filterNot(_ == JobsData.owner).map(diagnostics.figures)
-    def count(noun: com.histmersion.server.instance.InstanceControllers.CorpusCountsCountNoun): com.histmersion.server.instance.InstanceControllers.CorpusCountsCountResult = figures.flatMap(_.count(noun)).headOption.fold(0)(_.toInt)
+    def count(noun: com.histmersion.server.instance.InstanceControllers.Noun): com.histmersion.RowCount = figures.flatMap(_.count(noun)).headOption.fold(0)(_.toInt)
     CorpusCounts(
       count("sources"),
       count("findings"),
@@ -160,7 +160,7 @@ final class InstanceControllers(
   /** `POST /api/ui/seen/{board}` — the reader opened that window, which showed items up to `mark.at`. Answers the
     * counters after the mark moved.
     */
-  def markSeen(board: com.histmersion.server.instance.InstanceControllers.MarkSeenBoard, mark: UiNotices.SeenMark): Either[Api.Error, UiNotices.Counters] =
+  def markSeen(board: com.histmersion.server.instance.InstanceControllers.Board, mark: UiNotices.SeenMark): Either[Api.Error, UiNotices.Counters] =
     deps.maintenance.guard("mark_seen"):
       for
         b <- UiNotices.Board
@@ -190,25 +190,25 @@ final class InstanceControllers(
   /** `ui.base-map-source` resolved ([[BaseMapSource]]): `auto` becomes `local` once the stored extract can draw one of
     * the vector styles whole — a `stat` and a cached header read.
     */
-  def baseMapSource: com.histmersion.server.instance.InstanceControllers.BaseMapSourceResult =
+  def baseMapSource: com.histmersion.server.instance.InstanceControllers.MapSource =
     cfg.ui.baseMapSource.trim.toLowerCase(java.util.Locale.ROOT) match
       case s @ (BaseMapSource.Local | BaseMapSource.Online) => s
       case _ => BaseMapSource.resolve(cfg.ui.baseMapSource, basemap.status)
 
 object InstanceControllers:
-  type AboutAttemptResultPart1 = AboutAttemptResultPart1.T
-  object AboutAttemptResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AboutAttemptWhat = AboutAttemptWhat.T
-  object AboutAttemptWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CorpusCountsCountResult = CorpusCountsCountResult.T
-  object CorpusCountsCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CorpusCountsCountNoun = CorpusCountsCountNoun.T
-  object CorpusCountsCountNoun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Board = Board.T
+  object Board extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MapSource = MapSource.T
+  object MapSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Noun = Noun.T
+  object Noun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Operation = Operation.T
+  object Operation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetupDue = SetupDue.T
+  object SetupDue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SetupDueResult = SetupDueResult.T
-  object SetupDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetupDueResult = com.histmersion.server.instance.InstanceControllers.SetupDue
+  val SetupDueResult: _root_.com.histmersion.server.instance.InstanceControllers.SetupDue.type = _root_.com.histmersion.server.instance.InstanceControllers.SetupDue
 
-  type MarkSeenBoard = MarkSeenBoard.T
-  object MarkSeenBoard extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BaseMapSourceResult = BaseMapSourceResult.T
-  object BaseMapSourceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

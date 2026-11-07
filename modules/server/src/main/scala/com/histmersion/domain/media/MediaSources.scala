@@ -5,15 +5,17 @@ package com.histmersion.domain.media
   * its figures are linked from.
   */
 trait MediaSources:
-  def current(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.media.MediaSources.CurrentResult]
+  def current(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.media.MediaSources.Current]
   def lookup(citekey: com.histmersion.domain.library.Citekey): Either[MediaSources.Error, MediaSources.Key]
-  def markdown(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.MediaSources.MarkdownResult
+  def markdown(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.MediaSources.Markdown
 
 object MediaSources:
-  type CurrentResult = CurrentResult.T
-  object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Current = Current.T
+  object Current extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Markdown = Markdown.T
+  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Key = Key.T
   object Key extends io.github.iltotore.iron.RefinedType[String, io.github.iltotore.iron.Pure]
@@ -24,5 +26,5 @@ object MediaSources:
 
   object Error:
     object Invalid:
-      type Message = Message.T
-      object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Message = com.histmersion.domain.media.MediaSources.Problem
+      val Message: _root_.com.histmersion.domain.media.MediaSources.Problem.type = _root_.com.histmersion.domain.media.MediaSources.Problem

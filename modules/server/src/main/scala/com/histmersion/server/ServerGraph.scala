@@ -112,7 +112,7 @@ final class ServerGraph private (
     * so turning `watch` on or off is itself a reload, and the watcher stops with its scope. Off without a file to
     * watch.
     */
-  private[server] def addWatch(): Either[com.histmersion.server.ServerGraph.AddWatchResultPart1, Hot[com.histmersion.server.ServerGraph.AddWatchResultPart2]] =
+  private[server] def addWatch(): Either[com.histmersion.server.ServerGraph.Problem, Hot[Boolean]] =
     graph.node[Boolean](ServerGraph.Watch, keys = List("histmersion.config")) { ctx =>
       val c = ctx.config.app.config
       val target = ctx.config.loaded.file.path.filter(_ => source.isDefined)
@@ -140,22 +140,12 @@ final class ServerGraph private (
   def close(): Unit = graph.close()
 
 object ServerGraph:
-  type WatchOursResult = WatchOursResult.T
-  object WatchOursResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Migrations = Migrations.T
   object Migrations extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type AddWatchResultPart1 = AddWatchResultPart1.T
-  object AddWatchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddWatchResultPart2 = AddWatchResultPart2.T
-  object AddWatchResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartResultPart1 = StartResultPart1.T
-  object StartResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RedactResult = RedactResult.T
-  object RedactResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RedactUrl = RedactUrl.T
-  object RedactUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WatchDebounceMs = WatchDebounceMs.T
   object WatchDebounceMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -176,7 +166,7 @@ object ServerGraph:
       source: Option[ConfigSource],
       plugins: Option[Generation],
       core: com.histmersion.domain.library.acquisition.CoreBudget
-  ): Either[com.histmersion.server.ServerGraph.StartResultPart1, ServerGraph] =
+  ): Either[com.histmersion.server.ServerGraph.Problem, ServerGraph] =
     val graph = Hot.Graph[HotConfig](initial)
     val prepare = source.map(_.prepare).getOrElse((_: AppConfig) => Right(()))
     val built =
@@ -254,7 +244,7 @@ object ServerGraph:
       case NonFatal(e)             => scribe.warn(s"startup ANALYZE failed: ${e.getMessage}")
 
   /** A JDBC URL for the log: no query string (where a password could be). */
-  def redact(url: com.histmersion.server.ServerGraph.RedactUrl): com.histmersion.server.ServerGraph.RedactResult = url.takeWhile(_ != '?')
+  def redact(url: com.histmersion.server.HttpDownload.Url): com.histmersion.server.HttpDownload.Url = url.takeWhile(_ != '?')
 
   private def log(r: ReloadReport): Unit =
     if r.errors.nonEmpty then
@@ -283,7 +273,7 @@ object ServerGraph:
         StandardWatchEventKinds.ENTRY_MODIFY,
         StandardWatchEventKinds.ENTRY_DELETE
       )
-      def ours(k: java.nio.file.WatchKey): com.histmersion.server.ServerGraph.WatchOursResult =
+      def ours(k: java.nio.file.WatchKey): Boolean =
         import scala.jdk.CollectionConverters.*
         val hit = k
           .pollEvents()

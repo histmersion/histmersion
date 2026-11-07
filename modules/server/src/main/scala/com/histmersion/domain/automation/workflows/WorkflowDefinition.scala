@@ -11,7 +11,7 @@ trait WorkflowDefinition:
   def id: WorkflowId
 
   /** A run started under another version is not resumed (its checkpoints may not line up). */
-  def version: com.histmersion.domain.automation.workflows.WorkflowDefinition.VersionResult
+  def version: com.histmersion.domain.automation.Pipeline.Version
   def target: TargetKind
   def roles: List[AgentRole]
   def describe: com.histmersion.domain.automation.workflows.WorkflowDefinition.DescribeResult
@@ -26,8 +26,6 @@ trait WorkflowDefinition:
   def outputs: OutputComparison = OutputComparison.none
 
 object WorkflowDefinition:
-  type VersionResult = VersionResult.T
-  object VersionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DescribeResult = DescribeResult.T
   object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunResultPart2 = RunResultPart2.T

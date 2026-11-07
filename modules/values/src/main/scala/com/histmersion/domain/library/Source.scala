@@ -5,6 +5,10 @@ import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Source:
+  type Summary = Summary.T
+  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Status:
     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed

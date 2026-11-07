@@ -41,11 +41,11 @@ final class PlanPools(
   private val gate = RefreshGate()
   private val logins = ConcurrentHashMap[PoolId, (Long, Login)]()
 
-  private def poolCfg(p: PoolId): (com.histmersion.server.agents.PlanPools.PoolCfgResultPart1, com.histmersion.server.agents.PlanPools.PoolCfgResultPart2) = p match
+  private def poolCfg(p: PoolId): (com.histmersion.server.agents.PlanPools.PoolName, com.histmersion.server.agents.PlanPools.Limit) = p match
     case PoolId.ClaudePlan  => (cfg.quota.claudePlan.floors, cfg.quota.claudePlan.maxCallsInFlight)
     case PoolId.ChatgptPlan => (cfg.quota.chatgptPlan.floors, cfg.quota.chatgptPlan.maxCallsInFlight)
 
-  private def staleMs: com.histmersion.server.agents.PlanPools.StaleMsResult = math.max(1, cfg.quota.staleMinutes).toLong * 60000L
+  private def staleMs: com.histmersion.server.agents.PlanPools.StaleDuration = math.max(1, cfg.quota.staleMinutes).toLong * 60000L
 
   /** At most `max-calls-in-flight` LLM calls draw on a plan at once (default 1: the three-way review panel would
     * otherwise spend the last headroom three times).
@@ -53,12 +53,12 @@ final class PlanPools(
   def slot(p: PoolId): Semaphore = slots.computeIfAbsent(p, _ => Semaphore(math.max(1, poolCfg(p)._2)))
 
   def poolOf(m: ModelRef): Option[PoolId] = PlanQuota.poolOf(m, cfg.logins)
-  def paid(m: ModelRef): com.histmersion.server.agents.PlanPools.PaidResult = PlanQuota.paid(m, cfg.logins)
+  def paid(m: ModelRef): Boolean = PlanQuota.paid(m, cfg.logins)
 
   /** The floors of a pool and where they come from: saved, else config (a config string that does not parse floors
     * nothing it could not read, and says so).
     */
-  def floors(p: PoolId): (Floors, com.histmersion.server.agents.PlanPools.FloorsResultPart2, Option[com.histmersion.server.agents.PlanPools.FloorsResultPart3]) =
+  def floors(p: PoolId): (Floors, com.histmersion.server.agents.PlanPools.WindowName, Option[com.histmersion.server.agents.PlanPools.Problem]) =
     val saved = Transactor(ds).read(PlanQuotaRepo.pool(p)).floors
     saved.map(Floors.parse) match
       case Some(Right(f)) => (f, "saved", None)
@@ -75,7 +75,7 @@ final class PlanPools(
     * when its last reading is older than `poll-seconds`. Takes no fresh reading of its own: [[decide]] does, for a
     * pick.
     */
-  def verdict(p: PoolId, model: Option[com.histmersion.server.agents.PlanPools.VerdictModel], now: com.histmersion.server.agents.PlanPools.VerdictNow = System.currentTimeMillis()): (Verdict, List[WindowState]) =
+  def verdict(p: PoolId, model: Option[com.histmersion.server.agents.PlanPools.ModelName], now: com.histmersion.server.agents.PlanPools.Instant = System.currentTimeMillis()): (Verdict, List[WindowState]) =
     if p == PoolId.ChatgptPlan then poll(now)
     val pool = Transactor(ds).read(PlanQuotaRepo.pool(p))
     PlanQuota.verdict(
@@ -88,7 +88,7 @@ final class PlanPools(
     )
 
   /** Why `p`'s verdict would wait for a fresh reading now (None = it decides by itself). */
-  def need(p: PoolId, model: Option[com.histmersion.server.agents.PlanPools.NeedModel], now: com.histmersion.server.agents.PlanPools.NeedNow): Option[RefreshNeed] =
+  def need(p: PoolId, model: Option[com.histmersion.server.agents.PlanPools.ModelName], now: com.histmersion.server.agents.PlanPools.Instant): Option[RefreshNeed] =
     val pool = Transactor(ds).read(PlanQuotaRepo.pool(p))
     PlanQuota.refreshNeed(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
@@ -105,9 +105,9 @@ final class PlanPools(
     */
   def decide(
       p: PoolId,
-      model: Option[com.histmersion.server.agents.PlanPools.DecideModel],
+      model: Option[com.histmersion.server.agents.PlanPools.ModelName],
       trigger: RefreshTrigger,
-      now: com.histmersion.server.agents.PlanPools.DecideNow = System.currentTimeMillis()
+      now: com.histmersion.server.agents.PlanPools.Instant = System.currentTimeMillis()
   ): (Verdict, List[WindowState], Option[Refreshed]) =
     val (v, states) = verdict(p, model, now)
     if need(p, model, now).isEmpty then (v, states, None)
@@ -124,20 +124,20 @@ final class PlanPools(
   def record(p: PoolId, rs: List[Reading]): Unit = Transactor(ds).transact(PlanQuotaRepo.record(p, rs))
 
   /** When `p`'s newest reading was observed (epoch ms), if it has one. */
-  def lastObserved(p: PoolId): Option[com.histmersion.server.agents.PlanPools.LastObservedResult] = Transactor(ds).read(PlanQuotaRepo.readings(p)).map(_.observedAt).maxOption
+  def lastObserved(p: PoolId): Option[com.histmersion.server.agents.PlanPools.Instant] = Transactor(ds).read(PlanQuotaRepo.readings(p)).map(_.observedAt).maxOption
 
-  def blocked(p: PoolId, model: Option[com.histmersion.server.agents.PlanPools.BlockedModel]): Option[(com.histmersion.server.agents.PlanPools.BlockedResultPart1, Option[com.histmersion.server.agents.PlanPools.BlockedResultPart2])] =
+  def blocked(p: PoolId, model: Option[com.histmersion.server.agents.PlanPools.ModelName]): Option[(com.histmersion.server.agents.PlanPools.Reason, Option[com.histmersion.server.agents.PlanPools.Instant])] =
     verdict(p, model)._1 match
       case Verdict.Blocked(why, until) => Some((why, until))
       case _                           => None
 
-  def refresh(now: com.histmersion.server.agents.PlanPools.RefreshNow): Unit = { val _ = poll(now) }
+  def refresh(now: com.histmersion.server.agents.PlanPools.Instant): Unit = { val _ = poll(now) }
 
-  def hold(p: PoolId, on: com.histmersion.server.agents.PlanPools.HoldOn): Unit = Transactor(ds).transact(PlanQuotaRepo.setHold(p, on))
+  def hold(p: PoolId, on: com.histmersion.server.agents.PlanPools.Held): Unit = Transactor(ds).transact(PlanQuotaRepo.setHold(p, on))
 
   /** Whether a person holds `p` (no run draws on it until it is released). */
-  def held(p: PoolId): com.histmersion.server.agents.PlanPools.HeldResult = Transactor(ds).read(PlanQuotaRepo.pool(p)).held
-  def setFloors(p: PoolId, f: Option[com.histmersion.server.agents.PlanPools.SetFloorsF]): Unit = Transactor(ds).transact(PlanQuotaRepo.setFloors(p, f))
+  def held(p: PoolId): Boolean = Transactor(ds).read(PlanQuotaRepo.pool(p)).held
+  def setFloors(p: PoolId, f: Option[com.histmersion.server.agents.PlanPools.FloorsSpec]): Unit = Transactor(ds).transact(PlanQuotaRepo.setFloors(p, f))
 
   // ── logins ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -145,7 +145,7 @@ final class PlanPools(
     * in the runs' CODEX_HOME for the ChatGPT plan (the file is never read) — checked at most once per `poll-seconds`
     * (`force`: now).
     */
-  def login(p: PoolId, now: com.histmersion.server.agents.PlanPools.LoginNow = System.currentTimeMillis(), force: com.histmersion.server.agents.PlanPools.LoginForce = false): Login =
+  def login(p: PoolId, now: com.histmersion.server.agents.PlanPools.Instant = System.currentTimeMillis(), force: com.histmersion.server.agents.PlanPools.Force = false): Login =
     val every = math.max(1, cfg.quota.pollSeconds).toLong * 1000L
     Option(logins.get(p)).filter((at, _) => !force && now - at < every).map(_._2).getOrElse {
       val l = p match
@@ -168,7 +168,7 @@ final class PlanPools(
   /** Whether `m` may be offered at all: a model whose own runtime spends the pool (claude-code on the Claude plan,
     * codex on the ChatGPT plan) needs that runtime's login. Some(why) = unavailable.
     */
-  def unavailable(m: ModelRef, now: com.histmersion.server.agents.PlanPools.UnavailableNow = System.currentTimeMillis()): Option[com.histmersion.server.agents.PlanPools.UnavailableResult] =
+  def unavailable(m: ModelRef, now: com.histmersion.server.agents.PlanPools.Instant = System.currentTimeMillis()): Option[com.histmersion.server.agents.PlanPools.Reason] =
     poolOf(m).filter(p => PlanPools.loginGates(p, m)).flatMap { p =>
       login(p, now) match
         case Login.Missing(why) => Some(s"unavailable: no login — $why")
@@ -177,13 +177,13 @@ final class PlanPools(
 
   // ── fresh readings ─────────────────────────────────────────────────────────────────────────────
 
-  private def claudeMode: Either[com.histmersion.server.agents.PlanPools.ClaudeModeResultPart1, RefreshMode] =
+  private def claudeMode: Either[com.histmersion.server.agents.PlanPools.Problem, RefreshMode] =
     RefreshMode
       .parse(cfg.quota.claudePlan.refresh)
       .toRight(s"agents.quota.claude-plan.refresh: '${cfg.quota.claudePlan.refresh}' is not auto, probe or off")
 
   /** How `p` takes a fresh reading, for `agent quota`; None = it takes none. */
-  def refreshMode(p: PoolId): Option[com.histmersion.server.agents.PlanPools.RefreshModeResult] = p match
+  def refreshMode(p: PoolId): Option[com.histmersion.server.agents.Refreshed.Mode] = p match
     case PoolId.ClaudePlan =>
       claudeMode.toOption
         .filter(_ != RefreshMode.Off)
@@ -205,10 +205,10 @@ final class PlanPools(
     */
   def refreshOnSchedule(
       p: PoolId,
-      autopilotOn: com.histmersion.server.agents.PlanPools.RefreshOnScheduleAutopilotOn,
-      wanted: com.histmersion.server.agents.PlanPools.RefreshOnScheduleWanted,
+      autopilotOn: com.histmersion.server.agents.PlanPools.Autopilot,
+      wanted: com.histmersion.server.agents.PlanPools.Wanted,
       now: java.time.Instant
-  ): Either[com.histmersion.server.agents.PlanPools.RefreshOnScheduleResultPart1, Refreshed] =
+  ): Either[com.histmersion.server.agents.PlanPools.Problem, Refreshed] =
     val at = now.toEpochMilli
     gate.exclusive(p, at) { last =>
       val newest = lastObserved(p).map(java.time.Instant.ofEpochMilli)
@@ -242,10 +242,10 @@ final class PlanPools(
   def refreshPool(
       p: PoolId,
       trigger: RefreshTrigger,
-      model: Option[com.histmersion.server.agents.PlanPools.RefreshPoolModel] = None,
-      force: com.histmersion.server.agents.PlanPools.RefreshPoolForce = false,
-      now: com.histmersion.server.agents.PlanPools.RefreshPoolNow = System.currentTimeMillis()
-  ): Either[com.histmersion.server.agents.PlanPools.RefreshPoolResultPart1, Refreshed] =
+      model: Option[com.histmersion.server.agents.PlanPools.ModelName] = None,
+      force: com.histmersion.server.agents.PlanPools.Force = false,
+      now: com.histmersion.server.agents.PlanPools.Instant = System.currentTimeMillis()
+  ): Either[com.histmersion.server.agents.PlanPools.Problem, Refreshed] =
     gate.exclusive(p, now) { last =>
       // asked again inside the gate: a caller that waited sees the reading the one before it took
       val needNow = need(p, model, now)
@@ -263,7 +263,7 @@ final class PlanPools(
     }
 
   /** One reading of `p`, logged (server log and the pool's refresh log) with why it was taken. */
-  private def takeAndLog(p: PoolId, trigger: RefreshTrigger, why: com.histmersion.server.agents.PlanPools.TakeAndLogWhy, now: com.histmersion.server.agents.PlanPools.TakeAndLogNow): Refreshed =
+  private def takeAndLog(p: PoolId, trigger: RefreshTrigger, why: com.histmersion.server.agents.PlanPools.Reason, now: com.histmersion.server.agents.PlanPools.Instant): Refreshed =
     val r = take(p, now)
     val line = s"plan refresh ${p.wire} ($why) ${r.text}"
     if r.ok then scribe.info(line) else scribe.warn(line)
@@ -271,7 +271,7 @@ final class PlanPools(
     r
 
   /** One reading of `p`, recorded: the Claude probe or the ChatGPT app-server read. */
-  private def take(p: PoolId, now: com.histmersion.server.agents.PlanPools.TakeNow): Refreshed = p match
+  private def take(p: PoolId, now: com.histmersion.server.agents.PlanPools.Instant): Refreshed = p match
     case PoolId.ChatgptPlan =>
       poll(now, force = true) match
         case Some(why) => Refreshed("app-server", ok = false, why)
@@ -298,7 +298,7 @@ final class PlanPools(
   /** Read the ChatGPT plan through `codex app-server` (it generates nothing), at most once per `poll-seconds`, and only
     * with `app-server` on and a CODEX_HOME to read.
     */
-  def poll(now: com.histmersion.server.agents.PlanPools.PollNow, force: com.histmersion.server.agents.PlanPools.PollForce = false): Option[com.histmersion.server.agents.PlanPools.PollResult] =
+  def poll(now: com.histmersion.server.agents.PlanPools.Instant, force: com.histmersion.server.agents.PlanPools.Force = false): Option[com.histmersion.server.agents.PlanPools.Outcome] =
     val every = math.max(1, cfg.quota.pollSeconds).toLong * 1000L
     val last = lastPoll.get()
     if !cfg.providers.codex.appServer then Some("app-server reads are off (agents.providers.codex.app-server)")
@@ -322,7 +322,7 @@ final class PlanPools(
               None
 
   /** A mod's report: recorded, and answered with whether the run may go on. */
-  def guard(report: ModReport, now: com.histmersion.server.agents.PlanPools.GuardNow = System.currentTimeMillis()): GuardAnswer =
+  def guard(report: ModReport, now: com.histmersion.server.agents.PlanPools.Instant = System.currentTimeMillis()): GuardAnswer =
     val src = Source.parse(report.source).filter(s => s == Source.Mod || s == Source.Interactive).getOrElse(Source.Mod)
     record(PoolId.ClaudePlan, PlanPools.modReadings(report.rateLimits, src, now))
     verdict(PoolId.ClaudePlan, None, now)._1 match
@@ -331,7 +331,7 @@ final class PlanPools(
         GuardAnswer(allow = false, Some(why), until.map(java.time.Instant.ofEpochMilli(_).toString))
 
   /** Every plan pool, as `agent quota` shows it. Takes no fresh reading (looking is free). */
-  def statuses(covers: PoolId => List[com.histmersion.server.agents.PlanPools.StatusesCoversResult], now: com.histmersion.server.agents.PlanPools.StatusesNow = System.currentTimeMillis()): List[PoolStatus] =
+  def statuses(covers: PoolId => List[com.histmersion.server.agents.PlanPools.ModelName], now: com.histmersion.server.agents.PlanPools.Instant = System.currentTimeMillis()): List[PoolStatus] =
     val today = java.time.Instant
       .ofEpochMilli(now)
       .atZone(java.time.ZoneOffset.UTC)
@@ -397,155 +397,69 @@ final class PlanPools(
     }
 
 object PlanPools:
+  type Argument = Argument.T
+  object Argument extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Autopilot = Autopilot.T
+  object Autopilot extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CommandLine = CommandLine.T
+  object CommandLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CommandOutput = CommandOutput.T
+  object CommandOutput extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CooldownMinutes = CooldownMinutes.T
+  object CooldownMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnvName = EnvName.T
+  object EnvName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnvSetting = EnvSetting.T
+  object EnvSetting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExitCode = ExitCode.T
+  object ExitCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FloorsSpec = FloorsSpec.T
+  object FloorsSpec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Force = Force.T
+  object Force extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Held = Held.T
+  object Held extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Instant = Instant.T
+  object Instant extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JsonKey = JsonKey.T
+  object JsonKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModelName = ModelName.T
+  object ModelName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Outcome = Outcome.T
+  object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PoolName = PoolName.T
+  object PoolName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuotaNumber = QuotaNumber.T
+  object QuotaNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Reason = Reason.T
+  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScheduleText = ScheduleText.T
+  object ScheduleText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaleDuration = StaleDuration.T
+  object StaleDuration extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StandardInput = StandardInput.T
+  object StandardInput extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Summary = Summary.T
+  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeoutSeconds = TimeoutSeconds.T
+  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UseApiKey = UseApiKey.T
+  object UseApiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Wanted = Wanted.T
+  object Wanted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowName = WindowName.T
+  object WindowName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The schedule as `agent quota` names it after a pool's refresh mode. */
-  type PoolCfgResultPart1 = PoolCfgResultPart1.T
-  object PoolCfgResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PoolCfgResultPart2 = PoolCfgResultPart2.T
-  object PoolCfgResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StaleMsResult = StaleMsResult.T
-  object StaleMsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PaidResult = PaidResult.T
-  object PaidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FloorsResultPart2 = FloorsResultPart2.T
-  object FloorsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FloorsResultPart3 = FloorsResultPart3.T
-  object FloorsResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerdictModel = VerdictModel.T
-  object VerdictModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerdictNow = VerdictNow.T
-  object VerdictNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NeedModel = NeedModel.T
-  object NeedModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NeedNow = NeedNow.T
-  object NeedNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideModel = DecideModel.T
-  object DecideModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideNow = DecideNow.T
-  object DecideNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LastObservedResult = LastObservedResult.T
-  object LastObservedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlockedResultPart1 = BlockedResultPart1.T
-  object BlockedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlockedResultPart2 = BlockedResultPart2.T
-  object BlockedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlockedModel = BlockedModel.T
-  object BlockedModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefreshNow = RefreshNow.T
-  object RefreshNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HoldOn = HoldOn.T
-  object HoldOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeldResult = HeldResult.T
-  object HeldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetFloorsF = SetFloorsF.T
-  object SetFloorsF extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoginNow = LoginNow.T
-  object LoginNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoginForce = LoginForce.T
-  object LoginForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnavailableResult = UnavailableResult.T
-  object UnavailableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnavailableNow = UnavailableNow.T
-  object UnavailableNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClaudeModeResultPart1 = ClaudeModeResultPart1.T
-  object ClaudeModeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefreshModeResult = RefreshModeResult.T
-  object RefreshModeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefreshOnScheduleResultPart1 = RefreshOnScheduleResultPart1.T
-  object RefreshOnScheduleResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefreshOnScheduleAutopilotOn = RefreshOnScheduleAutopilotOn.T
-  object RefreshOnScheduleAutopilotOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefreshOnScheduleWanted = RefreshOnScheduleWanted.T
-  object RefreshOnScheduleWanted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefreshPoolResultPart1 = RefreshPoolResultPart1.T
-  object RefreshPoolResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefreshPoolModel = RefreshPoolModel.T
-  object RefreshPoolModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefreshPoolForce = RefreshPoolForce.T
-  object RefreshPoolForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefreshPoolNow = RefreshPoolNow.T
-  object RefreshPoolNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TakeAndLogWhy = TakeAndLogWhy.T
-  object TakeAndLogWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TakeAndLogNow = TakeAndLogNow.T
-  object TakeAndLogNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TakeNow = TakeNow.T
-  object TakeNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PollResult = PollResult.T
-  object PollResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PollNow = PollNow.T
-  object PollNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PollForce = PollForce.T
-  object PollForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardNow = GuardNow.T
-  object GuardNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatusesCoversResult = StatusesCoversResult.T
-  object StatusesCoversResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatusesNow = StatusesNow.T
-  object StatusesNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ScheduleTextResult = ScheduleTextResult.T
-  object ScheduleTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunProbeResultPart1 = RunProbeResultPart1.T
-  object RunProbeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunProbeArgv = RunProbeArgv.T
-  object RunProbeArgv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunProbeEnvArg1Part1 = RunProbeEnvArg1Part1.T
-  object RunProbeEnvArg1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunProbeEnvArg1Part2 = RunProbeEnvArg1Part2.T
-  object RunProbeEnvArg1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunProbeStdin = RunProbeStdin.T
-  object RunProbeStdin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunProbeTimeoutSeconds = RunProbeTimeoutSeconds.T
-  object RunProbeTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoginGatesResult = LoginGatesResult.T
-  object LoginGatesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClaudeEnvResultPart1 = ClaudeEnvResultPart1.T
-  object ClaudeEnvResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClaudeEnvResultPart2 = ClaudeEnvResultPart2.T
-  object ClaudeEnvResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClaudeLoginOut = ClaudeLoginOut.T
-  object ClaudeLoginOut extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClaudeLoginUseApiKey = ClaudeLoginUseApiKey.T
-  object ClaudeLoginUseApiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CodexLoginCommand = CodexLoginCommand.T
-  object CodexLoginCommand extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProbeReadingsResultPart1 = ProbeReadingsResultPart1.T
-  object ProbeReadingsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProbeReadingsNow = ProbeReadingsNow.T
-  object ProbeReadingsNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProbeReadingsCooldownMinutes = ProbeReadingsCooldownMinutes.T
-  object ProbeReadingsCooldownMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SummaryResult = SummaryResult.T
-  object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SummaryNow = SummaryNow.T
-  object SummaryNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumResult = NumResult.T
-  object NumResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumK = NumK.T
-  object NumK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClaudeReadingsNow = ClaudeReadingsNow.T
-  object ClaudeReadingsNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ModReadingsNow = ModReadingsNow.T
-  object ModReadingsNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CodexReadingsResultPart2Part1 = CodexReadingsResultPart2Part1.T
-  object CodexReadingsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CodexReadingsResultPart2Part2 = CodexReadingsResultPart2Part2.T
-  object CodexReadingsResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CodexReadingsResultPart3 = CodexReadingsResultPart3.T
-  object CodexReadingsResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CodexReadingsNow = CodexReadingsNow.T
-  object CodexReadingsNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadCodexResultPart1 = ReadCodexResultPart1.T
-  object ReadCodexResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadCodexCommand = ReadCodexCommand.T
-  object ReadCodexCommand extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadCodexTimeoutSeconds = ReadCodexTimeoutSeconds.T
-  object ReadCodexTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadRequests = ReadRequestsValue
   type ReadRequestsValue = ReadRequestsValue.T
   object ReadRequestsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def scheduleText(schedule: ScheduledRefresh): com.histmersion.server.agents.PlanPools.ScheduleTextResult = schedule match
+  def scheduleText(schedule: ScheduledRefresh): com.histmersion.server.agents.PlanPools.ScheduleText = schedule match
     case ScheduledRefresh.Off             => ""
     case ScheduledRefresh.Every(interval) =>
       s", and every ${interval.value} min while the autopilot has queued work for it"
@@ -561,38 +475,38 @@ object PlanPools:
   )
 
   object Seams:
-    type ReadCodexArg1 = ReadCodexArg1.T
-    object ReadCodexArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReadCodexArg3 = ReadCodexArg3.T
-    object ReadCodexArg3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReadCodexResultPart1 = ReadCodexResultPart1.T
-    object ReadCodexResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunProbeArg1 = RunProbeArg1.T
-    object RunProbeArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunProbeArg2Arg1Key = RunProbeArg2Arg1Key.T
-    object RunProbeArg2Arg1Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunProbeArg2Arg1Value = RunProbeArg2Arg1Value.T
-    object RunProbeArg2Arg1Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunProbeArg3 = RunProbeArg3.T
-    object RunProbeArg3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunProbeArg4 = RunProbeArg4.T
-    object RunProbeArg4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunProbeResultPart1 = RunProbeResultPart1.T
-    object RunProbeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunCommandArg1 = RunCommandArg1.T
-    object RunCommandArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunCommandArg2Key = RunCommandArg2Key.T
-    object RunCommandArg2Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunCommandArg2Value = RunCommandArg2Value.T
-    object RunCommandArg2Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunCommandArg3 = RunCommandArg3.T
-    object RunCommandArg3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunCommandResultPart1 = RunCommandResultPart1.T
-    object RunCommandResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunCommandResultPart2Part1 = RunCommandResultPart2Part1.T
-    object RunCommandResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunCommandResultPart2Part2 = RunCommandResultPart2Part2.T
-    object RunCommandResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReadCodexArg1 = com.histmersion.server.agents.PlanPools.CommandLine
+    val ReadCodexArg1: _root_.com.histmersion.server.agents.PlanPools.CommandLine.type = _root_.com.histmersion.server.agents.PlanPools.CommandLine
+    type ReadCodexArg3 = com.histmersion.server.agents.PlanPools.TimeoutSeconds
+    val ReadCodexArg3: _root_.com.histmersion.server.agents.PlanPools.TimeoutSeconds.type = _root_.com.histmersion.server.agents.PlanPools.TimeoutSeconds
+    type ReadCodexResultPart1 = com.histmersion.server.agents.PlanPools.Problem
+    val ReadCodexResultPart1: _root_.com.histmersion.server.agents.PlanPools.Problem.type = _root_.com.histmersion.server.agents.PlanPools.Problem
+    type RunProbeArg1 = com.histmersion.server.agents.PlanPools.CommandLine
+    val RunProbeArg1: _root_.com.histmersion.server.agents.PlanPools.CommandLine.type = _root_.com.histmersion.server.agents.PlanPools.CommandLine
+    type RunProbeArg2Arg1Key = com.histmersion.server.agents.PlanPools.EnvName
+    val RunProbeArg2Arg1Key: _root_.com.histmersion.server.agents.PlanPools.EnvName.type = _root_.com.histmersion.server.agents.PlanPools.EnvName
+    type RunProbeArg2Arg1Value = com.histmersion.server.agents.PlanPools.EnvSetting
+    val RunProbeArg2Arg1Value: _root_.com.histmersion.server.agents.PlanPools.EnvSetting.type = _root_.com.histmersion.server.agents.PlanPools.EnvSetting
+    type RunProbeArg3 = com.histmersion.server.agents.PlanPools.StandardInput
+    val RunProbeArg3: _root_.com.histmersion.server.agents.PlanPools.StandardInput.type = _root_.com.histmersion.server.agents.PlanPools.StandardInput
+    type RunProbeArg4 = com.histmersion.server.agents.PlanPools.TimeoutSeconds
+    val RunProbeArg4: _root_.com.histmersion.server.agents.PlanPools.TimeoutSeconds.type = _root_.com.histmersion.server.agents.PlanPools.TimeoutSeconds
+    type RunProbeResultPart1 = com.histmersion.server.agents.PlanPools.Problem
+    val RunProbeResultPart1: _root_.com.histmersion.server.agents.PlanPools.Problem.type = _root_.com.histmersion.server.agents.PlanPools.Problem
+    type RunCommandArg1 = com.histmersion.server.agents.PlanPools.CommandLine
+    val RunCommandArg1: _root_.com.histmersion.server.agents.PlanPools.CommandLine.type = _root_.com.histmersion.server.agents.PlanPools.CommandLine
+    type RunCommandArg2Key = com.histmersion.server.agents.PlanPools.EnvName
+    val RunCommandArg2Key: _root_.com.histmersion.server.agents.PlanPools.EnvName.type = _root_.com.histmersion.server.agents.PlanPools.EnvName
+    type RunCommandArg2Value = com.histmersion.server.agents.PlanPools.EnvSetting
+    val RunCommandArg2Value: _root_.com.histmersion.server.agents.PlanPools.EnvSetting.type = _root_.com.histmersion.server.agents.PlanPools.EnvSetting
+    type RunCommandArg3 = com.histmersion.server.agents.PlanPools.TimeoutSeconds
+    val RunCommandArg3: _root_.com.histmersion.server.agents.PlanPools.TimeoutSeconds.type = _root_.com.histmersion.server.agents.PlanPools.TimeoutSeconds
+    type RunCommandResultPart1 = com.histmersion.server.agents.PlanPools.Problem
+    val RunCommandResultPart1: _root_.com.histmersion.server.agents.PlanPools.Problem.type = _root_.com.histmersion.server.agents.PlanPools.Problem
+    type RunCommandResultPart2Part1 = com.histmersion.server.agents.PlanPools.ExitCode
+    val RunCommandResultPart2Part1: _root_.com.histmersion.server.agents.PlanPools.ExitCode.type = _root_.com.histmersion.server.agents.PlanPools.ExitCode
+    type RunCommandResultPart2Part2 = com.histmersion.server.agents.PlanPools.CommandOutput
+    val RunCommandResultPart2Part2: _root_.com.histmersion.server.agents.PlanPools.CommandOutput.type = _root_.com.histmersion.server.agents.PlanPools.CommandOutput
 
     type Refreshes = Refreshes.T
     object Refreshes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -610,11 +524,11 @@ object PlanPools:
 
   /** The one `claude -p` probe: in an empty scratch directory, its output read whole. */
   def runProbe(
-      argv: List[com.histmersion.server.agents.PlanPools.RunProbeArgv],
-      env: java.util.Map[com.histmersion.server.agents.PlanPools.RunProbeEnvArg1Part1, com.histmersion.server.agents.PlanPools.RunProbeEnvArg1Part2] => Unit,
-      stdin: com.histmersion.server.agents.PlanPools.RunProbeStdin,
-      timeoutSeconds: com.histmersion.server.agents.PlanPools.RunProbeTimeoutSeconds
-  ): Either[com.histmersion.server.agents.PlanPools.RunProbeResultPart1, CliProcess.Run] =
+      argv: List[com.histmersion.server.agents.PlanPools.Argument],
+      env: java.util.Map[com.histmersion.server.agents.PlanPools.EnvName, com.histmersion.server.agents.PlanPools.EnvSetting] => Unit,
+      stdin: com.histmersion.server.agents.PlanPools.StandardInput,
+      timeoutSeconds: com.histmersion.server.agents.PlanPools.TimeoutSeconds
+  ): Either[com.histmersion.server.agents.PlanPools.Problem, CliProcess.Run] =
     try
       CliProcess.withDir("histmersion-probe-") { dir =>
         Right(
@@ -635,25 +549,25 @@ object PlanPools:
   /** The model whose OWN runtime spends the pool needs that runtime's login: claude-code on the Claude plan, codex on
     * the ChatGPT plan (opencode on a ChatGPT login signs in by itself).
     */
-  def loginGates(p: PoolId, m: ModelRef): com.histmersion.server.agents.PlanPools.LoginGatesResult = (p, m.provider) match
+  def loginGates(p: PoolId, m: ModelRef): Boolean = (p, m.provider) match
     case (PoolId.ClaudePlan, ProviderKind.ClaudeCode) => true
     case (PoolId.ChatgptPlan, ProviderKind.Codex)     => true
     case _                                            => false
 
   /** The `claude` CLI's environment for `auth status`: no API key unless asked, its own config dir. */
-  def claudeEnv(cc: com.histmersion.config.ClaudeCodeConfig)(using com.histmersion.util.system.JvmHome): Map[com.histmersion.server.agents.PlanPools.ClaudeEnvResultPart1, Option[com.histmersion.server.agents.PlanPools.ClaudeEnvResultPart2]] =
+  def claudeEnv(cc: com.histmersion.config.ClaudeCodeConfig)(using com.histmersion.util.system.JvmHome): Map[com.histmersion.server.agents.PlanPools.EnvName, Option[com.histmersion.server.agents.PlanPools.EnvSetting]] =
     (if cc.useApiKey then Map.empty else Map("ANTHROPIC_API_KEY" -> None, "ANTHROPIC_AUTH_TOKEN" -> None)) ++
       Option(cc.configDir.trim).filter(_.nonEmpty).map(d => "CLAUDE_CONFIG_DIR" -> Some(AgentTrees.expand(d))).toMap
 
   /** `claude auth status` (JSON) → the login (the doctor's reading of it, [[AgentDoctor.login]]): logged out, or on an
     * API key where the plan is wanted, is Missing; an answer that is not JSON is Unknown.
     */
-  def claudeLogin(out: com.histmersion.server.agents.PlanPools.ClaudeLoginOut, useApiKey: com.histmersion.server.agents.PlanPools.ClaudeLoginUseApiKey): Login =
+  def claudeLogin(out: com.histmersion.server.agents.PlanPools.CommandOutput, useApiKey: com.histmersion.server.agents.PlanPools.UseApiKey): Login =
     if parser.parse(out.trim).isLeft then Login.Unknown(s"'claude auth status' did not answer JSON: ${out.take(200)}")
     else AgentDoctor.login(out, useApiKey).fold(Login.Missing(_), Login.Present(_))
 
   /** The runs' CODEX_HOME has a login when its `auth.json` exists (it is never read). */
-  def codexLogin(home: Option[java.nio.file.Path], command: com.histmersion.server.agents.PlanPools.CodexLoginCommand): Login = home match
+  def codexLogin(home: Option[java.nio.file.Path], command: com.histmersion.server.agents.PlanPools.CommandLine): Login = home match
     case None    => Login.Missing("no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home")
     case Some(h) =>
       if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then Login.Present(s"$h has a login")
@@ -663,7 +577,7 @@ object PlanPools:
     * plan's usage limit, one refused window until the reset it names (else the cool-down). Left = it said nothing about
     * the plan.
     */
-  def probeReadings(run: CliProcess.Run, now: com.histmersion.server.agents.PlanPools.ProbeReadingsNow, cooldownMinutes: com.histmersion.server.agents.PlanPools.ProbeReadingsCooldownMinutes): Either[com.histmersion.server.agents.PlanPools.ProbeReadingsResultPart1, List[Reading]] =
+  def probeReadings(run: CliProcess.Run, now: com.histmersion.server.agents.PlanPools.Instant, cooldownMinutes: com.histmersion.server.agents.PlanPools.CooldownMinutes): Either[com.histmersion.server.agents.PlanPools.Problem, List[Reading]] =
     val o = ClaudeCode.parse(run.lines)
     if o.readings.nonEmpty then Right(o.readings.map(_.modify(_.source).setTo(Source.Probe).modify(_.observedAt).setTo(now)))
     else
@@ -680,7 +594,7 @@ object PlanPools:
           )
 
   /** "five_hour 12% used, seven_day 42% used" — what a refresh read. */
-  def summary(rs: List[Reading], now: com.histmersion.server.agents.PlanPools.SummaryNow): com.histmersion.server.agents.PlanPools.SummaryResult =
+  def summary(rs: List[Reading], now: com.histmersion.server.agents.PlanPools.Instant): com.histmersion.server.agents.PlanPools.Summary =
     val cur = PlanQuota.current(rs, now)
     if cur.isEmpty then "no window reported"
     else
@@ -693,14 +607,14 @@ object PlanPools:
         }
         .mkString(", ")
 
-  private def num(j: Json, k: com.histmersion.server.agents.PlanPools.NumK): Option[com.histmersion.server.agents.PlanPools.NumResult] =
+  private def num(j: Json, k: com.histmersion.server.agents.PlanPools.JsonKey): Option[com.histmersion.server.agents.PlanPools.QuotaNumber] =
     j.hcursor.downField(k).as[Double].toOption
 
   /** Claude's `rate_limit_event.rate_limit_info` → readings (§3a P1): every `unifiedWindows` entry (`five_hour`,
     * `seven_day`, …; `utilization` 0–1, `resetsAt` epoch s), else the representative window; `status: rejected` marks
     * the window it names refused.
     */
-  def claudeReadings(info: Json, source: Source, now: com.histmersion.server.agents.PlanPools.ClaudeReadingsNow): List[Reading] =
+  def claudeReadings(info: Json, source: Source, now: com.histmersion.server.agents.PlanPools.Instant): List[Reading] =
     val c = info.hcursor
     val status = c.downField("status").as[String].toOption
     val repKind = c.downField("rateLimitType").as[String].toOption
@@ -730,7 +644,7 @@ object PlanPools:
       }
 
   /** A mod's `rateLimits` (`percentUsed`, `resetsAt` ISO) → readings. */
-  def modReadings(ws: List[ModWindow], source: Source, now: com.histmersion.server.agents.PlanPools.ModReadingsNow): List[Reading] =
+  def modReadings(ws: List[ModWindow], source: Source, now: com.histmersion.server.agents.PlanPools.Instant): List[Reading] =
     ws.map { w =>
       val reset = w.resetsAt.flatMap(t => scala.util.Try(java.time.Instant.parse(t).toEpochMilli).toOption)
       Reading("claude", w.kind, w.percentUsed, reset, rejected = false, now, source)
@@ -740,7 +654,7 @@ object PlanPools:
     * 5-hour one), the refusal (`ordinaryUsageAllowed: false`; a reached limit marks its windows refused) and the plan
     * type. Reset credits and upsells are ignored — never acted on.
     */
-  def codexReadings(result: Json, now: com.histmersion.server.agents.PlanPools.CodexReadingsNow): (List[Reading], Option[(com.histmersion.server.agents.PlanPools.CodexReadingsResultPart2Part1, Option[com.histmersion.server.agents.PlanPools.CodexReadingsResultPart2Part2])], Option[com.histmersion.server.agents.PlanPools.CodexReadingsResultPart3]) =
+  def codexReadings(result: Json, now: com.histmersion.server.agents.PlanPools.Instant): (List[Reading], Option[(com.histmersion.server.agents.PlanPools.WindowName, Option[com.histmersion.server.agents.PlanPools.Instant])], Option[com.histmersion.server.agents.PlanPools.Problem]) =
     val c = result.hcursor
     val buckets: List[Json] =
       c.downField("rateLimitsByLimitId")
@@ -786,7 +700,7 @@ object PlanPools:
     * read), with `CODEX_HOME` = the runs' home. Nothing else is ever sent — in particular never
     * `account/rateLimitResetCredit/consume`.
     */
-  def readCodex(command: com.histmersion.server.agents.PlanPools.ReadCodexCommand, home: java.nio.file.Path, timeoutSeconds: com.histmersion.server.agents.PlanPools.ReadCodexTimeoutSeconds): Either[com.histmersion.server.agents.PlanPools.ReadCodexResultPart1, Json] =
+  def readCodex(command: com.histmersion.server.agents.PlanPools.CommandLine, home: java.nio.file.Path, timeoutSeconds: com.histmersion.server.agents.PlanPools.TimeoutSeconds): Either[com.histmersion.server.agents.PlanPools.Problem, Json] =
     try
       val pb = ProcessBuilder(command, "app-server").redirectError(ProcessBuilder.Redirect.DISCARD)
       val env = pb.environment()

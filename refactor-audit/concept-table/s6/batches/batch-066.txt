@@ -1,0 +1,100 @@
+## CONCEPTS NEARBY
+com.histmersion.server.agents.Codex.Home.Report.Deleted (Int)
+com.histmersion.server.agents.Codex.Home.Report.FreedBytes (Long)
+com.histmersion.server.agents.Codex.Home.Report.Problems (String)
+com.histmersion.server.agents.Codex.Home.Report.Skipped (String)
+com.histmersion.server.agents.Codex.Home.Report.VacuumedPart1 (String)
+com.histmersion.server.agents.Codex.Home.Report.VacuumedPart2 (Long)
+com.histmersion.server.agents.Codex.Home.Report.VacuumedPart3 (Long)
+com.histmersion.server.agents.HostAiProvider.Plugin (String)
+
+## TYPES TO DECIDE
+com.histmersion.server.agents.Codex.ArgvAgent | base String | generated | method-parameter
+com.histmersion.server.agents.Codex.ArgvCwd | base String | generated | method-parameter
+com.histmersion.server.agents.Codex.ArgvLastFile | base String | generated | method-parameter
+com.histmersion.server.agents.Codex.ArgvModel | base String | generated | method-parameter
+com.histmersion.server.agents.Codex.ArgvResult | base String | generated | method-result
+com.histmersion.server.agents.Codex.ArgvSchemaFile | base String | generated | method-parameter
+com.histmersion.server.agents.Codex.ClientResultPart1 | base String | generated | method-result
+    def client(cfg: CodexConfig, rt: CliRuntime, ref: ModelRef): Either[com.histmersion.server.agents.Codex.ClientResultPart1, LlmClient] =
+com.histmersion.server.agents.Codex.EnvironmentEnvPart1 | base String | generated | method-parameter
+    def environment(cfg: CodexConfig, home: com.histmersion.server.agents.Codex.EnvironmentHome, token: Option[com.histmersion.server.agents.Codex.EnvironmentToken], env: jav
+com.histmersion.server.agents.Codex.EnvironmentEnvPart2 | base String | generated | method-parameter
+    def environment(cfg: CodexConfig, home: com.histmersion.server.agents.Codex.EnvironmentHome, token: Option[com.histmersion.server.agents.Codex.EnvironmentToken], env: jav
+com.histmersion.server.agents.Codex.EnvironmentHome | base String | generated | method-parameter
+    def environment(cfg: CodexConfig, home: com.histmersion.server.agents.Codex.EnvironmentHome, token: Option[com.histmersion.server.agents.Codex.EnvironmentToken], env: jav
+com.histmersion.server.agents.Codex.EnvironmentToken | base String | generated | method-parameter
+    def environment(cfg: CodexConfig, home: com.histmersion.server.agents.Codex.EnvironmentHome, token: Option[com.histmersion.server.agents.Codex.EnvironmentToken], env: jav
+com.histmersion.server.agents.Codex.Home.MaybeRetainNowMs | base Long | generated | method-parameter
+    def maybeRetain(home: Path, cfg: CodexConfig, nowMs: com.histmersion.server.agents.Codex.Home.MaybeRetainNowMs = System.currentTimeMillis()): Unit =
+com.histmersion.server.agents.Codex.Home.Report.Deleted | base Int | original | constructor-parameter
+com.histmersion.server.agents.Codex.Home.Report.FreedBytes | base Long | original | constructor-parameter
+com.histmersion.server.agents.Codex.Home.Report.Problems | base String | original | constructor-parameter
+com.histmersion.server.agents.Codex.Home.Report.Skipped | base String | original | constructor-parameter
+com.histmersion.server.agents.Codex.Home.Report.SummaryResult | base String | generated | method-result
+    def summary: com.histmersion.server.agents.Codex.Home.Report.SummaryResult = skipped.getOrElse {
+com.histmersion.server.agents.Codex.Home.Report.VacuumedPart1 | base String | original | constructor-parameter
+com.histmersion.server.agents.Codex.Home.Report.VacuumedPart2 | base Long | original | constructor-parameter
+com.histmersion.server.agents.Codex.Home.Report.VacuumedPart3 | base Long | original | constructor-parameter
+com.histmersion.server.agents.Codex.Home.RetainNowMs | base Long | generated | method-parameter
+com.histmersion.server.agents.Codex.Home.RetainRunArg1 | base String | generated | method-parameter
+com.histmersion.server.agents.Codex.Home.RetainRunResultPart1 | base String | generated | method-parameter
+com.histmersion.server.agents.Codex.Home.RetainRunResultPart2 | base Int | generated | method-parameter
+com.histmersion.server.agents.Codex.Home.RunCommandArgv | base String | generated | method-parameter
+    def runCommand(argv: List[com.histmersion.server.agents.Codex.Home.RunCommandArgv]): Either[com.histmersion.server.agents.Codex.Home.RunCommandResultPart1, com.histmersio
+com.histmersion.server.agents.Codex.Home.RunCommandResultPart1 | base String | generated | method-result
+    def runCommand(argv: List[com.histmersion.server.agents.Codex.Home.RunCommandArgv]): Either[com.histmersion.server.agents.Codex.Home.RunCommandResultPart1, com.histmersio
+com.histmersion.server.agents.Codex.Home.RunCommandResultPart2 | base Int | generated | method-result
+    def runCommand(argv: List[com.histmersion.server.agents.Codex.Home.RunCommandArgv]): Either[com.histmersion.server.agents.Codex.Home.RunCommandResultPart1, com.histmersio
+com.histmersion.server.agents.Codex.OutputSchemaJsonResult | base String | generated | method-result
+    def outputSchemaJson(s: ResponseSchema[?]): com.histmersion.server.agents.Codex.OutputSchemaJsonResult = StrictJsonSchema(schema(s)).noSpaces
+com.histmersion.server.agents.Codex.ParseError | base String | generated | variable
+    var error: Option[com.histmersion.server.agents.Codex.ParseError] = None
+com.histmersion.server.agents.Codex.ParseFinalText | base String | generated | variable
+    var finalText: Option[com.histmersion.server.agents.Codex.ParseFinalText] = None
+com.histmersion.server.agents.Codex.ParseLines | base String | generated | method-parameter
+    def parse(lines: List[com.histmersion.server.agents.Codex.ParseLines]): CliOutcome =
+com.histmersion.server.agents.Codex.SchemaJsonResult | base String | generated | method-result
+    def schemaJson(s: ResponseSchema[?]): com.histmersion.server.agents.Codex.SchemaJsonResult = schema(s).noSpaces
+com.histmersion.server.agents.HostAiProvider.Plugin | base String | original | constructor-parameter
+    final case class HostAiProvider(plugin: HostAiProvider.Plugin, kind: ProviderKind) extends AiProvider, HostOwned:
+com.histmersion.server.agents.HostAiProvider.TitleResult | base String | generated | method-result
+    def title: com.histmersion.server.agents.HostAiProvider.TitleResult = BuiltinAi.titles.getOrElse(kind, kind.wire)
+com.histmersion.server.agents.Opencode.ArgvAgent | base String | generated | method-parameter
+    def argv(cfg: OpencodeConfig, model: com.histmersion.server.agents.Opencode.ArgvModel, agent: com.histmersion.server.agents.Opencode.ArgvAgent, dir: com.histmersion.serve
+com.histmersion.server.agents.Opencode.ArgvDir | base String | generated | method-parameter
+    def argv(cfg: OpencodeConfig, model: com.histmersion.server.agents.Opencode.ArgvModel, agent: com.histmersion.server.agents.Opencode.ArgvAgent, dir: com.histmersion.serve
+com.histmersion.server.agents.Opencode.ArgvModel | base String | generated | method-parameter
+    def argv(cfg: OpencodeConfig, model: com.histmersion.server.agents.Opencode.ArgvModel, agent: com.histmersion.server.agents.Opencode.ArgvAgent, dir: com.histmersion.serve
+com.histmersion.server.agents.Opencode.ArgvResult | base String | generated | method-result
+    def argv(cfg: OpencodeConfig, model: com.histmersion.server.agents.Opencode.ArgvModel, agent: com.histmersion.server.agents.Opencode.ArgvAgent, dir: com.histmersion.serve
+com.histmersion.server.agents.Opencode.ClientResultPart1 | base String | generated | method-result
+    def client(cfg: OpencodeConfig, rt: CliRuntime, ref: ModelRef): Either[com.histmersion.server.agents.Opencode.ClientResultPart1, LlmClient] =
+com.histmersion.server.agents.Opencode.EnvironmentConfigDir | base String | generated | method-parameter
+    def environment(xdg: com.histmersion.server.agents.Opencode.EnvironmentXdg, configDir: com.histmersion.server.agents.Opencode.EnvironmentConfigDir, token: Option[com.hist
+com.histmersion.server.agents.Opencode.EnvironmentEnvPart1 | base String | generated | method-parameter
+    def environment(xdg: com.histmersion.server.agents.Opencode.EnvironmentXdg, configDir: com.histmersion.server.agents.Opencode.EnvironmentConfigDir, token: Option[com.hist
+com.histmersion.server.agents.Opencode.EnvironmentEnvPart2 | base String | generated | method-parameter
+    def environment(xdg: com.histmersion.server.agents.Opencode.EnvironmentXdg, configDir: com.histmersion.server.agents.Opencode.EnvironmentConfigDir, token: Option[com.hist
+com.histmersion.server.agents.Opencode.EnvironmentToken | base String | generated | method-parameter
+    def environment(xdg: com.histmersion.server.agents.Opencode.EnvironmentXdg, configDir: com.histmersion.server.agents.Opencode.EnvironmentConfigDir, token: Option[com.hist
+com.histmersion.server.agents.Opencode.EnvironmentXdg | base String | generated | method-parameter
+    def environment(xdg: com.histmersion.server.agents.Opencode.EnvironmentXdg, configDir: com.histmersion.server.agents.Opencode.EnvironmentConfigDir, token: Option[com.hist
+com.histmersion.server.agents.Opencode.ParseError | base String | generated | variable
+    var error: Option[com.histmersion.server.agents.Opencode.ParseError] = None
+com.histmersion.server.agents.Opencode.ParseFinalText | base String | generated | variable
+    var finalText: Option[com.histmersion.server.agents.Opencode.ParseFinalText] = None
+com.histmersion.server.agents.Opencode.ParseLines | base String | generated | method-parameter
+    def parse(lines: List[com.histmersion.server.agents.Opencode.ParseLines]): CliOutcome =
+com.histmersion.server.agents.Opencode.ParseStripT | base String | generated | method-parameter
+    def strip(t: com.histmersion.server.agents.Opencode.ParseStripT) = t.stripPrefix(s"${AgentDefinitions.McpServer}_")
+com.histmersion.server.agents.Opencode.SchemaNoteResult | base String | generated | method-result
+    def schemaNote(schema: com.histmersion.server.agents.Opencode.SchemaNoteSchema): com.histmersion.server.agents.Opencode.SchemaNoteResult =
+com.histmersion.server.agents.Opencode.SchemaNoteSchema | base String | generated | method-parameter
+    def schemaNote(schema: com.histmersion.server.agents.Opencode.SchemaNoteSchema): com.histmersion.server.agents.Opencode.SchemaNoteResult =
+com.histmersion.server.agents.PipelineWorkflow.DescribeResult | base String | generated | method-result
+    def describe: com.histmersion.server.agents.PipelineWorkflow.DescribeResult = pipeline.describe
+com.histmersion.server.agents.PipelineWorkflow.RunResultPart2 | base String | generated | method-result
+    def run(run: RunCtx): Either[Halt, com.histmersion.server.agents.PipelineWorkflow.RunResultPart2] = impl.run(run)
+com.histmersion.server.agents.PipelineWorkflow.VersionResult | base Int | generated | method-result
+    def version: com.histmersion.server.agents.PipelineWorkflow.VersionResult = pipeline.version

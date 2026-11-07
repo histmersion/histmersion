@@ -1,0 +1,154 @@
+## CONCEPTS NEARBY
+com.histmersion.util.basemap.Degrees (Double)
+com.histmersion.util.basemap.Degrees.PerPixel (Double)
+com.histmersion.util.basemap.DiskLru.Ext (String)
+com.histmersion.util.basemap.DiskLru.MaxBytesResult (Long)
+com.histmersion.util.basemap.GebcoPart.Name (String)
+com.histmersion.util.basemap.GebcoPart.Url (String)
+com.histmersion.util.basemap.GebcoPlan.EdgePart1 (Int)
+com.histmersion.util.basemap.GebcoPlan.EdgePart2 (Long)
+com.histmersion.util.basemap.GebcoPlan.EdgePart3 (Long)
+com.histmersion.util.basemap.GebcoPlan.MaxZoom (Int)
+com.histmersion.util.basemap.GebcoPlan.TilesPart1 (Long)
+com.histmersion.util.basemap.GebcoPlan.TilesPart2Part1 (Int)
+com.histmersion.util.basemap.GebcoPlan.TilesPart2Part2 (Long)
+com.histmersion.util.basemap.GebcoPlan.TilesPart2Part3 (Long)
+com.histmersion.util.basemap.GebcoSeaFloor.EtopoUrl (String)
+com.histmersion.util.basemap.GebcoSeaFloor.MaxRequestBytes (Long)
+
+## TYPES TO DECIDE
+com.histmersion.util.basemap.Degrees | base Double | original | constructor-parameter
+com.histmersion.util.basemap.DiskLru.BytesResult | base Long | generated | method-result
+    def bytes: com.histmersion.util.basemap.DiskLru.BytesResult = synchronized { load(); total }
+com.histmersion.util.basemap.DiskLru.ClearResult | base Long | generated | method-result
+    def clear(): com.histmersion.util.basemap.DiskLru.ClearResult = synchronized {
+com.histmersion.util.basemap.DiskLru.EntriesResult | base Long | generated | method-result
+    def entries: com.histmersion.util.basemap.DiskLru.EntriesResult = synchronized { load(); index.size.toLong }
+com.histmersion.util.basemap.DiskLru.Ext | base String | generated | constructor-parameter
+    final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytesResult, ext: DiskLru.Ext = "webp")(using clock: java.time.Clock):
+com.histmersion.util.basemap.DiskLru.FileAbsent | base Boolean | generated | method-parameter
+    private def file(key: com.histmersion.util.basemap.DiskLru.FileKey, absent: com.histmersion.util.basemap.DiskLru.FileAbsent): Store.Key =
+com.histmersion.util.basemap.DiskLru.FileKey | base String | generated | method-parameter
+    private def file(key: com.histmersion.util.basemap.DiskLru.FileKey, absent: com.histmersion.util.basemap.DiskLru.FileAbsent): Store.Key =
+com.histmersion.util.basemap.DiskLru.GetKey | base String | generated | method-parameter
+    def get(key: com.histmersion.util.basemap.DiskLru.GetKey): Option[Option[com.histmersion.util.basemap.DiskLru.GetResult]] = synchronized {
+com.histmersion.util.basemap.DiskLru.GetResult | base Array[Byte] | generated | method-result
+    def get(key: com.histmersion.util.basemap.DiskLru.GetKey): Option[Option[com.histmersion.util.basemap.DiskLru.GetResult]] = synchronized {
+com.histmersion.util.basemap.DiskLru.MaxBytesResult | base Long | generated | constructor-parameter
+    final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytesResult, ext: DiskLru.Ext = "webp")(using clock: java.time.Clock):
+com.histmersion.util.basemap.DiskLru.PutBytes | base Array[Byte] | generated | method-parameter
+    def put(key: com.histmersion.util.basemap.DiskLru.PutKey, bytes: Option[com.histmersion.util.basemap.DiskLru.PutBytes]): Unit = synchronized {
+com.histmersion.util.basemap.DiskLru.PutKey | base String | generated | method-parameter
+    def put(key: com.histmersion.util.basemap.DiskLru.PutKey, bytes: Option[com.histmersion.util.basemap.DiskLru.PutBytes]): Unit = synchronized {
+com.histmersion.util.basemap.GebcoPart.BytesResult | base Long | generated | method-result
+    def bytes: com.histmersion.util.basemap.GebcoPart.BytesResult = runs.map(_.length).sum
+com.histmersion.util.basemap.GebcoPart.Name | base String | original | constructor-parameter
+    final case class GebcoPart(name: GebcoPart.Name, url: GebcoPart.Url, grid: GeoTiffGrid, window: GridWindow, runs: List[RowRun]):
+com.histmersion.util.basemap.GebcoPart.Url | base String | original | constructor-parameter
+    final case class GebcoPart(name: GebcoPart.Name, url: GebcoPart.Url, grid: GeoTiffGrid, window: GridWindow, runs: List[RowRun]):
+com.histmersion.util.basemap.GebcoPlan.EdgePart1 | base Int | original | constructor-parameter
+com.histmersion.util.basemap.GebcoPlan.EdgePart2 | base Long | original | constructor-parameter
+com.histmersion.util.basemap.GebcoPlan.EdgePart3 | base Long | original | constructor-parameter
+com.histmersion.util.basemap.GebcoPlan.MaxZoom | base Int | original | alias,constructor-parameter
+com.histmersion.util.basemap.GebcoPlan.ReadBytesResult | base Long | generated | method-result
+    def readBytes: com.histmersion.util.basemap.GebcoPlan.ReadBytesResult = parts.map(_.bytes).sum
+com.histmersion.util.basemap.GebcoPlan.TilesPart1 | base Long | original | constructor-parameter
+com.histmersion.util.basemap.GebcoPlan.TilesPart2Part1 | base Int | original | constructor-parameter
+com.histmersion.util.basemap.GebcoPlan.TilesPart2Part2 | base Long | original | constructor-parameter
+com.histmersion.util.basemap.GebcoPlan.TilesPart2Part3 | base Long | original | constructor-parameter
+com.histmersion.util.basemap.GebcoSeaFloor.BoundsLatT | base Double | generated | method-parameter
+    def lat(t: com.histmersion.util.basemap.GebcoSeaFloor.BoundsLatT) = math.toDegrees(math.atan(math.sinh(math.Pi * (1 - 2 * t / n))))
+com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart1 | base Double | generated | method-result
+    def bounds(z: com.histmersion.util.basemap.GebcoSeaFloor.BoundsZ, x: com.histmersion.util.basemap.GebcoSeaFloor.BoundsX, y: com.histmersion.util.basemap.GebcoSeaFloor.Bou
+com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart2 | base Double | generated | method-result
+    def bounds(z: com.histmersion.util.basemap.GebcoSeaFloor.BoundsZ, x: com.histmersion.util.basemap.GebcoSeaFloor.BoundsX, y: com.histmersion.util.basemap.GebcoSeaFloor.Bou
+com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart3 | base Double | generated | method-result
+    def bounds(z: com.histmersion.util.basemap.GebcoSeaFloor.BoundsZ, x: com.histmersion.util.basemap.GebcoSeaFloor.BoundsX, y: com.histmersion.util.basemap.GebcoSeaFloor.Bou
+com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart4 | base Double | generated | method-result
+    def bounds(z: com.histmersion.util.basemap.GebcoSeaFloor.BoundsZ, x: com.histmersion.util.basemap.GebcoSeaFloor.BoundsX, y: com.histmersion.util.basemap.GebcoSeaFloor.Bou
+com.histmersion.util.basemap.GebcoSeaFloor.BoundsX | base Long | generated | method-parameter
+    def bounds(z: com.histmersion.util.basemap.GebcoSeaFloor.BoundsZ, x: com.histmersion.util.basemap.GebcoSeaFloor.BoundsX, y: com.histmersion.util.basemap.GebcoSeaFloor.Bou
+com.histmersion.util.basemap.GebcoSeaFloor.BoundsY | base Long | generated | method-parameter
+    def bounds(z: com.histmersion.util.basemap.GebcoSeaFloor.BoundsZ, x: com.histmersion.util.basemap.GebcoSeaFloor.BoundsX, y: com.histmersion.util.basemap.GebcoSeaFloor.Bou
+com.histmersion.util.basemap.GebcoSeaFloor.BoundsZ | base Int | generated | method-parameter
+    def bounds(z: com.histmersion.util.basemap.GebcoSeaFloor.BoundsZ, x: com.histmersion.util.basemap.GebcoSeaFloor.BoundsX, y: com.histmersion.util.basemap.GebcoSeaFloor.Bou
+com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg1 | base Long | generated | method-parameter
+    def build(p: GebcoPlan, work: Store, add: (com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg1, com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg2) => Unit, note
+com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg2 | base Array[Byte] | generated | method-parameter
+    def build(p: GebcoPlan, work: Store, add: (com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg1, com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg2) => Unit, note
+com.histmersion.util.basemap.GebcoSeaFloor.BuildEtopoPart2 | base Int | generated | value
+    lazy val etopo: Option[(Array[Float], com.histmersion.util.basemap.GebcoSeaFloor.BuildEtopoPart2)] =
+com.histmersion.util.basemap.GebcoSeaFloor.BuildNoteArg1 | base String | generated | method-parameter
+    def build(p: GebcoPlan, work: Store, add: (com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg1, com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg2) => Unit, note
+com.histmersion.util.basemap.GebcoSeaFloor.BuildResultPart1 | base String | generated | method-result
+    def build(p: GebcoPlan, work: Store, add: (com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg1, com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg2) => Unit, note
+com.histmersion.util.basemap.GebcoSeaFloor.BuildResultPart2 | base Long | generated | method-result
+    def build(p: GebcoPlan, work: Store, add: (com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg1, com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg2) => Unit, note
+com.histmersion.util.basemap.GebcoSeaFloor.DescribeResult | base String | generated | method-result
+    def describe(p: GebcoPlan): com.histmersion.util.basemap.GebcoSeaFloor.DescribeResult =
+com.histmersion.util.basemap.GebcoSeaFloor.DownloadGapMs | base Long | generated | method-parameter
+    def download(p: GebcoPlan, work: Store, gapMs: com.histmersion.util.basemap.GebcoSeaFloor.DownloadGapMs, note: com.histmersion.util.basemap.GebcoSeaFloor.DownloadNoteArg1
+com.histmersion.util.basemap.GebcoSeaFloor.DownloadNoteArg1 | base String | generated | method-parameter
+    def download(p: GebcoPlan, work: Store, gapMs: com.histmersion.util.basemap.GebcoSeaFloor.DownloadGapMs, note: com.histmersion.util.basemap.GebcoSeaFloor.DownloadNoteArg1
+com.histmersion.util.basemap.GebcoSeaFloor.DownloadResultPart1 | base String | generated | method-result
+    def download(p: GebcoPlan, work: Store, gapMs: com.histmersion.util.basemap.GebcoSeaFloor.DownloadGapMs, note: com.histmersion.util.basemap.GebcoSeaFloor.DownloadNoteArg1
+com.histmersion.util.basemap.GebcoSeaFloor.EtopoUrl | base String | generated | constructor-parameter
+    final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: GebcoSeaFloor.EtopoUrl, http: RangeHttp, maxRequestBytes: GebcoSeaFloor.MaxRequestBytes):
+com.histmersion.util.basemap.GebcoSeaFloor.InsideResult | base Boolean | generated | method-result
+    def inside(b: BBox, t: (com.histmersion.util.basemap.GebcoSeaFloor.InsideTPart1, com.histmersion.util.basemap.GebcoSeaFloor.InsideTPart2, com.histmersion.util.basemap.Geb
+com.histmersion.util.basemap.GebcoSeaFloor.InsideTPart1 | base Int | generated | method-parameter
+    def inside(b: BBox, t: (com.histmersion.util.basemap.GebcoSeaFloor.InsideTPart1, com.histmersion.util.basemap.GebcoSeaFloor.InsideTPart2, com.histmersion.util.basemap.Geb
+com.histmersion.util.basemap.GebcoSeaFloor.InsideTPart2 | base Long | generated | method-parameter
+    def inside(b: BBox, t: (com.histmersion.util.basemap.GebcoSeaFloor.InsideTPart1, com.histmersion.util.basemap.GebcoSeaFloor.InsideTPart2, com.histmersion.util.basemap.Geb
+com.histmersion.util.basemap.GebcoSeaFloor.InsideTPart3 | base Long | generated | method-parameter
+    def inside(b: BBox, t: (com.histmersion.util.basemap.GebcoSeaFloor.InsideTPart1, com.histmersion.util.basemap.GebcoSeaFloor.InsideTPart2, com.histmersion.util.basemap.Geb
+com.histmersion.util.basemap.GebcoSeaFloor.MaxRequestBytes | base Long | generated | constructor-parameter
+    final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: GebcoSeaFloor.EtopoUrl, http: RangeHttp, maxRequestBytes: GebcoSeaFloor.MaxRequestBytes):
+com.histmersion.util.basemap.GebcoSeaFloor.NeedsResult | base Long | generated | method-result
+    def needs(p: GebcoPlan): com.histmersion.util.basemap.GebcoSeaFloor.NeedsResult = p.readBytes + p.tiles.size * PngGuess
+com.histmersion.util.basemap.GebcoSeaFloor.PlanResultPart1 | base String | generated | method-result
+    def plan(bbox: BBox, maxZoom: com.histmersion.util.basemap.GebcoSeaFloor.PlanMaxZoom): Either[com.histmersion.util.basemap.GebcoSeaFloor.PlanResultPart1, GebcoPlan] =
+com.histmersion.util.basemap.GebcoSeaFloor.Rows.AtCol | base Int | generated | method-parameter
+    def at(col: com.histmersion.util.basemap.GebcoSeaFloor.Rows.AtCol, row: com.histmersion.util.basemap.GebcoSeaFloor.Rows.AtRow): Option[com.histmersion.util.basemap.GebcoS
+com.histmersion.util.basemap.GebcoSeaFloor.Rows.AtResult | base Short | generated | method-result
+    def at(col: com.histmersion.util.basemap.GebcoSeaFloor.Rows.AtCol, row: com.histmersion.util.basemap.GebcoSeaFloor.Rows.AtRow): Option[com.histmersion.util.basemap.GebcoS
+com.histmersion.util.basemap.GebcoSeaFloor.Rows.AtRow | base Int | generated | method-parameter
+    def at(col: com.histmersion.util.basemap.GebcoSeaFloor.Rows.AtCol, row: com.histmersion.util.basemap.GebcoSeaFloor.Rows.AtRow): Option[com.histmersion.util.basemap.GebcoS
+com.histmersion.util.basemap.GebcoSeaFloor.Rows.ByRow | base Array[Int] | generated | value
+    private val byRow: com.histmersion.util.basemap.GebcoSeaFloor.Rows.ByRow =
+com.histmersion.util.basemap.GebcoSeaFloor.SamplePx | base Int | generated | method-parameter
+    def sample(rows: List[Rows], z: com.histmersion.util.basemap.GebcoSeaFloor.SampleZ, x: com.histmersion.util.basemap.GebcoSeaFloor.SampleX, y: com.histmersion.util.basemap
+com.histmersion.util.basemap.GebcoSeaFloor.SamplePy | base Int | generated | method-parameter
+    def sample(rows: List[Rows], z: com.histmersion.util.basemap.GebcoSeaFloor.SampleZ, x: com.histmersion.util.basemap.GebcoSeaFloor.SampleX, y: com.histmersion.util.basemap
+com.histmersion.util.basemap.GebcoSeaFloor.SampleResult | base Float | generated | method-result
+    def sample(rows: List[Rows], z: com.histmersion.util.basemap.GebcoSeaFloor.SampleZ, x: com.histmersion.util.basemap.GebcoSeaFloor.SampleX, y: com.histmersion.util.basemap
+com.histmersion.util.basemap.GebcoSeaFloor.SampleSize | base Int | generated | method-parameter
+    def sample(rows: List[Rows], z: com.histmersion.util.basemap.GebcoSeaFloor.SampleZ, x: com.histmersion.util.basemap.GebcoSeaFloor.SampleX, y: com.histmersion.util.basemap
+com.histmersion.util.basemap.GebcoSeaFloor.SampleX | base Long | generated | method-parameter
+    def sample(rows: List[Rows], z: com.histmersion.util.basemap.GebcoSeaFloor.SampleZ, x: com.histmersion.util.basemap.GebcoSeaFloor.SampleX, y: com.histmersion.util.basemap
+com.histmersion.util.basemap.GebcoSeaFloor.SampleY | base Long | generated | method-parameter
+    def sample(rows: List[Rows], z: com.histmersion.util.basemap.GebcoSeaFloor.SampleZ, x: com.histmersion.util.basemap.GebcoSeaFloor.SampleX, y: com.histmersion.util.basemap
+com.histmersion.util.basemap.GebcoSeaFloor.SampleZ | base Int | generated | method-parameter
+    def sample(rows: List[Rows], z: com.histmersion.util.basemap.GebcoSeaFloor.SampleZ, x: com.histmersion.util.basemap.GebcoSeaFloor.SampleX, y: com.histmersion.util.basemap
+com.histmersion.util.basemap.GebcoSeaFloor.TilesMaxZoom | base Int | generated | method-parameter
+    def tiles(b: BBox, maxZoom: com.histmersion.util.basemap.GebcoSeaFloor.TilesMaxZoom): Vector[(com.histmersion.util.basemap.GebcoSeaFloor.TilesResultPart1, (com.histmersio
+com.histmersion.util.basemap.GebcoSeaFloor.TilesResultPart1 | base Long | generated | method-result
+    def tiles(b: BBox, maxZoom: com.histmersion.util.basemap.GebcoSeaFloor.TilesMaxZoom): Vector[(com.histmersion.util.basemap.GebcoSeaFloor.TilesResultPart1, (com.histmersio
+com.histmersion.util.basemap.GebcoSeaFloor.TilesResultPart2Part1 | base Int | generated | method-result
+    def tiles(b: BBox, maxZoom: com.histmersion.util.basemap.GebcoSeaFloor.TilesMaxZoom): Vector[(com.histmersion.util.basemap.GebcoSeaFloor.TilesResultPart1, (com.histmersio
+com.histmersion.util.basemap.GebcoSeaFloor.TilesResultPart2Part2 | base Long | generated | method-result
+    def tiles(b: BBox, maxZoom: com.histmersion.util.basemap.GebcoSeaFloor.TilesMaxZoom): Vector[(com.histmersion.util.basemap.GebcoSeaFloor.TilesResultPart1, (com.histmersio
+com.histmersion.util.basemap.GebcoSeaFloor.TilesResultPart2Part3 | base Long | generated | method-result
+    def tiles(b: BBox, maxZoom: com.histmersion.util.basemap.GebcoSeaFloor.TilesMaxZoom): Vector[(com.histmersion.util.basemap.GebcoSeaFloor.TilesResultPart1, (com.histmersio
+com.histmersion.util.basemap.GebcoSeaFloor.UrlOfDeg | base Int | generated | method-parameter
+    def urlOf(template: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfTemplate, west: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfWest, south: com.histmersion.util.base
+com.histmersion.util.basemap.GebcoSeaFloor.UrlOfFV | base Int | generated | method-parameter
+    def f(v: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfFV) = String.format(java.util.Locale.ROOT, "%.1f", v.toDouble)
+com.histmersion.util.basemap.GebcoSeaFloor.UrlOfResult | base String | generated | method-result
+    def urlOf(template: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfTemplate, west: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfWest, south: com.histmersion.util.base
+com.histmersion.util.basemap.GebcoSeaFloor.UrlOfSouth | base Int | generated | method-parameter
+    def urlOf(template: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfTemplate, west: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfWest, south: com.histmersion.util.base
+com.histmersion.util.basemap.GebcoSeaFloor.UrlOfTemplate | base String | generated | method-parameter
+    def urlOf(template: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfTemplate, west: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfWest, south: com.histmersion.util.base
+com.histmersion.util.basemap.GebcoSeaFloor.UrlOfWest | base Int | generated | method-parameter
+    def urlOf(template: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfTemplate, west: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfWest, south: com.histmersion.util.base

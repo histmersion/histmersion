@@ -1,0 +1,13 @@
+com.histmersion.domain.media.MediaTools.ApplySourceExistsArg1	com.histmersion.domain.library.Citekey
+com.histmersion.domain.media.MediaTools.ApplySourceExistsResult	native
+com.histmersion.domain.media.MediaTools.AssetLinksInput.Asset	keep
+com.histmersion.domain.media.MediaTools.AssetLinksInput.Notes	keep
+com.histmersion.domain.media.MediaTools.AssetLinksInput.Relation	keep
+com.histmersion.domain.media.MediaTools.AssetLinksInput.TargetId	keep
+com.histmersion.domain.media.MediaTools.AssetLinksInput.TargetType	keep
+com.histmersion.domain.media.MediaTools.AssetLinksInput.Xywh	keep
+com.histmersion.domain.media.MediaTools.DeleteAssetLinkInput.Id	keep
+com.histmersion.domain.media.MediaTools.PatchAssetInput.Caption	keep
+com.histmersion.domain.media.MediaTools.PatchAssetInput.Kind	keep
+com.histmersion.domain.media.MediaTools.PatchAssetInput.License	keep
+com.histmersion.domain.media.MediaTools.PatchAssetInput.Name	keep

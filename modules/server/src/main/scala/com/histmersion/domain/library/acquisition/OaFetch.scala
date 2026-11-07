@@ -10,10 +10,10 @@ import com.histmersion.util.plugins.Plugins
   * runs the chain of its own plugin generation, which may hold more fetchers or fewer.
   */
 object OaFetch:
-  type Md5Result = Md5Result.T
-  object Md5Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Md5B = Md5B.T
-  object Md5B extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Bytes = Bytes.T
+  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Md5 = Md5.T
+  object Md5 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(loaded: LoadedConfig, http: Http, core: CoreBudget): FetchChain =
     val g = Plugins.fetchers(
@@ -27,5 +27,5 @@ object OaFetch:
   /** Hex MD5 of a download, to compare with the one a PMC dataset record or a Zenodo record states; `None` when the
     * runtime offers no MD5 (the check is then skipped, never failed).
     */
-  def md5(b: com.histmersion.domain.library.acquisition.OaFetch.Md5B): Option[com.histmersion.domain.library.acquisition.OaFetch.Md5Result] =
+  def md5(b: com.histmersion.domain.library.acquisition.OaFetch.Bytes): Option[com.histmersion.domain.library.acquisition.OaFetch.Md5] =
     scala.util.Try(java.security.MessageDigest.getInstance("MD5").digest(b).map("%02x".format(_)).mkString).toOption

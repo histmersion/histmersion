@@ -1,0 +1,188 @@
+## CONCEPTS NEARBY
+com.histmersion.server.agents.PlanPools.ReadRequestsValue (String)
+com.histmersion.server.agents.PlanPools.Seams.ReadCodexArg1 (String)
+com.histmersion.server.agents.PlanPools.Seams.ReadCodexArg3 (Int)
+com.histmersion.server.agents.PlanPools.Seams.ReadCodexResultPart1 (String)
+com.histmersion.server.agents.PlanPools.Seams.Refreshes (Boolean)
+com.histmersion.server.agents.PlanPools.Seams.RunCommandArg1 (String)
+com.histmersion.server.agents.PlanPools.Seams.RunCommandArg2Key (String)
+com.histmersion.server.agents.PlanPools.Seams.RunCommandArg2Value (String)
+com.histmersion.server.agents.PlanPools.Seams.RunCommandArg3 (Int)
+com.histmersion.server.agents.PlanPools.Seams.RunCommandResultPart1 (String)
+com.histmersion.server.agents.PlanPools.Seams.RunCommandResultPart2Part1 (Int)
+com.histmersion.server.agents.PlanPools.Seams.RunCommandResultPart2Part2 (String)
+com.histmersion.server.agents.PlanPools.Seams.RunProbeArg1 (String)
+com.histmersion.server.agents.PlanPools.Seams.RunProbeArg2Arg1Key (String)
+com.histmersion.server.agents.PlanPools.Seams.RunProbeArg2Arg1Value (String)
+com.histmersion.server.agents.PlanPools.Seams.RunProbeArg3 (String)
+com.histmersion.server.agents.PlanPools.Seams.RunProbeArg4 (Int)
+com.histmersion.server.agents.PlanPools.Seams.RunProbeResultPart1 (String)
+com.histmersion.server.agents.Refreshed.Detail (String)
+com.histmersion.server.agents.Refreshed.Mode (String)
+com.histmersion.server.agents.Refreshed.Ok (Boolean)
+
+## TYPES TO DECIDE
+com.histmersion.server.agents.PlanPools.BlockedModel | base String | generated | method-parameter
+    def blocked(p: PoolId, model: Option[com.histmersion.server.agents.PlanPools.BlockedModel]): Option[(com.histmersion.server.agents.PlanPools.BlockedResultPart1, Option[co
+com.histmersion.server.agents.PlanPools.BlockedResultPart1 | base String | generated | method-result
+    def blocked(p: PoolId, model: Option[com.histmersion.server.agents.PlanPools.BlockedModel]): Option[(com.histmersion.server.agents.PlanPools.BlockedResultPart1, Option[co
+com.histmersion.server.agents.PlanPools.BlockedResultPart2 | base Long | generated | method-result
+    def blocked(p: PoolId, model: Option[com.histmersion.server.agents.PlanPools.BlockedModel]): Option[(com.histmersion.server.agents.PlanPools.BlockedResultPart1, Option[co
+com.histmersion.server.agents.PlanPools.ClaudeEnvResultPart1 | base String | generated | method-result
+    def claudeEnv(cc: com.histmersion.config.ClaudeCodeConfig)(using com.histmersion.util.system.JvmHome): Map[com.histmersion.server.agents.PlanPools.ClaudeEnvResultPart1, O
+com.histmersion.server.agents.PlanPools.ClaudeEnvResultPart2 | base String | generated | method-result
+    def claudeEnv(cc: com.histmersion.config.ClaudeCodeConfig)(using com.histmersion.util.system.JvmHome): Map[com.histmersion.server.agents.PlanPools.ClaudeEnvResultPart1, O
+com.histmersion.server.agents.PlanPools.ClaudeLoginOut | base String | generated | method-parameter
+    def claudeLogin(out: com.histmersion.server.agents.PlanPools.ClaudeLoginOut, useApiKey: com.histmersion.server.agents.PlanPools.ClaudeLoginUseApiKey): Login =
+com.histmersion.server.agents.PlanPools.ClaudeLoginUseApiKey | base Boolean | generated | method-parameter
+    def claudeLogin(out: com.histmersion.server.agents.PlanPools.ClaudeLoginOut, useApiKey: com.histmersion.server.agents.PlanPools.ClaudeLoginUseApiKey): Login =
+com.histmersion.server.agents.PlanPools.ClaudeModeResultPart1 | base String | generated | method-result
+    private def claudeMode: Either[com.histmersion.server.agents.PlanPools.ClaudeModeResultPart1, RefreshMode] =
+com.histmersion.server.agents.PlanPools.ClaudeReadingsNow | base Long | generated | method-parameter
+    def claudeReadings(info: Json, source: Source, now: com.histmersion.server.agents.PlanPools.ClaudeReadingsNow): List[Reading] =
+com.histmersion.server.agents.PlanPools.CodexLoginCommand | base String | generated | method-parameter
+    def codexLogin(home: Option[java.nio.file.Path], command: com.histmersion.server.agents.PlanPools.CodexLoginCommand): Login = home match
+com.histmersion.server.agents.PlanPools.CodexReadingsNow | base Long | generated | method-parameter
+    def codexReadings(result: Json, now: com.histmersion.server.agents.PlanPools.CodexReadingsNow): (List[Reading], Option[(com.histmersion.server.agents.PlanPools.CodexReadi
+com.histmersion.server.agents.PlanPools.CodexReadingsResultPart2Part1 | base String | generated | method-result
+    def codexReadings(result: Json, now: com.histmersion.server.agents.PlanPools.CodexReadingsNow): (List[Reading], Option[(com.histmersion.server.agents.PlanPools.CodexReadi
+com.histmersion.server.agents.PlanPools.CodexReadingsResultPart2Part2 | base Long | generated | method-result
+    def codexReadings(result: Json, now: com.histmersion.server.agents.PlanPools.CodexReadingsNow): (List[Reading], Option[(com.histmersion.server.agents.PlanPools.CodexReadi
+com.histmersion.server.agents.PlanPools.CodexReadingsResultPart3 | base String | generated | method-result
+    def codexReadings(result: Json, now: com.histmersion.server.agents.PlanPools.CodexReadingsNow): (List[Reading], Option[(com.histmersion.server.agents.PlanPools.CodexReadi
+com.histmersion.server.agents.PlanPools.DecideModel | base String | generated | method-parameter
+com.histmersion.server.agents.PlanPools.DecideNow | base Long | generated | method-parameter
+com.histmersion.server.agents.PlanPools.FloorsResultPart2 | base String | generated | method-result
+    def floors(p: PoolId): (Floors, com.histmersion.server.agents.PlanPools.FloorsResultPart2, Option[com.histmersion.server.agents.PlanPools.FloorsResultPart3]) =
+com.histmersion.server.agents.PlanPools.FloorsResultPart3 | base String | generated | method-result
+    def floors(p: PoolId): (Floors, com.histmersion.server.agents.PlanPools.FloorsResultPart2, Option[com.histmersion.server.agents.PlanPools.FloorsResultPart3]) =
+com.histmersion.server.agents.PlanPools.GuardNow | base Long | generated | method-parameter
+    def guard(report: ModReport, now: com.histmersion.server.agents.PlanPools.GuardNow = System.currentTimeMillis()): GuardAnswer =
+com.histmersion.server.agents.PlanPools.HeldResult | base Boolean | generated | method-result
+    def held(p: PoolId): com.histmersion.server.agents.PlanPools.HeldResult = Transactor(ds).read(PlanQuotaRepo.pool(p)).held
+com.histmersion.server.agents.PlanPools.HoldOn | base Boolean | generated | method-parameter
+    def hold(p: PoolId, on: com.histmersion.server.agents.PlanPools.HoldOn): Unit = Transactor(ds).transact(PlanQuotaRepo.setHold(p, on))
+com.histmersion.server.agents.PlanPools.LastObservedResult | base Long | generated | method-result
+    def lastObserved(p: PoolId): Option[com.histmersion.server.agents.PlanPools.LastObservedResult] = Transactor(ds).read(PlanQuotaRepo.readings(p)).map(_.observedAt).maxOpti
+com.histmersion.server.agents.PlanPools.LoginForce | base Boolean | generated | method-parameter
+    def login(p: PoolId, now: com.histmersion.server.agents.PlanPools.LoginNow = System.currentTimeMillis(), force: com.histmersion.server.agents.PlanPools.LoginForce = false
+com.histmersion.server.agents.PlanPools.LoginGatesResult | base Boolean | generated | method-result
+    def loginGates(p: PoolId, m: ModelRef): com.histmersion.server.agents.PlanPools.LoginGatesResult = (p, m.provider) match
+com.histmersion.server.agents.PlanPools.LoginNow | base Long | generated | method-parameter
+    def login(p: PoolId, now: com.histmersion.server.agents.PlanPools.LoginNow = System.currentTimeMillis(), force: com.histmersion.server.agents.PlanPools.LoginForce = false
+com.histmersion.server.agents.PlanPools.ModReadingsNow | base Long | generated | method-parameter
+    def modReadings(ws: List[ModWindow], source: Source, now: com.histmersion.server.agents.PlanPools.ModReadingsNow): List[Reading] =
+com.histmersion.server.agents.PlanPools.NeedModel | base String | generated | method-parameter
+    def need(p: PoolId, model: Option[com.histmersion.server.agents.PlanPools.NeedModel], now: com.histmersion.server.agents.PlanPools.NeedNow): Option[RefreshNeed] =
+com.histmersion.server.agents.PlanPools.NeedNow | base Long | generated | method-parameter
+    def need(p: PoolId, model: Option[com.histmersion.server.agents.PlanPools.NeedModel], now: com.histmersion.server.agents.PlanPools.NeedNow): Option[RefreshNeed] =
+com.histmersion.server.agents.PlanPools.NumK | base String | generated | method-parameter
+    private def num(j: Json, k: com.histmersion.server.agents.PlanPools.NumK): Option[com.histmersion.server.agents.PlanPools.NumResult] =
+com.histmersion.server.agents.PlanPools.NumResult | base Double | generated | method-result
+    private def num(j: Json, k: com.histmersion.server.agents.PlanPools.NumK): Option[com.histmersion.server.agents.PlanPools.NumResult] =
+com.histmersion.server.agents.PlanPools.PaidResult | base Boolean | generated | method-result
+    def paid(m: ModelRef): com.histmersion.server.agents.PlanPools.PaidResult = PlanQuota.paid(m, cfg.logins)
+com.histmersion.server.agents.PlanPools.PollForce | base Boolean | generated | method-parameter
+    def poll(now: com.histmersion.server.agents.PlanPools.PollNow, force: com.histmersion.server.agents.PlanPools.PollForce = false): Option[com.histmersion.server.agents.Pla
+com.histmersion.server.agents.PlanPools.PollNow | base Long | generated | method-parameter
+    def poll(now: com.histmersion.server.agents.PlanPools.PollNow, force: com.histmersion.server.agents.PlanPools.PollForce = false): Option[com.histmersion.server.agents.Pla
+com.histmersion.server.agents.PlanPools.PollResult | base String | generated | method-result
+    def poll(now: com.histmersion.server.agents.PlanPools.PollNow, force: com.histmersion.server.agents.PlanPools.PollForce = false): Option[com.histmersion.server.agents.Pla
+com.histmersion.server.agents.PlanPools.PoolCfgResultPart1 | base String | generated | method-result
+    private def poolCfg(p: PoolId): (com.histmersion.server.agents.PlanPools.PoolCfgResultPart1, com.histmersion.server.agents.PlanPools.PoolCfgResultPart2) = p match
+com.histmersion.server.agents.PlanPools.PoolCfgResultPart2 | base Int | generated | method-result
+    private def poolCfg(p: PoolId): (com.histmersion.server.agents.PlanPools.PoolCfgResultPart1, com.histmersion.server.agents.PlanPools.PoolCfgResultPart2) = p match
+com.histmersion.server.agents.PlanPools.ProbeReadingsCooldownMinutes | base Int | generated | method-parameter
+    def probeReadings(run: CliProcess.Run, now: com.histmersion.server.agents.PlanPools.ProbeReadingsNow, cooldownMinutes: com.histmersion.server.agents.PlanPools.ProbeReadin
+com.histmersion.server.agents.PlanPools.ProbeReadingsNow | base Long | generated | method-parameter
+    def probeReadings(run: CliProcess.Run, now: com.histmersion.server.agents.PlanPools.ProbeReadingsNow, cooldownMinutes: com.histmersion.server.agents.PlanPools.ProbeReadin
+com.histmersion.server.agents.PlanPools.ProbeReadingsResultPart1 | base String | generated | method-result
+    def probeReadings(run: CliProcess.Run, now: com.histmersion.server.agents.PlanPools.ProbeReadingsNow, cooldownMinutes: com.histmersion.server.agents.PlanPools.ProbeReadin
+com.histmersion.server.agents.PlanPools.ReadCodexCommand | base String | generated | method-parameter
+    def readCodex(command: com.histmersion.server.agents.PlanPools.ReadCodexCommand, home: java.nio.file.Path, timeoutSeconds: com.histmersion.server.agents.PlanPools.ReadCod
+com.histmersion.server.agents.PlanPools.ReadCodexResultPart1 | base String | generated | method-result
+    def readCodex(command: com.histmersion.server.agents.PlanPools.ReadCodexCommand, home: java.nio.file.Path, timeoutSeconds: com.histmersion.server.agents.PlanPools.ReadCod
+com.histmersion.server.agents.PlanPools.ReadCodexTimeoutSeconds | base Int | generated | method-parameter
+    def readCodex(command: com.histmersion.server.agents.PlanPools.ReadCodexCommand, home: java.nio.file.Path, timeoutSeconds: com.histmersion.server.agents.PlanPools.ReadCod
+com.histmersion.server.agents.PlanPools.ReadRequestsValue | base String | original | alias
+com.histmersion.server.agents.PlanPools.RefreshModeResult | base String | generated | method-result
+    def refreshMode(p: PoolId): Option[com.histmersion.server.agents.PlanPools.RefreshModeResult] = p match
+com.histmersion.server.agents.PlanPools.RefreshNow | base Long | generated | method-parameter
+    def refresh(now: com.histmersion.server.agents.PlanPools.RefreshNow): Unit = { val _ = poll(now) }
+com.histmersion.server.agents.PlanPools.RefreshOnScheduleAutopilotOn | base Boolean | generated | method-parameter
+com.histmersion.server.agents.PlanPools.RefreshOnScheduleResultPart1 | base String | generated | method-result
+com.histmersion.server.agents.PlanPools.RefreshOnScheduleWanted | base Boolean | generated | method-parameter
+com.histmersion.server.agents.PlanPools.RefreshPoolForce | base Boolean | generated | method-parameter
+com.histmersion.server.agents.PlanPools.RefreshPoolModel | base String | generated | method-parameter
+com.histmersion.server.agents.PlanPools.RefreshPoolNow | base Long | generated | method-parameter
+com.histmersion.server.agents.PlanPools.RefreshPoolResultPart1 | base String | generated | method-result
+com.histmersion.server.agents.PlanPools.RunProbeArgv | base String | generated | method-parameter
+com.histmersion.server.agents.PlanPools.RunProbeEnvArg1Part1 | base String | generated | method-parameter
+com.histmersion.server.agents.PlanPools.RunProbeEnvArg1Part2 | base String | generated | method-parameter
+com.histmersion.server.agents.PlanPools.RunProbeResultPart1 | base String | generated | method-result
+com.histmersion.server.agents.PlanPools.RunProbeStdin | base String | generated | method-parameter
+com.histmersion.server.agents.PlanPools.RunProbeTimeoutSeconds | base Int | generated | method-parameter
+com.histmersion.server.agents.PlanPools.ScheduleTextResult | base String | generated | method-result
+    def scheduleText(schedule: ScheduledRefresh): com.histmersion.server.agents.PlanPools.ScheduleTextResult = schedule match
+com.histmersion.server.agents.PlanPools.Seams.ReadCodexArg1 | base String | generated | constructor-parameter
+com.histmersion.server.agents.PlanPools.Seams.ReadCodexArg3 | base Int | generated | constructor-parameter
+com.histmersion.server.agents.PlanPools.Seams.ReadCodexResultPart1 | base String | generated | constructor-parameter
+    def readCodex(command: com.histmersion.server.agents.PlanPools.ReadCodexCommand, home: java.nio.file.Path, timeoutSeconds: com.histmersion.server.agents.PlanPools.ReadCod
+com.histmersion.server.agents.PlanPools.Seams.Refreshes | base Boolean | original | constructor-parameter
+com.histmersion.server.agents.PlanPools.Seams.RunCommandArg1 | base String | generated | constructor-parameter
+com.histmersion.server.agents.PlanPools.Seams.RunCommandArg2Key | base String | generated | constructor-parameter
+com.histmersion.server.agents.PlanPools.Seams.RunCommandArg2Value | base String | generated | constructor-parameter
+com.histmersion.server.agents.PlanPools.Seams.RunCommandArg3 | base Int | generated | constructor-parameter
+com.histmersion.server.agents.PlanPools.Seams.RunCommandResultPart1 | base String | generated | constructor-parameter
+com.histmersion.server.agents.PlanPools.Seams.RunCommandResultPart2Part1 | base Int | generated | constructor-parameter
+com.histmersion.server.agents.PlanPools.Seams.RunCommandResultPart2Part2 | base String | generated | constructor-parameter
+com.histmersion.server.agents.PlanPools.Seams.RunProbeArg1 | base String | generated | constructor-parameter
+com.histmersion.server.agents.PlanPools.Seams.RunProbeArg2Arg1Key | base String | generated | constructor-parameter
+com.histmersion.server.agents.PlanPools.Seams.RunProbeArg2Arg1Value | base String | generated | constructor-parameter
+com.histmersion.server.agents.PlanPools.Seams.RunProbeArg3 | base String | generated | constructor-parameter
+com.histmersion.server.agents.PlanPools.Seams.RunProbeArg4 | base Int | generated | constructor-parameter
+com.histmersion.server.agents.PlanPools.Seams.RunProbeResultPart1 | base String | generated | constructor-parameter
+com.histmersion.server.agents.PlanPools.SetFloorsF | base String | generated | method-parameter
+    def setFloors(p: PoolId, f: Option[com.histmersion.server.agents.PlanPools.SetFloorsF]): Unit = Transactor(ds).transact(PlanQuotaRepo.setFloors(p, f))
+com.histmersion.server.agents.PlanPools.StaleMsResult | base Long | generated | method-result
+    private def staleMs: com.histmersion.server.agents.PlanPools.StaleMsResult = math.max(1, cfg.quota.staleMinutes).toLong * 60000L
+com.histmersion.server.agents.PlanPools.StatusesCoversResult | base String | generated | method-parameter
+    def statuses(covers: PoolId => List[com.histmersion.server.agents.PlanPools.StatusesCoversResult], now: com.histmersion.server.agents.PlanPools.StatusesNow = System.curre
+com.histmersion.server.agents.PlanPools.StatusesNow | base Long | generated | method-parameter
+    def statuses(covers: PoolId => List[com.histmersion.server.agents.PlanPools.StatusesCoversResult], now: com.histmersion.server.agents.PlanPools.StatusesNow = System.curre
+com.histmersion.server.agents.PlanPools.SummaryNow | base Long | generated | method-parameter
+    def summary(rs: List[Reading], now: com.histmersion.server.agents.PlanPools.SummaryNow): com.histmersion.server.agents.PlanPools.SummaryResult =
+com.histmersion.server.agents.PlanPools.SummaryResult | base String | generated | method-result
+    def summary(rs: List[Reading], now: com.histmersion.server.agents.PlanPools.SummaryNow): com.histmersion.server.agents.PlanPools.SummaryResult =
+com.histmersion.server.agents.PlanPools.TakeAndLogNow | base Long | generated | method-parameter
+    private def takeAndLog(p: PoolId, trigger: RefreshTrigger, why: com.histmersion.server.agents.PlanPools.TakeAndLogWhy, now: com.histmersion.server.agents.PlanPools.TakeAn
+com.histmersion.server.agents.PlanPools.TakeAndLogWhy | base String | generated | method-parameter
+    private def takeAndLog(p: PoolId, trigger: RefreshTrigger, why: com.histmersion.server.agents.PlanPools.TakeAndLogWhy, now: com.histmersion.server.agents.PlanPools.TakeAn
+com.histmersion.server.agents.PlanPools.TakeNow | base Long | generated | method-parameter
+    private def take(p: PoolId, now: com.histmersion.server.agents.PlanPools.TakeNow): Refreshed = p match
+com.histmersion.server.agents.PlanPools.UnavailableNow | base Long | generated | method-parameter
+    def unavailable(m: ModelRef, now: com.histmersion.server.agents.PlanPools.UnavailableNow = System.currentTimeMillis()): Option[com.histmersion.server.agents.PlanPools.Una
+com.histmersion.server.agents.PlanPools.UnavailableResult | base String | generated | method-result
+    def unavailable(m: ModelRef, now: com.histmersion.server.agents.PlanPools.UnavailableNow = System.currentTimeMillis()): Option[com.histmersion.server.agents.PlanPools.Una
+com.histmersion.server.agents.PlanPools.VerdictModel | base String | generated | method-parameter
+    def verdict(p: PoolId, model: Option[com.histmersion.server.agents.PlanPools.VerdictModel], now: com.histmersion.server.agents.PlanPools.VerdictNow = System.currentTimeMi
+com.histmersion.server.agents.PlanPools.VerdictNow | base Long | generated | method-parameter
+    def verdict(p: PoolId, model: Option[com.histmersion.server.agents.PlanPools.VerdictModel], now: com.histmersion.server.agents.PlanPools.VerdictNow = System.currentTimeMi
+com.histmersion.server.agents.QuotaGuard.SourceResult | base String | generated | method-result
+    def source(m: AgentGenerator.QuotaMod): com.histmersion.server.agents.QuotaGuard.SourceResult =
+com.histmersion.server.agents.RefreshGate.ExclusiveBodyArg1 | base Long | generated | method-parameter
+    def exclusive[A](p: PoolId, at: => Long)(body: Option[com.histmersion.server.agents.RefreshGate.ExclusiveBodyArg1] => Either[com.histmersion.server.agents.RefreshGate.Exc
+com.histmersion.server.agents.RefreshGate.ExclusiveBodyResultPart1 | base String | generated | method-parameter
+    def exclusive[A](p: PoolId, at: => Long)(body: Option[com.histmersion.server.agents.RefreshGate.ExclusiveBodyArg1] => Either[com.histmersion.server.agents.RefreshGate.Exc
+com.histmersion.server.agents.RefreshGate.ExclusiveResultPart1 | base String | generated | method-result
+    def exclusive[A](p: PoolId, at: => Long)(body: Option[com.histmersion.server.agents.RefreshGate.ExclusiveBodyArg1] => Either[com.histmersion.server.agents.RefreshGate.Exc
+com.histmersion.server.agents.RefreshGate.LastAttemptResult | base Long | generated | method-result
+    def lastAttempt(p: PoolId): Option[com.histmersion.server.agents.RefreshGate.LastAttemptResult] = Option(last.get(p)).map(_.longValue)
+com.histmersion.server.agents.Refreshed.Detail | base String | original | constructor-parameter
+    final case class Refreshed(mode: Refreshed.Mode, ok: Refreshed.Ok, detail: Refreshed.Detail):
+com.histmersion.server.agents.Refreshed.Mode | base String | original | constructor-parameter
+    final case class Refreshed(mode: Refreshed.Mode, ok: Refreshed.Ok, detail: Refreshed.Detail):
+com.histmersion.server.agents.Refreshed.Ok | base Boolean | original | constructor-parameter
+    final case class Refreshed(mode: Refreshed.Mode, ok: Refreshed.Ok, detail: Refreshed.Detail):
+com.histmersion.server.agents.Refreshed.TextResult | base String | generated | method-result
+    def text: com.histmersion.server.agents.Refreshed.TextResult = s"$mode: $detail"

@@ -29,11 +29,11 @@ final class DataContributions private (val all: List[DataContribution]):
   def ownerOf(table: TableName): Option[DataOwner] = tables.collectFirst { case (o, t) if t.name == table => o }
 
 object DataContributions:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The registry, or what makes it inconsistent: an owner registered twice, a table claimed by two owners. */
-  type OfResultPart1 = OfResultPart1.T
-  object OfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def of(contributions: List[DataContribution]): Either[List[com.histmersion.util.data.DataContributions.OfResultPart1], DataContributions] =
+  def of(contributions: List[DataContribution]): Either[List[com.histmersion.util.data.DataContributions.Problem], DataContributions] =
     val owners = contributions.map(_.owner.value)
     val twice = owners.diff(owners.distinct).distinct.map(o => s"owner $o is registered twice")
     val claims = contributions.flatMap(c => c.tables.map(t => t.name.value -> c.owner.value))

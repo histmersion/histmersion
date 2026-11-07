@@ -24,8 +24,6 @@ final class ResearchWorkflowSite(h: ServerWiring, deps: Deps) extends ResearchSi
   def citations: CitationsControllers = h.library.citations
   def search: SearchControllers = h.library.search
   def labels: LabelsControllers = h.library.labels
-  def goal(slug: com.histmersion.server.ResearchWorkflowSite.GoalSlug): Either[Api.Error, Goal] = h.goals.get(slug)
+  def goal(slug: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Goal] = h.goals.get(slug)
 
 object ResearchWorkflowSite:
-  type GoalSlug = GoalSlug.T
-  object GoalSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

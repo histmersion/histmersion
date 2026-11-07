@@ -14,25 +14,15 @@ import com.histmersion.plugin.Plugin
   * places again.
   */
 object ImportRunner:
-  type PlacesResultPart1 = PlacesResultPart1.T
-  object PlacesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacesResultPart2Part2 = PlacesResultPart2Part2.T
-  object PlacesResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchAndImportResultPart1 = FetchAndImportResultPart1.T
-  object FetchAndImportResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchAndImportDryRun = FetchAndImportDryRun.T
-  object FetchAndImportDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchAndImportToleranceKm = _root_.com.histmersion.domain.catalogue.places.ImportRunner.BatchUpsertToleranceKm
-  val FetchAndImportToleranceKm: _root_.com.histmersion.domain.catalogue.places.ImportRunner.BatchUpsertToleranceKm.type = _root_.com.histmersion.domain.catalogue.places.ImportRunner.BatchUpsertToleranceKm
-  type BatchUpsertResultPart1 = BatchUpsertResultPart1.T
-  object BatchUpsertResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BatchUpsertToleranceKm = BatchUpsertToleranceKm.T
-  object BatchUpsertToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchAndImportToleranceKm = _root_.com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm
+  val FetchAndImportToleranceKm: _root_.com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm.type = _root_.com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm
 
   private val BatchSize = 1000
 
   /** The places a run of `source` stores, in order, and the ones refused with the reason. */
-  def places(source: GazetteerSource, http: Plugin.Http): Either[com.histmersion.domain.catalogue.places.ImportRunner.PlacesResultPart1, (List[Place.Input], List[com.histmersion.domain.catalogue.places.ImportRunner.PlacesResultPart2Part2])] =
+  def places(source: GazetteerSource, http: Plugin.Http): Either[com.histmersion.domain.catalogue.places.ImportRunner.Problem, (List[Place.Input], List[com.histmersion.domain.catalogue.Place.Id])] =
     PluginGazetteers.places(source, http).map { (items, refused) =>
       refused.foreach(why => scribe.warn(s"[import] refused $why"))
       (items, refused)
@@ -43,9 +33,9 @@ object ImportRunner:
       http: Plugin.Http,
       places: PlaceService,
       geometry: PlaceGeometry,
-      dryRun: com.histmersion.domain.catalogue.places.ImportRunner.FetchAndImportDryRun,
+      dryRun: com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun,
       toleranceKm: com.histmersion.domain.catalogue.places.ImportRunner.FetchAndImportToleranceKm
-  ): Either[com.histmersion.domain.catalogue.places.ImportRunner.FetchAndImportResultPart1, Place.ImportResult] =
+  ): Either[com.histmersion.domain.catalogue.places.ImportRunner.Problem, Place.ImportResult] =
     for
       (all, refused) <- ImportRunner.places(source, http)
       result <-
@@ -59,8 +49,8 @@ object ImportRunner:
       items: List[Place.Input],
       places: PlaceService,
       geometry: PlaceGeometry,
-      toleranceKm: com.histmersion.domain.catalogue.places.ImportRunner.BatchUpsertToleranceKm
-  ): Either[com.histmersion.domain.catalogue.places.ImportRunner.BatchUpsertResultPart1, Place.ImportResult] =
+      toleranceKm: com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm
+  ): Either[com.histmersion.domain.catalogue.places.ImportRunner.Problem, Place.ImportResult] =
     try
       val batches = items.grouped(BatchSize).toList
       val total = batches.zipWithIndex.foldLeft(Place.ImportResult(0, 0, 0, Nil)) { case (acc, (batch, i)) =>

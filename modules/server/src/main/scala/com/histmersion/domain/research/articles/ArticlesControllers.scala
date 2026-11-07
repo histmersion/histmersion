@@ -64,7 +64,7 @@ final class ArticlesControllers(
 ):
 
   /** Slugs are lower-case by construction; be forgiving about what a caller sends. */
-  private def norm(slug: com.histmersion.domain.research.articles.ArticlesControllers.NormSlug): com.histmersion.domain.research.articles.ArticlesControllers.NormResult = slug.trim.toLowerCase
+  private def norm(slug: com.histmersion.domain.research.Slug): com.histmersion.domain.research.Slug = slug.trim.toLowerCase
 
   private def resolve(f: Filter): Filter = filters.page(f)
   private def scopeOf(f: Filter): PlaceScope = filters.scope(f)
@@ -72,24 +72,24 @@ final class ArticlesControllers(
   // ── formatting: what in the agent-written Markdown will not display as meant ─────────────────
 
   /** The formatting problems of an article's body and summary, its links resolved as the page resolves them. */
-  def formatting(body: com.histmersion.domain.research.articles.ArticlesControllers.FormattingBody, summary: Option[com.histmersion.domain.research.articles.ArticlesControllers.FormattingSummary]): List[FormatIssue] =
+  def formatting(body: com.histmersion.domain.research.Article.Body, summary: Option[com.histmersion.domain.research.articles.ArticleSummaryRow.Summary]): List[FormatIssue] =
     MarkdownLint.ofArticle(body, summary, pageLinks(MarkdownLint.lookups(body :: summary.toList)))
 
   /** `strict`: refuse a write whose text has a formatting ERROR; otherwise the problems ride along in the response, and
     * the write goes through.
     */
-  private def strictGate(strict: com.histmersion.domain.research.articles.ArticlesControllers.StrictGateStrict, issues: => List[FormatIssue]): Either[Api.Error, Unit] =
+  private def strictGate(strict: com.histmersion.domain.research.Article.StrictMode, issues: => List[FormatIssue]): Either[Api.Error, Unit] =
     if !strict then Right(())
     else MarkdownLint.refusal(issues).fold(Right(()))(m => Left(Api.Error(m, Some(Write.CodeInvalid))))
 
   /** `GET /api/articles/{slug}/lint`. */
-  def lint(slug: com.histmersion.domain.research.articles.ArticlesControllers.LintSlug): Either[Api.Error, FormatReport] =
+  def lint(slug: com.histmersion.domain.research.Slug): Either[Api.Error, FormatReport] =
     get(slug).map(v => FormatReport(v.article.slug, v.formatting))
 
   /** `POST /api/articles/{slug}/lint/fix`: the safe repairs of the body and summary, written guarded by the article's
     * token, then the lint again.
     */
-  def fix(slug: com.histmersion.domain.research.articles.ArticlesControllers.FixSlug): Either[Api.Error, FormatReport] =
+  def fix(slug: com.histmersion.domain.research.Slug): Either[Api.Error, FormatReport] =
     maintenance.guard("fix_article_format"):
       store.load(store.canonical(norm(slug))).toRight(Articles.notFound(slug)).flatMap { a =>
         val (body, fb) = MarkdownLint.fix(a.body, FormatField.Body, MarkdownLint.Context(article = true))
@@ -116,7 +116,7 @@ final class ArticlesControllers(
   /** A whole body written by the mechanical pairing repair, guarded by the token it was computed against: whether it
     * was written.
     */
-  def writeRepairedBody(slug: com.histmersion.domain.research.articles.ArticlesControllers.WriteRepairedBodySlug, body: com.histmersion.domain.research.articles.ArticlesControllers.WriteRepairedBodyBody, token: Option[com.histmersion.domain.research.articles.ArticlesControllers.WriteRepairedBodyToken]): com.histmersion.domain.research.articles.ArticlesControllers.WriteRepairedBodyResult =
+  def writeRepairedBody(slug: com.histmersion.domain.research.Slug, body: com.histmersion.domain.research.Article.Body, token: Option[com.histmersion.domain.research.articles.BArticleRow.UpdatedAt]): Boolean =
     store.patch(slug, Article.Patch(body = Some(body), ifUpdatedAt = token), Caller.Local).isRight
 
   // ── a draft of an article, checked as review-article's fixer validation checks it ──────────────
@@ -126,7 +126,7 @@ final class ArticlesControllers(
     * position-free line each. `generated`: the article records a filter, so its Not used list and Method note are
     * generated and must not be written into the body.
     */
-  def bodyCorpus(texts: List[com.histmersion.domain.research.articles.ArticlesControllers.BodyCorpusTexts], generated: com.histmersion.domain.research.articles.ArticlesControllers.BodyCorpusGenerated = false): ReviewArticle.BodyCorpus =
+  def bodyCorpus(texts: List[com.histmersion.domain.research.Article.Body], generated: com.histmersion.domain.research.articles.ArticlesControllers.BodyCorpusGenerated = false): ReviewArticle.BodyCorpus =
     val links = pageLinks(MarkdownLint.lookups(texts))
     ReviewArticle.BodyCorpus(
       t => links(t).exists(_.isInstanceOf[Source.Ref]),
@@ -147,7 +147,7 @@ final class ArticlesControllers(
     * body; a whole `body` is checked as it stands (the article need not exist yet: a compile writer's draft). The same
     * function the review pipeline validates its fixer with.
     */
-  def check(slug: com.histmersion.domain.research.articles.ArticlesControllers.CheckSlug, in: Article.Edits.ArticleCheckRequest): Either[Api.Error, Article.Edits.ArticleCheck] =
+  def check(slug: com.histmersion.domain.research.Slug, in: Article.Edits.ArticleCheckRequest): Either[Api.Error, Article.Edits.ArticleCheck] =
     in.draft.left.map(m => Api.Error(m, Some(Write.CodeInvalid))).flatMap { draft =>
       val stored = store.load(store.canonical(norm(slug)))
       (draft, stored) match
@@ -186,14 +186,14 @@ final class ArticlesControllers(
   /** `GET /api/articles/{slug}/review`: the article's review state, its review history from the ledger (the only read
     * that decodes one), the goals linking it and the approvals about it that wait for a person.
     */
-  def review(slug: com.histmersion.domain.research.articles.ArticlesControllers.ReviewSlug): Either[Api.Error, Article.ReviewView] =
+  def review(slug: com.histmersion.domain.research.Slug): Either[Api.Error, Article.ReviewView] =
     val canon = store.canonical(norm(slug))
     store.load(canon).toRight(Articles.notFound(slug)).flatMap(_ => reviewOf(canon))
 
   /** The review view of an article known to exist (its canonical slug); a ledger that no longer decodes is an error
     * rather than an empty history.
     */
-  def reviewOf(slug: com.histmersion.domain.research.articles.ArticlesControllers.ReviewOfSlug): Either[Api.Error, Article.ReviewView] =
+  def reviewOf(slug: com.histmersion.domain.research.Slug): Either[Api.Error, Article.ReviewView] =
     ledgers(slug).left.map(e => Api.Error(e)).map { ledger =>
       val (facts, updatedAt) =
         reviewState.facts(List(slug)).getOrElse(slug, (ArticleReviewStatus.Facts(), None))
@@ -213,7 +213,7 @@ final class ArticlesControllers(
   /** One article, with its backlinks, the sources it cites, and — when it records a filter — its coverage, from which
     * every surface renders the generated Not used list and Method note.
     */
-  def get(slug: com.histmersion.domain.research.articles.ArticlesControllers.GetSlug, brief: com.histmersion.domain.research.articles.ArticlesControllers.GetBrief = false): Either[Api.Error, Article.View] =
+  def get(slug: com.histmersion.domain.research.Slug, brief: com.histmersion.domain.research.articles.ArticlesControllers.GetBrief = false): Either[Api.Error, Article.View] =
     val view = store.view(norm(slug)).toRight(Articles.notFound(slug))
     // `brief`: the row and its links only — the lint and the coverage are most of a read's cost
     // (a hover card waited ~20 ms on the lint alone) and a preview shows neither
@@ -230,7 +230,7 @@ final class ArticlesControllers(
   /** `GET /api/articles/{slug}/coverage`. An article that records no filter has no coverage: 404 saying so and how to
     * set one.
     */
-  def coverage(slug: com.histmersion.domain.research.articles.ArticlesControllers.CoverageSlug): Either[Api.Error, Coverage] =
+  def coverage(slug: com.histmersion.domain.research.Slug): Either[Api.Error, Coverage] =
     store.load(store.canonical(norm(slug))).toRight(Articles.notFound(slug)).flatMap { a =>
       coverageOf(a).toRight(
         Api.Error(
@@ -271,13 +271,13 @@ final class ArticlesControllers(
   /** The stored citekeys a body cites: its `[[links]]` outside a hand-written Not used section, resolved as the page
     * resolves them (an alias or a unique short form names its source).
     */
-  def citedSources(body: com.histmersion.domain.research.articles.ArticlesControllers.CitedSourcesBody): List[com.histmersion.domain.research.articles.ArticlesControllers.CitedSourcesResult] = citedOf(body, bodyLinks(body))
+  def citedSources(body: com.histmersion.domain.research.Article.Body): List[com.histmersion.domain.library.Citekey] = citedOf(body, bodyLinks(body))
 
   /** How the links of a body (outside a hand-written Not used section) resolve. */
-  private def bodyLinks(body: com.histmersion.domain.research.articles.ArticlesControllers.BodyLinksBody): com.histmersion.domain.research.articles.ArticlesControllers.BodyLinksResultArg1 => Option[LinkTarget] =
+  private def bodyLinks(body: com.histmersion.domain.research.Article.Body): com.histmersion.domain.research.Article.Body => Option[LinkTarget] =
     pageLinks(Article.Links.targets(Article.Coverage.withoutNotUsed(body)))
 
-  private def citedOf(body: com.histmersion.domain.research.articles.ArticlesControllers.CitedOfBody, links: com.histmersion.domain.research.articles.ArticlesControllers.CitedOfLinksArg1 => Option[LinkTarget]): List[com.histmersion.domain.research.articles.ArticlesControllers.CitedOfResult] =
+  private def citedOf(body: com.histmersion.domain.research.Article.Body, links: com.histmersion.domain.library.Citekey => Option[LinkTarget]): List[com.histmersion.domain.library.Citekey] =
     Article.Links
       .targets(Article.Coverage.withoutNotUsed(body))
       .flatMap(t => links(t).collect { case r: Source.Ref => r.citekey })
@@ -288,7 +288,7 @@ final class ArticlesControllers(
     * records a filter. `body` is the article's own unless a caller reviews a revision held in memory; `extra` reasons
     * count as stored (a dry run's, which were never written).
     */
-  def critiques(slug: com.histmersion.domain.research.articles.ArticlesControllers.CritiquesSlug, body: com.histmersion.domain.research.articles.ArticlesControllers.CritiquesBody, extra: List[CritiqueReason] = Nil): List[CritiquePair] =
+  def critiques(slug: com.histmersion.domain.research.Slug, body: com.histmersion.domain.research.Article.Body, extra: List[CritiqueReason] = Nil): List[CritiquePair] =
     val links = bodyLinks(body)
     val cited = citedOf(body, links)
     val edges = coverageReads.edgesTouching(cited, Article.Coverage.DisagreementKinds)
@@ -298,7 +298,7 @@ final class ArticlesControllers(
   /** THE PAIRING RULE of a body (lint `article-critique-pairing`): each paragraph that cites one side of a disagreement
     * edge and names the other side's author without citing it, and how its links resolve. Read only.
     */
-  def pairing(body: com.histmersion.domain.research.articles.ArticlesControllers.PairingBody): (List[CritiquePairing.Hit], com.histmersion.domain.research.articles.ArticlesControllers.PairingResultPart2Arg1 => Option[com.histmersion.domain.research.articles.ArticlesControllers.PairingResultPart2Result]) =
+  def pairing(body: com.histmersion.domain.research.Article.Body): (List[CritiquePairing.Hit], com.histmersion.domain.library.Citekey => Option[com.histmersion.domain.library.Citekey]) =
     val links = bodyLinks(body)
     val cited = citedOf(body, links)
     val edges = coverageReads.edgesTouching(cited, Article.Coverage.DisagreementKinds)
@@ -306,17 +306,17 @@ final class ArticlesControllers(
       .refs(edges.flatMap(e => List(e.from, e.to)).distinct)
       .map(r => r.citekey -> CritiquePairing.Work(r.citekey, CritiquePairing.names(r.citekey, r.authors), r.year))
       .toMap
-    val resolve: com.histmersion.domain.research.articles.ArticlesControllers.PairingResolveArg1 => Option[com.histmersion.domain.research.articles.ArticlesControllers.PairingResolveResult] = t => links(t).collect { case r: Source.Ref => r.citekey }
+    val resolve: com.histmersion.domain.library.Citekey => Option[com.histmersion.domain.library.Citekey] = t => links(t).collect { case r: Source.Ref => r.citekey }
     (CritiquePairing.hits(body, resolve, edges, works.get), resolve)
 
   /** [[pairing]]'s mechanical repair: the body with each named partner's citekey appended, and the hits applied. */
-  def repairPairing(body: com.histmersion.domain.research.articles.ArticlesControllers.RepairPairingBody): (com.histmersion.domain.research.articles.ArticlesControllers.RepairPairingResultPart1, List[CritiquePairing.Hit]) =
+  def repairPairing(body: com.histmersion.domain.research.Article.Body): (com.histmersion.domain.research.Article.Body, List[CritiquePairing.Hit]) =
     CritiquePairing.repair(body, pairing(body)._1)
 
   /** What filter `af` returns from the live corpus: its source count, which of `citekeys` it returns, and up to `cap`
     * of its sources (by citekey) — what the managers' code checks measure (infer-filter, propose-articles).
     */
-  def filterReach(af: Article.Filter, citekeys: List[com.histmersion.domain.research.articles.ArticlesControllers.FilterReachCitekeys], cap: com.histmersion.domain.research.articles.ArticlesControllers.FilterReachCap): (com.histmersion.domain.research.articles.ArticlesControllers.FilterReachResultPart1, Set[com.histmersion.domain.research.articles.ArticlesControllers.FilterReachResultPart2], List[com.histmersion.domain.research.articles.ArticlesControllers.FilterReachResultPart3]) =
+  def filterReach(af: Article.Filter, citekeys: List[com.histmersion.domain.library.Citekey], cap: com.histmersion.domain.research.articles.ArticlesControllers.FilterReachCap): (com.histmersion.domain.research.workflows.ReviewManagerPolicy.FilterHits, Set[com.histmersion.domain.library.Citekey], List[com.histmersion.domain.research.Article.ReachSummary]) =
     val f = af.toFilter
     val scope = scopeOf(f)
     val (total, rows) = coverageReads.sourceSet(f, scope, math.max(0, cap))
@@ -324,17 +324,17 @@ final class ArticlesControllers(
     (total, in, rows.map(_.citekey))
 
   /** The coverage filter an article records, as stored (no alias followed) — the review manager kind's. */
-  def recordedFilter(slug: com.histmersion.domain.research.articles.ArticlesControllers.RecordedFilterSlug): Option[Article.Filter] = store.load(slug).flatMap(_.filter)
+  def recordedFilter(slug: com.histmersion.domain.research.Slug): Option[Article.Filter] = store.load(slug).flatMap(_.filter)
 
   /** How many sources the filter of the article `slug` names returns now (none: no article, or no filter). */
-  def filterTotal(slug: com.histmersion.domain.research.articles.ArticlesControllers.FilterTotalSlug): Option[com.histmersion.domain.research.articles.ArticlesControllers.FilterTotalResult] =
+  def filterTotal(slug: com.histmersion.domain.research.Slug): Option[com.histmersion.domain.research.workflows.ReviewManagerPolicy.FilterHits] =
     store.load(store.canonical(norm(slug))).flatMap(_.filter).map(af => filterReach(af, Nil, 0)._1)
 
   /** How many sources an article's filter returns (of the first `limits.coverage-sources`) that its body neither cites
     * nor gives a reason for — what an extension would add (the autopilot's article-extend threshold). None: no such
     * article, or it records no filter.
     */
-  def newFilterSources(slug: com.histmersion.domain.research.articles.ArticlesControllers.NewFilterSourcesSlug): Option[com.histmersion.domain.research.articles.ArticlesControllers.NewFilterSourcesResult] =
+  def newFilterSources(slug: com.histmersion.domain.research.Slug): Option[com.histmersion.domain.research.articles.ArticlesControllers.NewSourceCount] =
     store
       .load(store.canonical(norm(slug)))
       .flatMap(a =>
@@ -349,14 +349,14 @@ final class ArticlesControllers(
   /** How many pairs of the article's critique checklist are open now and bear on a work it cites (None: no such
     * article). An open pair on a work the article does not cite is background: no run owes it anything.
     */
-  def openCritiques(slug: com.histmersion.domain.research.articles.ArticlesControllers.OpenCritiquesSlug): Option[com.histmersion.domain.research.articles.ArticlesControllers.OpenCritiquesResult] =
+  def openCritiques(slug: com.histmersion.domain.research.Slug): Option[com.histmersion.domain.research.workflows.ReviewManagerPolicy.OpenPairs] =
     store
       .load(store.canonical(norm(slug)))
       .map(a => Critiques.toRule(critiques(a.slug, a.body)).size)
 
   private def critiquesOf(
-      body: com.histmersion.domain.research.articles.ArticlesControllers.CritiquesOfBody,
-      links: com.histmersion.domain.research.articles.ArticlesControllers.CritiquesOfLinksArg1 => Option[LinkTarget],
+      body: com.histmersion.domain.research.Article.Body,
+      links: com.histmersion.domain.library.Citekey => Option[LinkTarget],
       edges: List[Coverage.Edge],
       reasons: List[CritiqueReason]
   ): List[CritiquePair] =
@@ -386,7 +386,7 @@ final class ArticlesControllers(
     * wins over an article, as in the pure [[ArticleLinks.hrefFor]]; anything unresolvable is `None` and renders as text
     * rather than a link to a 404.
     */
-  def pageLinks(targets: List[com.histmersion.domain.research.articles.ArticlesControllers.PageLinksTargets]): com.histmersion.domain.research.articles.ArticlesControllers.PageLinksResultArg1 => Option[LinkTarget] =
+  def pageLinks(targets: List[com.histmersion.domain.research.Slug]): com.histmersion.domain.research.Slug => Option[LinkTarget] =
     val aliases = sourceStore.resolveLinks(targets)
     val sourceRefs = sourceStore.refs(aliases.values.toList).map(r => r.citekey -> r).toMap
     val articles = store.refs(targets).map(a => a.slug -> a).toMap
@@ -399,11 +399,11 @@ final class ArticlesControllers(
     sources.get(citekey).map(s => store.backlinksForSource(s.source.citekey))
 
   /** "Mentioned in articles", the part a source's default and full views carry. */
-  def mentionedIn(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.research.articles.ArticlesControllers.MentionedInResult =
+  def mentionedIn(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.research.Slug =
     BacklinksMarkdown.sourceArticles(store.backlinksForSource(citekey).toVector)
 
   /** The article an identifier names, as `GET /api/resolve/{id}` shows it. */
-  def resolved(id: com.histmersion.domain.research.articles.ArticlesControllers.ResolvedId): Option[ResolvedArticle] =
+  def resolved(id: com.histmersion.domain.research.Slug): Option[ResolvedArticle] =
     get(id, brief = true).toOption.map(a => ResolvedArticle(a.article.slug, a.article.title))
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
@@ -411,7 +411,7 @@ final class ArticlesControllers(
   /** Create or REPLACE one article. The response carries its formatting problems; `strict` refuses the write when one
     * of them is an error.
     */
-  def put(slug: com.histmersion.domain.research.articles.ArticlesControllers.PutSlug, in: Article.Put, strict: com.histmersion.domain.research.articles.ArticlesControllers.PutStrict = false): Either[Api.Error, Article.View] =
+  def put(slug: com.histmersion.domain.research.Slug, in: Article.Put, strict: com.histmersion.domain.research.Article.StrictMode = false): Either[Api.Error, Article.View] =
     maintenance.guard("put_article"):
       // an OLD slug follows the alias: the put replaces the renamed article
       Slug
@@ -433,7 +433,7 @@ final class ArticlesControllers(
   /** Merge only the parts present in the patch (read + merge + write in one transaction). With `strict`, the merged
     * result is checked first — an append is judged in the article it lands in.
     */
-  def patch(slug: com.histmersion.domain.research.articles.ArticlesControllers.PatchSlug, p: Article.Patch, strict: com.histmersion.domain.research.articles.ArticlesControllers.PatchStrict = false): Either[Api.Error, Article.View] =
+  def patch(slug: com.histmersion.domain.research.Slug, p: Article.Patch, strict: com.histmersion.domain.research.Article.StrictMode = false): Either[Api.Error, Article.View] =
     maintenance.guard("patch_article"):
       Slug
         .parse(slug)
@@ -456,7 +456,7 @@ final class ArticlesControllers(
         }
         .flatMap(_ => get(slug))
 
-  def delete(slug: com.histmersion.domain.research.articles.ArticlesControllers.DeleteSlug): Either[Api.Error, Article.Deleted] =
+  def delete(slug: com.histmersion.domain.research.Slug): Either[Api.Error, Article.Deleted] =
     maintenance.guard("delete_article"):
       val now = current(AliasKinds.ArticleRecords, norm(slug))
       if store.delete(now, Caller.Local) then Right(Article.Deleted(now, true))
@@ -465,7 +465,7 @@ final class ArticlesControllers(
   /** `POST /api/articles/{slug}/rename` — a new slug; the old one keeps resolving and every `[[old]]` in other articles
     * is rewritten (each a new version).
     */
-  def rename(slug: com.histmersion.domain.research.articles.ArticlesControllers.RenameSlug, req: LabelRename): Either[Api.Error, LabelRenamed] =
+  def rename(slug: com.histmersion.domain.research.Slug, req: LabelRename): Either[Api.Error, LabelRenamed] =
     maintenance.guard("rename_article"):
       val from = current(AliasKinds.ArticleRecords, norm(slug))
       for
@@ -478,10 +478,10 @@ final class ArticlesControllers(
   /** The article as it would live on disk — `wiki/<kind>/<slug>.md`, with its generated coverage sections after the
     * body (between markers an import drops) and its filter and reasons in the frontmatter.
     */
-  def exportNote(slug: com.histmersion.domain.research.articles.ArticlesControllers.ExportNoteSlug): Either[Api.Error, com.histmersion.domain.research.articles.ArticlesControllers.ExportNoteResultPart2] = note(slug)
+  def exportNote(slug: com.histmersion.domain.research.Slug): Either[Api.Error, com.histmersion.domain.research.Article.Note] = note(slug)
 
   /** The note of the article an old slug or its own names, as the mirror writes it. */
-  def articleNote(slug: com.histmersion.domain.research.articles.ArticlesControllers.ArticleNoteSlug): Either[Api.Error, com.histmersion.domain.research.articles.ArticlesControllers.ArticleNoteResultPart2] =
+  def articleNote(slug: com.histmersion.domain.research.Slug): Either[Api.Error, com.histmersion.domain.research.Article.Note] =
     store
       .load(current(AliasKinds.ArticleRecords, norm(slug)))
       .map(a => ArticleNote.render(a, coverageOf(a).map(Article.Coverage.exported)))
@@ -490,18 +490,18 @@ final class ArticlesControllers(
   /** The edit history of one article. 404 when the slug itself is unknown (so "no versions yet" and "no such article"
     * are different answers).
     */
-  def versions(slug: com.histmersion.domain.research.articles.ArticlesControllers.VersionsSlug): Either[Api.Error, List[Article.Version]] =
+  def versions(slug: com.histmersion.domain.research.Slug): Either[Api.Error, List[Article.Version]] =
     get(norm(slug)).map(v => store.versions(v.article.slug))
 
   /** One historical version's full body. 404 when the slug or the version id is unknown. */
-  def version(slug: com.histmersion.domain.research.articles.ArticlesControllers.VersionSlug, versionId: com.histmersion.domain.research.articles.ArticlesControllers.VersionVersionId): Either[Api.Error, Article.VersionFull] =
+  def version(slug: com.histmersion.domain.research.Slug, versionId: com.histmersion.domain.research.articles.ArticleTools.ArticleVersionInput.VersionId): Either[Api.Error, Article.VersionFull] =
     get(norm(slug)).flatMap(v =>
       store
         .version(v.article.slug, versionId)
         .toRight(Api.Error(s"No version $versionId for article '$slug'", Some(Write.CodeNotFound)))
     )
 
-  def slugs: List[com.histmersion.domain.research.articles.ArticlesControllers.SlugsResult] = store.slugs
+  def slugs: List[com.histmersion.domain.research.Slug] = store.slugs
 
   /** Import ONE article note from raw text (the host-side path of `histmersion seed`). Applies the same "stored row is
     * newer than the file" guard as the source seed whenever the client sends the file's mtime, so a reseed cannot wipe
@@ -551,155 +551,29 @@ final class ArticlesControllers(
           }
 
 object ArticlesControllers:
-  type PairingResolveArg1 = PairingResolveArg1.T
-  object PairingResolveArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PairingResolveResult = PairingResolveResult.T
-  object PairingResolveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NewSourceCount = NewSourceCount.T
+  object NewSourceCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type LedgersArg1 = LedgersArg1.T
-  object LedgersArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LedgersArg1 = com.histmersion.domain.research.Slug
+  val LedgersArg1: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
   type LedgersResultPart1 = LedgersResultPart1.T
   object LedgersResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleLeadsArg1 = ArticleLeadsArg1.T
-  object ArticleLeadsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleLeadsArg2 = ArticleLeadsArg2.T
-  object ArticleLeadsArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoteArg1 = NoteArg1.T
-  object NoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoteResultPart2 = NoteResultPart2.T
-  object NoteResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleLeadsArg1 = com.histmersion.domain.research.Slug
+  val ArticleLeadsArg1: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+  type ArticleLeadsArg2 = com.histmersion.domain.research.Article.Lead
+  val ArticleLeadsArg2: _root_.com.histmersion.domain.research.Article.Lead.type = _root_.com.histmersion.domain.research.Article.Lead
+  type NoteArg1 = com.histmersion.domain.research.Slug
+  val NoteArg1: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+  type NoteResultPart2 = com.histmersion.domain.research.Article.Note
+  val NoteResultPart2: _root_.com.histmersion.domain.research.Article.Note.type = _root_.com.histmersion.domain.research.Article.Note
   type CurrentArg2 = CurrentArg2.T
   object CurrentArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CurrentResult = CurrentResult.T
   object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type NormResult = NormResult.T
-  object NormResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NormSlug = NormSlug.T
-  object NormSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FormattingBody = FormattingBody.T
-  object FormattingBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FormattingSummary = FormattingSummary.T
-  object FormattingSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StrictGateStrict = StrictGateStrict.T
-  object StrictGateStrict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LintSlug = LintSlug.T
-  object LintSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FixSlug = FixSlug.T
-  object FixSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteRepairedBodyResult = WriteRepairedBodyResult.T
-  object WriteRepairedBodyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteRepairedBodySlug = WriteRepairedBodySlug.T
-  object WriteRepairedBodySlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteRepairedBodyBody = WriteRepairedBodyBody.T
-  object WriteRepairedBodyBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteRepairedBodyToken = WriteRepairedBodyToken.T
-  object WriteRepairedBodyToken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyCorpusTexts = BodyCorpusTexts.T
-  object BodyCorpusTexts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BodyCorpusGenerated = BodyCorpusGenerated.T
   object BodyCorpusGenerated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckSlug = CheckSlug.T
-  object CheckSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReviewSlug = ReviewSlug.T
-  object ReviewSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReviewOfSlug = ReviewOfSlug.T
-  object ReviewOfSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetSlug = GetSlug.T
-  object GetSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GetBrief = GetBrief.T
   object GetBrief extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CoverageSlug = CoverageSlug.T
-  object CoverageSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitedSourcesResult = CitedSourcesResult.T
-  object CitedSourcesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitedSourcesBody = CitedSourcesBody.T
-  object CitedSourcesBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyLinksResultArg1 = BodyLinksResultArg1.T
-  object BodyLinksResultArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyLinksBody = BodyLinksBody.T
-  object BodyLinksBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitedOfResult = CitedOfResult.T
-  object CitedOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitedOfBody = CitedOfBody.T
-  object CitedOfBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitedOfLinksArg1 = CitedOfLinksArg1.T
-  object CitedOfLinksArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CritiquesSlug = CritiquesSlug.T
-  object CritiquesSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CritiquesBody = CritiquesBody.T
-  object CritiquesBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PairingResultPart2Arg1 = PairingResultPart2Arg1.T
-  object PairingResultPart2Arg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PairingResultPart2Result = PairingResultPart2Result.T
-  object PairingResultPart2Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PairingBody = PairingBody.T
-  object PairingBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RepairPairingResultPart1 = RepairPairingResultPart1.T
-  object RepairPairingResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RepairPairingBody = RepairPairingBody.T
-  object RepairPairingBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterReachResultPart1 = FilterReachResultPart1.T
-  object FilterReachResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterReachResultPart2 = FilterReachResultPart2.T
-  object FilterReachResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterReachResultPart3 = FilterReachResultPart3.T
-  object FilterReachResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterReachCitekeys = FilterReachCitekeys.T
-  object FilterReachCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FilterReachCap = FilterReachCap.T
   object FilterReachCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordedFilterSlug = RecordedFilterSlug.T
-  object RecordedFilterSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterTotalResult = FilterTotalResult.T
-  object FilterTotalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterTotalSlug = FilterTotalSlug.T
-  object FilterTotalSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewFilterSourcesResult = NewFilterSourcesResult.T
-  object NewFilterSourcesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewFilterSourcesSlug = NewFilterSourcesSlug.T
-  object NewFilterSourcesSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenCritiquesResult = OpenCritiquesResult.T
-  object OpenCritiquesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenCritiquesSlug = OpenCritiquesSlug.T
-  object OpenCritiquesSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CritiquesOfBody = CritiquesOfBody.T
-  object CritiquesOfBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CritiquesOfLinksArg1 = CritiquesOfLinksArg1.T
-  object CritiquesOfLinksArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageLinksResultArg1 = PageLinksResultArg1.T
-  object PageLinksResultArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageLinksTargets = PageLinksTargets.T
-  object PageLinksTargets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MentionedInResult = MentionedInResult.T
-  object MentionedInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolvedId = ResolvedId.T
-  object ResolvedId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutSlug = PutSlug.T
-  object PutSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutStrict = PutStrict.T
-  object PutStrict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchSlug = PatchSlug.T
-  object PatchSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchStrict = PatchStrict.T
-  object PatchStrict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteSlug = DeleteSlug.T
-  object DeleteSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameSlug = RenameSlug.T
-  object RenameSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExportNoteResultPart2 = ExportNoteResultPart2.T
-  object ExportNoteResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExportNoteSlug = ExportNoteSlug.T
-  object ExportNoteSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleNoteResultPart2 = ArticleNoteResultPart2.T
-  object ArticleNoteResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleNoteSlug = ArticleNoteSlug.T
-  object ArticleNoteSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VersionsSlug = VersionsSlug.T
-  object VersionsSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VersionSlug = VersionSlug.T
-  object VersionSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VersionVersionId = VersionVersionId.T
-  object VersionVersionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SlugsResult = SlugsResult.T
-  object SlugsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

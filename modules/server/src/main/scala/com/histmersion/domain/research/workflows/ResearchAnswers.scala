@@ -8,8 +8,8 @@ import sttp.ai.core.agent.ResponseSchema
   * pipelines (the engine's own are `AnswerSchemas`, the library's `LibraryAnswers`).
   */
 object ResearchAnswers:
-  type AllPart1 = AllPart1.T
-  object AllPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnswerKind = AnswerKind.T
+  object AnswerKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val extract: ResponseSchema[CompileArticle.ExtractAnswer] = ResponseSchema.derived[CompileArticle.ExtractAnswer]()
   val draft: ResponseSchema[CompileArticle.DraftAnswer] = ResponseSchema.derived[CompileArticle.DraftAnswer]()
@@ -23,7 +23,7 @@ object ResearchAnswers:
   val articles: ResponseSchema[PlanArticles.ArticlesAnswer] = ResponseSchema.derived[PlanArticles.ArticlesAnswer]()
 
   /** Its step schemas, by name. */
-  val all: List[(com.histmersion.domain.research.workflows.ResearchAnswers.AllPart1, ResponseSchema[?])] = List(
+  val all: List[(com.histmersion.domain.research.workflows.ResearchAnswers.AnswerKind, ResponseSchema[?])] = List(
     "extract" -> extract,
     "draft" -> draft,
     "rules" -> rules,

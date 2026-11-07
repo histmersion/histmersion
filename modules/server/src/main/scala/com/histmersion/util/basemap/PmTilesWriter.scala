@@ -29,10 +29,10 @@ final class PmTilesWriter(out: Reservation):
   private var lastId = -1L
   private var addressed = 0L
 
-  def tileCount: com.histmersion.util.basemap.PmTilesWriter.TileCountResult = addressed
+  def tileCount: com.histmersion.util.basemap.PmTiles.Header.AddressedTiles = addressed
 
   /** Add tile `id` (strictly greater than the last one added) with its stored bytes. */
-  def add(id: com.histmersion.util.basemap.PmTilesWriter.AddId, bytes: com.histmersion.util.basemap.PmTilesWriter.AddBytes): Unit =
+  def add(id: com.histmersion.util.basemap.PmTiles.Entry.TileId, bytes: com.histmersion.util.basemap.PmTiles.TileBytes): Unit =
     require(id > lastId, s"tiles must be added in ascending id order ($id after $lastId)")
     lastId = id
     addressed += 1
@@ -53,7 +53,7 @@ final class PmTilesWriter(out: Reservation):
   /** Complete the archive and return its size. `template` supplies the tile type, compression, zooms, bounds and
     * centre; the offsets and counts are this writer's.
     */
-  def finish(template: PmTiles.Header, metadata: Json): com.histmersion.util.basemap.PmTilesWriter.FinishResult =
+  def finish(template: PmTiles.Header, metadata: Json): com.histmersion.ByteCount =
     val ic = PmTiles.Compression.Gzip
     val (root, leaves) = PmTilesWriter.directories(entries.toVector, ic)
     val meta = PmTiles.compress(metadata.noSpaces.getBytes("UTF-8"), ic)
@@ -75,28 +75,12 @@ final class PmTilesWriter(out: Reservation):
     out.discard()
 
 object PmTilesWriter:
+  type EntriesPerLeaf = EntriesPerLeaf.T
+  object EntriesPerLeaf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A writer of the archive `key` of `store`, written beside it until [[PmTilesWriter.finish]]. */
-  type DirectoriesTryLeavesResultPart1 = DirectoriesTryLeavesResultPart1.T
-  object DirectoriesTryLeavesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DirectoriesTryLeavesResultPart2 = DirectoriesTryLeavesResultPart2.T
-  object DirectoriesTryLeavesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DirectoriesTryLeavesSize = DirectoriesTryLeavesSize.T
-  object DirectoriesTryLeavesSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type AddBytes = AddBytes.T
-  object AddBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DirectoriesResultPart1 = DirectoriesResultPart1.T
-  object DirectoriesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DirectoriesResultPart2 = DirectoriesResultPart2.T
-  object DirectoriesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type TileCountResult = TileCountResult.T
-  object TileCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddId = AddId.T
-  object AddId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FinishResult = FinishResult.T
-  object FinishResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(store: Store, key: Store.Key): PmTilesWriter =
     new PmTilesWriter(store.reserve(key).fold(e => throw IOException(e.message), identity))
@@ -104,12 +88,12 @@ object PmTilesWriter:
   /** The root directory and the leaf section for `entries`: one root when it fits in the first 16 KiB, else leaves of 4
     * 096 entries (doubled until their index fits). Pure.
     */
-  def directories(entries: Vector[PmTiles.Entry], c: PmTiles.Compression): (com.histmersion.util.basemap.PmTilesWriter.DirectoriesResultPart1, com.histmersion.util.basemap.PmTilesWriter.DirectoriesResultPart2) =
+  def directories(entries: Vector[PmTiles.Entry], c: PmTiles.Compression): (com.histmersion.util.basemap.PmTiles.DirectoryBytes, com.histmersion.util.basemap.PmTiles.DirectoryBytes) =
     val whole = PmTiles.compress(PmTiles.encodeDirectory(entries), c)
     if whole.length <= PmTiles.RootBytes - PmTiles.HeaderBytes then (whole, Array.emptyByteArray)
     else
       @annotation.tailrec
-      def tryLeaves(size: com.histmersion.util.basemap.PmTilesWriter.DirectoriesTryLeavesSize): (com.histmersion.util.basemap.PmTilesWriter.DirectoriesTryLeavesResultPart1, com.histmersion.util.basemap.PmTilesWriter.DirectoriesTryLeavesResultPart2) =
+      def tryLeaves(size: com.histmersion.util.basemap.PmTilesWriter.EntriesPerLeaf): (com.histmersion.util.basemap.PmTiles.DirectoryBytes, com.histmersion.util.basemap.PmTiles.DirectoryBytes) =
         val out = java.io.ByteArrayOutputStream()
         val index = entries
           .grouped(size)

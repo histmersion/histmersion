@@ -8,7 +8,7 @@ import com.histmersion.domain.library.acquisition.CoreBudget
   * new-source search's CORE index spends, under the limits `acquire.core.*` sets. A purpose is `lookup` or `search`.
   */
 final class CoreQuotaLend(budget: CoreBudget, limits: CoreQuota.Limits) extends UpstreamQuota:
-  def take(purpose: com.histmersion.domain.library.acquisition.CoreQuotaLend.TakePurpose): Either[com.histmersion.domain.library.acquisition.CoreQuotaLend.TakeResultPart1, Unit] =
+  def take(purpose: com.histmersion.domain.library.acquisition.CoreQuotaLend.TakePurpose): Either[com.histmersion.domain.library.acquisition.CoreQuotaLend.Problem, Unit] =
     CoreQuota.Purpose.values.find(_.wire == purpose) match
       case None =>
         Left(s"CORE's budget has no purpose '$purpose' (${CoreQuota.Purpose.values.map(_.wire).mkString(", ")})")
@@ -17,8 +17,8 @@ final class CoreQuotaLend(budget: CoreBudget, limits: CoreQuota.Limits) extends 
   override def waitingUntil: Option[String] = budget.state.block.map(_.until.toString)
 
 object CoreQuotaLend:
-  type TakeResultPart1 = TakeResultPart1.T
-  object TakeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TakePurpose = TakePurpose.T
   object TakePurpose extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ObserveStatus = ObserveStatus.T

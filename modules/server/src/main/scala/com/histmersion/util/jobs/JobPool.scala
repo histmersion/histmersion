@@ -60,14 +60,14 @@ final class JobPool(
 
   def resume(): Unit = gate.synchronized { paused = false; gate.notifyAll() }
 
-  def isPaused: com.histmersion.util.jobs.JobPool.IsPausedResult = gate.synchronized(paused)
+  def isPaused: Boolean = gate.synchronized(paused)
 
   private def awaitResume(): Unit = gate.synchronized(while paused do gate.wait())
 
   /** Reconcile interrupted jobs, then start `parallelism` workers. Returns how many rows the restart had to fail.
     * Idempotent: calling it twice does not start a second pool.
     */
-  def start(): com.histmersion.util.jobs.JobPool.StartResult =
+  def start(): com.histmersion.util.jobs.JobPool.StartedCount =
     import scala.jdk.CollectionConverters.*
     val interrupted = Transactor(ds).transact(JobRepo.failInterrupted(held.asScala.toList))
     if scope.isEmpty then
@@ -79,7 +79,7 @@ final class JobPool(
   /** Hand a job id to the pool. The queue is unbounded on purpose: admission control is the `jobs` table (a duplicate
     * upload is refused before it ever gets here), and dropping an accepted job would strand a row in `queued` forever.
     */
-  def submit(jobId: com.histmersion.util.jobs.JobPool.SubmitJobId): Unit =
+  def submit(jobId: com.histmersion.util.jobs.Job.Id): Unit =
     val _ = held.add(jobId)
     queue.put(
       Queued(
@@ -90,7 +90,7 @@ final class JobPool(
     )
 
   /** One job, its unexpected failure recorded — both on the job's own generation. */
-  private def runOne(id: com.histmersion.util.jobs.JobPool.RunOneId): Unit =
+  private def runOne(id: com.histmersion.util.jobs.Job.Id): Unit =
     try run(id)
     catch
       case e: InterruptedException => throw e
@@ -113,7 +113,7 @@ final class JobPool(
     scope.foreach(_.interrupt())
     scope = None
 
-  def queued: com.histmersion.util.jobs.JobPool.QueuedResult = queue.size
+  def queued: com.histmersion.util.jobs.JobPool.QueueDepth = queue.size
 
   private def pool(): Unit =
     try
@@ -140,18 +140,12 @@ final class JobPool(
       catch case _: InterruptedException => running = false
 
 object JobPool:
+  type QueueDepth = QueueDepth.T
+  object QueueDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartedCount = StartedCount.T
+  object StartedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Parallelism = Parallelism.T
   object Parallelism extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunArg1 = RunArg1.T
-  object RunArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunArg1 = com.histmersion.util.jobs.Job.Id
+  val RunArg1: _root_.com.histmersion.util.jobs.Job.Id.type = _root_.com.histmersion.util.jobs.Job.Id
 
-  type IsPausedResult = IsPausedResult.T
-  object IsPausedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartResult = StartResult.T
-  object StartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SubmitJobId = SubmitJobId.T
-  object SubmitJobId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunOneId = RunOneId.T
-  object RunOneId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueuedResult = QueuedResult.T
-  object QueuedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

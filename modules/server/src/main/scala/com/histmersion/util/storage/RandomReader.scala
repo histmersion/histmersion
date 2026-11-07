@@ -7,24 +7,14 @@ import com.histmersion.{ByteCount, ByteOffset}
   * interrupted read fails, every other one goes on.
   */
 trait RandomReader extends AutoCloseable:
-  def where: com.histmersion.util.storage.RandomReader.WhereResult
+  def where: com.histmersion.util.storage.Blob.Location
   def size: ByteCount
 
   /** `length` bytes from `offset`; fails when the file ends before them. */
-  def read(offset: ByteOffset, length: com.histmersion.util.storage.RandomReader.ReadLength): com.histmersion.util.storage.RandomReader.ReadResult
+  def read(offset: ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.storage.ByteSource.Content
 
   /** Up to `length` bytes from `offset`, fewer when the file ends first. */
-  def readUpTo(offset: ByteOffset, length: com.histmersion.util.storage.RandomReader.ReadUpToLength): com.histmersion.util.storage.RandomReader.ReadUpToResult
+  def readUpTo(offset: ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.storage.ByteSource.Content
 
 object RandomReader:
-  type ReadResult = ReadResult.T
-  object ReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadUpToResult = ReadUpToResult.T
-  object ReadUpToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type WhereResult = WhereResult.T
-  object WhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadLength = ReadLength.T
-  object ReadLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadUpToLength = ReadUpToLength.T
-  object ReadUpToLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

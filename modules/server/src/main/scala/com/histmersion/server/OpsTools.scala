@@ -25,8 +25,6 @@ object OpsTools:
   type RunQueueRenderList = RunQueueRenderList.T
   object RunQueueRenderList extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type RunQueueResult = RunQueueResult.T
-  object RunQueueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   import com.histmersion.util.mcp.ToolInputs.given
 
@@ -105,7 +103,7 @@ object OpsTools:
     List(lint, queue) ++ com.histmersion.domain.library.search.QueryTools(h.library.query) ++ List(backups)
 
   /** `action` dispatch, kept out of the tool body so the failure modes read as one list. */
-  private def runQueue(h: ServerWiring, in: QueueInput): com.histmersion.server.OpsTools.RunQueueResult =
+  private def runQueue(h: ServerWiring, in: QueueInput): com.histmersion.server.FullText.Shown.Markdown =
     def render(list: com.histmersion.server.OpsTools.RunQueueRenderList) =
       h.workListView.list(list, in.all) match
         case Right(l) =>
@@ -152,12 +150,12 @@ object OpsTools:
     object Rules extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Fix = Fix.T
     object Fix extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Article = Article.T
-    object Article extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Source = Source.T
-    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Article = com.histmersion.domain.research.Slug
+    val Article: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    type Source = com.histmersion.domain.library.Citekey
+    val Source: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
+    type Text = com.histmersion.server.MarkdownLint.Scan.Text
+    val Text: _root_.com.histmersion.server.MarkdownLint.Scan.Text.type = _root_.com.histmersion.server.MarkdownLint.Scan.Text
 
     given Schema[LintInput] = KindlingsSchema
       .derived[LintInput]
@@ -201,8 +199,8 @@ object OpsTools:
     object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DryRun = DryRun.T
     object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = com.histmersion.PageSize
+    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
 
     given Schema[QueueInput] = KindlingsSchema
       .derived[QueueInput]

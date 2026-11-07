@@ -32,7 +32,7 @@ final class Approvals(
 
 
 
-  def list(state: Option[com.histmersion.domain.automation.approvals.Approvals.ListState], limit: Option[com.histmersion.domain.automation.approvals.Approvals.ListLimit], page: com.histmersion.domain.automation.approvals.Approvals.ListPage): Either[Api.Error, List[ApprovalInfo]] =
+  def list(state: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.State], limit: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Limit], page: Int): Either[Api.Error, List[ApprovalInfo]] =
     filter(state).map(st => store.approvals(st, page))
 
   /** One page of the approvals ([[Paging]]) that match `f` ([[ListFilters.ApprovalFilter]]: no state = the open ones),
@@ -40,9 +40,9 @@ final class Approvals(
     */
   def page(
       f: ListFilters.ApprovalFilter,
-      limit: com.histmersion.domain.automation.approvals.Approvals.PageLimit,
-      before: Option[com.histmersion.domain.automation.approvals.Approvals.PageBefore],
-      upTo: Option[com.histmersion.domain.automation.approvals.Approvals.PageUpTo]
+      limit: com.histmersion.domain.automation.approvals.ApprovalQuery.Limit,
+      before: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Cursor],
+      upTo: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.UpTo]
   ): Either[Api.Error, (List[ApprovalInfo], Paging.Page)] =
     for
       q <- com.histmersion.server.ListQueries.approvals(f)
@@ -53,7 +53,7 @@ final class Approvals(
       (rows, Paging.Page.filtered(counts, q.state.map(_.wire).toList, Option.when(more)(rows.last.id.toString), facets))
 
   /** The `state` query: none = the open ones, `all` = every state (None), else one state. */
-  private def filter(state: Option[com.histmersion.domain.automation.approvals.Approvals.FilterState]): Either[Api.Error, Option[ApprovalState]] =
+  private def filter(state: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.State]): Either[Api.Error, Option[ApprovalState]] =
     state.map(_.trim).filter(_.nonEmpty) match
       case None        => Right(Some(ApprovalState.Open))
       case Some("all") => Right(None)
@@ -69,7 +69,7 @@ final class Approvals(
     * for one already decided. A BLOCKING approval (a goal's plan, an article to publish) is only decided here: the run
     * waiting on it applies it when it resumes (the caller wakes it).
     */
-  def decide(id: com.histmersion.domain.automation.approvals.Approvals.DecideId, decision: com.histmersion.domain.automation.approvals.Approvals.DecideDecision, note: Option[com.histmersion.domain.automation.approvals.Approvals.DecideNote]): Either[Api.Error, ApprovalInfo] =
+  def decide(id: com.histmersion.domain.automation.Approval.Id, decision: com.histmersion.domain.automation.Approval.Outcome, note: Option[com.histmersion.domain.automation.Approval.Note]): Either[Api.Error, ApprovalInfo] =
     val clean = note.map(_.trim).filter(_.nonEmpty).map(_.take(2000))
     for
       d <- Decision.parse(decision).toRight(Api.Error(s"unknown decision '$decision' (approve or reject)"))
@@ -93,7 +93,7 @@ final class Approvals(
       a: ApprovalInfo,
       k: ApprovalKind,
       d: Decision,
-      note: Option[com.histmersion.domain.automation.approvals.Approvals.DecideSubjectNote]
+      note: Option[com.histmersion.domain.automation.Approval.Note]
   ): Either[Api.Error, ApprovalInfo] =
     val to = if d == Decision.Approve then ApprovalState.Approved else ApprovalState.Rejected
     for
@@ -123,7 +123,7 @@ final class Approvals(
       out <- store.approval(a.id).toRight(Api.Error(s"No approval ${a.id}", Some(Write.CodeNotFound)))
     yield out
 
-  private def decideBlocking(a: ApprovalInfo, d: Decision, note: Option[com.histmersion.domain.automation.approvals.Approvals.DecideBlockingNote]): Either[Api.Error, ApprovalInfo] =
+  private def decideBlocking(a: ApprovalInfo, d: Decision, note: Option[com.histmersion.domain.automation.Approval.Note]): Either[Api.Error, ApprovalInfo] =
     val (to, result) = d match
       case Decision.Approve => (ApprovalState.Approved, "approved — the run that proposed it continues and applies it")
       case Decision.Reject  => (ApprovalState.Rejected, "rejected — the run finishes without applying it")
@@ -136,7 +136,7 @@ final class Approvals(
       out <- store.approval(a.id).toRight(Api.Error(s"No approval ${a.id}", Some(Write.CodeNotFound)))
     yield out
 
-  private def decideSource(id: com.histmersion.domain.automation.approvals.Approvals.DecideSourceId, d: Decision, clean: Option[com.histmersion.domain.automation.approvals.Approvals.DecideSourceClean]): Either[Api.Error, ApprovalInfo] =
+  private def decideSource(id: com.histmersion.domain.automation.Approval.Id, d: Decision, clean: Option[String]): Either[Api.Error, ApprovalInfo] =
     for
       apply <- store
         .payload(id)
@@ -165,31 +165,3 @@ object Approvals:
   type ApplyHintResultPart2 = ApplyHintResultPart2.T
   object ApplyHintResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ListState = ListState.T
-  object ListState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListLimit = ListLimit.T
-  object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListPage = ListPage.T
-  object ListPage extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageLimit = PageLimit.T
-  object PageLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageBefore = PageBefore.T
-  object PageBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageUpTo = PageUpTo.T
-  object PageUpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterState = FilterState.T
-  object FilterState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideId = DecideId.T
-  object DecideId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideDecision = DecideDecision.T
-  object DecideDecision extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideNote = DecideNote.T
-  object DecideNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideSubjectNote = DecideSubjectNote.T
-  object DecideSubjectNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideBlockingNote = DecideBlockingNote.T
-  object DecideBlockingNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideSourceId = DecideSourceId.T
-  object DecideSourceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideSourceClean = DecideSourceClean.T
-  object DecideSourceClean extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

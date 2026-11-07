@@ -26,10 +26,10 @@ final class WorkListView(
     acquireChecks: AcquireCheckService
 ):
   def list(
-      list: com.histmersion.server.views.WorkListView.ListList,
-      all: com.histmersion.server.views.WorkListView.ListAll,
-      goal: Option[com.histmersion.server.views.WorkListView.ListGoal] = None,
-      job: Option[com.histmersion.server.views.WorkListView.ListJob] = None
+      list: com.histmersion.server.views.WorkListView.QueueName,
+      all: com.histmersion.server.views.WorkListView.IncludeAll,
+      goal: Option[com.histmersion.domain.automation.Goal.Slug] = None,
+      job: Option[com.histmersion.util.jobs.Job.Id] = None
   ): Either[Api.Error, QueueListing] =
     workLists.kindOf(list).map { k =>
       val scope = (goal.map(_.trim).filter(_.nonEmpty), job.map(_.trim).filter(_.nonEmpty)) match
@@ -53,11 +53,7 @@ final class WorkListView(
     }
 
 object WorkListView:
-  type ListList = ListList.T
-  object ListList extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListAll = ListAll.T
-  object ListAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListGoal = ListGoal.T
-  object ListGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListJob = ListJob.T
-  object ListJob extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IncludeAll = IncludeAll.T
+  object IncludeAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueName = QueueName.T
+  object QueueName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -15,6 +15,14 @@ final case class ApprovalQuery(
 )
 
 object ApprovalQuery:
+  type Cursor = Cursor.T
+  object Cursor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type State = State.T
+  object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpTo = UpTo.T
+  object UpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** Who decided an approval, in SQL — `ListFilters.DecidedBy.of`, the same rules. The two prefixes are the code's own
     * constants (no quote, `%` or `_` in them — `ListFiltersSuite` holds that), so they are written in, not bound: the
     * expression is used both to filter and to count.

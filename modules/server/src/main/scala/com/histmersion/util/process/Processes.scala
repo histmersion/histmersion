@@ -13,21 +13,23 @@ import com.histmersion.util.storage.Store
   */
 trait Processes:
   /** Start the process; `Left` with why it could not be. */
-  def start(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.StartResultPart1, RunningProcess]
+  def start(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, RunningProcess]
 
   /** Start the process, read its output and wait for it to end. */
-  def run(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.RunResultPart1, ProcessResult]
+  def run(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, ProcessResult]
 
 object Processes:
-  type StartResultPart1 = StartResultPart1.T
-  object StartResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunResultPart1 = RunResultPart1.T
-  object RunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Pid = Pid.T
+  object Pid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitTimeout = WaitTimeout.T
+  object WaitTimeout extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(): Processes = Implementation()
 
   final private class Implementation extends Processes:
-    def start(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Implementation.StartResultPart1, RunningProcess] =
+    def start(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, RunningProcess] =
       for
         dir <- directory(launch)
         out <- log(launch)
@@ -42,11 +44,11 @@ object Processes:
           catch case e: IOException => Left(e.getMessage)
       yield started
 
-    private def directory(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Implementation.DirectoryResultPart1, Option[HandedFile]] = launch.workingStore match
+    private def directory(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, Option[HandedFile]] = launch.workingStore match
       case None    => Right(None)
       case Some(s) => s.onDiskFile(Store.Key.Root).left.map(_.message).map(Some(_))
 
-    private def log(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Implementation.LogResultPart1, Option[ProcessBuilder.Redirect]] = launch.output match
+    private def log(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, Option[ProcessBuilder.Redirect]] = launch.output match
       case ProcessOutput.Piped            => Right(None)
       case ProcessOutput.Discarded        => Right(Some(ProcessBuilder.Redirect.DISCARD))
       case ProcessOutput.AppendTo(s, key) =>
@@ -54,42 +56,26 @@ object Processes:
       case ProcessOutput.WriteTo(s, key) =>
         s.onDiskFile(key).left.map(_.message).map(f => Some(ProcessBuilder.Redirect.to(f)))
 
-    def run(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Implementation.RunResultPart1, ProcessResult] =
+    def run(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, ProcessResult] =
       start(launch).map { p =>
         val lines = scala.io.Source.fromInputStream(p.output).getLines().toList
         ProcessResult(p.waitFor(), lines)
       }
 
   object Implementation:
-    type StartResultPart1 = StartResultPart1.T
-    object StartResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DirectoryResultPart1 = DirectoryResultPart1.T
-    object DirectoryResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LogResultPart1 = LogResultPart1.T
-    object LogResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunResultPart1 = RunResultPart1.T
-    object RunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final private class OsProcess(p: Process) extends RunningProcess:
-    def pid: com.histmersion.util.process.Processes.OsProcess.PidResult = p.pid
-    def isAlive: com.histmersion.util.process.Processes.OsProcess.IsAliveResult = p.isAlive
+    def pid: com.histmersion.util.process.Processes.Pid = p.pid
+    def isAlive: Boolean = p.isAlive
     def output: InputStream = p.getInputStream
     def input: OutputStream = p.getOutputStream
-    def waitFor(): com.histmersion.util.process.Processes.OsProcess.WaitForResult = p.waitFor()
-    def waitFor(timeout: com.histmersion.util.process.Processes.OsProcess.WaitForTimeout, unit: TimeUnit): Boolean = p.waitFor(timeout, unit)
+    def waitFor(): com.histmersion.util.process.ProcessResult.ExitCode = p.waitFor()
+    def waitFor(timeout: com.histmersion.util.process.Processes.WaitTimeout, unit: TimeUnit): Boolean = p.waitFor(timeout, unit)
     def destroy(): Unit = p.destroy()
     def destroyForcibly(): Unit =
       val _ = p.destroyForcibly()
 
   object OsProcess:
-    type PidResult = PidResult.T
-    object PidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type IsAliveResult = IsAliveResult.T
-    object IsAliveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WaitForResult = WaitForResult.T
-    object WaitForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WaitForTimeout = WaitForTimeout.T
-    object WaitForTimeout extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Processes that never start: each launch is recorded and answered by `answer` (its exit code and output). */
   final class InMemory(answer: ProcessLaunch => ProcessResult) extends Processes:
@@ -98,33 +84,21 @@ object Processes:
     /** The launches asked for, in order. */
     def launches: List[ProcessLaunch] = launched.get.reverse
 
-    def start(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.InMemory.StartResultPart1, RunningProcess] =
+    def start(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, RunningProcess] =
       launched.updateAndGet(launch :: _)
       val r = answer(launch)
       Right(new RunningProcess:
-        def pid: com.histmersion.util.process.Processes.InMemory.StartPidResult = 0L
-        def isAlive: com.histmersion.util.process.Processes.InMemory.StartIsAliveResult = false
+        def pid: com.histmersion.util.process.Processes.Pid = 0L
+        def isAlive: Boolean = false
         val output: InputStream = ByteArrayInputStream(r.lines.map(_ + "\n").mkString.getBytes("UTF-8"))
         val input: OutputStream = ByteArrayOutputStream()
-        def waitFor(): com.histmersion.util.process.Processes.InMemory.StartWaitForResult = r.exitCode
-        def waitFor(timeout: com.histmersion.util.process.Processes.InMemory.StartWaitForTimeout, unit: TimeUnit): Boolean = true
+        def waitFor(): com.histmersion.util.process.ProcessResult.ExitCode = r.exitCode
+        def waitFor(timeout: com.histmersion.util.process.Processes.WaitTimeout, unit: TimeUnit): Boolean = true
         def destroy(): Unit = ()
         def destroyForcibly(): Unit = ())
 
-    def run(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.InMemory.RunResultPart1, ProcessResult] =
+    def run(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, ProcessResult] =
       start(launch).map(p => ProcessResult(p.waitFor(), scala.io.Source.fromInputStream(p.output).getLines().toList))
 
   object InMemory:
-    type StartPidResult = StartPidResult.T
-    object StartPidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StartIsAliveResult = StartIsAliveResult.T
-    object StartIsAliveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StartWaitForResult = StartWaitForResult.T
-    object StartWaitForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StartWaitForTimeout = StartWaitForTimeout.T
-    object StartWaitForTimeout extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type StartResultPart1 = StartResultPart1.T
-    object StartResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunResultPart1 = RunResultPart1.T
-    object RunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -18,8 +18,8 @@ final case class IngestMeta(
 )
 
 object IngestMeta:
-  type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = com.histmersion.domain.Title
+  val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
   type Authors = Authors.T
   object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Venue = Venue.T

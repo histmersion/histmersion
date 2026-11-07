@@ -18,20 +18,12 @@ object Passage:
 
   trait Source:
     /** The citekey the source named `citekey` has now; `None` when no source has it. */
-    def canonical(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.catalogue.evidence.passages.Passage.Source.CanonicalResult]
+    def canonical(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey]
 
     /** The sources whose text names `name` as a phrase, those naming it most often first, at most `limit`. */
-    def naming(name: com.histmersion.domain.catalogue.evidence.passages.Passage.Source.NamingName, limit: com.histmersion.domain.catalogue.evidence.passages.Passage.Source.NamingLimit): List[com.histmersion.domain.catalogue.evidence.passages.Passage.Source.NamingResult]
+    def naming(name: com.histmersion.domain.Title, limit: com.histmersion.PageSize): List[com.histmersion.domain.library.Citekey]
 
     /** A reader of one source's text, read once however many searches are made in it. */
     def reader(citekey: com.histmersion.domain.library.Citekey): PassageReader
 
   object Source:
-    type CanonicalResult = CanonicalResult.T
-    object CanonicalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NamingResult = NamingResult.T
-    object NamingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NamingName = NamingName.T
-    object NamingName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NamingLimit = NamingLimit.T
-    object NamingLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -37,7 +37,7 @@ final class ImportsControllers(
   /** The importer an import request names, or why it cannot run (unknown, its plugin switched off, or its own
     * `media.<provider>.enabled` off).
     */
-  private def providerOf(p: com.histmersion.domain.media.imports.ImportsControllers.ProviderOfP): Either[Api.Error, MediaImporter] =
+  private def providerOf(p: com.histmersion.domain.media.imports.ImportsControllers.Provider): Either[Api.Error, MediaImporter] =
     MediaImporters
       .resolve(p, collections()._1, imports, store, cfg, http, converter)
       .left
@@ -122,10 +122,10 @@ final class ImportsControllers(
   private def runImport(
       imp: MediaImporter,
       req: MediaImportRequest,
-      single: com.histmersion.domain.media.imports.ImportsControllers.RunImportSingle,
-      limit: Option[com.histmersion.domain.media.imports.ImportsControllers.RunImportLimit],
-      since: Option[com.histmersion.domain.media.imports.ImportsControllers.RunImportSince],
-      progress: com.histmersion.domain.media.imports.ImportsControllers.RunImportProgressArg1 => Unit
+      single: com.histmersion.domain.media.imports.ImportsControllers.Single,
+      limit: Option[com.histmersion.domain.media.imports.ImportsControllers.ImportLimit],
+      since: Option[com.histmersion.domain.media.imports.ImportsControllers.Since],
+      progress: com.histmersion.domain.media.imports.ImportsControllers.Progress => Unit
   ): MediaImportReport =
     val run = imp.start()
     val batch = imp.batch.max(1)
@@ -133,7 +133,7 @@ final class ImportsControllers(
     progress(s"counting the ${imp.over} not asked yet")
     val total = if single then 1 else imp.pending(since).min(cap)
     @annotation.tailrec
-    def loop(acc: MediaImportReport, seen: Set[com.histmersion.domain.media.imports.ImportsControllers.RunImportLoopSeen]): MediaImportReport =
+    def loop(acc: MediaImportReport, seen: Set[com.histmersion.domain.media.imports.ImportsControllers.SeenKey]): MediaImportReport =
       val left = cap - acc.targets
       if left <= 0 || jobs.held then acc
       else
@@ -171,50 +171,52 @@ final class ImportsControllers(
     out.modify(_.pending).setTo(imp.pending(since))
 
 object ImportsControllers:
-  type RunImportLoopSeen = RunImportLoopSeen.T
-  object RunImportLoopSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollectionItemKey = CollectionItemKey.T
+  object CollectionItemKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollectionKey = CollectionKey.T
+  object CollectionKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportLimit = ImportLimit.T
+  object ImportLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Progress = Progress.T
+  object Progress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProgressLine = ProgressLine.T
+  object ProgressLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Provider = Provider.T
+  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequestCount = RequestCount.T
+  object RequestCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeenKey = SeenKey.T
+  object SeenKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Since = Since.T
+  object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Single = Single.T
+  object Single extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SummaryText = SummaryText.T
+  object SummaryText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TotalCount = TotalCount.T
+  object TotalCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type CollectionsResultPart1Key = CollectionsResultPart1Key.T
-  object CollectionsResultPart1Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CollectionsResultPart2Key = CollectionsResultPart2Key.T
-  object CollectionsResultPart2Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollectionsResultPart1Key = com.histmersion.domain.media.imports.ImportsControllers.CollectionKey
+  val CollectionsResultPart1Key: _root_.com.histmersion.domain.media.imports.ImportsControllers.CollectionKey.type = _root_.com.histmersion.domain.media.imports.ImportsControllers.CollectionKey
+  type CollectionsResultPart2Key = com.histmersion.domain.media.imports.ImportsControllers.CollectionItemKey
+  val CollectionsResultPart2Key: _root_.com.histmersion.domain.media.imports.ImportsControllers.CollectionItemKey.type = _root_.com.histmersion.domain.media.imports.ImportsControllers.CollectionItemKey
   type CollectionsResultPart2Value = CollectionsResultPart2Value.T
   object CollectionsResultPart2Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ProviderOfP = ProviderOfP.T
-  object ProviderOfP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunImportSingle = RunImportSingle.T
-  object RunImportSingle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunImportLimit = RunImportLimit.T
-  object RunImportLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunImportSince = RunImportSince.T
-  object RunImportSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunImportProgressArg1 = RunImportProgressArg1.T
-  object RunImportProgressArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ImportJobKind = ImportJobKindValue
   type ImportJobKindValue = ImportJobKindValue.T
   object ImportJobKindValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SingleResult = SingleResult.T
-  object SingleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProgressLineResult = ProgressLineResult.T
-  object ProgressLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProgressLineTotal = ProgressLineTotal.T
-  object ProgressLineTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProgressLineRequests = ProgressLineRequests.T
-  object ProgressLineRequests extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SummaryResult = SummaryResult.T
-  object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val ImportJobKind: com.histmersion.domain.media.imports.ImportsControllers.ImportJobKind = com.histmersion.api.media.ImportJobKinds.MediaImport.kind.value
 
   /** Pure: does the request name one place or event (not "every one not asked yet")? */
-  def single(req: MediaImportRequest): com.histmersion.domain.media.imports.ImportsControllers.SingleResult =
+  def single(req: MediaImportRequest): Boolean =
     req.place.exists(_.trim.nonEmpty) || req.event.exists(_.trim.nonEmpty)
 
   /** Pure: a running import job's progress line — `n/total` asked (a total of 0 or less is unknown, and a total passed
     * by the asked count is the asked count: places cited meanwhile join in).
     */
-  def progressLine(r: MediaImportReport, total: com.histmersion.domain.media.imports.ImportsControllers.ProgressLineTotal, requests: com.histmersion.domain.media.imports.ImportsControllers.ProgressLineRequests): com.histmersion.domain.media.imports.ImportsControllers.ProgressLineResult =
+  def progressLine(r: MediaImportReport, total: com.histmersion.domain.media.imports.ImportsControllers.TotalCount, requests: com.histmersion.domain.media.imports.ImportsControllers.RequestCount): com.histmersion.domain.media.imports.ImportsControllers.ProgressLine =
     val of = if total > 0 then s"/${total.max(r.targets)}" else ""
     List(
       Some(s"${r.targets}$of place(s)/event(s) asked"),
@@ -225,7 +227,7 @@ object ImportsControllers:
     ).flatten.mkString(" · ")
 
   /** Pure: a finished import job's line in `histmersion jobs`. */
-  def summary(r: MediaImportReport): com.histmersion.domain.media.imports.ImportsControllers.SummaryResult =
+  def summary(r: MediaImportReport): com.histmersion.domain.media.imports.ImportsControllers.SummaryText =
     List(
       Some(s"${r.targets} place(s)/event(s) asked in ${r.batches} batch(es)"),
       Some(s"${r.files} file(s) · ${r.stored} stored · ${r.updated} refreshed · ${r.linked} link(s)"),

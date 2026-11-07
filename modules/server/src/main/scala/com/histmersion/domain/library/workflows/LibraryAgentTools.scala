@@ -36,7 +36,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
   private def max = caps.resultMaxChars
 
   /** The body slice an agent reads: what it asked for, or `body-chars`, and never past the result cap. */
-  private def bodyChars(asked: Option[com.histmersion.domain.library.workflows.LibraryAgentTools.BodyCharsAsked]): Option[com.histmersion.domain.library.workflows.LibraryAgentTools.BodyCharsResult] =
+  private def bodyChars(asked: Option[com.histmersion.domain.library.workflows.LibraryAgentTools.BodyChars]): Option[com.histmersion.domain.library.workflows.LibraryAgentTools.BodyChars] =
     val want = asked.filter(_ > 0).orElse(Option.when(caps.bodyChars > 0)(caps.bodyChars))
     if max <= 0 then want else Some(math.min(want.getOrElse(max), math.max(500, max - 300)))
 
@@ -140,22 +140,20 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
   )
 
 object LibraryAgentTools:
+  type BodyChars = BodyChars.T
+  object BodyChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueryMax = QueryMax.T
+  object QueryMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueryMaxRows = QueryMaxRows.T
+  object QueryMaxRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueryText = QueryText.T
+  object QueryText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A `query` result as an agent sees it: at most `maxRows` rows, marked as cut (the row cap's own flag), then
     * [[cap]]ped like any result.
     */
-  type BodyCharsResult = BodyCharsResult.T
-  object BodyCharsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyCharsAsked = BodyCharsAsked.T
-  object BodyCharsAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryResultResult = QueryResultResult.T
-  object QueryResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryResultMaxRows = QueryResultMaxRows.T
-  object QueryResultMaxRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryResultMax = QueryResultMax.T
-  object QueryResultMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def queryResult(r: com.histmersion.api.library.Query.QueryResult, maxRows: com.histmersion.domain.library.workflows.LibraryAgentTools.QueryResultMaxRows, max: com.histmersion.domain.library.workflows.LibraryAgentTools.QueryResultMax): com.histmersion.domain.library.workflows.LibraryAgentTools.QueryResultResult =
+  def queryResult(r: com.histmersion.api.library.Query.QueryResult, maxRows: com.histmersion.domain.library.workflows.LibraryAgentTools.QueryMaxRows, max: com.histmersion.domain.library.workflows.LibraryAgentTools.QueryMax): com.histmersion.domain.library.workflows.LibraryAgentTools.QueryText =
     val shown = if maxRows > 0 && r.rows.size > maxRows then
       r.modify(_.rows).setTo(r.rows.take(maxRows)).modify(_.rowCount).setTo(maxRows).modify(_.truncated).setTo(true)
     else r

@@ -1,0 +1,315 @@
+## CONCEPTS NEARBY
+com.histmersion.util.jobs.Job.Id (String)
+com.histmersion.util.jobs.Job.Kind (String)
+com.histmersion.util.jobs.JobAction.Wire (String)
+com.histmersion.util.jobs.JobControlRules.Problem (String)
+com.histmersion.util.jobs.JobQuery.Kinds (String)
+com.histmersion.util.jobs.JobQuery.Q (String)
+com.histmersion.util.jobs.JobQuery.Status (String)
+com.histmersion.util.jobs.JobRepo.CreateAcquireItem (Int)
+com.histmersion.util.jobs.JobRepo.CreateKind (String)
+com.histmersion.util.jobs.JobRepo.DueAt (String)
+com.histmersion.util.jobs.JobRepo.FailInterruptedExcept (String)
+com.histmersion.util.jobs.JobRepo.FinishMergeApplyId (String)
+com.histmersion.util.jobs.JobRepo.GetId (String)
+com.histmersion.util.jobs.JobRepo.ListStatus (String)
+com.histmersion.util.jobs.JobRepo.MergeApplyId (String)
+com.histmersion.util.jobs.JobRepo.MoveRunError (String)
+com.histmersion.util.jobs.JobRepo.MoveRunFrom (String)
+com.histmersion.util.jobs.JobRepo.MoveRunKind (String)
+com.histmersion.util.jobs.JobRepo.MoveRunProgress (String)
+com.histmersion.util.jobs.JobRepo.MoveRunTo (String)
+com.histmersion.util.jobs.JobRepo.PageCursor (String)
+com.histmersion.util.jobs.JobRepo.PageStatus (String)
+com.histmersion.util.jobs.JobRepo.Problem (String)
+com.histmersion.util.jobs.JobRepo.ProgressId (String)
+com.histmersion.util.jobs.JobRepo.ProgressText (String)
+com.histmersion.util.jobs.JobRepo.ResumeAt (String)
+com.histmersion.util.jobs.JobRepo.RunBudgetKind (String)
+com.histmersion.util.jobs.JobRepo.RunHeartbeatKind (String)
+com.histmersion.util.jobs.JobRepo.RunProgressKind (String)
+com.histmersion.util.jobs.JobRepo.RunProgressText (String)
+com.histmersion.util.jobs.JobRepo.RunResumesAtKind (String)
+com.histmersion.util.jobs.JobRepo.RunResumesAtPaused (String)
+com.histmersion.util.jobs.JobRepo.RunWarningKind (String)
+com.histmersion.util.jobs.JobRepo.RunsDueKind (String)
+com.histmersion.util.jobs.JobRepo.RunsDuePaused (String)
+com.histmersion.util.jobs.JobRepo.RunsInKind (String)
+com.histmersion.util.jobs.JobRepo.RunsInStatusesPart1 (String)
+com.histmersion.util.jobs.JobRepo.RunsInStatusesPart2 (String)
+com.histmersion.util.jobs.JobRepo.RunsPausedLikeKind (String)
+com.histmersion.util.jobs.JobRepo.RunsPausedLikePaused (String)
+com.histmersion.util.jobs.JobRepo.RunsReconciledError (String)
+com.histmersion.util.jobs.JobRepo.RunsReconciledExcept (String)
+com.histmersion.util.jobs.JobRepo.RunsReconciledKind (String)
+com.histmersion.util.jobs.JobRepo.RunsReconciledPaused (String)
+com.histmersion.util.jobs.JobRepo.RunsReconciledQueued (String)
+com.histmersion.util.jobs.JobRepo.RunsReconciledRunning (String)
+com.histmersion.util.jobs.JobRepo.SetDetailId (String)
+com.histmersion.util.jobs.JobRepo.TokenBudget (Long)
+com.histmersion.util.jobs.JobRepo.TransitionError (String)
+com.histmersion.util.jobs.JobRepo.TransitionId (String)
+com.histmersion.util.jobs.JobRepo.TransitionProgress (String)
+com.histmersion.util.jobs.JobRepo.WarningText (String)
+com.histmersion.util.jobs.JobRow.AcquireItem (Int)
+com.histmersion.util.jobs.JobRow.CreatedAt (String)
+com.histmersion.util.jobs.JobRow.Detail (String)
+com.histmersion.util.jobs.JobRow.Error (String)
+com.histmersion.util.jobs.JobRow.Id (String)
+com.histmersion.util.jobs.JobRow.Kind (String)
+com.histmersion.util.jobs.JobRow.Progress (String)
+com.histmersion.util.jobs.JobRow.Sha256 (String)
+com.histmersion.util.jobs.JobRow.Status (String)
+com.histmersion.util.jobs.JobRow.UpdatedAt (String)
+com.histmersion.util.jobs.MergeApplyRuns.InMemory.StateKey (String)
+com.histmersion.util.jobs.MergeApplyRuns.Run.Bundle (String)
+com.histmersion.util.jobs.MergeApplyRuns.Run.OutcomePart1 (String)
+com.histmersion.util.jobs.MergeApplyRuns.Run.PlanHash (String)
+com.histmersion.util.jobs.RunRow.AcquireItem (Int)
+com.histmersion.util.jobs.RunRow.DryRun (Boolean)
+com.histmersion.util.jobs.RunRow.Goal (String)
+com.histmersion.util.jobs.RunRow.Kind (String)
+com.histmersion.util.jobs.RunRow.ManagerId (String)
+com.histmersion.util.jobs.RunRow.ManagerItem (Long)
+com.histmersion.util.jobs.RunRow.Model (String)
+com.histmersion.util.jobs.RunRow.Origin (String)
+com.histmersion.util.jobs.RunRow.Params (String)
+com.histmersion.util.jobs.RunRow.Parent (String)
+com.histmersion.util.jobs.RunRow.Pipeline (String)
+com.histmersion.util.jobs.RunRow.Status (String)
+com.histmersion.util.jobs.RunRow.Target (String)
+com.histmersion.util.jobs.RunRow.TargetKind (String)
+com.histmersion.util.ocr.Chunk.Body (String)
+com.histmersion.util.ocr.Chunk.Heading (String)
+com.histmersion.util.ocr.Chunk.Ord (Int)
+com.histmersion.util.ocr.Chunker.ChunkMarkdown (String)
+com.histmersion.util.ocr.Chunker.ChunkMaxChars (Int)
+com.histmersion.util.ocr.ConverterClient.PageCount.Pages (Int)
+com.histmersion.util.ocr.ConverterClient.PageCount.Scanned (Int)
+com.histmersion.util.ocr.ConverterClient.Thumb.Bytes (Array[Byte])
+com.histmersion.util.ocr.ConverterClient.Thumb.Height (Int)
+com.histmersion.util.ocr.ConverterClient.Thumb.Mime (String)
+com.histmersion.util.ocr.ConverterClient.Thumb.Width (Int)
+com.histmersion.util.ocr.ConverterState.Busy.JobId (String)
+com.histmersion.util.ocr.ConverterState.Down.Reason (String)
+com.histmersion.util.ocr.ConverterUrl (String)
+com.histmersion.util.ocr.Dpi (Int)
+com.histmersion.util.ocr.Pixels (Int)
+com.histmersion.util.ocr.Seconds (Int)
+com.histmersion.util.plugins.HostProvided.ContributeResultPart1 (String)
+com.histmersion.util.plugins.HostProvided.Id (String)
+com.histmersion.util.plugins.HostProvided.IdsValue (String)
+com.histmersion.util.plugins.Plugin.Id (String)
+com.histmersion.util.plugins.PluginKit.Coordinates.Artifact (String)
+com.histmersion.util.plugins.PluginKit.Coordinates.Group (String)
+com.histmersion.util.plugins.PluginKit.Coordinates.Version (String)
+com.histmersion.util.plugins.PluginKit.Installed.AddedAt (String)
+com.histmersion.util.plugins.PluginKit.Installed.Signer (String)
+com.histmersion.util.plugins.PluginKit.Installed.Source (String)
+com.histmersion.util.plugins.PluginKit.KitFile.File (String)
+com.histmersion.util.plugins.PluginKit.KitManifest.Commit (String)
+com.histmersion.util.plugins.PluginKit.KitManifest.Format (Int)
+com.histmersion.util.plugins.PluginKit.KitManifest.Graalvm (String)
+com.histmersion.util.plugins.PluginKit.KitManifest.MainClass (String)
+com.histmersion.util.plugins.PluginKit.KitManifest.Version (String)
+com.histmersion.util.plugins.PluginKit.Origin.File.Path (String)
+com.histmersion.util.plugins.PluginKit.Origin.Url.Value (String)
+com.histmersion.util.plugins.PluginKit.Problem (String)
+
+## TYPES TO DECIDE
+com.histmersion.util.jobs.JobStops.AnsweredId | base String | generated | method-parameter
+    def answered(id: com.histmersion.util.jobs.JobStops.AnsweredId): Unit = { val _ = requested.remove(id) }
+com.histmersion.util.jobs.JobStops.CanResumeId | base String | generated | method-parameter
+    def canResume(id: com.histmersion.util.jobs.JobStops.CanResumeId): com.histmersion.util.jobs.JobStops.CanResumeResult = resumers.containsKey(id)
+com.histmersion.util.jobs.JobStops.CanResumeResult | base Boolean | generated | method-result
+    def canResume(id: com.histmersion.util.jobs.JobStops.CanResumeId): com.histmersion.util.jobs.JobStops.CanResumeResult = resumers.containsKey(id)
+com.histmersion.util.jobs.JobStops.ForgetId | base String | generated | method-parameter
+    def forget(id: com.histmersion.util.jobs.JobStops.ForgetId): Unit =
+com.histmersion.util.jobs.JobStops.PausedWithId | base String | generated | method-parameter
+    def pausedWith(id: com.histmersion.util.jobs.JobStops.PausedWithId, resume: () => Either[com.histmersion.util.jobs.JobStops.PausedWithResumeResultPart1, Unit]): Unit = { 
+com.histmersion.util.jobs.JobStops.PausedWithResumeResultPart1 | base String | generated | method-parameter
+    def pausedWith(id: com.histmersion.util.jobs.JobStops.PausedWithId, resume: () => Either[com.histmersion.util.jobs.JobStops.PausedWithResumeResultPart1, Unit]): Unit = { 
+com.histmersion.util.jobs.JobStops.RequestId | base String | generated | method-parameter
+    def request(id: com.histmersion.util.jobs.JobStops.RequestId, stop: JobStop): Unit = { val _ = requested.put(id, stop) }
+com.histmersion.util.jobs.JobStops.RequestedForId | base String | generated | method-parameter
+    def requestedFor(id: com.histmersion.util.jobs.JobStops.RequestedForId): Option[JobStop] = Option(requested.get(id))
+com.histmersion.util.jobs.JobStops.ResumeId | base String | generated | method-parameter
+    def resume(id: com.histmersion.util.jobs.JobStops.ResumeId): Either[com.histmersion.util.jobs.JobStops.ResumeResultPart1, Unit] =
+com.histmersion.util.jobs.JobStops.ResumeResultPart1 | base String | generated | method-result
+    def resume(id: com.histmersion.util.jobs.JobStops.ResumeId): Either[com.histmersion.util.jobs.JobStops.ResumeResultPart1, Unit] =
+com.histmersion.util.jobs.MergeApplyRuns.FinishId | base String | generated | method-parameter
+    def finish(id: com.histmersion.util.jobs.MergeApplyRuns.FinishId, outcome: Either[com.histmersion.util.jobs.MergeApplyRuns.FinishOutcomePart1, MergeApplyResult]): Unit
+    def finish(id: com.histmersion.util.jobs.MergeApplyRuns.Implementation.FinishId, outcome: Either[com.histmersion.util.jobs.MergeApplyRuns.Implementation.FinishOutcomePart
+com.histmersion.util.jobs.MergeApplyRuns.FinishOutcomePart1 | base String | generated | method-parameter
+    def finish(id: com.histmersion.util.jobs.MergeApplyRuns.FinishId, outcome: Either[com.histmersion.util.jobs.MergeApplyRuns.FinishOutcomePart1, MergeApplyResult]): Unit
+    def finish(id: com.histmersion.util.jobs.MergeApplyRuns.Implementation.FinishId, outcome: Either[com.histmersion.util.jobs.MergeApplyRuns.Implementation.FinishOutcomePart
+com.histmersion.util.jobs.MergeApplyRuns.Implementation.FinishId | base String | generated | method-parameter
+    def finish(id: com.histmersion.util.jobs.MergeApplyRuns.FinishId, outcome: Either[com.histmersion.util.jobs.MergeApplyRuns.FinishOutcomePart1, MergeApplyResult]): Unit
+    def finish(id: com.histmersion.util.jobs.MergeApplyRuns.Implementation.FinishId, outcome: Either[com.histmersion.util.jobs.MergeApplyRuns.Implementation.FinishOutcomePart
+com.histmersion.util.jobs.MergeApplyRuns.Implementation.FinishOutcomePart1 | base String | generated | method-parameter
+    def finish(id: com.histmersion.util.jobs.MergeApplyRuns.FinishId, outcome: Either[com.histmersion.util.jobs.MergeApplyRuns.FinishOutcomePart1, MergeApplyResult]): Unit
+    def finish(id: com.histmersion.util.jobs.MergeApplyRuns.Implementation.FinishId, outcome: Either[com.histmersion.util.jobs.MergeApplyRuns.Implementation.FinishOutcomePart
+com.histmersion.util.jobs.MergeApplyRuns.Implementation.RunningResult | base Boolean | generated | method-result
+    def running: com.histmersion.util.jobs.MergeApplyRuns.RunningResult
+    def running: com.histmersion.util.jobs.MergeApplyRuns.Implementation.RunningResult = Transactor(ds).read(JobRepo.mergeApplyRunning)
+com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartBundle | base String | generated | method-parameter
+    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.StartBundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.StartPlanHash): com.histmersion.util.jobs.Merge
+    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartBundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartPlanHash): c
+com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartPlanHash | base String | generated | method-parameter
+    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.StartBundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.StartPlanHash): com.histmersion.util.jobs.Merge
+    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartBundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartPlanHash): c
+com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartResult | base String | generated | method-result
+    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.StartBundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.StartPlanHash): com.histmersion.util.jobs.Merge
+    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartBundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartPlanHash): c
+com.histmersion.util.jobs.MergeApplyRuns.Implementation.StatusId | base String | generated | method-parameter
+    def status(id: com.histmersion.util.jobs.MergeApplyRuns.StatusId): Option[MergeApplyJob]
+    def status(id: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StatusId): Option[MergeApplyJob] = Transactor(ds).read(JobRepo.mergeApply(id))
+com.histmersion.util.jobs.MergeApplyRuns.InMemory.FinishId | base String | generated | method-parameter
+    def finish(id: com.histmersion.util.jobs.MergeApplyRuns.FinishId, outcome: Either[com.histmersion.util.jobs.MergeApplyRuns.FinishOutcomePart1, MergeApplyResult]): Unit
+    def finish(id: com.histmersion.util.jobs.MergeApplyRuns.Implementation.FinishId, outcome: Either[com.histmersion.util.jobs.MergeApplyRuns.Implementation.FinishOutcomePart
+com.histmersion.util.jobs.MergeApplyRuns.InMemory.FinishOutcomePart1 | base String | generated | method-parameter
+    def finish(id: com.histmersion.util.jobs.MergeApplyRuns.FinishId, outcome: Either[com.histmersion.util.jobs.MergeApplyRuns.FinishOutcomePart1, MergeApplyResult]): Unit
+    def finish(id: com.histmersion.util.jobs.MergeApplyRuns.Implementation.FinishId, outcome: Either[com.histmersion.util.jobs.MergeApplyRuns.Implementation.FinishOutcomePart
+com.histmersion.util.jobs.MergeApplyRuns.InMemory.RunningResult | base Boolean | generated | method-result
+    def running: com.histmersion.util.jobs.MergeApplyRuns.RunningResult
+    def running: com.histmersion.util.jobs.MergeApplyRuns.Implementation.RunningResult = Transactor(ds).read(JobRepo.mergeApplyRunning)
+com.histmersion.util.jobs.MergeApplyRuns.InMemory.StartResult | base String | generated | method-result
+    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.StartBundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.StartPlanHash): com.histmersion.util.jobs.Merge
+    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartBundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartPlanHash): c
+com.histmersion.util.jobs.MergeApplyRuns.InMemory.StateKey | base String | generated | constructor-parameter
+    final class InMemory(state: AtomicReference[Map[InMemory.StateKey, Run]] = AtomicReference(Map.empty[String, Run]))
+com.histmersion.util.jobs.MergeApplyRuns.InMemory.StatusId | base String | generated | method-parameter
+    def status(id: com.histmersion.util.jobs.MergeApplyRuns.StatusId): Option[MergeApplyJob]
+    def status(id: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StatusId): Option[MergeApplyJob] = Transactor(ds).read(JobRepo.mergeApply(id))
+com.histmersion.util.jobs.MergeApplyRuns.Run.Bundle | base String | original | alias,constructor-parameter
+    final case class Run(bundle: Run.Bundle, planHash: Run.PlanHash, outcome: Option[Either[Run.OutcomePart1, MergeApplyResult]])
+    val StartBundle: _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.Bundle.type = _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.Bundle
+com.histmersion.util.jobs.MergeApplyRuns.Run.OutcomePart1 | base String | original | constructor-parameter
+    final case class Run(bundle: Run.Bundle, planHash: Run.PlanHash, outcome: Option[Either[Run.OutcomePart1, MergeApplyResult]])
+com.histmersion.util.jobs.MergeApplyRuns.Run.PlanHash | base String | original | alias,constructor-parameter
+    final case class Run(bundle: Run.Bundle, planHash: Run.PlanHash, outcome: Option[Either[Run.OutcomePart1, MergeApplyResult]])
+    val StartPlanHash: _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.PlanHash.type = _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.PlanHash
+com.histmersion.util.jobs.MergeApplyRuns.RunningResult | base Boolean | generated | method-result
+    def running: com.histmersion.util.jobs.MergeApplyRuns.RunningResult
+    def running: com.histmersion.util.jobs.MergeApplyRuns.Implementation.RunningResult = Transactor(ds).read(JobRepo.mergeApplyRunning)
+com.histmersion.util.jobs.MergeApplyRuns.StartBundle | base String | generated | method-parameter
+    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.StartBundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.StartPlanHash): com.histmersion.util.jobs.Merge
+    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartBundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartPlanHash): c
+com.histmersion.util.jobs.MergeApplyRuns.StartPlanHash | base String | generated | method-parameter
+    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.StartBundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.StartPlanHash): com.histmersion.util.jobs.Merge
+    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartBundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartPlanHash): c
+com.histmersion.util.jobs.MergeApplyRuns.StartResult | base String | generated | method-result
+    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.StartBundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.StartPlanHash): com.histmersion.util.jobs.Merge
+    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartBundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StartPlanHash): c
+com.histmersion.util.jobs.MergeApplyRuns.StatusId | base String | generated | method-parameter
+    def status(id: com.histmersion.util.jobs.MergeApplyRuns.StatusId): Option[MergeApplyJob]
+    def status(id: com.histmersion.util.jobs.MergeApplyRuns.Implementation.StatusId): Option[MergeApplyJob] = Transactor(ds).read(JobRepo.mergeApply(id))
+com.histmersion.util.mcp.McpOut.MarkdownMdResult | base String | generated | method-parameter
+    def markdown[A](r: Either[Api.Error, A])(md: A => com.histmersion.util.mcp.McpOut.MarkdownMdResult): com.histmersion.util.mcp.McpOut.MarkdownResult = r.fold(refusal, md)
+com.histmersion.util.mcp.McpOut.MarkdownResult | base String | generated | method-result
+    def markdown[A](r: Either[Api.Error, A])(md: A => com.histmersion.util.mcp.McpOut.MarkdownMdResult): com.histmersion.util.mcp.McpOut.MarkdownResult = r.fold(refusal, md)
+com.histmersion.util.mcp.McpOut.OfMdResult | base String | generated | method-parameter
+    def of[A](r: Either[Api.Error, A])(md: A => com.histmersion.util.mcp.McpOut.OfMdResult): ToolResult[NoStructuredOutput] = ToolResult.text(markdown(r)(md))
+com.histmersion.util.mcp.McpOut.RefusalMessage | base String | generated | method-parameter
+    def refusal(message: com.histmersion.util.mcp.McpOut.RefusalMessage): com.histmersion.util.mcp.McpOut.RefusalResult = s"_${message}_"
+com.histmersion.util.mcp.McpOut.RefusalResult | base String | generated | method-result
+    def refusal(message: com.histmersion.util.mcp.McpOut.RefusalMessage): com.histmersion.util.mcp.McpOut.RefusalResult = s"_${message}_"
+    def refusal(e: Api.Error): com.histmersion.util.mcp.McpOut.RefusalResult = refusal(e.message)
+com.histmersion.util.mcp.McpOut.TextMd | base String | generated | method-parameter
+    def text(md: com.histmersion.util.mcp.McpOut.TextMd): ToolResult[NoStructuredOutput] = ToolResult.text(md)
+com.histmersion.util.ocr.ConverterClient.ConvertFilename | base String | generated | method-parameter
+    def convert(file: Blob, filename: com.histmersion.util.ocr.ConverterClient.ConvertFilename, quality: com.histmersion.util.ocr.ConverterClient.ConvertQuality): Either[com.
+com.histmersion.util.ocr.ConverterClient.ConvertQuality | base Boolean | generated | method-parameter
+    def convert(file: Blob, filename: com.histmersion.util.ocr.ConverterClient.ConvertFilename, quality: com.histmersion.util.ocr.ConverterClient.ConvertQuality): Either[com.
+com.histmersion.util.ocr.ConverterClient.ConvertResultPart1 | base String | generated | method-result
+    def convert(file: Blob, filename: com.histmersion.util.ocr.ConverterClient.ConvertFilename, quality: com.histmersion.util.ocr.ConverterClient.ConvertQuality): Either[com.
+com.histmersion.util.ocr.ConverterClient.HealthResultPart1 | base String | generated | method-result
+    def health: Either[com.histmersion.util.ocr.ConverterClient.HealthResultPart1, com.histmersion.util.ocr.ConverterClient.HealthResultPart2]
+com.histmersion.util.ocr.ConverterClient.HealthResultPart2 | base String | generated | method-result
+    def health: Either[com.histmersion.util.ocr.ConverterClient.HealthResultPart1, com.histmersion.util.ocr.ConverterClient.HealthResultPart2]
+com.histmersion.util.ocr.ConverterClient.PageCount.Pages | base Int | original | constructor-parameter
+    final case class PageCount(pages: PageCount.Pages, scanned: PageCount.Scanned = 0)
+com.histmersion.util.ocr.ConverterClient.PageCount.Scanned | base Int | original | constructor-parameter
+    final case class PageCount(pages: PageCount.Pages, scanned: PageCount.Scanned = 0)
+com.histmersion.util.ocr.ConverterClient.Thumb.Bytes | base Array[Byte] | original | constructor-parameter
+    final case class Thumb(bytes: Thumb.Bytes, mime: Thumb.Mime, width: Thumb.Width, height: Thumb.Height)
+com.histmersion.util.ocr.ConverterClient.Thumb.Height | base Int | original | constructor-parameter
+    final case class Thumb(bytes: Thumb.Bytes, mime: Thumb.Mime, width: Thumb.Width, height: Thumb.Height)
+com.histmersion.util.ocr.ConverterClient.Thumb.Mime | base String | original | constructor-parameter
+    final case class Thumb(bytes: Thumb.Bytes, mime: Thumb.Mime, width: Thumb.Width, height: Thumb.Height)
+com.histmersion.util.ocr.ConverterClient.Thumb.Width | base Int | original | constructor-parameter
+    final case class Thumb(bytes: Thumb.Bytes, mime: Thumb.Mime, width: Thumb.Width, height: Thumb.Height)
+com.histmersion.util.ocr.ConverterClient.ThumbnailBytes | base Array[Byte] | generated | method-parameter
+    def thumbnail(bytes: com.histmersion.util.ocr.ConverterClient.ThumbnailBytes, filename: com.histmersion.util.ocr.ConverterClient.ThumbnailFilename, maxPx: com.histmersion
+com.histmersion.util.ocr.ConverterClient.ThumbnailFilename | base String | generated | method-parameter
+    def thumbnail(bytes: com.histmersion.util.ocr.ConverterClient.ThumbnailBytes, filename: com.histmersion.util.ocr.ConverterClient.ThumbnailFilename, maxPx: com.histmersion
+com.histmersion.util.ocr.ConverterClient.ThumbnailMaxPx | base Int | generated | method-parameter
+    def thumbnail(bytes: com.histmersion.util.ocr.ConverterClient.ThumbnailBytes, filename: com.histmersion.util.ocr.ConverterClient.ThumbnailFilename, maxPx: com.histmersion
+com.histmersion.util.ocr.ConverterClient.ThumbnailResultPart1 | base String | generated | method-result
+    def thumbnail(bytes: com.histmersion.util.ocr.ConverterClient.ThumbnailBytes, filename: com.histmersion.util.ocr.ConverterClient.ThumbnailFilename, maxPx: com.histmersion
+com.histmersion.util.ocr.ConverterClient.TimeoutForQuality | base Boolean | generated | method-parameter
+    def timeoutFor(cfg: ConverterSettings, count: Option[PageCount], quality: com.histmersion.util.ocr.ConverterClient.TimeoutForQuality): Duration =
+com.histmersion.util.ocr.ConverterState.Busy.JobId | base String | generated | constructor-parameter
+    case Busy(jobId: ConverterState.Busy.JobId)
+com.histmersion.util.ocr.ConverterState.Down.Reason | base String | generated | constructor-parameter
+    case Down(reason: ConverterState.Down.Reason)
+com.histmersion.util.ocr.ConverterState.HealthyResult | base Boolean | generated | method-result
+    def healthy: com.histmersion.util.ocr.ConverterState.HealthyResult = this match
+com.histmersion.util.ocr.ConverterState.OfBusyJob | base String | generated | method-parameter
+    def of(probe: com.histmersion.util.ocr.ConverterState.OfProbe, busyJob: Option[com.histmersion.util.ocr.ConverterState.OfBusyJob]): ConverterState =
+com.histmersion.util.ocr.ConverterState.OfProbe | base String | generated | method-parameter
+    def of(probe: com.histmersion.util.ocr.ConverterState.OfProbe, busyJob: Option[com.histmersion.util.ocr.ConverterState.OfBusyJob]): ConverterState =
+com.histmersion.util.ocr.ConverterState.RenderResult | base String | generated | method-result
+    def render: com.histmersion.util.ocr.ConverterState.RenderResult = this match
+com.histmersion.util.ocr.ConverterUrl | base String | original | constructor-parameter
+com.histmersion.util.ocr.Dpi | base Int | original | constructor-parameter
+com.histmersion.util.ocr.HttpConverterClient.ConvertFilename | base String | generated | method-parameter
+    def convert(file: Blob, filename: com.histmersion.util.ocr.HttpConverterClient.ConvertFilename, quality: com.histmersion.util.ocr.HttpConverterClient.ConvertQuality): Eit
+com.histmersion.util.ocr.HttpConverterClient.ConvertQuality | base Boolean | generated | method-parameter
+    def convert(file: Blob, filename: com.histmersion.util.ocr.HttpConverterClient.ConvertFilename, quality: com.histmersion.util.ocr.HttpConverterClient.ConvertQuality): Eit
+com.histmersion.util.ocr.HttpConverterClient.ConvertResultPart1 | base String | generated | method-result
+    def convert(file: Blob, filename: com.histmersion.util.ocr.HttpConverterClient.ConvertFilename, quality: com.histmersion.util.ocr.HttpConverterClient.ConvertQuality): Eit
+com.histmersion.util.ocr.HttpConverterClient.HealthResultPart1 | base String | generated | method-result
+    def health: Either[com.histmersion.util.ocr.HttpConverterClient.HealthResultPart1, com.histmersion.util.ocr.HttpConverterClient.HealthResultPart2] =
+com.histmersion.util.ocr.HttpConverterClient.HealthResultPart2 | base String | generated | method-result
+    def health: Either[com.histmersion.util.ocr.HttpConverterClient.HealthResultPart1, com.histmersion.util.ocr.HttpConverterClient.HealthResultPart2] =
+com.histmersion.util.ocr.HttpConverterClient.MultipartAsciiS | base String | generated | method-parameter
+    def ascii(s: com.histmersion.util.ocr.HttpConverterClient.MultipartAsciiS) = s.getBytes("UTF-8")
+com.histmersion.util.ocr.HttpConverterClient.MultipartBoundary | base String | generated | method-parameter
+com.histmersion.util.ocr.HttpConverterClient.MultipartFieldName | base String | generated | method-parameter
+    def field(name: com.histmersion.util.ocr.HttpConverterClient.MultipartFieldName, value: com.histmersion.util.ocr.HttpConverterClient.MultipartFieldValue) =
+com.histmersion.util.ocr.HttpConverterClient.MultipartFieldValue | base String | generated | method-parameter
+    def field(name: com.histmersion.util.ocr.HttpConverterClient.MultipartFieldName, value: com.histmersion.util.ocr.HttpConverterClient.MultipartFieldValue) =
+com.histmersion.util.ocr.HttpConverterClient.MultipartFilename | base String | generated | method-parameter
+com.histmersion.util.ocr.HttpConverterClient.MultipartQuality | base Boolean | generated | method-parameter
+com.histmersion.util.ocr.HttpConverterClient.MultipartResultPart1 | base String | generated | method-result
+com.histmersion.util.ocr.HttpConverterClient.PagesFilename | base String | generated | method-parameter
+    def pages(file: Blob, filename: com.histmersion.util.ocr.HttpConverterClient.PagesFilename): Option[ConverterClient.PageCount] =
+com.histmersion.util.ocr.HttpConverterClient.SendResultPart1 | base String | generated | method-result
+com.histmersion.util.ocr.HttpConverterClient.SendResultPart2 | base String | generated | method-result
+com.histmersion.util.ocr.HttpConverterClient.SendTimeoutHint | base String | generated | method-parameter
+com.histmersion.util.ocr.HttpConverterClient.ThumbnailAsciiS | base String | generated | method-parameter
+    def ascii(s: com.histmersion.util.ocr.HttpConverterClient.ThumbnailAsciiS) = s.getBytes("UTF-8")
+com.histmersion.util.ocr.JatsConverter.ConvertFilename | base String | generated | method-parameter
+    def convert(file: Blob, filename: com.histmersion.util.ocr.JatsConverter.ConvertFilename, quality: com.histmersion.util.ocr.JatsConverter.ConvertQuality): Either[com.hist
+com.histmersion.util.ocr.JatsConverter.ConvertQuality | base Boolean | generated | method-parameter
+    def convert(file: Blob, filename: com.histmersion.util.ocr.JatsConverter.ConvertFilename, quality: com.histmersion.util.ocr.JatsConverter.ConvertQuality): Either[com.hist
+com.histmersion.util.ocr.JatsConverter.ConvertResultPart1 | base String | generated | method-result
+    def convert(file: Blob, filename: com.histmersion.util.ocr.JatsConverter.ConvertFilename, quality: com.histmersion.util.ocr.JatsConverter.ConvertQuality): Either[com.hist
+com.histmersion.util.ocr.JatsConverter.HealthResultPart1 | base String | generated | method-result
+    def health: Either[com.histmersion.util.ocr.JatsConverter.HealthResultPart1, com.histmersion.util.ocr.JatsConverter.HealthResultPart2] = sidecar.health
+com.histmersion.util.ocr.JatsConverter.HealthResultPart2 | base String | generated | method-result
+    def health: Either[com.histmersion.util.ocr.JatsConverter.HealthResultPart1, com.histmersion.util.ocr.JatsConverter.HealthResultPart2] = sidecar.health
+com.histmersion.util.ocr.Pixels | base Int | original | constructor-parameter
+com.histmersion.util.ocr.Seconds | base Int | original | constructor-parameter
+com.histmersion.util.plugins.HostProvided.ApplyContributeResultPart1 | base String | generated | method-parameter
+    def apply(id: com.histmersion.util.plugins.HostProvided.ApplyId, contribute: Plugin.Context => Either[com.histmersion.util.plugins.HostProvided.ApplyContributeResultPart1
+com.histmersion.util.plugins.HostProvided.ApplyId | base String | generated | method-parameter
+    def apply(id: com.histmersion.util.plugins.HostProvided.ApplyId, contribute: Plugin.Context => Either[com.histmersion.util.plugins.HostProvided.ApplyContributeResultPart1
+com.histmersion.util.plugins.HostProvided.ContributeResultPart1 | base String | generated | constructor-parameter
+    final class HostProvided[C](id: HostProvided.Id, contribute: (C, Plugin.Context) => Either[HostProvided.ContributeResultPart1, Unit])(using ConfigReader[C])
+com.histmersion.util.plugins.HostProvided.Id | base String | generated | constructor-parameter
+    final class HostProvided[C](id: HostProvided.Id, contribute: (C, Plugin.Context) => Either[HostProvided.ContributeResultPart1, Unit])(using ConfigReader[C])
+com.histmersion.util.plugins.HostProvided.IdsValue | base String | original | alias
+com.histmersion.util.plugins.HostProvided.RegisterResultPart1 | base String | generated | method-result
+    def register(config: C, ctx: Plugin.Context): Either[com.histmersion.util.plugins.HostProvided.RegisterResultPart1, Unit] = contribute(config, ctx)

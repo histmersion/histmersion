@@ -39,13 +39,13 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
 
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig = watchDefaults.managerDefaults(m)
 
-  def pipelineOf(itemKind: com.histmersion.domain.library.workflows.WatchManagerKind.PipelineOfItemKind): Pipeline = itemKind match
+  def pipelineOf(itemKind: com.histmersion.domain.library.workflows.WatchManagerKind.ItemKind): Pipeline = itemKind match
     case AcquisitionSweep => Pipeline.AcquisitionSweep
     case CurrencyCheck    => Pipeline.CurrencyCheck
     case _                => Pipeline.Fallback
 
   /** A firing re-opens each of the goal's sweeps that has settled (one still open is left to finish). */
-  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.library.workflows.WatchManagerKind.FireResult] =
+  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.library.workflows.WatchManagerKind.FireLine] =
     m.goal.toList.flatMap { g =>
       Sweep.of(m.config).map { sw =>
         val open = c
@@ -68,7 +68,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       "acquire-recheck" -> (() => work.acquireRecheck.tick(now))
     )
 
-  def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.library.workflows.WatchManagerKind.FactsRun): StepFacts =
+  def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts =
     item.kind match
       case AcquisitionSweep | CurrencyCheck =>
         StepFacts.Finished(closeLine(c, run).getOrElse(s"${item.kind} done — ${c.progress(run)}").take(1000))
@@ -104,10 +104,10 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       }
 
   /** The worklog line a sweep's `close` step wrote (what it found, queued, ingested). */
-  private def closeLine(c: ManagerContext, run: com.histmersion.domain.library.workflows.WatchManagerKind.CloseLineRun): Option[com.histmersion.domain.library.workflows.WatchManagerKind.CloseLineResult] =
+  private def closeLine(c: ManagerContext, run: com.histmersion.domain.automation.Run.Id): Option[com.histmersion.domain.library.workflows.WatchManagerKind.CloseLine] =
     c.stepOutput(run, "close").flatMap(o => io.circe.parser.decode[String](o).toOption)
 
-  def target(m: ManagerInfo, itemKind: com.histmersion.domain.library.workflows.WatchManagerKind.TargetItemKind, raw: com.histmersion.domain.library.workflows.WatchManagerKind.TargetRaw): Either[Api.Error, com.histmersion.domain.library.workflows.WatchManagerKind.TargetResultPart2] =
+  def target(m: ManagerInfo, itemKind: com.histmersion.domain.library.workflows.WatchManagerKind.ItemKind, raw: com.histmersion.domain.library.workflows.WatchManagerKind.Target): Either[Api.Error, com.histmersion.domain.library.workflows.WatchManagerKind.TargetText] =
     itemKind match
       case OaIngest =>
         com.histmersion.domain.library.Doi.normalize(raw)
@@ -148,8 +148,8 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       s: ReviewSettings,
       item: ManagerItem,
       now: Instant,
-      out: Builder[com.histmersion.domain.library.workflows.WatchManagerKind.DispatchOutPart1, List[com.histmersion.domain.library.workflows.WatchManagerKind.DispatchOutPart2]]
-  ): Option[com.histmersion.domain.library.workflows.WatchManagerKind.DispatchResult] =
+      out: Builder[com.histmersion.domain.library.workflows.WatchManagerKind.DispatchKey, List[com.histmersion.domain.library.workflows.WatchManagerKind.DispatchText]]
+  ): Option[com.histmersion.domain.library.workflows.WatchManagerKind.DispatchLine] =
     item.kind match
       case AcquisitionSweep | CurrencyCheck =>
         work.agents.host.goal(item.target) match
@@ -211,35 +211,27 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
         c.settleNow(m, item, ItemStatus.Cancelled, s"'$other' items are not driven by a ${m.kind} manager")
 
 object WatchManagerKind:
+  type CloseLine = CloseLine.T
+  object CloseLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DispatchKey = DispatchKey.T
+  object DispatchKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DispatchLine = DispatchLine.T
+  object DispatchLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DispatchText = DispatchText.T
+  object DispatchText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FireLine = FireLine.T
+  object FireLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemKind = ItemKind.T
+  object ItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Target = Target.T
+  object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetText = TargetText.T
+  object TargetText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: does a candidate sweep say there is nothing for a ranking (#3761)? Only an answered sweep with no unseen
     * candidate does; a search that is not connected (or failed) lets the run start as before.
     */
-  type PipelineOfItemKind = PipelineOfItemKind.T
-  object PipelineOfItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FireResult = FireResult.T
-  object FireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FactsRun = FactsRun.T
-  object FactsRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CloseLineResult = CloseLineResult.T
-  object CloseLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CloseLineRun = CloseLineRun.T
-  object CloseLineRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetResultPart2 = TargetResultPart2.T
-  object TargetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetItemKind = TargetItemKind.T
-  object TargetItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetRaw = TargetRaw.T
-  object TargetRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DispatchResult = DispatchResult.T
-  object DispatchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DispatchOutPart1 = DispatchOutPart1.T
-  object DispatchOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DispatchOutPart2 = DispatchOutPart2.T
-  object DispatchOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NothingNewResult = NothingNewResult.T
-  object NothingNewResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NothingNewSweepPart1 = NothingNewSweepPart1.T
-  object NothingNewSweepPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def nothingNew(sweep: Either[com.histmersion.domain.library.workflows.WatchManagerKind.NothingNewSweepPart1, CandidateSweep]): com.histmersion.domain.library.workflows.WatchManagerKind.NothingNewResult = sweep.exists(_.unseen == 0)
+  def nothingNew(sweep: Either[com.histmersion.domain.library.workflows.WatchManagerKind.Problem, CandidateSweep]): Boolean = sweep.exists(_.unseen == 0)

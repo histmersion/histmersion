@@ -15,7 +15,7 @@ final class SettingsControllers(
     knownKeys: () => List[SettingsControllers.KnownKeysResult] = () => Nil
 ):
 
-  def page(prefix: Option[com.histmersion.util.settings.SettingsControllers.PagePrefix]): Either[Api.Error, ConfigEdit.Page] =
+  def page(prefix: Option[com.histmersion.util.settings.SettingsService.ConfigPath]): Either[Api.Error, ConfigEdit.Page] =
     for
       p <- prefix
         .map(_.trim)
@@ -49,13 +49,9 @@ final class SettingsControllers(
         msg => Right(ConfigEdit.Restart(accepted = true, msg))
       )
 
-  def setupDue: com.histmersion.util.settings.SettingsControllers.SetupDueResult = settings.setupDue
+  def setupDue: Boolean = settings.setupDue
 
 object SettingsControllers:
-  type KnownKeysResult = KnownKeysResult.T
-  object KnownKeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KnownKeysResult = com.histmersion.util.settings.SettingsService.ConfigPath
+  val KnownKeysResult: _root_.com.histmersion.util.settings.SettingsService.ConfigPath.type = _root_.com.histmersion.util.settings.SettingsService.ConfigPath
 
-  type PagePrefix = PagePrefix.T
-  object PagePrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetupDueResult = SetupDueResult.T
-  object SetupDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -172,7 +172,7 @@ final class McpTools(
       )
       .input[ConfigInput]
       .handle { in =>
-        def page(f: com.histmersion.api.settings.ConfigEdit.Page => com.histmersion.server.McpTools.PageFResult, prefix: Option[com.histmersion.server.McpTools.PagePrefix]) =
+        def page(f: com.histmersion.api.settings.ConfigEdit.Page => com.histmersion.server.McpTools.PageFResult, prefix: Option[com.histmersion.server.McpTools.ConfigInput.Prefix]) =
           h.settings.page(prefix).fold(McpOut.error, p => ToolResult.text(f(p)))
         in.action.trim.toLowerCase(java.util.Locale.ROOT) match
           case "reload" => ToolResult.text(ReloadMarkdown.report(h.instance.configReload()))
@@ -471,10 +471,12 @@ final class McpTools(
   def toolNames: Set[com.histmersion.server.McpTools.ToolNamesResult] = server.tools.map(_.name).toSet
 
 object McpTools:
+  type AgentStateKey = AgentStateKey.T
+  object AgentStateKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeBound = TimeBound.T
+  object TimeBound extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PageFResult = PageFResult.T
   object PageFResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PagePrefix = PagePrefix.T
-  object PagePrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ToolNamesResult = ToolNamesResult.T
   object ToolNamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -533,8 +535,8 @@ object McpTools:
       acquireItem: Option[IngestInput.AcquireItem] = None
   ) derives KindlingsCodecAsObject
   object IngestInput:
-    type Citekey = Citekey.T
-    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Citekey = com.histmersion.domain.library.Citekey
+    val Citekey: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
     type Path = Path.T
     object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Base64 = Base64.T
@@ -545,14 +547,14 @@ object McpTools:
     object Quality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Force = Force.T
     object Force extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = com.histmersion.domain.Title
+    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
     type Authors = Authors.T
     object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Year = Year.T
-    object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Doi = Doi.T
-    object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Year = com.histmersion.Year
+    val Year: _root_.com.histmersion.Year.type = _root_.com.histmersion.Year
+    type Doi = com.histmersion.domain.library.Doi
+    val Doi: _root_.com.histmersion.domain.library.Doi.type = _root_.com.histmersion.domain.library.Doi
     type Provenance = Provenance.T
     object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type AcquireItem = AcquireItem.T
@@ -576,8 +578,8 @@ object McpTools:
   final case class JobControlInput(id: JobControlInput.Id, action: JobControlInput.Action) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object JobControlInput:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = com.histmersion.util.jobs.Job.Id
+    val Id: _root_.com.histmersion.util.jobs.Job.Id.type = _root_.com.histmersion.util.jobs.Job.Id
     type Action = Action.T
     object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -594,14 +596,14 @@ object McpTools:
   object ActivityInput:
     type Show = Show.T
     object Show extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Since = Since.T
-    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Before = Before.T
-    object Before extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Since = com.histmersion.server.McpTools.TimeBound
+    val Since: _root_.com.histmersion.server.McpTools.TimeBound.type = _root_.com.histmersion.server.McpTools.TimeBound
+    type Goal = com.histmersion.domain.automation.Goal.Slug
+    val Goal: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
+    type Limit = com.histmersion.PageSize
+    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
+    type Before = com.histmersion.server.McpTools.TimeBound
+    val Before: _root_.com.histmersion.server.McpTools.TimeBound.type = _root_.com.histmersion.server.McpTools.TimeBound
 
 
   final case class JobStatusInput(
@@ -616,20 +618,20 @@ object McpTools:
   ) derives KindlingsCodecAsObject:
     def filter: ListFilters.JobFilter = ListFilters.JobFilter(status.toList, kind, since, until, subject)
   object JobStatusInput:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = com.histmersion.util.jobs.Job.Id
+    val Id: _root_.com.histmersion.util.jobs.Job.Id.type = _root_.com.histmersion.util.jobs.Job.Id
     type Status = Status.T
     object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Before = Before.T
-    object Before extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Since = Since.T
-    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Until = Until.T
-    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = com.histmersion.PageSize
+    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
+    type Before = com.histmersion.server.McpTools.TimeBound
+    val Before: _root_.com.histmersion.server.McpTools.TimeBound.type = _root_.com.histmersion.server.McpTools.TimeBound
+    type Kind = com.histmersion.util.jobs.Job.Kind
+    val Kind: _root_.com.histmersion.util.jobs.Job.Kind.type = _root_.com.histmersion.util.jobs.Job.Kind
+    type Since = com.histmersion.server.McpTools.TimeBound
+    val Since: _root_.com.histmersion.server.McpTools.TimeBound.type = _root_.com.histmersion.server.McpTools.TimeBound
+    type Until = com.histmersion.server.McpTools.TimeBound
+    val Until: _root_.com.histmersion.server.McpTools.TimeBound.type = _root_.com.histmersion.server.McpTools.TimeBound
     type Subject = Subject.T
     object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -657,14 +659,14 @@ object McpTools:
       offset: Option[GoalsInput.Offset] = None
   ) derives KindlingsCodecAsObject
   object GoalsInput:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Offset = Offset.T
-    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.domain.automation.Goal.Slug
+    val Slug: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
+    type Status = com.histmersion.domain.automation.Goal.Status.Wire
+    val Status: _root_.com.histmersion.domain.automation.Goal.Status.Wire.type = _root_.com.histmersion.domain.automation.Goal.Status.Wire
+    type Limit = com.histmersion.PageSize
+    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
+    type Offset = com.histmersion.Offset
+    val Offset: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
 
     given Schema[GoalsInput] = KindlingsSchema
       .derived[GoalsInput]
@@ -684,12 +686,12 @@ object McpTools:
       parentSlug: Option[GoalPutInput.ParentSlug] = None
   )
   object GoalPutInput:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.domain.automation.Goal.Slug
+    val Slug: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
+    type Title = com.histmersion.domain.Title
+    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
+    type Status = com.histmersion.domain.automation.Goal.Status.Wire
+    val Status: _root_.com.histmersion.domain.automation.Goal.Status.Wire.type = _root_.com.histmersion.domain.automation.Goal.Status.Wire
     type Notes = Notes.T
     object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Tags = Tags.T
@@ -700,8 +702,8 @@ object McpTools:
     object PeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PeriodEnd = PeriodEnd.T
     object PeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParentSlug = ParentSlug.T
-    object ParentSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParentSlug = com.histmersion.domain.automation.Goal.Slug
+    val ParentSlug: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
 
     given Schema[GoalPutInput] = KindlingsSchema
       .derived[GoalPutInput]
@@ -725,12 +727,12 @@ object McpTools:
       budgetUsd: Option[GoalPatchInput.BudgetUsd] = None
   )
   object GoalPatchInput:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.domain.automation.Goal.Slug
+    val Slug: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
+    type Title = com.histmersion.domain.Title
+    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
+    type Status = com.histmersion.domain.automation.Goal.Status.Wire
+    val Status: _root_.com.histmersion.domain.automation.Goal.Status.Wire.type = _root_.com.histmersion.domain.automation.Goal.Status.Wire
     type Notes = Notes.T
     object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Tags = Tags.T
@@ -741,8 +743,8 @@ object McpTools:
     object PeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PeriodEnd = PeriodEnd.T
     object PeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParentSlug = ParentSlug.T
-    object ParentSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParentSlug = com.histmersion.domain.automation.Goal.Slug
+    val ParentSlug: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
     type BudgetUsd = BudgetUsd.T
     object BudgetUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -764,8 +766,8 @@ object McpTools:
       value: Option[AgentStateInput.Value] = None
   ) derives KindlingsCodecAsObject
   object AgentStateInput:
-    type Key = Key.T
-    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Key = com.histmersion.server.McpTools.AgentStateKey
+    val Key: _root_.com.histmersion.server.McpTools.AgentStateKey.type = _root_.com.histmersion.server.McpTools.AgentStateKey
     type Value = Value.T
     object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -777,8 +779,8 @@ object McpTools:
 
   final case class DeleteAgentStateInput(key: DeleteAgentStateInput.Key) derives KindlingsCodecAsObject
   object DeleteAgentStateInput:
-    type Key = Key.T
-    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Key = com.histmersion.server.McpTools.AgentStateKey
+    val Key: _root_.com.histmersion.server.McpTools.AgentStateKey.type = _root_.com.histmersion.server.McpTools.AgentStateKey
 
     given Schema[DeleteAgentStateInput] = KindlingsSchema
       .derived[DeleteAgentStateInput]
@@ -841,8 +843,8 @@ object McpTools:
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Uid = Uid.T
     object Uid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = com.histmersion.PageSize
+    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
 
     given Schema[MergesInput] = KindlingsSchema
       .derived[MergesInput]

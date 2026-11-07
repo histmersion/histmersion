@@ -5,14 +5,12 @@ package com.histmersion.util.basemap
   */
 import com.histmersion.util.storage.Store
 final case class GebcoPart(name: GebcoPart.Name, url: GebcoPart.Url, grid: GeoTiffGrid, window: GridWindow, runs: List[RowRun]):
-  def bytes: com.histmersion.util.basemap.GebcoPart.BytesResult = runs.map(_.length).sum
+  def bytes: com.histmersion.ByteCount = runs.map(_.length).sum
 
   /** The file `run` is kept in, in the fetch's work store. */
   def key(run: RowRun): Store.Key = Store.Key.applyUnsafe(s"gebco-$name-${run.firstRow}.bin")
 
 object GebcoPart:
-  type BytesResult = BytesResult.T
-  object BytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

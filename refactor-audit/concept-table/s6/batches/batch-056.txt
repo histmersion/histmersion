@@ -1,0 +1,241 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.research.Article.Kind (String)
+com.histmersion.domain.research.Article.Uid (UUID)
+com.histmersion.domain.research.DraftMode.Wire (String)
+com.histmersion.domain.research.Slug (String)
+com.histmersion.domain.research.Slug.Problem (String)
+com.histmersion.domain.research.articles.ArticleSummaryRow.Regions (String)
+com.histmersion.domain.research.articles.ArticleSummaryRow.Summary (String)
+com.histmersion.domain.research.articles.ArticleSummaryRow.Tags (String)
+com.histmersion.domain.research.articles.ArticleSummaryRow.UpdatedAt (String)
+com.histmersion.domain.research.articles.ArticlesCarried.Stem (String)
+com.histmersion.domain.research.articles.BArticleRow.Body (String)
+com.histmersion.domain.research.articles.BArticleRow.PNull (Boolean)
+com.histmersion.domain.research.articles.BArticleRow.Regions (String)
+com.histmersion.domain.research.articles.BArticleRow.Summary (String)
+com.histmersion.domain.research.articles.BArticleRow.Tags (String)
+com.histmersion.domain.research.articles.BArticleRow.UpdatedAt (String)
+com.histmersion.domain.research.articles.BVersionRow.CreatedAt (String)
+com.histmersion.domain.research.articles.BVersionRow.Summary (String)
+com.histmersion.domain.research.articles.BVersionRow.VersionOf (String)
+com.histmersion.domain.research.articles.FullArticleRow.Body (String)
+com.histmersion.domain.research.articles.FullArticleRow.Filter (String)
+com.histmersion.domain.research.articles.FullArticleRow.Reasons (String)
+com.histmersion.domain.research.articles.FullArticleRow.Regions (String)
+com.histmersion.domain.research.articles.FullArticleRow.Summary (String)
+com.histmersion.domain.research.articles.FullArticleRow.Tags (String)
+com.histmersion.domain.research.articles.FullArticleRow.UpdatedAt (String)
+com.histmersion.domain.research.articles.lint.SourceTextFormatting.LinksArg1 (String)
+com.histmersion.domain.research.articles.lint.SourceTextFormatting.LinksResultArg1 (String)
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Found.Filter (String)
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Found.ToExtract (String)
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Body (String)
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Kind (String)
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Query (String)
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Slug (String)
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Tags (String)
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Title (String)
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Topics (String)
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.UpdatedAt (String)
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.PreviousVersion (Long)
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Value (Boolean)
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Why (String)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.FilterHits (Int)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.Pick.Why (String)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.Escalated (Int)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.MaxReopened (Int)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OnlyMissingCritiques (Boolean)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OpenMajors (Int)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OpenPairs (Int)
+
+## TYPES TO DECIDE
+com.histmersion.domain.research.articles.CoverageService.EdgesTouchingCitekeys | base String | generated | method-parameter
+    def edgesTouching(citekeys: List[com.histmersion.domain.research.articles.CoverageService.EdgesTouchingCitekeys], kinds: List[com.histmersion.domain.research.articles.Cov
+    def edgesTouching(citekeys: List[com.histmersion.domain.research.articles.CoverageService.Implementation.EdgesTouchingCitekeys], kinds: List[com.histmersion.domain.resear
+com.histmersion.domain.research.articles.CoverageService.EdgesTouchingKinds | base String | generated | method-parameter
+    def edgesTouching(citekeys: List[com.histmersion.domain.research.articles.CoverageService.EdgesTouchingCitekeys], kinds: List[com.histmersion.domain.research.articles.Cov
+    def edgesTouching(citekeys: List[com.histmersion.domain.research.articles.CoverageService.Implementation.EdgesTouchingCitekeys], kinds: List[com.histmersion.domain.resear
+com.histmersion.domain.research.articles.CoverageService.Implementation.EdgesTouchingCitekeys | base String | generated | method-parameter
+    def edgesTouching(citekeys: List[com.histmersion.domain.research.articles.CoverageService.EdgesTouchingCitekeys], kinds: List[com.histmersion.domain.research.articles.Cov
+    def edgesTouching(citekeys: List[com.histmersion.domain.research.articles.CoverageService.Implementation.EdgesTouchingCitekeys], kinds: List[com.histmersion.domain.resear
+com.histmersion.domain.research.articles.CoverageService.Implementation.EdgesTouchingKinds | base String | generated | method-parameter
+    def edgesTouching(citekeys: List[com.histmersion.domain.research.articles.CoverageService.EdgesTouchingCitekeys], kinds: List[com.histmersion.domain.research.articles.Cov
+    def edgesTouching(citekeys: List[com.histmersion.domain.research.articles.CoverageService.Implementation.EdgesTouchingCitekeys], kinds: List[com.histmersion.domain.resear
+com.histmersion.domain.research.articles.CoverageService.Implementation.MembersCitekeys | base String | generated | method-parameter
+    def members(filter: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageService.MembersCitekeys]): (com.histmersion.domain.research
+    def members(filter: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageService.Implementation.MembersCitekeys]): (com.histmersion.
+com.histmersion.domain.research.articles.CoverageService.Implementation.MembersResultPart1 | base Int | generated | method-result
+    def members(filter: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageService.MembersCitekeys]): (com.histmersion.domain.research
+    def members(filter: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageService.Implementation.MembersCitekeys]): (com.histmersion.
+com.histmersion.domain.research.articles.CoverageService.Implementation.MembersResultPart2 | base String | generated | method-result
+    def members(filter: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageService.MembersCitekeys]): (com.histmersion.domain.research
+    def members(filter: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageService.Implementation.MembersCitekeys]): (com.histmersion.
+com.histmersion.domain.research.articles.CoverageService.Implementation.SourceSetCap | base Int | generated | method-parameter
+    def sourceSet(filter: Filter, scope: PlaceScope, cap: com.histmersion.domain.research.articles.CoverageService.SourceSetCap): (com.histmersion.domain.research.articles.Co
+    def sourceSet(filter: Filter, scope: PlaceScope, cap: com.histmersion.domain.research.articles.CoverageService.Implementation.SourceSetCap): (com.histmersion.domain.resea
+com.histmersion.domain.research.articles.CoverageService.Implementation.SourceSetResultPart1 | base Int | generated | method-result
+    def sourceSet(filter: Filter, scope: PlaceScope, cap: com.histmersion.domain.research.articles.CoverageService.SourceSetCap): (com.histmersion.domain.research.articles.Co
+    def sourceSet(filter: Filter, scope: PlaceScope, cap: com.histmersion.domain.research.articles.CoverageService.Implementation.SourceSetCap): (com.histmersion.domain.resea
+com.histmersion.domain.research.articles.CoverageService.MembersCitekeys | base String | generated | method-parameter
+    def members(filter: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageService.MembersCitekeys]): (com.histmersion.domain.research
+    def members(filter: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageService.Implementation.MembersCitekeys]): (com.histmersion.
+com.histmersion.domain.research.articles.CoverageService.MembersResultPart1 | base Int | generated | method-result
+    def members(filter: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageService.MembersCitekeys]): (com.histmersion.domain.research
+    def members(filter: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageService.Implementation.MembersCitekeys]): (com.histmersion.
+com.histmersion.domain.research.articles.CoverageService.MembersResultPart2 | base String | generated | method-result
+    def members(filter: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageService.MembersCitekeys]): (com.histmersion.domain.research
+    def members(filter: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageService.Implementation.MembersCitekeys]): (com.histmersion.
+com.histmersion.domain.research.articles.CoverageService.SourceSetCap | base Int | generated | method-parameter
+    def sourceSet(filter: Filter, scope: PlaceScope, cap: com.histmersion.domain.research.articles.CoverageService.SourceSetCap): (com.histmersion.domain.research.articles.Co
+    def sourceSet(filter: Filter, scope: PlaceScope, cap: com.histmersion.domain.research.articles.CoverageService.Implementation.SourceSetCap): (com.histmersion.domain.resea
+com.histmersion.domain.research.articles.CoverageService.SourceSetResultPart1 | base Int | generated | method-result
+    def sourceSet(filter: Filter, scope: PlaceScope, cap: com.histmersion.domain.research.articles.CoverageService.SourceSetCap): (com.histmersion.domain.research.articles.Co
+    def sourceSet(filter: Filter, scope: PlaceScope, cap: com.histmersion.domain.research.articles.CoverageService.Implementation.SourceSetCap): (com.histmersion.domain.resea
+com.histmersion.domain.research.articles.PageBuilder.ArticleQ | base String | generated | method-parameter
+    def article(slug: com.histmersion.domain.research.articles.PageBuilder.ArticleSlug, q: Option[com.histmersion.domain.research.articles.PageBuilder.ArticleQ]): Option[(com
+com.histmersion.domain.research.articles.PageBuilder.ArticleResultPart1 | base String | generated | method-result
+    def article(slug: com.histmersion.domain.research.articles.PageBuilder.ArticleSlug, q: Option[com.histmersion.domain.research.articles.PageBuilder.ArticleQ]): Option[(com
+com.histmersion.domain.research.articles.PageBuilder.ArticleResultPart2 | base String | generated | method-result
+    def article(slug: com.histmersion.domain.research.articles.PageBuilder.ArticleSlug, q: Option[com.histmersion.domain.research.articles.PageBuilder.ArticleQ]): Option[(com
+com.histmersion.domain.research.articles.PageBuilder.ArticleSlug | base String | generated | method-parameter
+    def article(slug: com.histmersion.domain.research.articles.PageBuilder.ArticleSlug, q: Option[com.histmersion.domain.research.articles.PageBuilder.ArticleQ]): Option[(com
+com.histmersion.domain.research.articles.PageBuilder.HighlightedHtml | base String | generated | method-parameter
+    private def highlighted(html: com.histmersion.domain.research.articles.PageBuilder.HighlightedHtml, term: Option[com.histmersion.domain.research.articles.PageBuilder.High
+com.histmersion.domain.research.articles.PageBuilder.HighlightedResult | base String | generated | method-result
+    private def highlighted(html: com.histmersion.domain.research.articles.PageBuilder.HighlightedHtml, term: Option[com.histmersion.domain.research.articles.PageBuilder.High
+com.histmersion.domain.research.articles.PageBuilder.HighlightedTerm | base String | generated | method-parameter
+    private def highlighted(html: com.histmersion.domain.research.articles.PageBuilder.HighlightedHtml, term: Option[com.histmersion.domain.research.articles.PageBuilder.High
+com.histmersion.domain.research.articles.PageBuilder.SourceCk | base String | generated | method-parameter
+    def source(ck: com.histmersion.domain.research.articles.PageBuilder.SourceCk, full: com.histmersion.domain.research.articles.PageBuilder.SourceFull, q: Option[com.histmer
+com.histmersion.domain.research.articles.PageBuilder.SourceFull | base Boolean | generated | method-parameter
+    def source(ck: com.histmersion.domain.research.articles.PageBuilder.SourceCk, full: com.histmersion.domain.research.articles.PageBuilder.SourceFull, q: Option[com.histmer
+com.histmersion.domain.research.articles.PageBuilder.SourceQ | base String | generated | method-parameter
+    def source(ck: com.histmersion.domain.research.articles.PageBuilder.SourceCk, full: com.histmersion.domain.research.articles.PageBuilder.SourceFull, q: Option[com.histmer
+com.histmersion.domain.research.articles.PageBuilder.SourceResultPart1 | base String | generated | method-result
+    def source(ck: com.histmersion.domain.research.articles.PageBuilder.SourceCk, full: com.histmersion.domain.research.articles.PageBuilder.SourceFull, q: Option[com.histmer
+com.histmersion.domain.research.articles.PageBuilder.SourceResultPart2 | base String | generated | method-result
+    def source(ck: com.histmersion.domain.research.articles.PageBuilder.SourceCk, full: com.histmersion.domain.research.articles.PageBuilder.SourceFull, q: Option[com.histmer
+com.histmersion.domain.research.articles.lint.SourceTextFormatting.FixResultPart1 | base String | generated | method-result
+    def fix(text: com.histmersion.domain.research.articles.lint.SourceTextFormatting.FixText, field: FormatField): (com.histmersion.domain.research.articles.lint.SourceTextFo
+com.histmersion.domain.research.articles.lint.SourceTextFormatting.FixResultPart2 | base String | generated | method-result
+    def fix(text: com.histmersion.domain.research.articles.lint.SourceTextFormatting.FixText, field: FormatField): (com.histmersion.domain.research.articles.lint.SourceTextFo
+com.histmersion.domain.research.articles.lint.SourceTextFormatting.FixText | base String | generated | method-parameter
+    def fix(text: com.histmersion.domain.research.articles.lint.SourceTextFormatting.FixText, field: FormatField): (com.histmersion.domain.research.articles.lint.SourceTextFo
+com.histmersion.domain.research.articles.lint.SourceTextFormatting.IssuesNotes | base String | generated | method-parameter
+    def issues(summary: Option[com.histmersion.domain.research.articles.lint.SourceTextFormatting.IssuesSummary], notes: Option[com.histmersion.domain.research.articles.lint.
+com.histmersion.domain.research.articles.lint.SourceTextFormatting.IssuesSummary | base String | generated | method-parameter
+    def issues(summary: Option[com.histmersion.domain.research.articles.lint.SourceTextFormatting.IssuesSummary], notes: Option[com.histmersion.domain.research.articles.lint.
+com.histmersion.domain.research.articles.lint.SourceTextFormatting.LinksArg1 | base String | generated | constructor-parameter
+    final class SourceTextFormatting(links: List[SourceTextFormatting.LinksArg1] => SourceTextFormatting.LinksResultArg1 => Option[LinkTarget]) extends SourceFormatting:
+com.histmersion.domain.research.articles.lint.SourceTextFormatting.LinksResultArg1 | base String | generated | constructor-parameter
+    final class SourceTextFormatting(links: List[SourceTextFormatting.LinksArg1] => SourceTextFormatting.LinksResultArg1 => Option[LinkTarget]) extends SourceFormatting:
+com.histmersion.domain.research.articles.lint.SourceTextFormatting.RefusalResult | base String | generated | method-result
+    def refusal(issues: List[FormatIssue]): Option[com.histmersion.domain.research.articles.lint.SourceTextFormatting.RefusalResult] = MarkdownLint.refusal(issues)
+com.histmersion.domain.research.articles.review.ReviewStateService.FactsResultPart1 | base String | generated | method-result
+    def facts(slugs: List[com.histmersion.domain.research.articles.review.ReviewStateService.FactsSlugs]): Map[com.histmersion.domain.research.articles.review.ReviewStateServ
+    def facts(slugs: List[com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.FactsSlugs]): Map[com.histmersion.domain.research.articles.review.
+com.histmersion.domain.research.articles.review.ReviewStateService.FactsResultPart2Part2 | base String | generated | method-result
+    def facts(slugs: List[com.histmersion.domain.research.articles.review.ReviewStateService.FactsSlugs]): Map[com.histmersion.domain.research.articles.review.ReviewStateServ
+    def facts(slugs: List[com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.FactsSlugs]): Map[com.histmersion.domain.research.articles.review.
+com.histmersion.domain.research.articles.review.ReviewStateService.FactsSlugs | base String | generated | method-parameter
+    def facts(slugs: List[com.histmersion.domain.research.articles.review.ReviewStateService.FactsSlugs]): Map[com.histmersion.domain.research.articles.review.ReviewStateServ
+    def facts(slugs: List[com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.FactsSlugs]): Map[com.histmersion.domain.research.articles.review.
+com.histmersion.domain.research.articles.review.ReviewStateService.GoalsSlug | base String | generated | method-parameter
+    def goals(slug: com.histmersion.domain.research.articles.review.ReviewStateService.GoalsSlug): List[ReviewGoal]
+    def goals(slug: com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.GoalsSlug): List[ReviewGoal] = db.read(ArticleReviewRepo.goals(slug))
+com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.FactsResultPart1 | base String | generated | method-result
+    def facts(slugs: List[com.histmersion.domain.research.articles.review.ReviewStateService.FactsSlugs]): Map[com.histmersion.domain.research.articles.review.ReviewStateServ
+    def facts(slugs: List[com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.FactsSlugs]): Map[com.histmersion.domain.research.articles.review.
+com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.FactsResultPart2Part2 | base String | generated | method-result
+    def facts(slugs: List[com.histmersion.domain.research.articles.review.ReviewStateService.FactsSlugs]): Map[com.histmersion.domain.research.articles.review.ReviewStateServ
+    def facts(slugs: List[com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.FactsSlugs]): Map[com.histmersion.domain.research.articles.review.
+com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.FactsSlugs | base String | generated | method-parameter
+    def facts(slugs: List[com.histmersion.domain.research.articles.review.ReviewStateService.FactsSlugs]): Map[com.histmersion.domain.research.articles.review.ReviewStateServ
+    def facts(slugs: List[com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.FactsSlugs]): Map[com.histmersion.domain.research.articles.review.
+com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.GoalsSlug | base String | generated | method-parameter
+    def goals(slug: com.histmersion.domain.research.articles.review.ReviewStateService.GoalsSlug): List[ReviewGoal]
+    def goals(slug: com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.GoalsSlug): List[ReviewGoal] = db.read(ArticleReviewRepo.goals(slug))
+com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.RunStartsResultPart1 | base String | generated | method-result
+    def runStarts(runs: List[com.histmersion.domain.research.articles.review.ReviewStateService.RunStartsRuns]): Map[com.histmersion.domain.research.articles.review.ReviewSta
+    def runStarts(runs: List[com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.RunStartsRuns]): Map[com.histmersion.domain.research.articles.r
+com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.RunStartsResultPart2 | base String | generated | method-result
+    def runStarts(runs: List[com.histmersion.domain.research.articles.review.ReviewStateService.RunStartsRuns]): Map[com.histmersion.domain.research.articles.review.ReviewSta
+    def runStarts(runs: List[com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.RunStartsRuns]): Map[com.histmersion.domain.research.articles.r
+com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.RunStartsRuns | base String | generated | method-parameter
+    def runStarts(runs: List[com.histmersion.domain.research.articles.review.ReviewStateService.RunStartsRuns]): Map[com.histmersion.domain.research.articles.review.ReviewSta
+    def runStarts(runs: List[com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.RunStartsRuns]): Map[com.histmersion.domain.research.articles.r
+com.histmersion.domain.research.articles.review.ReviewStateService.RunStartsResultPart1 | base String | generated | method-result
+    def runStarts(runs: List[com.histmersion.domain.research.articles.review.ReviewStateService.RunStartsRuns]): Map[com.histmersion.domain.research.articles.review.ReviewSta
+    def runStarts(runs: List[com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.RunStartsRuns]): Map[com.histmersion.domain.research.articles.r
+com.histmersion.domain.research.articles.review.ReviewStateService.RunStartsResultPart2 | base String | generated | method-result
+    def runStarts(runs: List[com.histmersion.domain.research.articles.review.ReviewStateService.RunStartsRuns]): Map[com.histmersion.domain.research.articles.review.ReviewSta
+    def runStarts(runs: List[com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.RunStartsRuns]): Map[com.histmersion.domain.research.articles.r
+com.histmersion.domain.research.articles.review.ReviewStateService.RunStartsRuns | base String | generated | method-parameter
+    def runStarts(runs: List[com.histmersion.domain.research.articles.review.ReviewStateService.RunStartsRuns]): Map[com.histmersion.domain.research.articles.review.ReviewSta
+    def runStarts(runs: List[com.histmersion.domain.research.articles.review.ReviewStateService.Implementation.RunStartsRuns]): Map[com.histmersion.domain.research.articles.r
+com.histmersion.domain.research.workflows.ArticleFilterApproval.ApplyResultPart1 | base String | generated | method-result
+    def apply(a: ApprovalInfo): Either[com.histmersion.domain.research.workflows.ArticleFilterApproval.ApplyResultPart1, com.histmersion.domain.research.workflows.ArticleFilt
+com.histmersion.domain.research.workflows.ArticleFilterApproval.ApplyResultPart2 | base String | generated | method-result
+    def apply(a: ApprovalInfo): Either[com.histmersion.domain.research.workflows.ArticleFilterApproval.ApplyResultPart1, com.histmersion.domain.research.workflows.ArticleFilt
+com.histmersion.domain.research.workflows.ArticleObjectives.FinishedResult | base String | generated | method-result
+    def finished(): Set[com.histmersion.domain.research.workflows.ArticleObjectives.FinishedResult] = ledgers.passedReview(ReviewId)
+com.histmersion.domain.research.workflows.ArticleObjectives.LinkedResultPart1 | base String | generated | method-result
+    def linked(): Map[com.histmersion.domain.research.workflows.ArticleObjectives.LinkedResultPart1, List[com.histmersion.domain.research.workflows.ArticleObjectives.LinkedRe
+com.histmersion.domain.research.workflows.ArticleObjectives.LinkedResultPart2 | base String | generated | method-result
+    def linked(): Map[com.histmersion.domain.research.workflows.ArticleObjectives.LinkedResultPart1, List[com.histmersion.domain.research.workflows.ArticleObjectives.LinkedRe
+com.histmersion.domain.research.workflows.CompileArticlePipeline.CloseResultPart1 | base String | generated | method-result
+    private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[com.histmersion.domain.research.workflows.CompileArticlePipeline.CloseReview]): Either[com.hist
+com.histmersion.domain.research.workflows.CompileArticlePipeline.CloseResultPart2 | base String | generated | method-result
+    private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[com.histmersion.domain.research.workflows.CompileArticlePipeline.CloseReview]): Either[com.hist
+com.histmersion.domain.research.workflows.CompileArticlePipeline.CloseReview | base String | generated | method-parameter
+    private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[com.histmersion.domain.research.workflows.CompileArticlePipeline.CloseReview]): Either[com.hist
+com.histmersion.domain.research.workflows.CompileArticlePipeline.CompileResultPart2 | base String | generated | method-result
+    private def compile(ctx: RunCtx, snap: Snap, found: Found): Either[Halt, com.histmersion.domain.research.workflows.CompileArticlePipeline.CompileResultPart2] =
+com.histmersion.domain.research.workflows.CompileArticlePipeline.FilterResultPart1 | base String | generated | method-result
+    private def filter(ctx: RunCtx, s: Snap): Either[com.histmersion.domain.research.workflows.CompileArticlePipeline.FilterResultPart1, Found] =
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Found.Filter | base String | original | constructor-parameter
+    val f = CompileArticle.runFilter(
+    val f = CompileArticle.runFilter(p.query, p.topics.getOrElse(Nil), p.tags.getOrElse(Nil), None, None)
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Found.ToExtract | base String | original | constructor-parameter
+    final case class Found(filter: Found.Filter, total: com.histmersion.RowCount, sources: List[SourceFact], toExtract: List[Found.ToExtract])
+com.histmersion.domain.research.workflows.CompileArticlePipeline.IsCitekeyCk | base String | generated | method-parameter
+    private def isCitekey(ck: com.histmersion.domain.research.workflows.CompileArticlePipeline.IsCitekeyCk): com.histmersion.domain.research.workflows.CompileArticlePipeline.
+com.histmersion.domain.research.workflows.CompileArticlePipeline.IsCitekeyResult | base Boolean | generated | method-result
+    private def isCitekey(ck: com.histmersion.domain.research.workflows.CompileArticlePipeline.IsCitekeyCk): com.histmersion.domain.research.workflows.CompileArticlePipeline.
+com.histmersion.domain.research.workflows.CompileArticlePipeline.LogLine | base String | generated | method-parameter
+    private def log(ctx: RunCtx, line: com.histmersion.domain.research.workflows.CompileArticlePipeline.LogLine): Either[com.histmersion.domain.research.workflows.CompileArti
+com.histmersion.domain.research.workflows.CompileArticlePipeline.LogResultPart1 | base String | generated | method-result
+    private def log(ctx: RunCtx, line: com.histmersion.domain.research.workflows.CompileArticlePipeline.LogLine): Either[com.histmersion.domain.research.workflows.CompileArti
+com.histmersion.domain.research.workflows.CompileArticlePipeline.LogResultPart2 | base String | generated | method-result
+    private def log(ctx: RunCtx, line: com.histmersion.domain.research.workflows.CompileArticlePipeline.LogLine): Either[com.histmersion.domain.research.workflows.CompileArti
+com.histmersion.domain.research.workflows.CompileArticlePipeline.RecordCk | base String | generated | method-parameter
+    private def record(ck: com.histmersion.domain.research.workflows.CompileArticlePipeline.RecordCk): Option[com.histmersion.domain.research.workflows.CompileArticlePipeline
+com.histmersion.domain.research.workflows.CompileArticlePipeline.RecordResult | base String | generated | method-result
+    private def record(ck: com.histmersion.domain.research.workflows.CompileArticlePipeline.RecordCk): Option[com.histmersion.domain.research.workflows.CompileArticlePipeline
+com.histmersion.domain.research.workflows.CompileArticlePipeline.ReviewResult | base String | generated | method-result
+    private def review(ctx: RunCtx, s: Snap, w: Written): Option[com.histmersion.domain.research.workflows.CompileArticlePipeline.ReviewResult] =
+com.histmersion.domain.research.workflows.CompileArticlePipeline.RunResultPart2 | base String | generated | method-result
+    def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.research.workflows.CompileArticlePipeline.RunResultPart2] =
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Body | base String | original | constructor-parameter
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Kind | base String | original | constructor-parameter
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Query | base String | original | constructor-parameter
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Slug | base String | original | alias,constructor-parameter
+    val SnapshotSlug: _root_.com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Slug.type = _root_.com.histmersion.domain.research.workflows.CompileArticle
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Tags | base String | original | constructor-parameter
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Title | base String | original | constructor-parameter
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Topics | base String | original | constructor-parameter
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.UpdatedAt | base String | original | constructor-parameter
+com.histmersion.domain.research.workflows.CompileArticlePipeline.SnapshotResultPart1 | base String | generated | method-result
+    private def snapshot(ctx: RunCtx, slug: com.histmersion.domain.research.workflows.CompileArticlePipeline.SnapshotSlug): Either[com.histmersion.domain.research.workflows.C
+com.histmersion.domain.research.workflows.CompileArticlePipeline.WriteResultPart1 | base String | generated | method-result
+    private def write(ctx: RunCtx, s: Snap, d: ArticleDraft, decided: Decided): Either[com.histmersion.domain.research.workflows.CompileArticlePipeline.WriteResultPart1, Writ
+com.histmersion.domain.research.workflows.CompileArticlePipeline.WriteTaskWhy | base String | generated | method-parameter
+    def task(why: com.histmersion.domain.research.workflows.CompileArticlePipeline.WriteTaskWhy): Unit =
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.PreviousVersion | base Long | original | constructor-parameter
+    final case class Written(written: Written.Value, why: Written.Why, previousVersion: Option[Written.PreviousVersion]) derives KindlingsCodecAsObject
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Value | base Boolean | original | constructor-parameter
+    final case class Written(written: Written.Value, why: Written.Why, previousVersion: Option[Written.PreviousVersion]) derives KindlingsCodecAsObject
+com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Why | base String | original | constructor-parameter
+    final case class Written(written: Written.Value, why: Written.Why, previousVersion: Option[Written.PreviousVersion]) derives KindlingsCodecAsObject
+com.histmersion.domain.research.workflows.CompileArticlePipeline.WrittenRun | base String | generated | method-parameter
+    def written(c: com.histmersion.domain.automation.managers.ManagerContext, run: com.histmersion.domain.research.workflows.CompileArticlePipeline.WrittenRun): Option[Writte

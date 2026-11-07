@@ -6,7 +6,7 @@ final class Referables(all: List[Referable]):
 
   def kinds: Set[ItemKind] = byKind.keySet
 
-  def resolve(kind: ItemKind, key: ItemKey): Either[com.histmersion.domain.Referables.ResolveResultPart1, ItemRef] =
+  def resolve(kind: ItemKind, key: ItemKey): Either[com.histmersion.domain.Referables.Problem, ItemRef] =
     byKind.get(kind).toRight(s"no records of kind '${kind.value}'").flatMap(_.resolve(kind, key))
 
   /** Each kind's records described by its owner, one call per owner. */
@@ -21,5 +21,5 @@ final class Referables(all: List[Referable]):
       .toMap
 
 object Referables:
-  type ResolveResultPart1 = ResolveResultPart1.T
-  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

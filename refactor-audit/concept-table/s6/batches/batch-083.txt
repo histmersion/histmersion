@@ -1,0 +1,397 @@
+## CONCEPTS NEARBY
+com.histmersion.util.jobs.Job.Id (String)
+com.histmersion.util.jobs.Job.Kind (String)
+com.histmersion.util.jobs.JobAction.Wire (String)
+com.histmersion.util.jobs.JobControlRules.Problem (String)
+com.histmersion.util.jobs.JobQuery.Kinds (String)
+com.histmersion.util.jobs.JobQuery.Q (String)
+com.histmersion.util.jobs.JobQuery.Status (String)
+com.histmersion.util.jobs.JobRepo.CreateAcquireItem (Int)
+com.histmersion.util.jobs.JobRepo.CreateKind (String)
+com.histmersion.util.jobs.JobRepo.DueAt (String)
+com.histmersion.util.jobs.JobRepo.FailInterruptedExcept (String)
+com.histmersion.util.jobs.JobRepo.FinishMergeApplyId (String)
+com.histmersion.util.jobs.JobRepo.GetId (String)
+com.histmersion.util.jobs.JobRepo.ListStatus (String)
+com.histmersion.util.jobs.JobRepo.MergeApplyId (String)
+com.histmersion.util.jobs.JobRepo.MoveRunError (String)
+com.histmersion.util.jobs.JobRepo.MoveRunFrom (String)
+com.histmersion.util.jobs.JobRepo.MoveRunKind (String)
+com.histmersion.util.jobs.JobRepo.MoveRunProgress (String)
+com.histmersion.util.jobs.JobRepo.MoveRunTo (String)
+com.histmersion.util.jobs.JobRepo.PageCursor (String)
+com.histmersion.util.jobs.JobRepo.PageStatus (String)
+com.histmersion.util.jobs.JobRepo.Problem (String)
+com.histmersion.util.jobs.JobRepo.ProgressId (String)
+com.histmersion.util.jobs.JobRepo.ProgressText (String)
+com.histmersion.util.jobs.JobRepo.ResumeAt (String)
+com.histmersion.util.jobs.JobRepo.RunBudgetKind (String)
+com.histmersion.util.jobs.JobRepo.RunHeartbeatKind (String)
+com.histmersion.util.jobs.JobRepo.RunProgressKind (String)
+com.histmersion.util.jobs.JobRepo.RunProgressText (String)
+com.histmersion.util.jobs.JobRepo.RunResumesAtKind (String)
+com.histmersion.util.jobs.JobRepo.RunResumesAtPaused (String)
+com.histmersion.util.jobs.JobRepo.RunWarningKind (String)
+com.histmersion.util.jobs.JobRepo.RunsDueKind (String)
+com.histmersion.util.jobs.JobRepo.RunsDuePaused (String)
+com.histmersion.util.jobs.JobRepo.RunsInKind (String)
+com.histmersion.util.jobs.JobRepo.RunsInStatusesPart1 (String)
+com.histmersion.util.jobs.JobRepo.RunsInStatusesPart2 (String)
+com.histmersion.util.jobs.JobRepo.RunsPausedLikeKind (String)
+com.histmersion.util.jobs.JobRepo.RunsPausedLikePaused (String)
+com.histmersion.util.jobs.JobRepo.RunsReconciledError (String)
+com.histmersion.util.jobs.JobRepo.RunsReconciledExcept (String)
+com.histmersion.util.jobs.JobRepo.RunsReconciledKind (String)
+com.histmersion.util.jobs.JobRepo.RunsReconciledPaused (String)
+com.histmersion.util.jobs.JobRepo.RunsReconciledQueued (String)
+com.histmersion.util.jobs.JobRepo.RunsReconciledRunning (String)
+com.histmersion.util.jobs.JobRepo.SetDetailId (String)
+com.histmersion.util.jobs.JobRepo.TokenBudget (Long)
+com.histmersion.util.jobs.JobRepo.TransitionError (String)
+com.histmersion.util.jobs.JobRepo.TransitionId (String)
+com.histmersion.util.jobs.JobRepo.TransitionProgress (String)
+com.histmersion.util.jobs.JobRepo.WarningText (String)
+com.histmersion.util.jobs.JobRow.AcquireItem (Int)
+com.histmersion.util.jobs.JobRow.CreatedAt (String)
+com.histmersion.util.jobs.JobRow.Detail (String)
+com.histmersion.util.jobs.JobRow.Error (String)
+com.histmersion.util.jobs.JobRow.Id (String)
+com.histmersion.util.jobs.JobRow.Kind (String)
+com.histmersion.util.jobs.JobRow.Progress (String)
+com.histmersion.util.jobs.JobRow.Sha256 (String)
+com.histmersion.util.jobs.JobRow.Status (String)
+com.histmersion.util.jobs.JobRow.UpdatedAt (String)
+com.histmersion.util.jobs.JobRuns.InMemory.StateKey (String)
+com.histmersion.util.jobs.RunRow.AcquireItem (Int)
+com.histmersion.util.jobs.RunRow.DryRun (Boolean)
+com.histmersion.util.jobs.RunRow.Goal (String)
+com.histmersion.util.jobs.RunRow.Kind (String)
+com.histmersion.util.jobs.RunRow.ManagerId (String)
+com.histmersion.util.jobs.RunRow.ManagerItem (Long)
+com.histmersion.util.jobs.RunRow.Model (String)
+com.histmersion.util.jobs.RunRow.Origin (String)
+com.histmersion.util.jobs.RunRow.Params (String)
+com.histmersion.util.jobs.RunRow.Parent (String)
+com.histmersion.util.jobs.RunRow.Pipeline (String)
+com.histmersion.util.jobs.RunRow.Status (String)
+com.histmersion.util.jobs.RunRow.Target (String)
+com.histmersion.util.jobs.RunRow.TargetKind (String)
+
+## TYPES TO DECIDE
+com.histmersion.util.jobs.JobRuns.BudgetId | base String | generated | method-parameter
+    def budget(kind: com.histmersion.util.jobs.JobRuns.BudgetKind, id: com.histmersion.util.jobs.JobRuns.BudgetId, usd: Option[BigDecimal], tokens: Option[com.histmersion.uti
+    def budget(kind: com.histmersion.util.jobs.JobRuns.Implementation.BudgetKind, id: com.histmersion.util.jobs.JobRuns.Implementation.BudgetId, usd: Option[BigDecimal], toke
+com.histmersion.util.jobs.JobRuns.BudgetKind | base String | generated | method-parameter
+    def budget(kind: com.histmersion.util.jobs.JobRuns.BudgetKind, id: com.histmersion.util.jobs.JobRuns.BudgetId, usd: Option[BigDecimal], tokens: Option[com.histmersion.uti
+    def budget(kind: com.histmersion.util.jobs.JobRuns.Implementation.BudgetKind, id: com.histmersion.util.jobs.JobRuns.Implementation.BudgetId, usd: Option[BigDecimal], toke
+com.histmersion.util.jobs.JobRuns.BudgetTokens | base Long | generated | method-parameter
+    def budget(kind: com.histmersion.util.jobs.JobRuns.BudgetKind, id: com.histmersion.util.jobs.JobRuns.BudgetId, usd: Option[BigDecimal], tokens: Option[com.histmersion.uti
+    def budget(kind: com.histmersion.util.jobs.JobRuns.Implementation.BudgetKind, id: com.histmersion.util.jobs.JobRuns.Implementation.BudgetId, usd: Option[BigDecimal], toke
+com.histmersion.util.jobs.JobRuns.CountKind | base String | generated | method-parameter
+    def count(kind: com.histmersion.util.jobs.JobRuns.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.CountStatusesPart1, com.histmersion.util.jobs.JobRuns.CountStatu
+    def count(kind: com.histmersion.util.jobs.JobRuns.Implementation.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.Implementation.CountStatusesPart1, com.histmersio
+com.histmersion.util.jobs.JobRuns.CountResult | base Int | generated | method-result
+    def count(kind: com.histmersion.util.jobs.JobRuns.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.CountStatusesPart1, com.histmersion.util.jobs.JobRuns.CountStatu
+    def count(kind: com.histmersion.util.jobs.JobRuns.Implementation.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.Implementation.CountStatusesPart1, com.histmersio
+com.histmersion.util.jobs.JobRuns.CountStatusesPart1 | base String | generated | method-parameter
+    def count(kind: com.histmersion.util.jobs.JobRuns.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.CountStatusesPart1, com.histmersion.util.jobs.JobRuns.CountStatu
+    def count(kind: com.histmersion.util.jobs.JobRuns.Implementation.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.Implementation.CountStatusesPart1, com.histmersio
+com.histmersion.util.jobs.JobRuns.CountStatusesPart2 | base String | generated | method-parameter
+    def count(kind: com.histmersion.util.jobs.JobRuns.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.CountStatusesPart1, com.histmersion.util.jobs.JobRuns.CountStatu
+    def count(kind: com.histmersion.util.jobs.JobRuns.Implementation.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.Implementation.CountStatusesPart1, com.histmersio
+com.histmersion.util.jobs.JobRuns.CreateInResult | base String | generated | method-result
+    def createIn(run: RunRow)(using DbCon): com.histmersion.util.jobs.JobRuns.CreateInResult
+    def createIn(run: RunRow)(using DbCon): com.histmersion.util.jobs.JobRuns.Implementation.CreateInResult = JobRepo.insertRun(run)
+com.histmersion.util.jobs.JobRuns.CreateResult | base String | generated | method-result
+    def create(run: RunRow): com.histmersion.util.jobs.JobRuns.CreateResult
+    def create(run: RunRow): com.histmersion.util.jobs.JobRuns.Implementation.CreateResult = db.transact(JobRepo.insertRun(run))
+com.histmersion.util.jobs.JobRuns.DueKind | base String | generated | method-parameter
+    def due(kind: com.histmersion.util.jobs.JobRuns.DueKind, paused: com.histmersion.util.jobs.JobRuns.DuePaused, now: Instant): Vector[com.histmersion.util.jobs.JobRuns.DueR
+    def due(kind: com.histmersion.util.jobs.JobRuns.Implementation.DueKind, paused: com.histmersion.util.jobs.JobRuns.Implementation.DuePaused, now: Instant): Vector[com.hist
+com.histmersion.util.jobs.JobRuns.DuePaused | base String | generated | method-parameter
+    def due(kind: com.histmersion.util.jobs.JobRuns.DueKind, paused: com.histmersion.util.jobs.JobRuns.DuePaused, now: Instant): Vector[com.histmersion.util.jobs.JobRuns.DueR
+    def due(kind: com.histmersion.util.jobs.JobRuns.Implementation.DueKind, paused: com.histmersion.util.jobs.JobRuns.Implementation.DuePaused, now: Instant): Vector[com.hist
+com.histmersion.util.jobs.JobRuns.DueResult | base String | generated | method-result
+    def due(kind: com.histmersion.util.jobs.JobRuns.DueKind, paused: com.histmersion.util.jobs.JobRuns.DuePaused, now: Instant): Vector[com.histmersion.util.jobs.JobRuns.DueR
+    def due(kind: com.histmersion.util.jobs.JobRuns.Implementation.DueKind, paused: com.histmersion.util.jobs.JobRuns.Implementation.DuePaused, now: Instant): Vector[com.hist
+com.histmersion.util.jobs.JobRuns.HeartbeatId | base String | generated | method-parameter
+    def heartbeat(kind: com.histmersion.util.jobs.JobRuns.HeartbeatKind, id: com.histmersion.util.jobs.JobRuns.HeartbeatId): Unit
+    def heartbeat(kind: com.histmersion.util.jobs.JobRuns.Implementation.HeartbeatKind, id: com.histmersion.util.jobs.JobRuns.Implementation.HeartbeatId): Unit = db.transact(
+com.histmersion.util.jobs.JobRuns.HeartbeatKind | base String | generated | method-parameter
+    def heartbeat(kind: com.histmersion.util.jobs.JobRuns.HeartbeatKind, id: com.histmersion.util.jobs.JobRuns.HeartbeatId): Unit
+    def heartbeat(kind: com.histmersion.util.jobs.JobRuns.Implementation.HeartbeatKind, id: com.histmersion.util.jobs.JobRuns.Implementation.HeartbeatId): Unit = db.transact(
+com.histmersion.util.jobs.JobRuns.Implementation.BudgetId | base String | generated | method-parameter
+    def budget(kind: com.histmersion.util.jobs.JobRuns.BudgetKind, id: com.histmersion.util.jobs.JobRuns.BudgetId, usd: Option[BigDecimal], tokens: Option[com.histmersion.uti
+    def budget(kind: com.histmersion.util.jobs.JobRuns.Implementation.BudgetKind, id: com.histmersion.util.jobs.JobRuns.Implementation.BudgetId, usd: Option[BigDecimal], toke
+com.histmersion.util.jobs.JobRuns.Implementation.BudgetKind | base String | generated | method-parameter
+    def budget(kind: com.histmersion.util.jobs.JobRuns.BudgetKind, id: com.histmersion.util.jobs.JobRuns.BudgetId, usd: Option[BigDecimal], tokens: Option[com.histmersion.uti
+    def budget(kind: com.histmersion.util.jobs.JobRuns.Implementation.BudgetKind, id: com.histmersion.util.jobs.JobRuns.Implementation.BudgetId, usd: Option[BigDecimal], toke
+com.histmersion.util.jobs.JobRuns.Implementation.BudgetTokens | base Long | generated | method-parameter
+    def budget(kind: com.histmersion.util.jobs.JobRuns.BudgetKind, id: com.histmersion.util.jobs.JobRuns.BudgetId, usd: Option[BigDecimal], tokens: Option[com.histmersion.uti
+    def budget(kind: com.histmersion.util.jobs.JobRuns.Implementation.BudgetKind, id: com.histmersion.util.jobs.JobRuns.Implementation.BudgetId, usd: Option[BigDecimal], toke
+com.histmersion.util.jobs.JobRuns.Implementation.CountKind | base String | generated | method-parameter
+    def count(kind: com.histmersion.util.jobs.JobRuns.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.CountStatusesPart1, com.histmersion.util.jobs.JobRuns.CountStatu
+    def count(kind: com.histmersion.util.jobs.JobRuns.Implementation.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.Implementation.CountStatusesPart1, com.histmersio
+com.histmersion.util.jobs.JobRuns.Implementation.CountResult | base Int | generated | method-result
+    def count(kind: com.histmersion.util.jobs.JobRuns.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.CountStatusesPart1, com.histmersion.util.jobs.JobRuns.CountStatu
+    def count(kind: com.histmersion.util.jobs.JobRuns.Implementation.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.Implementation.CountStatusesPart1, com.histmersio
+com.histmersion.util.jobs.JobRuns.Implementation.CountStatusesPart1 | base String | generated | method-parameter
+    def count(kind: com.histmersion.util.jobs.JobRuns.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.CountStatusesPart1, com.histmersion.util.jobs.JobRuns.CountStatu
+    def count(kind: com.histmersion.util.jobs.JobRuns.Implementation.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.Implementation.CountStatusesPart1, com.histmersio
+com.histmersion.util.jobs.JobRuns.Implementation.CountStatusesPart2 | base String | generated | method-parameter
+    def count(kind: com.histmersion.util.jobs.JobRuns.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.CountStatusesPart1, com.histmersion.util.jobs.JobRuns.CountStatu
+    def count(kind: com.histmersion.util.jobs.JobRuns.Implementation.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.Implementation.CountStatusesPart1, com.histmersio
+com.histmersion.util.jobs.JobRuns.Implementation.CreateInResult | base String | generated | method-result
+    def createIn(run: RunRow)(using DbCon): com.histmersion.util.jobs.JobRuns.CreateInResult
+    def createIn(run: RunRow)(using DbCon): com.histmersion.util.jobs.JobRuns.Implementation.CreateInResult = JobRepo.insertRun(run)
+com.histmersion.util.jobs.JobRuns.Implementation.CreateResult | base String | generated | method-result
+    def create(run: RunRow): com.histmersion.util.jobs.JobRuns.CreateResult
+    def create(run: RunRow): com.histmersion.util.jobs.JobRuns.Implementation.CreateResult = db.transact(JobRepo.insertRun(run))
+com.histmersion.util.jobs.JobRuns.Implementation.DueKind | base String | generated | method-parameter
+    def due(kind: com.histmersion.util.jobs.JobRuns.DueKind, paused: com.histmersion.util.jobs.JobRuns.DuePaused, now: Instant): Vector[com.histmersion.util.jobs.JobRuns.DueR
+    def due(kind: com.histmersion.util.jobs.JobRuns.Implementation.DueKind, paused: com.histmersion.util.jobs.JobRuns.Implementation.DuePaused, now: Instant): Vector[com.hist
+com.histmersion.util.jobs.JobRuns.Implementation.DuePaused | base String | generated | method-parameter
+    def due(kind: com.histmersion.util.jobs.JobRuns.DueKind, paused: com.histmersion.util.jobs.JobRuns.DuePaused, now: Instant): Vector[com.histmersion.util.jobs.JobRuns.DueR
+    def due(kind: com.histmersion.util.jobs.JobRuns.Implementation.DueKind, paused: com.histmersion.util.jobs.JobRuns.Implementation.DuePaused, now: Instant): Vector[com.hist
+com.histmersion.util.jobs.JobRuns.Implementation.DueResult | base String | generated | method-result
+    def due(kind: com.histmersion.util.jobs.JobRuns.DueKind, paused: com.histmersion.util.jobs.JobRuns.DuePaused, now: Instant): Vector[com.histmersion.util.jobs.JobRuns.DueR
+    def due(kind: com.histmersion.util.jobs.JobRuns.Implementation.DueKind, paused: com.histmersion.util.jobs.JobRuns.Implementation.DuePaused, now: Instant): Vector[com.hist
+com.histmersion.util.jobs.JobRuns.Implementation.HeartbeatId | base String | generated | method-parameter
+    def heartbeat(kind: com.histmersion.util.jobs.JobRuns.HeartbeatKind, id: com.histmersion.util.jobs.JobRuns.HeartbeatId): Unit
+    def heartbeat(kind: com.histmersion.util.jobs.JobRuns.Implementation.HeartbeatKind, id: com.histmersion.util.jobs.JobRuns.Implementation.HeartbeatId): Unit = db.transact(
+com.histmersion.util.jobs.JobRuns.Implementation.HeartbeatKind | base String | generated | method-parameter
+    def heartbeat(kind: com.histmersion.util.jobs.JobRuns.HeartbeatKind, id: com.histmersion.util.jobs.JobRuns.HeartbeatId): Unit
+    def heartbeat(kind: com.histmersion.util.jobs.JobRuns.Implementation.HeartbeatKind, id: com.histmersion.util.jobs.JobRuns.Implementation.HeartbeatId): Unit = db.transact(
+com.histmersion.util.jobs.JobRuns.Implementation.MoveError | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.Implementation.MoveFrom | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.Implementation.MoveId | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.Implementation.MoveKind | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.Implementation.MoveProgress | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.Implementation.MoveResult | base Boolean | generated | method-result
+com.histmersion.util.jobs.JobRuns.Implementation.MoveTo | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.Implementation.PausedWithKind | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.Implementation.PausedWithPaused | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.Implementation.PausedWithPrefix | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.Implementation.PausedWithResultPart1 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.Implementation.PausedWithResultPart2 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.Implementation.PausedWithResultPart3 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.Implementation.PausedWithResultPart4 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.Implementation.PipelineVersionId | base String | generated | method-parameter
+    def pipelineVersion(id: com.histmersion.util.jobs.JobRuns.PipelineVersionId): Option[com.histmersion.util.jobs.JobRuns.PipelineVersionResult]
+    def pipelineVersion(id: com.histmersion.util.jobs.JobRuns.Implementation.PipelineVersionId): Option[com.histmersion.util.jobs.JobRuns.Implementation.PipelineVersionResult
+com.histmersion.util.jobs.JobRuns.Implementation.PipelineVersionResult | base Int | generated | method-result
+    def pipelineVersion(id: com.histmersion.util.jobs.JobRuns.PipelineVersionId): Option[com.histmersion.util.jobs.JobRuns.PipelineVersionResult]
+    def pipelineVersion(id: com.histmersion.util.jobs.JobRuns.Implementation.PipelineVersionId): Option[com.histmersion.util.jobs.JobRuns.Implementation.PipelineVersionResult
+com.histmersion.util.jobs.JobRuns.Implementation.ProgressId | base String | generated | method-parameter
+    def progress(kind: com.histmersion.util.jobs.JobRuns.ProgressKind, id: com.histmersion.util.jobs.JobRuns.ProgressId, text: com.histmersion.util.jobs.JobRuns.ProgressText)
+    def progress(kind: com.histmersion.util.jobs.JobRuns.Implementation.ProgressKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ProgressId, text: com.histmersion.u
+com.histmersion.util.jobs.JobRuns.Implementation.ProgressKind | base String | generated | method-parameter
+    def progress(kind: com.histmersion.util.jobs.JobRuns.ProgressKind, id: com.histmersion.util.jobs.JobRuns.ProgressId, text: com.histmersion.util.jobs.JobRuns.ProgressText)
+    def progress(kind: com.histmersion.util.jobs.JobRuns.Implementation.ProgressKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ProgressId, text: com.histmersion.u
+com.histmersion.util.jobs.JobRuns.Implementation.ProgressText | base String | generated | method-parameter
+    def progress(kind: com.histmersion.util.jobs.JobRuns.ProgressKind, id: com.histmersion.util.jobs.JobRuns.ProgressId, text: com.histmersion.util.jobs.JobRuns.ProgressText)
+    def progress(kind: com.histmersion.util.jobs.JobRuns.Implementation.ProgressKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ProgressId, text: com.histmersion.u
+com.histmersion.util.jobs.JobRuns.Implementation.ReconcileError | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.Implementation.ReconcileExcept | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.Implementation.ReconcileKind | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.Implementation.ReconcilePaused | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.Implementation.ReconcileQueued | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.Implementation.ReconcileResultPart1Part1 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.Implementation.ReconcileResultPart1Part2 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.Implementation.ReconcileResultPart2 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.Implementation.ReconcileRunning | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtId | base String | generated | method-parameter
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.ResumeAtId, paused: com.histmersion.util.jobs.JobRuns.ResumeAtPau
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtId, paused: com.histmersion
+com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtKind | base String | generated | method-parameter
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.ResumeAtId, paused: com.histmersion.util.jobs.JobRuns.ResumeAtPau
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtId, paused: com.histmersion
+com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtPaused | base String | generated | method-parameter
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.ResumeAtId, paused: com.histmersion.util.jobs.JobRuns.ResumeAtPau
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtId, paused: com.histmersion
+com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtResult | base Boolean | generated | method-result
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.ResumeAtId, paused: com.histmersion.util.jobs.JobRuns.ResumeAtPau
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtId, paused: com.histmersion
+com.histmersion.util.jobs.JobRuns.Implementation.WarnId | base String | generated | method-parameter
+    def warn(kind: com.histmersion.util.jobs.JobRuns.WarnKind, id: com.histmersion.util.jobs.JobRuns.WarnId, warning: com.histmersion.util.jobs.JobRuns.WarnWarning): Unit
+    def warn(kind: com.histmersion.util.jobs.JobRuns.Implementation.WarnKind, id: com.histmersion.util.jobs.JobRuns.Implementation.WarnId, warning: com.histmersion.util.jobs.
+com.histmersion.util.jobs.JobRuns.Implementation.WarnKind | base String | generated | method-parameter
+    def warn(kind: com.histmersion.util.jobs.JobRuns.WarnKind, id: com.histmersion.util.jobs.JobRuns.WarnId, warning: com.histmersion.util.jobs.JobRuns.WarnWarning): Unit
+    def warn(kind: com.histmersion.util.jobs.JobRuns.Implementation.WarnKind, id: com.histmersion.util.jobs.JobRuns.Implementation.WarnId, warning: com.histmersion.util.jobs.
+com.histmersion.util.jobs.JobRuns.Implementation.WarnWarning | base String | generated | method-parameter
+    def warn(kind: com.histmersion.util.jobs.JobRuns.WarnKind, id: com.histmersion.util.jobs.JobRuns.WarnId, warning: com.histmersion.util.jobs.JobRuns.WarnWarning): Unit
+    def warn(kind: com.histmersion.util.jobs.JobRuns.Implementation.WarnKind, id: com.histmersion.util.jobs.JobRuns.Implementation.WarnId, warning: com.histmersion.util.jobs.
+com.histmersion.util.jobs.JobRuns.InMemory.BudgetId | base String | generated | method-parameter
+    def budget(kind: com.histmersion.util.jobs.JobRuns.BudgetKind, id: com.histmersion.util.jobs.JobRuns.BudgetId, usd: Option[BigDecimal], tokens: Option[com.histmersion.uti
+    def budget(kind: com.histmersion.util.jobs.JobRuns.Implementation.BudgetKind, id: com.histmersion.util.jobs.JobRuns.Implementation.BudgetId, usd: Option[BigDecimal], toke
+com.histmersion.util.jobs.JobRuns.InMemory.BudgetKind | base String | generated | method-parameter
+    def budget(kind: com.histmersion.util.jobs.JobRuns.BudgetKind, id: com.histmersion.util.jobs.JobRuns.BudgetId, usd: Option[BigDecimal], tokens: Option[com.histmersion.uti
+    def budget(kind: com.histmersion.util.jobs.JobRuns.Implementation.BudgetKind, id: com.histmersion.util.jobs.JobRuns.Implementation.BudgetId, usd: Option[BigDecimal], toke
+com.histmersion.util.jobs.JobRuns.InMemory.BudgetTokens | base Long | generated | method-parameter
+    def budget(kind: com.histmersion.util.jobs.JobRuns.BudgetKind, id: com.histmersion.util.jobs.JobRuns.BudgetId, usd: Option[BigDecimal], tokens: Option[com.histmersion.uti
+    def budget(kind: com.histmersion.util.jobs.JobRuns.Implementation.BudgetKind, id: com.histmersion.util.jobs.JobRuns.Implementation.BudgetId, usd: Option[BigDecimal], toke
+com.histmersion.util.jobs.JobRuns.InMemory.ChangeId | base String | generated | method-parameter
+    private def change(kind: com.histmersion.util.jobs.JobRuns.InMemory.ChangeKind, id: com.histmersion.util.jobs.JobRuns.InMemory.ChangeId)(f: JobRunState => JobRunState): c
+com.histmersion.util.jobs.JobRuns.InMemory.ChangeKind | base String | generated | method-parameter
+    private def change(kind: com.histmersion.util.jobs.JobRuns.InMemory.ChangeKind, id: com.histmersion.util.jobs.JobRuns.InMemory.ChangeId)(f: JobRunState => JobRunState): c
+com.histmersion.util.jobs.JobRuns.InMemory.ChangeResult | base Boolean | generated | method-result
+    private def change(kind: com.histmersion.util.jobs.JobRuns.InMemory.ChangeKind, id: com.histmersion.util.jobs.JobRuns.InMemory.ChangeId)(f: JobRunState => JobRunState): c
+com.histmersion.util.jobs.JobRuns.InMemory.CountKind | base String | generated | method-parameter
+    def count(kind: com.histmersion.util.jobs.JobRuns.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.CountStatusesPart1, com.histmersion.util.jobs.JobRuns.CountStatu
+    def count(kind: com.histmersion.util.jobs.JobRuns.Implementation.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.Implementation.CountStatusesPart1, com.histmersio
+com.histmersion.util.jobs.JobRuns.InMemory.CountResult | base Int | generated | method-result
+    def count(kind: com.histmersion.util.jobs.JobRuns.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.CountStatusesPart1, com.histmersion.util.jobs.JobRuns.CountStatu
+    def count(kind: com.histmersion.util.jobs.JobRuns.Implementation.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.Implementation.CountStatusesPart1, com.histmersio
+com.histmersion.util.jobs.JobRuns.InMemory.CountStatusesPart1 | base String | generated | method-parameter
+    def count(kind: com.histmersion.util.jobs.JobRuns.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.CountStatusesPart1, com.histmersion.util.jobs.JobRuns.CountStatu
+    def count(kind: com.histmersion.util.jobs.JobRuns.Implementation.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.Implementation.CountStatusesPart1, com.histmersio
+com.histmersion.util.jobs.JobRuns.InMemory.CountStatusesPart2 | base String | generated | method-parameter
+    def count(kind: com.histmersion.util.jobs.JobRuns.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.CountStatusesPart1, com.histmersion.util.jobs.JobRuns.CountStatu
+    def count(kind: com.histmersion.util.jobs.JobRuns.Implementation.CountKind, statuses: (com.histmersion.util.jobs.JobRuns.Implementation.CountStatusesPart1, com.histmersio
+com.histmersion.util.jobs.JobRuns.InMemory.CreateInResult | base String | generated | method-result
+    def createIn(run: RunRow)(using DbCon): com.histmersion.util.jobs.JobRuns.CreateInResult
+    def createIn(run: RunRow)(using DbCon): com.histmersion.util.jobs.JobRuns.Implementation.CreateInResult = JobRepo.insertRun(run)
+com.histmersion.util.jobs.JobRuns.InMemory.CreateResult | base String | generated | method-result
+    def create(run: RunRow): com.histmersion.util.jobs.JobRuns.CreateResult
+    def create(run: RunRow): com.histmersion.util.jobs.JobRuns.Implementation.CreateResult = db.transact(JobRepo.insertRun(run))
+com.histmersion.util.jobs.JobRuns.InMemory.DueKind | base String | generated | method-parameter
+    def due(kind: com.histmersion.util.jobs.JobRuns.DueKind, paused: com.histmersion.util.jobs.JobRuns.DuePaused, now: Instant): Vector[com.histmersion.util.jobs.JobRuns.DueR
+    def due(kind: com.histmersion.util.jobs.JobRuns.Implementation.DueKind, paused: com.histmersion.util.jobs.JobRuns.Implementation.DuePaused, now: Instant): Vector[com.hist
+com.histmersion.util.jobs.JobRuns.InMemory.DuePaused | base String | generated | method-parameter
+    def due(kind: com.histmersion.util.jobs.JobRuns.DueKind, paused: com.histmersion.util.jobs.JobRuns.DuePaused, now: Instant): Vector[com.histmersion.util.jobs.JobRuns.DueR
+    def due(kind: com.histmersion.util.jobs.JobRuns.Implementation.DueKind, paused: com.histmersion.util.jobs.JobRuns.Implementation.DuePaused, now: Instant): Vector[com.hist
+com.histmersion.util.jobs.JobRuns.InMemory.DueResult | base String | generated | method-result
+    def due(kind: com.histmersion.util.jobs.JobRuns.DueKind, paused: com.histmersion.util.jobs.JobRuns.DuePaused, now: Instant): Vector[com.histmersion.util.jobs.JobRuns.DueR
+    def due(kind: com.histmersion.util.jobs.JobRuns.Implementation.DueKind, paused: com.histmersion.util.jobs.JobRuns.Implementation.DuePaused, now: Instant): Vector[com.hist
+com.histmersion.util.jobs.JobRuns.InMemory.GetId | base String | generated | method-parameter
+    def get(id: com.histmersion.util.jobs.JobRuns.InMemory.GetId): Option[JobRunState] = state.get.get(id)
+com.histmersion.util.jobs.JobRuns.InMemory.HeartbeatId | base String | generated | method-parameter
+    def heartbeat(kind: com.histmersion.util.jobs.JobRuns.HeartbeatKind, id: com.histmersion.util.jobs.JobRuns.HeartbeatId): Unit
+    def heartbeat(kind: com.histmersion.util.jobs.JobRuns.Implementation.HeartbeatKind, id: com.histmersion.util.jobs.JobRuns.Implementation.HeartbeatId): Unit = db.transact(
+com.histmersion.util.jobs.JobRuns.InMemory.HeartbeatKind | base String | generated | method-parameter
+    def heartbeat(kind: com.histmersion.util.jobs.JobRuns.HeartbeatKind, id: com.histmersion.util.jobs.JobRuns.HeartbeatId): Unit
+    def heartbeat(kind: com.histmersion.util.jobs.JobRuns.Implementation.HeartbeatKind, id: com.histmersion.util.jobs.JobRuns.Implementation.HeartbeatId): Unit = db.transact(
+com.histmersion.util.jobs.JobRuns.InMemory.MineKind | base String | generated | method-parameter
+    private def mine(kind: com.histmersion.util.jobs.JobRuns.InMemory.MineKind): List[JobRunState] = state.get.values.toList.filter(_.row.kind == kind)
+com.histmersion.util.jobs.JobRuns.InMemory.MoveError | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.InMemory.MoveFrom | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.InMemory.MoveId | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.InMemory.MoveKind | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.InMemory.MoveProgress | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.InMemory.MoveResult | base Boolean | generated | method-result
+com.histmersion.util.jobs.JobRuns.InMemory.MoveTo | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.InMemory.PausedWithKind | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.InMemory.PausedWithPaused | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.InMemory.PausedWithPrefix | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.InMemory.PausedWithResultPart1 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.InMemory.PausedWithResultPart2 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.InMemory.PausedWithResultPart3 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.InMemory.PausedWithResultPart4 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.InMemory.PipelineVersionId | base String | generated | method-parameter
+    def pipelineVersion(id: com.histmersion.util.jobs.JobRuns.PipelineVersionId): Option[com.histmersion.util.jobs.JobRuns.PipelineVersionResult]
+    def pipelineVersion(id: com.histmersion.util.jobs.JobRuns.Implementation.PipelineVersionId): Option[com.histmersion.util.jobs.JobRuns.Implementation.PipelineVersionResult
+com.histmersion.util.jobs.JobRuns.InMemory.PipelineVersionResult | base Int | generated | method-result
+    def pipelineVersion(id: com.histmersion.util.jobs.JobRuns.PipelineVersionId): Option[com.histmersion.util.jobs.JobRuns.PipelineVersionResult]
+    def pipelineVersion(id: com.histmersion.util.jobs.JobRuns.Implementation.PipelineVersionId): Option[com.histmersion.util.jobs.JobRuns.Implementation.PipelineVersionResult
+com.histmersion.util.jobs.JobRuns.InMemory.ProgressId | base String | generated | method-parameter
+    def progress(kind: com.histmersion.util.jobs.JobRuns.ProgressKind, id: com.histmersion.util.jobs.JobRuns.ProgressId, text: com.histmersion.util.jobs.JobRuns.ProgressText)
+    def progress(kind: com.histmersion.util.jobs.JobRuns.Implementation.ProgressKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ProgressId, text: com.histmersion.u
+com.histmersion.util.jobs.JobRuns.InMemory.ProgressKind | base String | generated | method-parameter
+    def progress(kind: com.histmersion.util.jobs.JobRuns.ProgressKind, id: com.histmersion.util.jobs.JobRuns.ProgressId, text: com.histmersion.util.jobs.JobRuns.ProgressText)
+    def progress(kind: com.histmersion.util.jobs.JobRuns.Implementation.ProgressKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ProgressId, text: com.histmersion.u
+com.histmersion.util.jobs.JobRuns.InMemory.ProgressText | base String | generated | method-parameter
+    def progress(kind: com.histmersion.util.jobs.JobRuns.ProgressKind, id: com.histmersion.util.jobs.JobRuns.ProgressId, text: com.histmersion.util.jobs.JobRuns.ProgressText)
+    def progress(kind: com.histmersion.util.jobs.JobRuns.Implementation.ProgressKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ProgressId, text: com.histmersion.u
+com.histmersion.util.jobs.JobRuns.InMemory.ReconcileError | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.InMemory.ReconcileExcept | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.InMemory.ReconcileKind | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.InMemory.ReconcilePaused | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.InMemory.ReconcileQueued | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.InMemory.ReconcileResultPart1Part1 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.InMemory.ReconcileResultPart1Part2 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.InMemory.ReconcileResultPart2 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.InMemory.ReconcileRunning | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.InMemory.ResumeAtId | base String | generated | method-parameter
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.ResumeAtId, paused: com.histmersion.util.jobs.JobRuns.ResumeAtPau
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtId, paused: com.histmersion
+com.histmersion.util.jobs.JobRuns.InMemory.ResumeAtKind | base String | generated | method-parameter
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.ResumeAtId, paused: com.histmersion.util.jobs.JobRuns.ResumeAtPau
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtId, paused: com.histmersion
+com.histmersion.util.jobs.JobRuns.InMemory.ResumeAtPaused | base String | generated | method-parameter
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.ResumeAtId, paused: com.histmersion.util.jobs.JobRuns.ResumeAtPau
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtId, paused: com.histmersion
+com.histmersion.util.jobs.JobRuns.InMemory.ResumeAtResult | base Boolean | generated | method-result
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.ResumeAtId, paused: com.histmersion.util.jobs.JobRuns.ResumeAtPau
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtId, paused: com.histmersion
+com.histmersion.util.jobs.JobRuns.InMemory.StampedId | base String | generated | method-parameter
+    def stamped(id: com.histmersion.util.jobs.JobRuns.InMemory.StampedId): Unit = state.get.get(id).foreach(r => change(r.row.kind, id)(touched): Unit)
+com.histmersion.util.jobs.JobRuns.InMemory.StateKey | base String | generated | constructor-parameter
+    final class InMemory(state: AtomicReference[Map[InMemory.StateKey, JobRunState]], now: () => Instant) extends JobRuns:
+com.histmersion.util.jobs.JobRuns.InMemory.WarnId | base String | generated | method-parameter
+    def warn(kind: com.histmersion.util.jobs.JobRuns.WarnKind, id: com.histmersion.util.jobs.JobRuns.WarnId, warning: com.histmersion.util.jobs.JobRuns.WarnWarning): Unit
+    def warn(kind: com.histmersion.util.jobs.JobRuns.Implementation.WarnKind, id: com.histmersion.util.jobs.JobRuns.Implementation.WarnId, warning: com.histmersion.util.jobs.
+com.histmersion.util.jobs.JobRuns.InMemory.WarnKind | base String | generated | method-parameter
+    def warn(kind: com.histmersion.util.jobs.JobRuns.WarnKind, id: com.histmersion.util.jobs.JobRuns.WarnId, warning: com.histmersion.util.jobs.JobRuns.WarnWarning): Unit
+    def warn(kind: com.histmersion.util.jobs.JobRuns.Implementation.WarnKind, id: com.histmersion.util.jobs.JobRuns.Implementation.WarnId, warning: com.histmersion.util.jobs.
+com.histmersion.util.jobs.JobRuns.InMemory.WarnWarning | base String | generated | method-parameter
+    def warn(kind: com.histmersion.util.jobs.JobRuns.WarnKind, id: com.histmersion.util.jobs.JobRuns.WarnId, warning: com.histmersion.util.jobs.JobRuns.WarnWarning): Unit
+    def warn(kind: com.histmersion.util.jobs.JobRuns.Implementation.WarnKind, id: com.histmersion.util.jobs.JobRuns.Implementation.WarnId, warning: com.histmersion.util.jobs.
+com.histmersion.util.jobs.JobRuns.MoveError | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.MoveFrom | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.MoveId | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.MoveKind | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.MoveProgress | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.MoveResult | base Boolean | generated | method-result
+com.histmersion.util.jobs.JobRuns.MoveTo | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.PausedWithKind | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.PausedWithPaused | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.PausedWithPrefix | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.PausedWithResultPart1 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.PausedWithResultPart2 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.PausedWithResultPart3 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.PausedWithResultPart4 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.PipelineVersionId | base String | generated | method-parameter
+    def pipelineVersion(id: com.histmersion.util.jobs.JobRuns.PipelineVersionId): Option[com.histmersion.util.jobs.JobRuns.PipelineVersionResult]
+    def pipelineVersion(id: com.histmersion.util.jobs.JobRuns.Implementation.PipelineVersionId): Option[com.histmersion.util.jobs.JobRuns.Implementation.PipelineVersionResult
+com.histmersion.util.jobs.JobRuns.PipelineVersionResult | base Int | generated | method-result
+    def pipelineVersion(id: com.histmersion.util.jobs.JobRuns.PipelineVersionId): Option[com.histmersion.util.jobs.JobRuns.PipelineVersionResult]
+    def pipelineVersion(id: com.histmersion.util.jobs.JobRuns.Implementation.PipelineVersionId): Option[com.histmersion.util.jobs.JobRuns.Implementation.PipelineVersionResult
+com.histmersion.util.jobs.JobRuns.ProgressId | base String | generated | method-parameter
+    def progress(kind: com.histmersion.util.jobs.JobRuns.ProgressKind, id: com.histmersion.util.jobs.JobRuns.ProgressId, text: com.histmersion.util.jobs.JobRuns.ProgressText)
+    def progress(kind: com.histmersion.util.jobs.JobRuns.Implementation.ProgressKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ProgressId, text: com.histmersion.u
+com.histmersion.util.jobs.JobRuns.ProgressKind | base String | generated | method-parameter
+    def progress(kind: com.histmersion.util.jobs.JobRuns.ProgressKind, id: com.histmersion.util.jobs.JobRuns.ProgressId, text: com.histmersion.util.jobs.JobRuns.ProgressText)
+    def progress(kind: com.histmersion.util.jobs.JobRuns.Implementation.ProgressKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ProgressId, text: com.histmersion.u
+com.histmersion.util.jobs.JobRuns.ProgressText | base String | generated | method-parameter
+    def progress(kind: com.histmersion.util.jobs.JobRuns.ProgressKind, id: com.histmersion.util.jobs.JobRuns.ProgressId, text: com.histmersion.util.jobs.JobRuns.ProgressText)
+    def progress(kind: com.histmersion.util.jobs.JobRuns.Implementation.ProgressKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ProgressId, text: com.histmersion.u
+com.histmersion.util.jobs.JobRuns.ReconcileError | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.ReconcileExcept | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.ReconcileKind | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.ReconcilePaused | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.ReconcileQueued | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.ReconcileResultPart1Part1 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.ReconcileResultPart1Part2 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.ReconcileResultPart2 | base String | generated | method-result
+com.histmersion.util.jobs.JobRuns.ReconcileRunning | base String | generated | method-parameter
+com.histmersion.util.jobs.JobRuns.ResumeAtId | base String | generated | method-parameter
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.ResumeAtId, paused: com.histmersion.util.jobs.JobRuns.ResumeAtPau
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtId, paused: com.histmersion
+com.histmersion.util.jobs.JobRuns.ResumeAtKind | base String | generated | method-parameter
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.ResumeAtId, paused: com.histmersion.util.jobs.JobRuns.ResumeAtPau
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtId, paused: com.histmersion
+com.histmersion.util.jobs.JobRuns.ResumeAtPaused | base String | generated | method-parameter
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.ResumeAtId, paused: com.histmersion.util.jobs.JobRuns.ResumeAtPau
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtId, paused: com.histmersion
+com.histmersion.util.jobs.JobRuns.ResumeAtResult | base Boolean | generated | method-result
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.ResumeAtId, paused: com.histmersion.util.jobs.JobRuns.ResumeAtPau
+    def resumeAt(kind: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtKind, id: com.histmersion.util.jobs.JobRuns.Implementation.ResumeAtId, paused: com.histmersion
+com.histmersion.util.jobs.JobRuns.WarnId | base String | generated | method-parameter
+    def warn(kind: com.histmersion.util.jobs.JobRuns.WarnKind, id: com.histmersion.util.jobs.JobRuns.WarnId, warning: com.histmersion.util.jobs.JobRuns.WarnWarning): Unit
+    def warn(kind: com.histmersion.util.jobs.JobRuns.Implementation.WarnKind, id: com.histmersion.util.jobs.JobRuns.Implementation.WarnId, warning: com.histmersion.util.jobs.
+com.histmersion.util.jobs.JobRuns.WarnKind | base String | generated | method-parameter
+    def warn(kind: com.histmersion.util.jobs.JobRuns.WarnKind, id: com.histmersion.util.jobs.JobRuns.WarnId, warning: com.histmersion.util.jobs.JobRuns.WarnWarning): Unit
+    def warn(kind: com.histmersion.util.jobs.JobRuns.Implementation.WarnKind, id: com.histmersion.util.jobs.JobRuns.Implementation.WarnId, warning: com.histmersion.util.jobs.
+com.histmersion.util.jobs.JobRuns.WarnWarning | base String | generated | method-parameter
+    def warn(kind: com.histmersion.util.jobs.JobRuns.WarnKind, id: com.histmersion.util.jobs.JobRuns.WarnId, warning: com.histmersion.util.jobs.JobRuns.WarnWarning): Unit
+    def warn(kind: com.histmersion.util.jobs.JobRuns.Implementation.WarnKind, id: com.histmersion.util.jobs.JobRuns.Implementation.WarnId, warning: com.histmersion.util.jobs.

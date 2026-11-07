@@ -1,0 +1,164 @@
+## CONCEPTS NEARBY
+com.histmersion.util.basemap.BasemapLabels.Label.Elevation (Long)
+com.histmersion.util.basemap.BasemapLabels.Label.Kind (String)
+com.histmersion.util.basemap.BasemapLabels.Label.Lat (Double)
+com.histmersion.util.basemap.BasemapLabels.Label.LinePart1 (Double)
+com.histmersion.util.basemap.BasemapLabels.Label.LinePart2 (Double)
+com.histmersion.util.basemap.BasemapLabels.Label.Lon (Double)
+com.histmersion.util.basemap.BasemapLabels.Label.MaxZoom (Int)
+com.histmersion.util.basemap.BasemapLabels.Label.MinZoom (Int)
+com.histmersion.util.basemap.BasemapLabels.Label.NamesPart1 (String)
+com.histmersion.util.basemap.BasemapLabels.Label.NamesPart2 (String)
+
+## TYPES TO DECIDE
+com.histmersion.util.basemap.BasemapLabels.AreaRPart1 | base Double | generated | method-parameter
+    def area(r: Vector[(com.histmersion.util.basemap.BasemapLabels.AreaRPart1, com.histmersion.util.basemap.BasemapLabels.AreaRPart2)]): com.histmersion.util.basemap.BasemapL
+com.histmersion.util.basemap.BasemapLabels.AreaRPart2 | base Double | generated | method-parameter
+    def area(r: Vector[(com.histmersion.util.basemap.BasemapLabels.AreaRPart1, com.histmersion.util.basemap.BasemapLabels.AreaRPart2)]): com.histmersion.util.basemap.BasemapL
+com.histmersion.util.basemap.BasemapLabels.AreaResult | base Double | generated | method-result
+    def area(r: Vector[(com.histmersion.util.basemap.BasemapLabels.AreaRPart1, com.histmersion.util.basemap.BasemapLabels.AreaRPart2)]): com.histmersion.util.basemap.BasemapL
+com.histmersion.util.basemap.BasemapLabels.ClipBuffer | base Double | generated | method-parameter
+    def clip(l: Vector[(com.histmersion.util.basemap.BasemapLabels.ClipLPart1, com.histmersion.util.basemap.BasemapLabels.ClipLPart2)], x: com.histmersion.util.basemap.Basema
+com.histmersion.util.basemap.BasemapLabels.ClipLPart1 | base Double | generated | method-parameter
+    def clip(l: Vector[(com.histmersion.util.basemap.BasemapLabels.ClipLPart1, com.histmersion.util.basemap.BasemapLabels.ClipLPart2)], x: com.histmersion.util.basemap.Basema
+com.histmersion.util.basemap.BasemapLabels.ClipLPart2 | base Double | generated | method-parameter
+    def clip(l: Vector[(com.histmersion.util.basemap.BasemapLabels.ClipLPart1, com.histmersion.util.basemap.BasemapLabels.ClipLPart2)], x: com.histmersion.util.basemap.Basema
+com.histmersion.util.basemap.BasemapLabels.ClipResultPart1 | base Int | generated | method-result
+    def clip(l: Vector[(com.histmersion.util.basemap.BasemapLabels.ClipLPart1, com.histmersion.util.basemap.BasemapLabels.ClipLPart2)], x: com.histmersion.util.basemap.Basema
+com.histmersion.util.basemap.BasemapLabels.ClipResultPart2 | base Int | generated | method-result
+    def clip(l: Vector[(com.histmersion.util.basemap.BasemapLabels.ClipLPart1, com.histmersion.util.basemap.BasemapLabels.ClipLPart2)], x: com.histmersion.util.basemap.Basema
+com.histmersion.util.basemap.BasemapLabels.ClipTouchesAPart1 | base Double | generated | method-parameter
+    def touches(a: (com.histmersion.util.basemap.BasemapLabels.ClipTouchesAPart1, com.histmersion.util.basemap.BasemapLabels.ClipTouchesAPart2), b: (com.histmersion.util.base
+com.histmersion.util.basemap.BasemapLabels.ClipTouchesAPart2 | base Double | generated | method-parameter
+    def touches(a: (com.histmersion.util.basemap.BasemapLabels.ClipTouchesAPart1, com.histmersion.util.basemap.BasemapLabels.ClipTouchesAPart2), b: (com.histmersion.util.base
+com.histmersion.util.basemap.BasemapLabels.ClipTouchesBPart1 | base Double | generated | method-parameter
+    def touches(a: (com.histmersion.util.basemap.BasemapLabels.ClipTouchesAPart1, com.histmersion.util.basemap.BasemapLabels.ClipTouchesAPart2), b: (com.histmersion.util.base
+com.histmersion.util.basemap.BasemapLabels.ClipTouchesBPart2 | base Double | generated | method-parameter
+    def touches(a: (com.histmersion.util.basemap.BasemapLabels.ClipTouchesAPart1, com.histmersion.util.basemap.BasemapLabels.ClipTouchesAPart2), b: (com.histmersion.util.base
+com.histmersion.util.basemap.BasemapLabels.CoordsResultPart1 | base Double | generated | method-result
+    private def coords(j: Json): Option[(com.histmersion.util.basemap.BasemapLabels.CoordsResultPart1, com.histmersion.util.basemap.BasemapLabels.CoordsResultPart2)] =
+com.histmersion.util.basemap.BasemapLabels.CoordsResultPart2 | base Double | generated | method-result
+    private def coords(j: Json): Option[(com.histmersion.util.basemap.BasemapLabels.CoordsResultPart1, com.histmersion.util.basemap.BasemapLabels.CoordsResultPart2)] =
+com.histmersion.util.basemap.BasemapLabels.InTileMaxZoom | base Int | generated | alias,method-parameter
+    val TilesMaxZoom: _root_.com.histmersion.util.basemap.BasemapLabels.InTileMaxZoom.type = _root_.com.histmersion.util.basemap.BasemapLabels.InTileMaxZoom
+    def inTile(l: Label, z: com.histmersion.util.basemap.BasemapLabels.InTileZ, maxZoom: com.histmersion.util.basemap.BasemapLabels.InTileMaxZoom): com.histmersion.util.basem
+com.histmersion.util.basemap.BasemapLabels.InTileResult | base Boolean | generated | method-result
+    def inTile(l: Label, z: com.histmersion.util.basemap.BasemapLabels.InTileZ, maxZoom: com.histmersion.util.basemap.BasemapLabels.InTileMaxZoom): com.histmersion.util.basem
+com.histmersion.util.basemap.BasemapLabels.InTileZ | base Int | generated | method-parameter
+    def inTile(l: Label, z: com.histmersion.util.basemap.BasemapLabels.InTileZ, maxZoom: com.histmersion.util.basemap.BasemapLabels.InTileMaxZoom): com.histmersion.util.basem
+com.histmersion.util.basemap.BasemapLabels.InsidePPart1 | base Double | generated | method-parameter
+    def inside(r: Vector[(com.histmersion.util.basemap.BasemapLabels.InsideRPart1, com.histmersion.util.basemap.BasemapLabels.InsideRPart2)], p: (com.histmersion.util.basemap
+com.histmersion.util.basemap.BasemapLabels.InsidePPart2 | base Double | generated | method-parameter
+    def inside(r: Vector[(com.histmersion.util.basemap.BasemapLabels.InsideRPart1, com.histmersion.util.basemap.BasemapLabels.InsideRPart2)], p: (com.histmersion.util.basemap
+com.histmersion.util.basemap.BasemapLabels.InsideRPart1 | base Double | generated | method-parameter
+    def inside(r: Vector[(com.histmersion.util.basemap.BasemapLabels.InsideRPart1, com.histmersion.util.basemap.BasemapLabels.InsideRPart2)], p: (com.histmersion.util.basemap
+com.histmersion.util.basemap.BasemapLabels.InsideRPart2 | base Double | generated | method-parameter
+    def inside(r: Vector[(com.histmersion.util.basemap.BasemapLabels.InsideRPart1, com.histmersion.util.basemap.BasemapLabels.InsideRPart2)], p: (com.histmersion.util.basemap
+com.histmersion.util.basemap.BasemapLabels.InsideResult | base Boolean | generated | method-result
+    def inside(r: Vector[(com.histmersion.util.basemap.BasemapLabels.InsideRPart1, com.histmersion.util.basemap.BasemapLabels.InsideRPart2)], p: (com.histmersion.util.basemap
+com.histmersion.util.basemap.BasemapLabels.KindOfFeatureClass | base String | generated | method-parameter
+    def kindOf(featureClass: com.histmersion.util.basemap.BasemapLabels.KindOfFeatureClass): Option[com.histmersion.util.basemap.BasemapLabels.KindOfResult] = featureClass.tr
+com.histmersion.util.basemap.BasemapLabels.KindOfResult | base String | generated | method-result
+    def kindOf(featureClass: com.histmersion.util.basemap.BasemapLabels.KindOfFeatureClass): Option[com.histmersion.util.basemap.BasemapLabels.KindOfResult] = featureClass.tr
+com.histmersion.util.basemap.BasemapLabels.Label.Elevation | base Long | original | constructor-parameter
+com.histmersion.util.basemap.BasemapLabels.Label.Kind | base String | original | constructor-parameter
+com.histmersion.util.basemap.BasemapLabels.Label.Lat | base Double | original | constructor-parameter
+com.histmersion.util.basemap.BasemapLabels.Label.LinePart1 | base Double | original | constructor-parameter
+com.histmersion.util.basemap.BasemapLabels.Label.LinePart2 | base Double | original | constructor-parameter
+com.histmersion.util.basemap.BasemapLabels.Label.Lon | base Double | original | constructor-parameter
+com.histmersion.util.basemap.BasemapLabels.Label.MaxZoom | base Int | original | constructor-parameter
+    val WriteMaxZoom: _root_.com.histmersion.util.basemap.PmTiles.Header.MaxZoom.type = _root_.com.histmersion.util.basemap.PmTiles.Header.MaxZoom
+com.histmersion.util.basemap.BasemapLabels.Label.MinZoom | base Int | original | constructor-parameter
+com.histmersion.util.basemap.BasemapLabels.Label.NamesPart1 | base String | original | constructor-parameter
+com.histmersion.util.basemap.BasemapLabels.Label.NamesPart2 | base String | original | constructor-parameter
+com.histmersion.util.basemap.BasemapLabels.LabelPointPolygonsPart1 | base Double | generated | method-parameter
+    def labelPoint(polygons: Vector[Vector[(com.histmersion.util.basemap.BasemapLabels.LabelPointPolygonsPart1, com.histmersion.util.basemap.BasemapLabels.LabelPointPolygonsP
+com.histmersion.util.basemap.BasemapLabels.LabelPointPolygonsPart2 | base Double | generated | method-parameter
+    def labelPoint(polygons: Vector[Vector[(com.histmersion.util.basemap.BasemapLabels.LabelPointPolygonsPart1, com.histmersion.util.basemap.BasemapLabels.LabelPointPolygonsP
+com.histmersion.util.basemap.BasemapLabels.LabelPointResultPart1 | base Double | generated | method-result
+    def labelPoint(polygons: Vector[Vector[(com.histmersion.util.basemap.BasemapLabels.LabelPointPolygonsPart1, com.histmersion.util.basemap.BasemapLabels.LabelPointPolygonsP
+com.histmersion.util.basemap.BasemapLabels.LabelPointResultPart2 | base Double | generated | method-result
+    def labelPoint(polygons: Vector[Vector[(com.histmersion.util.basemap.BasemapLabels.LabelPointPolygonsPart1, com.histmersion.util.basemap.BasemapLabels.LabelPointPolygonsP
+com.histmersion.util.basemap.BasemapLabels.LangKeyCode | base String | generated | method-parameter
+    private def langKey(code: com.histmersion.util.basemap.BasemapLabels.LangKeyCode): com.histmersion.util.basemap.BasemapLabels.LangKeyResult = code match
+com.histmersion.util.basemap.BasemapLabels.LangKeyResult | base String | generated | method-result
+    private def langKey(code: com.histmersion.util.basemap.BasemapLabels.LangKeyCode): com.histmersion.util.basemap.BasemapLabels.LangKeyResult = code match
+com.histmersion.util.basemap.BasemapLabels.MinZoomOfResult | base Int | generated | method-result
+    def minZoomOf(p: io.circe.JsonObject): com.histmersion.util.basemap.BasemapLabels.MinZoomOfResult =
+com.histmersion.util.basemap.BasemapLabels.NamesResultPart1 | base String | generated | method-result
+    def names(p: io.circe.JsonObject): List[(com.histmersion.util.basemap.BasemapLabels.NamesResultPart1, com.histmersion.util.basemap.BasemapLabels.NamesResultPart2)] =
+com.histmersion.util.basemap.BasemapLabels.NamesResultPart2 | base String | generated | method-result
+    def names(p: io.circe.JsonObject): List[(com.histmersion.util.basemap.BasemapLabels.NamesResultPart1, com.histmersion.util.basemap.BasemapLabels.NamesResultPart2)] =
+com.histmersion.util.basemap.BasemapLabels.NumberResult | base Double | generated | method-result
+    private def number(p: io.circe.JsonObject, k: com.histmersion.util.basemap.BasemapLabels.NumberK): Option[com.histmersion.util.basemap.BasemapLabels.NumberResult] =
+com.histmersion.util.basemap.BasemapLabels.ParseFile | base String | generated | method-parameter
+    def parse(file: com.histmersion.util.basemap.BasemapLabels.ParseFile, doc: Json): Either[com.histmersion.util.basemap.BasemapLabels.ParseResultPart1, List[Label]] =
+com.histmersion.util.basemap.BasemapLabels.ParseResultPart1 | base String | generated | method-result
+    def parse(file: com.histmersion.util.basemap.BasemapLabels.ParseFile, doc: Json): Either[com.histmersion.util.basemap.BasemapLabels.ParseResultPart1, List[Label]] =
+com.histmersion.util.basemap.BasemapLabels.PropK | base String | generated | alias,method-parameter
+    val TextK: _root_.com.histmersion.util.basemap.BasemapLabels.PropK.type = _root_.com.histmersion.util.basemap.BasemapLabels.PropK
+    val NumberK: _root_.com.histmersion.util.basemap.BasemapLabels.PropK.type = _root_.com.histmersion.util.basemap.BasemapLabels.PropK
+com.histmersion.util.basemap.BasemapLabels.PropsResultPart1 | base String | generated | method-result
+    private def props(l: Label): List[(com.histmersion.util.basemap.BasemapLabels.PropsResultPart1, String | Long)] =
+com.histmersion.util.basemap.BasemapLabels.RelRPart1 | base Double | generated | method-parameter
+    private def rel(r: Vector[(com.histmersion.util.basemap.BasemapLabels.RelRPart1, com.histmersion.util.basemap.BasemapLabels.RelRPart2)], x: com.histmersion.util.basemap.B
+com.histmersion.util.basemap.BasemapLabels.RelRPart2 | base Double | generated | method-parameter
+    private def rel(r: Vector[(com.histmersion.util.basemap.BasemapLabels.RelRPart1, com.histmersion.util.basemap.BasemapLabels.RelRPart2)], x: com.histmersion.util.basemap.B
+com.histmersion.util.basemap.BasemapLabels.RelResultPart1 | base Int | generated | method-result
+    private def rel(r: Vector[(com.histmersion.util.basemap.BasemapLabels.RelRPart1, com.histmersion.util.basemap.BasemapLabels.RelRPart2)], x: com.histmersion.util.basemap.B
+com.histmersion.util.basemap.BasemapLabels.RelResultPart2 | base Int | generated | method-result
+    private def rel(r: Vector[(com.histmersion.util.basemap.BasemapLabels.RelRPart1, com.histmersion.util.basemap.BasemapLabels.RelRPart2)], x: com.histmersion.util.basemap.B
+com.histmersion.util.basemap.BasemapLabels.RelX | base Long | generated | alias,method-parameter
+    val ClipX: _root_.com.histmersion.util.basemap.BasemapLabels.RelX.type = _root_.com.histmersion.util.basemap.BasemapLabels.RelX
+    private def rel(r: Vector[(com.histmersion.util.basemap.BasemapLabels.RelRPart1, com.histmersion.util.basemap.BasemapLabels.RelRPart2)], x: com.histmersion.util.basemap.B
+com.histmersion.util.basemap.BasemapLabels.RelY | base Long | generated | alias,method-parameter
+    val ClipY: _root_.com.histmersion.util.basemap.BasemapLabels.RelY.type = _root_.com.histmersion.util.basemap.BasemapLabels.RelY
+    private def rel(r: Vector[(com.histmersion.util.basemap.BasemapLabels.RelRPart1, com.histmersion.util.basemap.BasemapLabels.RelRPart2)], x: com.histmersion.util.basemap.B
+com.histmersion.util.basemap.BasemapLabels.RingResultPart1 | base Double | generated | method-result
+    private def ring(j: Json): Vector[(com.histmersion.util.basemap.BasemapLabels.RingResultPart1, com.histmersion.util.basemap.BasemapLabels.RingResultPart2)] = j.asArray.ma
+com.histmersion.util.basemap.BasemapLabels.RingResultPart2 | base Double | generated | method-result
+    private def ring(j: Json): Vector[(com.histmersion.util.basemap.BasemapLabels.RingResultPart1, com.histmersion.util.basemap.BasemapLabels.RingResultPart2)] = j.asArray.ma
+com.histmersion.util.basemap.BasemapLabels.SimplifyLPart1 | base Double | generated | method-parameter
+    def simplify(l: Vector[(com.histmersion.util.basemap.BasemapLabels.SimplifyLPart1, com.histmersion.util.basemap.BasemapLabels.SimplifyLPart2)], tolerance: com.histmersion
+com.histmersion.util.basemap.BasemapLabels.SimplifyLPart2 | base Double | generated | method-parameter
+    def simplify(l: Vector[(com.histmersion.util.basemap.BasemapLabels.SimplifyLPart1, com.histmersion.util.basemap.BasemapLabels.SimplifyLPart2)], tolerance: com.histmersion
+com.histmersion.util.basemap.BasemapLabels.SimplifyResultPart1 | base Double | generated | method-result
+    def simplify(l: Vector[(com.histmersion.util.basemap.BasemapLabels.SimplifyLPart1, com.histmersion.util.basemap.BasemapLabels.SimplifyLPart2)], tolerance: com.histmersion
+com.histmersion.util.basemap.BasemapLabels.SimplifyResultPart2 | base Double | generated | method-result
+    def simplify(l: Vector[(com.histmersion.util.basemap.BasemapLabels.SimplifyLPart1, com.histmersion.util.basemap.BasemapLabels.SimplifyLPart2)], tolerance: com.histmersion
+com.histmersion.util.basemap.BasemapLabels.SimplifyTolerance | base Double | generated | method-parameter
+    def simplify(l: Vector[(com.histmersion.util.basemap.BasemapLabels.SimplifyLPart1, com.histmersion.util.basemap.BasemapLabels.SimplifyLPart2)], tolerance: com.histmersion
+com.histmersion.util.basemap.BasemapLabels.TextResult | base String | generated | method-result
+    private def text(p: io.circe.JsonObject, k: com.histmersion.util.basemap.BasemapLabels.TextK): Option[com.histmersion.util.basemap.BasemapLabels.TextResult] =
+com.histmersion.util.basemap.BasemapLabels.TilesResultPart1 | base Long | generated | method-result
+    def tiles(labels: List[Label], maxZoom: com.histmersion.util.basemap.BasemapLabels.TilesMaxZoom): Vector[(com.histmersion.util.basemap.BasemapLabels.TilesResultPart1, com
+com.histmersion.util.basemap.BasemapLabels.TilesResultPart2 | base Array[Byte] | generated | method-result
+    def tiles(labels: List[Label], maxZoom: com.histmersion.util.basemap.BasemapLabels.TilesMaxZoom): Vector[(com.histmersion.util.basemap.BasemapLabels.TilesResultPart1, com
+com.histmersion.util.basemap.BasemapLabels.TilesSlotX | base Long | generated | method-parameter
+    def slot(z: com.histmersion.util.basemap.BasemapLabels.TilesSlotZ, x: com.histmersion.util.basemap.BasemapLabels.TilesSlotX, y: com.histmersion.util.basemap.BasemapLabels
+com.histmersion.util.basemap.BasemapLabels.TilesSlotY | base Long | generated | method-parameter
+    def slot(z: com.histmersion.util.basemap.BasemapLabels.TilesSlotZ, x: com.histmersion.util.basemap.BasemapLabels.TilesSlotX, y: com.histmersion.util.basemap.BasemapLabels
+com.histmersion.util.basemap.BasemapLabels.TilesSlotZ | base Int | generated | method-parameter
+    def slot(z: com.histmersion.util.basemap.BasemapLabels.TilesSlotZ, x: com.histmersion.util.basemap.BasemapLabels.TilesSlotX, y: com.histmersion.util.basemap.BasemapLabels
+com.histmersion.util.basemap.BasemapLabels.WithinInLat | base Double | generated | method-parameter
+    def in(lon: com.histmersion.util.basemap.BasemapLabels.WithinInLon, lat: com.histmersion.util.basemap.BasemapLabels.WithinInLat) =
+com.histmersion.util.basemap.BasemapLabels.WithinInLon | base Double | generated | method-parameter
+    def in(lon: com.histmersion.util.basemap.BasemapLabels.WithinInLon, lat: com.histmersion.util.basemap.BasemapLabels.WithinInLat) =
+com.histmersion.util.basemap.BasemapLabels.WithinMargin | base Double | generated | method-parameter
+    def within(l: Label, b: BBox, margin: com.histmersion.util.basemap.BasemapLabels.WithinMargin = 1.0): com.histmersion.util.basemap.BasemapLabels.WithinResult =
+com.histmersion.util.basemap.BasemapLabels.WithinResult | base Boolean | generated | method-result
+    def within(l: Label, b: BBox, margin: com.histmersion.util.basemap.BasemapLabels.WithinMargin = 1.0): com.histmersion.util.basemap.BasemapLabels.WithinResult =
+com.histmersion.util.basemap.BasemapLabels.WorldLat | base Double | generated | method-parameter
+    def world(lon: com.histmersion.util.basemap.BasemapLabels.WorldLon, lat: com.histmersion.util.basemap.BasemapLabels.WorldLat, z: com.histmersion.util.basemap.BasemapLabel
+com.histmersion.util.basemap.BasemapLabels.WorldLon | base Double | generated | method-parameter
+    def world(lon: com.histmersion.util.basemap.BasemapLabels.WorldLon, lat: com.histmersion.util.basemap.BasemapLabels.WorldLat, z: com.histmersion.util.basemap.BasemapLabel
+com.histmersion.util.basemap.BasemapLabels.WorldResultPart1 | base Double | generated | method-result
+    def world(lon: com.histmersion.util.basemap.BasemapLabels.WorldLon, lat: com.histmersion.util.basemap.BasemapLabels.WorldLat, z: com.histmersion.util.basemap.BasemapLabel
+com.histmersion.util.basemap.BasemapLabels.WorldResultPart2 | base Double | generated | method-result
+    def world(lon: com.histmersion.util.basemap.BasemapLabels.WorldLon, lat: com.histmersion.util.basemap.BasemapLabels.WorldLat, z: com.histmersion.util.basemap.BasemapLabel
+com.histmersion.util.basemap.BasemapLabels.WorldZ | base Int | generated | method-parameter
+    def world(lon: com.histmersion.util.basemap.BasemapLabels.WorldLon, lat: com.histmersion.util.basemap.BasemapLabels.WorldLat, z: com.histmersion.util.basemap.BasemapLabel
+com.histmersion.util.basemap.BasemapLabels.WriteResultPart1 | base Int | generated | method-result
+    def write(store: Store, key: Store.Key, labels: List[Label], b: BBox, maxZoom: com.histmersion.util.basemap.BasemapLabels.WriteMaxZoom, metadata: Json): (com.histmersion.
+com.histmersion.util.basemap.BasemapLabels.WriteResultPart2 | base Long | generated | method-result
+    def write(store: Store, key: Store.Key, labels: List[Label], b: BBox, maxZoom: com.histmersion.util.basemap.BasemapLabels.WriteMaxZoom, metadata: Json): (com.histmersion.

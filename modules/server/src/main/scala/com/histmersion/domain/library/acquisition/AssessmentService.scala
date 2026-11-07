@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference
   */
 trait AssessmentService:
   /** Replace the whole mirror at once; how many rows it holds now. */
-  def replaceRetractionWatch(rows: List[Acquire.RetractionRow]): com.histmersion.domain.library.acquisition.AssessmentService.ReplaceRetractionWatchResult
+  def replaceRetractionWatch(rows: List[Acquire.RetractionRow]): com.histmersion.RowCount
   def retractionCount: com.histmersion.domain.library.acquisition.AssessmentService.RetractionCountResult
 
   /** Every notice the mirror records against this DOI. */
@@ -27,8 +27,6 @@ trait AssessmentService:
   def lastFor(citekey: com.histmersion.domain.library.Citekey): Option[(com.histmersion.domain.library.acquisition.AssessmentService.LastForResultPart1, com.histmersion.domain.library.acquisition.AssessmentService.LastForResultPart2)]
 
 object AssessmentService:
-  type ReplaceRetractionWatchResult = ReplaceRetractionWatchResult.T
-  object ReplaceRetractionWatchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RetractionCountResult = RetractionCountResult.T
   object RetractionCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecordResult = RecordResult.T
@@ -41,7 +39,7 @@ object AssessmentService:
   def apply(db: Transactor): AssessmentService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends AssessmentService:
-    def replaceRetractionWatch(rows: List[Acquire.RetractionRow]): com.histmersion.domain.library.acquisition.AssessmentService.Implementation.ReplaceRetractionWatchResult =
+    def replaceRetractionWatch(rows: List[Acquire.RetractionRow]): com.histmersion.RowCount =
       db.transact(AssessmentRepo.replaceRetractionWatch(rows))
     def retractionCount: com.histmersion.domain.library.acquisition.AssessmentService.Implementation.RetractionCountResult = db.read(AssessmentRepo.retractionCount())
     def retractionsFor(doi: com.histmersion.domain.library.Doi): List[RetractionNotice] = db.read(AssessmentRepo.retractionsFor(doi))
@@ -49,8 +47,6 @@ object AssessmentService:
     def lastFor(citekey: com.histmersion.domain.library.Citekey): Option[(com.histmersion.domain.library.acquisition.AssessmentService.Implementation.LastForResultPart1, com.histmersion.domain.library.acquisition.AssessmentService.Implementation.LastForResultPart2)] = db.read(AssessmentRepo.assessmentFor(citekey))
 
   object Implementation:
-    type ReplaceRetractionWatchResult = ReplaceRetractionWatchResult.T
-    object ReplaceRetractionWatchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RetractionCountResult = RetractionCountResult.T
     object RetractionCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RecordResult = RecordResult.T
@@ -64,7 +60,7 @@ object AssessmentService:
   final class InMemory(state: AtomicReference[AcquisitionState], clock: Clock) extends AssessmentService:
     private val Stamp = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC)
 
-    def replaceRetractionWatch(rows: List[Acquire.RetractionRow]): com.histmersion.domain.library.acquisition.AssessmentService.InMemory.ReplaceRetractionWatchResult =
+    def replaceRetractionWatch(rows: List[Acquire.RetractionRow]): com.histmersion.RowCount =
       val unique = rows.map(r => r.doi -> r).toMap
       val _ = state.updateAndGet(_.modify(_.retractions).setTo(unique))
       unique.size
@@ -82,8 +78,6 @@ object AssessmentService:
       state.get.assessments.get(citekey).map((a, at) => (a.verdict, at))
 
   object InMemory:
-    type ReplaceRetractionWatchResult = ReplaceRetractionWatchResult.T
-    object ReplaceRetractionWatchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RetractionCountResult = RetractionCountResult.T
     object RetractionCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RecordResult = RecordResult.T

@@ -21,7 +21,7 @@ final class JavaRangeHttp(
     sleep: JavaRangeHttp.SleepArg1 => Unit = ms => Thread.sleep(ms)
 )(using clock: java.time.Clock) extends RangeHttp:
 
-  private def request(url: com.histmersion.util.basemap.JavaRangeHttp.RequestUrl, range: Option[(com.histmersion.util.basemap.JavaRangeHttp.RequestRangePart1, com.histmersion.util.basemap.JavaRangeHttp.RequestRangePart2)]): HttpRequest =
+  private def request(url: com.histmersion.util.basemap.BasemapFetch.Source.Url, range: Option[(com.histmersion.ByteOffset, com.histmersion.ByteOffset)]): HttpRequest =
     val b = HttpRequest
       .newBuilder(URI.create(url))
       .GET()
@@ -34,8 +34,8 @@ final class JavaRangeHttp(
     * is known to be the one asked for — an answer that is not (a 200 with the whole 100 GB file) is closed unread,
     * which cancels it.
     */
-  private def send(url: com.histmersion.util.basemap.JavaRangeHttp.SendUrl, req: HttpRequest): Either[com.histmersion.util.basemap.JavaRangeHttp.SendResultPart1, HttpResponse[InputStream]] =
-    def attempt(n: com.histmersion.util.basemap.JavaRangeHttp.SendAttemptN): Either[com.histmersion.util.basemap.JavaRangeHttp.SendAttemptResultPart1, HttpResponse[InputStream]] =
+  private def send(url: com.histmersion.util.basemap.BasemapFetch.Source.Url, req: HttpRequest): Either[com.histmersion.util.basemap.JavaRangeHttp.Problem, HttpResponse[InputStream]] =
+    def attempt(n: Int): Either[com.histmersion.util.basemap.JavaRangeHttp.Problem, HttpResponse[InputStream]] =
       scala.util.Try(client.send(req, HttpResponse.BodyHandlers.ofInputStream())) match
         case scala.util.Failure(e: InterruptedException) => throw e
         case scala.util.Failure(e)                       =>
@@ -58,17 +58,17 @@ final class JavaRangeHttp(
             case None => Right(resp)
     attempt(0)
 
-  private def meta[T](r: HttpResponse[T], total: com.histmersion.util.basemap.JavaRangeHttp.MetaTotal): RemoteFile =
+  private def meta[T](r: HttpResponse[T], total: com.histmersion.ByteCount): RemoteFile =
     RemoteFile(total, Option(r.headers.firstValue("ETag").orElse(null)))
 
   /** The answer's body when `ok` accepts it, closed unread otherwise. */
   private def reading[A](r: HttpResponse[InputStream])(
-      ok: HttpResponse[InputStream] => Either[com.histmersion.util.basemap.JavaRangeHttp.ReadingOkResultPart1, A]
-  ): Either[com.histmersion.util.basemap.JavaRangeHttp.ReadingResultPart1, A] =
+      ok: HttpResponse[InputStream] => Either[com.histmersion.util.basemap.JavaRangeHttp.Problem, A]
+  ): Either[com.histmersion.util.basemap.JavaRangeHttp.Problem, A] =
     try ok(r)
     finally r.body.close()
 
-  private def ranged(url: com.histmersion.util.basemap.JavaRangeHttp.RangedUrl, offset: com.histmersion.util.basemap.JavaRangeHttp.RangedOffset, length: com.histmersion.util.basemap.JavaRangeHttp.RangedLength) =
+  private def ranged(url: com.histmersion.util.basemap.BasemapFetch.Source.Url, offset: com.histmersion.ByteOffset, length: com.histmersion.ByteCount) =
     send(url, request(url, Some((offset, length)))).flatMap { r =>
       RangeHttp.check(
         url,
@@ -91,7 +91,7 @@ final class JavaRangeHttp(
       }
     )
 
-  def text(url: com.histmersion.util.basemap.JavaRangeHttp.TextUrl): Either[com.histmersion.util.basemap.JavaRangeHttp.TextResultPart1, com.histmersion.util.basemap.JavaRangeHttp.TextResultPart2] =
+  def text(url: com.histmersion.util.basemap.BasemapFetch.Source.Url): Either[com.histmersion.util.basemap.JavaRangeHttp.Problem, com.histmersion.util.basemap.JavaRangeHttp.Text] =
     send(url, request(url, None)).flatMap(r =>
       reading(r) { r =>
         if r.statusCode != 200 then Left(s"$url: HTTP ${r.statusCode}")
@@ -99,7 +99,7 @@ final class JavaRangeHttp(
       }
     )
 
-  def bytes(url: com.histmersion.util.basemap.JavaRangeHttp.BytesUrl, offset: com.histmersion.util.basemap.JavaRangeHttp.BytesOffset, length: com.histmersion.util.basemap.JavaRangeHttp.BytesLength): Either[com.histmersion.util.basemap.JavaRangeHttp.BytesResultPart1, (com.histmersion.util.basemap.JavaRangeHttp.BytesResultPart2Part1, RemoteFile)] =
+  def bytes(url: com.histmersion.util.basemap.BasemapFetch.Source.Url, offset: com.histmersion.ByteOffset, length: com.histmersion.ByteCount): Either[com.histmersion.util.basemap.JavaRangeHttp.Problem, (com.histmersion.util.basemap.JavaRangeHttp.Bytes, RemoteFile)] =
     ranged(url, offset, length).flatMap((r, total) =>
       reading(r) { r =>
         val want = math.min(offset + length, total) - offset
@@ -109,7 +109,7 @@ final class JavaRangeHttp(
       }
     )
 
-  def download(url: com.histmersion.util.basemap.JavaRangeHttp.DownloadUrl, offset: com.histmersion.util.basemap.JavaRangeHttp.DownloadOffset, length: com.histmersion.util.basemap.JavaRangeHttp.DownloadLength, to: Reservation): Either[com.histmersion.util.basemap.JavaRangeHttp.DownloadResultPart1, RemoteFile] =
+  def download(url: com.histmersion.util.basemap.BasemapFetch.Source.Url, offset: com.histmersion.ByteOffset, length: com.histmersion.ByteCount, to: Reservation): Either[com.histmersion.util.basemap.JavaRangeHttp.Problem, RemoteFile] =
     ranged(url, offset, length).flatMap((r, total) =>
       reading(r) { r =>
         val got = Using.resource(to.output())(out => r.body.transferTo(out))
@@ -121,13 +121,13 @@ final class JavaRangeHttp(
     )
 
 object JavaRangeHttp:
-  type SendAttemptResultPart1 = SendAttemptResultPart1.T
-  object SendAttemptResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SendAttemptN = SendAttemptN.T
-  object SendAttemptN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Bytes = Bytes.T
+  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type BytesResultPart2Part1 = BytesResultPart2Part1.T
-  object BytesResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type TimeoutSeconds = TimeoutSeconds.T
   object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -135,50 +135,6 @@ object JavaRangeHttp:
   object Retries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UserAgent = UserAgent.T
   object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SleepArg1 = SleepArg1.T
-  object SleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SleepArg1 = com.histmersion.util.basemap.BasemapFetch.Pace.GapMs
+  val SleepArg1: _root_.com.histmersion.util.basemap.BasemapFetch.Pace.GapMs.type = _root_.com.histmersion.util.basemap.BasemapFetch.Pace.GapMs
 
-  type RequestUrl = RequestUrl.T
-  object RequestUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RequestRangePart1 = RequestRangePart1.T
-  object RequestRangePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RequestRangePart2 = RequestRangePart2.T
-  object RequestRangePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SendResultPart1 = SendResultPart1.T
-  object SendResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SendUrl = SendUrl.T
-  object SendUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MetaTotal = MetaTotal.T
-  object MetaTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadingResultPart1 = ReadingResultPart1.T
-  object ReadingResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadingOkResultPart1 = ReadingOkResultPart1.T
-  object ReadingOkResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangedUrl = RangedUrl.T
-  object RangedUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangedOffset = RangedOffset.T
-  object RangedOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangedLength = RangedLength.T
-  object RangedLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextResultPart1 = TextResultPart1.T
-  object TextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextResultPart2 = TextResultPart2.T
-  object TextResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextUrl = TextUrl.T
-  object TextUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BytesResultPart1 = BytesResultPart1.T
-  object BytesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BytesUrl = BytesUrl.T
-  object BytesUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BytesOffset = BytesOffset.T
-  object BytesOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BytesLength = BytesLength.T
-  object BytesLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart1 = DownloadResultPart1.T
-  object DownloadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadUrl = DownloadUrl.T
-  object DownloadUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadOffset = DownloadOffset.T
-  object DownloadOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadLength = DownloadLength.T
-  object DownloadLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

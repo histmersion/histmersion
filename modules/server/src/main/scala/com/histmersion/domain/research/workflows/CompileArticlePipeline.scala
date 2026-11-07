@@ -60,7 +60,7 @@ final class CompileArticlePipeline(
   val pipeline: Pipeline = Pipeline.CompileArticle
   import CompileArticlePipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.research.workflows.CompileArticlePipeline.RunResultPart2] =
+  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.research.workflows.CompileArticlePipeline.Outcome] =
     val slug = ctx.run.target
     for
       snap <- ctx.code[Snap]("snapshot")(snapshot(ctx, slug))
@@ -77,7 +77,7 @@ final class CompileArticlePipeline(
         else compile(ctx, snap, found)
     yield line
 
-  private def compile(ctx: RunCtx, snap: Snap, found: Found): Either[Halt, com.histmersion.domain.research.workflows.CompileArticlePipeline.CompileResultPart2] =
+  private def compile(ctx: RunCtx, snap: Snap, found: Found): Either[Halt, com.histmersion.domain.research.workflows.CompileArticlePipeline.Outcome] =
     for
       extracted <- extractAll(ctx, snap, found)
       ev <- ctx.code[Evidence]("evidence")(Right(evidenceOf(found, extracted)))
@@ -111,7 +111,7 @@ final class CompileArticlePipeline(
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
-  private def snapshot(ctx: RunCtx, slug: com.histmersion.domain.research.workflows.CompileArticlePipeline.SnapshotSlug): Either[com.histmersion.domain.research.workflows.CompileArticlePipeline.SnapshotResultPart1, Snap] =
+  private def snapshot(ctx: RunCtx, slug: com.histmersion.domain.research.workflows.CompileArticlePipeline.SnapshotSlug): Either[com.histmersion.domain.research.workflows.CompileArticlePipeline.Problem, Snap] =
     val p = ctx.run.params
     site.articles.get(slug) match
       case Right(v) =>
@@ -157,9 +157,9 @@ final class CompileArticlePipeline(
         )
       case Left(e) => Left(e.message)
 
-  private def isCitekey(ck: com.histmersion.domain.research.workflows.CompileArticlePipeline.IsCitekeyCk): com.histmersion.domain.research.workflows.CompileArticlePipeline.IsCitekeyResult = site.sources.get(ck, body = false).isRight
+  private def isCitekey(ck: com.histmersion.domain.library.Citekey): Boolean = site.sources.get(ck, body = false).isRight
 
-  private def filter(ctx: RunCtx, s: Snap): Either[com.histmersion.domain.research.workflows.CompileArticlePipeline.FilterResultPart1, Found] =
+  private def filter(ctx: RunCtx, s: Snap): Either[com.histmersion.domain.research.workflows.CompileArticlePipeline.Problem, Found] =
     val af = s.filter.getOrElse(Article.Filter(query = s.query, topics = s.topics, tags = s.tags))
     val f = af.toFilter.copy(limit = research.compile.maxSources)
     val res = site.search.sources(f)
@@ -174,7 +174,7 @@ final class CompileArticlePipeline(
   /** A source's record, as an extraction reads it: summary, findings, notes, then the body, cut at
     * `agents.compile.record-chars`.
     */
-  private def record(ck: com.histmersion.domain.research.workflows.CompileArticlePipeline.RecordCk): Option[com.histmersion.domain.research.workflows.CompileArticlePipeline.RecordResult] =
+  private def record(ck: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey] =
     site.sources.get(ck, body = true).toOption.map { s =>
       val parts = List(
         s.source.summary.map(x => s"Summary:\n$x"),
@@ -264,8 +264,8 @@ final class CompileArticlePipeline(
   /** The one write, only after approval: a new article only while its slug is still free (never an overwrite), an
     * extension appended with the snapshot's token (a 412 drops it, never overwrites).
     */
-  private def write(ctx: RunCtx, s: Snap, d: ArticleDraft, decided: Decided): Either[com.histmersion.domain.research.workflows.CompileArticlePipeline.WriteResultPart1, Written] =
-    def task(why: com.histmersion.domain.research.workflows.CompileArticlePipeline.WriteTaskWhy): Unit =
+  private def write(ctx: RunCtx, s: Snap, d: ArticleDraft, decided: Decided): Either[com.histmersion.domain.research.workflows.CompileArticlePipeline.Problem, Written] =
+    def task(why: com.histmersion.domain.research.workflows.CompileArticlePipeline.WriteReason): Unit =
       ctx.warn(why)
       val item = Pipelines.entry(
         ctx,
@@ -311,7 +311,7 @@ final class CompileArticlePipeline(
   /** The independent review (phase 5): a review-article run with fix, started by this one. A refusal (no reviewer model
     * configured) is a warning: the article is written either way.
     */
-  private def review(ctx: RunCtx, s: Snap, w: Written): Option[com.histmersion.domain.research.workflows.CompileArticlePipeline.ReviewResult] =
+  private def review(ctx: RunCtx, s: Snap, w: Written): Option[com.histmersion.domain.research.workflows.CompileArticlePipeline.ReviewVerdict] =
     if !w.written || !ctx.run.params.chainReview.getOrElse(research.compile.review) then None
     else
       // the run's per-role models carry over to the roles the review uses
@@ -333,7 +333,7 @@ final class CompileArticlePipeline(
           ctx.warn(s"review: no review-article run started — ${e.message}; run it by hand")
           None
 
-  private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[com.histmersion.domain.research.workflows.CompileArticlePipeline.CloseReview]): Either[com.histmersion.domain.research.workflows.CompileArticlePipeline.CloseResultPart1, com.histmersion.domain.research.workflows.CompileArticlePipeline.CloseResultPart2] =
+  private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[com.histmersion.domain.research.workflows.CompileArticlePipeline.ReviewVerdict]): Either[com.histmersion.domain.research.workflows.CompileArticlePipeline.Problem, com.histmersion.domain.research.workflows.CompileArticlePipeline.Outcome] =
     if w.written then
       ctx.run.goal.foreach(g =>
         goals.link(
@@ -347,52 +347,26 @@ final class CompileArticlePipeline(
       )
     log(ctx, CompileArticle.logLine(d, w.written, w.why, review, ctx.run.id))
 
-  private def log(ctx: RunCtx, line: com.histmersion.domain.research.workflows.CompileArticlePipeline.LogLine): Either[com.histmersion.domain.research.workflows.CompileArticlePipeline.LogResultPart1, com.histmersion.domain.research.workflows.CompileArticlePipeline.LogResultPart2] = Pipelines.log(site.workLists, ctx, line)
+  private def log(ctx: RunCtx, line: com.histmersion.domain.research.workflows.CompileArticlePipeline.LogLine): Either[com.histmersion.domain.research.workflows.CompileArticlePipeline.Problem, String] = Pipelines.log(site.workLists, ctx, line)
 
 object CompileArticlePipeline:
+  type Outcome = Outcome.T
+  object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReviewVerdict = ReviewVerdict.T
+  object ReviewVerdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteReason = WriteReason.T
+  object WriteReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What a compile-article run's write step did (None: it never got there). */
-  type WriteTaskWhy = WriteTaskWhy.T
-  object WriteTaskWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type RunResultPart2 = RunResultPart2.T
-  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CompileResultPart2 = CompileResultPart2.T
-  object CompileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SnapshotResultPart1 = SnapshotResultPart1.T
-  object SnapshotResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SnapshotSlug = _root_.com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Slug
-  val SnapshotSlug: _root_.com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Slug.type = _root_.com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Slug
-  type IsCitekeyResult = IsCitekeyResult.T
-  object IsCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsCitekeyCk = IsCitekeyCk.T
-  object IsCitekeyCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterResultPart1 = FilterResultPart1.T
-  object FilterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordResult = RecordResult.T
-  object RecordResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordCk = RecordCk.T
-  object RecordCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteResultPart1 = WriteResultPart1.T
-  object WriteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReviewResult = ReviewResult.T
-  object ReviewResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CloseResultPart1 = CloseResultPart1.T
-  object CloseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CloseResultPart2 = CloseResultPart2.T
-  object CloseResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CloseReview = CloseReview.T
-  object CloseReview extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LogResultPart1 = LogResultPart1.T
-  object LogResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LogResultPart2 = LogResultPart2.T
-  object LogResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnapshotSlug = _root_.com.histmersion.domain.research.Slug
+  val SnapshotSlug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
   type LogLine = LogLine.T
   object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WrittenRun = WrittenRun.T
-  object WrittenRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def written(c: com.histmersion.domain.automation.managers.ManagerContext, run: com.histmersion.domain.research.workflows.CompileArticlePipeline.WrittenRun): Option[Written] =
+  def written(c: com.histmersion.domain.automation.managers.ManagerContext, run: com.histmersion.domain.automation.Run.Id): Option[Written] =
     c.stepOutput(run, "write").flatMap(o => io.circe.parser.decode[Written](o).toOption)
 
   /** The kind of a new article when the run names none. */
@@ -416,32 +390,32 @@ object CompileArticlePipeline:
   ) derives KindlingsCodecAsObject
 
   object Snap:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Body = Body.T
-    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.domain.research.Slug
+    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    type Title = com.histmersion.domain.Title
+    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
+    type Kind = com.histmersion.domain.research.Article.Kind
+    val Kind: _root_.com.histmersion.domain.research.Article.Kind.type = _root_.com.histmersion.domain.research.Article.Kind
+    type Body = com.histmersion.domain.research.Article.Body
+    val Body: _root_.com.histmersion.domain.research.Article.Body.type = _root_.com.histmersion.domain.research.Article.Body
+    type UpdatedAt = com.histmersion.domain.research.articles.BArticleRow.UpdatedAt
+    val UpdatedAt: _root_.com.histmersion.domain.research.articles.BArticleRow.UpdatedAt.type = _root_.com.histmersion.domain.research.articles.BArticleRow.UpdatedAt
+    type Query = com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query
+    val Query: _root_.com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query.type = _root_.com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query
     type Topics = Topics.T
     object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = com.histmersion.domain.research.articles.ArticleSummaryRow.Tags
+    val Tags: _root_.com.histmersion.domain.research.articles.ArticleSummaryRow.Tags.type = _root_.com.histmersion.domain.research.articles.ArticleSummaryRow.Tags
 
   /** The filter's sources, and the ones to extract (when extending: not cited yet). */
   final case class Found(filter: Found.Filter, total: com.histmersion.RowCount, sources: List[SourceFact], toExtract: List[Found.ToExtract])
       derives KindlingsCodecAsObject
 
   object Found:
-    type Filter = Filter.T
-    object Filter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ToExtract = ToExtract.T
-    object ToExtract extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Filter = com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query
+    val Filter: _root_.com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query.type = _root_.com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query
+    type ToExtract = com.histmersion.domain.library.Citekey
+    val ToExtract: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
 
   /** What the write did; `previousVersion` holds the text an extension replaced (undo from it). */
   final case class Written(written: Written.Value, why: Written.Why, previousVersion: Option[Written.PreviousVersion]) derives KindlingsCodecAsObject
@@ -449,7 +423,7 @@ object CompileArticlePipeline:
   object Written:
     type Value = Value.T
     object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PreviousVersion = PreviousVersion.T
-    object PreviousVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = com.histmersion.domain.research.workflows.CompileArticlePipeline.WriteReason
+    val Why: _root_.com.histmersion.domain.research.workflows.CompileArticlePipeline.WriteReason.type = _root_.com.histmersion.domain.research.workflows.CompileArticlePipeline.WriteReason
+    type PreviousVersion = com.histmersion.domain.research.articles.ArticleTools.ArticleVersionInput.VersionId
+    val PreviousVersion: _root_.com.histmersion.domain.research.articles.ArticleTools.ArticleVersionInput.VersionId.type = _root_.com.histmersion.domain.research.articles.ArticleTools.ArticleVersionInput.VersionId

@@ -49,7 +49,7 @@ final class ManagersControllers(
   private def mcfg = cfg.managers
 
   /** The runs manager `id` dispatched, newest first (`status` narrows) — `run_status`'s manager filter. */
-  def runs(id: com.histmersion.domain.automation.managers.ManagersControllers.RunsId, status: Option[com.histmersion.domain.automation.managers.ManagersControllers.RunsStatus], limit: Option[com.histmersion.domain.automation.managers.ManagersControllers.RunsLimit]): List[RunInfo] =
+  def runs(id: com.histmersion.domain.automation.managers.ManagerLight.Id, status: Option[com.histmersion.domain.automation.Run.State.Wire], limit: Option[com.histmersion.domain.automation.managers.ManagerContext.Limit]): List[RunInfo] =
     val st = status.map(_.trim).filter(_.nonEmpty)
     agents.runs.forManager(id.trim, limit = limits.page(limit, 50)).toList.filter(r => st.forall(_ == r.status))
 
@@ -78,7 +78,7 @@ final class ManagersControllers(
     if kindOf(m) != Kind.Watch then e
     else backlog.get(m.id).fold(e)((n, days) => e.copy(backlog = n, backlogDays = days))
 
-  private def manager(id: com.histmersion.domain.automation.managers.ManagersControllers.ManagerId): Either[Api.Error, ManagerInfo] =
+  private def manager(id: com.histmersion.domain.automation.managers.ManagerLight.Id): Either[Api.Error, ManagerInfo] =
     agents.managerStore
       .get(id.trim)
       .map(m => withEffective(m, backlogs()))
@@ -88,7 +88,7 @@ final class ManagersControllers(
     lazy val snap = backlogs()
     agents.managerStore.list().map(withEffective(_, snap))
 
-  def get(id: com.histmersion.domain.automation.managers.ManagersControllers.GetId): Either[Api.Error, ManagerDetail] =
+  def get(id: com.histmersion.domain.automation.managers.ManagerLight.Id): Either[Api.Error, ManagerDetail] =
     manager(id).map { m =>
       ManagerDetail(
         m,
@@ -115,7 +115,7 @@ final class ManagersControllers(
     val state =
       if in.paused.contains(false) || (in.paused.isEmpty && agents.autopilot.on) then State.Active else State.Paused
     val goal = in.goal.map(_.trim).filter(_.nonEmpty)
-    def make(k: Kind, id: com.histmersion.domain.automation.managers.ManagersControllers.CreateMakeId, g: Option[com.histmersion.domain.automation.managers.ManagersControllers.CreateMakeG], cron: Option[com.histmersion.domain.automation.managers.ManagersControllers.CreateMakeCron] = None): Either[Api.Error, ManagerInfo] =
+    def make(k: Kind, id: com.histmersion.domain.automation.managers.ManagerLight.Id, g: Option[com.histmersion.domain.automation.Goal.Slug], cron: Option[com.histmersion.domain.automation.managers.ManagerLight.Cron] = None): Either[Api.Error, ManagerInfo] =
       for
         _ <- validate(k, in.config)
         c <- cron
@@ -177,7 +177,7 @@ final class ManagersControllers(
     * with "" — its next firing is computed now.
     */
   def update(
-      id: com.histmersion.domain.automation.managers.ManagersControllers.UpdateId,
+      id: com.histmersion.domain.automation.managers.ManagerLight.Id,
       in: ManagerUpdate,
       now: java.time.Instant = java.time.Instant.now(agents.clock)
   ): Either[Api.Error, ManagerInfo] =
@@ -210,7 +210,7 @@ final class ManagersControllers(
       out
 
   /** A cron a person sets on a manager of kind `k`: the enrich manager has none (ingests feed it). */
-  private def checkCron(k: Kind, text: com.histmersion.domain.automation.managers.ManagersControllers.CheckCronText, now: java.time.Instant): Either[Api.Error, Cron] =
+  private def checkCron(k: Kind, text: com.histmersion.domain.automation.managers.ManagerLight.Cron, now: java.time.Instant): Either[Api.Error, Cron] =
     if k == Kind.Enrich then
       Left(Api.Error("the enrich manager has no cron: the ingests and the Enrich buttons feed it"))
     else ManagerPolicy.checkCron(text, now, cfg.scheduler.minIntervalMinutes).left.map(Api.Error(_))
@@ -246,19 +246,19 @@ final class ManagersControllers(
         )
       }
 
-  def delete(id: com.histmersion.domain.automation.managers.ManagersControllers.DeleteId): Either[Api.Error, Removed] =
+  def delete(id: com.histmersion.domain.automation.managers.ManagerLight.Id): Either[Api.Error, Removed] =
     manager(id).map { m =>
       inFlight(m.id).foreach(r => agents.engine.cancel(r.id))
       Removed(Transactor(ds).transact(ManagerRepo.delete(m.id)))
     }
 
-  private def inFlight(id: com.histmersion.domain.automation.managers.ManagersControllers.InFlightId): List[RunInfo] = agents.runs.forManager(id, active = true).toList
+  private def inFlight(id: com.histmersion.domain.automation.managers.ManagerLight.Id): List[RunInfo] = agents.runs.forManager(id, active = true).toList
 
   /** `POST /api/agents/managers/{id}/{pause|resume|stop}[?runs=true]`. Pause = no new runs (with `runs`, its in-flight
     * runs are paused too, cooperatively); resume reverses both (only the runs paused on request); stop cancels its
     * in-flight runs and its open items.
     */
-  def action(id: com.histmersion.domain.automation.managers.ManagersControllers.ActionId, action: com.histmersion.domain.automation.managers.ManagersControllers.ActionAction, runs: Option[com.histmersion.domain.automation.managers.ManagersControllers.ActionRuns]): Either[Api.Error, ManagerInfo] =
+  def action(id: com.histmersion.domain.automation.managers.ManagerLight.Id, action: com.histmersion.domain.automation.managers.ManagersControllers.ActionAction, runs: Option[com.histmersion.domain.automation.managers.ManagersControllers.ActionRuns]): Either[Api.Error, ManagerInfo] =
     manager(id).flatMap { m =>
       val withRuns = runs.contains(true)
       action.trim.toLowerCase match
@@ -312,7 +312,7 @@ final class ManagersControllers(
 
   // ── items ──────────────────────────────────────────────────────────────────────────────────────
 
-  def items(id: com.histmersion.domain.automation.managers.ManagersControllers.ItemsId, status: Option[com.histmersion.domain.automation.managers.ManagersControllers.ItemsStatus], offset: Option[com.histmersion.domain.automation.managers.ManagersControllers.ItemsOffset], limit: Option[com.histmersion.domain.automation.managers.ManagersControllers.ItemsLimit]): Either[Api.Error, ItemPage] =
+  def items(id: com.histmersion.domain.automation.managers.ManagerLight.Id, status: Option[com.histmersion.domain.automation.ItemStatus.Wire], offset: Option[com.histmersion.Offset], limit: Option[com.histmersion.PageSize]): Either[Api.Error, ItemPage] =
     for
       m <- manager(id)
       st <- status.map(_.trim).filter(_.nonEmpty) match
@@ -328,7 +328,7 @@ final class ManagersControllers(
       ItemPage(withRuns(rows), total, off, lim)
 
   /** The item an id or a target names, in manager `m` (its default item kind first, then the others). */
-  private def itemOf(m: ManagerInfo, ref: com.histmersion.domain.automation.managers.ManagersControllers.ItemOfRef): Either[Api.Error, ManagerItem] =
+  private def itemOf(m: ManagerInfo, ref: com.histmersion.domain.automation.managers.ManagersControllers.ItemRef): Either[Api.Error, ManagerItem] =
     val r = ref.trim
     r.toLongOption
       .flatMap(agents.managerStore.item(_))
@@ -342,7 +342,7 @@ final class ManagersControllers(
   /** A target as an item of `kind` names it: an article's slug, a source's citekey, the goal (a seeding manager's own).
     * A compile item is never added by hand: it comes from an approved plan.
     */
-  private def targetOf(m: ManagerInfo, kind: com.histmersion.domain.automation.managers.ManagersControllers.TargetOfKind, raw: com.histmersion.domain.automation.managers.ManagersControllers.TargetOfRaw): Either[Api.Error, com.histmersion.domain.automation.managers.ManagersControllers.TargetOfResultPart2] =
+  private def targetOf(m: ManagerInfo, kind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind, raw: com.histmersion.domain.automation.managers.ManagersControllers.TargetOfRaw): Either[Api.Error, com.histmersion.domain.automation.managers.ManagersControllers.TargetOfResultPart2] =
     kinds.find(_.items.contains(kind)) match
       case Some(k) => k.target(m, kind, raw)
       case None    => Left(Api.Error(s"unknown item kind '$kind'"))
@@ -351,7 +351,7 @@ final class ManagersControllers(
     * the kind itself; blank = the manager's default). An article's review whose article records no filter brings an
     * infer-filter item with it (the review manager's `inferFilter`).
     */
-  def addItem(id: com.histmersion.domain.automation.managers.ManagersControllers.AddItemId, in: EnqueueRequest, origin: ItemOrigin = ItemOrigin.Person): Either[Api.Error, ManagerItem] =
+  def addItem(id: com.histmersion.domain.automation.managers.ManagerLight.Id, in: EnqueueRequest, origin: ItemOrigin = ItemOrigin.Person): Either[Api.Error, ManagerItem] =
     for
       m <- manager(id)
       kind <- itemKindOf(kindOf(m), in.kind).toRight(
@@ -406,7 +406,7 @@ final class ManagersControllers(
             EnqueueResult(EnrichId, items, skipped)
           }
 
-  def patchItem(id: com.histmersion.domain.automation.managers.ManagersControllers.PatchItemId, ref: com.histmersion.domain.automation.managers.ManagersControllers.PatchItemRef, in: ItemPatch): Either[Api.Error, ManagerItem] =
+  def patchItem(id: com.histmersion.domain.automation.managers.ManagerLight.Id, ref: com.histmersion.domain.automation.managers.ManagersControllers.ItemRef, in: ItemPatch): Either[Api.Error, ManagerItem] =
     for
       m <- manager(id)
       i <- itemOf(m, ref)
@@ -488,7 +488,7 @@ final class ManagersControllers(
 
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 
-  def hints(id: com.histmersion.domain.automation.managers.ManagersControllers.HintsId, all: com.histmersion.domain.automation.managers.ManagersControllers.HintsAll): Either[Api.Error, List[ManagerHint]] =
+  def hints(id: com.histmersion.domain.automation.managers.ManagerLight.Id, all: com.histmersion.domain.automation.managers.ManagersControllers.HintsAll): Either[Api.Error, List[ManagerHint]] =
     manager(id).map(m => Transactor(ds).read(ManagerRepo.hints(m.id, live = !all)))
 
   /** A hint: its text reaches the next runs' fixer and skeptic as the person's notes (a once-hint the next run only).
@@ -498,7 +498,7 @@ final class ManagersControllers(
     * ([[applyProposal]]). `suggest` asks the server's planner model to read the text and propose the action (a
     * `hint-effect` run, started for the person; its proposal waits for approval the same way).
     */
-  def addHint(id: com.histmersion.domain.automation.managers.ManagersControllers.AddHintId, in: HintAdd): Either[Api.Error, ManagerHint] =
+  def addHint(id: com.histmersion.domain.automation.managers.ManagerLight.Id, in: HintAdd): Either[Api.Error, ManagerHint] =
     val propose = in.propose.contains(true)
     val suggest = in.suggest.contains(true)
     for
@@ -589,7 +589,7 @@ final class ManagersControllers(
     else Right(e.modify(_.action).setTo(a).modify(_.targets).setTo((e.targets ++ item.map(_.target).toList).distinct))
 
   /** A model's effect, recorded for a person: an open `hint-effect` approval about the manager. */
-  private def proposeEffect(m: ManagerInfo, hintId: com.histmersion.domain.automation.managers.ManagersControllers.ProposeEffectHintId, text: com.histmersion.domain.automation.managers.ManagersControllers.ProposeEffectText, e: HintEffect, by: com.histmersion.domain.automation.managers.ManagersControllers.ProposeEffectBy): com.histmersion.domain.automation.managers.ManagersControllers.ProposeEffectResult =
+  private def proposeEffect(m: ManagerInfo, hintId: com.histmersion.domain.automation.managers.ManagersControllers.HintId, text: com.histmersion.domain.automation.managers.ManagersControllers.EffectText, e: HintEffect, by: com.histmersion.domain.automation.managers.ManagersControllers.ProposeEffectBy): com.histmersion.domain.automation.managers.ManagersControllers.ProposeEffectResult =
     import io.circe.syntax.*
     val a = agents.approvalStore.openSubject(
       None,
@@ -630,7 +630,7 @@ final class ManagersControllers(
       supervisor.nudge()
       s"${m.id} hint #${ht.id}: ${ManagersMarkdown.effect(e)}$w"
 
-  private def applyEffect(m: ManagerInfo, hintId: com.histmersion.domain.automation.managers.ManagersControllers.ApplyEffectHintId, text: com.histmersion.domain.automation.managers.ManagersControllers.ApplyEffectText, e: HintEffect): com.histmersion.domain.automation.managers.ManagersControllers.ApplyEffectResult =
+  private def applyEffect(m: ManagerInfo, hintId: com.histmersion.domain.automation.managers.ManagersControllers.HintId, text: com.histmersion.domain.automation.managers.ManagersControllers.EffectText, e: HintEffect): com.histmersion.domain.automation.managers.ManagersControllers.ApplyEffectResult =
     // the named targets become items of the manager's default kind (a target that exists); the matched
     // ones are the open items
     val kind = itemKinds(kindOf(m)).headOption.getOrElse(ArticleReview)
@@ -674,7 +674,7 @@ final class ManagersControllers(
       case _ => 0
     s" — ${e.action}: ${Plural.count(n, "item")}"
 
-  def deleteHint(id: com.histmersion.domain.automation.managers.ManagersControllers.DeleteHintId, hint: com.histmersion.domain.automation.managers.ManagersControllers.DeleteHintHint): Either[Api.Error, Removed] =
+  def deleteHint(id: com.histmersion.domain.automation.managers.ManagerLight.Id, hint: com.histmersion.domain.automation.managers.ManagersControllers.HintId): Either[Api.Error, Removed] =
     manager(id).map { m =>
       val gone = Transactor(ds).transact(ManagerRepo.retireHint(m.id, hint))
       if gone then agents.managerStore.event(m.id, None, None, Feed.Hint, s"hint #$hint retired by a person")
@@ -686,7 +686,7 @@ final class ManagersControllers(
   /** A goal's schedules (every goal's: None) as the goal surfaces show them — its watcher's sweeps
     * ([[WatchSchedules.view]]), and any `goal_schedules` row the managers have not moved yet.
     */
-  def goalSchedules(goal: Option[com.histmersion.domain.automation.managers.ManagersControllers.GoalSchedulesGoal]): List[Goal.Plans.GoalSchedule] =
+  def goalSchedules(goal: Option[com.histmersion.domain.automation.Goal.Slug]): List[Goal.Plans.GoalSchedule] =
     agents.managerStore
       .list()
       .filter(m => m.kind == Kind.Watch.wire && goal.forall(g => m.goal.contains(g)))
@@ -701,7 +701,7 @@ final class ManagersControllers(
     * cap.
     */
   def setSchedule(
-      goal: com.histmersion.domain.automation.managers.ManagersControllers.SetScheduleGoal,
+      goal: com.histmersion.domain.automation.Goal.Slug,
       kind: Goal.Plans.ScheduleKind,
       in: Goal.Plans.ScheduleSet,
       now: java.time.Instant
@@ -757,7 +757,7 @@ final class ManagersControllers(
   /** `DELETE /api/goals/{slug}/schedules/{kind}` — the sweep leaves the watcher (its open item is cancelled); the
     * watcher itself stays.
     */
-  def removeSchedule(goal: com.histmersion.domain.automation.managers.ManagersControllers.RemoveScheduleGoal, kind: Goal.Plans.ScheduleKind): Goal.Plans.Removed =
+  def removeSchedule(goal: com.histmersion.domain.automation.Goal.Slug, kind: Goal.Plans.ScheduleKind): Goal.Plans.Removed =
     val legacy = agents.goals.removeSchedule(goal, kind.transformInto[com.histmersion.domain.automation.ScheduleKind])
     val sw = WatchSchedules.sweepOf(kind)
     val fromWatcher = agents.managerStore.get(watchId(goal)).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
@@ -782,7 +782,7 @@ final class ManagersControllers(
     Goal.Plans.Removed(legacy || fromWatcher)
 
   /** A sweep the watcher no longer runs: its pending or held item is cancelled (a running one finishes). */
-  private def cancelSweep(m: ManagerInfo, sw: Sweep, why: com.histmersion.domain.automation.managers.ManagersControllers.CancelSweepWhy): Unit =
+  private def cancelSweep(m: ManagerInfo, sw: Sweep, why: com.histmersion.domain.automation.managers.ManagerRepo.CancelReason): Unit =
     m.goal.flatMap(g => agents.managerStore.itemFor(m.id, sw.itemKind, g)).foreach { i =>
       if transact(ds)(ManagerRepo.settle(i.id, ItemStatus.Cancelled, why, List(ItemStatus.Pending, ItemStatus.Held)))
       then agents.managerStore.event(m.id, Some(i.id), None, Feed.Stopped, s"${i.target} (${i.kind}): $why")
@@ -797,7 +797,7 @@ final class ManagersControllers(
   def focus: Autopilot.FocusInfo = agents.focus.info()
 
   /** `GET /api/agents/scheduler[?limit=]` — readable with agents off (a dry pass). */
-  def scheduler(limit: Option[com.histmersion.domain.automation.managers.ManagersControllers.SchedulerLimit]): AgentScheduler.SchedulerStatus = agents.scheduler.status(limit)
+  def scheduler(limit: Option[com.histmersion.domain.automation.managers.ManagerContext.Limit]): AgentScheduler.SchedulerStatus = agents.scheduler.status(limit)
 
   /** `POST /api/agents/scheduler {strategy}` — switch the strategy live. */
   def setScheduler(in: AgentScheduler.SchedulerSet): Either[Api.Error, AgentScheduler.SchedulerStatus] =
@@ -845,7 +845,7 @@ final class ManagersControllers(
 
   // ── events ─────────────────────────────────────────────────────────────────────────────────────
 
-  def events(id: com.histmersion.domain.automation.managers.ManagersControllers.EventsId, before: Option[com.histmersion.domain.automation.managers.ManagersControllers.EventsBefore], limit: Option[com.histmersion.domain.automation.managers.ManagersControllers.EventsLimit]): Either[Api.Error, EventPage] =
+  def events(id: com.histmersion.domain.automation.managers.ManagerLight.Id, before: Option[com.histmersion.domain.automation.managers.ManagerRepo.EventCursor], limit: Option[com.histmersion.domain.automation.managers.ManagerContext.Limit]): Either[Api.Error, EventPage] =
     manager(id).map { m =>
       val lim = limits.page(limit, 50)
       val es = connect(ds)(ManagerRepo.events(m.id, before, lim))
@@ -853,19 +853,13 @@ final class ManagersControllers(
     }
 
 object ManagersControllers:
-  type CreateMakeId = CreateMakeId.T
-  object CreateMakeId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreateMakeG = CreateMakeG.T
-  object CreateMakeG extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreateMakeCron = CreateMakeCron.T
-  object CreateMakeCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EffectText = EffectText.T
+  object EffectText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintId = HintId.T
+  object HintId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemRef = ItemRef.T
+  object ItemRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type RunsId = RunsId.T
-  object RunsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunsStatus = RunsStatus.T
-  object RunsStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunsLimit = RunsLimit.T
-  object RunsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NotFoundWhat = NotFoundWhat.T
   object NotFoundWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ConflictM = ConflictM.T
@@ -876,60 +870,20 @@ object ManagersControllers:
   object BacklogsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BacklogsResultPart2Part2 = BacklogsResultPart2Part2.T
   object BacklogsResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ManagerId = ManagerId.T
-  object ManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetId = GetId.T
-  object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdateId = UpdateId.T
-  object UpdateId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckCronText = CheckCronText.T
-  object CheckCronText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteId = DeleteId.T
-  object DeleteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InFlightId = InFlightId.T
-  object InFlightId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ActionId = ActionId.T
-  object ActionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ActionAction = ActionAction.T
   object ActionAction extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ActionRuns = ActionRuns.T
   object ActionRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemsId = ItemsId.T
-  object ItemsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemsStatus = ItemsStatus.T
-  object ItemsStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemsOffset = ItemsOffset.T
-  object ItemsOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemsLimit = ItemsLimit.T
-  object ItemsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemOfRef = ItemOfRef.T
-  object ItemOfRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TargetOfResultPart2 = TargetOfResultPart2.T
   object TargetOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetOfKind = TargetOfKind.T
-  object TargetOfKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TargetOfRaw = TargetOfRaw.T
   object TargetOfRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddItemId = AddItemId.T
-  object AddItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchItemId = PatchItemId.T
-  object PatchItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchItemRef = PatchItemRef.T
-  object PatchItemRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HintsId = HintsId.T
-  object HintsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HintsAll = HintsAll.T
   object HintsAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddHintId = AddHintId.T
-  object AddHintId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckEffectProposal = CheckEffectProposal.T
   object CheckEffectProposal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProposeEffectResult = ProposeEffectResult.T
   object ProposeEffectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProposeEffectHintId = ProposeEffectHintId.T
-  object ProposeEffectHintId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProposeEffectText = ProposeEffectText.T
-  object ProposeEffectText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProposeEffectBy = ProposeEffectBy.T
   object ProposeEffectBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyProposalResultPart1 = ApplyProposalResultPart1.T
@@ -938,34 +892,10 @@ object ManagersControllers:
   object ApplyProposalResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyEffectResult = ApplyEffectResult.T
   object ApplyEffectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyEffectHintId = ApplyEffectHintId.T
-  object ApplyEffectHintId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyEffectText = ApplyEffectText.T
-  object ApplyEffectText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteHintId = DeleteHintId.T
-  object DeleteHintId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteHintHint = DeleteHintHint.T
-  object DeleteHintHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalSchedulesGoal = GoalSchedulesGoal.T
-  object GoalSchedulesGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetScheduleGoal = SetScheduleGoal.T
-  object SetScheduleGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveScheduleGoal = RemoveScheduleGoal.T
-  object RemoveScheduleGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CancelSweepWhy = CancelSweepWhy.T
-  object CancelSweepWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SchedulerLimit = SchedulerLimit.T
-  object SchedulerLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StallsDays = StallsDays.T
   object StallsDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SchedulerWhyItem = SchedulerWhyItem.T
   object SchedulerWhyItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventsId = EventsId.T
-  object EventsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventsBefore = EventsBefore.T
-  object EventsBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventsLimit = EventsLimit.T
-  object EventsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DescribeResult = DescribeResult.T
   object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

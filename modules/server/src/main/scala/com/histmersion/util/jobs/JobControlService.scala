@@ -17,24 +17,18 @@ trait JobControlService:
   /** Answer `action` on job `id`, with the job as it stands after it. A pause or cancel of a running background job is
     * asked of it: the answer is still `running`, and the job stops after its current part.
     */
-  def control(id: com.histmersion.util.jobs.JobControlService.ControlId, action: JobAction): Either[Api.Error, JobInfo]
+  def control(id: com.histmersion.util.jobs.Job.Id, action: JobAction): Either[Api.Error, JobInfo]
 
 object JobControlService:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ControlId = ControlId.T
-  object ControlId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NotFoundId = NotFoundId.T
-  object NotFoundId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConflictWhy = ConflictWhy.T
-  object ConflictWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyRunsArg1 = ApplyRunsArg1.T
-  object ApplyRunsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def notFound(id: com.histmersion.util.jobs.JobControlService.NotFoundId) = Api.Error(s"No job '$id'", Some(Write.CodeNotFound))
-  private def conflict(why: com.histmersion.util.jobs.JobControlService.ConflictWhy) = Api.Error(why, Some(com.histmersion.api.jobs.JobActions.CodeConflict))
+  private def notFound(id: com.histmersion.util.jobs.Job.Id) = Api.Error(s"No job '$id'", Some(Write.CodeNotFound))
+  private def conflict(why: com.histmersion.util.jobs.JobControlService.Problem) = Api.Error(why, Some(com.histmersion.api.jobs.JobActions.CodeConflict))
 
   /** Over the jobs table; `runs` is the agent runs' own pause, resume and cancel. */
-  def apply(ds: DataSource, stops: JobStops, runs: (com.histmersion.util.jobs.JobControlService.ApplyRunsArg1, JobAction) => Either[Api.Error, Unit]): JobControlService =
+  def apply(ds: DataSource, stops: JobStops, runs: (com.histmersion.util.jobs.Job.Id, JobAction) => Either[Api.Error, Unit]): JobControlService =
     Implementation(ds, stops, runs)
 
   final private class Implementation(
@@ -43,7 +37,7 @@ object JobControlService:
       runs: (Implementation.RunsArg1, JobAction) => Either[Api.Error, Unit]
   ) extends JobControlService:
 
-    def control(id: com.histmersion.util.jobs.JobControlService.Implementation.ControlId, action: JobAction): Either[Api.Error, JobInfo] =
+    def control(id: com.histmersion.util.jobs.Job.Id, action: JobAction): Either[Api.Error, JobInfo] =
       def current = Transactor(ds).read(JobRepo.get(id)).toRight(notFound(id))
       current.flatMap { job =>
         JobControlRules.decide(job, action, stops.canResume(id)).left.map(conflict).flatMap {
@@ -63,11 +57,9 @@ object JobControlService:
       }
 
   object Implementation:
-    type RunsArg1 = RunsArg1.T
-    object RunsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RunsArg1 = com.histmersion.util.jobs.Job.Id
+    val RunsArg1: _root_.com.histmersion.util.jobs.Job.Id.type = _root_.com.histmersion.util.jobs.Job.Id
 
-    type ControlId = ControlId.T
-    object ControlId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The same answers over jobs held in memory (tests). A running job's body is the test's: it asks
     * [[JobStops.requestedFor]] between its parts and reports how it stopped with [[stopped]].
@@ -81,10 +73,10 @@ object JobControlService:
     /** A job, as the store would hold it. */
     def put(job: JobInfo): Unit = jobs.updateAndGet(_ + (job.id -> job)): Unit
 
-    def get(id: com.histmersion.util.jobs.JobControlService.InMemory.GetId): Option[JobInfo] = jobs.get.get(id)
+    def get(id: com.histmersion.util.jobs.Job.Id): Option[JobInfo] = jobs.get.get(id)
 
     /** A running job's body stopped as asked, after `progress`: paused (resumed by `resume`) or cancelled. */
-    def stopped(id: com.histmersion.util.jobs.JobControlService.InMemory.StoppedId, progress: Option[com.histmersion.util.jobs.JobControlService.InMemory.StoppedProgress], resume: () => Either[com.histmersion.util.jobs.JobControlService.InMemory.StoppedResumeResultPart1, Unit]): Unit =
+    def stopped(id: com.histmersion.util.jobs.Job.Id, progress: Option[com.histmersion.util.jobs.JobRepo.ProgressText], resume: () => Either[com.histmersion.util.jobs.JobRepo.ResumeAt, Unit]): Unit =
       stops.requestedFor(id).foreach { stop =>
         stops.answered(id)
         val to = if stop == JobStop.Pause then JobState.Paused else JobState.Cancelled
@@ -92,7 +84,7 @@ object JobControlService:
         move(id, to, Some(JobControlRules.stoppedLine(stop, progress)))
       }
 
-    private def move(id: com.histmersion.util.jobs.JobControlService.InMemory.MoveId, to: JobState, progress: Option[com.histmersion.util.jobs.JobControlService.InMemory.MoveProgress]): Unit =
+    private def move(id: com.histmersion.util.jobs.Job.Id, to: JobState, progress: Option[com.histmersion.util.jobs.JobRepo.ProgressText]): Unit =
       jobs.updateAndGet(m =>
         m.get(id)
           .fold(m)(j =>
@@ -104,7 +96,7 @@ object JobControlService:
           )
       ): Unit
 
-    def control(id: com.histmersion.util.jobs.JobControlService.InMemory.ControlId, action: JobAction): Either[Api.Error, JobInfo] =
+    def control(id: com.histmersion.util.jobs.Job.Id, action: JobAction): Either[Api.Error, JobInfo] =
       def current = get(id).toRight(notFound(id))
       current.flatMap { job =>
         JobControlRules.decide(job, action, stops.canResume(id)).left.map(conflict).flatMap {
@@ -123,20 +115,6 @@ object JobControlService:
   object InMemory:
     type JobsKey = JobsKey.T
     object JobsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunsArg1 = RunsArg1.T
-    object RunsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RunsArg1 = com.histmersion.util.jobs.Job.Id
+    val RunsArg1: _root_.com.histmersion.util.jobs.Job.Id.type = _root_.com.histmersion.util.jobs.Job.Id
 
-    type GetId = GetId.T
-    object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StoppedId = StoppedId.T
-    object StoppedId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StoppedProgress = StoppedProgress.T
-    object StoppedProgress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StoppedResumeResultPart1 = StoppedResumeResultPart1.T
-    object StoppedResumeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MoveId = MoveId.T
-    object MoveId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MoveProgress = MoveProgress.T
-    object MoveProgress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ControlId = ControlId.T
-    object ControlId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

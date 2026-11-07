@@ -20,21 +20,21 @@ import com.histmersion.api.research.Article
   * is a person's decision, made with `histmersion article delete`.
   */
 object ArticleTools:
+  type CoverageMarkdown = CoverageMarkdown.T
+  object CoverageMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EditCheckMarkdown = EditCheckMarkdown.T
+  object EditCheckMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReviewMarkdown = ReviewMarkdown.T
+  object ReviewMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArticleCoverageDoc = ArticleCoverageDocValue
-  type ArticleCoverageDocValue = ArticleCoverageDocValue.T
-  object ArticleCoverageDocValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleCoverageMarkdownResult = ArticleCoverageMarkdownResult.T
-  object ArticleCoverageMarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCoverageDocValue = com.histmersion.domain.research.articles.ArticleTools.CoverageMarkdown
+  val ArticleCoverageDocValue: _root_.com.histmersion.domain.research.articles.ArticleTools.CoverageMarkdown.type = _root_.com.histmersion.domain.research.articles.ArticleTools.CoverageMarkdown
   type ArticleReviewDoc = ArticleReviewDocValue
-  type ArticleReviewDocValue = ArticleReviewDocValue.T
-  object ArticleReviewDocValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleReviewMarkdownResult = ArticleReviewMarkdownResult.T
-  object ArticleReviewMarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleReviewDocValue = com.histmersion.domain.research.articles.ArticleTools.ReviewMarkdown
+  val ArticleReviewDocValue: _root_.com.histmersion.domain.research.articles.ArticleTools.ReviewMarkdown.type = _root_.com.histmersion.domain.research.articles.ArticleTools.ReviewMarkdown
   type CheckEditsDoc = CheckEditsDocValue
-  type CheckEditsDocValue = CheckEditsDocValue.T
-  object CheckEditsDocValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckEditsResult = CheckEditsResult.T
-  object CheckEditsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckEditsDocValue = com.histmersion.domain.research.articles.ArticleTools.EditCheckMarkdown
+  val CheckEditsDocValue: _root_.com.histmersion.domain.research.articles.ArticleTools.EditCheckMarkdown.type = _root_.com.histmersion.domain.research.articles.ArticleTools.EditCheckMarkdown
 
   import com.histmersion.util.mcp.ToolInputs.given
 
@@ -241,18 +241,18 @@ object ArticleTools:
     def toQuery: Api.ArticleQuery =
       Api.ArticleQuery(Filter.of(tags = tag.toList, limit = limit, offset = offset, title = title), kind, query)
   object ListArticlesInput:
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = com.histmersion.domain.research.Article.Kind
+    val Kind: _root_.com.histmersion.domain.research.Article.Kind.type = _root_.com.histmersion.domain.research.Article.Kind
     type Query = Query.T
     object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Tag = Tag.T
     object Tag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Offset = Offset.T
-    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = com.histmersion.domain.Title
+    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
+    type Limit = com.histmersion.PageSize
+    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
+    type Offset = com.histmersion.Offset
+    val Offset: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
 
     given Schema[ListArticlesInput] = KindlingsSchema
       .derived[ListArticlesInput]
@@ -264,8 +264,8 @@ object ArticleTools:
 
   final case class GetArticleInput(slug: GetArticleInput.Slug, parts: Option[GetArticleInput.Parts] = None) derives KindlingsCodecAsObject
   object GetArticleInput:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.domain.research.Slug
+    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
     type Parts = Parts.T
     object Parts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -289,7 +289,7 @@ object ArticleTools:
       "that records no filter has none (set it with patch_article `filter`)."
 
   /** `article_coverage`: the one handler, rendered. */
-  def articleCoverageMarkdown(articles: ArticlesControllers, in: ArticleCoverageInput): com.histmersion.domain.research.articles.ArticleTools.ArticleCoverageMarkdownResult =
+  def articleCoverageMarkdown(articles: ArticlesControllers, in: ArticleCoverageInput): com.histmersion.domain.research.articles.ArticleTools.CoverageMarkdown =
     articles.coverage(in.slug).fold(McpOut.refusal, Article.Coverage.markdown)
 
   /** `article_review` as `/mcp` describes it. */
@@ -302,13 +302,13 @@ object ArticleTools:
       "won't fix, still open). CLI: histmersion article review."
 
   /** `article_review`: the one handler, rendered. */
-  def articleReviewMarkdown(articles: ArticlesControllers, in: ArticleReviewInput): com.histmersion.domain.research.articles.ArticleTools.ArticleReviewMarkdownResult =
+  def articleReviewMarkdown(articles: ArticlesControllers, in: ArticleReviewInput): com.histmersion.domain.research.articles.ArticleTools.ReviewMarkdown =
     articles.review(in.slug).fold(McpOut.refusal, Article.ReviewView.markdown)
 
   final case class ArticleReviewInput(slug: ArticleReviewInput.Slug) derives KindlingsCodecAsObject
   object ArticleReviewInput:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.domain.research.Slug
+    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
 
     given Schema[ArticleReviewInput] = KindlingsSchema
       .derived[ArticleReviewInput]
@@ -317,8 +317,8 @@ object ArticleTools:
 
   final case class ArticleCoverageInput(slug: ArticleCoverageInput.Slug) derives KindlingsCodecAsObject
   object ArticleCoverageInput:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.domain.research.Slug
+    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
 
     given Schema[ArticleCoverageInput] = KindlingsSchema
       .derived[ArticleCoverageInput]
@@ -336,7 +336,7 @@ object ArticleTools:
       "checks code runs on a review fixer's answer."
 
   /** `check_edits`: the one handler, rendered. */
-  def checkEdits(articles: ArticlesControllers, in: CheckEditsInput): com.histmersion.domain.research.articles.ArticleTools.CheckEditsResult =
+  def checkEdits(articles: ArticlesControllers, in: CheckEditsInput): com.histmersion.domain.research.articles.ArticleTools.EditCheckMarkdown =
     articles
       .check(in.slug, Article.Edits.ArticleCheckRequest(in.edits, in.body, in.kind))
       .fold(McpOut.refusal, Article.Edits.markdown)
@@ -348,12 +348,12 @@ object ArticleTools:
       kind: Option[CheckEditsInput.Kind] = None
   ) derives KindlingsCodecAsObject
   object CheckEditsInput:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Body = Body.T
-    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.domain.research.Slug
+    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    type Body = com.histmersion.domain.research.Article.Body
+    val Body: _root_.com.histmersion.domain.research.Article.Body.type = _root_.com.histmersion.domain.research.Article.Body
+    type Kind = com.histmersion.domain.research.Article.Kind
+    val Kind: _root_.com.histmersion.domain.research.Article.Kind.type = _root_.com.histmersion.domain.research.Article.Kind
 
     given Schema[CheckEditsInput] = KindlingsSchema
       .derived[CheckEditsInput]
@@ -369,10 +369,10 @@ object ArticleTools:
 
   final case class PutArticleInput(slug: PutArticleInput.Slug, article: Article.Put, strict: PutArticleInput.Strict = false)
   object PutArticleInput:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Strict = Strict.T
-    object Strict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.domain.research.Slug
+    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    type Strict = com.histmersion.domain.research.Article.StrictMode
+    val Strict: _root_.com.histmersion.domain.research.Article.StrictMode.type = _root_.com.histmersion.domain.research.Article.StrictMode
 
     given Schema[PutArticleInput] = KindlingsSchema
       .derived[PutArticleInput]
@@ -382,10 +382,10 @@ object ArticleTools:
 
   final case class PatchArticleInput(slug: PatchArticleInput.Slug, patch: Article.Patch, strict: PatchArticleInput.Strict = false)
   object PatchArticleInput:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Strict = Strict.T
-    object Strict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.domain.research.Slug
+    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    type Strict = com.histmersion.domain.research.Article.StrictMode
+    val Strict: _root_.com.histmersion.domain.research.Article.StrictMode.type = _root_.com.histmersion.domain.research.Article.StrictMode
 
     given Schema[PatchArticleInput] = KindlingsSchema
       .derived[PatchArticleInput]
@@ -397,14 +397,14 @@ object ArticleTools:
   final case class ExportArticleInput(slug: ExportArticleInput.Slug) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object ExportArticleInput:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.domain.research.Slug
+    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
 
 
   final case class ArticleVersionsInput(slug: ArticleVersionsInput.Slug) derives KindlingsCodecAsObject
   object ArticleVersionsInput:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.domain.research.Slug
+    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
 
     given Schema[ArticleVersionsInput] = KindlingsSchema
       .derived[ArticleVersionsInput]
@@ -413,8 +413,8 @@ object ArticleTools:
 
   final case class ArticleVersionInput(slug: ArticleVersionInput.Slug, versionId: ArticleVersionInput.VersionId) derives KindlingsCodecAsObject
   object ArticleVersionInput:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.domain.research.Slug
+    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
     type VersionId = VersionId.T
     object VersionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -22,6 +22,44 @@ import com.histmersion.api.library.Label
   * (Protomaps). Pure.
   */
 object BasemapLabels:
+  type Area = Area.T
+  object Area extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Buffer = Buffer.T
+  object Buffer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FeatureClass = FeatureClass.T
+  object FeatureClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileName = FileName.T
+  object FileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelCount = LabelCount.T
+  object LabelCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Language = Language.T
+  object Language extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Margin = Margin.T
+  object Margin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NumericProp = NumericProp.T
+  object NumericProp extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointCount = PointCount.T
+  object PointCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PropKey = PropKey.T
+  object PropKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileBytes = TileBytes.T
+  object TileBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileKey = TileKey.T
+  object TileKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileX = TileX.T
+  object TileX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileY = TileY.T
+  object TileY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Tolerance = Tolerance.T
+  object Tolerance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Zoom = Zoom.T
+  object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One name to place: a point (`line` empty) or a river's line (`line` its parts, lon/lat), shown from map zoom
     * `minZoom` (to `maxZoom`), with its names by language (`name`, `name:en`, …).
@@ -38,40 +76,12 @@ object BasemapLabels:
   object ClipTouchesBPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClipTouchesBPart2 = ClipTouchesBPart2.T
   object ClipTouchesBPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesSlotZ = TilesSlotZ.T
-  object TilesSlotZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesSlotX = TilesSlotX.T
-  object TilesSlotX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesSlotY = TilesSlotY.T
-  object TilesSlotY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type TilesResultPart2 = TilesResultPart2.T
-  object TilesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type KindOfResult = KindOfResult.T
-  object KindOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindOfFeatureClass = KindOfFeatureClass.T
-  object KindOfFeatureClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LangKeyResult = LangKeyResult.T
-  object LangKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LangKeyCode = LangKeyCode.T
-  object LangKeyCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PropK = PropK.T
-  object PropK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextResult = TextResult.T
-  object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextK = _root_.com.histmersion.util.basemap.BasemapLabels.PropK
-  val TextK: _root_.com.histmersion.util.basemap.BasemapLabels.PropK.type = _root_.com.histmersion.util.basemap.BasemapLabels.PropK
-  type NumberResult = NumberResult.T
-  object NumberResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumberK = _root_.com.histmersion.util.basemap.BasemapLabels.PropK
-  val NumberK: _root_.com.histmersion.util.basemap.BasemapLabels.PropK.type = _root_.com.histmersion.util.basemap.BasemapLabels.PropK
-  type NamesResultPart1 = NamesResultPart1.T
-  object NamesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NamesResultPart2 = NamesResultPart2.T
-  object NamesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MinZoomOfResult = MinZoomOfResult.T
-  object MinZoomOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextK = _root_.com.histmersion.util.basemap.BasemapLabels.PropKey
+  val TextK: _root_.com.histmersion.util.basemap.BasemapLabels.PropKey.type = _root_.com.histmersion.util.basemap.BasemapLabels.PropKey
+  type NumberK = _root_.com.histmersion.util.basemap.BasemapLabels.PropKey
+  val NumberK: _root_.com.histmersion.util.basemap.BasemapLabels.PropKey.type = _root_.com.histmersion.util.basemap.BasemapLabels.PropKey
   type CoordsResultPart1 = CoordsResultPart1.T
   object CoordsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CoordsResultPart2 = CoordsResultPart2.T
@@ -80,14 +90,10 @@ object BasemapLabels:
   object RingResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RingResultPart2 = RingResultPart2.T
   object RingResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AreaResult = AreaResult.T
-  object AreaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AreaRPart1 = AreaRPart1.T
   object AreaRPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AreaRPart2 = AreaRPart2.T
   object AreaRPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InsideResult = InsideResult.T
-  object InsideResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InsideRPart1 = InsideRPart1.T
   object InsideRPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InsideRPart2 = InsideRPart2.T
@@ -104,14 +110,6 @@ object BasemapLabels:
   object LabelPointPolygonsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LabelPointPolygonsPart2 = LabelPointPolygonsPart2.T
   object LabelPointPolygonsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseFile = ParseFile.T
-  object ParseFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithinResult = WithinResult.T
-  object WithinResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithinMargin = WithinMargin.T
-  object WithinMargin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WorldResultPart1 = WorldResultPart1.T
   object WorldResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WorldResultPart2 = WorldResultPart2.T
@@ -120,8 +118,6 @@ object BasemapLabels:
   object WorldLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WorldLat = WorldLat.T
   object WorldLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WorldZ = WorldZ.T
-  object WorldZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SimplifyResultPart1 = SimplifyResultPart1.T
   object SimplifyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SimplifyResultPart2 = SimplifyResultPart2.T
@@ -130,52 +126,22 @@ object BasemapLabels:
   object SimplifyLPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SimplifyLPart2 = SimplifyLPart2.T
   object SimplifyLPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SimplifyTolerance = SimplifyTolerance.T
-  object SimplifyTolerance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClipResultPart1 = ClipResultPart1.T
-  object ClipResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClipResultPart2 = ClipResultPart2.T
-  object ClipResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClipLPart1 = ClipLPart1.T
   object ClipLPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClipLPart2 = ClipLPart2.T
   object ClipLPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClipX = _root_.com.histmersion.util.basemap.BasemapLabels.RelX
-  val ClipX: _root_.com.histmersion.util.basemap.BasemapLabels.RelX.type = _root_.com.histmersion.util.basemap.BasemapLabels.RelX
-  type ClipY = _root_.com.histmersion.util.basemap.BasemapLabels.RelY
-  val ClipY: _root_.com.histmersion.util.basemap.BasemapLabels.RelY.type = _root_.com.histmersion.util.basemap.BasemapLabels.RelY
-  type ClipBuffer = ClipBuffer.T
-  object ClipBuffer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RelResultPart1 = RelResultPart1.T
-  object RelResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RelResultPart2 = RelResultPart2.T
-  object RelResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClipX = _root_.com.histmersion.util.basemap.BasemapLabels.TileX
+  val ClipX: _root_.com.histmersion.util.basemap.BasemapLabels.TileX.type = _root_.com.histmersion.util.basemap.BasemapLabels.TileX
+  type ClipY = _root_.com.histmersion.util.basemap.BasemapLabels.TileY
+  val ClipY: _root_.com.histmersion.util.basemap.BasemapLabels.TileY.type = _root_.com.histmersion.util.basemap.BasemapLabels.TileY
   type RelRPart1 = RelRPart1.T
   object RelRPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RelRPart2 = RelRPart2.T
   object RelRPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RelX = RelX.T
-  object RelX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RelY = RelY.T
-  object RelY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InTileResult = InTileResult.T
-  object InTileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InTileZ = InTileZ.T
-  object InTileZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InTileMaxZoom = InTileMaxZoom.T
-  object InTileMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PropsResultPart1 = PropsResultPart1.T
-  object PropsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesResultPart1 = TilesResultPart1.T
-  object TilesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesMaxZoom = _root_.com.histmersion.util.basemap.BasemapLabels.InTileMaxZoom
-  val TilesMaxZoom: _root_.com.histmersion.util.basemap.BasemapLabels.InTileMaxZoom.type = _root_.com.histmersion.util.basemap.BasemapLabels.InTileMaxZoom
-  type WriteResultPart1 = WriteResultPart1.T
-  object WriteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteResultPart2 = WriteResultPart2.T
-  object WriteResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteMaxZoom = _root_.com.histmersion.util.basemap.PmTiles.Header.MaxZoom
-  val WriteMaxZoom: _root_.com.histmersion.util.basemap.PmTiles.Header.MaxZoom.type = _root_.com.histmersion.util.basemap.PmTiles.Header.MaxZoom
+  type TilesMaxZoom = _root_.com.histmersion.util.basemap.BasemapLabels.Label.MaxZoom
+  val TilesMaxZoom: _root_.com.histmersion.util.basemap.BasemapLabels.Label.MaxZoom.type = _root_.com.histmersion.util.basemap.BasemapLabels.Label.MaxZoom
+  type WriteMaxZoom = _root_.com.histmersion.util.basemap.PmTiles.Zoom
+  val WriteMaxZoom: _root_.com.histmersion.util.basemap.PmTiles.Zoom.type = _root_.com.histmersion.util.basemap.PmTiles.Zoom
 
   final case class Label(
       kind: Label.Kind,
@@ -191,10 +157,10 @@ object BasemapLabels:
   object Label:
     type Kind = Kind.T
     object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NamesPart1 = NamesPart1.T
-    object NamesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NamesPart2 = NamesPart2.T
-    object NamesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NamesPart1 = com.histmersion.util.basemap.BasemapLabels.Language
+    val NamesPart1: _root_.com.histmersion.util.basemap.BasemapLabels.Language.type = _root_.com.histmersion.util.basemap.BasemapLabels.Language
+    type NamesPart2 = com.histmersion.util.basemap.BasemapLabels.Name
+    val NamesPart2: _root_.com.histmersion.util.basemap.BasemapLabels.Name.type = _root_.com.histmersion.util.basemap.BasemapLabels.Name
     type Lon = Lon.T
     object Lon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Lat = Lat.T
@@ -211,7 +177,7 @@ object BasemapLabels:
     object Elevation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Natural Earth's feature classes, lower-cased → the `kind` a style selects; `None` = not kept. */
-  def kindOf(featureClass: com.histmersion.util.basemap.BasemapLabels.KindOfFeatureClass): Option[com.histmersion.util.basemap.BasemapLabels.KindOfResult] = featureClass.trim.toLowerCase(java.util.Locale.ROOT) match
+  def kindOf(featureClass: com.histmersion.util.basemap.BasemapLabels.FeatureClass): Option[com.histmersion.util.basemap.BasemapLabels.Label.Kind] = featureClass.trim.toLowerCase(java.util.Locale.ROOT) match
     case "range/mtn"                   => Some("range")
     case "foothills"                   => Some("foothills")
     case "desert"                      => Some("desert")
@@ -238,25 +204,25 @@ object BasemapLabels:
     case _                             => None // reservoirs, canals, lake centrelines, poles, …
 
   /** Natural Earth's `name_<code>` → our `name:<code>` (Protomaps' keys: Chinese as zh-Hans / zh-Hant). */
-  private def langKey(code: com.histmersion.util.basemap.BasemapLabels.LangKeyCode): com.histmersion.util.basemap.BasemapLabels.LangKeyResult = code match
+  private def langKey(code: com.histmersion.util.basemap.BasemapLabels.Language): com.histmersion.util.basemap.BasemapLabels.PropKey = code match
     case "zh"  => "zh-Hans"
     case "zht" => "zh-Hant"
     case c     => c
 
   /** A property by name, whatever its case (Natural Earth's polygon files use upper case). */
-  private def prop(p: io.circe.JsonObject, k: com.histmersion.util.basemap.BasemapLabels.PropK): Option[Json] =
+  private def prop(p: io.circe.JsonObject, k: com.histmersion.util.basemap.BasemapLabels.PropKey): Option[Json] =
     p(k).orElse(p(k.toUpperCase(java.util.Locale.ROOT))).filterNot(_.isNull)
 
-  private def text(p: io.circe.JsonObject, k: com.histmersion.util.basemap.BasemapLabels.TextK): Option[com.histmersion.util.basemap.BasemapLabels.TextResult] =
+  private def text(p: io.circe.JsonObject, k: com.histmersion.util.basemap.BasemapLabels.TextK): Option[com.histmersion.util.basemap.BasemapLabels.Text] =
     prop(p, k).flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).map(_.trim).filter(_.nonEmpty)
 
-  private def number(p: io.circe.JsonObject, k: com.histmersion.util.basemap.BasemapLabels.NumberK): Option[com.histmersion.util.basemap.BasemapLabels.NumberResult] =
+  private def number(p: io.circe.JsonObject, k: com.histmersion.util.basemap.BasemapLabels.NumberK): Option[com.histmersion.util.basemap.BasemapLabels.NumericProp] =
     prop(p, k).flatMap(j => j.asNumber.map(_.toDouble).orElse(j.asString.flatMap(_.trim.toDoubleOption)))
 
   /** The names a feature carries: `name` (Natural Earth's own, mostly English or local), `name:en`, and `name:<code>`
     * for each `name_<code>`.
     */
-  def names(p: io.circe.JsonObject): List[(com.histmersion.util.basemap.BasemapLabels.NamesResultPart1, com.histmersion.util.basemap.BasemapLabels.NamesResultPart2)] =
+  def names(p: io.circe.JsonObject): List[(com.histmersion.util.basemap.BasemapLabels.Language, com.histmersion.util.basemap.BasemapLabels.Name)] =
     val own = text(p, "name").toList.map("name" -> _)
     val langs = p.keys.toList
       .map(_.toLowerCase(java.util.Locale.ROOT))
@@ -271,7 +237,7 @@ object BasemapLabels:
   /** The map zoom a feature is labelled from: Natural Earth's `min_label`, else `min_zoom`, else its `scalerank`; a
     * fraction rounds to the nearer zoom. Pure.
     */
-  def minZoomOf(p: io.circe.JsonObject): com.histmersion.util.basemap.BasemapLabels.MinZoomOfResult =
+  def minZoomOf(p: io.circe.JsonObject): com.histmersion.util.basemap.BasemapLabels.Label.MinZoom =
     number(p, "min_label")
       .orElse(number(p, "min_zoom"))
       .orElse(number(p, "scalerank").map(_ + 1))
@@ -288,7 +254,7 @@ object BasemapLabels:
   private def ring(j: Json): Vector[(com.histmersion.util.basemap.BasemapLabels.RingResultPart1, com.histmersion.util.basemap.BasemapLabels.RingResultPart2)] = j.asArray.map(_.flatMap(coords)).getOrElse(Vector.empty)
 
   /** The signed area of a ring (shoelace), in square degrees. Pure. */
-  def area(r: Vector[(com.histmersion.util.basemap.BasemapLabels.AreaRPart1, com.histmersion.util.basemap.BasemapLabels.AreaRPart2)]): com.histmersion.util.basemap.BasemapLabels.AreaResult =
+  def area(r: Vector[(com.histmersion.util.basemap.BasemapLabels.AreaRPart1, com.histmersion.util.basemap.BasemapLabels.AreaRPart2)]): com.histmersion.util.basemap.BasemapLabels.Area =
     if r.size < 3 then 0.0
     else
       r.indices.map { i =>
@@ -296,7 +262,7 @@ object BasemapLabels:
       }.sum / 2
 
   /** Is `p` inside ring `r` (even-odd)? Pure. */
-  def inside(r: Vector[(com.histmersion.util.basemap.BasemapLabels.InsideRPart1, com.histmersion.util.basemap.BasemapLabels.InsideRPart2)], p: (com.histmersion.util.basemap.BasemapLabels.InsidePPart1, com.histmersion.util.basemap.BasemapLabels.InsidePPart2)): com.histmersion.util.basemap.BasemapLabels.InsideResult =
+  def inside(r: Vector[(com.histmersion.util.basemap.BasemapLabels.InsideRPart1, com.histmersion.util.basemap.BasemapLabels.InsideRPart2)], p: (com.histmersion.util.basemap.BasemapLabels.InsidePPart1, com.histmersion.util.basemap.BasemapLabels.InsidePPart2)): Boolean =
     val (px, py) = p
     r.indices.count { i =>
       val (x0, y0) = r(i); val (x1, y1) = r((i + 1) % r.size)
@@ -369,7 +335,7 @@ object BasemapLabels:
       )
 
   /** Every kept label of one GeoJSON FeatureCollection. */
-  def parse(file: com.histmersion.util.basemap.BasemapLabels.ParseFile, doc: Json): Either[com.histmersion.util.basemap.BasemapLabels.ParseResultPart1, List[Label]] =
+  def parse(file: com.histmersion.util.basemap.BasemapLabels.FileName, doc: Json): Either[com.histmersion.util.basemap.BasemapLabels.Problem, List[Label]] =
     doc.hcursor
       .downField("features")
       .focus
@@ -378,7 +344,7 @@ object BasemapLabels:
       .map(_.toList.flatMap(label))
 
   /** Does the label touch `b` (grown by `margin` degrees)? Pure. */
-  def within(l: Label, b: BBox, margin: com.histmersion.util.basemap.BasemapLabels.WithinMargin = 1.0): com.histmersion.util.basemap.BasemapLabels.WithinResult =
+  def within(l: Label, b: BBox, margin: com.histmersion.util.basemap.BasemapLabels.Margin = 1.0): Boolean =
     def in(lon: com.histmersion.util.basemap.BasemapLabels.WithinInLon, lat: com.histmersion.util.basemap.BasemapLabels.WithinInLat) =
       lon >= b.minLon - margin && lon <= b.maxLon + margin && lat >= b.minLat - margin && lat <= b.maxLat + margin
     if l.line.isEmpty then in(l.lon, l.lat) else l.line.exists(_.exists(in.tupled))
@@ -388,13 +354,13 @@ object BasemapLabels:
   private val Extent = 4096
 
   /** World position of lon/lat in units of 1/4096 of a zoom-`z` tile. Pure. */
-  def world(lon: com.histmersion.util.basemap.BasemapLabels.WorldLon, lat: com.histmersion.util.basemap.BasemapLabels.WorldLat, z: com.histmersion.util.basemap.BasemapLabels.WorldZ): (com.histmersion.util.basemap.BasemapLabels.WorldResultPart1, com.histmersion.util.basemap.BasemapLabels.WorldResultPart2) =
+  def world(lon: com.histmersion.util.basemap.BasemapLabels.WorldLon, lat: com.histmersion.util.basemap.BasemapLabels.WorldLat, z: com.histmersion.util.basemap.BasemapLabels.Zoom): (com.histmersion.util.basemap.BasemapLabels.WorldResultPart1, com.histmersion.util.basemap.BasemapLabels.WorldResultPart2) =
     val n = (1L << z).toDouble * Extent
     val r = math.toRadians(lat.max(-Basemap.MaxLat).min(Basemap.MaxLat))
     ((lon + 180.0) / 360.0 * n, (1.0 - math.log(math.tan(r) + 1.0 / math.cos(r)) / math.Pi) / 2.0 * n)
 
   /** Douglas–Peucker: the points of `l` that keep it within `tolerance` of the original. Pure. */
-  def simplify(l: Vector[(com.histmersion.util.basemap.BasemapLabels.SimplifyLPart1, com.histmersion.util.basemap.BasemapLabels.SimplifyLPart2)], tolerance: com.histmersion.util.basemap.BasemapLabels.SimplifyTolerance): Vector[(com.histmersion.util.basemap.BasemapLabels.SimplifyResultPart1, com.histmersion.util.basemap.BasemapLabels.SimplifyResultPart2)] =
+  def simplify(l: Vector[(com.histmersion.util.basemap.BasemapLabels.SimplifyLPart1, com.histmersion.util.basemap.BasemapLabels.SimplifyLPart2)], tolerance: com.histmersion.util.basemap.BasemapLabels.Tolerance): Vector[(com.histmersion.util.basemap.BasemapLabels.SimplifyResultPart1, com.histmersion.util.basemap.BasemapLabels.SimplifyResultPart2)] =
     if l.size <= 2 then l
     else
       val keep = Array.fill(l.size)(false)
@@ -422,7 +388,7 @@ object BasemapLabels:
   /** The runs of `l` (world units) whose segments touch tile `(x, y)` grown by `buffer`, relative to the tile's corner
     * and rounded. Pure.
     */
-  def clip(l: Vector[(com.histmersion.util.basemap.BasemapLabels.ClipLPart1, com.histmersion.util.basemap.BasemapLabels.ClipLPart2)], x: com.histmersion.util.basemap.BasemapLabels.ClipX, y: com.histmersion.util.basemap.BasemapLabels.ClipY, buffer: com.histmersion.util.basemap.BasemapLabels.ClipBuffer): Vector[Vector[(com.histmersion.util.basemap.BasemapLabels.ClipResultPart1, com.histmersion.util.basemap.BasemapLabels.ClipResultPart2)]] =
+  def clip(l: Vector[(com.histmersion.util.basemap.BasemapLabels.ClipLPart1, com.histmersion.util.basemap.BasemapLabels.ClipLPart2)], x: com.histmersion.util.basemap.BasemapLabels.ClipX, y: com.histmersion.util.basemap.BasemapLabels.ClipY, buffer: com.histmersion.util.basemap.BasemapLabels.Buffer): Vector[Vector[(com.histmersion.util.basemap.BasemapLabels.PointCount, com.histmersion.util.basemap.BasemapLabels.PointCount)]] =
     val x0 = x * Extent - buffer; val y0 = y * Extent - buffer
     val x1 = (x + 1) * Extent + buffer; val y1 = (y + 1) * Extent + buffer
     def touches(a: (com.histmersion.util.basemap.BasemapLabels.ClipTouchesAPart1, com.histmersion.util.basemap.BasemapLabels.ClipTouchesAPart2), b: (com.histmersion.util.basemap.BasemapLabels.ClipTouchesBPart1, com.histmersion.util.basemap.BasemapLabels.ClipTouchesBPart2)) =
@@ -442,27 +408,27 @@ object BasemapLabels:
     if open then runs += rel(run.result(), x, y)
     runs.result().filter(_.size >= 2)
 
-  private def rel(r: Vector[(com.histmersion.util.basemap.BasemapLabels.RelRPart1, com.histmersion.util.basemap.BasemapLabels.RelRPart2)], x: com.histmersion.util.basemap.BasemapLabels.RelX, y: com.histmersion.util.basemap.BasemapLabels.RelY): Vector[(com.histmersion.util.basemap.BasemapLabels.RelResultPart1, com.histmersion.util.basemap.BasemapLabels.RelResultPart2)] =
+  private def rel(r: Vector[(com.histmersion.util.basemap.BasemapLabels.RelRPart1, com.histmersion.util.basemap.BasemapLabels.RelRPart2)], x: com.histmersion.util.basemap.BasemapLabels.TileX, y: com.histmersion.util.basemap.BasemapLabels.TileY): Vector[(com.histmersion.util.basemap.BasemapLabels.PointCount, com.histmersion.util.basemap.BasemapLabels.PointCount)] =
     r.map((wx, wy) => (math.round(wx - x * Extent).toInt, math.round(wy - y * Extent).toInt))
       .foldLeft(Vector.empty[(Int, Int)])((acc, p) => if acc.lastOption.contains(p) then acc else acc :+ p)
 
   /** Is the label drawn by the page from data tile `z` (which serves map zoom z + 1; the deepest, every zoom past it)?
     * Its own `min_zoom` filters it further in the page. Pure.
     */
-  def inTile(l: Label, z: com.histmersion.util.basemap.BasemapLabels.InTileZ, maxZoom: com.histmersion.util.basemap.BasemapLabels.InTileMaxZoom): com.histmersion.util.basemap.BasemapLabels.InTileResult =
+  def inTile(l: Label, z: com.histmersion.util.basemap.BasemapLabels.Zoom, maxZoom: com.histmersion.util.basemap.BasemapLabels.Label.MaxZoom): Boolean =
     (z == maxZoom || l.minZoom <= z + 1) && l.maxZoom.forall(_ >= z + 1)
 
-  private def props(l: Label): List[(com.histmersion.util.basemap.BasemapLabels.PropsResultPart1, String | Long)] =
+  private def props(l: Label): List[(com.histmersion.util.basemap.BasemapLabels.PropKey, String | Long)] =
     ("kind" -> l.kind) :: ("min_zoom" -> l.minZoom.toLong) :: l.names ++ l.elevation.map("elevation" -> _).toList
 
   /** The archive's tiles, by tile id: points in the tile they fall in, rivers clipped to each tile they cross
     * (simplified to about a pixel of the zoom), zooms 0…`maxZoom`, gzip-compressed MVT. Pure.
     */
-  def tiles(labels: List[Label], maxZoom: com.histmersion.util.basemap.BasemapLabels.TilesMaxZoom): Vector[(com.histmersion.util.basemap.BasemapLabels.TilesResultPart1, com.histmersion.util.basemap.BasemapLabels.TilesResultPart2)] =
+  def tiles(labels: List[Label], maxZoom: com.histmersion.util.basemap.BasemapLabels.TilesMaxZoom): Vector[(com.histmersion.util.basemap.BasemapLabels.TileKey, com.histmersion.util.basemap.BasemapLabels.TileBytes)] =
     type Features = mutable.ListBuffer[(Int, Vector[Int], List[(String, String | Long)])]
     // per tile id, its points and its lines, filled zoom by zoom
     val out = mutable.TreeMap.empty[Long, (Features, Features)]
-    def slot(z: com.histmersion.util.basemap.BasemapLabels.TilesSlotZ, x: com.histmersion.util.basemap.BasemapLabels.TilesSlotX, y: com.histmersion.util.basemap.BasemapLabels.TilesSlotY) =
+    def slot(z: com.histmersion.util.basemap.BasemapLabels.Zoom, x: com.histmersion.util.basemap.BasemapLabels.TileX, y: com.histmersion.util.basemap.BasemapLabels.TileY) =
       out.getOrElseUpdate(PmTiles.tileId(z, x, y), (mutable.ListBuffer.empty, mutable.ListBuffer.empty))
     for z <- 0 to maxZoom do
       val n = 1L << z
@@ -501,7 +467,7 @@ object BasemapLabels:
     }
 
   /** Write `labels` as the archive `key` of `store` (zooms 0…`maxZoom`, bounds `b`); answers its tiles and bytes. */
-  def write(store: Store, key: Store.Key, labels: List[Label], b: BBox, maxZoom: com.histmersion.util.basemap.BasemapLabels.WriteMaxZoom, metadata: Json): (com.histmersion.util.basemap.BasemapLabels.WriteResultPart1, com.histmersion.util.basemap.BasemapLabels.WriteResultPart2) =
+  def write(store: Store, key: Store.Key, labels: List[Label], b: BBox, maxZoom: com.histmersion.util.basemap.BasemapLabels.WriteMaxZoom, metadata: Json): (com.histmersion.util.basemap.BasemapLabels.LabelCount, com.histmersion.ByteCount) =
     val ts = tiles(labels, maxZoom)
     val w = PmTilesWriter(store, key)
     val header = PmTiles.Header(

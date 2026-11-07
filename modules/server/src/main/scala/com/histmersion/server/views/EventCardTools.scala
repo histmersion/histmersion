@@ -38,24 +38,24 @@ object EventCardTools:
   object EventsInput:
     type Query = Query.T
     object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = com.histmersion.domain.catalogue.Event.Id
+    val Id: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
     type Kind = Kind.T
     object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Historicity = Historicity.T
-    object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PlaceId = PlaceId.T
-    object PlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Historicity = com.histmersion.domain.catalogue.Historicity.Wire
+    val Historicity: _root_.com.histmersion.domain.catalogue.Historicity.Wire.type = _root_.com.histmersion.domain.catalogue.Historicity.Wire
+    type PlaceId = com.histmersion.domain.catalogue.Place.Id
+    val PlaceId: _root_.com.histmersion.domain.catalogue.Place.Id.type = _root_.com.histmersion.domain.catalogue.Place.Id
     type From = From.T
     object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type To = To.T
     object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Offset = Offset.T
-    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = com.histmersion.domain.Title
+    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
+    type Limit = com.histmersion.PageSize
+    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
+    type Offset = com.histmersion.Offset
+    val Offset: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
 
     given Schema[EventsInput] = KindlingsSchema
       .derived[EventsInput]
@@ -89,32 +89,32 @@ object EventCardTools:
       wikidata: Option[PatchEventInput.Wikidata] = None
   )
   object PatchEventInput:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = com.histmersion.domain.catalogue.Event.Id
+    val Id: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
     type Label = Label.T
     object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Kind = Kind.T
     object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Historicity = Historicity.T
-    object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Historicity = com.histmersion.domain.catalogue.Historicity.Wire
+    val Historicity: _root_.com.histmersion.domain.catalogue.Historicity.Wire.type = _root_.com.histmersion.domain.catalogue.Historicity.Wire
     type Scale = Scale.T
     object Scale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PlaceId = PlaceId.T
-    object PlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlaceId = com.histmersion.domain.catalogue.Place.Id
+    val PlaceId: _root_.com.histmersion.domain.catalogue.Place.Id.type = _root_.com.histmersion.domain.catalogue.Place.Id
     type Geometry = Geometry.T
     object Geometry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Lat = Lat.T
     object Lat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Lon = Lon.T
     object Lon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParentId = ParentId.T
-    object ParentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParentId = com.histmersion.domain.catalogue.Event.Id
+    val ParentId: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
     type Description = Description.T
     object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Citekey = Citekey.T
-    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Wikidata = Wikidata.T
-    object Wikidata extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Citekey = com.histmersion.domain.library.Citekey
+    val Citekey: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
+    type Wikidata = com.histmersion.domain.catalogue.places.Wikidata.Id
+    val Wikidata: _root_.com.histmersion.domain.catalogue.places.Wikidata.Id.type = _root_.com.histmersion.domain.catalogue.places.Wikidata.Id
 
     given Schema[PatchEventInput] = KindlingsSchema
       .derived[PatchEventInput]

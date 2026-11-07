@@ -12,25 +12,31 @@ final case class GebcoPlan(
     tiles: Vector[(GebcoPlan.TilesPart1, (GebcoPlan.TilesPart2Part1, GebcoPlan.TilesPart2Part2, GebcoPlan.TilesPart2Part3))],
     edge: Set[(GebcoPlan.EdgePart1, GebcoPlan.EdgePart2, GebcoPlan.EdgePart3)]
 ):
-  def readBytes: com.histmersion.util.basemap.GebcoPlan.ReadBytesResult = parts.map(_.bytes).sum
+  def readBytes: com.histmersion.ByteCount = parts.map(_.bytes).sum
 
 object GebcoPlan:
-  type ReadBytesResult = ReadBytesResult.T
-  object ReadBytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileKey = TileKey.T
+  object TileKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileX = TileX.T
+  object TileX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileY = TileY.T
+  object TileY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Zoom = Zoom.T
+  object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type MaxZoom = MaxZoom.T
   object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesPart1 = TilesPart1.T
-  object TilesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesPart2Part1 = TilesPart2Part1.T
-  object TilesPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesPart2Part2 = TilesPart2Part2.T
-  object TilesPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesPart2Part3 = TilesPart2Part3.T
-  object TilesPart2Part3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EdgePart1 = EdgePart1.T
-  object EdgePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EdgePart2 = EdgePart2.T
-  object EdgePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EdgePart3 = EdgePart3.T
-  object EdgePart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilesPart1 = com.histmersion.util.basemap.GebcoPlan.TileKey
+  val TilesPart1: _root_.com.histmersion.util.basemap.GebcoPlan.TileKey.type = _root_.com.histmersion.util.basemap.GebcoPlan.TileKey
+  type TilesPart2Part1 = com.histmersion.util.basemap.GebcoPlan.Zoom
+  val TilesPart2Part1: _root_.com.histmersion.util.basemap.GebcoPlan.Zoom.type = _root_.com.histmersion.util.basemap.GebcoPlan.Zoom
+  type TilesPart2Part2 = com.histmersion.util.basemap.GebcoPlan.TileX
+  val TilesPart2Part2: _root_.com.histmersion.util.basemap.GebcoPlan.TileX.type = _root_.com.histmersion.util.basemap.GebcoPlan.TileX
+  type TilesPart2Part3 = com.histmersion.util.basemap.GebcoPlan.TileY
+  val TilesPart2Part3: _root_.com.histmersion.util.basemap.GebcoPlan.TileY.type = _root_.com.histmersion.util.basemap.GebcoPlan.TileY
+  type EdgePart1 = com.histmersion.util.basemap.GebcoPlan.Zoom
+  val EdgePart1: _root_.com.histmersion.util.basemap.GebcoPlan.Zoom.type = _root_.com.histmersion.util.basemap.GebcoPlan.Zoom
+  type EdgePart2 = com.histmersion.util.basemap.GebcoPlan.TileX
+  val EdgePart2: _root_.com.histmersion.util.basemap.GebcoPlan.TileX.type = _root_.com.histmersion.util.basemap.GebcoPlan.TileX
+  type EdgePart3 = com.histmersion.util.basemap.GebcoPlan.TileY
+  val EdgePart3: _root_.com.histmersion.util.basemap.GebcoPlan.TileY.type = _root_.com.histmersion.util.basemap.GebcoPlan.TileY

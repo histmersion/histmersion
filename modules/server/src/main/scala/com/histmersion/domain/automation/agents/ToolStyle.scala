@@ -13,13 +13,9 @@ import scala.jdk.CollectionConverters.*
 enum ToolStyle:
   case Claude, Opencode, Bare
 
-  def tool(name: com.histmersion.domain.automation.agents.ToolStyle.ToolName): com.histmersion.domain.automation.agents.ToolStyle.ToolResult = this match
+  def tool(name: com.histmersion.domain.automation.agents.ToolUse.Tool): String = this match
     case Claude   => s"mcp__${AgentDefinitions.McpServer}__$name"
     case Opencode => s"${AgentDefinitions.McpServer}_$name"
     case Bare     => name
 
 object ToolStyle:
-  type ToolResult = ToolResult.T
-  object ToolResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToolName = ToolName.T
-  object ToolName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
