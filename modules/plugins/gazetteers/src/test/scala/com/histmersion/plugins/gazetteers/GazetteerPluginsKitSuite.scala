@@ -31,7 +31,7 @@ class GazetteerPluginsKitSuite extends munit.FunSuite:
 
   test("a gazetteer plugin has no setting of its own: anything in its block is refused"):
     val refused = PluginHarness.load(
-      "gazetteer-awmc",
+      com.histmersion.plugin.Plugin.Info.Id("gazetteer-awmc"),
       "url = \"https://elsewhere.example\"",
       http = HttpMode.Offline,
       env = Map.empty
@@ -68,7 +68,7 @@ class GazetteerPluginsKitSuite extends munit.FunSuite:
     assertEquals(r.accepted.size, 6)
     assertEquals(r.accepted.take(3).forall(_.place.geometry.isEmpty), true)
     assertEquals(r.accepted.map(_.source).distinct, List(Some("Cliopatria (Seshat Databank), CC BY 4.0")))
-    val missing = load("gazetteer-cliopatria", Map(Cliopatria.url -> StubAnswer(404, Array.emptyByteArray)))
+    val missing = load("gazetteer-cliopatria", Map(Cliopatria.url -> StubAnswer(com.histmersion.pluginhost.HttpAnswer.Code(404), Array.emptyByteArray)))
     assertEquals(missing.readGazetteer("cliopatria").failure, Some(s"HTTP 404 from ${Cliopatria.url}"))
     assertEquals(
       missing.readGazetteer("nowhere").failure,

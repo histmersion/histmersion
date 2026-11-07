@@ -1,5 +1,7 @@
 package com.histmersion.plugins.gazetteers
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.plugin.*
 
 class ChronOntologySuite extends munit.FunSuite:
@@ -89,7 +91,7 @@ class ChronOntologySuite extends munit.FunSuite:
     assertEquals(r1, r2)
 
   test("transform returns Left for invalid JSON"):
-    val result = ChronOntology.read("not json")
+    val result = ChronOntology.read(com.histmersion.plugins.gazetteers.DownloadedGazetteer.Text("not json"))
     assert(result.isLeft)
 
   test("transform returns Left for missing results key"):
@@ -98,6 +100,6 @@ class ChronOntologySuite extends munit.FunSuite:
 
   test("the gazetteer-chronontology plugin registers the source chronontology"):
     val h = com.histmersion.plugin.testkit.PluginHarness
-      .load("gazetteer-chronontology", http = com.histmersion.plugin.testkit.HttpMode.Offline, env = Map.empty)
+      .load(com.histmersion.plugin.Plugin.Info.Id("gazetteer-chronontology"), http = com.histmersion.plugin.testkit.HttpMode.Offline, env = Map.empty)
       .fold(e => fail(e), identity)
     assertEquals(h.gazetteerSources, List("chronontology"))
