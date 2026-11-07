@@ -64,8 +64,8 @@ private[activity] object ActivityRepo:
 
   private def where(q: ActivityQuery): Sql =
     Sql.raw(Sql.Text(s" WHERE ${showSql(q.show)}")) ++
-      q.goal.fold(Sql.empty)(g => Sql.of(" AND goal = ?", Param.S(Param.S.V(g.value)))) ++
-      q.since.fold(Sql.empty)(s => Sql.of(" AND t >= ?::timestamptz", Param.S(Param.S.V(s.toString)))) ++
+      q.goal.fold(Sql.empty)(g => Sql.of(com.histmersion.util.database.Sql.Text(" AND goal = ?"), Param.S(Param.S.V(g.value)))) ++
+      q.since.fold(Sql.empty)(s => Sql.of(com.histmersion.util.database.Sql.Text(" AND t >= ?::timestamptz"), Param.S(Param.S.V(s.toString)))) ++
       q.before.fold(Sql.empty)(c =>
         Sql.of(
           """ AND (t < ?::timestamptz OR (t = ?::timestamptz AND (kind || ':' || rid) COLLATE "C" < ?))""",
