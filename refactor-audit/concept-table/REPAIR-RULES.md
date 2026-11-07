@@ -57,3 +57,7 @@ sbt 2 caches test results, even across `clean`: `test` may run a few suites or n
 Do not delete a type from a public signature and use `String`, `Int`, `Boolean` or `Array[Byte]` instead, even when that makes the error go away. If a name is positional, replace it with the real concept: name one, defining it on the owner if none exists. Plain types are fine only in private helpers and for predicate results. Do not change behaviour to suit a type: if a value the old code accepted no longer fits, report it.
 
 A test must not take over behaviour from the code under test. If a test expected the code to normalise, parse or check something and the code no longer does, that is a regression in src/main: report it, and do not normalise inside the test.
+
+## Repositories and SQL (db, plugin-host)
+
+SQL is a boundary: `Param.S(x.value)`, SQL fragments as plain String and row-to-type reads may use `.value` and raw constructors. A repository's public methods take and return concepts. Rows hold what the database holds, so reading a row must accept every value the old code accepted: a newtype with a constraint must not start rejecting stored data (read it the way the old code did and report the case). Use domain types (`com.histmersion.domain...`), never add a new reference to `com.histmersion.api...` in `db` or `plugin-host`. In a repository, a positional type such as `RecordAppliedPart1` means the real concept of that column: check the column in the SQL rather than trusting the parameter order. Multi-valued tables, `?` order and SQL text must stay byte-identical.
