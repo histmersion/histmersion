@@ -37,7 +37,7 @@ object KeePassXcSession:
   /** Pure: an argument for the interactive mode's own splitting, which reads a backslash as "the next character as it
     * is": every space, tab, quote and backslash is escaped.
     */
-  private def escape(s: String): String =
+  def escape(s: String): String =
     s.flatMap(c => if c == ' ' || c == '\t' || c == '"' || c == '\\' then s"\\$c" else c.toString)
 
   /** Pure: the line that asks for one attribute of one entry. */

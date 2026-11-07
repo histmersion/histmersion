@@ -53,7 +53,7 @@ class CalibreCollectionSuite extends munit.FunSuite:
     assertEquals(c.item(CollectionId("99")), Right(None))
     assertEquals(c.item(CollectionId("not-a-number")), Right(None))
     val file = c.file(one, Some(SourceCollection.FileFormat("epub"))).fold(e => fail(e.value), identity)
-    assert(file.name.endsWith("Book 5.epub"), file)
+    assert(file.name.value.endsWith("Book 5.epub"), file)
     assert(c.original(one, file).exists(f => f.extension.value == "epub" && f.bytes.value.nonEmpty))
     assert(c.cover(one).exists(_.exists(_.extension.value == "jpg")))
     val mobi = c.item(CollectionId("7")).toOption.flatten.getOrElse(fail("no book 7"))
