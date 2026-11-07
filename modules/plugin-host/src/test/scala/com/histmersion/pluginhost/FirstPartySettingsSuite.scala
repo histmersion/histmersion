@@ -56,14 +56,14 @@ class FirstPartySettingsSuite extends munit.FunSuite:
   test("the host keys a generation is built from: the client's and every path the table names, no plugin block"):
     val keys = FirstPartySettings.hostKeys
     assert(keys.contains("histmersion.acquire") && keys.contains("histmersion.events.wikidata"), keys.toString)
-    assert(!keys.exists(_.startsWith(PluginHost.Root)), keys.toString)
+    assert(!keys.exists(_.value.startsWith(PluginHost.Root)), keys.toString)
 
   final private case class Contact(contactEmail: Option[String] = None) derives ConfigReader
 
   /** A first-party plugin whose defaults declare an environment override, as `oa-unpaywall`'s do. */
   final private class Unpaywall extends Plugin:
     type Config = Contact
-    val info = Plugin.Info(com.histmersion.plugin.Plugin.Info.Id("oa-unpaywall"), com.histmersion.plugin.Plugin.Info.Version("1.0.0"), Spi.Version)
+    val info = Plugin.Info(com.histmersion.plugin.Plugin.Info.Id("oa-unpaywall"), com.histmersion.plugin.Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
     override def defaultsResource = com.histmersion.plugin.Plugin.DefaultsResourceResult("zq-first-defaults.conf")
     def register(c: Contact, ctx: Plugin.Context) = Right(())
 

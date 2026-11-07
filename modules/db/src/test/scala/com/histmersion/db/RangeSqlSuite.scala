@@ -44,12 +44,12 @@ class RangeSqlSuite extends com.histmersion.db.DbSuite:
     assertEquals(RangeSql.cols("f.period"), "lower(f.period), upper(f.period) - 1")
     assertEquals(RangeSql.cols("f.period", "p0", "p1"), "lower(f.period) AS p0, upper(f.period) - 1 AS p1")
     assertEquals(RangeSql.range("d.lo", "d.hi"), "int8range(d.lo, d.hi + 1, '[)')")
-    val o = RangeSql.overlaps("s.period", Period(com.histmersion.api.catalogue.Year(-10), com.histmersion.util.database.Param.L.V(10)))
+    val o = RangeSql.overlaps("s.period", Period(com.histmersion.api.catalogue.Year(-10), com.histmersion.api.catalogue.Year(10)))
     assertEquals(o.text, "s.period && int8range(?::bigint, ?::bigint, '[]')")
     assertEquals(o.params, List(Param.L(com.histmersion.util.database.Param.L.V(-10)), Param.L(com.histmersion.util.database.Param.L.V(10))))
 
   test("merge: a bound given alone replaces that bound and keeps the other"):
-    val stored = (Some(-1200L), Some(-1000L))
+    val stored = (Some(com.histmersion.domain.DeepTime.SignedYear(-1200L)), Some(com.histmersion.domain.DeepTime.SignedYear(-1000L)))
     assertEquals(RangeSql.merge(stored, Some(com.histmersion.domain.DeepTime.SignedYear(-1300)), None, "x"), Some(Right((Some(-1300L), Some(-1000L)))))
     assertEquals(RangeSql.merge(stored, None, Some(com.histmersion.domain.DeepTime.SignedYear(-900)), "x"), Some(Right((Some(-1200L), Some(-900L)))))
     assertEquals(RangeSql.merge(stored, None, None, "x"), None, "nothing named, nothing to write")
@@ -58,7 +58,7 @@ class RangeSqlSuite extends com.histmersion.db.DbSuite:
   test("merge: a result that starts after it ends is refused, naming both years"):
     val r = RangeSql.merge((Some(com.histmersion.domain.DeepTime.SignedYear(-1200L)), Some(com.histmersion.domain.DeepTime.SignedYear(-1000L))), Some(com.histmersion.domain.DeepTime.SignedYear(-900)), None, "goal 'g'")
     assert(
-      r.exists(_.left.exists(e => e.message.contains("900 BCE") && e.code.contains(Write.CodeInvalid))),
+      r.exists(_.left.exists(e => e.message.value.contains("900 BCE") && e.code.contains(Write.CodeInvalid))),
       r.toString
     )
 
@@ -70,7 +70,7 @@ class RangeSqlSuite extends com.histmersion.db.DbSuite:
   private val testDb = TestDb.url
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private def dbTest(name: String)(body: => Unit): Unit =

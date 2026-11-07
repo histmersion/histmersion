@@ -7,12 +7,12 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.domain.library.sources.SourceCheckFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.domain.catalogue.places.{GeocodeSettings, PlaceFixtures}
+import com.histmersion.domain.catalogue.places.{FindingPlacement, GeocodeSettings, PlaceFixtures}
 
 import com.histmersion.api.{GeoPoint, LatinFold}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.catalogue.Geocode.{Approximation, KindHint}
+import com.histmersion.api.catalogue.Geocode.{Approximation, Attempt, KindHint}
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Confidence
@@ -33,13 +33,17 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
   private lazy val settings =
-    GeocodeSettings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
-  private def min = cfg.places.geocodePlaceholderMin
+    GeocodeSettings(
+      GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value),
+      GeocodeSettings.RepairKm(cfg.places.geocodeRepairKm.value),
+      GeocodeSettings.ToleranceKm(cfg.places.pointToleranceKm.value)
+    )
+  private def min = settings.placeholderMin
 
   private val Ck = "zzgeo_src"
 
@@ -103,10 +107,10 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
 
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
-  private def resolve(name: String, hint: KindHint = KindHint.Unknown, at: Option[Period] = None) =
+  private def resolve(name: Attempt.Name, hint: KindHint = KindHint.Unknown, at: Option[Period] = None) =
     connect(ds)(PlaceFixtures.resolve(name, hint, at, min))
 
-  private def chosen(name: String, hint: KindHint = KindHint.Unknown, at: Option[Period] = None) =
+  private def chosen(name: Attempt.Name, hint: KindHint = KindHint.Unknown, at: Option[Period] = None) =
     resolve(name, hint, at).map(_.placeId)
 
   // ── the key: SQL and Scala must agree ────────────────────────────────────────────────────────
@@ -142,79 +146,86 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
         .toList
     val diffs = samples
       .zip(got)
-      .filter((s, g) => Geocode.key(s) != g)
+      .filter((s, g) => Geocode.key(s).value != g)
       .map((s, g) => s"'$s': scala '${Geocode.key(s)}' sql '$g'")
     assertEquals(diffs, Nil)
 
   // ── the real failures ────────────────────────────────────────────────────────────────────────
 
   test("Albania: the country, not the site that has it as an alias; a covering snapshot when dated"):
-    assertEquals(chosen("Zzalbania"), Some("zzgeo_ne_alb"))
-    assertEquals(chosen("Zzalbania", at = Some(Period(com.histmersion.api.catalogue.Year(800), com.histmersion.api.catalogue.Year(900)))), Some("zzgeo_ne_alb"))
-    assertEquals(chosen("Zzalbania", at = Some(Period(com.histmersion.api.catalogue.Year(1925), com.histmersion.api.catalogue.Year(1925)))), Some("zzgeo_alb_1920"))
-    assertEquals(chosen("Zzhulwan"), Some("zzgeo_site_alb"), "the site still answers to its own names")
+    assertEquals(chosen(Attempt.Name("Zzalbania")), Some("zzgeo_ne_alb"))
+    assertEquals(chosen(Attempt.Name("Zzalbania"), at = Some(Period(com.histmersion.api.catalogue.Year(800), com.histmersion.api.catalogue.Year(900)))), Some("zzgeo_ne_alb"))
+    assertEquals(chosen(Attempt.Name("Zzalbania"), at = Some(Period(com.histmersion.api.catalogue.Year(1925), com.histmersion.api.catalogue.Year(1925)))), Some("zzgeo_alb_1920"))
+    assertEquals(chosen(Attempt.Name("Zzhulwan")), Some("zzgeo_site_alb"), "the site still answers to its own names")
 
   test("Mesopotamia: the curated region, not the placeholder point Pleiades shares with other provinces"):
-    val r = resolve("Zzmesopotamia").get
+    val r = resolve(Attempt.Name("Zzmesopotamia")).get
     assertEquals((r.placeId, r.isApproximate), ("zzgeo_mesopotamia", false))
     // alone on a placeholder, a name still resolves, and says it is rough
-    val o = resolve("Zzosroene").get
+    val o = resolve(Attempt.Name("Zzosroene")).get
     assertEquals(o.approximate, List(Approximation.Rough(com.histmersion.api.catalogue.Geocode.Approximation.Rough.Places(4))))
 
   test("Kievan Rus': the snapshot of the finding's own time"):
-    assertEquals(chosen("Zzkievan Rus'", at = Some(Period(com.histmersion.api.catalogue.Year(1000), com.histmersion.api.catalogue.Year(1000)))), Some("zzgeo_kr_990_1017"))
-    assertEquals(chosen("Zzkievan Rus", at = Some(Period(com.histmersion.api.catalogue.Year(1237), com.histmersion.api.catalogue.Year(1239)))), Some("zzgeo_kr_1236_1240"))
-    assertEquals(chosen("Zzkievan Rus’", at = Some(Period(com.histmersion.api.catalogue.Year(1100), com.histmersion.api.catalogue.Year(1100)))), Some("zzgeo_kr_990_1017"), "nearest in time")
+    assertEquals(chosen(Attempt.Name("Zzkievan Rus'"), at = Some(Period(com.histmersion.api.catalogue.Year(1000), com.histmersion.api.catalogue.Year(1000)))), Some("zzgeo_kr_990_1017"))
+    assertEquals(chosen(Attempt.Name("Zzkievan Rus"), at = Some(Period(com.histmersion.api.catalogue.Year(1237), com.histmersion.api.catalogue.Year(1239)))), Some("zzgeo_kr_1236_1240"))
+    assertEquals(chosen(Attempt.Name("Zzkievan Rus’"), at = Some(Period(com.histmersion.api.catalogue.Year(1100), com.histmersion.api.catalogue.Year(1100)))), Some("zzgeo_kr_990_1017"), "nearest in time")
 
   test("Ur: the Pleiades city under 'Ur(i)' when the model says site; the polity otherwise"):
-    assertEquals(chosen("Zzur", KindHint.Site), Some("zzgeo_ur_city"))
-    assertEquals(chosen("Zzur"), Some("zzgeo_ur_polity"))
-    assertEquals(chosen("Zzur (Tell el-Muqayyar)", KindHint.Site), Some("zzgeo_ur_city"))
+    assertEquals(chosen(Attempt.Name("Zzur"), KindHint.Site), Some("zzgeo_ur_city"))
+    assertEquals(chosen(Attempt.Name("Zzur")), Some("zzgeo_ur_polity"))
+    assertEquals(chosen(Attempt.Name("Zzur (Tell el-Muqayyar)"), KindHint.Site), Some("zzgeo_ur_city"))
 
   test("diacritics, case and 'the' are folded on both sides"):
-    assertEquals(chosen("Zzkrakow"), Some("zzgeo_krakow"))
-    assertEquals(chosen("ZZKRAKÓW"), Some("zzgeo_krakow"))
-    assertEquals(chosen("the Zzlevant"), Some("zzgeo_levant"))
-    assertEquals(chosen("Zzsyria Palestine"), Some("zzgeo_levant"), "an alias, hyphen or not")
+    assertEquals(chosen(Attempt.Name("Zzkrakow")), Some("zzgeo_krakow"))
+    assertEquals(chosen(Attempt.Name("ZZKRAKÓW")), Some("zzgeo_krakow"))
+    assertEquals(chosen(Attempt.Name("the Zzlevant")), Some("zzgeo_levant"))
+    assertEquals(chosen(Attempt.Name("Zzsyria Palestine")), Some("zzgeo_levant"), "an alias, hyphen or not")
 
   test("'X, Country': the X inside that country; an unknown X falls back to the country, approximately"):
-    val k = resolve("Zzkormadin, Zzserbia").get
+    val k = resolve(Attempt.Name("Zzkormadin, Zzserbia")).get
     assertEquals((k.placeId, k.isApproximate, k.lon, k.lat), ("zzgeo_kormadin", false, 20.2, 44.8))
-    val g = resolve("Zzgornij, Zzserbia").get
+    val g = resolve(Attempt.Name("Zzgornij, Zzserbia")).get
     assertEquals((g.placeId, g.approximate), ("zzgeo_serbia", List(Approximation.OnlyWithin(com.histmersion.api.catalogue.Geocode.Approximation.OnlyWithin.Missing("Zzgornij")))))
 
   test("a directional qualifier resolves to the base region, flagged approximate"):
-    val s = resolve("southern Zzlevant").get
+    val s = resolve(Attempt.Name("southern Zzlevant")).get
     assertEquals((s.placeId, s.approximate), ("zzgeo_levant", List(Approximation.Qualifier(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("southern")))))
-    assertEquals(resolve("Southern Zzlevant").map(_.placeId), Some("zzgeo_levant"))
-    val n = resolve("Northern Zzalbania").get
+    assertEquals(resolve(Attempt.Name("Southern Zzlevant")).map(_.placeId), Some("zzgeo_levant"))
+    val n = resolve(Attempt.Name("Northern Zzalbania")).get
     assertEquals((n.placeId, n.isApproximate), ("zzgeo_ne_alb", true))
-    assertEquals(resolve("Western and Central Zzalbania").map(_.placeId), Some("zzgeo_ne_alb"))
+    assertEquals(resolve(Attempt.Name("Western and Central Zzalbania")).map(_.placeId), Some("zzgeo_ne_alb"))
     // #987: the point moves into the part the qualifier names (Zzlevant spans 31–37 N, 34–37 E)
-    assert(s.lat < 34.0, s)
-    val whole = resolve("Zzlevant").get
-    assert(whole.lat > 33.0, whole)
-    val e = resolve("eastern Zzlevant").get
-    assert(e.lon > 35.5, e)
+    assert(s.lat.value < 34.0, s)
+    val whole = resolve(Attempt.Name("Zzlevant")).get
+    assert(whole.lat.value > 33.0, whole)
+    val e = resolve(Attempt.Name("eastern Zzlevant")).get
+    assert(e.lon.value > 35.5, e)
     assertEquals(
-      resolve("Western and Central Zzalbania").map(r => (r.lon, r.lat)),
-      resolve("Zzalbania").map(r => (r.lon, r.lat)),
+      resolve(Attempt.Name("Western and Central Zzalbania")).map(r => (r.lon, r.lat)),
+      resolve(Attempt.Name("Zzalbania")).map(r => (r.lon, r.lat)),
       "two directions keep the whole shape's point"
     )
 
   test("unknown stays unknown: nothing is guessed"):
-    assertEquals(resolve("Zzdead Sea"), None)
-    assertEquals(resolve("Zzsea of Zzgalilee"), None)
-    assertEquals(resolve("   "), None)
-    assertEquals(resolve("Western Zznowhere"), None)
+    assertEquals(resolve(Attempt.Name("Zzdead Sea")), None)
+    assertEquals(resolve(Attempt.Name("Zzsea of Zzgalilee")), None)
+    assertEquals(resolve(Attempt.Name("   ")), None)
+    assertEquals(resolve(Attempt.Name("Western Zznowhere")), None)
 
   // ── the repair ───────────────────────────────────────────────────────────────────────────────
 
-  private def finding(n: Int, region: String, lon: Double, lat: Double, claim: String, period: Option[Period] = None) =
-    Finding(s"$Ck#$n", com.histmersion.api.library.Citekey(Ck), claim, Some(region), Some(GeoPoint(lon, lat)), period, None, Nil, Some(Confidence.High))
+  private def finding(
+      n: Int,
+      region: Finding.Region,
+      lon: com.histmersion.api.catalogue.Longitude,
+      lat: com.histmersion.api.catalogue.Latitude,
+      claim: Finding.Claim,
+      period: Option[Period] = None
+  ) =
+    Finding(Finding.Id(s"$Ck#$n"), com.histmersion.api.library.Citekey(Ck), claim, Some(region), Some(GeoPoint(lon, lat)), period, None, Nil, Some(Confidence.High))
 
-  private def point(id: String): (Double, Double, Option[String]) = connect(ds):
-    sql"SELECT ST_X(geom), ST_Y(geom), region_name FROM findings WHERE id = $id"
+  private def point(id: Finding.Id): (Double, Double, Option[String]) = connect(ds):
+    sql"SELECT ST_X(geom), ST_Y(geom), region_name FROM findings WHERE id = ${id.value}"
       .query[(Double, Double, Option[String])]
       .run()
       .head
@@ -240,15 +251,15 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
       calibreId = None,
       findings = List(
         // what the OLD pipeline wrote: the alias site's point under ITS label, the asked name in the run
-        finding(0, siteLabel, 45.85589, 34.46511, "Albanians descend from early medieval Albania."),
+        finding(0, Finding.Region(siteLabel), com.histmersion.api.catalogue.Longitude(45.85589), com.histmersion.api.catalogue.Latitude(34.46511), Finding.Claim("Albanians descend from early medieval Albania.")),
         // a person placed this one by hand, in Albania: never touched
-        finding(1, "Zzalbania", 19.8, 41.3, "A hand-placed claim."),
+        finding(1, Finding.Region("Zzalbania"), com.histmersion.api.catalogue.Longitude(19.8), com.histmersion.api.catalogue.Latitude(41.3), Finding.Claim("A hand-placed claim.")),
         // the old pick by region_name (no run): the placeholder point
-        finding(2, "Zzmesopotamia", 37.5, 37.5, "Sumerian cities in Mesopotamia.", Some(Period(com.histmersion.api.catalogue.Year(-2500), com.histmersion.api.catalogue.Year(-2000)))),
+        finding(2, Finding.Region("Zzmesopotamia"), com.histmersion.api.catalogue.Longitude(37.5), com.histmersion.api.catalogue.Latitude(37.5), Finding.Claim("Sumerian cities in Mesopotamia."), Some(Period(com.histmersion.api.catalogue.Year(-2500), com.histmersion.api.catalogue.Year(-2000)))),
         // the old pick, dated 1000 CE: the snapshot with the smaller area, 1236-1240
-        finding(3, "Zzkievan Rus'", 0, 0, "Rus in 1000.", Some(Period(com.histmersion.api.catalogue.Year(1000), com.histmersion.api.catalogue.Year(1000)))),
+        finding(3, Finding.Region("Zzkievan Rus'"), com.histmersion.api.catalogue.Longitude(0), com.histmersion.api.catalogue.Latitude(0), Finding.Claim("Rus in 1000."), Some(Period(com.histmersion.api.catalogue.Year(1000), com.histmersion.api.catalogue.Year(1000)))),
         // the old pick and the new one are the same place: nothing to do
-        finding(4, "Zzlevant", 0, 0, "Levant claim.")
+        finding(4, Finding.Region("Zzlevant"), com.histmersion.api.catalogue.Longitude(0), com.histmersion.api.catalogue.Latitude(0), Finding.Claim("Levant claim."))
       )
     )
     SourceFixtures.upsert(ds, src, cfg.limits.chunkChars)
@@ -267,32 +278,33 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
       val _ = sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status, output)
                     VALUES ('zzgeo_job', 4, 1, 'findings-1', 'llm', 'done', $out::jsonb)""".update.run()
 
-    val moves = connect(ds)(PlaceFixtures.moves(settings)).filter(_.citekey == Ck)
+    val moves = connect(ds)(PlaceFixtures.moves(settings)).filter(_.citekey.value == Ck)
     assertEquals(
-      moves.map(m => (m.findingId, m.asked, m.to.placeId)).sortBy(_._1),
+      moves.map(m => (m.findingId, m.asked, m.to.placeId)).sortBy(_._1.value),
       List(
         (s"$Ck#0", "Zzalbania", "zzgeo_ne_alb"),
         (s"$Ck#2", "Zzmesopotamia", "zzgeo_mesopotamia"),
         (s"$Ck#3", "Zzkievan Rus'", "zzgeo_kr_990_1017")
       )
     )
-    assert(moves.forall(_.km > settings.repairKm), moves.map(_.km))
+    assert(moves.forall(_.km.value > settings.repairKm.value), moves.map(_.km))
 
     // the lint rule lists the same moves, under the source
-    val rep = SourceCheckFixtures.run(ds, List(Lint.rule(Lint.FindingGeocode).get), 500, 3, (_, _, _) => Nil, settings)
-    val items = rep.rules.head.items.filter(_.citekey == Ck)
+    val rep = SourceCheckFixtures.run(ds, List(Lint.rule(Lint.Rule.Name(Lint.FindingGeocode)).get), Lint.ItemLimit(500), Lint.ItemLimit(3), (_, _, _) => Nil, settings)
+    val items = rep.rules.head.items.filter(_.citekey.value == Ck)
     assertEquals(items.size, 3, items)
-    assert(items.exists(_.detail.contains(s"stored as '$siteLabel'")), items)
+    assert(items.exists(_.detail.value.contains(s"stored as '$siteLabel'")), items)
 
-    val before1 = point(s"$Ck#1")
-    assertEquals(transact(ds)(PlaceFixtures.applyMoves(moves, settings.toleranceKm)), 3)
-    val (lon0, lat0, region0) = point(s"$Ck#0")
+    val before1 = point(Finding.Id(s"$Ck#1"))
+    val tolerance = FindingPlacement.Implementation.ToleranceKm(settings.toleranceKm.value)
+    assertEquals(transact(ds)(PlaceFixtures.applyMoves(moves, tolerance)), 3)
+    val (lon0, lat0, region0) = point(Finding.Id(s"$Ck#0"))
     assert(lon0 > 19.3 && lon0 < 21.0 && lat0 > 39.7 && lat0 < 42.6, (lon0, lat0))
     assertEquals(region0, Some("Zzalbania"), "the asked name replaces the alias site's label")
-    assertEquals(point(s"$Ck#1"), before1, "a hand-placed point is never moved")
-    val (lon2, lat2, _) = point(s"$Ck#2")
+    assertEquals(point(Finding.Id(s"$Ck#1")), before1, "a hand-placed point is never moved")
+    val (lon2, lat2, _) = point(Finding.Id(s"$Ck#2"))
     assert(lon2 > 40.0 && lat2 < 37.0, (lon2, lat2))
-    val (lon3, lat3, _) = point(s"$Ck#3")
+    val (lon3, lat3, _) = point(Finding.Id(s"$Ck#3"))
     assert(lat3 > 50.0, (lon3, lat3))
     // finding_places follows the new points
     val inAlbania = connect(ds):
@@ -303,5 +315,5 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(inAlbania, 1L)
 
     // idempotent: nothing is left to move, and a stale move is not applied over a newer point
-    assertEquals(connect(ds)(PlaceFixtures.moves(settings)).filter(_.citekey == Ck), Nil)
-    assertEquals(transact(ds)(PlaceFixtures.applyMoves(moves, settings.toleranceKm)), 0)
+    assertEquals(connect(ds)(PlaceFixtures.moves(settings)).filter(_.citekey.value == Ck), Nil)
+    assertEquals(transact(ds)(PlaceFixtures.applyMoves(moves, tolerance)), 0)

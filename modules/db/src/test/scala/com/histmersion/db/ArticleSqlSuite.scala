@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.research.articles.ArticleFixtures
 
 import com.histmersion.domain.library.search.FilterSql
@@ -17,17 +19,17 @@ import com.histmersion.util.database.given
   */
 class ArticleSqlSuite extends munit.FunSuite:
 
-  private def where(kind: Option[String] = None, text: Option[String] = None, f: Filter = Filter()) =
+  private def where(kind: Option[com.histmersion.domain.research.Article.Kind] = None, text: Option[com.histmersion.domain.library.search.Search.Query] = None, f: Filter = Filter()) =
     ArticleFixtures.listWhere(f, PlaceScope.empty, kind, text)
 
   test("no parameters selects everything"):
     assertEquals(where().text, "TRUE")
-    assertEquals(where(Some("  "), Some("")).text, "TRUE")
+    assertEquals(where(Some(com.histmersion.domain.research.Article.Kind("  ")), Some(com.histmersion.domain.library.search.Search.Query(""))).text, "TRUE")
     // sort and paging are not criteria
     assertEquals(where(f = Filter(sort = Sort.Year, limit = com.histmersion.api.library.Filter.Limit(5), offset = com.histmersion.api.library.Filter.Offset(10))).text, "TRUE")
 
   test("kind is an exact, case-insensitive match on one bound parameter"):
-    val s = where(kind = Some("Concept"))
+    val s = where(kind = Some(com.histmersion.domain.research.Article.Kind("Concept")))
     assertEquals(s.text, "lower(a.kind) = ?")
     assertEquals(s.params, List(Param.S(com.histmersion.util.database.Param.S.V("concept"))))
 
@@ -47,15 +49,15 @@ class ArticleSqlSuite extends munit.FunSuite:
     assertEquals(s.params, List(Param.S(com.histmersion.util.database.Param.S.V("%50\\%\\_sea%"))))
 
   test("text is FTS over the article vector OR a title substring, with % escaped"):
-    val s = where(text = Some("100%_sea"))
-    assert(s.text.contains("a.tsv @@ websearch_to_tsquery('english', ?)"), s.text)
-    assert(s.text.contains("a.title ILIKE ?"), s.text)
+    val s = where(text = Some(com.histmersion.domain.library.search.Search.Query("100%_sea")))
+    assert(s.text.value.contains("a.tsv @@ websearch_to_tsquery('english', ?)"), s.text)
+    assert(s.text.value.contains("a.title ILIKE ?"), s.text)
     assertEquals(s.params, List(Param.S(com.histmersion.util.database.Param.S.V("100%_sea")), Param.S(com.histmersion.util.database.Param.S.V("%100\\%\\_sea%"))))
 
   test("parameters stay in textual order when the parts are combined"):
-    val s = where(Some("report"), Some("gods"), Filter(status = List(com.histmersion.api.library.Filter.Status("current")), title = Some(com.histmersion.api.library.Filter.Title("pie"))))
+    val s = where(Some(com.histmersion.domain.research.Article.Kind("report")), Some(com.histmersion.domain.library.search.Search.Query("gods")), Filter(status = List(com.histmersion.api.library.Filter.Status("current")), title = Some(com.histmersion.api.library.Filter.Title("pie"))))
     assertEquals(
       s.params,
       List(Param.S(com.histmersion.util.database.Param.S.V("current")), Param.S(com.histmersion.util.database.Param.S.V("%pie%")), Param.S(com.histmersion.util.database.Param.S.V("report")), Param.S(com.histmersion.util.database.Param.S.V("gods")), Param.S(com.histmersion.util.database.Param.S.V("%gods%")))
     )
-    assertEquals(s.text.count(_ == '?'), 5)
+    assertEquals(s.text.value.count(_ == '?'), 5)

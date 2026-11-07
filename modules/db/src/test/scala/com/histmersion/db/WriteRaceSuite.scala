@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.research.articles.ArticleFixtures
@@ -45,13 +47,13 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
       pool.shutdownNow()
       val _ = pool.awaitTermination(5, TimeUnit.SECONDS)
 
-  private val ck = "zzrace_src"
+  private val ck = com.histmersion.domain.library.Citekey("zzrace_src")
 
-  private def seedSource(): String =
+  private def seedSource(): Source.UpdatedAt =
     SourceFixtures.put(
       ds,
       Source(
-        citekey = com.histmersion.api.library.Citekey(ck),
+        citekey = com.histmersion.api.library.Citekey("zzrace_src"),
         title = com.histmersion.api.library.Title("Race"),
         authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
@@ -98,16 +100,16 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
       assertEquals(List(a, b).count(_.isRight), 1, s"round $round: a=$a b=$b — a lost update slipped through")
       assertEquals(List(a, b).collectFirst { case Left(e) => e }.get.code, Some(Write.CodePrecondition))
       // …and the stored row is whichever one won, never a mixture
-      assert(Set(Some("A"), Some("B")).contains(SourceFixtures.load(ds, ck).get.summary))
+      assert(Set(Some("A"), Some("B")).contains(SourceFixtures.load(ds, ck).get.summary.map(_.value)))
     }
 
-  private val slug = "zzrace_article"
+  private val slug = com.histmersion.domain.research.Slug("zzrace_article")
 
-  private def seedArticle(): String =
+  private def seedArticle(): Article.UpdatedAt =
     ArticleFixtures.put(
       ds,
       Article(
-        slug = slug,
+        slug = Article.Slug("zzrace_article"),
         title = com.histmersion.api.research.Article.Title("Race"),
         kind = com.histmersion.api.research.Article.KindValue("concept"),
         body = com.histmersion.api.research.Article.Body("before"),
@@ -127,5 +129,5 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
       )
       assertEquals(List(a, b).count(_.isRight), 1, s"round $round: a=$a b=$b — a lost update slipped through")
       assertEquals(List(a, b).collectFirst { case Left(e) => e }.get.code, Some(Write.CodePrecondition))
-      assert(Set("A", "B").contains(ArticleFixtures.load(ds, slug).get.body))
+      assert(Set("A", "B").contains(ArticleFixtures.load(ds, slug).get.body.value))
     }

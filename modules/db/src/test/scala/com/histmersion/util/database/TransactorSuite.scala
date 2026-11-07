@@ -1,13 +1,13 @@
 package com.histmersion.util.database
 
 import com.augustnagro.magnum.sql
-import com.histmersion.config.AppConfig
+import com.histmersion.config.{AppConfig, DbConfig}
 import com.histmersion.db.{DbSuite, TestDb}
 
 class TransactorSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
-  private lazy val db = Transactor(testPool(AppConfig.load().db.copy(url = testDb.get)))
+  private lazy val db = Transactor(testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get))))
 
   override def beforeAll(): Unit =
     if testDb.isDefined then

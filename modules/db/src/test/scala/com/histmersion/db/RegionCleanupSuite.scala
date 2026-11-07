@@ -37,7 +37,7 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
     )
     places.foreach { p =>
       val c = """\[([-0-9.]+),([-0-9.]+)\]""".r.findFirstMatchIn(p.geometry.get).get
-      val want = com.histmersion.api.catalogue.Place.Precision.of(p.id, c.group(1).toDouble, c.group(2).toDouble)
+      val want = com.histmersion.api.catalogue.Place.Precision.of(p.id, com.histmersion.api.catalogue.Longitude(c.group(1).toDouble), com.histmersion.api.catalogue.Latitude(c.group(2).toDouble))
       assertEquals(
         stored(p.id)
           .flatMap(com.histmersion.api.catalogue.Place.Precision.parse)
@@ -55,7 +55,7 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
     yield (x, y)
     pts.foreach { (x, y) =>
       val sqlSays = connect(ds)(sql"SELECT histmersion_grid_centre($x, $y)".query[Boolean].run().head)
-      assertEquals(sqlSays, com.histmersion.api.catalogue.Place.Precision.gridCentre(x, y), s"($x, $y)")
+      assertEquals(sqlSays, com.histmersion.api.catalogue.Place.Precision.gridCentre(com.histmersion.api.catalogue.Longitude(x), com.histmersion.api.catalogue.Latitude(y)), s"($x, $y)")
     }
 
   test("the geocoder ranks a grid square's centre below a precise point of the same name"):
@@ -64,19 +64,19 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
       Place(
         com.histmersion.api.catalogue.Place.Id("pleiades_999100010"),
         com.histmersion.api.catalogue.Place.Label("Zzrc Thessalia"),
-        com.histmersion.domain.catalogue.Place.Kind.Region,
+        Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
         pt(141.9, -47.1),
         properties = types("region")
       )
     val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(precise, List(Place.Name(precise.label)))))
     val r =
       connect(ds)(
-        PlaceFixtures.resolve(com.histmersion.api.catalogue.Geocode.Attempt.Name("Zzrc Thessalia"), Geocode.KindHint.Unknown, None, cfg.places.geocodePlaceholderMin)
+        PlaceFixtures.resolve(com.histmersion.api.catalogue.Geocode.Attempt.Name("Zzrc Thessalia"), Geocode.KindHint.Unknown, None, com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value))
       )
     assertEquals(r.map(_.placeId), Some("pleiades_999100010"))
     val alone =
       connect(ds)(
-        PlaceFixtures.resolve(com.histmersion.api.catalogue.Geocode.Attempt.Name("Zzrc Achaia"), Geocode.KindHint.Unknown, None, cfg.places.geocodePlaceholderMin)
+        PlaceFixtures.resolve(com.histmersion.api.catalogue.Geocode.Attempt.Name("Zzrc Achaia"), Geocode.KindHint.Unknown, None, com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value))
       )
     assertEquals(alone.map(r => (r.placeId, r.approximate)), Some((Achaia, List(Geocode.Approximation.GridSquare))))
     assertEquals(

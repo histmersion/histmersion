@@ -18,8 +18,8 @@ import com.histmersion.api.TimeSpan
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.Migrate
-import com.histmersion.api.catalogue.{EventPut, Period}
-import com.histmersion.api.library.{Filter, Source}
+import com.histmersion.api.catalogue.{EventPut, EventSummary, Period, Year}
+import com.histmersion.api.library.{Citekey, Filter, Source}
 import com.histmersion.api.research.Article
 import com.histmersion.util.database.given
 
@@ -40,7 +40,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
 
   private def source(
       ck: String,
-      tags: List[String],
+      tags: List[Source.Tags],
       status: com.histmersion.api.library.Source.Status,
       period: Period,
       author: String
@@ -68,7 +68,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
       4000
     )
 
-  private def article(slug: String, title: String, body: String) =
+  private def article(slug: Article.Slug, title: Article.Title, body: Article.Body) =
     ArticleFixtures.put(
       ds,
       Article(
@@ -83,7 +83,12 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
       )
     )
 
-  private def event(id: String, label: String, year: Long, citekey: Option[String]) =
+  private def event(
+      id: String,
+      label: com.histmersion.api.catalogue.EventSummary.Label,
+      year: com.histmersion.api.catalogue.Year,
+      citekey: Option[com.histmersion.api.library.Citekey]
+  ) =
     EventFixtures.put(
       ds,
       id,
@@ -94,7 +99,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
     if testDb.isDefined then
       val _ = source(
         "zz_rel_match",
-        List(Tag),
+        List(Source.Tags(Tag)),
         com.histmersion.api.library.Source.Status.Current,
         Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200)),
         "Zzrelauthor"
@@ -106,13 +111,13 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
         Period(com.histmersion.api.catalogue.Year(-600), com.histmersion.api.catalogue.Year(-500)),
         "Someone"
       )
-      val _ = article("zz_rel_cites_match", "Zz Rel Kadesh article", "# K\n\nSee [[zz_rel_match]].")
-      val _ = article("zz_rel_cites_other", "Zz Rel other article", "# O\n\nSee [[zz_rel_other]].")
-      val _ = article("zz_rel_cites_none", "Zz Rel lonely article", "# L\n\nNo citation at all.")
-      event("zz_rel_ev_match", "Zz Rel battle of Kadesh", -1274, Some("zz_rel_match"))
-      event("zz_rel_ev_late", "Zz Rel late raid", -800, Some("zz_rel_match"))
-      event("zz_rel_ev_other", "Zz Rel other battle", -1274, Some("zz_rel_other"))
-      event("zz_rel_ev_nosrc", "Zz Rel unsourced flood", -1250, None)
+      val _ = article(Article.Slug("zz_rel_cites_match"), Article.Title("Zz Rel Kadesh article"), Article.Body("# K\n\nSee [[zz_rel_match]]."))
+      val _ = article(Article.Slug("zz_rel_cites_other"), Article.Title("Zz Rel other article"), Article.Body("# O\n\nSee [[zz_rel_other]]."))
+      val _ = article(Article.Slug("zz_rel_cites_none"), Article.Title("Zz Rel lonely article"), Article.Body("# L\n\nNo citation at all."))
+      event("zz_rel_ev_match", EventSummary.Label("Zz Rel battle of Kadesh"), Year(-1274), Some(Citekey("zz_rel_match")))
+      event("zz_rel_ev_late", EventSummary.Label("Zz Rel late raid"), Year(-800), Some(Citekey("zz_rel_match")))
+      event("zz_rel_ev_other", EventSummary.Label("Zz Rel other battle"), Year(-1274), Some(Citekey("zz_rel_other")))
+      event("zz_rel_ev_nosrc", EventSummary.Label("Zz Rel unsourced flood"), Year(-1250), None)
 
   override def afterSuite(): Unit =
     if testDb.isDefined then
@@ -125,7 +130,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
     ArticleFixtures
       .list(ds, f, PlaceScope.empty, None, None, 500, 0)
       .articles
-      .map(_.slug)
+      .map(_.slug.value)
       .filter(_.startsWith("zz_rel_"))
       .toSet
 
@@ -133,7 +138,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
     EventFixtures
       .list(ds, f, PlaceScope.empty, text, None, None, None, 500, 0)
       .events
-      .map(_.id)
+      .map(_.id.value)
       .filter(_.startsWith("zz_rel_"))
       .toSet
 
@@ -142,7 +147,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(events(Filter()), Set("zz_rel_ev_match", "zz_rel_ev_late", "zz_rel_ev_other", "zz_rel_ev_nosrc"))
 
   test("articles: one citing a matching source is listed, one citing none (or another) is not"):
-    assertEquals(articles(Filter(tags = List(Tag))), Set("zz_rel_cites_match"))
+    assertEquals(articles(Filter(tags = List(Filter.Tags(Tag)))), Set("zz_rel_cites_match"))
     assertEquals(articles(Filter(authors = List(com.histmersion.api.library.Filter.Authors("zzrelauth")))), Set("zz_rel_cites_match"))
     assertEquals(articles(Filter(status = List(com.histmersion.api.library.Filter.Status("contested")))), Set("zz_rel_cites_other"))
 
@@ -152,11 +157,11 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
   test("articles: title narrows the ARTICLE's own title, not its sources'"):
     assertEquals(articles(Filter(title = Some(com.histmersion.api.library.Filter.Title("kadesh")))), Set("zz_rel_cites_match"))
     assertEquals(articles(Filter(title = Some(com.histmersion.api.library.Filter.Title("Source title")))), Set.empty[String])
-    assertEquals(articles(Filter(title = Some("lonely"), tags = List(Tag))), Set.empty[String])
+    assertEquals(articles(Filter(title = Some(Filter.Title("lonely")), tags = List(Filter.Tags(Tag)))), Set.empty[String])
 
   test("events: listed when the source matches; an event outside the period is excluded"):
-    assertEquals(events(Filter(tags = List(Tag))), Set("zz_rel_ev_match", "zz_rel_ev_late"))
-    assertEquals(events(Filter(tags = List(Tag), period = Some(Period(-1300, -1200)))), Set("zz_rel_ev_match"))
+    assertEquals(events(Filter(tags = List(Filter.Tags(Tag)))), Set("zz_rel_ev_match", "zz_rel_ev_late"))
+    assertEquals(events(Filter(tags = List(Filter.Tags(Tag)), period = Some(Period(Year(-1300), Year(-1200))))), Set("zz_rel_ev_match"))
 
   test("events: a period alone matches the event's own span, with or without a source"):
     assertEquals(

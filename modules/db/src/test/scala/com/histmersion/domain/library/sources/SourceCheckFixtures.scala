@@ -14,14 +14,18 @@ import javax.sql.DataSource
   * owner's repository; and the SQL each rule reads.
   */
 object SourceCheckFixtures:
-  def reindexStale(ds: DataSource, chunkChars: Int, maxChars: Long): ReindexResult =
+  def reindexStale(
+      ds: DataSource,
+      chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars,
+      maxChars: SourceRepairs.MaxChars
+  ): ReindexResult =
     SourceRepairs(Transactor(ds)).reindexStale(chunkChars, maxChars)
 
   def run(
       ds: DataSource,
       rules: List[Rule],
-      maxItems: Int,
-      suggestions: Int,
+      maxItems: com.histmersion.api.checks.Lint.ItemLimit,
+      suggestions: com.histmersion.api.checks.Lint.ItemLimit,
       format: FormatChecker,
       geocode: GeocodeSettings
   ): LintReport =
@@ -29,7 +33,7 @@ object SourceCheckFixtures:
       given CheckRun = CheckRun()
       val context = SourceCheckRepo.Context(suggestions, format, geocode)
       LintReport(rules.map { r =>
-        if SourceCheckRepo.sqlOf(r.name).nonEmpty then SourceCheckRepo.report(r, context, maxItems)
+        if SourceCheckRepo.sqlOf(r.name.value).nonEmpty then SourceCheckRepo.report(r, context, maxItems)
         else ArticleCheckFixtures.report(r, format, maxItems)
       })
 

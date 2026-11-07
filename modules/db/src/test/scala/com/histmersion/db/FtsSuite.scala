@@ -24,17 +24,22 @@ class FtsSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
   private def chunkChars = cfg.limits.chunkChars
-  private def words = cfg.limits.snippetWords
+  private def words = com.histmersion.domain.library.search.Search.SnippetWords(cfg.limits.snippetWords.value)
 
-  private def source(ck: String, title: String, summary: String, body: String) =
+  private def source(
+      ck: com.histmersion.api.library.Citekey,
+      title: com.histmersion.api.library.Title,
+      summary: Source.Summary,
+      body: Source.OcrMarkdown
+  ) =
     Source(
-      citekey = com.histmersion.api.library.Citekey(ck),
-      title = com.histmersion.api.library.Title(title),
+      citekey = ck,
+      title = title,
       authors = (List("Tester")).map(com.histmersion.api.library.AuthorName.apply),
       doi = None,
       year = (Some(1999)).map(com.histmersion.api.catalogue.Year.apply),
@@ -69,26 +74,31 @@ class FtsSuite extends com.histmersion.db.DbSuite:
     assert(big.length > 1_100_000, big.length)
     SourceFixtures.upsert(
       ds,
-      source("zz_fts_big", "Aegean stratigraphy", "A summary with no query terms.", big),
-      chunkChars
-    )
-    SourceFixtures.upsert(
-      ds,
       source(
-        "zz_fts_egypt",
-        "Delta excavations",
-        "Another summary.",
-        "## Medinet Habu\n\nThe sea peoples are named in Egypt, in the reliefs of Ramesses III."
+        com.histmersion.api.library.Citekey("zz_fts_big"),
+        com.histmersion.api.library.Title("Aegean stratigraphy"),
+        Source.Summary("A summary with no query terms."),
+        Source.OcrMarkdown(big)
       ),
       chunkChars
     )
     SourceFixtures.upsert(
       ds,
       source(
-        "zz_fts_title",
-        "The Sea Peoples reconsidered",
-        "Historiography.",
-        "## Body\n\nThis body never mentions the raiders by name; it discusses pottery."
+        com.histmersion.api.library.Citekey("zz_fts_egypt"),
+        com.histmersion.api.library.Title("Delta excavations"),
+        Source.Summary("Another summary."),
+        Source.OcrMarkdown("## Medinet Habu\n\nThe sea peoples are named in Egypt, in the reliefs of Ramesses III.")
+      ),
+      chunkChars
+    )
+    SourceFixtures.upsert(
+      ds,
+      source(
+        com.histmersion.api.library.Citekey("zz_fts_title"),
+        com.histmersion.api.library.Title("The Sea Peoples reconsidered"),
+        Source.Summary("Historiography."),
+        Source.OcrMarkdown("## Body\n\nThis body never mentions the raiders by name; it discusses pottery.")
       ),
       chunkChars
     )
@@ -96,32 +106,32 @@ class FtsSuite extends com.histmersion.db.DbSuite:
   /** The ONE query path: `/api/sources` (`Filter.q` is the FTS predicate, relevance is `ts_rank_cd`, and the hit
     * carries the snippet of the best-matching chunk).
     */
-  private def search(q: String): Vector[SearchHit] = listing(Filter(q = Some(q), limit = 20))
+  private def search(q: Filter.Q): Vector[SearchHit] = listing(Filter(q = Some(q), limit = Filter.Limit(20)))
   private def listing(f: Filter): Vector[SearchHit] =
     SearchFixtures.sources(ds, f, words).hits.map(_.source).toVector
 
   test("a >1 MB body is indexed and a body-only phrase is found, with snippet and heading"):
     fixture
-    val hits = search("\"sea peoples\"")
-    val big = hits.find(_.citekey == "zz_fts_big")
+    val hits = search(Filter.Q("\"sea peoples\""))
+    val big = hits.find(_.citekey.value == "zz_fts_big")
     assert(big.isDefined, hits.map(_.citekey))
     assertEquals(big.get.matchedHeading, Some("Ugarit destruction"))
-    val snip = big.get.snippet.getOrElse("")
+    val snip = big.get.snippet.fold("")(_.value)
     assert(snip.contains("**"), snip) // ts_headline StartSel/StopSel
     assert(snip.toLowerCase.contains("peoples"), snip)
     assert(snip.length < 2000, snip.length) // a fragment, not the whole chunk
 
   test("-not excludes a source whose body carries the excluded term"):
     fixture
-    val all = search("\"sea peoples\"").map(_.citekey)
-    val excluded = search("\"sea peoples\" -egypt").map(_.citekey)
+    val all = search(Filter.Q("\"sea peoples\"")).map(_.citekey)
+    val excluded = search(Filter.Q("\"sea peoples\" -egypt")).map(_.citekey)
     assert(all.contains("zz_fts_egypt"), all)
     assert(!excluded.contains("zz_fts_egypt"), excluded)
     assert(excluded.contains("zz_fts_big"), excluded)
 
   test("ranking prefers a title match over a body match"):
     fixture
-    val hits = search("sea peoples").map(_.citekey).filter(_.startsWith("zz_fts_"))
+    val hits = search(Filter.Q("sea peoples")).map(_.citekey).filter(_.value.startsWith("zz_fts_"))
     assertEquals(hits.headOption, Some("zz_fts_title"), hits)
 
   test("no query keeps the most-cited listing, with no snippet"):
@@ -132,19 +142,24 @@ class FtsSuite extends com.histmersion.db.DbSuite:
 
   test("websearch operators: bare words are AND-ed within a vector, `or` alternates"):
     fixture
-    assert(search("sea peoples reconsidered").map(_.citekey).contains("zz_fts_title"))
-    assert(!search("sea peoples zzzznotaword").map(_.citekey).contains("zz_fts_title"))
-    assert(search("zzzznotaword or stratigraphy").map(_.citekey).contains("zz_fts_big"))
+    assert(search(Filter.Q("sea peoples reconsidered")).map(_.citekey).contains("zz_fts_title"))
+    assert(!search(Filter.Q("sea peoples zzzznotaword")).map(_.citekey).contains("zz_fts_title"))
+    assert(search(Filter.Q("zzzznotaword or stratigraphy")).map(_.citekey).contains("zz_fts_big"))
 
   test("reindex rebuilds every chunk from ocr_markdown"):
     fixture
     // scoped to THIS suite's citekeys (they sort together): the db suites run in parallel against one
     // database, so wiping/rewriting every chunk row would collide with another suite's write
     transact(ds)(sql"DELETE FROM source_chunks WHERE citekey LIKE 'zz_fts_%'".update.run())
-    assert(!search("\"sea peoples\"").exists(_.citekey == "zz_fts_big"))
-    val r = SourceFixtures.reindexChunks(ds, chunkChars, after = Some("zz_fts_a"), maxSources = Some(3))
+    assert(!search(Filter.Q("\"sea peoples\"")).exists(_.citekey.value == "zz_fts_big"))
+    val r = SourceFixtures.reindexChunks(
+      ds,
+      chunkChars,
+      after = Some(com.histmersion.domain.library.Citekey("zz_fts_a")),
+      maxSources = Some(com.histmersion.domain.library.sources.SourceRepairs.MaxSources(3))
+    )
     assert(r.sources == 3 && r.chunks > r.sources, r)
-    assert(search("\"sea peoples\"").exists(_.citekey == "zz_fts_big"))
+    assert(search(Filter.Q("\"sea peoples\"")).exists(_.citekey.value == "zz_fts_big"))
 
 /** Planner/statistics upkeep against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. */
 class PlannerUpkeepSuite extends com.histmersion.db.DbSuite:
@@ -152,7 +167,7 @@ class PlannerUpkeepSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
-    val d = testPool(AppConfig.load().db.copy(url = testDb.get))
+    val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 

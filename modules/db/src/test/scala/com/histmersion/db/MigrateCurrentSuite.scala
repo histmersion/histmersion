@@ -14,7 +14,7 @@ class MigrateCurrentSuite extends com.histmersion.db.DbSuite with Bounded:
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
-    val d = testPool(AppConfig.load().db.copy(url = testDb.get))
+    val d = testPool(AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   /** The scribe records Flyway logs on THIS thread while `f` runs (other suites migrate concurrently). */
@@ -37,4 +37,4 @@ class MigrateCurrentSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(logs, Nil)
     val flyway = org.flywaydb.core.Flyway.configure().dataSource(ds0).load()
     assertEquals(Migrate.current(ds0), Option(flyway.info().current()).map(_.getVersion.toString))
-    assertEquals(Migrate.current(ds0), Migrate.migrationNames.lastOption.map(_.drop(1).takeWhile(_ != '_')))
+    assertEquals(Migrate.current(ds0), Migrate.migrationNames.lastOption.map(_.value.drop(1).takeWhile(_ != '_')))

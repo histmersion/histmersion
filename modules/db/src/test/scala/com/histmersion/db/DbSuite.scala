@@ -26,12 +26,12 @@ abstract class DbSuite extends munit.FunSuite:
 
   /** The application pool on `cfg`'s database, this suite's own. */
   protected def testPool(cfg: DbConfig): DataSource = owned.synchronized {
-    owned.getOrElseUpdate((cfg.url, cfg.user), Db.pool(cfg))
+    owned.getOrElseUpdate((cfg.url.value, cfg.user.value), Db.pool(cfg))
   }
 
   /** The read-only role's pool on `db`'s database, this suite's own. */
   protected def testQueryPool(db: DbConfig, q: QueryConfig): DataSource = owned.synchronized {
-    owned.getOrElseUpdate((db.url, q.user), QueryAccess.pool(db, q))
+    owned.getOrElseUpdate((db.url.value, q.user.value), QueryAccess.pool(db, q))
   }
 
   /** Fresh, migrated, EMPTY databases for this suite, named `<prefix>_<n>_test` beside `cfg`'s database: each a copy
@@ -53,7 +53,7 @@ abstract class DbSuite extends munit.FunSuite:
       } finally c.close()
 
     /** The URL of database `name` on `cfg`'s server. */
-    def urlOf(name: String): String = cfg.url.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")
+    def urlOf(name: String): DbConfig.Url = DbConfig.Url(cfg.url.value.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1"))
 
     private lazy val template: String =
       val t = s"${prefix}_template_test"

@@ -62,7 +62,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = sql"DELETE FROM events WHERE id LIKE 'zqmd%'".update.run()
     val _ = sql"DELETE FROM places WHERE id LIKE 'zqmd%'".update.run()
 
-  private def pt(lon: Double) = Some(s"""{"type":"Point","coordinates":[$lon,-40]}""")
+  private def pt(lon: Double) = Some(Place.Geometry(s"""{"type":"Point","coordinates":[$lon,-40]}"""))
 
   override def beforeAll(): Unit =
     if testDb.isDefined then
@@ -74,18 +74,18 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
             Place(
               com.histmersion.api.catalogue.Place.Id("zqmd_site"),
               com.histmersion.api.catalogue.Place.Label("Zqmd site"),
-              com.histmersion.domain.catalogue.Place.Kind.Site,
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
               pt(130.0),
               Some(Period(com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1100)))
             ),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmd site")))
           ),
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmd_busy"), com.histmersion.api.catalogue.Place.Label("Zqmd busy"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(131.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("zqmd_busy"), com.histmersion.api.catalogue.Place.Label("Zqmd busy"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(131.0)),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmd busy")))
           ),
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmd_nolink"), com.histmersion.api.catalogue.Place.Label("Zqmd no link"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(132.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("zqmd_nolink"), com.histmersion.api.catalogue.Place.Label("Zqmd no link"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(132.0)),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmd no link")))
           )
         )
@@ -114,32 +114,32 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
         ds,
         "zqmd2020_figs",
         List(
-          NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig1.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png ++ Array[Byte](1), None, None),
-          NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig2.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png ++ Array[Byte](2), None, None)
+          NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig1.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), NewFigure.Bytes(png ++ Array[Byte](1)), None, None),
+          NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig2.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), NewFigure.Bytes(png ++ Array[Byte](2)), None, None)
         )
       )
       val _ = AssetFixtures.add(
         ds,
         "zqmd2021_nolic",
-        List(NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png ++ Array[Byte](3), None, None))
+        List(NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), NewFigure.Bytes(png ++ Array[Byte](3)), None, None))
       )
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def asset(
-      key: String,
-      license: String = Lic,
-      credit: String = "Ann, CC BY-SA 9.9, via Wikimedia Commons",
+      key: ProviderAsset.Key,
+      license: ProviderAsset.License = ProviderAsset.License(Lic),
+      credit: ProviderAsset.Credit = ProviderAsset.Credit("Ann, CC BY-SA 9.9, via Wikimedia Commons"),
       thumb: Boolean = true
   ) =
     ProviderAsset(
-      P,
+      ProviderAsset.Provider(P),
       key,
-      key.stripPrefix("File:").trim.replaceAll("[^A-Za-z0-9._-]+", "_"),
+      ProviderAsset.Name(key.value.stripPrefix("File:").trim.replaceAll("[^A-Za-z0-9._-]+", "_")),
       com.histmersion.domain.media.assets.ProviderAsset.Mime("image/jpeg"),
-      Array[Byte](-1, -40, 1),
+      ProviderAsset.Bytes(Array[Byte](-1, -40, 1)),
       Some(com.histmersion.domain.media.assets.ProviderAsset.Width(1280)),
       Some(com.histmersion.domain.media.assets.ProviderAsset.Height(960)),
-      Option.when(thumb)(Array[Byte](-1, -40, 2)),
+      Option.when(thumb)(ProviderAsset.Thumb(Array[Byte](-1, -40, 2))),
       Option.when(thumb)(com.histmersion.domain.media.assets.ProviderAsset.ThumbMime("image/jpeg")),
       Some(com.histmersion.domain.media.assets.ProviderAsset.ThumbWidth(330)),
       Some(com.histmersion.domain.media.assets.ProviderAsset.ThumbHeight(248)),
@@ -147,13 +147,13 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       Some(com.histmersion.domain.media.assets.ProviderAsset.LicenseUrl("https://creativecommons.org/licenses/by-sa/9.9")),
       Some(com.histmersion.domain.media.assets.ProviderAsset.Author("Ann")),
       credit,
-      s"https://commons.wikimedia.org/wiki/${key.replace(' ', '_')}",
+      ProviderAsset.SourceUrl(s"https://commons.wikimedia.org/wiki/${key.value.replace(' ', '_')}"),
       Some(com.histmersion.domain.media.assets.ProviderAsset.OriginalUrl("https://upload.example/x.jpg")),
-      Some(AssetKind.Photo)
+      Some(ProviderAsset.Kind(AssetKind.Photo))
     )
 
   test("V082: a provider's picture has no citekey; exactly one of citekey and provider is set"):
-    val (uid, inserted) = AssetFixtures.save(ds, asset("File:Zqmd one.jpg"), ("place", "zqmd_site"))
+    val (uid, inserted) = AssetFixtures.save(ds, asset(ProviderAsset.Key("File:Zqmd one.jpg")), ("place", "zqmd_site"))
     assert(inserted)
     val row = connect(ds)(
       sql"SELECT citekey, provider FROM assets WHERE uid = $uid::uuid"
@@ -181,19 +181,22 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       ds,
       "zqmd2020_figs",
       List(
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig1.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), Array[Byte](-119, 80, 78, 71, 13, 10, 26, 10, 1), None, None),
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig2.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), Array[Byte](-119, 80, 78, 71, 13, 10, 26, 10, 2), None, None)
+        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig1.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), NewFigure.Bytes(Array[Byte](-119, 80, 78, 71, 13, 10, 26, 10, 1)), None, None),
+        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig2.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), NewFigure.Bytes(Array[Byte](-119, 80, 78, 71, 13, 10, 26, 10, 2)), None, None)
       )
     )
     assertEquals(n, 2)
-    assertEquals((AssetLinkFixtures.list(ds, Some("zqmd2020_figs"), None, None, None).total.value: Int), 1, "the link survived")
+    assertEquals((AssetLinkFixtures.list(ds, Some(com.histmersion.domain.library.Citekey("zqmd2020_figs")), None, None, None).total.value: Int), 1, "the link survived")
     assertEquals(AssetFixtures.list(ds, "zqmd2020_figs").map(_.name), Vector("fig1.png", "fig2.png"))
 
   test("save: a second save of the same key replaces it in place; point and period come from the place"):
-    val (uid1, _) = AssetFixtures.save(ds, asset("File:Zqmd two.jpg"), ("place", "zqmd_site"))
+    val (uid1, _) = AssetFixtures.save(ds, asset(ProviderAsset.Key("File:Zqmd two.jpg")), ("place", "zqmd_site"))
     val (uid2, inserted) = AssetFixtures.save(
       ds,
-      asset("File:Zqmd two.jpg", credit = "Bob, CC BY-SA 9.9, via Wikimedia Commons"),
+      asset(
+        ProviderAsset.Key("File:Zqmd two.jpg"),
+        credit = ProviderAsset.Credit("Bob, CC BY-SA 9.9, via Wikimedia Commons")
+      ),
       ("place", "zqmd_busy")
     )
     assertEquals(uid2, uid1)
@@ -209,9 +212,9 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     )
 
   test("links and the card: the thumbnails of a place, best role first, only ones with a thumbnail"):
-    val (img, _) = AssetFixtures.save(ds, asset("File:Zqmd image.jpg"), ("place", "zqmd_busy"))
-    val (map, _) = AssetFixtures.save(ds, asset("File:Zqmd map.svg"), ("place", "zqmd_busy"))
-    val (bare, _) = AssetFixtures.save(ds, asset("File:Zqmd bare.jpg", thumb = false), ("place", "zqmd_busy"))
+    val (img, _) = AssetFixtures.save(ds, asset(ProviderAsset.Key("File:Zqmd image.jpg")), ("place", "zqmd_busy"))
+    val (map, _) = AssetFixtures.save(ds, asset(ProviderAsset.Key("File:Zqmd map.svg")), ("place", "zqmd_busy"))
+    val (bare, _) = AssetFixtures.save(ds, asset(ProviderAsset.Key("File:Zqmd bare.jpg"), thumb = false), ("place", "zqmd_busy"))
     assert(AssetFixtures.link(ds, map, "place", "zqmd_busy", MediaRole.LocatorMap, Some("P242"), Some("Q90000002"), 0))
     assert(AssetFixtures.link(ds, img, "place", "zqmd_busy", MediaRole.Image, Some("P18"), Some("Q90000002"), 0))
     assert(AssetFixtures.link(ds, bare, "place", "zqmd_busy", MediaRole.Image, Some("P18"), Some("Q90000002"), 1))
@@ -227,9 +230,9 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       MediaThumb(
         img,
         com.histmersion.api.media.MediaThumb.Role("image"),
-        s"/media/$img/thumb",
+        MediaThumb.Url(s"/media/$img/thumb"),
         com.histmersion.api.media.MediaItem.Credit("Ann, CC BY-SA 9.9, via Wikimedia Commons"),
-        Some(Lic),
+        Some(com.histmersion.api.media.MediaItem.License(Lic)),
         Some(com.histmersion.api.media.MediaItem.LicenseUrl("https://creativecommons.org/licenses/by-sa/9.9")),
         Some(com.histmersion.api.media.MediaItem.SourceUrl("https://commons.wikimedia.org/wiki/File:Zqmd_image.jpg")),
         Some(com.histmersion.api.media.ImageSize.Width(330)),
@@ -241,15 +244,15 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(AssetFixtures.file(ds, bare).map(_._2.toList), Some(List[Byte](-1, -40, 1)))
 
   test("V094: depiction, object and map roles; a link keeps its basis; a picture in two roles is on the card once"):
-    val (uid, _) = AssetFixtures.save(ds, asset("File:Zqmd depicted.jpg"), ("event", "zqmd_battle"))
+    val (uid, _) = AssetFixtures.save(ds, asset(ProviderAsset.Key("File:Zqmd depicted.jpg")), ("event", "zqmd_battle"))
     assert(AssetFixtures.link(ds, uid, "event", "zqmd_battle", MediaRole.Depiction, Some("P180"), Some("Q90000003"), 0))
     assert(AssetFixtures.link(ds, uid, "event", "zqmd_battle", MediaRole.Image, Some("P18"), Some("Q90000003"), 0))
     assertEquals(
-      AssetFixtures.thumbs(ds, "event", "zqmd_battle").filter(_.uid == uid).map(_.role),
+      AssetFixtures.thumbs(ds, "event", "zqmd_battle").filter(_.uid.value == uid).map(_.role),
       List(MediaRole.Image),
       "once, in its best role"
     )
-    val (obj, _) = AssetFixtures.save(ds, asset("File:Zqmd object.jpg"), ("place", "zqmd_site"))
+    val (obj, _) = AssetFixtures.save(ds, asset(ProviderAsset.Key("File:Zqmd object.jpg")), ("place", "zqmd_site"))
     assert(
       AssetFixtures.link(ds, obj, "place", "zqmd_site", MediaRole.Object, None, None, 0, Some("find_spot = Zqmd site"))
     )
@@ -261,12 +264,12 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       AssetFixtures.link(ds, obj, "place", "zqmd_busy", MediaRole.Map, None, None, 0, Some("location = zqmd busy"))
     )
     val targets = AssetFixtures.show(ds, obj).get.targets
-    assertEquals(targets.filter(_.targetId == "zqmd_site").map(_.basis), List(Some("find_spot = Zqmd site")))
-    assertEquals(ProviderAsset.kindOf(MediaRole.Map), AssetKind.Map)
+    assertEquals(targets.filter(_.targetId.value == "zqmd_site").map(_.basis), List(Some("find_spot = Zqmd site")))
+    assertEquals(ProviderAsset.kindOf(MediaRole.Wire(MediaRole.Map)), AssetKind.Map)
     connect(ds)(sql"DELETE FROM media_links WHERE asset_uid IN ($uid::uuid, $obj::uuid)".update.run())
 
   test("an event's card: its Wikidata item and its picture"):
-    val (uid, _) = AssetFixtures.save(ds, asset("File:Zqmd battle.jpg"), ("event", "zqmd_battle"))
+    val (uid, _) = AssetFixtures.save(ds, asset(ProviderAsset.Key("File:Zqmd battle.jpg")), ("event", "zqmd_battle"))
     AssetFixtures.link(ds, uid, "event", "zqmd_battle", MediaRole.Image, Some("P18"), Some("Q90000003"), 0)
     val d = EventFixtures.get(ds, "zqmd_battle").get
     assertEquals(d.wikidata, Some("Q90000003"))
@@ -306,7 +309,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       .targets(ds, P, None, None, 100000, refresh)
       .toOption
       .get
-      .filter(_.id.startsWith("zqmd"))
+      .filter(_.id.value.startsWith("zqmd"))
       .map(t => (t.targetType, t.id, t.qid))
     assertEquals(
       mine(refresh = false),
@@ -341,25 +344,25 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(!ImportFixtures.commonsCategory(ds, "zqmd_site", "Zqmd category", "Q90000001"))
     assert(
       PlaceFixtures
-        .get(ds, "zqmd_site", None, cfg.places.modernFrom)
+        .get(ds, "zqmd_site", None, cfg.places.modernFrom.value)
         .get
         .links
-        .exists(l => l.scheme == "commons" && l.externalId == "Zqmd category")
+        .exists(l => l.scheme.value == "commons" && l.externalId.value == "Zqmd category")
     )
 
   test("list, show and facets: by provider, licence, place; source figures as `source`"):
-    val (uid, _) = AssetFixtures.save(ds, asset("File:Zqmd listed.jpg"), ("place", "zqmd_site"))
+    val (uid, _) = AssetFixtures.save(ds, asset(ProviderAsset.Key("File:Zqmd listed.jpg")), ("place", "zqmd_site"))
     AssetFixtures.link(ds, uid, "place", "zqmd_site", MediaRole.Image, Some("P18"), Some("Q90000001"), 0)
     val l =
-      AssetFixtures.list(ds, Api.MediaQuery(provider = Some(P), license = Some(Lic), place = Some(com.histmersion.api.catalogue.Place.Id("zqmd_site"))), 50)
+      AssetFixtures.list(ds, Api.MediaQuery(provider = Some(MediaProvider.Id(P)), license = Some(Api.MediaQuery.License(Lic)), place = Some(com.histmersion.api.catalogue.Place.Id("zqmd_site"))), 50)
     assertEquals(l.items.map(_.providerKey), List(Some("File:Zqmd listed.jpg")))
     assertEquals((l.total.value: Int), 1)
     val figs = AssetFixtures
       .list(ds, Api.MediaQuery(provider = Some(com.histmersion.api.media.MediaProvider.Id("source")), q = Some(com.histmersion.api.Api.MediaQuery.Q("fig")), limit = None), 1000)
       .items
-      .filter(_.citekey.exists(_.startsWith("zqmd")))
+      .filter(_.citekey.exists(_.value.startsWith("zqmd")))
     assertEquals(
-      figs.map(f => (f.citekey, f.name)).sorted,
+      figs.map(f => (f.citekey.map(_.value), f.name.value)).sorted,
       List(
         (Some("zqmd2020_figs"), "fig1.png"),
         (Some("zqmd2020_figs"), "fig2.png"),
@@ -369,22 +372,22 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     val shown = AssetFixtures.show(ds, uid).get
     assertEquals(shown.targets, List(MediaTarget(com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("zqmd_site"), com.histmersion.api.media.MediaTarget.Role("image"), Some(com.histmersion.api.media.MediaTarget.Property("P18")), Some(com.histmersion.api.media.MediaTarget.Item("Q90000001")))))
     assertEquals((shown.fileUrl, shown.thumbUrl), (s"/media/$uid/file", Some(s"/media/$uid/thumb")))
-    assert(shown.retrievedAt.exists(_.endsWith("Z")))
+    assert(shown.retrievedAt.exists(_.value.endsWith("Z")))
     val f = AssetFixtures.facets(ds)
     assert(
-      f.providers.exists(c => c.key == P && c.n >= 1) && f.providers.exists(_.key == MediaProvider.Source),
+      f.providers.exists(c => c.key.value == P && c.n.value >= 1) && f.providers.exists(_.key.value == MediaProvider.Source),
       f.toString
     )
-    assert(f.licences.exists(c => c.key == Lic && c.n >= 1), f.toString)
+    assert(f.licences.exists(c => c.key.value == Lic && c.n.value >= 1), f.toString)
 
   test("the media layer: provider and licence filters, a provider's thumbnail and credit on the hit"):
-    val q = Api.MediaGeoQuery(provider = Some(P), license = Some(Lic), limit = Some(com.histmersion.api.Api.MediaGeoQuery.Limit(1000)))
+    val q = Api.MediaGeoQuery(provider = Some(MediaProvider.Id(P)), license = Some(Api.MediaGeoQuery.License(Lic)), limit = Some(com.histmersion.api.Api.MediaGeoQuery.Limit(1000)))
     val hits = AssetFixtures.geo(ds, q, 1000)
     assert(hits.nonEmpty && hits.forall(h => h.provider.contains(P) && h.license.contains(Lic) && h.citekey.isEmpty))
     assert(hits.exists(h => h.thumbUrl.contains(s"/media/${h.uid}/thumb") && h.credit.isDefined))
     // what a full-size view shows: the stored rendition (this server's), the provider's page, the licence's text
     assert(
-      hits.forall(h => h.fileUrl.contains(s"/media/${h.uid}/file") && h.sourceUrl.exists(_.startsWith("http"))),
+      hits.forall(h => h.fileUrl.contains(s"/media/${h.uid}/file") && h.sourceUrl.exists(_.value.startsWith("http"))),
       hits.toString
     )
     assert(
@@ -393,15 +396,15 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       ),
       hits.toString
     )
-    assertEquals(AssetFixtures.geo(ds, q.modify(_.provider).setTo(Some("source")), 1000).filter(_.license.contains(Lic)), Nil)
+    assertEquals(AssetFixtures.geo(ds, q.modify(_.provider).setTo(Some(MediaProvider.Id("source"))), 1000).filter(_.license.contains(Lic)), Nil)
     val dated = AssetFixtures.geo(ds, q.modify(_.from).setTo((Some(-1500): _root_.scala.Option[_root_.scala.Long])).modify(_.to).setTo((Some(-1400): _root_.scala.Option[_root_.scala.Long])), 1000)
-    assert(dated.nonEmpty && dated.forall(_.periodStart.exists(_ <= -1400)), "the place's period dates the picture")
-    assert(!dated.exists(_.assetName == "Zqmd_image.jpg"), "a place with no dates gives its picture none")
+    assert(dated.nonEmpty && dated.forall(_.periodStart.exists(_.value <= -1400)), "the place's period dates the picture")
+    assert(!dated.exists(_.assetName.value == "Zqmd_image.jpg"), "a place with no dates gives its picture none")
 
   test("fill-licences: a figure takes its source's licence — counted first, written only with apply"):
     val dry = FigureFixtures.fillLicences(ds, apply = false)
-    assertEquals(dry.bySource.find(_.key == "zqmd2020_figs").map(_.n), Some(2))
-    assert(!dry.bySource.exists(_.key == "zqmd2021_nolic"), "a source with no licence gives none")
+    assertEquals(dry.bySource.find(_.key.value == "zqmd2020_figs").map(_.n), Some(2))
+    assert(!dry.bySource.exists(_.key.value == "zqmd2021_nolic"), "a source with no licence gives none")
     assertEquals(
       connect(ds)(
         sql"SELECT count(*)::int FROM assets WHERE citekey = 'zqmd2020_figs' AND license IS NOT NULL"
@@ -413,7 +416,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       "a dry run writes nothing"
     )
     val done = FigureFixtures.fillLicences(ds, apply = true)
-    assert(done.applied && done.updated >= 2)
+    assert(done.applied.value && done.updated.value >= 2)
     assertEquals(
       connect(ds)(
         sql"SELECT DISTINCT license FROM assets WHERE citekey = 'zqmd2020_figs'"
@@ -425,7 +428,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     )
 
   test("lint media-licence: a figure with no licence, a provider's picture with no credit line"):
-    val (uid, _) = AssetFixtures.save(ds, asset("File:Zqmd uncredited.jpg", credit = " "), ("place", "zqmd_site"))
+    val (uid, _) = AssetFixtures.save(ds, asset(ProviderAsset.Key("File:Zqmd uncredited.jpg"), credit = ProviderAsset.Credit(" ")), ("place", "zqmd_site"))
     val items = AssetFixtures.licenceGaps(ds).toMap
     assertEquals(items.get("zqmd2021_nolic/fig.png").map(_.startsWith("no licence")), Some(true))
     assertEquals(items.get(s"media:$uid").map(_.startsWith("no credit line")), Some(true))
@@ -438,22 +441,22 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       ds,
       List(
         Place.Input(
-          Place(com.histmersion.api.catalogue.Place.Id("zqmd_eq_a"), com.histmersion.api.catalogue.Place.Label("Zqmd Gobekli Tepe"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(133.0)),
+          Place(com.histmersion.api.catalogue.Place.Id("zqmd_eq_a"), com.histmersion.api.catalogue.Place.Label("Zqmd Gobekli Tepe"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(133.0)),
           List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmd Gobekli Tepe")))
         ),
         // another gazetteer's point of the same site: the same name (the key folds ö and case), 850 m away
         Place.Input(
-          Place(com.histmersion.api.catalogue.Place.Id("zqmd_eq_b"), com.histmersion.api.catalogue.Place.Label("Zqmd Göbekli tepe"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(133.01)),
+          Place(com.histmersion.api.catalogue.Place.Id("zqmd_eq_b"), com.histmersion.api.catalogue.Place.Label("Zqmd Göbekli tepe"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(133.01)),
           List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmd Göbekli tepe")))
         ),
         // the same name 700 km away is another place
         Place.Input(
-          Place(com.histmersion.api.catalogue.Place.Id("zqmd_eq_far"), com.histmersion.api.catalogue.Place.Label("Zqmd Gobekli Tepe"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(141.0)),
+          Place(com.histmersion.api.catalogue.Place.Id("zqmd_eq_far"), com.histmersion.api.catalogue.Place.Label("Zqmd Gobekli Tepe"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(141.0)),
           List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmd Gobekli Tepe")))
         ),
         // another name, the same Wikidata item (a polity's other time slice, a Wikidata import)
         Place.Input(
-          Place(com.histmersion.api.catalogue.Place.Id("zqmd_eq_wd"), com.histmersion.api.catalogue.Place.Label("Zqmd Other"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(135.0)),
+          Place(com.histmersion.api.catalogue.Place.Id("zqmd_eq_wd"), com.histmersion.api.catalogue.Place.Label("Zqmd Other"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(135.0)),
           List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmd Other")))
         )
       )
@@ -469,12 +472,12 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("a place's card reaches the pictures of its equivalents: same item, an old id, the same site's other point"):
     eqFixtures()
-    val (photo, _) = AssetFixtures.save(ds, asset("File:Zqmd gobekli.jpg"), ("place", "zqmd_eq_a"))
+    val (photo, _) = AssetFixtures.save(ds, asset(ProviderAsset.Key("File:Zqmd gobekli.jpg")), ("place", "zqmd_eq_a"))
     AssetFixtures.link(ds, photo, "place", "zqmd_eq_a", MediaRole.Image, Some("P18"), Some("Q90000011"), 0)
-    val (plan, _) = AssetFixtures.save(ds, asset("File:Zqmd gobekli plan.jpg"), ("place", "zqmd_eq_a"))
+    val (plan, _) = AssetFixtures.save(ds, asset(ProviderAsset.Key("File:Zqmd gobekli plan.jpg")), ("place", "zqmd_eq_a"))
     // stored under an id that was later merged into zqmd_eq_b (its alias), from no item
     AssetFixtures.link(ds, plan, "place", "zqmd_eq_old", MediaRole.Plan, None, None, 0)
-    def uids(id: String) = AssetFixtures.placeThumbs(ds, id, cfg.media.sameSiteKm).map(_.uid)
+    def uids(id: String) = AssetFixtures.placeThumbs(ds, id, cfg.media.sameSiteKm.value).map(_.uid)
     assertEquals(uids("zqmd_eq_a"), List(photo), "its own; the plan is the old id's, not an equivalent of a")
     assertEquals(uids("zqmd_eq_b"), List(photo, plan), "the same site's other point, and its own old id")
     assertEquals(uids("zqmd_eq_wd"), List(photo), "the same Wikidata item")
@@ -487,9 +490,9 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(AssetFixtures.thumbs(ds, "place", "zqmd_eq_b"), Nil, "the plain lookup stays exact")
 
   test("a place's own picture is shown before an equivalent's in the same role"):
-    val (own, _) = AssetFixtures.save(ds, asset("File:Zqmd gobekli own.jpg"), ("place", "zqmd_eq_wd"))
+    val (own, _) = AssetFixtures.save(ds, asset(ProviderAsset.Key("File:Zqmd gobekli own.jpg")), ("place", "zqmd_eq_wd"))
     AssetFixtures.link(ds, own, "place", "zqmd_eq_wd", MediaRole.Image, Some("P18"), Some("Q90000011"), 1)
-    assertEquals(AssetFixtures.placeThumbs(ds, "zqmd_eq_wd", cfg.media.sameSiteKm).map(_.uid).headOption, Some(own))
+    assertEquals(AssetFixtures.placeThumbs(ds, "zqmd_eq_wd", cfg.media.sameSiteKm.value).map(_.uid).headOption, Some(own))
 
   test("targets: one per Wikidata item, the place most sources cite; an item asked through any place is done"):
     connect(ds):
@@ -504,7 +507,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       .targets(ds, P, None, None, 100000, refresh = false)
       .toOption
       .get
-      .filter(_.id.startsWith("zqmd_eq"))
+      .filter(_.id.value.startsWith("zqmd_eq"))
       .map(t => (t.id, t.qid))
     assertEquals(mine(), List(("zqmd_eq_wd", "Q90000011")), "two sources cite zqmd_eq_wd, one zqmd_eq_a")
     val before = ImportFixtures.pending(ds, P)
@@ -517,7 +520,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
         .targets(ds, P, None, None, 100000, refresh = true, Some(since))
         .toOption
         .get
-        .filter(_.id.startsWith("zqmd_eq"))
+        .filter(_.id.value.startsWith("zqmd_eq"))
         .map(_.id),
       List("zqmd_eq_wd"),
       "a refresh job: not asked since its start"
@@ -538,8 +541,8 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       ds,
       "zqmd2022_paper",
       List(
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig-0002-01.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png ++ Array[Byte](7), Some(com.histmersion.domain.media.assets.NewFigure.Width(900)), Some(com.histmersion.domain.media.assets.NewFigure.Height(700))),
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("logo.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png ++ Array[Byte](8), Some(com.histmersion.domain.media.assets.NewFigure.Width(40)), Some(com.histmersion.domain.media.assets.NewFigure.Height(40)))
+        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig-0002-01.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), NewFigure.Bytes(png ++ Array[Byte](7)), Some(com.histmersion.domain.media.assets.NewFigure.Width(900)), Some(com.histmersion.domain.media.assets.NewFigure.Height(700))),
+        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("logo.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), NewFigure.Bytes(png ++ Array[Byte](8)), Some(com.histmersion.domain.media.assets.NewFigure.Width(40)), Some(com.histmersion.domain.media.assets.NewFigure.Height(40)))
       )
     )
     assertEquals(
@@ -549,24 +552,24 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(SourceFixtures.markdown(ds, "zqmd2022_paper").contains("assets/logo.png"))
     assert(CoverFixtures.illustrationCandidates(ds, None, refresh = false, 100000).contains("zqmd2022_paper"))
     val fig = AssetFixtures.figures(ds, "zqmd2022_paper").head
-    AssetFixtures.setSourcePicture(ds, "zqmd2022_paper", fig.uid, MediaRole.Illustration, None)
+    AssetFixtures.setSourcePicture(ds, "zqmd2022_paper", fig.uid.value, MediaRole.Illustration, None)
     assert(!CoverFixtures.illustrationCandidates(ds, None, refresh = false, 100000).contains("zqmd2022_paper"))
     val t = AssetFixtures.sourceThumb(ds, "zqmd2022_paper").get
     assertEquals((t.uid, t.role, t.width), (fig.uid, MediaRole.Illustration, Some(900)))
     assertEquals(
-      AssetFixtures.thumb(ds, fig.uid).map(_._2.toList),
+      AssetFixtures.thumb(ds, fig.uid.value).map(_._2.toList),
       Some((png ++ Array[Byte](7)).toList),
       "a figure with no thumbnail is its own"
     )
-    AssetFixtures.setThumb(ds, fig.uid, Array[Byte](-1, -40, 9), "image/jpeg", Some(330), Some(257))
-    assertEquals(AssetFixtures.thumb(ds, fig.uid).map(_._1), Some("image/jpeg"))
+    AssetFixtures.setThumb(ds, fig.uid.value, Array[Byte](-1, -40, 9), "image/jpeg", Some(330), Some(257))
+    assertEquals(AssetFixtures.thumb(ds, fig.uid.value).map(_._1), Some("image/jpeg"))
     // a cover comes first; a second cover replaces the first
     val cover = ProviderAsset(
-      MediaProvider.Calibre,
+      ProviderAsset.Provider(MediaProvider.Calibre),
       com.histmersion.domain.media.assets.ProviderAsset.Key("zqmd-1"),
       com.histmersion.domain.media.assets.ProviderAsset.Name("cover-calibre-zqmd-1.jpg"),
       com.histmersion.domain.media.assets.ProviderAsset.Mime("image/jpeg"),
-      Array[Byte](-1, -40, 10),
+      ProviderAsset.Bytes(Array[Byte](-1, -40, 10)),
       Some(com.histmersion.domain.media.assets.ProviderAsset.Width(600)),
       Some(com.histmersion.domain.media.assets.ProviderAsset.Height(900)),
       None,
@@ -579,7 +582,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       com.histmersion.domain.media.assets.ProviderAsset.Credit("Cover: the local Calibre library"),
       com.histmersion.domain.media.assets.ProviderAsset.SourceUrl("calibre:book/zqmd-1"),
       None,
-      Some(AssetKind.Photo)
+      Some(ProviderAsset.Kind(AssetKind.Photo))
     )
     val (c1, _) = AssetFixtures.save(ds, cover, ("source", "zqmd2022_paper"))
     AssetFixtures.setSourcePicture(ds, "zqmd2022_paper", c1, MediaRole.Cover, Some("calibre"))
@@ -595,7 +598,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     val (c2, _) =
       AssetFixtures.save(
         ds,
-        cover.modify(_.key).setTo("zqmd-2").modify(_.name).setTo("cover-calibre-zqmd-2.jpg"),
+        cover.modify(_.key).setTo(ProviderAsset.Key("zqmd-2")).modify(_.name).setTo(ProviderAsset.Name("cover-calibre-zqmd-2.jpg")),
         ("source", "zqmd2022_paper")
       )
     AssetFixtures.setSourcePicture(ds, "zqmd2022_paper", c2, MediaRole.Cover, Some("calibre"))
@@ -610,7 +613,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
             SELECT uid, 'isbn', '9780691168388' FROM sources WHERE citekey = 'zqmd2022_paper'
             ON CONFLICT DO NOTHING""".update.run()
     def mine(refresh: Boolean) =
-      CoverFixtures.coverCandidates(ds, None, refresh, 100000).filter(_.citekey.startsWith("zqmd"))
+      CoverFixtures.coverCandidates(ds, None, refresh, 100000).filter(_.citekey.value.startsWith("zqmd"))
     assertEquals(mine(false).map(k => (k.citekey, k.isbn)), List(("zqmd2022_paper", Some("9780691168388"))))
     ImportFixtures.checked(ds, MediaProvider.OpenLibrary, "source", "zqmd2022_paper", 0)
     assertEquals(mine(false), Nil, "asked already")

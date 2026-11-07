@@ -14,7 +14,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Migrate, Sql}
-import com.histmersion.api.catalogue.{Period, Place}
+import com.histmersion.api.catalogue.{Latitude, Longitude, Period, Place}
 import com.histmersion.api.library.{Finding, Source}
 import com.histmersion.util.database.given
 
@@ -38,7 +38,7 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
     val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d)
     d
-  private def tol = cfg.places.pointToleranceKm
+  private def tol = cfg.places.pointToleranceKm.value
 
   private def clean(): Unit = connect(ds):
     val _ = sql"DELETE FROM sources WHERE citekey LIKE 'zzph%'".update.run()
@@ -47,9 +47,9 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then clean()
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
-  private def pt(lon: Double, lat: Double) = Some(s"""{"type":"Point","coordinates":[$lon,$lat]}""")
+  private def pt(lon: Double, lat: Double) = Some(Place.Geometry(s"""{"type":"Point","coordinates":[$lon,$lat]}"""))
   private def box(x0: Double, y0: Double, x1: Double, y1: Double) =
-    Some(s"""{"type":"Polygon","coordinates":[[[$x0,$y0],[$x1,$y0],[$x1,$y1],[$x0,$y1],[$x0,$y0]]]}""")
+    Some(Place.Geometry(s"""{"type":"Polygon","coordinates":[[[$x0,$y0],[$x1,$y0],[$x1,$y1],[$x0,$y1],[$x0,$y0]]]}"""))
 
   private val Hellas = "zzph_hellas" // 150–154 E, 40–44 S: area 16
   private val Balkans = "zzph_balkans" // contains Hellas
@@ -59,7 +59,7 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
   private val Mantinea = "zzph_mantinea" // 7 km from the grid point, 11 km from Tegea
   private val NearRep = "zzph_nearrep" // 3 km from Hellas' representative point
 
-  private val Grid = GeoPoint(152.5, -42.5) // a 5° and a 1° square's centre
+  private val Grid = GeoPoint(Longitude(152.5), Latitude(-42.5)) // a 5° and a 1° square's centre
 
   private lazy val rep: GeoPoint = connect(ds)(
     sql"SELECT ST_X(ST_PointOnSurface(geom)), ST_Y(ST_PointOnSurface(geom)) FROM places WHERE id = $Hellas"
@@ -67,20 +67,20 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
       .run()
       .head
   ) match
-    case (x, y) => GeoPoint(x, y)
+    case (x, y) => GeoPoint(Longitude(x), Latitude(y))
 
   private def seed(): Unit =
-    def in(p: Place) = Place.Input(p, List(Place.Name(p.label)))
+    def in(p: Place) = Place.Input(p, List(Place.Name(Place.Name.Value(p.label.value))))
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
-        in(Place(com.histmersion.api.catalogue.Place.Id(Hellas), com.histmersion.api.catalogue.Place.Label("Zzph Hellas"), com.histmersion.domain.catalogue.Place.Kind.Region, box(150, -44, 154, -40))),
-        in(Place(com.histmersion.api.catalogue.Place.Id(Balkans), com.histmersion.api.catalogue.Place.Label("Zzph Balkans"), com.histmersion.domain.catalogue.Place.Kind.Region, box(149, -46, 156, -39))),
+        in(Place(com.histmersion.api.catalogue.Place.Id(Hellas), com.histmersion.api.catalogue.Place.Label("Zzph Hellas"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), box(150, -44, 154, -40))),
+        in(Place(com.histmersion.api.catalogue.Place.Id(Balkans), com.histmersion.api.catalogue.Place.Label("Zzph Balkans"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), box(149, -46, 156, -39))),
         in(
           Place(
             com.histmersion.api.catalogue.Place.Id(Pelop),
             com.histmersion.api.catalogue.Place.Label("Zzph Peloponnesos"),
-            com.histmersion.domain.catalogue.Place.Kind.Polity,
+            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Polity),
             box(151.0, -43.5, 152.8, -42.2)
           )
         ),
@@ -88,13 +88,13 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
           Place(
             com.histmersion.api.catalogue.Place.Id(Mykenai),
             com.histmersion.api.catalogue.Place.Label("Zzph Mykenai Realm"),
-            com.histmersion.domain.catalogue.Place.Kind.Polity,
+            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Polity),
             box(150, -44, 152, -41),
             Some(Period(com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1100)))
           )
         ),
-        in(Place(com.histmersion.api.catalogue.Place.Id(Tegea), com.histmersion.api.catalogue.Place.Label("Zzph Tegea"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(152.52, -42.53))),
-        in(Place(com.histmersion.api.catalogue.Place.Id(Mantinea), com.histmersion.api.catalogue.Place.Label("Zzph Mantinea"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(152.45, -42.45)))
+        in(Place(com.histmersion.api.catalogue.Place.Id(Tegea), com.histmersion.api.catalogue.Place.Label("Zzph Tegea"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(152.52, -42.53))),
+        in(Place(com.histmersion.api.catalogue.Place.Id(Mantinea), com.histmersion.api.catalogue.Place.Label("Zzph Mantinea"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(152.45, -42.45)))
       )
     )
     val r = rep
@@ -105,14 +105,14 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
           Place(
             com.histmersion.api.catalogue.Place.Id(NearRep),
             com.histmersion.api.catalogue.Place.Label("Zzph Nearrep"),
-            com.histmersion.domain.catalogue.Place.Kind.Site,
-            pt(r.lon + 0.02, r.lat + 0.01)
+            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+            pt(r.lon.value + 0.02, r.lat.value + 0.01)
           )
         )
       )
     )
-    def f(n: Int, region: Option[String], at: Option[GeoPoint], period: Option[Period] = None) =
-      Finding(s"zzph_src#$n", com.histmersion.api.library.Citekey("zzph_src"), s"claim $n", region, at, period, None, Nil, None)
+    def f(n: Int, region: Option[Finding.Region], at: Option[GeoPoint], period: Option[Period] = None) =
+      Finding(Finding.Id(s"zzph_src#$n"), com.histmersion.api.library.Citekey("zzph_src"), Finding.Claim(s"claim $n"), region, at, period, None, Nil, None)
     SourceFixtures.upsert(
       ds,
       Source(
@@ -133,19 +133,19 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
         provenance = None,
         calibreId = None,
         findings = List(
-          f(0, Some("Zzph Hellas"), Some(Grid), Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200)))), // a model's "Greece" on round numbers
+          f(0, Some(Finding.Region("Zzph Hellas")), Some(Grid), Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200)))), // a model's "Greece" on round numbers
           f(1, None, Some(Grid), Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200)))), // the same point, no name
-          f(2, Some("Zzph Hellas"), Some(r)), // the geocoder's point for the name
-          f(3, Some("Zzph Tegea"), Some(GeoPoint(152.52, -42.53))), // a precise point
-          f(4, Some("Zzph Hellas"), Some(Grid), Some(Period(com.histmersion.api.catalogue.Year(-500), com.histmersion.api.catalogue.Year(-400))))
+          f(2, Some(Finding.Region("Zzph Hellas")), Some(r)), // the geocoder's point for the name
+          f(3, Some(Finding.Region("Zzph Tegea")), Some(GeoPoint(Longitude(152.52), Latitude(-42.53)))), // a precise point
+          f(4, Some(Finding.Region("Zzph Hellas")), Some(Grid), Some(Period(com.histmersion.api.catalogue.Year(-500), com.histmersion.api.catalogue.Year(-400))))
         )
       ), // after the Mykenai realm
-      cfg.limits.chunkChars,
+      cfg.limits.chunkChars.value,
       tol
     )
 
   private def at(n: Int): Set[String] =
-    PlaceFixtures.placesOf(ds, s"zzph_src#$n").map(_.id).filter(_.startsWith("zzph")).toSet
+    PlaceFixtures.placesOf(ds, s"zzph_src#$n").map(_.id.value).filter(_.startsWith("zzph")).toSet
 
   private def holds(): Unit =
     assertEquals(
@@ -183,7 +183,9 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
     def isPh(p: GeoPoint) = connect(ds)(
       Sql
         .raw(
-          s"SELECT ${PlaceFixtures.placeholderSql("f")} FROM (SELECT ST_SetSRID(ST_MakePoint(${p.lon}, ${p.lat}), 4326) AS geom) f"
+          Sql.Text(
+            s"SELECT ${PlaceFixtures.placeholderSql("f")} FROM (SELECT ST_SetSRID(ST_MakePoint(${p.lon}, ${p.lat}), 4326) AS geom) f"
+          )
         )
         .frag
         .query[Boolean]
@@ -192,18 +194,18 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     assert(isPh(Grid))
     assert(isPh(rep))
-    assert(!isPh(GeoPoint(152.52, -42.53)), "a site's own point")
-    assert(!isPh(GeoPoint(rep.lon + 0.001, rep.lat)), "100 m off the representative point")
+    assert(!isPh(GeoPoint(Longitude(152.52), Latitude(-42.53))), "a site's own point")
+    assert(!isPh(GeoPoint(Longitude(rep.lon.value + 0.001), rep.lat)), "100 m off the representative point")
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
         Place.Input(
-          Place(com.histmersion.api.catalogue.Place.Id("zzph_tribe"), com.histmersion.api.catalogue.Place.Label("Zzph Tribe"), com.histmersion.domain.catalogue.Place.Kind.People, pt(153.31, -41.17)),
+          Place(com.histmersion.api.catalogue.Place.Id("zzph_tribe"), com.histmersion.api.catalogue.Place.Label("Zzph Tribe"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.People), pt(153.31, -41.17)),
           List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzph Tribe")))
         )
       )
     )
-    assert(isPh(GeoPoint(153.31, -41.17)), "a people's point")
+    assert(isPh(GeoPoint(Longitude(153.31), Latitude(-41.17))), "a people's point")
 
   test("finding-placeholder lists the placeholders no name resolves; nobody loses their last place"):
     seed()

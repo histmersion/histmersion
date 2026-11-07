@@ -10,5 +10,5 @@ import com.histmersion.api.library.{Filter, GeoHit}
 object FindingFixtures:
   def findingsFor(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Vector[GeoHit] =
     connect(ds)(FindingRepo.findingsFor(filter, scope))
-  def findingsCount(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Int =
+  def findingsCount(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): com.histmersion.RowCount =
     connect(ds)(FindingRepo.findingsCount(filter, scope))

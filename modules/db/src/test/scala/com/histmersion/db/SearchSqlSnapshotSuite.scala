@@ -31,8 +31,18 @@ class SearchSqlSnapshotSuite extends munit.FunSuite:
   private val update = sys.env.get("HISTMERSION_UPDATE_ORACLE").contains("1")
 
   private val scoped = PlaceScope(
-    Map("zq_land" -> List("zq_land", "zq_tell", "zq_cove"), "zq_tell" -> List("zq_tell")),
-    Map("zq_land" -> "Zqland", "zq_tell" -> "Zqtell")
+    Map(
+      PlaceScope.Value("zq_land") -> List(
+        PlaceScope.ByValueValue("zq_land"),
+        PlaceScope.ByValueValue("zq_tell"),
+        PlaceScope.ByValueValue("zq_cove")
+      ),
+      PlaceScope.Value("zq_tell") -> List(PlaceScope.ByValueValue("zq_tell"))
+    ),
+    Map(
+      PlaceScope.Value("zq_land") -> PlaceScope.LabelsValue("Zqland"),
+      PlaceScope.Value("zq_tell") -> PlaceScope.LabelsValue("Zqtell")
+    )
   )
 
   private val Box = BBox(com.histmersion.api.catalogue.Longitude(30), com.histmersion.api.catalogue.Latitude(36), com.histmersion.api.catalogue.Longitude(40), com.histmersion.api.catalogue.Latitude(42))

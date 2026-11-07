@@ -90,4 +90,4 @@ class MigrateSquashSuite extends com.histmersion.db.DbSuite with Bounded:
     val e = intercept[IllegalStateException](Migrate.run(ds))
     assert(e.getMessage.contains("schema 108"), e.getMessage)
     assertEquals(strings(ds, "SELECT count(*)::text FROM flyway_schema_history"), List("108"))
-    assert(Migrate.validate(ds).left.exists(_.contains("schema 108")), Migrate.validate(ds).toString)
+    assert(Migrate.validate(ds).left.exists(_.value.contains("schema 108")), Migrate.validate(ds).toString)

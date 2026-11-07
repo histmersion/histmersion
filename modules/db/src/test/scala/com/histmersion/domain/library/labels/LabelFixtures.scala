@@ -1,6 +1,7 @@
 package com.histmersion.domain.library.labels
 
 import com.histmersion.domain.catalogue.places.PlaceScope
+import com.histmersion.domain.library.search.FilterSql
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
@@ -11,9 +12,9 @@ object LabelFixtures:
   def facets(
       ds: DataSource,
       field: Facet.Field,
-      prefix: Option[String],
+      prefix: Option[FilterSql.FacetPrefix],
       filter: Filter,
-      limit: Int,
+      limit: com.histmersion.PageSize,
       scope: PlaceScope = PlaceScope.empty
   ): Vector[Facet] =
     connect(ds)(LabelRepo.facets(field, prefix, filter, limit, scope))

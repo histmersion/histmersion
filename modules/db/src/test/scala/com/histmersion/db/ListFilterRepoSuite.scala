@@ -8,7 +8,8 @@ import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 
-import com.histmersion.util.jobs.JobRepo
+import com.histmersion.util.jobs.{JobQuery, JobRepo}
+import com.histmersion.domain.automation.agents.RunQuery
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -34,7 +35,7 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
 
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.modify(_.url).setTo(testDb.get))
+    val d = testPool(base.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private val tag = s"zzlf${System.nanoTime().toHexString.takeRight(8)}"
@@ -89,7 +90,7 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
     "approvals: kind, state, subject, goal and decider filter on the server; each facet is counted under the others"
   ):
     val g = s"$tag-goal"
-    val run = job(s"$tag-run-a", Agents.JobKind, RunState.Done.wire, "2026-10-01T00:00:00Z", goal = Some(g))
+    val run = job(s"$tag-run-a", Agents.JobKind, RunState.Done.wire.value, "2026-10-01T00:00:00Z", goal = Some(g))
     val gp1 = approval("goal-plan", "open", Some(g))
     val gp2 =
       approval("goal-plan", "approved", Some(s"$tag-other"), note = Some(s"${DecidedBy.AutopilotNote} approved — fine"))
@@ -103,19 +104,19 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
     )
     val rej = approval("edge", "rejected", None, citekey = Some(s"${tag}_src2"), note = Some("not the critic"))
     def ids(q: ApprovalQuery) =
-      connect(ds)(AgentRepo.approvalPage(q, 50, None, None)).toOption.get._1.map(_.id).toSet
-    val mine = ApprovalQuery(subject = Some(tag))
+      connect(ds)(AgentRepo.approvalPage(q, com.histmersion.PageSize(50), None, None)).toOption.get._1.map(_.id).toSet
+    val mine = ApprovalQuery(subject = Some(ApprovalQuery.Subject(tag)))
     assertEquals(ids(mine), Set(gp1, gp2, pub, edg, rej))
     assertEquals(ids(mine.modify(_.state).setTo(Some(ApprovalState.Open))), Set(gp1, pub))
     assertEquals(ids(mine.modify(_.kinds).setTo(List(ApprovalKind.Edge, ApprovalKind.GoalPlan))), Set(gp1, gp2, edg, rej))
     // goal: its own plan, and what a run for it proposed
-    assertEquals(ids(ApprovalQuery(goal = Some(g))), Set(gp1, pub))
+    assertEquals(ids(ApprovalQuery(goal = Some(ApprovalQuery.Goal(g)))), Set(gp1, pub))
     // the decider
     assertEquals(ids(mine.modify(_.decidedBy).setTo(List(DecidedBy.Autopilot))), Set(gp2))
     assertEquals(ids(mine.modify(_.decidedBy).setTo(List(DecidedBy.Auto))), Set(edg))
     assertEquals(ids(mine.modify(_.decidedBy).setTo(List(DecidedBy.Person))), Set(rej))
     // a text filter takes `%` and `_` literally
-    assertEquals(ids(ApprovalQuery(subject = Some(s"$tag%"))), Set.empty[Long])
+    assertEquals(ids(ApprovalQuery(subject = Some(ApprovalQuery.Subject(s"$tag%")))), Set.empty[Long])
     // the counts: per state over the kind filter; per kind over the state filter, not the kind filter
     val (states, facets) =
       connect(ds)(
@@ -161,21 +162,21 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
     // an OCR job is not a run, whatever it is about
     job(s"$tag-o1", "ingest", "done", "2026-10-01T10:00:00Z", citekey = Some(s"$t-four"))
     step(a, 1, "codex:gpt-a"); step(a, 2, "codex:gpt-b"); step(b, 1, "claude-code:opus")
-    def ids(q: com.histmersion.domain.automation.agents.RunQuery) =
-      connect(ds)(AgentRepo.page(q, 50, None, None)).toOption.get._1.map(_.id).toSet
-    val mine = com.histmersion.domain.automation.agents.RunQuery(q = Some(t))
+    def ids(q: RunQuery) =
+      connect(ds)(AgentRepo.page(q, com.histmersion.PageSize(50), None, None)).toOption.get._1.map(_.id).toSet
+    val mine = RunQuery(q = Some(RunQuery.Q(t)))
     assertEquals(ids(mine), Set(a, b, c))
-    assertEquals(ids(mine.modify(_.pipelines).setTo(List("review-article"))), Set(a, c))
-    assertEquals(ids(mine.modify(_.status).setTo(List("failed", "cancelled"))), Set(b))
-    assertEquals(ids(mine.modify(_.managers).setTo(List("seed:x"))), Set(c))
+    assertEquals(ids(mine.modify(_.pipelines).setTo(List(RunQuery.Pipelines("review-article")))), Set(a, c))
+    assertEquals(ids(mine.modify(_.status).setTo(List(RunQuery.Status("failed"), RunQuery.Status("cancelled")))), Set(b))
+    assertEquals(ids(mine.modify(_.managers).setTo(List(RunQuery.Managers("seed:x")))), Set(c))
     // a run with no recorded origin was a person's
-    assertEquals(ids(mine.modify(_.origins).setTo(List("person"))), Set(b))
-    assertEquals(ids(mine.modify(_.models).setTo(List("codex:gpt-b"))), Set(a))
-    assertEquals(ids(mine.modify(_.providers).setTo(List("claude-code"))), Set(b))
+    assertEquals(ids(mine.modify(_.origins).setTo(List(RunQuery.Origins("person")))), Set(b))
+    assertEquals(ids(mine.modify(_.models).setTo(List(RunQuery.Models("codex:gpt-b")))), Set(a))
+    assertEquals(ids(mine.modify(_.providers).setTo(List(RunQuery.Providers("claude-code")))), Set(b))
     val at = (s: String) => Some(Instant.parse(s))
     assertEquals(ids(mine.modify(_.since).setTo(at("2026-09-10T00:00:00Z"))), Set(b, c))
     assertEquals(ids(mine.modify(_.since).setTo(at("2026-09-10T00:00:00Z")).modify(_.until).setTo(at("2026-10-01T00:00:00Z"))), Set(b))
-    val (states, facets) = connect(ds)(AgentRepo.runFacets(mine.modify(_.pipelines).setTo(List("review-article"))))
+    val (states, facets) = connect(ds)(AgentRepo.runFacets(mine.modify(_.pipelines).setTo(List(RunQuery.Pipelines("review-article")))))
     assertEquals(states.toMap, Map("done" -> 2))
     val f = facets.toMap
     assertEquals(f("pipeline"), List("review-article" -> 2, "enrich-source" -> 1))
@@ -201,18 +202,18 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
       pipeline = Some("enrich-source"),
       target = Some(s"${t}_d")
     )
-    def ids(q: com.histmersion.util.jobs.JobQuery) =
-      Transactor(ds).read(JobRepo.page(q, 50, None, None)).toOption.get._1.map(_.id).toSet
-    val mine = com.histmersion.util.jobs.JobQuery(q = Some(t))
+    def ids(q: JobQuery) =
+      Transactor(ds).read(JobRepo.page(q, com.histmersion.PageSize(50), None, None)).toOption.get._1.map(_.id).toSet
+    val mine = JobQuery(q = Some(JobQuery.Q(t)))
     assertEquals(ids(mine), Set(i1, i2, m1, r1))
-    assertEquals(ids(mine.modify(_.kinds).setTo(List("ingest", "media-import"))), Set(i1, i2, m1))
-    assertEquals(ids(mine.modify(_.status).setTo(List("failed"))), Set(i2))
+    assertEquals(ids(mine.modify(_.kinds).setTo(List(JobQuery.Kinds("ingest"), JobQuery.Kinds("media-import")))), Set(i1, i2, m1))
+    assertEquals(ids(mine.modify(_.status).setTo(List(JobQuery.Status("failed")))), Set(i2))
     assertEquals(ids(mine.modify(_.until).setTo(Some(Instant.parse("2026-09-03T00:00:00Z")))), Set(i1, i2))
     // the start of an id finds that job
-    assertEquals(ids(com.histmersion.util.jobs.JobQuery(q = Some(s"$tag-j3"))), Set(m1))
+    assertEquals(ids(JobQuery(q = Some(JobQuery.Q(s"$tag-j3")))), Set(m1))
     val (states, facets) =
-      Transactor(ds).read(JobRepo.facets(mine.modify(_.kinds).setTo(List("ingest")).modify(_.status).setTo(List("done")), com.histmersion.PageSize(40)))
+      Transactor(ds).read(JobRepo.facets(mine.modify(_.kinds).setTo(List(JobQuery.Kinds("ingest"))).modify(_.status).setTo(List(JobQuery.Status("done"))), com.histmersion.PageSize(40)))
     assertEquals(states.toMap, Map("done" -> 1, "failed" -> 1))
     assertEquals(facets.toMap.apply("kind").toMap, Map("ingest" -> 1, "media-import" -> 1, "agent" -> 1))
     // the old single-state page still reads through the same query
-    assert(Transactor(ds).read(JobRepo.page(Some(com.histmersion.util.jobs.JobRepo.PageStatus("failed")), com.histmersion.PageSize(500))).toOption.get._1.exists(_.id == i2))
+    assert(Transactor(ds).read(JobRepo.page(Some(com.histmersion.util.jobs.JobRepo.PageStatus("failed")), com.histmersion.PageSize(500))).toOption.get._1.exists(_.id.value == i2))
