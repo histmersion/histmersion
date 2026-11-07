@@ -2,6 +2,7 @@ package com.histmersion.util.basemap
 
 import com.histmersion.testsupport.ComparedByValue.given
 
+import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.util.storage.{Location, Reservation, Storage, Store}
 import io.circe.Json
 
@@ -23,85 +24,141 @@ object BasemapFixtures:
     PmTilesWriter(store(a.getParent), Store.Key.applyUnsafe(a.getFileName.toString))
 
   /** The archive at `p`, opened. */
-  def open(p: Path): Either[String, PmTiles.File] =
+  def open(p: Path): Either[PmTiles.Problem, PmTiles.File] =
     val a = p.toAbsolutePath
     store(a.getParent)
       .get(Store.Key.applyUnsafe(a.getFileName.toString))
-      .toRight(s"$p: no such file")
+      .toRight(PmTiles.Problem(s"$p: no such file"))
       .flatMap(PmTiles.File.open(_))
 
+  private def commands(cs: Int*): Vector[Mvt.GeometryCommand] = cs.map(Mvt.GeometryCommand(_)).toVector
+
+  private val KindKey = Mvt.PropKey("kind")
+  private val NameKey = Mvt.PropKey("name")
+  private val NameEnKey = Mvt.PropKey("name:en")
+
   /** A square ring over the whole tile (MVT commands: MoveTo, LineTo ×3, ClosePath). */
-  private val square = Vector(9, 0, 0, 26, 8192, 0, 0, 8192, 8191, 0, 15)
-  private val line = Vector(9, 100, 100, 10, 400, 400)
+  private val square = commands(9, 0, 0, 26, 8192, 0, 0, 8192, 8191, 0, 15)
+  private val line = commands(9, 100, 100, 10, 400, 400)
 
   /** A vector tile with what a Protomaps tile holds: land, the sea (and its name), a river and a canal, natural and
     * farmed land cover, land use, a peak and a restaurant, a road, a town, and a layer an older build has
     * (`physical_point`).
     */
-  def vectorTile(z: Int, x: Long, y: Long): Array[Byte] =
+  def vectorTile(z: PmTiles.Zoom, x: PmTiles.TileColumn, y: PmTiles.TileRow): PmTiles.PlainBytes =
     Mvt.tile(
       List(
-        Mvt.layer(com.histmersion.util.basemap.Mvt.LayerName("earth"), List((com.histmersion.util.basemap.Mvt.GeomType(3), square, Map("kind" -> "earth")))),
+        Mvt.layer(Mvt.LayerName("earth"), List((Mvt.GeomType(3), square, Map(KindKey -> Mvt.PropText("earth"))))),
         Mvt.layer(
-          com.histmersion.util.basemap.Mvt.LayerName("water"),
+          Mvt.LayerName("water"),
           List(
-            (com.histmersion.util.basemap.Mvt.GeomType(3), square, Map("kind" -> "ocean")),
-            (com.histmersion.util.basemap.Mvt.GeomType(2), line, Map("kind" -> "river")),
-            (com.histmersion.util.basemap.Mvt.GeomType(2), line, Map("kind" -> "canal")),
-            (com.histmersion.util.basemap.Mvt.GeomType(1), Vector(com.histmersion.util.basemap.Mvt.GeometryCommand(9), com.histmersion.util.basemap.Mvt.GeometryCommand(40), com.histmersion.util.basemap.Mvt.GeometryCommand(40)), Map("kind" -> "sea", "name" -> "Aegean Sea", "name:en" -> "Aegean Sea"))
+            (Mvt.GeomType(3), square, Map(KindKey -> Mvt.PropText("ocean"))),
+            (Mvt.GeomType(2), line, Map(KindKey -> Mvt.PropText("river"))),
+            (Mvt.GeomType(2), line, Map(KindKey -> Mvt.PropText("canal"))),
+            (
+              Mvt.GeomType(1),
+              commands(9, 40, 40),
+              Map(
+                KindKey -> Mvt.PropText("sea"),
+                NameKey -> Mvt.PropText("Aegean Sea"),
+                NameEnKey -> Mvt.PropText("Aegean Sea")
+              )
+            )
           )
         ),
-        Mvt.layer(com.histmersion.util.basemap.Mvt.LayerName("landcover"), List((com.histmersion.util.basemap.Mvt.GeomType(3), square, Map("kind" -> "forest")), (com.histmersion.util.basemap.Mvt.GeomType(3), square, Map("kind" -> "farmland")))),
-        Mvt.layer(com.histmersion.util.basemap.Mvt.LayerName("landuse"), List((com.histmersion.util.basemap.Mvt.GeomType(3), square, Map("kind" -> "residential")))),
         Mvt.layer(
-          com.histmersion.util.basemap.Mvt.LayerName("pois"),
+          Mvt.LayerName("landcover"),
           List(
-            (com.histmersion.util.basemap.Mvt.GeomType(1), Vector(com.histmersion.util.basemap.Mvt.GeometryCommand(9), com.histmersion.util.basemap.Mvt.GeometryCommand(60), com.histmersion.util.basemap.Mvt.GeometryCommand(60)), Map("kind" -> "peak", "name" -> "Olympus")),
-            (com.histmersion.util.basemap.Mvt.GeomType(1), Vector(com.histmersion.util.basemap.Mvt.GeometryCommand(9), com.histmersion.util.basemap.Mvt.GeometryCommand(70), com.histmersion.util.basemap.Mvt.GeometryCommand(70)), Map("kind" -> "restaurant"))
+            (Mvt.GeomType(3), square, Map(KindKey -> Mvt.PropText("forest"))),
+            (Mvt.GeomType(3), square, Map(KindKey -> Mvt.PropText("farmland")))
           )
         ),
-        Mvt.layer(com.histmersion.util.basemap.Mvt.LayerName("roads"), List((com.histmersion.util.basemap.Mvt.GeomType(2), line, Map("kind" -> "highway", "name" -> s"A$z-$x-$y")))),
-        Mvt.layer(com.histmersion.util.basemap.Mvt.LayerName("places"), List((com.histmersion.util.basemap.Mvt.GeomType(1), Vector(com.histmersion.util.basemap.Mvt.GeometryCommand(9), com.histmersion.util.basemap.Mvt.GeometryCommand(50), com.histmersion.util.basemap.Mvt.GeometryCommand(50)), Map("kind" -> "locality", "name" -> "Zzville")))),
-        Mvt.layer(com.histmersion.util.basemap.Mvt.LayerName("physical_point"), List((com.histmersion.util.basemap.Mvt.GeomType(1), Vector(com.histmersion.util.basemap.Mvt.GeometryCommand(9), com.histmersion.util.basemap.Mvt.GeometryCommand(80), com.histmersion.util.basemap.Mvt.GeometryCommand(80)), Map("kind" -> "mountain_range", "name" -> "Pindus"))))
+        Mvt.layer(Mvt.LayerName("landuse"), List((Mvt.GeomType(3), square, Map(KindKey -> Mvt.PropText("residential"))))),
+        Mvt.layer(
+          Mvt.LayerName("pois"),
+          List(
+            (
+              Mvt.GeomType(1),
+              commands(9, 60, 60),
+              Map(KindKey -> Mvt.PropText("peak"), NameKey -> Mvt.PropText("Olympus"))
+            ),
+            (Mvt.GeomType(1), commands(9, 70, 70), Map(KindKey -> Mvt.PropText("restaurant")))
+          )
+        ),
+        Mvt.layer(
+          Mvt.LayerName("roads"),
+          List(
+            (
+              Mvt.GeomType(2),
+              line,
+              Map(KindKey -> Mvt.PropText("highway"), NameKey -> Mvt.PropText(s"A$z-$x-$y"))
+            )
+          )
+        ),
+        Mvt.layer(
+          Mvt.LayerName("places"),
+          List(
+            (
+              Mvt.GeomType(1),
+              commands(9, 50, 50),
+              Map(KindKey -> Mvt.PropText("locality"), NameKey -> Mvt.PropText("Zzville"))
+            )
+          )
+        ),
+        Mvt.layer(
+          Mvt.LayerName("physical_point"),
+          List(
+            (
+              Mvt.GeomType(1),
+              commands(9, 80, 80),
+              Map(KindKey -> Mvt.PropText("mountain_range"), NameKey -> Mvt.PropText("Pindus"))
+            )
+          )
+        )
       )
     )
 
-  private def header(t: PmTiles.TileType, c: PmTiles.Compression, maxZoom: Int) =
+  private def header(t: PmTiles.TileType, c: PmTiles.Compression, maxZoom: PmTiles.Zoom) =
     PmTiles.Header(
-      com.histmersion.util.basemap.PmTiles.Header.MetadataOffset(0),
-      com.histmersion.util.basemap.PmTiles.Header.MetadataLength(0),
-      com.histmersion.util.basemap.PmTiles.Header.LeafOffset(0),
-      com.histmersion.util.basemap.PmTiles.Header.LeafLength(0),
-      com.histmersion.util.basemap.PmTiles.Header.DataOffset(0),
-      com.histmersion.util.basemap.PmTiles.Header.DataLength(0),
-      com.histmersion.util.basemap.PmTiles.Header.AddressedTiles(0),
-      com.histmersion.util.basemap.PmTiles.Header.TileEntries(0),
-      com.histmersion.util.basemap.PmTiles.Header.TileContents(0),
-      com.histmersion.util.basemap.PmTiles.Header.TileEntries(0),
-      com.histmersion.util.basemap.PmTiles.Header.TileContents(0),
-      com.histmersion.util.basemap.PmTiles.Header.Clustered(true),
+      PmTiles.Header.RootOffset(0),
+      PmTiles.Header.RootLength(0),
+      PmTiles.Header.MetadataOffset(0),
+      PmTiles.Header.MetadataLength(0),
+      PmTiles.Header.LeafOffset(0),
+      PmTiles.Header.LeafLength(0),
+      PmTiles.Header.DataOffset(0),
+      PmTiles.Header.DataLength(0),
+      PmTiles.Header.AddressedTiles(0),
+      PmTiles.Header.TileEntries(0),
+      PmTiles.Header.TileContents(0),
+      PmTiles.Header.Clustered(true),
       PmTiles.Compression.Gzip,
       c,
       t,
-      com.histmersion.util.basemap.PmTiles.Header.MinZoom(0),
+      PmTiles.Header.MinZoom(0),
       maxZoom,
-      com.histmersion.util.basemap.PmTiles.Header.MinLon(-180),
-      -85.05,
-      com.histmersion.util.basemap.PmTiles.Header.MaxLon(180),
-      85.05,
-      com.histmersion.util.basemap.PmTiles.Header.CenterLat(0),
-      com.histmersion.util.basemap.PmTiles.Header.CenterLon(0),
-      com.histmersion.util.basemap.PmTiles.Header.CenterLat(0)
+      PmTiles.Header.MinLon(-180),
+      PmTiles.Header.MinLat(-85.05),
+      PmTiles.Header.MaxLon(180),
+      PmTiles.Header.MaxLat(85.05),
+      PmTiles.Header.CenterZoom(0),
+      PmTiles.Header.CenterLon(0),
+      PmTiles.Header.CenterLat(0)
     )
 
   /** A world archive of zooms 0…`maxZoom`, every tile from `tile` (stored with `compression`). */
-  def archive(out: Path, maxZoom: Int, t: PmTiles.TileType, c: PmTiles.Compression, extra: Json = Json.obj())(
-      tile: (Int, Long, Long) => Array[Byte]
+  def archive(out: Path, maxZoom: PmTiles.Zoom, t: PmTiles.TileType, c: PmTiles.Compression, extra: Json = Json.obj())(
+      tile: (PmTiles.Zoom, PmTiles.TileColumn, PmTiles.TileRow) => PmTiles.PlainBytes
   ): Path =
     val w = writer(out)
-    val all = for z <- 0 to maxZoom; x <- 0L until (1L << z); y <- 0L until (1L << z)
-    yield (PmTiles.tileId(z, x, y), (z, x, y))
-    all.sortBy(_._1).foreach { case (id, (z, x, y)) => w.add(id, PmTiles.compress(tile(z, x, y), c)) }
+    val all = for
+      z <- 0 to maxZoom.value
+      x <- 0L until (1L << z)
+      y <- 0L until (1L << z)
+    yield (PmTiles.tileId(PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y)), (PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y)))
+    all.sortBy(_._1.value).foreach { case (id, (z, x, y)) =>
+      w.add(id, PmTiles.TileBytes(PmTiles.compress(tile(z, x, y), c).value))
+    }
     val meta = Json.obj(
       "name" -> Json.fromString("fixture"),
       "vector_layers" -> Json.arr(
@@ -114,29 +171,44 @@ object BasemapFixtures:
     out
 
   /** `extra`: metadata merged in — `{"histmersion": {"keepAll": true}}` makes it a `--keep-all` extract. */
-  def vectorArchive(out: Path, maxZoom: Int = 4, extra: Json = Json.obj()): Path =
+  def vectorArchive(out: Path, maxZoom: PmTiles.Zoom = PmTiles.Zoom(4), extra: Json = Json.obj()): Path =
     archive(out, maxZoom, PmTiles.TileType.Mvt, PmTiles.Compression.Gzip, extra)(vectorTile)
 
   /** A terrain archive whose tiles are just their own name (a fetch never decodes them). */
-  def terrainArchive(out: Path, maxZoom: Int = 4): Path =
-    archive(out, maxZoom, PmTiles.TileType.Webp, PmTiles.Compression.None)((z, x, y) => s"RIFF$z/$x/$y".getBytes)
+  def terrainArchive(out: Path, maxZoom: PmTiles.Zoom = PmTiles.Zoom(4)): Path =
+    archive(out, maxZoom, PmTiles.TileType.Webp, PmTiles.Compression.None)((z, x, y) =>
+      PmTiles.PlainBytes(s"RIFF$z/$x/$y".getBytes)
+    )
 
   /** Answers range requests from `file` as a CDN does (206, Content-Range, an ETag), counting them. `etag` may change
     * between requests (a build replaced mid-download).
     */
-  final class LocalRange(file: Path, var etag: String = "\"v1\"", builds: String = "[]") extends RangeHttp:
+  final class LocalRange(
+      file: Path,
+      var etag: RemoteFile.Etag = RemoteFile.Etag("\"v1\""),
+      builds: RangeHttp.ResponseText = RangeHttp.ResponseText("[]")
+  ) extends RangeHttp:
     val requests = AtomicInteger(0)
     val downloads = AtomicInteger(0)
-    private def size = Files.size(file)
-    def text(url: String): Either[String, String] = Right(builds)
-    def bytes(url: String, offset: Long, length: Long): Either[String, (Array[Byte], RemoteFile)] =
+    private def size = RemoteFile.Size(Files.size(file))
+    def text(url: RangeHttp.Url): Either[RangeHttp.Problem, RangeHttp.ResponseText] = Right(builds)
+    def bytes(
+        url: RangeHttp.Url,
+        offset: ByteOffset,
+        length: ByteCount
+    ): Either[RangeHttp.Problem, (RangeHttp.ResponseBytes, RemoteFile)] =
       requests.incrementAndGet()
       val all = Files.readAllBytes(file)
-      val end = math.min(all.length.toLong, offset + length)
-      Right((all.slice(offset.toInt, end.toInt), RemoteFile(size, Some(etag))))
-    def download(url: String, offset: Long, length: Long, to: Reservation): Either[String, RemoteFile] =
+      val end = math.min(all.length.toLong, offset.value + length.value)
+      Right((RangeHttp.ResponseBytes(all.slice(offset.value.toInt, end.toInt)), RemoteFile(size, Some(etag))))
+    def download(
+        url: RangeHttp.Url,
+        offset: ByteOffset,
+        length: ByteCount,
+        to: Reservation
+    ): Either[RangeHttp.Problem, RemoteFile] =
       requests.incrementAndGet()
       downloads.incrementAndGet()
       val all = Files.readAllBytes(file)
-      Using.resource(to.output())(_.write(all.slice(offset.toInt, (offset + length).toInt)))
+      Using.resource(to.output())(_.write(all.slice(offset.value.toInt, (offset.value + length.value).toInt)))
       Right(RemoteFile(size, Some(etag)))

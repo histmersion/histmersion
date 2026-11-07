@@ -5,7 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Dataset
-import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetRegion}
+import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetRegion, Year}
 import com.histmersion.domain.catalogue.{CatalogueStores, CatalogueStoreSuite}
 
 /** The contract the named periods keep: parents written before their parts and the inclusive span read back, the
@@ -13,14 +13,14 @@ import com.histmersion.domain.catalogue.{CatalogueStores, CatalogueStoreSuite}
   * deletions and version, a label search with `_` and `%` literal.
   */
 abstract class PeriodServiceContract extends CatalogueStoreSuite:
-  private def hp(id: String, s: Long, e: Long, parent: Option[String] = None) =
-    HistoricalPeriod(id, id.toUpperCase, Some(s"PeriodO $id · test"), Period(s, e), Some(com.histmersion.api.catalogue.HistoricalPeriod.Region("Zzrland")), parent)
+  private def hp(id: HistoricalPeriod.Id, s: Year, e: Year, parent: Option[HistoricalPeriod.ParentId] = None) =
+    HistoricalPeriod(id, HistoricalPeriod.Label(id.value.toUpperCase), Some(HistoricalPeriod.Authority(s"PeriodO $id · test")), Period(s, e), Some(com.histmersion.api.catalogue.HistoricalPeriod.Region("Zzrland")), parent)
 
   private val tree = List(
-    hp("zzr_root", -3000, -1000),
-    hp("zzr_bronze", -3000, -1200, Some("zzr_root")),
-    hp("zzr_lba", -1600, -1200, Some("zzr_bronze")),
-    hp("zzr_lm", -1700, -1050, Some("zzr_bronze"))
+    hp(HistoricalPeriod.Id("zzr_root"), Year(-3000), Year(-1000)),
+    hp(HistoricalPeriod.Id("zzr_bronze"), Year(-3000), Year(-1200), Some(HistoricalPeriod.ParentId("zzr_root"))),
+    hp(HistoricalPeriod.Id("zzr_lba"), Year(-1600), Year(-1200), Some(HistoricalPeriod.ParentId("zzr_bronze"))),
+    hp(HistoricalPeriod.Id("zzr_lm"), Year(-1700), Year(-1050), Some(HistoricalPeriod.ParentId("zzr_bronze")))
   )
 
   private def ids(ps: List[HistoricalPeriod]) = ps.map(_.id)
@@ -33,7 +33,7 @@ abstract class PeriodServiceContract extends CatalogueStoreSuite:
     assertEquals(ids(p.children(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzr_bronze"))), List("zzr_lm", "zzr_lba"))
     assertEquals(p.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzr_nope")), None)
     assertEquals(p.write(Nil, Dataset.Seed), 0)
-    intercept[Exception](p.write(List(hp("zzr_orphan", 1, 2, Some("zzr_missing"))), Dataset.Seed))
+    intercept[Exception](p.write(List(hp(HistoricalPeriod.Id("zzr_orphan"), Year(1), Year(2), Some(HistoricalPeriod.ParentId("zzr_missing")))), Dataset.Seed))
     assertEquals(p.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzr_orphan")), None)
   }
 
@@ -46,14 +46,14 @@ abstract class PeriodServiceContract extends CatalogueStoreSuite:
     )
     assertEquals(p.placement(Nil), Map.empty)
     val before = p.count()
-    p.write(List(hp("zzr_lba", -1600, -1200, Some("zzr_root"))), Dataset.Seed)
+    p.write(List(hp(HistoricalPeriod.Id("zzr_lba"), Year(-1600), Year(-1200), Some(HistoricalPeriod.ParentId("zzr_root")))), Dataset.Seed)
     assertEquals(p.count(), before)
     assertEquals(p.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzr_lba")).flatMap(_.parentId), Some("zzr_root"))
   }
 
   stest("the presets are the rows filed under a heading; the search finds by label, region and either bound") { s =>
     val p = s.periods
-    p.write(tree :+ hp("zzr_other", 100, 200).modify(_.preset).setTo(Some(PresetRegion.Aegean)), Dataset.Seed)
+    p.write(tree :+ hp(HistoricalPeriod.Id("zzr_other"), Year(100), Year(200)).modify(_.preset).setTo(Some(PresetRegion.Aegean)), Dataset.Seed)
     assertEquals(
       p.search(PeriodSearch(Some(com.histmersion.domain.catalogue.periods.PeriodSearch.Text("ZZR")))).filter(_.preset.isDefined).map(x => x.id -> x.preset),
       List("zzr_other" -> Some(PresetRegion.Aegean))
@@ -74,10 +74,10 @@ abstract class PeriodServiceContract extends CatalogueStoreSuite:
 
   stest("an upsert without a preset keeps the stored one; retainPresets takes the others off the menu") { s =>
     val p = s.periods
-    p.write(tree :+ hp(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzr_other"), 100, 200).modify(_.preset).setTo(Some(PresetRegion.Aegean)), Dataset.Seed)
-    p.write(List(hp("zzr_other", 100, 200)), Dataset.Seed)
+    p.write(tree :+ hp(HistoricalPeriod.Id("zzr_other"), Year(100), Year(200)).modify(_.preset).setTo(Some(PresetRegion.Aegean)), Dataset.Seed)
+    p.write(List(hp(HistoricalPeriod.Id("zzr_other"), Year(100), Year(200))), Dataset.Seed)
     assertEquals(p.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzr_other")).flatMap(_.preset), Some(PresetRegion.Aegean))
-    p.write(List(hp("zzr_root", -3000, -1000).modify(_.preset).setTo(Some(PresetRegion.Iran))), Dataset.Seed)
+    p.write(List(hp(HistoricalPeriod.Id("zzr_root"), Year(-3000), Year(-1000)).modify(_.preset).setTo(Some(PresetRegion.Iran))), Dataset.Seed)
     assertEquals(p.retainPresets(List(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzr_root"))), 1)
     assertEquals(p.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzr_other")).map(x => (x.preset, x.label)), Some((None, "ZZR_OTHER")))
     assertEquals(p.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzr_root")).flatMap(_.preset), Some(PresetRegion.Iran))
@@ -88,7 +88,7 @@ abstract class PeriodServiceContract extends CatalogueStoreSuite:
     s =>
       val p = s.periods
       p.write(tree, Dataset.Seed)
-      p.write(List(hp("zzr_mine", 1, 2, Some("zzr_lm"))), Dataset.Local)
+      p.write(List(hp(HistoricalPeriod.Id("zzr_mine"), Year(1), Year(2), Some(HistoricalPeriod.ParentId("zzr_lm")))), Dataset.Local)
       assertEquals(s.seedRows().toSet, tree.map(_.id).toSet)
       assertEquals(p.deleteSeedExcept(List(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzr_root"), com.histmersion.api.catalogue.HistoricalPeriod.Id("zzr_bronze"), com.histmersion.api.catalogue.HistoricalPeriod.Id("zzr_lba"))), 1)
       assertEquals(p.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzr_lm")), None)
@@ -107,7 +107,7 @@ abstract class PeriodServiceContract extends CatalogueStoreSuite:
 
   stest("the label search treats `_` and `%` as literal characters") { s =>
     val p = s.periods
-    p.write(List(hp("zzr_root", -3000, -1000), hp("zzr_other", 100, 200), hp("zz%r", 1, 2)), Dataset.Seed)
+    p.write(List(hp(HistoricalPeriod.Id("zzr_root"), Year(-3000), Year(-1000)), hp(HistoricalPeriod.Id("zzr_other"), Year(100), Year(200)), hp(HistoricalPeriod.Id("zz%r"), Year(1), Year(2))), Dataset.Seed)
     assertEquals(ids(p.search(PeriodSearch(Some(com.histmersion.domain.catalogue.periods.PeriodSearch.Text("ZZR_"))))).toSet, Set("zzr_root", "zzr_other"))
     assertEquals(ids(p.search(PeriodSearch(Some(com.histmersion.domain.catalogue.periods.PeriodSearch.Text("zzr_oth"))))), List("zzr_other"))
     assertEquals(ids(p.search(PeriodSearch(Some(com.histmersion.domain.catalogue.periods.PeriodSearch.Text("ZZ_R"))))), Nil)

@@ -9,5 +9,5 @@ class FiguresControllersSuite extends munit.FunSuite:
     val gate = WriteGate()
     val c = FiguresControllers(FigureService.InMemory(), gate)
     val held = gate.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(Right((c.fillLicences(apply = com.histmersion.domain.media.figures.FigureService.Apply(false)), c.fillLicences(apply = com.histmersion.domain.media.figures.FigureService.Apply(true)))))
-    val (dry, wet) = held.fold(e => fail(e.message), identity)
+    val (dry, wet) = held.fold(e => fail(e.message.value), identity)
     assert(dry.isRight && wet.isLeft, (dry, wet))

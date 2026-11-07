@@ -38,7 +38,7 @@ class ReadingServiceContractSuite extends PersonalServiceContract("reading"):
     assertEquals(w.reading.list(me, None, ReadingShow.Read, all), Nil)
     assertEquals(w.reading.list(me, None, ReadingShow.Opened, all).map(_.title.value: String), List("Zz Beta"))
     val article = MarkTarget.itemKind(MarkKind.Article)
-    w.reading.opened(me, article, ItemKey("zz_art_x"), TargetLabel.tidy("Zz article X"), at(4))
+    w.reading.opened(me, article, ItemKey("zz_art_x"), TargetLabel.tidy(TargetLabel.Label("Zz article X")), at(4))
     assertEquals(
       w.reading.list(me, None, ReadingShow.Opened, all).map(_.title.value: String),
       List("Zz article X", "Zz Beta")

@@ -22,21 +22,46 @@ class CheckRunnerSuite extends munit.FunSuite:
 
   private val shared = CheckInput(List("x"))
 
-  final private class Fake(name: String, items: Int, override val fix: Option[SafeFix] = None) extends CheckRule:
+  final private class Fake(name: Rule.Name, items: Int, override val fix: Option[SafeFix] = None) extends CheckRule:
     val owner: DataOwner = DataOwner("test")
-    val rule: Rule = Rule(name, s"$name rule")
-    def report(context: CheckContext, maxItems: Int)(using run: CheckRun)(using DbCon): LintRuleReport =
-      Lint.report(rule, List.tabulate(items)(i => LintItem(s"${run(shared).head}$i", name)), maxItems)
+    val rule: Rule = Rule(name, Rule.Description(s"$name rule"))
+    def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using run: CheckRun)(using DbCon): LintRuleReport =
+      Lint.report(
+        rule,
+        List.tabulate(items)(i =>
+          LintItem(com.histmersion.api.library.Citekey(s"${run(shared).head}$i"), LintItem.Detail(name.value))
+        ),
+        Lint.ItemLimit(maxItems.value)
+      )
 
-  private def fixing(line: String, edges: Int, when: FixWhen, rank: Int): Option[SafeFix] =
-    Some(SafeFix(when, FixRank(rank), _ => LintFixResult(List(line), edges, com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0), com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0), edges, findingsPlaced = edges)))
+  private def fixing(
+      line: LintFixResult.Applied,
+      edges: LintFixResult.EdgesResolved,
+      when: FixWhen,
+      rank: FixRank
+  ): Option[SafeFix] =
+    Some(
+      SafeFix(
+        when,
+        rank,
+        _ =>
+          LintFixResult(
+            List(line),
+            edges,
+            LintFixResult.SourcesReindexed(0),
+            LintFixResult.ChunksWritten(0),
+            LintFixResult.Remaining(edges.value),
+            findingsPlaced = LintFixResult.FindingsPlaced(edges.value)
+          )
+      )
+    )
 
   private val order = CheckOrder(List(com.histmersion.api.checks.Lint.Rule.Name("a"), com.histmersion.api.checks.Lint.Rule.Name("b"), com.histmersion.api.checks.Lint.Rule.Name("c")))
   private val registered = List(
-    Fake("b", 1, fixing("b fixed", 2, FixWhen.WhenNamed, 3)),
-    Fake("z", 0),
-    Fake("a", 3, fixing("a fixed", 1, FixWhen.EveryFix, 2)),
-    Fake("c", 0, fixing("c fixed", 4, FixWhen.WhenNamed, 1))
+    Fake(Rule.Name("b"), 1, fixing(LintFixResult.Applied("b fixed"), LintFixResult.EdgesResolved(2), FixWhen.WhenNamed, FixRank(3))),
+    Fake(Rule.Name("z"), 0),
+    Fake(Rule.Name("a"), 3, fixing(LintFixResult.Applied("a fixed"), LintFixResult.EdgesResolved(1), FixWhen.EveryFix, FixRank(2))),
+    Fake(Rule.Name("c"), 0, fixing(LintFixResult.Applied("c fixed"), LintFixResult.EdgesResolved(4), FixWhen.WhenNamed, FixRank(1)))
   )
   private val runner = CheckRunner(registered, order, NoDatabase)
   private lazy val context = CheckContext(AppConfig.load(), null, _ => (_, _, _) => Nil, (_, _, _) => true, new com.histmersion.util.time.SystemTimer)

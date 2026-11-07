@@ -5,6 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.BBox
+import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import io.circe.Json
@@ -15,6 +16,11 @@ import com.histmersion.api.basemap.Basemap
   * simplifying and clipping rivers, and the tiles they are written as. Pure.
   */
 class BasemapLabelsSuite extends munit.FunSuite:
+
+  private val Lon = BasemapLabels.Label.Lon
+  private val Lat = BasemapLabels.Label.Lat
+  private val X = BasemapLabels.WorldX
+  private val Y = BasemapLabels.WorldY
 
   private def feature(props: String, geometry: String): Json =
     parse(s"""{"type":"Feature","properties":$props,"geometry":$geometry}""").fold(e => fail(e.toString), identity)
@@ -28,6 +34,7 @@ class BasemapLabelsSuite extends munit.FunSuite:
     assertEquals(BasemapLabels.kindOf(com.histmersion.util.basemap.BasemapLabels.FeatureClass("mountain")), Some("peak"))
     assertEquals(BasemapLabels.kindOf(com.histmersion.util.basemap.BasemapLabels.FeatureClass("Alkaline Lake")), Some("lake"))
     List("Reservoir", "Canal", "Lake Centerline", "pole", "Populated place", "Admin-0 country", "Road")
+      .map(BasemapLabels.FeatureClass(_))
       .foreach(c => assertEquals(BasemapLabels.kindOf(c), None, c))
 
   test("names: Natural Earth's own and each language, upper-case keys too, Chinese as Protomaps names it"):
@@ -54,14 +61,23 @@ class BasemapLabelsSuite extends munit.FunSuite:
     assertEquals(z("""{}"""), 6)
 
   test("a polygon's name sits inside it — a crescent's centroid does not, the widest stretch does"):
-    val square = Vector((0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0))
+    val square = Vector((Lon(0.0), Lat(0.0)), (Lon(4.0), Lat(0.0)), (Lon(4.0), Lat(4.0)), (Lon(0.0), Lat(4.0)))
     assertEquals(BasemapLabels.labelPoint(Vector(square)), Some((2.0, 2.0)))
     // a C open to the east: its centre of area lies in the opening
-    val c = Vector((0.0, 0.0), (10.0, 0.0), (10.0, 2.0), (2.0, 2.0), (2.0, 8.0), (10.0, 8.0), (10.0, 10.0), (0.0, 10.0))
+    val c = Vector(
+      (Lon(0.0), Lat(0.0)),
+      (Lon(10.0), Lat(0.0)),
+      (Lon(10.0), Lat(2.0)),
+      (Lon(2.0), Lat(2.0)),
+      (Lon(2.0), Lat(8.0)),
+      (Lon(10.0), Lat(8.0)),
+      (Lon(10.0), Lat(10.0)),
+      (Lon(0.0), Lat(10.0))
+    )
     val p = BasemapLabels.labelPoint(Vector(c)).get
     assert(BasemapLabels.inside(c, p), p.toString)
     // the largest part wins
-    val tiny = Vector((50.0, 50.0), (50.1, 50.0), (50.1, 50.1))
+    val tiny = Vector((Lon(50.0), Lat(50.0)), (Lon(50.1), Lat(50.0)), (Lon(50.1), Lat(50.1)))
     assertEquals(BasemapLabels.labelPoint(Vector(tiny, square)), Some((2.0, 2.0)))
     assertEquals(BasemapLabels.labelPoint(Vector.empty), None)
 
@@ -104,17 +120,29 @@ class BasemapLabelsSuite extends munit.FunSuite:
 
   test("the region: a point inside (with a margin), a river that crosses it"):
     val b = BBox.parse(com.histmersion.api.BBox.Text("20,35,30,42")).get
-    val pt = BasemapLabels.Label(com.histmersion.util.basemap.BasemapLabels.Label.Kind("peak"), List("name" -> "A"), com.histmersion.util.basemap.BasemapLabels.Label.Lon(25), com.histmersion.util.basemap.BasemapLabels.Label.Lat(38), com.histmersion.util.basemap.BasemapLabels.Label.MinZoom(6))
+    val pt = BasemapLabels.Label(
+      BasemapLabels.Label.Kind("peak"),
+      List((BasemapLabels.Language("name"), BasemapLabels.Name("A"))),
+      Lon(25),
+      Lat(38),
+      BasemapLabels.Label.MinZoom(6)
+    )
     assert(BasemapLabels.within(pt, b))
-    assert(BasemapLabels.within(pt.modify(_.lon).setTo((30.5: _root_.scala.Double)), b), "within the margin")
-    assert(!BasemapLabels.within(pt.modify(_.lon).setTo((40: _root_.scala.Double)), b))
-    val river = pt.modify(_.kind).setTo("river").modify(_.lon).setTo((50: _root_.scala.Double)).modify(_.line).setTo(Vector(Vector((50.0, 50.0), (29.0, 41.0))))
+    assert(BasemapLabels.within(pt.modify(_.lon).setTo(Lon(30.5)), b), "within the margin")
+    assert(!BasemapLabels.within(pt.modify(_.lon).setTo(Lon(40)), b))
+    val river = pt
+      .modify(_.kind)
+      .setTo(BasemapLabels.Label.Kind("river"))
+      .modify(_.lon)
+      .setTo(Lon(50))
+      .modify(_.line)
+      .setTo(Vector(Vector((Lon(50.0), Lat(50.0)), (Lon(29.0), Lat(41.0)))))
     assert(BasemapLabels.within(river, b))
 
   test("rivers: simplified to about a pixel, clipped to each tile they cross, relative to its corner"):
-    val l = Vector((0.0, 0.0), (1.0, 0.01), (2.0, 0.0), (3.0, 5.0), (4.0, 0.0))
-    assertEquals(BasemapLabels.simplify(l, 0.5), Vector((0.0, 0.0), (2.0, 0.0), (3.0, 5.0), (4.0, 0.0)))
-    val across = Vector((100.0, 100.0), (8000.0, 100.0), (8000.0, 12000.0))
+    val l = Vector((X(0.0), Y(0.0)), (X(1.0), Y(0.01)), (X(2.0), Y(0.0)), (X(3.0), Y(5.0)), (X(4.0), Y(0.0)))
+    assertEquals(BasemapLabels.simplify(l, BasemapLabels.Tolerance(0.5)), Vector((0.0, 0.0), (2.0, 0.0), (3.0, 5.0), (4.0, 0.0)))
+    val across = Vector((X(100.0), Y(100.0)), (X(8000.0), Y(100.0)), (X(8000.0), Y(12000.0)))
     assertEquals(BasemapLabels.clip(across, com.histmersion.util.basemap.PmTiles.TileColumn(0), com.histmersion.util.basemap.PmTiles.TileRow(0), com.histmersion.util.basemap.BasemapLabels.Buffer(64)), Vector(Vector((100, 100), (8000, 100))))
     assertEquals(BasemapLabels.clip(across, com.histmersion.util.basemap.PmTiles.TileColumn(1), com.histmersion.util.basemap.PmTiles.TileRow(0), com.histmersion.util.basemap.BasemapLabels.Buffer(64)), Vector(Vector((-3996, 100), (3904, 100), (3904, 12000))))
     assertEquals(BasemapLabels.clip(across, com.histmersion.util.basemap.PmTiles.TileColumn(1), com.histmersion.util.basemap.PmTiles.TileRow(2), com.histmersion.util.basemap.BasemapLabels.Buffer(64)), Vector(Vector((3904, -8092), (3904, 3808))))
@@ -134,40 +162,47 @@ class BasemapLabelsSuite extends munit.FunSuite:
   ):
     val olympus = BasemapLabels.Label(
       com.histmersion.util.basemap.BasemapLabels.Label.Kind("peak"),
-      List("name" -> "Όλυμπος", "name:en" -> "Olympus"),
-      22.35,
-      40.08,
+      List(
+        BasemapLabels.Language("name") -> BasemapLabels.Name("Όλυμπος"),
+        BasemapLabels.Language("name:en") -> BasemapLabels.Name("Olympus")
+      ),
+      Lon(22.35),
+      Lat(40.08),
       com.histmersion.util.basemap.BasemapLabels.Label.MinZoom(7),
-      elevation = Some(2917)
+      elevation = Some(BasemapLabels.Label.Elevation(2917))
     )
-    val world = BasemapLabels.Label(com.histmersion.util.basemap.BasemapLabels.Label.Kind("continent"), List("name" -> "Europe"), com.histmersion.util.basemap.BasemapLabels.Label.Lon(15), com.histmersion.util.basemap.BasemapLabels.Label.Lat(50), com.histmersion.util.basemap.BasemapLabels.Label.MinZoom(1), maxZoom = Some(com.histmersion.util.basemap.BasemapLabels.Label.MaxZoom(3)))
+    val world = BasemapLabels.Label(com.histmersion.util.basemap.BasemapLabels.Label.Kind("continent"), List(BasemapLabels.Language("name") -> BasemapLabels.Name("Europe")), com.histmersion.util.basemap.BasemapLabels.Label.Lon(15), com.histmersion.util.basemap.BasemapLabels.Label.Lat(50), com.histmersion.util.basemap.BasemapLabels.Label.MinZoom(1), maxZoom = Some(com.histmersion.util.basemap.BasemapLabels.Label.MaxZoom(3)))
     val axios = BasemapLabels.Label(
       com.histmersion.util.basemap.BasemapLabels.Label.Kind("river"),
-      List("name" -> "Axios"),
+      List(BasemapLabels.Language("name") -> BasemapLabels.Name("Axios")),
       com.histmersion.util.basemap.BasemapLabels.Label.Lon(22),
       com.histmersion.util.basemap.BasemapLabels.Label.Lat(41),
       com.histmersion.util.basemap.BasemapLabels.Label.MinZoom(5),
-      line = Vector(Vector((21.0, 42.0), (22.6, 40.6)))
+      line = Vector(Vector((Lon(21.0), Lat(42.0)), (Lon(22.6), Lat(40.6))))
     )
     assert(
       !BasemapLabels.inTile(olympus, com.histmersion.util.basemap.PmTiles.Zoom(5), com.histmersion.util.basemap.PmTiles.Zoom(8)) && BasemapLabels.inTile(olympus, com.histmersion.util.basemap.PmTiles.Zoom(6), com.histmersion.util.basemap.PmTiles.Zoom(8)) && BasemapLabels.inTile(
-        olympus.modify(_.minZoom).setTo(12),
+        olympus.modify(_.minZoom).setTo(BasemapLabels.Label.MinZoom(12)),
         com.histmersion.util.basemap.PmTiles.Zoom(8),
         com.histmersion.util.basemap.PmTiles.Zoom(8)
       )
     )
     assert(BasemapLabels.inTile(world, com.histmersion.util.basemap.PmTiles.Zoom(2), com.histmersion.util.basemap.PmTiles.Zoom(8)) && !BasemapLabels.inTile(world, com.histmersion.util.basemap.PmTiles.Zoom(3), com.histmersion.util.basemap.PmTiles.Zoom(8)))
     val tiles = BasemapLabels.tiles(List(olympus, world, axios), com.histmersion.util.basemap.PmTiles.Zoom(8))
-    assertEquals(tiles.map(_._1), tiles.map(_._1).sorted, "in tile-id order, as the archive is written")
-    def at(z: Int, lon: Double, lat: Double) =
-      val id = PmTiles.tileId(z, Basemap.tileX(lon, z), Basemap.tileY(lat, z))
-      tiles.find(_._1 == id).map(t => PmTiles.gunzip(t._2).fold(e => fail(e), identity))
-    assertEquals(at(6, 22.35, 40.08).map(Mvt.kinds(_, com.histmersion.util.basemap.Mvt.LayerName("physical"))), Some(Right(List("peak"))))
-    assertEquals(at(5, 22.35, 40.08).map(Mvt.kinds(_, com.histmersion.util.basemap.Mvt.LayerName("physical"))), Some(Right(Nil)), "the river's tile, no peak yet")
-    assertEquals(at(4, 22.35, 40.08).map(Mvt.kinds(_, com.histmersion.util.basemap.Mvt.LayerName("rivers"))), Some(Right(List("river"))))
-    assertEquals(at(2, 15, 50).map(Mvt.kinds(_, com.histmersion.util.basemap.Mvt.LayerName("physical"))), Some(Right(List("continent"))))
-    assertEquals(at(8, 15, 50), None, "the continent is gone deeper")
-    val t8 = at(8, 22.35, 40.08).get
+    assertEquals(tiles.map(_._1), tiles.map(_._1).sortBy(_.value), "in tile-id order, as the archive is written")
+    def at(z: PmTiles.Zoom, lon: Longitude, lat: Latitude) =
+      val id = PmTiles.tileId(
+        z,
+        PmTiles.TileColumn(Basemap.tileX(lon, Basemap.Zoom(z.value)).value),
+        PmTiles.TileRow(Basemap.tileY(lat, Basemap.Zoom(z.value)).value)
+      )
+      tiles.find(_._1 == id).map(t => PmTiles.gunzip(PmTiles.CompressedBytes(t._2.value)).fold(e => fail(e.value), identity))
+    assertEquals(at(PmTiles.Zoom(6), Longitude(22.35), Latitude(40.08)).map(Mvt.kinds(_, com.histmersion.util.basemap.Mvt.LayerName("physical"))), Some(Right(List("peak"))))
+    assertEquals(at(PmTiles.Zoom(5), Longitude(22.35), Latitude(40.08)).map(Mvt.kinds(_, com.histmersion.util.basemap.Mvt.LayerName("physical"))), Some(Right(Nil)), "the river's tile, no peak yet")
+    assertEquals(at(PmTiles.Zoom(4), Longitude(22.35), Latitude(40.08)).map(Mvt.kinds(_, com.histmersion.util.basemap.Mvt.LayerName("rivers"))), Some(Right(List("river"))))
+    assertEquals(at(PmTiles.Zoom(2), Longitude(15), Latitude(50)).map(Mvt.kinds(_, com.histmersion.util.basemap.Mvt.LayerName("physical"))), Some(Right(List("continent"))))
+    assertEquals(at(PmTiles.Zoom(8), Longitude(15), Latitude(50)), None, "the continent is gone deeper")
+    val t8 = at(PmTiles.Zoom(8), Longitude(22.35), Latitude(40.08)).get
     assertEquals(Mvt.layerNames(t8), Right(List("physical", "rivers")), "the Axios ends in this tile")
-    val text = String(t8, "UTF-8")
+    val text = String(t8.value, "UTF-8")
     assert(text.contains("Olympus") && text.contains("min_zoom") && text.contains("elevation"), text)

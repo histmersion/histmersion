@@ -1,6 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.config.AppConfig
+import com.histmersion.config.{AppConfig, DbConfig}
+import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.worklists.{QueueService, WorkListState}
 import com.histmersion.domain.library.{LibraryState, LibraryStoreSuite}
 import com.histmersion.domain.library.sources.SourceService
@@ -43,7 +44,7 @@ object AcquisitionStoreSuite:
     private lazy val scratch =
       ScratchDatabases(
         s"histmersion_s10q_${getClass.getSimpleName.toLowerCase.take(24)}",
-        AppConfig.load().db.copy(url = testDb.get)
+        AppConfig.load().db.copy(url = DbConfig.Url(testDb.get))
       )
     private val made = AtomicLong(0L)
     override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
@@ -60,5 +61,5 @@ object AcquisitionStoreSuite:
           def goal(slug: String) =
             val _ = com.histmersion.domain.automation.goals
               .GoalService(db)
-              .put(slug, com.histmersion.api.automation.Goal.Put(s"Goal $slug"))
+              .put(Goal.Slug(slug), com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title(s"Goal $slug")))
       }

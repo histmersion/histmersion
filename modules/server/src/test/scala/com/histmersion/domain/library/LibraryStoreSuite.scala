@@ -1,6 +1,6 @@
 package com.histmersion.domain.library
 
-import com.histmersion.config.AppConfig
+import com.histmersion.config.{AppConfig, DbConfig}
 import com.histmersion.domain.library.citations.CitationService
 import com.histmersion.domain.library.sources.{SourceService, SourceSettings}
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
@@ -21,7 +21,7 @@ abstract class LibraryStoreSuite extends com.histmersion.db.DbSuite:
 
 object LibraryStoreSuite:
 
-  val Settings: SourceSettings = SourceSettings(com.histmersion.domain.library.sources.SourceSettings.ChunkChars(4000), 25.0)
+  val Settings: SourceSettings = SourceSettings(SourceSettings.ChunkChars(4000), SourceSettings.ToleranceKm(25.0))
 
   /** A clock that moves a millisecond each read, as the database's `now()` differs between transactions. */
   final class Ticking extends Clock:
@@ -45,7 +45,7 @@ object LibraryStoreSuite:
     private lazy val scratch =
       ScratchDatabases(
         s"histmersion_s10c_${getClass.getSimpleName.toLowerCase.take(24)}",
-        AppConfig.load().db.copy(url = testDb.get)
+        AppConfig.load().db.copy(url = DbConfig.Url(testDb.get))
       )
     private val made = AtomicLong(0L)
     override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()

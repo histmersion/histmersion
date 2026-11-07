@@ -4,7 +4,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.AppConfig
 import com.histmersion.server.Deps
-import com.histmersion.util.storage.{Location, MeasureBudget, Storage}
+import com.histmersion.util.storage.{ByteSource, Location, MeasureBudget, Storage}
 import com.histmersion.util.storage.Store
 
 /** About › Storage over stores in memory: an entry per registered store (the install's only when named), in About's
@@ -38,22 +38,22 @@ class StorageFiguresSuite extends munit.FunSuite:
       figures
         .spots(storage, List(Location.Logs, Location.Install))
         .map(_.key)
-        .filter(k => k == "logs" || k == "install"),
+        .filter(k => k == ShownStore.Key("logs") || k == ShownStore.Key("install")),
       List("install", "logs")
     )
 
   test("the base map's detail: its layer files, an unfinished download and the caches registered in its store"):
     val storage = Storage.InMemory()
     val basemap = storage.store(Location.Basemap)
-    basemap.put(Store.Key.applyUnsafe("vector.pmtiles"), Array.fill[Byte](2000)(1)): Unit
-    basemap.put(Store.Key.applyUnsafe(".terrain.part/0001"), Array.fill[Byte](1000)(1)): Unit
-    basemap.put(Store.Key.applyUnsafe("vector-cache/tiles/3/0/0.mvt"), Array.fill[Byte](3000)(1)): Unit
+    basemap.put(Store.Key.applyUnsafe("vector.pmtiles"), ByteSource.Content(Array.fill[Byte](2000)(1))): Unit
+    basemap.put(Store.Key.applyUnsafe(".terrain.part/0001"), ByteSource.Content(Array.fill[Byte](1000)(1))): Unit
+    basemap.put(Store.Key.applyUnsafe("vector-cache/tiles/3/0/0.mvt"), ByteSource.Content(Array.fill[Byte](3000)(1))): Unit
     val r = figures.measure(storage, Nil, cfg, None, Right(Nil), MeasureBudget.unlimited)
-    val entry = r.entries.find(_.key == "basemap").getOrElse(fail(r.entries.map(_.key).toString))
+    val entry = r.entries.find(_.key == com.histmersion.api.maintenance.Storage.Entry.Key("basemap")).getOrElse(fail(r.entries.map(_.key).toString))
     assertEquals(entry.detail, Some("vector 2.0 kB · terrain download unfinished 1.0 kB · map cache 3.0 kB"))
     assertEquals((entry.bytes, entry.files), (Some(6000L), Some(3L)))
     assertEquals(
-      r.entries.find(_.key == "backups").map(_.shrink),
-      Some(com.histmersion.api.maintenance.Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), cfg.backups.keep))
+      r.entries.find(_.key == com.histmersion.api.maintenance.Storage.Entry.Key("backups")).map(_.shrink),
+      Some(com.histmersion.api.maintenance.Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), com.histmersion.api.maintenance.Storage.Advice.Keep(cfg.backups.keep.value)))
     )
     assertEquals(r.problems, Nil)

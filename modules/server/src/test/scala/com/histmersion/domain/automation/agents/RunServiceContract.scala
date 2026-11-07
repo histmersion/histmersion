@@ -4,7 +4,8 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.automation.agents.AgentRepo
-import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
+import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite, Run}
+import com.histmersion.util.jobs.{Job, RunRow}
 
 import java.time.Instant
 
@@ -14,31 +15,40 @@ import java.time.Instant
 abstract class RunServiceContract extends EngineStoreSuite:
   private def r(s: EngineStores) = s.agentRuns
   private val started = Instant.parse("2026-10-31T10:00:00Z")
-  private def step(seq: Int, attempt: Int, status: StepStatus, model: String, cost: String, output: Option[String]) =
+  private def step(
+      seq: AgentRepo.StepRecord.Seq,
+      attempt: AgentRepo.StepRecord.Attempt,
+      status: StepStatus,
+      model: AgentRepo.StepRecord.Model,
+      cost: BigDecimal,
+      output: Option[AgentRepo.StepRecord.Output]
+  ) =
     AgentRepo.StepRecord(
       seq,
       attempt,
-      s"step$seq",
+      AgentRepo.StepRecord.Name(s"step$seq"),
       StepKind.Llm,
       status,
       output,
       Some(com.histmersion.domain.automation.agents.AgentRepo.StepRecord.PromptHash("h")),
       Some(model),
-      Usage(10L * attempt, com.histmersion.api.automation.Agents.Usage.Output(2), com.histmersion.api.automation.Agents.Usage.CacheRead(1), com.histmersion.api.automation.Agents.Usage.CacheWrite(0)),
-      BigDecimal(cost),
+      Usage(Usage.Input(10L * attempt.value), com.histmersion.api.automation.Agents.Usage.Output(2), com.histmersion.api.automation.Agents.Usage.CacheRead(1), com.histmersion.api.automation.Agents.Usage.CacheWrite(0)),
+      cost,
       Option.when(status == StepStatus.Failed)(com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Error("boom")),
       started,
-      Some(model),
+      Some(AgentRepo.StepRecord.ActualModel(model.value)),
       List(WouldWrite(com.histmersion.api.automation.Agents.WouldWrite.What("w"), com.histmersion.api.automation.Agents.WouldWrite.Payload("p"))),
       Some(com.histmersion.domain.automation.agents.AgentRepo.StepRecord.FirstCallTokens(7L)),
-      Some(attempt)
+      Some(AgentRepo.StepRecord.Turns(attempt.value))
     )
-  private def move(s: EngineStores, id: String, from: String, to: String) =
-    assert(s.runs.move(JobKind, id, from, to, None, None, None), s"$id $from → $to")
+  private def jobOf(id: Run.Id): Job.Id = Job.Id.assume(id.value)
+  private def move(s: EngineStores, id: Run.Id, from: RunRow.Status, to: RunRow.Status) =
+    assert(s.runs.move(Job.Kind.assume(JobKind), id, from, to, None, None, None), s"$id $from → $to")
 
   stest("a run reads back with its steps' usage summed; attempts, checkpoints and the trace in their order") { s =>
-    val id = s.run("zz2020_a", goal = Some("zz-g"))
-    val fresh = r(s).get(id).get
+    val runId = s.run(RunRow.Target("zz2020_a"), goal = Some(RunRow.Goal("zz-g")))
+    val id = jobOf(runId)
+    val fresh = r(s).get(runId).get
     assertEquals(
       (fresh.pipeline, fresh.target, fresh.status, fresh.usage, fresh.costUsd, fresh.goal),
       ("enrich-source", "zz2020_a", "queued", Usage.Zero, 0.0, Some("zz-g"))
@@ -46,13 +56,13 @@ abstract class RunServiceContract extends EngineStoreSuite:
     assertEquals((r(s).attempts(id, com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq(1)), r(s).checkpoint(id, com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq(1))), (0, None))
     r(s).record(
       id,
-      step(1, 1, StepStatus.Failed, "openai:gpt-5", "0.10", None),
+      step(AgentRepo.StepRecord.Seq(1), AgentRepo.StepRecord.Attempt(1), StepStatus.Failed, AgentRepo.StepRecord.Model("openai:gpt-5"), BigDecimal("0.10"), None),
       List(AgentRepo.MessageRecord(com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.N(1), com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Role("user"), Some(com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Content("hi")), None, None, None, None))
     )
     assertEquals((r(s).attempts(id, com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq(1)), r(s).checkpoint(id, com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq(1))), (1, None))
     r(s).record(
       id,
-      step(1, 2, StepStatus.Done, "anthropic:claude", "0.25", Some("\"abcdef\"")),
+      step(AgentRepo.StepRecord.Seq(1), AgentRepo.StepRecord.Attempt(2), StepStatus.Done, AgentRepo.StepRecord.Model("anthropic:claude"), BigDecimal("0.25"), Some(AgentRepo.StepRecord.Output("\"abcdef\""))),
       List(
         AgentRepo.MessageRecord(com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.N(2), com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Role("assistant"), Some(com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Content("done")), None, None, None, Some(com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.LatencyMs(5))),
         AgentRepo.MessageRecord(com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.N(1), com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Role("user"), Some(com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Content("again")), Some(com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolName("t")), Some(com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolInput("{}")), Some(com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolResult("r")), None)
@@ -60,7 +70,7 @@ abstract class RunServiceContract extends EngineStoreSuite:
     )
     assertEquals(r(s).attempts(id, com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq(1)), 2)
     assertEquals(r(s).checkpoint(id, com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq(1)), Some(("step1", "\"abcdef\"")))
-    val run = r(s).get(id).get
+    val run = r(s).get(runId).get
     assertEquals((run.usage, run.costUsd), (Usage(com.histmersion.api.automation.Agents.Usage.Input(30), com.histmersion.api.automation.Agents.Usage.Output(4), com.histmersion.api.automation.Agents.Usage.CacheRead(2), com.histmersion.api.automation.Agents.Usage.CacheWrite(0)), 0.35))
     assertEquals(r(s).runSpend(id), (Usage(com.histmersion.api.automation.Agents.Usage.Input(30), com.histmersion.api.automation.Agents.Usage.Output(4), com.histmersion.api.automation.Agents.Usage.CacheRead(2), com.histmersion.api.automation.Agents.Usage.CacheWrite(0)), BigDecimal("0.35")))
     val steps = r(s).steps(id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(3))
@@ -86,11 +96,11 @@ abstract class RunServiceContract extends EngineStoreSuite:
   stest(
     "lists: newest first by state and goal; a target's and a manager's runs; the unsettled ones; counts per state"
   ) { s =>
-    val a = s.run("zz2020_a", goal = Some("zz-g"))
-    val b = s.run("zz2020_b", manager = Some("watch:zz-g"), item = Some(1L))
-    val c = s.run("zz2020_a", manager = Some("watch:zz-g"), pipeline = "currency-check")
-    move(s, b, "queued", "running")
-    move(s, b, "running", "done")
+    val a = s.run(RunRow.Target("zz2020_a"), goal = Some(RunRow.Goal("zz-g")))
+    val b = s.run(RunRow.Target("zz2020_b"), manager = Some(RunRow.ManagerId("watch:zz-g")), item = Some(RunRow.ManagerItem(1L)))
+    val c = s.run(RunRow.Target("zz2020_a"), manager = Some(RunRow.ManagerId("watch:zz-g")), pipeline = RunRow.Pipeline("currency-check"))
+    move(s, b, RunRow.Status("queued"), RunRow.Status("running"))
+    move(s, b, RunRow.Status("running"), RunRow.Status("done"))
     assertEquals(r(s).list(None, com.histmersion.domain.automation.agents.RunQuery.Limit(10)).map(_.id), Vector(c, b, a))
     assertEquals(r(s).list(Some(com.histmersion.domain.automation.agents.RunQuery.Status(" QUEUED ")), com.histmersion.domain.automation.agents.RunQuery.Limit(10)).map(_.id), Vector(c, a))
     assertEquals(r(s).list(None, com.histmersion.domain.automation.agents.RunQuery.Limit(10), Some(com.histmersion.domain.automation.Goal.Slug("zz-g"))).map(_.id), Vector(a))
@@ -109,21 +119,21 @@ abstract class RunServiceContract extends EngineStoreSuite:
   stest(
     "pages newest first with cursors; filters by state, pipeline, manager, goal, model (a step's too), provider, text; facets"
   ) { s =>
-    val a = s.run("zz2020_tin", goal = Some("zz-g"))
-    val b = s.run("zz2020_copper", manager = Some("watch:zz-g"))
-    val c = s.run("zz2020_tin_b", pipeline = "currency-check")
-    r(s).record(b, step(1, 1, StepStatus.Done, "openai:gpt-5", "0.01", Some("1")), Nil)
-    move(s, c, "queued", "running")
+    val a = s.run(RunRow.Target("zz2020_tin"), goal = Some(RunRow.Goal("zz-g")))
+    val b = s.run(RunRow.Target("zz2020_copper"), manager = Some(RunRow.ManagerId("watch:zz-g")))
+    val c = s.run(RunRow.Target("zz2020_tin_b"), pipeline = RunRow.Pipeline("currency-check"))
+    r(s).record(jobOf(b), step(AgentRepo.StepRecord.Seq(1), AgentRepo.StepRecord.Attempt(1), StepStatus.Done, AgentRepo.StepRecord.Model("openai:gpt-5"), BigDecimal("0.01"), Some(AgentRepo.StepRecord.Output("1"))), Nil)
+    move(s, c, RunRow.Status("queued"), RunRow.Status("running"))
     val Right((first, more)) = r(s).page(None, com.histmersion.domain.automation.agents.RunQuery.Limit(2)): @unchecked
     assertEquals((first.map(_.id), more), (Vector(c, b), true))
-    val Right((rest, none)) = r(s).page(None, com.histmersion.domain.automation.agents.RunQuery.Limit(2), before = Some(b)): @unchecked
+    val Right((rest, none)) = r(s).page(None, com.histmersion.domain.automation.agents.RunQuery.Limit(2), before = Some(AgentRepo.PageCursor(b.value))): @unchecked
     assertEquals((rest.map(_.id), none), (Vector(a), false))
-    val Right((upTo, older)) = r(s).page(None, com.histmersion.domain.automation.agents.RunQuery.Limit(5), upTo = Some(b)): @unchecked
+    val Right((upTo, older)) = r(s).page(None, com.histmersion.domain.automation.agents.RunQuery.Limit(5), upTo = Some(RunQuery.UpTo(b.value))): @unchecked
     assertEquals((upTo.map(_.id), older), (Vector(c, b), true))
     assert(
-      r(s).page(None, com.histmersion.domain.automation.agents.RunQuery.Limit(2), before = Some(com.histmersion.domain.automation.agents.AgentRepo.PageCursor("00000000-0000-0000-0000-000000000000"))).left.exists(_.contains("No agent run"))
+      r(s).page(None, com.histmersion.domain.automation.agents.RunQuery.Limit(2), before = Some(com.histmersion.domain.automation.agents.AgentRepo.PageCursor("00000000-0000-0000-0000-000000000000"))).left.exists(_.value.contains("No agent run"))
     )
-    def page(q: RunQuery) = r(s).page(q, 10, None, None).map(_._1.map(_.id))
+    def page(q: RunQuery) = r(s).page(q, RunQuery.Limit(10), None, None).map(_._1.map(_.id))
     assertEquals(page(RunQuery(status = List(com.histmersion.domain.automation.agents.RunQuery.Status("running")))), Right(Vector(c)))
     assertEquals(page(RunQuery(pipelines = List(com.histmersion.domain.automation.agents.RunQuery.Pipelines("currency-check")))), Right(Vector(c)))
     assertEquals(page(RunQuery(managers = List(com.histmersion.domain.automation.agents.RunQuery.Managers("watch:zz-g")))), Right(Vector(b)))

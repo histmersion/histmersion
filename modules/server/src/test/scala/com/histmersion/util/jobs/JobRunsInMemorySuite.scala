@@ -1,18 +1,23 @@
 package com.histmersion.util.jobs
 
+import com.histmersion.domain.automation.Run
+
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 
 class JobRunsInMemorySuite extends JobRunsContract("memory"):
-  private val stores = collection.concurrent.TrieMap.empty[JobRuns, AtomicReference[Map[String, JobRunState]]]
+  private val stores = collection.concurrent.TrieMap.empty[JobRuns, AtomicReference[Map[Run.Id, JobRunState]]]
 
   protected def fresh(test: String): Option[(JobRuns, Instant)] =
     val now = Instant.parse("2026-11-01T12:00:00Z")
-    val state = AtomicReference(Map.empty[String, JobRunState])
+    val state = AtomicReference(Map.empty[Run.Id, JobRunState])
     val r = JobRuns.InMemory(state, () => now)
     stores.update(r, state)
     Some((r, now))
 
-  protected def row(runs: JobRuns, id: String): (String, Option[String], Option[String], Option[String]) =
+  protected def row(
+      runs: JobRuns,
+      id: Run.Id
+  ): (RunRow.Status, Option[JobRunState.Error], Option[JobRunState.Progress], Option[RunRow.Origin]) =
     stores(runs).get()(id) match
       case s => (s.row.status, s.error, s.progress, Some(s.row.origin))

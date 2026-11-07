@@ -20,7 +20,7 @@ abstract class SiteTypeServiceContract extends CatalogueStoreSuite:
     )
     assertEquals(t.sitesToType(com.histmersion.PageSize(1), refresh = com.histmersion.domain.catalogue.places.SiteTypeService.Refresh(false), None).map(_._1), List("wikidata_q1"))
     assertEquals(t.countSitesToType(refresh = com.histmersion.domain.catalogue.places.SiteTypeService.Refresh(false), None), 2)
-    t.setSiteTypes(List("wikidata_q1" -> Some("palace")))
+    t.setSiteTypes(List(com.histmersion.domain.catalogue.Place.Id("wikidata_q1") -> Some(com.histmersion.api.catalogue.SiteTypes.SiteType.Id("palace"))))
     assertEquals(t.sitesToType(com.histmersion.PageSize(10), refresh = com.histmersion.domain.catalogue.places.SiteTypeService.Refresh(false), None).map(_._1), List("wikidata_q2"))
     assertEquals(t.countSitesToType(refresh = com.histmersion.domain.catalogue.places.SiteTypeService.Refresh(true), None), 2, "a refresh asks every one")
     assertEquals(t.countSitesToType(refresh = com.histmersion.domain.catalogue.places.SiteTypeService.Refresh(true), Some(com.histmersion.domain.DeepTime.SignedYear(0L))), 1, "asked since the run began: not again")

@@ -30,7 +30,7 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
 
   private lazy val base =
     val b = AppConfig.load()
-    b.modify(_.db).setTo(b.db.modify(_.url).setTo(testDb.get))
+    b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   private lazy val scratch = ScratchDatabases("calibre_cmds", base.db)
 
   override protected def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
@@ -56,7 +56,7 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
     )
 
   /** The sources the commands act on; `stored` ones get an original in the spool. */
-  private def seed(ds: javax.sql.DataSource, spool: Path, chunk: Int): Unit =
+  private def seed(ds: javax.sql.DataSource, spool: Path, chunk: Limits.ChunkChars): Unit =
     def put(s: Source, stored: Boolean = false): Unit =
       SourceFixtures.upsert(ds, s, chunk)
       if stored then
@@ -197,7 +197,7 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
     val cliConf = Files.writeString(runDir.resolve("cli.conf"), "")
     val ds = scratch("run")
     val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf("calibre_cmds_run_test"))).modify(_.server).setTo(base.server.modify(_.publicUrl).setTo("http://histmersion.test")).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(spool.toString)
+      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf("calibre_cmds_run_test"))).modify(_.server).setTo(base.server.modify(_.publicUrl).setTo(ServerConfig.PublicUrl("http://histmersion.test"))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(spool.toString))
     )
     seed(ds, spool, cfg.limits.chunkChars)
     val transcript = supervised {
@@ -274,7 +274,7 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
     val cliConf = Files.writeString(runDir.resolve("cli.conf"), "")
     val ds = scratch("fallback")
     val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf("calibre_cmds_fallback_test"))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(spool.toString)
+      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf("calibre_cmds_fallback_test"))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(spool.toString))
     )
     seed(ds, spool, cfg.limits.chunkChars)
     val commands = List(

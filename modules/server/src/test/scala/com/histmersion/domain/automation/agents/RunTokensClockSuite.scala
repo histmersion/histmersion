@@ -18,15 +18,15 @@ class RunTokensClockSuite extends munit.FunSuite:
     assertEquals(grant.expiresAt, epoch.toEpochMilli + 2000L)
     assertEquals(tokens.check(grant.token), Some(grant))
     assertEquals(tokens.bearer(s"Bearer ${grant.token}"), Some(grant))
-    assertEquals(tokens.check(grant.token, epoch.toEpochMilli + 2000L), None)
+    assertEquals(tokens.check(grant.token, PlanQuotaRepo.EpochMillis(epoch.toEpochMilli + 2000L)), None)
 
   test("explicit time overrides the injected clock and expiration revokes the token"):
     val tokens = RunTokens(using Clock.fixed(epoch, ZoneOffset.UTC))
-    val now = epoch.toEpochMilli + 5000L
+    val now = PlanQuotaRepo.EpochMillis(epoch.toEpochMilli + 5000L)
     val grant = tokens.issue(agent, None, com.histmersion.domain.automation.agents.RunTokens.TtlMillis(1000L), now)
-    assertEquals(grant.expiresAt, now + 1000L)
-    assertEquals(tokens.bearer(s"Bearer ${grant.token}", now + 999L), Some(grant))
-    assertEquals(tokens.bearer(s"Bearer ${grant.token}", now + 1000L), None)
+    assertEquals(grant.expiresAt, now.value + 1000L)
+    assertEquals(tokens.bearer(s"Bearer ${grant.token}", PlanQuotaRepo.EpochMillis(now.value + 999L)), Some(grant))
+    assertEquals(tokens.bearer(s"Bearer ${grant.token}", PlanQuotaRepo.EpochMillis(now.value + 1000L)), None)
     assertEquals(tokens.check(grant.token, now), None)
 
   test("independent token stores retain independent clocks"):
@@ -34,7 +34,7 @@ class RunTokensClockSuite extends munit.FunSuite:
     val late = RunTokens(using Clock.fixed(epoch.plusSeconds(60L), ZoneOffset.UTC))
     val first = early.issue(agent, None, com.histmersion.domain.automation.agents.RunTokens.TtlMillis(1000L))
     val second = late.issue(agent, None, com.histmersion.domain.automation.agents.RunTokens.TtlMillis(1000L))
-    assertEquals(second.expiresAt - first.expiresAt, 60000L)
+    assertEquals(second.expiresAt.value - first.expiresAt.value, 60000L)
     assertEquals(early.check(first.token), Some(first))
     assertEquals(late.check(second.token), Some(second))
 

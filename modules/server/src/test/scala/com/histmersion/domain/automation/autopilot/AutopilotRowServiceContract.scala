@@ -44,7 +44,7 @@ abstract class AutopilotRowServiceContract extends EngineStoreSuite:
     a(s).setStrategy(Some(com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName("type-balanced")), com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy("p"))
     val Some((name, by, at)) = a(s).strategy(): @unchecked
     assertEquals((name, by), ("type-balanced", "p"))
-    assert(at.matches("\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ"), at)
+    assert(at.value.matches("\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ"), at)
     a(s).setStrategy(None, com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy("q"))
     assertEquals(a(s).strategy(), None)
   }

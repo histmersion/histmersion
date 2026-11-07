@@ -96,14 +96,14 @@ class CoreBudgetSuite extends munit.FunSuite:
            |  exhausted-pause-seconds = 60 }
            |$user""".stripMargin
       )
-      .fold(e => fail(e), identity)
+      .fold(e => fail(e.value), identity)
 
   /** A clock the test moves; `sleep` moves it too (and is recorded), so nothing waits. */
   final private class Clock:
     val now = AtomicReference(t0)
-    val slept = ConcurrentLinkedQueue[Long]()
+    val slept = ConcurrentLinkedQueue[CoreQuota.Grant.WaitMs]()
     def advance(seconds: Long): Unit = now.updateAndGet(_.plusSeconds(seconds))
-    def budget(): CoreBudget = CoreBudget(() => now.get, ms => { slept.add(ms); now.updateAndGet(_.plusMillis(ms)) })
+    def budget(): CoreBudget = CoreBudget(() => now.get, ms => { slept.add(ms); now.updateAndGet(_.plusMillis(ms.value)) })
 
   private val Ctx: com.histmersion.plugin.Fetch.Context = new com.histmersion.plugin.Fetch.Context:
     private val m = scala.collection.mutable.Map.empty[String, Any] // one fetch's memo
@@ -125,12 +125,12 @@ class CoreBudgetSuite extends munit.FunSuite:
   private def coreIndex(loaded: LoadedConfig, g: Generation, budget: CoreBudget): Option[ScholarlyIndex] =
     val cfg = loaded.config.acquire
     Indexes
-      .of(cfg, SttpHttp(cfg, tries = com.histmersion.pluginhost.PolicyHttp.Tries(1), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())), com.histmersion.util.plugins.Plugins.coreKey(g, cfg.core.key), budget)
+      .of(cfg, SttpHttp(cfg, tries = com.histmersion.pluginhost.PolicyHttp.Tries(1), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())), com.histmersion.util.plugins.Plugins.coreKey(g, cfg.core.key.map(k => com.histmersion.util.plugins.Plugins.CoreKey(k.value))), budget)
       ._1
-      .find(_.name == "core")
+      .find(_.name.value == "core")
 
   private def missWhy(f: Fetch): String = f match
-    case Fetch.Miss(why) => why
+    case Fetch.Miss(why) => why.value
     case other           => fail(s"not a miss: $other")
 
   test("a 429 with X-RateLimit-Retry-After: the chain goes on without core, which is not asked again until that time"):
@@ -153,12 +153,12 @@ class CoreBudgetSuite extends munit.FunSuite:
       val next = new SourceFetcher:
         val access = com.histmersion.plugin.Access.Open
         def fetch(w: WorkKey, ctx: com.histmersion.plugin.Fetch.Context) = Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("nothing here either"))
-      val chain = FetchChain(List("core" -> g.registries.sourceFetchers(com.histmersion.pluginhost.Registries.SourceFetchersKey("core")), "next" -> next))
-      val out = chain.fetchWorkExplained(work, legalOnly = true)
+      val chain = FetchChain(List(FetchChain.Step.Id("core") -> g.registries.sourceFetchers(com.histmersion.pluginhost.Registries.SourceFetchersKey("core")), FetchChain.Step.Id("next") -> next))
+      val out = chain.fetchWorkExplained(work, legalOnly = FetchChain.LegalOnly(true))
       // the job's report says why core had nothing, and the next step was asked
       assertEquals(out.answers.map(_.fetcher), List("core", "next"))
       assert(
-        out.answers.head.why.startsWith("CORE not asked: CORE answered HTTP 429; not asked until 2026-10-26T18:52:11Z"),
+        out.answers.head.why.value.startsWith("CORE not asked: CORE answered HTTP 429; not asked until 2026-10-26T18:52:11Z"),
         out.answers.head.why
       )
       assertEquals(core.asked.size, 1)
@@ -166,8 +166,8 @@ class CoreBudgetSuite extends munit.FunSuite:
       clock.advance(60)
       assert(missWhy(lookup(g)).contains("CORE asked to wait until 2026-10-26T18:52:11Z (HTTP 429)"))
       val idx = coreIndex(cfg, g, budget).get
-      assert(idx.unavailable.exists(_.contains("2026-10-26T18:52:11Z")), idx.unavailable.toString)
-      assert(idx.search(com.histmersion.domain.library.search.Search.Query("bronze age"), LocalDate.of(2026, 1, 1), com.histmersion.domain.library.acquisition.ScholarlyIndex.Limit(10)).left.exists(_.startsWith("CORE not asked")))
+      assert(idx.unavailable.exists(_.value.contains("2026-10-26T18:52:11Z")), idx.unavailable.toString)
+      assert(idx.search(com.histmersion.domain.library.search.Search.Query("bronze age"), LocalDate.of(2026, 1, 1), com.histmersion.domain.library.acquisition.ScholarlyIndex.Limit(10)).left.exists(_.value.startsWith("CORE not asked")))
       assertEquals(core.asked.size, 1)
       // after it, CORE is asked again: here it has the PDF
       clock.advance(90)
@@ -218,8 +218,8 @@ class CoreBudgetSuite extends munit.FunSuite:
       val g = generation(cfg, budget)
       val idx = coreIndex(cfg, g, budget).get
       assert(idx.search(com.histmersion.domain.library.search.Search.Query("bronze age"), LocalDate.of(2026, 1, 1), com.histmersion.domain.library.acquisition.ScholarlyIndex.Limit(10)).isRight)
-      assert(idx.unavailable.exists(_.contains("search-daily-tokens")), idx.unavailable.toString)
-      assert(idx.search(com.histmersion.domain.library.search.Search.Query("bronze age"), LocalDate.of(2026, 1, 1), com.histmersion.domain.library.acquisition.ScholarlyIndex.Limit(10)).left.exists(_.contains("search-daily-tokens")))
+      assert(idx.unavailable.exists(_.value.contains("search-daily-tokens")), idx.unavailable.toString)
+      assert(idx.search(com.histmersion.domain.library.search.Search.Query("bronze age"), LocalDate.of(2026, 1, 1), com.histmersion.domain.library.acquisition.ScholarlyIndex.Limit(10)).left.exists(_.value.contains("search-daily-tokens")))
       lookup(g); lookup(g)
       assert(missWhy(lookup(g)).contains("acquire.core.daily-tokens"))
       assertEquals(core.asked.size, 3)
@@ -267,7 +267,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       val g = generation(cfg, budget, extra = List(MakerPlugin()))
       assert(g.report.ok, g.report.toString)
       assertEquals(
-        com.histmersion.util.plugins.Plugins.coreKey(g, cfg.config.acquire.core.key),
+        com.histmersion.util.plugins.Plugins.coreKey(g, cfg.config.acquire.core.key.map(k => com.histmersion.util.plugins.Plugins.CoreKey(k.value))),
         Some("v(Work/Histmersion/CORE#password)")
       )
       lookup(g)

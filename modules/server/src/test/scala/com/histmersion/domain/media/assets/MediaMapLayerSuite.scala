@@ -14,8 +14,8 @@ class MediaMapLayerSuite extends munit.FunSuite:
       None,
       com.histmersion.api.exchange.Bundle.Asset.FileName("Lions_Gate.jpg"),
       Some(com.histmersion.api.media.MediaItem.Kind("photo")),
-      37.7,
-      22.7,
+      com.histmersion.api.catalogue.Latitude(37.7),
+      com.histmersion.api.catalogue.Longitude(22.7),
       None,
       None,
       None,
@@ -35,7 +35,7 @@ class MediaMapLayerSuite extends munit.FunSuite:
         java.time.Clock.systemUTC()
       )
     )
-      .feature(h)(TileCell(com.histmersion.domain.catalogue.maptiles.TileCell.Key("u1"), com.histmersion.domain.catalogue.maptiles.TileCell.X(10), com.histmersion.domain.catalogue.maptiles.TileCell.Y(20), com.histmersion.domain.catalogue.maptiles.TileCell.N(1), None, None, 22.7, 37.7, 22.7, 37.7))
+      .feature(h)(TileCell(com.histmersion.domain.catalogue.maptiles.TileCell.Key("u1"), com.histmersion.domain.catalogue.maptiles.TileCell.X(10), com.histmersion.domain.catalogue.maptiles.TileCell.Y(20), com.histmersion.domain.catalogue.maptiles.TileCell.N(1), None, None, TileCell.West(22.7), TileCell.South(37.7), TileCell.East(22.7), TileCell.North(37.7)))
       .props
       .toMap
     assertEquals(props.get(P.SourceUrl), Some(TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("https://commons.wikimedia.org/wiki/File:Lions_Gate.jpg"))))

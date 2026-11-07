@@ -21,7 +21,7 @@ class UpstreamRecordsSuite extends munit.FunSuite:
     assertEquals(AcquireParse.openalexWork(fixture("openalex_work.json")).wire.citekey, Some("haak2015_massive"))
     assertEquals(AcquireParse.crossrefWork(fixture("crossref_work.json")).wire.citekey, Some("haak2015_massive"))
     val ws = AcquireParse.openalexWorks(fixture("openalex_search.json")).map(_.wire)
-    assert(ws.nonEmpty && ws.forall(_.citekey.isDefined) && ws.forall(!_.inDb))
+    assert(ws.nonEmpty && ws.forall(_.citekey.isDefined) && ws.forall(!_.inDb.value))
 
   test("a work goes to the upstreams and back unchanged but for the corpus's own fields"):
     val w = AcquireParse.openalexWork(fixture("openalex_work.json"))
@@ -29,7 +29,7 @@ class UpstreamRecordsSuite extends munit.FunSuite:
 
   test("a citing work and a reference carry the wire's defaults"):
     val c = AcquireParse.s2Citations(fixture("s2_citations.json")).map(_.wire)
-    assert(c.nonEmpty && c.forall(r => r.proposedKind == "cites" && r.citekey.isEmpty), c.toString)
+    assert(c.nonEmpty && c.forall(r => r.proposedKind.value == "cites" && r.citekey.isEmpty), c.toString)
     val r = AcquireParse.crossrefReferences(fixture("crossref_work.json")).map(_.wire)
     assert(r.forall(_.citekey.isEmpty))
 
@@ -41,7 +41,7 @@ class UpstreamRecordsSuite extends munit.FunSuite:
       api.library.Acquire.Verdicts.Retracted
     )
     val rows = AcquireParse.s2Citations(fixture("s2_citations.json")).map(_.wire)
-    val kinds = rows.map(r => api.library.Acquire.classify(r.intents, r.contexts, r.isInfluential, r.year, Some(com.histmersion.api.catalogue.Year(2015))))
+    val kinds = rows.map(r => api.library.Acquire.classify(r.intents.map(i => api.library.Acquire.Intent.Wire(i.value)), r.contexts.map(c => api.library.Acquire.CitationContext(c.value)), r.isInfluential.value, r.year, Some(com.histmersion.api.catalogue.Year(2015))))
     assert(kinds.forall(api.library.Acquire.EdgeKinds.all.contains), kinds)
 
   test("the upstreams' DOI and arXiv rules are the wire's"):
@@ -60,6 +60,6 @@ class UpstreamRecordsSuite extends munit.FunSuite:
       "math.AG/0309136"
     )
     inputs.foreach { s =>
-      assertEquals(Identifiers.doi(s), com.histmersion.domain.library.Doi.normalize(s), s)
-      assertEquals(Identifiers.arxiv(s), com.histmersion.domain.library.acquisition.Ident.arxiv(s), s)
+      assertEquals(Identifiers.doi(Identifiers.DoiText(s)), com.histmersion.domain.library.Doi.normalize(s), s)
+      assertEquals(Identifiers.arxiv(Identifiers.ArxivText(s)), Ident.arxiv(Ident.Written(s)), s)
     }

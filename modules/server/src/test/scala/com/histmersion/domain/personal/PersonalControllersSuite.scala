@@ -46,16 +46,16 @@ class PersonalControllersSuite extends munit.FunSuite:
 
   test("a bookmark's target is checked: an item names its id, a point its position, a period its years in order"):
     val c = fixture()
-    assert(c.addBookmark(me, Bookmark.New(Target(ItemKind.Source))).left.exists(_.message.contains("its id")))
+    assert(c.addBookmark(me, Bookmark.New(Target(ItemKind.Source))).left.exists(_.message.value.contains("its id")))
     assert(
       c.addBookmark(me, Bookmark.New(Target(ItemKind.Point, lat = Some(Latitude(1)))))
         .left
-        .exists(_.message.contains("lat and lon"))
+        .exists(_.message.value.contains("lat and lon"))
     )
     assert(
       c.addBookmark(me, Bookmark.New(Target(ItemKind.Period, from = Some(Year(-1000)), to = Some(Year(-1200)))))
         .left
-        .exists(_.message.contains("before it starts"))
+        .exists(_.message.value.contains("before it starts"))
     )
     val p = c.addBookmark(
       me,
@@ -72,12 +72,12 @@ class PersonalControllersSuite extends munit.FunSuite:
     assert(
       c.addNote(me, Note.New(Target(ItemKind.View, view = Some(ViewState("a=b"))), Note.Text("x")))
         .left
-        .exists(_.message.contains("cannot"))
+        .exists(_.message.value.contains("cannot"))
     )
     assert(
       c.addNote(me, Note.New(Target.item(ItemKind.Source, com.histmersion.api.personal.ItemKey("zz")), Note.Text("   ")))
         .left
-        .exists(_.message.contains("some text"))
+        .exists(_.message.value.contains("some text"))
     )
     val n = c.addNote(
       me,
@@ -91,14 +91,14 @@ class PersonalControllersSuite extends munit.FunSuite:
     val n = c.addNote(me, Note.New(Target.item(ItemKind.Source, com.histmersion.api.personal.ItemKey("zz")), Note.Text("one"))).toOption.get
     clock.tick()
     assertEquals(
-      c.editNote(me, n.id.value, Note.Edit(Note.Text("two"), Some(n.updatedAt))).map(_.text.value.toString),
+      c.editNote(me, n.id, Note.Edit(Note.Text("two"), Some(n.updatedAt))).map(_.text.value.toString),
       Right("two")
     )
-    val stale = c.editNote(me, n.id.value, Note.Edit(Note.Text("three"), Some(n.updatedAt)))
+    val stale = c.editNote(me, n.id, Note.Edit(Note.Text("three"), Some(n.updatedAt)))
     assertEquals(stale.left.map(_.code), Left(Some(Write.CodePrecondition)))
-    assert(stale.left.exists(_.message.contains("2026-10-30T12:01:00.000000Z")), stale.toString)
+    assert(stale.left.exists(_.message.value.contains("2026-10-30T12:01:00.000000Z")), stale.toString)
     assertEquals(
-      c.editNote(me, n.id.value, Note.Edit(Note.Text("four"), Some(com.histmersion.api.personal.Note.UpdatedAt("yesterday")))).left.map(_.code),
+      c.editNote(me, n.id, Note.Edit(Note.Text("four"), Some(com.histmersion.api.personal.Note.UpdatedAt("yesterday")))).left.map(_.code),
       Left(Some(Write.CodePrecondition))
     )
     assertEquals(c.note(me, com.histmersion.api.personal.Note.Id("not-an-id")).left.map(_.code), Left(None))
@@ -107,13 +107,13 @@ class PersonalControllersSuite extends munit.FunSuite:
       c.removeBookmark(me, com.histmersion.api.personal.Bookmark.Id("00000000-0000-0000-0000-000000000000")).left.map(_.code),
       Left(Some(Write.CodeNotFound))
     )
-    assertEquals(c.removeNote(me, n.id.value.toUpperCase).map(_.id), Right(n.id))
+    assertEquals(c.removeNote(me, Note.Id(n.id.value.toUpperCase)).map(_.id), Right(n.id))
 
   test("lists: kinds by name, a word search, a limit"):
     val clock = Ticking()
     val c = fixture(clock = clock)
     List("a", "b", "c").foreach { k =>
-      c.addBookmark(me, Bookmark.New(Target.item(ItemKind.Source, s"zz_$k"), title = Some(s"Zz $k"))); clock.tick()
+      c.addBookmark(me, Bookmark.New(Target.item(ItemKind.Source, ItemKey(s"zz_$k")), title = Some(s"Zz $k"))); clock.tick()
     }
     assertEquals(c.listBookmarks(me, Some(com.histmersion.api.ItemKind.Wire("sources")), None, Some(com.histmersion.api.Paging.Limit(2))).map(_.map(_.title)), Right(List("Zz c", "Zz b")))
     assertEquals(c.listBookmarks(me, None, Some(com.histmersion.api.personal.PersonalApi.Search("zz B")), None).map(_.map(_.title)), Right(List("Zz b")))

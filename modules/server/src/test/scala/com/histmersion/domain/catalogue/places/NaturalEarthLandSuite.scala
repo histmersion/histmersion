@@ -11,8 +11,8 @@ class NaturalEarthLandSuite extends munit.FunSuite:
         |{"type":"Feature","properties":{},"geometry":null}]}""".stripMargin
     val gs = NaturalEarthLand.geometries(fc).toOption.get
     assertEquals(gs.size, 2)
-    assert(gs.head.startsWith("""{"type":"Polygon""""), gs.head)
-    assert(gs(1).contains("MultiPolygon"), gs(1))
+    assert(gs.head.value.startsWith("""{"type":"Polygon""""), gs.head)
+    assert(gs(1).value.contains("MultiPolygon"), gs(1))
 
   test("anything but a FeatureCollection is an error, not an empty coastline"):
     assert(NaturalEarthLand.geometries("""{"type":"Polygon"}""").isLeft)

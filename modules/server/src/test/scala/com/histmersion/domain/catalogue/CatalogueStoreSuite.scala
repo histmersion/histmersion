@@ -3,7 +3,7 @@ package com.histmersion.domain.catalogue
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.Dataset
-import com.histmersion.config.AppConfig
+import com.histmersion.config.{AppConfig, DbConfig}
 import com.histmersion.domain.catalogue.events.{CorrectionService, EventImportService, EventService}
 import com.histmersion.domain.catalogue.evidence.{AttestationService, EventLinkService, LeadService}
 import com.histmersion.domain.catalogue.periods.PeriodService
@@ -41,16 +41,16 @@ object CatalogueStoreSuite:
         val events = evs
         val corrections = CorrectionService.InMemory(state)
         val eventImports = EventImportService.InMemory(state)
-        val eventLinks = EventLinkService.InMemory(state, ck => sources.get(ck).map(_ => Some(ck)))
-        val leads = LeadService.InMemory(state, evs, ck => sources.get(ck).map(_ => (Some(ck), None)))
-        val siteTypes = SiteTypeService.InMemory(state, () => clock.incrementAndGet())
+        val eventLinks = EventLinkService.InMemory(state, ck => sources.get(ck.value).map(_ => Some(com.histmersion.domain.Title(ck.value))))
+        val leads = LeadService.InMemory(state, evs, ck => sources.get(ck.value).map(_ => (Some(com.histmersion.api.catalogue.EventSourceRef.Title(ck.value)), None)))
+        val siteTypes = SiteTypeService.InMemory(state, () => HeldSite.CheckedAt(clock.incrementAndGet()))
         val places =
           PlaceService.InMemory(state, java.time.Clock.fixed(java.time.Instant.EPOCH, java.time.ZoneOffset.UTC))
         def source(citekey: String): Unit = sources.update(citekey, ())
         def site(id: String, onMap: Boolean, cls: Option[String]): Unit =
-          val _ = state.updateAndGet(_.modify(_.sites).using(_ :+ HeldSite(id, onMap, cls)))
+          val _ = state.updateAndGet(_.modify(_.sites).using(_ :+ HeldSite(HeldSite.Id(id), HeldSite.OnMap(onMap), cls.map(HeldSite.ImportClass(_)))))
         def seedRows(): List[String] =
-          state.get.periods.filter(_.dataset == Dataset.Seed).map(_.period.id).toList)
+          state.get.periods.filter(_.dataset == Dataset.Seed).map(_.period.id.value).toList)
 
   /** The stores on a scratch database of their own per test. */
   trait OnDatabase extends CatalogueStoreSuite:
@@ -59,7 +59,7 @@ object CatalogueStoreSuite:
     private lazy val scratch =
       ScratchDatabases(
         s"histmersion_s8c_${getClass.getSimpleName.toLowerCase.take(24)}",
-        AppConfig.load().db.copy(url = testDb.get)
+        AppConfig.load().db.copy(url = DbConfig.Url(testDb.get))
       )
     private val made = AtomicLong(0L)
     override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()

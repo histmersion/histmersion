@@ -2,7 +2,7 @@ package com.histmersion.domain.personal
 
 import com.histmersion.api.personal.MapZoom
 import com.histmersion.api.ItemKind as MarkKind
-import com.histmersion.config.AppConfig
+import com.histmersion.config.{AppConfig, DbConfig}
 import com.histmersion.domain.library.sources.{SourceReadable, SourceReferable}
 import com.histmersion.domain.personal.bookmarks.BookmarkService
 import com.histmersion.domain.personal.marks.{Readable, UnreadItem}
@@ -69,7 +69,7 @@ abstract class PersonalServiceContract(prefix: String) extends com.histmersion.d
     )
 
   private val testDb = com.histmersion.db.TestDb.url
-  private lazy val scratch = ScratchDatabases(prefix, AppConfig.load().db.copy(url = testDb.get))
+  private lazy val scratch = ScratchDatabases(prefix, AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 
   private def onDatabase(name: String): World =

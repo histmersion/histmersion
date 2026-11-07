@@ -8,7 +8,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.TestDb
 import com.histmersion.util.database.{Db, Migrate}
-import com.histmersion.server.GazetteerPaths
+import com.histmersion.server.{GazetteerPaths, HttpDownload}
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.storage.{Location, Storage}
 
@@ -27,10 +27,12 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
 
   private lazy val base = AppConfig.load()
   private lazy val ds =
-    val d = testPool(base.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
-  private val FixtureSha = "20af2b1dd68f5bce2a5c9ea67bb06862038a7e007eb2d7872a4dfdb763954e5b"
+  private val FixtureSha = Gazetteer.Extract.Sha256("20af2b1dd68f5bce2a5c9ea67bb06862038a7e007eb2d7872a4dfdb763954e5b")
+
+  private val Timeout = GazetteerLoad.Settings.DownloadTimeoutSeconds(5)
 
   /** Copy a test resource out (resources may live in a jar). */
   private def copyResource(name: String, to: Path): Unit =
@@ -40,9 +42,9 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
 
   /** A data dir with a manifest pinning the fixture as `geonames`, an extracts dir and an LPF dir. */
   private def layout(
-      sha: String = FixtureSha,
+      sha: Gazetteer.Extract.Sha256 = FixtureSha,
       withFile: Boolean = true,
-      url: Option[String] = None
+      url: Option[Gazetteer.Extract.Url] = None
   ): GazetteerLoad.Settings =
     val d = Files.createTempDirectory("histmersion-gaz")
     val x = Gazetteer.Extract(
@@ -71,8 +73,8 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
     GazetteerLoad.Settings(
       stores(d.resolve("extracts"), lpf, d.resolve("extracts.json")),
       batch = com.histmersion.domain.catalogue.places.GazetteerLoad.Settings.Batch(1),
-      maxLpfBytes = 1 << 20,
-      downloadTimeoutSeconds = com.histmersion.domain.catalogue.places.GazetteerLoad.Settings.(5),
+      maxLpfBytes = GazetteerLoad.Settings.MaxLpfBytes(1 << 20),
+      downloadTimeoutSeconds = Timeout,
       toleranceKm = com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm(10),
       rebuild = com.histmersion.domain.catalogue.places.GazetteerLoad.Settings.Rebuild(false)
     )
@@ -83,14 +85,14 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
       Storage.at(Location.GazetteerExtracts, extracts),
       legacy.map(Storage.at(Location.GazetteerFolder, _)),
       Storage.at(Location.GazetteerDrop, lpf),
-      manifest.toString,
+      GazetteerLoad.Stores.ManifestAt(manifest.toString),
       () => GazetteerPaths(extracts, lpf, manifest).manifestText()
     )
 
-  private def extractsOf(s: GazetteerLoad.Settings): Path = Path.of(s.stores.extracts.where())
-  private def manifestOf(s: GazetteerLoad.Settings): Path = Path.of(s.stores.manifestAt)
+  private def extractsOf(s: GazetteerLoad.Settings): Path = Path.of(s.stores.extracts.where().value)
+  private def manifestOf(s: GazetteerLoad.Settings): Path = Path.of(s.stores.manifestAt.value)
 
-  private val noNet: GazetteerLoad.Download = (u, _, _) => Left(s"no network in a test ($u)")
+  private val noNet: GazetteerLoad.Download = (u, _, _) => Left(HttpDownload.Problem(s"no network in a test ($u)"))
   private lazy val db = Transactor(ds)
 
   /** A download that writes `bytes` where it is told to. */
@@ -108,51 +110,51 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
   // ── no database ──────────────────────────────────────────────────────────────────────────────
 
   test("a checksum mismatch is refused before anything is read"):
-    val s = layout(sha = "0" * 64)
-    val r = GazetteerLoad.extract(s.stores, GazetteerLoad.manifest(s.stores).toOption.get.extracts.head, noNet, com.histmersion.domain.catalogue.places.GazetteerLoad.Settings.(5))
-    assert(r.left.exists(_.contains("refused")), r.toString)
+    val s = layout(sha = Gazetteer.Extract.Sha256("0" * 64))
+    val r = GazetteerLoad.extract(s.stores, GazetteerLoad.manifest(s.stores).toOption.get.extracts.head, noNet, Timeout)
+    assert(r.left.exists(_.value.contains("refused")), r.toString)
 
   test("a missing extract without a url says where to put it; with one it is downloaded and verified"):
     val bare = layout(withFile = false)
     val x0 = GazetteerLoad.manifest(bare.stores).toOption.get.extracts.head
-    val why = GazetteerLoad.extract(bare.stores, x0, noNet, com.histmersion.domain.catalogue.places.GazetteerLoad.Settings.(5)).left.getOrElse(fail("a missing file"))
-    val at = extractsOf(bare).resolve(x0.file).toString
+    val why = GazetteerLoad.extract(bare.stores, x0, noNet, Timeout).left.getOrElse(fail("a missing file"))
+    val at = extractsOf(bare).resolve(x0.file.value).toString
     assert(
-      why.contains(s"is not at $at") && why.contains("no download url") && why.contains(FixtureSha) &&
-        why.contains("places.sources.dir"),
+      why.value.contains(s"is not at $at") && why.value.contains("no download url") && why.value.contains(FixtureSha.value) &&
+        why.value.contains("places.sources.dir"),
       s"names the exact path, the checksum and the setting: $why"
     )
-    val net = layout(withFile = false, url = Some("https://example.org/geonames-fixture.ndjson.gz"))
+    val net = layout(withFile = false, url = Some(Gazetteer.Extract.Url("https://example.org/geonames-fixture.ndjson.gz")))
     val x1 = GazetteerLoad.manifest(net.stores).toOption.get.extracts.head
     val fetchOk = serving(resourceBytes("geonames-fixture.ndjson.gz"))
     assertEquals(
-      GazetteerLoad.extract(net.stores, x1, fetchOk, com.histmersion.domain.catalogue.places.GazetteerLoad.Settings.(5)).map(_.key.name),
+      GazetteerLoad.extract(net.stores, x1, fetchOk, Timeout).map(_.key.name),
       Right("geonames-fixture.ndjson.gz")
     )
     // a download that is not the pinned file is refused and removed
-    val wrong = layout(withFile = false, url = Some("https://example.org/x"))
+    val wrong = layout(withFile = false, url = Some(Gazetteer.Extract.Url("https://example.org/x")))
     val x2 = GazetteerLoad.manifest(wrong.stores).toOption.get.extracts.head
     val fetchBad = serving("not it".getBytes(java.nio.charset.StandardCharsets.UTF_8))
-    assert(GazetteerLoad.extract(wrong.stores, x2, fetchBad, com.histmersion.domain.catalogue.places.GazetteerLoad.Settings.(5)).left.exists(_.contains("refused")))
-    assert(!Files.exists(extractsOf(wrong).resolve(x2.file)))
+    assert(GazetteerLoad.extract(wrong.stores, x2, fetchBad, Timeout).left.exists(_.value.contains("refused")))
+    assert(!Files.exists(extractsOf(wrong).resolve(x2.file.value)))
 
   test("a pin that is not built yet (no sha256) is named as such, never downloaded"):
-    val s = layout(sha = "", url = Some("https://example.org/x"))
+    val s = layout(sha = Gazetteer.Extract.Sha256(""), url = Some(Gazetteer.Extract.Url("https://example.org/x")))
     val x = GazetteerLoad.manifest(s.stores).toOption.get.extracts.head
-    val r = GazetteerLoad.extract(s.stores, x, (_, _, _) => fail("no download for an unbuilt pin"), com.histmersion.domain.catalogue.places.GazetteerLoad.Settings.(5))
-    assert(r.left.exists(_.contains("not pinned yet")), r.toString)
+    val r = GazetteerLoad.extract(s.stores, x, (_, _, _) => fail("no download for an unbuilt pin"), Timeout)
+    assert(r.left.exists(_.value.contains("not pinned yet")), r.toString)
 
   test("the extracts default to the XDG cache directory; the LPF folder stays in the data directory"):
     val cfg = base.modify(
-      _.places).setTo(base.places.modify(_.sources).setTo(base.places.sources.modify(_.dir).setTo("").modify(_.lpfDir).setTo(""))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo("/data")
+      _.places).setTo(base.places.modify(_.sources).setTo(base.places.sources.modify(_.dir).setTo(PlaceSourcesConfig.Dir("")).modify(_.lpfDir).setTo(PlaceSourcesConfig.LpfDir(""))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir("/data"))
     )
-    val p = GazetteerPaths.of(cfg, Map("HOME" -> "/home/u", "XDG_CACHE_HOME" -> "/xc").get, com.histmersion.config.UserPaths.OsName("Linux"))
+    val p = GazetteerPaths.of(cfg, Environment(Map(Environment.VariablesKey("HOME") -> Environment.VariablesValue("/home/u"), Environment.VariablesKey("XDG_CACHE_HOME") -> Environment.VariablesValue("/xc"))).lookup, com.histmersion.config.UserPaths.OsName("Linux"))
     assertEquals(p.extracts, Path.of("/xc/histmersion/gazetteer"))
     assertEquals(p.lpf, Path.of("/data/gazetteer/lpf"))
     assertEquals(p.legacy, Some(Path.of("/data/gazetteer")), "the old default, adopted from")
     val own = GazetteerPaths.of(
-      cfg.modify(_.places).setTo(cfg.places.modify(_.sources).setTo(cfg.places.sources.modify(_.dir).setTo("/mine"))),
-      Map("HOME" -> "/home/u").get,
+      cfg.modify(_.places).setTo(cfg.places.modify(_.sources).setTo(cfg.places.sources.modify(_.dir).setTo(PlaceSourcesConfig.Dir("/mine")))),
+      Environment(Map(Environment.VariablesKey("HOME") -> Environment.VariablesValue("/home/u"))).lookup,
       com.histmersion.config.UserPaths.OsName("Linux")
     )
     assertEquals(own.extracts, Path.of("/mine"), "places.sources.dir still overrides")
@@ -163,16 +165,16 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
     copyResource("geonames-fixture.ndjson.gz", legacy.resolve("geonames-fixture.ndjson.gz"))
     val p = s.stores.modify(_.legacy).setTo(Some(Storage.at(Location.GazetteerFolder, legacy)))
     val x = GazetteerLoad.manifest(p).toOption.get.extracts.head
-    val moved = extractsOf(s).resolve(x.file).toString
-    assertEquals(GazetteerLoad.extract(p, x, noNet, com.histmersion.domain.catalogue.places.GazetteerLoad.Settings.(5)).map(_.where), Right(moved))
-    assert(!Files.exists(legacy.resolve(x.file)), "moved, not copied")
-    assertEquals(GazetteerLoad.extract(p, x, noNet, com.histmersion.domain.catalogue.places.GazetteerLoad.Settings.(5)).map(_.where), Right(moved), "found in place next time")
+    val moved = extractsOf(s).resolve(x.file.value).toString
+    assertEquals(GazetteerLoad.extract(p, x, noNet, Timeout).map(_.where), Right(moved))
+    assert(!Files.exists(legacy.resolve(x.file.value)), "moved, not copied")
+    assertEquals(GazetteerLoad.extract(p, x, noNet, Timeout).map(_.where), Right(moved), "found in place next time")
     // a legacy file that is not the pinned one is refused and left where it is
     val bad = Files.createTempDirectory("histmersion-gaz-legacy")
-    Files.writeString(bad.resolve(x.file), "not it")
+    Files.writeString(bad.resolve(x.file.value), "not it")
     val q = layout(withFile = false).stores.copy(legacy = Some(Storage.at(Location.GazetteerFolder, bad)))
-    assert(GazetteerLoad.extract(q, x, noNet, com.histmersion.domain.catalogue.places.GazetteerLoad.Settings.(5)).left.exists(_.contains("refused")))
-    assert(Files.exists(bad.resolve(x.file)))
+    assert(GazetteerLoad.extract(q, x, noNet, Timeout).left.exists(_.value.contains("refused")))
+    assert(Files.exists(bad.resolve(x.file.value)))
 
   test("the committed manifest decodes; every extract is pinned with a checksum"):
     val root = Iterator
@@ -181,15 +183,15 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
       .find(d => Files.isRegularFile(d.resolve("db/gazetteer/extracts.json")))
       .getOrElse(fail("no db/gazetteer above"))
     val p = stores(Files.createTempDirectory("gaz"), Path.of("/nowhere"), root.resolve("db/gazetteer/extracts.json"))
-    val m = GazetteerLoad.manifest(p).fold(e => fail(e), identity)
+    val m = GazetteerLoad.manifest(p).fold(e => fail(e.value), identity)
     assertEquals(m.extracts.map(_.name), List("geonames", "tgn", "wikidata"))
-    assert(m.extracts.forall(x => Gazetteer.Kind.parse(x.name).isDefined))
-    val tgn = m.extracts.find(_.name == "tgn").get
+    assert(m.extracts.forall(x => Gazetteer.Kind.parse(Gazetteer.Kind.Wire(x.name.value)).isDefined))
+    val tgn = m.extracts.find(_.name == Gazetteer.Extract.Name("tgn")).get
     assertEquals(tgn.licence, "ODC-By 1.0")
-    assert(m.extracts.forall(x => x.sha256.matches("[0-9a-f]{64}") && x.file.nonEmpty), m.extracts.toString)
+    assert(m.extracts.forall(x => x.sha256.value.matches("[0-9a-f]{64}") && x.file.value.nonEmpty), m.extracts.toString)
     // not on disk here: the error names the file to put in place, not "not pinned yet"
     assert(
-      GazetteerLoad.extract(p, tgn, noNet, com.histmersion.domain.catalogue.places.GazetteerLoad.Settings.(5)).left.exists(e => e.contains(tgn.file) && !e.contains("not pinned yet"))
+      GazetteerLoad.extract(p, tgn, noNet, Timeout).left.exists(e => e.value.contains(tgn.file.value) && !e.value.contains("not pinned yet"))
     )
 
   test("the LPF drop folder lists data files only, never a sidecar"):
@@ -226,13 +228,13 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
     "LPF then GeoNames: dataset provenance, open-ended dated names, and a GeoNames record joining by a shared Wikidata id"
   ):
     val s = layout()
-    val lpf = GazetteerLoad.load(db, s, Gazetteer.Kind.Lpf, apply = com.histmersion.domain.catalogue.places.GazetteerLoad.LoadApply(true), _ => (), noNet).fold(e => fail(e), identity)
+    val lpf = GazetteerLoad.load(db, s, Gazetteer.Kind.Lpf, apply = com.histmersion.domain.catalogue.places.GazetteerLoad.LoadApply(true), _ => (), noNet).fold(e => fail(e.value), identity)
     assertEquals(lpf.map(c => c.source -> c.created), List("lpf:zzgaz_hittite" -> 2L, "lpf:zzgaz_kultepe" -> 1L))
-    val rows = PlaceFixtures.gazetteerSources(ds).filter(_.key.startsWith("lpf:zzgaz")).map(r => r.key -> r).toMap
+    val rows = PlaceFixtures.gazetteerSources(ds).filter(_.key.value.startsWith("lpf:zzgaz")).map(r => r.key -> r).toMap
     val hit = rows(com.histmersion.domain.catalogue.places.GazetteerSourceRow.Key("lpf:zzgaz_hittite"))
     assertEquals(hit.title, "Zzgaz Hittite capitals (test fixture)")
     assertEquals(hit.licence, Some("CC BY 4.0"))
-    assert(hit.citation.exists(_.startsWith("Fixture, A. (2026)")))
+    assert(hit.citation.exists(_.value.startsWith("Fixture, A. (2026)")))
     assertEquals((hit.periodStart, hit.periodEnd), (Some(-1650L), Some(-1180L)), "the records' widest years")
     assertEquals(rows(com.histmersion.domain.catalogue.places.GazetteerSourceRow.Key("lpf:zzgaz_kultepe")).title, "Zzgaz Kültepe (test fixture)")
     assertEquals(rows(com.histmersion.domain.catalogue.places.GazetteerSourceRow.Key("lpf:zzgaz_kultepe")).citation, Some("Fixture, B. (2026). Kültepe LP-TSV."))
@@ -255,7 +257,7 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
 
     // GeoNames 999000202 names wd:Q999000101, which the LPF record links: its names go to the LPF place
     val gn =
-      GazetteerLoad.load(db, s, Gazetteer.Kind.Geonames, apply = com.histmersion.domain.catalogue.places.GazetteerLoad.LoadApply(true), _ => (), noNet).fold(e => fail(e), identity).head
+      GazetteerLoad.load(db, s, Gazetteer.Kind.Geonames, apply = com.histmersion.domain.catalogue.places.GazetteerLoad.LoadApply(true), _ => (), noNet).fold(e => fail(e.value), identity).head
     assertEquals((gn.records, gn.created, gn.joined), (2L, 1L, 1L))
     val names = connect(ds)(
       sql"SELECT name FROM place_names WHERE place_id = $hattusa AND import_source = 'geonames' ORDER BY name"
@@ -265,7 +267,7 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
     )
     assertEquals(names, List("Zzgaz Mikoyan", "Zzgaz Yeghegnadzor"))
     assertEquals(
-      PlaceFixtures.gazetteerSources(ds).find(_.key == "geonames").map(r => (r.version, r.sha256)),
+      PlaceFixtures.gazetteerSources(ds).find(_.key == GazetteerSourceRow.Key("geonames")).map(r => (r.version, r.sha256)),
       Some(("fixture-1", FixtureSha))
     )
 
@@ -274,7 +276,7 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
       GazetteerLoad.load(db, s, Gazetteer.Kind.Geonames, apply = com.histmersion.domain.catalogue.places.GazetteerLoad.LoadApply(true), _ => (), noNet).toOption.get
     assert(again.forall(_.unchanged), again.map(_.describe).mkString("; "))
 
-  private val TgnSha = "2c386aa87210da40fc3bcba558ebfd99ff6fa3924c4139f139212095882c4384"
+  private val TgnSha = Gazetteer.Extract.Sha256("2c386aa87210da40fc3bcba558ebfd99ff6fa3924c4139f139212095882c4384")
 
   /** [[layout]] with a `tgn` extract pinned too. */
   private def withTgn(s: GazetteerLoad.Settings): GazetteerLoad.Settings =
@@ -296,13 +298,13 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
 
   dbTest("Getty TGN (#1403): joins by a shared tgn id only, keeps open name spans, drops a point-only region"):
     val s = withTgn(layout())
-    val _ = GazetteerLoad.load(db, s, Gazetteer.Kind.Lpf, apply = com.histmersion.domain.catalogue.places.GazetteerLoad.LoadApply(true), _ => (), noNet).fold(e => fail(e), identity)
+    val _ = GazetteerLoad.load(db, s, Gazetteer.Kind.Lpf, apply = com.histmersion.domain.catalogue.places.GazetteerLoad.LoadApply(true), _ => (), noNet).fold(e => fail(e.value), identity)
     val hattusa = "lpf_zzgaz_hittite_hattusa"
     // what the Wikidata extract does for 25 753 items: a tgn: link on a place (here, by hand)
     connect(ds)(sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
                       VALUES ($hattusa, 'tgn', '999000301', 'close_match')""".update.run())
     val c =
-      GazetteerLoad.load(db, s, Gazetteer.Kind.Tgn, apply = com.histmersion.domain.catalogue.places.GazetteerLoad.LoadApply(true), _ => (), noNet).fold(e => fail(e), identity).head
+      GazetteerLoad.load(db, s, Gazetteer.Kind.Tgn, apply = com.histmersion.domain.catalogue.places.GazetteerLoad.LoadApply(true), _ => (), noNet).fold(e => fail(e.value), identity).head
     assertEquals((c.source, c.records, c.joined, c.created, c.pointAreasSkipped), ("tgn", 3L, 1L, 1L, 1L), c.describe)
     val span = connect(ds)(
       sql"""SELECT lower(period), upper(period) - 1 FROM place_names
@@ -320,7 +322,7 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
       0,
       "a TGN region known only by a point is no place"
     )
-    val src = PlaceFixtures.gazetteerSources(ds).find(_.key == "tgn").getOrElse(fail("recorded"))
+    val src = PlaceFixtures.gazetteerSources(ds).find(_.key == GazetteerSourceRow.Key("tgn")).getOrElse(fail("recorded"))
     assertEquals((src.kind, src.version, src.licence), ("tgn", "fixture-t", Some("ODC-By 1.0")))
     val desc = connect(ds)(
       sql"SELECT text FROM place_descriptions WHERE place_id = $hattusa AND import_source = 'tgn'"
@@ -329,7 +331,7 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
         .toList
     )
     assertEquals(desc, List("Capital of the Hittites."))
-    val again = GazetteerLoad.load(db, s, Gazetteer.Kind.Tgn, apply = com.histmersion.domain.catalogue.places.GazetteerLoad.LoadApply(true), _ => (), noNet).fold(e => fail(e), identity)
+    val again = GazetteerLoad.load(db, s, Gazetteer.Kind.Tgn, apply = com.histmersion.domain.catalogue.places.GazetteerLoad.LoadApply(true), _ => (), noNet).fold(e => fail(e.value), identity)
     assert(again.forall(_.unchanged), again.map(_.describe).mkString("; "))
 
   dbTest("a dry run counts and keeps nothing"):
@@ -337,11 +339,11 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
     val c =
       GazetteerLoad
         .load(db, s, Gazetteer.Kind.Geonames, apply = com.histmersion.domain.catalogue.places.GazetteerLoad.LoadApply(false), _ => (), noNet)
-        .fold(e => fail(e), identity)
+        .fold(e => fail(e.value), identity)
         .head
     assertEquals(c.created, 2L)
     assertEquals(
       connect(ds)(sql"SELECT count(*)::int FROM places WHERE import_source = 'geonames'".query[Int].run().head),
       0
     )
-    assert(!PlaceFixtures.gazetteerSources(ds).exists(_.key == "geonames"))
+    assert(!PlaceFixtures.gazetteerSources(ds).exists(_.key == GazetteerSourceRow.Key("geonames")))

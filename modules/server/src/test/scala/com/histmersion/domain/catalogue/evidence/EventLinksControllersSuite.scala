@@ -5,10 +5,11 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.{TimeSpan, Write}
-import com.histmersion.api.catalogue.{EventLinksRequest, EventPut, MatchSpan}
+import com.histmersion.api.catalogue.{EventLinksRequest, EventPut, EventSourceRef, MatchSpan}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.PlaceScope
-import com.histmersion.domain.Caller
+import com.histmersion.domain.{Caller, Title}
+import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.catalogue.{CatalogueJobs, CatalogueState}
 import com.histmersion.domain.catalogue.events.EventService
 import com.histmersion.domain.catalogue.evidence.passages.{Passage, PassageReader}
@@ -23,27 +24,27 @@ import java.util.concurrent.atomic.AtomicReference
   */
 class EventLinksControllersSuite extends munit.FunSuite:
   private val texts = Map(
-    "zzln2020_names" -> "The Siege of Zzaria lasted long.",
-    "zzln2021_silent" -> "Nothing of the kind here."
+    Citekey("zzln2020_names") -> "The Siege of Zzaria lasted long.",
+    Citekey("zzln2021_silent") -> "Nothing of the kind here."
   )
 
   private val sources = new Passage.Source:
-    def canonical(citekey: String): Option[String] = Option.when(texts.contains(citekey))(citekey)
-    def naming(name: String, limit: Int): List[String] = texts.collect { case (ck, t) if t.contains(name) => ck }.toList
-    def reader(citekey: String): PassageReader = (query, _, _, _, _, _) =>
+    def canonical(citekey: Citekey): Option[Citekey] = Option.when(texts.contains(citekey))(citekey)
+    def naming(name: Title, limit: com.histmersion.PageSize): List[Citekey] = texts.collect { case (ck, t) if t.contains(name.value) => ck }.toList
+    def reader(citekey: Citekey): PassageReader = (query, _, _, _, _, _) =>
       val text = texts.getOrElse(citekey, "")
       val at = text.indexOf("Siege of Zzaria")
-      Right(Option.when(query.contains("Zzaria") && at >= 0)(Passage(com.histmersion.domain.catalogue.evidence.passages.Passage.Offset(0), text, List(MatchSpan(at, at + 15)))).toList)
+      Right(Option.when(query.value.contains("Zzaria") && at >= 0)(Passage(com.histmersion.domain.catalogue.evidence.passages.Passage.Offset(0), Passage.Text(text), List(MatchSpan(MatchSpan.Start(at), MatchSpan.End(at + 15))))).toList)
 
   private def controllers() =
     val state = AtomicReference(CatalogueState.empty)
     val events = EventService.InMemory(state)
     events.put(com.histmersion.domain.catalogue.Event.Id("zz_siege"), EventPut(com.histmersion.api.catalogue.EventSummary.Label("Siege of Zzaria"), com.histmersion.api.catalogue.EventSummary.Kind("siege"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-500)), None, None, Some(com.histmersion.api.catalogue.Year(-499)))))
-    val links = EventLinkService.InMemory(state, ck => Option.when(texts.contains(ck))(Some(ck)))
+    val links = EventLinkService.InMemory(state, ck => Option.when(texts.contains(ck))(Some(Title(ck.value))))
     val attestations = AttestationService.InMemory(state)
     val c = EventLinksControllers(
       links,
-      LeadService.InMemory(state, events, ck => Option.when(texts.contains(ck))((Some(ck), None))),
+      LeadService.InMemory(state, events, ck => Option.when(texts.contains(ck))((Some(EventSourceRef.Title(ck.value)), None))),
       events,
       attestations,
       sources,
@@ -73,7 +74,7 @@ class EventLinksControllersSuite extends munit.FunSuite:
       List(("zzln2020_names", Some("Siege of Zzaria"), Some(4)))
     )
     assertEquals(r.refused.size, 2)
-    assert(r.refused.exists(_.startsWith("zzgone: no such source")))
+    assert(r.refused.exists(_.value.startsWith("zzgone: no such source")))
     assertEquals((attestations.list(None, Some(com.histmersion.api.catalogue.Attestation.TargetType("event")), Some(com.histmersion.api.catalogue.Attestation.TargetId("zz_siege")), com.histmersion.PageSize(10), com.histmersion.Offset(0)).total.value: Int), 1)
     assertEquals(links.candidates(com.histmersion.domain.catalogue.Event.Id("zz_siege")).map(c => (c.citekey, c.status)), List("zzln2020_names" -> "confirmed"))
     val again = c.applyLinks(Caller.Local, com.histmersion.domain.catalogue.Event.Id("zz_siege"), EventLinksRequest(confirm = List(com.histmersion.api.catalogue.EventLinksRequest.Confirm("zzln2020_names")))).toOption.get

@@ -8,6 +8,7 @@ import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 
 import java.time.Instant
 import com.histmersion.domain.automation.Goal
+import com.histmersion.util.jobs.{Job, RunRow}
 
 /** The contract the managers keep: made once, their settings; items added once and brought back, held and released (for
   * a person, for the focus), settled and dispatched; events; the reads over every manager at once.
@@ -15,12 +16,12 @@ import com.histmersion.domain.automation.Goal
 abstract class ManagerServiceContract extends EngineStoreSuite:
   private def m(s: EngineStores) = s.managers
   private val t = Instant.parse("2026-11-03T06:00:00Z")
-  private def goal(s: EngineStores, slug: String) = assert(
-    s.goals.put(slug, com.histmersion.api.automation.Goal.Put(slug)).isRight
+  private def goal(s: EngineStores, slug: Goal.Slug) = assert(
+    s.goals.put(slug, com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title(slug.value))).isRight
   )
 
   stest("a manager is made once; its state, settings and cron; light, with whether it has a plan-goal item") { s =>
-    goal(s, "zz-g")
+    goal(s, Goal.Slug("zz-g"))
     assert(
       m(s).create(
         com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:zz-g"),
@@ -47,7 +48,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assert(m(s).setConfig(com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), ManagerConfig(lowWater = Some(com.histmersion.api.automation.Managers.ManagerConfig.LowWater(3))), None, None))
     assertEquals(m(s).get(com.histmersion.api.automation.Managers.ManagerInfo.Id("review")).map(x => (x.config.lowWater, x.cron)), Some((Some(3), None)))
     assertEquals(m(s).light().map(l => (l.id, l.planItem)), List(("review", false), ("seed:zz-g", false)))
-    val _ = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:zz-g"), PlanGoalItem, com.histmersion.api.automation.Managers.ManagerItem.Target("zz-g"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(1), reopen = false)
+    val _ = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:zz-g"), ManagerItem.Kind(PlanGoalItem), com.histmersion.api.automation.Managers.ManagerItem.Target("zz-g"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(1), reopen = false)
     assertEquals(m(s).light().map(l => (l.id, l.planItem)), List(("review", false), ("seed:zz-g", true)))
   }
 
@@ -70,7 +71,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assertEquals(m(s).item(b).map(i => (i.status, i.outcome)), Some(("stopped", Some("skipped"))))
     assertEquals(m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), com.histmersion.api.automation.Managers.ManagerItem.Kind("article-review"), com.histmersion.api.automation.Managers.ManagerItem.Target("zz-b"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = true), (b, false))
     assertEquals(m(s).item(b).map(i => (i.status, i.outcome)), Some(("pending", None)), "a settled one reopened")
-    val run = s.run("zz-a", manager = Some("review"), item = Some(a))
+    val run = s.run(RunRow.Target("zz-a"), manager = Some(RunRow.ManagerId("review")), item = Some(RunRow.ManagerItem(a.value)))
     assert(m(s).dispatch(a, run, ItemState(before = Some(com.histmersion.api.automation.Managers.ItemState.Before(2)))))
     assert(!m(s).dispatch(a, run, ItemState()), "not pending")
     assertEquals(
@@ -95,10 +96,10 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     s =>
       assert(m(s).create(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-a"), Kind.Watch, None, State.Active, ManagerConfig()))
       assert(m(s).create(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-b"), Kind.Watch, None, State.Paused, ManagerConfig()))
-      val (a1, _) = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-a"), OaIngest, com.histmersion.api.automation.Managers.ManagerItem.Target("10.5555/zz.1"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)
-      val (a2, _) = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-a"), OaIngest, com.histmersion.api.automation.Managers.ManagerItem.Target("10.5555/zz.2"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(3), reopen = false)
-      val (b1, _) = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-b"), OaIngest, com.histmersion.api.automation.Managers.ManagerItem.Target("10.5555/zz.1"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)
-      val (other, _) = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-a"), AcquisitionSweep, com.histmersion.api.automation.Managers.ManagerItem.Target("zz-a"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(9), reopen = false)
+      val (a1, _) = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-a"), ManagerItem.Kind(OaIngest), com.histmersion.api.automation.Managers.ManagerItem.Target("10.5555/zz.1"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)
+      val (a2, _) = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-a"), ManagerItem.Kind(OaIngest), com.histmersion.api.automation.Managers.ManagerItem.Target("10.5555/zz.2"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(3), reopen = false)
+      val (b1, _) = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-b"), ManagerItem.Kind(OaIngest), com.histmersion.api.automation.Managers.ManagerItem.Target("10.5555/zz.1"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)
+      val (other, _) = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-a"), ManagerItem.Kind(AcquisitionSweep), com.histmersion.api.automation.Managers.ManagerItem.Target("zz-a"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(9), reopen = false)
       assertEquals(m(s).backlogPending().map(_.id), List(a2, a1), "an active watcher's, the most urgent first")
       assertEquals(m(s).backlogOpen().map(_.id), List(a1, a2, b1), "every watcher's open ones, the oldest first")
       assertEquals(m(s).backlogOpenFor(com.histmersion.domain.library.Doi("10.5555/zz.1")).map(_.id), Some(a1))
@@ -132,7 +133,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
   stest("the focus holds pending items only, and releases only its own holds") { s =>
     assert(m(s).create(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz"), Kind.Watch, None, State.Active, ManagerConfig()))
     val ids = (1 to 3).toList.map(i =>
-      m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz"), OaIngest, s"10.1/$i", ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)._1
+      m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz"), ManagerItem.Kind(OaIngest), ManagerItem.Target(s"10.1/$i"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)._1
     )
     assert(m(s).focusHold(ids(0), Hold(reason = com.histmersion.api.automation.Managers.Hold.Reason("focus"), focus = Some(com.histmersion.api.automation.Managers.Hold.Focus("zz")))))
     assert(m(s).focusHold(ids(1), Hold(reason = com.histmersion.api.automation.Managers.Hold.Reason("focus"), focus = Some(com.histmersion.api.automation.Managers.Hold.Focus("zz")))))
@@ -140,8 +141,8 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assert(m(s).hold(ids(2), Hold(reason = com.histmersion.api.automation.Managers.Hold.Reason("a person"))))
     assertEquals(m(s).focusHeldCount(), 2)
     assertEquals(m(s).forPerson(), 1, "the focus's holds wait for nobody")
-    assertEquals(m(s).openOf(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz"), List(OaIngest), List(com.histmersion.api.automation.ItemStatus.Wire("held"))), 3)
-    assertEquals(m(s).openOf(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz"), List(OaIngest), List(com.histmersion.api.automation.ItemStatus.Wire("held")), focusHeld = false), 1)
+    assertEquals(m(s).openOf(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz"), List(ManagerItem.Kind(OaIngest)), List(com.histmersion.api.automation.ItemStatus.Wire("held"))), 3)
+    assertEquals(m(s).openOf(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz"), List(ManagerItem.Kind(OaIngest)), List(com.histmersion.api.automation.ItemStatus.Wire("held")), focusHeld = false), 1)
     assertEquals(m(s).backlogCounts(), Map("watch:zz" -> (0, 3)))
     assertEquals(m(s).focusRelease(List(ids(0), ids(2))), 1, "a person's hold is never touched")
     assertEquals(m(s).focusReleaseAll(), 1)
@@ -150,19 +151,19 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
   }
 
   stest("events: the newest of a kind, every manager's since a moment, the pace and the last progress") { s =>
-    goal(s, "zz-g")
+    goal(s, Goal.Slug("zz-g"))
     assert(m(s).create(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), Kind.Watch, Some(com.histmersion.domain.automation.Goal.Slug("zz-g")), State.Active, ManagerConfig()))
     assert(m(s).create(com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), Kind.Review, None, State.Active, ManagerConfig()))
     m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), None, None, Feed.Ingested, com.histmersion.api.automation.Managers.ManagerEvent.Text("one"))
     m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), None, None, Feed.Ingested, com.histmersion.api.automation.Managers.ManagerEvent.Text("two"))
-    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), None, None, Feed.Ingested, "x" * 3000)
+    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), None, None, Feed.Ingested, ManagerEvent.Text("x" * 3000))
     assertEquals(m(s).lastEventOf(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), Feed.Ingested).map(_.text), Some("two"))
     assertEquals(m(s).lastEventOf(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), Feed.Started), None)
-    assertEquals(m(s).get(com.histmersion.api.automation.Managers.ManagerInfo.Id("review")).flatMap(_.lastEvent).map(_.text.length), Some(2000))
+    assertEquals(m(s).get(com.histmersion.api.automation.Managers.ManagerInfo.Id("review")).flatMap(_.lastEvent).map(_.text.value.length), Some(2000))
     assertEquals(m(s).countEventsAll(Feed.Ingested, Instant.parse("2000-01-01T00:00:00Z")), 3)
     assertEquals(m(s).countEventsAll(Feed.Ingested, Instant.parse("2099-01-01T00:00:00Z")), 0)
-    val (i, _) = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), AcquisitionSweep, com.histmersion.api.automation.Managers.ManagerItem.Target("zz-g"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)
-    val _ = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), OaIngest, com.histmersion.api.automation.Managers.ManagerItem.Target("10.1/x"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)
+    val (i, _) = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), ManagerItem.Kind(AcquisitionSweep), com.histmersion.api.automation.Managers.ManagerItem.Target("zz-g"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)
+    val _ = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), ManagerItem.Kind(OaIngest), com.histmersion.api.automation.Managers.ManagerItem.Target("10.1/x"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)
     assertEquals(
       m(s).pace(Instant.parse("2000-01-01T00:00:00Z")).get(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g")).map(p => (p._1, p._2, p._3.isDefined)),
       Some((1, 0, true))
@@ -177,21 +178,21 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assert(m(s).lastProgress().contains(com.histmersion.api.automation.Goal.Slug("zz-g")))
     assertEquals(m(s).lastProgress().keySet, Set("zz-g"))
     assert(s.goals.link(com.histmersion.domain.automation.Goal.Slug("zz-g"), Goal.LinkKind.Source, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_s"), None))
-    assert(m(s).lastProgress()(com.histmersion.api.automation.Goal.Slug("zz-g")).matches("\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ"))
+    assert(m(s).lastProgress()(com.histmersion.api.automation.Goal.Slug("zz-g")).value.matches("\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ"))
   }
 
   stest("the runs that hold a place, per manager and per goal; the kinds of the newest runs") { s =>
-    goal(s, "zz-g")
+    goal(s, Goal.Slug("zz-g"))
     assert(m(s).create(com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:zz-g"), Kind.Seed, Some(com.histmersion.domain.automation.Goal.Slug("zz-g")), State.Active, ManagerConfig()))
-    val (a, _) = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:zz-g"), ProposeArticles, com.histmersion.api.automation.Managers.ManagerItem.Target("zz-g"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)
-    val (b, _) = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:zz-g"), ArticleCompile, com.histmersion.api.automation.Managers.ManagerItem.Target("zz-art"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)
-    val r1 = s.run("zz-g", manager = Some("seed:zz-g"), item = Some(a), pipeline = "propose-articles")
-    val r2 = s.run("zz-art", manager = Some("seed:zz-g"), item = Some(b), pipeline = "compile-article")
-    val mine = s.run("zz2020_x")
+    val (a, _) = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:zz-g"), ManagerItem.Kind(ProposeArticles), com.histmersion.api.automation.Managers.ManagerItem.Target("zz-g"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)
+    val (b, _) = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:zz-g"), ManagerItem.Kind(ArticleCompile), com.histmersion.api.automation.Managers.ManagerItem.Target("zz-art"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)
+    val r1 = s.run(RunRow.Target("zz-g"), manager = Some(RunRow.ManagerId("seed:zz-g")), item = Some(RunRow.ManagerItem(a.value)), pipeline = RunRow.Pipeline("propose-articles"))
+    val r2 = s.run(RunRow.Target("zz-art"), manager = Some(RunRow.ManagerId("seed:zz-g")), item = Some(RunRow.ManagerItem(b.value)), pipeline = RunRow.Pipeline("compile-article"))
+    val mine = s.run(RunRow.Target("zz2020_x"))
     assert(m(s).dispatch(a, r1, ItemState()))
     assert(m(s).dispatch(b, r2, ItemState()))
-    assert(s.runs.move(JobKind, r2, com.histmersion.util.jobs.RunRow.Status("queued"), com.histmersion.util.jobs.RunRow.Status("running"), None, None, None))
-    assert(s.runs.move(JobKind, r2, com.histmersion.util.jobs.RunRow.Status("running"), com.histmersion.util.jobs.RunRow.Status("waiting"), None, None, None))
+    assert(s.runs.move(Job.Kind.assume(JobKind), r2, com.histmersion.util.jobs.RunRow.Status("queued"), com.histmersion.util.jobs.RunRow.Status("running"), None, None, None))
+    assert(s.runs.move(Job.Kind.assume(JobKind), r2, com.histmersion.util.jobs.RunRow.Status("running"), com.histmersion.util.jobs.RunRow.Status("waiting"), None, None, None))
     assertEquals(m(s).running(com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:zz-g")), 1)
     assertEquals(
       m(s).occupyingRuns().toSet,
@@ -203,10 +204,10 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assertEquals(m(s).forPerson(), 1, "an active item whose run waits for an approval")
     assert(
       m(s).hold(
-        m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:zz-g"), PlanGoalItem, com.histmersion.api.automation.Managers.ManagerItem.Target("zz-g"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)._1,
+        m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:zz-g"), ManagerItem.Kind(PlanGoalItem), com.histmersion.api.automation.Managers.ManagerItem.Target("zz-g"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)._1,
         Hold(reason = com.histmersion.api.automation.Managers.Hold.Reason("p"))
       )
     )
     assertEquals(m(s).personHeldByGoal(), Map("zz-g" -> 1))
-    assertEquals(mine.nonEmpty, true)
+    assertEquals(mine.value.nonEmpty, true)
   }

@@ -1,9 +1,10 @@
 package com.histmersion.domain.library.acquisition
 
 import com.histmersion.server.ServerPlugins
-import com.histmersion.util.plugins.Plugins
+import com.histmersion.util.plugins.{Plugin, Plugins}
 
 import com.histmersion.config.{AcquireConfig, AppConfig, LoadedConfig}
+import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.{Doi, WorkKey}
 import com.histmersion.pluginhost.{FetchChain, Generation, HttpAnswer, HttpTransport, PolicyHttp}
 import org.ekrich.config.ConfigFactory
@@ -11,6 +12,7 @@ import org.ekrich.config.ConfigFactory
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.time.{Instant, LocalDate}
+import scala.collection.immutable.ListMap
 import scala.jdk.CollectionConverters.*
 
 /** The recorded traffic of the acquisition chain: every request the stock generation's source fetchers (and the
@@ -21,32 +23,38 @@ import scala.jdk.CollectionConverters.*
   */
 class FetcherTrafficSuite extends munit.FunSuite:
 
-  private val Pdf: Array[Byte] = ("%PDF-1.5\n" + ("x" * 4096)).getBytes("ISO-8859-1")
-  private val Epub: Array[Byte] = ("PK epub " + ("e" * 20480)).getBytes("ISO-8859-1")
-  private val Xml: Array[Byte] = scala.io.Source.fromResource("jats/article.xml").mkString.getBytes(UTF_8)
+  private val Pdf: HttpAnswer.Body = HttpAnswer.Body(("%PDF-1.5\n" + ("x" * 4096)).getBytes("ISO-8859-1"))
+  private val Epub: HttpAnswer.Body = HttpAnswer.Body(("PK epub " + ("e" * 20480)).getBytes("ISO-8859-1"))
+  private val Xml: HttpAnswer.Body = HttpAnswer.Body(scala.io.Source.fromResource("jats/article.xml").mkString.getBytes(UTF_8))
+
+  private val ContentType = CoreQuota.HeaderName("content-type")
+  private val PdfType = CoreQuota.HeaderValue("application/pdf")
+  private val XmlType = CoreQuota.HeaderValue("application/xml")
+  private val EpubType = CoreQuota.HeaderValue("application/epub+zip")
 
   private def fixture(name: String): String =
     scala.io.Source.fromResource(s"acquire/$name")(using scala.io.Codec.UTF8).mkString
   private def landing(name: String): String = fixture(s"landing/$name")
 
-  private def md5(b: Array[Byte]): String = OaFetch.md5(b).getOrElse(fail("no MD5 in this runtime"))
+  private def md5(b: HttpAnswer.Body): String =
+    OaFetch.md5(OaFetch.Bytes(b.value)).getOrElse(fail("no MD5 in this runtime")).value
 
-  private def json(s: String): Either[String, HttpAnswer] =
-    Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> "application/json"), s.getBytes(UTF_8)))
-  private def html(s: String): Either[String, HttpAnswer] =
-    Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> "text/html"), s.getBytes(UTF_8)))
-  private def file(b: Array[Byte], mime: String): Either[String, HttpAnswer] =
-    Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> mime), b))
-  private val notFound: Either[String, HttpAnswer] =
-    Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(404), Map("content-type" -> "text/plain"), "not found".getBytes(UTF_8)))
+  private def json(s: String): Either[HttpTransport.Problem, HttpAnswer] =
+    Right(HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> CoreQuota.HeaderValue("application/json")), HttpAnswer.Body(s.getBytes(UTF_8))))
+  private def html(s: String): Either[HttpTransport.Problem, HttpAnswer] =
+    Right(HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> CoreQuota.HeaderValue("text/html")), HttpAnswer.Body(s.getBytes(UTF_8))))
+  private def file(b: HttpAnswer.Body, mime: CoreQuota.HeaderValue): Either[HttpTransport.Problem, HttpAnswer] =
+    Right(HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> mime), b))
+  private val notFound: Either[HttpTransport.Problem, HttpAnswer] =
+    Right(HttpAnswer(HttpAnswer.Code(404), Map(ContentType -> CoreQuota.HeaderValue("text/plain")), HttpAnswer.Body("not found".getBytes(UTF_8))))
 
-  /** Answers from `routes`, 404 otherwise; every request written to `out`. */
-  final private class Wire(routes: PartialFunction[String, Either[String, HttpAnswer]]) extends HttpTransport:
+  /** Answers from `routes` (matched on the URL's text), 404 otherwise; every request written to `out`. */
+  final private class Wire(routes: PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]]) extends HttpTransport:
     val out = StringBuilder()
-    def get(url: String, headers: Map[String, String]): Either[String, HttpAnswer] =
-      val answer = routes.applyOrElse(url, (_: String) => notFound)
+    def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[HttpTransport.Problem, HttpAnswer] =
+      val answer = routes.applyOrElse(url.value, (_: String) => notFound)
       out ++= s"GET $url\n"
-      headers.toList.sortBy(_._1.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
+      headers.toList.sortBy(_._1.value.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
       out ++= s"  -> ${answer.fold(e => s"error $e", a => a.code.toString)}\n"
       answer
 
@@ -56,7 +64,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
       |""".stripMargin
 
   private def loaded(text: String, env: Map[String, String]): LoadedConfig =
-    AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), text).fold(e => fail(e), identity)
+    AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), text).fold(e => fail(e.value), identity)
 
   private val t0 = Instant.parse("2026-10-26T18:50:00Z")
 
@@ -66,7 +74,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
   private def scenario(
       name: String,
       works: List[WorkKey],
-      routes: AcquireConfig => PartialFunction[String, Either[String, HttpAnswer]],
+      routes: AcquireConfig => PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]],
       text: String = baseText,
       env: Map[String, String] = Map.empty,
       search: Boolean = false
@@ -77,25 +85,30 @@ class FetcherTrafficSuite extends munit.FunSuite:
     val core = budget()
     val g: Generation = ServerPlugins.load(l, core = core, transport = _ => wire)
     val (chain, _) =
-      FetchChain.of(g.registries.sourceFetchers, cfg.chainIds, cfg.allowUnauthorised, plugins = g.registered)
+      FetchChain.of(
+        ListMap.from(g.registries.sourceFetchers.toList.flatMap((k, f) => Plugin.Id.option(k.value).map(_ -> f))),
+        cfg.chainIds.flatMap(c => Plugin.Id.option(c.value)),
+        FetchChain.AllowUnauthorised(cfg.allowUnauthorised.value),
+        plugins = g.registered.flatMap(i => Plugin.Id.option(i.value))
+      )
     val sb = StringBuilder(s"## $name\n")
     sb ++= s"chain: ${chain.plan.map(_._1).mkString(", ")}\n"
     works.foreach { w =>
       wire.out.clear()
-      val outcome = chain.fetchWorkExplained(w, legalOnly = false)
+      val outcome = chain.fetchWorkExplained(w, legalOnly = FetchChain.LegalOnly(false))
       sb ++= s"### ${FetchChain.describe(w)}\n"
       sb ++= wire.out.result()
       sb ++= (outcome.file match
         case Right(f) =>
-          s"found by ${outcome.foundBy.getOrElse("?")}: ${f.source} ${f.extension} ${f.url.getOrElse("-")} " +
-            s"${f.bytes.length} bytes${f.licence.fold("")(l => s" licence ${l.value}")}\n"
+          s"found by ${outcome.foundBy.fold("?")(_.value)}: ${f.source} ${f.extension} ${f.url.fold("-")(_.value)} " +
+            s"${f.bytes.value.length} bytes${f.licence.fold("")(l => s" licence ${l.value}")}\n"
         case Left(why) => s"no copy: $why\n" + outcome.answers.map(a => s"  ${a.line}\n").mkString)
     }
     if search then
       wire.out.clear()
       val host = new SttpHttp(PolicyHttp.acquisition(l.config, wire))
-      val (indexes, _) = Indexes.of(cfg, host, Plugins.coreKey(g, cfg.core.key), core)
-      val got = indexes.find(_.name == "core").map(_.search("bronze age", LocalDate.of(2026, 1, 1), 5))
+      val (indexes, _) = Indexes.of(cfg, host, Plugins.coreKey(g, cfg.core.key.map(k => Plugins.CoreKey(k.value))), core)
+      val got = indexes.find(_.name.value == "core").map(_.search(com.histmersion.domain.library.search.Search.Query("bronze age"), LocalDate.of(2026, 1, 1), ScholarlyIndex.Limit(5)))
       sb ++= "### core index search\n"
       sb ++= wire.out.result()
       sb ++= s"core index: ${got.fold("none")(_.fold(e => s"failed $e", hits => s"${hits.size} hit(s)"))}\n"
@@ -108,36 +121,36 @@ class FetcherTrafficSuite extends munit.FunSuite:
 
   private val PmcDoi = "10.1038/nature25778"
 
-  private def pmc(c: AcquireConfig): PartialFunction[String, Either[String, HttpAnswer]] =
+  private def pmc(c: AcquireConfig): PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]] =
     val record = fixture("pmc_dataset_oa.json").replaceAll("(\\.pdf\\?md5=)[0-9a-f]{32}", "$1" + md5(Pdf))
     {
-      case u if u.startsWith(c.europepmc.url + "/search") => json(fixture("europepmc_oa.json"))
+      case u if u.startsWith(c.europepmc.url.value + "/search") => json(fixture("europepmc_oa.json"))
       case u if u.startsWith("https://europepmc.org/")    =>
-        Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(403), Map("cf-mitigated" -> "challenge"), "Just a moment...".getBytes(UTF_8)))
-      case u if u.startsWith(c.pmcDataset.url + "/?") =>
+        Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(403), Map(CoreQuota.HeaderName("cf-mitigated") -> CoreQuota.HeaderValue("challenge")), HttpAnswer.Body("Just a moment...".getBytes(UTF_8))))
+      case u if u.startsWith(c.pmcDataset.url.value + "/?") =>
         Right(
-          HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> "application/xml"), fixture("pmc_dataset_list.xml").getBytes(UTF_8))
+          HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map(ContentType -> XmlType), HttpAnswer.Body(fixture("pmc_dataset_list.xml").getBytes(UTF_8)))
         )
-      case u if u.startsWith(c.pmcDataset.url + "/metadata/")        => json(record)
-      case u if u.startsWith(c.pmcDataset.url) && u.endsWith(".pdf") => file(Pdf, "application/pdf")
+      case u if u.startsWith(c.pmcDataset.url.value + "/metadata/")        => json(record)
+      case u if u.startsWith(c.pmcDataset.url.value) && u.endsWith(".pdf") => file(Pdf, PdfType)
     }
 
   private val ManuscriptDoi = "10.1126/science.aar7711"
 
-  private def manuscript(c: AcquireConfig): PartialFunction[String, Either[String, HttpAnswer]] =
+  private def manuscript(c: AcquireConfig): PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]] =
     val record = fixture("pmc_dataset_manuscript.json").replaceAll("(\\.xml\\?md5=)[0-9a-f]{32}", "$1" + md5(Xml))
     {
-      case u if u.startsWith(c.europepmc.url + "/search") => json(fixture("europepmc_free.json"))
-      case u if u.startsWith(c.pmcDataset.url + "/?")     =>
+      case u if u.startsWith(c.europepmc.url.value + "/search") => json(fixture("europepmc_free.json"))
+      case u if u.startsWith(c.pmcDataset.url.value + "/?")     =>
         Right(
           HttpAnswer(
             com.histmersion.pluginhost.HttpAnswer.Code(200),
-            Map("content-type" -> "application/xml"),
-            fixture("pmc_dataset_list.xml").replace("PMC6091220", "PMC6748862").getBytes(UTF_8)
+            Map(ContentType -> XmlType),
+            HttpAnswer.Body(fixture("pmc_dataset_list.xml").replace("PMC6091220", "PMC6748862").getBytes(UTF_8))
           )
         )
-      case u if u.startsWith(c.pmcDataset.url + "/metadata/")        => json(record)
-      case u if u.startsWith(c.pmcDataset.url) && u.endsWith(".xml") => file(Xml, "application/xml")
+      case u if u.startsWith(c.pmcDataset.url.value + "/metadata/")        => json(record)
+      case u if u.startsWith(c.pmcDataset.url.value) && u.endsWith(".xml") => file(Xml, XmlType)
     }
 
   private val IndexDoi = "10.9999/landing.1"
@@ -145,7 +158,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
   private val OaPage = "https://repo-o.example.org/item/1"
   private val DcPage = "https://repo-d.example.org/item/1"
 
-  private def indexes(c: AcquireConfig): PartialFunction[String, Either[String, HttpAnswer]] =
+  private def indexes(c: AcquireConfig): PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]] =
     case u if u.startsWith(s"${c.unpaywall.url}/$IndexDoi") =>
       json(s"""{"doi":"$IndexDoi","oa_locations":[{"host_type":"repository","url_for_landing_page":"$UpPage"}]}""")
     case u if u.startsWith(s"${c.openalex.url}/") && u.contains(IndexDoi) =>
@@ -154,29 +167,29 @@ class FetcherTrafficSuite extends munit.FunSuite:
       )
     case u if u == s"${c.datacite.url}/dois/$IndexDoi" => json(s"""{"data":{"attributes":{"url":"$DcPage"}}}""")
 
-  private def direct(c: AcquireConfig): PartialFunction[String, Either[String, HttpAnswer]] =
+  private def direct(c: AcquireConfig): PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]] =
     case u if u.startsWith(s"${c.unpaywall.url}/10.1/up") =>
       json("""{"doi":"10.1/up","best_oa_location":{"url_for_pdf":"https://repo.example.org/up.pdf","license":"cc-by"},
              |"oa_locations":[{"url_for_pdf":"https://repo.example.org/up.pdf","license":"cc-by"}]}""".stripMargin)
-    case "https://repo.example.org/up.pdf" => file(Pdf, "application/pdf")
+    case "https://repo.example.org/up.pdf" => file(Pdf, PdfType)
     case u if u.startsWith(s"${c.core.url.value}/search/works/") && u.contains("10.1/core") =>
       Right(
         HttpAnswer(
           com.histmersion.pluginhost.HttpAnswer.Code(200),
-          Map("content-type" -> "application/json", "x-ratelimit-limit" -> "25", "x-ratelimit-remaining" -> "20"),
-          """{"results":[{"doi":"10.1/core","downloadUrl":"https://core.example.org/core.pdf"}]}""".getBytes(UTF_8)
+          Map(ContentType -> CoreQuota.HeaderValue("application/json"), CoreQuota.HeaderName("x-ratelimit-limit") -> CoreQuota.HeaderValue("25"), CoreQuota.HeaderName("x-ratelimit-remaining") -> CoreQuota.HeaderValue("20")),
+          HttpAnswer.Body("""{"results":[{"doi":"10.1/core","downloadUrl":"https://core.example.org/core.pdf"}]}""".getBytes(UTF_8))
         )
       )
-    case "https://core.example.org/core.pdf"                     => file(Pdf, "application/pdf")
+    case "https://core.example.org/core.pdf"                     => file(Pdf, PdfType)
     case u if u.startsWith(s"${c.core.url.value}/search/works/") =>
-      Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> "application/json"), """{"results":[]}""".getBytes(UTF_8)))
+      Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map(ContentType -> CoreQuota.HeaderValue("application/json")), HttpAnswer.Body("""{"results":[]}""".getBytes(UTF_8))))
     case u if u.startsWith(s"${c.openalex.url}/") && u.contains("10.1/oa") =>
       json(
         """{"id":"https://openalex.org/W9","best_oa_location":{"pdf_url":"https://oa.example.org/oa.pdf"},
           |"locations":[{"pdf_url":"https://oa.example.org/oa.pdf","is_oa":true,"source":{"type":"repository"}}]}""".stripMargin
       )
-    case "https://oa.example.org/oa.pdf"                           => file(Pdf, "application/pdf")
-    case u if u.startsWith(s"${c.arxiv.url}/pdf/2101.00001")       => file(Pdf, "application/pdf")
+    case "https://oa.example.org/oa.pdf"                           => file(Pdf, PdfType)
+    case u if u.startsWith(s"${c.arxiv.url}/pdf/2101.00001")       => file(Pdf, PdfType)
     case u if u.startsWith(s"${c.archiveOrg.url}/metadata/zqbook") =>
       json(
         """{"metadata":{"identifier":"zqbook","title":"A Book","creator":"An Author","date":"1901"},
@@ -187,11 +200,11 @@ class FetcherTrafficSuite extends munit.FunSuite:
         """{"metadata":{"identifier":"zqlent","title":"Lent","access-restricted-item":"true"},
           |"files":[{"name":"zqlent.pdf","format":"Text PDF","size":"40000"}]}""".stripMargin
       )
-    case u if u.startsWith(s"${c.archiveOrg.url}/download/zqbook/zqbook.epub") => file(Epub, "application/epub+zip")
+    case u if u.startsWith(s"${c.archiveOrg.url}/download/zqbook/zqbook.epub") => file(Epub, EpubType)
     case u if u.startsWith(s"${c.archiveOrg.url}/download/zqbook/zqbook.pdf")  =>
-      file(("%PDF-1.4\n" + ("p" * 20480)).getBytes("ISO-8859-1"), "application/pdf")
+      file(HttpAnswer.Body(("%PDF-1.4\n" + ("p" * 20480)).getBytes("ISO-8859-1")), PdfType)
 
-  private def zenodo(c: AcquireConfig): PartialFunction[String, Either[String, HttpAnswer]] =
+  private def zenodo(c: AcquireConfig): PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]] =
     val record = landing("zenodo_record_3695551.json").replaceAll("md5:[0-9a-f]{32}", s"md5:${md5(Pdf)}")
     val pdf = "https://zenodo.org/api/records/3695551/files/Oreshko%20Ahhiyawa-Danuna-offprint.pdf/content"
     {
@@ -199,10 +212,10 @@ class FetcherTrafficSuite extends munit.FunSuite:
         json(landing("openalex_10_5281_zenodo_3695550.json"))
       case "https://zenodo.org/record/3695551"              => html("<!DOCTYPE html><html><head></head></html>")
       case u if u == s"${c.zenodo.url}/api/records/3695551" => json(record)
-      case `pdf`                                            => file(Pdf, "application/pdf")
+      case `pdf`                                            => file(Pdf, PdfType)
     }
 
-  private def repositories(c: AcquireConfig): PartialFunction[String, Either[String, HttpAnswer]] =
+  private def repositories(c: AcquireConfig): PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]] =
     val apollo = "https://www.repository.cam.ac.uk/handle/1810/265228"
     val apolloPdf = "https://www.repository.cam.ac.uk/bitstreams/635fb0e4-fed6-4dd0-a369-16067170b87f/download"
     val tobias = "https://publikationen.uni-tuebingen.de/xmlui/handle/10900/73561"
@@ -211,7 +224,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
       case u if u.startsWith(s"${c.openalex.url}/works/https://doi.org/10.17863/CAM.11325") =>
         json(landing("openalex_10_17863_CAM_11325.json"))
       case `apollo`    => html(landing("apollo_cam_item.html"))
-      case `apolloPdf` => file(Pdf, "application/pdf")
+      case `apolloPdf` => file(Pdf, PdfType)
       case u if u.startsWith(s"${c.openalex.url}/works/https://doi.org/10.15496/publikation-14969") =>
         json(landing("openalex_10_15496_publikation-14969.json"))
       case u if u == s"${c.datacite.url}/dois/10.15496/publikation-14969" =>
@@ -222,7 +235,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
       case u if u == s"${c.doiHandles.url}/$oreDoi?type=URL" =>
         json(landing("doi_handle_10_12688_openreseurope.20351.3.json"))
       case "https://ore.eu/ore/article/view/1056/version/1810" => html(landing("ore_article.html"))
-      case "https://ore.eu/ore/article/download/1056/3617"     => file(Pdf, "application/pdf")
+      case "https://ore.eu/ore/article/download/1056/3617"     => file(Pdf, PdfType)
     }
 
   // ── the transcript ──────────────────────────────────────────────────────────────────────────

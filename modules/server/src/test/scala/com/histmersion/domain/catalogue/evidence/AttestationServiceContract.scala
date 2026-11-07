@@ -35,13 +35,13 @@ abstract class AttestationServiceContract extends CatalogueStoreSuite:
     )
     val second = a.create(Attestation.Put(com.histmersion.api.library.Citekey("zzat2020_one"), com.histmersion.api.catalogue.Attestation.TargetType("event"), com.histmersion.api.catalogue.Attestation.TargetId("zz_battle"), quote = Some(com.histmersion.api.catalogue.Attestation.Quote("the battle"))))
     val third = a.create(Attestation.Put(com.histmersion.api.library.Citekey("zzat2021_two"), com.histmersion.api.catalogue.Attestation.TargetType("place"), com.histmersion.api.catalogue.Attestation.TargetId("zz_hill")))
-    assert(first.id < second.id && second.id < third.id)
+    assert(first.id.value < second.id.value && second.id.value < third.id.value)
     assertEquals(a.get(first.id), Some(first))
     assertEquals(
       (first.quote, first.charEnd, first.ctsUrn, first.note),
       (Some("the hill"), Some(11), Some("urn:cts:x"), Some("n"))
     )
-    assertEquals(a.get(third.id + 100), None)
+    assertEquals(a.get(Attestation.Id(third.id.value + 100)), None)
     val all = a.list(None, None, None, com.histmersion.PageSize(10), com.histmersion.Offset(0))
     assertEquals(((all.total.value: Int), all.attestations.map(_.id)), (3, List(first.id, second.id, third.id)))
     assertEquals(a.list(Some(com.histmersion.domain.library.Citekey("zzat2020_one")), None, None, com.histmersion.PageSize(10), com.histmersion.Offset(0)).attestations.map(_.id), List(first.id, second.id))
@@ -53,7 +53,7 @@ abstract class AttestationServiceContract extends CatalogueStoreSuite:
     val patched = a.patch(first.id, Attestation.Patch(note = Some(com.histmersion.api.catalogue.Attestation.Note("changed")), page = Some(com.histmersion.api.catalogue.Attestation.Page("13")))).toOption.get
     assertEquals(patched, first.modify(_.note).setTo(Some("changed")).modify(_.page).setTo(Some("13")))
     assert(
-      a.patch(third.id + 100, Attestation.Patch(note = Some(com.histmersion.api.catalogue.Attestation.Note("x")))).left.exists(_.message.contains("No attestation"))
+      a.patch(Attestation.Id(third.id.value + 100), Attestation.Patch(note = Some(com.histmersion.api.catalogue.Attestation.Note("x")))).left.exists(_.message.contains("No attestation"))
     )
     assert(a.delete(second.id))
     assert(!a.delete(second.id))

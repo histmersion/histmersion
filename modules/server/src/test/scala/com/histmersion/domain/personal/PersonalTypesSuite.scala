@@ -28,8 +28,8 @@ class PersonalTypesSuite extends munit.FunSuite:
     val src = MarkTarget.Item(ref)
     def described(title: Option[String], key: String = "zz") =
       Map(ref -> Described(ItemKey(key), title.map(Title(_)), RecordState.Live))
-    assertEquals(src.shown(described(Some(" Now ")), TargetLabel.tidy("then"))._2.value: String, "Now")
-    assertEquals(src.shown(Map.empty, TargetLabel.tidy("then  and\nnow"))._2.value: String, "then and now")
+    assertEquals(src.shown(described(Some(" Now ")), TargetLabel.tidy(TargetLabel.Label("then")))._2.value: String, "Now")
+    assertEquals(src.shown(Map.empty, TargetLabel.tidy(TargetLabel.Label("then  and\nnow")))._2.value: String, "then and now")
     assertEquals(src.shown(described(Some(" ")), None)._2.value: String, "zz")
     val view = MarkTarget.View(None, None, None, None, None, None)
     assertEquals(view.shown(Map.empty, None)._2.value: String, "Saved view")
@@ -45,9 +45,9 @@ class PersonalTypesSuite extends munit.FunSuite:
     assert(Bookmark.Label.tidy(Some(Bookmark.Label("x" * 201))).isLeft)
     assertEquals(Note.Text.tidy(Note.Text("a\r\nb  \n\n")).map(_.value.toString), Right("a\nb"))
     assert(Note.Text.tidy(Note.Text("x" * (Note.Text.MaxChars + 1))).isLeft)
-    assertEquals(TargetLabel.tidy(" a \t b ").map(_.value: String), Some("a b"))
-    assertEquals(TargetLabel.tidy("x" * 400).map(_.value.length), Some(TargetLabel.MaxChars))
-    assertEquals(TargetLabel.tidy(Some("   ")), None)
+    assertEquals(TargetLabel.tidy(TargetLabel.Label(" a \t b ")).map(_.value: String), Some("a b"))
+    assertEquals(TargetLabel.tidy(TargetLabel.Label("x" * 400)).map(_.value.length), Some(TargetLabel.MaxChars))
+    assertEquals(TargetLabel.tidy(Some(TargetLabel.Label("   "))), None)
 
   test("search: every word, case ignored"):
     val ws = SearchWords.of(Some(com.histmersion.domain.personal.SearchWords.Query("  Bronze  AGE ")))

@@ -2,7 +2,7 @@ package com.histmersion.domain.media
 
 import com.histmersion.testsupport.ComparedByValue.given
 
-import com.histmersion.config.AppConfig
+import com.histmersion.config.{AppConfig, DbConfig}
 import com.histmersion.domain.media.assets.AssetService
 import com.histmersion.domain.media.covers.CoverService
 import com.histmersion.domain.media.figures.FigureService
@@ -53,7 +53,7 @@ object MediaStoreSuite:
     private lazy val scratch =
       ScratchDatabases(
         s"histmersion_s9c_${getClass.getSimpleName.toLowerCase.take(24)}",
-        AppConfig.load().db.copy(url = testDb.get)
+        AppConfig.load().db.copy(url = DbConfig.Url(testDb.get))
       )
     private val made = AtomicLong(0L)
     override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
@@ -68,5 +68,6 @@ object MediaStoreSuite:
           val covers = CoverService(db)
           val figures = FigureService(db)
           def source(citekey: String): Unit =
-            connect(ds)(sql"INSERT INTO sources (citekey, title) VALUES ($citekey, $citekey)".update.run()): Unit
+            connect(ds):
+              val _ = sql"INSERT INTO sources (citekey, title) VALUES ($citekey, $citekey)".update.run()
       }

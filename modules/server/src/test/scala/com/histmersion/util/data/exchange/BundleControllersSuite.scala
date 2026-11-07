@@ -23,12 +23,12 @@ class BundleControllersSuite extends munit.FunSuite:
       BundleControllers.since(Some(com.histmersion.util.data.exchange.BundleScope.Since.At("2026-10-03T09:12:00.123456Z"))),
       Right(Some("2026-10-03T09:12:00.123456Z"))
     )
-    assert(BundleControllers.since(Some(com.histmersion.util.data.exchange.BundleScope.Since.At("yesterday"))).left.exists(_.message.contains("ISO-8601")))
+    assert(BundleControllers.since(Some(com.histmersion.util.data.exchange.BundleScope.Since.At("yesterday"))).left.exists(_.message.value.contains("ISO-8601")))
     assert(BundleControllers.since(Some(com.histmersion.util.data.exchange.BundleScope.Since.At("2026-10-03"))).isLeft)
 
   test("the download is named after the instance and the moment it is as of"):
     val m = Bundle.Manifest(
-      Bundle.Format,
+      Bundle.Manifest.Format(Bundle.Format),
       com.histmersion.api.exchange.Bundle.Manifest.FormatVersion(1),
       com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("33"),
       UUID.randomUUID(),
@@ -56,7 +56,7 @@ class BundleControllersSuite extends munit.FunSuite:
     val dir = Files.createTempDirectory("histmersion-originals")
     val o = ContentDirectory(dir)
     val data = "an original".getBytes(UTF_8)
-    val sha = BundleFormat.sha256Hex(data)
+    val sha = com.histmersion.Sha256.applyUnsafe(BundleFormat.sha256Hex(data).value)
     assertEquals(o.find(sha), None)
     assert(o.store(sha, com.histmersion.util.storage.ContentStore.Ext("pdf"), java.io.ByteArrayInputStream("not it".getBytes(UTF_8))).isLeft)
     assertEquals(o.find(sha), None)

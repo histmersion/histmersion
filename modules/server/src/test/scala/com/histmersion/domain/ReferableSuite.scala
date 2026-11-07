@@ -42,7 +42,7 @@ class ReferableSuite extends com.histmersion.db.DbSuite:
     )
 
   private val testDb = com.histmersion.db.TestDb.url
-  private lazy val scratch = ScratchDatabases("referable", AppConfig.load().db.copy(url = testDb.get))
+  private lazy val scratch = ScratchDatabases("referable", AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get)))
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 
   private def onDatabase(name: String): (World, Transactor) =
@@ -73,7 +73,7 @@ class ReferableSuite extends com.histmersion.db.DbSuite:
       body(onDatabase(name.toLowerCase.replaceAll("[^a-z]+", "_").take(30))._1)
     }
 
-  private def ref(w: World, ck: String): ItemRef = w.referable.resolve(source, key(ck)).fold(e => fail(e), identity)
+  private def ref(w: World, ck: String): ItemRef = w.referable.resolve(source, key(ck)).fold(e => fail(e.value), identity)
 
   both("a reference follows its record through a rename, a merge and a deletion") { w =>
     List("zz_a", "zz_b", "zz_c", "zz_d").foreach(w.add)

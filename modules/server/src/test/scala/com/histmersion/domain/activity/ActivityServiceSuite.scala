@@ -19,68 +19,70 @@ class ActivityServiceSuite extends com.histmersion.db.DbSuite:
   private def ago(min: Int): Instant = now.minusSeconds(min * 60L)
 
   /** What both services hold, by name: the rows of the store, and the keys the list gives them. */
-  final private case class World(service: ActivityService, key: Map[String, String])
+  final private case class World(service: ActivityService, key: Map[String, Entry.Key])
+
+  private def at(i: Instant): Entry.At = Entry.At(i.toString)
 
   private def inMemory: World =
     val m = ActivityService.InMemory()
     val names = Map(
-      "r1" -> "run:r1",
-      "j1" -> "job:j1",
-      "j0" -> "job:j0",
-      "l1" -> "log:1",
-      "l2" -> "log:2",
-      "l3" -> "log:3",
-      "a5" -> "decision:1"
+      "r1" -> Entry.Key("run:r1"),
+      "j1" -> Entry.Key("job:j1"),
+      "j0" -> Entry.Key("job:j0"),
+      "l1" -> Entry.Key("log:1"),
+      "l2" -> Entry.Key("log:2"),
+      "l3" -> Entry.Key("log:3"),
+      "a5" -> Entry.Key("decision:1")
     )
     List(
       Entry(
         com.histmersion.api.automation.Activity.Entry.Key("run:r1"),
         com.histmersion.api.automation.Activity.Entry.Kind("run"),
-        ago(1).toString,
+        at(ago(1)),
         state = com.histmersion.api.automation.Activity.Entry.State("running"),
         what = com.histmersion.api.automation.Activity.Entry.What("review-article"),
-        goal = Some("g1"),
-        job = Some("r1"),
-        article = Some("sea-peoples"),
-        target = Some("sea-peoples"),
-        targetKind = Some("article")
+        goal = Some(com.histmersion.api.automation.Goal.Slug("g1")),
+        job = Some(Entry.Job("r1")),
+        article = Some(Entry.Article("sea-peoples")),
+        target = Some(Entry.Target("sea-peoples")),
+        targetKind = Some(Entry.TargetKind("article"))
       ),
       Entry(
         com.histmersion.api.automation.Activity.Entry.Key("job:j1"),
         com.histmersion.api.automation.Activity.Entry.Kind("job"),
-        ago(2).toString,
+        at(ago(2)),
         state = com.histmersion.api.automation.Activity.Entry.State("failed"),
         what = com.histmersion.api.automation.Activity.Entry.What("media-import"),
-        error = Some("HTTP 500"),
-        job = Some("j1")
+        error = Some(Entry.Error("HTTP 500")),
+        job = Some(Entry.Job("j1"))
       ),
-      Entry(com.histmersion.api.automation.Activity.Entry.Key("job:j0"), com.histmersion.api.automation.Activity.Entry.Kind("job"), ago(60 * 24 * 9).toString, state = com.histmersion.api.automation.Activity.Entry.State("failed"), what = com.histmersion.api.automation.Activity.Entry.What("basemap-fetch"), job = Some("j0")),
+      Entry(com.histmersion.api.automation.Activity.Entry.Key("job:j0"), com.histmersion.api.automation.Activity.Entry.Kind("job"), at(ago(60 * 24 * 9)), state = com.histmersion.api.automation.Activity.Entry.State("failed"), what = com.histmersion.api.automation.Activity.Entry.What("basemap-fetch"), job = Some(Entry.Job("j0"))),
       Entry(
         com.histmersion.api.automation.Activity.Entry.Key("log:1"),
         com.histmersion.api.automation.Activity.Entry.Kind("log"),
-        ago(3).toString,
-        text = "reviewed",
-        goal = Some("g1"),
-        job = Some("r1"),
-        by = Some("agent")
+        at(ago(3)),
+        text = Entry.Text("reviewed"),
+        goal = Some(com.histmersion.api.automation.Goal.Slug("g1")),
+        job = Some(Entry.Job("r1")),
+        by = Some(Entry.By("agent"))
       ),
-      Entry(com.histmersion.api.automation.Activity.Entry.Key("log:2"), com.histmersion.api.automation.Activity.Entry.Kind("log"), ago(3).toString, text = "fetched", job = Some("j1"), by = Some("job")),
-      Entry(com.histmersion.api.automation.Activity.Entry.Key("log:3"), com.histmersion.api.automation.Activity.Entry.Kind("log"), ago(3).toString, text = "a person's note"),
+      Entry(com.histmersion.api.automation.Activity.Entry.Key("log:2"), com.histmersion.api.automation.Activity.Entry.Kind("log"), at(ago(3)), text = Entry.Text("fetched"), job = Some(Entry.Job("j1")), by = Some(Entry.By("job"))),
+      Entry(com.histmersion.api.automation.Activity.Entry.Key("log:3"), com.histmersion.api.automation.Activity.Entry.Kind("log"), at(ago(3)), text = Entry.Text("a person's note")),
       Entry(
         com.histmersion.api.automation.Activity.Entry.Key("decision:1"),
         com.histmersion.api.automation.Activity.Entry.Kind("decision"),
-        ago(4).toString,
+        at(ago(4)),
         state = com.histmersion.api.automation.Activity.Entry.State("approved"),
         what = com.histmersion.api.automation.Activity.Entry.What("edge"),
-        goal = Some("g1"),
-        job = Some("r1"),
-        approval = Some(1L)
+        goal = Some(com.histmersion.api.automation.Goal.Slug("g1")),
+        job = Some(Entry.Job("r1")),
+        approval = Some(Entry.Approval(1L))
       )
     ).foreach(m.add)
     World(m, names)
 
   private val testDb = com.histmersion.db.TestDb.url
-  private lazy val scratch = ScratchDatabases("activity", AppConfig.load().db.copy(url = testDb.get))
+  private lazy val scratch = ScratchDatabases("activity", AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get)))
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 
   private def onDatabase: World =
@@ -89,13 +91,13 @@ class ActivityServiceSuite extends com.histmersion.db.DbSuite:
     World(
       ActivityService(ds),
       Map(
-        "r1" -> "run:r1",
-        "j1" -> "job:j1",
-        "j0" -> "job:j0",
-        "l1" -> "log:1",
-        "l2" -> "log:2",
-        "l3" -> "log:3",
-        "a5" -> "decision:1"
+        "r1" -> Entry.Key("run:r1"),
+        "j1" -> Entry.Key("job:j1"),
+        "j0" -> Entry.Key("job:j0"),
+        "l1" -> Entry.Key("log:1"),
+        "l2" -> Entry.Key("log:2"),
+        "l3" -> Entry.Key("log:3"),
+        "a5" -> Entry.Key("decision:1")
       )
     )
 
@@ -130,8 +132,8 @@ class ActivityServiceSuite extends com.histmersion.db.DbSuite:
         .run()
     ()
 
-  private def keysOf(w: World, q: ActivityQuery): List[String] = w.service.page(q, now).entries.map(_.key)
-  private def named(w: World, names: String*): List[String] = names.toList.map(w.key)
+  private def keysOf(w: World, q: ActivityQuery): List[Entry.Key] = w.service.page(q, now).entries.map(_.key)
+  private def named(w: World, names: String*): List[Entry.Key] = names.toList.map(w.key)
 
   private def spec(label: String, world: => World): Unit =
     lazy val w = world
@@ -141,12 +143,12 @@ class ActivityServiceSuite extends com.histmersion.db.DbSuite:
 
     test(s"$label: pages of any size walk the whole list once"):
       for size <- 1 to 4 do
-        def walk(q: ActivityQuery, acc: List[String]): List[String] =
+        def walk(q: ActivityQuery, acc: List[Entry.Key]): List[Entry.Key] =
           val p = w.service.page(q, now)
           val got = acc ++ p.entries.map(_.key)
-          p.next.fold(got)(c => walk(q.copy(before = ActivityCursor.parse(c).toOption), got))
+          p.next.fold(got)(c => walk(q.copy(before = ActivityCursor.parse(ActivityCursor.Wire(c.value)).toOption), got))
         assertEquals(
-          walk(ActivityQuery(limit = size), Nil),
+          walk(ActivityQuery(limit = ActivityQuery.Limit(size)), Nil),
           named(w, "r1", "j1", "l3", "l2", "l1", "a5", "j0"),
           s"size $size"
         )

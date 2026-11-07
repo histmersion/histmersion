@@ -10,7 +10,7 @@ import com.augustnagro.magnum.*
 class QueueServiceDbSuite extends QueueServiceContract("db"):
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
-  private lazy val scratch = ScratchDatabases("histmersion_s7q", AppConfig.load().db.copy(url = testDb.get))
+  private lazy val scratch = ScratchDatabases("histmersion_s7q", AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get)))
   private val made = java.util.concurrent.atomic.AtomicInteger(0)
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 

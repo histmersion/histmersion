@@ -6,6 +6,7 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Write
 import com.histmersion.config.AppConfig
+import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.media.{MediaSources, MediaState, MediaStoreSuite}
 import com.histmersion.util.data.maintenance.WriteGate
 
@@ -20,24 +21,24 @@ import com.histmersion.api.media.{AssetInput, AssetPatch}
 class AssetsControllersSuite extends munit.FunSuite:
 
   private val sources = new MediaSources:
-    def current(citekey: String): Option[String] = if citekey == "zqold" then Some("zqnew2001_x") else Some(citekey)
-    def lookup(citekey: String): Either[MediaSources.Error, MediaSources.Key] =
-      if citekey == "zqnew2001_x" then Right(MediaSources.Key(citekey))
+    def current(citekey: Citekey): Option[MediaSources.Current] = if citekey == Citekey("zqold") then Some(MediaSources.Current("zqnew2001_x")) else Some(MediaSources.Current(citekey.value))
+    def lookup(citekey: Citekey): Either[MediaSources.Error, MediaSources.Key] =
+      if citekey == Citekey("zqnew2001_x") then Right(MediaSources.Key(citekey.value))
       else Left(MediaSources.Error.NotFound)
-    def markdown(citekey: String): String = ""
+    def markdown(citekey: Citekey): MediaSources.Markdown = MediaSources.Markdown("")
 
   private def controllers(gate: WriteGate = WriteGate()) =
     val assets = AssetService.InMemory(AtomicReference(MediaState.empty), MediaStoreSuite.Ticking())
     (AssetsControllers(assets, sources, () => AppConfig.load(), gate), assets)
 
-  private val png = AssetInput(com.histmersion.api.exchange.Bundle.Asset.FileName("a.png"), com.histmersion.api.exchange.Bundle.Asset.MimeText("image/png"), Base64.getEncoder.encodeToString(Array[Byte](1, 2, 3)))
+  private val png = AssetInput(com.histmersion.api.exchange.Bundle.Asset.FileName("a.png"), com.histmersion.api.exchange.Bundle.Asset.MimeText("image/png"), AssetInput.Base64(Base64.getEncoder.encodeToString(Array[Byte](1, 2, 3))))
 
   test("a figure uploaded to its source, read back under an old citekey; refused for a source not there"):
     val (c, _) = controllers()
     assertEquals(c.putFigures(com.histmersion.domain.library.Citekey("zqnew2001_x"), List(png)).map(_.stored), Right(1))
     assertEquals(c.putFigures(com.histmersion.domain.library.Citekey("zqgone2001_x"), List(png)).left.map(_.code), Left(Some(Write.CodeNotFound)))
     assert(
-      c.putFigures(com.histmersion.domain.library.Citekey("zqnew2001_x"), List(png.modify(_.base64).setTo("%%%"))).left.exists(_.message.contains("not valid base64"))
+      c.putFigures(com.histmersion.domain.library.Citekey("zqnew2001_x"), List(png.modify(_.base64).setTo(AssetInput.Base64("%%%")))).left.exists(_.message.value.contains("not valid base64"))
     )
     assertEquals(c.figures(com.histmersion.domain.library.Citekey("zqold")).map(_.name), List("a.png"))
     assertEquals(c.figure(com.histmersion.domain.library.Citekey("zqold"), com.histmersion.domain.media.assets.AssetService.AssetName("a.png")).map(_._2), Right("image/png"))
@@ -55,5 +56,5 @@ class AssetsControllersSuite extends munit.FunSuite:
     val held = gate.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(
       Right((c.putFigures(com.histmersion.domain.library.Citekey("zqnew2001_x"), List(png)), c.patch(com.histmersion.domain.library.Citekey("zqnew2001_x"), com.histmersion.domain.media.assets.AssetService.AssetName("a.png"), AssetPatch(caption = Some(com.histmersion.api.media.MediaItem.Caption("x"))))))
     )
-    val (a, b) = held.fold(e => fail(e.message), identity)
+    val (a, b) = held.fold(e => fail(e.message.value), identity)
     assert(a.isLeft && b.isLeft, (a, b))

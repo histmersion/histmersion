@@ -11,7 +11,7 @@ abstract class AgentStateServiceContract extends EngineStoreSuite:
   private def a(s: EngineStores) = s.agentState
 
   stest("a value is set, replaced, listed by key and deleted; it reads back as jsonb prints it") { s =>
-    a(s).set(com.histmersion.domain.automation.agents.AgentStateRecord.Key("zz-b"), """{"zeta":1,"a":[1,2,{"bb":true,"c":null}]}""")
+    a(s).set(com.histmersion.domain.automation.agents.AgentStateRecord.Key("zz-b"), AgentStateService.SetValue("""{"zeta":1,"a":[1,2,{"bb":true,"c":null}]}"""))
     a(s).set(com.histmersion.domain.automation.agents.AgentStateRecord.Key("zz-a"), com.histmersion.domain.automation.agents.AgentStateService.SetValue("\"one\""))
     a(s).set(com.histmersion.domain.automation.agents.AgentStateRecord.Key("zz-a"), com.histmersion.domain.automation.agents.AgentStateService.SetValue("[1,  2]"))
     assertEquals(a(s).get(com.histmersion.domain.automation.agents.AgentStateRecord.Key("zz-b")).map(_.value), Some("""{"a": [1, 2, {"c": null, "bb": true}], "zeta": 1}"""))
