@@ -1,7 +1,5 @@
 package com.histmersion.web
 
-import com.histmersion.testsupport.ComparedByValue.given
-
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.BBox
@@ -17,58 +15,78 @@ class BaseMapsSuite extends munit.FunSuite:
     com.histmersion.api.instance.UiConfig.TilesMaxZoom(12),
     com.histmersion.api.instance.UiConfig.MarkerRadius(5),
     com.histmersion.api.instance.UiConfig.ViewportDebounceMs(250),
-    com.histmersion.api.instance.UiConfig.TreeDepth(2)0,
-    12,
-    2,
-    3,
-    40,
-    DebounceConfig(150, 250, 400, 120),
-    TimeConfig(-5000, 2000, -3500, -500),
-    760,
-    500,
-    1366,
-    EventsUiConfig(1.5, 3, 5000, 0.05)
+    UiConfig.PageSize(20),
+    UiConfig.FacetSuggestions(12),
+    UiConfig.TreeDepth(2),
+    UiConfig.TreeSamples(3),
+    UiConfig.MaxBuckets(40),
+    DebounceConfig(
+      DebounceConfig.SuggestMs(150),
+      DebounceConfig.SearchMs(250),
+      DebounceConfig.ReloadMs(400),
+      DebounceConfig.PreviewMs(120)
+    ),
+    TimeConfig(
+      com.histmersion.api.catalogue.Year(-5000),
+      com.histmersion.api.catalogue.Year(2000),
+      com.histmersion.api.catalogue.Year(-3500),
+      com.histmersion.api.catalogue.Year(-500)
+    ),
+    UiConfig.NarrowMaxWidthPx(760),
+    UiConfig.NarrowMaxHeightPx(500),
+    UiConfig.TabletMaxWidthPx(1366),
+    EventsUiConfig(
+      EventsUiConfig.LocalFadeSeconds(1.5),
+      EventsUiConfig.RegionalFadeSeconds(3),
+      EventsUiConfig.MapLimit(5000),
+      EventsUiConfig.OutlineToleranceDeg(0.05)
+    )
   )
 
   private def status(
       available: Boolean,
-      readableMissing: List[String] = Nil,
+      readableMissing: List[Basemap.StyleState.Missing] = Nil,
       focus: Boolean = false,
       onDemand: Boolean = false,
       sea: Boolean = true
   ) =
     Basemap.Status(
-      available,
+      Basemap.Status.Available(available),
       com.histmersion.api.basemap.Basemap.Status.Dir("/x"),
       com.histmersion.api.basemap.Basemap.Status.Bbox("-12,20,90,62"),
       List(
-        Basemap.LayerInfo(com.histmersion.api.basemap.Basemap.LayerInfo.Layer("vector"), available, com.histmersion.api.basemap.Basemap.LayerInfo.File("/x/vector.pmtiles"), maxZoom = Some(10), version = Some("v1")),
+        Basemap.LayerInfo(com.histmersion.api.basemap.Basemap.LayerInfo.Layer("vector"), Basemap.LayerInfo.Present(available), com.histmersion.api.basemap.Basemap.LayerInfo.File("/x/vector.pmtiles"), maxZoom = Some(Basemap.LayerInfo.MaxZoom(10)), version = Some(Basemap.LayerInfo.Version("v1"))),
         Basemap.LayerInfo(
           com.histmersion.api.basemap.Basemap.LayerInfo.Layer("terrain"),
-          available,
+          Basemap.LayerInfo.Present(available),
           com.histmersion.api.basemap.Basemap.LayerInfo.File("/x/terrain.pmtiles"),
-          maxZoom = Some(8),
-          version = Some("t1"),
-          onDemand = Some(Basemap.OnDemand(onDemand, com.histmersion.api.basemap.Basemap.OnDemand.MaxZoom(12), com.histmersion.api.basemap.Basemap.OnDemand.Dir("/x/terrain-cache"), com.histmersion.api.basemap.Basemap.OnDemand.Tiles(0), com.histmersion.api.ByteCount(0), com.histmersion.api.basemap.Basemap.OnDemand.MaxBytes(1000))),
+          maxZoom = Some(Basemap.LayerInfo.MaxZoom(8)),
+          version = Some(Basemap.LayerInfo.Version("t1")),
+          onDemand = Some(Basemap.OnDemand(Basemap.OnDemand.Enabled(onDemand), com.histmersion.api.basemap.Basemap.OnDemand.MaxZoom(12), com.histmersion.api.basemap.Basemap.OnDemand.Dir("/x/terrain-cache"), com.histmersion.api.basemap.Basemap.OnDemand.Tiles(0), com.histmersion.api.ByteCount(0), com.histmersion.api.basemap.Basemap.OnDemand.MaxBytes(1000))),
           focus = if focus then List(Basemap.Focus(com.histmersion.api.basemap.Basemap.Focus.Name("argolid"), com.histmersion.api.basemap.Basemap.Focus.File("/x/f.pmtiles"), com.histmersion.api.ByteCount(1), com.histmersion.api.basemap.Basemap.Focus.Bbox("22,37,23,38"), com.histmersion.api.basemap.Basemap.Focus.MinZoom(9), com.histmersion.api.basemap.Basemap.Focus.MaxZoom(12), com.histmersion.api.basemap.Basemap.Focus.Tiles(10))) else Nil
         ),
         Basemap.LayerInfo(
           com.histmersion.api.basemap.Basemap.LayerInfo.Layer("bathymetry"),
-          available && sea,
+          Basemap.LayerInfo.Present(available && sea),
           com.histmersion.api.basemap.Basemap.LayerInfo.File("/x/bathymetry.pmtiles"),
-          maxZoom = Some(7),
-          version = Some("b1")
+          maxZoom = Some(Basemap.LayerInfo.MaxZoom(7)),
+          version = Some(Basemap.LayerInfo.Version("b1"))
         )
       ),
-      Basemap.FetchCommand,
-      styles =
-        List(Basemap.StyleState("readable", "Readable", readableMissing), Basemap.StyleState("physical", "Physical")),
-      mapMaxZoom = 16
+      Basemap.Status.FetchCommand(Basemap.FetchCommand),
+      styles = List(
+        Basemap.StyleState(Basemap.StyleState.Id("readable"), Basemap.StyleState.Name("Readable"), readableMissing),
+        Basemap.StyleState(Basemap.StyleState.Id("physical"), Basemap.StyleState.Name("Physical"))
+      ),
+      mapMaxZoom = Basemap.Status.MapMaxZoom(16)
     )
 
   test("the choices: two styles, the online maps unless the page is local; an old local choice is Readable"):
     assertEquals(BaseMaps.choices(local = true), List(BaseMap.Readable, BaseMap.Physical))
-    assertEquals(BaseMaps.choices(local = false).map(_.wire), List("readable", "physical", "standard", "muted", "dark"))
+    assertEquals(
+      BaseMaps.choices(local = false).map(_.wire),
+      List(BaseMap.Wire("readable"), BaseMap.Wire("physical"), BaseMap.Wire("standard"), BaseMap.Wire("muted"), BaseMap.Wire("dark"))
+    )
     assertEquals(BaseMap.fromWire(com.histmersion.web.BaseMap.Wire("terrain")), Some(BaseMap.Readable))
     assertEquals(summon[FieldCodec[BaseMap]].decode(List(com.histmersion.web.FieldCodec.Token("physical"))), Some(BaseMap.Physical))
     assertEquals(BaseMap.tone(BaseMap.Physical, MapTone.Dark), MapTone.Light)
@@ -76,14 +94,14 @@ class BaseMapsSuite extends munit.FunSuite:
 
   test("a local page draws a kept online choice as its best local style: Readable when whole, else Physical"):
     assertEquals(BaseMaps.effective(BaseMap.Dark, local = true, Some(status(true))), BaseMap.Readable)
-    assertEquals(BaseMaps.effective(BaseMap.Dark, local = true, Some(status(true, List("roads")))), BaseMap.Physical)
+    assertEquals(BaseMaps.effective(BaseMap.Dark, local = true, Some(status(true, List(Basemap.StyleState.Missing("roads"))))), BaseMap.Physical)
     assertEquals(BaseMaps.effective(BaseMap.Dark, local = false, Some(status(true))), BaseMap.Dark)
     assertEquals(BaseMaps.effective(BaseMap.Physical, local = true, Some(status(true))), BaseMap.Physical)
 
   test("the labels say when the data is missing or the download left layers out"):
     assertEquals(BaseMaps.optionLabel(BaseMap.Readable, Some(status(true))), "Readable")
     assertEquals(
-      BaseMaps.optionLabel(BaseMap.Readable, Some(status(true, List("roads")))),
+      BaseMaps.optionLabel(BaseMap.Readable, Some(status(true, List(Basemap.StyleState.Missing("roads"))))),
       "Readable — needs the full download"
     )
     assertEquals(BaseMaps.optionLabel(BaseMap.Physical, Some(status(false))), "Physical — not downloaded")
@@ -104,20 +122,26 @@ class BaseMapsSuite extends munit.FunSuite:
       soft = false
     )
     spec match
-      case BaseMapSpec.Vector(VectorStyle.Physical, _, "el", true, false, true, false) => ()
-      case other                                                                       => fail(other.toString)
-    assertEquals((notice.map(_._1), z), (Some(BaseMaps.PastNotice), 16))
+      case BaseMapSpec.Vector(VectorStyle.Physical, _, lang, names, contours, seaDepth, reduced)
+          if lang == BaseMapSpec.Vector.Lang("el") && names == BaseMapSpec.Vector.Names(true) &&
+            contours == BaseMapSpec.Vector.Contours(false) && seaDepth == BaseMapSpec.Vector.SeaDepth(true) &&
+            reduced == BaseMapSpec.Vector.Reduced(false) =>
+        ()
+      case other => fail(other.toString)
+    assertEquals((notice.map(_._1), z), (Some(BaseMaps.PastNotice), Basemap.Zoom(16)))
     // a lacking download says so; without a GPU the cheapest drawing
     val (s2, n2, _) =
-      BaseMaps.plan(BaseMap.Readable, Some(status(true, List("roads"))), MapPrefs(), ui, local = false, soft = true)
-    assert(s2.asInstanceOf[BaseMapSpec.Vector].reduced)
+      BaseMaps.plan(BaseMap.Readable, Some(status(true, List(Basemap.StyleState.Missing("roads")))), MapPrefs(), ui, local = false, soft = true)
+    assert(s2.asInstanceOf[BaseMapSpec.Vector].reduced.value)
     assert(n2.exists((t, warn) => warn && t.contains("roads")))
     // the configured language (`basemap.labels.language`) unless the viewer chose one; offered in the menu
     BaseMaps
-      .plan(BaseMap.Readable, Some(status(true)), MapPrefs(), ui.modify(_.mapLanguage).setTo("de"), local = false, soft = false)
+      .plan(BaseMap.Readable, Some(status(true)), MapPrefs(), ui.modify(_.mapLanguage).setTo(UiConfig.MapLanguage("de")), local = false, soft = false)
       ._1 match
-      case BaseMapSpec.Vector(_, _, "de", _, _, false, _) => ()
-      case other                                          => fail(other.toString)
+      case BaseMapSpec.Vector(_, _, lang, _, _, seaDepth, _)
+          if lang == BaseMapSpec.Vector.Lang("de") && seaDepth == BaseMapSpec.Vector.SeaDepth(false) =>
+        ()
+      case other => fail(other.toString)
     assertEquals(BaseMaps.languageChoices("de"), BaseMaps.Languages)
     assertEquals(BaseMaps.languageChoices("pl").last, "pl" -> "pl")
     // not downloaded: the online Standard stands in — none on a local page
@@ -134,11 +158,11 @@ class BaseMapsSuite extends munit.FunSuite:
 
   test("the online maps: the configured tiles, the HOT style's own, Dark the same tiles inverted; their credits"):
     val std = BaseMaps.raster(BaseMap.Standard, ui)
-    assertEquals((std.template, std.maxZoom, std.dark), (ui.tiles, 12, false))
-    assert(std.attribution.contains("OpenStreetMap") && !std.attribution.contains("Humanitarian"))
-    assert(BaseMaps.raster(BaseMap.Muted, ui).attribution.contains("Humanitarian"))
-    assert(BaseMaps.raster(BaseMap.Dark, ui).dark)
-    assert(!BaseMaps.raster(BaseMap.Dark, ui.modify(_.tilesTone).setTo("dark")).dark, "dark tiles already")
+    assertEquals((std.template.value, std.maxZoom.value, std.dark.value), (ui.tiles.value, 12, false))
+    assert(std.attribution.value.contains("OpenStreetMap") && !std.attribution.value.contains("Humanitarian"))
+    assert(BaseMaps.raster(BaseMap.Muted, ui).attribution.value.contains("Humanitarian"))
+    assert(BaseMaps.raster(BaseMap.Dark, ui).dark.value)
+    assert(!BaseMaps.raster(BaseMap.Dark, ui.modify(_.tilesTone).setTo(UiConfig.TilesTone("dark"))).dark.value, "dark tiles already")
     assertEquals(
       BaseMaps.plan(BaseMap.Muted, None, MapPrefs(), ui, local = false, soft = false)._2,
       None,
@@ -166,8 +190,8 @@ class BaseMapsSuite extends munit.FunSuite:
     assert(BaseMaps.contoursWhy(BaseMap.Physical, None, soft = false).isDefined, "not asked yet")
 
   test("contours in this view: zoom in below zoom 11; outside every focus region only when nothing is read on demand"):
-    val argolid = GeoBounds(37.6, 22.6, 37.8, 22.9)
-    val naxos = GeoBounds(36.9, 25.3, 37.2, 25.6)
+    val argolid = GeoBounds(GeoBounds.South(37.6), GeoBounds.West(22.6), GeoBounds.North(37.8), GeoBounds.East(22.9))
+    val naxos = GeoBounds(GeoBounds.South(36.9), GeoBounds.West(25.3), GeoBounds.North(37.2), GeoBounds.East(25.6))
     assertEquals(BaseMaps.contoursNote(Some(status(true, focus = true)), 12, argolid), None)
     assert(BaseMaps.contoursNote(Some(status(true, focus = true)), 10.5, argolid).exists(_.startsWith("zoom in")))
     assert(
@@ -181,8 +205,8 @@ class BaseMapsSuite extends munit.FunSuite:
       "read on demand there"
     )
     assertEquals(BaseMaps.contoursNote(Some(status(true, onDemand = true)), 11, naxos), None)
-    assert(BaseMaps.meets(GeoBounds(37.0, 21.0, 37.5, 22.1), BBox(com.histmersion.api.catalogue.Longitude(22), com.histmersion.api.catalogue.Latitude(37), com.histmersion.api.catalogue.Longitude(23), com.histmersion.api.catalogue.Latitude(38))), "touching at the corner")
-    assert(!BaseMaps.meets(GeoBounds(38.1, 22.0, 39.0, 23.0), BBox(com.histmersion.api.catalogue.Longitude(22), com.histmersion.api.catalogue.Latitude(37), com.histmersion.api.catalogue.Longitude(23), com.histmersion.api.catalogue.Latitude(38))))
+    assert(BaseMaps.meets(GeoBounds(GeoBounds.South(37.0), GeoBounds.West(21.0), GeoBounds.North(37.5), GeoBounds.East(22.1)), BBox(com.histmersion.api.catalogue.Longitude(22), com.histmersion.api.catalogue.Latitude(37), com.histmersion.api.catalogue.Longitude(23), com.histmersion.api.catalogue.Latitude(38))), "touching at the corner")
+    assert(!BaseMaps.meets(GeoBounds(GeoBounds.South(38.1), GeoBounds.West(22.0), GeoBounds.North(39.0), GeoBounds.East(23.0)), BBox(com.histmersion.api.catalogue.Longitude(22), com.histmersion.api.catalogue.Latitude(37), com.histmersion.api.catalogue.Longitude(23), com.histmersion.api.catalogue.Latitude(38))))
 
   test(
     "the sea's depth: on in Physical and off in Readable by default, the viewer's choice per style; needs the sea floor and a GPU"
@@ -195,7 +219,7 @@ class BaseMapsSuite extends munit.FunSuite:
     assertEquals(r.withSeaDepth(VectorStyle.Readable, on = com.histmersion.web.MapPrefs.SeaDepth(false)), MapPrefs(), "the default again is no choice")
     assertEquals(MapPrefs().withSeaDepth(VectorStyle.Physical, on = com.histmersion.web.MapPrefs.SeaDepth(false)), MapPrefs(depthPhysical = Some(com.histmersion.web.MapPrefs.DepthPhysical(false))))
     BaseMaps.plan(BaseMap.Readable, Some(status(true)), r, ui, local = false, soft = false)._1 match
-      case v: BaseMapSpec.Vector => assert(v.seaDepth)
+      case v: BaseMapSpec.Vector => assert(v.seaDepth.value)
       case other                 => fail(other.toString)
     assertEquals(BaseMaps.seaDepthWhy(BaseMap.Readable, Some(status(true)), soft = false), None)
     assert(
@@ -233,14 +257,15 @@ class BaseMapsSuite extends munit.FunSuite:
   test("a folding overlay's button names what it opens and says whether it is open"):
     val closed =
       MapFold.toggleHtml(com.histmersion.web.MapFold.ClassName("hd-legend-toggle"), com.histmersion.web.MapFold.ControlsId("hd-legend-body"), com.histmersion.web.MapFold.Label("map legend"), com.histmersion.web.MapFold.InnerHtml("<span>legend</span>"), open = com.histmersion.web.MapFold.Open(false))
-    assert(closed.startsWith("""<button type="button" class="btn btn--sm hd-legend-toggle" """), closed)
-    assert(closed.contains("""aria-controls="hd-legend-body""""), closed)
-    assert(closed.contains("""aria-expanded="false""""), closed)
-    assert(closed.contains("""aria-label="map legend""""), closed)
-    assert(closed.endsWith("<span>legend</span></button>"), closed)
+    assert(closed.value.startsWith("""<button type="button" class="btn btn--sm hd-legend-toggle" """), closed)
+    assert(closed.value.contains("""aria-controls="hd-legend-body""""), closed)
+    assert(closed.value.contains("""aria-expanded="false""""), closed)
+    assert(closed.value.contains("""aria-label="map legend""""), closed)
+    assert(closed.value.endsWith("<span>legend</span></button>"), closed)
     assert(
       MapFold
         .toggleHtml(com.histmersion.web.MapFold.ClassName("x"), com.histmersion.web.MapFold.ControlsId("y"), com.histmersion.web.MapFold.Label("a \"b\" & c"), com.histmersion.web.MapFold.InnerHtml(""), open = com.histmersion.web.MapFold.Open(true))
+        .value
         .contains("""aria-expanded="true" aria-label="a &quot;b&quot; &amp; c"""")
     )
 
@@ -254,7 +279,7 @@ class BaseMapsSuite extends munit.FunSuite:
     assertEquals(c.decode(List(com.histmersion.web.FieldCodec.Token("{oops"))), Some(MapPrefs()))
     assertEquals(c.decode(c.encode(MapPrefs(depthReadable = Some(com.histmersion.web.MapPrefs.DepthReadable(true))))), Some(MapPrefs(depthReadable = Some(com.histmersion.web.MapPrefs.DepthReadable(true)))))
     assertEquals(
-      c.decode(List("""{"names":false}""")),
+      c.decode(List(com.histmersion.web.FieldCodec.Token("""{"names":false}"""))),
       Some(MapPrefs(names = Some(com.histmersion.web.MapPrefs.Names(false)))),
       "kept before the depth existed"
     )

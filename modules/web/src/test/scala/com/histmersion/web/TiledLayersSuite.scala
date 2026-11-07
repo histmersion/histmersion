@@ -15,13 +15,13 @@ import com.histmersion.api.media.MediaGeoHit
   */
 class TiledLayersSuite extends munit.FunSuite:
 
-  private def feature(lat: Double, lon: Double, props: (String, js.Any)*): TilePointFeature =
+  private def feature(lat: LatLon.Lat, lon: LatLon.Lon, props: (String, js.Any)*): TilePointFeature =
     TilePointFeature(LatLon(lat, lon), js.Dictionary(props*))
 
   test("a site feature is the site the places feed gave: its type, basis and dates"):
     val f = feature(
-      37.6,
-      22.7,
+      LatLon.Lat(37.6),
+      LatLon.Lon(22.7),
       "k" -> "pleiades_1",
       "z" -> 9,
       "id" -> "pleiades_1",
@@ -41,23 +41,23 @@ class TiledLayersSuite extends munit.FunSuite:
           com.histmersion.web.SitePoint.Kind("site"),
           Some(com.histmersion.web.SitePoint.SiteType("fortification")),
           Some(com.histmersion.web.SitePoint.Basis("dated")),
-          37.6,
-          22.7,
-          Some((-1600.0, -1100.0))
+          LatLon.Lat(37.6),
+          LatLon.Lon(22.7),
+          Some((PlaybackAreas.FractionalYear(-1600.0), PlaybackAreas.FractionalYear(-1100.0)))
         )
       )
     )
     assert(!TileDecode.isCell(f))
     // an open end: no period on the ramp, as the feed's
     assertEquals(
-      TileDecode.site(feature(1, 2, "id" -> "x", "label" -> "X", "periodStart" -> -10)).flatMap(_.period),
+      TileDecode.site(feature(LatLon.Lat(1), LatLon.Lon(2), "id" -> "x", "label" -> "X", "periodStart" -> -10)).flatMap(_.period),
       None
     )
 
   test("an event feature carries everything its marker, label and card read"):
     val f = feature(
-      40.0,
-      26.2,
+      LatLon.Lat(40.0),
+      LatLon.Lon(26.2),
       "id" -> "ev1",
       "label" -> "Fall of Troy",
       "kind" -> "destruction",
@@ -85,8 +85,8 @@ class TiledLayersSuite extends munit.FunSuite:
 
   test("a picture feature is the media layer's hit"):
     val f = feature(
-      41.9,
-      12.5,
+      LatLon.Lat(41.9),
+      LatLon.Lon(12.5),
       "uid" -> "u1",
       "assetName" -> "Forum",
       "kind" -> "photo",
@@ -108,8 +108,8 @@ class TiledLayersSuite extends munit.FunSuite:
           None,
           com.histmersion.api.exchange.Bundle.Asset.FileName("Forum"),
           Some(com.histmersion.api.media.MediaItem.Kind("photo")),
-          41.9,
-          12.5,
+          com.histmersion.api.catalogue.Latitude(41.9),
+          com.histmersion.api.catalogue.Longitude(12.5),
           Some(com.histmersion.api.catalogue.Year(-50L)),
           Some(com.histmersion.api.catalogue.Year(300L)),
           None,
@@ -128,8 +128,8 @@ class TiledLayersSuite extends munit.FunSuite:
 
   test("a cell: its count, dates' range and box; it counts for all of them in a bubble and is not listed"):
     val f = feature(
-      10,
-      20,
+      LatLon.Lat(10),
+      LatLon.Lon(20),
       "k" -> "c4/1/2",
       "n" -> 37,
       "lo" -> -1500.5,
@@ -143,7 +143,7 @@ class TiledLayersSuite extends munit.FunSuite:
     val c = TileDecode.cell(f, DotKind.Site)
     assertEquals(
       c,
-      TileCellPoint(com.histmersion.web.TileCellPoint.Key("c4/1/2"), DotKind.Site, com.histmersion.web.TileCellPoint.Lat(10), com.histmersion.web.TileCellPoint.Lon(20), com.histmersion.web.TileCellPoint.N(37), Some(-1500.5), Some(-200.0), GeoBounds(com.histmersion.web.map.GeoBounds.South(9), com.histmersion.web.map.GeoBounds.West(19), com.histmersion.web.map.GeoBounds.North(11), com.histmersion.web.map.GeoBounds.East(21)))
+      TileCellPoint(com.histmersion.web.TileCellPoint.Key("c4/1/2"), DotKind.Site, com.histmersion.web.TileCellPoint.Lat(10), com.histmersion.web.TileCellPoint.Lon(20), com.histmersion.web.TileCellPoint.N(37), Some(TileCellPoint.MidLo(-1500.5)), Some(TileCellPoint.MidHi(-200.0)), GeoBounds(com.histmersion.web.map.GeoBounds.South(9), com.histmersion.web.map.GeoBounds.West(19), com.histmersion.web.map.GeoBounds.North(11), com.histmersion.web.map.GeoBounds.East(21)))
     )
     val m = CellKind(DotKind.Site).member(c)
     assertEquals((m.kind, m.n, m.mids, m.aggregate), (DotKind.Site, 37, List(-1500.5, -200.0), true))
@@ -154,10 +154,10 @@ class TiledLayersSuite extends munit.FunSuite:
     assert(!DotCluster.Contents(List(Member(DotKind.Event, com.histmersion.web.Member.N(1), Nil, Certainty.NoSay))).counted)
 
   test("playback buckets: a round number of years a bucket, the window widened to whole ones"):
-    assertEquals(PlaybackBuckets.years(com.histmersion.web.PlaybackBuckets.YearsPerSecond(166), 1.0), 200L)
-    assertEquals(PlaybackBuckets.years(com.histmersion.web.PlaybackBuckets.YearsPerSecond(30), 1.0), 50L)
-    assertEquals(PlaybackBuckets.years(com.histmersion.web.PlaybackBuckets.YearsPerSecond(0), 1.0), 1L)
-    assertEquals(PlaybackBuckets.years(com.histmersion.web.PlaybackBuckets.YearsPerSecond(1000), 1.0), com.histmersion.web.PlaybackBuckets.BucketYears(100)0L)
+    assertEquals(PlaybackBuckets.years(com.histmersion.web.PlaybackBuckets.YearsPerSecond(166), PlaybackBuckets.Seconds(1.0)), 200L)
+    assertEquals(PlaybackBuckets.years(com.histmersion.web.PlaybackBuckets.YearsPerSecond(30), PlaybackBuckets.Seconds(1.0)), 50L)
+    assertEquals(PlaybackBuckets.years(com.histmersion.web.PlaybackBuckets.YearsPerSecond(0), PlaybackBuckets.Seconds(1.0)), 1L)
+    assertEquals(PlaybackBuckets.years(com.histmersion.web.PlaybackBuckets.YearsPerSecond(1000), PlaybackBuckets.Seconds(1.0)), 1000L)
     assertEquals(PlaybackBuckets.widen((com.histmersion.api.Years.Astronomical(-1650L), com.histmersion.api.Years.Astronomical(-1550L)), com.histmersion.web.PlaybackBuckets.BucketYears(200)), (-1800L, -1401L))
     assertEquals(PlaybackBuckets.widen((com.histmersion.api.Years.Astronomical(10L), com.histmersion.api.Years.Astronomical(10L)), com.histmersion.web.PlaybackBuckets.BucketYears(100)), (0L, 99L))
     assertEquals(PlaybackBuckets.widen((com.histmersion.api.Years.Astronomical(-1L), com.histmersion.api.Years.Astronomical(0L)), com.histmersion.web.PlaybackBuckets.BucketYears(100)), (-100L, 99L))

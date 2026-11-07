@@ -17,7 +17,7 @@ class AboutSourceSuite extends munit.FunSuite:
   test("the Server section names the licence and links the source at the running commit"):
     val url = "https://github.com/histmersion/histmersion/tree/abc123def456"
     val rows =
-      serverRows(BuildStamp(com.histmersion.api.instance.BuildStamp.Version("1.2.3"), Some(com.histmersion.api.instance.BuildStamp.GitCommit("abc123def456")), licence = Some(com.histmersion.api.instance.BuildStamp.Licence("AGPL-3.0-or-later")), sourceUrl = Some(url)))
+      serverRows(BuildStamp(com.histmersion.api.instance.BuildStamp.Version("1.2.3"), Some(com.histmersion.api.instance.BuildStamp.GitCommit("abc123def456")), licence = Some(com.histmersion.api.instance.BuildStamp.Licence("AGPL-3.0-or-later")), sourceUrl = Some(BuildStamp.SourceUrl(url))))
     val licence = rows.find(_.label == "licence").get
     assertEquals((licence.value, licence.href), ("AGPL-3.0-or-later", None))
     val source = rows.find(_.label == "source").get

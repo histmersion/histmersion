@@ -23,7 +23,7 @@ class ApprovalsViewSuite extends munit.FunSuite:
     assertEquals(ApprovalsView.evidenceLine(plan), None)
     val status = ApprovalInfo(com.histmersion.api.automation.Agents.ApprovalInfo.Id(2), Some(com.histmersion.api.automation.Agents.RunInfo.Id("r")), com.histmersion.api.automation.Agents.ApprovalInfo.Kind("status-change"), com.histmersion.api.library.Citekey("a2020_b"), evidence = com.histmersion.api.automation.Agents.ApprovalInfo.Evidence("a retraction notice"))
     assertEquals(ApprovalsView.evidenceLine(status), Some("a retraction notice"))
-    assertEquals(ApprovalsView.evidenceLine(status.modify(_.evidence).setTo("")), None)
+    assertEquals(ApprovalsView.evidenceLine(status.modify(_.evidence).setTo(ApprovalInfo.Evidence(""))), None)
 
   test("a model's hint action reads as what it does to which manager; the phase 2 kinds read as themselves"):
     import com.histmersion.api.automation.Managers.{HintEffect, HintProposal}

@@ -18,5 +18,5 @@ object TestTokens:
   )
 
   def install(): Unit =
-    ThemeTokens.lookup = values.get
+    ThemeTokens.lookup = n => values.get(n.value).map(ThemeTokens.CssText(_))
     ThemeTokens.refresh()

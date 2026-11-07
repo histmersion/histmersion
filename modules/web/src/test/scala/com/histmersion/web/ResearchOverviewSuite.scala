@@ -13,28 +13,28 @@ import com.histmersion.api.automation.Agents.ApprovalInfo
 class ResearchOverviewSuite extends munit.FunSuite:
 
   private def approval(
-      id: Long,
-      kind: String,
-      at: String,
-      subject: Option[String] = None,
-      target: Option[String] = None
+      id: ApprovalInfo.Id,
+      kind: ApprovalInfo.Kind,
+      at: ApprovalInfo.CreatedAt,
+      subject: Option[ApprovalInfo.Subject] = None,
+      target: Option[ApprovalInfo.Target] = None
   ) =
     ApprovalInfo(id, Some(com.histmersion.api.automation.Agents.RunInfo.Id("r1")), kind, com.histmersion.api.library.Citekey("drake2012"), createdAt = at, subject = subject, target = target)
 
   test("a decision names what to read first, and the evidence comes before its accept button"):
     assertEquals(
-      ResearchOverview.evidence(approval(1, "edge", "t", target = Some("kaniewski2013"))),
+      ResearchOverview.evidence(approval(ApprovalInfo.Id(1), ApprovalInfo.Kind("edge"), ApprovalInfo.CreatedAt("t"), target = Some(ApprovalInfo.Target("kaniewski2013")))),
       List("See the evidence" -> "/source/drake2012", "Compare the two" -> "/source/kaniewski2013")
     )
     assertEquals(
-      ResearchOverview.evidence(approval(2, "article-publish", "t", subject = Some("sea-peoples"))),
+      ResearchOverview.evidence(approval(ApprovalInfo.Id(2), ApprovalInfo.Kind("article-publish"), ApprovalInfo.CreatedAt("t"), subject = Some(ApprovalInfo.Subject("sea-peoples")))),
       List("Read it first" -> "/article/sea-peoples")
     )
     assertEquals(
-      ResearchOverview.evidence(approval(3, "goal-plan", "t", subject = Some("collapse"))),
+      ResearchOverview.evidence(approval(ApprovalInfo.Id(3), ApprovalInfo.Kind("goal-plan"), ApprovalInfo.CreatedAt("t"), subject = Some(ApprovalInfo.Subject("collapse")))),
       List("Read the plan first" -> "/research/goals/collapse")
     )
-    assertEquals(ResearchOverview.evidence(approval(4, "status-change", "t")).map(_._1), List("See the evidence"))
+    assertEquals(ResearchOverview.evidence(approval(ApprovalInfo.Id(4), ApprovalInfo.Kind("status-change"), ApprovalInfo.CreatedAt("t"))).map(_._1), List("See the evidence"))
     assert(
       List(
         "edge",
@@ -46,22 +46,28 @@ class ResearchOverviewSuite extends munit.FunSuite:
         "hint-effect",
         "other"
       )
-        .forall(k => ResearchOverview.evidence(approval(5, k, "t", subject = Some("x"))).nonEmpty),
+        .forall(k => ResearchOverview.evidence(approval(ApprovalInfo.Id(5), ApprovalInfo.Kind(k), ApprovalInfo.CreatedAt("t"), subject = Some(ApprovalInfo.Subject("x")))).nonEmpty),
       "every kind has something to read"
     )
 
   test("the oldest decision first; decided ones are not listed"):
     val as = List(
-      approval(3, "edge", "2026-10-30T10:00:00Z"),
-      approval(1, "edge", "2026-10-29T10:00:00Z"),
-      approval(2, "edge", "2026-10-29T10:00:00Z").modify(_.state).setTo("approved")
+      approval(ApprovalInfo.Id(3), ApprovalInfo.Kind("edge"), ApprovalInfo.CreatedAt("2026-10-30T10:00:00Z")),
+      approval(ApprovalInfo.Id(1), ApprovalInfo.Kind("edge"), ApprovalInfo.CreatedAt("2026-10-29T10:00:00Z")),
+      approval(ApprovalInfo.Id(2), ApprovalInfo.Kind("edge"), ApprovalInfo.CreatedAt("2026-10-29T10:00:00Z")).modify(_.state).setTo(ApprovalInfo.State("approved"))
     )
     assertEquals(ResearchOverview.oldestFirst(as).map(_.id), List(1L, 3L))
-    assertEquals(ResearchOverview.waited(com.histmersion.web.ResearchOverview.EpochMillis(0), 5 * 3600000.0), "5 hours")
-    assertEquals(ResearchOverview.waited(com.histmersion.web.ResearchOverview.EpochMillis(0), 1800000.0), "less than an hour")
-    assertEquals(ResearchOverview.waited(com.histmersion.web.ResearchOverview.EpochMillis(0), 72 * 3600000.0), "3 days")
+    assertEquals(ResearchOverview.waited(com.histmersion.web.ResearchOverview.EpochMillis(0), ResearchOverview.EpochMillis(5 * 3600000.0)), "5 hours")
+    assertEquals(ResearchOverview.waited(com.histmersion.web.ResearchOverview.EpochMillis(0), ResearchOverview.EpochMillis(1800000.0)), "less than an hour")
+    assertEquals(ResearchOverview.waited(com.histmersion.web.ResearchOverview.EpochMillis(0), ResearchOverview.EpochMillis(72 * 3600000.0)), "3 days")
 
-  private def manager(id: String, goal: String, done: Int, pending: Int, note: Option[String] = None) =
+  private def manager(
+      id: Managers.ManagerInfo.Id,
+      goal: com.histmersion.api.automation.Goal.Slug,
+      done: Managers.ItemCounts.Done,
+      pending: Managers.ItemCounts.Pending,
+      note: Option[Managers.ManagerInfo.StatusNote] = None
+  ) =
     Managers.ManagerInfo(
       id,
       com.histmersion.api.automation.Managers.ManagerInfo.Kind("seed"),
@@ -71,7 +77,13 @@ class ResearchOverviewSuite extends munit.FunSuite:
     )
 
   test("a goal's progress is its managers' steps done of all; what blocks it is said in words"):
-    val ms = List(manager("seed:a", "a", 8, 3), manager("watch:a", "a", 0, 1), manager("seed:b", "b", 1, 0))
+    import com.histmersion.api.automation.Goal
+    import Managers.{ItemCounts, ManagerInfo}
+    val ms = List(
+      manager(ManagerInfo.Id("seed:a"), Goal.Slug("a"), ItemCounts.Done(8), ItemCounts.Pending(3)),
+      manager(ManagerInfo.Id("watch:a"), Goal.Slug("a"), ItemCounts.Done(0), ItemCounts.Pending(1)),
+      manager(ManagerInfo.Id("seed:b"), Goal.Slug("b"), ItemCounts.Done(1), ItemCounts.Pending(0))
+    )
     assertEquals(ResearchOverview.progressOf(com.histmersion.api.automation.Goal.Slug("a"), ms), ResearchOverview.Progress(com.histmersion.web.ResearchOverview.Progress.Done(8), com.histmersion.web.ResearchOverview.Progress.Total(12)))
     assertEquals(ResearchOverview.progressOf(com.histmersion.api.automation.Goal.Slug("a"), ms).pct, 66)
     assertEquals(ResearchOverview.progressOf(com.histmersion.api.automation.Goal.Slug("none"), ms), ResearchOverview.Progress(com.histmersion.web.ResearchOverview.Progress.Done(0), com.histmersion.web.ResearchOverview.Progress.Total(0)))
@@ -84,15 +96,15 @@ class ResearchOverviewSuite extends munit.FunSuite:
     assertEquals(ResearchOverview.blocker(g, None, ms), Some("waits for 2 of your decisions"))
     assertEquals(
       ResearchOverview
-        .blocker(g.modify(_.openApprovals).setTo(0), None, List(manager("seed:a", "a", 0, 1, Some("starved: no model")))),
+        .blocker(g.modify(_.openApprovals).setTo(Autopilot.GoalProgress.OpenApprovals(0)), None, List(manager(ManagerInfo.Id("seed:a"), Goal.Slug("a"), ItemCounts.Done(0), ItemCounts.Pending(1), Some(ManagerInfo.StatusNote("starved: no model"))))),
       Some("starved: no model")
     )
-    assertEquals(ResearchOverview.blocker(g.modify(_.openApprovals).setTo(0), None, ms), None)
+    assertEquals(ResearchOverview.blocker(g.modify(_.openApprovals).setTo(Autopilot.GoalProgress.OpenApprovals(0)), None, ms), None)
 
   test("the weekly allowance: each plan that reports this week's limit"):
     val w = PlanQuota.WindowStatus(com.histmersion.api.automation.PlanQuota.WindowStatus.Limit("claude"), com.histmersion.api.automation.PlanQuota.WindowStatus.Kind("seven_day"), com.histmersion.api.automation.PlanQuota.WindowStatus.UsedPct(39), com.histmersion.api.automation.PlanQuota.WindowStatus.LeftPct(61), com.histmersion.api.automation.PlanQuota.WindowStatus.Floor(10), usable = com.histmersion.api.automation.PlanQuota.WindowStatus.Usable(true), stale = com.histmersion.api.automation.PlanQuota.WindowStatus.Stale(false), None, com.histmersion.api.automation.PlanQuota.WindowStatus.ObservedAt(""), com.histmersion.api.automation.PlanQuota.WindowStatus.AgeSeconds(0), com.histmersion.api.automation.PlanQuota.WindowStatus.Source(""))
     val pool = PlanQuota.PoolStatus(
-      com.histmersion.api.automation.PlanQuota.PoolStatus.Kind("claude"),
+      com.histmersion.api.automation.PlanQuota.PoolStatus.Pool("claude"),
       com.histmersion.api.automation.PlanQuota.PoolStatus.Title("Claude plan"),
       com.histmersion.api.automation.PlanQuota.PoolStatus.Kind("claude"),
       Nil,

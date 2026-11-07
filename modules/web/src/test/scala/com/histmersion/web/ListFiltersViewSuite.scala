@@ -1,7 +1,5 @@
 package com.histmersion.web
 
-import com.histmersion.testsupport.ComparedByValue.given
-
 import com.histmersion.api.{UiLabels, Wording}
 import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.api.automation.ListFilters
@@ -26,10 +24,10 @@ class ListFiltersViewSuite extends munit.FunSuite:
     assertEquals(ListFilterBar.toggled(List("edge"), "goal-plan"), List("edge", "goal-plan"))
     assertEquals(ListFilterBar.toggled(List("edge", "goal-plan"), "edge"), List("goal-plan"))
     assertEquals(ListFilterBar.optionLabel("review-article", 1223), "Review an article (1,223)")
-    assertEquals(ListFilterBar.optionLabel("seed:x", 0, Wording.manager), "Seeding manager · X")
+    assertEquals(ListFilterBar.optionLabel("seed:x", 0, id => Wording.manager(Wording.ManagerId(id))), "Seeding manager · X")
     assertEquals(ListFilterBar.optionLabel("some-new-kind", 2), "Some new kind (2)", "an identifier never reads raw")
     assertEquals(
-      ListFilterBar.tooltip("edge", UiLabels.label, _ => Some("A typed link.")),
+      ListFilterBar.tooltip("edge", id => UiLabels.label(UiLabels.Key(id)).value, _ => Some("A typed link.")),
       Some("A typed link. (edge)")
     )
     assertEquals(ListFilterBar.tooltip("x", identity, _ => None), None)
@@ -49,14 +47,14 @@ class ListFiltersViewSuite extends munit.FunSuite:
     ListFilterBar.clear(fields)
     assert(!ListFilterBar.anySet(fields))
     assertEquals(UiState.approvalKinds.now(), Nil)
-    assert(!UiState.hashString.contains("apprKind"), UiState.hashString)
+    assert(!UiState.hashString.value.contains("apprKind"), UiState.hashString)
 
   private def appr(
-      id: Long,
-      kind: String,
-      state: String = "open",
-      note: Option[String] = None,
-      result: Option[String] = None
+      id: ApprovalInfo.Id,
+      kind: ApprovalInfo.Kind,
+      state: ApprovalInfo.State = ApprovalInfo.State("open"),
+      note: Option[ApprovalInfo.Note] = None,
+      result: Option[ApprovalInfo.Result] = None
   ) =
     ApprovalInfo(id, None, kind, com.histmersion.api.library.Citekey(""), state = state, note = note, result = result)
 
@@ -66,39 +64,39 @@ class ListFiltersViewSuite extends munit.FunSuite:
       ApprovalsView.currentFilter(),
       ListFilters.ApprovalFilter(kind = List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")), decidedBy = List(com.histmersion.api.automation.Approval.DecidedBy.Wire("person")))
     )
-    val rows = List(appr(1, "goal-plan"), appr(2, "edge"), appr(3, "goal-plan", "approved"))
-    assertEquals(ApprovalsView.visible(rows, ListFilters.ApprovalFilter(kind = List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")))).map(_.id), List(1L))
+    val rows = List(appr(ApprovalInfo.Id(1), ApprovalInfo.Kind("goal-plan")), appr(ApprovalInfo.Id(2), ApprovalInfo.Kind("edge")), appr(ApprovalInfo.Id(3), ApprovalInfo.Kind("goal-plan"), ApprovalInfo.State("approved")))
+    assertEquals(ApprovalsView.visible(rows, ListFilters.ApprovalFilter(kind = List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")))).map(_.id.value), List(1L))
     assertEquals(
-      ApprovalsView.visible(rows, ListFilters.ApprovalFilter(state = Some(com.histmersion.api.automation.Approval.State.Wire("all")), kind = List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")))).map(_.id),
+      ApprovalsView.visible(rows, ListFilters.ApprovalFilter(state = Some(com.histmersion.api.automation.Approval.State.Wire("all")), kind = List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")))).map(_.id.value),
       List(1L, 3L)
     )
-    assertEquals(ApprovalsView.visible(rows, ListFilters.ApprovalFilter(state = Some(com.histmersion.api.automation.Approval.State.Wire("approved")))).map(_.id), List(3L))
-    assertEquals(ApprovalsView.qualifier(ListFilters.ApprovalFilter(kind = List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")))), Some("open goal-plan"))
+    assertEquals(ApprovalsView.visible(rows, ListFilters.ApprovalFilter(state = Some(com.histmersion.api.automation.Approval.State.Wire("approved")))).map(_.id.value), List(3L))
+    assertEquals(ApprovalsView.qualifier(ListFilters.ApprovalFilter(kind = List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")))).map(_.value), Some("open goal-plan"))
 
   test("approvals: a bulk decision applies to the ticked rows still shown and open, and says what it will do"):
-    val rows = List(appr(1, "goal-plan"), appr(2, "goal-plan"), appr(3, "edge"), appr(4, "edge", "approved"))
-    assertEquals(ApprovalsView.bulkTargets(Set(com.histmersion.api.automation.Agents.ApprovalInfo.Id(1), com.histmersion.api.automation.Agents.ApprovalInfo.Id(3), com.histmersion.api.automation.Agents.ApprovalInfo.Id(4), com.histmersion.api.automation.Agents.ApprovalInfo.Id(9)), rows).map(_.id), List(1L, 3L))
+    val rows = List(appr(ApprovalInfo.Id(1), ApprovalInfo.Kind("goal-plan")), appr(ApprovalInfo.Id(2), ApprovalInfo.Kind("goal-plan")), appr(ApprovalInfo.Id(3), ApprovalInfo.Kind("edge")), appr(ApprovalInfo.Id(4), ApprovalInfo.Kind("edge"), ApprovalInfo.State("approved")))
+    assertEquals(ApprovalsView.bulkTargets(Set(com.histmersion.api.automation.Agents.ApprovalInfo.Id(1), com.histmersion.api.automation.Agents.ApprovalInfo.Id(3), com.histmersion.api.automation.Agents.ApprovalInfo.Id(4), com.histmersion.api.automation.Agents.ApprovalInfo.Id(9)), rows).map(_.id.value), List(1L, 3L))
     val text = ApprovalsView.confirmText(Decision.Approve, rows.take(3))
     assert(text.startsWith("Approve 3 approvals (2 plan a goal, 1 link two sources)?"), text)
     assert(ApprovalsView.confirmText(Decision.Reject, rows.take(1)).startsWith("Reject 1 approval (1 plan a goal)?"))
 
   test("approvals: who decided, as the row says it"):
-    assertEquals(ApprovalsView.decidedLine(appr(1, "goal-plan")), None)
+    assertEquals(ApprovalsView.decidedLine(appr(ApprovalInfo.Id(1), ApprovalInfo.Kind("goal-plan"))), None)
     assertEquals(
-      ApprovalsView.decidedLine(appr(1, "goal-plan", "approved", note = Some("autopilot: approved — ok"))),
-      Some(ListFilters.DecidedBy.Autopilot.describe)
+      ApprovalsView.decidedLine(appr(ApprovalInfo.Id(1), ApprovalInfo.Kind("goal-plan"), ApprovalInfo.State("approved"), note = Some(ApprovalInfo.Note("autopilot: approved — ok")))),
+      Some(ListFilters.DecidedBy.Autopilot.describe.value)
     )
     assertEquals(
-      ApprovalsView.decidedLine(appr(1, "edge", "approved", result = Some("applied automatically: x"))),
-      Some(ListFilters.DecidedBy.Auto.describe)
+      ApprovalsView.decidedLine(appr(ApprovalInfo.Id(1), ApprovalInfo.Kind("edge"), ApprovalInfo.State("approved"), result = Some(ApprovalInfo.Result("applied automatically: x")))),
+      Some(ListFilters.DecidedBy.Auto.describe.value)
     )
 
   private def run(
-      id: String,
-      status: String,
-      pipeline: String,
-      origin: Option[String] = None,
-      manager: Option[String] = None
+      id: RunInfo.Id,
+      status: RunInfo.Status,
+      pipeline: RunInfo.Pipeline,
+      origin: Option[RunInfo.Origin] = None,
+      manager: Option[com.histmersion.api.automation.Managers.ManagerInfo.Id] = None
   ) =
     RunInfo(id, pipeline, com.histmersion.api.automation.Agents.RunInfo.Target("t"), status, origin = origin, managerId = manager)
 
@@ -131,20 +129,20 @@ class ListFiltersViewSuite extends munit.FunSuite:
       )
     )
     val rows = List(
-      run("a", "failed", "review-article", Some("manager"), Some("review")),
-      run("b", "done", "review-article"),
-      run("c", "failed", "enrich-source")
+      run(RunInfo.Id("a"), RunInfo.Status("failed"), RunInfo.Pipeline("review-article"), Some(RunInfo.Origin("manager")), Some(com.histmersion.api.automation.Managers.ManagerInfo.Id("review"))),
+      run(RunInfo.Id("b"), RunInfo.Status("done"), RunInfo.Pipeline("review-article")),
+      run(RunInfo.Id("c"), RunInfo.Status("failed"), RunInfo.Pipeline("enrich-source"))
     )
     assertEquals(
-      RunsView.visible(rows, ListFilters.RunFilter(pipeline = List(com.histmersion.api.automation.ListFilters.RunFilter.Pipeline("review-article")))).map(_.id),
+      RunsView.visible(rows, ListFilters.RunFilter(pipeline = List(com.histmersion.api.automation.ListFilters.RunFilter.Pipeline("review-article")))).map(_.id.value),
       List("a", "b")
     )
     assertEquals(
-      RunsView.visible(rows, ListFilters.RunFilter(status = List(com.histmersion.api.automation.ListFilters.RunFilter.Status("failed")), manager = List(com.histmersion.api.automation.ListFilters.RunFilter.Manager("review")))).map(_.id),
+      RunsView.visible(rows, ListFilters.RunFilter(status = List(com.histmersion.api.automation.ListFilters.RunFilter.Status("failed")), manager = List(com.histmersion.api.automation.ListFilters.RunFilter.Manager("review")))).map(_.id.value),
       List("a")
     )
     // a run with no origin was a person's
-    assertEquals(RunsView.visible(rows, ListFilters.RunFilter(origin = List(com.histmersion.api.automation.Agents.Origin.Wire("person")))).map(_.id), List("b", "c"))
+    assertEquals(RunsView.visible(rows, ListFilters.RunFilter(origin = List(com.histmersion.api.automation.Agents.Origin.Wire("person")))).map(_.id.value), List("b", "c"))
 
   test("jobs: the query from the fields; the rows the states and kinds show at once"):
     assertEquals(

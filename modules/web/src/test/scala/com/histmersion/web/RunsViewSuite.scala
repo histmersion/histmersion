@@ -17,7 +17,7 @@ class RunsViewSuite extends munit.FunSuite:
     UiState.store = Store.Memory()
     UiState.loadHash(com.histmersion.web.UiState.UrlHash(""))
 
-  private def run(status: String, error: Option[String] = None) =
+  private def run(status: RunInfo.Status, error: Option[RunInfo.Error] = None) =
     RunInfo(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), com.histmersion.api.automation.Agents.RunInfo.Pipeline("enrich-source"), com.histmersion.api.automation.Agents.RunInfo.Target("a2020_b"), status, error = error)
 
   test("only queued and running runs are live; the poll stops once nothing is"):
@@ -25,10 +25,10 @@ class RunsViewSuite extends munit.FunSuite:
     assert(!RunsView.live(com.histmersion.api.automation.Agents.RunInfo.Status("paused")) && !RunsView.live(com.histmersion.api.automation.Agents.RunInfo.Status("done")) && !RunsView.live(com.histmersion.api.automation.Agents.RunInfo.Status("nonsense")))
     assertEquals(RunsView.nextPoll(None, anyLive = com.histmersion.web.Poll.LiveMode(false), changed = com.histmersion.web.Poll.DataChanged(true)), None)
     assertEquals(RunsView.nextPoll(None, anyLive = com.histmersion.web.Poll.LiveMode(true), changed = com.histmersion.web.Poll.DataChanged(true)), Some(JobsView.Poll.FirstMs))
-    val slower = RunsView.nextPoll(Some(JobsView.Poll.FirstMs), anyLive = com.histmersion.web.Poll.LiveMode(true), changed = com.histmersion.web.Poll.DataChanged(false)).get
-    assert(slower > JobsView.Poll.FirstMs)
+    val slower = RunsView.nextPoll(Some(com.histmersion.web.Poll.Revision(JobsView.Poll.FirstMs)), anyLive = com.histmersion.web.Poll.LiveMode(true), changed = com.histmersion.web.Poll.DataChanged(false)).get
+    assert(slower.value > JobsView.Poll.FirstMs)
     assertEquals(
-      RunsView.nextPoll(Some(JobsView.Poll.MaxMs), anyLive = com.histmersion.web.Poll.LiveMode(true), changed = com.histmersion.web.Poll.DataChanged(false)),
+      RunsView.nextPoll(Some(com.histmersion.web.Poll.Revision(JobsView.Poll.MaxMs)),anyLive = com.histmersion.web.Poll.LiveMode(true), changed = com.histmersion.web.Poll.DataChanged(false)),
       Some(JobsView.Poll.MaxMs)
     )
 
@@ -41,10 +41,10 @@ class RunsViewSuite extends munit.FunSuite:
     assertEquals(RunsView.actions(com.histmersion.api.automation.Agents.RunInfo.Status("cancelled")), Nil)
 
   test("why a run paused, the filter, and a typed budget"):
-    assertEquals(RunsView.pausedFor(run("paused", Some("budget: the run spent 2 of its 2 USD"))), Some("budget"))
-    assertEquals(RunsView.pausedFor(run("paused", Some("interrupted"))), Some("interrupted"))
-    assertEquals(RunsView.pausedFor(run("done")), None)
-    val rs = List(run("done"), run("paused"), run("done"))
+    assertEquals(RunsView.pausedFor(run(RunInfo.Status("paused"), Some(RunInfo.Error("budget: the run spent 2 of its 2 USD")))), Some("budget"))
+    assertEquals(RunsView.pausedFor(run(RunInfo.Status("paused"), Some(RunInfo.Error("interrupted")))), Some("interrupted"))
+    assertEquals(RunsView.pausedFor(run(RunInfo.Status("done"))), None)
+    val rs = List(run(RunInfo.Status("done")), run(RunInfo.Status("paused")), run(RunInfo.Status("done")))
     assertEquals(RunsView.visible(rs, Some(RunState.Done)).size, 2)
     assertEquals(RunsView.visible(rs, None).size, 3)
     assertEquals(RunsView.counts(rs), Map("done" -> 2, "paused" -> 1))
@@ -62,7 +62,7 @@ class RunsViewSuite extends munit.FunSuite:
       com.histmersion.api.library.Citekey("a2020_b"),
       edgeKind = Some(com.histmersion.api.library.Edge.Kind.Wire("superseded_by")),
       target = Some(com.histmersion.api.automation.Agents.ApprovalInfo.Target("c2024_d")),
-      state = "approved"
+      state = com.histmersion.api.automation.Agents.ApprovalInfo.State("approved")
     )
     assertEquals(ApprovalsView.describe(status), "status of a2020_b: current → contested")
     assertEquals(ApprovalsView.describe(edge), "a2020_b superseded by c2024_d")
@@ -86,12 +86,12 @@ class RunsViewSuite extends munit.FunSuite:
     )()
     val hash = UiState.hashString
     assert(
-      hash.contains("runs=paused") && hash.contains("apprState=all") && hash.contains("apprKind=goal-plan") &&
-        hash.contains("apprKind=edge") && hash.contains("runPipeline=review-article") && hash.contains(
+      hash.value.contains("runs=paused") && hash.value.contains("apprState=all") && hash.value.contains("apprKind=goal-plan") &&
+        hash.value.contains("apprKind=edge") && hash.value.contains("runPipeline=review-article") && hash.value.contains(
           "runSince=2026-10-01"
         ) &&
-        hash.contains("jobKind=ingest") && hash.contains("jobSubject=a2020"),
-      hash
+        hash.value.contains("jobKind=ingest") && hash.value.contains("jobSubject=a2020"),
+      hash.value
     )
     UiState.loadHash(com.histmersion.web.UiState.UrlHash(""))
     assertEquals(UiState.runStatus.now(), None)
@@ -111,7 +111,7 @@ class RunsViewSuite extends munit.FunSuite:
     assert(!RunsView.live(com.histmersion.api.automation.Agents.RunInfo.Status("waiting")), "a waiting run waits for a person, not for the server")
     val w = RunInfo(com.histmersion.api.automation.Agents.RunInfo.Id("r2"), com.histmersion.api.automation.Agents.RunInfo.Pipeline("plan-goal"), com.histmersion.api.automation.Agents.RunInfo.Target("g"), com.histmersion.api.automation.Agents.RunInfo.Status("waiting"), progress = Some(com.histmersion.api.automation.Agents.RunInfo.Progress("approve: waiting for approval 42")))
     assertEquals(RunsView.waitingFor(w), Some(42L))
-    assertEquals(RunsView.waitingFor(run("done")), None)
+    assertEquals(RunsView.waitingFor(run(RunInfo.Status("done"))), None)
 
   test("a goal plan and an article to publish, in words"):
     val plan = ApprovalInfo(
@@ -123,7 +123,7 @@ class RunsViewSuite extends munit.FunSuite:
       plan = Some(
         com.histmersion.api.automation.Goal.Plans.Plan(
           com.histmersion.api.automation.Goal.Slug("bronze-age"),
-          queries = List("tin"),
+          queries = List(com.histmersion.api.automation.Goal.Plans.Plan.Queries("tin")),
           subGoals = List(com.histmersion.api.automation.Goal.Plans.PlannedGoal(com.histmersion.api.automation.Goal.Slug("tin"), com.histmersion.api.automation.Goal.Title("Tin")))
         )
       )
@@ -159,7 +159,7 @@ class RunsViewSuite extends munit.FunSuite:
       com.histmersion.api.automation.Agents.StepInfo.Status("failed"),
       model = Some(com.histmersion.api.automation.Agents.StepInfo.Model("anthropic:claude")),
       usage = Usage(com.histmersion.api.automation.Agents.Usage.Input(120), com.histmersion.api.automation.Agents.Usage.Output(45)),
-      costUsd = 0.25,
+      costUsd = com.histmersion.api.automation.Agents.StepInfo.CostUsd(0.25),
       error = Some(com.histmersion.api.automation.Agents.StepInfo.Error("provider: overloaded"))
     )
     val cells = RunsView.stepCells(s)
@@ -170,7 +170,7 @@ class RunsViewSuite extends munit.FunSuite:
     // nothing to say is an empty cell (left out of a card), never a missing column
     val bare = RunsView.stepCells(StepInfo(com.histmersion.api.automation.Agents.StepInfo.Seq(1), com.histmersion.api.automation.Agents.StepInfo.Name("plan"), com.histmersion.api.automation.Agents.StepInfo.Kind("tool"), com.histmersion.api.automation.Agents.StepInfo.Attempt(1), com.histmersion.api.automation.Agents.StepInfo.Status("done")))
     assertEquals(bare.size, RunsView.StepColumns.size)
-    assertEquals(bare.filter(_._2.isEmpty).map(_._1), List("model", "note"))
+    assertEquals(bare.filter(_._2.value.isEmpty).map(_._1), List("model", "note"))
     // #992: the model the provider reported beside the configured one; a dry run's skipped write
     val eval = RunsView.stepCells(
       StepInfo(
