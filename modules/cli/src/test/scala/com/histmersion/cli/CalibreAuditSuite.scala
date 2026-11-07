@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** The audit compares loosely where Calibre legitimately differs (subtitles, accents, "Last, First") and strictly where
   * it matters (no author in common, scraped junk, a missing entry).
   */
@@ -25,13 +27,13 @@ class CalibreAuditSuite extends munit.FunSuite:
   test("a bracketed role or life span is not a surname"):
     assert(
       Calibre.Audit.authorsMatch(
-        List("Ken Dowden (ed.)", "Niall Livingstone (ed.)"),
-        List("Ken Dowden; Niall Livingstone")
+        List(com.histmersion.api.library.AuthorName("Ken Dowden (ed.)"), com.histmersion.api.library.AuthorName("Niall Livingstone (ed.)")),
+        List(com.histmersion.api.library.AuthorName("Ken Dowden; Niall Livingstone"))
       ) ||
-        Calibre.Audit.authorsMatch(List("Ken Dowden (ed.)"), List("Ken Dowden"))
+        Calibre.Audit.authorsMatch(List(com.histmersion.api.library.AuthorName("Ken Dowden (ed.)")), List(com.histmersion.api.library.AuthorName("Ken Dowden")))
     )
-    assertEquals(Calibre.Audit.surname("Gimbutienė, Marija (1921-1994)"), "gimbutiene")
-    assertEquals(Calibre.Audit.surname("Cynthia W. Shelmerdine (ed.)"), "shelmerdine")
+    assertEquals(Calibre.Audit.surname(com.histmersion.api.library.AuthorName("Gimbutienė, Marija (1921-1994)")), "gimbutiene")
+    assertEquals(Calibre.Audit.surname(com.histmersion.api.library.AuthorName("Cynthia W. Shelmerdine (ed.)")), "shelmerdine")
 
   test("a shared entry is judged against the record it matches — the volume, not the chapter"):
     val vol =
@@ -70,6 +72,6 @@ class CalibreAuditSuite extends munit.FunSuite:
         3 -> List(AuditIssue.Title, AuditIssue.Year)
       )
     )
-    val md = Calibre.Audit.markdown(f, 3)
+    val md = Calibre.Audit.markdown(f, com.histmersion.api.library.CollectionAudit.Checked(3))
     assert(md.contains("`histmersion calibre update a2000_x`"), md)
     assert(md.contains("re-push, or clear"), md)

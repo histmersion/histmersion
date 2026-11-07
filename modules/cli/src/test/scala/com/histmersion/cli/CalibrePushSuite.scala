@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.CalibreCliConfig
@@ -23,10 +25,10 @@ class CalibrePushSuite extends munit.FunSuite:
   private def gap(ck: String, stored: Option[Boolean] = None, provenance: String = "unpaywall") =
     CalibreGap(
       ck,
-      "Bronze Age tin",
-      List("Stocker, Sharon R."),
-      Some("10.1/x"),
-      Some(2019),
+      com.histmersion.api.library.CalibreGap.Title("Bronze Age tin"),
+      List(com.histmersion.api.library.CalibreGap.Authors("Stocker, Sharon R.")),
+      Some(com.histmersion.api.library.Doi("10.1/x")),
+      Some(com.histmersion.api.catalogue.Year(2019)),
       None,
       None,
       Nil,
@@ -105,7 +107,7 @@ class CalibrePushSuite extends munit.FunSuite:
     def isRunning(processMatch: String): Boolean = false
 
   private def calibre(shell: Shell) =
-    Calibre(CalibreCliConfig("/nonexistent/library", "calibredb", "sqlite3", ""), shell)
+    Calibre(CalibreCliConfig(com.histmersion.config.CalibreCliConfig.LibraryDir("/nonexistent/library"), com.histmersion.config.CalibreCliConfig.Calibredb("calibredb"), com.histmersion.config.CalibreCliConfig.Sqlite("sqlite3"), com.histmersion.config.CalibreCliConfig.OriginalsDir("")), shell)
 
   private def withStub[A](body: Stub => A): A = withGaps(Nil)(body)
 
@@ -117,7 +119,7 @@ class CalibrePushSuite extends munit.FunSuite:
   test("no --file and no originals-dir: the server's stored original is downloaded, added, and removed"):
     withStub { s =>
       val shell = Recording()
-      val got = CalibreCmd.pushOne(Client(s.url), "zz_ck", None, calibre(shell), originals = None)
+      val got = CalibreCmd.pushOne(Client(s.url), com.histmersion.api.library.Citekey("zz_ck"), None, calibre(shell), originals = None)
       assertEquals(got.map(_._1), Right(4242))
       val (file, content) = shell.added.head
       assertEquals(content, Pdf, "calibredb add got the server's bytes")
@@ -136,7 +138,7 @@ class CalibrePushSuite extends munit.FunSuite:
       Files.createDirectories(dir.resolve("zz_ck"))
       Files.writeString(dir.resolve("zz_ck/paper.pdf"), "%PDF local")
       val shell = Recording()
-      val got = CalibreCmd.pushOne(Client(s.url), "zz_ck", None, calibre(shell), originals = Some(dir.toString))
+      val got = CalibreCmd.pushOne(Client(s.url), com.histmersion.api.library.Citekey("zz_ck"), None, calibre(shell), originals = Some(dir.toString))
       assertEquals(got.map(_._1), Right(4242))
       assertEquals(shell.added.map(_._2), List("%PDF local"))
       assert(!s.requests.toArray.exists(_.toString.endsWith("/original")), s.requests)
@@ -147,7 +149,7 @@ class CalibrePushSuite extends munit.FunSuite:
       val f = Files.createTempFile("zz-given-", ".pdf"); Files.writeString(f, "%PDF given")
       val shell = Recording()
       assertEquals(
-        CalibreCmd.pushOne(Client(s.url), "zz_ck", Some(f), calibre(shell), originals = None).map(_._1),
+        CalibreCmd.pushOne(Client(s.url), com.histmersion.api.library.Citekey("zz_ck"), Some(f), calibre(shell), originals = None).map(_._1),
         Right(4242)
       )
       assertEquals(shell.added.map(_._2), List("%PDF given"))
@@ -157,7 +159,7 @@ class CalibrePushSuite extends munit.FunSuite:
   test("no stored original and none on this host: nothing is added, and the error says what to do"):
     withStub { s =>
       val shell = Recording()
-      val got = CalibreCmd.pushOne(Client(s.url), "zz_none", None, calibre(shell), originals = None)
+      val got = CalibreCmd.pushOne(Client(s.url), com.histmersion.api.library.Citekey("zz_none"), None, calibre(shell), originals = None)
       val msg = got.left.map(_.message).swap.getOrElse(fail(s"pushed: $got"))
       assert(msg.contains("no original stored") && msg.contains("--file") && msg.contains("originals-dir"), msg)
       assertEquals(shell.commands, Nil, "calibredb never ran")

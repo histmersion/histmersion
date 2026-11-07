@@ -12,20 +12,20 @@ class DeleteCmdSuite extends munit.FunSuite:
   private def parse(args: String*) = cmd.parse(args.toList, Map.empty)
 
   test("a dry run by default; --apply and --json are flags"):
-    assertEquals(parse("page2024_history"), Right(DeleteCmd.Args("page2024_history", apply = false, json = false)))
+    assertEquals(parse("page2024_history"), Right(DeleteCmd.Args(com.histmersion.cli.DeleteCmd.Args.Citekey("page2024_history"), apply = com.histmersion.cli.DeleteCmd.Args.Apply(false), json = com.histmersion.cli.DeleteCmd.Args.Json(false))))
     assertEquals(
       parse("page2024_history", "--apply"),
-      Right(DeleteCmd.Args("page2024_history", apply = true, json = false))
+      Right(DeleteCmd.Args(com.histmersion.cli.DeleteCmd.Args.Citekey("page2024_history"), apply = com.histmersion.cli.DeleteCmd.Args.Apply(true), json = com.histmersion.cli.DeleteCmd.Args.Json(false)))
     )
     assertEquals(
       parse("--json", " page2024_history "),
-      Right(DeleteCmd.Args("page2024_history", apply = false, json = true))
+      Right(DeleteCmd.Args(com.histmersion.cli.DeleteCmd.Args.Citekey("page2024_history"), apply = com.histmersion.cli.DeleteCmd.Args.Apply(false), json = com.histmersion.cli.DeleteCmd.Args.Json(true)))
     )
 
   test("no force override; missing arguments fail and citekeys reach server validation"):
     assert(parse("page2024_history", "--force").isLeft)
     assert(parse().isLeft)
-    assertEquals(parse("Page 2024"), Right(DeleteCmd.Args("Page 2024", apply = false, json = false)))
+    assertEquals(parse("Page 2024"), Right(DeleteCmd.Args(com.histmersion.cli.DeleteCmd.Args.Citekey("Page 2024"), apply = com.histmersion.cli.DeleteCmd.Args.Apply(false), json = com.histmersion.cli.DeleteCmd.Args.Json(false))))
 
   test("the subcommand is registered under `delete` and says it is a dry run"):
     val top = Command("histmersion", "test")(DeleteCmd.command)
@@ -33,15 +33,15 @@ class DeleteCmdSuite extends munit.FunSuite:
     assert(top.parse(List("delete", "--help"), Map.empty).left.exists(_.toString.contains("dry run")))
 
   test("the linked Calibre entry is looked up in the library before the answer says it is there (#1776)"):
-    val book = Calibre.Book(1885, "T", List("A"), None, None, Nil, None, Map.empty, Nil)
-    assertEquals(DeleteCmd.calibreCheck("1885", true, "/lib", _ => Right(Some(book))), CalibreEntryCheck.Present)
-    assertEquals(DeleteCmd.calibreCheck("1885", true, "/lib", _ => Right(None)), CalibreEntryCheck.Missing)
+    val book = Calibre.Book(com.histmersion.cli.Calibre.Book.Id(1885), com.histmersion.cli.Calibre.Book.Title("T"), List(com.histmersion.api.library.AuthorName("A")), None, None, Nil, None, Map.empty, Nil)
+    assertEquals(DeleteCmd.calibreCheck(com.histmersion.api.library.Source.CalibreId("1885"), true, com.histmersion.config.CalibreCliConfig.LibraryDir("/lib"), _ => Right(Some(book))), CalibreEntryCheck.Present)
+    assertEquals(DeleteCmd.calibreCheck(com.histmersion.api.library.Source.CalibreId("1885"), true, com.histmersion.config.CalibreCliConfig.LibraryDir("/lib"), _ => Right(None)), CalibreEntryCheck.Missing)
     assertEquals(
-      DeleteCmd.calibreCheck("1885", false, "/lib", _ => fail("not read without a library")),
-      CalibreEntryCheck.Unchecked("no Calibre library at /lib")
+      DeleteCmd.calibreCheck(com.histmersion.api.library.Source.CalibreId("1885"), false, com.histmersion.config.CalibreCliConfig.LibraryDir("/lib"), _ => fail("not read without a library")),
+      CalibreEntryCheck.Unchecked(com.histmersion.api.library.CalibreEntryCheck.Unchecked.Reason("no Calibre library at /lib"))
     )
     assertEquals(
-      DeleteCmd.calibreCheck("1885", true, "/lib", _ => Left("sqlite3: locked\nmore")),
-      CalibreEntryCheck.Unchecked("sqlite3: locked")
+      DeleteCmd.calibreCheck(com.histmersion.api.library.Source.CalibreId("1885"), true, com.histmersion.config.CalibreCliConfig.LibraryDir("/lib"), _ => Left(com.histmersion.cli.Shell.Problem("sqlite3: locked\nmore"))),
+      CalibreEntryCheck.Unchecked(com.histmersion.api.library.CalibreEntryCheck.Unchecked.Reason("sqlite3: locked"))
     )
-    assert(DeleteCmd.calibreCheck("x1", true, "/lib", _ => fail("not read")).isInstanceOf[CalibreEntryCheck.Unchecked])
+    assert(DeleteCmd.calibreCheck(com.histmersion.api.library.Source.CalibreId("x1"), true, com.histmersion.config.CalibreCliConfig.LibraryDir("/lib"), _ => fail("not read")).isInstanceOf[CalibreEntryCheck.Unchecked])

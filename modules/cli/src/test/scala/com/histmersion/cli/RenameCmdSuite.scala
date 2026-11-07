@@ -16,24 +16,24 @@ class RenameCmdSuite extends munit.FunSuite:
   test("two positional citekeys, --json optional"):
     assertEquals(
       parse("page2024_history", "page1959_history"),
-      Right(RenameCmd.Args("page2024_history", "page1959_history", json = false))
+      Right(RenameCmd.Args(com.histmersion.api.library.Citekey("page2024_history"), com.histmersion.api.library.Citekey("page1959_history"), json = com.histmersion.cli.Cli.JsonOutput(false)))
     )
     assertEquals(
       parse("page2024_history", "page1959_history", "--json"),
-      Right(RenameCmd.Args("page2024_history", "page1959_history", json = true))
+      Right(RenameCmd.Args(com.histmersion.api.library.Citekey("page2024_history"), com.histmersion.api.library.Citekey("page1959_history"), json = com.histmersion.cli.Cli.JsonOutput(true)))
     )
 
   test("the new citekey is trimmed"):
     assertEquals(
       parse("latacz2023_troy", " latacz2004_troy "),
-      Right(RenameCmd.Args("latacz2023_troy", "latacz2004_troy", json = false))
+      Right(RenameCmd.Args(com.histmersion.api.library.Citekey("latacz2023_troy"), com.histmersion.api.library.Citekey("latacz2004_troy"), json = com.histmersion.cli.Cli.JsonOutput(false)))
     )
 
   test("a missing argument is a usage error"):
     assert(parse("page2024_history").isLeft)
     assert(parse().isLeft)
 
-  test("citekey validity is decided by the server") { List("page2024_history", "Page 1959", "page-1959").foreach(to => assertEquals(parse("page2024_history", to), Right(RenameCmd.Args("page2024_history", to, json = false)))) }
+  test("citekey validity is decided by the server") { List("page2024_history", "Page 1959", "page-1959").foreach(to => assertEquals(parse("page2024_history", to), Right(RenameCmd.Args(com.histmersion.api.library.Citekey("page2024_history"), to, json = com.histmersion.cli.Cli.JsonOutput(false))))) }
 
   test("the subcommand is registered under `rename`"):
     val top = Command("histmersion", "test")(RenameCmd.command)
@@ -48,9 +48,9 @@ class RenameCmdSuite extends munit.FunSuite:
       val out = RenameCmd.pruneRenamed(
         dir,
         List(
-          Source.Alias("old2020_a", com.histmersion.api.library.Citekey("new1999_a")),
-          Source.Alias("gone2020_c", com.histmersion.api.library.Citekey("new1999_c")), // no file: nothing to report
-          Source.Alias("../keep2020_b", com.histmersion.api.library.Citekey("x2020_y"))
+          Source.Alias(com.histmersion.api.library.Source.Alias.Value("old2020_a"), com.histmersion.api.library.Citekey("new1999_a")),
+          Source.Alias(com.histmersion.api.library.Source.Alias.Value("gone2020_c"), com.histmersion.api.library.Citekey("new1999_c")), // no file: nothing to report
+          Source.Alias(com.histmersion.api.library.Source.Alias.Value("../keep2020_b"), com.histmersion.api.library.Citekey("x2020_y"))
         )
       ) // not a citekey: never a path outside `dir`
       assertEquals(out, List(Right("old2020_a → new1999_a")))

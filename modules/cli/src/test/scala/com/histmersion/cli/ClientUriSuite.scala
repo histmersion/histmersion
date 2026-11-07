@@ -24,23 +24,23 @@ class ClientUriSuite extends munit.FunSuite:
 
   test("every filter field maps to its FIXED query parameter name"):
     val f = Filter.of(
-      q = Some("collapse"),
-      tags = List("sea-peoples", "steppe"),
-      authors = List("cline"),
-      places = List("Levant"),
-      topics = List("trade"),
-      status = List("current"),
-      yearFrom = Some(2000),
-      yearTo = Some(2020),
-      from = Some(-1300),
-      to = Some(-1100),
-      minLon = Some(25),
-      minLat = Some(30),
-      maxLon = Some(45),
-      maxLat = Some(42),
-      sort = Some("cited"),
-      limit = Some(5),
-      offset = Some(10)
+      q = Some(com.histmersion.api.library.Filter.Q("collapse")),
+      tags = List(com.histmersion.api.library.Filter.Tags("sea-peoples"), com.histmersion.api.library.Filter.Tags("steppe")),
+      authors = List(com.histmersion.api.library.Filter.Authors("cline")),
+      places = List(com.histmersion.api.library.Filter.Places("Levant")),
+      topics = List(com.histmersion.api.library.Filter.Topics("trade")),
+      status = List(com.histmersion.api.library.Filter.Status("current")),
+      yearFrom = Some(com.histmersion.api.catalogue.Year(2000)),
+      yearTo = Some(com.histmersion.api.catalogue.Year(2020)),
+      from = Some(com.histmersion.api.catalogue.Year(-1300)),
+      to = Some(com.histmersion.api.catalogue.Year(-1100)),
+      minLon = Some(com.histmersion.api.catalogue.Longitude(25)),
+      minLat = Some(com.histmersion.api.catalogue.Latitude(30)),
+      maxLon = Some(com.histmersion.api.catalogue.Longitude(45)),
+      maxLat = Some(com.histmersion.api.catalogue.Latitude(42)),
+      sort = Some(com.histmersion.api.library.Sort.Wire("cited")),
+      limit = Some(com.histmersion.api.library.Filter.Limit(5)),
+      offset = Some(com.histmersion.api.library.Filter.Offset(10))
     )
     val u = uriOf(Api.sources)(f)
     List(
@@ -66,29 +66,29 @@ class ClientUriSuite extends munit.FunSuite:
       .foreach(p => assert(u.contains(p), s"$p missing from $u"))
 
   test("repeatable parameters repeat, they are not comma-joined"):
-    val u = uriOf(Api.sources)(Filter(tags = List("a", "b")))
+    val u = uriOf(Api.sources)(Filter(tags = List(com.histmersion.api.library.Filter.Tags("a"), com.histmersion.api.library.Filter.Tags("b"))))
     assertEquals(u.count(_ == '&') >= 1, true, u)
     assert(u.contains("tag=a") && u.contains("tag=b"), u)
 
   test("facets carries field, prefix and the same filter"):
-    val u = uriOf(Api.facets)(("tags", Some("in"), Filter(status = List("current"))))
+    val u = uriOf(Api.facets)((com.histmersion.api.Api.Facets.Field("tags"), Some(com.histmersion.api.Api.Facets.Prefix("in")), Filter(status = List(com.histmersion.api.library.Filter.Status("current")))))
     assert(u.startsWith("http://example.invalid/api/facets?"), u)
     assert(u.contains("field=tags") && u.contains("prefix=in") && u.contains("status=current"), u)
 
   test("/api/findings takes the SAME filter params, plus the legacy `region`"):
     val f = Filter.of(
-      q = Some("collapse"),
-      tags = List("steppe"),
-      places = List("Levant"),
-      from = Some(-1300),
-      to = Some(-1100),
-      minLon = Some(170),
-      minLat = Some(-60),
-      maxLon = Some(-170),
-      maxLat = Some(60),
+      q = Some(com.histmersion.api.library.Filter.Q("collapse")),
+      tags = List(com.histmersion.api.library.Filter.Tags("steppe")),
+      places = List(com.histmersion.api.library.Filter.Places("Levant")),
+      from = Some(com.histmersion.api.catalogue.Year(-1300)),
+      to = Some(com.histmersion.api.catalogue.Year(-1100)),
+      minLon = Some(com.histmersion.api.catalogue.Longitude(170)),
+      minLat = Some(com.histmersion.api.catalogue.Latitude(-60)),
+      maxLon = Some(com.histmersion.api.catalogue.Longitude(-170)),
+      maxLat = Some(com.histmersion.api.catalogue.Latitude(60)),
       limit = Some(500)
     )
-    val u = uriOf(Api.findings)(Api.FindingsQuery(f, Some("Anatolia")))
+    val u = uriOf(Api.findings)(Api.FindingsQuery(f, Some(com.histmersion.api.Api.FindingsQuery.Region("Anatolia"))))
     assert(u.startsWith("http://example.invalid/api/findings?"), u)
     List(
       "q=collapse",
@@ -108,11 +108,11 @@ class ClientUriSuite extends munit.FunSuite:
 
   test("/api/aggregate takes by + unit + the same filter params"):
     val u = uriOf(Api.aggregate)(
-      Api.AggregateQuery.time(Filter(tags = List("steppe"), period = Some(Period(-3300, -2600))), Some("sources"))
+      Api.AggregateQuery.time(Filter(tags = List(com.histmersion.api.library.Filter.Tags("steppe")), period = Some(Period(com.histmersion.api.catalogue.Year(-3300), com.histmersion.api.catalogue.Year(-2600)))), Some(com.histmersion.api.Api.AggregateQuery.Unit("sources")))
     )
     assert(u.startsWith("http://example.invalid/api/aggregate?"), u)
     List("by=time", "unit=sources", "tag=steppe", "from=-3300", "to=-2600")
       .foreach(p => assert(u.contains(p), s"$p missing from $u"))
 
   test("the legacy /api/search endpoint is untouched (the web page uses it)"):
-    assertEquals(uriOf(Api.search)((Some("collapse"), Some(5))), "http://example.invalid/api/search?q=collapse&limit=5")
+    assertEquals(uriOf(Api.search)((Some(com.histmersion.api.Api.Search.Text("collapse")), Some(com.histmersion.api.Api.Search.Limit(5)))), "http://example.invalid/api/search?q=collapse&limit=5")

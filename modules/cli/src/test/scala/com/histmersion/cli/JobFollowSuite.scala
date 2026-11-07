@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.config.*
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.backup.Backup
@@ -47,26 +49,26 @@ class JobFollowSuite extends munit.FunSuite:
 
   test("an unreachable server keeps its own exit code"):
     val r =
-      JobFollow.job(_ => Left(Cli.Error("cannot reach")), com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"), sleep = _ => (), progress = quiet, clear = () => ())
+      JobFollow.job(_ => Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("cannot reach"))), com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"), sleep = _ => (), progress = quiet, clear = () => ())
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.Unreachable))
 
   private def backup(state: String, error: Option[String] = None, sha: Option[String] = None) =
-    Backup.Status("histmersion-1.dump", state, 1000, bytes = sha.map(_ => 10L), sha256 = sha, error = error)
+    Backup.Status(com.histmersion.api.backup.Backup.Status.File("histmersion-1.dump"), state, com.histmersion.api.backup.Backup.Status.DurationMs(1000), bytes = sha.map(_ => com.histmersion.api.ByteCount(10L)), sha256 = sha, error = error)
 
   test("a backup that fails exits 2 — it used to exit 1, the usage code"):
     val next = server(backup("failed", Some("pg_dump: permission denied")))
-    val r = JobFollow.backup(() => Right(next()), backup("running"), pollMs = 0, sleep = _ => (), progress = quiet)
+    val r = JobFollow.backup(() => Right(next()), backup("running"), pollMs = com.histmersion.cli.JobFollow.BackupPollMs(0), sleep = _ => (), progress = quiet)
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.Refused))
     assert(r.left.exists(_.message.contains("permission denied")))
 
   test("a backup done without a checksum exits 2; done with one is Right"):
     val noSum =
-      JobFollow.backup(() => Right(backup("done")), backup("done"), pollMs = 0, sleep = _ => (), progress = quiet)
+      JobFollow.backup(() => Right(backup("done")), backup("done"), pollMs = com.histmersion.cli.JobFollow.BackupPollMs(0), sleep = _ => (), progress = quiet)
     assertEquals(noSum.left.map(_.exitCode), Left(ExitCode.Refused))
     val ok = JobFollow.backup(
       () => Right(backup("done", sha = Some("ab"))),
       backup("running"),
-      pollMs = 0,
+      pollMs = com.histmersion.cli.JobFollow.BackupPollMs(0),
       sleep = _ => (),
       progress = quiet
     )

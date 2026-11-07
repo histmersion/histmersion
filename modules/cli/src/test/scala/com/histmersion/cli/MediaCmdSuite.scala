@@ -24,11 +24,11 @@ class MediaCmdSuite extends munit.FunSuite:
   private val running = JobInfo(
     com.histmersion.api.SpatialHierarchyResult.Job.Id("j7"),
     com.histmersion.api.jobs.JobKinds.Wire("media-import"),
-    "running",
-    progress = Some("100/300 place(s)/event(s) asked · batch 2"),
+    com.histmersion.api.jobs.JobInfo.Status("running"),
+    progress = Some(com.histmersion.api.jobs.JobInfo.Progress("100/300 place(s)/event(s) asked · batch 2")),
     detail = Some(
       com.histmersion.api.media.ImportJobKinds
-        .Media(Some("Wikidata pictures of up to 300 places/events not asked yet"))
+        .Media(Some(com.histmersion.api.jobs.JobKinds.Subject("Wikidata pictures of up to 300 places/events not asked yet")))
     )
   )
   private val done =
