@@ -31,6 +31,6 @@ object ApprovalEffects:
     def proposal(payload: com.histmersion.domain.automation.approvals.ApprovalEffects.Payload): Option[() => Either[com.histmersion.domain.automation.approvals.ApprovalEffects.Problem, String]] = proposals.proposal(payload)
     val subjectKinds: Set[Approval.Kind] = subjects.map(_.kind).toSet
     def applySubject(a: ApprovalInfo): Either[com.histmersion.domain.automation.approvals.ApprovalEffects.Problem, String] =
-      subjects.find(s => Approval.Kind.parse(a.kind).contains(s.kind)) match
+      subjects.find(s => Approval.Kind.parse(Approval.Kind.Wire(a.kind.value)).contains(s.kind)) match
         case Some(s) => s.apply(a)
-        case None    => Left(s"no domain applies a ${a.kind} approval")
+        case None    => Left(Problem(s"no domain applies a ${a.kind} approval"))

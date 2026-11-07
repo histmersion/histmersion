@@ -36,10 +36,10 @@ private[agents] object AgentTreeWriter:
         tree.toList.map((name, text) => name -> Prompt.sha256(text))).sortBy(_._1)
       val manifest = Json.obj(
         "generator" -> AgentGenerator.PluginVersion.asJson,
-        "definitions" -> sha.value.asJson,
+        "definitions" -> Json.fromString(sha.value),
         "generatedAt" -> java.time.Instant.now(clock).toString.asJson,
         "runtimes" -> runtimes.asJson,
-        "files" -> Json.obj(files.map((name, sha) => name -> sha.value.asJson)*)
+        "files" -> Json.obj(files.map((name, sha) => name -> Json.fromString(sha.value))*)
       )
       store.write(Manifest, ByteSource.Content(AgentGenerator.pretty(manifest).getBytes(UTF_8))).fold(error => throw java.io.IOException(error.message.value), _ => ())
       Right(

@@ -36,8 +36,6 @@ object StrictJsonSchema:
   type StringFormats = StringFormatsValue
   type StringFormatsValue = StringFormatsValue.T
   object StringFormatsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConvertSeen = String
-  type ConvertObjectDefsPart1 = String
 
   val Keywords: Set[com.histmersion.domain.automation.agents.StrictJsonSchema.Keywords] = Set(
     com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("type"),
@@ -93,10 +91,10 @@ object StrictJsonSchema:
       o("enum").flatMap(_.asArray).exists(_.exists(_.isNull))
 
   /** `seen`: the `$ref`s being inlined on this path (a self-referencing definition is inlined once). */
-  private def convert(node: Json, defs: Map[String, Json], seen: Set[com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertSeen]): Json =
+  private def convert(node: Json, defs: Map[String, Json], seen: Set[String]): Json =
     node.asObject.fold(node)(o => Json.fromJsonObject(convertObject(o, defs, seen)))
 
-  private def convertObject(o: JsonObject, defs: Map[com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertObjectDefsPart1, Json], seen: Set[String]): JsonObject =
+  private def convertObject(o: JsonObject, defs: Map[String, Json], seen: Set[String]): JsonObject =
     val ref = o("$ref").flatMap(_.asString)
     ref.filter(r => o.size > 1 && !seen(r)).flatMap(r => defs.get(r).flatMap(_.asObject).map(r -> _)) match
       case Some((r, d)) =>
@@ -104,7 +102,7 @@ object StrictJsonSchema:
         convertObject(o.remove("$ref").toList.foldLeft(d)((acc, kv) => acc.add(kv._1, kv._2)), defs, seen + r)
       case None =>
         val str = types(o).contains("string")
-        val kept = o.filter((k, v) => Keywords(k) && (k != "format" || (str && v.asString.exists(StringFormats))))
+        val kept = o.filter((k, v) => Keywords(KeywordsValue(k)) && (k != "format" || (str && v.asString.exists(f => StringFormats(StringFormatsValue(f))))))
         val sub = (j: Json) => convert(j, defs, seen)
         val mapped = kept.toList.map {
           case (k @ ("properties" | "$defs" | "definitions"), v) => k -> v.mapObject(_.mapValues(sub))

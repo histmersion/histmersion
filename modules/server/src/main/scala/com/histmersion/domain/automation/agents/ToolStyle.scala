@@ -16,5 +16,5 @@ enum ToolStyle:
   def tool(name: com.histmersion.domain.automation.agents.ToolUse.Tool): String = this match
     case Claude   => s"mcp__${AgentDefinitions.McpServer}__$name"
     case Opencode => s"${AgentDefinitions.McpServer}_$name"
-    case Bare     => name
+    case Bare     => name.value
 

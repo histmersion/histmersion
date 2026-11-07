@@ -59,11 +59,11 @@ final class ProposeArticlesPipeline(
   val pipeline: Pipeline = Pipeline.ProposeArticles
   import ProposeArticlesPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, PipelineDef.RunResultPart2] =
+  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
     Goal.Slug.either(ctx.run.target.value).left.map(m => Halt.Fail(Halt.Fail.Message(m))).flatMap(runFor(ctx, _))
 
-  private def runFor(ctx: RunCtx, goal: Goal.Slug): Either[Halt, PipelineDef.RunResultPart2] =
-    val runId = com.histmersion.domain.automation.Run.Id.assume(ctx.run.id.value)
+  private def runFor(ctx: RunCtx, goal: Goal.Slug): Either[Halt, PipelineDef.Summary] =
+    val runId = ctx.runId
     for
       loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(goal))
       plan <- ctx.llm[ArticlesAnswer, ArticlePlan](
@@ -76,7 +76,7 @@ final class ProposeArticlesPipeline(
       closed <- ctx.code[String](AgentRepo.StepRecord.Name("close"))(
         log(ctx, PlanArticles.logLine(goal, plan, PlanArticles.Outcome(recorded.line.value), runId))
       )
-    yield PipelineDef.RunResultPart2(closed)
+    yield PipelineDef.Summary(closed)
 
   private def log(ctx: RunCtx, line: PlanArticles.LogLine): Either[String, String] =
     Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).left.map(_.value).map(_.value)
@@ -121,9 +121,8 @@ final class ProposeArticlesPipeline(
       val articles = area.flatMap(a => goals.refs(a, Goal.LinkKind.Article)).distinct.flatMap { ref =>
         Slug.parse(ref.value).toOption.flatMap(site.articles.get(_).toOption).map { v =>
           val articleSlug = Slug.assume(v.article.slug.value)
-          val body = com.histmersion.domain.research.Article.Body(v.article.body.value)
           val f = site.articleStore.load(articleSlug).flatMap(_.filter)
-          Existing(articleSlug, com.histmersion.domain.Title(v.article.title.value), f, site.articles.citedSources(body))
+          Existing(articleSlug, com.histmersion.domain.Title(v.article.title.value), f, site.articles.citedSources(v.article.body))
         }
       }
       // what its seeding manager (or a parent's or sub-area's) will compile already counts as the area's
@@ -221,7 +220,7 @@ final class ProposeArticlesPipeline(
           f => {
             val (n, _, rows) = site.articles.filterReach(f, Nil, OverlapCap)
             (
-              ArticlePlan.ProposedArticle.Hits(n.value),
+              com.histmersion.api.research.Article.Plans.ProposedArticle.Hits(n.value),
               rows.map(r => com.histmersion.domain.library.Citekey.assume(r.value)).toSet
             )
           },

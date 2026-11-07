@@ -1,6 +1,8 @@
 package com.histmersion.domain.automation.managers
 
 import com.histmersion.domain.automation.agents.AgentsControllers
+import com.histmersion.domain.automation.autopilot.AutopilotRepo
+import com.histmersion.util.jobs.{Job, RunRow}
 
 import com.histmersion.api.Plural
 import com.histmersion.config.*
@@ -25,14 +27,30 @@ final class DrainService(
     agents: AgentsControllers
 ):
 
+  private val agentKind: Job.Kind = Job.Kind.assume(Agents.JobKind)
+
+  private def occupied: com.histmersion.RowCount =
+    agents.jobRuns.count(
+      agentKind,
+      (RunRow.Status(Agents.RunState.Queued.wire.value), RunRow.Status(Agents.RunState.Running.wire.value))
+    )
+
+  private def count(n: Int, noun: String): String = Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(noun)).value
+
   /** Draining now? */
   def draining: Boolean = agents.autopilotRow.drain().isDefined
 
   /** The drain as shown (None: not draining). */
   def info(): Option[DrainInfo] =
     agents.autopilotRow.drain().map { (since, by, at) =>
-      val active = agents.jobRuns.count(Agents.JobKind, (Agents.RunState.Queued.wire, Agents.RunState.Running.wire))
-      DrainInfo(since, by, at.isDefined && active == 0, at, active)
+      val active = occupied.value
+      DrainInfo(
+        DrainInfo.Since(since.value),
+        DrainInfo.By(by.value),
+        DrainInfo.Drained(at.isDefined && active == 0),
+        at.map(a => DrainInfo.DrainedAt(a.value)),
+        DrainInfo.InFlight(active)
+      )
     }
 
   /** Why nothing new starts (the scheduler's stop), while draining. */
@@ -42,8 +60,10 @@ final class DrainService(
       .map((since, by, _) =>
         SchedulerPolicy.Block(
           com.histmersion.domain.SchedulerPolicy.Block.Code("drain"),
-          s"draining since $since${if by.nonEmpty then s" (by $by)" else ""}: nothing new starts until it is lifted " +
-            "(histmersion agent autopilot undrain)"
+          com.histmersion.domain.SchedulerPolicy.Block.Why(
+            s"draining since ${since.value}${if by.value.nonEmpty then s" (by ${by.value})" else ""}: nothing new starts until it is lifted " +
+              "(histmersion agent autopilot undrain)"
+          )
         )
       )
 
@@ -51,31 +71,28 @@ final class DrainService(
     * which stops after the item in flight — records it drained (a run that resumes by itself afterwards — an allowance,
     * a restart — makes it draining again).
     */
-  def tick(now: Instant): List[com.histmersion.domain.automation.managers.DrainService.TickResult] =
+  def tick(now: Instant): List[String] =
     agents.autopilotRow.drain() match
       case None                 => Nil
       case Some((since, _, at)) =>
-        val active = agents.jobRuns.count(
-          Agents.JobKind,
-          (Agents.RunState.Queued.wire, Agents.RunState.Running.wire)
-        ) + (if agents.workflows.managerKinds.exists(_.busy) then 1 else 0)
+        val active = occupied.value + (if agents.workflows.managerKinds.exists(_.busy) then 1 else 0)
         if active == 0 && at.isEmpty then
           agents.autopilotRow.drained(Some(now))
           log(
-            s"autopilot: drained (draining since $since): no agent run is queued or running — safe to stop the server"
+            s"autopilot: drained (draining since ${since.value}): no agent run is queued or running — safe to stop the server"
           )
-          List(com.histmersion.domain.automation.managers.DrainService.TickResult("drained"))
+          List("drained")
         else if active > 0 && at.isDefined then
           agents.autopilotRow.drained(None)
-          List(s"draining again: ${Plural.count(active, com.histmersion.api.Plural.CountSingular("run"))} in flight")
+          List(s"draining again: ${count(active, "run")} in flight")
         else Nil
 
   /** Start or lift the drain; answers the autopilot's status with what it did. */
   def set(in: DrainSet, now: Instant = Instant.now(agents.clock)): EngineStatus =
-    val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
-    val changed = agents.autopilotRow.setDrain(in.on, by)
+    val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
+    val changed = agents.autopilotRow.setDrain(in.on.value, AutopilotRepo.Row.ChangedBy(by))
     val line =
-      if in.on then
+      if in.on.value then
         (if changed then s"draining (by $by): nothing new starts; the runs in flight finish" else "draining already"
       )
       else if changed then s"drain lifted (by $by): the scheduler admits work again"
@@ -83,14 +100,8 @@ final class DrainService(
     if changed then log(s"autopilot: $line")
     agents.managers.nudge()
     val _ = tick(now)
-    agents.autopilot.status(now).copy(changes = List(line))
+    agents.autopilot.status(now).copy(changes = List(EngineStatus.Changes(line)))
 
-  private def log(line: com.histmersion.domain.automation.managers.DrainService.LogLine): Unit =
-    val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(line.take(1000)))
+  private def log(line: String): Unit =
+    val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text(line.take(1000))))
     scribe.info(line)
-
-object DrainService:
-  type TickResult = TickResult.T
-  object TickResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LogLine = LogLine.T
-  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

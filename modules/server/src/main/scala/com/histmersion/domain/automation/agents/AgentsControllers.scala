@@ -2,7 +2,11 @@ package com.histmersion.domain.automation.agents
 
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.domain.automation.approvals.{ApprovalDigestService, Approvals, AutoApprovals}
+import com.histmersion.PageSize
+import com.histmersion.domain.automation.agents.AgentsControllers.{BudgetTokens, BudgetUsd, ModelName, PositiveAmount}
+import com.histmersion.domain.automation.approvals.{ApprovalDigestService, ApprovalQuery, Approvals, AutoApprovals}
+import com.histmersion.domain.automation.goals.BGoalLinkRow
+import com.histmersion.domain.automation.{Approval as DomainApproval, Goal as DomainGoal, Pipeline as DomainPipeline, Run as DomainRun}
 import com.histmersion.domain.automation.autopilot.AutopilotService
 import com.histmersion.domain.automation.goals.GoalFocusService
 import com.histmersion.domain.automation.managers.{DrainService, ManagersControllers, ManagerSupervisor, Zero}
@@ -23,7 +27,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.domain.automation.agents.ModelSettingsRepo
-import com.histmersion.api.automation.{Agents, AgentsApi, ListFilters, ModelChains, PlanQuota, RunCompare}
+import com.histmersion.api.automation.{Agents, ListFilters, Managers, ModelChains, PlanQuota, RunCompare}
 import com.histmersion.api.Api
 import com.histmersion.api.automation.Goal
 
@@ -179,7 +183,7 @@ final class AgentsControllers(
   /** One agent server per database: the engine and the managers start only in the server that holds it (ttl 3 × the
     * managers' tick).
     */
-  val lease: AgentLease = AgentLease(ds, 3 * math.max(5, cfg.managers.tickSeconds))
+  val lease: AgentLease = AgentLease(ds, AgentLease.TtlSeconds(3 * math.max(5, cfg.managers.tickSeconds.value)))
 
   /** Start the run pool and the managers — only when agents are enabled, and only once this server holds the agent
     * lease (a second server on the same database waits for it to be free); off, no thread is started and queued or
@@ -189,9 +193,9 @@ final class AgentsControllers(
     */
   def start(): Int =
     val _ = managers.migrateSchedules(java.time.Instant.now(clock))
-    if !cfg.enabled then 0
+    if !cfg.enabled.value then 0
     else
-      if cfg.runtimes.generate then
+      if cfg.runtimes.generate.value then
         generate(GenerateRequest()) match
           case Right(r) =>
             scribe.info(
@@ -212,9 +216,9 @@ final class AgentsControllers(
     * handlers ([[com.histmersion.server.McpTools]] needs them); `Main` attaches it before [[start]]. Until then, the
     * agent tools.
     */
-  @volatile private var knownTools: Set[com.histmersion.domain.automation.agents.ToolUse.Tool] = toolbox.names.map(_.value).toSet
+  @volatile private var knownTools: Set[ToolName] = toolbox.names.toSet
 
-  def attachTools(names: Set[com.histmersion.domain.automation.agents.ToolUse.Tool]): Unit = knownTools = names ++ toolbox.names.map(_.value)
+  def attachTools(names: Set[ToolName]): Unit = knownTools = names ++ toolbox.names
 
   /** `POST /api/agents/generate` — works with agents off too: the interactive plugin the research workspace installs is
     * one of the trees.
@@ -222,16 +226,18 @@ final class AgentsControllers(
   def generate(req: GenerateRequest): Either[Api.Error, GenerateResult] =
     for
       rts <- req.runtimes
-        .map(r => AgentRuntime.parse(r).filter(AgentRuntime.Generated.contains).toRight(r))
+        .map(r => AgentRuntime.parse(AgentRuntime.Wire(r.value)).filter(AgentRuntime.Generated.contains).toRight(r))
         .partitionMap(identity) match
         case (Nil, ok) => Right(if ok.isEmpty then AgentRuntime.Generated else ok)
         case (bad, _)  =>
           Left(
             Api.Error(
-              s"unknown runtime(s) ${bad.mkString(", ")} (one of: ${AgentRuntime.Generated.map(_.wire).mkString(", ")})"
+              Api.Error.Message(
+                s"unknown runtime(s) ${bad.mkString(", ")} (one of: ${AgentRuntime.Generated.map(_.wire).mkString(", ")})"
+              )
             )
           )
-      r <- cli.trees.generate(knownTools, rts, AgentTrees.out(req.out, site.userPaths)).left.map(Api.Error(_))
+      r <- cli.trees.generate(knownTools, rts, AgentTrees.out(req.out.map(_.value), site.userPaths)).left.map(e => Api.Error(Api.Error.Message(e.value)))
     yield r
 
   // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
@@ -240,45 +246,65 @@ final class AgentsControllers(
     case PlanQuota.PoolId.ClaudePlan  => List(s"${ProviderKind.ClaudeCode.wire}:*")
     case PlanQuota.PoolId.ChatgptPlan =>
       s"${ProviderKind.Codex.wire}:*" :: Option
-        .when(cfg.providers.opencode.chatgptLogin)(s"${ProviderKind.Opencode.wire}:openai/*")
+        .when(cfg.providers.opencode.chatgptLogin.value)(s"${ProviderKind.Opencode.wire}:openai/*")
         .toList
 
   /** `GET /api/agents/quota` — readable with agents off. Nothing is spent: the ChatGPT pool is read from the app-server
     * (throttled), the Claude pool from what runs and mods reported.
     */
   def quota: PlanQuota.QuotaInfo =
-    val now = clock.millis()
+    val now = PlanQuotaRepo.EpochMillis(clock.millis())
     PlanQuota.QuotaInfo(
       pools.statuses(covers, now),
       picker.allowanceStatuses(now),
-      Role.values.toList.filter(picker.fallthrough).map(_.wire),
-      java.time.Instant.ofEpochMilli(now).toString,
-      picker.cooldowns(now).map((m, u) => PlanQuota.Cooldown(m, u.toString, ModelPicker.CoolingWhy))
+      Role.values.toList.filter(picker.fallthrough).map(r => PlanQuota.QuotaInfo.Fallthrough(r.wire.value)),
+      PlanQuota.QuotaInfo.Now(java.time.Instant.ofEpochMilli(now.value).toString),
+      picker
+        .cooldowns(now)
+        .map((m, u) =>
+          PlanQuota.Cooldown(
+            PlanQuota.Cooldown.Model(m.value),
+            PlanQuota.Cooldown.Until(u.toString),
+            PlanQuota.Cooldown.Reason(ModelPicker.CoolingWhy)
+          )
+        )
     )
 
-  private def poolOf(raw: com.histmersion.domain.automation.agents.PlanQuotaRepo.PoolName): Either[Api.Error, PlanQuota.PoolId] =
+  private def poolOf(raw: PlanQuota.PoolId.Wire): Either[Api.Error, PlanQuota.PoolId] =
     PlanQuota.PoolId
       .parse(raw)
-      .toRight(Api.Error(s"unknown pool '$raw' (one of: ${PlanQuota.PoolId.values.map(_.wire).mkString(", ")})"))
+      .toRight(
+        Api.Error(
+          Api.Error.Message(s"unknown pool '$raw' (one of: ${PlanQuota.PoolId.values.map(_.wire).mkString(", ")})")
+        )
+      )
 
   /** `PUT /api/agents/quota/{pool}` — the hold switch and the floors. */
-  def setPool(pool: com.histmersion.domain.automation.agents.PlanQuotaRepo.PoolName, in: PlanQuota.PoolSet): Either[Api.Error, PlanQuota.PoolStatus] =
+  def setPool(pool: PlanQuota.PoolIdText, in: PlanQuota.PoolSet): Either[Api.Error, PlanQuota.PoolStatus] =
     for
-      p <- poolOf(pool)
-      f <- in.floors.map(_.trim) match
+      p <- poolOf(PlanQuota.PoolId.Wire(pool.value))
+      f <- in.floors.map(_.value.trim) match
         case Some("") => Right(Some(None))
-        case Some(t)  => PlanQuota.Floors.parse(t).left.map(Api.Error(_)).map(fs => Some(Some(fs.text)))
-        case None     => Right(None)
+        case Some(t)  =>
+          PlanQuota.Floors
+            .parse(PlanQuota.Floors.Wire(t))
+            .left
+            .map(e => Api.Error(Api.Error.Message(e.value)))
+            .map(fs => Some(Some(fs.text)))
+        case None => Right(None)
       _ = in.hold.foreach(pools.hold(p, _))
       _ = f.foreach(pools.setFloors(p, _))
-      st <- pools.statuses(covers).find(_.pool == p.wire).toRight(Api.Error(s"no pool ${p.wire}"))
+      st <- pools
+        .statuses(covers)
+        .find(_.pool == p.wire)
+        .toRight(Api.Error(Api.Error.Message(s"no pool ${p.wire}")))
     yield st
 
   /** `PUT /api/agents/quota/fallthrough/{role}`. */
-  def setFallthrough(role: com.histmersion.domain.automation.AgentRole.Wire, in: PlanQuota.FallthroughSet): Either[Api.Error, PlanQuota.QuotaInfo] =
+  def setFallthrough(role: Role.Wire, in: PlanQuota.FallthroughSet): Either[Api.Error, PlanQuota.QuotaInfo] =
     roleOf(role).map { r =>
       Transactor(ds).transact(
-        com.histmersion.domain.automation.agents.PlanQuotaRepo.setFallthrough(r.wire, in.fallthrough)
+        PlanQuotaRepo.setFallthrough(ModelSettingsRepo.ChainRole(r.wire.value), in.fallthrough.value)
       )
       quota
     }
@@ -289,9 +315,9 @@ final class AgentsControllers(
     */
   def refreshQuota(in: PlanQuota.QuotaRefresh): Either[Api.Error, PlanQuota.QuotaRefreshed] =
     in.pool
-      .map(_.trim)
+      .map(_.value.trim)
       .filter(_.nonEmpty)
-      .map(poolOf(_).map(List(_)))
+      .map(t => poolOf(PlanQuota.PoolId.Wire(t)).map(List(_)))
       .getOrElse(Right(PlanQuota.PoolId.values.toList))
       .map { ps =>
         val cooled = picker.cooldowns().map(_._1)
@@ -305,11 +331,23 @@ final class AgentsControllers(
               .get(p.wire)
               .map(st =>
                 r match
-                  case Right(x)  => PlanQuota.PoolRefreshed(p.wire, x.ok, x.text, st)
-                  case Left(why) => PlanQuota.PoolRefreshed(p.wire, refreshed = com.histmersion.api.automation.PlanQuota.PoolRefreshed.Refreshed(false), s"not read: $why", st)
+                  case Right(x) =>
+                    PlanQuota.PoolRefreshed(
+                      p.wire,
+                      PlanQuota.PoolRefreshed.Refreshed(x.ok.value),
+                      PlanQuota.PoolRefreshed.Detail(x.text.value),
+                      st
+                    )
+                  case Left(why) =>
+                    PlanQuota.PoolRefreshed(
+                      p.wire,
+                      PlanQuota.PoolRefreshed.Refreshed(false),
+                      PlanQuota.PoolRefreshed.Detail(s"not read: $why"),
+                      st
+                    )
               )
           },
-          cooled.filterNot(still)
+          cooled.filterNot(still).map(m => PlanQuota.QuotaRefreshed.Lifted(m.value))
         )
       }
 
@@ -328,7 +366,7 @@ final class AgentsControllers(
     * of work runs on the new database).
     */
   def adoptDatabase(): Unit =
-    if cfg.enabled then
+    if cfg.enabled.value then
       val _ = managers.migrateSchedules(java.time.Instant.now(clock))
       managers.ensureDefaults()
       val paused = engine.start()
@@ -337,20 +375,25 @@ final class AgentsControllers(
 
   /** Off unless `agents.enabled`: every agent operation but the read-only model listing refuses. */
   private def enabled: Either[Api.Error, Unit] =
-    if cfg.enabled then Right(())
-    else Left(Api.Error("embedded agents are off — set HISTMERSION_AGENTS_ENABLED=true on the server to use them"))
+    if cfg.enabled.value then Right(())
+    else
+      Left(
+        Api.Error(
+          Api.Error.Message("embedded agents are off — set HISTMERSION_AGENTS_ENABLED=true on the server to use them")
+        )
+      )
 
   /** The price table, parsed once per call (config is immutable; parsing is microseconds). */
-  private def prices: Either[com.histmersion.domain.automation.agents.AgentsControllers.Problem, Map[com.histmersion.domain.automation.agents.AgentsControllers.Problem, Price]] =
-    Agents.Prices.parse(cfg.prices).left.map(m => s"agents.prices: $m")
+  private def prices: Either[Agents.Prices.Problem, Map[ModelRef.Model, Price]] =
+    Agents.Prices.parse(Agents.Prices.Wire(cfg.prices.value)).left.map(m => Agents.Prices.Problem(s"agents.prices: $m"))
 
   /** A model that can run: on a plan pool or PRICED (an unpriced metered model is refused, never treated as free), and
     * with a client its provider can build (a hosted provider needs its key; `claude-code` a loopback server).
     */
-  def resolve(m: ModelRef): Either[com.histmersion.domain.automation.agents.AgentsControllers.Problem, (LlmClient, Billing)] =
+  def resolve(m: ModelRef): Either[ModelPicker.Problem, (LlmClient, Billing)] =
     for
-      ps <- prices
-      b <- Agents.Prices.billing(ps, m, pools.poolOf(m))
+      ps <- prices.left.map(p => ModelPicker.Problem(p.value))
+      b <- Agents.Prices.billing(ps, m, pools.poolOf(m)).left.map(p => ModelPicker.Problem(p.value))
       c <- clientFor(cfg, m)
     yield (c, b)
 
@@ -360,7 +403,10 @@ final class AgentsControllers(
   /** The client plugin AI providers' doctor checks and model listings go through. */
   private val aiHttp: com.histmersion.plugin.AiHttp = HostAiHttp()
 
-  def knownProviders: Set[com.histmersion.domain.automation.ProviderKind.Wire] = BuiltinAi.known(site.aiProviders())
+  def knownProviders: Set[com.histmersion.util.plugins.Plugin.Id] = BuiltinAi.known(site.aiProviders())
+
+  private def knownPluginNames: Set[ProviderKind.Plugin.Name] =
+    knownProviders.map(id => ProviderKind.Plugin.Name(id.value))
 
   /** The model chains and allowances in effect, and the choice before every LLM call. */
   val picker: ModelPicker = ModelPicker(ds, cfg, resolve, pools, () => knownProviders)(using clock)
@@ -368,119 +414,153 @@ final class AgentsControllers(
   /** A role's chain can run at all: at least one of its models is on a plan or priced, and buildable (allowances are
     * not looked at — a run whose models are all spent queues and pauses until a window frees).
     */
-  def runnable(role: Role, overrideRef: Option[com.histmersion.domain.automation.agents.AgentsControllers.ModelName]): Either[com.histmersion.domain.automation.agents.AgentsControllers.Problem, Unit] =
+  def runnable(role: Role, overrideRef: Option[ModelName]): Either[ModelPicker.Problem, Unit] =
     picker.chainFor(role, overrideRef).flatMap { chain =>
       val tried = chain.map(m => m -> resolve(m))
       if tried.exists(_._2.isRight) then Right(())
       else
         Left(
-          s"no model of the ${role.wire} chain can run: " + tried
-            .collect { case (m, Left(w)) => s"${m.wire}: $w" }
-            .mkString("; ")
+          ModelPicker.Problem(
+            s"no model of the ${role.wire} chain can run: " + tried
+              .collect { case (m, Left(w)) => s"${m.wire}: $w" }
+              .mkString("; ")
+          )
         )
     }
 
   /** `GET /api/agents/models` — each role's chain, the model it would use now, and every allowance's use per window.
     * Sends nothing to a provider: clients are constructed, spends summed.
     */
-  def models: ModelsInfo = models(clock.millis())
+  def models: ModelsInfo = models(PlanQuotaRepo.EpochMillis(clock.millis()))
 
-  def models(now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis): ModelsInfo =
+  def models(now: PlanQuotaRepo.EpochMillis): ModelsInfo =
     val chains = picker.roleChains(now)
     val roles = chains.map { c =>
-      val shown = c.active.orElse(c.models.headOption.map(_.model))
-      val entry = c.models.find(e => shown.contains(e.model))
+      val shown = c.active.map(_.value).orElse(c.models.headOption.map(_.model.value))
+      val entry = c.models.find(e => shown.contains(e.model.value))
       RoleModel(
-        c.role,
-        shown,
-        ready = c.active.isDefined,
+        Role.Wire(c.role.value),
+        shown.map(RoleModel.Model(_)),
+        ready = RoleModel.Ready(c.active.isDefined),
         if c.active.isDefined then None
         else
-          c.problem.orElse(
-            Option.when(c.models.nonEmpty)(c.models.flatMap(e => e.problem.map(p => s"${e.model}: $p")).mkString("; "))
-          )
+          c.problem
+            .map(_.value)
+            .orElse(
+              Option.when(c.models.nonEmpty)(
+                c.models.flatMap(e => e.problem.map(p => s"${e.model}: $p")).mkString("; ")
+              )
+            )
+            .map(RoleModel.Problem(_))
       )
     }
     val modes = List("status-change" -> cfg.approvals.statusChange, "edges" -> cfg.approvals.edges).collect {
-      case (k, v) if ApprovalMode.parse(v).isEmpty =>
+      case (k, v) if ApprovalMode.parse(ApprovalMode.Wire(v.value)).isEmpty =>
         s"agents.approvals.$k = '$v' is neither manual nor auto; treated as manual"
     }
     val modes2 = Option
-      .when(ApprovalMode.parse(cfg.approvals.articlePublish).isEmpty)(
+      .when(ApprovalMode.parse(ApprovalMode.Wire(cfg.approvals.articlePublish.value)).isEmpty)(
         s"agents.approvals.article-publish = '${cfg.approvals.articlePublish}' is neither manual nor auto; treated as manual"
       )
       .toList
-    val problems = prices.left.toOption.toList ++ modes ++ modes2 ++ picker.allowances._2 ++
-      Option.when(!cfg.enabled)("embedded agents are off (agents.enabled = false)")
+    val problems = prices.left.toOption.map(_.value).toList ++ modes ++ modes2 ++ picker.allowances._2 ++
+      Option.when(!cfg.enabled.value)("embedded agents are off (agents.enabled = false)")
     ModelsInfo(
-      cfg.enabled,
+      ModelsInfo.Enabled(cfg.enabled.value),
       roles,
-      Pipeline.values.toList.map(_.wire),
-      cfg.maxConcurrentRuns,
-      problems,
+      Pipeline.values.toList.map(p => ModelsInfo.Pipelines(p.wire.value)),
+      ModelsInfo.MaxConcurrentRuns(cfg.maxConcurrentRuns.value),
+      problems.map(ModelsInfo.Problems(_)),
       chains,
       picker.allowanceStatuses(now),
-      java.time.Instant.ofEpochMilli(now).toString
+      ModelsInfo.Now(java.time.Instant.ofEpochMilli(now.value).toString)
     )
 
   // ── chains and allowances: saved over config ───────────────────────────────────────────────────
 
-  private def roleOf(raw: com.histmersion.domain.automation.AgentRole.Wire): Either[Api.Error, Role] =
-    Role.parse(raw).toRight(Api.Error(s"unknown role '$raw' (one of: ${Role.values.map(_.wire).mkString(", ")})"))
+  private def roleOf(raw: Role.Wire): Either[Api.Error, Role] =
+    Role
+      .parse(raw)
+      .toRight(
+        Api.Error(Api.Error.Message(s"unknown role '$raw' (one of: ${Role.values.map(_.wire).mkString(", ")})"))
+      )
 
   private def chainOf(role: Role): Either[Api.Error, ModelChains.RoleChain] =
-    picker.roleChains(clock.millis()).find(_.role == role.wire).toRight(Api.Error(s"no role ${role.wire}"))
+    picker
+      .roleChains(PlanQuotaRepo.EpochMillis(clock.millis()))
+      .find(_.role.value == role.wire.value)
+      .toRight(Api.Error(Api.Error.Message(s"no role ${role.wire}")))
 
   /** `PUT /api/agents/models/{role}` — the role's chain, saved over `agents.roles.<role>`. Every model must be a
     * `provider:model`; one that is not priced or buildable yet is accepted and shown as not ready (a price or key may
     * come next). Works with agents off.
     */
-  def setChain(role: com.histmersion.domain.automation.AgentRole.Wire, in: ModelChains.ChainSet): Either[Api.Error, ModelChains.RoleChain] =
+  def setChain(role: Role.Wire, in: ModelChains.ChainSet): Either[Api.Error, ModelChains.RoleChain] =
     for
       r <- roleOf(role)
-      ms <- ModelChains.parseModels(in.models, knownProviders).left.map(Api.Error(_))
+      ms <- ModelChains
+        .parseModels(in.models.map(m => ModelRef.Model.Spec(m.value)), knownPluginNames)
+        .left
+        .map(e => Api.Error(Api.Error.Message(e.value)))
       _ <- Either.cond(
         ms.nonEmpty,
         (),
-        Api.Error("a chain needs at least one provider:model (reset the role to go back to config)")
+        Api.Error(
+          Api.Error.Message("a chain needs at least one provider:model (reset the role to go back to config)")
+        )
       )
-      _ = Transactor(ds).transact(ModelSettingsRepo.setChain(r.wire, ms.map(_.wire)))
+      _ = Transactor(ds).transact(ModelSettingsRepo.setChain(ModelSettingsRepo.ChainRole(r.wire.value), ms.map(_.wire)))
       c <- chainOf(r)
     yield c
 
   /** `DELETE /api/agents/models/{role}` — back to `agents.roles.<role>`. */
-  def resetChain(role: com.histmersion.domain.automation.AgentRole.Wire): Either[Api.Error, ModelChains.RoleChain] =
+  def resetChain(role: Role.Wire): Either[Api.Error, ModelChains.RoleChain] =
     for
       r <- roleOf(role)
-      _ = Transactor(ds).transact(ModelSettingsRepo.removeChain(r.wire))
+      _ = Transactor(ds).transact(ModelSettingsRepo.removeChain(ModelSettingsRepo.ChainRole(r.wire.value)))
       c <- chainOf(r)
     yield c
 
   /** `PUT /api/agents/allowances` — one model's or provider's limits and reserve, saved over config. */
   def setAllowance(in: ModelChains.AllowanceSet): Either[Api.Error, ModelChains.AllowanceStatus] =
     for
-      t <- ModelChains.Target.parse(in.target, knownProviders).left.map(Api.Error(_))
+      t <- ModelChains.Target
+        .parse(ModelChains.Target.Spec(in.target.value), knownPluginNames)
+        .left
+        .map(e => Api.Error(Api.Error.Message(e.value)))
       ls <- in.limits.map(ModelChains.Limit.fromSpec).partitionMap(identity) match
         case (Nil, ok) => Right(ok)
-        case (errs, _) => Left(Api.Error(errs.mkString("; ")))
-      a <- ModelChains.Allowance.of(t, ls, in.reservePct).left.map(Api.Error(_))
-      _ = Transactor(ds).transact(ModelSettingsRepo.setAllowance(t.wire, a.limits.map(_.spec), a.reservePct))
+        case (errs, _) => Left(Api.Error(Api.Error.Message(errs.mkString("; "))))
+      a <- ModelChains.Allowance.of(t, ls, in.reservePct).left.map(e => Api.Error(Api.Error.Message(e.value)))
+      _ = Transactor(ds).transact(
+        ModelSettingsRepo.setAllowance(
+          ModelSettingsRepo.Saved.Target(t.wire.value),
+          a.limits.map(_.spec),
+          ModelSettingsRepo.Saved.ReservePct(a.reservePct.value)
+        )
+      )
       st <- picker
-        .allowanceStatuses(clock.millis())
-        .find(_.target == t.wire)
-        .toRight(Api.Error(s"the allowance of ${t.wire} was not recorded"))
+        .allowanceStatuses(PlanQuotaRepo.EpochMillis(clock.millis()))
+        .find(_.target.value == t.wire.value)
+        .toRight(Api.Error(Api.Error.Message(s"the allowance of ${t.wire} was not recorded")))
     yield st
 
   /** `DELETE /api/agents/allowances?target=…` — the saved allowance goes; config's (if any) applies again. */
-  def removeAllowance(target: com.histmersion.domain.automation.agents.AgentsControllers.Target): Either[Api.Error, Goal.Plans.Removed] =
+  def removeAllowance(target: ModelChains.AllowanceSet.Target): Either[Api.Error, Goal.Plans.Removed] =
     ModelChains.Target
-      .parse(target, knownProviders)
+      .parse(ModelChains.Target.Spec(target.value), knownPluginNames)
       .left
-      .map(Api.Error(_))
-      .map(t => Goal.Plans.Removed(Transactor(ds).transact(ModelSettingsRepo.removeAllowance(t.wire))))
+      .map(e => Api.Error(Api.Error.Message(e.value)))
+      .map(t =>
+        Goal.Plans.Removed(
+          Goal.Plans.Removed.Value(
+            Transactor(ds).transact(ModelSettingsRepo.removeAllowance(ModelSettingsRepo.Saved.Target(t.wire.value)))
+          )
+        )
+      )
 
   /** `GET /api/agents/doctor` — every provider checked without spending anything. */
-  def doctor(offline: com.histmersion.domain.automation.agents.AgentsControllers.Offline): Agents.DoctorReport =
+  def doctor(offline: AgentsControllers.Offline): Agents.DoctorReport =
     val r =
       AgentDoctor(
         site.config,
@@ -490,19 +570,36 @@ final class AgentsControllers(
         aiHttp = aiHttp,
         paths = site.userPaths
       )
-        .report(online = !offline)
+        .report(online = !offline.value)
     val held = lease.status match
-      case Some((o, u, false, true))  => DoctorCheck(com.histmersion.api.automation.Agents.DoctorCheck.Name("agent lease"), CheckLevel.Ok, s"held by this server ($o) until $u")
+      case Some((o, u, false, true)) =>
+        DoctorCheck(
+          DoctorCheck.Name("agent lease"),
+          CheckLevel.Ok,
+          DoctorCheck.Detail(s"held by this server ($o) until $u")
+        )
       case Some((o, u, false, false)) =>
         DoctorCheck(
-          com.histmersion.api.automation.Agents.DoctorCheck.Name("agent lease"),
+          DoctorCheck.Name("agent lease"),
           CheckLevel.Warn,
-          s"held by another server ($o) until $u: this one runs no agents, schedules or managers on this database"
+          DoctorCheck.Detail(
+            s"held by another server ($o) until $u: this one runs no agents, schedules or managers on this database"
+          )
         )
       case Some((o, u, true, _)) =>
-        DoctorCheck(com.histmersion.api.automation.Agents.DoctorCheck.Name("agent lease"), CheckLevel.Warn, s"expired ($o until $u): the next server to start takes it")
-      case None if cfg.enabled => DoctorCheck(com.histmersion.api.automation.Agents.DoctorCheck.Name("agent lease"), CheckLevel.Warn, com.histmersion.api.automation.Agents.DoctorCheck.Detail("not held: the agents have not started"))
-      case None                => DoctorCheck(com.histmersion.api.automation.Agents.DoctorCheck.Name("agent lease"), CheckLevel.Ok, com.histmersion.api.automation.Agents.DoctorCheck.Detail("not held (agents off)"))
+        DoctorCheck(
+          DoctorCheck.Name("agent lease"),
+          CheckLevel.Warn,
+          DoctorCheck.Detail(s"expired ($o until $u): the next server to start takes it")
+        )
+      case None if cfg.enabled.value =>
+        DoctorCheck(
+          DoctorCheck.Name("agent lease"),
+          CheckLevel.Warn,
+          DoctorCheck.Detail("not held: the agents have not started")
+        )
+      case None =>
+        DoctorCheck(DoctorCheck.Name("agent lease"), CheckLevel.Ok, DoctorCheck.Detail("not held (agents off)"))
     r.modify(_.checks).using(_ :+ held)
 
   // ── runs ───────────────────────────────────────────────────────────────────────────────────────
@@ -531,18 +628,18 @@ final class AgentsControllers(
           pr.pipeline,
           pr.target,
           pr.model,
-          BigDecimal(pr.usd),
+          BigDecimal(pr.usd.value),
           pr.tokens,
           tweak(pr.params),
-          req.acquireItem,
+          req.acquireItem.map(i => QueueItemId(i.value)),
           pr.goal,
-          parent.map(_.id),
+          parent.map(p => DomainRun.Id.assume(p.id.value)),
           origin,
           dryRun = pr.dryRun
         )
       )
       val run = runs.get(id).get
-      engine.submit(run.id)
+      engine.submit(DomainRun.Id.assume(run.id.value))
       run
     }
 
@@ -551,28 +648,14 @@ final class AgentsControllers(
     */
   final case class Prepared(
       pipeline: Pipeline,
-      target: Prepared.Target,
-      model: Option[Prepared.Model],
-      usd: Prepared.Usd,
-      tokens: Prepared.Tokens,
+      target: AgentsControllers.Target,
+      model: Option[ModelName],
+      usd: BudgetUsd,
+      tokens: BudgetTokens,
       params: RunParams,
-      goal: Option[Prepared.Goal],
-      dryRun: Prepared.DryRun
+      goal: Option[DomainGoal.Slug],
+      dryRun: RunService.DryRun
   )
-
-  object Prepared:
-    type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Model = Model.T
-    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Usd = Usd.T
-    object Usd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Tokens = Tokens.T
-    object Tokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DryRun = DryRun.T
-    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Everything [[startRunAs]] checks before it queues a run — pipeline, target, models, options, goal, budgets —
     * without creating it.
@@ -581,158 +664,243 @@ final class AgentsControllers(
     for
       _ <- enabled
       p <- Pipeline
-        .parse(req.pipeline)
+        .parse(Pipeline.Wire(req.pipeline.value))
         .toRight(
-          Api.Error(s"unknown pipeline '${req.pipeline}' (one of: ${Pipeline.values.map(_.wire).mkString(", ")})")
+          Api.Error(
+            Api.Error.Message(
+              s"unknown pipeline '${req.pipeline}' (one of: ${Pipeline.values.map(_.wire).mkString(", ")})"
+            )
+          )
         )
-      target <- targetOf(p, req.target)
+      target <- targetOf(p, AgentsControllers.Target(req.target.value))
       over <- overrides(p, req.modelFor)
       // every role the pipeline uses must have a chain with a priced model it can build, NOW — its
       // own --model-for when it has one, else --model, else its chain
       _ <- p.roles.foldLeft[Either[Api.Error, Unit]](Right(())) { (acc, role) =>
-        acc.flatMap(_ => runnable(role, over.get(role).orElse(req.model)).left.map(Api.Error(_)))
+        acc.flatMap(_ =>
+          runnable(role, over.get(role).orElse(req.model.map(m => ModelName(m.value)))).left
+            .map(e => Api.Error(Api.Error.Message(e.value)))
+        )
       }
       // and an override for a role the pipeline only reaches through a chained run (compile-article's
       // review) is checked the same way
       _ <- over.toList.filterNot((r, _) => p.roles.contains(r)).foldLeft[Either[Api.Error, Unit]](Right(())) {
-        case (acc, (role, ref)) => acc.flatMap(_ => runnable(role, Some(ref)).left.map(Api.Error(_)))
+        case (acc, (role, ref)) =>
+          acc.flatMap(_ => runnable(role, Some(ref)).left.map(e => Api.Error(Api.Error.Message(e.value))))
       }
       _ <- host.runOptions(p, req, target, roundsCap)
-      goal <- goalOf(p, target, req.goal.orElse(parent.flatMap(_.goal)))
-      usd <- positive(req.budgetUsd.orElse(goal.flatMap(goalBudget)).getOrElse(cfg.budgets.runUsd), "budget-usd")
-      tok <- positive(req.budgetTokens.getOrElse(cfg.budgets.runTokensFor(p.wire)).toDouble, "budget-tokens")
+      goal <- goalOf(p, target, req.goal.orElse(parent.flatMap(_.goal)).map(_.value))
+      usd <- positive(
+        PositiveAmount(
+          req.budgetUsd.map(_.value).orElse(goal.flatMap(goalBudget).map(_.value)).getOrElse(cfg.budgets.runUsd.value)
+        ),
+        "budget-usd"
+      )
+      tok <- positive(
+        PositiveAmount(req.budgetTokens.map(_.value).getOrElse(cfg.budgets.runTokensFor(DomainPipeline.Wire(p.wire.value)).value).toDouble),
+        "budget-tokens"
+      )
     yield
       val clean = (xs: List[String]) => Option(xs.map(_.trim).filter(_.nonEmpty).distinct).filter(_.nonEmpty)
       val params = RunParams(
-        fix = req.fix.filter(identity),
+        fix = req.fix.filter(_.value),
         rounds = req.rounds,
-        title = req.title.map(_.trim).filter(_.nonEmpty),
-        kind = req.kind.map(_.trim.toLowerCase).filter(_.nonEmpty),
-        query = req.query.map(_.trim).filter(_.nonEmpty),
-        topics = clean(req.topics),
-        tags = clean(req.tags),
-        modelFor = Option.when(over.nonEmpty)(over.toList.sortBy(_._1.ordinal).map((r, m) => ModelOverride(r.wire, m)))
+        title = req.title.map(_.value.trim).filter(_.nonEmpty).map(RunRequest.Title(_)),
+        kind = req.kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty).map(RunRequest.Kind(_)),
+        query = req.query.map(_.value.trim).filter(_.nonEmpty).map(RunRequest.Query(_)),
+        topics = clean(req.topics.map(_.value)).map(_.map(RunRequest.Topics(_))),
+        tags = clean(req.tags.map(_.value)).map(_.map(RunRequest.Tags(_))),
+        modelFor = Option.when(over.nonEmpty)(
+          over.toList.sortBy(_._1.ordinal).map((r, m) => ModelOverride(r.wire, ModelOverride.Model(m.value)))
+        )
       )
       // a run started by a dry run is one too (nothing it starts may write)
-      val dry = req.dryRun.contains(true) || parent.exists(_.dryRun)
-      Prepared(p, target, req.model.map(_.trim).filter(_.nonEmpty), usd, tok.toLong, params, goal, dry)
+      val dry = req.dryRun.exists(_.value) || parent.exists(_.dryRun.value)
+      Prepared(
+        p,
+        target,
+        req.model.map(_.value.trim).filter(_.nonEmpty).map(ModelName(_)),
+        BudgetUsd(usd.value),
+        BudgetTokens(tok.value.toLong),
+        params,
+        goal,
+        RunService.DryRun(dry)
+      )
 
   /** `--model-for role=provider:model`, checked before the run is queued: a role the pipeline uses, once, with a model
     * ref (or `a > b` chain) that parses. Whether that model can run is checked with the rest of the roles (the
     * readiness `models set` shows).
     */
-  private def overrides(p: Pipeline, asked: List[ModelOverride]): Either[Api.Error, Map[Role, com.histmersion.domain.automation.agents.AgentsControllers.ModelName]] =
+  private def overrides(p: Pipeline, asked: List[ModelOverride]): Either[Api.Error, Map[Role, ModelName]] =
     val roles = host.runRoles(p)
-    asked.foldLeft[Either[Api.Error, Map[Role, String]]](Right(Map.empty)) { (acc, o) =>
+    asked.foldLeft[Either[Api.Error, Map[Role, ModelName]]](Right(Map.empty)) { (acc, o) =>
       acc.flatMap { m =>
         for
           r <- Role
             .parse(o.role)
             .toRight(
-              Api.Error(s"--model-for: unknown role '${o.role}' (one of: ${Role.values.map(_.wire).mkString(", ")})")
+              Api.Error(
+                Api.Error.Message(
+                  s"--model-for: unknown role '${o.role}' (one of: ${Role.values.map(_.wire).mkString(", ")})"
+                )
+              )
             )
           _ <- Either.cond(
             roles.contains(r),
             (),
             Api.Error(
-              s"--model-for: ${p.wire} uses no ${r.wire} role " +
-                s"(its roles: ${
-                    if roles.isEmpty then "none — it calls no model" else roles.map(_.wire).mkString(", ")
-                  })"
+              Api.Error.Message(
+                s"--model-for: ${p.wire} uses no ${r.wire} role " +
+                  s"(its roles: ${
+                      if roles.isEmpty then "none — it calls no model" else roles.map(_.wire).mkString(", ")
+                    })"
+              )
             )
           )
-          _ <- Either.cond(!m.contains(r), (), Api.Error(s"--model-for: the ${r.wire} role is given twice"))
-          _ <- ModelChains.parseChain(o.model, knownProviders).left.map(e => Api.Error(s"--model-for ${r.wire}: $e"))
-        yield m + (r -> o.model.trim)
+          _ <- Either.cond(
+            !m.contains(r),
+            (),
+            Api.Error(Api.Error.Message(s"--model-for: the ${r.wire} role is given twice"))
+          )
+          _ <- ModelChains
+            .parseChain(ModelChains.Chain.Spec(o.model.value), knownPluginNames)
+            .left
+            .map(e => Api.Error(Api.Error.Message(s"--model-for ${r.wire}: $e")))
+        yield m + (r -> ModelName(o.model.value.trim))
       }
     }
 
   /** The target as the pipeline names it (its workflow's domain resolves it), or a manager. */
-  private def targetOf(p: Pipeline, raw: com.histmersion.domain.automation.agents.AgentsControllers.Target): Either[Api.Error, com.histmersion.domain.automation.agents.AgentsControllers.Target] =
+  private def targetOf(p: Pipeline, raw: AgentsControllers.Target): Either[Api.Error, AgentsControllers.Target] =
     host
       .runTarget(p, raw)
       .getOrElse(
         managerStore
-          .get(raw.trim)
-          .map(_.id)
-          .toRight(Api.Error(s"No manager '$raw'", Some(Write.CodeNotFound)))
+          .get(Managers.ManagerInfo.Id(raw.value.trim))
+          .map(m => AgentsControllers.Target(m.id.value))
+          .toRight(Api.Error(Api.Error.Message(s"No manager '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
       )
 
   /** The goal a run works for: the target of a goal pipeline, else the one the request names (which must exist).
     */
-  private def goalOf(p: Pipeline, target: com.histmersion.domain.automation.agents.AgentsControllers.Target, named: Option[com.histmersion.domain.automation.Goal.Slug]): Either[Api.Error, Option[com.histmersion.domain.automation.Goal.Slug]] =
-    if p.targetKind == TargetKind.Goal then Right(Some(target))
+  private def goalOf(p: Pipeline, target: AgentsControllers.Target, named: Option[String]): Either[Api.Error, Option[DomainGoal.Slug]] =
+    def slug(raw: String): Either[Api.Error, DomainGoal.Slug] =
+      DomainGoal.Slug
+        .either(raw)
+        .left
+        .map(_ =>
+          Api.Error(Api.Error.Message(s"No goal '$raw'"), Some(Api.Error.Code(Write.CodeNotFound)))
+        )
+    if p.targetKind == TargetKind.Goal then slug(target.value).map(Some(_))
     else
       named.map(_.trim).filter(_.nonEmpty) match
         case None    => Right(None)
-        case Some(g) => host.goal(g).map(x => Some(x.slug))
+        case Some(g) => slug(g).flatMap(s => host.goal(s).map(_ => Some(s)))
 
-  private def goalBudget(goal: com.histmersion.domain.automation.Goal.Slug): Option[com.histmersion.domain.automation.agents.AgentsControllers.BudgetUsd] =
-    goals.planAndBudget(goal).flatMap(_._2).map(_.toDouble)
+  private def goalBudget(goal: DomainGoal.Slug): Option[BudgetUsd] =
+    goals.planAndBudget(goal).flatMap(_._2).map(b => BudgetUsd(b.toDouble))
 
   /** Budgets are stored to the micro-dollar (numeric(12,6)): anything smaller would round to 0. */
-  private def positive(v: com.histmersion.domain.automation.agents.AgentsControllers.PositiveAmount, what: String): Either[Api.Error, com.histmersion.domain.automation.agents.AgentsControllers.PositiveAmount] =
-    if v >= 0.000001 then Right(v) else Left(Api.Error(s"$what must be at least 0.000001"))
+  private def positive(v: PositiveAmount, what: String): Either[Api.Error, PositiveAmount] =
+    if v.value >= 0.000001 then Right(v)
+    else Left(Api.Error(Api.Error.Message(s"$what must be at least 0.000001")))
 
-  def runs(status: Option[com.histmersion.domain.automation.agents.RunQuery.Status], limit: Option[com.histmersion.domain.automation.agents.RunQuery.Limit], goal: Option[com.histmersion.domain.automation.Goal.Slug] = None): Either[Api.Error, List[RunInfo]] =
-    status.map(_.trim).filter(_.nonEmpty) match
-      case Some(st) if RunState.parse(st).isEmpty =>
-        Left(Api.Error(s"unknown status '$st' (one of: ${RunState.values.map(_.wire).mkString(", ")})"))
-      case st => Right(runs.list(st, site.config.limits.page(limit, site.config.limits.search), goal).toList)
+  private def notFound(message: String): Api.Error =
+    Api.Error(Api.Error.Message(message), Some(Api.Error.Code(Write.CodeNotFound)))
+
+  private def searchPage: PageSize = PageSize.applyUnsafe(math.max(1, site.config.limits.search.value))
+
+  def runs(status: Option[RunQuery.Status], limit: Option[PageSize], goal: Option[DomainGoal.Slug] = None): Either[Api.Error, List[RunInfo]] =
+    status.map(st => RunQuery.Status(st.value.trim)).filter(_.value.nonEmpty) match
+      case Some(st) if RunState.parse(RunState.Wire(st.value)).isEmpty =>
+        Left(
+          Api.Error(
+            Api.Error.Message(s"unknown status '$st' (one of: ${RunState.values.map(_.wire).mkString(", ")})")
+          )
+        )
+      case st => Right(runs.list(st, site.config.limits.page(limit, searchPage), goal).toList)
 
   /** `GET /api/agents/runs` — one page, newest first ([[Paging]]), with the per-state counts of the runs (of `goal`,
     * when given).
     */
   def runsPage(
-      status: Option[com.histmersion.domain.automation.agents.RunQuery.Status],
-      limit: Option[com.histmersion.domain.automation.agents.RunQuery.Limit],
-      goal: Option[com.histmersion.domain.automation.Goal.Slug] = None,
-      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor] = None,
-      upTo: Option[com.histmersion.domain.automation.agents.RunQuery.UpTo] = None
+      status: Option[RunQuery.Status],
+      limit: Option[PageSize],
+      goal: Option[DomainGoal.Slug] = None,
+      before: Option[Paging.Cursor] = None,
+      upTo: Option[Paging.Cursor] = None
   ): Either[Api.Error, (List[RunInfo], Paging.Page)] =
-    runsPage(ListFilters.RunFilter(status = status.toList, goal = goal), limit, before, upTo)
+    runsPage(
+      ListFilters.RunFilter(
+        status = status.toList.map(st => ListFilters.RunFilter.Status(st.value)),
+        goal = goal.map(g => Goal.Slug(g.value))
+      ),
+      limit,
+      before,
+      upTo
+    )
 
   /** `GET /api/agents/runs` filtered ([[ListFilters.RunFilter]]): one page, newest first, with the per-state counts and
     * the facet counts under the same filter.
     */
   def runsPage(
       f: ListFilters.RunFilter,
-      limit: Option[com.histmersion.domain.automation.agents.RunQuery.Limit],
-      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor],
-      upTo: Option[com.histmersion.domain.automation.agents.RunQuery.UpTo]
+      limit: Option[PageSize],
+      before: Option[Paging.Cursor],
+      upTo: Option[Paging.Cursor]
   ): Either[Api.Error, (List[RunInfo], Paging.Page)] =
     for
       q <- com.histmersion.server.ListQueries.runs(f, java.time.Instant.now(clock))
       page <- runs
-        .page(q, site.config.limits.page(limit, site.config.limits.search), cursor(before), cursor(upTo))
+        .page(
+          q,
+          site.config.limits.page(limit, searchPage),
+          cursor(before).map(c => AgentRepo.PageCursor(c.value)),
+          cursor(upTo).map(c => RunQuery.UpTo(c.value))
+        )
         .left
-        .map(Api.Error(_, Some(Write.CodeNotFound)))
+        .map(p => Api.Error(Api.Error.Message(p.value), Some(Api.Error.Code(Write.CodeNotFound))))
     yield
       val (rows, more) = page
       val (counts, facets) = runs.runFacets(q)
-      (rows.toList, Paging.Page.filtered(counts, q.status, Option.when(more)(rows.last.id), facets))
+      (
+        rows.toList,
+        Paging.Page.filtered(
+          counts.map((state, n) => (Paging.Page.CountState(state.value), Paging.Count(n.value))),
+          q.status.map(st => Paging.Page.CountState(st.value)),
+          Option.when(more)(com.histmersion.api.library.Filter.Last(rows.last.id.value)),
+          facets.map((name, values) =>
+            (
+              com.histmersion.api.library.Facet.Name(name.value),
+              values.map((v, n) =>
+                (com.histmersion.api.library.Facet.Value(v.value), com.histmersion.api.library.Facet.Count(n.value))
+              )
+            )
+          )
+        )
+      )
 
-  private def cursor(c: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor]): Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor] = c.map(_.trim).filter(_.nonEmpty)
+  private def cursor(c: Option[Paging.Cursor]): Option[Paging.Cursor] =
+    c.map(x => Paging.Cursor(x.value.trim)).filter(_.value.nonEmpty)
 
-  def run(id: com.histmersion.domain.automation.Run.Id): Either[Api.Error, RunDetail] =
+  def run(id: DomainRun.Id): Either[Api.Error, RunDetail] =
     runs
       .get(id)
-      .toRight(Api.Error(s"No agent run '$id'", Some(Write.CodeNotFound)))
+      .toRight(notFound(s"No agent run '$id'"))
       .map(r => RunDetail(r, runs.steps(id, cfg.trace.maxToolResultChars), runs.messages(id)))
 
   /** `GET /api/agents/compare?id=…` (#992) — runs of one pipeline on one target side by side, from their recorded steps
     * (full outputs, not the display cut). How each configured model is paid for is named from the server's prices and
     * plan pools.
     */
-  def compare(ids: List[com.histmersion.domain.automation.Run.Id]): Either[Api.Error, RunCompare.Comparison] =
-    val wanted = ids.flatMap(_.split(',')).map(_.trim).filter(_.nonEmpty)
+  def compare(ids: List[DomainRun.Id]): Either[Api.Error, RunCompare.Comparison] =
     for
-      runs <- wanted.foldLeft[Either[Api.Error, List[RunDetail]]](Right(Nil)) { (acc, id) =>
+      runs <- ids.foldLeft[Either[Api.Error, List[RunDetail]]](Right(Nil)) { (acc, id) =>
         acc.flatMap(rs =>
           runs
             .get(id)
-            .toRight(Api.Error(s"No agent run '$id'", Some(Write.CodeNotFound)))
-            .map(r => rs :+ RunDetail(r, runs.steps(r.id, Int.MaxValue), Nil))
+            .toRight(notFound(s"No agent run '$id'"))
+            .map(r => rs :+ RunDetail(r, runs.steps(id, Int.MaxValue), Nil))
         )
       }
       compared = runs.map(CompareRunsViews.run)
@@ -740,62 +908,77 @@ final class AgentsControllers(
       outputs = compared.headOption
         .flatMap(r => workflows.parse(r.run.pipeline))
         .fold(OutputComparison.none)(_.outputs)
-      cmp <- CompareRuns.compare(compared, billingOf, outputs).left.map(Api.Error(_))
+      cmp <- CompareRuns.compare(compared, billingOf, outputs).left.map(p => Api.Error(Api.Error.Message(p.value)))
     yield CompareRunsViews.comparison(cmp)
 
   /** How a configured model is paid for, as `agent models` words it (None: it cannot be read). */
-  private def billingOf(ref: String): Option[String] =
+  private def billingOf(ref: CompareRuns.Step.Model): Option[CompareRuns.StepSide.Billing] =
     ModelRef
-      .parse(ref, knownProviders)
+      .parse(ModelRef.Wire(ref.value), knownPluginNames)
       .toOption
       .flatMap(m => prices.toOption.flatMap(ps => Agents.Prices.billing(ps, m, pools.poolOf(m)).toOption))
-      .map(_.describe)
+      .map(b => CompareRuns.StepSide.Billing(b.describe))
 
   def control(
-      id: com.histmersion.domain.automation.Run.Id,
-      action: com.histmersion.domain.automation.agents.AgentsControllers.ControlAction,
-      budgetUsd: Option[com.histmersion.domain.automation.agents.AgentsControllers.BudgetUsd],
-      budgetTokens: Option[com.histmersion.domain.automation.agents.AgentsControllers.BudgetTokens]
+      id: DomainRun.Id,
+      action: Action,
+      budgetUsd: Option[BudgetUsd],
+      budgetTokens: Option[BudgetTokens]
   ): Either[Api.Error, RunInfo] =
-    action.trim.toLowerCase match
+    action.value.trim.toLowerCase match
       case "pause"  => engine.pause(id)
       case "resume" => enabled.flatMap(_ => engine.resume(id, budgetUsd, budgetTokens))
       case "cancel" => engine.cancel(id)
-      case other    => Left(Api.Error(s"unknown action '$other' (one of: ${AgentsApi.Actions.mkString(", ")})"))
+      case other    =>
+        Left(
+          Api.Error(
+            Api.Error.Message(s"unknown action '$other' (one of: ${List("pause", "resume", "cancel").mkString(", ")})")
+          )
+        )
 
   // ── approvals ──────────────────────────────────────────────────────────────────────────────────
 
   /** `GET /api/agents/approvals` — readable whether or not agents are on (a person can still decide what an earlier run
     * proposed).
     */
-  def approvalsList(state: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.State], limit: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Limit]): Either[Api.Error, List[ApprovalInfo]] =
-    approvals.list(state, limit, site.config.limits.page(limit, site.config.limits.search))
+  def approvalsList(state: Option[ApprovalQuery.State], limit: Option[PageSize]): Either[Api.Error, List[ApprovalInfo]] =
+    approvals.list(state, limit, site.config.limits.page(limit, searchPage))
 
   /** One page of [[approvalsList]] ([[Paging]]), with the per-state counts of every approval. */
   def approvalsPage(
-      state: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.State],
-      limit: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Limit],
-      before: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Cursor] = None,
-      upTo: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.UpTo] = None
+      state: Option[ApprovalQuery.State],
+      limit: Option[PageSize],
+      before: Option[Paging.Cursor] = None,
+      upTo: Option[Paging.Cursor] = None
   ): Either[Api.Error, (List[ApprovalInfo], Paging.Page)] =
-    approvalsPage(ListFilters.ApprovalFilter(state = state), limit, before, upTo)
+    approvalsPage(
+      ListFilters.ApprovalFilter(state = state.map(st => ListFilters.ApprovalFilter.State(st.value))),
+      limit,
+      before,
+      upTo
+    )
 
   /** `GET /api/agents/approvals` filtered ([[ListFilters.ApprovalFilter]]): one page, with the per-state and facet
     * counts under the same filter.
     */
   def approvalsPage(
       f: ListFilters.ApprovalFilter,
-      limit: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Limit],
-      before: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Cursor],
-      upTo: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.UpTo]
+      limit: Option[PageSize],
+      before: Option[Paging.Cursor],
+      upTo: Option[Paging.Cursor]
   ): Either[Api.Error, (List[ApprovalInfo], Paging.Page)] =
-    approvals.page(f, site.config.limits.page(limit, site.config.limits.search), cursor(before), cursor(upTo))
+    approvals.page(
+      f,
+      site.config.limits.page(limit, searchPage),
+      cursor(before).map(c => ApprovalQuery.Cursor(c.value)),
+      cursor(upTo).map(c => ApprovalQuery.UpTo(c.value))
+    )
 
   /** `POST /api/agents/approvals/{id}/{approve|reject}`. Deciding works with agents off too: it only applies a change a
     * person accepts, through the ordinary patch.
     */
-  def decide(id: com.histmersion.domain.automation.Approval.Id, decision: com.histmersion.domain.automation.Approval.Outcome, req: DecisionRequest): Either[Api.Error, ApprovalInfo] =
-    approvals.decide(id, decision, req.note).map { a =>
+  def decide(id: DomainApproval.Id, decision: DomainApproval.Outcome, req: DecisionRequest): Either[Api.Error, ApprovalInfo] =
+    approvals.decide(id, decision, req.note.map(n => DomainApproval.Note(n.value))).map { a =>
       // a blocking approval: the run waiting on it goes back to the queue (it applies the decision)
       if a.approvalKind.exists(_.blocking) then a.runId.foreach(r => engine.wake(r))
       // an approved plan of articles: its seeding manager gets one compile item per article (the item
@@ -808,61 +991,73 @@ final class AgentsControllers(
   // ── goals: view, links, schedules (P3) ─────────────────────────────────────────────────────────
 
   /** `GET /api/goals/{slug}/view` — readable whether or not agents are on. */
-  def goalView(slug: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, GoalView] =
+  def goalView(slug: DomainGoal.Slug): Either[Api.Error, GoalView] =
     host.goal(slug).map { g =>
-      val (plan, budget) = goals.planAndBudget(g.slug).getOrElse((None, None))
+      val (plan, budget) = goals.planAndBudget(slug).getOrElse((None, None))
       GoalView(
         g,
-        goals.children(g.slug),
-        goals.links(g.slug),
-        managing.goalSchedules(Some(g.slug)),
-        plan.flatMap(j => io.circe.parser.decode[Plan](j).toOption),
-        budget.map(_.toDouble)
+        goals.children(slug),
+        goals.links(slug),
+        managing.goalSchedules(Some(slug)),
+        plan.flatMap(j => io.circe.parser.decode[Plan](j.value).toOption),
+        budget.map(b => GoalView.BudgetUsd(b.toDouble))
       )
     }
 
-  def addGoalLink(slug: com.histmersion.domain.automation.Goal.Slug, in: LinkAdd): Either[Api.Error, GoalLink] =
-    val ref = in.ref.trim
+  def addGoalLink(slug: DomainGoal.Slug, in: LinkAdd): Either[Api.Error, GoalLink] =
+    val ref = in.ref.value.trim
     for
-      g <- host.goal(slug)
+      _ <- host.goal(slug)
       r <- in.kind match
-        case LinkKind.Source    => host.linkRef(LinkKind.Source, ref)
-        case LinkKind.Article   => host.linkRef(LinkKind.Article, ref)
+        case LinkKind.Source    => host.linkRef(LinkKind.Source, ref).map(x => BGoalLinkRow.Ref(x.value))
+        case LinkKind.Article   => host.linkRef(LinkKind.Article, ref).map(x => BGoalLinkRow.Ref(x.value))
         case LinkKind.QueueItem =>
           ref.toIntOption
             .flatMap(i => site.queues.get(QueueItemId(i)))
-            .map(_.id.toString)
-            .toRight(Api.Error(s"No queue item '$ref'", Some(Write.CodeNotFound)))
+            .map(i => BGoalLinkRow.Ref(i.id.toString))
+            .toRight(notFound(s"No queue item '$ref'"))
         case LinkKind.Query =>
           Either.cond(
-            ref.nonEmpty && ref.length <= cfg.plan.queryChars,
-            ref,
-            Api.Error(s"a query is 1 to ${cfg.plan.queryChars} characters")
+            ref.nonEmpty && ref.length <= cfg.plan.queryChars.value,
+            BGoalLinkRow.Ref(ref),
+            Api.Error(Api.Error.Message(s"a query is 1 to ${cfg.plan.queryChars} characters"))
           )
       _ = goals.link(
-        g.slug,
-        in.kind.transformInto[com.histmersion.domain.automation.Goal.LinkKind],
+        slug,
+        in.kind.transformInto[DomainGoal.LinkKind],
         r,
-        in.note.map(_.trim).filter(_.nonEmpty)
+        in.note.map(_.value.trim).filter(_.nonEmpty).map(BGoalLinkRow.Note(_))
       )
       l <- goals
-        .links(g.slug)
-        .find(l => l.kind == in.kind && l.ref == r)
-        .toRight(Api.Error(s"the link to $r was not recorded"))
+        .links(slug)
+        .find(l => l.kind == in.kind && l.ref.value == r.value)
+        .toRight(Api.Error(Api.Error.Message(s"the link to $r was not recorded")))
     yield l
 
-  def removeGoalLink(slug: com.histmersion.domain.automation.Goal.Slug, kind: com.histmersion.domain.automation.Goal.LinkKind.Wire, ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref): Either[Api.Error, Removed] =
+  def removeGoalLink(slug: DomainGoal.Slug, kind: LinkKind.Wire, ref: BGoalLinkRow.Ref): Either[Api.Error, Removed] =
     for
-      g <- host.goal(slug)
+      _ <- host.goal(slug)
       k <- LinkKind
         .parse(kind)
-        .toRight(Api.Error(s"unknown link kind '$kind' (one of: ${LinkKind.values.map(_.wire).mkString(", ")})"))
-    yield Removed(goals.unlink(g.slug, k.transformInto[com.histmersion.domain.automation.Goal.LinkKind], ref.trim))
+        .toRight(
+          Api.Error(
+            Api.Error.Message(
+              s"unknown link kind '$kind' (one of: ${LinkKind.values.map(_.wire).mkString(", ")})"
+            )
+          )
+        )
+    yield Removed(
+      Removed.Value(goals.unlink(slug, k.transformInto[DomainGoal.LinkKind], BGoalLinkRow.Ref(ref.value.trim)))
+    )
 
-  private def scheduleKind(kind: com.histmersion.domain.automation.ScheduleKind.Wire): Either[Api.Error, ScheduleKind] =
+  private def scheduleKind(kind: ScheduleKind.Wire): Either[Api.Error, ScheduleKind] =
     ScheduleKind
       .parse(kind)
-      .toRight(Api.Error(s"unknown schedule '$kind' (one of: ${ScheduleKind.values.map(_.wire).mkString(", ")})"))
+      .toRight(
+        Api.Error(
+          Api.Error.Message(s"unknown schedule '$kind' (one of: ${ScheduleKind.values.map(_.wire).mkString(", ")})")
+        )
+      )
 
   /** `PUT /api/goals/{slug}/schedules/{kind}` — a sweep of the goal's watcher since phase 3
     * ([[ManagersControllers.setSchedule]]: created paused when it does not exist; the cron is checked, no more often than
@@ -870,23 +1065,25 @@ final class AgentsControllers(
     * is resumed.
     */
   def setSchedule(
-      slug: com.histmersion.domain.automation.Goal.Slug,
-      kind: com.histmersion.domain.automation.ScheduleKind.Wire,
+      slug: DomainGoal.Slug,
+      kind: ScheduleKind.Wire,
       in: ScheduleSet,
       now: java.time.Instant = java.time.Instant.now(clock)
   ): Either[Api.Error, GoalSchedule] =
     for
-      g <- host.goal(slug)
+      _ <- host.goal(slug)
       k <- scheduleKind(kind)
-      _ <- in.budgetUsd.fold[Either[Api.Error, Double]](Right(0))(positive(_, "budget-usd"))
-      out <- managing.setSchedule(g.slug, k, in, now)
+      _ <- in.budgetUsd.fold[Either[Api.Error, PositiveAmount]](Right(PositiveAmount(0)))(b =>
+        positive(PositiveAmount(b.value), "budget-usd")
+      )
+      out <- managing.setSchedule(slug, k, in, now)
     yield out
 
-  def removeSchedule(slug: com.histmersion.domain.automation.Goal.Slug, kind: com.histmersion.domain.automation.goals.BGoalScheduleRow.Kind): Either[Api.Error, Removed] =
+  def removeSchedule(slug: DomainGoal.Slug, kind: ScheduleKind.Wire): Either[Api.Error, Removed] =
     for
-      g <- host.goal(slug)
+      _ <- host.goal(slug)
       k <- scheduleKind(kind)
-    yield managing.removeSchedule(g.slug, k)
+    yield managing.removeSchedule(slug, k)
 
   /** Every goal's schedules: its watcher's sweeps. */
   def schedules: List[GoalSchedule] = managing.goalSchedules(None)
@@ -898,18 +1095,22 @@ final class AgentsControllers(
   def probe(req: ProbeRequest): Either[Api.Error, ProbeResult] =
     for
       _ <- enabled
-      src <- host.probeSubject(req.citekey)
+      ck <- com.histmersion.domain.library.Citekey
+        .either(req.citekey.value)
+        .left
+        .map(_ => notFound(s"No source '${req.citekey}'"))
+      src <- host.probeSubject(ck)
       picked <- picker.pick(Role.Probe, req.model).left.map {
-        case PickFailure.Unavailable(m)     => Api.Error(m)
-        case PickFailure.Exhausted(m, _, _) => Api.Error(m)
+        case PickFailure.Unavailable(m)     => Api.Error(Api.Error.Message(m.value))
+        case PickFailure.Exhausted(m, _, _) => Api.Error(Api.Error.Message(m.value))
       }
       result <- probeWith(picked.client, picked.billing, src)
     yield result
 
   private def probeWith(client: LlmClient, billing: Billing, src: ProbeAnswer): Either[Api.Error, ProbeResult] =
     for
-      d <- definitions.agent(StepAgent.Probe).left.map(Api.Error(_))
-      sys <- definitions.system(d, ToolStyle.Bare).left.map(Api.Error(_))
+      d <- definitions.agent(StepAgent.Probe).left.map(m => Api.Error(Api.Error.Message(m)))
+      sys <- definitions.system(d, ToolStyle.Bare).left.map(m => Api.Error(Api.Error.Message(m)))
       r <- probeCall(client, billing, src, d, sys)
     yield r
 
@@ -929,15 +1130,15 @@ final class AgentsControllers(
     val ask = s"Call get_source with citekey \"${src.citekey}\" and section \"summary\", then " +
       "reply with that source's citekey, exact title and publication year."
     def call(user: String) = LlmCall[ProbeAnswer](
-      system = system,
-      user = user,
+      system = LlmCall.System(system),
+      user = LlmCall.User(user),
       tools = toolbox.tools(d.tools),
       schema = AnswerSchemas.probe,
-      maxIterations = math.min(cfg.step.maxIterations, 3),
-      maxTokens = math.min(cfg.step.maxTokens, 512),
+      maxIterations = LlmCall.MaxIterations(math.min(cfg.step.maxIterations.value, 3)),
+      maxTokens = LlmCall.MaxTokens(math.min(cfg.step.maxTokens.value, 512)),
       agent = Some(d)
     )
-    val maxAttempts = 1 + math.max(0, cfg.step.maxRetries)
+    val maxAttempts = 1 + math.max(0, cfg.step.maxRetries.value)
     val t0 = timer.start()
     @annotation.tailrec
     def go(attempt: Int, user: String, used: Usage, calls: List[String]): Either[Api.Error, ProbeResult] =
@@ -947,31 +1148,35 @@ final class AgentsControllers(
           val use = used + LlmClient.usage(res.usage)
           val answer = res.finalAnswer.toOption
           val problems =
-            res.finalAnswer.fold(f => List(Engine.answerProblem(f, res.finishReason)), _.problems(src.year))
+            res.finalAnswer.fold(
+              f => List(Engine.answerProblem(f, res.finishReason).value),
+              _.problems(src.year).map(_.value)
+            )
           val toolCalls = calls ++ res.toolCalls.toList.map(c => s"${c.toolName} ${c.input}")
           if problems.nonEmpty && attempt < maxAttempts then
             go(
               attempt + 1,
-              ask + Prompt.retry(problems, answer.map(a => io.circe.Encoder[ProbeAnswer].apply(a).noSpaces)),
+              ask + Prompt.retry(problems.map(Prompt.Problem(_)), answer.map(a => io.circe.Encoder[ProbeAnswer].apply(a).noSpaces)),
               use,
               toolCalls
             )
           else
             Right(
               ProbeResult(
-                model = client.model.wire,
+                model = ProbeResult.Model(client.model.wire.value),
                 answer = answer,
-                rawAnswer = LlmClient.rawAnswer(res.finalAnswer).take(2000),
-                matchesRecord =
-                  problems.isEmpty && answer.exists(a => host.sameTitle(a.title, src.title) && a.year == src.year),
-                toolCalls = toolCalls,
-                iterations = res.iterations,
-                finish = LlmClient.finish(res.finishReason),
+                rawAnswer = ProbeResult.RawAnswer(LlmClient.rawAnswer(res.finalAnswer).take(2000)),
+                matchesRecord = ProbeResult.MatchesRecord(
+                  problems.isEmpty && answer.exists(a => host.sameTitle(a.title, src.title) && a.year == src.year)
+                ),
+                toolCalls = toolCalls.map(ProbeResult.ToolCalls(_)),
+                iterations = ProbeResult.Iterations(res.iterations),
+                finish = ProbeResult.Finish(LlmClient.finish(res.finishReason)),
                 usage = use,
-                costUsd = Some(billing.cost(use).toDouble),
-                millis = t0.elapsed.toMillis,
-                problems = problems,
-                attempts = attempt
+                costUsd = Some(ProbeResult.CostUsd(billing.cost(use).toDouble)),
+                millis = ProbeResult.Millis(t0.elapsed.toMillis),
+                problems = problems.map(ProbeResult.Problems(_)),
+                attempts = ProbeResult.Attempts(attempt)
               )
             )
     go(1, ask, Usage.Zero, Nil)
@@ -987,18 +1192,35 @@ object AgentsControllers:
   object Offline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PositiveAmount = PositiveAmount.T
   object PositiveAmount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RoundsCap = RoundsCap.T
   object RoundsCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourcesCount = SourcesCount.T
   object SourcesCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Target = Target.T
   object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  /** The server's providers over one [[CliRuntime]]. */
+  /** A run id a request names: one that is not a run id names no run. */
+  def runId(raw: String): Either[Api.Error, DomainRun.Id] =
+    DomainRun.Id
+      .either(raw)
+      .left
+      .map(_ => Api.Error(Api.Error.Message(s"No agent run '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
 
-  type ControlAction = ControlAction.T
-  object ControlAction extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  /** The run ids a request names (comma-separated ones too). */
+  def runIds(raw: List[String]): Either[Api.Error, List[DomainRun.Id]] =
+    raw
+      .flatMap(_.split(','))
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .foldLeft[Either[Api.Error, List[DomainRun.Id]]](Right(Nil))((acc, id) => acc.flatMap(xs => runId(id).map(xs :+ _)))
+
+  /** A goal slug a request names: one that is not a slug names no goal. */
+  def goalSlug(raw: String): Either[Api.Error, DomainGoal.Slug] =
+    DomainGoal.Slug
+      .either(raw)
+      .left
+      .map(_ => Api.Error(Api.Error.Message(s"No goal '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
+
+  /** The server's providers over one [[CliRuntime]]. */
 
   def serverWiring(site: EngineSite): (LlmClient.Factory, CliRuntime) =
     val rt = CliRuntime(site.config, site.roster, site.userPaths)(using site.stores, site.resources, site.clock, site.jvmHome)
@@ -1028,4 +1250,6 @@ object AgentsControllers:
           case v: VerbatimFailure => v.description
           case _                  => s"${e.getClass.getSimpleName}: ${e.getMessage}"
         scribe.warn(s"agent call to ${model.wire} failed: $logged")
-        Left(Api.Error(s"the call to ${model.wire} failed: ${VerbatimFailure.describe(e)}".take(600)))
+        Left(
+          Api.Error(Api.Error.Message(s"the call to ${model.wire} failed: ${VerbatimFailure.describe(e)}".take(600)))
+        )

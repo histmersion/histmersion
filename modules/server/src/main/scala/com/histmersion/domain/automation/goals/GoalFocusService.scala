@@ -22,7 +22,8 @@ import com.histmersion.api.automation.Queue.QueueAdd
 import java.time.Instant
 import javax.sql.DataSource
 import com.histmersion.api.Api
-import com.histmersion.api.automation.Goal
+import com.histmersion.api.automation.Goal as ApiGoal
+import com.histmersion.domain.automation.Goal
 
 /** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"): while the autopilot is on and the
   * cap (`agents.autopilot.max-active-goals`, or a person's `focus max`) is above 0, at most that many research goals
@@ -49,10 +50,12 @@ final class GoalFocusService(
   private def acfg = cfg.autopilot
 
   /** The cap and where it comes from: a person's (`focus max`) or the config's. */
-  def cap: (com.histmersion.domain.automation.goals.GoalFocusService.CapResultPart1, com.histmersion.domain.automation.goals.GoalFocusService.CapResultPart2) =
+  def cap: (GoalFocus.Settings.Max, FocusInfo.MaxFrom) =
     Transactor(ds)
       .read(FocusRepo.maxOverride)
-      .fold((math.max(0, acfg.maxActiveGoals), "config"))(n => (math.max(0, n), "person"))
+      .fold((GoalFocus.Settings.Max(math.max(0, acfg.maxActiveGoals.value)), FocusInfo.MaxFrom("config")))(n =>
+        (GoalFocus.Settings.Max(math.max(0, n.value)), FocusInfo.MaxFrom("person"))
+      )
 
   /** The focus is in force — never since the central scheduler (#3933, [[SchedulerService]]) admits the managers' work:
     * the focus holds nothing; it ranks the goals (what [[info]] shows), and its pins and priorities are the goals'
@@ -66,119 +69,118 @@ final class GoalFocusService(
   /** The active goals of the last pass (None: the focus is not in force). Read by the dispatch, written by [[tick]]; a
     * `var` because the supervisor's dispatch reads what the pass just before it decided.
     */
-  @volatile private var current: Option[Set[com.histmersion.domain.automation.goals.GoalFocusService.Current]] = None
+  @volatile private var current: Option[Set[Goal.Slug]] = None
 
   /** The active goals now, as the last pass decided them (None: not in force). */
-  def activeGoals: Option[Set[com.histmersion.domain.automation.goals.GoalFocusService.ActiveGoalsResult]] = current
+  def activeGoals: Option[Set[Goal.Slug]] = current
 
   /** The unfinished goals the last pass did NOT make active (their model items wait). */
-  @volatile private var queued: Set[com.histmersion.domain.automation.goals.GoalFocusService.Queued] = Set.empty
+  @volatile private var queued: Set[Goal.Slug] = Set.empty
 
   /** The status line of a seeding manager or watcher whose goal waits for a focus slot (else `note`). */
-  def statusNote(goal: Option[com.histmersion.domain.automation.Goal.Slug], note: com.histmersion.domain.automation.managers.ManagerLight.StatusNote): com.histmersion.domain.automation.goals.GoalFocusService.StatusNoteResult =
-    goal.filter(g => current.isDefined && queued(g)).fold(note)(_ => s"focus: its goal waits for a slot — $note")
+  def statusNote(goal: Option[Goal.Slug], note: ManagerInfo.StatusNote): ManagerInfo.StatusNote =
+    goal
+      .filter(g => current.isDefined && queued(g))
+      .fold(note)(_ => ManagerInfo.StatusNote(s"focus: its goal waits for a slot — ${note.value}"))
+
+  private def seed(goal: Goal.Slug): ManagerInfo.Id = seedId(ApiGoal.Ref(goal.value))
+
+  private def watch(goal: Goal.Slug): ManagerInfo.Id = watchId(ApiGoal.Ref(goal.value))
+
+  private def count(n: Int, noun: String): String = Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(noun)).value
 
   // ── the facts ──────────────────────────────────────────────────────────────────────────────────
 
   /** Does only a person decide an approval of `kind` opened by a run of a manager whose `autoApprove` is `auto` (the
     * same rule as [[AutoApprovals.checked]])?
     */
-  private def byPerson(kind: Option[com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Kind], autoApprove: Option[com.histmersion.domain.automation.goals.FocusRepo.WorkRow.AutoApprove]): Boolean =
-    kind.flatMap(ApprovalKind.parse) match
+  private def byPerson(kind: Option[FocusRepo.WorkRow.ApprovalKind], autoApprove: Option[FocusRepo.WorkRow.AutoApprove]): Boolean =
+    kind.flatMap(k => ApprovalKind.parse(com.histmersion.api.automation.Approval.Kind.Wire(k.value))) match
       case Some(k) if List(ApprovalKind.ArticlePlan, ApprovalKind.GoalPlan, ApprovalKind.ArticlePublish).contains(k) =>
         !autoApprove
-          .flatMap(_.toBooleanOption)
+          .flatMap(_.value.toBooleanOption)
           .getOrElse(cfg.approvals.checked(k.transformInto[com.histmersion.domain.automation.Approval.Kind]))
       case _ => true
 
   final private case class Read(
       facts: List[Facts],
       work: List[FocusRepo.WorkRow],
-      titles: Map[Read.TitlesKey, Read.TitlesValue],
-      left: Map[Read.LeftKey, (Option[Read.LeftValuePart1], Option[Read.LeftValuePart2])],
-      openPlans: Read.OpenPlans
+      titles: Map[Goal.Slug, FocusRepo.GoalRow.Title],
+      left: Map[Goal.Slug, (Option[FocusRepo.GoalRow.LeftAt], Option[FocusRepo.GoalRow.LeftWhy])],
+      openPlans: com.histmersion.RowCount
   )
-
-  object Read:
-    type TitlesKey = TitlesKey.T
-    object TitlesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TitlesValue = TitlesValue.T
-    object TitlesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LeftKey = LeftKey.T
-    object LeftKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LeftValuePart1 = LeftValuePart1.T
-    object LeftValuePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LeftValuePart2 = LeftValuePart2.T
-    object LeftValuePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OpenPlans = OpenPlans.T
-    object OpenPlans extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def read(): Read =
     val goals = agents.focusStore.goals()
     val rows = Transactor(ds).read(FocusRepo.work)
     val work = rows.map(r =>
-      r.goals -> Work(
-        r.id,
-        r.kind,
-        r.status,
-        r.target,
-        r.person,
-        r.focusHeld,
-        r.personHeld,
-        r.approval,
-        r.approval.isDefined && byPerson(r.approvalKind, r.autoApprove)
+      r.goals.map(g => Goal.Slug.assume(g.value)) -> Work(
+        Work.ItemId(r.id.value),
+        ManagerItem.Kind(r.kind.value),
+        com.histmersion.domain.automation.ItemStatus.Wire(r.status.value),
+        Work.Target(r.target.value),
+        Work.Person(r.person.value),
+        Work.FocusHeld(r.focusHeld.value),
+        Work.PersonHeld(r.personHeld.value),
+        r.approval.map(a => Work.Approval(a.value)),
+        Work.ApprovalByPerson(r.approval.isDefined && byPerson(r.approvalKind, r.autoApprove))
       )
     )
     val base = goals.map(g =>
       Facts(
-        g.slug,
-        g.parent,
-        g.status,
-        g.createdAt,
-        pinned = g.pinned,
-        priority = g.priority,
-        active = g.active,
-        since = g.since
+        Goal.Slug.assume(g.slug.value),
+        g.parent.map(p => Goal.Slug.assume(p.value)),
+        Goal.Status.Wire(g.status.value),
+        Facts.CreatedAt(g.createdAt.value),
+        pinned = Facts.Pinned(g.pinned.value),
+        priority = Facts.Priority(g.priority.value),
+        active = Facts.Active(g.active.value),
+        since = g.since.map(s => Facts.Since(s.value))
       )
     )
     val facts = GoalFocus.build(
       base,
       work,
-      agents.focusStore.sourceCounts(),
-      agents.workflows.linked(),
-      agents.workflows.finished(),
-      Transactor(ds).read(FocusRepo.compileOpen),
-      agents.focusStore.lastStops()
+      agents.focusStore.sourceCounts().map((g, n) => g -> Facts.Sources(n.value)),
+      agents.workflows
+        .linked()
+        .map((g, articles) =>
+          Goal.Slug.assume(g.value) -> articles.map(a => com.histmersion.domain.research.Slug.assume(a.value))
+        ),
+      agents.workflows.finished().map(a => com.histmersion.domain.research.Slug.assume(a.value)),
+      Transactor(ds).read(FocusRepo.compileOpen).map((g, n) => g -> Facts.CompileOpen(n.value)),
+      agents.focusStore.lastStops().map((g, why) => g -> Facts.LastStop(why.value))
     )
     Read(
       facts,
       rows,
-      goals.map(g => g.slug -> g.title).toMap,
-      goals.map(g => g.slug -> (g.leftAt, g.leftWhy)).toMap,
+      goals.map(g => Goal.Slug.assume(g.slug.value) -> g.title).toMap,
+      goals.map(g => Goal.Slug.assume(g.slug.value) -> (g.leftAt, g.leftWhy)).toMap,
       Transactor(ds).read(FocusRepo.openGoalPlans)
     )
 
-  private def settings(r: Read, max: com.histmersion.domain.automation.goals.GoalFocusService.SettingsMax): GoalFocus.Settings =
+  private def settings(r: Read, max: GoalFocus.Settings.Max): GoalFocus.Settings =
     GoalFocus.Settings(
       max,
-      agents.sourcesToPlan,
-      plansByPerson = !cfg.approvals.checked(com.histmersion.domain.automation.Approval.Kind.GoalPlan),
-      r.openPlans
+      GoalFocus.Settings.MinSources(agents.sourcesToPlan.value),
+      plansByPerson =
+        GoalFocus.Settings.PlansByPerson(!cfg.approvals.checked(com.histmersion.domain.automation.Approval.Kind.GoalPlan)),
+      GoalFocus.Settings.OpenPersonPlans(r.openPlans.value)
     )
 
   // ── the pass ───────────────────────────────────────────────────────────────────────────────────
 
   /** One pass at `now`, from the managers' tick before the dispatch; one line per change. */
-  def tick(now: Instant): List[com.histmersion.domain.automation.goals.GoalFocusService.TickResult] =
+  def tick(now: Instant): List[String] =
     if !inForce then
       current = None
       queued = Set.empty
       val released = agents.managerStore.focusReleaseAll()
       val cleared = Transactor(ds).transact(FocusRepo.clearActive(notInForce, now))
-      if released + cleared == 0 then Nil
+      if released.value + cleared.value == 0 then Nil
       else
-        val line = s"autopilot focus: not in force ($notInForce): ${Plural.count(released, com.histmersion.api.Plural.CountSingular("item"))} released, " +
-          s"${Plural.count(cleared, "goal")} no longer active"
+        val line = s"autopilot focus: not in force (${notInForce.value}): ${count(released.value, "item")} released, " +
+          s"${count(cleared.value, "goal")} no longer active"
         log(line)
         List(line)
     else
@@ -190,58 +192,65 @@ final class GoalFocusService(
       if changes.nonEmpty then log(s"autopilot focus: ${changes.mkString("; ")}".take(1000))
       changes
 
-  private def notInForce: com.histmersion.domain.automation.goals.GoalFocusService.NotInForceResult = com.histmersion.domain.automation.goals.GoalFocusService.NotInForceResult("the central scheduler admits the work (agents.scheduler.strategy)")
+  private def notInForce: FocusRepo.GoalRow.LeftWhy = FocusRepo.GoalRow.LeftWhy("the central scheduler admits the work (agents.scheduler.strategy)")
 
   /** The goal's manager an event about it goes to: its seeding manager, else its watcher. */
-  private def managerOf(goal: com.histmersion.domain.automation.Goal.Slug): Option[com.histmersion.domain.automation.goals.GoalFocusService.ManagerOfResult] =
-    List(seedId(goal), watchId(goal)).find(id => agents.managerStore.get(id).isDefined)
+  private def managerOf(goal: Goal.Slug): Option[ManagerInfo.Id] =
+    List(seed(goal), watch(goal)).find(id => agents.managerStore.get(id).isDefined)
 
-  private def event(goal: com.histmersion.domain.automation.Goal.Slug, text: com.histmersion.domain.automation.goals.GoalFocusService.EventText): Unit =
-    managerOf(goal).foreach(id => agents.managerStore.event(id, None, None, Feed.Autopilot, text.take(2000)))
+  private def emit(manager: ManagerInfo.Id, feed: String, text: String): Unit =
+    agents.managerStore.event(manager, None, None, ManagerEvent.Kind(feed), ManagerEvent.Text(text.take(2000)))
+
+  private def event(goal: Goal.Slug, text: String): Unit =
+    managerOf(goal).foreach(id => emit(id, Feed.Autopilot, text))
 
   /** The goals that joined and left, recorded with why. */
-  private def record(plan: Plan, r: Read, now: Instant): List[com.histmersion.domain.automation.goals.GoalFocusService.RecordResult] =
+  private def record(plan: Plan, r: Read, now: Instant): List[String] =
     val joined = plan.joined.flatMap(g => plan.active.find(_.slug == g)).map { p =>
-      agents.focusStore.joined(p.slug, p.why, now)
-      event(p.slug, s"focus: active — ${p.why}")
-      s"+${p.slug} (${p.stage.wire})"
+      agents.focusStore.joined(p.slug, FocusRepo.JoinWhy(p.why.value), now)
+      event(p.slug, s"focus: active — ${p.why.value}")
+      s"+${p.slug.value} (${p.stage.wire.value})"
     }
     val left = plan.left.map { (g, why) =>
-      agents.focusStore.left(g, why, now)
-      event(g, s"focus: no longer active — $why")
-      s"-$g ($why)"
+      agents.focusStore.left(g, FocusRepo.GoalRow.LeftWhy(why.value), now)
+      event(g, s"focus: no longer active — ${why.value}")
+      s"-${g.value} (${why.value})"
     }
     joined ++ left
 
   /** Hold what waits, release what may run; one line per manager that changed. */
-  private def applyHolds(plan: Plan, r: Read): List[com.histmersion.domain.automation.goals.GoalFocusService.ApplyHoldsResult] =
-    val items = r.work.map(w => GoalFocus.Item(w.id, w.kind, w.status, w.goals, w.person, w.focusHeld))
+  private def applyHolds(plan: Plan, r: Read): List[String] =
+    val items = r.work.map(w =>
+      GoalFocus.Item(
+        Work.ItemId(w.id.value),
+        ManagerItem.Kind(w.kind.value),
+        com.histmersion.domain.automation.ItemStatus.Wire(w.status.value),
+        w.goals.map(g => Goal.Slug.assume(g.value)),
+        Work.Person(w.person.value),
+        Work.FocusHeld(w.focusHeld.value)
+      )
+    )
     val hs = GoalFocus.holds(items, plan, r.facts)
-    val mgr = r.work.map(w => w.id -> w.managerId).toMap
+    val mgr = r.work.map(w => Work.ItemId(w.id.value) -> w.managerId.value).toMap
     val held =
-      hs.hold.filter((id, goal, why) => agents.managerStore.focusHold(id, Hold(reason = why, focus = Some(goal))))
-    val released = if hs.release.isEmpty then 0 else agents.managerStore.focusRelease(hs.release)
+      hs.hold.filter((id, goal, why) =>
+        agents.managerStore.focusHold(
+          ManagerItem.Id(id.value),
+          Hold(reason = Hold.Reason(why.value), focus = Some(Hold.Focus(goal.value)))
+        )
+      )
+    val released =
+      if hs.release.isEmpty then 0
+      else agents.managerStore.focusRelease(hs.release.map(id => ManagerItem.Id(id.value))).value
     val heldBy = held.groupBy((id, _, _) => mgr.getOrElse(id, ""))
     heldBy.toList.sortBy(_._1).foreach { (m, xs) =>
-      agents.managerStore.event(
-        m,
-        None,
-        None,
-        Feed.Held,
-        s"focus: ${Plural.count(xs.size, "item")} held — ${xs.head._3}".take(2000)
-      )
+      emit(ManagerInfo.Id(m), Feed.Held, s"focus: ${count(xs.size, "item")} held — ${xs.head._3.value}")
     }
     hs.release.groupBy(id => mgr.getOrElse(id, "")).toList.sortBy(_._1).foreach { (m, xs) =>
-      agents.managerStore.event(
-        m,
-        None,
-        None,
-        Feed.Held,
-        s"focus: ${Plural.count(xs.size, "item")} released — its goal is active"
-      )
+      emit(ManagerInfo.Id(m), Feed.Held, s"focus: ${count(xs.size, "item")} released — its goal is active")
     }
-    (if held.isEmpty then Nil else List(s"${Plural.count(held.size, com.histmersion.api.Plural.CountSingular("item"))} held")) ++
-      (if released == 0 then Nil else List(s"${Plural.count(released, "item")} released"))
+    (if held.isEmpty then Nil else List(s"${count(held.size, "item")} held")) ++
+      (if released == 0 then Nil else List(s"${count(released, "item")} released"))
 
   // ── the library-wide managers ──────────────────────────────────────────────────────────────────
 
@@ -255,14 +264,29 @@ final class GoalFocusService(
       pending: List[ManagerItem]
   ): List[ManagerPolicy.Candidate] =
     current match
-      case Some(active) if m.id == EnrichId || m.id == ReviewId =>
-        val link = if m.id == EnrichId then Goal.Plans.LinkKind.Source.wire else Goal.Plans.LinkKind.Article.wire
+      case Some(active) if m.id.value == EnrichId || m.id.value == ReviewId =>
+        val link =
+          if m.id.value == EnrichId then Goal.LinkKind.Source.wire
+          else Goal.LinkKind.Article.wire
         val ratio = acfg.focusRatio
-        val recent = Transactor(ds).read(FocusRepo.recentTargets(m.id, math.max(1, ratio)))
-        val goalsOf = agents.focusStore.goalsOf(link, (due.map(_.target) ++ recent).distinct)
-        def mine(t: com.histmersion.domain.automation.goals.GoalFocusService.FairMineT) = goalsOf.getOrElse(t, Nil).exists(active)
-        val person = pending.filter(_.origin == ItemOrigin.Person.wire).map(_.id).toSet
-        GoalFocus.fairOrder(due, c => person(c.id) || mine(c.target), recent.map(mine), ratio)
+        val recent = Transactor(ds).read(
+          FocusRepo.recentTargets(
+            FocusRepo.WorkRow.ManagerId(m.id.value),
+            com.histmersion.PageSize.assume(math.max(1, ratio.value))
+          )
+        )
+        val goalsOf = agents.focusStore.goalsOf(
+          link,
+          (due.map(_.target.value) ++ recent.map(_.value)).distinct.map(ApiGoal.Plans.GoalLink.Ref(_))
+        )
+        def mine(t: String): Boolean = goalsOf.getOrElse(ApiGoal.Plans.GoalLink.Ref(t), Nil).exists(active)
+        val person = pending.filter(_.origin == ItemOrigin.Person.wire).map(_.id.value).toSet
+        GoalFocus.fairOrder(
+          due,
+          c => person(c.id.value) || mine(c.target.value),
+          recent.map(t => GoalFocus.Recent(mine(t.value))),
+          GoalFocus.Ratio(ratio.value)
+        )
       case _ => due
 
   // ── goal plans ─────────────────────────────────────────────────────────────────────────────────
@@ -273,56 +297,65 @@ final class GoalFocusService(
     * focus and the plan approvals waited for each other — a goal waiting for its plan was never active, so code never
     * decided its plan).
     */
-  def goalPlanBlock(goal: com.histmersion.domain.automation.Goal.Slug, proposed: com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockProposed): Option[com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockResult] =
+  def goalPlanBlock(goal: Goal.Slug, proposed: AutopilotPolicy.Proposed): Option[AutopilotPolicy.Description] =
     val goals = agents.focusStore.goals()
-    val kids = goals.filter(_.parent.isDefined).groupMap(_.parent.get)(identity)
-    def open(s: com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockOpenS, seen: Set[com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockOpenSeen]): com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockOpenResult =
+    val kids = goals.filter(_.parent.isDefined).groupMap(_.parent.get.value)(identity)
+    def open(s: String, seen: Set[String]): Int =
       kids
         .getOrElse(s, Nil)
-        .filterNot(k => seen(k.slug))
+        .filterNot(k => seen(k.slug.value))
         .map { k =>
-          (if GoalFocus.finished(k.status) then 0 else 1) + open(k.slug, seen + k.slug)
+          (if GoalFocus.finished(Goal.Status.Wire(k.status.value)) then 0 else 1) + open(k.slug.value, seen + k.slug.value)
         }
         .sum
-    AutopilotPolicy.goalPlanSubGoals(goal, open(goal, Set(goal)), proposed, acfg.maxOpenSubGoals)
+    AutopilotPolicy.goalPlanSubGoals(
+      goal,
+      AutopilotPolicy.OpenCount(open(goal.value, Set(goal.value))),
+      proposed,
+      AutopilotPolicy.Limit(acfg.maxOpenSubGoals.value)
+    )
 
   /** How many goals with an approved plan are unfinished now. */
-  def unfinishedPlanned(): com.histmersion.domain.automation.goals.GoalFocusService.UnfinishedPlannedResult =
-    AutopilotPolicy.unfinishedPlanned(agents.focusStore.goals().map(g => g.slug -> g.status), agents.goals.planned())
+  def unfinishedPlanned(): AutopilotPolicy.Unfinished =
+    AutopilotPolicy.unfinishedPlanned(
+      agents.focusStore.goals().map(g => Goal.Slug.assume(g.slug.value) -> Goal.Status.Wire(g.status.value)),
+      agents.goals.planned()
+    )
 
   /** Why goal plans are not offered now, if they are not ([[AutopilotPolicy.goalPlansWait]]). */
-  def goalPlansWait(): Option[com.histmersion.domain.automation.goals.GoalFocusService.GoalPlansWaitResult] =
+  def goalPlansWait(): Option[AutopilotPolicy.Description] =
     val limit = acfg.maxUnfinishedGoals
-    if limit <= 0 then None else AutopilotPolicy.goalPlansWait(unfinishedPlanned(), limit)
+    if limit.value <= 0 then None else AutopilotPolicy.goalPlansWait(unfinishedPlanned(), AutopilotPolicy.Limit(limit.value))
 
   // ── what it shows ──────────────────────────────────────────────────────────────────────────────
 
   /** The focus as the next pass would decide it (read-only: with the autopilot off, what it WOULD focus on). */
-  def info(now: Instant = Instant.now(agents.clock), changes: List[com.histmersion.domain.automation.goals.GoalFocusService.InfoChanges] = Nil): FocusInfo =
+  def info(now: Instant = Instant.now(agents.clock), changes: List[FocusInfo.Changes] = Nil): FocusInfo =
     val (max, from) = cap
     val r = read()
-    val plan = GoalFocus.select(r.facts, settings(r, if max > 0 then max else acfg.maxActiveGoals))
+    val plan =
+      GoalFocus.select(r.facts, settings(r, if max.value > 0 then max else GoalFocus.Settings.Max(acfg.maxActiveGoals.value)))
     val pace = agents.managerStore.pace(now.minusSeconds(7L * 86400L))
     val byGoal = r.facts.map(f => f.slug -> f).toMap
-    def goal(p: GoalFocus.Pick, active: com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Active): FocusGoal =
+    def goal(p: GoalFocus.Pick, active: Boolean): FocusGoal =
       val f = byGoal.get(p.slug)
-      val ps = List(seedId(p.slug), watchId(p.slug)).flatMap(pace.get)
-      val (open, done) = (f.fold(0)(_.work.size), ps.map(_._2).sum)
+      val ps = List(seed(p.slug), watch(p.slug)).flatMap(pace.get)
+      val (open, done) = (f.fold(0)(_.work.size), ps.map(_._2.value).sum)
       FocusGoal(
-        p.slug,
-        r.titles.getOrElse(p.slug, ""),
-        f.fold("")(_.status),
-        p.stage.wire,
-        p.why,
-        p.pinned,
-        f.fold(0)(_.priority),
-        p.since,
-        if active then f.flatMap(x => GoalFocus.doing(x.work)) else None,
-        open,
-        done,
-        GoalFocus.etaDays(open, done)
+        FocusGoal.Slug(p.slug.value),
+        FocusGoal.Title(r.titles.get(p.slug).fold("")(_.value)),
+        FocusGoal.Status(f.fold("")(_.status.value)),
+        FocusGoal.Stage(p.stage.wire.value),
+        FocusGoal.Why(p.why.value),
+        FocusGoal.Pinned(p.pinned.value),
+        FocusGoal.Priority(f.fold(0)(_.priority.value)),
+        p.since.map(s => FocusGoal.Since(s.value)),
+        if active then f.flatMap(x => GoalFocus.doing(x.work)).map(d => FocusGoal.Doing(d.value)) else None,
+        FocusGoal.Open(open),
+        FocusGoal.DoneLast7(done),
+        GoalFocus.etaDays(AutopilotPolicy.OpenCount(open), AutopilotPolicy.DoneLast7(done)).map(d => FocusGoal.EtaDays(d.value))
       )
-    val shown = math.max(0, acfg.focusQueueShown)
+    val shown = math.max(0, acfg.focusQueueShown.value)
     val note =
       if !agents.autopilot.on then Some("the autopilot is off: nothing is held; this is what it would focus on")
       else if !inForce then
@@ -330,22 +363,29 @@ final class GoalFocusService(
           "the central scheduler admits the work (histmersion agent scheduler): the focus holds " +
             "nothing; this is how it ranks the goals, and its pins and priorities are the goals' priorities in the scheduler"
         )
-      else if max <= 0 then
+      else if max.value <= 0 then
         Some(
-          s"no cap (max 0${if from == "person" then ", set by a person" else ""}): every goal is active; " +
-            s"the order shown is the one a cap of ${acfg.maxActiveGoals} would use"
+          s"no cap (max 0${if from.value == "person" then ", set by a person" else ""}): every goal is active; " +
+            s"the order shown is the one a cap of ${acfg.maxActiveGoals.value} would use"
         )
       else None
     FocusInfo(
-      inForce,
-      max,
+      FocusInfo.On(inForce),
+      FocusInfo.Max(max.value),
       from,
       plan.active.map(goal(_, active = true)),
       plan.queue.take(shown).map(goal(_, active = false)),
-      plan.queue.size,
-      plan.waiting.map((s, c, w) => FocusWaiting(s, c, w, byGoal.get(s).exists(_.pinned))),
-      agents.managerStore.focusHeldCount(),
-      note,
+      FocusInfo.Queued(plan.queue.size),
+      plan.waiting.map((s, c, w) =>
+        FocusWaiting(
+          FocusWaiting.Slug(s.value),
+          FocusWaiting.Code(c.value),
+          FocusWaiting.Why(w.value),
+          FocusWaiting.Pinned(byGoal.get(s).exists(_.pinned.value))
+        )
+      ),
+      FocusInfo.Held(agents.managerStore.focusHeldCount().value),
+      note.map(FocusInfo.Note(_)),
       changes
     )
 
@@ -355,92 +395,48 @@ final class GoalFocusService(
     * managers' tick (nudged now); answers the focus as the next pass will decide it.
     */
   def set(in: FocusSet, now: Instant = Instant.now(agents.clock)): Either[Api.Error, FocusInfo] =
-    val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
-    def goal = in.goal.map(_.trim).filter(_.nonEmpty).toRight(Api.Error(s"`${in.action}` needs `goal`"))
-    def missing(g: com.histmersion.domain.automation.Goal.Slug) = Api.Error(s"no goal '$g'", Some(Write.CodeNotFound))
-    val done: Either[Api.Error, com.histmersion.domain.automation.goals.GoalFocusService.SetDonePart2] = in.action.trim.toLowerCase match
+    def error(message: String): Api.Error = Api.Error(Api.Error.Message(message))
+    val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
+    def goal: Either[Api.Error, String] =
+      in.goal.map(_.value.trim).filter(_.nonEmpty).toRight(error(s"`${in.action.value}` needs `goal`"))
+    def missing(g: String) =
+      Api.Error(Api.Error.Message(s"no goal '$g'"), Some(Api.Error.Code(Write.CodeNotFound)))
+    def known(g: String): Either[Api.Error, Goal.Slug] = Goal.Slug.either(g).left.map(_ => missing(g))
+    val done: Either[Api.Error, String] = in.action.value.trim.toLowerCase match
       case "pin" | "unpin" =>
-        val on = in.action.trim.equalsIgnoreCase("pin")
-        goal.flatMap(g => Either.cond(agents.focusStore.pin(g, on), g, missing(g))).map { g =>
-          event(g, s"focus: ${if on then "pinned" else "unpinned"} by $by")
-          s"$g ${if on then "pinned: it is active from the next tick" else "unpinned"} (by $by)"
-        }
+        val on = in.action.value.trim.equalsIgnoreCase("pin")
+        goal
+          .flatMap(g => known(g).flatMap(s => Either.cond(agents.focusStore.pin(s, FocusRepo.GoalRow.Pinned(on)), s, missing(g))))
+          .map { g =>
+            event(g, s"focus: ${if on then "pinned" else "unpinned"} by $by")
+            s"${g.value} ${if on then "pinned: it is active from the next tick" else "unpinned"} (by $by)"
+          }
       case "priority" =>
         for
           g <- goal
-          n <- in.value.toRight(Api.Error("`priority` needs `value` (higher first)"))
-          _ <- Either.cond(agents.focusStore.priority(g, n), (), missing(g))
+          s <- known(g)
+          n <- in.value.toRight(error("`priority` needs `value` (higher first)"))
+          _ <- Either.cond(agents.focusStore.priority(s, FocusRepo.GoalRow.Priority(n.value)), (), missing(g))
         yield
-          event(g, s"focus: priority $n set by $by")
-          s"$g priority $n (by $by)"
+          event(s, s"focus: priority ${n.value} set by $by")
+          s"$g priority ${n.value} (by $by)"
       case "max" =>
         in.value match
-          case Some(n) if n < 0 => Left(Api.Error(com.histmersion.api.Api.Error.Message("`max` is 0 (no cap) or more")))
-          case v                =>
-            Transactor(ds).transact(FocusRepo.setMaxOverride(v))
+          case Some(n) if n.value < 0 => Left(error("`max` is 0 (no cap) or more"))
+          case v                      =>
+            Transactor(ds).transact(FocusRepo.setMaxOverride(v.map(n => GoalFocus.Settings.Max(n.value))))
             Right(
-              v.fold(s"cap back to agents.autopilot.max-active-goals (${acfg.maxActiveGoals}) (by $by)")(n =>
-                s"cap $n${if n == 0 then " (no cap)" else ""} (by $by)"
+              v.fold(s"cap back to agents.autopilot.max-active-goals (${acfg.maxActiveGoals.value}) (by $by)")(n =>
+                s"cap ${n.value}${if n.value == 0 then " (no cap)" else ""} (by $by)"
               )
             )
-      case other => Left(Api.Error(s"unknown focus action '$other' (one of: ${FocusSet.Actions.mkString(", ")})"))
+      case other => Left(error(s"unknown focus action '$other' (one of: ${FocusSet.Actions.mkString(", ")})"))
     done.map { line =>
       log(s"autopilot focus: $line")
       agents.managers.nudge()
-      info(now, List(line))
+      info(now, List(FocusInfo.Changes(line)))
     }
 
-  private def log(line: com.histmersion.domain.automation.goals.GoalFocusService.LogLine): Unit =
-    val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(line.take(1000)))
+  private def log(line: String): Unit =
+    val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text(line.take(1000))))
     scribe.info(line)
-
-object GoalFocusService:
-  type FairMineT = FairMineT.T
-  object FairMineT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalPlanBlockOpenResult = GoalPlanBlockOpenResult.T
-  object GoalPlanBlockOpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalPlanBlockOpenS = GoalPlanBlockOpenS.T
-  object GoalPlanBlockOpenS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalPlanBlockOpenSeen = GoalPlanBlockOpenSeen.T
-  object GoalPlanBlockOpenSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetDonePart2 = SetDonePart2.T
-  object SetDonePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type CapResultPart1 = CapResultPart1.T
-  object CapResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CapResultPart2 = CapResultPart2.T
-  object CapResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Current = Current.T
-  object Current extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ActiveGoalsResult = ActiveGoalsResult.T
-  object ActiveGoalsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Queued = Queued.T
-  object Queued extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatusNoteResult = StatusNoteResult.T
-  object StatusNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SettingsMax = SettingsMax.T
-  object SettingsMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TickResult = TickResult.T
-  object TickResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NotInForceResult = NotInForceResult.T
-  object NotInForceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ManagerOfResult = ManagerOfResult.T
-  object ManagerOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventText = EventText.T
-  object EventText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordResult = RecordResult.T
-  object RecordResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyHoldsResult = ApplyHoldsResult.T
-  object ApplyHoldsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalPlanBlockResult = GoalPlanBlockResult.T
-  object GoalPlanBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalPlanBlockProposed = GoalPlanBlockProposed.T
-  object GoalPlanBlockProposed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnfinishedPlannedResult = UnfinishedPlannedResult.T
-  object UnfinishedPlannedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalPlansWaitResult = GoalPlansWaitResult.T
-  object GoalPlansWaitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InfoChanges = InfoChanges.T
-  object InfoChanges extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LogLine = LogLine.T
-  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

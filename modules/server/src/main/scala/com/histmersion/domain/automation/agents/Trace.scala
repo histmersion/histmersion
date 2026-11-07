@@ -32,5 +32,13 @@ object Trace:
       }
       .zipWithIndex
       .map { case ((role, content, tool, input, result, ms), n) =>
-        AgentRepo.MessageRecord(n + 1, role, content, tool, input, result, ms)
+        AgentRepo.MessageRecord(
+          AgentRepo.MessageRecord.N(n + 1),
+          AgentRepo.MessageRecord.Role(role),
+          content.map(c => AgentRepo.MessageRecord.Content(c)),
+          tool.map(t => AgentRepo.MessageRecord.ToolName(t)),
+          input.map(i => AgentRepo.MessageRecord.ToolInput(i)),
+          result.map(r => AgentRepo.MessageRecord.ToolResult(r)),
+          ms
+        )
       }

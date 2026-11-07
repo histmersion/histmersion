@@ -35,36 +35,36 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
   def opencodeXdg: Option[Path] = root.map(_.resolve("opencode").resolve("xdg"))
   def opencodeConfig: Option[Path] = root.map(_.resolve("opencode").resolve("config"))
 
-  private def publicUrl = app.server.publicUrl.stripSuffix("/")
+  private def publicUrl = app.server.publicUrl.value.stripSuffix("/")
 
   def settings(version: com.histmersion.domain.automation.agents.AgentTrees.SettingsVersion): GenSettings =
-    val agentMcp = Option(cfg.providers.claudeCode.mcpUrl.trim).filter(_.nonEmpty).getOrElse(s"$publicUrl/mcp/agent")
+    val agentMcp = Option(cfg.providers.claudeCode.mcpUrl.value.trim).filter(_.nonEmpty).getOrElse(s"$publicUrl/mcp/agent")
     GenSettings(
-      agentMcp,
-      Some(s"$publicUrl/mcp"),
-      s"$publicUrl/api/agents/quota/claude",
-      cfg.runtimes.claudeMod,
-      cfg.runtimes.interactiveMod,
+      GenSettings.AgentMcpUrl(agentMcp),
+      Some(GenSettings.McpUrl(s"$publicUrl/mcp")),
+      GenSettings.QuotaUrl(s"$publicUrl/api/agents/quota/claude"),
+      GenSettings.ClaudeMod(cfg.runtimes.claudeMod.value),
+      GenSettings.InteractiveMod(cfg.runtimes.interactiveMod.value),
       version,
-      cfg.providers.codex.toolOutputTokens,
-      cfg.providers.codex.leanBase
+      GenSettings.CodexToolOutputTokens(cfg.providers.codex.toolOutputTokens.value),
+      GenSettings.CodexLeanBase(cfg.providers.codex.leanBase)
     )
 
   /** The definitions, loaded and checked; `known` are the MCP tool names placeholders may use. */
-  def load(known: Set[com.histmersion.util.storage.SafePath.Candidate]): Either[com.histmersion.domain.automation.agents.AgentTrees.Problem, AgentGenerator.Defs] =
+  def load(known: Set[com.histmersion.domain.automation.workflows.ToolName]): Either[com.histmersion.domain.automation.agents.AgentTrees.Problem, AgentGenerator.Defs] =
     for
       as <- defs.agents
       fs <- defs.fragments
       ss <- defs.skills
       d = AgentGenerator.Defs(as, fs, ss)
-      _ <- AgentGenerator.check(d, known) match
+      _ <- AgentGenerator.check(d, known.map(t => t.value: String)) match
         case Nil  => Right(())
         case errs => Left(errs.mkString("; "))
     yield d
 
   /** Generate the trees of `runtimes` (all three by default) into `out` (default [[root]]). */
   def generate(
-      known: Set[com.histmersion.util.storage.SafePath.Candidate],
+      known: Set[com.histmersion.domain.automation.workflows.ToolName],
       runtimes: List[AgentRuntime] = AgentRuntime.Generated,
       out: Option[Path] = None
   ): Either[com.histmersion.domain.automation.agents.AgentTrees.Problem, GenerateResult] =
@@ -74,8 +74,8 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
         .toRight("no runtimes directory: set agents.runtimes.dir (HISTMERSION_AGENTS_RUNTIMES_DIR)")
       d <- load(known)
       sha = AgentTrees.sha(d)
-      tree = AgentGenerator.tree(d, settings(s"${AgentGenerator.PluginVersion}+${sha.take(12)}"), runtimes)
-      res <- AgentTrees.write(stores.at(com.histmersion.util.storage.Location.AgentHomes, dir), tree, runtimes.map(_.wire), sha)
+      tree = AgentGenerator.tree(d, settings(AgentTrees.SettingsVersion(s"${AgentGenerator.PluginVersion}+${sha.value.take(12)}")), runtimes)
+      res <- AgentTrees.write(stores.at(com.histmersion.util.storage.Location.AgentHomes, dir), tree, runtimes.map(_.wire.value), sha)
     yield res
 
 object AgentTrees:
@@ -95,7 +95,7 @@ object AgentTrees:
   /** `~` as the JVM's home directory: what the command-line runtimes still read (their slice gives them the injected
     * environment, §25).
     */
-  def expand(p: String)(using home: com.histmersion.util.system.JvmHome): String = home.expand(p)
+  def expand(p: String)(using home: com.histmersion.util.system.JvmHome): String = home.expand(com.histmersion.util.system.JvmHome.Path(p)).value
 
   /** `agents.runtimes.dir`, else the data directory the bundle uses (`runtime.data-dir`, else
     * `~/Library/Application Support/Histmersion` on macOS, `$XDG_DATA_HOME/histmersion` elsewhere) + `/agents`.
@@ -103,18 +103,18 @@ object AgentTrees:
   def root(app: AppConfig, paths: UserPaths): Option[Path] = root(app, paths.environment.lookup, paths.osName)
 
   /** [[root]] in the environment `env` of the operating system `osName`. */
-  def root(app: AppConfig, env: String => Option[String], osName: String): Option[Path] =
+  def root(app: AppConfig, env: UserPaths.Lookup, osName: UserPaths.OsName): Option[Path] =
     Option(app.agents.runtimes.dir)
-      .map(_.trim)
+      .map(_.value.trim)
       .filter(_.nonEmpty)
       .map(d => Path.of(expandIn(d, env)))
       .orElse(UserPaths.dataDir(app.runtime.dataDir, env, osName).map(_.resolve("agents")))
       .map(_.toAbsolutePath.normalize)
 
   /** `~` at the start of `p` as the environment's `HOME` (left as it is when there is none). */
-  def expandIn(p: String, env: String => Option[String]): String =
-    env("HOME")
-      .map(_.trim)
+  def expandIn(p: String, env: UserPaths.Lookup): String =
+    env(com.histmersion.config.Environment.VariablesKey("HOME"))
+      .map(_.value.trim)
       .filter(_.nonEmpty)
       .fold(p)(h => p.replaceFirst("^~", java.util.regex.Matcher.quoteReplacement(h)))
 
@@ -126,9 +126,9 @@ object AgentTrees:
     codexHome(app, paths.environment.lookup, paths.osName)
 
   /** [[codexHome]] in the environment `env` of the operating system `osName`. */
-  def codexHome(app: AppConfig, env: String => Option[String], osName: String): Option[Path] =
+  def codexHome(app: AppConfig, env: UserPaths.Lookup, osName: UserPaths.OsName): Option[Path] =
     Option(app.agents.providers.codex.home)
-      .map(_.trim)
+      .map(_.value.trim)
       .filter(_.nonEmpty)
       .map(h => Path.of(expandIn(h, env)))
       .orElse(root(app, env, osName).map(_.resolve("codex").resolve("home")))
@@ -136,9 +136,9 @@ object AgentTrees:
   /** The definitions' fingerprint: what the trees were generated from. */
   def sha(d: AgentGenerator.Defs): com.histmersion.Sha256 =
     Prompt.sha256(
-      (d.agents.sortBy(_.name).map(a => s"${a.name}\u0000${a.body}\u0000${a.fingerprint}") ++
-        d.fragments.toList.sorted.map((k, v) => s"$k\u0000$v") ++
-        d.skills.toList.sortBy(_._1).map((k, s) => s"$k\u0000${s.header.mkString("\n")}\u0000${s.body}"))
+      (d.agents.sortBy[String](_.name.value).map(a => s"${a.name}\u0000${a.body}\u0000${a.fingerprint}") ++
+        d.fragments.toList.sortBy[String](_._1.value).map((k, v) => s"$k\u0000$v") ++
+        d.skills.toList.sortBy[String](_._1.value).map((k, s) => s"$k\u0000${s.header.mkString("\n")}\u0000${s.body}"))
         .mkString("\u0001")
     )
 
@@ -147,5 +147,5 @@ object AgentTrees:
   /** Write `tree` under `dir`: each file atomically, only when its text changed; a file the previous manifest listed
     * (for one of these runtimes) and this tree does not have is removed.
     */
-  def write(store: com.histmersion.util.storage.Store, tree: Map[com.histmersion.util.storage.SafePath.Candidate, String], runtimes: List[String], sha: com.histmersion.Sha256)(using java.time.Clock): Either[com.histmersion.domain.automation.agents.AgentTrees.Problem, GenerateResult] =
+  def write(store: com.histmersion.util.storage.Store, tree: Map[String, String], runtimes: List[String], sha: com.histmersion.Sha256)(using java.time.Clock): Either[com.histmersion.domain.automation.agents.AgentTrees.Problem, GenerateResult] =
     AgentTreeWriter.write(store, tree, runtimes, sha)

@@ -10,20 +10,27 @@ import java.util.concurrent.ConcurrentHashMap
   * running step.
   */
 final class RunTokens(using wallClock: java.time.Clock):
-  private val grants = ConcurrentHashMap[String, RunGrant]()
+  private val grants = ConcurrentHashMap[RunGrant.Token, RunGrant]()
   private val random = java.security.SecureRandom()
 
   def issue(
       agent: AgentDef,
       scope: Option[RunScope],
       ttlMillis: com.histmersion.domain.automation.agents.RunTokens.TtlMillis,
-      now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis = wallClock.millis()
+      now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())
   ): RunGrant =
     val bytes = new Array[Byte](32)
     random.nextBytes(bytes)
-    val token = "hmrt_" + bytes.map(b => f"$b%02x").mkString
+    val token = RunGrant.Token("hmrt_" + bytes.map(b => f"$b%02x").mkString)
     val g =
-      RunGrant(token, agent.name, agent.tools, scope.map(_.run), scope.map(_.step), now + math.max(1000L, ttlMillis))
+      RunGrant(
+        token,
+        RunGrant.Agent(agent.name.value),
+        agent.tools,
+        scope.map(s => RunGrant.Run(s.run.value)),
+        scope.map(s => RunGrant.Step(s.step.value)),
+        RunGrant.ExpiresAt(now.value + math.max(1000L, ttlMillis.value))
+      )
     val _ = grants.put(token, g)
     prune(now)
     g
@@ -31,23 +38,23 @@ final class RunTokens(using wallClock: java.time.Clock):
   def revoke(token: com.histmersion.domain.automation.agents.RunTokens.Token): Unit = { val _ = grants.remove(token) }
 
   /** The grant of a live token; an expired one is dropped. */
-  def check(token: com.histmersion.domain.automation.agents.RunTokens.Token, now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis = wallClock.millis()): Option[RunGrant] =
+  def check(token: com.histmersion.domain.automation.agents.RunTokens.Token, now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())): Option[RunGrant] =
     Option(grants.get(token)).flatMap { g =>
-      if g.expiresAt > now then Some(g)
+      if g.expiresAt.value > now.value then Some(g)
       else
         revoke(token)
         None
     }
 
   /** The grant a `Bearer <token>` header carries. */
-  def bearer(header: String, now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis = wallClock.millis()): Option[RunGrant] =
-    Option(header).map(_.trim).filter(_.startsWith("Bearer ")).map(_.stripPrefix("Bearer ").trim).flatMap(check(_, now))
+  def bearer(header: String, now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())): Option[RunGrant] =
+    Option(header).map(_.trim).filter(_.startsWith("Bearer ")).map(_.stripPrefix("Bearer ").trim).flatMap(t => check(RunGrant.Token(t), now))
 
-  private def prune(now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis): Unit = grants.values().removeIf(_.expiresAt <= now)
+  private def prune(now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis): Unit = grants.values().removeIf(_.expiresAt.value <= now.value)
 
 object RunTokens:
-  type Token = Token.T
-  object Token extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Token = RunGrant.Token
+  val Token: RunGrant.Token.type = RunGrant.Token
   type TtlMillis = TtlMillis.T
   object TtlMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The agent MCP endpoint: `/mcp/agent` (the run token picks the agent) and `/mcp/agent/<agent>`. */

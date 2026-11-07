@@ -39,11 +39,11 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
   val pipeline: Pipeline = Pipeline.InferFilter
   import InferFilterPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, PipelineDef.RunResultPart2] =
+  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
     Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(Halt.Fail.Message(p.value))).flatMap(runFor(ctx, _))
 
-  private def runFor(ctx: RunCtx, slug: Slug): Either[Halt, PipelineDef.RunResultPart2] =
-    val runId = com.histmersion.domain.automation.Run.Id.assume(ctx.run.id.value)
+  private def runFor(ctx: RunCtx, slug: Slug): Either[Halt, PipelineDef.Summary] =
+    val runId = ctx.runId
     for
       loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(slug))
       line <-
@@ -71,7 +71,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
               log(ctx, FilterInference.logLine(slug, FilterInference.Outcome(recorded.line.value), runId))
             )
           yield closed
-    yield PipelineDef.RunResultPart2(line)
+    yield PipelineDef.Summary(line)
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -80,8 +80,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
       val a = v.article
       val canonical = Slug.assume(a.slug.value)
       val stored = site.articleStore.load(canonical)
-      val body = com.histmersion.domain.research.Article.Body(a.body.value)
-      val cited = site.articles.citedSources(body)
+      val cited = site.articles.citedSources(a.body)
       val refs =
         site.sourceStore
           .refs(cited.take(CitedShown))
@@ -104,7 +103,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
         stored.flatMap(_.filter).isDefined,
         cited,
         refs.map(Loaded.CitedLines(_)),
-        Loaded.Excerpt(body.value.take(ExcerptChars)),
+        Loaded.Excerpt(a.body.value.take(ExcerptChars)),
         vocab("topics").map(Loaded.Topics(_)),
         vocab("tags").map(Loaded.Tags(_))
       )

@@ -255,9 +255,9 @@ final class EventLinksControllers(
         Event.Id.option(one).toRight(notFound(s"No event '$one'")).flatMap(eventOrFail).flatMap(_ =>
           jobs.start(EventLinksControllers.CandidatesJobKind, com.histmersion.api.jobs.JobKinds.Subject(s"candidates of $one"), write = true) { (_, _) =>
             Event.Id.option(one).toRight(notFound(s"No event '$one'")).flatMap(eventOrFail)
-              .map(d => s"${compute(d).candidates.size} candidate(s) for ${d.event.id}")
+              .map(d => com.histmersion.util.jobs.BackgroundJob.Outcome.Summary(s"${compute(d).candidates.size} candidate(s) for ${d.event.id}"))
               .left
-              .map(_.message)
+              .map(e => com.histmersion.util.jobs.BackgroundJob.Outcome.Error(e.message.value))
           }
         )
       case None =>
@@ -281,7 +281,7 @@ final class EventLinksControllers(
             }
             progress(JobInfo.Progress(s"$n of ${ids.size} event(s) checked · $found candidate(s)"))
           }
-          Right(s"$n event(s) checked · $found candidate(s)")
+          Right(com.histmersion.util.jobs.BackgroundJob.Outcome.Summary(s"$n event(s) checked · $found candidate(s)"))
         }
 
   private def leadOf(r: LeadRow): Option[EventLead] =

@@ -21,7 +21,7 @@ object AnswerSchemas:
 
   /** The engine's step schemas, by name. */
   val all: List[(com.histmersion.domain.automation.agents.AnswerSchemas.SchemaName, ResponseSchema[?])] = List(
-    "probe" -> probe,
-    "plan" -> plan,
-    "hint-effect" -> hintEffect
+    SchemaName("probe") -> probe,
+    SchemaName("plan") -> plan,
+    SchemaName("hint-effect") -> hintEffect
   )

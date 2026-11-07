@@ -12,12 +12,12 @@ final class SourceTextFormatting(links: List[com.histmersion.domain.library.Cite
     MarkdownLint.ofSource(
       summary,
       notes,
-      links(MarkdownLint.lookups(summary.map(_.value).toList ++ notes.map(_.value).toList))
+      links(MarkdownLint.lookups((summary.map(_.value).toList ++ notes.map(_.value).toList).map(MarkdownLint.Scan.Text(_))))
     )
 
   def fix(text: com.histmersion.domain.library.Source.Text, field: FormatField): (com.histmersion.domain.library.Source.Text, List[com.histmersion.domain.library.Source.Text]) =
-    val (fixed, done) = MarkdownLint.fix(text.value, field)
-    (com.histmersion.domain.library.Source.Text(fixed), done.map(d => com.histmersion.domain.library.Source.Text(d)))
+    val (fixed, done) = MarkdownLint.fix(MarkdownLint.Scan.Text(text.value), field)
+    (com.histmersion.domain.library.Source.Text(fixed.value), done.map(d => com.histmersion.domain.library.Source.Text(d.value)))
 
   def refusal(issues: List[FormatIssue]): Option[com.histmersion.domain.research.articles.lint.SourceTextFormatting.Problem] =
     MarkdownLint.refusal(issues).map(p => SourceTextFormatting.Problem(p.value))

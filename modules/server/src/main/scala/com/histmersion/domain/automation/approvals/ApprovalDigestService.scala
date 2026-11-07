@@ -8,7 +8,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{ApprovalKind, Decision, DecisionRequest}
 import com.histmersion.api.automation.ApprovalDigest.*
-import com.histmersion.api.automation.Queue.QueueAdd
+import com.histmersion.api.automation.Queue.{QueueAdd, QueueItem}
+import com.histmersion.domain.automation.Approval as DomainApproval
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -27,7 +28,7 @@ final class ApprovalDigestService(
 ):
 
   /** Does code decide an approval of kind `k` now (the autopilot's checks)? */
-  private def checked(k: String): Boolean =
+  private def checked(k: ApprovalKind.Wire): Boolean =
     ApprovalKind
       .parse(k)
       .exists(kk =>
@@ -40,29 +41,29 @@ final class ApprovalDigestService(
     val open = agents.approvalStore.openLight()
     val wait = agents.focus.goalPlansWait()
     Digest(
-      now.toString,
-      open.size,
+      Digest.At(now.toString),
+      Digest.Total(open.size),
       ApprovalDigest.group(open, checked, wait.fold(Set.empty)(_ => Set(ApprovalKind.GoalPlan.wire))),
-      agents.managerStore.forPerson(),
-      agents.autopilotRow.lastDigest(),
-      wait
+      Digest.HeldForPerson(agents.managerStore.forPerson().value),
+      agents.autopilotRow.lastDigest().map(d => Digest.LastWritten(d.value)),
+      wait.map(w => Digest.GoalPlansWait(w.value))
     )
 
   /** From the managers' tick: once a UTC day (the tick's), after `digest-hour` (on the tick's time or on the digest's
     * clock, when it has one: [[AgentsControllers.digestClock]]), the digest's line goes to the worklog.
     */
   def tick(now: Instant): List[String] =
-    val hour = cfg.autopilot.digestHour
+    val hour = cfg.autopilot.digestHour.value
     val day = ManagerPolicy.dayStart(now)
     def pastHour(t: Instant) = !t.isBefore(ManagerPolicy.dayStart(t).plusSeconds(math.min(23, hour).toLong * 3600L))
     val due = hour >= 0 && (pastHour(now) || agents.digestClock.exists(c => pastHour(Instant.now(c)))) &&
-      agents.autopilotRow.lastDigest().flatMap(ManagerPolicy.parseInstant).forall(_.isBefore(day))
+      agents.autopilotRow.lastDigest().flatMap(d => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(d.value))).forall(_.isBefore(day))
     if !due then Nil
     else
       val line = ApprovalDigest.line(digest(now))
       agents.autopilotRow.digested(now)
-      val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(line.take(1000)))
-      scribe.info(line)
+      val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(QueueItem.Text(line.value.take(1000))))
+      scribe.info(line.value)
       List("approval digest written")
 
   /** Decide every open approval `b` matches (a kind, a subject, ids), oldest first; a refused one does not stop the
@@ -70,31 +71,55 @@ final class ApprovalDigestService(
     */
   def decideAll(b: BulkDecide): Either[Api.Error, BulkResult] =
     for
-      d <- Decision.parse(b.decision).toRight(Api.Error(s"unknown decision '${b.decision}' (approve or reject)"))
+      d <- Decision
+        .parse(Decision.Wire(b.decision.value))
+        .toRight(Api.Error(Api.Error.Message(s"unknown decision '${b.decision}' (approve or reject)")))
       _ <- Either.cond(
-        b.kind.exists(_.trim.nonEmpty) || b.subject.exists(_.trim.nonEmpty) || b.ids.nonEmpty,
+        b.kind.exists(_.value.trim.nonEmpty) || b.subject.exists(_.value.trim.nonEmpty) || b.ids.nonEmpty,
         (),
-        Api.Error("give a kind, a subject or ids: a bulk decision never takes every open approval")
+        Api.Error(Api.Error.Message("give a kind, a subject or ids: a bulk decision never takes every open approval"))
       )
       _ <- b.kind
-        .map(_.trim)
+        .map(_.value.trim)
         .filter(_.nonEmpty)
         .fold[Either[Api.Error, Unit]](Right(()))(k =>
           ApprovalKind
-            .parse(k)
-            .toRight(Api.Error(s"unknown approval kind '$k' (${ApprovalKind.values.map(_.wire).mkString(", ")})"))
+            .parse(ApprovalKind.Wire(k))
+            .toRight(
+              Api.Error(
+                Api.Error.Message(s"unknown approval kind '$k' (${ApprovalKind.values.map(_.wire).mkString(", ")})")
+              )
+            )
             .map(_ => ())
         )
     yield
       val open = agents.approvalStore.openLight()
       val ms = ApprovalDigest.matching(open, b)
-      if b.dryRun then BulkResult(d.wire, dryRun = true, ms.size, ms.map(_.id), Nil, open.size)
+      if b.dryRun.value then
+        BulkResult(
+          BulkResult.Decision(d.wire.value),
+          dryRun = BulkResult.DryRun(true),
+          BulkResult.Matched(ms.size),
+          ms.map(o => BulkResult.Decided(o.id.value)),
+          Nil,
+          BulkResult.Left(open.size)
+        )
       else
-        val by = b.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
-        val note = Some((b.note.map(_.trim).filter(_.nonEmpty).getOrElse("") + s" (decided in bulk by $by)").trim)
-        val done = ms.map(o => o.id -> agents.decide(o.id, d.wire, DecisionRequest(note)))
+        val by = b.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
+        val note = Some(
+          DecisionRequest.Note((b.note.map(_.value.trim).filter(_.nonEmpty).getOrElse("") + s" (decided in bulk by $by)").trim)
+        )
+        val done = ms.map(o =>
+          o.id -> agents.decide(
+            DomainApproval.Id(o.id.value),
+            DomainApproval.Outcome(d.wire.value),
+            DecisionRequest(note)
+          )
+        )
         val ok = done.collect { case (id, Right(_)) => id }
-        val bad = done.collect { case (id, Left(e)) => BulkFailed(id, e.message.take(300)) }
+        val bad = done.collect { case (id, Left(e)) =>
+          BulkFailed(BulkFailed.Id(id.value), BulkFailed.Error(e.message.value.take(300)))
+        }
         val left = agents.approvalStore.openLight().size
         if ok.nonEmpty then
           val what = List(
@@ -104,8 +129,18 @@ final class ApprovalDigestService(
           ).flatten.mkString(", ")
           val line = s"approvals ${if d == Decision.Approve then "approved" else "rejected"} in bulk by $by ($what): " +
             s"${ok.size} of ${ms.size}" + (if bad.nonEmpty then s", ${bad.size} refused" else "") + s"; $left open left"
-          val _ = agents.workLists.add("log", QueueAdd(line.take(1000)))
+          val _ = agents.workLists.add(
+            com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"),
+            QueueAdd(QueueItem.Text(line.take(1000)))
+          )
           scribe.info(line)
         agents.managers.nudge()
-        BulkResult(d.wire, dryRun = false, ms.size, ok, bad, left)
+        BulkResult(
+          BulkResult.Decision(d.wire.value),
+          dryRun = BulkResult.DryRun(false),
+          BulkResult.Matched(ms.size),
+          ok.map(id => BulkResult.Decided(id.value)),
+          bad,
+          BulkResult.Left(left)
+        )
 

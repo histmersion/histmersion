@@ -5,7 +5,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.ingest.StoredOriginals
 import com.histmersion.PageSize
-import com.histmersion.domain.library.sources.{FullSourceRow, SourceRepo, SourceService}
+import com.histmersion.domain.library.sources.{FullSourceRow, SourceService}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.domain.library.Citekey
 
@@ -30,7 +30,7 @@ final class CalibreGapControllers(
       limit.flatMap(l => PageSize.option(l.value)),
       PageSize.assume(math.max(1, limits.maxPage.value))
     )
-    val gaps = sources.calibreGaps(Some(SourceRepo.Limit(page.value)))
+    val gaps = sources.calibreGaps(Some(page))
     // which originals the server can hand the host's push (`GET /api/sources/{ck}/original`)
     def held(ck: com.histmersion.api.library.Citekey): Citekey = Citekey.assume(ck.value)
     val hashes = sources.originals(gaps.map(g => held(g.citekey)))

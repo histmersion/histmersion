@@ -29,7 +29,7 @@ final private[automation] class AllowanceGuard(
 ) extends AgentInterceptor[Identity]:
   override def decide(state: AgentRunState): LoopDecision =
     val use = LlmClient.usage(state.usage)
-    val overTokens = headroomTokens.exists(use.total >= _)
+    val overTokens = headroomTokens.exists(h => use.total.value >= h.value)
     val overUsd = headroomUsd.exists(h => billing.cost(use) >= h)
     if overTokens || overUsd then
       LoopDecision.FinishNow(

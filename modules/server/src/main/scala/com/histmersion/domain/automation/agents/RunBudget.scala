@@ -28,12 +28,12 @@ final private[automation] class RunBudget(
     capUsd: BigDecimal,
     capTokens: RunBudget.CapTokens,
     billing: Billing,
-    cacheReadWeight: RunBudget.CacheReadWeight = 1.0
+    cacheReadWeight: Usage.CacheReadWeight = Usage.CacheReadWeight(1.0)
 ) extends AgentInterceptor[Identity]:
   override def decide(state: AgentRunState): LoopDecision =
     val use = LlmClient.usage(state.usage)
     val cost = billing.cost(use)
-    if spentUsd + cost >= capUsd || spentTokens + use.budgeted(cacheReadWeight) >= capTokens then
+    if spentUsd + cost >= capUsd || spentTokens.value + use.budgeted(cacheReadWeight).value >= capTokens.value then
       LoopDecision.FinishNow(
         FinishReason.BudgetExceeded,
         sttp.ai.core.agent.interceptor.BudgetInterceptor.defaultInstruction
@@ -45,5 +45,4 @@ object RunBudget:
   object SpentTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CapTokens = com.histmersion.domain.automation.agents.AgentsControllers.BudgetTokens
   val CapTokens: _root_.com.histmersion.domain.automation.agents.AgentsControllers.BudgetTokens.type = _root_.com.histmersion.domain.automation.agents.AgentsControllers.BudgetTokens
-  type CacheReadWeight = CacheReadWeight.T
-  object CacheReadWeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+

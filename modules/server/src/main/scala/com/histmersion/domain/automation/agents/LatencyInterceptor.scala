@@ -32,7 +32,7 @@ final private[automation] class LatencyInterceptor(slots: Semaphore, beat: () =>
     val t0 = timer.start()
     try next
     finally
-      millis = millis :+ t0.elapsed.toMillis.toInt
+      millis = millis :+ AgentRepo.MessageRecord.LatencyMs(t0.elapsed.toMillis.toInt)
       slots.release()
       beat()
 

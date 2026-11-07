@@ -1,5 +1,6 @@
 package com.histmersion.domain.library.workflows
 
+import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.managers.ManagerContext
 import com.histmersion.domain.automation.managers.ManagerDefaultsViews
 import com.histmersion.domain.automation.managers.ManagerKindDefinition
@@ -46,7 +47,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
     case _                => Pipeline.Fallback
 
   /** A firing re-opens each of the goal's sweeps that has settled (one still open is left to finish). */
-  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FireResult] =
+  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase] =
     m.goal.toList.flatMap { g =>
       Sweep.of(m.config).map { sw =>
         val id = ManagerLight.Id(m.id.value)
@@ -55,7 +56,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
         val open = c
           .itemFor(id, itemKind, target)
           .exists(i => !ItemStatus.parse(i.status).exists(_.isFinal))
-        ManagerKindDefinition.FireResult(
+        ManagerKindDefinition.FirePhrase(
           if open then s"${sw.itemKind} still open"
           else
             val _ = c.upsert(id, itemKind, target, ItemOrigin.Cron, ManagerContext.Priority(0), reopen = ManagerContext.UpsertReopen(true))
@@ -64,16 +65,16 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       }
     }
 
-  override def housework(now: Instant, draining: => Boolean): List[(ManagerKindDefinition.HouseworkResultPart1, () => List[ManagerKindDefinition.HouseworkResultPart2Result])] =
-    def lines(f: => List[String]): () => List[ManagerKindDefinition.HouseworkResultPart2Result] =
-      () => f.map(ManagerKindDefinition.HouseworkResultPart2Result(_))
+  override def housework(now: Instant, draining: => Boolean): List[(ManagerLight.Id, () => List[ManagerContext.TickLine])] =
+    def lines(f: => List[String]): () => List[ManagerContext.TickLine] =
+      () => f.map(ManagerContext.TickLine(_))
     List(
       // seed before the plan: sourceless goals queue legal open-access candidates (no model), then the drain
-      ManagerKindDefinition.HouseworkResultPart1("seed") -> lines(work.seeding.tick(now)),
+      ManagerLight.Id("seed") -> lines(work.seeding.tick(now)),
       // the watchers' ingest backlog, before any sweep is dispatched (a sweep gets what it leaves)
-      ManagerKindDefinition.HouseworkResultPart1("ingest-backlog") -> lines(if draining then Nil else work.oaBacklog.drain(now)),
+      ManagerLight.Id("ingest-backlog") -> lines(if draining then Nil else work.oaBacklog.drain(now)),
       // the acquisition list's legal re-check: after the backlog, which keeps the shared allowance first
-      ManagerKindDefinition.HouseworkResultPart1("acquire-recheck") -> lines(work.acquireRecheck.tick(now).map(_.value))
+      ManagerLight.Id("acquire-recheck") -> lines(work.acquireRecheck.tick(now).map(_.value))
     )
 
   def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts =
@@ -88,7 +89,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       m: ManagerInfo,
       item: ManagerItem,
       run: Option[com.histmersion.domain.automation.Run.Id],
-      out: Builder[ManagerKindDefinition.AfterDoneOutPart1, List[ManagerKindDefinition.AfterDoneOutPart2]]
+      out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
   ): Unit =
     if item.kind.value == AcquisitionSweep || item.kind.value == CurrencyCheck then
       run.foreach { r =>
@@ -98,7 +99,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
           s"; picked: ${found
               .map(p =>
                 s"${p.candidate.title} (https://doi.org/${p.candidate.doi}${
-                    if p.candidate.isOa then ", open access" else ""
+                    if p.candidate.isOa.value then ", open access" else ""
                   })"
               )
               .mkString("; ")}"
@@ -113,13 +114,13 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
 
   /** The worklog line a sweep's `close` step wrote (what it found, queued, ingested). */
   private def closeLine(c: ManagerContext, run: com.histmersion.domain.automation.Run.Id): Option[String] =
-    c.stepOutput(run, ManagerContext.StepOutputStep("close")).flatMap(o => io.circe.parser.decode[String](o.value).toOption)
+    c.stepOutput(run, AgentRepo.StepRecord.Name("close")).flatMap(o => io.circe.parser.decode[String](o.value).toOption)
 
-  def target(m: ManagerInfo, itemKind: ManagerContext.ItemKind, raw: ManagerKindDefinition.TargetRaw): Either[Api.Error, ManagerKindDefinition.TargetResultPart2] =
+  def target(m: ManagerInfo, itemKind: ManagerContext.ItemKind, raw: ManagerItem.Target): Either[Api.Error, ManagerContext.ItemTarget] =
     itemKind.value match
       case OaIngest =>
         com.histmersion.domain.library.Doi.normalize(raw.value)
-          .map(d => ManagerKindDefinition.TargetResultPart2(d.value))
+          .map(d => ManagerContext.ItemTarget(d.value))
           .toRight(Api.Error(Api.Error.Message(s"'$raw' is not a DOI (an ingest-backlog item is one legal open-access work)")))
       case AcquisitionSweep | CurrencyCheck =>
         val g = Option(raw.value.trim).filter(_.nonEmpty).orElse(m.goal.map(_.value)).getOrElse("")
@@ -132,20 +133,15 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
             Either
               .cond(
                 m.goal.forall(_.value == s.value),
-                ManagerKindDefinition.TargetResultPart2(s.value),
+                ManagerContext.ItemTarget(s.value),
                 Api.Error(Api.Error.Message(s"manager ${m.id} watches ${m.goal.fold("?")(_.value)}, not $s"))
               )
           )
       case other => Left(Api.Error(Api.Error.Message(s"unknown item kind '$other'")))
 
   /** Each watcher's ingest backlog and the days it takes to drain. */
-  override def backlog(): Map[ManagerKindDefinition.BacklogResultPart1, (ManagerKindDefinition.BacklogResultPart2Part1, Option[ManagerKindDefinition.BacklogResultPart2Part2])] =
-    work.oaBacklog.snapshot().perManager.map((id, v) =>
-      ManagerKindDefinition.BacklogResultPart1(id.value) -> (
-        ManagerKindDefinition.BacklogResultPart2Part1(v._1.value),
-        v._2.map(d => ManagerKindDefinition.BacklogResultPart2Part2(d.value))
-      )
-    )
+  override def backlog(): Map[ManagerLight.Id, (IngestBacklog.Lane.Backlog, Option[IngestBacklog.DaysToDrain])] =
+    work.oaBacklog.snapshot().perManager
 
   /** The ingest backlog's size (the page adds the upstreams' quotas and the acquisition list's re-check). */
   override def status(st: Autopilot.EngineStatus, now: Instant): Autopilot.EngineStatus =
@@ -159,8 +155,8 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
   def upstreams(now: Instant): List[com.histmersion.api.library.UpstreamQuota] = site.upstreamQuotas(now)
 
   /** The acquisition list's re-check's finds count against the shared ingest cap too. */
-  override def ingestedToday(now: Instant): ManagerKindDefinition.IngestedTodayResult =
-    ManagerKindDefinition.IngestedTodayResult(work.acquireRecheck.fetchedToday(now).value)
+  override def ingestedToday(now: Instant): com.histmersion.RowCount =
+    work.acquireRecheck.fetchedToday(now)
 
   override def busy: Boolean = work.acquireRecheck.jobRunning
 
@@ -170,19 +166,18 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       s: ReviewSettings,
       item: ManagerItem,
       now: Instant,
-      out: Builder[ManagerKindDefinition.DispatchOutPart1, List[ManagerKindDefinition.DispatchOutPart2]]
-  ): Option[ManagerKindDefinition.DispatchResult] =
+      out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
+  ): Option[ManagerLight.Id] =
     item.kind.value match
       case AcquisitionSweep | CurrencyCheck =>
         com.histmersion.domain.automation.Goal.Slug.option(item.target.value).flatMap(work.agents.host.goal(_).toOption) match
           case None =>
             c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy("the goal no longer exists"))
-              .map(r => ManagerKindDefinition.DispatchResult(r.value))
           case Some(g) =>
             // the deterministic search first (#3761, no model): no new candidate, no agent run — the schedule
             // stops spending model quota on sweeps that change nothing
             val swept =
-              Option.when(item.kind.value == AcquisitionSweep)(work.acquisition.sweepCandidates(g.slug, dryRun = com.histmersion.domain.library.workflows.AgentUpstream.SweepCandidatesDryRun(false)))
+              Option.when(item.kind.value == AcquisitionSweep)(work.acquisition.sweepCandidates(com.histmersion.domain.automation.Goal.Slug.assume(g.slug.value), dryRun = com.histmersion.domain.library.workflows.AgentUpstream.SweepCandidatesDryRun(false)))
             swept.filter(WatchManagerKind.nothingNew).flatMap(_.toOption) match
               case Some(s) =>
                 c.settleNow(
@@ -193,7 +188,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
                     s"no new candidates from the goal's watches (${Plural.count(Plural.CountN(s.watches.size.toLong), com.histmersion.api.Plural.CountSingular("watch"), com.histmersion.api.Plural.CountPlural("watches"))} " +
                       s"read, ${s.found} found, all known) — no agent run"
                   )
-                ).map(r => ManagerKindDefinition.DispatchResult(r.value))
+                )
               case None =>
                 val sweep = item.kind.value == AcquisitionSweep
                 val autoOn = sweep && m.config.autoIngest.contains(true)
@@ -204,7 +199,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
                       .ingestAllowance(
                         m.config,
                         WatchManagerDefaults.IngestedToday(
-                          c.countEvents(managerId, ManagerContext.CountEventsFeed(Feed.Ingested), ManagerPolicy.dayStart(now)).value
+                          c.countEvents(managerId, ManagerContext.EventFeed(Feed.Ingested), ManagerPolicy.dayStart(now)).value
                         )
                       )
                       .value
@@ -241,10 +236,9 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
                   item.state,
                   ManagerContext.StartWhat(s"${item.kind}$auto"),
                   out
-                ).map(r => ManagerKindDefinition.DispatchResult(r.value))
+                )
       case other =>
         c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy(s"'$other' items are not driven by a ${m.kind} manager"))
-          .map(r => ManagerKindDefinition.DispatchResult(r.value))
 
 object WatchManagerKind:
   /** Pure: does a candidate sweep say there is nothing for a ranking (#3761)? Only an answered sweep with no unseen

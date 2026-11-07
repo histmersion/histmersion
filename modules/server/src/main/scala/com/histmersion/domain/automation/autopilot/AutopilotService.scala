@@ -15,7 +15,10 @@ import com.histmersion.api.automation.Autopilot.*
 import com.histmersion.domain.AutopilotPolicy.{GoalFacts, GoalRow, ManagerRow, Step}
 import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.api.automation.Queue.QueueAdd
+import com.histmersion.api.automation.Queue.{QueueAdd, QueueItem}
+import com.histmersion.domain.automation.{Goal as DomainGoal, ItemStatus as DomainItemStatus, Manager as DomainManager}
+import com.histmersion.domain.research.Slug as ResearchSlug
+import com.histmersion.RowCount
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 
 import java.time.Instant
@@ -53,29 +56,38 @@ final class AutopilotService(
   private def acfg = cfg.autopilot
 
   /** Whether it is on (one row read). */
-  def on: Boolean = agents.autopilotRow.row().enabled
+  def on: Boolean = agents.autopilotRow.row().enabled.value
 
   /** Today's shared ingest cap: `ingest-per-day` (0 = none), scaled to the watchers' ingest backlog when
     * `ingest-backlog-share` is above 0 (at most `ingest-ceiling`).
     */
-  def ingestCap: com.histmersion.domain.automation.autopilot.AutopilotService.IngestCapResult =
-    if acfg.ingestPerDay <= 0 then com.histmersion.domain.automation.autopilot.AutopilotService.IngestCapResult(0)
-    else AutopilotPolicy.scaledCap(acfg.ingestPerDay, backlogPending, acfg.ingestBacklogShare, acfg.ingestCeiling)
+  def ingestCap: AutopilotPolicy.Cap =
+    if acfg.ingestPerDay.value <= 0 then AutopilotPolicy.Cap(0)
+    else
+      AutopilotPolicy.scaledCap(
+        AutopilotPolicy.Base(acfg.ingestPerDay.value),
+        backlogPending,
+        AutopilotPolicy.Share(acfg.ingestBacklogShare.value),
+        AutopilotPolicy.Cap(acfg.ingestCeiling.value)
+      )
 
-  private def backlogPending: com.histmersion.domain.automation.autopilot.AutopilotService.BacklogPendingResult =
-    if acfg.ingestBacklogShare <= 0 then com.histmersion.domain.automation.autopilot.AutopilotService.(0) else agents.managerStore.backlogCounts().values.map(_._1).sum
+  private def backlogPending: AutopilotPolicy.Backlog =
+    if acfg.ingestBacklogShare.value <= 0 then AutopilotPolicy.Backlog(0)
+    else AutopilotPolicy.Backlog(agents.managerStore.backlogCounts().values.map(_._1.value).sum)
 
   /** What is left today of the legal open-access ingests all watchers share — the acquisition list's re-check's finds
     * counted too (None: off, or no shared cap).
     */
-  def sharedIngestLeft(now: Instant): Option[com.histmersion.domain.automation.autopilot.AutopilotService.SharedIngestLeftResult] =
+  def sharedIngestLeft(now: Instant): Option[AutopilotPolicy.Left] =
     if !on then None
     else AutopilotPolicy.sharedIngestLeft(ingestCap, ingestedToday(now))
 
   /** The legal open-access ingests today: every watcher's, and the acquisition list's re-check's. */
-  def ingestedToday(now: Instant): com.histmersion.domain.automation.autopilot.AutopilotService.IngestedTodayResult =
-    agents.managerStore.countEventsAll(Feed.Ingested, ManagerPolicy.dayStart(now)) +
-      agents.workflows.managerKinds.map(_.ingestedToday(now)).sum
+  def ingestedToday(now: Instant): AutopilotPolicy.IngestedToday =
+    AutopilotPolicy.IngestedToday(
+      agents.managerStore.countEventsAll(ManagerEvent.Kind(Feed.Ingested), ManagerPolicy.dayStart(now)).value +
+        agents.workflows.managerKinds.map(_.ingestedToday(now)).sum
+    )
 
   /** Make sure of the goals' managers at the next tick (a plan created sub-goals). */
   def soon(): Unit = agents.autopilotRow.ensureSoon()
@@ -86,47 +98,47 @@ final class AutopilotService(
     * answer is the status with what it did.
     */
   def set(in: AutopilotSet, now: Instant = Instant.now(agents.clock)): EngineStatus =
-    val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
+    val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
+    val changedBy = AutopilotRepo.Row.ChangedBy(by)
     val row = agents.autopilotRow.row()
     val changes =
-      if in.on then
-        val turned = agents.autopilotRow.set(enabled = com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled(true), by, row.paused)
+      if in.on.value then
+        val turned = agents.autopilotRow.set(enabled = com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled(true), changedBy, row.paused)
         // turning it on lifts a drain: the person wants it running
-        val undrained = Option.when(agents.autopilotRow.setDrain(on = com.histmersion.domain.automation.autopilot.AutopilotRowService.SetDrainOn(false), by))(s"drain lifted by $by")
+        val undrained = Option.when(agents.autopilotRow.setDrain(on = false, changedBy))(s"drain lifted by $by")
         (if turned then List(s"turned on by $by") else List("already on")) ++ undrained ++ ensureNow(now) ++ advance(
           now
         )
-      else if !row.enabled then List("already off")
+      else if !row.enabled.value then List("already off")
       else
         val ids = AutopilotPolicy.toPause(rows())
         ids.foreach { id =>
-          val _ = agents.managerStore.setState(id, State.Paused, pauseRuns = com.histmersion.domain.automation.managers.ManagerService.SetStatePauseRuns(false))
-          agents.managerStore.event(
-            id,
-            None,
-            None,
-            Feed.Autopilot,
-            s"paused: the autopilot was turned off by $by (its runs in flight go on)"
-          )
+          val managerId = ManagerInfo.Id(id.value)
+          val _ = agents.managerStore.setState(managerId, State.Paused, pauseRuns = ManagerInfo.PauseRuns(false))
+          event(managerId, s"paused: the autopilot was turned off by $by (its runs in flight go on)")
         }
-        val _ = agents.autopilotRow.set(enabled = com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled(false), by, ids)
-        List(s"turned off by $by", s"paused ${Plural.count(ids.size, com.histmersion.api.Plural.CountSingular("manager"))} it ran (turning it on resumes them)")
-    log(s"autopilot ${if in.on then "on" else "off"} (by $by): ${changes.mkString("; ")}")
+        val _ = agents.autopilotRow.set(
+          enabled = com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled(false),
+          changedBy,
+          ids.map(id => AutopilotRepo.Row.Paused(id.value))
+        )
+        List(s"turned off by $by", s"paused ${Plural.count(Plural.CountN(ids.size.toLong), com.histmersion.api.Plural.CountSingular("manager"))} it ran (turning it on resumes them)")
+    log(s"autopilot ${if in.on.value then "on" else "off"} (by $by): ${changes.mkString("; ")}")
     agents.managers.nudge()
-    status(now).modify(_.changes).setTo(changes)
+    status(now).modify(_.changes).setTo(changes.map(c => EngineStatus.Changes(c)))
 
   // ── the tick ───────────────────────────────────────────────────────────────────────────────────
 
   /** One pass, from the managers' tick: nothing while off; on, ensure and advance when due, and the housekeeping when
     * due.
     */
-  def tick(now: Instant): List[com.histmersion.domain.automation.autopilot.AutopilotService.TickResult] =
+  def tick(now: Instant): List[String] =
     val row = agents.autopilotRow.row()
-    if !row.enabled then Nil
+    if !row.enabled.value then Nil
     else
-      val last = row.lastEnsureAt.flatMap(ManagerPolicy.parseInstant)
+      val last = row.lastEnsureAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
       val ensured =
-        if last.forall(t => !t.plusSeconds(math.max(1, acfg.ensureMinutes).toLong * 60L).isAfter(now)) then
+        if last.forall(t => !t.plusSeconds(math.max(1, acfg.ensureMinutes.value).toLong * 60L).isAfter(now)) then
           val out = ensureNow(now) ++ advance(now) ++ (if agents.drain.draining then Nil else nextArticles(now))
           if out.nonEmpty then log(s"autopilot: ${out.mkString("; ")}".take(1000))
           out
@@ -137,118 +149,150 @@ final class AutopilotService(
     agents.managerStore
       .light()
       .map(m =>
-        ManagerRow(m.id, m.kind, m.goal, m.state, m.cron, m.config.autoIngest, m.planItem, m.config.extendMinNew)
+        ManagerRow(
+          ManagerRow.Id(m.id.value),
+          DomainManager.Kind.Wire(m.kind.value),
+          m.goal.flatMap(g => DomainGoal.Slug.option(g.value)),
+          DomainManager.State.Wire(m.state.value),
+          m.cron.map(c => AutopilotPolicy.Cron(c.value)),
+          m.config.autoIngest.map(a => ManagerRow.AutoIngest(a.value)),
+          ManagerRow.PlanItem(m.planItem.value),
+          m.config.extendMinNew.map(n => AutopilotPolicy.Settings.ExtendMinNew(n.value))
+        )
       )
 
   private def settings = AutopilotPolicy.Settings(
-    acfg.watchCron,
-    acfg.seedCron,
-    acfg.finishedWatchCron,
-    math.max(0, acfg.watchIngestPerDay),
-    math.max(0, acfg.extendMinNew)
+    AutopilotPolicy.Cron(acfg.watchCron.value),
+    AutopilotPolicy.Cron(acfg.seedCron.value),
+    AutopilotPolicy.Cron(acfg.finishedWatchCron.value),
+    AutopilotPolicy.Settings.WatchIngestPerDay(math.max(0, acfg.watchIngestPerDay.value)),
+    AutopilotPolicy.Settings.ExtendMinNew(math.max(0, acfg.extendMinNew.value))
   )
 
   /** Every goal's managers ([[AutopilotPolicy.ensure]]), applied; one line per change. */
-  def ensureNow(now: Instant): List[com.histmersion.domain.automation.autopilot.AutopilotService.EnsureNowResult] =
+  def ensureNow(now: Instant): List[String] =
     val goals = agents.goals.all()
     val planned = agents.goals.planned()
     val links = agents.goals.linkCounts()
     val gs = goals.map(g =>
+      val slug = slugOf(g)
       GoalRow(
-        g.slug,
-        g.status,
-        needsPlan = !planned(g.slug) && links.getOrElse((g.slug, LinkKind.SearchQuery.wire), 0) == 0
+        slug,
+        DomainGoal.Status.Wire(g.status.value),
+        needsPlan = GoalRow.NeedsPlan(
+          !planned(slug) && links.getOrElse((slug, DomainGoal.LinkKind.Wire(LinkKind.SearchQuery.wire.value)), RowCount(0)).value == 0
+        )
       )
     )
-    val steps = AutopilotPolicy.ensure(gs, rows(), agents.autopilotRow.row().paused.toSet, settings)
+    val steps = AutopilotPolicy.ensure(
+      gs,
+      rows(),
+      agents.autopilotRow.row().paused.map(p => ManagerRow.Id(p.value)).toSet,
+      settings
+    )
     val out = steps.flatMap(s => applyStep(s, now))
     agents.autopilotRow.ensured(now)
     if out.nonEmpty then agents.managers.nudge()
     out
 
-  private def next(cron: com.histmersion.domain.automation.managers.ManagerLight.Cron, now: Instant): Option[Instant] = Cron.parse(cron).toOption.flatMap(_.next(now))
+  private def next(cron: AutopilotPolicy.Cron, now: Instant): Option[Instant] = Cron.parse(Cron.Text(cron.value)).toOption.flatMap(_.next(now))
 
-  private def event(id: com.histmersion.domain.automation.autopilot.AutopilotService.EventId, text: com.histmersion.domain.automation.autopilot.AutopilotService.EventText): Unit = agents.managerStore.event(id, None, None, Feed.Autopilot, text)
+  /** The slug of a goal read from the database, as the domain types it. */
+  private def slugOf(g: Goal): DomainGoal.Slug = DomainGoal.Slug.assume(g.slug.value)
 
-  private def applyStep(s: Step, now: Instant): Option[com.histmersion.domain.automation.autopilot.AutopilotService.ApplyStepResult] =
+  private def event(id: ManagerInfo.Id, text: String): Unit =
+    agents.managerStore.event(id, None, None, ManagerEvent.Kind(Feed.Autopilot), ManagerEvent.Text(text))
+
+  private def itemOf(goal: DomainGoal.Slug): ManagerItem.Target = ManagerItem.Target(goal.value)
+
+  private def applyStep(s: Step, now: Instant): Option[String] =
     s match
       case Step.CreateSeed(goal, cron, planFirst) =>
-        val id = seedId(goal)
+        val id = seedId(Goal.Ref(goal.value))
         Option.when(
           agents.managerStore
-            .create(id, Kind.Seed, Some(goal), State.Active, ManagerConfig(), Some(cron), next(cron, now))
+            .create(id, Kind.Seed, Some(goal), State.Active, ManagerConfig(), Some(ManagerInfo.Cron(cron.value)), next(cron, now))
         ) {
-          if planFirst then
-            val _ = agents.managerStore.upsert(id, PlanGoalItem, goal, ItemOrigin.Selection, com.histmersion.domain.automation.managers.ManagerContext.Priority(1), reopen = com.histmersion.domain.automation.managers.ManagerService.UpsertReopen(false))
-          val _ = agents.managerStore.upsert(id, ProposeArticles, goal, ItemOrigin.Selection, com.histmersion.domain.automation.managers.ManagerContext.Priority(0), reopen = com.histmersion.domain.automation.managers.ManagerService.UpsertReopen(false))
+          if planFirst.value then
+            val _ = agents.managerStore.upsert(id, ManagerItem.Kind(PlanGoalItem), itemOf(goal), ItemOrigin.Selection, ManagerItem.Priority(1), reopen = false)
+          val _ = agents.managerStore.upsert(id, ManagerItem.Kind(ProposeArticles), itemOf(goal), ItemOrigin.Selection, ManagerItem.Priority(0), reopen = false)
           event(
             id,
             s"created active by the autopilot, cron `$cron` (UTC)" +
-              (if planFirst then ": the goal has no plan — plan-goal first, then propose-articles"
+              (if planFirst.value then ": the goal has no plan — plan-goal first, then propose-articles"
                else ": propose-articles")
           )
           s"$id created"
         }
       case Step.CreateWatch(goal, cron, perDay) =>
-        val id = watchId(goal)
-        val c = ManagerConfig(autoIngest = Some(com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(true)), autoIngestPerDay = Some(perDay))
+        val id = watchId(Goal.Ref(goal.value))
+        val c = ManagerConfig(autoIngest = Some(com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(true)), autoIngestPerDay = Some(ManagerConfig.AutoIngestPerDay(perDay.value)))
         Option.when(
-          agents.managerStore.create(id, Kind.Watch, Some(goal), State.Active, c, Some(cron), next(cron, now))
+          agents.managerStore.create(id, Kind.Watch, Some(goal), State.Active, c, Some(ManagerInfo.Cron(cron.value)), next(cron, now))
         ) {
           Sweep
             .of(c)
-            .foreach(sw => agents.managerStore.upsert(id, sw.itemKind, goal, ItemOrigin.Selection, com.histmersion.domain.automation.managers.ManagerContext.Priority(0), reopen = com.histmersion.domain.automation.managers.ManagerService.UpsertReopen(false)))
+            .foreach(sw => agents.managerStore.upsert(id, ManagerItem.Kind(sw.itemKind.value), itemOf(goal), ItemOrigin.Selection, ManagerItem.Priority(0), reopen = false))
           event(
             id,
             s"created active by the autopilot, cron `$cron` (UTC), auto-ingest of legal open access on (at most $perDay a day)"
           )
           s"$id created"
         }
-      case Step.Resume(id) =>
-        Option.when(agents.managerStore.setState(id, State.Active, pauseRuns = com.histmersion.domain.automation.managers.ManagerService.SetStatePauseRuns(false))) {
+      case Step.Resume(rowId) =>
+        val id = ManagerInfo.Id(rowId.value)
+        Option.when(agents.managerStore.setState(id, State.Active, pauseRuns = ManagerInfo.PauseRuns(false))) {
           agents.autopilotRow.unpaused(id)
-          event(id, com.histmersion.domain.automation.autopilot.AutopilotService.EventText("resumed by the autopilot"))
+          event(id, "resumed by the autopilot")
           s"$id resumed"
         }
-      case Step.SetCron(id, cron) =>
+      case Step.SetCron(rowId, cron) =>
+        val id = ManagerInfo.Id(rowId.value)
         agents.managerStore.get(id).flatMap { m =>
-          Option.when(agents.managerStore.setConfig(id, m.config, Some(cron), next(cron, now))) {
+          Option.when(agents.managerStore.setConfig(id, m.config, Some(ManagerInfo.Cron(cron.value)), next(cron, now))) {
             event(id, s"cron `$cron` (UTC) set by the autopilot")
             s"$id cron $cron"
           }
         }
-      case Step.AutoIngestOn(id, perDay) =>
+      case Step.AutoIngestOn(rowId, perDay) =>
+        val id = ManagerInfo.Id(rowId.value)
         agents.managerStore.get(id).flatMap { m =>
           val c =
-            m.config.modify(_.autoIngest).setTo(Some(true)).modify(_.autoIngestPerDay).setTo(m.config.autoIngestPerDay.orElse(Some(perDay)))
-          Option.when(agents.managerStore.setConfig(id, c, m.cron, m.nextTickAt.flatMap(ManagerPolicy.parseInstant))) {
+            m.config
+              .modify(_.autoIngest)
+              .setTo(Some(ManagerConfig.AutoIngest(true)))
+              .modify(_.autoIngestPerDay)
+              .setTo(m.config.autoIngestPerDay.orElse(Some(ManagerConfig.AutoIngestPerDay(perDay.value))))
+          Option.when(agents.managerStore.setConfig(id, c, m.cron, m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value))))) {
             event(
               id,
-              s"auto-ingest of legal open access turned on by the autopilot (at most ${c.autoIngestPerDay.getOrElse(perDay)} a day)"
+              s"auto-ingest of legal open access turned on by the autopilot (at most ${c.autoIngestPerDay.fold(perDay.value)(_.value)} a day)"
             )
             s"$id auto-ingest on"
           }
         }
-      case Step.AddPlanItem(id, goal) =>
-        val (item, isNew) = agents.managerStore.upsert(id, PlanGoalItem, goal, ItemOrigin.Selection, com.histmersion.domain.automation.managers.ManagerContext.Priority(1), reopen = com.histmersion.domain.automation.managers.ManagerService.UpsertReopen(false))
+      case Step.AddPlanItem(rowId, goal) =>
+        val id = ManagerInfo.Id(rowId.value)
+        val (item, isNew) = agents.managerStore.upsert(id, ManagerItem.Kind(PlanGoalItem), itemOf(goal), ItemOrigin.Selection, ManagerItem.Priority(1), reopen = false)
         Option.when(isNew) {
           agents.managerStore.event(
             id,
             Some(item),
             None,
-            Feed.Autopilot,
-            s"$goal ($PlanGoalItem): the goal has no plan — planned first"
+            ManagerEvent.Kind(Feed.Autopilot),
+            ManagerEvent.Text(s"$goal ($PlanGoalItem): the goal has no plan — planned first")
           )
           s"$id plan-goal queued"
         }
-      case Step.ExtendMinNew(id, n) =>
+      case Step.ExtendMinNew(rowId, n) =>
+        val id = ManagerInfo.Id(rowId.value)
         agents.managerStore.get(id).flatMap { m =>
           Option.when(
             agents.managerStore.setConfig(
               id,
-              m.config.modify(_.extendMinNew).setTo(Some(n)),
+              m.config.modify(_.extendMinNew).setTo(Some(ManagerConfig.ExtendMinNew(n.value))),
               m.cron,
-              m.nextTickAt.flatMap(ManagerPolicy.parseInstant)
+              m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
             )
           ) {
             event(
@@ -265,39 +309,64 @@ final class AutopilotService(
   /** Every goal's status moved on from the facts ([[AutopilotPolicy.advance]]), the deepest goals first so a parent
     * sees its sub-goals' new status in the same pass; one line per goal moved.
     */
-  def advance(now: Instant): List[com.histmersion.domain.automation.autopilot.AutopilotService.AdvanceResult] =
+  def advance(now: Instant): List[String] =
     val goals = agents.goals.all()
-    val parentOf = goals.map(g => g.slug -> g.parentSlug).toMap
+    val parentOf = goals.map(g => g.slug.value -> g.parentSlug.map(_.value)).toMap
     val managers = agents.managerStore.light()
-    val articles = agents.workflows.linked()
-    val passed = agents.workflows.finished()
-    val status = collection.mutable.Map.from(goals.map(g => g.slug -> g.status))
-    val order = goals.sortBy(g => -AutopilotPolicy.depth(g.slug, s => parentOf.get(s).flatten))
+    val articles = agents.workflows.linked().map((k, v) => k.value -> v.map(_.value))
+    val passed = agents.workflows.finished().map(_.value)
+    val status = collection.mutable.Map.from(goals.map(g => g.slug.value -> g.status))
+    val order = goals.sortBy(g =>
+      -AutopilotPolicy
+        .depth(ResearchSlug.assume(g.slug.value), s => parentOf.get(s.value).flatten.map(p => ResearchSlug.assume(p)))
+        .value
+    )
     order.flatMap { g =>
-      val mine = managers.filter(_.goal.contains(g.slug))
+      val slug = g.slug.value
+      val mine = managers.filter(_.goal.exists(_.value == slug))
       val managed =
-        mine.exists(m => m.state == State.Active.wire && (m.kind == Kind.Seed.wire || m.kind == Kind.Watch.wire))
-      val arts = articles.getOrElse(g.slug, Nil)
-      val seed = seedId(g.slug)
-      val compileOpen = agents.managerStore.openOf(seed, List(ArticleCompile), List("pending", "held", "active")) > 0 ||
+        mine.exists(m =>
+          m.state.value == State.Active.wire.value &&
+            (m.kind.value == Kind.Seed.wire.value || m.kind.value == Kind.Watch.wire.value)
+        )
+      val arts = articles.getOrElse(slug, Nil)
+      val seed = seedId(Goal.Ref(slug))
+      val compileOpen = agents.managerStore.openOf(
+        seed,
+        List(ManagerItem.Kind(ArticleCompile)),
+        List(ManagerItem.Status("pending"), ManagerItem.Status("held"), ManagerItem.Status("active"))
+      ).value > 0 ||
         agents.managerStore.openOf(
           seed,
-          List(ProposeArticles, PlanGoalItem),
-          List("held", "active"),
+          List(ManagerItem.Kind(ProposeArticles), ManagerItem.Kind(PlanGoalItem)),
+          List(ManagerItem.Status("held"), ManagerItem.Status("active")),
           focusHeld = false
-        ) > 0
-      val kids = goals.filter(_.parentSlug.contains(g.slug)).map(c => status.getOrElse(c.slug, c.status))
-      val facts = GoalFacts(g.slug, status(g.slug), managed, arts.size, compileOpen, arts.forall(passed), kids)
+        ).value > 0
+      val kids = goals
+        .filter(_.parentSlug.exists(_.value == slug))
+        .map(c => DomainGoal.Status.Wire(status.getOrElse(c.slug.value, c.status).value))
+      val facts = GoalFacts(
+        GoalFacts.Slug(slug),
+        DomainGoal.Status.Wire(status(slug).value),
+        GoalFacts.Managed(managed),
+        GoalFacts.Articles(arts.size),
+        GoalFacts.CompileOpen(compileOpen),
+        GoalFacts.Reviewed(arts.forall(passed)),
+        kids
+      )
       AutopilotPolicy.advance(facts).flatMap { (to, why) =>
-        agents.host.patchGoal(g.slug, Goal.Patch(status = Some(to))) match
+        agents.host.patchGoal(slugOf(g), Goal.Patch(status = Some(Goal.StatusValue(to.value)))) match
           case Left(e) =>
-            scribe.warn(s"autopilot: goal ${g.slug} not moved to $to: ${e.message}")
+            scribe.warn(s"autopilot: goal $slug not moved to $to: ${e.message}")
             None
           case Right(_) =>
-            val from = status(g.slug)
-            status(g.slug) = to
-            val line = s"goal ${g.slug}: $from → $to ($why)"
-            mine.find(_.kind == Kind.Seed.wire).orElse(mine.headOption).foreach(m => event(m.id, line))
+            val from = status(slug)
+            status(slug) = Goal.StatusValue(to.value)
+            val line = s"goal $slug: $from → $to ($why)"
+            mine
+              .find(_.kind.value == Kind.Seed.wire.value)
+              .orElse(mine.headOption)
+              .foreach(m => event(ManagerInfo.Id(m.id.value), line))
             Some(line)
       }
     }
@@ -308,26 +377,26 @@ final class AutopilotService(
     * ([[AutopilotPolicy.nextArticle]]): its seeding manager's propose-articles item re-opened (the scheduler starts it;
     * the plan goes through the article-plan approvals). One line per goal.
     */
-  def nextArticles(now: Instant): List[com.histmersion.domain.automation.autopilot.AutopilotService.NextArticlesResult] =
-    if acfg.nextArticleHours <= 0 then Nil
+  def nextArticles(now: Instant): List[String] =
+    if acfg.nextArticleHours.value <= 0 then Nil
     else
-      val seeds = agents.managerStore.light().filter(_.kind == Kind.Seed.wire).flatMap(m => m.goal.map(_ -> m)).toMap
-      agents.focus.facts().filter(f => f.articles > 0 && seeds.contains(f.slug)).flatMap { f =>
-        val sid = seedId(f.slug)
-        val item = agents.managerStore.itemFor(sid, ProposeArticles, f.slug)
+      val seeds = agents.managerStore.light().filter(_.kind.value == Kind.Seed.wire.value).flatMap(m => m.goal.map(_.value -> m)).toMap
+      agents.focus.facts().filter(f => f.articles.value > 0 && seeds.contains(f.slug.value)).flatMap { f =>
+        val sid = seedId(Goal.Ref(f.slug.value))
+        val item = agents.managerStore.itemFor(sid, ManagerItem.Kind(ProposeArticles), itemOf(f.slug))
         val facts = AutopilotPolicy.NextFacts(
-          f.slug,
+          AutopilotPolicy.NextFacts.Goal(f.slug.value),
           f.status,
-          f.articles,
-          f.unreviewed,
-          f.compileOpen,
-          seeds.get(f.slug).map(_.state),
-          item.map(_.status),
-          item.flatMap(i => ManagerPolicy.parseInstant(i.updatedAt))
+          AutopilotPolicy.NextFacts.Articles(f.articles.value),
+          AutopilotPolicy.NextFacts.Unreviewed(f.unreviewed.value),
+          AutopilotPolicy.NextFacts.CompileOpen(f.compileOpen.value),
+          seeds.get(f.slug.value).map(m => DomainManager.State.Wire(m.state.value)),
+          item.map(i => DomainItemStatus.Wire(i.status.value)),
+          item.flatMap(i => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(i.updatedAt.value)))
         )
-        AutopilotPolicy.nextArticle(facts, now, acfg.nextArticleHours).map { why =>
-          val (id, _) = agents.managerStore.upsert(sid, ProposeArticles, f.slug, ItemOrigin.Selection, 0, reopen = true)
-          agents.managerStore.event(sid, Some(id), None, Feed.Autopilot, s"${f.slug}: $why".take(2000))
+        AutopilotPolicy.nextArticle(facts, now, AutopilotPolicy.CooldownHours(acfg.nextArticleHours.value)).map { why =>
+          val (id, _) = agents.managerStore.upsert(sid, ManagerItem.Kind(ProposeArticles), itemOf(f.slug), ItemOrigin.Selection, ManagerItem.Priority(0), reopen = true)
+          agents.managerStore.event(sid, Some(id), None, ManagerEvent.Kind(Feed.Autopilot), ManagerEvent.Text(s"${f.slug}: $why".take(2000)))
           s"goal ${f.slug}: next article proposed"
         }
       }
@@ -340,9 +409,17 @@ final class AutopilotService(
     * minutes), one at a time. Recorded as started, so a failure is not retried every tick (the next try is a period
     * later); the outcome is a worklog line.
     */
-  private def housekeeping(row: AutopilotRepo.Row, now: Instant): List[com.histmersion.domain.automation.autopilot.AutopilotService.HousekeepingResult] =
-    val backupDue = AutopilotPolicy.due(row.lastBackupAt.flatMap(ManagerPolicy.parseInstant), acfg.backupHours, now)
-    val lintDue = AutopilotPolicy.due(row.lastLintAt.flatMap(ManagerPolicy.parseInstant), acfg.lintHours, now)
+  private def housekeeping(row: AutopilotRepo.Row, now: Instant): List[String] =
+    val backupDue = AutopilotPolicy.due(
+      row.lastBackupAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value))),
+      AutopilotPolicy.EveryHours(acfg.backupHours.value),
+      now
+    )
+    val lintDue = AutopilotPolicy.due(
+      row.lastLintAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value))),
+      AutopilotPolicy.EveryHours(acfg.lintHours.value),
+      now
+    )
     if !(backupDue || lintDue) then Nil
     else
       agents.host.housekeepingBlock match
@@ -385,11 +462,11 @@ final class AutopilotService(
       case Left(e)  => s"autopilot: the scheduled lint --fix failed: ${e.message}"
       case Right(r) =>
         s"autopilot: lint --fix — ${r.edgesResolved} edge(s) resolved, ${r.sourcesReindexed} source(s) re-indexed" +
-          (if r.remaining > 0 then s", ${r.remaining} left for the next run" else "")
+          (if r.remaining.value > 0 then s", ${r.remaining} left for the next run" else "")
     log(line)
 
-  private def log(line: com.histmersion.domain.automation.autopilot.AutopilotService.LogLine): Unit =
-    val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(line.take(1000)))
+  private def log(line: String): Unit =
+    val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(QueueItem.Text(line.take(1000))))
     scribe.info(line)
 
   // ── status ─────────────────────────────────────────────────────────────────────────────────────
@@ -403,109 +480,91 @@ final class AutopilotService(
     val managers = agents.managerStore.light()
     val pace = agents.managerStore.pace(now.minusSeconds(7L * 86400L))
     val links = agents.goals.linkCounts()
-    val arts = agents.workflows.linked()
-    val open = agents.approvalStore.openBySubject()
-    def brief(m: ManagerLight) = ManagerBrief(m.id, m.kind, m.state, m.statusNote)
-    val progress = goals.sortBy(_.slug).map { g =>
-      val mine = managers.filter(_.goal.contains(g.slug))
-      val p = mine.flatMap(m => pace.get(m.id))
-      val (o, d) = (p.map(_._1).sum, p.map(_._2).sum)
+    val arts = agents.workflows.linked().map((k, v) => k.value -> v.map(_.value))
+    val open = agents.approvalStore.openBySubject().map((k, v) => k.value -> v.value)
+    def linkCount(g: Goal, kind: DomainGoal.LinkKind): Int =
+      links.getOrElse((slugOf(g), kind.wire), RowCount(0)).value
+    def brief(m: ManagerLight) =
+      ManagerBrief(
+        ManagerBrief.Id(m.id.value),
+        ManagerBrief.Kind(m.kind.value),
+        ManagerBrief.State(m.state.value),
+        m.statusNote.map(n => ManagerBrief.Note(n.value))
+      )
+    val progress = goals.sortBy(_.slug.value).map { g =>
+      val mine = managers.filter(_.goal.exists(_.value == g.slug.value))
+      val p = mine.flatMap(m => pace.get(ManagerInfo.Id(m.id.value)))
+      val (o, d) = (p.map(_._1.value).sum, p.map(_._2.value).sum)
+      val mentions = arts.getOrElse(g.slug.value, Nil)
       GoalProgress(
-        g.slug,
-        g.title,
-        g.status,
-        g.parentSlug,
+        GoalProgress.Slug(g.slug.value),
+        GoalProgress.Title(g.title.value),
+        GoalProgress.Status(g.status.value),
+        g.parentSlug.map(parent => GoalProgress.Parent(parent.value)),
         mine.map(brief),
-        links.getOrElse((g.slug, LinkKind.Source.wire), 0),
-        arts.getOrElse(g.slug, Nil).size,
-        open.getOrElse(g.slug, 0) + arts.getOrElse(g.slug, Nil).map(open.getOrElse(_, 0)).sum,
-        p.flatMap(_._3).maxOption,
-        d,
-        o,
-        AutopilotPolicy.etaDays(o, d)
+        GoalProgress.Sources(linkCount(g, DomainGoal.LinkKind.Source)),
+        GoalProgress.Articles(mentions.size),
+        GoalProgress.OpenApprovals(open.getOrElse(g.slug.value, 0) + mentions.map(open.getOrElse(_, 0)).sum),
+        p.flatMap(_._3.map(_.value)).maxOption.map(t => GoalProgress.LastActivity(t)),
+        GoalProgress.DoneLast7(d),
+        GoalProgress.Open(o),
+        AutopilotPolicy.etaDays(AutopilotPolicy.OpenCount(o), AutopilotPolicy.DoneLast7(d)).map(e => GoalProgress.EtaDays(e.value))
       )
     }
     val caps = cfg.approvals.auto
-    def rule(k: Agents.ApprovalKind, cap: com.histmersion.domain.automation.autopilot.AutopilotService.StatusRuleCap) =
+    def rule(k: Agents.ApprovalKind, cap: String) =
       ApprovalRule(
         k.wire,
         if cfg.approvals.checked(k.transformInto[com.histmersion.domain.automation.Approval.Kind]) then com.histmersion.api.automation.Autopilot.ApprovalRule.Mode("checked")
         else com.histmersion.api.automation.Autopilot.ApprovalRule.Mode("person"),
-        cap
+        ApprovalRule.Cap(cap)
       ) match
         case r if k == Agents.ApprovalKind.ArticlePublish && cfg.approvals.publishMode == Agents.ApprovalMode.Auto =>
-          r.modify(_.mode).setTo("auto (in the run, unchecked)")
+          r.modify(_.mode).setTo(ApprovalRule.Mode("auto (in the run, unchecked)"))
         case r => r
     val st = EngineStatus(
-      row.enabled,
-      Some(row.changedAt),
-      Option(row.changedBy).filter(_.nonEmpty),
-      cfg.enabled,
-      cfg.managers.enabled,
-      cfg.scheduler.enabled,
+      EngineStatus.On(row.enabled.value),
+      Some(EngineStatus.Since(row.changedAt.value)),
+      Option(row.changedBy.value).filter(_.nonEmpty).map(by => EngineStatus.By(by)),
+      EngineStatus.AgentsEnabled(cfg.enabled.value),
+      EngineStatus.ManagersEnabled(cfg.managers.enabled.value),
+      EngineStatus.CronsEnabled(cfg.scheduler.enabled.value),
       List(
         rule(
           Agents.ApprovalKind.GoalPlan,
-          AutopilotPolicy.capText(
-            caps.goalPlansPerDay,
-            agents.approvalStore.openCount(Agents.ApprovalKind.GoalPlan),
-            caps.goalPlansBacklogShare,
-            caps.goalPlansCeiling
-          ) +
+          AutopilotPolicy
+            .capText(
+              AutopilotPolicy.Base(caps.goalPlansPerDay.value),
+              AutopilotPolicy.Backlog(agents.approvalStore.openCount(Agents.ApprovalKind.GoalPlan).value),
+              AutopilotPolicy.Share(caps.goalPlansBacklogShare.value),
+              AutopilotPolicy.Cap(caps.goalPlansCeiling.value)
+            )
+            .value +
             s", sub-goals above depth ${caps.maxGoalDepth}"
         ),
         rule(Agents.ApprovalKind.ArticlePlan, s"${caps.articlesPerGoalPerDay} articles per goal a day"),
         rule(
           Agents.ApprovalKind.ArticlePublish,
-          AutopilotPolicy.capText(
-            caps.publishPerDay,
-            agents.approvalStore.openCount(Agents.ApprovalKind.ArticlePublish),
-            caps.publishBacklogShare,
-            caps.publishCeiling
-          ) + s", filter at least ${caps.publishMinSources} sources"
+          AutopilotPolicy
+            .capText(
+              AutopilotPolicy.Base(caps.publishPerDay.value),
+              AutopilotPolicy.Backlog(agents.approvalStore.openCount(Agents.ApprovalKind.ArticlePublish).value),
+              AutopilotPolicy.Share(caps.publishBacklogShare.value),
+              AutopilotPolicy.Cap(caps.publishCeiling.value)
+            )
+            .value + s", filter at least ${caps.publishMinSources} sources"
         )
       ),
-      ingestedToday(now),
-      if row.enabled then ingestCap else com.histmersion.api.automation.Autopilot.EngineStatus.IngestCap(0),
-      cfg.maxConcurrentRuns,
-      row.lastBackupAt,
-      row.lastLintAt,
-      managers.filter(m => m.id == ReviewId || m.id == EnrichId).map(brief),
+      EngineStatus.IngestedToday(ingestedToday(now).value),
+      EngineStatus.IngestCap(if row.enabled.value then ingestCap.value else 0),
+      EngineStatus.MaxConcurrentRuns(cfg.maxConcurrentRuns.value),
+      row.lastBackupAt.map(t => EngineStatus.LastBackup(t.value)),
+      row.lastLintAt.map(t => EngineStatus.LastLint(t.value)),
+      managers.filter(m => m.id.value == ReviewId || m.id.value == EnrichId).map(brief),
       progress,
       focus = Some(agents.focus.info(now)),
       drain = agents.drain.info(),
-      goalPlansWait = agents.focus.goalPlansWait()
+      goalPlansWait = agents.focus.goalPlansWait().map(w => EngineStatus.GoalPlansWait(w.value))
     )
     // the domains' parts: the ingest backlog
     agents.workflows.managerKinds.foldLeft(st)((s, k) => k.status(s, now))
-
-object AutopilotService:
-  type StatusRuleCap = StatusRuleCap.T
-  object StatusRuleCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type IngestCapResult = IngestCapResult.T
-  object IngestCapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BacklogPendingResult = BacklogPendingResult.T
-  object BacklogPendingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SharedIngestLeftResult = SharedIngestLeftResult.T
-  object SharedIngestLeftResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IngestedTodayResult = IngestedTodayResult.T
-  object IngestedTodayResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TickResult = TickResult.T
-  object TickResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnsureNowResult = EnsureNowResult.T
-  object EnsureNowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventId = EventId.T
-  object EventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventText = EventText.T
-  object EventText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyStepResult = ApplyStepResult.T
-  object ApplyStepResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AdvanceResult = AdvanceResult.T
-  object AdvanceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextArticlesResult = NextArticlesResult.T
-  object NextArticlesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HousekeepingResult = HousekeepingResult.T
-  object HousekeepingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LogLine = LogLine.T
-  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

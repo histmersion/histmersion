@@ -38,10 +38,10 @@ final class PageBuilder(
         .toMap
       def entry(r: NeighborRow): Option[Citation] = r.target match
         case NeighborTarget.Source     =>
-          refs.get(r.citekey.value).map(Citation.ToSource(_, com.histmersion.domain.library.Edge.Kind.Wire(r.kind)))
-        case NeighborTarget.Article    => linked.get(r.citekey.value).map(a => Citation.ToArticle(a, Some(r.kind)))
+          refs.get(r.citekey.value).map(Citation.ToSource(_, com.histmersion.domain.library.Edge.Kind.Wire(com.histmersion.api.library.Edge.Kind.wireOf(r.kind).value)))
+        case NeighborTarget.Article    => linked.get(r.citekey.value).map(a => Citation.ToArticle(a, Some(com.histmersion.domain.library.Edge.Kind.Wire(com.histmersion.api.library.Edge.Kind.wireOf(r.kind).value))))
         case NeighborTarget.Unresolved =>
-          Some(Citation.Unresolved(Citation.Unresolved.Id(r.citekey.value), com.histmersion.domain.library.Edge.Kind.Wire(r.kind)))
+          Some(Citation.Unresolved(Citation.Unresolved.Id(r.citekey.value), com.histmersion.domain.library.Edge.Kind.Wire(com.histmersion.api.library.Edge.Kind.wireOf(r.kind).value)))
       val citingArticles = articles
         .sourceArticles(ck)
         .getOrElse(Nil)
@@ -81,7 +81,7 @@ final class PageBuilder(
         List(s.summary.map(_.value), s.notes.map(_.value), if full.value then s.ocrMarkdown.map(_.value) else None).flatten
           .mkString("\n\n")
       val links = articles.pageLinks(Article.Links.targets(WikiLinks.Body(md)))
-      (com.histmersion.domain.Title(s.title.value), highlighted(Pages.source(page, links), term))
+      (com.histmersion.domain.Title(s.title.value), highlighted(Pages.source(page, ck => links(WikiLinks.Occurrence.Target(ck.value))), term))
     }
 
   /** `(title, inner HTML)` of `/article/{slug}`, `?q=` terms highlighted. */
@@ -104,7 +104,7 @@ final class PageBuilder(
           v.coverage,
           articles.reviewOf(Slug.assume(v.article.slug.value)).toOption
         ),
-        links
+        s => links(WikiLinks.Occurrence.Target(s.value))
       )
       (com.histmersion.domain.Title(v.article.title.value), highlighted(html, q.map(_.value.trim).filter(_.nonEmpty)))
     }

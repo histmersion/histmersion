@@ -84,7 +84,7 @@ object AssetLinkService:
           ck.forall(_ == l.citekey.value) && an.forall(_ == l.assetName.value) && tt.forall(_ == l.targetType.value) &&
             ti.forall(_ == l.targetId.value)
         )
-        .sortBy(_.id.value)
+        .sortBy[Long](_.id.value)
         .toList
       AssetLink.List.of(com.histmersion.api.RowCount(rows.size), rows, com.histmersion.api.personal.UnreadPage.Offset(0))
 

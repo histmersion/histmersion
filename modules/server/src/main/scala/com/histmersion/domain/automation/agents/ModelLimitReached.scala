@@ -9,7 +9,7 @@ import scala.concurrent.duration.*
   * — the engine skips the model until `until` (or `limit-cooldown-minutes`) and tries the chain's next one.
   */
 final class ModelLimitReached(val model: ModelRef, val until: Option[java.time.Instant], message: ModelLimitReached.Message)
-    extends RuntimeException(message)
+    extends RuntimeException(message.value)
 
 object ModelLimitReached:
   type Problem = Problem.T

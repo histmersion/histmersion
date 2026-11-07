@@ -88,7 +88,7 @@ object ArticleTools:
         .handle { in =>
           readSlug(in.slug).flatMap(articles.get(_)) match
             case Right(v) =>
-              val parts = in.parts.map(_.value.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil)
+              val parts = in.parts.map(_.value.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil).map(Article.Part(_))
               ToolResult.text(ArticleMarkdown.article(v, parts))
             case Left(e) => ToolResult.text(s"_No article '${in.slug}' — find a slug with list_articles._")
         }
@@ -242,7 +242,12 @@ object ArticleTools:
       */
     def toQuery: Api.ArticleQuery =
       Api.ArticleQuery(
-        Filter.of(tags = tag.toList.map(t => Filter.Tags(t.value)), limit = limit, offset = offset, title = title),
+        Filter.of(
+          tags = tag.toList.map(t => Filter.Tags(t.value)),
+          limit = limit.map(l => Filter.Limit(l.value)),
+          offset = offset.map(o => Filter.Offset(o.value)),
+          title = title.map(t => Filter.Title(t.value))
+        ),
         kind.map(k => Api.ArticleQuery.Kind(k.value)),
         query.map(q => Api.ArticleQuery.Text(q.value))
       )

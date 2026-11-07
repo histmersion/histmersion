@@ -4,21 +4,21 @@ import com.histmersion.util.storage.{Location, Resources, Store, Stores}
 import java.nio.file.Path
 
 final class Prompts(overrideDir: Prompts.OverrideDir)(using stores: Stores, resources: Resources):
-  private[agents] def bundledText(rel: com.histmersion.util.storage.SafePath.Candidate): Either[com.histmersion.domain.automation.agents.Prompts.Problem, String] = resources.text(s"agents/$rel")
+  private[agents] def bundledText(rel: com.histmersion.util.storage.SafePath.Candidate): Either[com.histmersion.domain.automation.agents.Prompts.Problem, String] = resources.text(Resources.ResourceName(s"agents/${rel.value}")).left.map(p => Problem(p.value)).map(_.value)
   private val dir: Option[Path] =
-    Option(overrideDir).map(_.trim).filter(_.nonEmpty).map(d => Path.of(d).toAbsolutePath.normalize())
+    Option(overrideDir.value).map(_.trim).filter(_.nonEmpty).map(d => Path.of(d).toAbsolutePath.normalize())
 
   def load(rel: com.histmersion.util.storage.SafePath.Candidate): Either[com.histmersion.domain.automation.agents.Prompts.Problem, String] =
     val local = dir.flatMap { root =>
-      val path = root.resolve(rel).normalize()
+      val path = root.resolve(rel.value).normalize()
       Option.when(path.startsWith(root))((root, path))
     }.flatMap { (root, path) =>
       Store.Key.of(root.relativize(path).toString.replace('\\', '/')).toOption.map(key => (stores.at(Location.AgentHomes, root), key))
     }
     local.filter((store, key) => store.isFile(key)) match
       case Some((store, key)) =>
-        try store.get(key).toRight(s"prompt override ${store.where(key)} cannot be read: file disappeared").map(_.text())
-        catch case e: java.io.IOException => Left(s"prompt override ${store.where(key)} cannot be read: ${e.getMessage}")
+        try store.get(key).toRight(Problem(s"prompt override ${store.where(key)} cannot be read: file disappeared")).map(_.text().value)
+        catch case e: java.io.IOException => Left(Problem(s"prompt override ${store.where(key)} cannot be read: ${e.getMessage}"))
       case None => bundledText(rel)
 
 object Prompts:

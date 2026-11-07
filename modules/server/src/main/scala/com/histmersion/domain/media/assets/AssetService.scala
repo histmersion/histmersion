@@ -533,7 +533,7 @@ object AssetService:
     private def targetsOf(uid: com.histmersion.domain.media.assets.AssetService.AssetUid): List[MediaTarget] =
       state.get.mediaLinks
         .filter(_.assetUid == uid)
-        .sortBy(m => (m.targetType.value, m.targetId.value, m.rank.value))
+        .sortBy(m => (m.targetType.value: String, m.targetId.value: String, m.rank.value: Int))
         .toList
         .map(m =>
           MediaTarget(
@@ -662,7 +662,7 @@ object AssetService:
           a.point.isDefined && k.forall(kk => a.kind.exists(_.value == kk)) && inSpan(a) && ofProvider(a, provider) &&
             underLicence(a, license)
         )
-        .sortBy(a => (a.period.flatMap(_._1).isEmpty, a.period.flatMap(_._1).map(_.value)))
+        .sortBy(a => (a.period.flatMap(_._1).isEmpty, a.period.flatMap(_._1).map(y => y.value: Long)))
         .take(limit.value.max(1))
         .toList
         .map(a => hit(a, a.point.get))
@@ -682,9 +682,9 @@ object AssetService:
         .filter((_, a) => a.thumb.isDefined || targetType.value == PictureTarget.Source.wire.value)
         .groupBy(_._2.uid)
         .values
-        .map(_.minBy((m, _) => (ord(m.role), m.rank.value)))
+        .map(_.minBy((m, _) => (ord(m.role), m.rank.value: Int)))
         .toList
-        .sortBy((m, a) => (ord(m.role), m.rank.value, a.uid.value))
+        .sortBy((m, a) => (ord(m.role), m.rank.value: Int, a.uid.value: String))
       best.take(limit.value.max(1)).map { (m, a) =>
         MediaThumb(
           MediaItem.Uid(a.uid.value),

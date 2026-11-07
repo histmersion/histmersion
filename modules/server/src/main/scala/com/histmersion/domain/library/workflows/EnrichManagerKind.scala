@@ -36,11 +36,11 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     case SourceEnrich => Pipeline.EnrichSource
     case _            => Pipeline.Fallback
 
-  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FireResult] = Nil
+  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase] = Nil
 
   def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts = StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("enriched"))
 
-  def target(m: ManagerInfo, itemKind: ManagerContext.ItemKind, raw: ManagerKindDefinition.TargetRaw): Either[Api.Error, ManagerKindDefinition.TargetResultPart2] =
+  def target(m: ManagerInfo, itemKind: ManagerContext.ItemKind, raw: ManagerItem.Target): Either[Api.Error, ManagerContext.ItemTarget] =
     itemKind.value match
       case SourceEnrich =>
         Citekey.option(raw.value.trim) match
@@ -48,18 +48,18 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
           case Some(ck) =>
             site.sources
               .get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false))
-              .map(s => ManagerKindDefinition.TargetResultPart2(s.source.citekey.value))
+              .map(s => ManagerContext.ItemTarget(s.source.citekey.value))
       case other => Left(Api.Error(Api.Error.Message(s"unknown item kind '$other'")))
 
   /** What an Enrich button names: a source itself (enriched again even if it was), or the sources an article cites / a
     * goal links that are NOT enriched yet ([[AutoEnrich.enrichedBy]]; the others are reported as skipped, with why).
     */
-  override def expand(c: ManagerContext, raw: ManagerKindDefinition.ExpandRaw): Either[Api.Error, (List[ManagerKindDefinition.ExpandResultPart2Part1], List[ManagerKindDefinition.ExpandResultPart2Part2])] =
+  override def expand(c: ManagerContext, raw: ManagerItem.Target): Either[Api.Error, (List[ManagerContext.ItemTarget], List[ManagerKindDefinition.ExpandSkipped])] =
     val text = raw.value
     val asSource = Citekey.option(text).toRight(Api.Error(Api.Error.Message(s"No source '$text'"))).flatMap(ck =>
       site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false))
     )
-    asSource.map(s => (List(ManagerKindDefinition.ExpandResultPart2Part1(s.source.citekey.value)), List.empty[ManagerKindDefinition.ExpandResultPart2Part2])).orElse {
+    asSource.map(s => (List(ManagerContext.ItemTarget(s.source.citekey.value)), List.empty[ManagerKindDefinition.ExpandSkipped])).orElse {
       val cited = com.histmersion.domain.research.Slug.option(text).toRight(Api.Error(Api.Error.Message(s"No article '$text'"))).flatMap(slug =>
         site.articleSources(slug).map(_.map(x => Citekey.assume(x.value)))
       ).orElse(
@@ -69,7 +69,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
       )
       cited.left.map(_ => Api.Error(Api.Error.Message(s"'$text' is no source, article or goal"), Some(Api.Error.Code(Write.CodeNotFound)))).map { cks =>
         val (todo, done) = cks.distinct.map(ck => ck -> enrichedWhy(c, ck)).partition(_._2.isEmpty)
-        (todo.map(t => ManagerKindDefinition.ExpandResultPart2Part1(t._1.value)), done.map((ck, why) => ManagerKindDefinition.ExpandResultPart2Part2(s"[[$ck]]: ${why.fold("")(_.value)}")))
+        (todo.map(t => ManagerContext.ItemTarget(t._1.value)), done.map((ck, why) => ManagerKindDefinition.ExpandSkipped(s"[[$ck]]: ${why.fold("")(_.value)}")))
       }
     }
 
@@ -148,7 +148,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     val (itemId, isNew) = c.upsert(enrichId, ManagerContext.ItemKind(SourceEnrich), ManagerContext.ItemTarget(citekey.value), ItemOrigin.FromIngest, com.histmersion.domain.automation.managers.ManagerContext.Priority(0), reopen = com.histmersion.domain.automation.managers.ManagerContext.UpsertReopen(true))
     c.event(
       enrichId,
-      Some(ManagerContext.ItemId(itemId.value)),
+      Some(itemId),
       None,
       ManagerContext.EventFeed(Feed.Evaluated),
       ManagerContext.EventText(s"$citekey ${if isNew then "enqueued" else "enqueued again"} by an ingest")
@@ -165,10 +165,10 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
       s: ReviewSettings,
       item: ManagerItem,
       now: Instant,
-      out: Builder[ManagerKindDefinition.DispatchOutPart1, List[ManagerKindDefinition.DispatchOutPart2]]
-  ): Option[ManagerKindDefinition.DispatchResult] =
+      out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
+  ): Option[ManagerLight.Id] =
     def settle(status: ItemStatus, why: String) =
-      c.settleNow(m, item, status, ManagerContext.SettleNowWhy(why)).map(r => ManagerKindDefinition.DispatchResult(r.value))
+      c.settleNow(m, item, status, ManagerContext.SettleNowWhy(why))
     item.kind.value match
       case SourceEnrich =>
         Citekey
@@ -205,6 +205,5 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
                     com.histmersion.domain.automation.managers.ManagerContext.StartWhat("enrich-source"),
                     out
                   )
-                  .map(r => ManagerKindDefinition.DispatchResult(r.value))
       case other =>
         settle(ItemStatus.Cancelled, s"'$other' items are not driven by a ${m.kind} manager")
