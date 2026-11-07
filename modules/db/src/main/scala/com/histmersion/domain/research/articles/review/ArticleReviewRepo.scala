@@ -74,7 +74,7 @@ private[review] object ArticleReviewRepo:
     val Status: _root_.com.histmersion.domain.automation.Goal.Status.Wire.type = _root_.com.histmersion.domain.automation.Goal.Status.Wire
 
   /** The approval kinds that leave an article waiting for a person. */
-  val WaitingKinds: List[com.histmersion.domain.research.articles.review.ArticleReviewRepo.WaitingKinds] = List("article-filter", "article-publish")
+  val WaitingKinds: List[com.histmersion.domain.research.articles.review.ArticleReviewRepo.WaitingKinds] = List(com.histmersion.domain.research.articles.review.ArticleReviewRepo.("article-filter"), com.histmersion.domain.research.articles.review.ArticleReviewRepo.("article-publish"))
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 

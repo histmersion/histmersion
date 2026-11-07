@@ -98,7 +98,7 @@ private[articles] object ArticleRepo:
   /** Selective merge (`patch_article`): read → [[Articles.applyPatch]] → write, all in ONE transaction, so two
     * concurrent patches cannot interleave and `ifUpdatedAt` means something.
     */
-  def patch(slug: com.histmersion.domain.research.Slug, p: Article.Patch, by: com.histmersion.domain.research.articles.CritiqueRepo.By = "person")(using DbCon): Either[Api.Error, String] =
+  def patch(slug: com.histmersion.domain.research.Slug, p: Article.Patch, by: com.histmersion.domain.research.articles.CritiqueRepo.By = com.histmersion.domain.research.articles.CritiqueRepo.By("person"))(using DbCon): Either[Api.Error, String] =
     // FOR UPDATE before the read: `ifUpdatedAt` is a compare-and-swap, and without the row lock
     // two concurrent patches both saw the token they were given and both "succeeded", the second
     // discarding the first. See the twin comment in `SourceRepo.patch`.
@@ -365,10 +365,10 @@ private[articles] object ArticleRepo:
   )(using DbCon): Article.List =
     val where = listWhere(filter, scope, kind, text)
     val order = text.map(_.trim).filter(_.nonEmpty) match
-      case Some(t) => Sql.raw("ORDER BY ts_rank_cd(a.tsv, ") ++ tsQuery(t) ++ Sql.raw(") DESC, a.title")
-      case None    => Sql.raw("ORDER BY a.kind, a.title")
+      case Some(t) => Sql.raw(com.histmersion.util.database.Sql.RawText("ORDER BY ts_rank_cd(a.tsv, ")) ++ tsQuery(t) ++ Sql.raw(") DESC, a.title")
+      case None    => Sql.raw(com.histmersion.util.database.Sql.RawText("ORDER BY a.kind, a.title"))
     val kinds = Article.List.byKind(
-      (Sql.raw("SELECT a.kind, count(*)::int FROM articles a WHERE ") ++ where ++ Sql
+      (Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT a.kind, count(*)::int FROM articles a WHERE ")) ++ where ++ Sql
         .raw(" GROUP BY a.kind")).frag.query[(String, Int)].run().toList.map(Article.KindCount(_, _))
     )
     val total = kinds.map(_.count).sum
@@ -383,14 +383,14 @@ private[articles] object ArticleRepo:
     val ps = List.newBuilder[Sql]
     val related = FilterSql.articleWhere(filter, scope)
     if related.text != "TRUE" then ps += related
-    kind.map(_.trim.toLowerCase).filter(_.nonEmpty).foreach(k => ps += Sql.of("lower(a.kind) = ?", S(k)))
+    kind.map(_.trim.toLowerCase).filter(_.nonEmpty).foreach(k => ps += Sql.of(com.histmersion.util.database.Sql.OfText("lower(a.kind) = ?"), S(k)))
     text.map(_.trim).filter(_.nonEmpty).foreach { t =>
-      val fts = Sql.raw("(a.tsv @@ ") ++ tsQuery(t) ++
+      val fts = Sql.raw(com.histmersion.util.database.Sql.RawText("(a.tsv @@ ")) ++ tsQuery(t) ++
         Sql.of(s" OR a.title ILIKE ?$Esc)", S(FilterSql.contains(t)))
       ps += fts
     }
     val parts = ps.result()
-    if parts.isEmpty then Sql.raw("TRUE")
+    if parts.isEmpty then Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE"))
     else Sql(parts.map(_.text).mkString(" AND "), parts.flatMap(_.params))
 
   private def tsQuery(q: com.histmersion.domain.library.search.Search.Query): Sql = Search.tsQuery(q)
@@ -417,7 +417,7 @@ private[articles] object ArticleRepo:
   /** List the version history of one article: id, slug, summary (first 200 chars), updatedAt, createdAt, and word count
     * (approximated as non-empty whitespace-split tokens). Newest first.
     */
-  def listVersions(slug: com.histmersion.domain.research.Slug, limit: com.histmersion.domain.research.articles.ArticleRepo.Limit = 20)(using DbCon): List[Article.Version] =
+  def listVersions(slug: com.histmersion.domain.research.Slug, limit: com.histmersion.domain.research.articles.ArticleRepo.Limit = com.histmersion.domain.research.articles.ArticleRepo.Limit(20))(using DbCon): List[Article.Version] =
     Sql
       .of(
         s"""SELECT v.id, v.slug, left(v.summary, 200),

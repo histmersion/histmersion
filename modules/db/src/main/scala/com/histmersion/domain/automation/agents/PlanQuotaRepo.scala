@@ -68,7 +68,7 @@ object PlanQuotaRepo:
     type PlanType = PlanType.T
     object PlanType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val NoPool: Pool = Pool(false, None, None, None, None)
+  val NoPool: Pool = Pool(com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Held(false), None, None, None, None)
 
   def pool(p: PoolId)(using DbCon): Pool =
     sql"""SELECT held, floors, refusal, (extract(epoch FROM refusal_until) * 1000)::bigint, plan_type

@@ -35,5 +35,5 @@ object ManagerLight:
   type PlanItem = PlanItem.T
   object PlanItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private given DbCodec[ManagerConfig] = Jsonb.codec(ManagerConfig(), dropNulls = true)
+  private given DbCodec[ManagerConfig] = Jsonb.codec(ManagerConfig(), dropNulls = com.histmersion.util.database.Jsonb.DropNulls(true))
   given DbCodec[ManagerLight] = DbCodec.derived

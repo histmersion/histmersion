@@ -19,9 +19,7 @@ object RangeSql:
     * infinite bound as NULL), or the column is NULL or empty.
     */
   type StartCol = String
-  val StartCol: String.type = String
   type ColsCol = String
-  val ColsCol: String.type = String
   type LiteralStart = _root_.com.histmersion.domain.DeepTime.SignedYear
   val LiteralStart: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
   type LiteralEnd = _root_.com.histmersion.domain.DeepTime.SignedYear

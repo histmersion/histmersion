@@ -13,7 +13,7 @@ final case class SourceKeys(citekey: com.histmersion.domain.library.Citekey, key
   def findingPrefix: com.histmersion.domain.library.sources.referrers.SourceKeys.FindingPrefix = citekey + "#"
 
   /** Whether `text` holds the citekey as a whole token. */
-  def tokenIn(text: com.histmersion.domain.library.sources.referrers.SourceKeys.Text): Boolean = Rename.replaceToken(text, citekey, "\u0000") != text
+  def tokenIn(text: com.histmersion.domain.library.sources.referrers.SourceKeys.Text): Boolean = Rename.replaceToken(text, citekey, com.histmersion.api.library.Citekey("\u0000")) != text
 
   /** Whether `text` links the source under any of its keys. */
   def linkedIn(text: com.histmersion.domain.library.sources.referrers.SourceKeys.Text): Boolean = keys.exists(k => WikiLinks.links(text, k))

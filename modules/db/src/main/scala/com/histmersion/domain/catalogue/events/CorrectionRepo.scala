@@ -98,10 +98,10 @@ private[events] object CorrectionRepo:
       DbCon
   ): Correction.List =
     val st = status.map(_.trim.toLowerCase).filter(_.nonEmpty)
-    val where = Sql.of("c.target_kind = ?", Param.S(kind)) ++
+    val where = Sql.of(com.histmersion.util.database.Sql.OfText("c.target_kind = ?"), Param.S(kind)) ++
       id.map(_.trim).filter(_.nonEmpty).fold(Sql.empty)(i => Sql.of(" AND c.target_id = ?", Param.S(i))) ++
       st.fold(Sql.raw(" AND c.status <> 'agreed'"))(s => Sql.of(" AND c.status = ?", Param.S(s)))
-    val count = (Sql.raw("SELECT count(*)::int FROM corrections c WHERE ") ++ where).frag.query[Int].run().head
+    val count = (Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT count(*)::int FROM corrections c WHERE ")) ++ where).frag.query[Int].run().head
     val rows = (Sql.raw(
       s"SELECT $Cols, e.label FROM corrections c " +
         "LEFT JOIN events e ON c.target_kind = 'event' AND e.id = c.target_id WHERE "

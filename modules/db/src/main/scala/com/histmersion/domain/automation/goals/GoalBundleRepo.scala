@@ -96,7 +96,7 @@ private[goals] object GoalBundleRepo:
 
   def goalRenamesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.followRenames(w.es.goals, _.uid, _.slug, w.local.goals.map(g => g.uid -> g.slug).toMap, "goal")(GoalRepo.renameIn)
+    w.followRenames(w.es.goals, _.uid, _.slug, w.local.goals.map(g => g.uid -> g.slug).toMap, com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("goal"))(GoalRepo.renameIn)
 
   /** A goal's links (unioned with this collection's) and schedules (this collection's kept, #881). A linked record is
     * found by its uid, so the link follows a rename or a merge; a queue item that is not here is left out. A schedule

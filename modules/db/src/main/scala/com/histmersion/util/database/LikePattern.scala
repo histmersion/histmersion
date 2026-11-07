@@ -5,9 +5,7 @@ package com.histmersion.util.database
   */
 object LikePattern:
   type ContainsS = String
-  val ContainsS: String.type = String
   type StartsWithS = String
-  val StartsWithS: String.type = String
 
   def escape(s: String): String = s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
   def contains(s: com.histmersion.util.database.LikePattern.ContainsS): String = "%" + escape(s) + "%"

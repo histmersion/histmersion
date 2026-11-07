@@ -181,7 +181,7 @@ private[events] object EventBundleRepo:
     */
   def eventRenames(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.followRenames(w.es.events, _.uid, _.id, w.local.events.map(e => e.uid -> e.id).toMap, "event")(EventRepo.rename)
+    w.followRenames(w.es.events, _.uid, _.id, w.local.events.map(e => e.uid -> e.id).toMap, com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("event"))(EventRepo.rename)
 
   /** Events: the rows, then their parents (a parent may come later in uid order), then the sets. */
   def eventsIn(w: BundleImport.Writer): Unit =

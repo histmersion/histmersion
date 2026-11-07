@@ -65,15 +65,15 @@ object PluginGazetteers:
     */
   def input(p: GazetteerPlace, credit: com.histmersion.domain.Attribution.Credit): Either[com.histmersion.pluginhost.PluginGazetteers.Problem, Place.Input] =
     try
-      if p == null then Left("a place that is null")
+      if p == null then Left(com.histmersion.pluginhost.PluginGazetteers.Problem("a place that is null"))
       else
         val id = Option(p.id).getOrElse("")
         def named(why: com.histmersion.pluginhost.PluginGazetteers.Reason) = s"place '$id': $why"
-        if id.trim.isEmpty then Left("a place with no id")
-        else if Option(p.kind).forall(_.trim.isEmpty) then Left(named("no kind"))
+        if id.trim.isEmpty then Left(com.histmersion.pluginhost.PluginGazetteers.Problem("a place with no id"))
+        else if Option(p.kind).forall(_.trim.isEmpty) then Left(named(com.histmersion.pluginhost.PluginGazetteers.Reason("no kind")))
         else
           for
-            label <- Option(p.label).toRight(named("no label"))
+            label <- Option(p.label).toRight(named(com.histmersion.pluginhost.PluginGazetteers.Reason("no label")))
             geometry <- json(Option(p.geometry).flatten, "geometry").left.map(named)
             properties <- json(Option(p.properties).flatten, "properties").left.map(named)
             period <- span(Option(p.period).flatten, Option(p.open).flatten).left.map(named)
@@ -90,16 +90,16 @@ object PluginGazetteers:
         )
 
   private def name(n: GazetteerName): Either[com.histmersion.pluginhost.PluginGazetteers.Problem, Place.Name] =
-    if n == null || n.name == null then Left("a name that is null")
+    if n == null || n.name == null then Left(com.histmersion.pluginhost.PluginGazetteers.Problem("a name that is null"))
     else
       span(Option(n.period).flatten, Option(n.open).flatten).map((period, open) =>
         Place.Name(n.name, Option(n.lang).getOrElse(""), period, open)
       )
 
   private def relation(r: GazetteerRelation): Either[com.histmersion.pluginhost.PluginGazetteers.Problem, Place.Relation] =
-    if r == null then Left("a relation that is null")
+    if r == null then Left(com.histmersion.pluginhost.PluginGazetteers.Problem("a relation that is null"))
     else if Option(r.childId).forall(_.trim.isEmpty) || Option(r.parentId).forall(_.trim.isEmpty) then
-      Left("a relation without both its places")
+      Left(com.histmersion.pluginhost.PluginGazetteers.Problem("a relation without both its places"))
     else if Option(r.kind).forall(_.trim.isEmpty) then Left(s"the relation to '${r.parentId}' has no kind")
     else
       span(Option(r.period).flatten, Option(r.open).flatten).map((period, open) =>

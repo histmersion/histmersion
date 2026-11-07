@@ -42,7 +42,7 @@ private[assets] object AssetRepo:
     plan.renames.foreach((from, to) =>
       sql"UPDATE assets SET name = $to WHERE citekey = $citekey AND name = $from".update.run()
     )
-    val n = insert(citekey, incoming, replaceExisting = true)
+    val n = insert(citekey, incoming, replaceExisting = com.histmersion.domain.media.assets.AssetRepo.ReplaceExisting(true))
     touch(citekey)
     n
 
@@ -50,7 +50,7 @@ private[assets] object AssetRepo:
     * `POST /api/sources/{ck}/assets`). Returns how many rows were written.
     */
   def add(citekey: com.histmersion.domain.library.Citekey, assets: List[NewFigure])(using DbCon): com.histmersion.RowCount =
-    val n = insert(citekey, NewFigure.dedupe(assets), replaceExisting = false)
+    val n = insert(citekey, NewFigure.dedupe(assets), replaceExisting = com.histmersion.domain.media.assets.AssetRepo.ReplaceExisting(false))
     touch(citekey)
     n
 

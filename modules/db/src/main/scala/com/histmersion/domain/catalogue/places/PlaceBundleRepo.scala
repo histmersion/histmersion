@@ -26,7 +26,7 @@ private[places] object PlaceBundleRepo:
   def places(scope: BundleScope, alsoIds: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id] = Nil)(using DbCon): Vector[Bundle.Place] =
     val own = Sql.raw("p.dataset = 'local' AND ") ++ where(scope, "p.uid", "p.updated_at")
     val sel = if alsoIds.isEmpty then own
-    else Sql.raw("((") ++ own ++ Sql.of(") OR p.id = ANY(?::text[]))", Param.A(alsoIds.distinct))
+    else Sql.raw(com.histmersion.util.database.Sql.RawText("((")) ++ own ++ Sql.of(") OR p.id = ANY(?::text[]))", Param.A(alsoIds.distinct))
     val rows = (Sql.raw(s"""SELECT p.uid, p.origin, p.id, p.label, p.kind, encode(ST_AsEWKB(p.geom), 'hex'),
                        ${rangeCols("p.period")}, p.source, p.properties::text, ${ts("p.updated_at")}
                 FROM places p WHERE """) ++ sel ++ " ORDER BY p.uid").frag.query[BPlaceRow].run()
@@ -181,7 +181,7 @@ private[places] object PlaceBundleRepo:
     */
   def placeRenames(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.followRenames(w.es.places, _.uid, _.id, w.local.places.map(p => p.uid -> p.id).toMap, "place")(PlaceRepo.renameIn)
+    w.followRenames(w.es.places, _.uid, _.id, w.local.places.map(p => p.uid -> p.id).toMap, com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("place"))(PlaceRepo.renameIn)
 
   /** Places of the other collection's own (V052): before the events that point at them. Their sets (names, parents,
     * links, types) are replaced; a parent that is neither here nor in the bundle is left out.

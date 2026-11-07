@@ -209,7 +209,7 @@ private[places] object Geocoder:
     * Returns the findings moved.
     */
   def apply(ms: List[Move], toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): com.histmersion.RowCount =
-    if ms.isEmpty then 0
+    if ms.isEmpty then com.histmersion.RowCount(0)
     else
       val moved = ms.filter { m =>
         sql"""UPDATE findings SET geom = ST_SetSRID(ST_MakePoint(${m.to.lon}, ${m.to.lat}), 4326),
@@ -263,7 +263,7 @@ private[places] object Geocoder:
     * re-materialised, in the same transaction. Returns the findings placed.
     */
   def place(ps: List[Placement], toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): com.histmersion.RowCount =
-    if ps.isEmpty then 0
+    if ps.isEmpty then com.histmersion.RowCount(0)
     else
       val placed = ps.filter { p =>
         sql"""UPDATE findings SET geom = ST_SetSRID(ST_MakePoint(${p.to.lon}, ${p.to.lat}), 4326)

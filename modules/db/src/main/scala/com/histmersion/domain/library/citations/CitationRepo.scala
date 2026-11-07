@@ -87,7 +87,7 @@ private[citations] object CitationRepo:
           val seen = grown.iterator.map(_.id).toSet
           val next = touching.iterator.flatMap(l => List(l.source, l.target)).filterNot(seen).toList.distinct
           walk(d + 1, next, grown, links ++ touching)
-    val (nodes, links) = walk(0, List(citekey), Vector.empty, Set.empty)
+    val (nodes, links) = walk(com.histmersion.domain.library.citations.CitationRepo.Depth(0), List(citekey), Vector.empty, Set.empty)
     val ids = nodes.iterator.map(_.id).toSet
     com.histmersion.api.library.Source.Graph(
       citekey,

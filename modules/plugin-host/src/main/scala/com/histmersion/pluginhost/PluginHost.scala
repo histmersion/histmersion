@@ -151,7 +151,7 @@ object PluginHost:
   def foreignSpi(e: Throwable): Option[Option[com.histmersion.pluginhost.PluginHost.ForeignSpiResult]] = e match
     case e: (NoSuchMethodError | NoSuchFieldError | AbstractMethodError | IncompatibleClassChangeError) =>
       val message = Option(e.getMessage).getOrElse("").replace('/', '.')
-      if message.contains("com.histmersion.plugin.Spi$.Version()") then Some(Some(1))
+      if message.contains("com.histmersion.plugin.Spi$.Version()") then Some(Some(com.histmersion.pluginhost.PluginHost.ForeignSpiResult(1)))
       else if message.contains("com.histmersion.plugin.") then Some(None)
       else None
     case e => Option(e.getCause).filter(_ ne e).flatMap(foreignSpi)
@@ -518,8 +518,8 @@ object PluginHost:
     override def processes: Processes = services.processes
     lazy val http: Plugin.Http = services.http()
     val log: Plugin.Log = new Plugin.Log:
-      def info(message: com.histmersion.pluginhost.PluginHost.LogMessage) = services.log(id, false, message)
-      def warn(message: com.histmersion.pluginhost.PluginHost.LogMessage) = services.log(id, true, message)
+      def info(message: com.histmersion.pluginhost.PluginHost.LogMessage) = services.log(id, com.histmersion.pluginhost.HostServices.LogArg2(false), message)
+      def warn(message: com.histmersion.pluginhost.PluginHost.LogMessage) = services.log(id, com.histmersion.pluginhost.HostServices.LogArg2(true), message)
     def env(name: com.histmersion.pluginhost.PluginHost.EnvName) = Option(services.env.root.get(name)).flatMap(v => Option(v.unwrapped)).map(_.toString)
     def secret(s: Secret) = resolved(s)
     def secretVaults = vaults
@@ -635,7 +635,7 @@ object PluginHost:
       /** The first-party plugins: the ones a reserved name of the host's (a catalogue's, a media provider's, an AI
         * provider's) is kept for.
         */
-      firstParty: com.histmersion.util.plugins.Plugin.Id => com.histmersion.pluginhost.PluginHost.FirstParty = _ => false
+      firstParty: com.histmersion.util.plugins.Plugin.Id => com.histmersion.pluginhost.PluginHost.FirstParty = _ => com.histmersion.pluginhost.PluginHost.FirstParty(false)
   ): Generation =
     val infos = plugins.map(_.info)
     val refused = check(infos, Spi.Version)
@@ -647,7 +647,7 @@ object PluginHost:
     val unknown = unknownBlocks(user, infos.map(_.id).toSet)
       .map(id => s"$Root.$id configures no plugin in this binary — ignored")
     val warnings = discoveryErrors ++ orderErr ++ orderWarn ++ unknown
-    warnings.foreach(w => services.log("", true, w))
+    warnings.foreach(w => services.log(com.histmersion.pluginhost.HostServices.LogArg1(""), com.histmersion.pluginhost.HostServices.LogArg2(true), w))
 
     val byId = accepted.map(p => p.info.id -> p).toMap
     def status(
@@ -679,7 +679,7 @@ object PluginHost:
         case Some(c) => Right(Prepared(p, ConfigFactory.empty, Nil, _ => Right(()), Some(c)))
         case None    =>
           for
-            defs <- defaults(p).left.map(e => status(p, false, PluginState.Failed, error = Some(e)))
+            defs <- defaults(p).left.map(e => status(p, com.histmersion.pluginhost.PluginHost.Enabled(false), PluginState.Failed, error = Some(e)))
             // the defaults resolved on their own: `${?ENV}` lines leave the default standing
             known = Try(defs.resolve()).getOrElse(defs)
             _ <- typeCheck(id, user, known) match
@@ -734,8 +734,8 @@ object PluginHost:
             if missing.nonEmpty then pass(tail, rs, ds, left :+ pr, prog)
             else
               val (st, added) = pr.carried.getOrElse(register(pr, rs, services, secrets, firstParty(pr.p.info.id)))
-              pass(tail, rs ++ added, ds.updated(pr.p.info.id, (st, added)), left, true)
-      val (rs, ds, left, progressed) = pass(waiting, regs, done, Nil, false)
+              pass(tail, rs ++ added, ds.updated(pr.p.info.id, (st, added)), left, com.histmersion.pluginhost.PluginHost.PassProgress(true))
+      val (rs, ds, left, progressed) = pass(waiting, regs, done, Nil, com.histmersion.pluginhost.PluginHost.PassProgress(false))
       if left.isEmpty || !progressed then
         val stuck = left.map { pr =>
           val names =
@@ -763,10 +763,10 @@ object PluginHost:
       case (id, Right(_)) => registered(id)._1
     } ++ plugins
       .filter(p => refused.contains(p.info.id))
-      .map(p => status(p, false, PluginState.Refused, error = refused.get(p.info.id)))
+      .map(p => status(p, com.histmersion.pluginhost.PluginHost.Enabled(false), PluginState.Refused, error = refused.get(p.info.id)))
     statuses
       .filter(_.state == PluginState.Failed.wire)
-      .foreach(s => services.log(s.id, true, s.error.getOrElse("failed")))
+      .foreach(s => services.log(s.id, com.histmersion.pluginhost.HostServices.LogArg2(true), s.error.getOrElse("failed")))
     val live = registered.collect { case (id, (st, regs)) if st.state == PluginState.Registered.wire => id -> regs }
     val fresh = ready.filter(pr => pr.carried.isEmpty && live.contains(pr.p.info.id))
     Generation(
@@ -804,14 +804,14 @@ object PluginHost:
         s"$Root.$id: a secret is written into the config (value:${Secret.Ref.Mask}) — " +
           "use env:<NAME> or a vault reference"
       )
-    warns.foreach(w => services.log(id, true, w))
+    warns.foreach(w => services.log(id, com.histmersion.pluginhost.HostServices.LogArg2(true), w))
     def fail(e: com.histmersion.pluginhost.PluginHost.Problem) =
       (
         PluginStatus(
           id,
           p.info.version,
           p.info.spiVersion,
-          true,
+          com.histmersion.api.plugins.PluginStatus.Enabled(true),
           PluginState.Failed.wire,
           Nil,
           settings(pr.block),
@@ -861,7 +861,7 @@ object PluginHost:
                 id,
                 p.info.version,
                 p.info.spiVersion,
-                true,
+                com.histmersion.api.plugins.PluginStatus.Enabled(true),
                 PluginState.Registered.wire,
                 added.provides,
                 settings(pr.block),

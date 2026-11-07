@@ -50,9 +50,7 @@ object HttpMode:
     object AnswersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type FromEnvEnvPart1 = String
-  val FromEnvEnvPart1: String.type = String
   type FromEnvEnvPart2 = String
-  val FromEnvEnvPart2: String.type = String
 
   val ModeVariable = "HISTMERSION_PLUGIN_HTTP"
 

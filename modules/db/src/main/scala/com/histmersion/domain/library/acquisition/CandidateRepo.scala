@@ -175,12 +175,12 @@ private[acquisition] object CandidateRepo:
 
   /** Set the state of these candidates; how many there were. */
   def mark(ids: List[com.histmersion.domain.library.acquisition.CandidateRepo.Row.Id], state: com.histmersion.domain.library.acquisition.CandidateRepo.Row.State)(using DbCon): com.histmersion.RowCount =
-    if ids.isEmpty then 0
+    if ids.isEmpty then com.histmersion.RowCount(0)
     else
       val arr = ids.map(_.toString)
       sql"UPDATE source_candidates SET state = $state WHERE id = ANY($arr::bigint[])".update.run()
 
   /** Set the state of a goal's candidates with these DOIs (a ranking's picks). */
   def markDois(goal: com.histmersion.domain.automation.Goal.Slug, dois: List[com.histmersion.domain.library.Doi], state: com.histmersion.domain.library.acquisition.CandidateRepo.Row.State)(using DbCon): com.histmersion.RowCount =
-    if dois.isEmpty then 0
+    if dois.isEmpty then com.histmersion.RowCount(0)
     else sql"UPDATE source_candidates SET state = $state WHERE goal = $goal AND doi = ANY($dois::text[])".update.run()

@@ -81,7 +81,7 @@ private[events] object EventRepo:
   def geo(listed: Sql, limit: com.histmersion.PageSize, tolerance: com.histmersion.domain.catalogue.events.EventRepo.GeoTolerance)(using DbCon): EventGeo.List =
     // drawn at a year only when dated, and well enough (core.EventPrecision.mapped): the imprecise are
     // counted; an undated one (its outer span unbounded) would otherwise stand in every period
-    val where = listed ++ Sql.of(" AND e.uncertainty <= ?", Param.L(EventPrecision.ApproximateUpTo))
+    val where = listed ++ Sql.of(com.histmersion.util.database.Sql.OfText(" AND e.uncertainty <= ?"), Param.L(EventPrecision.ApproximateUpTo))
     val rows = (geoSelect ++ where ++
       Sql.raw(" ORDER BY coalesce(e.not_before, e.begin_by), e.label") ++
       Sql.of(" LIMIT ?", Param.I(limit.max(1)))).frag.query[EventGeoRow].run().toList
@@ -113,7 +113,7 @@ private[events] object EventRepo:
     if ids.isEmpty then Map.empty
     else
       (geoSelect ++ Sql.of(
-        "e.id = ANY(?) AND e.uncertainty <= ?",
+        com.histmersion.util.database.Sql.OfText("e.id = ANY(?) AND e.uncertainty <= ?"),
         Param.A(ids),
         Param.L(EventPrecision.ApproximateUpTo)
       )).frag.query[EventGeoRow].run().map(r => r.row.id -> r.toGeo).toMap

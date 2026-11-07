@@ -203,7 +203,7 @@ object PluginEvents:
     val half = Option.when(lat0.isDefined != lon0.isDefined)("a position needs both latitude and longitude")
     val (lat, lon) = if half.isDefined then (None, None) else (lat0, lon0)
     val warnings = List(latWhy, lonWhy, half, wikidataWhy).flatten.map(left)
-    if id.isEmpty then Left("a record without an id")
+    if id.isEmpty then Left(com.histmersion.pluginhost.PluginEvents.Problem("a record without an id"))
     else if label.isEmpty then Left(s"$id: no label")
     else if !Historicity.all.contains(e.historicity) then
       Left(s"$id: historicity '${e.historicity}' is none of ${Historicity.all.mkString(", ")}")
@@ -214,7 +214,7 @@ object PluginEvents:
         endFrom <- stated(e.endFrom)(SpiValues.yearOf)
         notAfter <- stated(e.notAfter)(SpiValues.yearOf)
         central <- stated(e.central)(SpiValues.yearOf)
-        points = List(notBefore, beginBy, endFrom, notAfter).flatten.map(_.value)
+        points = List(notBefore, beginBy, endFrom, notAfter).flatten.map(_)
         _ <- Either.cond(!points.zip(points.drop(1)).exists((a, b) => a > b), (), s"$id: its dating runs backwards")
       yield
         def long(y: Option[com.histmersion.Year]) = y.map(_.value.toLong)

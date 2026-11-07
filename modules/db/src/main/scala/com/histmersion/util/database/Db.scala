@@ -46,7 +46,7 @@ object Db:
   object DatabaseSettingsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def pool(cfg: DbConfig): HikariDataSource =
-    pooled(cfg.url, cfg.user, cfg.password, cfg.pool.max, "histmersion")
+    pooled(cfg.url, cfg.user, cfg.password, cfg.pool.max, com.histmersion.util.database.Db.PoolName("histmersion"))
 
   /** Build a pool the way a NATIVE IMAGE can.
     *

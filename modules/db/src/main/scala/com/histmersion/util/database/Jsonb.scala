@@ -17,10 +17,10 @@ object Jsonb:
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def codec[A: {Encoder, Decoder}](fallback: A, dropNulls: com.histmersion.util.database.Jsonb.DropNulls = false): DbCodec[A] =
+  def codec[A: {Encoder, Decoder}](fallback: A, dropNulls: com.histmersion.util.database.Jsonb.DropNulls = com.histmersion.util.database.Jsonb.DropNulls(false)): DbCodec[A] =
     DbCodec[Option[String]].biMap(_.flatMap(read[A]).getOrElse(fallback), a => Some(write(a, dropNulls)))
 
-  def optional[A: {Encoder, Decoder}](dropNulls: com.histmersion.util.database.Jsonb.DropNulls = false): DbCodec[Option[A]] =
+  def optional[A: {Encoder, Decoder}](dropNulls: com.histmersion.util.database.Jsonb.DropNulls = com.histmersion.util.database.Jsonb.DropNulls(false)): DbCodec[Option[A]] =
     DbCodec[Option[String]].biMap(_.flatMap(read[A]), _.map(write(_, dropNulls)))
 
   /** The stored text as an `A`; `None` when it does not decode. */
@@ -31,6 +31,6 @@ object Jsonb:
     io.circe.parser.decode[A](text).left.map(_.getMessage)
 
   /** What is bound into the column: compact JSON, without null fields when `dropNulls`. */
-  def write[A: Encoder](a: A, dropNulls: com.histmersion.util.database.Jsonb.DropNulls = false): com.histmersion.util.database.Jsonb.JsonText =
+  def write[A: Encoder](a: A, dropNulls: com.histmersion.util.database.Jsonb.DropNulls = com.histmersion.util.database.Jsonb.DropNulls(false)): com.histmersion.util.database.Jsonb.JsonText =
     val j = a.asJson
     (if dropNulls then j.dropNullValues else j).noSpaces

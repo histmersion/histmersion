@@ -2,9 +2,9 @@ package com.histmersion.domain.media.assets
 
 /** What a picture is shown on: a place, an event, or a source (its cover or illustration). */
 enum PictureTarget(val wire: PictureTarget.Wire):
-  case Place extends PictureTarget("place")
-  case Event extends PictureTarget("event")
-  case Source extends PictureTarget("source")
+  case Place extends PictureTarget(com.histmersion.domain.media.assets.PictureTarget.Wire("place"))
+  case Event extends PictureTarget(com.histmersion.domain.media.assets.PictureTarget.Wire("event"))
+  case Source extends PictureTarget(com.histmersion.domain.media.assets.PictureTarget.Wire("source"))
 
 object PictureTarget:
   type Wire = Wire.T

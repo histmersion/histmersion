@@ -187,7 +187,7 @@ object JobRepo:
   /** Newest first; `status` (when given) narrows to one state. */
   def list(status: Option[com.histmersion.util.jobs.JobRepo.ListStatus], limit: com.histmersion.PageSize)(using DbCon): Vector[JobInfo] =
     val where = status.map(_.trim.toLowerCase).filter(_.nonEmpty) match
-      case Some(s) => Sql.of(" WHERE status = ?", Param.S(s))
+      case Some(s) => Sql.of(com.histmersion.util.database.Sql.OfText(" WHERE status = ?"), Param.S(s))
       case None    => Sql.empty
     val q = select ++ where ++ Keyset.orderBy("") ++ Sql.of(" LIMIT ?", Param.I(math.max(1, limit)))
     (q.frag.query[JobRow].run().map(toInfo))
@@ -209,7 +209,7 @@ object JobRepo:
     sql"SELECT status, count(*)::int FROM jobs GROUP BY status".query[(String, Int)].run().toList
 
   /** How many jobs are in each state — the whole table (one `GROUP BY` over the status index). */
-  def stateCounts(using DbCon): List[(com.histmersion.util.jobs.JobRepo.StateCountsResultPart1, com.histmersion.RowCount)] = Keyset.countsOn(Sql.raw(" FROM jobs"), "status")
+  def stateCounts(using DbCon): List[(com.histmersion.util.jobs.JobRepo.StateCountsResultPart1, com.histmersion.RowCount)] = Keyset.countsOn(Sql.raw(com.histmersion.util.database.Sql.RawText(" FROM jobs")), "status")
 
   private def conds(q: JobQuery): ListSql.Conds =
     val text = q.q.fold(Sql.empty) { t =>
@@ -244,7 +244,7 @@ object JobRepo:
       case None    =>
         val (rows, more) = Keyset.pageOn[JobRow](
           select,
-          Sql.raw(" WHERE true") ++ conds(q).all,
+          Sql.raw(com.histmersion.util.database.Sql.RawText(" WHERE true")) ++ conds(q).all,
           "",
           "jobs",
           math.max(1, limit),
@@ -259,7 +259,7 @@ object JobRepo:
     */
   def facets(q: JobQuery, facetMax: com.histmersion.PageSize)(using DbCon): (List[(com.histmersion.util.jobs.JobRepo.FacetsResultPart1Part1, com.histmersion.RowCount)], List[(com.histmersion.util.jobs.JobRepo.FacetsResultPart2Part1, List[(com.histmersion.util.jobs.JobRepo.FacetsResultPart2Part2Part1, com.histmersion.RowCount)])]) =
     val c = conds(q)
-    def from(except: String) = Sql.raw(" FROM jobs WHERE true") ++ c.except(except)
+    def from(except: String) = Sql.raw(com.histmersion.util.database.Sql.RawText(" FROM jobs WHERE true")) ++ c.except(except)
     (Keyset.countsOn(from("status"), "status"), List("kind" -> ListSql.facetOn(from("kind"), "kind", facetMax)))
 
   /** Free-text progress on a `running` job — what the CLI's progress line prints. */

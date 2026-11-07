@@ -154,7 +154,7 @@ private[places] object PointAreaRepo:
 
   /** The rule's report. */
   def reportIn(rule: Lint.Rule, kinds: List[com.histmersion.domain.catalogue.Place.Kind.Wire], maxItems: com.histmersion.domain.catalogue.places.PointAreas.ReportMaxItems)(using DbCon): Lint.LintRuleReport =
-    if kinds.isEmpty then Lint.LintRuleReport(rule.name, rule.description, 0, Nil)
+    if kinds.isEmpty then Lint.LintRuleReport(rule.name, rule.description, com.histmersion.api.checks.Lint.LintRuleReport.Count(0), Nil)
     else PointAreas.report(rule, groupsIn(kinds), holdersIn(kinds), sampleIn(kinds, maxItems), maxItems)
 
   /** The ids `--fix` may remove: every listed place no evidence names. */
@@ -174,7 +174,7 @@ private[places] object PointAreaRepo:
     * deleted. Shared with the importer's prune ([[GazetteerImport.Session.prune]]).
     */
   private[places] def deletePlacesIn(ids: List[com.histmersion.domain.catalogue.Place.Id])(using DbCon): com.histmersion.RowCount =
-    if ids.isEmpty then 0
+    if ids.isEmpty then com.histmersion.RowCount(0)
     else
       val _ = sql"DELETE FROM finding_places WHERE place_id = ANY($ids::text[])".update.run()
       val _ = sql"DELETE FROM place_names WHERE place_id = ANY($ids::text[])".update.run()
@@ -256,7 +256,7 @@ private[places] object PointAreaRepo:
                       AND NOT EXISTS (SELECT 1 FROM asset_links t WHERE t.target_type = 'place' AND t.target_id = p.id)
                       AND NOT EXISTS (SELECT 1 FROM place_overrides o WHERE o.place_id = p.id)
                     FOR UPDATE OF p""".query[String].run().toList
-    if ids.isEmpty then (0, 0, Set.empty)
+    if ids.isEmpty then (com.histmersion.RowCount(0), com.histmersion.RowCount(0), Set.empty)
     else
       val held = sql"""SELECT DISTINCT f.id, f.citekey FROM finding_places fp JOIN findings f ON f.id = fp.finding_id
                        WHERE fp.place_id = ANY($ids::text[])""".query[(String, String)].run().toList

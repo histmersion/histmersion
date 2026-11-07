@@ -19,8 +19,8 @@ import com.histmersion.plugin.Plugin
 final class PolicyHttp(
     userAgent: PolicyHttp.UserAgent,
     transport: HttpTransport,
-    tries: PolicyHttp.Tries = 4,
-    maxRetryAfterSeconds: PolicyHttp.MaxRetryAfterSeconds = 60,
+    tries: PolicyHttp.Tries = com.histmersion.pluginhost.PolicyHttp.Tries(4),
+    maxRetryAfterSeconds: PolicyHttp.MaxRetryAfterSeconds = com.histmersion.pluginhost.PolicyHttp.MaxRetryAfterSeconds(60),
     sleep: PolicyHttp.SleepArg1 => Unit = ms => Thread.sleep(ms),
     clock: () => java.time.Instant = () => java.time.Instant.now(),
     log: HostLog = HostLog.scribe
@@ -48,12 +48,12 @@ final class PolicyHttp(
           if Challenge.isChallenge(code, answer.headers, answer.body) then
             Left(s"$url: HTTP $code bot-protection challenge — treated as no copy")
           else
-            HttpPolicy.decide(code, answer.header("Retry-After"), n, maxRetries, maxRetryAfterSeconds, clock()) match
+            HttpPolicy.decide(code, answer.header(com.histmersion.domain.CoreQuota.HeaderName("Retry-After")), n, maxRetries, maxRetryAfterSeconds, clock()) match
               case HttpPolicy.Step.Accept                                    => Right(answer.body)
               case HttpPolicy.Step.Wait(ms, why)                             => again(n, ms, why)
               case HttpPolicy.Step.GiveUp(why) if HttpPolicy.Throttled(code) => Left(s"$url failed: $why")
               case HttpPolicy.Step.GiveUp(_) => Left(s"$url: HTTP $code ${new String(answer.body.take(200), "UTF-8")}")
-    attempt(0)
+    attempt(com.histmersion.domain.HttpPolicy.Attempt(0))
 
   /** One GET with the policy's identity and NO retry: the answer as it came, a slow-down or an error included, with its
     * headers — for an upstream whose own budget decides when to ask again (CORE's rate-limit headers), where a retry

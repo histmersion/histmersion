@@ -41,7 +41,7 @@ final class SourceRepairs(db: Transactor):
       val (s, c) = (sources + r.sources, chunks + r.chunks)
       if r.remaining > 0 && r.lastCitekey.isDefined then go(r.lastCitekey, s, c)
       else ReindexResult(s, c, r.lastCitekey, r.remaining)
-    go(None, 0, 0)
+    go(None, com.histmersion.RowCount(0), com.histmersion.RowCount(0))
 
   /** Re-chunk the sources that have a body but no full-text chunks (`stale-chunks`).
     *
@@ -70,7 +70,7 @@ final class SourceRepairs(db: Transactor):
   /** `unresolved-short-citekeys`: unify the unambiguous short edge targets. */
   def resolveEdgesFix(): LintFixResult =
     val resolved = db.transact(SourceRepo.resolveEdges())
-    LintFixResult(List(s"resolve-edges: $resolved edge target(s) rewritten"), resolved, 0, 0, 0)
+    LintFixResult(List(s"resolve-edges: $resolved edge target(s) rewritten"), resolved, com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0), com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0), com.histmersion.api.checks.Lint.LintFixResult.Remaining(0))
 
   /** `stale-chunks`: re-chunk a bounded batch of the sources with a body and no chunks. */
   def reindexFix(cfg: AppConfig): LintFixResult =
@@ -78,7 +78,7 @@ final class SourceRepairs(db: Transactor):
     val left = if r.remaining > 0 then s", ${r.remaining} still stale" else ""
     LintFixResult(
       List(s"reindex: ${r.sources} source(s) → ${r.chunks} chunk(s)$left"),
-      0,
+      com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0),
       r.sources,
       r.chunks,
       r.remaining
@@ -90,10 +90,10 @@ final class SourceRepairs(db: Transactor):
     val moved = db.transact(FindingPlacement.move(FindingPlacement.movesIn(s), s.toleranceKm))
     LintFixResult(
       List(s"$FindingGeocode: $moved finding(s) moved to the place the current geocoder chooses"),
-      0,
-      0,
-      0,
-      0,
+      com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0),
+      com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0),
+      com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0),
+      com.histmersion.api.checks.Lint.LintFixResult.Remaining(0),
       findingsRegeocoded = moved
     )
 
@@ -103,10 +103,10 @@ final class SourceRepairs(db: Transactor):
     val placed = db.transact(FindingPlacement.place(FindingPlacement.placementsIn(s), s.toleranceKm))
     LintFixResult(
       List(s"$FindingUnplaced: $placed finding(s) given the point of the place they name"),
-      0,
-      0,
-      0,
-      0,
+      com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0),
+      com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0),
+      com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0),
+      com.histmersion.api.checks.Lint.LintFixResult.Remaining(0),
       findingsPlaced = placed
     )
 
@@ -126,4 +126,4 @@ object SourceRepairs:
     def loop(rest: List[(com.histmersion.domain.library.Citekey, com.histmersion.RowCount)], spent: com.histmersion.domain.library.sources.SourceRepairs.CharsSpent, out: List[String]): List[String] = rest match
       case (ck, len) :: tail if spent + len.toLong <= maxChars => loop(tail, spent + len.toLong, ck :: out)
       case _                                                   => out.reverse
-    loop(pending.toList, 0L, Nil)
+    loop(pending.toList, com.histmersion.domain.library.sources.SourceRepairs.CharsSpent(0L), Nil)

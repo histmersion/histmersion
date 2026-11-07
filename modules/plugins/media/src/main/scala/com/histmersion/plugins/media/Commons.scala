@@ -221,7 +221,6 @@ object Commons:
     override def completeAll(items: List[MediaItem], http: Plugin.Http): MediaCompleted =
       Files(http, media, licences).thumbnails(items)
 
-  object Depictions:
 
   /** Wikimedia Commons files that DEPICT an event: structured data's `P180 depicts` searched by CirrusSearch's
     * documented `haswbstatement` keyword through the action API (no login), and Wikidata's `P1299 depicted by` on the

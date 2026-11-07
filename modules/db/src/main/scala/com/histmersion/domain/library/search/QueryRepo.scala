@@ -60,7 +60,7 @@ private[search] object QueryRepo:
         if !hasRs then
           // unreachable in a READ ONLY transaction (nothing that updates rows can run), but an
           // honest answer beats a NullPointerException if Postgres ever allows one.
-          Right(QueryResult(Nil, Nil, 0, false, elapsed))
+          Right(QueryResult(Nil, Nil, com.histmersion.api.library.Query.QueryResult.RowCount(0), com.histmersion.api.library.Query.QueryResult.Truncated(false), elapsed))
         else Right(read(st.getResultSet, maxRows, maxCellChars, elapsed))
       finally st.close()
     catch case e: SQLException => Left(message(e))
@@ -124,7 +124,7 @@ private[search] object QueryRepo:
           .map { case ((name, kind), cols) =>
             SchemaTable(
               name,
-              if kind == "VIEW" then "view" else "table",
+              if kind == "VIEW" then com.histmersion.api.library.Query.SchemaTable.Kind("view") else com.histmersion.api.library.Query.SchemaTable.Kind("table"),
               cols.map((_, _, col, tpe, nullable) => SchemaColumn(col, tpe, nullable == "YES"))
             )
           }

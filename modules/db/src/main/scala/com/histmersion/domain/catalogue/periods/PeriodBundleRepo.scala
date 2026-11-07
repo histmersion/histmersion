@@ -22,7 +22,7 @@ private[periods] object PeriodBundleRepo:
   def periods(scope: BundleScope, alsoIds: List[com.histmersion.domain.catalogue.periods.BPeriodRow.Id] = Nil)(using DbCon): Vector[Bundle.Period] =
     val own = Sql.raw("p.dataset = 'local' AND ") ++ where(scope, "p.uid", "p.updated_at")
     val sel = if alsoIds.isEmpty then own
-    else Sql.raw("((") ++ own ++ Sql.of(") OR p.id = ANY(?::text[]))", Param.A(alsoIds.distinct))
+    else Sql.raw(com.histmersion.util.database.Sql.RawText("((")) ++ own ++ Sql.of(") OR p.id = ANY(?::text[]))", Param.A(alsoIds.distinct))
     (Sql.raw(s"""SELECT p.uid, p.origin, p.id, p.label, p.authority, ${rangeCols("p.period")}, p.region, p.parent_id,
                        ${ts("p.updated_at")}
                 FROM periods p WHERE """) ++ sel ++ " ORDER BY p.uid").frag.query[BPeriodRow].run().map { r =>

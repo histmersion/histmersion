@@ -12,4 +12,3 @@ final case class LandingConfig(acquire: UpstreamSettings, plugins: LandingPeers 
   def unpaywallEmail: Option[com.histmersion.plugins.fetchers.UnpaywallConfig.ContactEmail] =
     UnpaywallConfig.own(plugins.oaUnpaywall.contactEmail).orElse(acquire.contact)
 
-object LandingConfig:

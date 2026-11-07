@@ -29,7 +29,7 @@ object BundleSql:
 
   /** `WHERE` for the scope, on a table's uid and change-clock columns. */
   def where(scope: BundleScope, uid: String, clock: String): Sql = scope match
-    case BundleScope.All       => Sql.raw("TRUE")
+    case BundleScope.All       => Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE"))
     case BundleScope.Since(at) => Sql.of(s"$clock > ?::timestamptz", Param.S(at))
     case BundleScope.Uids(us)  => Sql.of(s"$uid = ANY(?::uuid[])", Param.A(us.map(_.toString)))
 

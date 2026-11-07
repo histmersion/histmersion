@@ -49,7 +49,7 @@ private[assets] object AssetBundleRepo:
   def bytes(uid: UUID)(using DbCon): java.io.OutputStream => Unit =
     out =>
       out.write(
-        Sql.of("SELECT bytes FROM assets WHERE uid = ?::uuid", Param.S(uid.toString)).frag.query[Array[Byte]].run().head
+        Sql.of(com.histmersion.util.database.Sql.OfText("SELECT bytes FROM assets WHERE uid = ?::uuid"), Param.S(uid.toString)).frag.query[Array[Byte]].run().head
       )
 
   // ── in ───────────────────────────────────────────────────────────────────────────────────────

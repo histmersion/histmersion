@@ -16,7 +16,7 @@ object QueryAccess:
     */
 
   def pool(db: DbConfig, q: QueryConfig): HikariDataSource =
-    Db.pooled(db.url, q.user, q.password, math.min(4, math.max(1, db.pool.max)), "histmersion-query")
+    Db.pooled(db.url, q.user, q.password, math.min(4, math.max(1, db.pool.max)), com.histmersion.util.database.Db.PoolName("histmersion-query"))
 
   /** Give the `histmersion_query` role (created by migration V011) its password and its statement timeout, running as
     * the application role.

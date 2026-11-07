@@ -370,7 +370,7 @@ private[assets] object MediaRepo:
   ): Sql =
     val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
     val ps = List.newBuilder[Sql]
-    k.foreach(v => ps += Sql.of("a.kind = ?", Param.S(v)))
+    k.foreach(v => ps += Sql.of(com.histmersion.util.database.Sql.OfText("a.kind = ?"), Param.S(v)))
     clean(provider).foreach(p =>
       ps += (if p == MediaProvider.Source then Sql.raw("a.provider IS NULL") else Sql.of("a.provider = ?", Param.S(p)))
     )
@@ -379,7 +379,7 @@ private[assets] object MediaRepo:
              else Sql.of("a.license = ?", Param.S(l)))
     )
     window.foreach((lo, hi) => ps += Sql.raw(RangeSql.overlaps("a.period", s"$lo::bigint", s"$hi::bigint")))
-    val rest = ps.result().foldLeft(Sql.empty)((acc, p) => acc ++ Sql.raw(" AND ") ++ p)
+    val rest = ps.result().foldLeft(Sql.empty)((acc, p) => acc ++ Sql.raw(com.histmersion.util.database.Sql.RawText(" AND ")) ++ p)
     Sql.raw(
       "SELECT a.uid::text AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, lower(a.period) AS ps, upper(a.period) - 1 AS pe," +
         " false AS ub" +

@@ -41,7 +41,7 @@ object AgentRepo:
   type SettleResult = SettleResult.T
   object SettleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private given DbCodec[RunParams] = Jsonb.codec(RunParams(), dropNulls = true)
+  private given DbCodec[RunParams] = Jsonb.codec(RunParams(), dropNulls = com.histmersion.util.database.Jsonb.DropNulls(true))
 
   final private case class RunRow(
       id: RunRow.Id,
@@ -297,7 +297,7 @@ object AgentRepo:
       "provider" -> usedModel(q.providers, provider),
       "origin" -> ListSql.anyOf(originExpr, q.origins),
       "time" -> ListSql.between("j.created_at", q.since, q.until),
-      "q" -> q.q.fold(Sql.empty)(t => Sql.of(" AND j.target_id ILIKE ?", Param.S(ListSql.contains(t))))
+      "q" -> q.q.fold(Sql.empty)(t => Sql.of(com.histmersion.util.database.Sql.OfText(" AND j.target_id ILIKE ?"), Param.S(ListSql.contains(t))))
     )
   )
 
@@ -329,7 +329,7 @@ object AgentRepo:
     */
   def runFacets(q: RunQuery)(using DbCon): (List[(com.histmersion.domain.automation.Run.State.Wire, com.histmersion.RowCount)], List[(com.histmersion.domain.automation.Pipeline.Wire, List[(com.histmersion.domain.automation.agents.AgentRepo.RunRow.Model, com.histmersion.RowCount)])]) =
     val c = runConds(q)
-    def from(except: String) = Sql.raw(" FROM jobs j") ++ Sql.raw(runsOnly) ++ c.except(except)
+    def from(except: String) = Sql.raw(com.histmersion.util.database.Sql.RawText(" FROM jobs j")) ++ Sql.raw(runsOnly) ++ c.except(except)
     def used(except: String): Sql =
       Sql.raw(
         " FROM (SELECT DISTINCT j.id, x.m FROM jobs j CROSS JOIN LATERAL (SELECT j.model AS m UNION " +
@@ -349,13 +349,13 @@ object AgentRepo:
 
   /** How many runs are in each state — of one goal, when given. */
   def stateCounts(goal: Option[com.histmersion.domain.automation.Goal.Slug] = None)(using DbCon): List[(com.histmersion.domain.automation.Approval.State.Wire, com.histmersion.RowCount)] =
-    Keyset.countsOn(Sql.raw(" FROM jobs j") ++ Sql.raw(runsOnly) ++ runGoal(goal), "j.status")
+    Keyset.countsOn(Sql.raw(com.histmersion.util.database.Sql.RawText(" FROM jobs j")) ++ Sql.raw(runsOnly) ++ runGoal(goal), "j.status")
 
   private def runStatus(status: Option[com.histmersion.domain.automation.Run.State.Wire]): Sql =
-    status.map(_.trim.toLowerCase).filter(_.nonEmpty).fold(Sql.empty)(s => Sql.of(" AND j.status = ?", Param.S(s)))
+    status.map(_.trim.toLowerCase).filter(_.nonEmpty).fold(Sql.empty)(s => Sql.of(com.histmersion.util.database.Sql.OfText(" AND j.status = ?"), Param.S(s)))
 
   private def runGoal(goal: Option[com.histmersion.domain.automation.Goal.Slug]): Sql =
-    goal.map(_.trim).filter(_.nonEmpty).fold(Sql.empty)(g => Sql.of(" AND j.goal_slug = ?", Param.S(g)))
+    goal.map(_.trim).filter(_.nonEmpty).fold(Sql.empty)(g => Sql.of(com.histmersion.util.database.Sql.OfText(" AND j.goal_slug = ?"), Param.S(g)))
 
   /** Every run of `p` on `target`, newest first (what auto-enrich asks before queueing another). */
   def forTarget(p: Pipeline, target: com.histmersion.domain.automation.agents.AgentRepo.RunRow.Target)(using DbCon): Vector[RunInfo] =
@@ -368,7 +368,7 @@ object AgentRepo:
   /** The runs a manager dispatched, newest first (`active` = only those not settled yet: queued, running, paused or
     * waiting).
     */
-  def forManager(managerId: com.histmersion.domain.automation.agents.AgentRepo.RunRow.ManagerId, active: com.histmersion.domain.automation.agents.AgentRepo.ActiveOnly = false, limit: com.histmersion.PageSize = 200)(using DbCon): Vector[RunInfo] =
+  def forManager(managerId: com.histmersion.domain.automation.agents.AgentRepo.RunRow.ManagerId, active: com.histmersion.domain.automation.agents.AgentRepo.ActiveOnly = com.histmersion.domain.automation.agents.AgentRepo.ActiveOnly(false), limit: com.histmersion.PageSize = com.histmersion.PageSize(200))(using DbCon): Vector[RunInfo] =
     val open = if active then Sql.of(" AND j.status IN ('queued', 'running', 'paused', 'waiting')") else Sql.empty
     (runSelect ++ Sql.of(" AND j.manager_id = ?", Param.S(managerId)) ++ open ++
       Sql.of(" ORDER BY j.created_at DESC, j.id DESC LIMIT ?", Param.I(math.max(1, limit)))).frag
@@ -556,7 +556,7 @@ object AgentRepo:
     * are never pruned: a resume and the budget sums need them. Returns how many rows went.
     */
   def pruneMessages(days: com.histmersion.domain.CodexRetention.KeepDays)(using DbCon): com.histmersion.RowCount =
-    if days <= 0 then 0
+    if days <= 0 then com.histmersion.RowCount(0)
     else sql"""DELETE FROM agent_messages WHERE created_at < now() - make_interval(days => $days)""".update.run()
 
   // ── approvals: what runs proposed for a person to decide (`ApprovalService` opens the connection) ────
@@ -628,7 +628,7 @@ object AgentRepo:
       r.current,
       r.edgeKind,
       r.target,
-      "",
+      com.histmersion.api.automation.Agents.ApprovalInfo.Evidence(""),
       None,
       r.state,
       r.note,
@@ -675,7 +675,7 @@ object AgentRepo:
 
   /** Newest first; `state` narrows (none = every state). */
   def approvals(state: Option[ApprovalState], limit: com.histmersion.PageSize)(using DbCon): List[ApprovalInfo] =
-    val where = state.fold(Sql.empty)(s => Sql.of(" WHERE state = ?", Param.S(s.wire)))
+    val where = state.fold(Sql.empty)(s => Sql.of(com.histmersion.util.database.Sql.OfText(" WHERE state = ?"), Param.S(s.wire)))
     (approvalSelect ++ where ++ Sql.of(
       " ORDER BY created_at DESC, id DESC LIMIT ?",
       Param.I(math.max(1, limit))
@@ -715,7 +715,7 @@ object AgentRepo:
     )
     ListSql.Conds(
       List(
-        "state" -> q.state.fold(Sql.empty)(s => Sql.of(" AND state = ?", Param.S(s.wire))),
+        "state" -> q.state.fold(Sql.empty)(s => Sql.of(com.histmersion.util.database.Sql.OfText(" AND state = ?"), Param.S(s.wire))),
         "kind" -> ListSql.anyOf("kind", q.kinds.map(_.wire)),
         "subject" -> subject,
         "goal" -> goal,
@@ -739,7 +739,7 @@ object AgentRepo:
       b <- before.fold(Right(None))(cursor(_).map(Some(_)))
       u <- upTo.fold(Right(None))(cursor(_).map(Some(_)))
     yield
-      val where = Sql.raw(" WHERE true") ++ approvalConds(q).all
+      val where = Sql.raw(com.histmersion.util.database.Sql.RawText(" WHERE true")) ++ approvalConds(q).all
       val (rows, more) = Keyset
         .pageOn[ApprovalRow](approvalSelect, where, "", "approvals", math.max(1, limit), b, u, r => Param.L(r.id))
       (rows.toList.map(info), more)
@@ -749,7 +749,7 @@ object AgentRepo:
     */
   def approvalFacets(q: ApprovalQuery)(using DbCon): (List[(com.histmersion.domain.automation.Approval.Kind.Wire, com.histmersion.RowCount)], List[(com.histmersion.domain.automation.Approval.State.Wire, List[(com.histmersion.domain.automation.agents.AgentRepo.ApprovalRow.Subject, com.histmersion.RowCount)])]) =
     val c = approvalConds(q)
-    def from(except: String) = Sql.raw(" FROM approvals WHERE true") ++ c.except(except)
+    def from(except: String) = Sql.raw(com.histmersion.util.database.Sql.RawText(" FROM approvals WHERE true")) ++ c.except(except)
     (
       Keyset.countsOn(from("state"), "state"),
       List(
@@ -759,7 +759,7 @@ object AgentRepo:
     )
 
   /** How many approvals are in each state. */
-  def approvalCounts()(using DbCon): List[(com.histmersion.domain.automation.Approval.Kind.Wire, com.histmersion.RowCount)] = Keyset.countsOn(Sql.raw(" FROM approvals"), "state")
+  def approvalCounts()(using DbCon): List[(com.histmersion.domain.automation.Approval.Kind.Wire, com.histmersion.RowCount)] = Keyset.countsOn(Sql.raw(com.histmersion.util.database.Sql.RawText(" FROM approvals")), "state")
 
   /** The approval step `seq` of run `jobId` waits on, opened if it is not there yet (a resumed run finds the one it
     * opened before, never a second). `state` = approved with a `result` records one applied at once (an `auto` mode).
