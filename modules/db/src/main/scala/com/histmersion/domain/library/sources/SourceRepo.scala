@@ -182,9 +182,9 @@ private[sources] object SourceRepo:
       val known = canonicalAll(es.flatMap(e => domainCitekey(e.dst)).distinct).map((key, value) => apiCitekey(key) -> value)
       es.map { e =>
         if known.contains(e.dst) then
-          sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, ${known(e.dst)}, ${e.kind})
+          sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, ${known(e.dst)}, ${Edge.Kind.wireOf(e.kind)})
                 ON CONFLICT DO NOTHING""".update.run()
-        else sql"""INSERT INTO unresolved_edges (src, dst, kind) VALUES (${e.src}, ${e.dst}, ${e.kind})
+        else sql"""INSERT INTO unresolved_edges (src, dst, kind) VALUES (${e.src}, ${e.dst}, ${Edge.Kind.wireOf(e.kind)})
                 ON CONFLICT DO NOTHING""".update.run()
       }.sum
         .pipe(com.histmersion.RowCount(_))

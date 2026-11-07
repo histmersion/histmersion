@@ -44,6 +44,10 @@ final class SourcesControllers(
     clock: Clock
 )(using timer: com.histmersion.util.time.Timer):
 
+  /** A citekey as a client sent it, or the 400 that refuses it: the one place a request's citekey becomes a domain one. */
+  def parseCitekey(ck: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
+    Citekey.parse(ck.value).left.map(p => Write.invalid(Api.Error.Message(p.value)))
+
   private def apiCk(c: Citekey): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(c.value)
 
   private def currentOf(id: Citekey): Option[Citekey] =

@@ -109,7 +109,7 @@ object GoalService:
       db.read(GoalRepo.listIn(status.map(s => GoalRow.Status(s.value)), limit, offset))
     def patch(slug: com.histmersion.domain.automation.Goal.Slug, p: Goal.Patch): Either[Api.Error, Unit] = db.transact(GoalRepo.patchIn(slug, p))
     def delete(slug: com.histmersion.domain.automation.Goal.Slug): Boolean = db.transact(GoalRepo.deleteIn(slug))
-    def rename(from: com.histmersion.domain.automation.Goal.Slug, to: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Unit] = db.transact(GoalRepo.renameIn(from, to))
+    def rename(from: com.histmersion.domain.automation.Goal.Slug, to: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Unit] = db.transact(GoalRepo.renameIn(from.trimmed, to.trimmed))
     def goalsOfItems(items: List[GoalLinkRepo.ItemId]): List[(GoalLinkRepo.ItemId, com.histmersion.domain.automation.Goal.Slug, BGoalRow.Title)] = db.read(GoalLinkRepo.goalsOfItemsIn(items))
     def links(goal: com.histmersion.domain.automation.Goal.Slug): List[GoalLink] = db.read(GoalLinkRepo.links(goal))
     def link(
@@ -279,10 +279,11 @@ object GoalService:
       before.goals.contains(key(slug))
 
     def rename(from: com.histmersion.domain.automation.Goal.Slug, to: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Unit] =
-      val (old, now) = (from.value, to.value)
+      val (oldSlug, newSlug) = (from.trimmed, to.trimmed)
+      val (old, now) = (oldSlug.value, newSlug.value)
       val aliasOf = state.get.goalAliases.get(AutomationState.GoalAliasesKey(now)).map(_.value)
-      if !goals.contains(key(from)) then Left(notFound(from))
-      else if goals.contains(key(to)) then
+      if !goals.contains(key(oldSlug)) then Left(notFound(oldSlug))
+      else if goals.contains(key(newSlug)) then
         Left(refused(s"'$now' is already the slug of another goal", Write.CodeInvalid))
       else if aliasOf.exists(_ != old) then
         Left(

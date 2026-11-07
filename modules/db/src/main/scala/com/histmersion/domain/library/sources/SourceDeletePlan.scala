@@ -9,13 +9,15 @@ import com.histmersion.api.library.Source
   */
 final case class SourceDeletePlan(
     deletion: Source.Deletion,
-    sha256: Option[com.histmersion.Sha256],
+    sha256: Option[SourceDeletePlan.Sha256],
     shaShared: SourceDeletePlan.ShaShared,
     keys: List[SourceDeletePlan.Keys],
     report: DeleteReport
 )
 
 object SourceDeletePlan:
+  type Sha256 = Sha256.T
+  object Sha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShaShared = ShaShared.T
   object ShaShared extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Keys = Keys.T

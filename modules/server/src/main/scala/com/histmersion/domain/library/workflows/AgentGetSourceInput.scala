@@ -3,6 +3,7 @@ package com.histmersion.domain.library.workflows
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import io.circe.{Codec, Decoder, Encoder}
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
@@ -26,6 +27,15 @@ final case class AgentGetSourceInput(
         )
       )
 object AgentGetSourceInput:
+
+  /** What a model typed as the citekey is looked up as it stands: a key that names no source answers "not found", not a
+    * refused turn.
+    */
+  private given Codec[com.histmersion.domain.library.Citekey] =
+    Codec.from(
+      Decoder.decodeString.map(com.histmersion.domain.library.Citekey.assume(_)),
+      Encoder.encodeString.contramap(_.value)
+    )
 
   given Schema[AgentGetSourceInput] = KindlingsSchema
     .derived[AgentGetSourceInput]

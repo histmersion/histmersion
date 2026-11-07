@@ -223,7 +223,7 @@ object Agents:
 
   final case class ProbeAnswer(citekey: com.histmersion.api.library.Citekey, title: com.histmersion.api.library.Title, year: Option[com.histmersion.api.catalogue.Year])
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema:
     /** A strict-schema provider sends `""` and `null` where it has nothing; they must not pass. */
     def problems(recordYear: Option[com.histmersion.api.automation.Agents.ProbeAnswer.RecordYear]): List[com.histmersion.api.automation.Agents.ProbeAnswer.Problem] = List(
       Option.when(Option(citekey).forall(_.value.trim.isEmpty))(ProbeAnswer.Problem("the citekey is empty — give the source's citekey")),
@@ -236,6 +236,8 @@ object Agents:
     ).flatten
 
   object ProbeAnswer:
+    /** The year asked of a model stays the 32-bit integer its schema has always said. */
+    given Schema[ProbeAnswer] = com.histmersion.api.json.Schema.derived[ProbeAnswer].modify(_.year)(_.format("int32"))
     type Problem = Problem.T
     object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RecordYear = RecordYear.T

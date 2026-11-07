@@ -11,6 +11,8 @@ object Place:
 
   object Id extends RefinedType[String, Match["[a-z][a-z0-9-]*(_.+)?"]]:
     extension (id: T) def isPleiades: Boolean = id.value.startsWith("pleiades_")
+    extension (id: T) def isBlank: Boolean = id.value.trim.isEmpty
+    extension (id: T) def trimmed: Id = assume(id.value.trim)
 
   /** The five `kind`s the store recognises. Free text in the column (an importer may carry its own vocabulary), but
     * these are what the CLI/UI offer and what api's `Lpf` maps foreign type labels onto. `people` (2026-10-09) is a

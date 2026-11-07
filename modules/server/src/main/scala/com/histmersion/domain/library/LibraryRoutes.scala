@@ -1,6 +1,6 @@
 package com.histmersion.domain.library
 
-import com.histmersion.api.{Api, Write}
+import com.histmersion.api.Api
 import com.histmersion.api.library.{Citekey as ApiCitekey, Facet, Filter, Source}
 import com.histmersion.domain.library.citations.{CitationService, CitationsControllers}
 import com.histmersion.domain.library.findings.FindingsControllers
@@ -30,7 +30,7 @@ object LibraryRoutes:
       reindex: ServerEndpoint[Any, Identity]
   ): List[ServerEndpoint[Any, Identity]] =
     def citekey(ck: ApiCitekey): Either[Api.Error, Citekey] =
-      Citekey.parse(ck.value).left.map(p => Write.invalid(Api.Error.Message(p.value)))
+      sources.parseCitekey(ck)
     def citekeyOpt(ck: Option[ApiCitekey]): Either[Api.Error, Option[Citekey]] =
       ck.fold[Either[Api.Error, Option[Citekey]]](Right(None))(c => citekey(c).map(Some(_)))
     List(

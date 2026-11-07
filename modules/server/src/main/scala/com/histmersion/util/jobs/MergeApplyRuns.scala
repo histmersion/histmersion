@@ -21,7 +21,7 @@ trait MergeApplyRuns:
   def running: Boolean
 
   /** A new running row for the bundle and plan; its id. */
-  def start(bundle: com.histmersion.Sha256, planHash: com.histmersion.Sha256): Job.Id
+  def start(bundle: com.histmersion.Sha256, planHash: MergeRow.PlanHash): Job.Id
 
   /** How the run ended; a row a restart already failed is left as it is. */
   def finish(id: Job.Id, outcome: Either[MergeApplyRuns.Failure, MergeApplyResult]): Unit
@@ -38,14 +38,14 @@ object MergeApplyRuns:
 
   final private class Implementation(ds: DataSource) extends MergeApplyRuns:
     def running: Boolean = Transactor(ds).read(JobRepo.mergeApplyRunning)
-    def start(bundle: com.histmersion.Sha256, planHash: com.histmersion.Sha256): Job.Id =
-      Transactor(ds).transact(JobRepo.startMergeApply(MergeRepo.BundleName(bundle.value), MergeRow.PlanHash(planHash.value)))
+    def start(bundle: com.histmersion.Sha256, planHash: MergeRow.PlanHash): Job.Id =
+      Transactor(ds).transact(JobRepo.startMergeApply(MergeRepo.BundleName(bundle.value), planHash))
     def finish(id: Job.Id, outcome: Either[MergeApplyRuns.Failure, MergeApplyResult]): Unit =
       Transactor(ds).transact(JobRepo.finishMergeApply(id, outcome.left.map(f => JobRepo.Problem(f.value))))
     def status(id: Job.Id): Option[MergeApplyJob] = Transactor(ds).read(JobRepo.mergeApply(id))
 
   /** One run as the in-memory twin keeps it. */
-  final case class Run(bundle: com.histmersion.Sha256, planHash: com.histmersion.Sha256, outcome: Option[Either[MergeApplyRuns.Failure, MergeApplyResult]])
+  final case class Run(bundle: com.histmersion.Sha256, planHash: MergeRow.PlanHash, outcome: Option[Either[MergeApplyRuns.Failure, MergeApplyResult]])
 
   /** The rows in memory, keyed by id; ids are numbered in start order. */
   final class InMemory(state: AtomicReference[Map[Job.Id, Run]] = AtomicReference(Map.empty[Job.Id, Run]))
@@ -54,7 +54,7 @@ object MergeApplyRuns:
 
     def running: Boolean = state.get().values.exists(_.outcome.isEmpty)
 
-    def start(bundle: com.histmersion.Sha256, planHash: com.histmersion.Sha256): Job.Id =
+    def start(bundle: com.histmersion.Sha256, planHash: MergeRow.PlanHash): Job.Id =
       val next = state.updateAndGet(m => m + (idOf(m.size + 1) -> Run(bundle, planHash, None)))
       idOf(next.size)
 

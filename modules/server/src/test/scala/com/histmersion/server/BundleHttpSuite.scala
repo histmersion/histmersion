@@ -186,7 +186,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
         s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"merge_plan","arguments":{"bundle":"${u.sha256}"}}}"""
       )
       assertEquals(mcp.statusCode, 200, mcp.body)
-      assert(mcp.body.contains(plan.planHash), mcp.body)
+      assert(mcp.body.contains(plan.planHash.value), mcp.body)
     }
 
   test("the review draft, resolution files, merge list/show/ledger and label renames over HTTP and MCP"):

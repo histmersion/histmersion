@@ -84,7 +84,7 @@ class SourcesControllersSuite extends munit.FunSuite:
 
   test("a put under a citekey that is not one is refused; a strict put with a formatting error too"):
     val c = controllers()
-    assertEquals(c.put(Citekey.applyUnsafe("Not A Key"), put).left.map(_.code), Left(Some(Write.CodeInvalid)))
+    assertEquals(c.parseCitekey(com.histmersion.api.library.Citekey("Not A Key")).flatMap(c.put(_, put)).left.map(_.code), Left(Some(Write.CodeInvalid)))
     assertEquals(
       c.put(Walls90, put.modify(_.notes).setTo(Div), strict = SourcesControllers.PutStrict(true)).left.map(_.message),
       Left("refused (strict)")

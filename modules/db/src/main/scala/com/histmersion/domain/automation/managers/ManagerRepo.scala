@@ -242,13 +242,13 @@ object ManagerRepo:
   /** Every agent run that occupies a place ([[running]]'s rule, a person's runs too): its pipeline, and the goal of the
     * manager that started it (None: a person's, or a library-wide manager's).
     */
-  def occupyingRuns()(using DbCon): List[(com.histmersion.api.automation.Pipeline, Option[ManagerRow.Goal])] =
+  def occupyingRuns()(using DbCon): List[(com.histmersion.api.automation.Pipeline.Wire, Option[ManagerRow.Goal])] =
 
     (of(
       "SELECT j.pipeline, m.goal_slug FROM jobs j LEFT JOIN agent_managers m ON m.id = j.manager_id " +
         "WHERE j.kind = ? AND ",
       str(JobKind)
-    ) ++ occupyingOn("j")).frag.query[(com.histmersion.api.automation.Pipeline, Option[ManagerRow.Goal])].run().toList
+    ) ++ occupyingOn("j")).frag.query[(com.histmersion.api.automation.Pipeline.Wire, Option[ManagerRow.Goal])].run().toList
 
   /** The runs that occupy a place ([[running]]'s rule), as a predicate on table (alias) `t` of `jobs`. */
   private def occupyingOn(t: String): Sql =

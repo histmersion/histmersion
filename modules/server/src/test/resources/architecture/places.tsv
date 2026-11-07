@@ -1,17 +1,23 @@
 # file (module:path under com/histmersion)	place — where the domain-model design moves each file that is not in its feature package yet
+api:api/AllowanceWindow.scala	kernel
 api:api/Api.scala	api
+api:api/Ascii.scala	kernel
 api:api/BBox.scala	kernel
+api:api/ByteCount.scala	kernel
 api:api/ConfidenceStyle.scala	api.ui
 api:api/Csv.scala	util.common
 api:api/Dataset.scala	kernel
+api:api/Geo.scala	kernel
 api:api/GeoPick.scala	kernel
 api:api/GeoPoint.scala	kernel
 api:api/HtmlAtoms.scala	util.markdown
+api:api/Jobs.scala	kernel
 api:api/LatinFold.scala	util.common
 api:api/ListPatch.scala	kernel
 api:api/LpfDataset.scala	kernel
 api:api/MapStack.scala	api.ui
 api:api/Markdown.scala	util.common
+api:api/Offset.scala	kernel
 api:api/OffsetPage.scala	kernel
 api:api/OpenSide.scala	kernel
 api:api/OpsApi.scala	api
@@ -21,7 +27,9 @@ api:api/PeriodODataset.scala	kernel
 api:api/Plural.scala	util.common
 api:api/RegisteredJobKinds.scala	api
 api:api/RegisteredPlanMatches.scala	api
+api:api/RowCount.scala	kernel
 api:api/ServiceState.scala	kernel
+api:api/Sha256.scala	kernel
 api:api/Span.scala	kernel
 api:api/SpatialHierarchyResult.scala	kernel
 api:api/StatusCount.scala	kernel
@@ -30,11 +38,11 @@ api:api/TableSize.scala	kernel
 api:api/TimeSpan.scala	kernel
 api:api/UiLabels.scala	api.ui
 api:api/Validity.scala	kernel
-api:api/ValueCodecs.scala	util.common
 api:api/VocabularyCodecs.scala	util.common
 api:api/Wcag.scala	api.ui
 api:api/WebPaths.scala	api.ui
 api:api/WireEnum.scala	util.common
+api:api/WireEnumValues.scala	kernel
 api:api/Wording.scala	util.common
 api:api/Write.scala	util.common
 api:api/YearFmt.scala	util.common
@@ -88,6 +96,7 @@ config:config/CodexConfig.scala	automation.agents
 config:config/CommaList.scala	values
 config:config/Config.scala	config
 config:config/ConfigLayers.scala	config
+config:config/ConfigProblem.scala	config
 config:config/ConfigReload.scala	util.settings
 config:config/ConverterConfig.scala	library.ingest
 config:config/CoreServiceConfig.scala	library.acquisition

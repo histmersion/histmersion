@@ -9248,7 +9248,7 @@
             "required" : false,
             "schema" : {
               "type" : "integer",
-              "format" : "int32"
+              "format" : "int64"
             }
           },
           {
@@ -19962,7 +19962,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "publisher" : {
             "type" : "string"
@@ -20258,7 +20258,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "citedByCount" : {
             "type" : "integer",
@@ -20321,7 +20321,7 @@
           },
           "bytes" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "sha256" : {
             "type" : "string"
@@ -20379,7 +20379,7 @@
           },
           "bytes" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "sha256" : {
             "type" : "string"
@@ -20978,7 +20978,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "venue" : {
             "type" : "string"
@@ -21086,7 +21086,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "authors" : {
             "type" : "array",
@@ -21404,7 +21404,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "status" : {
             "type" : "string"
@@ -21476,7 +21476,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "publisher" : {
             "type" : "string"
@@ -21564,7 +21564,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "venue" : {
             "type" : "string"
@@ -21823,7 +21823,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           }
         }
       },
@@ -22078,7 +22078,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "status" : {
             "type" : "string"
@@ -22097,7 +22097,7 @@
           },
           "otherYear" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "otherStatus" : {
             "type" : "string"
@@ -22602,7 +22602,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "cited" : {
             "type" : "boolean"
@@ -22899,7 +22899,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "venue" : {
             "type" : "string"
@@ -24507,7 +24507,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "via" : {
             "type" : "string"
@@ -25073,7 +25073,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "doi" : {
             "type" : "string"
@@ -25742,7 +25742,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "status" : {
             "type" : "string"
@@ -28578,7 +28578,7 @@
           },
           "bytes" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "citekey" : {
             "type" : "string"
@@ -29393,7 +29393,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "venue" : {
             "type" : "string"
@@ -29744,7 +29744,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "authors" : {
             "type" : "array",
@@ -30491,7 +30491,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "authors" : {
             "type" : "array",
@@ -31060,7 +31060,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "venue" : {
             "type" : "string"
@@ -31732,7 +31732,7 @@
           },
           "upTo" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "since" : {
             "type" : "string"
@@ -31944,7 +31944,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "doi" : {
             "type" : "string"
@@ -32620,7 +32620,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "title" : {
             "type" : "string"
@@ -33775,7 +33775,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "status" : {
             "type" : "string"
@@ -33986,7 +33986,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "status" : {
             "type" : "string"
@@ -34661,11 +34661,11 @@
           },
           "from" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "to" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "view" : {
             "type" : "string"
@@ -35076,7 +35076,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "status" : {
             "type" : "string"
@@ -35622,7 +35622,7 @@
           },
           "year" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
           "authors" : {
             "type" : "array",

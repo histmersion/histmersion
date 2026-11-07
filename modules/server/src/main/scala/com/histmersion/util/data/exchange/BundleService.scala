@@ -46,7 +46,7 @@ trait BundleService:
   def keep(upload: ByteSource): Either[Api.Error, Bundle.Upload]
   def plan(bundle: com.histmersion.Sha256, resolutions: MergeResolutions): Either[Api.Error, MergePlan]
   def importKept(bundle: com.histmersion.Sha256, resolutions: MergeResolutions, dryRun: com.histmersion.util.data.exchange.ImportOptions.DryRun): Either[Api.Error, Bundle.ImportResult]
-  def applyKept(bundle: com.histmersion.Sha256, planHash: com.histmersion.Sha256, resolutions: MergeResolutions): Either[Api.Error, MergeApplyJob]
+  def applyKept(bundle: com.histmersion.Sha256, planHash: MergeRow.PlanHash, resolutions: MergeResolutions): Either[Api.Error, MergeApplyJob]
   def applyStatus(job: com.histmersion.util.jobs.Job.Id): Option[MergeApplyJob]
   def session(bundle: com.histmersion.Sha256): MergeSession
   def putSession(bundle: com.histmersion.Sha256, resolutions: MergeResolutions): MergeSession
@@ -246,7 +246,7 @@ object BundleService:
     ): Either[Api.Error, Bundle.ImportResult] =
       kept(bundle).flatMap(importFrom(_, bundle, resolutions, dryRun))
 
-    def applyKept(bundle: com.histmersion.Sha256, planHash: com.histmersion.Sha256, resolutions: MergeResolutions): Either[Api.Error, MergeApplyJob] =
+    def applyKept(bundle: com.histmersion.Sha256, planHash: MergeRow.PlanHash, resolutions: MergeResolutions): Either[Api.Error, MergeApplyJob] =
       kept(bundle).flatMap { source =>
         w.applyJobs.start(bundle, planHash) { () =>
           BundleImporter

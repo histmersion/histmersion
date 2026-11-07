@@ -256,7 +256,7 @@ final class EventImports(
       case None =>
         report = report
           .modify(_.failed)
-          .using(_ :+ EventImportReport.Failed(resolve(provider).fold(_.value, _.value)))
+          .using(_ :+ EventImportReport.Failed(resolve(provider).fold(_.value, _ => provider.value)))
       case Some(cat) => run(cat)
 
     // the parts still to read: none for a catalogue whose parts are all read at every import

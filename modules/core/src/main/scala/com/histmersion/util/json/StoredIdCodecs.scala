@@ -15,3 +15,6 @@ object StoredIdCodecs:
 
   given placeId: Decoder[com.histmersion.domain.catalogue.Place.Id] =
     Decoder.decodeString.map(com.histmersion.domain.catalogue.Place.Id.assume(_))
+
+  given runId: Decoder[com.histmersion.domain.automation.Run.Id] =
+    Decoder.decodeString.map(com.histmersion.domain.automation.Run.Id.assume(_))

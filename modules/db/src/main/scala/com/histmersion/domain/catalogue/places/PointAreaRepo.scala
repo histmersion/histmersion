@@ -232,7 +232,7 @@ private[places] object PointAreaRepo:
             .flatMap(a => a.key :: a.within.map(w => Geocode.key(w.value)).toList)
             .toSet
         )
-    val keys = findings.flatMap(_._2).distinct.map(_.value)
+    val keys: List[String] = findings.flatMap(_._2).distinct.map(_.value)
     if keys.isEmpty then Map.empty
     else
       val seedOnly = s"NOT ${PlaceRepo.importedSql("p")} AND ${FindingPlaceRepo.explicitOnlySql("p")}"

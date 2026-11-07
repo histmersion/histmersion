@@ -147,7 +147,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         com.histmersion.util.storage.ContentDirectory(originals),
         res,
         merge,
-        com.histmersion.Sha256.assume(hash.value),
+        com.histmersion.util.data.exchange.MergeRow.PlanHash(hash.value),
         () => Right("stub.dump"),
         TestExchange.kinds,
         TestExchange.rules,

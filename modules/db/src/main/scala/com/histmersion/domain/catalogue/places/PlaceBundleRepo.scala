@@ -267,7 +267,7 @@ private[places] object PlaceBundleRepo:
       sql"DELETE FROM place_types WHERE place_id = $id".update.run()
       p.names.foreach { n =>
         sql"""INSERT INTO place_names (place_id, name, lang, period)
-              VALUES ($id, ${n.name}, ${n.lang.getOrElse("")},
+              VALUES ($id, ${n.name}, ${n.lang.map(_.value).getOrElse("")},
                 ${rangeLiteral(n.period)}::int8range)
               ON CONFLICT DO NOTHING""".update.run()
       }

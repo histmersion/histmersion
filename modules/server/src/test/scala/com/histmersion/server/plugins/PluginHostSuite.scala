@@ -126,7 +126,9 @@ class PluginHostSuite extends munit.FunSuite:
     val services = HostServices(
       () => new Plugin.Http { def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(Plugin.Http.GetResultPart1("offline")) },
       ConfigFactory.empty,
-      (id, warn, m) => lines += s"${if warn.value then "W" else "I"} $id: $m"
+      (id, warn, m) => lines += s"${if warn.value then "W" else "I"} $id: $m",
+      files = new com.histmersion.pluginhost.DiskLocalFiles,
+      processes = new com.histmersion.pluginhost.SystemProcesses
     )
   private def services(e: Config = ConfigFactory.empty) =
     val l = Logs(); (l, l.services.modify(_.env).setTo(e))

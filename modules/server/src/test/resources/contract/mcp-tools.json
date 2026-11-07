@@ -649,7 +649,7 @@
                 },
                 "year" : {
                   "type" : "integer",
-                  "format" : "int32"
+                  "format" : "int64"
                 },
                 "venue" : {
                   "type" : "string"
@@ -873,7 +873,7 @@
                 },
                 "year" : {
                   "type" : "integer",
-                  "format" : "int32"
+                  "format" : "int64"
                 },
                 "venue" : {
                   "type" : "string"
@@ -1856,12 +1856,12 @@
             "periodStart" : {
               "description" : "Signed year it begins (BCE negative)",
               "type" : "integer",
-              "format" : "int64"
+              "format" : "int32"
             },
             "periodEnd" : {
               "description" : "Signed year it ends (BCE negative)",
               "type" : "integer",
-              "format" : "int64"
+              "format" : "int32"
             },
             "reason" : {
               "description" : "Why: the evidence the decision rests on (with a point: the gazetteer value it comes from)",
@@ -2615,11 +2615,11 @@
             },
             "periodStart" : {
               "type" : "integer",
-              "format" : "int64"
+              "format" : "int32"
             },
             "periodEnd" : {
               "type" : "integer",
-              "format" : "int64"
+              "format" : "int32"
             }
           }
         }
@@ -3754,7 +3754,7 @@
             },
             "since" : {
               "type" : "integer",
-              "format" : "int32"
+              "format" : "int64"
             },
             "sort" : {
               "type" : "string"
