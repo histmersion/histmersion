@@ -15,14 +15,14 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
   private val keys = Map("ANTHROPIC_API_KEY" -> "k-test", "OPENAI_API_KEY" -> "k-test")
 
   private def request(iteration: Int = 1, tools: List[AiTool] = Nil) = AiTurn.Request(
-    "m-1",
-    "SYSTEM",
-    List(AiMessage.User("USER")),
+    com.histmersion.plugin.AiTurn.Request.Model("m-1"),
+    com.histmersion.plugin.AiTurn.Request.System("SYSTEM"),
+    List(AiMessage.User(com.histmersion.plugin.AiMessage.User.Text("USER"))),
     tools,
     Some("""{"type":"object","properties":{"word":{"type":"string"}},"required":["word"]}"""),
-    100,
+    com.histmersion.plugin.AiTurn.Request.MaxTokens(100),
     iteration,
-    2,
+    com.histmersion.plugin.AiTurn.Request.MaxIterations(2),
     Some(
       """{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","properties":{"word":{"type":"string"}},"required":["word"]}"""
     ),
@@ -40,7 +40,7 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
       """"message":{"role":"assistant","content":"{\"word\":\"hi\"}"},"finish_reason":"stop"}],""" +
       """"usage":{"prompt_tokens":700,"completion_tokens":30,"total_tokens":730}}"""
 
-  private def json(body: String) = Right(AiHttp.Response(200, body, Map("content-type" -> "application/json")))
+  private def json(body: String) = Right(AiHttp.Response(com.histmersion.plugin.AiHttp.Response.Status(200), body, Map("content-type" -> "application/json")))
 
   test("each plugin loads from the class path with its defaults and the host's settings, and registers its provider"):
     Map("ai-anthropic" -> "anthropic", "ai-openai" -> "openai", "ai-local" -> "local").foreach { (id, name) =>
@@ -51,7 +51,7 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
     }
 
   test("a provider plugin has no setting the host owns: a base URL in its block is refused"):
-    val refused = PluginHarness.load("ai-openai", "base-url = \"http://127.0.0.1:1/v1\"", env = Map.empty)
+    val refused = PluginHarness.load(com.histmersion.plugin.Plugin.Info.Id("ai-openai"), "base-url = \"http://127.0.0.1:1/v1\"", env = Map.empty)
     assert(refused.left.exists(_.contains("unknown setting")), refused.toString)
 
   test("without a key the hosted providers refuse every model, saying where the key goes; a local server needs none"):
@@ -87,11 +87,11 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
       Some(
         Right(
           AiTurn(
-            "Let me look.",
-            List(AiTool.Call("toolu_01", "facets", """{"field":"tags"}""")),
+            com.histmersion.plugin.AiTurn.Text("Let me look."),
+            List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("toolu_01"), com.histmersion.plugin.AiTool.Call.Tool("facets"), """{"field":"tags"}""")),
             AiStop.ToolUse,
             Some(AiUsage(2000, 80, 500, 300)),
-            Some("claude-sonnet-4-5-20250929")
+            Some(com.histmersion.plugin.AiTurn.ServedBy("claude-sonnet-4-5-20250929"))
           )
         )
       )
@@ -101,17 +101,17 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
     val http = ScriptedAiHttp(
       Right(
         AiHttp.Response(
-          429,
+          com.histmersion.plugin.AiHttp.Response.Status(429),
           """{"error":{"message":"Rate limit reached","type":"tokens","code":"rate_limit_exceeded"}}"""
         )
       )
     )
     val r = load("ai-openai", keys).aiTurn("openai", request(), http)
     assertEquals(http.requests.head.url, "https://api.openai.com/v1/chat/completions")
-    assertEquals(r.turn, Some(Left(AiFailure.Error("RuntimeException: OpenAI API error: Rate limit reached"))))
+    assertEquals(r.turn, Some(Left(AiFailure.Error(com.histmersion.plugin.AiFailure.Error.Message("RuntimeException: OpenAI API error: Rate limit reached")))))
 
   test("a client that cannot connect is described as the providers always described it"):
-    val http = ScriptedAiHttp(Left("ConnectException: "))
+    val http = ScriptedAiHttp(Left(com.histmersion.plugin.testkit.ScriptedAiHttp.Problem("ConnectException: ")))
     val r = load("ai-anthropic", keys).aiTurn("anthropic", request(), http)
     assertEquals(
       r.turn,
@@ -125,9 +125,9 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
     )
 
   test("the providers ask for the loop's notes and verbatim failures, and offer tools"):
-    val settings = ProviderSettings("http://127.0.0.1:1", "", false, 1)
+    val settings = ProviderSettings(com.histmersion.plugins.ai.ProviderSettings.BaseUrl("http://127.0.0.1:1"), com.histmersion.plugins.ai.ProviderSettings.ApiKey(""), com.histmersion.plugins.ai.ProviderSettings.StrictTools(false), com.histmersion.plugins.ai.ProviderSettings.TimeoutSeconds(1))
     List(AnthropicProvider(settings), ChatCompletionsProvider.openAi(settings), ChatCompletionsProvider.local(settings))
       .foreach { p =>
-        assertEquals(p.capabilities, AiCapabilities(true, true, true, true), p.title)
+        assertEquals(p.capabilities, AiCapabilities(com.histmersion.plugin.AiCapabilities.Tools(true), com.histmersion.plugin.AiCapabilities.StructuredOutput(true), com.histmersion.plugin.AiCapabilities.IterationMarkers(true), com.histmersion.plugin.AiCapabilities.VerbatimFailures(true)), p.title)
         assert(!p.spendsPersonalPlan, p.title)
       }
