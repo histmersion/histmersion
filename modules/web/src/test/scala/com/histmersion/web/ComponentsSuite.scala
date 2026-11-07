@@ -1,18 +1,20 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 class ComponentsSuite extends munit.FunSuite:
 
   test("a source link is labelled by DOI when present, else by citekey") {
-    assertEquals(SourceLink.idLabel("a2020_b", Some("10.1/x")), "10.1/x")
-    assertEquals(SourceLink.idLabel("a2020_b", Some("  ")), "a2020_b")
-    assertEquals(SourceLink.idLabel("a2020_b", None), "a2020_b")
-    assertEquals(SourceLink.href("a b"), "/source/a%20b")
+    assertEquals(SourceLink.idLabel(com.histmersion.api.library.Citekey("a2020_b"), Some(com.histmersion.api.library.Doi("10.1/x"))), "10.1/x")
+    assertEquals(SourceLink.idLabel(com.histmersion.api.library.Citekey("a2020_b"), Some(com.histmersion.api.library.Doi("  "))), "a2020_b")
+    assertEquals(SourceLink.idLabel(com.histmersion.api.library.Citekey("a2020_b"), None), "a2020_b")
+    assertEquals(SourceLink.href(com.histmersion.api.library.Citekey("a b")), "/source/a%20b")
   }
 
   test("map layers round-trip through their wire names") {
     MapLayer.values.foreach(l => assertEquals(MapLayer.fromWire(l.wire), Some(l)))
-    assertEquals(MapLayer.fromWire(" Sites "), Some(MapLayer.Sites))
-    assertEquals(MapLayer.fromWire("nope"), None)
+    assertEquals(MapLayer.fromWire(com.histmersion.web.MapLayer.Wire(" Sites ")), Some(MapLayer.Sites))
+    assertEquals(MapLayer.fromWire(com.histmersion.web.MapLayer.Wire("nope")), None)
   }
 
   test("every layer has its own icon, and icons are stroke paths (no emoji)") {

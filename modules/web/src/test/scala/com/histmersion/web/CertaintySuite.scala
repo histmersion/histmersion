@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.library.GeoHit
 
@@ -12,7 +14,7 @@ class CertaintySuite extends munit.FunSuite:
 
   private val span = (-3500L, -500L)
   private def hit(conf: Option[Confidence]) =
-    GeoHit("zz2020_x", "Zz", "a claim", None, Some(30.0), Some(37.0), Some(-2100L), Some(-1900L), conf)
+    GeoHit(com.histmersion.api.library.Citekey("zz2020_x"), com.histmersion.api.library.GeoHit.Title("Zz"), com.histmersion.api.library.GeoHit.Claim("a claim"), None, Some(30.0), Some(37.0), Some(com.histmersion.api.catalogue.Year(-2100L)), Some(com.histmersion.api.catalogue.Year(-1900L)), conf)
   private val high = Certainty.Stated(Confidence.High)
   private val low = Certainty.Stated(Confidence.Low)
   private val contested = Certainty.Stated(Confidence.Contested)
@@ -33,8 +35,8 @@ class CertaintySuite extends munit.FunSuite:
     assertEquals(ranks.distinct.size, 5)
 
   test("a bubble of sites and an unstated finding is unstated; sites alone have no say"):
-    val site = Member(DotKind.Site, 1, Nil, Certainty.NoSay)
-    val finding = Member(DotKind.Finding, 1, Nil, Certainty.Unstated, findings = List(hit(None)))
+    val site = Member(DotKind.Site, com.histmersion.web.Member.N(1), Nil, Certainty.NoSay)
+    val finding = Member(DotKind.Finding, com.histmersion.web.Member.N(1), Nil, Certainty.Unstated, findings = List(hit(None)))
     assertEquals(DotCluster.Contents(List(site, finding)).certainty, Certainty.Unstated)
     assertEquals(DotCluster.Contents(List(site)).certainty, Certainty.NoSay)
 
@@ -45,12 +47,12 @@ class CertaintySuite extends munit.FunSuite:
     val parts = "\\d+".r.findAllIn(unstated).toList
     assertEquals(parts.distinct.size, 1, s"a grey: $unstated")
     assertEquals(
-      Certainty.desaturate("rgb(33,145,140)", Certainty.Unstated),
+      Certainty.desaturate(com.histmersion.api.ConfidenceStyle.Rgb("rgb(33,145,140)"), Certainty.Unstated),
       "rgb(111,111,111)",
       "the stylesheet's --conf-unstated is the ramp's midpoint drawn this way"
     )
-    assertEquals(Certainty.desaturate("var(--x)", Certainty.Unstated), "var(--x)")
-    assertEquals(Certainty.desaturate("rgb(33,145,140)", high), "rgb(33,145,140)")
+    assertEquals(Certainty.desaturate(com.histmersion.api.ConfidenceStyle.Rgb("var(--x)"), Certainty.Unstated), "var(--x)")
+    assertEquals(Certainty.desaturate(com.histmersion.api.ConfidenceStyle.Rgb("rgb(33,145,140)"), high), "rgb(33,145,140)")
     // the older and the newer still differ in lightness
     assert(
       MapView.colorFor(Some(-3400.0), span, Certainty.Unstated) != MapView.colorFor(

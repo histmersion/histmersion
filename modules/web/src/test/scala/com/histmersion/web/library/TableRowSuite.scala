@@ -14,9 +14,9 @@ class TableRowSuite extends munit.FunSuite:
         (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
         Source.Status.Current,
         Nil,
-        List("levant"),
-        Some(-1250),
-        Some(-1100),
+        List(com.histmersion.api.library.Source.Regions("levant")),
+        Some(com.histmersion.api.catalogue.Year(-1250)),
+        Some(com.histmersion.api.catalogue.Year(-1100)),
         None,
         authors = (authors).map(com.histmersion.api.library.AuthorName.apply)
       ),
@@ -29,10 +29,10 @@ class TableRowSuite extends munit.FunSuite:
     assertEquals(
       r,
       TableRow(
-        "cline2014_year",
+        com.histmersion.web.library.TableRow.Key("cline2014_year"),
         "1177 B.C.",
         "Eric H. Cline",
-        Some(2014),
+        Some(com.histmersion.api.catalogue.Year(2014)),
         Some(Source.Status.Current),
         "",
         "1250 BCE–1100 BCE",
@@ -47,12 +47,12 @@ class TableRowSuite extends munit.FunSuite:
 
   test("an article's row: its kind in words, its regions under the title, no status"):
     val r = TableRow.of(
-      Article.Summary("sea-peoples", "The Sea Peoples", "concept", None, Nil, List("eastern_mediterranean"), None, None)
+      Article.Summary(com.histmersion.api.research.Article.Slug("sea-peoples"), com.histmersion.api.research.Article.Title("The Sea Peoples"), com.histmersion.api.research.Article.Kind.Wire("concept"), None, Nil, List(com.histmersion.api.research.Article.Regions("eastern_mediterranean")), None, None)
     )
     assertEquals(
       r,
       TableRow(
-        "sea-peoples",
+        com.histmersion.web.library.TableRow.Key("sea-peoples"),
         "The Sea Peoples",
         "eastern mediterranean",
         None,

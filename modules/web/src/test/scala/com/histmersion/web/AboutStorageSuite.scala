@@ -15,65 +15,65 @@ class AboutStorageSuite extends munit.FunSuite:
   private val vol = "/System/Volumes/Data (/dev/disk3s5)"
 
   private val about =
-    About("histmersion", BuildStamp("1.2.3"), Health("ok", "ok", Some("97"), Some("ok")), JobCounts(), None, None, None)
+    About(com.histmersion.api.instance.About.Name("histmersion"), BuildStamp(com.histmersion.api.instance.BuildStamp.Version("1.2.3")), Health(com.histmersion.api.instance.Health.Status("ok"), com.histmersion.api.instance.Health.Db("ok"), Some(com.histmersion.api.instance.Health.SchemaVersion("97")), Some(com.histmersion.api.instance.Health.Converter("ok"))), JobCounts(), None, None, None)
 
   private val report = Storage.Report(
     ageSeconds = (Some(30)).map(com.histmersion.api.maintenance.Storage.Report.AgeSeconds.apply),
     entries = Storage.nest(
       List(
         Storage.Entry(
-          "database",
-          "database (Postgres)",
-          "database",
+          com.histmersion.api.maintenance.Storage.Entry.Key("database"),
+          com.histmersion.api.maintenance.Storage.Entry.Label("database (Postgres)"),
+          com.histmersion.api.maintenance.Storage.Entry.Group("database"),
           None,
           (Some(9 * GB)).map(com.histmersion.api.ByteCount.apply),
-          within = Some("database-cluster"),
-          detail = Some("histmersion")
+          within = Some(com.histmersion.api.maintenance.Storage.Entry.Key("database-cluster")),
+          detail = Some(com.histmersion.api.maintenance.Storage.Entry.Detail("histmersion"))
         ),
         Storage.Entry(
-          "database-cluster",
-          "database files (bundled Postgres)",
-          "database",
-          Some("/d/pg"),
+          com.histmersion.api.maintenance.Storage.Entry.Key("database-cluster"),
+          com.histmersion.api.maintenance.Storage.Entry.Label("database files (bundled Postgres)"),
+          com.histmersion.api.maintenance.Storage.Entry.Group("database"),
+          Some(com.histmersion.api.maintenance.Storage.Entry.Path("/d/pg")),
           (Some(10 * GB)).map(com.histmersion.api.ByteCount.apply),
           (Some(3000L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
           volume = Some(vol)
         ),
         Storage.Entry(
-          "backups",
-          "backups",
-          "backups",
-          Some("/d/backups"),
+          com.histmersion.api.maintenance.Storage.Entry.Key("backups"),
+          com.histmersion.api.maintenance.Storage.Entry.Label("backups"),
+          com.histmersion.api.maintenance.Storage.Entry.Group("backups"),
+          Some(com.histmersion.api.maintenance.Storage.Entry.Path("/d/backups")),
           (Some(28 * GB)).map(com.histmersion.api.ByteCount.apply),
           (Some(5L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
           volume = Some(vol),
-          shrink = Storage.Advice.shrink("backups", 5)
+          shrink = Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), com.histmersion.api.maintenance.Storage.Advice.Keep(5))
         ),
-        Storage.Entry("plugins", "plugins", "install", Some("/d/plugins"), None, None, exists = false),
+        Storage.Entry(com.histmersion.api.maintenance.Storage.Entry.Key("plugins"), com.histmersion.api.maintenance.Storage.Entry.Label("plugins"), com.histmersion.api.maintenance.Storage.Entry.Group("install"), Some(com.histmersion.api.maintenance.Storage.Entry.Path("/d/plugins")), None, None, exists = com.histmersion.api.maintenance.Storage.Entry.Exists(false)),
         Storage.Entry(
-          "basemap",
-          "terrain base map (cache)",
-          "caches",
-          Some("/c/basemap"),
+          com.histmersion.api.maintenance.Storage.Entry.Key("basemap"),
+          com.histmersion.api.maintenance.Storage.Entry.Label("terrain base map (cache)"),
+          com.histmersion.api.maintenance.Storage.Entry.Group("caches"),
+          Some(com.histmersion.api.maintenance.Storage.Entry.Path("/c/basemap")),
           (Some(600_000_000L)).map(com.histmersion.api.ByteCount.apply),
           (Some(3L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
-          partial = true,
+          partial = com.histmersion.api.maintenance.Storage.Entry.Partial(true),
           volume = Some(vol)
         ),
         Storage.Entry(
-          "calibre-originals",
-          "originals folder (cli.calibre.originals-dir)",
-          "corpus",
-          Some("/o"),
+          com.histmersion.api.maintenance.Storage.Entry.Key("calibre-originals"),
+          com.histmersion.api.maintenance.Storage.Entry.Label("originals folder (cli.calibre.originals-dir)"),
+          com.histmersion.api.maintenance.Storage.Entry.Group("corpus"),
+          Some(com.histmersion.api.maintenance.Storage.Entry.Path("/o")),
           (Some(GB)).map(com.histmersion.api.ByteCount.apply),
           (Some(10L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
-          host = "cli"
+          host = com.histmersion.api.maintenance.Storage.Entry.Host("cli")
         )
       )
     ),
-    tables = List(TableSize("sources", 5 * GB)),
+    tables = List(TableSize(com.histmersion.api.TableSize.Name("sources"), 5 * GB)),
     volumes = List(Storage.Volume(vol, com.histmersion.api.ByteCount(994 * GB), com.histmersion.api.ByteCount(5 * GB))),
-    backups = Some(BackupsUsage(5, 28 * GB, Some("histmersion-1.dump"), 5))
+    backups = Some(BackupsUsage(com.histmersion.api.backup.BackupsUsage.Count(5), 28 * GB, Some(com.histmersion.api.backup.BackupsUsage.Newest("histmersion-1.dump")), com.histmersion.api.backup.BackupsUsage.Keep(5)))
   )
 
   test("Storage: the total, each location nested under the one it is inside, missing ones left out"):
@@ -111,7 +111,7 @@ class AboutStorageSuite extends munit.FunSuite:
 
   test("measuring: the window says so; an older server's About has no Storage section"):
     assertEquals(AboutView.storage(Storage.Report()), Nil)
-    val m = AboutView.storage(Storage.Report(measuring = true))
+    val m = AboutView.storage(Storage.Report(measuring = com.histmersion.api.maintenance.Storage.Report.Measuring(true)))
     assertEquals(m.map(_.title), List("Storage"))
     assertEquals(m.head.rows, List(AboutView.Row("", "measuring…")))
     val again = AboutView.storage(report.modify(_.measuring).setTo(true))

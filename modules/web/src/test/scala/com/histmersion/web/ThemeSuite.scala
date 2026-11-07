@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 class ThemeSuite extends munit.FunSuite:
 
   test("the button cycles system → light → dark → system"):

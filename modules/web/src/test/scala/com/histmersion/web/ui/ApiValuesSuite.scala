@@ -1,5 +1,7 @@
 package com.histmersion.web.ui
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 class ApiValuesSuite extends munit.FunSuite:
 
   test("AggregateUnit.Sources.param is None — not Some(\"overlap\")"):

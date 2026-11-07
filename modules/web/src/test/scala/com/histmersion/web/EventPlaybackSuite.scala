@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.TimeSpan
@@ -13,34 +15,34 @@ class EventPlaybackSuite extends munit.FunSuite:
 
   private val kadesh = EventGeo(
     com.histmersion.api.catalogue.Event.Id("kadesh"),
-    "Battle <of> Kadesh",
-    "battle",
+    com.histmersion.api.catalogue.EventGeo.Label("Battle <of> Kadesh"),
+    com.histmersion.api.catalogue.EventGeo.Kind("battle"),
     EventScale.Local,
-    "attested",
-    TimeSpan(Some(-1274), None, None, Some(-1274)),
+    com.histmersion.api.catalogue.EventGeo.Historicity("attested"),
+    TimeSpan(Some(com.histmersion.api.catalogue.Year(-1274)), None, None, Some(com.histmersion.api.catalogue.Year(-1274))),
     com.histmersion.api.catalogue.Latitude(34.55),
     com.histmersion.api.catalogue.Longitude(36.5),
-    "place",
+    com.histmersion.api.catalogue.EventGeo.Anchor("place"),
     (Some("p")).map(com.histmersion.api.catalogue.Place.Id.apply),
-    Some("Kadesh")
+    Some(com.histmersion.api.catalogue.EventGeo.PlaceLabel("Kadesh"))
   )
   private val migration = kadesh.modify(_.id).setTo(com.histmersion.api.catalogue.Event.Id("m")).modify(_.label).setTo("Yamnaya expansion").modify(_.kind).setTo("migration").modify(_.scale).setTo(EventScale.Regional).modify(_.timeSpan).setTo(TimeSpan(Some(-3300), None, None, Some(-2200))).modify(_.placeLabel).setTo(None
   )
 
   test("alpha: nothing before the span, full inside it, a linear fade after it, then nothing"):
     val span = (-1274L, -1274L)
-    assertEquals(EventPlayback.alpha(span, -1275, 10), 0.0)
-    assertEquals(EventPlayback.alpha(span, -1274, 10), 1.0)
-    assertEquals(EventPlayback.alpha(span, -1269, 10), 0.5)
-    assertEquals(EventPlayback.alpha(span, -1264, 10), 0.0)
-    assertEquals(EventPlayback.alpha(span, -1200, 10), 0.0)
-    assertEquals(EventPlayback.alpha(span, -1273, 0), 0.0, "no fade: gone the year after")
-    assertEquals(EventPlayback.alpha((-3300L, -2200L), -2800, 10), 1.0)
+    assertEquals(EventPlayback.alpha(span, com.histmersion.api.catalogue.Year(-1275), com.histmersion.web.EventPlayback.FadeYears(10)), 0.0)
+    assertEquals(EventPlayback.alpha(span, com.histmersion.api.catalogue.Year(-1274), com.histmersion.web.EventPlayback.FadeYears(10)), 1.0)
+    assertEquals(EventPlayback.alpha(span, com.histmersion.api.catalogue.Year(-1269), com.histmersion.web.EventPlayback.FadeYears(10)), 0.5)
+    assertEquals(EventPlayback.alpha(span, com.histmersion.api.catalogue.Year(-1264), com.histmersion.web.EventPlayback.FadeYears(10)), 0.0)
+    assertEquals(EventPlayback.alpha(span, com.histmersion.api.catalogue.Year(-1200), com.histmersion.web.EventPlayback.FadeYears(10)), 0.0)
+    assertEquals(EventPlayback.alpha(span, com.histmersion.api.catalogue.Year(-1273), com.histmersion.web.EventPlayback.FadeYears(0)), 0.0, "no fade: gone the year after")
+    assertEquals(EventPlayback.alpha((com.histmersion.api.catalogue.Year(-3300L), com.histmersion.api.catalogue.Year(-2200L)), com.histmersion.api.catalogue.Year(-2800), com.histmersion.web.EventPlayback.FadeYears(10)), 1.0)
 
   test("a fade of N seconds lasts N seconds whatever the speed: it is converted to years at the rate playing"):
     assertEquals(EventPlayback.fadeYears(2.5, 100.0), 250.0)
     assertEquals(EventPlayback.fadeYears(2.5, 10.0), 25.0)
-    assertEquals(EventPlayback.fadeYears(-1, 10.0), 0.0)
+    assertEquals(EventPlayback.fadeYears(com.histmersion.web.EventPlayback.Seconds(-1), 10.0), 0.0)
 
   test("step: visibility moves in twentieths, so a slow fade does not rewrite the page every frame"):
     assertEquals(EventPlayback.step(0.51), 0.5)
@@ -63,8 +65,8 @@ class EventPlaybackSuite extends munit.FunSuite:
     assert(regional.contains("--a:0.5"), regional)
 
   test("the note: kind and years — one year alone, or a range"):
-    assertEquals(EventPlayback.note(kadesh), s"${Fmt.display("battle")} · ${Fmt.yr(-1274)}")
-    assertEquals(EventPlayback.note(migration), s"${Fmt.display("migration")} · ${Fmt.yr(-3300)}–${Fmt.yr(-2200)}")
+    assertEquals(EventPlayback.note(kadesh), s"${Fmt.display(com.histmersion.api.UiLabels.Text("battle"))} · ${Fmt.yr(-1274)}")
+    assertEquals(EventPlayback.note(migration), s"${Fmt.display(com.histmersion.api.UiLabels.Text("migration"))} · ${Fmt.yr(-3300)}–${Fmt.yr(-2200)}")
 
   test("events at one point stack: slots number the SHOWN ones in their order there"):
     assertEquals(EventPlayback.anchorKey(kadesh), EventPlayback.anchorKey(kadesh.modify(_.id).setTo(com.histmersion.api.catalogue.Event.Id("other"))))
@@ -77,22 +79,22 @@ class EventPlaybackSuite extends munit.FunSuite:
 
   test("rank: every event name outranks every area and point name; local over regional; later first"):
     val world = 256.0 * 256.0 // an area name's rank is its zoom-0 area: at most the whole world
-    val battle = EventPlayback.rank(kadesh, -1274)
-    val era = EventPlayback.rank(migration, -3300)
+    val battle = EventPlayback.rank(kadesh, com.histmersion.api.catalogue.Year(-1274))
+    val era = EventPlayback.rank(migration, com.histmersion.api.catalogue.Year(-3300))
     assert(era > world && era > -1.0, s"$era")
     assert(battle > era)
-    assert(EventPlayback.rank(migration, -1000) > EventPlayback.rank(migration, -3300))
-    assert(EventPlayback.rank(kadesh, -1177) > battle, "the later of two local events wins")
-    assert(EventPlayback.rank(kadesh, 2000) < EventPlayback.rank(kadesh, 2001))
-    assert(EventPlayback.rank(migration, 3000) < EventPlayback.rank(kadesh, -4000), "local over regional at any year")
+    assert(EventPlayback.rank(migration, com.histmersion.api.catalogue.Year(-1000)) > EventPlayback.rank(migration, com.histmersion.api.catalogue.Year(-3300)))
+    assert(EventPlayback.rank(kadesh, com.histmersion.api.catalogue.Year(-1177)) > battle, "the later of two local events wins")
+    assert(EventPlayback.rank(kadesh, com.histmersion.api.catalogue.Year(2000)) < EventPlayback.rank(kadesh, com.histmersion.api.catalogue.Year(2001)))
+    assert(EventPlayback.rank(migration, com.histmersion.api.catalogue.Year(3000)) < EventPlayback.rank(kadesh, com.histmersion.api.catalogue.Year(-4000)), "local over regional at any year")
 
   test(
     "cull: an event name over a large area's name keeps the event, drops the area; two events at nearby sites do not overlap"
   ):
     import LabelPlacement.Box
     val area = Box("a|greece", 100, 100, 120, 16, 30000)
-    val mycenae = Box("e|mycenae", 110, 102, 90, 24, EventPlayback.rank(kadesh, -1190))
-    val tiryns = Box("e|tiryns", 115, 110, 80, 24, EventPlayback.rank(kadesh, -1180))
-    val pylos = Box("e|pylos", 20, 200, 70, 24, EventPlayback.rank(kadesh, -1180))
+    val mycenae = Box("e|mycenae", 110, 102, 90, 24, EventPlayback.rank(kadesh, com.histmersion.api.catalogue.Year(-1190)))
+    val tiryns = Box("e|tiryns", 115, 110, 80, 24, EventPlayback.rank(kadesh, com.histmersion.api.catalogue.Year(-1180)))
+    val pylos = Box("e|pylos", 20, 200, 70, 24, EventPlayback.rank(kadesh, com.histmersion.api.catalogue.Year(-1180)))
     val kept = LabelPlacement.cull(Seq(area, mycenae, tiryns, pylos))
     assertEquals(kept, Set("e|tiryns", "e|pylos"))

@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.Paging
 import com.histmersion.api.automation.Agents.RunState
 
@@ -130,16 +132,16 @@ class PolledListSuite extends munit.FunSuite:
     f.asked(1).failure(RuntimeException("HTTP 404"))
     assertEquals(f.one.failure.now(), Some("HTTP 404"))
     assertEquals(f.timers.map(_._1).toList, List(Poll.MaxMs))
-    f.one.refresh(changed = true) // a control button was pressed
+    f.one.refresh(changed = com.histmersion.web.Poll.DataChanged(true)) // a control button was pressed
     f.asked(2).success(job("r", JobState.Running))
     assertEquals(f.one.failure.now(), None)
     assertEquals(f.timers.last._1, Poll.FirstMs)
 
   test("the shared schedule: quick on a change, slower while nothing changes, none when nothing is live"):
-    assertEquals(Poll.next(None, live = false, changed = true), None)
-    assertEquals(Poll.next(Some(1000), live = true, changed = false), Some(1600))
-    assertEquals(Poll.next(Some(14000), live = true, changed = false), Some(Poll.MaxMs))
-    assertEquals(Poll.next(Some(8000), live = true, changed = true), Some(Poll.FirstMs))
+    assertEquals(Poll.next(None, live = com.histmersion.web.Poll.LiveMode(false), changed = com.histmersion.web.Poll.DataChanged(true)), None)
+    assertEquals(Poll.next(Some(com.histmersion.web.Poll.Revision(1000)), live = com.histmersion.web.Poll.LiveMode(true), changed = com.histmersion.web.Poll.DataChanged(false)), Some(1600))
+    assertEquals(Poll.next(Some(com.histmersion.web.Poll.Revision(14000)), live = com.histmersion.web.Poll.LiveMode(true), changed = com.histmersion.web.Poll.DataChanged(false)), Some(Poll.MaxMs))
+    assertEquals(Poll.next(Some(com.histmersion.web.Poll.Revision(8000)), live = com.histmersion.web.Poll.LiveMode(true), changed = com.histmersion.web.Poll.DataChanged(true)), Some(Poll.FirstMs))
 
   test("manager events: a poll's newest page keeps the older pages loaded below it"):
     val loaded = List(9L, 8L, 7L, 6L, 5L, 4L)
@@ -152,5 +154,5 @@ class PolledListSuite extends munit.FunSuite:
   test("runs: the state a person reads, not the wire word"):
     assertEquals(RunsView.stateLabel(RunState.WaitingApproval), "Waiting for a decision")
     assertEquals(RunsView.stateLabel(RunState.Running), "Running")
-    assertEquals(RunsView.statusLabel("waiting"), "Waiting for a decision")
-    assertEquals(RunsView.statusLabel("nonsense"), "Nonsense")
+    assertEquals(RunsView.statusLabel(com.histmersion.api.automation.Agents.RunInfo.Status("waiting")), "Waiting for a decision")
+    assertEquals(RunsView.statusLabel(com.histmersion.api.automation.Agents.RunInfo.Status("nonsense")), "Nonsense")

@@ -19,7 +19,7 @@ class ThrottleSuite extends munit.FunSuite:
       due.foreach(_._3())
 
   private def throttled(clock: Clock, out: mutable.ListBuffer[Int]) =
-    Throttle[Int](100, out += _, () => clock.t, clock.later, clock.cancel)
+    Throttle[Int](com.histmersion.web.Throttle.IntervalMs(100), out += _, () => clock.t, clock.later, clock.cancel)
 
   test("the first call runs at once") {
     val c = Clock(); val out = mutable.ListBuffer.empty[Int]
@@ -53,8 +53,8 @@ class ThrottleSuite extends munit.FunSuite:
   }
 
   test("FadingLayer.plan splits keys into entering, staying, exiting") {
-    val p = FadingLayer.plan(Set("a", "b"), Set("b", "c"))
-    assertEquals(p, FadingLayer.Plan(entering = Set("c"), staying = Set("b"), exiting = Set("a")))
+    val p = FadingLayer.plan(Set(com.histmersion.web.FadingLayer.Key("a"), com.histmersion.web.FadingLayer.Key("b")), Set(com.histmersion.web.FadingLayer.Key("b"), com.histmersion.web.FadingLayer.Key("c")))
+    assertEquals(p, FadingLayer.Plan(entering = Set(com.histmersion.web.FadingLayer.Key("c")), staying = Set(com.histmersion.web.FadingLayer.Key("b")), exiting = Set(com.histmersion.web.FadingLayer.Key("a"))))
   }
 
 class LatestOnlySuite extends munit.FunSuite:
@@ -107,7 +107,7 @@ class DebounceSuite extends munit.FunSuite:
 
   test("a burst of calls runs once, after the quiet period, with the latest value") {
     val c = Clock(); val out = mutable.ListBuffer.empty[Int]
-    val d = Debounce[Int](200, out += _, c.later, c.cancel)
+    val d = Debounce[Int](com.histmersion.web.Debounce.QuietMs(200), out += _, c.later, c.cancel)
     for i <- 1 to 10 do { d(i); c.advance(50) }
     assertEquals(out.toList, Nil, "nothing while the calls keep coming")
     assertEquals(c.pendingCount, 1, "one timer, not one per call")
@@ -117,14 +117,14 @@ class DebounceSuite extends munit.FunSuite:
 
   test("calls apart by more than the quiet period each run") {
     val c = Clock(); val out = mutable.ListBuffer.empty[Int]
-    val d = Debounce[Int](100, out += _, c.later, c.cancel)
+    val d = Debounce[Int](com.histmersion.web.Debounce.QuietMs(100), out += _, c.later, c.cancel)
     d(1); c.advance(150); d(2); c.advance(150)
     assertEquals(out.toList, List(1, 2))
   }
 
   test("cancelPending drops the run") {
     val c = Clock(); val out = mutable.ListBuffer.empty[Int]
-    val d = Debounce[Int](100, out += _, c.later, c.cancel)
+    val d = Debounce[Int](com.histmersion.web.Debounce.QuietMs(100), out += _, c.later, c.cancel)
     d(1); d.cancelPending(); c.advance(500)
     assertEquals(out.toList, Nil)
     assertEquals(c.pendingCount, 0)

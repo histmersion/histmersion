@@ -1,5 +1,7 @@
 package com.histmersion.web.library
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.library.Sort
 
 class LibrarySortSuite extends munit.FunSuite:
@@ -16,6 +18,6 @@ class LibrarySortSuite extends munit.FunSuite:
 
   test("an address names an order by its wire word; none or an unknown one is relevance"):
     LibrarySort.values.foreach(s => assertEquals(LibrarySort.of(Some(s.wire)), s))
-    assertEquals(LibrarySort.of(Some(" OLDEST ")), LibrarySort.Oldest)
+    assertEquals(LibrarySort.of(Some(com.histmersion.web.library.LibrarySort.Wire(" OLDEST "))), LibrarySort.Oldest)
     assertEquals(LibrarySort.of(None), LibrarySort.Relevance)
-    assertEquals(LibrarySort.of(Some("cited")), LibrarySort.Relevance)
+    assertEquals(LibrarySort.of(Some(com.histmersion.web.library.LibrarySort.Wire("cited"))), LibrarySort.Relevance)

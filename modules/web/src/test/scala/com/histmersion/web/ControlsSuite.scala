@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetMenu, PresetRegion}
 
@@ -15,8 +17,8 @@ class ControlsSuite extends munit.FunSuite:
     TimelinePlayback.Speeds.foreach(s =>
       assertEquals(TimelinePlayback.parseSpeed(TimelinePlayback.speedLabel(s)), Some(s))
     )
-    assertEquals(TimelinePlayback.parseSpeed("3×"), None)
-    assertEquals(TimelinePlayback.parseSpeed(" 2× "), Some(2.0))
+    assertEquals(TimelinePlayback.parseSpeed(com.histmersion.api.UiLabels.Text("3×")), None)
+    assertEquals(TimelinePlayback.parseSpeed(com.histmersion.api.UiLabels.Text(" 2× ")), Some(2.0))
 
   // ── the period-preset menu ─────────────────────────────────────────────────────────────────────
 
@@ -36,7 +38,7 @@ class ControlsSuite extends munit.FunSuite:
     preset("p2", "Bronze Age", -1700, PresetRegion.Scandinavia, "Denmark"),
     preset("p3", "Neolithic", -3900, PresetRegion.Scandinavia, "Denmark"),
     preset("p4", "Bronze Age", -3200, PresetRegion.Aegean, "Greece"),
-    HistoricalPeriod("p5", "Bronze Age", Some("PeriodO p5 · ROAD"), Period(-3300, -1500), Some("Eurasia"))
+    HistoricalPeriod(com.histmersion.api.catalogue.HistoricalPeriod.Id("p5"), com.histmersion.api.catalogue.HistoricalPeriod.Label("Bronze Age"), Some(com.histmersion.api.catalogue.HistoricalPeriod.Authority("PeriodO p5 · ROAD")), Period(com.histmersion.api.catalogue.Year(-3300), com.histmersion.api.catalogue.Year(-1500)), Some(com.histmersion.api.catalogue.HistoricalPeriod.Region("Eurasia")))
   )
 
   test("presets are grouped by region, each region oldest first; a period without a heading is not offered"):

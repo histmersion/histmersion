@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.TimeSpan
 import com.histmersion.web.map.{GeoBounds, LatLon, TilePointFeature}
 
@@ -34,11 +36,11 @@ class TiledLayersSuite extends munit.FunSuite:
       TileDecode.site(f),
       Some(
         SitePoint(
-          Some("pleiades_1"),
-          "Mycenae",
-          "site",
-          Some("fortification"),
-          Some("dated"),
+          Some(com.histmersion.web.SitePoint.Id("pleiades_1")),
+          com.histmersion.web.SitePoint.Label("Mycenae"),
+          com.histmersion.web.SitePoint.Kind("site"),
+          Some(com.histmersion.web.SitePoint.SiteType("fortification")),
+          Some(com.histmersion.web.SitePoint.Basis("dated")),
           37.6,
           22.7,
           Some((-1600.0, -1100.0))
@@ -75,7 +77,7 @@ class TiledLayersSuite extends munit.FunSuite:
       (e.id, e.label, e.kind, e.tier, e.precision),
       (com.histmersion.api.catalogue.Event.Id("ev1"), "Fall of Troy", "destruction", "catalogue", "approximate")
     )
-    assertEquals(e.timeSpan, TimeSpan(Some(-1190L), None, None, Some(-1180L)))
+    assertEquals(e.timeSpan, TimeSpan(Some(com.histmersion.api.catalogue.Year(-1190L)), None, None, Some(com.histmersion.api.catalogue.Year(-1180L))))
     assertEquals(
       (e.lat, e.lon, e.placeLabel, e.dating, e.outline),
       (com.histmersion.api.catalogue.Latitude(40.0), com.histmersion.api.catalogue.Longitude(26.2), Some("Troy"), Some("c. 1185 BCE"), None)
@@ -104,22 +106,22 @@ class TiledLayersSuite extends munit.FunSuite:
       Some(
         MediaGeoHit(
           None,
-          "Forum",
-          Some("photo"),
+          com.histmersion.api.exchange.Bundle.Asset.FileName("Forum"),
+          Some(com.histmersion.api.media.MediaItem.Kind("photo")),
           41.9,
           12.5,
-          Some(-50L),
-          Some(300L),
+          Some(com.histmersion.api.catalogue.Year(-50L)),
+          Some(com.histmersion.api.catalogue.Year(300L)),
           None,
-          "u1",
-          Some("met"),
-          Some("CC0-1.0"),
-          Some("The Met"),
-          Some("/api/media/u1/thumb"),
-          fileUrl = Some("/media/u1/file"),
-          sourceUrl = Some("https://www.metmuseum.org/art/collection/search/1"),
-          licenseUrl = Some("https://creativecommons.org/publicdomain/zero/1.0/"),
-          author = Some("Unknown maker")
+          com.histmersion.api.media.MediaItem.Uid("u1"),
+          Some(com.histmersion.api.media.MediaItem.Provider("met")),
+          Some(com.histmersion.api.media.MediaItem.License("CC0-1.0")),
+          Some(com.histmersion.api.media.MediaItem.Credit("The Met")),
+          Some(com.histmersion.api.media.MediaItem.ThumbUrl("/api/media/u1/thumb")),
+          fileUrl = Some(com.histmersion.api.media.MediaItem.FileUrl("/media/u1/file")),
+          sourceUrl = Some(com.histmersion.api.media.MediaItem.SourceUrl("https://www.metmuseum.org/art/collection/search/1")),
+          licenseUrl = Some(com.histmersion.api.media.MediaItem.LicenseUrl("https://creativecommons.org/publicdomain/zero/1.0/")),
+          author = Some(com.histmersion.api.media.MediaItem.Author("Unknown maker"))
         )
       )
     )
@@ -141,34 +143,34 @@ class TiledLayersSuite extends munit.FunSuite:
     val c = TileDecode.cell(f, DotKind.Site)
     assertEquals(
       c,
-      TileCellPoint("c4/1/2", DotKind.Site, 10, 20, 37, Some(-1500.5), Some(-200.0), GeoBounds(9, 19, 11, 21))
+      TileCellPoint(com.histmersion.web.TileCellPoint.Key("c4/1/2"), DotKind.Site, com.histmersion.web.TileCellPoint.Lat(10), com.histmersion.web.TileCellPoint.Lon(20), com.histmersion.web.TileCellPoint.N(37), Some(-1500.5), Some(-200.0), GeoBounds(com.histmersion.web.map.GeoBounds.South(9), com.histmersion.web.map.GeoBounds.West(19), com.histmersion.web.map.GeoBounds.North(11), com.histmersion.web.map.GeoBounds.East(21)))
     )
     val m = CellKind(DotKind.Site).member(c)
     assertEquals((m.kind, m.n, m.mids, m.aggregate), (DotKind.Site, 37, List(-1500.5, -200.0), true))
-    val held = DotCluster.Contents(List(m, Member(DotKind.Event, 1, Nil, Certainty.NoSay)))
+    val held = DotCluster.Contents(List(m, Member(DotKind.Event, com.histmersion.web.Member.N(1), Nil, Certainty.NoSay)))
     assertEquals(held.total, 38)
     assert(held.counted)
-    assertEquals(held.cells, List(GeoBounds(9, 19, 11, 21)))
-    assert(!DotCluster.Contents(List(Member(DotKind.Event, 1, Nil, Certainty.NoSay))).counted)
+    assertEquals(held.cells, List(GeoBounds(com.histmersion.web.map.GeoBounds.South(9), com.histmersion.web.map.GeoBounds.West(19), com.histmersion.web.map.GeoBounds.North(11), com.histmersion.web.map.GeoBounds.East(21))))
+    assert(!DotCluster.Contents(List(Member(DotKind.Event, com.histmersion.web.Member.N(1), Nil, Certainty.NoSay))).counted)
 
   test("playback buckets: a round number of years a bucket, the window widened to whole ones"):
-    assertEquals(PlaybackBuckets.years(166, 1.0), 200L)
-    assertEquals(PlaybackBuckets.years(30, 1.0), 50L)
-    assertEquals(PlaybackBuckets.years(0, 1.0), 1L)
-    assertEquals(PlaybackBuckets.years(1000, 1.0), 1000L)
-    assertEquals(PlaybackBuckets.widen((-1650L, -1550L), 200), (-1800L, -1401L))
-    assertEquals(PlaybackBuckets.widen((10L, 10L), 100), (0L, 99L))
-    assertEquals(PlaybackBuckets.widen((-1L, 0L), 100), (-100L, 99L))
+    assertEquals(PlaybackBuckets.years(com.histmersion.web.PlaybackBuckets.YearsPerSecond(166), 1.0), 200L)
+    assertEquals(PlaybackBuckets.years(com.histmersion.web.PlaybackBuckets.YearsPerSecond(30), 1.0), 50L)
+    assertEquals(PlaybackBuckets.years(com.histmersion.web.PlaybackBuckets.YearsPerSecond(0), 1.0), 1L)
+    assertEquals(PlaybackBuckets.years(com.histmersion.web.PlaybackBuckets.YearsPerSecond(1000), 1.0), com.histmersion.web.PlaybackBuckets.BucketYears(100)0L)
+    assertEquals(PlaybackBuckets.widen((com.histmersion.api.Years.Astronomical(-1650L), com.histmersion.api.Years.Astronomical(-1550L)), com.histmersion.web.PlaybackBuckets.BucketYears(200)), (-1800L, -1401L))
+    assertEquals(PlaybackBuckets.widen((com.histmersion.api.Years.Astronomical(10L), com.histmersion.api.Years.Astronomical(10L)), com.histmersion.web.PlaybackBuckets.BucketYears(100)), (0L, 99L))
+    assertEquals(PlaybackBuckets.widen((com.histmersion.api.Years.Astronomical(-1L), com.histmersion.api.Years.Astronomical(0L)), com.histmersion.web.PlaybackBuckets.BucketYears(100)), (-100L, 99L))
 
   test("a tile URL template: the placeholder tile becomes {z}/{x}/{y}"):
     val uri = s"/api/tiles/sites/${TilePlaceholder.Z}/${TilePlaceholder.X}/${TilePlaceholder.Y}?from=-10&to=20"
     assertEquals(TilePlaceholder.fill(uri), "/api/tiles/sites/{z}/{x}/{y}?from=-10&to=20")
 
   test("the events tiles' query: the filter's span set, its paging and sort left as every tile shares them"):
-    val f = Filter(tags = List("bronze"), limit = 500, offset = 40)
-    val q = EventMarkers.query(f, (-1200L, -1100L), Some("battle"), None)
+    val f = Filter(tags = List(com.histmersion.api.library.Filter.Tags("bronze")), limit = com.histmersion.api.library.Filter.Limit(500), offset = com.histmersion.api.library.Filter.Offset(40))
+    val q = EventMarkers.query(f, (com.histmersion.api.catalogue.Year(-1200L), com.histmersion.api.catalogue.Year(-1100L)), Some(com.histmersion.api.Api.EventQuery.Kind("battle")), None)
     assertEquals(q.layer, "events")
-    assertEquals(q.filter, Filter(tags = List("bronze"), period = Some(Period(-1200, -1100))))
+    assertEquals(q.filter, Filter(tags = List(com.histmersion.api.library.Filter.Tags("bronze")), period = Some(Period(com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-1100)))))
     assertEquals((q.kind, q.tier, q.context), (Some("battle"), None, Some(true)))
 
   test("a read at the same URL and zoom keeps what was shown near the view and is in no tile held now"):

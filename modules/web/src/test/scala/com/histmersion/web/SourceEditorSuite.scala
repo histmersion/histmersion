@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.ListPatch
@@ -20,15 +22,15 @@ class SourceEditorSuite extends munit.FunSuite:
     year = (Some(2007)).map(com.histmersion.api.catalogue.Year.apply),
     venue = (Some("Princeton UP")).map(com.histmersion.api.library.Source.Venue.apply),
     status = Source.Status.Current,
-    topics = List("pie_origins"),
-    regions = List("pontic_caspian_steppe"),
-    tags = List("steppe", "horses"),
-    periodStart = Some(-4500L),
-    periodEnd = Some(-2500L),
-    summary = Some("s"),
+    topics = List(com.histmersion.api.library.Source.Topics("pie_origins")),
+    regions = List(com.histmersion.api.library.Source.Regions("pontic_caspian_steppe")),
+    tags = List(com.histmersion.api.library.Source.Tags("steppe"), com.histmersion.api.library.Source.Tags("horses")),
+    periodStart = Some(com.histmersion.api.catalogue.Year(-4500L)),
+    periodEnd = Some(com.histmersion.api.catalogue.Year(-2500L)),
+    summary = Some(com.histmersion.api.library.Source.Summary("s")),
     doi = None,
     ocrMarkdown = None,
-    updatedAt = Some("t1")
+    updatedAt = Some(com.histmersion.api.library.Source.UpdatedAt("t1"))
   )
 
   private val d0 = Draft.of(orig)
@@ -52,8 +54,8 @@ class SourceEditorSuite extends munit.FunSuite:
     )
     val p = SourceEditor.toPatch(orig, d).toOption.flatten.get
     assertEquals(p.metadata, Some(MetadataPatch(title = (Some("The Horse")).map(com.histmersion.api.library.Title.apply), status = Some(Source.Status.Contested))))
-    assertEquals(p.tags, Some(ListPatch(add = List("wheel"), remove = List("steppe"))))
-    assertEquals(p.period, Some(Period.Input(-4200, -3000)))
+    assertEquals(p.tags, Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("wheel")), remove = List(com.histmersion.api.Write.ListItem("steppe")))))
+    assertEquals(p.period, Some(Period.Input(com.histmersion.api.catalogue.Year(-4200), com.histmersion.api.catalogue.Year(-3000))))
     assertEquals(p.topics, None)
     assertEquals(p.regions, None)
     assertEquals(p.summary, None)
@@ -68,7 +70,7 @@ class SourceEditorSuite extends munit.FunSuite:
     assertEquals(p.topics, Some(List("pie_origins", "domestication")))
     assertEquals(p.regions, Some(Nil))
     assertEquals(p.metadata.flatMap(_.doi), Some(com.histmersion.api.library.Doi("10.1515/9781400831104")))
-    assertEquals(p.period, Some(Period.Input(-100, 200)))
+    assertEquals(p.period, Some(Period.Input(com.histmersion.api.catalogue.Year(-100), com.histmersion.api.catalogue.Year(200))))
   }
 
   test("what the patch cannot express, or the server would refuse, is caught per field") {
@@ -85,11 +87,11 @@ class SourceEditorSuite extends munit.FunSuite:
   }
 
   test("typed years: BCE negative, blank is none") {
-    assertEquals(SourceEditor.year("1300 BCE"), Right(Some(-1300L)))
-    assertEquals(SourceEditor.year("-1300"), Right(Some(-1300L)))
-    assertEquals(SourceEditor.year("530 ce"), Right(Some(530L)))
-    assertEquals(SourceEditor.year("  "), Right(None))
-    assert(SourceEditor.year("later").isLeft)
+    assertEquals(SourceEditor.year(com.histmersion.api.Years.Text("1300 BCE")), Right(Some(-1300L)))
+    assertEquals(SourceEditor.year(com.histmersion.api.Years.Text("-1300")), Right(Some(-1300L)))
+    assertEquals(SourceEditor.year(com.histmersion.api.Years.Text("530 ce")), Right(Some(530L)))
+    assertEquals(SourceEditor.year(com.histmersion.api.Years.Text("  ")), Right(None))
+    assert(SourceEditor.year(com.histmersion.api.Years.Text("later")).isLeft)
   }
 
   test("a server refusal is shown next to the field its message names") {

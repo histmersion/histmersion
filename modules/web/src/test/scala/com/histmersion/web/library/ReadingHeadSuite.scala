@@ -19,14 +19,14 @@ class ReadingHeadSuite extends munit.FunSuite:
     (Some("Princeton University Press")).map(com.histmersion.api.library.Source.Venue.apply),
     Source.Status.Current,
     Nil,
-    List("levant", "anatolia"),
+    List(com.histmersion.api.library.Source.Regions("levant"), com.histmersion.api.library.Source.Regions("anatolia")),
     Nil,
-    Some(-1250),
-    Some(-1100),
-    Some(" Several pressures together. "),
+    Some(com.histmersion.api.catalogue.Year(-1250)),
+    Some(com.histmersion.api.catalogue.Year(-1100)),
+    Some(com.histmersion.api.library.Source.Summary(" Several pressures together. ")),
     None,
     None,
-    provenance = Some("calibre")
+    provenance = Some(com.histmersion.api.library.Source.Provenance("calibre"))
   )
 
   test("from the table's row at once: year, title, authors, status, period, regions, summary"):
@@ -37,10 +37,10 @@ class ReadingHeadSuite extends munit.FunSuite:
         (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
         Source.Status.Current,
         Nil,
-        List("levant"),
-        Some(-1250),
-        Some(-1100),
-        Some("Sum."),
+        List(com.histmersion.api.library.Source.Regions("levant")),
+        Some(com.histmersion.api.catalogue.Year(-1250)),
+        Some(com.histmersion.api.catalogue.Year(-1100)),
+        Some(com.histmersion.api.library.Source.Summary("Sum.")),
         authors = (List("Eric H. Cline")).map(com.histmersion.api.library.AuthorName.apply)
       )
     )
@@ -66,14 +66,14 @@ class ReadingHeadSuite extends munit.FunSuite:
   test("an unknown type is left out, not called unknown"):
     val paperless = detail.modify(_.provenance).setTo(None).modify(_.venue).setTo(None)
     assertEquals(ReadingHead.of(com.histmersion.api.library.Source.WithFindings(paperless, Nil)).what, "2014")
-    val cover = MediaThumb("u", MediaRole.Cover, "/x.jpg", "credit")
+    val cover = MediaThumb(com.histmersion.api.media.MediaItem.Uid("u"), MediaRole.Cover, com.histmersion.api.media.MediaThumb.Url("/x.jpg"), com.histmersion.api.media.MediaItem.Credit("credit"))
     assertEquals(
       ReadingHead.of(com.histmersion.api.library.Source.WithFindings(paperless, Nil, illustration = Some(cover))).what,
       "Book · 2014"
     )
 
   test("the map shows the box around a source's located findings; none when none is located"):
-    def f(lat: Option[Double], lon: Option[Double]) = Finding.Row("c", None, lon, lat, None, None, None, Nil, None)
+    def f(lat: Option[Double], lon: Option[Double]) = Finding.Row(com.histmersion.api.library.Finding.Claim("c"), None, lon, lat, None, None, None, Nil, None)
     assertEquals(
       ReadingPane.bounds(List(f(Some(35.6), Some(35.8)), f(Some(40.0), Some(34.6)), f(None, None))),
       Some(GeoBounds(35.6, 34.6, 40.0, 35.8))

@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.TimeSpan
@@ -19,17 +21,17 @@ class ExploreChromeSuite extends munit.FunSuite:
 
   test("the filter panel is folded only when this browser left it folded; More filters opens when one in it is set"):
     assert(!FilterBar.foldedInitially(None))
-    assert(!FilterBar.foldedInitially(Some("0")))
-    assert(FilterBar.foldedInitially(Some("1")))
+    assert(!FilterBar.foldedInitially(Some(com.histmersion.web.FilterBar.StoredText("0"))))
+    assert(FilterBar.foldedInitially(Some(com.histmersion.web.FilterBar.StoredText("1"))))
     assert(!FilterBar.moreOpenInitially(None, someMoreSet = false))
-    assert(FilterBar.moreOpenInitially(Some("0"), someMoreSet = true))
-    assert(FilterBar.moreOpenInitially(Some("1"), someMoreSet = false))
+    assert(FilterBar.moreOpenInitially(Some(com.histmersion.web.FilterBar.StoredText("0")), someMoreSet = true))
+    assert(FilterBar.moreOpenInitially(Some(com.histmersion.web.FilterBar.StoredText("1")), someMoreSet = false))
 
   test("the period counts as an active filter only away from the default span"):
     assert(!FilterChips.periodSet(None, None, -3000, 2000))
     assert(!FilterChips.periodSet(Some(-3000), Some(2000), -3000, 2000))
     assert(FilterChips.periodSet(Some(-1500), None, -3000, 2000))
-    val chips = List(UiState.ActiveChip("topics", "topic", "bronze age"), UiState.ActiveChip("q", "search", "troy"))
+    val chips = List(UiState.ActiveChip(com.histmersion.web.UiState.ActiveChip.Key("topics"), com.histmersion.web.UiState.ActiveChip.Label("topic"), com.histmersion.web.UiState.ActiveChip.Value("bronze age")), UiState.ActiveChip(com.histmersion.web.UiState.ActiveChip.Key("q"), com.histmersion.web.UiState.ActiveChip.Label("search"), com.histmersion.web.UiState.ActiveChip.Value("troy")))
     assertEquals(FilterChips.count(chips, period = true), 3)
     assertEquals(FilterChips.count(Nil, period = false), 0)
 
@@ -44,17 +46,17 @@ class ExploreChromeSuite extends munit.FunSuite:
 
   test("the results' tabs: five, a kept key back to its tab, an old tree tab to the sources"):
     assertEquals(SidebarTab.values.toList.map(_.label), List("Sources", "Articles", "Events", "Places", "Pictures"))
-    assertEquals(SidebarTab.of(Some("pictures")), SidebarTab.Pictures)
-    assertEquals(SidebarTab.of(Some("bytime")), SidebarTab.Sources)
+    assertEquals(SidebarTab.of(Some(com.histmersion.web.ui.SidebarTab.Key("pictures"))), SidebarTab.Pictures)
+    assertEquals(SidebarTab.of(Some(com.histmersion.web.ui.SidebarTab.Key("bytime"))), SidebarTab.Sources)
     assertEquals(SidebarTab.of(None), SidebarTab.Sources)
-    assertEquals(ResultsPanel.tabLabel("Places", Some(12)), "Places 12")
-    assertEquals(ResultsPanel.tabLabel("Places", None), "Places")
+    assertEquals(ResultsPanel.tabLabel(com.histmersion.api.UiLabels.Text("Places"), Some(com.histmersion.api.RowCount(12))), "Places 12")
+    assertEquals(ResultsPanel.tabLabel(com.histmersion.api.UiLabels.Text("Places"), None), "Places")
 
   test("an item's detail opens its own page in a new tab"):
-    assertEquals(ResultDetail.pageOf(Preview.Target.Source("smith2020")), "/source/smith2020")
-    assertEquals(ResultDetail.pageOf(Preview.Target.Place("pleiades_570406", Some(-500))), "/place/pleiades_570406")
-    assertEquals(ResultDetail.pageOf(Preview.Target.Event("ev1")), "/event/ev1")
-    assertEquals(ResultDetail.kindOf(Preview.Target.Article("x")), "article")
+    assertEquals(ResultDetail.pageOf(Preview.Target.Source(com.histmersion.web.Preview.Target.Source.Citekey("smith2020"))), "/source/smith2020")
+    assertEquals(ResultDetail.pageOf(Preview.Target.Place(com.histmersion.web.Preview.Target.Place.Id("pleiades_570406"), Some(com.histmersion.api.Years.Astronomical(-500)))), "/place/pleiades_570406")
+    assertEquals(ResultDetail.pageOf(Preview.Target.Event(com.histmersion.web.Preview.Target.Event.Id("ev1"))), "/event/ev1")
+    assertEquals(ResultDetail.kindOf(Preview.Target.Article(com.histmersion.web.Preview.Target.Article.Slug("x"))), "article")
 
   test("the credits: open at first, folded after the first move, open when the map is missing; a choice wins"):
     assert(BaseMaps.footOpenNow(None, moved = false, warns = false))
@@ -68,13 +70,13 @@ class ExploreChromeSuite extends munit.FunSuite:
     assert(BaseMaps.allCreditsLink.contains("/settings/credits"))
 
   test("the places list: the count line on the map and everywhere; a site's note says when its date is unknown"):
-    assertEquals(MapLists.countLine(3, 3, "place", "places", onMap = true), "3 places on the map")
+    assertEquals(MapLists.countLine(com.histmersion.web.MapLists.ListedCount(3), com.histmersion.web.MapLists.TotalCount(3), com.histmersion.api.Plural.Noun.Singular("place"), com.histmersion.api.Plural.Noun.Plural("places"), onMap = com.histmersion.web.MapLists.OnMap(true)), "3 places on the map")
     assertEquals(
-      MapLists.countLine(40, 312, "place", "places", onMap = true),
+      MapLists.countLine(com.histmersion.web.MapLists.ListedCount(40), com.histmersion.web.MapLists.TotalCount(312), com.histmersion.api.Plural.Noun.Singular("place"), com.histmersion.api.Plural.Noun.Plural("places"), onMap = com.histmersion.web.MapLists.OnMap(true)),
       "312 places on the map · 40 listed, zoom in to list the rest"
     )
-    assertEquals(MapLists.countLine(1, 1, "picture", "pictures", onMap = false), "1 picture")
-    val site = SitePoint(Some("s1"), "Tower", "site", Some("tower"), None, 37, 22, None, undated = true)
+    assertEquals(MapLists.countLine(com.histmersion.web.MapLists.ListedCount(1), com.histmersion.web.MapLists.TotalCount(1), com.histmersion.api.Plural.Noun.Singular("picture"), com.histmersion.api.Plural.Noun.Plural("pictures"), onMap = com.histmersion.web.MapLists.OnMap(false)), "1 picture")
+    val site = SitePoint(Some(com.histmersion.web.SitePoint.Id("s1")), com.histmersion.web.SitePoint.Label("Tower"), com.histmersion.web.SitePoint.Kind("site"), Some(com.histmersion.web.SitePoint.SiteType("tower")), None, com.histmersion.web.map.LatLon.Lat(37), com.histmersion.web.map.LatLon.Lon(22), None, undated = com.histmersion.web.SitePoint.Undated(true))
     assert(MapLists.siteNote(site).endsWith("date unknown"), MapLists.siteNote(site))
 
   test("a site or a cell of the tiles marked undated reads so; a bubble says how many have no known date"):
@@ -93,16 +95,16 @@ class ExploreChromeSuite extends munit.FunSuite:
       DotCluster.summary(DotCluster.Contents(List(CellKind(DotKind.Site).member(c)))),
       "12 sites, 5 with no known date"
     )
-    assertEquals(DotCluster.summary(Map(DotKind.Site -> 3), 0), "3 sites")
+    assertEquals(DotCluster.summary(Map(DotKind.Site -> com.histmersion.web.DotCluster.KindCount(3)), com.histmersion.web.DotCluster.Undated(0)), "3 sites")
 
   test("an event with no known date is drawn undated, beneath the dated"):
     val e = TileDecode.event(feature(40, 26, "id" -> "ev9", "label" -> "Quake", "kind" -> "earthquake")).get
     assert(PointKinds.Events.undated(e))
     assert(PointKinds.Events.classes(e).contains(MapView.UndatedClass))
-    val dated = e.modify(_.timeSpan).setTo(TimeSpan(Some(-1200L), None, None, Some(-1190L)))
+    val dated = e.modify(_.timeSpan).setTo(TimeSpan(Some(com.histmersion.api.catalogue.Year(-1200L)), None, None, Some(com.histmersion.api.catalogue.Year(-1190L))))
     assert(!PointKinds.Events.undated(dated))
     assert(PointKinds.Events.zIndex(e) < PointKinds.Events.zIndex(dated))
 
   test("the legend keys the dashed outline while undated places are drawn"):
-    assert(MapKey.html(events = false, sites = true, undated = true).contains("date unknown"))
-    assert(!MapKey.html(events = false, sites = true).contains("date unknown"))
+    assert(MapKey.html(events = com.histmersion.web.MapKey.Events(false), sites = com.histmersion.web.MapKey.Sites(true), undated = com.histmersion.web.MapKey.Undated(true)).contains("date unknown"))
+    assert(!MapKey.html(events = com.histmersion.web.MapKey.Events(false), sites = com.histmersion.web.MapKey.Sites(true)).contains("date unknown"))

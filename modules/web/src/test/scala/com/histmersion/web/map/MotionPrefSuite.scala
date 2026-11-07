@@ -1,5 +1,7 @@
 package com.histmersion.web.map
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.web.{Store, UiState}
 
 /** The reader's "Map motion" (#4718): what each choice decides with and without the system's reduced-motion setting,
@@ -9,7 +11,7 @@ import com.histmersion.web.{Store, UiState}
 class MotionPrefSuite extends munit.FunSuite:
 
   override def afterEach(context: AfterEach): Unit =
-    MotionPref.systemChanged(false)
+    MotionPref.systemChanged(com.histmersion.web.map.MotionPref.SystemReduced(false))
     MotionPref.choose(MapMotion.System)
 
   test("follow the system animates unless the system asks for reduced motion; always and never ignore it"):
@@ -34,24 +36,24 @@ class MotionPrefSuite extends munit.FunSuite:
     assertEquals(MapMotion.attribute(false), "still")
     assertEquals(MapMotion.values.toList.map(_.wire), List("system", "always", "never"))
     MapMotion.values.foreach(m => assertEquals(MapMotion.fromWire(s" ${m.wire.toUpperCase} "), Some(m)))
-    assertEquals(MapMotion.fromWire("sometimes"), None)
+    assertEquals(MapMotion.fromWire(com.histmersion.web.map.MapMotion.Wire("sometimes")), None)
 
   test("MotionPref follows the choice and a change of the system's setting, live"):
     MotionPref.choose(MapMotion.System)
-    MotionPref.systemChanged(false)
+    MotionPref.systemChanged(com.histmersion.web.map.MotionPref.SystemReduced(false))
     assert(MotionPref.animate())
-    MotionPref.systemChanged(true)
+    MotionPref.systemChanged(com.histmersion.web.map.MotionPref.SystemReduced(true))
     assert(!MotionPref.animate(), "the system asks for reduced motion: still")
     MotionPref.choose(MapMotion.Always)
     assert(MotionPref.animate(), "always: animates although the system asks")
     MotionPref.choose(MapMotion.Never)
-    MotionPref.systemChanged(false)
+    MotionPref.systemChanged(com.histmersion.web.map.MotionPref.SystemReduced(false))
     assert(!MotionPref.animate(), "never: still although the system does not ask")
 
   test("a camera move eases only when the caller animates it and the map animates"):
     import com.histmersion.web.map.maplibre.MapLibreSurface
     MotionPref.choose(MapMotion.Always)
-    MotionPref.systemChanged(true)
+    MotionPref.systemChanged(com.histmersion.web.map.MotionPref.SystemReduced(true))
     assert(MapLibreSurface.eases(true))
     assert(!MapLibreSurface.eases(false))
     val o = MapLibreSurface.motion(true, scala.scalajs.js.Dynamic.literal()).asInstanceOf[scala.scalajs.js.Dynamic]

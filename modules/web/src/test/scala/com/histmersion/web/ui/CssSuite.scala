@@ -1,5 +1,7 @@
 package com.histmersion.web.ui
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 class CssSuite extends munit.FunSuite:
 
   test("Px.css produces valid pixel string"):

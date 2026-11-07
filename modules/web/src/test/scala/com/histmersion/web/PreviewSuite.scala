@@ -15,11 +15,11 @@ class PreviewSuite extends munit.FunSuite:
     (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
     (Some("Princeton UP")).map(com.histmersion.api.library.Source.Venue.apply),
     Source.Status.Current,
-    List("bronze_age_collapse"),
-    List("Eastern_Mediterranean"),
-    List("sea_peoples"),
-    Some(-1250),
-    Some(-1100),
+    List(com.histmersion.api.library.Source.Topics("bronze_age_collapse")),
+    List(com.histmersion.api.library.Source.Regions("Eastern_Mediterranean")),
+    List(com.histmersion.api.library.Source.Tags("sea_peoples")),
+    Some(com.histmersion.api.catalogue.Year(-1250)),
+    Some(com.histmersion.api.catalogue.Year(-1100)),
     Some("x" * 400),
     (Some("10.1515/9781400849987")).map(com.histmersion.api.library.Doi.apply),
     None,
@@ -29,10 +29,10 @@ class PreviewSuite extends munit.FunSuite:
   )
 
   test("a data-ck element previews a source, a data-slug element an article; a source wins"):
-    assertEquals(Preview.targetOf(Some("a2020_b"), None), Some(Preview.Target.Source("a2020_b")))
-    assertEquals(Preview.targetOf(None, Some("sea_peoples")), Some(Preview.Target.Article("sea_peoples")))
-    assertEquals(Preview.targetOf(Some("a2020_b"), Some("x")), Some(Preview.Target.Source("a2020_b")))
-    assertEquals(Preview.targetOf(Some(" "), None), None)
+    assertEquals(Preview.targetOf(Some(com.histmersion.api.library.Citekey("a2020_b")), None), Some(Preview.Target.Source(com.histmersion.web.Preview.Target.Source.Citekey("a2020_b"))))
+    assertEquals(Preview.targetOf(None, Some(com.histmersion.api.research.Article.Slug("sea_peoples"))), Some(Preview.Target.Article(com.histmersion.web.Preview.Target.Article.Slug("sea_peoples"))))
+    assertEquals(Preview.targetOf(Some(com.histmersion.api.library.Citekey("a2020_b")), Some(com.histmersion.api.research.Article.Slug("x"))), Some(Preview.Target.Source(com.histmersion.web.Preview.Target.Source.Citekey("a2020_b"))))
+    assertEquals(Preview.targetOf(Some(com.histmersion.api.library.Citekey(" ")), None), None)
 
   test("the source card shows the DOI as identifier, readable places and a bounded summary"):
     val c = Preview.card(detail)
@@ -56,20 +56,20 @@ class PreviewSuite extends munit.FunSuite:
   private val patones = PlaceDetail(
     com.histmersion.api.catalogue.Place.Summary(
       com.histmersion.api.catalogue.Place.Id("wikidata_q131839713"),
-      "Kingdom of Patones",
+      com.histmersion.api.catalogue.Place.Summary.Label("Kingdom of Patones"),
       Place.Kind.Polity,
       None,
-      Some(1769L),
-      Some("Wikidata (wikidata.org), CC0"),
-      "Kingdom of Patones, Reino de Patones",
+      Some(com.histmersion.api.catalogue.Year(1769L)),
+      Some(com.histmersion.api.catalogue.Place.Source("Wikidata (wikidata.org), CC0")),
+      com.histmersion.api.catalogue.Place.Summary.Names("Kingdom of Patones, Reino de Patones"),
       dating = com.histmersion.api.catalogue.Place.Dating.EndOnly,
       importSource = Some("wikidata")
     ),
     geometry = Some("""{"type":"Point","coordinates":[-3.48,40.88]}"""),
     parents = Nil,
     children = Nil,
-    findings = 0,
-    asOf = Some(-3900L),
+    findings = com.histmersion.api.catalogue.Place.Counts.Findings(0),
+    asOf = Some(com.histmersion.api.catalogue.Year(-3900L)),
     links =
       List(com.histmersion.api.catalogue.Place.Link(com.histmersion.api.catalogue.Place.Id("wikidata_q131839713"), "wikidata", "Q131839713", "exact_match")),
     hasBoundary = false,

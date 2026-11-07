@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.TimeSpan
@@ -24,22 +26,22 @@ class PointKindsSuite extends munit.FunSuite:
   final private case class Sample[A](kind: PointKind[A], known: A, unknown: Option[A])
 
   private val finding = GeoHit(
-    "zz2020_x",
-    "Zz paper",
-    "a claim",
+    com.histmersion.api.library.Citekey("zz2020_x"),
+    com.histmersion.api.library.GeoHit.Title("Zz paper"),
+    com.histmersion.api.library.GeoHit.Claim("a claim"),
     None,
     Some(31.0),
     Some(37.0),
-    Some(-1300L),
-    Some(-1250L),
+    Some(com.histmersion.api.catalogue.Year(-1300L)),
+    Some(com.histmersion.api.catalogue.Year(-1250L)),
     Some(Confidence.High),
     sourceKind = Some(Source.Kinds.Paper)
   )
   private val site = SitePoint(
-    Some("zz_fort"),
-    "Zz fort",
+    Some(com.histmersion.web.SitePoint.Id("zz_fort")),
+    com.histmersion.web.SitePoint.Label("Zz fort"),
     Place.Kind.Site,
-    Some("fortification"),
+    Some(com.histmersion.web.SitePoint.SiteType("fortification")),
     None,
     37.5,
     32.0,
@@ -47,16 +49,16 @@ class PointKindsSuite extends munit.FunSuite:
   )
   private val event = EventGeo(
     com.histmersion.api.catalogue.Event.Id("zz_b"),
-    "Zz battle",
-    "battle",
-    "local",
-    "attested",
-    TimeSpan(Some(-1274), None, None, Some(-1274)),
+    com.histmersion.api.catalogue.EventGeo.Label("Zz battle"),
+    com.histmersion.api.catalogue.EventGeo.Kind("battle"),
+    com.histmersion.api.catalogue.EventGeo.Scale("local"),
+    com.histmersion.api.catalogue.EventGeo.Historicity("attested"),
+    TimeSpan(Some(com.histmersion.api.catalogue.Year(-1274)), None, None, Some(com.histmersion.api.catalogue.Year(-1274))),
     com.histmersion.api.catalogue.Latitude(37.5),
     com.histmersion.api.catalogue.Longitude(32),
-    "event"
+    com.histmersion.api.catalogue.EventGeo.Anchor("event")
   )
-  private val picture = MediaGeoHit(None, "zz.jpg", Some("photo"), 37.0, 22.0, Some(-1500L), Some(-1400L), None, "u1")
+  private val picture = MediaGeoHit(None, com.histmersion.api.exchange.Bundle.Asset.FileName("zz.jpg"), Some(com.histmersion.api.media.MediaItem.Kind("photo")), 37.0, 22.0, Some(com.histmersion.api.catalogue.Year(-1500L)), Some(com.histmersion.api.catalogue.Year(-1400L)), None, com.histmersion.api.media.MediaItem.Uid("u1"))
 
   private val samples: List[Sample[?]] = List(
     Sample(
@@ -110,26 +112,26 @@ class PointKindsSuite extends munit.FunSuite:
       if k.dot == DotKind.Finding then assertEquals(m.findings.size, 1)
       else assert(m.entry.exists(e => e.kind == k.dot && Glyphs.inner.contains(e.icon)), s"${k.dot}: ${m.entry}")
     }
-    val two = Spot(1, 2, List(finding, finding.modify(_.citekey).setTo("zz2021_y")))
+    val two = Spot(com.histmersion.api.catalogue.Latitude(1), com.histmersion.api.catalogue.Longitude(2), List(finding, finding.modify(_.citekey).setTo("zz2021_y")))
     assertEquals(PointKinds.Findings.member(two).n, 2)
     assertEquals(PointKinds.Findings.inner(two), """<span class="hd-find-count">2</span>""")
     assertEquals(PointKinds.Findings.title(two), Some("2 findings here"))
     assertEquals(PointKinds.Findings.target(two, None), None)
 
   test("the card a hover shows: the source, the place at the map's year, the event, a figure's source"):
-    assertEquals(PointKinds.Findings.target(Spot(1, 2, List(finding)), None), Some(Preview.Target.Source("zz2020_x")))
-    assertEquals(PointKinds.Sites.target(site, Some(-1300L)), Some(Preview.Target.Place("zz_fort", Some(-1300L))))
-    assertEquals(PointKinds.Events.target(event, None), Some(Preview.Target.Event("zz_b")))
+    assertEquals(PointKinds.Findings.target(Spot(com.histmersion.api.catalogue.Latitude(1), com.histmersion.api.catalogue.Longitude(2), List(finding)), None), Some(Preview.Target.Source(com.histmersion.web.Preview.Target.Source.Citekey("zz2020_x"))))
+    assertEquals(PointKinds.Sites.target(site, Some(com.histmersion.api.Years.Astronomical(-1300L))), Some(Preview.Target.Place(com.histmersion.web.Preview.Target.Place.Id("zz_fort"), Some(com.histmersion.api.Years.Astronomical(-1300L)))))
+    assertEquals(PointKinds.Events.target(event, None), Some(Preview.Target.Event(com.histmersion.web.Preview.Target.Event.Id("zz_b"))))
     assertEquals(PointKinds.Media.target(picture, None), None)
     assertEquals(
       PointKinds.Media.target(picture.modify(_.citekey).setTo(Some("zz2019")), None),
-      Some(Preview.Target.Source("zz2019"))
+      Some(Preview.Target.Source(com.histmersion.web.Preview.Target.Source.Citekey("zz2019")))
     )
 
   test("the client-side filter: the site-type menu keeps its type; every other kind is filtered by the server"):
     assert(PointKinds.Sites.keeps(site, None))
-    assert(PointKinds.Sites.keeps(site, Some("fortification")))
-    assert(!PointKinds.Sites.keeps(site, Some("burial")))
+    assert(PointKinds.Sites.keeps(site, Some(com.histmersion.api.catalogue.SiteTile.SiteType("fortification"))))
+    assert(!PointKinds.Sites.keeps(site, Some(com.histmersion.api.catalogue.SiteTile.SiteType("burial"))))
 
   test("equal optical size: the diamond's box is the largest, the photo landscape"):
     val (fw, _) = PointKinds.Findings.box
