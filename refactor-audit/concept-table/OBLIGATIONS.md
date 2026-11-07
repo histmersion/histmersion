@@ -236,3 +236,12 @@ The client table's new concepts were placed on same-named owners in other module
 ## plugin-api is the third-party SPI: its positional leftovers are a published contract
 
 The sample plugins (plugin-fixtures/hello, hello-ai) show what a plugin author now writes: `AiProvider.TitleResult(...)`, `AiCapabilities.Tools(true)`, `Plugin.Context.SecretResultPart2`, `Plugin.Log.InfoMessage(...)`, `Registry.AddId(...)`, `Http.GetHeadersPart1/2`. Rename every plugin-api positional type to a real concept (and consider plain-literal-friendly constructors) before plugins are rebuilt; the testkit API snapshot then follows.
+
+## From server test failures (1628/1632 pass)
+
+- New silent class, data-corrupting: Magnum `sql"..."` writes an interpolated enum as its toString ("References", "High") instead of its wire spelling, ignoring imported codecs. Fixed in SourceRepo.insertEdges and SourceBundleRepo.findingsIn; others may remain. Mechanical check needed: any enum-typed value interpolated in `sql"..."` in db and server. Also check the live data on the restored copy for capitalised edge kinds or confidences.
+- Silent class in tests: `String.contains(newtype)` always false (ModelChainRunSuite, BundleHttpSuite): fixed; part of the always-false check.
+- Remaining 3 failures, need decisions: (1) ArchitectureSuite direction: 423 new violations, mostly shared newtypes (Citekey, Title, UnreadPage, Year) now used across domains: resolve in G11/G12 (feature boundaries), no new exceptions. (2) ContractsSuite: contracts.tsv refinement scoreboard has 1386 new and 320 gone rows: regenerate at the inventory step, after review. (3) PluginTreeSuite: plugin/skills/scalafix is tracked without a source in skills/; copying it broke AutomationOracle, AgentGenerator, NativeMetadata: the user's scalafix skill, ask.
+- `AgentGetSourceInput` decodes a model-supplied citekey with assume (a test requires leniency): make it parse at the boundary instead.
+- Contract snapshots regenerated: only int32/int64 format hints changed (Year and ByteCount now Long; ProbeAnswer.year kept int32 for the recorded traffic). Two regressions fixed: CandidateSweep.skipped and CollectionEntry.identifiers Map schemas.
+- BundleHttpSuite "review draft" is not idempotent against a reused test database (leaves a merge_sessions row).

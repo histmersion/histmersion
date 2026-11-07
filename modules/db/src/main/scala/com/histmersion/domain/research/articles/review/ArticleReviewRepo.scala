@@ -116,7 +116,7 @@ private[review] object ArticleReviewRepo:
   def runStarts(runs: List[com.histmersion.domain.automation.Run.Id])(using DbCon): Map[com.histmersion.domain.automation.Run.Id, String] =
     if runs.isEmpty then Map.empty
     else sql"""SELECT id, to_char(created_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}) FROM jobs
-              WHERE id = ANY(${runs.distinct}::text[])""".query[(com.histmersion.domain.automation.Run.Id, String)].run().toMap
+              WHERE id = ANY(${runs.distinct}::text[])""".query[(String, String)].run().map((id, at) => com.histmersion.domain.automation.Run.Id.assume(id) -> at).toMap
 
   /** The research goals that link the article (`goal_links` of kind `article`), by slug. */
   def goals(slug: com.histmersion.domain.research.Slug)(using DbCon): List[ReviewGoal] =

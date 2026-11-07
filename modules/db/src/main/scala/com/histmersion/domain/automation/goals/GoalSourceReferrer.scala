@@ -3,6 +3,7 @@ package com.histmersion.domain.automation.goals
 import com.histmersion.api.library.{DeleteCount, DeletePart}
 import com.histmersion.domain.library.sources.referrers.*
 
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*

@@ -23,13 +23,14 @@ class MergeApplyJobsSuite extends munit.FunSuite:
     )
 
   private def sha(c: Char): Sha256 = Sha256.applyUnsafe(c.toString * 64)
+  private def plan(c: Char): MergeRow.PlanHash = MergeRow.PlanHash(c.toString * 64)
 
   private def status(jobs: MergeApplyJobs, id: MergeApplyJob.Job): Option[MergeApplyJob] =
     jobs.status(Job.Id.applyUnsafe(id.value))
 
   test("done within the wait: the answer is its report"):
     val jobs = MergeApplyJobs(MergeApplyRuns.InMemory(), 5)
-    val j = jobs.start(sha('b'), sha('a'))(() => Right(result)).fold(e => fail(e.message.value), identity)
+    val j = jobs.start(sha('b'), plan('a'))(() => Right(result)).fold(e => fail(e.message.value), identity)
     assertEquals(j.state, MergeJobState.Done)
     assertEquals(j.result, Some(result))
     assertEquals(status(jobs, j.job).map(_.state), Some(MergeJobState.Done))
@@ -38,13 +39,13 @@ class MergeApplyJobsSuite extends munit.FunSuite:
     val jobs = MergeApplyJobs(MergeApplyRuns.InMemory(), 0)
     val release = CountDownLatch(1)
     val j = jobs
-      .start(sha('b'), sha('a')) { () =>
+      .start(sha('b'), plan('a')) { () =>
         release.await()
         Left(MergeApplyRuns.Failure("nothing to apply"))
       }
       .fold(e => fail(e.message.value), identity)
     assertEquals(j.state, MergeJobState.Running)
-    assert(jobs.start(sha('c'), sha('d'))(() => Right(result)).left.exists(_.message.value.contains("still running")))
+    assert(jobs.start(sha('c'), plan('d'))(() => Right(result)).left.exists(_.message.value.contains("still running")))
     release.countDown()
     val ended = Iterator
       .continually { Thread.sleep(10); status(jobs, j.job) }
@@ -54,7 +55,7 @@ class MergeApplyJobsSuite extends munit.FunSuite:
 
   test("a run that throws ends failed, with why"):
     val jobs = MergeApplyJobs(MergeApplyRuns.InMemory(), 5)
-    val j = jobs.start(sha('b'), sha('a'))(() => throw IllegalStateException("boom")).fold(e => fail(e.message.value), identity)
+    val j = jobs.start(sha('b'), plan('a'))(() => throw IllegalStateException("boom")).fold(e => fail(e.message.value), identity)
     assertEquals(j.state, MergeJobState.Failed)
     assert(j.error.exists(_.value.contains("boom")), j.toString)
     assertEquals(jobs.status(Job.Id.applyUnsafe(UUID.randomUUID().toString)), None)

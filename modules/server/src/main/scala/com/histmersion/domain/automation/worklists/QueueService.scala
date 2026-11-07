@@ -3,9 +3,7 @@ package com.histmersion.domain.automation.worklists
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueItem, QueuePatch}
 import com.histmersion.api.automation.Goal.Plans.GoalLink
-import com.histmersion.domain.automation.Goal
 import com.histmersion.util.database.Transactor
-import com.histmersion.util.jobs.Job
 
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
@@ -44,14 +42,9 @@ object QueueService:
       .read(scope match
         case QueueScope.Open                            => QueueRepo.list(list, all = false)
         case QueueScope.All                             => QueueRepo.list(list, all = true)
-        case QueueScope.ForJob(job) =>
-          Job.Id.option(job.value).fold(Vector.empty[QueueItem])(QueueRepo.forJob(list, _))
+        case QueueScope.ForJob(job) => QueueRepo.forJob(list, QueueRepo.JobText(job.value))
         case QueueScope.ForGoal(goal, linked, withDone) =>
-          Goal.Slug
-            .option(goal.value)
-            .fold(Vector.empty[QueueItem])(g =>
-              QueueRepo.forGoal(list, g, linked.toList.map(l => GoalLink.Ref(l.value)), withDone.value)
-            ))
+          QueueRepo.forGoal(list, QueueRepo.GoalText(goal.value), linked.toList.map(l => GoalLink.Ref(l.value)), withDone.value))
       .toList
 
     def get(id: QueueItemId): Option[QueueItem] = db.read(QueueRepo.get(QueueRepo.QueueItemId(id.value)))

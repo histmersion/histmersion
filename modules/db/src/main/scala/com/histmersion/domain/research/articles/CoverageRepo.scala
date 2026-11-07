@@ -11,6 +11,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Filter
 import com.histmersion.api.research.Coverage
+import com.histmersion.api.library.SourceColumns.given
 
 /** What an article's coverage (#958) reads from the corpus: the whole source set of its filter (not a ranked page — no
   * FTS ranking, no snippets), which of a set of citekeys the filter returns, and the disagreement edges touching the

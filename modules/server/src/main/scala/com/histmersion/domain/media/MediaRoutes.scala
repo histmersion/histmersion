@@ -35,7 +35,7 @@ object MediaRoutes:
   ): List[ServerEndpoint[Any, Identity]] =
     List(
       Api.assets.serverLogicSuccess[Identity](ck => Citekey.option(ck.value).map(assets.figures).getOrElse(Nil)),
-      Api.putAssets.serverLogic[Identity]((ck, in) => citekey(ck.value)(k => assets.putFigures(k, in))),
+      Api.putAssets.serverLogic[Identity]((ck, in) => assets.putFiguresAsked(ApiCitekey(ck.value), in)),
       Api.assetDetail.serverLogic[Identity]((ck, name) => citekey(ck.value)(k => assets.detail(k, AssetService.AssetName(name.value)))),
       Api.patchAsset.serverLogic[Identity]((ck, name, p) => citekey(ck.value)(k => assets.patch(k, AssetService.AssetName(name.value), p))),
       Api.asset.serverLogic[Identity]((ck, name) =>

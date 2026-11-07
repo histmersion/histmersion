@@ -48,7 +48,7 @@ private[sources] object SourceDeleteRepo:
         Right(p.modify(_.deletion).setTo(d.modify(_.logEntry).setTo(log.map(e => Source.Deletion.LogEntry(e.value)))))
     }
 
-  final private case class Row(citekey: com.histmersion.domain.library.Citekey, title: Row.Title, calibreId: Option[Row.CalibreId], sha256: Option[com.histmersion.Sha256])
+  final private case class Row(citekey: com.histmersion.domain.library.Citekey, title: Row.Title, calibreId: Option[Row.CalibreId], sha256: Option[SourceDeletePlan.Sha256])
       derives DbCodec
 
   object Row:
@@ -111,7 +111,7 @@ private[sources] object SourceDeleteRepo:
         Right(
           SourceDeletePlan(
             d,
-            r.sha256,
+            r.sha256.map(_.value.trim).filter(_.nonEmpty).map(SourceDeletePlan.Sha256(_)),
             SourceDeletePlan.ShaShared(shared),
             keys.map(k => SourceDeletePlan.Keys(k.value)),
             report

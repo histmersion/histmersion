@@ -497,7 +497,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         assert(pb.contains("\"source\":\"saved\""), pb)
         val (gs, gb) = send(HttpRequest.newBuilder(URI.create(s"$url/api/agents/models")).build())
         assertEquals(gs, 200)
-        assert(gb.contains("\"chains\"") && gb.contains(B.wire), gb.take(500))
+        assert(gb.contains("\"chains\"") && gb.contains(B.wire.value), gb.take(500))
         val (as, ab) = send(
           HttpRequest
             .newBuilder(URI.create(s"$url/api/agents/allowances"))

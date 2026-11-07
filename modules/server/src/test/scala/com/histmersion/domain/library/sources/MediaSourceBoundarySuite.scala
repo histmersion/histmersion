@@ -19,11 +19,11 @@ class MediaSourceBoundarySuite extends munit.FunSuite:
   test("invalid source identifiers fail before absence is considered"):
     val c = controllers()
     List("", "Not A Key", "../escape", null).foreach { raw =>
-      assertEquals(c.putFigures(com.histmersion.domain.library.Citekey.applyUnsafe(raw), Nil).left.map(_.code), Left(Some(Write.CodeInvalid)))
+      assertEquals(c.putFiguresAsked(com.histmersion.api.library.Citekey(raw), Nil).left.map(_.code), Left(Some(Write.CodeInvalid)))
     }
 
   test("source parser errors reach the media boundary unchanged"):
-    assertEquals(controllers().putFigures(com.histmersion.domain.library.Citekey.applyUnsafe("../escape"), Nil).left.map(_.message),
+    assertEquals(controllers().putFiguresAsked(com.histmersion.api.library.Citekey("../escape"), Nil).left.map(_.message),
       Left("invalid citekey '../escape' — it may not contain '..'"))
 
   test("a valid absent source is not found"):
@@ -31,4 +31,4 @@ class MediaSourceBoundarySuite extends munit.FunSuite:
 
   test("lookup and missing-source errors retain the original input"):
     val raw = "  missing2026_source  "
-    assertEquals(controllers().putFigures(com.histmersion.domain.library.Citekey.applyUnsafe(raw), Nil), Left(Write.notFound(com.histmersion.api.library.Citekey(raw))))
+    assertEquals(controllers().putFiguresAsked(com.histmersion.api.library.Citekey(raw), Nil), Left(Write.notFound(com.histmersion.api.library.Citekey(raw))))

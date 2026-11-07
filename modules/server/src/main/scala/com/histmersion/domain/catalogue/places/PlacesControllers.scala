@@ -41,7 +41,7 @@ final class PlacesControllers(
     */
   def placeId(id: Place.Id): Place.Id = current(AliasKinds.PlaceRecords, PlacesControllers.Alias(id.value))
 
-  private def named(id: Option[Place.Id]): Option[Place.Id] = id.map(placeId)
+  private def named(id: Option[Place.Id]): Option[Place.Id] = id.map(_.trimmed).filterNot(_.isBlank).map(placeId)
 
   /** A place NAME → its gazetteer point (#981), for a finding about a place of kind `hint` dated `at`. */
   def geocode(name: Geocode.Attempt.Name, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =

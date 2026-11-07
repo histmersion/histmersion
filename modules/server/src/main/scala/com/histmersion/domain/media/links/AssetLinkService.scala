@@ -50,7 +50,7 @@ object AssetLinkService:
     ): AssetLink.List =
       val rows = db.read(
         AssetLinkRepo.list(
-          citekey,
+          named(citekey.map(_.value)).map(com.histmersion.domain.library.Citekey.assume(_)),
           named(asset.map(_.value)).map(com.histmersion.domain.media.assets.MediaItemRow.Uid(_)),
           named(targetType.map(_.value)).map(com.histmersion.domain.media.imports.Target.TargetType(_)),
           named(targetId.map(_.value)).map(com.histmersion.domain.media.imports.Target.Id(_))

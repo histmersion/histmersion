@@ -18,6 +18,7 @@ import com.histmersion.domain.*
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.server.Composition
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import io.circe.parser.decode
@@ -156,7 +157,7 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
     com.histmersion.domain.catalogue.Place.Id("zqmp_region"),
     com.histmersion.domain.catalogue.Place.Id("pleiades_99900002")
   )
-  private val IdTexts = Ids.map(_.value)
+  private val IdTexts: List[String] = Ids.map(_.value)
 
   private def clean(): Unit = connect(ds):
     val _ = sql"DELETE FROM media_links WHERE target_id = ANY($IdTexts::text[])".update.run()

@@ -314,7 +314,10 @@ object HttpApi:
     refused("citekey", com.histmersion.domain.library.Citekey.either(ck.value))
 
   private def jobId(id: String): Either[Api.Error, com.histmersion.util.jobs.Job.Id] =
-    refused("job id", com.histmersion.util.jobs.Job.Id.either(id))
+    com.histmersion.util.jobs.Job.Id
+      .either(id)
+      .left
+      .map(_ => Api.Error(Api.Error.Message(s"No job '$id'"), Some(Api.Error.Code(com.histmersion.api.Write.CodeNotFound))))
 
   private def goalSlug(slug: String): Either[Api.Error, com.histmersion.domain.automation.Goal.Slug] =
     refused("goal", com.histmersion.domain.automation.Goal.Slug.either(slug))

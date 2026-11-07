@@ -21,7 +21,7 @@ import com.histmersion.api.Api
 final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: WorkCarrier = WorkCarrier.none):
 
   /** Start `run` on its own thread and wait up to `waitSeconds` for it. */
-  def start(bundle: com.histmersion.Sha256, planHash: com.histmersion.Sha256)(
+  def start(bundle: com.histmersion.Sha256, planHash: MergeRow.PlanHash)(
       run: () => Either[MergeApplyRuns.Failure, MergeApplyResult]
   ): Either[Api.Error, MergeApplyJob] =
     synchronized {

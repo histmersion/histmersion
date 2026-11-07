@@ -3,6 +3,7 @@ import com.histmersion.api.automation.PlanQuota.{PoolId, Reading, RefreshInfo, S
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The plan pools' readings, settings and refresh log (migrations V063–V065, V069). Stateless. */
 object PlanQuotaRepo:

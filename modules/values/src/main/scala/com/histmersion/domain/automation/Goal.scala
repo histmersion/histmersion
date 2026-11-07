@@ -10,7 +10,8 @@ object Goal:
   /** A goal's slug: the article slug's rule, but its own type, so a goal never passes for an article. */
   type Slug = Slug.T
 
-  object Slug extends RefinedType[String, Match["[a-z0-9][a-z0-9_.-]{0,120}"]]
+  object Slug extends RefinedType[String, Match["[a-z0-9][a-z0-9_.-]{0,120}"]]:
+    extension (s: Slug) def trimmed: Slug = assume(s.value.trim)
 
   /** A goal's stable identity across renames, merges and databases (`goals.uid`). */
   type Uid = Uid.T

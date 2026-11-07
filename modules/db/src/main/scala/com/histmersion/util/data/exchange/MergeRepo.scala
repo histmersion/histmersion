@@ -261,7 +261,8 @@ object MergeRepo:
 
   /** While on, rows keep the clocks the bundle gives them: the change-clock triggers stand aside. */
   def importing(on: com.histmersion.util.data.exchange.MergeRepo.Importing)(using DbCon): Unit =
-    val _ = sql"SELECT set_config('histmersion.importing', ${if on.value then "on" else "off"}, true)".query[String].run()
+    val setting: String = if on.value then "on" else "off"
+    val _ = sql"SELECT set_config('histmersion.importing', $setting, true)".query[String].run()
 
   /** Record what was merged — only what changed in the ledger, and a `merges` row only when the import changed anything
     * at all, so importing the same bundle twice writes nothing. The ledger is keyed by the BUNDLE's uid and names the

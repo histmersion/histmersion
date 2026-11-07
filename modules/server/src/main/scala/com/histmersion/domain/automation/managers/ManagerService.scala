@@ -143,7 +143,7 @@ trait ManagerService:
   def lastProgress(): Map[com.histmersion.api.automation.Goal.Slug, ManagerRepo.ProgressText]
 
   /** Every agent run that occupies a place: its pipeline and its manager's goal. */
-  def occupyingRuns(): List[(com.histmersion.api.automation.Pipeline, Option[com.histmersion.api.automation.Goal.Slug])]
+  def occupyingRuns(): List[(com.histmersion.api.automation.Pipeline.Wire, Option[com.histmersion.api.automation.Goal.Slug])]
 
   /** Per goal: its items a person holds. */
   def personHeldByGoal(): Map[Goal.Slug, com.histmersion.RowCount]
@@ -228,7 +228,7 @@ object ManagerService:
     def focusHeldCount(): com.histmersion.RowCount = db.read(ManagerRepo.focusHeldCount())
     def forPerson(): com.histmersion.RowCount = db.read(ManagerRepo.forPerson())
     def lastProgress(): Map[com.histmersion.api.automation.Goal.Slug, ManagerRepo.ProgressText] = db.read(ManagerRepo.lastProgress())
-    def occupyingRuns(): List[(com.histmersion.api.automation.Pipeline, Option[com.histmersion.api.automation.Goal.Slug])] = db.read(ManagerRepo.occupyingRuns())
+    def occupyingRuns(): List[(com.histmersion.api.automation.Pipeline.Wire, Option[com.histmersion.api.automation.Goal.Slug])] = db.read(ManagerRepo.occupyingRuns())
     def personHeldByGoal(): Map[Goal.Slug, com.histmersion.RowCount] = db.read(ManagerRepo.personHeldByGoal())
     def recentKinds(n: com.histmersion.PageSize): List[ManagerItem.Kind] = db.read(ManagerRepo.recentKinds(n))
     def running(id: ManagerInfo.Id): com.histmersion.RowCount = db.read(ManagerRepo.running(id))
@@ -688,21 +688,17 @@ object ManagerService:
         .view
         .map((g, ts) => com.histmersion.api.automation.Goal.Slug(g) -> ManagerRepo.ProgressText(text(ts.map(_._2).max)))
         .toMap
-    def occupyingRuns(): List[(com.histmersion.api.automation.Pipeline, Option[com.histmersion.api.automation.Goal.Slug])] =
+    def occupyingRuns(): List[(com.histmersion.api.automation.Pipeline.Wire, Option[com.histmersion.api.automation.Goal.Slug])] =
       runs
         .filter(occupying)
-        .flatMap(r =>
-          com.histmersion.api.automation.Pipeline
-            .parse(com.histmersion.api.automation.Pipeline.Wire(r.row.pipeline.value))
-            .map(p =>
-              (
-                p,
-                r.row.managerId
-                  .flatMap(id => manager(id.value))
-                  .flatMap(_.goal)
-                  .map(g => com.histmersion.api.automation.Goal.Slug(g.value))
-              )
-            )
+        .map(r =>
+          (
+            com.histmersion.api.automation.Pipeline.Wire(r.row.pipeline.value),
+            r.row.managerId
+              .flatMap(id => manager(id.value))
+              .flatMap(_.goal)
+              .map(g => com.histmersion.api.automation.Goal.Slug(g.value))
+          )
         )
     def personHeldByGoal(): Map[Goal.Slug, com.histmersion.RowCount] =
       counted(items.filter(personHeld).flatMap(goalOf)).map((g, n) => Goal.Slug.assume(g) -> com.histmersion.RowCount(n))

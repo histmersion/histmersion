@@ -18,6 +18,10 @@ import com.augustnagro.magnum.*
 private[worklists] object QueueRepo:
   type QueueItemId = QueueItemId.T
   object QueueItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobText = JobText.T
+  object JobText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalText = GoalText.T
+  object GoalText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Column order is fixed once here and reused by every projection (AGENTS.md: no duplicated column lists). `to_char`
     * normalises to UTC so the value is stable whatever the session TZ is.
@@ -44,14 +48,14 @@ private[worklists] object QueueRepo:
   /** The open (with `all`, every) items of `kind` that serve goal `goal`: their own goal, or one of `linked` (the
     * references of the goal's `queue-item` links, compared with the id as text).
     */
-  def forGoal(kind: Kind, goal: com.histmersion.domain.automation.Goal.Slug, linked: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref], all: Boolean)(using DbCon): Vector[QueueItem] =
+  def forGoal(kind: Kind, goal: QueueRepo.GoalText, linked: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref], all: Boolean)(using DbCon): Vector[QueueItem] =
     sql"""SELECT $Cols FROM queue_items
             WHERE list = ${kind.label} AND status <> $Note AND ($all OR status = $Open)
               AND (goal_slug = $goal OR id::text = ANY($linked::text[]))
             ORDER BY id""".query[QueueItem].run()
 
   /** The items of `kind` (any status but notes) that agent run or background job `job` wrote or ticked off. */
-  def forJob(kind: Kind, job: com.histmersion.util.jobs.Job.Id)(using DbCon): Vector[QueueItem] =
+  def forJob(kind: Kind, job: QueueRepo.JobText)(using DbCon): Vector[QueueItem] =
     sql"""SELECT $Cols FROM queue_items
             WHERE list = ${kind.label} AND status <> $Note AND (created_job = $job OR closed_job = $job)
             ORDER BY id""".query[QueueItem].run()

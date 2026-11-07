@@ -2,6 +2,7 @@ package com.histmersion.domain.media.assets
 
 import com.histmersion.api.{Api, Write}
 import com.histmersion.config.AppConfig
+import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.media.MediaSources
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.media.{
@@ -47,16 +48,25 @@ final class AssetsControllers(
       .map((mime, bytes) => (bytes, mime))
       .toRight(Api.Error(Api.Error.Message(s"No asset '$name' for '$citekey'"), Some(Api.Error.Code(Write.CodeNotFound))))
 
-  /** Add figures to an existing source (the host-side seed path). */
-  def putFigures(citekey: com.histmersion.domain.library.Citekey, in: List[AssetInput]): Either[Api.Error, AssetsStored] =
+  /** Add figures to the source a client named: a name that is no citekey is refused (400). */
+  def putFiguresAsked(citekey: com.histmersion.api.library.Citekey, in: List[AssetInput]): Either[Api.Error, AssetsStored] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("put_assets"))(
-      sources.lookup(citekey).left.map {
-        case MediaSources.Error.Invalid(message) => Write.invalid(Write.InvalidMessage(message.value))
-        case MediaSources.Error.NotFound => Write.notFound(com.histmersion.api.library.Citekey(citekey.value))
-      }.flatMap { _ =>
-        decode(in).map(stored => AssetsStored(com.histmersion.api.library.Citekey(citekey.value), AssetsStored.Stored(assets.addFigures(citekey, stored).value)))
-      }
+      Citekey.parse(citekey.value).left.map(p => Write.invalid(Write.InvalidMessage(p.value))).flatMap(storeFigures(_, citekey, in))
     )
+
+  /** Add figures to an existing source (the host-side seed path). */
+  def putFigures(citekey: Citekey, in: List[AssetInput]): Either[Api.Error, AssetsStored] =
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("put_assets"))(
+      storeFigures(citekey, com.histmersion.api.library.Citekey(citekey.value), in)
+    )
+
+  private def storeFigures(citekey: Citekey, asked: com.histmersion.api.library.Citekey, in: List[AssetInput]): Either[Api.Error, AssetsStored] =
+    sources.lookup(citekey).left.map {
+      case MediaSources.Error.Invalid(message) => Write.invalid(Write.InvalidMessage(message.value))
+      case MediaSources.Error.NotFound => Write.notFound(asked)
+    }.flatMap { _ =>
+      decode(in).map(stored => AssetsStored(com.histmersion.api.library.Citekey(citekey.value), AssetsStored.Stored(assets.addFigures(citekey, stored).value)))
+    }
 
   /** Wire figures → storable ones, failing the whole batch on the first unusable payload. */
   def decode(in: List[AssetInput]): Either[Api.Error, List[NewFigure]] =

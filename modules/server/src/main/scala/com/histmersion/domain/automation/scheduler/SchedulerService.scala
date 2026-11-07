@@ -234,8 +234,8 @@ final class SchedulerService(
     }
     val runs = agents.managerStore.occupyingRuns()
     val pipePools = collection.mutable.Map.empty[Pipeline, List[PlanQuota.PoolId]] // per pass
-    def poolsOfRun(p: Pipeline): List[PlanQuota.PoolId] =
-      pipePools.getOrElseUpdate(p, poolIds(Nil, now, List(p)).getOrElse(Nil))
+    def poolsOfRun(w: Pipeline.Wire): List[PlanQuota.PoolId] =
+      Pipeline.parse(w).toList.flatMap(p => pipePools.getOrElseUpdate(p, poolIds(Nil, now, List(p)).getOrElse(Nil)))
     val caps = ms.flatMap(m => m.config.maxRuns.map(r => m.id -> Resources.ManagerCapValue(r.value))).toMap
     val res = Resources(
       maxRuns = Resources.MaxRuns(cfg.maxConcurrentRuns.value),

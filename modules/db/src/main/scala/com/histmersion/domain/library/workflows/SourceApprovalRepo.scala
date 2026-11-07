@@ -41,6 +41,6 @@ private[workflows] object SourceApprovalRepo:
       target: Option[com.histmersion.domain.library.Citekey]
   )(using DbCon): Boolean =
     sql"""SELECT 1 FROM approvals WHERE kind = ${kind.wire} AND citekey = $citekey
-          AND coalesce(status, '') = ${status.fold("")(_.wire)}
+          AND coalesce(status, '') = ${status.fold("")(_.wire.value)}
           AND coalesce(edge_kind, '') = ${edgeKind.fold("")(Edge.Kind.wireOf)}
           AND coalesce(target, '') = ${target.fold("")(_.value)} LIMIT 1""".query[Int].run().nonEmpty

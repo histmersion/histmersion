@@ -896,7 +896,8 @@ final class AgentsControllers(
     */
   def compare(ids: List[DomainRun.Id]): Either[Api.Error, RunCompare.Comparison] =
     for
-      runs <- ids.foldLeft[Either[Api.Error, List[RunDetail]]](Right(Nil)) { (acc, id) =>
+      wanted <- AgentsControllers.runIds(ids.map(_.value))
+      runs <- wanted.foldLeft[Either[Api.Error, List[RunDetail]]](Right(Nil)) { (acc, id) =>
         acc.flatMap(rs =>
           runs
             .get(id)

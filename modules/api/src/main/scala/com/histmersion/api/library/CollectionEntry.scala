@@ -21,6 +21,7 @@ final case class CollectionEntry(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object CollectionEntry:
+  given Schema[Map[IdentifiersKey, IdentifiersValue]] = Schema.schemaForMap[IdentifiersKey, IdentifiersValue](_.value).copy(name = None, isOptional = true)
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Publisher = Publisher.T
@@ -31,7 +32,6 @@ object CollectionEntry:
   object IdentifiersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
     given _root_.io.circe.KeyEncoder[T] = _root_.io.circe.KeyEncoder.encodeKeyString.contramap(_.value)
     given _root_.io.circe.KeyDecoder[T] = _root_.io.circe.KeyDecoder.decodeKeyString.map(IdentifiersKey(_))
-    given Schema[Map[T, IdentifiersValue]] = Schema.schemaForMap(_.value)
   type IdentifiersValue = IdentifiersValue.T
   object IdentifiersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Formats = Formats.T

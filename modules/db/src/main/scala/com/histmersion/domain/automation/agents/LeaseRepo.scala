@@ -3,6 +3,7 @@ package com.histmersion.domain.automation.agents
 import com.histmersion.util.database.{Param, Sql}
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The agent lease (V087): one agent server per database, the one that holds the named lease. Every statement runs on
   * the connection it is given (`AgentLease` opens it).

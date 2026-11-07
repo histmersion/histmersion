@@ -19,6 +19,7 @@ final case class CandidateSweep(
       KindlingsSchema, com.histmersion.api.json.Schema
 object CandidateSweep:
 
+  given Schema[Map[SkippedKey, SkippedValue]] = Schema.schemaForMap[SkippedKey, SkippedValue](_.value).copy(name = None, isOptional = true)
 
   type Goal = com.histmersion.api.research.ReviewGoal.Slug
   val Goal: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
@@ -33,7 +34,6 @@ object CandidateSweep:
     given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
     given _root_.io.circe.KeyEncoder[T] = _root_.io.circe.KeyEncoder.encodeKeyString.contramap(_.value)
     given _root_.io.circe.KeyDecoder[T] = _root_.io.circe.KeyDecoder.decodeKeyString.map(SkippedKey(_))
-    given Schema[Map[T, SkippedValue]] = Schema.schemaForMap(_.value)
   type SkippedValue = SkippedValue.T
   object SkippedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Unseen = Unseen.T

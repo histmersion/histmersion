@@ -330,7 +330,7 @@ private[events] object EventBundleRepo:
         .toMap
       w.es.corrections.foreach { c =>
         // an event's correction follows the event here (by uid); a place's names a gazetteer id
-        val target =
+        val target: Option[String] =
           if c.targetKind.value == "event" then
             c.targetUid
               .fold(Option.when(eventExists(BEventRow.Id(c.targetId.value)))(c.targetId.value))(u => eventIds(u).map(_.value))

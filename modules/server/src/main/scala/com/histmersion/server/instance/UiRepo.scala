@@ -5,6 +5,7 @@ import com.histmersion.api.instance.UiNotices
 import com.histmersion.api.instance.UiNotices.{Board, Counters}
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.automation.Run
 
 /** The web UI's toolbar notices (migration V083, core [[UiNotices]]): each watched list's count and newest change, read

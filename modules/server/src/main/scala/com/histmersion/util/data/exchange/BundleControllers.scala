@@ -68,11 +68,7 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
     */
   def applyUploaded(req: MergeApplyRequest): Either[Api.Error, MergeApplyJob] =
     maintenance.guard(WriteGate.OperationName("merge/apply")):
-      for
-        bundle <- BundleControllers.sha256(req.bundle.value)
-        plan <- BundleControllers.planHash(req.planHash.value)
-        job <- bundles.applyKept(bundle, plan, req.resolutions)
-      yield job
+      BundleControllers.sha256(req.bundle.value).flatMap(bundles.applyKept(_, MergeRow.PlanHash(req.planHash.value), req.resolutions))
 
   /** `GET /api/merge/apply/{job}` — the job is a `jobs` row, so it answers across a restart (#888). */
   def applyStatus(job: com.histmersion.util.jobs.Job.Id): Either[Api.Error, MergeApplyJob] =
@@ -129,13 +125,6 @@ object BundleControllers:
       .map(_ =>
         Api.Error(Api.Error.Message(s"'$raw' is not a bundle's sha256 (64 hex digits, as `POST /api/bundle/upload` answers)"))
       )
-
-  /** A plan's hash: 64 lower-case hex digits, as `merge plan` answers. Pure. */
-  def planHash(raw: String): Either[Api.Error, com.histmersion.Sha256] =
-    com.histmersion.Sha256
-      .either(raw.trim.toLowerCase(java.util.Locale.ROOT))
-      .left
-      .map(_ => Api.Error(Api.Error.Message(s"'$raw' is not a plan hash (64 hex digits, as `merge plan` answers)")))
 
   /** `since` must be a moment: ISO-8601 with an offset (`2026-10-03T09:12:00Z`), as `asOf` is. */
   def since(raw: Option[com.histmersion.util.data.exchange.BundleScope.Since.At]): Either[Api.Error, Option[com.histmersion.util.data.exchange.BundleScope.Since.At]] =

@@ -256,13 +256,14 @@ private[sources] object SourceBundleRepo:
     w.es.findings.filter(f => w.writes(f.uid)).foreach { f =>
       w.touchSource(f.sourceUid)
       val ck = w.citekeyOf(f.sourceUid)
+      val confidence: Option[String] = f.confidence.map(_.wire.value)
       sql"""INSERT INTO findings (uid, origin, id, citekey, claim, region_name, geom, period, period_name,
               tags, confidence, significance, updated_at)
             VALUES (${f.uid}, ${f.origin}, ${f.id}, $ck, ${f.claim}, ${f.region},
               CASE WHEN ${f.lon}::float8 IS NULL OR ${f.lat}::float8 IS NULL THEN NULL
                    ELSE ST_SetSRID(ST_MakePoint(${f.lon}::float8, ${f.lat}::float8), 4326) END,
               ${rangeLiteral(f.period)}::int8range,
-              ${f.periodName}, ${f.tags}::text[], ${f.confidence}, ${f.significance}, ${f.updatedAt}::timestamptz)
+              ${f.periodName}, ${f.tags}::text[], ${confidence}, ${f.significance}, ${f.updatedAt}::timestamptz)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, id = EXCLUDED.id,
               citekey = EXCLUDED.citekey, claim = EXCLUDED.claim, region_name = EXCLUDED.region_name,
               geom = EXCLUDED.geom, period = EXCLUDED.period, period_name = EXCLUDED.period_name,
