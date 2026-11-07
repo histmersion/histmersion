@@ -133,10 +133,10 @@ class SearchSqlSnapshotSuite extends munit.FunSuite:
       "findingsFeedQuery" -> FilterSql.findingsFeedQuery(f, scope),
       "findingsCountQuery" -> FilterSql.findingsCountQuery(f, scope),
       "selectionCountsQuery" -> FilterSql.selectionCountsQuery(f, scope),
-      "periodsQuery sources" -> SearchFixtures.periodsQuery("sources", f, scope),
-      "periodsQuery findings" -> SearchFixtures.periodsQuery("findings", f, scope),
-      "treeRowsQuery sources" -> SearchFixtures.treeRowsQuery("sources", f, scope),
-      "treeRowsQuery findings" -> SearchFixtures.treeRowsQuery("findings", f, scope)
+      "periodsQuery sources" -> SearchFixtures.periodsQuery(com.histmersion.domain.library.search.AggregateRepo.Unit("sources"), f, scope),
+      "periodsQuery findings" -> SearchFixtures.periodsQuery(com.histmersion.domain.library.search.AggregateRepo.Unit("findings"), f, scope),
+      "treeRowsQuery sources" -> SearchFixtures.treeRowsQuery(com.histmersion.domain.library.search.AggregateRepo.Unit("sources"), f, scope),
+      "treeRowsQuery findings" -> SearchFixtures.treeRowsQuery(com.histmersion.domain.library.search.AggregateRepo.Unit("findings"), f, scope)
     ) ++ text.toList.map(q => "snippetsQuery" -> FilterSql.snippetsQuery(q, com.histmersion.domain.library.search.Search.SnippetWords(30), List(com.histmersion.domain.library.Citekey("zqa1990_a"), com.histmersion.domain.library.Citekey("zqb2001_b"))))
 
   private def facets(f: Filter, scope: PlaceScope): List[(String, Sql)] =

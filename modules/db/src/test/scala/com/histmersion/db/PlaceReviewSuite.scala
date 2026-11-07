@@ -121,10 +121,10 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
       cfg.limits.chunkChars,
       cfg.places.pointToleranceKm
     )
-    assertEquals(PlaceFixtures.placesOf(ds, "zzrc_src2#0").map(_.id).filter(_.startsWith("pleiades_99910")).toList, Nil)
+    assertEquals(PlaceFixtures.placesOf(ds, com.histmersion.api.library.Finding.Id("zzrc_src2#0")).map(_.id).filter(_.startsWith("pleiades_99910")).toList, Nil)
     assertEquals(PlaceFixtures.relocate(ds, rs, cfg.places.pointToleranceKm), 1)
     assertEquals(
-      PlaceFixtures.placesOf(ds, "zzrc_src2#0").map(_.id).filter(_.startsWith("pleiades_99910")).toList,
+      PlaceFixtures.placesOf(ds, com.histmersion.api.library.Finding.Id("zzrc_src2#0")).map(_.id).filter(_.startsWith("pleiades_99910")).toList,
       List(Thess),
       "the moved place's findings are matched again at once"
     )

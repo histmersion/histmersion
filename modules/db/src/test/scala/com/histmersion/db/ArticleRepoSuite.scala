@@ -58,7 +58,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
         calibreId = None,
         notes = notes
       ),
-      4000
+      com.histmersion.config.Limits.ChunkChars(4000)
     )
 
   private def article(body: Article.Body, s: Article.Slug = Article.Slug(slug)) = Article(
@@ -95,17 +95,17 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(ArticleFixtures.get(ds, slug).get.tags, tags)
     assertEquals(ArticleFixtures.load(ds, slug).get.regions, List("Syria, coast"))
     assertEquals(
-      ArticleFixtures.list(ds, Filter(), PlaceScope.empty, None, None, 50, 0).articles.find(_.slug.value == slug).map(_.tags),
+      ArticleFixtures.list(ds, Filter(), PlaceScope.empty, None, None, com.histmersion.domain.research.articles.ArticleRepo.Limit(50), com.histmersion.Offset(0)).articles.find(_.slug.value == slug).map(_.tags),
       Some(tags)
     )
     val _ = seedSource("zz_comma2020_authors")
     val _ = SourceFixtures.put(
       ds,
       SourceFixtures
-        .load(ds, "zz_comma2020_authors")
+        .load(ds, com.histmersion.domain.library.Citekey("zz_comma2020_authors"))
         .get
         .copy(authors = List(com.histmersion.api.library.AuthorName("Stocker, Sharon R."), com.histmersion.api.library.AuthorName("Davis, Jack L."))),
-      4000
+      com.histmersion.config.Limits.ChunkChars(4000)
     )
     val _ = ArticleFixtures.put(ds, article(Article.Body("# T\n\n[[zz_comma2020_authors]]")))
     assertEquals(
@@ -113,7 +113,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
       List(List("Stocker, Sharon R.", "Davis, Jack L."))
     )
     assertEquals(
-      SourceFixtures.get(ds, "zz_comma2020_authors").map(_._1.authors),
+      SourceFixtures.get(ds, com.histmersion.domain.library.Citekey("zz_comma2020_authors")).map(_._1.authors),
       Some(List("Stocker, Sharon R.", "Davis, Jack L."))
     )
 
@@ -182,7 +182,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
 
   test("patching an unknown slug is not_found"):
     assertEquals(
-      ArticleFixtures.patch(ds, "zz_no_such_article", Article.Patch(summary = Some(com.histmersion.api.research.Article.SummaryText("x")))).left.toOption.get.code,
+      ArticleFixtures.patch(ds, com.histmersion.domain.research.Slug("zz_no_such_article"), Article.Patch(summary = Some(com.histmersion.api.research.Article.SummaryText("x")))).left.toOption.get.code,
       Some(Write.CodeNotFound)
     )
 
@@ -197,7 +197,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
 
     def slugs(q: Option[String] = None, kind: Option[String] = None) =
       ArticleFixtures
-        .list(ds, Filter(), PlaceScope.empty, kind, q, 50, 0)
+        .list(ds, Filter(), PlaceScope.empty, kind, q, com.histmersion.domain.research.articles.ArticleRepo.Limit(50), com.histmersion.Offset(0))
         .articles
         .map(_.slug.value)
         .filter(_.startsWith("zz_article"))
@@ -212,7 +212,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     reset()
     val _ = ArticleFixtures.put(ds, article(Article.Body("# The Sea Peoples\n\nbody")))
     assert(
-      ArticleFixtures.list(ds, Filter(), PlaceScope.empty, None, Some("Peopl"), 50, 0).articles.exists(_.slug.value == slug)
+      ArticleFixtures.list(ds, Filter(), PlaceScope.empty, None, Some(com.histmersion.domain.library.search.Search.Query("Peopl")), com.histmersion.domain.research.articles.ArticleRepo.Limit(50), com.histmersion.Offset(0)).articles.exists(_.slug.value == slug)
     )
 
   test("list: total ignores limit/offset"):
@@ -223,13 +223,13 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     val _ = ArticleFixtures.put(ds, onlyMine(Article.Body("# T\n\nbody"), Article.Slug(slug)))
     val _ = ArticleFixtures.put(ds, onlyMine(Article.Body("# T2\n\nbody"), Article.Slug("zz_article_other")))
     val r =
-      ArticleFixtures.list(ds, Filter(title = Some(com.histmersion.api.library.Filter.Title("ZZ TOTAL marker"))), PlaceScope.empty, Some("concept"), None, 1, 0)
+      ArticleFixtures.list(ds, Filter(title = Some(com.histmersion.api.library.Filter.Title("ZZ TOTAL marker"))), PlaceScope.empty, Some(com.histmersion.domain.research.Article.Kind("concept")), None, com.histmersion.domain.research.articles.ArticleRepo.Limit(1), com.histmersion.Offset(0))
     assertEquals(r.articles.size, 1)
     assertEquals((r.total.value: Int), 2)
     assertEquals(r.kinds, List(Article.KindCount(com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.KindCount.Count(2))), "the per-kind counts ignore limit/offset too")
     val myth = onlyMine(Article.Body("# T3\n\nbody"), Article.Slug("zz_article_myth")).copy(kind = Article.KindValue("myth"))
     val _ = ArticleFixtures.put(ds, myth)
-    val all = ArticleFixtures.list(ds, Filter(title = Some(com.histmersion.api.library.Filter.Title("ZZ TOTAL marker"))), PlaceScope.empty, None, None, 1, 0)
+    val all = ArticleFixtures.list(ds, Filter(title = Some(com.histmersion.api.library.Filter.Title("ZZ TOTAL marker"))), PlaceScope.empty, None, None, com.histmersion.domain.research.articles.ArticleRepo.Limit(1), com.histmersion.Offset(0))
     assertEquals(((all.total.value: Int), all.kinds), (3, List(Article.KindCount(com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.KindCount.Count(2)), Article.KindCount(com.histmersion.api.research.Article.Kind.Wire("myth"), com.histmersion.api.research.Article.KindCount.Count(1)))))
 
   test("delete removes the article and its links"):
@@ -296,7 +296,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
   test("getVersion returns None for a non-existent version id"):
     reset()
     val _ = ArticleFixtures.put(ds, article(Article.Body("# T\n\nbody")))
-    assertEquals(ArticleFixtures.getVersion(ds, slug, 999999L), None)
+    assertEquals(ArticleFixtures.getVersion(ds, slug, com.histmersion.domain.research.articles.ArticleRepo.VersionId(999999L)), None)
 
   test("deleting an article cascades to its versions"):
     reset()
@@ -336,7 +336,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     // an article written before V066 (no filter, no reasons) reads as such
     val _ = ArticleFixtures.put(ds, article(Article.Body("# T\n\nbody"), Article.Slug("zz_article_other")))
     assertEquals(
-      ArticleFixtures.load(ds, "zz_article_other").map(x => (x.filter, x.reasons)),
+      ArticleFixtures.load(ds, com.histmersion.domain.research.Slug("zz_article_other")).map(x => (x.filter, x.reasons)),
       Some((None, Map.empty[String, String]))
     )
 
@@ -353,6 +353,6 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
       article(Article.Body("# T\n\nbody"))
         .modify(_.filter).setTo(Some(Article.Filter(tags = List(Article.Filter.Tags("x"))))).modify(_.reasons).setTo(Map("zz_covren2001_old" -> "about Egypt"))
     )
-    assert(SourceFixtures.rename(ds, "zz_covren2001_old", "zz_covren2001_new").isRight)
+    assert(SourceFixtures.rename(ds, com.histmersion.domain.library.Citekey("zz_covren2001_old"), com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw("zz_covren2001_new")).isRight)
     assertEquals(ArticleFixtures.load(ds, slug).get.reasons, Map("zz_covren2001_new" -> "about Egypt"))
     wipe()

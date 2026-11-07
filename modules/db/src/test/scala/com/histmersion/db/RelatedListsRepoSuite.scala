@@ -65,7 +65,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
         provenance = None,
         calibreId = None
       ),
-      4000
+      com.histmersion.config.Limits.ChunkChars(4000)
     )
 
   private def article(slug: Article.Slug, title: Article.Title, body: Article.Body) =
@@ -128,7 +128,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
 
   private def articles(f: Filter): Set[String] =
     ArticleFixtures
-      .list(ds, f, PlaceScope.empty, None, None, 500, 0)
+      .list(ds, f, PlaceScope.empty, None, None, com.histmersion.domain.research.articles.ArticleRepo.Limit(500), com.histmersion.Offset(0))
       .articles
       .map(_.slug.value)
       .filter(_.startsWith("zz_rel_"))
@@ -136,7 +136,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
 
   private def events(f: Filter, text: Option[String] = None): Set[String] =
     EventFixtures
-      .list(ds, f, PlaceScope.empty, text, None, None, None, 500, 0)
+      .list(ds, f, PlaceScope.empty, text, None, None, None, com.histmersion.PageSize(500), com.histmersion.Offset(0))
       .events
       .map(_.id.value)
       .filter(_.startsWith("zz_rel_"))
@@ -175,5 +175,5 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(events(Filter(), text = Some("unsourced")), Set("zz_rel_ev_nosrc"))
 
   test("sources: title narrows the source list by its own title"):
-    val r = SearchFixtures.sources(ds, Filter(title = Some(com.histmersion.api.library.Filter.Title("title zz_rel_m")), limit = com.histmersion.api.library.Filter.Limit(50)), 20, PlaceScope.empty)
+    val r = SearchFixtures.sources(ds, Filter(title = Some(com.histmersion.api.library.Filter.Title("title zz_rel_m")), limit = com.histmersion.api.library.Filter.Limit(50)), com.histmersion.domain.library.search.Search.SnippetWords(20), PlaceScope.empty)
     assertEquals(r.hits.map(_.source.citekey), List("zz_rel_match"))

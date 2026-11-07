@@ -288,7 +288,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(SourceFixtures.aliases(ds).filter(_.alias.value.startsWith(Prefix)), List(Source.Alias(Source.Alias.Value(Old), com.histmersion.api.library.Citekey(New))))
     assertEquals(SourceFixtures.canonical(ds, Old), Some(New))
     assertEquals(SourceFixtures.canonical(ds, New), Some(New))
-    assertEquals(SourceFixtures.canonical(ds, "zzrn_nothing"), None)
+    assertEquals(SourceFixtures.canonical(ds, com.histmersion.domain.library.Citekey("zzrn_nothing")), None)
     assertEquals(SourceFixtures.resolveAliases(ds, List(Old, New)), Map(Old -> New, New -> New))
 
   test("after a rename the old citekey keeps working as a link target, an edge target and a patch target"):
@@ -351,7 +351,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     refused("zzrn2000_missing", New, Some(Write.CodeNotFound), "zzrn2000_missing")
     refused(Old, Other, Some(Write.CodeInvalid), "already the citekey of another source")
     // a new key that is an OLD key of another source
-    assert(SourceFixtures.rename(ds, Other, "zzrnb2019_other").isRight)
+    assert(SourceFixtures.rename(ds, Other, com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw("zzrnb2019_other")).isRight)
     refused(Old, Other, Some(Write.CodeInvalid), "old citekey of 'zzrnb2019_other'")
     // renaming an old key names what it points to
     refused(Other, New, Some(Write.CodeInvalid), "rename 'zzrnb2019_other' instead")
