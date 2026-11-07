@@ -32,16 +32,16 @@ final class TiledPoints[A](
   val cells: PointLayer[TileCellPoint] = PointLayer(CellKind(dot), () => MapView.dots, () => MapView.spanMid())
   // `var`s: the URL template and span asked for, whether the layer is on, the map's tiles once made, the
   // span the features shown were read for
-  private var template: Option[String] = None
+  private var template: Option[ApiClient.Url] = None
   private var span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical) = (com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(1L))
   private var on = false
   private var tiles: Option[PointTiles] = None
   private var shown: (Seq[A], Seq[TileCellPoint]) = (Nil, Nil)
   // the tiles' URL and the zoom what is shown was read at
-  private var readAt: Option[(Option[String], Int)] = None
+  private var readAt: Option[(Option[ApiClient.Url], Int)] = None
 
   private def tileTemplate: Option[com.histmersion.api.basemap.BasemapApi.TileTemplate] =
-    template.map(com.histmersion.api.basemap.BasemapApi.TileTemplate(_))
+    template.map(u => com.histmersion.api.basemap.BasemapApi.TileTemplate(u.value))
 
   private def source: Option[PointTiles] =
     if tiles.isEmpty && TheMap.isUp then
@@ -73,7 +73,7 @@ final class TiledPoints[A](
       changed.update(r => com.histmersion.web.Poll.Revision(r.value + 1))
 
   /** The tiles of `url` (the span and options in it), drawn for `s`. */
-  def load(url: String, s: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Unit =
+  def load(url: ApiClient.Url, s: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Unit =
     template = Some(url)
     span = s
     if on then source.foreach(_.setTiles(tileTemplate))

@@ -3,6 +3,7 @@ package com.histmersion.web
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
+import com.histmersion.api.Api
 import com.histmersion.api.library.{Label, Source}
 import com.histmersion.api.research.Article
 
@@ -31,7 +32,7 @@ object IdentLink:
     cache.getOrElseUpdate(
       id.value,
       ApiClient
-        .resolveId(ApiClient.Id(id.value))
+        .resolveId(Api.Lookup.Text(id.value))
         .map(r =>
           r.source.map(s => Resolved.Source(s.ref)).orElse(r.article.map(a => Resolved.Article(a.slug, a.title)))
         )

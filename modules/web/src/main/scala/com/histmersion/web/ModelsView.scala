@@ -86,7 +86,7 @@ object ModelsView:
 
     def check(offline: Boolean): Unit =
       busy.set(true)
-      ApiClient.agentDoctor(ApiClient.Offline(offline)).onComplete { r =>
+      ApiClient.agentDoctor(Agents.DoctorReport.Online(offline)).onComplete { r =>
         busy.set(false)
         r.fold(e => failure.set(Some(e.getMessage)), d => doctor.set(Some(d)))
       }

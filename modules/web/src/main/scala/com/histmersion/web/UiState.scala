@@ -378,12 +378,12 @@ object UiState:
   /** What the Articles tab asks for: the global filter, title included — the server lists the articles citing the
     * sources it selects.
     */
-  def articleQuery(): Api.ArticleQuery = Api.ArticleQuery(toFilter().modify(_.limit).setTo(ui.Layout.tabFetch))
+  def articleQuery(): Api.ArticleQuery = Api.ArticleQuery(toFilter().modify(_.limit).setTo(Filter.Limit(ui.Layout.tabFetch.value)))
 
   /** What the Events tab asks for: the global filter, title included — the server lists the events whose source it
     * selects, in its period.
     */
-  def eventQuery(): Api.EventQuery = Api.EventQuery(toFilter().modify(_.limit).setTo(ui.Layout.tabFetch))
+  def eventQuery(): Api.EventQuery = Api.EventQuery(toFilter().modify(_.limit).setTo(Filter.Limit(ui.Layout.tabFetch.value)))
 
   private[web] def parseBbox(s: String): Option[(Double, Double, Double, Double)] =
     s.split(",").flatMap(_.trim.toDoubleOption).toList match

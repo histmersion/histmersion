@@ -1,20 +1,20 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.Plural
+import com.histmersion.api.{Api, Plural}
 import com.histmersion.web.{ApiClient, Auth, MapRegionsView}
 import com.raquo.laminar.api.L.*
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.backup.Backup
-import com.histmersion.api.catalogue.CatalogProviderInfo
+import com.histmersion.api.catalogue.{CatalogProviderInfo, EventImportRequest}
 import com.histmersion.api.instance.{About, UiConfig}
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.api.maintenance.Storage
 import com.histmersion.api.plugins.PluginState
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.catalogue.Gazetteer
-import com.histmersion.api.media.MediaProvider
+import com.histmersion.api.media.{MediaItem, MediaProvider}
 
 /** Settings › Data and downloads: the reference data Histmersion keeps on this computer — the background map, places,
   * periods and events, pictures — each with what it is, whether it is there, and Update / Remove; the downloads under
@@ -101,7 +101,7 @@ object DataSection:
                         else "data-state data-state--off"),
                 a.flatMap(_.counts).fold("")(c => if c.places.value > 0 then "Installed" else "Not loaded yet")
               ),
-              act(com.histmersion.web.settings.DataSection.ActionLabel("Update now"), com.histmersion.web.settings.DataSection.ActionWhat("boundaries"), ApiClient.initData(fetch = com.histmersion.web.ApiClient.Fetch(true)))
+              act(com.histmersion.web.settings.DataSection.ActionLabel("Update now"), com.histmersion.web.settings.DataSection.ActionWhat("boundaries"), ApiClient.initData(fetch = Api.Overwrite(true)))
             )
           ),
           children <-- sources.signal.map(
@@ -127,7 +127,7 @@ object DataSection:
                 c.title.value,
                 c.licence.value,
                 span(cls := "data-state", ""),
-                act(com.histmersion.web.settings.DataSection.ActionLabel("Update now"), com.histmersion.web.settings.DataSection.ActionWhat(s"events-${c.id}"), ApiClient.importEvents(ApiClient.Provider(c.id.value)))
+                act(com.histmersion.web.settings.DataSection.ActionLabel("Update now"), com.histmersion.web.settings.DataSection.ActionWhat(s"events-${c.id}"), ApiClient.importEvents(EventImportRequest.Provider(c.id.value)))
               )
             )
           )
@@ -146,7 +146,7 @@ object DataSection:
                   cls := (if on then "data-state" else "data-state data-state--off"),
                   if on then "" else "Turned off: see Plugins and Keys"
                 ),
-                if on then act(com.histmersion.web.settings.DataSection.ActionLabel("Fetch new pictures"), com.histmersion.web.settings.DataSection.ActionWhat(s"media-${m.name}"), ApiClient.importMedia(ApiClient.Provider(m.name.value))) else span()
+                if on then act(com.histmersion.web.settings.DataSection.ActionLabel("Fetch new pictures"), com.histmersion.web.settings.DataSection.ActionWhat(s"media-${m.name}"), ApiClient.importMedia(MediaItem.Provider(m.name.value))) else span()
               )
             }
           )

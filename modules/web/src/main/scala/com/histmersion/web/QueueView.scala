@@ -297,7 +297,7 @@ object QueueView:
 
   /** One window's pane. Its state lives with the pane, so each window loads its own list. */
   /** A list's page; with `goal`, only the items that serve that research goal. */
-  def pane(kind: Queue.Kind, goal: Option[com.histmersion.api.automation.Goal.Ref] = None): HtmlElement =
+  def pane(kind: Queue.Kind, goal: Option[com.histmersion.api.automation.Goal.Slug] = None): HtmlElement =
     val sp = spec(kind)
     val recheck = Var(Option.empty[Either[String, Acquire.Checks.RecheckResult]])
     val items = Var(List.empty[Queue.QueueItem])
@@ -314,8 +314,8 @@ object QueueView:
     // a list without a done state is listed whole; the others follow their "show done" switch
     def load(): Unit =
       val all = sp.showDone.fold(true)(_.now())
-      val list = ApiClient.QueueName(kind.label.value)
-      goal.fold(ApiClient.queueList(list, ApiClient.All(all)))(g => ApiClient.queueForGoal(list, ApiClient.GoalSlug(g.value), ApiClient.All(all))).onComplete { r =>
+      val list = kind.label
+      goal.fold(ApiClient.queueList(list, all))(g => ApiClient.queueForGoal(list, g, all)).onComplete { r =>
         r.fold(
           e => failure.set(Some(s"Could not load the list: ${e.getMessage}")),
           l =>
@@ -354,17 +354,17 @@ object QueueView:
         write(
           com.histmersion.api.UiLabels.Text(s"update item ${item.id}"),
           ApiClient.queuePatch(
-            ApiClient.QueueItemId(item.id.value),
+            item.id,
             Queue.QueuePatch(status = Some(Queue.QueueItem.Status(if d.value then Queue.Done else Queue.Open)))
           )
         )(),
       edit = (item, p, after) =>
-        write(com.histmersion.api.UiLabels.Text(s"edit item ${item.id}"), ApiClient.queuePatch(ApiClient.QueueItemId(item.id.value), p))(_ => after()),
+        write(com.histmersion.api.UiLabels.Text(s"edit item ${item.id}"), ApiClient.queuePatch(item.id, p))(_ => after()),
       delete = item =>
-        write(com.histmersion.api.UiLabels.Text(s"delete item ${item.id}"), ApiClient.queueDelete(ApiClient.QueueItemId(item.id.value)))(),
+        write(com.histmersion.api.UiLabels.Text(s"delete item ${item.id}"), ApiClient.queueDelete(item.id))(),
       fulfil = (item, ck) =>
         val (id, p) = fulfil(item, ck)
-        write(com.histmersion.api.UiLabels.Text(s"tick item $id off"), ApiClient.queuePatch(ApiClient.QueueItemId(id.value), p))()
+        write(com.histmersion.api.UiLabels.Text(s"tick item $id off"), ApiClient.queuePatch(id, p))()
       ,
       recheck = item =>
         write(
@@ -414,7 +414,7 @@ object QueueView:
         p(
           cls := "muted queue-goal",
           "Only the items of the goal ",
-          RouteLink(Route.Goal(com.histmersion.api.automation.Goal.Slug(g.value)), Wording.humanize(Wording.Id(g.value))),
+          RouteLink(Route.Goal(g), Wording.humanize(Wording.Id(g.value))),
           " · ",
           RouteLink(
             if kind == Queue.Kind.Acquire then Route.Research(ResearchSection.Acquire)
@@ -453,7 +453,7 @@ object QueueView:
             sp,
             items.signal,
             topicsId,
-            (in, reset) => write(com.histmersion.api.UiLabels.Text("add the item"), ApiClient.queueAdd(ApiClient.QueueName(kind.label.value), in))(_ => reset()),
+            (in, reset) => write(com.histmersion.api.UiLabels.Text("add the item"), ApiClient.queueAdd(kind.label, in))(_ => reset()),
             () => adding.set(false)
           )
         )
@@ -705,13 +705,13 @@ object QueueView:
     )
 
   /** What one agent run or background job wrote to the lists and ticked off — its page's side of the links. */
-  def ofJob(jobId: com.histmersion.web.Pages.JobId): HtmlElement =
+  def ofJob(jobId: com.histmersion.api.jobs.JobInfo.Id): HtmlElement =
     val found = Var(Option.empty[List[Queue.QueueItem]])
     div(
       cls := "job-items",
       onMountCallback(_ =>
         scala.concurrent.Future
-          .sequence(Queue.Kind.values.toList.map(k => ApiClient.queueOfJob(ApiClient.QueueName(k.label.value), ApiClient.JobId(jobId.value))))
+          .sequence(Queue.Kind.values.toList.map(k => ApiClient.queueOfJob(k.label, jobId)))
           .onComplete(r => found.set(Some(r.toOption.toList.flatten.flatMap(_.items))))
       ),
       child <-- found.signal.map {

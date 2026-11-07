@@ -11,7 +11,7 @@ import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.instance.UiConfig
-import com.histmersion.api.library.{Bucket, TimeHistogram}
+import com.histmersion.api.library.{Bucket, Filter, TimeHistogram}
 
 object TreeTab:
   private var config: Option[UiConfig] = None
@@ -272,7 +272,7 @@ object TreeTab:
         Api.AggregateQuery.tree(com.histmersion.api.Api.AggregateQuery.By("time"), narrowed, depth = Some(Api.AggregateQuery.Depth(cfg.treeDepth.value)), samples = Some(Api.AggregateQuery.Samples(cfg.treeSamples.value)))
       )
     else
-      val narrowed = f.modify(_.places).setTo(b.placeId.toList)
+      val narrowed = f.modify(_.places).setTo(b.placeId.toList.map(p => Filter.Places(p.value)))
       ApiClient.aggregate(
         Api.AggregateQuery
           .tree(

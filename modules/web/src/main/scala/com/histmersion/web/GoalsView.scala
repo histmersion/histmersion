@@ -267,11 +267,11 @@ object GoalsView:
           busy.set(true)
           val created =
             ApiClient
-              .getGoal(ApiClient.GoalSlug(a.slug.value))
+              .getGoal(a.slug)
               .transformWith {
                 case scala.util.Success(_) =>
                   scala.concurrent.Future.failed(new Exception(s"a goal '${a.slug}' exists already"))
-                case scala.util.Failure(_) => ApiClient.putGoal(ApiClient.GoalSlug(a.slug.value), a.put)
+                case scala.util.Failure(_) => ApiClient.putGoal(a.slug, a.put)
               }
               .flatMap { _ =>
                 val planned = if a.plan.value then
@@ -383,7 +383,7 @@ object GoalsView:
 
     def refresh(): Unit =
       ApiClient
-        .goalView(ApiClient.GoalSlug(slug.value))
+        .goalView(slug)
         .onComplete(_.fold(e => failure.set(Some(e.getMessage)), v => { failure.set(None); view.set(Some(v)) }))
       if RunsView.enabled.now().value then
         ApiClient.agentRuns(ListFilters.RunFilter(goal = Some(slug)), Some(com.histmersion.api.Paging.Limit(RunLimit))).foreach(r => runs.set(r._1))
@@ -541,7 +541,7 @@ object GoalsView:
               cls := "link-btn goal-unlink",
               "unlink",
               disabled <-- busy,
-              onClick --> (_ => write("unlink")(ApiClient.removeGoalLink(ApiClient.GoalSlug(slug.value), l.kind, ApiClient.LinkRef(l.ref.value))))
+              onClick --> (_ => write("unlink")(ApiClient.removeGoalLink(slug, l.kind, l.ref)))
             )
           )
         )
@@ -593,7 +593,7 @@ object GoalsView:
               disabled <-- busy,
               onClick --> { _ =>
                 linkToAdd(kind.now(), LinkAdd.Ref(ref.now()), LinkAdd.Note(note.now())).foreach { l =>
-                  write("link")(ApiClient.addGoalLink(ApiClient.GoalSlug(slug.value), l))
+                  write("link")(ApiClient.addGoalLink(slug, l))
                   ref.set(""); note.set("")
                 }
               }
@@ -669,7 +669,7 @@ object GoalsView:
                 onClick --> (_ =>
                   write(s"${k.wire.value} schedule")(
                     ApiClient.setSchedule(
-                      ApiClient.GoalSlug(slug.value),
+                      slug,
                       k,
                       ScheduleSet(
                         ScheduleSet.Cron(cron.now()),
@@ -686,7 +686,7 @@ object GoalsView:
                   cls := "btn",
                   "remove",
                   disabled <-- busy,
-                  onClick --> (_ => write(s"${k.wire.value} schedule")(ApiClient.removeSchedule(ApiClient.GoalSlug(slug.value), k)))
+                  onClick --> (_ => write(s"${k.wire.value} schedule")(ApiClient.removeSchedule(slug, k)))
                 )
               )
             )

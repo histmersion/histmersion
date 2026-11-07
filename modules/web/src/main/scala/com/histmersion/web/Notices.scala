@@ -112,7 +112,7 @@ object Notices:
     if !sending.get(b).exists(_.value >= at.value) then
       sending(b) = at
       generation += 1 // a poll already on its way read the mark from before this one
-      ApiClient.markSeen(ApiClient.Board(b.wire.value), ApiClient.SeenAt(at.value)).onComplete { r =>
+      ApiClient.markSeen(b.wire, Counter.Seen(at.value)).onComplete { r =>
         if sending.get(b).contains(at) then sending.remove(b)
         r.fold(_ => refresh(), cs => { generation += 1; apply(cs) })
       }
