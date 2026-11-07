@@ -59,7 +59,6 @@ object PlacesData:
       )
     )
 
-  object Kind:
 
   /** `place-grid-point`: a place at the centre of an atlas grid square whose linked record gives its point. */
   final private class GridPoint(val owner: DataOwner) extends CheckRule:
@@ -85,7 +84,6 @@ object PlacesData:
       )
     )
 
-  object GridPoint:
 
   /** `place-imported-point-area`: an imported region, polity or people stored with only a point. */
   final private class PointArea(val owner: DataOwner) extends CheckRule:
@@ -102,4 +100,3 @@ object PlacesData:
       )
     )
 
-  object PointArea:

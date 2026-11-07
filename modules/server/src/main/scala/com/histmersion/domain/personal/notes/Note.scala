@@ -51,7 +51,6 @@ object Note:
   final case class Item(key: ItemKey, uids: Set[ItemUid]):
     def holds(note: StoredNote): Boolean = note.target.itemRef.exists(r => r.key == key || r.uid.exists(uids))
 
-  object Item:
 
   /** A live note as the table answers it. */
   final private[notes] case class Row(

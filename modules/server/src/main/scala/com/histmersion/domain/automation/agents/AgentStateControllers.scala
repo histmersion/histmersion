@@ -22,4 +22,3 @@ final class AgentStateControllers(store: AgentStateService, maintenance: WriteGa
     maintenance.guard("agent_state_delete"):
       if store.delete(key) then Right(AgentStateDeleted(key, true)) else Left(notFound(key))
 
-object AgentStateControllers:

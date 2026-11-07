@@ -20,11 +20,9 @@ object ToolResultCap:
   type CapMax = CapMax.T
   object CapMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CapHint = String
-  val CapHint: String.type = String
   type SourceMax = _root_.com.histmersion.domain.automation.agents.ToolResultCap.CapMax
   val SourceMax: _root_.com.histmersion.domain.automation.agents.ToolResultCap.CapMax.type = _root_.com.histmersion.domain.automation.agents.ToolResultCap.CapMax
   type NotesExcerptHint = String
-  val NotesExcerptHint: String.type = String
 
   private val ChipLink = """\[([^\]\n]*)\]\(/#[^)\s]*\)""".r
 

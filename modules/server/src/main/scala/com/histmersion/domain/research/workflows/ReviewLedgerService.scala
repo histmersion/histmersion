@@ -34,7 +34,6 @@ object ReviewLedgerService:
     def put(ledger: Ledger): Unit = db.transact(ReviewLedgerRepo.put(ledger))
     def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.ReviewId): Set[com.histmersion.domain.research.Slug] = db.read(ReviewLedgerRepo.passedReview(reviewId))
 
-  object Implementation:
 
   /** Over the ledgers of `state`, as a database holding only research's rows answers: no manager item is stored, so an
     * article passed once its ledger holds no open MAJOR; a ledger of an article that is not stored is refused, as the
@@ -53,4 +52,3 @@ object ReviewLedgerService:
     def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.ReviewId): Set[com.histmersion.domain.research.Slug] =
       state.get.ledgers.collect { case (slug, l) if l.openMajors.isEmpty => slug }.toSet
 
-  object InMemory:

@@ -22,7 +22,6 @@ object UpstreamQuotaService:
     def load(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaService.Upstream): Option[CoreQuota.State] = db.read(UpstreamQuotaRepo.load(upstream))
     def save(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaService.Upstream, state: CoreQuota.State): Unit = db.transact(UpstreamQuotaRepo.save(upstream, state))
 
-  object Implementation:
 
   /** The budgets in memory: what a row keeps of one (the recent call slots are not kept). */
   final class InMemory(state: AtomicReference[AcquisitionState]) extends UpstreamQuotaService:
@@ -30,4 +29,3 @@ object UpstreamQuotaService:
     def save(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaService.Upstream, s: CoreQuota.State): Unit =
       val _ = state.updateAndGet(_.modify(_.quotas).using(_.updated(upstream, s.modify(_.recent).setTo(Vector.empty))))
 
-  object InMemory:

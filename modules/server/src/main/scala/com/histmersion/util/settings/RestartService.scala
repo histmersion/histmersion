@@ -33,7 +33,6 @@ object RestartService:
     def available: Boolean = stop.isDefined
     def restart(): Either[com.histmersion.util.settings.RestartService.Problem, com.histmersion.util.settings.RestartService.Summary] = stop.toRight(NotHere).map { s => s(); Started }
 
-  object Implementation:
 
   /** Counts the restarts asked for instead of ending anything. */
   final class InMemory(val available: InMemory.Available) extends RestartService:

@@ -27,11 +27,9 @@ object CoverService:
     def coverCandidates(only: Option[com.histmersion.domain.media.covers.CoverService.CandidatesOnly], refresh: com.histmersion.domain.media.covers.CoverService.CandidatesRefresh, limit: com.histmersion.domain.media.covers.CoverService.CandidatesLimit): List[CoverKeys] =
       db.read(CoverRepo.coverCandidates(only, refresh, limit))
 
-  object Implementation:
 
   /** Media's rows alone, in memory: no source is held, so no source has figures or an ISBN to look at. */
   final class InMemory extends CoverService:
     def illustrationCandidates(only: Option[com.histmersion.domain.media.covers.CoverService.CandidatesOnly], refresh: com.histmersion.domain.media.covers.CoverService.CandidatesRefresh, limit: com.histmersion.domain.media.covers.CoverService.CandidatesLimit): List[com.histmersion.domain.media.covers.CoverService.CandidatesText] = Nil
     def coverCandidates(only: Option[com.histmersion.domain.media.covers.CoverService.CandidatesOnly], refresh: com.histmersion.domain.media.covers.CoverService.CandidatesRefresh, limit: com.histmersion.domain.media.covers.CoverService.CandidatesLimit): List[CoverKeys] = Nil
 
-  object InMemory:

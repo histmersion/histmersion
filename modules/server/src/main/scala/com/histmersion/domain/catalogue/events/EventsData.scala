@@ -23,4 +23,3 @@ object EventsData:
     def report(context: CheckContext, maxItems: com.histmersion.domain.catalogue.places.PointAreas.ReportMaxItems)(using CheckRun)(using DbCon): LintRuleReport =
       Lint.report(rule, CorrectionRepo.conflictsIn().map((id, detail) => LintItem(id, detail)), maxItems)
 
-  object Conflicts:

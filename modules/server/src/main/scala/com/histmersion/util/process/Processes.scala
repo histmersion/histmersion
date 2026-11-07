@@ -62,7 +62,6 @@ object Processes:
         ProcessResult(p.waitFor(), lines)
       }
 
-  object Implementation:
 
   final private class OsProcess(p: Process) extends RunningProcess:
     def pid: com.histmersion.util.process.Processes.Pid = p.pid
@@ -75,7 +74,6 @@ object Processes:
     def destroyForcibly(): Unit =
       val _ = p.destroyForcibly()
 
-  object OsProcess:
 
   /** Processes that never start: each launch is recorded and answered by `answer` (its exit code and output). */
   final class InMemory(answer: ProcessLaunch => ProcessResult) extends Processes:
@@ -100,5 +98,4 @@ object Processes:
     def run(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, ProcessResult] =
       start(launch).map(p => ProcessResult(p.waitFor(), scala.io.Source.fromInputStream(p.output).getLines().toList))
 
-  object InMemory:
 

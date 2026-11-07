@@ -33,7 +33,6 @@ object SiteTypeService:
       db.read(SiteTypeRepo.countSitesToType(refresh, before))
     def setSiteTypes(types: List[(com.histmersion.domain.catalogue.places.HeldSite.Id, Option[com.histmersion.domain.catalogue.places.HeldSite.SiteType])]): Unit = db.transact(SiteTypeRepo.setSiteTypes(types))
 
-  object Implementation:
 
   /** The same rules over the shared in-memory state; `now` is the time a site is asked at (epoch ms). */
   final class InMemory(state: AtomicReference[CatalogueState], now: () => InMemory.NowResult) extends SiteTypeService:

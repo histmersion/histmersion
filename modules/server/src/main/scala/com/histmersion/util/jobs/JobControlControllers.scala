@@ -12,4 +12,3 @@ final class JobControlControllers(jobs: JobControlService):
       .toRight(Api.Error(s"unknown action '$action' — one of: ${JobAction.values.map(_.wire).mkString(", ")}"))
       .flatMap(jobs.control(id.trim, _))
 
-object JobControlControllers:

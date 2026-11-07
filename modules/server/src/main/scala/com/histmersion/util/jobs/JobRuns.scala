@@ -115,7 +115,6 @@ object JobRuns:
     def resumeAt(kind: com.histmersion.util.jobs.Job.Kind, id: com.histmersion.util.jobs.Job.Id, paused: com.histmersion.util.jobs.JobRow.Status, at: Instant): Boolean =
       db.transact(JobRepo.runResumesAt(kind, id, paused, at.toString))
 
-  object Implementation:
 
   /** The same rows in memory, stamped by `now` (the database's `now()`), each with the order it was made and last
     * changed in; behaves as the database does.

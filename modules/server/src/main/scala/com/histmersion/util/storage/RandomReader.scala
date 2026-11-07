@@ -16,5 +16,4 @@ trait RandomReader extends AutoCloseable:
   /** Up to `length` bytes from `offset`, fewer when the file ends first. */
   def readUpTo(offset: ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.storage.ByteSource.Content
 
-object RandomReader:
 

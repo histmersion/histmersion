@@ -33,4 +33,3 @@ object QueryService:
       catch case error: java.sql.SQLException => Left(QueryRepo.message(error))
     def tables: List[SchemaTable] = schema.read(QueryRepo.tables)
 
-  object Implementation:

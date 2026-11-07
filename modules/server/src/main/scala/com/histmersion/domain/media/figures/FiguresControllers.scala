@@ -10,4 +10,3 @@ final class FiguresControllers(figures: FigureService, maintenance: WriteGate):
     if apply then maintenance.guard("media_fill_licences")(Right(figures.fillLicences(apply = true)))
     else Right(figures.fillLicences(apply = false))
 
-object FiguresControllers:

@@ -18,4 +18,3 @@ trait MapLayer:
     */
   def features(keys: List[com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey]): Map[com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey, TileCell => TilePoint]
 
-object MapLayer:

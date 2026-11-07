@@ -11,4 +11,3 @@ final class ArticleObjectives(articles: => ArticleService, ledgers: => ReviewLed
   def linked(): Map[com.histmersion.domain.research.Slug, List[com.histmersion.domain.research.Slug]] = articles.articlesByGoal
   def finished(): Set[com.histmersion.domain.research.Slug] = ledgers.passedReview(ReviewId)
 
-object ArticleObjectives:

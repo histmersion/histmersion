@@ -278,4 +278,3 @@ object BundleService:
     def mergeLedger(uid: Option[com.histmersion.util.data.exchange.MergeRepo.UidText], merge: Option[com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix], limit: com.histmersion.util.data.exchange.MergeRepo.ListLimit): Either[Api.Error, MergeLedger] =
       Transactor(w.ds).read(MergeRepo.ledger(uid, merge, limit, w.rules))
 
-  object Implementation:

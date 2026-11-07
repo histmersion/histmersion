@@ -35,4 +35,3 @@ object ReviewStateService:
       if runs.isEmpty then Map.empty else db.read(ArticleReviewRepo.runStarts(runs))
     def goals(slug: com.histmersion.domain.research.Slug): List[ReviewGoal] = db.read(ArticleReviewRepo.goals(slug))
 
-  object Implementation:

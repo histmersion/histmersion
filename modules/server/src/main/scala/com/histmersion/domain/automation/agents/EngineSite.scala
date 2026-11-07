@@ -63,4 +63,3 @@ trait EngineSite:
   /** What engine `a` asks of the rest of the server. */
   def host(a: AgentsControllers): AutomationHost
 
-object EngineSite:

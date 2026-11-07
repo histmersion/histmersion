@@ -60,7 +60,6 @@ object DiagnosticsService:
 
     def ownerTables: List[(DataOwner, ByteCount)] = perOwner(registry, transactor.read(StatsRepo.tableBytes))
 
-  object Implementation:
 
   /** Figures given up front: `counts` by owner, the database `database` with `tables` (largest first). */
   final class InMemory(

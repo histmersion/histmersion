@@ -85,7 +85,6 @@ object ReadingService:
     def unread(user: UserId, kind: ItemKind, size: PageSize, from: Offset): UnreadItems =
       unreadOf(readables, kind)(db.read(ReadingRepo.read(user, kind)).toSet, size, from)
 
-  object Implementation:
 
   /** The read marks held in `state`, beside the bookmarks and notes of the same person, by the rules the table keeps.
     */
@@ -141,4 +140,3 @@ object ReadingService:
       val read = mine(state.get, user).filter(m => m.ref.kind == kind && m.readAt.isDefined).map(_.ref).toSet
       unreadOf(readables, kind)(read, size, from)
 
-  object InMemory:

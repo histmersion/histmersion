@@ -326,7 +326,6 @@ object PmTiles:
         if shift > 63 && more then throw IllegalArgumentException("varint too long in PMTiles directory")
       result
 
-  object Varints:
 
   /** A directory's bytes, uncompressed: the count, then the id deltas, run lengths, lengths and offsets column by
     * column (an offset of 0 means "right after the previous entry").

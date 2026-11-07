@@ -55,7 +55,6 @@ object AssetLinkService:
 
     def delete(id: com.histmersion.domain.media.links.AssetLinkService.LinkId): Boolean = db.transact(AssetLinkRepo.delete(id))
 
-  object Implementation:
 
   /** The links media holds in memory, beside its pictures (the figure a link names is looked up there). */
   final class InMemory(state: AtomicReference[MediaState]) extends AssetLinkService:
@@ -89,4 +88,3 @@ object AssetLinkService:
       val before = state.getAndUpdate(_.modify(_.assetLinks).using(_.filterNot(_.id == id)))
       before.assetLinks.exists(_.id == id)
 
-  object InMemory:

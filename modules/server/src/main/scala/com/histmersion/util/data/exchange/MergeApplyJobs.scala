@@ -57,4 +57,3 @@ final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: W
 
   def status(id: com.histmersion.util.jobs.Job.Id): Option[MergeApplyJob] = runs.status(id.trim)
 
-object MergeApplyJobs:

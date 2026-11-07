@@ -21,4 +21,3 @@ object LabelService:
     def facets(field: Facet.Field, prefix: Option[com.histmersion.domain.library.search.FilterSql.FacetPrefix], filter: Filter, limit: com.histmersion.domain.library.labels.LabelService.Limit, scope: PlaceScope): List[Facet] =
       db.read(LabelRepo.facets(field, prefix, filter, limit, scope)).toList
 
-  object Implementation:

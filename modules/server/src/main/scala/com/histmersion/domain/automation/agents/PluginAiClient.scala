@@ -152,4 +152,3 @@ object PluginAiClient:
         case Left(AiFailure.Error(m)) if caps.verbatimFailures => throw VerbatimFailure(m)
         case Left(AiFailure.Error(m)) => throw java.io.IOException(s"${model.wire}: $m".take(600))
 
-  object Turns:
