@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{ServiceState, Wording}
@@ -19,7 +21,7 @@ class PlaceHoverSuite extends munit.FunSuite:
   override def beforeEach(context: BeforeEach): Unit =
     UiState.mirrorHash = false
     UiState.store = Store.Memory()
-    UiState.loadHash("")
+    UiState.loadHash(com.histmersion.web.UiState.UrlHash(""))
 
   /** A fake clock, as in ThrottleSuite: `later` queues, `advance` runs what is due. */
   final private class Clock:
@@ -37,7 +39,7 @@ class PlaceHoverSuite extends munit.FunSuite:
 
   test("#716: sweeping across places fetches nothing; resting on one fires it once") {
     val c = Clock(); val fired = mutable.ListBuffer.empty[String]
-    val i = HoverIntent[String](180, fired += _, c.later, c.cancel)
+    val i = HoverIntent[String](com.histmersion.web.HoverIntent.DelayMs(180), fired += _, c.later, c.cancel)
     // the pointer crosses three shapes in quick succession
     i.enter("a"); c.advance(50); i.leave("a")
     i.enter("b"); c.advance(50)
@@ -52,7 +54,7 @@ class PlaceHoverSuite extends munit.FunSuite:
 
   test("#716: leaving a place drops only its own pending card") {
     val c = Clock(); val fired = mutable.ListBuffer.empty[String]
-    val i = HoverIntent[String](100, fired += _, c.later, c.cancel)
+    val i = HoverIntent[String](com.histmersion.web.HoverIntent.DelayMs(100), fired += _, c.later, c.cancel)
     i.enter("a")
     i.leave("b") // a mouseout from another shape arriving late
     assert(i.isPending("a"))
@@ -64,15 +66,15 @@ class PlaceHoverSuite extends munit.FunSuite:
 
   test("#716: a place card shows kind, validity in BCE/CE, the parents and the counts") {
     def summary(id: String, label: String, kind: String, ps: Option[Long] = None, pe: Option[Long] = None) =
-      Place.Summary(com.histmersion.api.catalogue.Place.Id(id), label, kind, ps, pe, None, "")
+      Place.Summary(com.histmersion.api.catalogue.Place.Id(id), label, kind, ps, pe, None, com.histmersion.api.catalogue.Place.Summary.Names(""))
     val d = PlaceDetail(
       place = summary("hatti", "Hittite Empire", "polity", Some(-1650), Some(-1180)),
       geometry = None,
       parents = List(summary("anatolia", "Anatolia", "region"), summary("near_east", "Near East", "region")),
       children = Nil,
-      findings = 3,
-      asOf = Some(-1300),
-      counts = Some(Place.Counts(sources = 12, findings = 1, articles = 0, events = 2))
+      findings = com.histmersion.api.catalogue.Place.Counts.Findings(3),
+      asOf = Some(com.histmersion.api.catalogue.Year(-1300)),
+      counts = Some(Place.Counts(sources = com.histmersion.api.catalogue.Place.Counts.Sources(12), findings = com.histmersion.api.catalogue.Place.Counts.Findings(1), articles = com.histmersion.api.catalogue.Place.Counts.Articles(0), events = com.histmersion.api.catalogue.Place.Counts.Events(2)))
     )
     val c = Preview.card(d)
     assertEquals(c.title, "Hittite Empire")
@@ -95,75 +97,75 @@ class PlaceHoverSuite extends munit.FunSuite:
 
   test("#716: the card sits beside the pointer and flips at the viewport's edges") {
     // room on both sides: below-right
-    assertEquals(Preview.pointPlacement(100, 100, 200, 80, 1200, 800), (114.0, 114.0))
+    assertEquals(Preview.pointPlacement(com.histmersion.web.Preview.PointPlacementX(100), com.histmersion.web.Preview.PointPlacementY(100), com.histmersion.web.Preview.PointPlacementW(200), com.histmersion.web.Preview.PointPlacementH(80), com.histmersion.web.Preview.PointPlacementVw(1200), com.histmersion.web.Preview.PointPlacementVh(800)), (114.0, 114.0))
     // near the right and bottom edges: above-left of the pointer
-    assertEquals(Preview.pointPlacement(1150, 780, 200, 80, 1200, 800), (936.0, 686.0))
+    assertEquals(Preview.pointPlacement(com.histmersion.web.Preview.PointPlacementX(1150), com.histmersion.web.Preview.PointPlacementY(780), com.histmersion.web.Preview.PointPlacementW(200), com.histmersion.web.Preview.PointPlacementH(80), com.histmersion.web.Preview.PointPlacementVw(1200), com.histmersion.web.Preview.PointPlacementVh(800)), (936.0, 686.0))
     // a phone narrower than the card: pinned to the gutter, never off-screen
-    val (x, _) = Preview.pointPlacement(200, 100, 380, 80, 400, 800)
+    val (x, _) = Preview.pointPlacement(com.histmersion.web.Preview.PointPlacementX(200), com.histmersion.web.Preview.PointPlacementY(100), com.histmersion.web.Preview.PointPlacementW(380), com.histmersion.web.Preview.PointPlacementH(80), com.histmersion.web.Preview.PointPlacementVw(400), com.histmersion.web.Preview.PointPlacementVh(800))
     assertEquals(x, 10.0)
   }
 
   test("a card never leaves the viewport: flipped, shifted, else capped so it scrolls") {
     import Preview.Fit
     // fits below: placed there, allowed the whole room below
-    assertEquals(Preview.pointFit(100, 100, 200, 300, 1200, 800), Fit(114, 114, 800 - 10 - 114))
+    assertEquals(Preview.pointFit(com.histmersion.web.Preview.ScreenPixels(100), com.histmersion.web.Preview.ScreenPixels(100), com.histmersion.web.Preview.ElementSize(200), com.histmersion.web.Preview.PointFitH(300), com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.PointFitVh(800)), Fit(com.histmersion.web.Preview.Fit.X(114), com.histmersion.web.Preview.Fit.Y(114), 800 - 10 - 114))
     // too tall below, fits above: above the pointer, never over its top edge
-    val up = Preview.pointFit(100, 700, 200, 500, 1200, 800)
-    assertEquals(up, Fit(114, 700 - 14 - 500, 700 - 14 - 10))
+    val up = Preview.pointFit(com.histmersion.web.Preview.ScreenPixels(100), com.histmersion.web.Preview.ScreenPixels(700), com.histmersion.web.Preview.ElementSize(200), com.histmersion.web.Preview.PointFitH(500), com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.PointFitVh(800))
+    assertEquals(up, Fit(com.histmersion.web.Preview.Fit.X(114), 700 - 14 - 500, 700 - 14 - 10))
     assert(up.y >= 10)
     // too tall for either side: the roomier side, capped to it (the content scrolls)
-    val big = Preview.pointFit(100, 300, 200, 1000, 1200, 800)
-    assertEquals(big, Fit(114, 314, 800 - 10 - 314))
+    val big = Preview.pointFit(com.histmersion.web.Preview.ScreenPixels(100), com.histmersion.web.Preview.ScreenPixels(300), com.histmersion.web.Preview.ElementSize(200), com.histmersion.web.Preview.PointFitH(1000), com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.PointFitVh(800))
+    assertEquals(big, Fit(com.histmersion.web.Preview.Fit.X(114), com.histmersion.web.Preview.Fit.Y(314), 800 - 10 - 314))
     assert(big.y + big.maxH <= 790)
-    val bigUp = Preview.pointFit(100, 600, 200, 1000, 1200, 800)
-    assertEquals(bigUp, Fit(114, 10, 600 - 14 - 10))
+    val bigUp = Preview.pointFit(com.histmersion.web.Preview.ScreenPixels(100), com.histmersion.web.Preview.ScreenPixels(600), com.histmersion.web.Preview.ElementSize(200), com.histmersion.web.Preview.PointFitH(1000), com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.PointFitVh(800))
+    assertEquals(bigUp, Fit(com.histmersion.web.Preview.Fit.X(114), com.histmersion.web.Preview.Fit.Y(10), 600 - 14 - 10))
     // a short window with the pointer in the middle: the full height, over the pointer
-    assertEquals(Preview.pointFit(100, 150, 200, 1000, 1200, 300), Fit(114, 10, 280))
+    assertEquals(Preview.pointFit(com.histmersion.web.Preview.ScreenPixels(100), com.histmersion.web.Preview.ScreenPixels(150), com.histmersion.web.Preview.ElementSize(200), com.histmersion.web.Preview.PointFitH(1000), com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.PointFitVh(300)), Fit(com.histmersion.web.Preview.Fit.X(114), com.histmersion.web.Preview.Fit.Y(10), com.histmersion.web.Preview.Fit.MaxH(280)))
     // under a link: the same rules
-    assertEquals(Preview.underFit(500, 700, 720, 60, 300, 900, 1200, 800), Fit(380, 10, 700 - 6 - 10))
+    assertEquals(Preview.underFit(com.histmersion.web.Preview.ScreenPixels(500), com.histmersion.web.Preview.UnderFitTop(700), com.histmersion.web.Preview.UnderFitBottom(720), com.histmersion.web.Preview.ElementSize(60), com.histmersion.web.Preview.ElementSize(300), com.histmersion.web.Preview.UnderFitH(900), com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.UnderFitVh(800)), Fit(com.histmersion.web.Preview.Fit.X(380), com.histmersion.web.Preview.Fit.Y(10), 700 - 6 - 10))
     // every fit stays inside, for any pointer and size
     for x <- 0 to 1200 by 150; y <- 0 to 800 by 100; h <- List(50, 400, 790, 2000) do
-      val f = Preview.pointFit(x, y, 300, h, 1200, 800)
+      val f = Preview.pointFit(x, y, com.histmersion.web.Preview.ElementSize(300), h, com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.PointFitVh(800))
       assert(f.x >= 10 && f.x + 300 <= 1190 && f.y >= 10 && f.y + math.min(h.toDouble, f.maxH) <= 790, s"$x,$y,$h → $f")
   }
 
   test("#717: a click makes a place THE place filter; a second click on it clears it") {
-    assertEquals(UiState.toggledPlace(Nil, "hatti"), List("hatti"))
-    assertEquals(UiState.toggledPlace(List("anatolia"), "hatti"), List("hatti")) // narrows, never widens
-    assertEquals(UiState.toggledPlace(List("hatti"), "hatti"), Nil)
-    assertEquals(UiState.toggledPlace(List("anatolia", "hatti"), "hatti"), List("anatolia"))
+    assertEquals(UiState.toggledPlace(Nil, com.histmersion.web.UiState.ToggledPlaceId("hatti")), List("hatti"))
+    assertEquals(UiState.toggledPlace(List("anatolia"), com.histmersion.web.UiState.ToggledPlaceId("hatti")), List("hatti")) // narrows, never widens
+    assertEquals(UiState.toggledPlace(List("hatti"), com.histmersion.web.UiState.ToggledPlaceId("hatti")), Nil)
+    assertEquals(UiState.toggledPlace(List("anatolia", "hatti"), com.histmersion.web.UiState.ToggledPlaceId("hatti")), List("anatolia"))
   }
 
   test("#717: the map's choice is the place filter the lists, the chips and the hash all read") {
-    assert(UiState.togglePlace("hatti"))
+    assert(UiState.togglePlace(com.histmersion.web.UiState.TogglePlaceId("hatti")))
     assertEquals(UiState.placeIds.now(), List("hatti"))
     assertEquals(UiState.toFilter().places, List("hatti"))
     assert(UiState.activeChips().exists(c => c.key == "placeIds" && c.value == "hatti"))
     assert(UiState.hashString.contains("placeId=hatti"), UiState.hashString)
     // the same place again: cleared, and gone from the hash
-    assert(!UiState.togglePlace("hatti"))
+    assert(!UiState.togglePlace(com.histmersion.web.UiState.TogglePlaceId("hatti")))
     assertEquals(UiState.placeIds.now(), Nil)
     assert(!UiState.hashString.contains("placeId"), UiState.hashString)
     // the chip's ✕ is the same field
-    UiState.togglePlace("troy")
-    UiState.removeChip("placeIds", "troy")
+    UiState.togglePlace(com.histmersion.web.UiState.TogglePlaceId("troy"))
+    UiState.removeChip(com.histmersion.web.UiState.RemoveChipKey("placeIds"), com.histmersion.web.UiState.FilterTerm("troy"))
     assertEquals(UiState.placeIds.now(), Nil)
   }
 
   test("#718: the About window is a window key like the others, and survives the hash") {
-    assertEquals(WindowKey.parse("about"), Some(WindowKey.About))
+    assertEquals(WindowKey.parse(com.histmersion.web.WindowKey.Wire("about")), Some(WindowKey.About))
     assertEquals(WindowKey.About.wire, "about")
     assertEquals(WindowKey.parse(WindowKey.About.wire), Some(WindowKey.About))
   }
 
   private val about = About(
-    name = "histmersion",
-    build = BuildStamp("1.2.3", Some("abc123def456"), Some("2026-10-01T10:00:00+02:00")),
-    health = Health("degraded", "ok", Some("28"), Some("busy: converting 2 documents")),
-    jobs = JobCounts(1, 2, 3, 4),
-    counts = Some(CorpusCounts(10, 200, 5, 7, 15000, 40, 12)),
-    lastBackup = Some(Backup.Info("histmersion-20261001.dump", 2_500_000, "2026-10-01T08:00:00Z")),
-    lastBackupAgeSeconds = Some(90000)
+    name = com.histmersion.api.instance.About.Name("histmersion"),
+    build = BuildStamp(com.histmersion.api.instance.BuildStamp.Version("1.2.3"), Some(com.histmersion.api.instance.BuildStamp.GitCommit("abc123def456")), Some(com.histmersion.api.instance.BuildStamp.CommitDate("2026-10-01T10:00:00+02:00"))),
+    health = Health(com.histmersion.api.instance.Health.Status("degraded"), com.histmersion.api.instance.Health.Db("ok"), Some(com.histmersion.api.instance.Health.SchemaVersion("28")), Some(com.histmersion.api.instance.Health.Converter("busy: converting 2 documents"))),
+    jobs = JobCounts(com.histmersion.api.jobs.JobCounts.Queued(1), com.histmersion.api.jobs.JobCounts.Running(2), com.histmersion.api.jobs.JobCounts.Done(3), com.histmersion.api.jobs.JobCounts.Failed(4)),
+    counts = Some(CorpusCounts(com.histmersion.api.instance.CorpusCounts.Sources(10), com.histmersion.api.instance.CorpusCounts.Findings(200), com.histmersion.api.instance.CorpusCounts.Articles(5), com.histmersion.api.instance.CorpusCounts.Events(7), com.histmersion.api.instance.CorpusCounts.Places(15000), com.histmersion.api.instance.CorpusCounts.Periods(40), com.histmersion.api.instance.CorpusCounts.Presets(12))),
+    lastBackup = Some(Backup.Info(com.histmersion.api.backup.Backup.Info.File("histmersion-20261001.dump"), 2_500_000, com.histmersion.api.backup.Backup.Info.CreatedAt("2026-10-01T08:00:00Z"))),
+    lastBackupAgeSeconds = Some(com.histmersion.api.instance.About.LastBackupAgeSeconds(90000))
   )
 
   test("#718: the About panel shows build, health with states, jobs, backup age and store counts") {
@@ -193,22 +195,22 @@ class PlaceHoverSuite extends munit.FunSuite:
     "#2018: the About panel lists the plugins — state badge, version, what each registered, settings as references"
   ) {
     val report = PluginsReport(
-      1,
+      com.histmersion.api.plugins.PluginsReport.SpiVersion(1),
       List(
-        PluginStatus("media-met", "1.0.0", 1, enabled = true, "registered", List("media-collection:met")),
+        PluginStatus(com.histmersion.api.plugins.PluginStatus.Id("media-met"), com.histmersion.api.plugins.PluginStatus.Version("1.0.0"), com.histmersion.api.plugins.PluginStatus.SpiVersion(1), enabled = com.histmersion.api.plugins.PluginStatus.Enabled(true), com.histmersion.api.plugins.PluginStatus.State("registered"), List(com.histmersion.api.plugins.PluginDescription.Provides("media-collection:met"))),
         PluginStatus(
-          "portal",
-          "0.2.0",
-          1,
-          enabled = true,
-          "registered",
-          List("media-collection:portal", "event-catalogue:portal"),
-          List(PluginSetting("token", "env:PORTAL_TOKEN"), PluginSetting("key", "value:***"))
+          com.histmersion.api.plugins.PluginStatus.Id("portal"),
+          com.histmersion.api.plugins.PluginStatus.Version("0.2.0"),
+          com.histmersion.api.plugins.PluginStatus.SpiVersion(1),
+          enabled = com.histmersion.api.plugins.PluginStatus.Enabled(true),
+          com.histmersion.api.plugins.PluginStatus.State("registered"),
+          List(com.histmersion.api.plugins.PluginDescription.Provides("media-collection:portal"), com.histmersion.api.plugins.PluginDescription.Provides("event-catalogue:portal")),
+          List(PluginSetting(com.histmersion.api.plugins.PluginSetting.Key("token"), com.histmersion.api.plugins.PluginSetting.Value("env:PORTAL_TOKEN")), PluginSetting(com.histmersion.api.plugins.PluginSetting.Key("key"), com.histmersion.api.plugins.PluginSetting.Value("value:***")))
         ),
-        PluginStatus("1password", "1.0.0", 1, enabled = false, "disabled"),
-        PluginStatus("broken", "0.1.0", 1, enabled = true, "failed", error = Some("histmersion.plugins.broken.x: bad"))
+        PluginStatus(com.histmersion.api.plugins.PluginStatus.Id("1password"), com.histmersion.api.plugins.PluginStatus.Version("1.0.0"), com.histmersion.api.plugins.PluginStatus.SpiVersion(1), enabled = com.histmersion.api.plugins.PluginStatus.Enabled(false), com.histmersion.api.plugins.PluginStatus.State("disabled")),
+        PluginStatus(com.histmersion.api.plugins.PluginStatus.Id("broken"), com.histmersion.api.plugins.PluginStatus.Version("0.1.0"), com.histmersion.api.plugins.PluginStatus.SpiVersion(1), enabled = com.histmersion.api.plugins.PluginStatus.Enabled(true), com.histmersion.api.plugins.PluginStatus.State("failed"), error = Some(com.histmersion.api.plugins.PluginDescription.Error("histmersion.plugins.broken.x: bad")))
       ),
-      List("histmersion.plugins.helo configures no plugin in this binary — ignored")
+      List(com.histmersion.api.plugins.PluginsReport.Warnings("histmersion.plugins.helo configures no plugin in this binary — ignored"))
     )
     val s = AboutView.sections(about.modify(_.plugins).setTo(report))
     assertEquals(s.map(_.title), List("Server", "Health", "Job queue", "Backups", "Store", "Plugins"))

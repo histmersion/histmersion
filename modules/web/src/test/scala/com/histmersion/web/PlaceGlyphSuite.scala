@@ -8,21 +8,21 @@ import com.histmersion.api.catalogue.Place
 class PlaceGlyphSuite extends munit.FunSuite:
 
   test("a polygon is an area; a point region or polity is a label; a point site is a dot"):
-    assertEquals(PlaceGlyph.of(Place.Kind.Polity, "MultiPolygon"), PlaceGlyph.Area)
-    assertEquals(PlaceGlyph.of(Place.Kind.Region, "Polygon"), PlaceGlyph.Area)
-    assertEquals(PlaceGlyph.of(Place.Kind.Region, "Point"), PlaceGlyph.Label)
-    assertEquals(PlaceGlyph.of(Place.Kind.Polity, "Point"), PlaceGlyph.Label)
-    assertEquals(PlaceGlyph.of(Place.Kind.Site, "Point"), PlaceGlyph.Dot)
-    assertEquals(PlaceGlyph.of(Place.Kind.Feature, "Point"), PlaceGlyph.Dot)
-    assertEquals(PlaceGlyph.of(Place.Kind.People, "Point"), PlaceGlyph.Label, "a people is named, never a dot")
+    assertEquals(PlaceGlyph.of(Place.Kind.Polity, com.histmersion.web.PlaceGlyph.GeometryType("MultiPolygon")), PlaceGlyph.Area)
+    assertEquals(PlaceGlyph.of(Place.Kind.Region, com.histmersion.web.PlaceGlyph.GeometryType("Polygon")), PlaceGlyph.Area)
+    assertEquals(PlaceGlyph.of(Place.Kind.Region, com.histmersion.web.PlaceGlyph.GeometryType("Point")), PlaceGlyph.Label)
+    assertEquals(PlaceGlyph.of(Place.Kind.Polity, com.histmersion.web.PlaceGlyph.GeometryType("Point")), PlaceGlyph.Label)
+    assertEquals(PlaceGlyph.of(Place.Kind.Site, com.histmersion.web.PlaceGlyph.GeometryType("Point")), PlaceGlyph.Dot)
+    assertEquals(PlaceGlyph.of(Place.Kind.Feature, com.histmersion.web.PlaceGlyph.GeometryType("Point")), PlaceGlyph.Dot)
+    assertEquals(PlaceGlyph.of(Place.Kind.People, com.histmersion.web.PlaceGlyph.GeometryType("Point")), PlaceGlyph.Label, "a people is named, never a dot")
 
   test("a people's label says 'people', not that a boundary is missing"):
-    val h = PlaceGlyph.labelHtml("Ubii", Place.Kind.People)
+    val h = PlaceGlyph.labelHtml(com.histmersion.api.UiLabels.Text("Ubii"), Place.Kind.People)
     assert(h.contains(">people<"), h)
     assert(!h.contains("no boundary"), h)
 
   test("the label names the place, says it has no boundary yet, and escapes the name"):
-    val h = PlaceGlyph.labelHtml("Kingdom <of> Patones")
+    val h = PlaceGlyph.labelHtml(com.histmersion.api.UiLabels.Text("Kingdom <of> Patones"))
     assert(h.contains("Kingdom &lt;of&gt; Patones"), h)
     assert(h.contains("no boundary yet"), h)
     assert(h.contains("class=\"hd-area-point\""), h)
@@ -34,6 +34,6 @@ class PlaceGlyphSuite extends munit.FunSuite:
 
   test("a chosen place's chip: label and kind, never the (humanised) id"):
     val lookup = Map("wikidata_q131839713" -> ("Kingdom of Patones", "polity")).get
-    assertEquals(PlacesInput.chipText("wikidata_q131839713", lookup), "Kingdom of Patones (polity)")
-    val unknown = PlacesInput.chipText("wikidata_q131839713", _ => None)
+    assertEquals(PlacesInput.chipText(com.histmersion.web.PlacesInput.PlaceId("wikidata_q131839713"), lookup), "Kingdom of Patones (polity)")
+    val unknown = PlacesInput.chipText(com.histmersion.web.PlacesInput.PlaceId("wikidata_q131839713"), _ => None)
     assert(!unknown.toLowerCase.contains("wikidata") && !unknown.contains("q131839713"), unknown)

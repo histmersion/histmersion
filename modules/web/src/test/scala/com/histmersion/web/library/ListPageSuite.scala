@@ -1,5 +1,7 @@
 package com.histmersion.web.library
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 class ListPageSuite extends munit.FunSuite:
 
   test("numbers group their thousands with commas, whatever the locale"):

@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.BBox
@@ -11,11 +13,11 @@ import com.histmersion.api.instance.{DebounceConfig, EventsUiConfig, TimeConfig,
 class BaseMapsSuite extends munit.FunSuite:
 
   private val ui = UiConfig(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    12,
-    5,
-    250,
-    20,
+    com.histmersion.api.instance.UiConfig.Tiles("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"),
+    com.histmersion.api.instance.UiConfig.TilesMaxZoom(12),
+    com.histmersion.api.instance.UiConfig.MarkerRadius(5),
+    com.histmersion.api.instance.UiConfig.ViewportDebounceMs(250),
+    com.histmersion.api.instance.UiConfig.TreeDepth(2)0,
     12,
     2,
     3,
@@ -37,23 +39,23 @@ class BaseMapsSuite extends munit.FunSuite:
   ) =
     Basemap.Status(
       available,
-      "/x",
-      "-12,20,90,62",
+      com.histmersion.api.basemap.Basemap.Status.Dir("/x"),
+      com.histmersion.api.basemap.Basemap.Status.Bbox("-12,20,90,62"),
       List(
-        Basemap.LayerInfo("vector", available, "/x/vector.pmtiles", maxZoom = Some(10), version = Some("v1")),
+        Basemap.LayerInfo(com.histmersion.api.basemap.Basemap.LayerInfo.Layer("vector"), available, com.histmersion.api.basemap.Basemap.LayerInfo.File("/x/vector.pmtiles"), maxZoom = Some(10), version = Some("v1")),
         Basemap.LayerInfo(
-          "terrain",
+          com.histmersion.api.basemap.Basemap.LayerInfo.Layer("terrain"),
           available,
-          "/x/terrain.pmtiles",
+          com.histmersion.api.basemap.Basemap.LayerInfo.File("/x/terrain.pmtiles"),
           maxZoom = Some(8),
           version = Some("t1"),
-          onDemand = Some(Basemap.OnDemand(onDemand, 12, "/x/terrain-cache", 0, 0, 1000)),
-          focus = if focus then List(Basemap.Focus("argolid", "/x/f.pmtiles", 1, "22,37,23,38", 9, 12, 10)) else Nil
+          onDemand = Some(Basemap.OnDemand(onDemand, com.histmersion.api.basemap.Basemap.OnDemand.MaxZoom(12), com.histmersion.api.basemap.Basemap.OnDemand.Dir("/x/terrain-cache"), com.histmersion.api.basemap.Basemap.OnDemand.Tiles(0), com.histmersion.api.ByteCount(0), com.histmersion.api.basemap.Basemap.OnDemand.MaxBytes(1000))),
+          focus = if focus then List(Basemap.Focus(com.histmersion.api.basemap.Basemap.Focus.Name("argolid"), com.histmersion.api.basemap.Basemap.Focus.File("/x/f.pmtiles"), com.histmersion.api.ByteCount(1), com.histmersion.api.basemap.Basemap.Focus.Bbox("22,37,23,38"), com.histmersion.api.basemap.Basemap.Focus.MinZoom(9), com.histmersion.api.basemap.Basemap.Focus.MaxZoom(12), com.histmersion.api.basemap.Basemap.Focus.Tiles(10))) else Nil
         ),
         Basemap.LayerInfo(
-          "bathymetry",
+          com.histmersion.api.basemap.Basemap.LayerInfo.Layer("bathymetry"),
           available && sea,
-          "/x/bathymetry.pmtiles",
+          com.histmersion.api.basemap.Basemap.LayerInfo.File("/x/bathymetry.pmtiles"),
           maxZoom = Some(7),
           version = Some("b1")
         )
@@ -67,8 +69,8 @@ class BaseMapsSuite extends munit.FunSuite:
   test("the choices: two styles, the online maps unless the page is local; an old local choice is Readable"):
     assertEquals(BaseMaps.choices(local = true), List(BaseMap.Readable, BaseMap.Physical))
     assertEquals(BaseMaps.choices(local = false).map(_.wire), List("readable", "physical", "standard", "muted", "dark"))
-    assertEquals(BaseMap.fromWire("terrain"), Some(BaseMap.Readable))
-    assertEquals(summon[FieldCodec[BaseMap]].decode(List("physical")), Some(BaseMap.Physical))
+    assertEquals(BaseMap.fromWire(com.histmersion.web.BaseMap.Wire("terrain")), Some(BaseMap.Readable))
+    assertEquals(summon[FieldCodec[BaseMap]].decode(List(com.histmersion.web.FieldCodec.Token("physical"))), Some(BaseMap.Physical))
     assertEquals(BaseMap.tone(BaseMap.Physical, MapTone.Dark), MapTone.Light)
     assertEquals(BaseMap.tone(BaseMap.Dark, MapTone.Light), MapTone.Dark)
 
@@ -96,7 +98,7 @@ class BaseMapsSuite extends munit.FunSuite:
     val (spec, notice, z) = BaseMaps.plan(
       BaseMap.Physical,
       Some(status(true)),
-      MapPrefs(language = Some("el"), contours = Some(false)),
+      MapPrefs(language = Some(com.histmersion.web.MapPrefs.Language("el")), contours = Some(com.histmersion.web.MapPrefs.Contours(false))),
       ui,
       local = false,
       soft = false
@@ -179,19 +181,19 @@ class BaseMapsSuite extends munit.FunSuite:
       "read on demand there"
     )
     assertEquals(BaseMaps.contoursNote(Some(status(true, onDemand = true)), 11, naxos), None)
-    assert(BaseMaps.meets(GeoBounds(37.0, 21.0, 37.5, 22.1), BBox(22, 37, 23, 38)), "touching at the corner")
-    assert(!BaseMaps.meets(GeoBounds(38.1, 22.0, 39.0, 23.0), BBox(22, 37, 23, 38)))
+    assert(BaseMaps.meets(GeoBounds(37.0, 21.0, 37.5, 22.1), BBox(com.histmersion.api.catalogue.Longitude(22), com.histmersion.api.catalogue.Latitude(37), com.histmersion.api.catalogue.Longitude(23), com.histmersion.api.catalogue.Latitude(38))), "touching at the corner")
+    assert(!BaseMaps.meets(GeoBounds(38.1, 22.0, 39.0, 23.0), BBox(com.histmersion.api.catalogue.Longitude(22), com.histmersion.api.catalogue.Latitude(37), com.histmersion.api.catalogue.Longitude(23), com.histmersion.api.catalogue.Latitude(38))))
 
   test(
     "the sea's depth: on in Physical and off in Readable by default, the viewer's choice per style; needs the sea floor and a GPU"
   ):
     assert(MapPrefs().seaDepth(VectorStyle.Physical))
     assert(!MapPrefs().seaDepth(VectorStyle.Readable))
-    val r = MapPrefs().withSeaDepth(VectorStyle.Readable, on = true)
-    assertEquals(r, MapPrefs(depthReadable = Some(true)))
+    val r = MapPrefs().withSeaDepth(VectorStyle.Readable, on = com.histmersion.web.MapPrefs.SeaDepth(true))
+    assertEquals(r, MapPrefs(depthReadable = Some(com.histmersion.web.MapPrefs.DepthReadable(true))))
     assert(r.seaDepth(VectorStyle.Readable) && r.seaDepth(VectorStyle.Physical))
-    assertEquals(r.withSeaDepth(VectorStyle.Readable, on = false), MapPrefs(), "the default again is no choice")
-    assertEquals(MapPrefs().withSeaDepth(VectorStyle.Physical, on = false), MapPrefs(depthPhysical = Some(false)))
+    assertEquals(r.withSeaDepth(VectorStyle.Readable, on = com.histmersion.web.MapPrefs.SeaDepth(false)), MapPrefs(), "the default again is no choice")
+    assertEquals(MapPrefs().withSeaDepth(VectorStyle.Physical, on = com.histmersion.web.MapPrefs.SeaDepth(false)), MapPrefs(depthPhysical = Some(com.histmersion.web.MapPrefs.DepthPhysical(false))))
     BaseMaps.plan(BaseMap.Readable, Some(status(true)), r, ui, local = false, soft = false)._1 match
       case v: BaseMapSpec.Vector => assert(v.seaDepth)
       case other                 => fail(other.toString)
@@ -230,7 +232,7 @@ class BaseMapsSuite extends munit.FunSuite:
 
   test("a folding overlay's button names what it opens and says whether it is open"):
     val closed =
-      MapFold.toggleHtml("hd-legend-toggle", "hd-legend-body", "map legend", "<span>legend</span>", open = false)
+      MapFold.toggleHtml(com.histmersion.web.MapFold.ClassName("hd-legend-toggle"), com.histmersion.web.MapFold.ControlsId("hd-legend-body"), com.histmersion.web.MapFold.Label("map legend"), com.histmersion.web.MapFold.InnerHtml("<span>legend</span>"), open = com.histmersion.web.MapFold.Open(false))
     assert(closed.startsWith("""<button type="button" class="btn btn--sm hd-legend-toggle" """), closed)
     assert(closed.contains("""aria-controls="hd-legend-body""""), closed)
     assert(closed.contains("""aria-expanded="false""""), closed)
@@ -238,7 +240,7 @@ class BaseMapsSuite extends munit.FunSuite:
     assert(closed.endsWith("<span>legend</span></button>"), closed)
     assert(
       MapFold
-        .toggleHtml("x", "y", "a \"b\" & c", "", open = true)
+        .toggleHtml(com.histmersion.web.MapFold.ClassName("x"), com.histmersion.web.MapFold.ControlsId("y"), com.histmersion.web.MapFold.Label("a \"b\" & c"), com.histmersion.web.MapFold.InnerHtml(""), open = com.histmersion.web.MapFold.Open(true))
         .contains("""aria-expanded="true" aria-label="a &quot;b&quot; &amp; c"""")
     )
 
@@ -246,13 +248,13 @@ class BaseMapsSuite extends munit.FunSuite:
     val c = summon[FieldCodec[MapPrefs]]
     assertEquals(c.encode(MapPrefs()), Nil)
     assertEquals(
-      c.decode(c.encode(MapPrefs(names = Some(false), language = Some("local")))),
-      Some(MapPrefs(Some(false), Some("local")))
+      c.decode(c.encode(MapPrefs(names = Some(com.histmersion.web.MapPrefs.Names(false)), language = Some(com.histmersion.web.MapPrefs.Language("local"))))),
+      Some(MapPrefs(Some(com.histmersion.web.MapPrefs.Names(false)), Some(com.histmersion.web.MapPrefs.Language("local"))))
     )
-    assertEquals(c.decode(List("{oops")), Some(MapPrefs()))
-    assertEquals(c.decode(c.encode(MapPrefs(depthReadable = Some(true)))), Some(MapPrefs(depthReadable = Some(true))))
+    assertEquals(c.decode(List(com.histmersion.web.FieldCodec.Token("{oops"))), Some(MapPrefs()))
+    assertEquals(c.decode(c.encode(MapPrefs(depthReadable = Some(com.histmersion.web.MapPrefs.DepthReadable(true))))), Some(MapPrefs(depthReadable = Some(com.histmersion.web.MapPrefs.DepthReadable(true)))))
     assertEquals(
       c.decode(List("""{"names":false}""")),
-      Some(MapPrefs(names = Some(false))),
+      Some(MapPrefs(names = Some(com.histmersion.web.MapPrefs.Names(false)))),
       "kept before the depth existed"
     )

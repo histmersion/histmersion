@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.instance.UiNotices.{Board, Counter}
 
 /** The pure parts of the toolbar's notices: which window watches which board, which open windows are marked read and at
@@ -19,7 +21,7 @@ class NoticesSuite extends munit.FunSuite:
     assertEquals(Notices.boardOf(WindowKey.Approvals), Some(Board.Approvals))
     assertEquals(Notices.boardOf(WindowKey.Acquire), Some(Board.Acquire))
     assertEquals(Notices.boardOf(WindowKey.Log), Some(Board.Log))
-    assertEquals(Notices.boardOf(WindowKey.Goal("bronze-age")), None, "one goal's window is not the goals list")
+    assertEquals(Notices.boardOf(WindowKey.Goal(com.histmersion.web.WindowKey.Goal.Slug("bronze-age"))), None, "one goal's window is not the goals list")
     assertEquals(Notices.boardOf(WindowKey.Jobs), None)
     // every board is a page of Research's, which marks it read while it is shown
     val pages = List(
@@ -43,7 +45,7 @@ class NoticesSuite extends munit.FunSuite:
     assertEquals(Notices.toMark(List(WindowKey.Tasks, WindowKey.Jobs), cs), List(Board.Tasks -> t2))
     assertEquals(Notices.toMark(List(WindowKey.Log), cs), Nil, "nothing new: nothing to send")
     assertEquals(Notices.toMark(Nil, cs), Nil, "a closed window stays bold")
-    assertEquals(Notices.toMark(List(WindowKey.Goal("x")), cs), Nil)
+    assertEquals(Notices.toMark(List(WindowKey.Goal(com.histmersion.web.WindowKey.Goal.Slug("x"))), cs), Nil)
     assertEquals(Notices.toMark(List(WindowKey.Tasks, WindowKey.Tasks), cs), List(Board.Tasks -> t2))
 
   test("once marked, a board is not new, and an older mark never moves it back"):

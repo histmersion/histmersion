@@ -1,5 +1,7 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Activity.Entry
 
@@ -15,18 +17,18 @@ class ActivityViewSuite extends munit.FunSuite:
     assertEquals(ActivityTab.values.toList.filterNot(_.isChip).map(_.slug), List("runs", "all-jobs", "worklog"))
 
   private def run(state: String) =
-    Entry("run:r1", "run", "2026-10-30T12:00:00Z", state = state, what = "review-article", job = Some("r1"))
+    Entry(com.histmersion.api.automation.Activity.Entry.Key("run:r1"), com.histmersion.api.automation.Activity.Entry.Kind("run"), com.histmersion.api.automation.Activity.Entry.At("2026-10-30T12:00:00Z"), state = state, what = com.histmersion.api.automation.Activity.Entry.What("review-article"), job = Some("r1"))
   private def job(kind: String, state: String) =
-    Entry("job:j1", "job", "2026-10-30T12:00:00Z", state = state, what = kind, job = Some("j1"))
+    Entry(com.histmersion.api.automation.Activity.Entry.Key("job:j1"), com.histmersion.api.automation.Activity.Entry.Kind("job"), com.histmersion.api.automation.Activity.Entry.At("2026-10-30T12:00:00Z"), state = state, what = kind, job = Some("j1"))
 
   test("a row's first words say what is going on, or what it was and when"):
     assertEquals(ActivityView.when(run("running"), "12:40"), "Running")
     assertEquals(ActivityView.when(job("media-import", "done"), "12:40"), "Done · 12:40")
     assertEquals(ActivityView.when(job("media-import", "failed"), "11:02"), "Problem · 11:02")
     assertEquals(ActivityView.when(job("media-import", "paused"), "11:02"), "Paused · 11:02")
-    assertEquals(ActivityView.when(Entry("log:1", "log", "x"), "09:12"), "Note · 09:12")
+    assertEquals(ActivityView.when(Entry(com.histmersion.api.automation.Activity.Entry.Key("log:1"), com.histmersion.api.automation.Activity.Entry.Kind("log"), com.histmersion.api.automation.Activity.Entry.At("x")), "09:12"), "Note · 09:12")
     assertEquals(
-      ActivityView.when(Entry("decision:1", "decision", "x", state = "approved"), "09:12"),
+      ActivityView.when(Entry(com.histmersion.api.automation.Activity.Entry.Key("decision:1"), com.histmersion.api.automation.Activity.Entry.Kind("decision"), com.histmersion.api.automation.Activity.Entry.At("x"), state = com.histmersion.api.automation.Activity.Entry.State("approved")), "09:12"),
       "You decided · 09:12"
     )
     assert(ActivityView.problem(job("media-import", "failed")) && !ActivityView.problem(run("running")))
@@ -39,11 +41,11 @@ class ActivityViewSuite extends munit.FunSuite:
     assertEquals(ActivityView.actions(job("media-import", "running")), List("pause", "cancel"))
     assertEquals(ActivityView.actions(job("basemap-fetch", "paused")), List("resume", "cancel"))
     assertEquals(ActivityView.actions(job("ingest", "running")), Nil, "an OCR runs as one piece")
-    assertEquals(ActivityView.actions(Entry("log:1", "log", "x", job = Some("r1"))), Nil)
+    assertEquals(ActivityView.actions(Entry(com.histmersion.api.automation.Activity.Entry.Key("log:1"), com.histmersion.api.automation.Activity.Entry.Kind("log"), com.histmersion.api.automation.Activity.Entry.At("x"), job = Some(com.histmersion.api.SpatialHierarchyResult.Job.Id("r1")))), Nil)
 
   test("the page's goal rides in its query, kept from chip to chip"):
-    assertEquals(ActivityView.search(Some("bronze age")), "?goal=bronze%20age")
+    assertEquals(ActivityView.search(Some(com.histmersion.api.automation.Goal.Slug("bronze age"))), "?goal=bronze%20age")
     assertEquals(ActivityView.search(None), "")
-    assertEquals(ActivityView.param("?item=3&goal=bronze%20age", "goal"), Some("bronze age"))
-    assertEquals(ActivityView.param("?goal=", "goal"), None)
-    assertEquals(ActivityView.param("", "goal"), None)
+    assertEquals(ActivityView.param(com.histmersion.web.Pages.UrlQuery("?item=3&goal=bronze%20age"), com.histmersion.web.ActivityView.ParamName("goal")), Some("bronze age"))
+    assertEquals(ActivityView.param(com.histmersion.web.Pages.UrlQuery("?goal="), com.histmersion.web.ActivityView.ParamName("goal")), None)
+    assertEquals(ActivityView.param(com.histmersion.web.Pages.UrlQuery(""), com.histmersion.web.ActivityView.ParamName("goal")), None)

@@ -13,14 +13,14 @@ class LabelPlacementSuite extends munit.FunSuite:
   private def ring(pts: (Double, Double)*): Vector[Pt] = pts.map((x, y) => Pt(x, y)).toVector
 
   test("projection: the equator and the prime meridian are the plane's centre, and it round-trips"):
-    val c = project(0, 0)
+    val c = project(com.histmersion.api.Geo.Latitude(0), com.histmersion.api.Geo.Longitude(0))
     assertEqualsDouble(c.x, 128.0, 1e-9)
     assertEqualsDouble(c.y, 128.0, 1e-9)
     for (lat, lon) <- List((35.1, 33.4), (-33.9, 151.2), (64.1, -21.9)) do
       val (la, lo) = unproject(project(lat, lon))
       assertEqualsDouble(la, lat, 1e-9)
       assertEqualsDouble(lo, lon, 1e-9)
-    assert(project(60, 0).y < project(10, 0).y, "north is up: y grows southwards")
+    assert(project(com.histmersion.api.Geo.Latitude(60), com.histmersion.api.Geo.Longitude(0)).y < project(com.histmersion.api.Geo.Latitude(10), com.histmersion.api.Geo.Longitude(0)).y, "north is up: y grows southwards")
 
   test("area: a square, a square with a hole, and a degenerate ring"):
     val sq = ring((0, 0), (10, 0), (10, 10), (0, 10))
@@ -210,7 +210,7 @@ class LabelPlacementSuite extends munit.FunSuite:
       }
       shape(Seq(Seq(ring))).get
     }
-    val v = viewAt(project(40, 25), 1400, 900, math.pow(2, 5))
+    val v = viewAt(project(com.histmersion.api.Geo.Latitude(40), com.histmersion.api.Geo.Longitude(25)), 1400, 900, math.pow(2, 5))
     def pass() = shapes.flatMap(s => place(s, v, math.pow(2, 5), 50, 8))
     (0 until 5).foreach(_ => pass()) // warm the JIT
     val t0 = System.nanoTime()

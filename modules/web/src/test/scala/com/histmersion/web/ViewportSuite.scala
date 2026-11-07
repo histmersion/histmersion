@@ -1,21 +1,23 @@
 package com.histmersion.web
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** The narrow (phone) layout's decisions, purely: which mode a width is, and how the bottom sheet steps and snaps. What
   * the modes look like is the stylesheet's.
   */
 class ViewportSuite extends munit.FunSuite:
 
   test("a thin screen is narrow; so is a short TOUCH screen (a phone held sideways); a desktop is not"):
-    def m(w: Double, h: Double, touch: Boolean) = Viewport.mode(w, h, touch, 760, 500, 1366)
+    def m(w: Double, h: Double, touch: Boolean) = Viewport.mode(w, h, touch, com.histmersion.api.instance.UiConfig.NarrowMaxWidthPx(760), com.histmersion.api.instance.UiConfig.NarrowMaxHeightPx(500), com.histmersion.api.instance.UiConfig.TabletMaxWidthPx(1366))
     assertEquals(m(390, 844, touch = true), Viewport.Mode.Narrow)
     assertEquals(m(760, 900, touch = false), Viewport.Mode.Narrow)
     assertEquals(m(844, 390, touch = true), Viewport.Mode.Narrow, "sideways phone")
     assertEquals(m(1440, 900, touch = true), Viewport.Mode.Wide, "a big touch screen is wide")
     assertEquals(m(1920, 1080, touch = false), Viewport.Mode.Wide)
-    assertEquals(Viewport.query(760, 500), "(max-width: 760px), (max-height: 500px) and (pointer: coarse)")
+    assertEquals(Viewport.query(com.histmersion.api.instance.UiConfig.NarrowMaxWidthPx(760), com.histmersion.api.instance.UiConfig.NarrowMaxHeightPx(500)), "(max-width: 760px), (max-height: 500px) and (pointer: coarse)")
 
   test("between the phone and the desktop, up to its own width, a screen is a tablet, held either way"):
-    def m(w: Double, h: Double, touch: Boolean, tabletMax: Int = 1366) = Viewport.mode(w, h, touch, 760, 500, tabletMax)
+    def m(w: Double, h: Double, touch: Boolean, tabletMax: Int = 1366) = Viewport.mode(w, h, touch, com.histmersion.api.instance.UiConfig.NarrowMaxWidthPx(760), com.histmersion.api.instance.UiConfig.NarrowMaxHeightPx(500), tabletMax)
     assertEquals(m(761, 900, touch = false), Viewport.Mode.Tablet)
     for (w, h) <- List((768, 1024), (820, 1180), (1024, 768), (1024, 1366), (1180, 820), (1280, 800), (1366, 1024)) do
       assertEquals(m(w, h, touch = true), Viewport.Mode.Tablet, s"${w}x$h")
@@ -24,7 +26,7 @@ class ViewportSuite extends munit.FunSuite:
     assertEquals(m(1024, 768, touch = false, tabletMax = 0), Viewport.Mode.Wide, "0: no tablet layout")
     assertEquals(m(700, 900, touch = false, tabletMax = 0), Viewport.Mode.Narrow)
     assertEquals(Viewport.Mode.Tablet.wire, "narrow", "the phone's rules apply, the tablet's own on top")
-    assertEquals(Viewport.tabletQuery(1366), "(max-width: 1366px)")
+    assertEquals(Viewport.tabletQuery(com.histmersion.api.instance.UiConfig.TabletMaxWidthPx(1366)), "(max-width: 1366px)")
 
   test("the timeline starts unfolded on a tablet, folded on a phone"):
     assert(MobileChrome.timelineOpenIn(Viewport.Mode.Tablet))
@@ -90,9 +92,9 @@ class ViewportSuite extends munit.FunSuite:
 
   test("the ☰ badge counts the filters that are set but hidden in the drawer, not the search"):
     val chips = List(
-      UiState.ActiveChip("q", "search", "troy"),
-      UiState.ActiveChip("tags", "tag", "argolid"),
-      UiState.ActiveChip("status", "status", "current")
+      UiState.ActiveChip(com.histmersion.web.UiState.ActiveChip.Key("q"), com.histmersion.web.UiState.ActiveChip.Label("search"), com.histmersion.web.UiState.ActiveChip.Value("troy")),
+      UiState.ActiveChip(com.histmersion.web.UiState.ActiveChip.Key("tags"), com.histmersion.web.UiState.ActiveChip.Label("tag"), com.histmersion.web.UiState.ActiveChip.Value("argolid")),
+      UiState.ActiveChip(com.histmersion.web.UiState.ActiveChip.Key("status"), com.histmersion.web.UiState.ActiveChip.Label("status"), com.histmersion.web.UiState.ActiveChip.Value("current"))
     )
     assertEquals(MobileChrome.hiddenFilterCount(chips), 2)
     assertEquals(MobileChrome.hiddenFilterCount(Nil), 0)
