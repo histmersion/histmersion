@@ -188,7 +188,7 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
           )
         )
       )
-      ok(post(s"$url/api/places/import", geo))
+      ok(post(s"$url/api/places/import", geo.value))
       ok(
         put(
           s"$url/api/sources/zzalias2020_place",

@@ -235,7 +235,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
       .filter(_.managerId.exists(_.value.startsWith("watch:")))
       .foreach(r => a.engine.execute(ApiIds.run(r.id)))
 
-  private def status(g: DomainGoal.Slug): String = connect(ds)(GoalRepo.get(g)).get.status
+  private def status(g: DomainGoal.Slug): com.histmersion.api.automation.Goal.StatusValue = connect(ds)(GoalRepo.get(g)).get.status
 
   /** A clock from the wall clock (the switch records real times) that moves six minutes a tick — past the autopilot's
     * ensure interval every tick.
@@ -264,7 +264,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     assertEquals(status(Goal), com.histmersion.domain.automation.Goal.Status.Seeding, "managed: seeding")
     val seedM = connect(ds)(ManagerRepo.get(seedId(ref(Goal)))).get
-    assertEquals((seedM.state, seedM.cron), ("active", Some(AutopilotPolicy.stagger(com.histmersion.domain.AutopilotPolicy.Cron("@weekly"), seedId(ref(Goal))))))
+    assertEquals((seedM.state, seedM.cron), ("active", Some(AutopilotPolicy.stagger(com.histmersion.domain.AutopilotPolicy.Cron("@weekly"), AutopilotPolicy.ManagerRow.Id.seed(Goal)))))
     assertEquals(
       connect(ds)(ManagerRepo.get(watchId(ref(Goal)))).map(m => (m.state, m.config.autoIngest)),
       Some(("active", Some(true)))
@@ -504,7 +504,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(connect(ds)(ManagerRepo.get(seedId(ref(Goal)))), None)
     assertEquals(
       connect(ds)(ManagerRepo.get(watchId(ref(Goal)))).flatMap(_.cron),
-      Some(AutopilotPolicy.stagger(com.histmersion.domain.AutopilotPolicy.Cron("@monthly"), watchId(ref(Goal))))
+      Some(AutopilotPolicy.stagger(com.histmersion.domain.AutopilotPolicy.Cron("@monthly"), AutopilotPolicy.ManagerRow.Id.watch(Goal)))
     )
 
   // ── caps ───────────────────────────────────────────────────────────────────────────────────────

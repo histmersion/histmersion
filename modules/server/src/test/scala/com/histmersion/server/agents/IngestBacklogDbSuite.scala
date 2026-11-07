@@ -193,7 +193,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
       connect(ds)(AgentRepo.steps(ApiIds.job(run.id), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100))).map(_.name),
       List("discover", "rank", "ingest", "backlog", "queue", "close")
     )
-    val first = backlog(m.id).minBy(_.id.value)
+    val first = backlog(m.id).minBy(r => (r.id.value: Long))
     assertEquals(first.state.oa.map(w => (w.goals, w.title, w.foundBy)), Some((List(Goal), "Work w21", Some(run.id))))
     // the same day: the allowance is spent, nothing drains; the status says when it will
     b.managers.tick(now)

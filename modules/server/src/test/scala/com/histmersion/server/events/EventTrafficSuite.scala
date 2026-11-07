@@ -6,7 +6,7 @@ import com.histmersion.server.CatalogueWiring
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.config.{AppConfig, LoadedConfig}
+import com.histmersion.config.{AppConfig, DbConfig, LoadedConfig}
 import com.histmersion.db.TestDb
 import com.histmersion.util.database.Migrate
 import com.histmersion.pluginhost.HttpAnswer
@@ -19,7 +19,7 @@ import org.ekrich.config.ConfigFactory
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
-import com.histmersion.api.catalogue.EventImportRequest
+import com.histmersion.api.catalogue.{CatalogRecord, EventImportRequest}
 
 /** The recorded traffic and the stored results of the event catalogues: imports of GVP, NOAA and Wikidata from the
   * fixtures (no socket) on the stock generation's catalogues — every request with its headers, in order — then the
@@ -73,11 +73,11 @@ class EventTrafficSuite extends com.histmersion.db.DbSuite:
       |""".stripMargin
 
   private lazy val loaded: LoadedConfig =
-    AppConfig.loadWithUserText(ConfigFactory.empty, text).fold(e => fail(e), identity)
+    AppConfig.loadWithUserText(ConfigFactory.empty, text).fold(e => fail(e.value), identity)
   private def cfg = loaded.config
 
   private lazy val ds =
-    val d = testPool(cfg.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
@@ -116,7 +116,7 @@ class EventTrafficSuite extends com.histmersion.db.DbSuite:
     def handlers(f: FakeMediaHttp) = CatalogueWiring(Deps(cfg, ds, ds, plugins = plugins), f, () => com.histmersion.domain.DeepTime.SignedYear(2026L))
     def run(name: String, req: EventImportRequest): Unit =
       val f = FakeMediaHttp(route)
-      val r = handlers(f).eventImporter.runImport(req.provider, req, None, _ => ())
+      val r = handlers(f).eventImporter.runImport(CatalogRecord.Provider(req.provider.value), req, None, _ => ())
       sb ++= s"## import $name\n" + requests(f) + s"report: ${r.asJson.noSpaces}\n"
     sb ++= s"catalogues: ${handlers(FakeMediaHttp(route)).eventImporter.catalogues.asJson.noSpaces}\n"
     run("gvp (dry run)", EventImportRequest(com.histmersion.api.catalogue.EventImportRequest.Provider("gvp"), dryRun = com.histmersion.api.catalogue.EventImportRequest.DryRun(true)))

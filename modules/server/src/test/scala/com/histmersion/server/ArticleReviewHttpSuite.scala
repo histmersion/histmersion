@@ -117,7 +117,7 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
           (ReviewState.InReview, "in review · round 2", Some(2))
         )
         assertEquals((running.openMajors, running.openMinors, running.findings, running.runs), (1, 0, 3, 2))
-        assert(running.detail.contains("Waiting for a person: approval #"), running.detail)
+        assert(running.detail.value.contains("Waiting for a person: approval #"), running.detail)
         assertEquals(rows(Article.Slug(Fresh)).map(_.state), Some(ReviewState.Unreviewed))
 
         // ── one article's review: history in run order, goals, approvals ─────────────────────

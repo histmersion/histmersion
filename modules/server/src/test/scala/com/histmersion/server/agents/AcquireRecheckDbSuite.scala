@@ -551,7 +551,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       resumed.toString
     )
     val next = Transactor(ds)
-      .read(JobRepo.page(com.histmersion.util.jobs.JobQuery(kinds = List(com.histmersion.util.jobs.JobQuery.Kinds(RecheckJob.JobKind))), 1, None, None))
+      .read(JobRepo.page(com.histmersion.util.jobs.JobQuery(kinds = List(com.histmersion.util.jobs.JobQuery.Kinds(RecheckJob.JobKind))), com.histmersion.PageSize(1), None, None))
       .toOption
       .get
       ._1

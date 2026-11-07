@@ -216,7 +216,7 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
           )
         )
       )
-      val (is, ib) = post(s"$url/api/places/import", geo)
+      val (is, ib) = post(s"$url/api/places/import", geo.value)
       assertEquals(is, 200, ib)
       val (rs, rb) = post(s"$url/api/places/zz_fmt_place_a/rename", """{"to":"zz_fmt_place_b"}""")
       assertEquals(rs, 200, rb)

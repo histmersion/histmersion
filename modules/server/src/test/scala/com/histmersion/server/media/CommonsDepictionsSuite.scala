@@ -5,7 +5,8 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.domain.media.imports.OwnImport
 import com.histmersion.domain.media.imports.Target
 
-import com.histmersion.pluginhost.HttpAnswer
+import com.histmersion.domain.media.assets.ProviderAsset
+import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Registries}
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -66,7 +67,7 @@ class CommonsDepictionsSuite extends munit.FunSuite:
     val http = provider()
     val (polite, _) = FakeMediaHttp.polite(http, cfg)
     val store = CollStore(Map.empty, Map.empty)
-    val r = OwnImport(com.histmersion.domain.media.imports.MediaImporter.ImporterName("depicts"), FakeMediaHttp.collection("depicts"), polite, cfg).run(
+    val r = OwnImport(com.histmersion.domain.media.imports.MediaImporter.ImporterName("depicts"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("depicts")), polite, cfg).run(
       List(kadesh),
       dryRun = com.histmersion.domain.media.imports.MediaImporter.DryRun(true),
       refresh = com.histmersion.domain.media.imports.ImportService.Refresh(false),
@@ -74,7 +75,7 @@ class CommonsDepictionsSuite extends munit.FunSuite:
     )
     assertEquals(r.provider, MediaProvider.CommonsDepicts)
     assertEquals(r.statements, 3, "media.depicts.per-event")
-    assertEquals(r.byRole, List(MediaCount(MediaRole.Depiction, com.histmersion.api.media.MediaCount.N(3))))
+    assertEquals(r.byRole, List(MediaCount(MediaCount.Key(MediaRole.Depiction), com.histmersion.api.media.MediaCount.N(3))))
     assertEquals(
       r.samples.map(_.basis),
       List("P1299 depicted by Q203729", "P180 depicts Q203729", "P180 depicts Q203729")
@@ -86,14 +87,14 @@ class CommonsDepictionsSuite extends munit.FunSuite:
   test("real run: stored as Commons pictures, linked as depictions, checked under the depictions' name"):
     val (polite, _) = FakeMediaHttp.polite(provider(), cfg)
     val store = CollStore(Map.empty, Map.empty)
-    val r = OwnImport(com.histmersion.domain.media.imports.MediaImporter.ImporterName("depicts"), FakeMediaHttp.collection("depicts"), polite, cfg).run(
+    val r = OwnImport(com.histmersion.domain.media.imports.MediaImporter.ImporterName("depicts"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("depicts")), polite, cfg).run(
       List(kadesh),
       dryRun = com.histmersion.domain.media.imports.MediaImporter.DryRun(false),
       refresh = com.histmersion.domain.media.imports.ImportService.Refresh(false),
       store
     )
     assertEquals((r.stored, r.linked), (3, 3))
-    assert(store.saved.values.forall(_._2.provider == MediaProvider.Commons))
+    assert(store.saved.values.forall(_._2.provider == ProviderAsset.Provider(MediaProvider.Commons)))
     assertEquals(
       store.links.toList.map(l => (l._3, l._4, l._5)),
       List(
@@ -106,16 +107,16 @@ class CommonsDepictionsSuite extends munit.FunSuite:
 
   test("a failed search leaves the event unrecorded, so it is asked again"):
     val http = FakeMediaHttp { url =>
-      if url.contains("list=search") then Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(404), Map.empty, Array.emptyByteArray))
-      else provider().get(url, Map.empty)
+      if url.contains("list=search") then Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(404), Map.empty, HttpAnswer.Body(Array.emptyByteArray)))
+      else provider().get(HttpTransport.Url(url), Map.empty).left.map(_.value)
     }
     val (polite, _) = FakeMediaHttp.polite(http, cfg)
     val store = CollStore(Map.empty, Map.empty)
-    val r = OwnImport(com.histmersion.domain.media.imports.MediaImporter.ImporterName("depicts"), FakeMediaHttp.collection("depicts"), polite, cfg).run(
+    val r = OwnImport(com.histmersion.domain.media.imports.MediaImporter.ImporterName("depicts"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("depicts")), polite, cfg).run(
       List(kadesh),
       dryRun = com.histmersion.domain.media.imports.MediaImporter.DryRun(false),
       refresh = com.histmersion.domain.media.imports.ImportService.Refresh(false),
       store
     )
-    assert(r.failed.exists(_.contains("Commons search for battle_of_kadesh")), r.failed.toString)
+    assert(r.failed.exists(_.value.contains("Commons search for battle_of_kadesh")), r.failed.toString)
     assert(store.checks.isEmpty)

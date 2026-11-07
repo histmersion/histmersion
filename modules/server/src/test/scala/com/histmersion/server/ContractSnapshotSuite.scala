@@ -108,7 +108,7 @@ class ContractSnapshotSuite extends munit.FunSuite:
         "answer" -> PromptBudget.answers
           .get(a.name)
           .fold(Json.Null)(s =>
-            io.circe.parser.parse(agents.ClaudeCode.schemaJson(s)).fold(e => Json.fromString(e.toString), identity)
+            io.circe.parser.parse(agents.ClaudeCode.schemaJson(s).value).fold(e => Json.fromString(e.toString), identity)
           )
       )
     }*)

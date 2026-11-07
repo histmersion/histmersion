@@ -151,14 +151,14 @@ class MediaOracleSuite extends DbSuite:
     Statements.foreach { s =>
       val l = Licence.classify(Licence.Id(s.value))
       val r = HostLicences.readName(com.histmersion.plugin.LicenceReader.ReadNameName(s.value))
-      out ++= s"${s.value.asJson.noSpaces} → ${lic(l)} · ${l.family.needsAttribution} · " +
+      out ++= s"${(s.value: String).asJson.noSpaces} → ${lic(l)} · ${l.family.needsAttribution} · " +
         s"${l.family.isPublicDomain} · ${Licence.allowed(l, default)} · " +
         s"${r.id}|${r.family}|${r.needsAttribution}\n"
     }
     out ++= "# ofUrl: url → id|family · host's read\n"
     Urls.foreach { u =>
       val r = HostLicences.readUrl(com.histmersion.plugin.LicenceReader.ReadUrlUrl(u.value))
-      out ++= s"${u.value.asJson.noSpaces} → ${lic(Licence.ofUrl(u))} · ${r.id}|${r.family}|${r.needsAttribution}\n"
+      out ++= s"${(u.value: String).asJson.noSpaces} → ${lic(Licence.ofUrl(u))} · ${r.id}|${r.family}|${r.needsAttribution}\n"
     }
     out ++= "# parse(machine, short) and firstKnown\n"
     val pairs = List(
@@ -170,17 +170,17 @@ class MediaOracleSuite extends DbSuite:
       (None, None)
     ).map((m, s) => (m.map(Licence.Statement(_)), s.map(Licence.Statement(_))))
     pairs.foreach((m, s) =>
-      out ++= s"${m.map(_.value).asJson.noSpaces}, ${s.map(_.value).asJson.noSpaces} → ${lic(Licence.parse(m, s))}\n"
+      out ++= s"${m.map(x => (x.value: String)).asJson.noSpaces}, ${s.map(x => (x.value: String)).asJson.noSpaces} → ${lic(Licence.parse(m, s))}\n"
     )
     List(List("x", "cc0"), List("", " ", "y"), Nil, List("CC BY-NC 4.0", "cc-by-4.0")).map(_.map(Licence.Statement(_))).foreach { ss =>
       val r = HostLicences.readFirst(ss.map(x => com.histmersion.plugin.LicenceReader.ReadFirstStatements(x.value)))
-      out ++= s"${ss.map(_.value).asJson.noSpaces} → ${lic(Licence.firstKnown(ss))} · ${r.id}|${r.family}\n"
+      out ++= s"${ss.map(x => (x.value: String)).asJson.noSpaces} → ${lic(Licence.firstKnown(ss))} · ${r.id}|${r.family}\n"
     }
     out ++= "# allowList: csv → the families · each family allowed\n"
     val families = Licence.Family.allowable ++ List(Licence.Family.AllRightsReserved, Licence.Family.Unknown)
     AllowLists.foreach { csv =>
       val allow = Licence.allowList(csv)
-      out ++= s"${csv.value.asJson.noSpaces} → ${allow.toList.map(_.wire).sorted.mkString(",")} · " +
+      out ++= s"${(csv.value: String).asJson.noSpaces} → ${allow.toList.map(_.wire).sortBy(_.value).mkString(",")} · " +
         families.map(f => s"${f.wire}=${Licence.allowed(Licence(Licence.Id("x"), f), allow)}").mkString(" ") + "\n"
     }
     out ++= "# the allowlist each collection is judged by: defaults, then a config with both key families\n"
@@ -203,7 +203,7 @@ class MediaOracleSuite extends DbSuite:
       names.foreach { n =>
         val csv = BuiltinMedia.licencesFor(n, cfg)
         val allow = Licence.allowList(Licence.AllowList(csv.value))
-        out ++= s"$what $n: ${csv.value.asJson.noSpaces} → " +
+        out ++= s"$what $n: ${(csv.value: String).asJson.noSpaces} → " +
           families.filter(f => Licence.allowed(Licence(Licence.Id("x"), f), allow)).map(_.wire).mkString(",") + "\n"
       }
     }
@@ -222,14 +222,14 @@ class MediaOracleSuite extends DbSuite:
       spi.MediaRights(spi.Licence("All rights reserved"), credit = com.histmersion.plugin.MediaRights.Credit("Zq Museum"))
     )
     stated.foreach { r =>
-      out ++= s"${(r.licence.value: String).asJson.noSpaces} ${r.licenceUrl.map(_.value).asJson.noSpaces} → " +
+      out ++= s"${(r.licence.value: String).asJson.noSpaces} ${r.licenceUrl.map(x => (x.value: String)).asJson.noSpaces} → " +
         PluginMedia
           .rights(r)
           .fold(
             why => s"refused: $why",
             a =>
-              s"${lic(a.licence)} url=${a.licenceUrl.map(_.value).asJson.noSpaces} author=${a.author.map(_.value).asJson.noSpaces} " +
-                s"credit=${a.credit.value.asJson.noSpaces}"
+              s"${lic(a.licence)} url=${a.licenceUrl.map(x => (x.value: String)).asJson.noSpaces} author=${a.author.map(x => (x.value: String)).asJson.noSpaces} " +
+                s"credit=${(a.credit.value: String).asJson.noSpaces}"
           ) + "\n"
     }
     out ++= "# the host's own statements\n"
@@ -238,8 +238,8 @@ class MediaOracleSuite extends DbSuite:
       Attribution.publicDomain(None, com.histmersion.domain.Attribution.PublicDomainCredit("Zq Museum")),
       Attribution.publicDomain(Some(com.histmersion.domain.AuthorName("Zq")), com.histmersion.domain.Attribution.PublicDomainCredit("Zq"), None)
     ).foreach(a =>
-      out ++= s"${lic(a.licence)} url=${a.licenceUrl.map(_.value).asJson.noSpaces} author=${a.author.map(_.value).asJson.noSpaces} " +
-        s"credit=${a.credit.value.asJson.noSpaces}\n"
+      out ++= s"${lic(a.licence)} url=${a.licenceUrl.map(x => (x.value: String)).asJson.noSpaces} author=${a.author.map(x => (x.value: String)).asJson.noSpaces} " +
+        s"credit=${(a.credit.value: String).asJson.noSpaces}\n"
     )
     out.result()
 
@@ -918,7 +918,7 @@ class MediaOracleSuite extends DbSuite:
     val role = spi.MediaCollection.RoleResult(spi.MediaCollection.Object)
     override val requestIntervalMs = com.histmersion.plugin.MediaCollection.RequestIntervalMsResult(0)
     def search(place: spi.MediaPlace, http: spi.Plugin.Http) =
-      http.get(spi.Plugin.Http.GetUrl(s"https://zq-search.example/q?label=${place.label}"), Map.empty).map { _ =>
+      http.get(spi.Plugin.Http.GetUrl(s"https://zq-search.example/q?label=${place.label}"), Map.empty).left.map(e => spi.MediaCollection.SearchResultPart1(e.value)).map { _ =>
         def it(key: spi.MediaItem.Key, licence: spi.Licence, where: spi.MediaItem.GeographyPart2) =
           Right(
             spi.MediaItem(
@@ -1058,7 +1058,7 @@ class MediaOracleSuite extends DbSuite:
         .calibreStep(client, cal, only, refresh, dry, None)
         .fold(
           e => s"## $name\nrefused: ${e.message}\n",
-          (r, asks) => s"## $name\nreport: ${r.asJson.spaces2SortKeys}\nasks: ${asks.asJson.noSpaces}\n"
+          (r, asks) => s"## $name\nreport: ${r.asJson.spaces2SortKeys}\nasks: ${asks.map((c, i) => ((c.value: String), (i.value: String))).asJson.noSpaces}\n"
         )
     step("dry run", None, refresh = MediaImportRequest.Refresh(false), dry = MediaImportRequest.DryRun(true)) +
       step("every linked source", None, refresh = MediaImportRequest.Refresh(false), dry = MediaImportRequest.DryRun(false)) +

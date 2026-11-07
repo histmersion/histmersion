@@ -65,7 +65,7 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
       handler.queue.start()
       val accepted = handler.controllers
         .ingest(
-          Ingest.Params(com.histmersion.api.library.Citekey("zz_ingest_queue_failure"), Some(com.histmersion.api.exchange.Bundle.Asset.FileName("fixture.pdf")), force = com.histmersion.api.library.Ingest.Params.Force(true), acquireItem = Some(item.id)),
+          Ingest.Params(com.histmersion.api.library.Citekey("zz_ingest_queue_failure"), Some(com.histmersion.api.exchange.Bundle.Asset.FileName("fixture.pdf")), force = com.histmersion.api.library.Ingest.Params.Force(true), acquireItem = Some(Ingest.Params.AcquireItem(item.id.value))),
           com.histmersion.domain.library.ingest.Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(pdf.toFile))
         )
         .toOption

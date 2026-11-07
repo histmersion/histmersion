@@ -82,7 +82,7 @@ class InteractiveLatencySuite extends munit.FunSuite:
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}/api"
       try
-        assertEquals(post(s"$url/places/import", doc)._1, 200)
+        assertEquals(post(s"$url/places/import", doc.value)._1, 200)
         val span = "from=-3000&to=-1000"
         // hover: a place's card with its counts, a source link, an article link (brief)
         within(50, s"$url/places/zzl_land?asOf=-1500&counts=true")

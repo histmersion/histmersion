@@ -19,7 +19,7 @@ object Generated:
     texts.flatMap(AgentDefinitions.placeholders).map(t => ToolName.either(t).fold(m => throw AssertionError(m), identity)).toSet ++ ToolboxOrder.names
 
   def defs(): AgentGenerator.Defs =
-    val d = AgentDefinitions(Prompts(Prompts.OverrideDir("")), EngineContributions.roster)
+    val d = AgentDefinitions(new Prompts(Prompts.OverrideDir("")), EngineContributions.roster)
     AgentGenerator.Defs(
       d.agents.fold(m => throw AssertionError(m), identity),
       d.fragments.fold(m => throw AssertionError(m), identity),

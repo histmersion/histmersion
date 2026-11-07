@@ -4,7 +4,8 @@ import com.histmersion.domain.media.imports.{BuiltinMedia, PluginCollection}
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Polite}
+import com.histmersion.domain.CoreQuota
+import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Polite, Registries}
 
 import com.histmersion.config.{AppConfig, MediaConfig}
 import com.histmersion.plugin.MediaCollection
@@ -17,16 +18,26 @@ import scala.jdk.CollectionConverters.*
   */
 final class FakeMediaHttp(route: String => Either[String, HttpAnswer]) extends HttpTransport:
   val requests = scala.collection.mutable.ListBuffer.empty[(String, Map[String, String])]
-  def get(url: String, headers: Map[String, String]): Either[String, HttpAnswer] =
-    requests += url -> headers
-    route(url)
+  def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[HttpTransport.Problem, HttpAnswer] =
+    requests += url.value -> headers.map((k, v) => k.value -> v.value)
+    route(url.value).left.map(HttpTransport.Problem(_))
 
 object FakeMediaHttp:
+  /** The answer a fake server gives: its status, its headers and body as they go over the wire. */
+  private def answer(code: Int, headers: Map[String, String], body: Array[Byte]): Either[String, HttpAnswer] =
+    Right(
+      HttpAnswer(
+        HttpAnswer.Code(code),
+        headers.map((k, v) => CoreQuota.HeaderName(k) -> CoreQuota.HeaderValue(v)),
+        HttpAnswer.Body(body)
+      )
+    )
+
   def json(body: String, headers: Map[String, String] = Map.empty, code: Int = 200): Either[String, HttpAnswer] =
-    Right(HttpAnswer(code, Map("content-type" -> "application/json") ++ headers, body.getBytes("UTF-8")))
+    answer(code, Map("content-type" -> "application/json") ++ headers, body.getBytes("UTF-8"))
 
   def bytes(b: Array[Byte], mime: String): Either[String, HttpAnswer] =
-    Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> mime), b))
+    answer(200, Map("content-type" -> mime), b)
 
   def fixture(name: String): String = scala.io.Source.fromResource(s"media/$name")(using scala.io.Codec.UTF8).mkString
 
@@ -38,18 +49,18 @@ object FakeMediaHttp:
   def polite(
       http: HttpTransport,
       c: MediaConfig = cfg,
-      refusalBackoffMs: List[Long] = Nil
-  ): (Polite, scala.collection.mutable.ListBuffer[Long]) =
-    val slept = scala.collection.mutable.ListBuffer.empty[Long]
+      refusalBackoffMs: List[Polite.RefusalBackoffMs] = Nil
+  ): (Polite, scala.collection.mutable.ListBuffer[Polite.IntervalMs]) =
+    val slept = scala.collection.mutable.ListBuffer.empty[Polite.IntervalMs]
     // `var`: the fake clock, advanced by every recorded sleep
-    var now = 1_000_000L
-    (Polite(http, c, ms => { slept += ms; now += ms }, () => now, refusalBackoffMs), slept)
+    var now = Polite.EpochMs(1_000_000L)
+    (Polite(http, c, ms => { slept += ms; now = Polite.EpochMs(now.value + ms.value) }, () => now, refusalBackoffMs), slept)
 
   /** The first-party collection registered as `name`, as the host builds it: its plugin discovered on the class path
     * and supplied the host's settings `settings` (a `histmersion.conf` text: `histmersion.media.*`, and a keyed one's
     * `histmersion.plugins.<id>` block), its secret references read from `env`.
     */
-  def collection(name: String, settings: String = "", env: Map[String, String] = Map.empty): MediaCollection =
+  def collection(name: Registries.MediaCollectionsKey, settings: String = "", env: Map[String, String] = Map.empty): MediaCollection =
     val g = ServerPlugins.offlineWith(Nil, ConfigFactory.parseString(settings), ConfigFactory.parseMap(env.asJava))
     g.registries.mediaCollections.getOrElse(
       name,
@@ -60,9 +71,9 @@ object FakeMediaHttp:
     * judged by its own allowlist in `c`.
     */
   def builtin(
-      name: String,
+      name: BuiltinMedia.EntryName,
       settings: String = "",
       env: Map[String, String] = Map.empty,
       c: MediaConfig = cfg
   ): PluginCollection =
-    PluginCollection(BuiltinMedia.providerOf(name), collection(name, settings, env), BuiltinMedia.licencesFor(name, c))
+    PluginCollection(BuiltinMedia.providerOf(name), collection(Registries.MediaCollectionsKey(name.value), settings, env), BuiltinMedia.licencesFor(name, c))

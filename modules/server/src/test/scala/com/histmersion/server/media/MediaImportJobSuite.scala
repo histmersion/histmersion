@@ -39,7 +39,7 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val N = 300
-  private def id(i: Int) = f"0zqmj_$i%03d"
+  private def id(i: Int) = BEventRow.Id(f"0zqmj_$i%03d")
   private def qid(i: Int) = s"Q${9_100_000 + i}"
   private def idx(q: String): Int = q.stripPrefix("Q").toInt - 9_100_000
 
@@ -131,8 +131,8 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
   private lazy val cfg =
     val base = AppConfig.load()
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.media).setTo(base.media.modify(
-        _.requestIntervalMs).setTo(0).modify(_.importBatch).setTo(50).modify(_.wikidata).setTo(base.media.wikidata.modify(_.apiUrl).setTo(s"$providerUrl/wikidata").modify(_.batch).setTo(50)).modify(_.commons).setTo(base.media.commons.modify(_.apiUrl).setTo(s"$providerUrl/commons").modify(_.batch).setTo(50)
+      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.media).setTo(base.media.modify(
+        _.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)).modify(_.importBatch).setTo(MediaConfig.ImportBatch(50)).modify(_.wikidata).setTo(base.media.wikidata.modify(_.apiUrl).setTo(MediaWikidataConfig.ApiUrl(s"$providerUrl/wikidata")).modify(_.batch).setTo(MediaWikidataConfig.Batch(50))).modify(_.commons).setTo(base.media.commons.modify(_.apiUrl).setTo(MediaCommonsConfig.ApiUrl(s"$providerUrl/commons")).modify(_.batch).setTo(MediaCommonsConfig.Batch(50))
       )
     )
 
@@ -165,7 +165,7 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
         EventFixtures.put(
           ds,
           id(i),
-          EventPut(s"Zqmj event $i", com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1200)), None, None, Some(com.histmersion.api.catalogue.Year(-1190))))
+          EventPut(com.histmersion.api.catalogue.EventSummary.Label(s"Zqmj event $i"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1200)), None, None, Some(com.histmersion.api.catalogue.Year(-1190))))
         )
       )
       connect(ds)(sql"""UPDATE events SET wikidata = 'Q' || (9100000 + substring(id FROM 7)::int)::text
@@ -175,13 +175,13 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
       clean()
       providerServer.stop(0)
 
-  private def job(url: String, jid: String): JobInfo =
+  private def job(url: String, jid: JobInfo.Id): JobInfo =
     val (s, b) = get(s"$url/api/jobs/$jid")
     assertEquals(s, 200, b)
     decode[JobInfo](b).fold(e => fail(s"$e: $b"), identity)
 
   @annotation.tailrec
-  private def until(url: String, jid: String, n: Int)(p: JobInfo => Boolean): JobInfo =
+  private def until(url: String, jid: JobInfo.Id, n: Int)(p: JobInfo => Boolean): JobInfo =
     val j = job(url, jid)
     if p(j) || n <= 0 then j else { Thread.sleep(50); until(url, jid, n - 1)(p) }
 
@@ -202,9 +202,9 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
         assert(!started.isTerminal, started.toString)
 
         // mid-way: two batches of 50 asked, the third held at Wikidata
-        val mid = until(url, started.id, 400)(_.progress.exists(_.startsWith(s"100/$N ")))
+        val mid = until(url, started.id, 400)(_.progress.exists(_.value.startsWith(s"100/$N ")))
         assertEquals(mid.status, "running", mid.toString)
-        assert(mid.progress.exists(_.contains("batch 2")), mid.toString)
+        assert(mid.progress.exists(_.value.contains("batch 2")), mid.toString)
         // a second import while this one runs is refused, not queued behind it
         val (bs, bb) = post(s"$url/api/media/import/job", s"""{"dryRun":false,"limit":1}""")
         assert(bs >= 400 && bb.contains("a media run is already running"), s"$bs $bb")
@@ -212,7 +212,7 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
 
         val end = until(url, started.id, 1200)(_.isTerminal)
         assertEquals(end.status, "done", end.toString)
-        val summary = end.progress.getOrElse(fail(end.toString))
+        val summary = end.progress.getOrElse(fail(end.toString)).value
         assert(summary.contains(s"$N place(s)/event(s) asked in ${N / 50} batch(es)"), summary)
         val stored = N - noPictures - broken
         assert(summary.contains(s"$stored stored"), summary)

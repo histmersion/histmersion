@@ -98,7 +98,7 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       .ingest(Ingest.Params(IngestCk, Some(com.histmersion.api.exchange.Bundle.Asset.FileName("tin.pdf"))), com.histmersion.domain.library.ingest.Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(pdf.toFile)))
       .fold(e => fail(e.message.value), identity)
     def go(n: Int): JobInfo =
-      val j = h.jobs.job(accepted.jobId).fold(e => fail(e.message.value), identity)
+      val j = h.jobs.job(com.histmersion.util.jobs.Job.Id.applyUnsafe(accepted.jobId.value)).fold(e => fail(e.message.value), identity)
       if j.isTerminal || n > 600 then j else { Thread.sleep(50); go(n + 1) }
     val j = go(0)
     assertEquals(j.state, JobState.Done, j.toString)

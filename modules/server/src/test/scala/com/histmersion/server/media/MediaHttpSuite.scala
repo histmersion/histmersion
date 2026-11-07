@@ -5,6 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.media.assets.AssetFixtures
+import com.histmersion.domain.media.imports.Target
 import com.histmersion.server.MediaWiring
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
@@ -46,7 +47,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.media).setTo(base.media.modify(_.requestIntervalMs).setTo(0))
+    base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.media).setTo(base.media.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)))
   private lazy val ds =
     val d = testPool(cfg.db)
     Migrate.run(d)
@@ -70,8 +71,10 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
     )
     (r.statusCode, r.body)
 
-  private val PlaceId = "zqmh_mycenae"
-  private val EventId = "zqmh_battle"
+  private val PlaceId = Place.Id("zqmh_mycenae")
+  private val PlaceTarget = Target.Id("zqmh_mycenae")
+  private val EventId = BEventRow.Id("zqmh_battle")
+  private val ApiEventId = com.histmersion.api.catalogue.Event.Id("zqmh_battle")
 
   private def clean(): Unit = connect(ds):
     val _ =
@@ -91,8 +94,8 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
             Place(
               com.histmersion.api.catalogue.Place.Id("zqmh_mycenae"),
               com.histmersion.api.catalogue.Place.Label("Zqmh Mycenae"),
-              com.histmersion.domain.catalogue.Place.Kind.Site,
-              Some("""{"type":"Point","coordinates":[22.75,37.73]}"""),
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Some(Place.Geometry("""{"type":"Point","coordinates":[22.75,37.73]}""")),
               Some(Period(com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1100)))
             ),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmh Mycenae")))
@@ -101,15 +104,15 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
             Place(
               com.histmersion.api.catalogue.Place.Id("zqmh_nolink"),
               com.histmersion.api.catalogue.Place.Label("Zqmh no link"),
-              com.histmersion.domain.catalogue.Place.Kind.Site,
-              Some("""{"type":"Point","coordinates":[22.0,37.0]}""")
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Some(Place.Geometry("""{"type":"Point","coordinates":[22.0,37.0]}"""))
             ),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmh no link")))
           )
         )
       )
       connect(ds)(sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, import_source, import_ref)
-            VALUES ($PlaceId, 'wikidata', 'Q132564', 'exact_match', 'test', 'zqmh')""".update.run())
+            VALUES (${PlaceId.value}, 'wikidata', 'Q132564', 'exact_match', 'test', 'zqmh')""".update.run())
       EventFixtures.put(
         ds,
         EventId,
@@ -130,18 +133,18 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
   test("an import through the handler: dry run stores nothing; the real one stores, links, checks"):
     val fake = fakeProvider
     val h = MediaWiring(Deps(cfg, ds), fake)
-    val dry = h.imports.importMedia(MediaImportRequest(place = Some(PlaceId))).fold(e => fail(e.message), identity)
+    val dry = h.imports.importMedia(MediaImportRequest(place = Some(PlaceId))).fold(e => fail(e.message.value), identity)
     assert(dry.dryRun)
     assertEquals(dry.byLicence.map(c => (c.key, c.allowed)), List(("CC-BY-NC-SA-4.0", false), ("CC-BY-SA-2.5", true)))
-    assertEquals(AssetFixtures.thumbs(ds, com.histmersion.domain.media.imports.Target.TargetType("place"), PlaceId), Nil)
+    assertEquals(AssetFixtures.thumbs(ds, com.histmersion.domain.media.imports.Target.TargetType("place"), PlaceTarget), Nil)
     val done =
       h.imports
         .importMedia(MediaImportRequest(dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(PlaceId)))
-        .fold(e => fail(e.message), identity)
+        .fold(e => fail(e.message.value), identity)
     assertEquals((done.stored, done.linked, done.categories), (1, 1, 1))
-    assertEquals(AssetFixtures.thumbs(ds, com.histmersion.domain.media.imports.Target.TargetType("place"), PlaceId).map(_.license), List(Some("CC-BY-SA-2.5")))
-    assert(fake.requests.forall(_._2 == Map("User-Agent" -> cfg.media.userAgent)))
-    val checked = connect(ds)(sql"SELECT found FROM media_checks WHERE target_id = $PlaceId".query[Int].run())
+    assertEquals(AssetFixtures.thumbs(ds, com.histmersion.domain.media.imports.Target.TargetType("place"), PlaceTarget).map(_.license), List(Some("CC-BY-SA-2.5")))
+    assert(fake.requests.forall(_._2 == Map("User-Agent" -> cfg.media.userAgent.value)))
+    val checked = connect(ds)(sql"SELECT found FROM media_checks WHERE target_id = ${PlaceId.value}".query[Int].run())
     assertEquals(checked, Vector(1))
 
   test("refusals: an unknown provider, a place with no Wikidata link, an event with no item"):
@@ -150,16 +153,16 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
       h.imports
         .importMedia(MediaImportRequest(provider = com.histmersion.api.media.MediaItem.Provider("flickr")))
         .left
-        .exists(_.message.contains("unknown media provider"))
+        .exists(_.message.value.contains("unknown media provider"))
     )
     assert(
       h.imports
         .importMedia(MediaImportRequest(place = Some(com.histmersion.api.catalogue.Place.Id("zqmh_nolink"))))
         .left
-        .exists(_.message.contains("no Wikidata link"))
+        .exists(_.message.value.contains("no Wikidata link"))
     )
     assert(
-      h.imports.importMedia(MediaImportRequest(event = Some(EventId))).left.exists(_.message.contains("events patch"))
+      h.imports.importMedia(MediaImportRequest(event = Some(ApiEventId))).left.exists(_.message.value.contains("events patch"))
     )
 
   test("the server: the place card carries the thumbnail, served locally with its type; list, show, facets"):
@@ -175,7 +178,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
           (t.role, t.license, t.credit),
           ("image", Some("CC-BY-SA-2.5"), "Andreas Trepte, CC BY-SA 2.5, via Wikimedia Commons")
         )
-        assert(d.links.exists(l => l.scheme == "commons" && l.externalId == "Mycenae"), d.links.toString)
+        assert(d.links.exists(l => l.scheme.value == "commons" && l.externalId.value == "Mycenae"), d.links.toString)
         assertEquals(
           decode[PlaceDetail](get(s"$url/api/places/$PlaceId")._2).map(_.media),
           Right(Nil),
@@ -198,13 +201,13 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
         assertEquals(decode[MediaItem](sb).map(_.targets.map(_.targetId)), Right(List(PlaceId)))
         val (fs, fb) = get(s"$url/api/media/facets")
         assertEquals(fs, 200, fb)
-        assert(decode[MediaFacets](fb).exists(_.licences.exists(_.key == "CC-BY-SA-2.5")), fb)
+        assert(decode[MediaFacets](fb).exists(_.licences.exists(_.key.value == "CC-BY-SA-2.5")), fb)
         val (gs, gb) = get(s"$url/api/media-geo?provider=${MediaProvider.Commons}&license=CC-BY-SA-2.5&limit=1000")
         assertEquals(gs, 200, gb)
         assert(decode[List[MediaGeoHit]](gb).exists(_.exists(_.uid == t.uid)), gb)
         val (cs, cb) = send("POST", s"$url/api/media/fill-licences", "")
         assertEquals(cs, 200, cb)
-        assert(decode[FigureLicenceFill](cb).exists(!_.applied), cb)
+        assert(decode[FigureLicenceFill](cb).exists(!_.applied.value), cb)
       finally b.stop()
     }
 

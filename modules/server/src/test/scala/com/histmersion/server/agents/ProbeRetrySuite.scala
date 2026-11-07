@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.agents.ScriptedClient
@@ -35,8 +37,10 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(60, "s")
 
-  private val Ck = "zzprobe1956_catalogue"
+  private val Ck = com.histmersion.domain.library.Citekey("zzprobe1956_catalogue")
+  private val ApiCk = com.histmersion.api.library.Citekey("zzprobe1956_catalogue")
   private val Model = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("zzProbe"))
+  private val ProbeModel = ProbeRequest.Model(Model.wire.value)
   private val Usage1 = Some(TokenUsage(Tokens(100), Tokens(10), Tokens.Zero, Tokens.Zero))
 
   private lazy val cfg =
@@ -65,13 +69,13 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(h.library.sources.put(Ck, Source.Put(title = com.histmersion.api.library.Title("A Catalogue of Fishes"), year = (Some(1956)).map(com.histmersion.api.catalogue.Year.apply))).isRight)
     AgentsControllers(
       ServerEngineSite(deps, h),
-      (_, ref) => Option.when(ref == Model)(c).toRight(s"no scripted client for ${ref.wire}")
+      (_, ref) => Option.when(ref == Model)(c).toRight(PickFailure.Problem(s"no scripted client for ${ref.wire}"))
     )
 
   test("an empty title and a null year are sent back with the problems; the second answer matches"):
     val c = ScriptedClient(Model)
     c.scripts ++= List(Seq(text(Empty)), Seq(text(Right_)))
-    val r = handlers(c).probe(ProbeRequest(Ck, Some(Model.wire))).fold(e => fail(e.message), identity)
+    val r = handlers(c).probe(ProbeRequest(ApiCk, Some(ProbeModel))).fold(e => fail(e.message.value), identity)
     assertEquals((r.attempts, r.problems, r.matchesRecord), (2, Nil, true), r)
     assertEquals(r.usage.input, 200L, "both attempts are counted")
     val retry = c.steps(1).head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.get
@@ -79,10 +83,10 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   test("a model that never fills them: the probe reports the answer incomplete, never as matching"):
     val c = ScriptedClient(Model)
-    c.scripts ++= List.fill(1 + math.max(0, cfg.agents.step.maxRetries))(Seq(text(Empty)))
-    val r = handlers(c).probe(ProbeRequest(Ck, Some(Model.wire))).fold(e => fail(e.message), identity)
-    assertEquals(r.attempts, 1 + math.max(0, cfg.agents.step.maxRetries))
-    assert(!r.matchesRecord)
+    c.scripts ++= List.fill(1 + math.max(0, cfg.agents.step.maxRetries.value))(Seq(text(Empty)))
+    val r = handlers(c).probe(ProbeRequest(ApiCk, Some(ProbeModel))).fold(e => fail(e.message.value), identity)
+    assertEquals(r.attempts, 1 + math.max(0, cfg.agents.step.maxRetries.value))
+    assert(!r.matchesRecord.value)
     assertEquals(r.problems.size, 2, r.problems)
     assert(AgentsMarkdown.probe(r).contains("answer is **incomplete**: the title is empty"), AgentsMarkdown.probe(r))
 
@@ -113,12 +117,12 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(h.library.sources.put(Ck, Source.Put(title = com.histmersion.api.library.Title("A Catalogue of Fishes"), year = (Some(1956)).map(com.histmersion.api.catalogue.Year.apply))).isRight)
     AgentsControllers(
       ServerEngineSite(deps, h),
-      (_, ref) => Option.when(ref == Model)(client).toRight(s"no client for ${ref.wire}")
+      (_, ref) => Option.when(ref == Model)(client).toRight(PickFailure.Problem(s"no client for ${ref.wire}"))
     )
 
   test("claude-code: a prose answer is asked again with why; the typed second answer matches (#915)"):
     val fake = FakeCli.sequence("claude", List(List(ClaudeStreams.Init, Prose), List(ClaudeStreams.Init, Typed)))
-    val r = claudeHandlers(fake).probe(ProbeRequest(Ck, Some(Model.wire))).fold(e => fail(e.message), identity)
+    val r = claudeHandlers(fake).probe(ProbeRequest(ApiCk, Some(ProbeModel))).fold(e => fail(e.message.value), identity)
     assertEquals((r.model, r.attempts, r.problems, r.matchesRecord), ("claude-code:haiku", 2, Nil, true), r)
     assertEquals(FakeCli.invocations(fake), 2)
     val retry = FakeCli.stdinOf(fake, 2)
@@ -137,10 +141,10 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   test("claude-code: prose every time — no typed answer, and the probe says why"):
     val fake = FakeCli.sequence("claude", List(List(ClaudeStreams.Init, Prose)))
-    val r = claudeHandlers(fake).probe(ProbeRequest(Ck, Some(Model.wire))).fold(e => fail(e.message), identity)
-    assertEquals(r.attempts, 1 + math.max(0, cfg.agents.step.maxRetries))
+    val r = claudeHandlers(fake).probe(ProbeRequest(ApiCk, Some(ProbeModel))).fold(e => fail(e.message.value), identity)
+    assertEquals(r.attempts, 1 + math.max(0, cfg.agents.step.maxRetries.value))
     assertEquals(FakeCli.invocations(fake), r.attempts)
-    assert(r.answer.isEmpty && !r.matchesRecord)
+    assert(r.answer.isEmpty && !r.matchesRecord.value)
     val md = AgentsMarkdown.probe(r)
     assert(
       md.contains(

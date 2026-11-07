@@ -6,15 +6,15 @@ import com.histmersion.server.MediaWiring
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.config.LoadedConfig
+import com.histmersion.config.{DbConfig, LoadedConfig}
 import com.histmersion.db.TestDb
-import com.histmersion.util.jobs.JobRepo
+import com.histmersion.util.jobs.{Job, JobRepo}
 import com.histmersion.server.Deps
 import io.circe.syntax.*
 
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.api.jobs.JobInfo
-import com.histmersion.api.media.{MediaImportReport, MediaImportRequest}
+import com.histmersion.api.media.{MediaImportReport, MediaImportRequest, MediaItem}
 import com.histmersion.api.Api
 
 /** The recorded traffic of the media imports: every request each of the ten first-party collections sends through
@@ -31,9 +31,9 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
 
   private val Transcript = "traffic/media.txt"
 
-  private def load(more: String): LoadedConfig = MediaWire.load(more).fold(e => fail(e), identity)
+  private def load(more: String): LoadedConfig = MediaWire.load(more).fold(e => fail(e.value), identity)
 
-  private lazy val scratch = ScratchDatabases("mediatraffic", load("").config.db.copy(url = testDb.get))
+  private lazy val scratch = ScratchDatabases("mediatraffic", load("").config.db.copy(url = DbConfig.Url(testDb.get)))
   private lazy val ds = scratch("media")
 
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
@@ -57,8 +57,8 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
       sb ++= s"## $name\n" + wire.take() + report(r)
 
     @annotation.tailrec
-    def until(id: String, n: Int): JobInfo =
-      val j = Transactor(ds).read(JobRepo.get(id)).getOrElse(fail(s"no job $id"))
+    def until(id: JobInfo.Id, n: Int): JobInfo =
+      val j = Transactor(ds).read(JobRepo.get(Job.Id.assume(id.value))).getOrElse(fail(s"no job $id"))
       if j.isTerminal || n <= 0 then j else { Thread.sleep(50); until(id, n - 1) }
 
     def job(name: String, req: MediaImportRequest): Unit =
@@ -83,7 +83,7 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
       "opencontext",
       "smithsonian",
       "europeana"
-    )
+    ).map(MediaItem.Provider(_))
     all.foreach(p => run(s"$p (dry run)", MediaImportRequest(p, dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(true), limit = Some(com.histmersion.api.media.MediaImportRequest.Limit(20)))))
 
     run("wikidata, one place", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("wikidata"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("pleiades_570491"))))
@@ -126,7 +126,7 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
         wire,
         MediaWire.Thumbs()
       )
-    List("cleveland", "met", "europeana", "smithsonian").foreach { p =>
+    List("cleveland", "met", "europeana", "smithsonian").map(MediaItem.Provider(_)).foreach { p =>
       sb ++= s"## $p, switched off\n" + report(offHandlers.imports.importMedia(MediaImportRequest(p))) + wire.take()
     }
     sb ++= s"providers, some switched off: ${offHandlers.imports.providers.asJson.noSpaces}\n"

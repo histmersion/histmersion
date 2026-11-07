@@ -24,24 +24,24 @@ class StepFailureSuite extends munit.FunSuite:
       """the 4096 output token maximum. To configure this behavior, set the CLAUDE_CODE_MAX_OUTPUT_TOKENS environment variable.",""" +
       """"usage":{"input_tokens":70000,"output_tokens":16384}}"""
 
-  private def claudeResult(lines: String*) =
+  private def claudeResult(lines: CliProcess.Run.Lines*) =
     ClaudeCode.result(ClaudeCode.parse(lines.toList), com.histmersion.domain.automation.agents.LlmCall.User("u"), LibraryAnswers.notes).toOption.get
 
   test("#1450 Claude Code's output-cap error is recognised, with the cap it names"):
-    val r = claudeResult(ClaudeStreams.Init, OverCap)
+    val r = claudeResult(CliProcess.Run.Lines(ClaudeStreams.Init), CliProcess.Run.Lines(OverCap))
     assert(r.finalAnswer.isLeft)
     assertEquals(Engine.outputCapHit(r), Some(4096))
-    val msg = Engine.outputCapMessage("cold-reader-1", com.histmersion.domain.automation.agents.Engine.OutputCapLimit(4096), com.histmersion.domain.automation.agents.Engine.Count(4096), com.histmersion.domain.automation.agents.AgentsControllers.ModelName("claude-code:haiku"), Engine.capKey(com.histmersion.domain.automation.agents.Engine.CapKeyOverridden(false)))
+    val msg = Engine.outputCapMessage("cold-reader-1", com.histmersion.domain.automation.agents.Engine.OutputCapLimit(4096), com.histmersion.domain.automation.agents.Engine.Count(4096), com.histmersion.domain.automation.agents.AgentsControllers.ModelName("claude-code:haiku"), Engine.capKey(com.histmersion.domain.automation.agents.Engine.CapKeyOverridden(false)).value)
     assert(msg.contains("agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)") && msg.contains("resume"), msg)
-    assert(Engine.capKey(com.histmersion.domain.automation.agents.Engine.CapKeyOverridden(true)).contains("fixer-max-tokens"))
+    assert(Engine.capKey(com.histmersion.domain.automation.agents.Engine.CapKeyOverridden(true)).value.contains("fixer-max-tokens"))
 
   test("#1450 an ordinary error, a usage limit or a good answer is not an output-cap hit"):
     val ok =
       """{"type":"result","subtype":"success","is_error":false,"num_turns":1,"result":"","structured_output":{"notes":"x"},"usage":{}}"""
-    assertEquals(Engine.outputCapHit(claudeResult(ClaudeStreams.Init, ok)), None)
+    assertEquals(Engine.outputCapHit(claudeResult(CliProcess.Run.Lines(ClaudeStreams.Init), CliProcess.Run.Lines(ok))), None)
     val err =
       """{"type":"result","subtype":"error_during_execution","is_error":true,"num_turns":1,"result":"boom","usage":{}}"""
-    assertEquals(Engine.outputCapHit(claudeResult(ClaudeStreams.Init, err)), None)
+    assertEquals(Engine.outputCapHit(claudeResult(CliProcess.Run.Lines(ClaudeStreams.Init), CliProcess.Run.Lines(err))), None)
 
   test("#941 a decoding failure names the path and the decoder's message, then the start of the answer"):
     val raw = """{"notes": 5}"""
@@ -51,9 +51,9 @@ class StepFailureSuite extends munit.FunSuite:
         .left
         .map(AgentParseError(raw, _))
     val p = Engine.answerProblem(f.swap.toOption.get, FinishReason.NaturalStop)
-    assert(p.startsWith("the answer does not match the schema at .notes: "), p)
-    assert(p.contains("expecting string"), p)
-    assert(p.endsWith(s"the answer began: $raw"), p)
+    assert(p.value.startsWith("the answer does not match the schema at .notes: "), p)
+    assert(p.value.contains("expecting string"), p)
+    assert(p.value.endsWith(s"the answer began: $raw"), p)
     assertEquals(Engine.undecoded(f), Some(raw))
 
   test("#941 a missing field deep in a list is located by index"):
@@ -64,13 +64,14 @@ class StepFailureSuite extends munit.FunSuite:
         .left
         .map(AgentParseError(raw, _))
     val p = Engine.answerProblem(f.swap.toOption.get, FinishReason.NaturalStop)
-    assert(p.contains(".findings[0]."), p)
+    assert(p.value.contains(".findings[0]."), p)
 
   test("#941 not JSON, no answer at all, and a long answer is quoted only in part"):
     val bad = AgentParseError("{nope", io.circe.ParsingFailure("expected json value", new RuntimeException("x")))
     assert(
       Engine
         .answerProblem(bad, FinishReason.NaturalStop)
+        .value
         .startsWith("the answer is not valid JSON: expected json value")
     )
     val none = AgentIncomplete("", FinishReason.MaxIterations, None)
@@ -87,39 +88,39 @@ class StepFailureSuite extends munit.FunSuite:
     val gaveUp = AgentIncomplete("""{"notes": 5}""", FinishReason.MaxIterations, Some(df))
     val p = Engine.answerProblem(gaveUp, FinishReason.MaxIterations)
     assert(
-      p.startsWith("the answer does not match the schema at .notes: Got value '5'") && p.contains("(iteration limit)"),
+      p.value.startsWith("the answer does not match the schema at .notes: Got value '5'") && p.value.contains("(iteration limit)"),
       p
     )
     assertEquals(Engine.undecoded(Left(gaveUp)), Some("""{"notes": 5}"""))
     val long = AgentParseError("x" * 5000, RuntimeException("odd"))
-    assert(Engine.answerProblem(long, FinishReason.NaturalStop).length < Engine.AnswerExcerpt + 100)
+    assert(Engine.answerProblem(long, FinishReason.NaturalStop).value.length < Engine.AnswerExcerpt + 100)
 
   test("#941 the retry prompt carries the decoder's error and the undecoded answer to amend"):
     val raw = """{"notes": 5}"""
-    val problem = "the answer does not match the schema at .notes: String"
+    val problem = Prompt.Problem("the answer does not match the schema at .notes: String")
     val prompt = Prompt.retry(List(problem), Some(raw))
     assert(prompt.contains(s"- $problem") && prompt.contains(s"<previous-answer>\n$raw\n</previous-answer>"), prompt)
 
   test("#941 a text answer that is not JSON keeps the parser's error: recorded, and the text goes back to amend"):
     // a truncated object (the answer ran out mid-string), prose, a JSON array; a well-formed object is no problem
-    assert(CliOutcomes.textProblem("""{"notes": "abc""").exists(_.message.nonEmpty))
+    assert(CliOutcomes.textProblem(CliOutcomes.TextProblemText("""{"notes": "abc""")).exists(_.message.nonEmpty))
     assert(CliOutcomes.textProblem(com.histmersion.server.agents.CliOutcomes.TextProblemText("I could not find it.")).exists(_.message.contains("no JSON object")))
     assert(CliOutcomes.textProblem(com.histmersion.server.agents.CliOutcomes.TextProblemText("[1, 2]")).exists(_.message.contains("not an object")))
-    assertEquals(CliOutcomes.textProblem("""```json\n{"notes":"x"}\n```"""), None)
+    assertEquals(CliOutcomes.textProblem(CliOutcomes.TextProblemText("""```json\n{"notes":"x"}\n```""")), None)
     assertEquals(CliOutcomes.textProblem(com.histmersion.server.agents.CliOutcomes.TextProblemText("  ")), None)
     val text = """Here it is: {"notes": "abc"""
     val ok = """{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":""" +
       io.circe.Json.fromString(text).noSpaces + ""","usage":{}}"""
-    val r = claudeResult(ClaudeStreams.Init, ok)
+    val r = claudeResult(CliProcess.Run.Lines(ClaudeStreams.Init), CliProcess.Run.Lines(ok))
     val f = r.finalAnswer.swap.toOption.get
     val p = Engine.answerProblem(f, r.finishReason)
     assert(
-      p.startsWith("the answer is not valid JSON: ") && p.contains("(answered)") && p.contains(
+      p.value.startsWith("the answer is not valid JSON: ") && p.value.contains("(answered)") && p.value.contains(
         "the answer began: Here it is"
       ),
       p
     )
-    assert(!p.contains("not the JSON the schema asks for"), p)
+    assert(!p.value.contains("not the JSON the schema asks for"), p)
     assertEquals(Engine.undecoded(r.finalAnswer), Some(text))
     // Codex / opencode: the final text is the answer
     val cli = CliOutcomes.result(
@@ -131,6 +132,7 @@ class StepFailureSuite extends munit.FunSuite:
     assert(
       Engine
         .answerProblem(cli.finalAnswer.swap.toOption.get, cli.finishReason)
+        .value
         .startsWith("the answer is not valid JSON")
     )
     // an error result is not a parse problem: no cause, as before

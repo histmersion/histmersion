@@ -7,6 +7,7 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.media.MediaMarkdown
 
 import com.histmersion.domain.media.imports.ImportFixtures
+import com.histmersion.domain.media.assets.MediaItemRow
 import com.histmersion.server.MediaWiring
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
@@ -92,8 +93,8 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
   private lazy val cfg =
     val base = AppConfig.load()
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.media).setTo(base.media.modify(
-        _.requestIntervalMs).setTo(0).modify(_.aic).setTo(base.media.aic.modify(_.apiUrl).setTo(s"$providerUrl/api").modify(_.imageUrl).setTo(s"$providerUrl/iiif").modify(_.requestIntervalMs).setTo(0)
+      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.media).setTo(base.media.modify(
+        _.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)).modify(_.aic).setTo(base.media.aic.modify(_.apiUrl).setTo(MediaCollectionConfig.ApiUrl(s"$providerUrl/api")).modify(_.imageUrl).setTo(MediaCollectionConfig.ImageUrl(s"$providerUrl/iiif")).modify(_.requestIntervalMs).setTo(MediaCollectionConfig.RequestIntervalMs(0))
       )
     )
 
@@ -122,7 +123,7 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
     val _ = sql"DELETE FROM sources WHERE citekey LIKE 'zqmc%'".update.run()
     val _ = sql"DELETE FROM places WHERE id LIKE 'zqmc%'".update.run()
 
-  private def pt(lon: Double) = Some(s"""{"type":"Point","coordinates":[$lon,-41]}""")
+  private def pt(lon: com.histmersion.Longitude) = Some(Place.Geometry(s"""{"type":"Point","coordinates":[${lon.value},-41]}"""))
 
   override def beforeAll(): Unit =
     if testDb.isDefined then
@@ -131,15 +132,15 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
         ds,
         List(
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmc_site"), com.histmersion.api.catalogue.Place.Label("Zqmcenae"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("zqmc_site"), com.histmersion.api.catalogue.Place.Label("Zqmcenae"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(com.histmersion.Longitude(140.0))),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmcenae")), Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmcenai")))
           ),
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmc_thebai_a"), com.histmersion.api.catalogue.Place.Label("Zqmc Thebai"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(141.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("zqmc_thebai_a"), com.histmersion.api.catalogue.Place.Label("Zqmc Thebai"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(com.histmersion.Longitude(141.0))),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmc Thebai")))
           ),
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmc_thebai_b"), com.histmersion.api.catalogue.Place.Label("Zqmc Thebai"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(150.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("zqmc_thebai_b"), com.histmersion.api.catalogue.Place.Label("Zqmc Thebai"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(com.histmersion.Longitude(150.0))),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmc Thebai")))
           )
         )
@@ -164,17 +165,17 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
     val f = ImportFixtures.placeFacts(ds, List(com.histmersion.domain.catalogue.Place.Id("zqmc_site")))(com.histmersion.domain.catalogue.Place.Id("zqmc_site"))
     assertEquals(f.keys, Set("zqmcenae", "zqmcenai"))
     assertEquals(f.period, Some((-1600L, -1100L)))
-    val named = ImportFixtures.mapPlacesNamed(ds, List(com.histmersion.domain.media.imports.ImportRepo.NameKey("zqmcenai"), com.histmersion.domain.media.imports.ImportRepo.NameKey("zqmc thebai"), com.histmersion.domain.media.imports.ImportRepo.NameKey("zqmc nowhere")))
+    val named = ImportFixtures.mapPlacesNamed(ds, List(ImportFixtures.NameKey("zqmcenai"), ImportFixtures.NameKey("zqmc thebai"), ImportFixtures.NameKey("zqmc nowhere")))
     assertEquals(
-      named.view.mapValues(_.map(_.id).sorted).toMap,
+      named.view.mapValues(_.map(_.id.value).sorted).toMap,
       Map("zqmcenai" -> List("zqmc_site"), "zqmc thebai" -> List("zqmc_thebai_a", "zqmc_thebai_b"))
     )
     val ts = ImportFixtures
-      .collectionTargets(ds, MediaProvider.ArtInstitute, places = com.histmersion.domain.media.imports.ImportRepo.Places(true), None, None, 10_000, refresh = com.histmersion.domain.media.imports.ImportRepo.Refresh(false))
-      .fold(fail(_), identity)
-    assert(Set("zqmc_site", "zqmc_thebai_a").subsetOf(ts.map(_.id).toSet), ts.toString)
+      .collectionTargets(ds, MediaItemRow.Provider(MediaProvider.ArtInstitute), places = ImportFixtures.Places(true), None, None, ImportFixtures.Limit(10_000), refresh = ImportFixtures.Refresh(false))
+      .fold(p => fail(p.value), identity)
+    assert(Set("zqmc_site", "zqmc_thebai_a").subsetOf(ts.map(_.id.value).toSet), ts.toString)
     assert(
-      ImportFixtures.collectionTargets(ds, MediaProvider.ArtInstitute, places = com.histmersion.domain.media.imports.ImportRepo.Places(true), None, Some(com.histmersion.domain.catalogue.Event.Id("e")), com.histmersion.domain.media.imports.ImportRepo.Limit(1), com.histmersion.domain.media.imports.ImportRepo.Refresh(false)).isLeft,
+      ImportFixtures.collectionTargets(ds, MediaItemRow.Provider(MediaProvider.ArtInstitute), places = ImportFixtures.Places(true), None, Some(com.histmersion.domain.catalogue.Event.Id("e")), ImportFixtures.Limit(1), ImportFixtures.Refresh(false)).isLeft,
       "a collection is about places"
     )
 
@@ -194,8 +195,8 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
           dry.samples.map(s => (s.key, s.basis)),
           List(("9001", "place_of_origin = Zqmcenai; 1400–1300 BCE within 1600–1100 BCE"))
         )
-        assert(dry.rejected.exists(_.key == "names another place on the map"), dry.rejected.toString)
-        assert(dry.rejected.exists(_.key.startsWith("not public domain")), dry.rejected.toString)
+        assert(dry.rejected.exists(_.key.value == "names another place on the map"), dry.rejected.toString)
+        assert(dry.rejected.exists(_.key.value.startsWith("not public domain")), dry.rejected.toString)
         assertEquals(searches.size, 1)
         assert(searches.head.contains("q=Zqmcenae"), searches.head)
 
@@ -205,7 +206,7 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
         assert(
           job.detail
             .flatMap(com.histmersion.api.media.ImportJobKinds.Media.of)
-            .exists(_.contains("Art Institute of Chicago objects of zqmc_site")),
+            .exists(_.value.contains("Art Institute of Chicago objects of zqmc_site")),
           job.toString
         )
         @annotation.tailrec
@@ -214,7 +215,7 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
           if j.isTerminal || n <= 0 then j else { Thread.sleep(50); until(n - 1) }
         val end = until(400)
         assertEquals(end.status, "done", end.toString)
-        assert(end.progress.exists(_.contains("1 stored")), end.toString)
+        assert(end.progress.exists(_.value.contains("1 stored")), end.toString)
 
         val (uid, basis, role) =
           connect(ds)(sql"""SELECT a.uid::text, m.basis, m.role FROM media_links m JOIN assets a ON a.uid = m.asset_uid

@@ -84,7 +84,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
 
-      val (is, ib) = post(s"$url/api/places/import", doc)
+      val (is, ib) = post(s"$url/api/places/import", doc.value)
       assertEquals(is, 200, ib)
       assert(ib.contains("\"places\":3"), ib)
       assert(ib.contains("\"relations\":2"), ib)
@@ -116,7 +116,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
       assertEquals(get(s"$url/api/places/zzh_nope")._1, 404)
       assertEquals(post(s"$url/api/places/import", "{ not json")._1, 400)
-      assertEquals(post(s"$url/api/places/import?kind=nonsense", doc)._1, 400)
+      assertEquals(post(s"$url/api/places/import?kind=nonsense", doc.value)._1, 400)
 
       b.stop()
     }
@@ -176,7 +176,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
-      assertEquals(post(s"$url/api/places/import", countsDoc)._1, 200)
+      assertEquals(post(s"$url/api/places/import", countsDoc.value)._1, 200)
       // a source write materialises its findings into the places that cover them (odd years: the
       // aggregate suites assert on which periods exist anywhere in the shared test database)
       val (ps, pb) = put(
@@ -206,7 +206,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
-      assertEquals(post(s"$url/api/places/import", countsDoc)._1, 200)
+      assertEquals(post(s"$url/api/places/import", countsDoc.value)._1, 200)
       val (as, ab) = get(s"$url/api/about")
       assertEquals(as, 200, ab)
       val about = io.circe.parser.decode[About](ab).fold(e => fail(s"$e: $ab"), identity)
@@ -279,7 +279,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
           )
         )
       )
-      assertEquals(post(s"$url/api/places/import?dataset=seed", lake)._1, 200)
+      assertEquals(post(s"$url/api/places/import?dataset=seed", lake.value)._1, 200)
 
       val (as, ab) = post(s"$url/api/places/zzn_lake/names", """{"name":"Lake Zznkinneret","lang":"EN"}""")
       assertEquals(as, 200, ab)
@@ -293,7 +293,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       )
 
       // a re-seed of the place keeps the name added by hand
-      assertEquals(post(s"$url/api/places/import?dataset=seed", lake)._1, 200)
+      assertEquals(post(s"$url/api/places/import?dataset=seed", lake.value)._1, 200)
       val (ls, lb) = get(s"$url/api/places/names?place=zzn_lake")
       assertEquals(ls, 200, lb)
       assert(lb.contains("\"name\":\"Lake Zznkinneret\""), lb)
@@ -371,7 +371,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
           )
         )
       )
-      assertEquals(post(s"$url/api/places/import?dataset=seed", regio)._1, 200)
+      assertEquals(post(s"$url/api/places/import?dataset=seed", regio.value)._1, 200)
 
       val (ss, sb) =
         post(s"$url/api/places/zzo_regio/override", """{"kind":"Region","reason":"one of the 14 regiones"}""")
@@ -387,7 +387,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       )
 
       // a re-seed sends kind site again; the override stays and the source's kind is remembered
-      assertEquals(post(s"$url/api/places/import?dataset=seed", regio)._1, 200)
+      assertEquals(post(s"$url/api/places/import?dataset=seed", regio.value)._1, 200)
       val (ds1, db1) = get(s"$url/api/places/zzo_regio")
       assertEquals(ds1, 200, db1)
       assert(db1.contains("\"kind\":\"region\""), db1)
@@ -448,7 +448,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
           )
         )
       )
-      assertEquals(post(s"$url/api/places/import?dataset=seed", two)._1, 200)
+      assertEquals(post(s"$url/api/places/import?dataset=seed", two.value)._1, 200)
       val (ms, mb) = post(s"$url/api/places/zzo_dup/merge", """{"into":"zzo_regio","reason":"same place"}""")
       assertEquals(ms, 200, mb)
       assert(mb.contains("\"into\":\"zzo_regio\""), mb)
@@ -461,7 +461,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       assert(removed.contains("removed **Withdrawn: Untitled** `zzo_road`; no re-seed brings it back"), removed)
       val both = mcp("place_override", """{"placeId":"zzo_regio","remove":true,"mergeInto":"zzo_x"}""")
       assert(both.contains("exclude each other"), both)
-      assertEquals(post(s"$url/api/places/import?dataset=seed", two)._1, 200)
+      assertEquals(post(s"$url/api/places/import?dataset=seed", two.value)._1, 200)
       assertEquals(get(s"$url/api/places/zzo_road")._1, 404)
       val (rs, rb) = get(s"$url/api/places/zzo_dup")
       assert(rs == 200 && rb.contains("\"id\":\"zzo_regio\""), s"$rs $rb")
@@ -478,7 +478,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       )
       assertEquals(ps, 200, pb)
       assert(pb.contains("\"latBefore\":-21.3") && pb.contains("\"latAfter\":-21.0"), pb)
-      assertEquals(post(s"$url/api/places/import?dataset=seed", regio)._1, 200)
+      assertEquals(post(s"$url/api/places/import?dataset=seed", regio.value)._1, 200)
       val (gs, gb) = get(s"$url/api/places/zzo_regio")
       assertEquals(gs, 200, gb)
       assert(gb.contains("141") && !gb.contains("141.5"), gb)

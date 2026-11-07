@@ -77,7 +77,7 @@ class TreeHttpSuite extends munit.FunSuite:
       val url = s"http://127.0.0.1:${b.port}"
       val filter = "tag=zzg-tree&from=-1600&to=-1200"
 
-      assertEquals(post(s"$url/api/places/import", places)._1, 200)
+      assertEquals(post(s"$url/api/places/import", places.value)._1, 200)
       val (ps, pb) = put(s"$url/api/sources/zzg_tree_src", source)
       assertEquals(ps, 200, pb)
 

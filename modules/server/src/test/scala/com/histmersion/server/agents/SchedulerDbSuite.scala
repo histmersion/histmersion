@@ -37,6 +37,10 @@ import com.histmersion.api.automation.{
 }
 import com.histmersion.api.library.PdfInfo
 import com.histmersion.api.automation.Goal
+import com.histmersion.domain.automation.{Goal as DomainGoal}
+import com.histmersion.domain.automation.managers.ManagerContext
+import com.histmersion.domain.automation.approvals.ApprovalQuery
+import com.histmersion.domain.automation.agents.ApprovalService
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
@@ -55,9 +59,23 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override val munitTimeout = scala.concurrent.duration.Duration(180, "s")
 
   private val Model = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("scripted"))
-  private val goals = (1 to 20).toList.map(i => f"zzfocus-g$i%02d")
+  private val goals = (1 to 20).toList.map(i => DomainGoal.Slug(f"zzfocus-g$i%02d"))
   private def g(i: Int) = goals(i - 1)
-  private val Art = "zzfocus_art"
+  private def ref(g: DomainGoal.Slug) = Goal.Ref(g.value)
+  private def apiSlug(g: DomainGoal.Slug) = Goal.Slug(g.value)
+  private def target(g: DomainGoal.Slug) = ManagerItem.Target(g.value)
+  private def goalLink(g: DomainGoal.Slug) = GoalLink.Ref(g.value)
+  private val Art = com.histmersion.domain.research.Slug("zzfocus_art")
+  private val ArtLink = GoalLink.Ref("zzfocus_art")
+  private val ArtRunTarget = RunInfo.Target("zzfocus_art")
+  private val ArtItem = ManagerItem.Target("zzfocus_art")
+  private val Review = ManagerInfo.Id(ReviewId)
+  private val ReviewLight = ApiIds.manager(Review)
+  private val ReviewKind = ManagerItem.Kind(ArticleReview)
+  private val CompileKind = ManagerItem.Kind(ArticleCompile)
+  private val ProposeKind = ManagerItem.Kind(ProposeArticles)
+  private val PlanGoalKind = ManagerItem.Kind(PlanGoalItem)
+  private val IngestKind = ManagerItem.Kind(OaIngest)
 
   /** 3 runs at once, goal-first, the crons off (nothing fires by itself), the backlog drained whole. */
   private lazy val cfg =
@@ -108,22 +126,22 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def doi(slug: String) = s"10.5555/$slug"
-  private def ck(d: String) = "zzfocus" + d.replaceAll("[^a-z0-9]", "")
+  private def doi(slug: DomainGoal.Slug) = com.histmersion.api.library.Doi(s"10.5555/$slug")
+  private def ck(d: String) = com.histmersion.domain.library.Citekey("zzfocus" + d.replaceAll("[^a-z0-9]", ""))
 
   /** 20 goals with a query each (no plan needed): g05 has an article to review, g10 enough sources. */
   private def seed(a: AgentsControllers, h: ServerWiring, up: StubUpstream): Unit =
     goals.foreach { s =>
-      assert(h.goals.put(s, Goal.Put(s"Zz $s")).isRight)
-      assert(a.addGoalLink(s, LinkAdd(LinkKind.Query, s"zzfocus query $s")).isRight)
+      assert(h.goals.put(s, Goal.Put(Goal.Title(s"Zz $s"))).isRight)
+      assert(a.addGoalLink(s, LinkAdd(LinkKind.Query, LinkAdd.Ref(s"zzfocus query $s"))).isRight)
     }
-    List("zzfocus_s1", "zzfocus_s2").foreach { c =>
+    List("zzfocus_s1", "zzfocus_s2").map(com.histmersion.domain.library.Citekey(_)).foreach { c =>
       assert(
         h.library.sources
           .put(c, Source.Put(title = com.histmersion.api.library.Title(s"Zz $c"), year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply), topics = List(com.histmersion.api.library.Source.Topics("zzfocus_t")), body = Some(com.histmersion.api.library.Source.OcrMarkdown("Tin."))))
           .isRight
       )
-      assert(transact(ds)(GoalLinkRepo.link(g(10), LinkKind.Source, c, None)))
+      assert(transact(ds)(GoalLinkRepo.link(g(10), LinkKind.Source, GoalLink.Ref(c.value), None)))
     }
     assert(
       h.research.articles
@@ -138,19 +156,37 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         )
         .isRight
     )
-    assert(transact(ds)(GoalLinkRepo.link(g(5), LinkKind.Article, Art, None)))
+    assert(transact(ds)(GoalLinkRepo.link(g(5), LinkKind.Article, ArtLink, None)))
     up.onIngest = d =>
       assert(h.library.sources.put(ck(d), Source.Put(title = com.histmersion.api.library.Title(s"Ingested $d"), year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply), doi = (Some(d)).map(com.histmersion.api.library.Doi.apply))).isRight)
       Right(
         Ingest.Report(
-          ck(d),
-          Some(d),
-          Some(s"Ingested $d"),
+          com.histmersion.api.library.Citekey(ck(d).value),
+          Some(com.histmersion.api.library.Doi(d)),
+          Some(com.histmersion.api.library.Title(s"Ingested $d")),
           created = com.histmersion.api.library.Ingest.Report.Created(true),
-          Some(PdfInfo(com.histmersion.api.library.PdfInfo.Source("unpaywall"), Some(s"https://example.invalid/$d.pdf"), com.histmersion.api.ByteCount(2048), None)),
+          Some(PdfInfo(com.histmersion.api.library.PdfInfo.Source("unpaywall"), Some(PdfInfo.Url(s"https://example.invalid/$d.pdf")), com.histmersion.api.ByteCount(2048), None)),
           com.histmersion.api.library.Ingest.Report.EdgesAdded(0),
           None,
           Nil
+        )
+      )
+
+  /** An open goal plan of `goal` with `kids` planned sub-goals. */
+  private def plan(goal: DomainGoal.Slug, kids: Int = 0) =
+    TestRuns
+      .approvals(ds)
+      .openSubject(
+        None,
+        ApprovalKind.GoalPlan,
+        ApprovalQuery.Subject(goal.value),
+        ApprovalService.Payload(
+          Plan(
+            apiSlug(goal),
+            Plan.Rationale("r"),
+            (1 to kids).toList.map(i => PlannedGoal(Goal.Slug(s"${goal.value}-k$i"), Goal.Title(s"Zz k$i"))),
+            List(Plan.Queries("q"))
+          ).asJson.noSpaces
         )
       )
 
@@ -158,19 +194,19 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.managers.ensureDefaults()
     // the review manager's own selection narrowed to these goals' article (other suites' articles stay out)
     a.managing
-      .update(ReviewId, ManagerUpdate(Some(ManagerConfig(includeGoal = Some(g(5))))))
-      .fold(e => fail(e.message), identity)
-    a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true), Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("test")))).fold(e => fail(e.message), identity)
+      .update(ReviewLight, ManagerUpdate(Some(ManagerConfig(includeGoal = Some(ManagerConfig.IncludeGoal(g(5).value))))))
+      .fold(e => fail(e.message.value), identity)
+    a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true), Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("test")))).fold(e => fail(e.message.value), identity)
 
-  private def item(mid: String, kind: String, target: String): ManagerItem =
+  private def item(mid: ManagerInfo.Id, kind: ManagerItem.Kind, target: ManagerItem.Target): ManagerItem =
     connect(ds)(ManagerRepo.itemFor(mid, kind, target)).getOrElse(fail(s"no $kind item for $target in $mid"))
 
   /** The runs the managers dispatched on these goals (and the article), by pipeline. */
   private def runs(): Vector[RunInfo] =
-    connect(ds)(AgentRepo.list(None, com.histmersion.PageSize(1000))).filter(r => r.managerId.isDefined && r.target.startsWith("zzfocus"))
+    connect(ds)(AgentRepo.list(None, com.histmersion.PageSize(1000))).filter(r => r.managerId.isDefined && r.target.value.startsWith("zzfocus"))
 
   final private class Clock(var now: Instant = Instant.now()): // a var: the test's own moving time
-    def tick(a: AgentsControllers, minutes: Int = 6): List[String] =
+    def tick(a: AgentsControllers, minutes: Int = 6): List[ManagerContext.TickLine] =
       now = now.plusSeconds(minutes.toLong * 60L)
       a.managers.tick(now)
 
@@ -179,9 +215,9 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   ):
     val (a, h, up) = handlers(); seed(a, h, up)
     on(a)
-    a.focus.set(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("pin"), Some(g(20)), by = Some("test"))).fold(e => fail(e.message), identity)
-    a.focus.set(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("priority"), Some(g(15)), Some(com.histmersion.api.automation.Autopilot.FocusSet.Value(5)))).fold(e => fail(e.message), identity)
-    goals.foreach(s => a.oaBacklog.add(watchId(s), s, OaWork(doi(s), s"Work of $s")))
+    a.focus.set(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("pin"), Some(apiSlug(g(20))), by = Some("test"))).fold(e => fail(e.message.value), identity)
+    a.focus.set(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("priority"), Some(apiSlug(g(15))), Some(com.histmersion.api.automation.Autopilot.FocusSet.Value(5)))).fold(e => fail(e.message.value), identity)
+    goals.foreach(s => a.oaBacklog.add(watchId(ref(s)), s, OaWork(doi(s), com.histmersion.api.library.Title(s"Work of $s"))))
     val clock = Clock()
     clock.tick(a)
 
@@ -192,53 +228,53 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     // the focus holds nothing: the others are pending, in the scheduler's queue
     assertEquals(connect(ds)(ManagerRepo.focusHeldCount()), 0)
-    assertEquals(item(seedId(g(2)), ProposeArticles, g(2)).status, "pending")
+    assertEquals(item(seedId(ref(g(2))), ProposeKind, target(g(2))).status, "pending")
     val st = a.scheduler.status(Some(com.histmersion.PageSize(500)))
     note("scheduler status", AgentSchedulerMarkdown.status(st))
     assertEquals((st.strategy, st.strategyFrom, st.dry), ("goal-first", "config", false))
     assertEquals((st.maxRuns, st.started.size), (3, 3))
     assert(
-      st.started.head.why.contains("gathering share") || st.started.head.why.contains("goal-first"),
+      st.started.head.why.value.contains("gathering share") || st.started.head.why.value.contains("goal-first"),
       st.started.head.why
     )
     val first = st.waiting.head
     assertEquals((first.goal, first.position, first.code), (Some(g(15)), 1, "capacity"))
-    assert(first.why.contains("goal-first") && first.why.contains("no place free"), first.why)
+    assert(first.why.value.contains("goal-first") && first.why.value.contains("no place free"), first.why)
     assert(first.behind.nonEmpty, first)
     // then the oldest goals, by age and slug (they were made in the same second)
     assertEquals(st.waiting.map(_.goal).distinct.take(4), List(Some(g(15)), Some(g(1)), Some(g(2)), Some(g(3))))
     // why, for one item: by id and by target
     val w =
-      a.scheduler.why(item(seedId(g(15)), ProposeArticles, g(15)).id.toString).fold(e => fail(e.message), identity)
+      a.scheduler.why(ManagerItem.Ref(item(seedId(ref(g(15))), ProposeKind, target(g(15))).id.toString)).fold(e => fail(e.message.value), identity)
     assertEquals((w.code, w.position), ("capacity", 1))
-    val running = a.scheduler.why(g(20)).fold(e => fail(e.message), identity)
+    val running = a.scheduler.why(ManagerItem.Ref(g(20).value)).fold(e => fail(e.message.value), identity)
     note("why waiting", AgentSchedulerMarkdown.why(w))
     note("why running", AgentSchedulerMarkdown.why(running))
-    note("why unknown", a.scheduler.why(com.histmersion.api.automation.Managers.ManagerItem.Ref("zzfocus-nope")).fold(_.message, AgentSchedulerMarkdown.why))
+    note("why unknown", a.scheduler.why(com.histmersion.api.automation.Managers.ManagerItem.Ref("zzfocus-nope")).fold(_.message.value, AgentSchedulerMarkdown.why))
     assertEquals(running.code, AgentScheduler.Code.Running)
     assert(a.scheduler.why(com.histmersion.api.automation.Managers.ManagerItem.Ref("zzfocus-nope")).isLeft)
     // the status as Markdown names the strategy and the queue
     val md = AgentSchedulerMarkdown.status(st)
     assert(md.startsWith("# Scheduler: goal-first") && md.contains(s"1. #${first.item}"), md.take(600))
     // the ingest backlog drains for every goal (no AI allowance)
-    assertEquals(goals.count(s => item(watchId(s), OaIngest, doi(s)).status == "done"), 20)
+    assertEquals(goals.count(s => item(watchId(ref(s)), IngestKind, ManagerItem.Target(doi(s).value)).status.value == "done"), 20)
     // the manager whose items wait says why in its status line
     assert(
-      connect(ds)(ManagerRepo.get(seedId(g(2)))).flatMap(_.statusNote).exists(_.contains("the scheduler: capacity")),
-      connect(ds)(ManagerRepo.get(seedId(g(2)))).flatMap(_.statusNote)
+      connect(ds)(ManagerRepo.get(seedId(ref(g(2))))).flatMap(_.statusNote).exists(_.value.contains("the scheduler: capacity")),
+      connect(ds)(ManagerRepo.get(seedId(ref(g(2))))).flatMap(_.statusNote)
     )
 
     // switched live to type-balanced, with three more places: the starts spread over the job types
     val sw =
-      a.scheduler.set(AgentScheduler.SchedulerSet(com.histmersion.api.automation.AgentScheduler.SchedulerSet.Strategy("type-balanced"), Some(com.histmersion.api.automation.AgentScheduler.SchedulerSet.By("test")))).fold(e => fail(e.message), identity)
+      a.scheduler.set(AgentScheduler.SchedulerSet(com.histmersion.api.automation.AgentScheduler.SchedulerSet.Strategy("type-balanced"), Some(com.histmersion.api.automation.AgentScheduler.SchedulerSet.By("test")))).fold(e => fail(e.message.value), identity)
     assertEquals((sw.strategy, sw.strategyFrom), ("type-balanced", "person"))
     assert(QueueRepoLog.has(ds, "agent scheduler: strategy type-balanced"), "a worklog line")
     val (b, _, _) = handlers(cfg.modify(_.agents).setTo(cfg.agents.modify(_.maxConcurrentRuns).setTo(6)))
     clock.tick(b)
     val next = runs().map(r => (r.pipeline, r.target)).toSet -- Set(
-      ("propose-articles", g(20)),
-      ("acquisition-sweep", g(20)),
-      ("currency-check", g(20))
+      (RunInfo.Pipeline("propose-articles"), RunInfo.Target(g(20).value)),
+      (RunInfo.Pipeline("acquisition-sweep"), RunInfo.Target(g(20).value)),
+      (RunInfo.Pipeline("currency-check"), RunInfo.Target(g(20).value))
     )
     assertEquals(next, Set(("review-article", Art), ("propose-articles", g(15)), ("acquisition-sweep", g(15))))
     assertEquals(b.scheduler.status().strategy, "type-balanced")
@@ -253,69 +289,61 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.autopilot.ensureNow(Instant.now())
     val st = a.scheduler.status()
     note("dry pass", AgentSchedulerMarkdown.status(st))
-    assert(st.dry, st)
+    assert(st.dry.value, st)
     assertEquals(st.started.size, 3)
     assertEquals(runs(), Vector.empty, "a dry pass starts nothing")
 
   test("goal-plan manual: the plan's run waits for a person and holds no place; the next goal's work takes it"):
     val one = cfg.modify(_.agents).setTo(cfg.agents.modify(_.maxConcurrentRuns).setTo(1))
     val (a, h, up) = handlers(one); seed(a, h, up)
-    val planned = "zzfocus-plan"
+    val planned = DomainGoal.Slug("zzfocus-plan")
     assert(h.goals.put(planned, Goal.Put(com.histmersion.api.automation.Goal.Title("Zz a goal with no plan"))).isRight)
     on(a)
-    a.focus.set(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("pin"), Some(planned))).fold(e => fail(e.message), identity)
+    a.focus.set(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("pin"), Some(apiSlug(planned)))).fold(e => fail(e.message.value), identity)
     val clock = Clock()
     clock.tick(a)
-    val planItem = item(seedId(planned), PlanGoalItem, planned)
+    val planItem = item(seedId(ref(planned)), PlanGoalKind, target(planned))
     assertEquals(planItem.status, "active", "the pinned goal's plan takes the one place")
     assertEquals(runs().size, 1)
     // its run now waits for a person to decide the plan (goal-plan = manual): the place frees
     val run = planItem.runId.get
     connect(ds)(sql"UPDATE jobs SET status = 'waiting' WHERE id = $run".update.run())
     clock.tick(a)
-    assertEquals(runs().count(r => r.status == "queued"), 1, "another goal's item started in the freed place")
-    assertEquals(a.scheduler.why(planItem.id.toString).map(_.code), Right(AgentScheduler.Code.Person))
+    assertEquals(runs().count(r => r.status.value == "queued"), 1, "another goal's item started in the freed place")
+    assertEquals(a.scheduler.why(ManagerItem.Ref(planItem.id.toString)).map(_.code), Right(AgentScheduler.Code.Person))
     // its proposal waits for the plan without holding anything; the status counts what waits for a person
     val prop =
-      a.scheduler.why(item(seedId(planned), ProposeArticles, planned).id.toString).fold(e => fail(e.message), identity)
-    assert(prop.code == "blocked" && prop.why.contains("plan comes first"), prop)
-    assert(a.scheduler.status().forPerson >= 1)
+      a.scheduler.why(ManagerItem.Ref(item(seedId(ref(planned)), ProposeKind, target(planned)).id.toString)).fold(e => fail(e.message.value), identity)
+    assert(prop.code.value == "blocked" && prop.why.value.contains("plan comes first"), prop)
+    assert(a.scheduler.status().forPerson.value >= 1)
 
   test("gathering goals keep their place: a goal still gathering sources starts beside the pinned goal under review"):
     val two = cfg.modify(_.agents).setTo(cfg.agents.modify(_.maxConcurrentRuns).setTo(2))
     val (a, h, up) = handlers(two); seed(a, h, up)
     on(a)
-    a.focus.set(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("pin"), Some(g(5)))).fold(e => fail(e.message), identity)
+    a.focus.set(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("pin"), Some(apiSlug(g(5))))).fold(e => fail(e.message.value), identity)
     Clock().tick(a)
     val started = runs().map(r => (r.pipeline, r.target)).toSet
-    assert(started.contains((com.histmersion.api.automation.Agents.RunInfo.Pipeline("review-article"), Art)), started)
+    assert(started.contains((com.histmersion.api.automation.Agents.RunInfo.Pipeline("review-article"), ArtRunTarget)), started)
     assertEquals(started.size, 2)
-    val other = (started - ((com.histmersion.api.automation.Agents.RunInfo.Pipeline("review-article"), Art))).head
-    assert(other._2 != g(5) && other._2 != g(10), s"a gathering goal's item, not $other")
-    assert(a.scheduler.status().started.exists(_.why.contains("gathering share")), a.scheduler.status().started)
+    val other = (started - ((com.histmersion.api.automation.Agents.RunInfo.Pipeline("review-article"), ArtRunTarget))).head
+    assert(other._2.value != g(5).value && other._2.value != g(10).value, s"a gathering goal's item, not $other")
+    assert(a.scheduler.status().started.exists(_.why.value.contains("gathering share")), a.scheduler.status().started)
 
   test("goal plans are decided by code whatever the focus, within the open sub-goals"):
     val auto = cfg.modify(_.agents).setTo(cfg.agents.modify(_.approvals).setTo(cfg.agents.approvals.modify(_.goalPlan).setTo("auto")))
     val (a, h, up) = handlers(auto); seed(a, h, up)
     on(a)
     Clock().tick(a)
-    def plan(goal: String, kids: Int) = TestRuns
-      .approvals(ds)
-      .openSubject(
-        None,
-        ApprovalKind.GoalPlan,
-        goal,
-        Plan(goal, com.histmersion.api.automation.Goal.Plans.Plan.Rationale("r"), (1 to kids).toList.map(i => PlannedGoal(s"$goal-k$i", s"Zz k$i")), List(com.histmersion.api.automation.Goal.Plans.Plan.Queries("q"))).asJson.noSpaces
-      )
     val now = Instant.now()
-    def judged(p: ApprovalInfo) = a.autoApprovals.judge(TestRuns.approvals(ds).approval(p.id).get, None, None, now)
+    def judged(p: ApprovalInfo) = a.autoApprovals.judge(TestRuns.approvals(ds).approval(ApiIds.approval(p.id)).get, None, None, now)
     assert(
       judged(plan(g(7), 0)).isInstanceOf[AutopilotPolicy.Verdict.Approve],
       "not active in any focus: decided all the same"
     )
     assert(judged(plan(g(1), 3)).isInstanceOf[AutopilotPolicy.Verdict.Approve])
     judged(plan(g(1), 6)) match
-      case AutopilotPolicy.Verdict.Leave(w) => assert(w.contains("limit on open sub-goals"), w)
+      case AutopilotPolicy.Verdict.Leave(w) => assert(w.value.contains("limit on open sub-goals"), w)
       case v                                => fail(v.toString)
 
   test(
@@ -326,39 +354,36 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       )
     )
     val (a, h, up) = handlers(auto); seed(a, h, up)
-    val unplanned = "zzfocus-plan"
+    val unplanned = DomainGoal.Slug("zzfocus-plan")
     assert(h.goals.put(unplanned, Goal.Put(com.histmersion.api.automation.Goal.Title("Zz a goal with no plan"))).isRight)
     // three goals with an approved plan, none reviewed: one more than the limit
     List(g(1), g(2), g(3)).foreach(s =>
       connect(ds)(sql"UPDATE goals SET plan = '{}'::jsonb WHERE slug = $s".update.run())
     )
     on(a)
-    a.focus.set(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("pin"), Some(unplanned))).fold(e => fail(e.message), identity)
+    a.focus.set(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("pin"), Some(apiSlug(unplanned)))).fold(e => fail(e.message.value), identity)
     Clock().tick(a)
-    val planItem = item(seedId(unplanned), PlanGoalItem, unplanned)
+    val planItem = item(seedId(ref(unplanned)), PlanGoalKind, target(unplanned))
     assertEquals(planItem.status, "pending", "no plan-goal run starts")
-    assert(!runs().exists(_.pipeline == Pipeline.PlanGoal.wire), runs())
-    val why = a.scheduler.why(planItem.id.toString).fold(e => fail(e.message), identity)
+    assert(!runs().exists(_.pipeline.value == Pipeline.PlanGoal.wire.value), runs())
+    val why = a.scheduler.why(ManagerItem.Ref(planItem.id.toString)).fold(e => fail(e.message.value), identity)
     assert(
-      why.code == "blocked" && why.why.contains("drop to 2") && why.why.contains("3 goals with an approved plan"),
+      why.code.value == "blocked" && why.why.value.contains("drop to 2") && why.why.value.contains("3 goals with an approved plan"),
       why
     )
     // an open goal plan is neither decided by code nor reported to its manager; the digest and the status say why
-    val p =
-      TestRuns
-        .approvals(ds)
-        .openSubject(None, ApprovalKind.GoalPlan, g(4), Plan(g(4), com.histmersion.api.automation.Goal.Plans.Plan.Rationale("r"), Nil, List(com.histmersion.api.automation.Goal.Plans.Plan.Queries("q"))).asJson.noSpaces)
+    val p = plan(g(4))
     val _ = a.autoApprovals.sweep(Instant.now())
-    assertEquals(TestRuns.approvals(ds).approval(p.id).map(_.state), Some("open"))
-    a.autoApprovals.judge(TestRuns.approvals(ds).approval(p.id).get, None, None, Instant.now()) match
-      case AutopilotPolicy.Verdict.Leave(w) => assert(w.contains("limit on unfinished goals"), w)
+    assertEquals(TestRuns.approvals(ds).approval(ApiIds.approval(p.id)).map(_.state), Some("open"))
+    a.autoApprovals.judge(TestRuns.approvals(ds).approval(ApiIds.approval(p.id)).get, None, None, Instant.now()) match
+      case AutopilotPolicy.Verdict.Leave(w) => assert(w.value.contains("limit on unfinished goals"), w)
       case v                                => fail(v.toString)
     val d = a.digest.digest()
-    assert(d.goalPlansWait.exists(_.contains("drop to 2")), d)
-    assertEquals(d.kinds.find(_.kind == "goal-plan").map(_.decidedBy), Some(ApprovalDigest.Waits))
-    assert(a.autopilot.status().goalPlansWait.exists(_.contains("3 goals")))
+    assert(d.goalPlansWait.exists(_.value.contains("drop to 2")), d)
+    assertEquals(d.kinds.find(_.kind.value == "goal-plan").map(_.decidedBy), Some(ApprovalDigest.Waits))
+    assert(a.autopilot.status().goalPlansWait.exists(_.value.contains("3 goals")))
     // a person decides it all the same
-    assertEquals(a.decide(p.id, com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest(Some(com.histmersion.api.automation.Approval.Note("by hand")))).map(_.state), Right("approved"))
+    assertEquals(a.decide(ApiIds.approval(p.id),com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest(Some(com.histmersion.api.automation.Approval.Note("by hand")))).map(_.state), Right("approved"))
     // one planned goal reviewed: at the limit, goal plans are offered again
     assertEquals(a.focus.unfinishedPlanned(), 3)
     connect(ds)(sql"UPDATE goals SET status = 'reviewed' WHERE slug = ${g(1)}".update.run())
@@ -368,15 +393,11 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("the digest: open approvals by kind; one worklog line a UTC day after digest-hour; a kind decided at once"):
     val morning = Instant.parse("2031-03-03T06:59:00Z")
     val (a, h, up) = handlers(digestClock = java.time.Clock.fixed(morning, java.time.ZoneOffset.UTC)); seed(a, h, up)
-    def plan(goal: String) =
-      TestRuns
-        .approvals(ds)
-        .openSubject(None, ApprovalKind.GoalPlan, goal, Plan(goal, com.histmersion.api.automation.Goal.Plans.Plan.Rationale("r"), Nil, List(com.histmersion.api.automation.Goal.Plans.Plan.Queries("q"))).asJson.noSpaces)
-    val ps = List(g(1), g(2), g(3)).map(plan)
+    val ps = List(g(1), g(2), g(3)).map(x => plan(x))
     val d = a.digest.digest()
-    val plans = d.kinds.find(_.kind == "goal-plan").getOrElse(fail(d.toString))
+    val plans = d.kinds.find(_.kind.value == "goal-plan").getOrElse(fail(d.toString))
     assertEquals((plans.count, plans.decidedBy), (3, "person"))
-    assertEquals(plans.ids, ps.map(_.id).sorted)
+    assertEquals(plans.ids, ps.map(_.id).sortBy(x => (x.value: Long)))
     // once a day, after the hour (7 UTC by default)
     assertEquals(a.digest.tick(morning), Nil, "before the hour")
     assertEquals(a.digest.tick(morning.plusSeconds(120)), List("approval digest written"))
@@ -392,15 +413,15 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(a.digest.decideAll(ApprovalDigest.BulkDecide(com.histmersion.api.automation.ApprovalDigest.BulkDecide.Decision("approve"), kind = Some(com.histmersion.api.automation.Approval.Kind.Wire("nope")))).isLeft)
     val dry = a.digest
       .decideAll(ApprovalDigest.BulkDecide(com.histmersion.api.automation.ApprovalDigest.BulkDecide.Decision("reject"), kind = Some(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")), dryRun = com.histmersion.api.automation.ApprovalDigest.BulkDecide.DryRun(true)))
-      .fold(e => fail(e.message), identity)
+      .fold(e => fail(e.message.value), identity)
     assertEquals((dry.matched, dry.decided.size, dry.dryRun), (3, 3, true))
-    assert(ps.forall(p => TestRuns.approvals(ds).approval(p.id).exists(_.state == "open")), "a dry run decides nothing")
+    assert(ps.forall(p => TestRuns.approvals(ds).approval(ApiIds.approval(p.id)).exists(_.state.value == "open")), "a dry run decides nothing")
     val done = a.digest
-      .decideAll(ApprovalDigest.BulkDecide(com.histmersion.api.automation.ApprovalDigest.BulkDecide.Decision("reject"), kind = Some(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")), subject = Some(g(2)), by = Some("test")))
-      .fold(e => fail(e.message), identity)
+      .decideAll(ApprovalDigest.BulkDecide(com.histmersion.api.automation.ApprovalDigest.BulkDecide.Decision("reject"), kind = Some(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")), subject = Some(ApprovalDigest.BulkDecide.Subject(g(2).value)), by = Some("test")))
+      .fold(e => fail(e.message.value), identity)
     assertEquals((done.matched, done.decided, done.failed), (1, List(ps(1).id), Nil))
     assertEquals(
-      TestRuns.approvals(ds).approval(ps(1).id).map(x => (x.state, x.note.exists(_.contains("in bulk by test")))),
+      TestRuns.approvals(ds).approval(ApiIds.approval(ps(1).id)).map(x => (x.state, x.note.exists(_.value.contains("in bulk by test")))),
       Some(("rejected", true))
     )
     assert(QueueRepoLog.has(ds, "approvals rejected in bulk by test"), "a worklog line")
@@ -412,14 +433,10 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       )
     )
     val (a, h, up) = handlers(scaled); seed(a, h, up)
-    (1 to 6).foreach(i =>
-      TestRuns
-        .approvals(ds)
-        .openSubject(None, ApprovalKind.GoalPlan, g(i), Plan(g(i), com.histmersion.api.automation.Goal.Plans.Plan.Rationale("r"), Nil, List(com.histmersion.api.automation.Goal.Plans.Plan.Queries("q"))).asJson.noSpaces)
-    )
+    (1 to 6).foreach(i => plan(g(i)))
     assertEquals(a.autoApprovals.goalPlanCap, 3, "max(1, ceil(6 x 0.5)) = 3, at most 3")
     assert(
-      a.managing.autopilot.approvals.exists(r => r.kind == "goal-plan" && r.cap.contains("3 today for a backlog of 6")),
+      a.managing.autopilot.approvals.exists(r => r.kind.value == "goal-plan" && r.cap.value.contains("3 today for a backlog of 6")),
       a.managing.autopilot.approvals
     )
     val (b, _, _) = handlers()
@@ -430,11 +447,11 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     on(a)
     val drained = a.drain.set(Autopilot.DrainSet(on = com.histmersion.api.automation.Autopilot.DrainSet.On(true), Some(com.histmersion.api.automation.Autopilot.DrainSet.By("test"))))
     note("drain on, nothing running", a.autopilotPage(drained))
-    assert(drained.drain.exists(_.drained), drained.drain)
+    assert(drained.drain.exists(_.drained.value), drained.drain)
     val clock = Clock()
     clock.tick(a)
     assertEquals(runs(), Vector.empty, "nothing starts while draining")
-    assert(a.scheduler.status().waiting.forall(_.code == "drain"), a.scheduler.status().waiting.map(_.code).distinct)
+    assert(a.scheduler.status().waiting.forall(_.code.value == "drain"), a.scheduler.status().waiting.map(_.code).distinct)
     note("drained: scheduler", AgentSchedulerMarkdown.status(a.scheduler.status(Some(com.histmersion.PageSize(500)))))
     note("drained: autopilot", a.autopilotPage(a.managing.autopilot))
     assert(a.autopilotPage(a.managing.autopilot).contains("DRAINED since"))
@@ -450,44 +467,42 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     note("draining, 3 in flight", a.autopilotPage(a.managing.autopilot))
     assert(a.autopilotPage(a.managing.autopilot).contains("DRAINING since"))
     // the runs in flight finish (here: cancelled): drained
-    runs().foreach(r => a.engine.cancel(r.id))
+    runs().foreach(r => a.engine.cancel(ApiIds.run(r.id)))
     clock.tick(a)
-    assert(a.managing.autopilot.drain.exists(_.drained))
-    assertEquals(runs().count(r => r.status == "queued"), 0, "still nothing new")
+    assert(a.managing.autopilot.drain.exists(_.drained.value))
+    assertEquals(runs().count(r => r.status.value == "queued"), 0, "still nothing new")
     // turning the autopilot on lifts it
-    val st = a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true), Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("test")))).fold(e => fail(e.message), identity)
+    val st = a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true), Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("test")))).fold(e => fail(e.message.value), identity)
     note("on lifts the drain", a.autopilotPage(st))
-    assert(st.changes.exists(_.contains("drain lifted")) && st.drain.isEmpty, st.changes)
+    assert(st.changes.exists(_.value.contains("drain lifted")) && st.drain.isEmpty, st.changes)
 
   test("stalls: every unfinished goal with no progress, the reason and the action"):
     val (a, h, up) = handlers(); seed(a, h, up)
     on(a)
-    TestRuns
-      .approvals(ds)
-      .openSubject(None, ApprovalKind.GoalPlan, g(4), Plan(g(4), com.histmersion.api.automation.Goal.Plans.Plan.Rationale("r"), Nil, List(com.histmersion.api.automation.Goal.Plans.Plan.Queries("q"))).asJson.noSpaces)
+    plan(g(4))
     Clock().tick(a)
     val r = a.scheduler.stalls(Some(com.histmersion.config.AgentAutopilotConfig.StallDays(0)))
     note("stalls", StallsMarkdown.report(r))
     assertEquals(r.goals, 20)
     assertEquals(r.stalled.size, 20, "days 0: every goal counts")
-    assertEquals(r.stalled.find(_.slug == g(4)).map(_.code), Some(Stalls.Code.Person))
-    assert(r.stalled.exists(_.code == Stalls.Code.Queue), r.byReason)
+    assertEquals(r.stalled.find(_.slug.value == g(4).value).map(_.code), Some(Stalls.Code.Person))
+    assert(r.stalled.exists(_.code.value == Stalls.Code.Queue), r.byReason)
     assertEquals(a.scheduler.stalls(Some(com.histmersion.config.AgentAutopilotConfig.StallDays(3))).stalled, Nil, "they all started today")
     a.drain.set(Autopilot.DrainSet(on = com.histmersion.api.automation.Autopilot.DrainSet.On(true)))
     note("stalls while draining", StallsMarkdown.report(a.scheduler.stalls(Some(com.histmersion.config.AgentAutopilotConfig.StallDays(0)))))
-    assert(a.scheduler.stalls(Some(com.histmersion.config.AgentAutopilotConfig.StallDays(0))).stalled.forall(_.code == Stalls.Code.Drain))
+    assert(a.scheduler.stalls(Some(com.histmersion.config.AgentAutopilotConfig.StallDays(0))).stalled.forall(_.code.value == Stalls.Code.Drain))
 
   test(
     "seed before the plan: sourceless goals sweep their candidates (no model) and ingest legal open access within the caps"
   ):
     val (a, h, up) = handlers(); seed(a, h, up)
-    def cand(id: Long, goal: String, oa: Boolean) =
-      Source.Candidate(id, goal, com.histmersion.api.library.Doi(s"10.5555/zzseed.$id"), com.histmersion.api.library.Title(s"Zz seed $id"), isOa = oa)
+    def cand(id: Source.Candidate.Id, goal: DomainGoal.Slug, oa: Boolean) =
+      Source.Candidate(id, Source.Candidate.Goal(goal.value), com.histmersion.api.library.Doi(s"10.5555/zzseed.$id"), com.histmersion.api.library.Title(s"Zz seed $id"), isOa = oa)
     up.sweepFinds = Map(
-      g(1) -> List(cand(1, g(1), oa = true), cand(2, g(1), oa = false)),
-      g(2) -> List(cand(3, g(2), oa = true)),
-      g(3) -> Nil,
-      g(4) -> Nil
+      g(1).value -> List(cand(Source.Candidate.Id(1), g(1), oa = true), cand(Source.Candidate.Id(2), g(1), oa = false)),
+      g(2).value -> List(cand(Source.Candidate.Id(3), g(2), oa = true)),
+      g(3).value -> Nil,
+      g(4).value -> Nil
     )
     on(a)
     val clock = Clock()
@@ -496,7 +511,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     // the two first sourceless goals (g01, g02: oldest, then slug) were seeded; g10 has sources and is not
     def seeded =
       goals.filter(x =>
-        connect(ds)(ManagerRepo.events(watchId(x), None, com.histmersion.PageSize(100))).exists(_.text.startsWith("seed before the plan"))
+        connect(ds)(ManagerRepo.events(watchId(ref(x)), None, com.histmersion.PageSize(100))).exists(_.text.value.startsWith("seed before the plan"))
       )
     assertEquals(seeded, List(g(1), g(2)))
     // their legal open-access finds went through the ingest backlog and were ingested in the same tick
@@ -505,7 +520,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       List("ingest 10.5555/zzseed.1", "ingest 10.5555/zzseed.3")
     )
     assert(
-      connect(ds)(GoalLinkRepo.links(g(1))).exists(l => l.kind == LinkKind.Source && l.ref == ck("10.5555/zzseed.1")),
+      connect(ds)(GoalLinkRepo.links(g(1))).exists(l => l.kind == LinkKind.Source && l.ref.value == ck("10.5555/zzseed.1").value),
       connect(ds)(GoalLinkRepo.links(g(1)))
     )
     assert(QueueRepoLog.has(ds, "seed before the plan: "), "a worklog line")
@@ -513,7 +528,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     clock.tick(a)
     assertEquals(seeded, List(g(1), g(2), g(3), g(4)))
     assertEquals(
-      connect(ds)(ManagerRepo.events(watchId(g(1)), None, com.histmersion.PageSize(100))).count(_.text.startsWith("seed before the plan")),
+      connect(ds)(ManagerRepo.events(watchId(ref(g(1))), None, com.histmersion.PageSize(100))).count(_.text.value.startsWith("seed before the plan")),
       1
     )
     // draining: no seeding
@@ -527,13 +542,13 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val clock = Clock()
     clock.tick(a)
     // g05's article has not passed review: its proposal is kept back
-    val prop = item(seedId(g(5)), ProposeArticles, g(5))
-    val why = a.scheduler.why(prop.id.toString).fold(e => fail(e.message), identity)
-    assert(why.code == "blocked" && why.why.contains("articles in progress come first (1 to pass review)"), why)
+    val prop = item(seedId(ref(g(5))), ProposeKind, target(g(5)))
+    val why = a.scheduler.why(ManagerItem.Ref(prop.id.toString)).fold(e => fail(e.message.value), identity)
+    assert(why.code.value == "blocked" && why.why.value.contains("articles in progress come first (1 to pass review)"), why)
     assertEquals(a.autopilot.nextArticles(clock.now), Nil)
     // the article passes its review (a clean ledger, no review item open), and the proposal had settled days ago
-    ReviewLedgerFixtures.put(ds, ReviewLedger.Ledger(Art))
-    connect(ds)(ManagerRepo.itemFor(ReviewId, ArticleReview, Art))
+    ReviewLedgerFixtures.put(ds, ReviewLedger.Ledger(ReviewLedger.Ledger.Slug("zzfocus_art")))
+    connect(ds)(ManagerRepo.itemFor(Review, ReviewKind, ArtItem))
       .foreach(i =>
         transact(ds)(
           ManagerRepo.settle(
@@ -547,20 +562,20 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     transact(ds)(ManagerRepo.settle(prop.id, ItemStatus.Done, com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Outcome("approval #1 approved"), List(ItemStatus.Pending)))
     connect(ds)(sql"UPDATE manager_items SET updated_at = now() - interval '2 days' WHERE id = ${prop.id}".update.run())
     assertEquals(a.autopilot.nextArticles(clock.now), List(s"goal ${g(5)}: next article proposed"))
-    assertEquals(item(seedId(g(5)), ProposeArticles, g(5)).status, "pending")
+    assertEquals(item(seedId(ref(g(5))), ProposeKind, target(g(5))).status, "pending")
     assert(
-      connect(ds)(ManagerRepo.events(seedId(g(5)), None, com.histmersion.PageSize(50))).exists(_.text.contains("its next article is proposed"))
+      connect(ds)(ManagerRepo.events(seedId(ref(g(5))), None, com.histmersion.PageSize(50))).exists(_.text.value.contains("its next article is proposed"))
     )
     clock.tick(a)
-    assertNotEquals(a.scheduler.why(prop.id.toString).map(_.code), Right("blocked"), "no longer kept back")
+    assertNotEquals(a.scheduler.why(ManagerItem.Ref(prop.id.toString)).map(_.code), Right("blocked"), "no longer kept back")
     // open again: not proposed twice; an approved article to compile keeps the next one back
     assertEquals(a.autopilot.nextArticles(clock.now), Nil)
-    transact(ds)(ManagerRepo.upsert(seedId(g(5)), ArticleCompile, com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Target("zzfocus_next"), ItemOrigin.Chain, com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Priority(0), reopen = false))
+    transact(ds)(ManagerRepo.upsert(seedId(ref(g(5))), CompileKind,com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Target("zzfocus_next"), ItemOrigin.Chain, com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Priority(0), reopen = false))
     clock.tick(a)
-    val back = a.scheduler.why(prop.id.toString).fold(e => fail(e.message), identity)
-    assert(back.code == "blocked" && back.why.contains("1 to compile"), back)
+    val back = a.scheduler.why(ManagerItem.Ref(prop.id.toString)).fold(e => fail(e.message.value), identity)
+    assert(back.code.value == "blocked" && back.why.value.contains("1 to compile"), back)
 
 /** The worklog, read for an assertion. */
 private object QueueRepoLog:
   def has(ds: javax.sql.DataSource, prefix: String): Boolean =
-    com.histmersion.domain.automation.worklists.QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.startsWith(prefix))
+    com.histmersion.domain.automation.worklists.QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.value.startsWith(prefix))

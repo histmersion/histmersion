@@ -5,6 +5,8 @@ import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.media.imports.ImportFixtures
+import com.histmersion.domain.media.assets.MediaItemRow
+import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.server.MediaWiring
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
@@ -127,8 +129,8 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val m = base.media
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.media).setTo(m.modify(
-        _.requestIntervalMs).setTo(0).modify(_.commons).setTo(m.commons.modify(_.apiUrl).setTo(s"$providerUrl/w/api.php")).modify(_.pleiades).setTo(m.pleiades.modify(_.apiUrl).setTo(providerUrl).modify(_.requestIntervalMs).setTo(0)).modify(_.openContext).setTo(m.openContext.modify(_.apiUrl).setTo(providerUrl).modify(_.requestIntervalMs).setTo(0)
+      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.media).setTo(m.modify(
+        _.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)).modify(_.commons).setTo(m.commons.modify(_.apiUrl).setTo(MediaCommonsConfig.ApiUrl(s"$providerUrl/w/api.php"))).modify(_.pleiades).setTo(m.pleiades.modify(_.apiUrl).setTo(MediaCollectionConfig.ApiUrl(providerUrl)).modify(_.requestIntervalMs).setTo(MediaCollectionConfig.RequestIntervalMs(0))).modify(_.openContext).setTo(m.openContext.modify(_.apiUrl).setTo(MediaCollectionConfig.ApiUrl(providerUrl)).modify(_.requestIntervalMs).setTo(MediaCollectionConfig.RequestIntervalMs(0))
       )
     )
 
@@ -149,20 +151,25 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
     Migrate.run(d)
     d
 
-  private val Ids = List("zqmp_site", "zqmp_region", "pleiades_99900002")
+  private val Ids = List(
+    com.histmersion.domain.catalogue.Place.Id("zqmp_site"),
+    com.histmersion.domain.catalogue.Place.Id("zqmp_region"),
+    com.histmersion.domain.catalogue.Place.Id("pleiades_99900002")
+  )
+  private val IdTexts = Ids.map(_.value)
 
   private def clean(): Unit = connect(ds):
-    val _ = sql"DELETE FROM media_links WHERE target_id = ANY($Ids::text[])".update.run()
+    val _ = sql"DELETE FROM media_links WHERE target_id = ANY($IdTexts::text[])".update.run()
     val _ = sql"""DELETE FROM assets WHERE (provider = ${MediaProvider.OpenContext} AND provider_key = $Uuid)
                   OR (provider = ${MediaProvider.Commons} AND provider_key = 'File:Zqmp plan.jpg')""".update.run()
-    val _ = sql"DELETE FROM media_checks WHERE target_id = ANY($Ids::text[])".update.run()
-    val _ = sql"DELETE FROM finding_places WHERE place_id = ANY($Ids::text[])".update.run()
+    val _ = sql"DELETE FROM media_checks WHERE target_id = ANY($IdTexts::text[])".update.run()
+    val _ = sql"DELETE FROM finding_places WHERE place_id = ANY($IdTexts::text[])".update.run()
     val _ = sql"DELETE FROM findings WHERE citekey LIKE 'zqmp%'".update.run()
     val _ = sql"DELETE FROM sources WHERE citekey LIKE 'zqmp%'".update.run()
-    val _ = sql"DELETE FROM place_links WHERE place_id = ANY($Ids::text[])".update.run()
-    val _ = sql"DELETE FROM places WHERE id = ANY($Ids::text[])".update.run()
+    val _ = sql"DELETE FROM place_links WHERE place_id = ANY($IdTexts::text[])".update.run()
+    val _ = sql"DELETE FROM places WHERE id = ANY($IdTexts::text[])".update.run()
 
-  private def pt(lon: Double) = Some(s"""{"type":"Point","coordinates":[$lon,-42]}""")
+  private def pt(lon: com.histmersion.Longitude) = Some(Place.Geometry(s"""{"type":"Point","coordinates":[${lon.value},-42]}"""))
 
   override def beforeAll(): Unit =
     if testDb.isDefined then
@@ -171,15 +178,15 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
         ds,
         List(
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmp_site"), com.histmersion.api.catalogue.Place.Label("Zqmpetra"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("zqmp_site"), com.histmersion.api.catalogue.Place.Label("Zqmpetra"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(com.histmersion.Longitude(140.0))),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmpetra")))
           ),
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmp_region"), com.histmersion.api.catalogue.Place.Label("Zqmpjordan"), com.histmersion.domain.catalogue.Place.Kind.Region, pt(141.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("zqmp_region"), com.histmersion.api.catalogue.Place.Label("Zqmpjordan"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), pt(com.histmersion.Longitude(141.0))),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmpjordan")))
           ),
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("pleiades_99900002"), com.histmersion.api.catalogue.Place.Label("Zqmp Zygouries"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(142.0)),
+            Place(com.histmersion.api.catalogue.Place.Id("pleiades_99900002"), com.histmersion.api.catalogue.Place.Label("Zqmp Zygouries"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(com.histmersion.Longitude(142.0))),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmp Zygouries")))
           )
         )
@@ -208,12 +215,13 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
       "a close match is not an id"
     )
     val own = ImportFixtures.placeExternalIds(ds, Ids)
-    assertEquals(own.get("zqmp_site"), Some(Set("pleiades" -> "99900001", "geonames" -> "99900009")))
-    assert(own.get("pleiades_99900002").exists(_.contains("pleiades" -> "99900002")), own.toString)
+    val pleiades = ExternalIds.Scheme("pleiades")
+    assertEquals(own.get(Ids.head), Some(Set("pleiades" -> "99900001", "geonames" -> "99900009")))
+    assert(own.get(Ids(2)).exists(_.contains(pleiades -> ExternalIds.ExternalId("99900002"))), own.toString)
     val byId =
       ImportFixtures.mapPlacesWithIds(
         ds,
-        List("pleiades" -> "99900001", "pleiades" -> "99900002", "pleiades" -> "99900003")
+        List(pleiades -> ExternalIds.ExternalId("99900001"), pleiades -> ExternalIds.ExternalId("99900002"), pleiades -> ExternalIds.ExternalId("99900003"))
       )
     assertEquals(
       byId.view.mapValues(_.map(_.id)).toMap,
@@ -222,31 +230,31 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
     val ts = ImportFixtures
       .collectionTargets(
         ds,
-        MediaProvider.Pleiades,
-        places = com.histmersion.domain.media.imports.ImportRepo.Places(true),
+        MediaItemRow.Provider(MediaProvider.Pleiades),
+        places = ImportFixtures.Places(true),
         None,
         None,
-        100_000,
-        refresh = com.histmersion.domain.media.imports.ImportRepo.Refresh(false),
-        pleiadesOnly = true
+        ImportFixtures.Limit(100_000),
+        refresh = ImportFixtures.Refresh(false),
+        pleiadesOnly = ImportFixtures.PleiadesOnly(true)
       )
-      .fold(fail(_), identity)
-      .map(_.id)
+      .fold(p => fail(p.value), identity)
+      .map(_.id.value)
       .toSet
     assert(Set("zqmp_site", "pleiades_99900002").subsetOf(ts), ts.toString)
     assert(!ts.contains("zqmp_region"))
     val none = ImportFixtures.collectionTargets(
       ds,
-      MediaProvider.Pleiades,
-      places = com.histmersion.domain.media.imports.ImportRepo.Places(true),
+      MediaItemRow.Provider(MediaProvider.Pleiades),
+      places = ImportFixtures.Places(true),
       Some(com.histmersion.domain.catalogue.Place.Id("zqmp_region")),
       None,
-      com.histmersion.domain.media.imports.ImportRepo.Limit(1),
-      com.histmersion.domain.media.imports.ImportRepo.Refresh(false),
-      pleiadesOnly = true
+      ImportFixtures.Limit(1),
+      ImportFixtures.Refresh(false),
+      pleiadesOnly = ImportFixtures.PleiadesOnly(true)
     )
-    assert(none.left.exists(_.contains("no Pleiades id")), none.toString)
-    assert(ImportFixtures.collectionPending(ds, MediaProvider.Pleiades, places = com.histmersion.domain.media.imports.ImportRepo.Places(true), pleiadesOnly = true) >= 2)
+    assert(none.left.exists(_.value.contains("no Pleiades id")), none.toString)
+    assert(ImportFixtures.collectionPending(ds, MediaItemRow.Provider(MediaProvider.Pleiades), places = ImportFixtures.Places(true), pleiadesOnly = ImportFixtures.PleiadesOnly(true)).value >= 2)
 
   test(
     "Open Context and Pleiades through the server: a dry run's reason, both jobs storing with the basis on the link"
@@ -281,7 +289,7 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
         assertEquals(rs, 200, rb)
         val region = decode[MediaImportReport](rb).fold(e => fail(s"$e: $rb"), identity)
         assert(
-          region.samples.isEmpty && region.rejected.exists(_.key == "its place id names another place on the map"),
+          region.samples.isEmpty && region.rejected.exists(_.key.value == "its place id names another place on the map"),
           region.toString
         )
 
@@ -299,7 +307,7 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
         assertEquals((item.provider, item.license), (Some(MediaProvider.OpenContext), Some("CC-BY-4.0")))
         assertEquals(item.originalUrl, Some("https://archive.org/download/zqmp/full.jpg"))
         assert(
-          item.credit.exists(_.contains("Open Context. https://n2t.net/ark:/28722/zqmp. CC BY 4.0")),
+          item.credit.exists(_.value.contains("Open Context. https://n2t.net/ark:/28722/zqmp. CC BY 4.0")),
           item.toString
         )
         assert(asked.contains(s"/media/$Uuid.json?"), asked.toString)

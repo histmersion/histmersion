@@ -155,7 +155,7 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     val job = b.init(fetch = false).fold(e => fail(e.message.value), identity)
     assertEquals(job.kind, Bootstrap.JobKind)
     val end = Iterator
-      .continually { Thread.sleep(100); Transactor(ds).read(JobRepo.get(job.id)).get }
+      .continually { Thread.sleep(100); Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.applyUnsafe(job.id.value))).get }
       .take(300)
       .find(_.isTerminal)
       .getOrElse(fail("the init job did not finish"))

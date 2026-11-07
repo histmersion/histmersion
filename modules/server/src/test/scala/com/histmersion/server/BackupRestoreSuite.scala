@@ -18,6 +18,7 @@ import com.histmersion.api.library.Filter
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
 import com.histmersion.api.library.Title
+import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.domain.library.Citekey
 
 /** The acceptance line of plan §4 wave 2.5: `backup` then `restore --force` reproduces `search` results. Runs
@@ -152,10 +153,10 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
       summary = Some(Source.Summary(s"fixture $ck")),
       findings = List(
         Finding.Input(
-          claim = s"$ck says something",
+          claim = Finding.Claim(s"$ck says something"),
           region = Some(com.histmersion.api.library.Finding.Region("Anatolia")),
-          lon = Some(32.0),
-          lat = Some(39.0),
+          lon = Some(Longitude(32.0)),
+          lat = Some(Latitude(39.0)),
           periodStart = Some(com.histmersion.api.catalogue.Year(-1250)),
           periodEnd = Some(com.histmersion.api.catalogue.Year(-1150))
         )
