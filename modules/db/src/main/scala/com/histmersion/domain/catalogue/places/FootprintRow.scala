@@ -14,7 +14,7 @@ final private[places] case class FootprintRow(
     periodEnd: Option[com.histmersion.Year],
     certainty: Option[FootprintRow.Certainty],
     accuracyM: Option[FootprintRow.AccuracyM],
-    citekey: Option[com.histmersion.domain.library.Citekey]
+    citekey: Option[FootprintRow.Citekey]
 ) derives DbCodec:
   def toDto: Place.Footprint =
     Place.Footprint(
@@ -29,6 +29,8 @@ final private[places] case class FootprintRow(
     )
 
 object FootprintRow:
+  type Citekey = Citekey.T
+  object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Role = Role.T

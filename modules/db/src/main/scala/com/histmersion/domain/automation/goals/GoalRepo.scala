@@ -7,6 +7,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.Api
 

@@ -6,6 +6,7 @@ import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle

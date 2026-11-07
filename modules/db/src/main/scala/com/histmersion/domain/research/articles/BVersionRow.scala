@@ -23,7 +23,7 @@ object BVersionRow:
   val BodyBytes: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
   type Summary = Summary.T
   object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VersionOf = com.histmersion.domain.research.Slug
-  val VersionOf: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+  type VersionOf = VersionOf.T
+  object VersionOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CreatedAt = CreatedAt.T
   object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -92,3 +92,10 @@ Also check: `ModelChains.headroom` returns `Option[LimitState.FreesAt]` for a to
 
 - SpiValuesSuite and PluginHarnessSuite lost direct coverage of trim and refuse on SpiValues.doi/wikidata and WorkKey.fromDoi, because those now take validated types; `Doi.assume` keeps the URL-stripping test running. Review whether SpiValues.doi, wikidata and workFromDoi should take unconstrained SPI text at the plugin edge, as latitude and longitude now do.
 - Test inputs changed: fake hashes in AssetReconcileSuite became valid hex; `Place.Id.applyUnsafe` in GazetteerNames and RegionCleanup for ids like "levant" that fail the pattern. Stored place ids must load: covered by the stored-data check.
+
+## From db test failures
+
+- New silent class: an Option/List of a newtype in `sql"..."` without `NewtypeColumns.given` falls back to setObject and fails at run time (only a compiler warning: "Could not find given DbCodec ... Using PreparedStatement::setObject"). Make it an error or a check. Still warned at EventBundleRepo:340, PlaceBundleRepo:269, PointAreaRepo:240, SourceApprovalRepo:43 and some test lines: fix them.
+- New silent class: a row class deriving DbCodec with an enum field and no vocabulary given uses Magnum's enum codec and misreads stored spellings. Audited for status, confidence, edge kind, precision, dating, time basis, neighbour target in db main; audit again in server.
+- Strict Doi reads that throw on stored URL-form DOIs: SourceRepo.doiIndex, DoiKey, AcquireCheckRepo. The other sources.doi reads were loosened. Decide for all: lenient read or a data repair.
+- Loosened to local unconstrained types: JobRow.sha256, AgentRepo.ApprovalJobId, FootprintRow's free-text citekey column (misnamed), BVersionRow.versionOf. Concept review.

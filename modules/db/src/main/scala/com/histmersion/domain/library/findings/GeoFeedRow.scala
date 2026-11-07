@@ -7,6 +7,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.library.GeoHit
 import com.histmersion.api.library.Source
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.api.library.SourceColumns.given
 
 /** One map-feed row: a [[GeoHit]] and what [[SourceKinds.of]] reads to say what its source is. */
 final private[findings] case class GeoFeedRow(
@@ -20,7 +21,7 @@ final private[findings] case class GeoFeedRow(
     periodEnd: Option[com.histmersion.Year],
     confidence: Option[Confidence],
     significance: Option[GeoFeedRow.Significance],
-    doi: Option[com.histmersion.domain.library.Doi],
+    doi: Option[GeoFeedRow.Doi],
     venue: Option[GeoFeedRow.Venue],
     provenance: Option[GeoFeedRow.Provenance],
     tags: List[GeoFeedRow.Tags],
@@ -56,6 +57,8 @@ final private[findings] case class GeoFeedRow(
     )
 
 object GeoFeedRow:
+  type Doi = Doi.T
+  object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Title = Title.T
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Claim = Claim.T

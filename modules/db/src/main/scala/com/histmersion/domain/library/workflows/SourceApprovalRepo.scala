@@ -2,6 +2,7 @@ package com.histmersion.domain.library.workflows
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
 import com.histmersion.domain.library.{Source, Edge}
 

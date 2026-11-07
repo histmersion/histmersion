@@ -18,6 +18,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Migrate, Param, Sql}
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.{Period, SiteTile, Year}
 import com.histmersion.api.library.Filter
@@ -84,7 +85,7 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
       .run()
     // the optional columns set apart: `Param` has no null
     val _ =
-      sql"UPDATE places SET import_source = ${importSource.map(_.value)}, properties = ${props.value}::jsonb, site_type = ${siteType.map(_.value)} WHERE id = ${id.value}".update
+      sql"UPDATE places SET import_source = ${importSource}, properties = ${props.value}::jsonb, site_type = ${siteType} WHERE id = ${id.value}".update
         .run()
 
   private def keysIn(cells: List[TileCell]): Set[String] = cells.filter(_.isItem).map(_.key.value).toSet

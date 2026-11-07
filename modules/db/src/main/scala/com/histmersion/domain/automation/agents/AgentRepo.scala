@@ -480,9 +480,12 @@ object AgentRepo:
 
   // ── approvals: what runs proposed for a person to decide (`ApprovalService` opens the connection) ────
 
+  type ApprovalJobId = ApprovalJobId.T
+  object ApprovalJobId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class ApprovalRow(
       id: ApprovalInfo.Id,
-      jobId: Option[com.histmersion.util.jobs.Job.Id],
+      jobId: Option[ApprovalJobId],
       kind: ApprovalInfo.Kind,
       citekey: Option[com.histmersion.api.library.Citekey],
       status: Option[ApprovalInfo.Status],

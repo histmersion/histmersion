@@ -245,7 +245,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
 
     // edges in both directions followed the key; the parked ones waiting for the new name arrived
     assertEquals(
-      CitationFixtures.neighbors(ds, New).map(n => (n.direction, n.kind, n.citekey)).toSet,
+      CitationFixtures.neighbors(ds, New).map(n => (n.direction, com.histmersion.api.library.Edge.Kind.wireOf(n.kind), n.citekey)).toSet,
       Set(
         ("out", "challenges", Other),
         ("in", "references", Other),
