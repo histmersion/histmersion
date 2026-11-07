@@ -37,7 +37,7 @@ class AboutStorageSuite extends munit.FunSuite:
           Some(com.histmersion.api.maintenance.Storage.Entry.Path("/d/pg")),
           (Some(10 * GB)).map(com.histmersion.api.ByteCount.apply),
           (Some(3000L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
-          volume = Some(vol)
+          volume = Some(Storage.Entry.Volume(vol))
         ),
         Storage.Entry(
           com.histmersion.api.maintenance.Storage.Entry.Key("backups"),
@@ -46,7 +46,7 @@ class AboutStorageSuite extends munit.FunSuite:
           Some(com.histmersion.api.maintenance.Storage.Entry.Path("/d/backups")),
           (Some(28 * GB)).map(com.histmersion.api.ByteCount.apply),
           (Some(5L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
-          volume = Some(vol),
+          volume = Some(Storage.Entry.Volume(vol)),
           shrink = Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), com.histmersion.api.maintenance.Storage.Advice.Keep(5))
         ),
         Storage.Entry(com.histmersion.api.maintenance.Storage.Entry.Key("plugins"), com.histmersion.api.maintenance.Storage.Entry.Label("plugins"), com.histmersion.api.maintenance.Storage.Entry.Group("install"), Some(com.histmersion.api.maintenance.Storage.Entry.Path("/d/plugins")), None, None, exists = com.histmersion.api.maintenance.Storage.Entry.Exists(false)),
@@ -58,7 +58,7 @@ class AboutStorageSuite extends munit.FunSuite:
           (Some(600_000_000L)).map(com.histmersion.api.ByteCount.apply),
           (Some(3L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
           partial = com.histmersion.api.maintenance.Storage.Entry.Partial(true),
-          volume = Some(vol)
+          volume = Some(Storage.Entry.Volume(vol))
         ),
         Storage.Entry(
           com.histmersion.api.maintenance.Storage.Entry.Key("calibre-originals"),
@@ -71,9 +71,9 @@ class AboutStorageSuite extends munit.FunSuite:
         )
       )
     ),
-    tables = List(TableSize(com.histmersion.api.TableSize.Name("sources"), 5 * GB)),
-    volumes = List(Storage.Volume(vol, com.histmersion.api.ByteCount(994 * GB), com.histmersion.api.ByteCount(5 * GB))),
-    backups = Some(BackupsUsage(com.histmersion.api.backup.BackupsUsage.Count(5), 28 * GB, Some(com.histmersion.api.backup.BackupsUsage.Newest("histmersion-1.dump")), com.histmersion.api.backup.BackupsUsage.Keep(5)))
+    tables = List(TableSize(com.histmersion.api.TableSize.Name("sources"), com.histmersion.api.ByteCount(5 * GB))),
+    volumes = List(Storage.Volume(Storage.Volume.Id(vol), com.histmersion.api.ByteCount(994 * GB), com.histmersion.api.ByteCount(5 * GB))),
+    backups = Some(BackupsUsage(com.histmersion.api.backup.BackupsUsage.Count(5), com.histmersion.api.ByteCount(28 * GB), Some(com.histmersion.api.backup.BackupsUsage.Newest("histmersion-1.dump")), com.histmersion.api.backup.BackupsUsage.Keep(5)))
   )
 
   test("Storage: the total, each location nested under the one it is inside, missing ones left out"):
@@ -106,7 +106,7 @@ class AboutStorageSuite extends munit.FunSuite:
     assertEquals((rows.head.label, rows.head.value, rows.head.state), (vol, "5.0 GB free", Some(ServiceState.Down)))
     assert(rows(1).value.startsWith(s"Low disk space on $vol"), rows)
     assert(rows(1).value.contains("backups 28.0 GB (lower backups.keep (now 5)"), rows)
-    val roomy = AboutView.storage(report.modify(_.volumes).setTo(List(Storage.Volume(vol, com.histmersion.api.ByteCount(994 * GB), com.histmersion.api.ByteCount(500 * GB)))))
+    val roomy = AboutView.storage(report.modify(_.volumes).setTo(List(Storage.Volume(Storage.Volume.Id(vol), com.histmersion.api.ByteCount(994 * GB), com.histmersion.api.ByteCount(500 * GB)))))
     assertEquals(roomy.last.rows.map(_.state), List(Some(ServiceState.Ok)))
 
   test("measuring: the window says so; an older server's About has no Storage section"):
@@ -114,5 +114,5 @@ class AboutStorageSuite extends munit.FunSuite:
     val m = AboutView.storage(Storage.Report(measuring = com.histmersion.api.maintenance.Storage.Report.Measuring(true)))
     assertEquals(m.map(_.title), List("Storage"))
     assertEquals(m.head.rows, List(AboutView.Row("", "measuring…")))
-    val again = AboutView.storage(report.modify(_.measuring).setTo(true))
+    val again = AboutView.storage(report.modify(_.measuring).setTo(Storage.Report.Measuring(true)))
     assertEquals(again.head.rows.head.detail, Some("measured 30 s ago · measuring…"))

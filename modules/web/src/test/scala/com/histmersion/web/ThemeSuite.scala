@@ -13,7 +13,7 @@ class ThemeSuite extends munit.FunSuite:
     assertEquals(ThemeChoice.fromWire(" Light "), ThemeChoice.Light)
     assertEquals(ThemeChoice.fromWire(null), ThemeChoice.System)
     assertEquals(ThemeChoice.fromWire("sepia"), ThemeChoice.System)
-    ThemeChoice.values.foreach(c => assertEquals(ThemeChoice.fromWire(c.wire), c))
+    ThemeChoice.values.foreach(c => assertEquals(ThemeChoice.fromWire(c.wire.value), c))
 
   test("the button says what it shows and what a press picks"):
     assertEquals(ThemeChoice.tooltip(ThemeChoice.System), "Theme: follows the system. Click for light.")

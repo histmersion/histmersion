@@ -73,7 +73,7 @@ class RouteSuite extends munit.FunSuite:
 
   test("every page the web UI draws is an address the server serves it for; the server's pages are not"):
     pages.foreach { r =>
-      val segments = r.path.split('/').toList.filter(_.nonEmpty)
+      val segments = r.path.split('/').toList.filter(_.nonEmpty).map(WebPaths.Segment(_))
       assertEquals(WebPaths.isApp(segments), !r.serverPage, r.path)
       assert(Route.isAppPath(r.path) == !r.serverPage, r.path)
     }
@@ -197,4 +197,4 @@ class RouteSuite extends munit.FunSuite:
     assertEquals(TopBar.showsResults(Route.Research(ResearchSection.Goals)), None)
 
   test("page titles are words, never identifiers"):
-    pages.foreach(r => assert(!Router.title(r).contains("_") && Router.title(r).head.isUpper, r.toString))
+    pages.foreach(r => assert(!Router.title(r).value.contains("_") && Router.title(r).value.head.isUpper, r.toString))

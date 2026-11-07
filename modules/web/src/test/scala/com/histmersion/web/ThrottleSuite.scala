@@ -7,11 +7,14 @@ class ThrottleSuite extends munit.FunSuite:
   /** A fake clock: `later` queues callbacks, `advance` runs the ones that are due. */
   final private class Clock:
     var t: Double = 0
-    private val queue = mutable.ListBuffer.empty[(Double, Int, () => Unit)]
+    private val queue = mutable.ListBuffer.empty[(Double, Throttle.TimerId, () => Unit)]
     private var ids = 0
-    def later(ms: Double, g: () => Unit): Int =
-      ids += 1; queue += ((t + ms, ids, g)); ids
-    def cancel(id: Int): Unit = queue.filterInPlace(_._2 != id)
+    def later(ms: Throttle.DelayMs, g: () => Unit): Throttle.TimerId =
+      ids += 1
+      val id = Throttle.TimerId(ids)
+      queue += ((t + ms.value, id, g))
+      id
+    def cancel(id: Throttle.TimerId): Unit = queue.filterInPlace(_._2 != id)
     def advance(ms: Double): Unit =
       t += ms
       val due = queue.filter(_._1 <= t).toList
@@ -19,7 +22,7 @@ class ThrottleSuite extends munit.FunSuite:
       due.foreach(_._3())
 
   private def throttled(clock: Clock, out: mutable.ListBuffer[Int]) =
-    Throttle[Int](com.histmersion.web.Throttle.IntervalMs(100), out += _, () => clock.t, clock.later, clock.cancel)
+    Throttle[Int](com.histmersion.web.Throttle.IntervalMs(100), out += _, () => ResearchOverview.EpochMillis(clock.t), clock.later, clock.cancel)
 
   test("the first call runs at once") {
     val c = Clock(); val out = mutable.ListBuffer.empty[Int]
@@ -93,11 +96,14 @@ class DebounceSuite extends munit.FunSuite:
 
   final private class Clock:
     var t: Double = 0
-    private val queue = mutable.ListBuffer.empty[(Double, Int, () => Unit)]
+    private val queue = mutable.ListBuffer.empty[(Double, Debounce.TimerId, () => Unit)]
     private var ids = 0
-    def later(ms: Double, g: () => Unit): Int =
-      ids += 1; queue += ((t + ms, ids, g)); ids
-    def cancel(id: Int): Unit = queue.filterInPlace(_._2 != id)
+    def later(ms: Debounce.Delay, g: () => Unit): Debounce.TimerId =
+      ids += 1
+      val id = Debounce.TimerId(ids)
+      queue += ((t + ms.value, id, g))
+      id
+    def cancel(id: Debounce.TimerId): Unit = queue.filterInPlace(_._2 != id)
     def pendingCount: Int = queue.size
     def advance(ms: Double): Unit =
       t += ms

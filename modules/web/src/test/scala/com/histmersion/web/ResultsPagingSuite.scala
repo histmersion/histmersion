@@ -44,6 +44,6 @@ class ResultsPagingSuite extends munit.FunSuite:
     val time = TimeHistogram(from = com.histmersion.api.library.TimeHistogram.From(-1475), to = com.histmersion.api.library.TimeHistogram.To(-1465), bucket = com.histmersion.api.library.TimeHistogram.Bucket(10), buckets = Nil, by = com.histmersion.api.library.TimeHistogram.By("time"), total = com.histmersion.api.library.TimeHistogram.Total(285))
     assertEquals(TreeTab.countLine(time, com.histmersion.api.RowCount(12), com.histmersion.api.Years.Astronomical(-1475), com.histmersion.api.Years.Astronomical(-1465)), "285 sources · 12 periods · 1475 BCE → 1465 BCE")
     assertEquals(
-      TreeTab.countLine(time.modify(_.by).setTo("region").modify(_.asOf).setTo((Some(-1470): _root_.scala.Option[_root_.scala.Long])), com.histmersion.api.RowCount(1), com.histmersion.api.Years.Astronomical(-1475), com.histmersion.api.Years.Astronomical(-1465)),
+      TreeTab.countLine(time.modify(_.by).setTo(TimeHistogram.By("region")).modify(_.asOf).setTo(Some(com.histmersion.api.catalogue.Year(-1470))), com.histmersion.api.RowCount(1), com.histmersion.api.Years.Astronomical(-1475), com.histmersion.api.Years.Astronomical(-1465)),
       "285 sources · 1 region · 1475 BCE → 1465 BCE · as of 1470 BCE"
     )
