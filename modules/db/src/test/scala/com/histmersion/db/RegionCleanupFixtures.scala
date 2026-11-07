@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -12,7 +14,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Migrate
-import com.histmersion.api.catalogue.Place
+import com.histmersion.api.catalogue.{Latitude, Longitude, Place}
 import com.histmersion.api.library.{Finding, Source}
 import com.histmersion.util.database.given
 
@@ -27,7 +29,7 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
 
   protected lazy val cfg = AppConfig.load()
   protected lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
@@ -39,8 +41,9 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then clean()
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
-  protected def pt(lon: Double, lat: Double) = Some(s"""{"type":"Point","coordinates":[$lon,$lat]}""")
-  protected def types(t: String) = Some(s"""{"feature_types":"$t"}""")
+  protected def pt(lon: Longitude, lat: Latitude) =
+    Some(Place.Geometry(s"""{"type":"Point","coordinates":[${lon.value},${lat.value}]}"""))
+  protected def types(t: String) = Some(Place.Properties(s"""{"feature_types":"$t"}"""))
 
   protected val City = "zzrc_city"
   protected val Regio1 = "pleiades_999100001"
@@ -55,88 +58,88 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
   protected val Peir = "pleiades_999100009"
 
   protected val places = List(
-    Place(com.histmersion.api.catalogue.Place.Id(City), com.histmersion.api.catalogue.Place.Label("Zzrc City"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0, -50.0)),
+    Place(com.histmersion.api.catalogue.Place.Id(City), com.histmersion.api.catalogue.Place.Label("Zzrc City"), Place.KindValue(Place.Kind.Site), pt(Longitude(140.0), Latitude(-50.0))),
     Place(
       com.histmersion.api.catalogue.Place.Id(Regio1),
       com.histmersion.api.catalogue.Place.Label("Zzrc Regio I (Porta Capena)"),
-      com.histmersion.domain.catalogue.Place.Kind.Region,
-      pt(140.02, -50.01),
+      Place.KindValue(Place.Kind.Region),
+      pt(Longitude(140.02), Latitude(-50.01)),
       properties = types("region")
     ),
     Place(
       com.histmersion.api.catalogue.Place.Id(Regio2),
       com.histmersion.api.catalogue.Place.Label("Zzrc Regio II (Caelimontium)"),
-      com.histmersion.domain.catalogue.Place.Kind.Region,
-      pt(140.03, -49.99),
+      Place.KindValue(Place.Kind.Region),
+      pt(Longitude(140.03), Latitude(-49.99)),
       properties = types("region")
     ),
     Place(
       com.histmersion.api.catalogue.Place.Id(Aiantis),
       com.histmersion.api.catalogue.Place.Label("Zzrc Aiantis"),
-      com.histmersion.domain.catalogue.Place.Kind.Region,
-      pt(140.2, -50.0),
+      Place.KindValue(Place.Kind.Region),
+      pt(Longitude(140.2), Latitude(-50.0)),
       properties = types("people")
     ),
-    Place(com.histmersion.api.catalogue.Place.Id(Athens), com.histmersion.api.catalogue.Place.Label("Zzrc Athens"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.21, -50.02)),
+    Place(com.histmersion.api.catalogue.Place.Id(Athens), com.histmersion.api.catalogue.Place.Label("Zzrc Athens"), Place.KindValue(Place.Kind.Site), pt(Longitude(140.21), Latitude(-50.02))),
     Place(
       com.histmersion.api.catalogue.Place.Id(Thess),
       com.histmersion.api.catalogue.Place.Label("Zzrc Thessalia"),
-      com.histmersion.domain.catalogue.Place.Kind.Region,
-      pt(142.5, -47.5),
+      Place.KindValue(Place.Kind.Region),
+      pt(Longitude(142.5), Latitude(-47.5)),
       properties = types("province")
     ),
     Place(
       com.histmersion.api.catalogue.Place.Id(Achaia),
       com.histmersion.api.catalogue.Place.Label("Zzrc Achaia"),
-      com.histmersion.domain.catalogue.Place.Kind.Region,
-      pt(141.25, -47.75),
+      Place.KindValue(Place.Kind.Region),
+      pt(Longitude(141.25), Latitude(-47.75)),
       properties = types("region")
     ),
     Place(
       com.histmersion.api.catalogue.Place.Id(Grid),
       com.histmersion.api.catalogue.Place.Label("Zzrc Gridsite"),
-      com.histmersion.domain.catalogue.Place.Kind.Site,
-      pt(143.5, -46.5),
+      Place.KindValue(Place.Kind.Site),
+      pt(Longitude(143.5), Latitude(-46.5)),
       properties = types("settlement")
     ),
     Place(
       com.histmersion.api.catalogue.Place.Id(Dup),
       com.histmersion.api.catalogue.Place.Label("Withdrawn (duplicate): Zzrc Creta et Cyrene"),
-      com.histmersion.domain.catalogue.Place.Kind.Region,
-      pt(144.0, -45.0),
+      Place.KindValue(Place.Kind.Region),
+      pt(Longitude(144.0), Latitude(-45.0)),
       properties = types("province")
     ),
     Place(
       com.histmersion.api.catalogue.Place.Id(Into),
       com.histmersion.api.catalogue.Place.Label("Zzrc Creta et Cyrene (Roman province)"),
-      com.histmersion.domain.catalogue.Place.Kind.Site,
-      pt(144.3, -45.2),
+      Place.KindValue(Place.Kind.Site),
+      pt(Longitude(144.3), Latitude(-45.2)),
       properties = types("province-2")
     ),
     Place(
       com.histmersion.api.catalogue.Place.Id(Peir),
       com.histmersion.api.catalogue.Place.Label("Zzrc Peiraieus"),
-      com.histmersion.domain.catalogue.Place.Kind.Region,
-      pt(140.25, -50.05),
+      Place.KindValue(Place.Kind.Region),
+      pt(Longitude(140.25), Latitude(-50.05)),
       properties = types("region,settlement,deme-attic")
     )
   )
 
-  protected def f(n: Int, region: Option[String], at: Option[GeoPoint]) =
-    Finding(s"zzrc_src#$n", com.histmersion.api.library.Citekey("zzrc_src"), s"claim $n", region, at, None, None, Nil, None)
+  protected def f(n: Int, region: Option[Finding.Region], at: Option[GeoPoint]) =
+    Finding(Finding.Id(s"zzrc_src#$n"), com.histmersion.api.library.Citekey("zzrc_src"), Finding.Claim(s"claim $n"), region, at, None, None, Nil, None)
 
   protected val findings = List(
-    f(0, Some("Zzrc City"), Some(GeoPoint(140.0, -50.0))),
-    f(1, Some("Zzrc Regio I (Porta Capena)"), Some(GeoPoint(140.0, -50.0))), // named, placed on the city
-    f(2, Some("Zzrc Athens"), Some(GeoPoint(140.21, -50.02))),
-    f(3, Some("Zzrc Aiantis"), Some(GeoPoint(140.2, -50.0))), // on the tribe's own point
-    f(4, Some("near the grid site"), Some(GeoPoint(143.52, -46.51))), // 2 km from a grid centre
-    f(5, Some("Zzrc Achaia"), None), // a name, no point
-    f(6, Some("Zzrc Hellas"), Some(GeoPoint(142.5, -47.5)))
+    f(0, Some(Finding.Region("Zzrc City")), Some(GeoPoint(Longitude(140.0), Latitude(-50.0)))),
+    f(1, Some(Finding.Region("Zzrc Regio I (Porta Capena)")), Some(GeoPoint(Longitude(140.0), Latitude(-50.0)))), // named, placed on the city
+    f(2, Some(Finding.Region("Zzrc Athens")), Some(GeoPoint(Longitude(140.21), Latitude(-50.02)))),
+    f(3, Some(Finding.Region("Zzrc Aiantis")), Some(GeoPoint(Longitude(140.2), Latitude(-50.0)))), // on the tribe's own point
+    f(4, Some(Finding.Region("near the grid site")), Some(GeoPoint(Longitude(143.52), Latitude(-46.51)))), // 2 km from a grid centre
+    f(5, Some(Finding.Region("Zzrc Achaia")), None), // a name, no point
+    f(6, Some(Finding.Region("Zzrc Hellas")), Some(GeoPoint(Longitude(142.5), Latitude(-47.5))))
   ) // round numbers ON a grid centre
 
   protected def seed(): Unit =
-    val _ = PlaceFixtures.upsertPlaces(ds, places.map(p => Place.Input(p, List(Place.Name(p.label)))))
+    val _ = PlaceFixtures.upsertPlaces(ds, places.map(p => Place.Input(p, List(Place.Name(Place.Name.Value(p.label.value))))))
     SourceFixtures.upsert(
       ds,
       Source(
@@ -163,11 +166,11 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
     )
 
   /** The fixture places finding `n` belongs to. */
-  protected def at(n: Int): Set[String] =
+  protected def at(n: Int): Set[Place.Id] =
     PlaceFixtures
-      .placesOf(ds, s"zzrc_src#$n")
+      .placesOf(ds, com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id(s"zzrc_src#$n"))
       .map(_.id)
-      .filter(id => id.startsWith("pleiades_99910") || id.startsWith("zzrc"))
+      .filter(id => id.value.startsWith("pleiades_99910") || id.value.startsWith("zzrc"))
       .toSet
 
   protected def assignmentsHold(): Unit =

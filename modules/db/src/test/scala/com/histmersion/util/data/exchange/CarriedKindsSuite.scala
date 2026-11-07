@@ -28,7 +28,7 @@ class CarriedKindsSuite extends munit.FunSuite:
       def entry: BundleEntry = BundleEntry("entities/odd.ndjson")
       def out(scope: BundleScope, files: com.histmersion.util.storage.ContentStore)(using
           com.augustnagro.magnum.DbCon
-      ): CarriedOut = CarriedOut(Array.emptyByteArray, None)
+      ): CarriedOut = CarriedOut(CarriedOut.Payload(Array.emptyByteArray), None)
       def into(scope: BundleScope, files: com.histmersion.util.storage.ContentStore)(using
           com.augustnagro.magnum.DbCon
       ): com.histmersion.util.data.exchange.BundleEntities => com.histmersion.util.data.exchange.BundleEntities =

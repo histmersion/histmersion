@@ -33,7 +33,9 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.util.data.exchange.{BundleExport, BundleScope}
 import com.histmersion.domain.automation.goals.GoalRepo
-import com.histmersion.util.data.exchange.{BundleImport, BundleRepo, MergeState}
+import com.histmersion.util.data.exchange.{BundleImport, BundleRepo, ImportOptions, MergeState}
+import com.histmersion.api.catalogue.{Latitude, Longitude}
+import com.histmersion.api.library.Citekey
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.catalogue.{EventPut, Period}
@@ -64,6 +66,12 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
   private lazy val cfg = AppConfig.load()
   private lazy val merge = cfg.merge.transformInto[MergeSettings]
   private lazy val admin = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+  private lazy val chunkChars = cfg.limits.chunkChars
+  private lazy val importChunkChars = ImportOptions.ChunkChars(chunkChars.value)
+  private lazy val importToleranceKm = ImportOptions.ToleranceKm(cfg.places.pointToleranceKm.value)
+
+  private def sha256Of(bundle: Path): com.histmersion.Sha256 =
+    com.histmersion.Sha256.assume(BundleFormat.sha256Hex(Files.readAllBytes(bundle)).value)
   private val tmp = Files.createTempDirectory("histmersion-merge-suite")
 
   private def exec(ds: DataSource, stmt: String): Unit =
@@ -107,7 +115,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         res,
         merge,
         com.histmersion.util.storage.ContentDirectory(originals),
-        cfg.limits.chunkChars,
+        importChunkChars,
         TestExchange.kinds,
         TestExchange.rules
       )
@@ -118,14 +126,14 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       bundle: Path,
       originals: Path,
       res: MergeResolutions = MergeResolutions(),
-      dryRun: Boolean = false
+      dryRun: ImportOptions.DryRun = ImportOptions.DryRun(false)
   ): com.histmersion.api.exchange.Bundle.ImportResult =
     com.histmersion.util.data.exchange.BundleImporter
       .run(
         ds,
         com.histmersion.util.storage.ByteSource.file(bundle),
-        BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
-        BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm),
+        sha256Of(bundle),
+        BundleImport.Options(dryRun, importChunkChars, importToleranceKm),
         com.histmersion.util.storage.ContentDirectory(originals),
         res,
         merge,
@@ -134,7 +142,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       )
       .fold(e => fail(e), identity)
 
-  private def count(ds: DataSource, q: String): Int = connect(ds)(Sql.raw(q).frag.query[Int].run().head)
+  private def count(ds: DataSource, q: String): Int = connect(ds)(Sql.raw(Sql.Text(q)).frag.query[Int].run().head)
 
   // ── the crafted pair ───────────────────────────────────────────────────────────────────────
 
@@ -144,13 +152,13 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       authors: List[String],
       year: Int,
       doi: Option[String] = None,
-      body: Option[String] = None,
+      body: Option[Source.OcrMarkdown] = None,
       status: com.histmersion.api.library.Source.Status = com.histmersion.api.library.Source.Status.Current,
-      notes: Option[String] = None,
+      notes: Option[Source.Notes] = None,
       venue: Option[String] = None,
-      summary: Option[String] = None,
-      findings: List[(String, List[String])] = Nil,
-      edges: List[(String, String)] = Nil
+      summary: Option[Source.Summary] = None,
+      findings: List[(Finding.Claim, List[Finding.Tags])] = Nil,
+      edges: List[(com.histmersion.api.library.Citekey, Edge.Kind)] = Nil
   ): Source =
     Source(
       com.histmersion.api.library.Citekey(ck),
@@ -173,29 +181,34 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       notes = notes,
       findings = findings.zipWithIndex.map { case ((claim, tags), i) =>
         Finding(
-          s"$ck#${i + 1}",
+          Finding.Id(s"$ck#${i + 1}"),
           com.histmersion.api.library.Citekey(ck),
           claim,
           Some(com.histmersion.api.library.Finding.Region("Anatolia")),
-          Some(GeoPoint(34.6, 40.0)),
+          Some(GeoPoint(Longitude(34.6), Latitude(40.0))),
           Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1200))),
           Some(com.histmersion.api.library.Finding.PeriodName("LBA")),
           tags,
           Some(Confidence.High)
         )
       },
-      edges = edges.map((dst, kind) => Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey(dst), kind))
+      edges = edges.map((dst, kind) => Edge(com.histmersion.api.library.Citekey(ck), dst, kind))
     )
 
   private def png(n: Byte): Array[Byte] = Array[Byte](0x89.toByte, 'P', 'N', 'G', 13, 10, 26, 10, n, n, n)
-  private def asset(name: String, n: Byte) = NewFigure(name, com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(n), None, None)
-  private def attest(ds: DataSource, ck: String, quote: String, target: String): Unit =
+  private def asset(name: NewFigure.Name, n: Byte) = NewFigure(name, com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), NewFigure.Bytes(png(n)), None, None)
+  private def attest(
+      ds: DataSource,
+      ck: com.histmersion.api.library.Citekey,
+      quote: Attestation.Quote,
+      target: Attestation.TargetId
+  ): Unit =
     val _ = AttestationRows.create(
       ds,
-      Attestation.Put(ck, com.histmersion.api.catalogue.Attestation.TargetType("place"), target, quote = Some(quote), charStart = Some(0), charEnd = Some(quote.length))
+      Attestation.Put(ck, com.histmersion.api.catalogue.Attestation.TargetType("place"), target, quote = Some(quote), charStart = Some(0), charEnd = Some(quote.value.length))
     )
 
-  private def put(ds: DataSource, s: Source): Unit = SourceFixtures.upsert(ds, s, cfg.limits.chunkChars)
+  private def put(ds: DataSource, s: Source): Unit = SourceFixtures.upsert(ds, s, chunkChars.value)
 
   private val olsen: String =
     val rnd = scala.util.Random(2015)
@@ -212,27 +225,27 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     Transactor(work).transact(BundleRepo.setLabel(Some(com.histmersion.api.aliases.InstanceInfo.Label("work"))))
     Transactor(home).transact(BundleRepo.setLabel(Some(com.histmersion.api.aliases.InstanceInfo.Label("home"))))
     // ── the shared history ──
-    put(work, src("zzshared2001_alpha", "Alpha", List("Doe, John"), 2001, summary = Some("as imported")))
+    put(work, src("zzshared2001_alpha", "Alpha", List("Doe, John"), 2001, summary = Some(Source.Summary("as imported"))))
     transact(work)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_shared_goal"), Goal.Put(com.histmersion.api.automation.Goal.Title("Shared goal"))))
     // two articles both sides will edit: in different places (a clean three-way merge), in one place
     val _ = ArticleFixtures.put(work, Article(com.histmersion.api.research.Article.Slug("zz_shared_art"), com.histmersion.api.research.Article.Title("Shared"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("Intro.\n\nMiddle.\n\nEnd.")))
     val _ = ArticleFixtures.put(work, Article(com.histmersion.api.research.Article.Slug("zz_shared_conf"), com.histmersion.api.research.Article.Title("Conflict"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("One.\n\nTwo.\n\nThree.")))
     val first = importInto(home, exportOf(work, sw), sh)
-    assert(first.applied, first.problems.mkString("\n"))
+    assert(first.applied.value, first.problems.mkString("\n"))
     // …then both sides go on
     val _ =
       SourceFixtures.patch(
         work,
         "zzshared2001_alpha",
         Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("edited at work"))),
-        cfg.limits.chunkChars
+        chunkChars.value
       )
     val _ =
       SourceFixtures.patch(
         home,
         "zzshared2001_alpha",
         Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("edited at home"))),
-        cfg.limits.chunkChars
+        chunkChars.value
       )
     val _ = Transactor(work).transact(GoalRepo.deleteIn(com.histmersion.domain.automation.Goal.Slug("zz_shared_goal")))
     val _ = Transactor(home).transact(GoalRepo.patchIn(com.histmersion.domain.automation.Goal.Slug("zz_shared_goal"), Goal.Patch(notes = Some(com.histmersion.api.automation.Goal.Notes("edited at home")))))
@@ -253,21 +266,21 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         1997,
         doi = Some("10.5555/oip26"),
         venue = Some("Oriental Institute"),
-        notes = Some("work's notes"),
+        notes = Some(Source.Notes("work's notes")),
         // the same claim as home's #1 (other word order), a near duplicate of it, and one home lacks
         findings = List(
-          "the storm god of Hatti is Tarhunna" -> List("work"),
-          "Tarhunna the storm god ruled Hatti and Arinna" -> Nil,
-          "Hattusa burned around 1180 BC" -> Nil
+          Finding.Claim("the storm god of Hatti is Tarhunna") -> List(Finding.Tags("work")),
+          Finding.Claim("Tarhunna the storm god ruled Hatti and Arinna") -> Nil,
+          Finding.Claim("Hattusa burned around 1180 BC") -> Nil
         ),
-        edges = List("zznew2020_only" -> "references", "smith1900_unknown" -> "references")
+        edges = List(Citekey("zznew2020_only") -> Edge.Kind.References, Citekey("smith1900_unknown") -> Edge.Kind.References)
       )
     )
     // one figure as home's (the same bytes), one new, one whose name home uses for another figure
     val _ = AssetFixtures.add(
       work,
       "guterbock1997_perspectives",
-      List(asset("fig1.png", 1), asset("fig2.png", 2), asset("fig3.png", 4))
+      List(asset(NewFigure.Name("fig1.png"), 1), asset(NewFigure.Name("fig2.png"), 2), asset(NewFigure.Name("fig3.png"), 4))
     )
     put(
       work,
@@ -277,13 +290,13 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         List("Amélie Kuhrt"),
         1995,
         doi = Some("10.4324/9780203431566"),
-        body = Some("Kuhrt body, work's OCR")
+        body = Some(Source.OcrMarkdown("Kuhrt body, work's OCR"))
       )
     )
     SourceFixtures.setSha256(work, "kuhrt1995_near", kuhrtSha)
     // one passage home's body has too (it moves), one only work's has (it cannot)
-    attest(work, "kuhrt1995_near", "Kuhrt body", "zz_found")
-    attest(work, "kuhrt1995_near", "work's OCR", "zz_lost")
+    attest(work, Citekey("kuhrt1995_near"), Attestation.Quote("Kuhrt body"), Attestation.TargetId("zz_found"))
+    attest(work, Citekey("kuhrt1995_near"), Attestation.Quote("work's OCR"), Attestation.TargetId("zz_lost"))
     put(
       work,
       src(
@@ -293,7 +306,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         2006,
         doi = Some("10.1093/acprof:oso/9780199279081.001.0001"),
         status = com.histmersion.api.library.Source.Status.Contested,
-        edges = List("guterbock1997_perspectives" -> "references")
+        edges = List(Citekey("guterbock1997_perspectives") -> Edge.Kind.References)
       )
     )
     put(
@@ -321,7 +334,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       )
     )
     val _ = SourceFixtures.rename(work, "harrison1903_old", "harrison1903_prolegomena")
-    put(work, src("olsen2015_penelope", "Penelope's Weaving", List("Barbara Olsen"), 2015, body = Some(olsen)))
+    put(work, src("olsen2015_penelope", "Penelope's Weaving", List("Barbara Olsen"), 2015, body = Some(Source.OcrMarkdown(olsen))))
     put(work, src("zznew2020_only", "A Book Only Work Has", List("Roe, Richard"), 2020))
     put(work, src("west1997_east", "The East Face of Helicon", List("M. L. West"), 1997))
     exec(
@@ -334,7 +347,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         com.histmersion.api.research.Article.Slug("bronze_age_collapse"),
         com.histmersion.api.research.Article.Title("Bronze Age collapse"),
         com.histmersion.api.research.Article.KindValue("concept"),
-        "Work's account of the collapse, citing [[kuhrt1995_near]]."
+        com.histmersion.api.research.Article.Body("Work's account of the collapse, citing [[kuhrt1995_near]].")
       )
     )
     val _ = ArticleFixtures.put(work, Article(com.histmersion.api.research.Article.Slug("zz_same_text"), com.histmersion.api.research.Article.Title("Same"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("Identical on both sides.")))
@@ -361,13 +374,16 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         List("Hoffner, Harry A.", "Güterbock, Hans G."),
         1997,
         venue = Some("Oriental Institute"),
-        notes = Some("home's notes"),
+        notes = Some(Source.Notes("home's notes")),
         findings =
-          List("Tarhunna is the storm god of Hatti" -> List("home"), "The storm god Tarhunna ruled Hatti" -> Nil),
-        edges = List("page1959_history" -> "references")
+          List(
+            Finding.Claim("Tarhunna is the storm god of Hatti") -> List(Finding.Tags("home")),
+            Finding.Claim("The storm god Tarhunna ruled Hatti") -> Nil
+          ),
+        edges = List(Citekey("page1959_history") -> Edge.Kind.References)
       )
     )
-    val _ = AssetFixtures.add(home, "guterbock1997_hittite", List(asset("fig1.png", 1), asset("fig3.png", 3)))
+    val _ = AssetFixtures.add(home, "guterbock1997_hittite", List(asset(NewFigure.Name("fig1.png"), 1), asset(NewFigure.Name("fig3.png"), 3)))
     put(
       home,
       src(
@@ -376,12 +392,12 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         List("Kuhrt, Amelie"),
         1995,
         doi = Some("10.4324/9781315682334"),
-        body = Some("Preface. Kuhrt body, home's OCR")
+        body = Some(Source.OcrMarkdown("Preface. Kuhrt body, home's OCR"))
       )
     )
     SourceFixtures.setSha256(home, "kuhrt1995_ancient", kuhrtSha)
     // home's own attestation: should the merge take work's body, it could not move
-    attest(home, "kuhrt1995_ancient", "home's OCR", "zz_home")
+    attest(home, Citekey("kuhrt1995_ancient"), Attestation.Quote("home's OCR"), Attestation.TargetId("zz_home"))
     put(
       home,
       src(
@@ -419,7 +435,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = SourceFixtures.rename(home, "harrison1903_old", "harrison1912_themis")
     put(
       home,
-      src("olsen2015_penelope_weaving", "Penelope’s weaving", List("Olsen, Barbara"), 2015, body = Some(olsenAgain))
+      src("olsen2015_penelope_weaving", "Penelope’s weaving", List("Olsen, Barbara"), 2015, body = Some(Source.OcrMarkdown(olsenAgain)))
     )
     put(home, src("west1997_face", "The East Face of Helicon", List("West, Martin L."), 1997))
     exec(
@@ -428,7 +444,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     val _ = ArticleFixtures.put(
       home,
-      Article(com.histmersion.api.research.Article.Slug("bronze_age_collapse"), com.histmersion.api.research.Article.Title("Bronze Age collapse"), com.histmersion.api.research.Article.KindValue("concept"), "Home's account of the collapse.")
+      Article(com.histmersion.api.research.Article.Slug("bronze_age_collapse"), com.histmersion.api.research.Article.Title("Bronze Age collapse"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("Home's account of the collapse."))
     )
     val _ = ArticleFixtures.put(home, Article(com.histmersion.api.research.Article.Slug("zz_same_text"), com.histmersion.api.research.Article.Title("Same"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("Identical on both sides.")))
     EventFixtures.put(
@@ -441,9 +457,9 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       "zz_ev_same",
       EventPut(com.histmersion.api.catalogue.EventSummary.Label("Fall of Hattusa (home)"), com.histmersion.api.catalogue.EventSummary.Kind("destruction"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1190)), None, None, Some(com.histmersion.api.catalogue.Year(-1180))))
     )
-    transact(home)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_goal_both"), Goal.Put(com.histmersion.api.automation.Goal.Title("Goal created at home"), notes = Some("home's plan"))))
+    transact(home)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_goal_both"), Goal.Put(com.histmersion.api.automation.Goal.Title("Goal created at home"), notes = Some(com.histmersion.api.automation.Goal.Notes("home's plan")))))
     val task = QueueRows.add(home, Queue.Kind.Tasks, Queue.QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("Find the Kuhrt reprint")))
-    val _ = QueueRows.patch(home, task.id, Queue.QueuePatch(status = Some(Queue.Done)))
+    val _ = QueueRows.patch(home, task.id, Queue.QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done))))
     (work, home, sw, sh)
 
   /** kind, id letter, left label, right label, severity, conditional on. */
@@ -454,9 +470,9 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       .map(i =>
         (
           i.kind,
-          i.id.takeWhile(_ != '-'),
-          i.left.map(_.label),
-          i.right.map(_.label),
+          i.id.value.takeWhile(_ != '-'),
+          i.left.map(_.label.value),
+          i.right.map(_.label.value),
           i.severity,
           i.condition.map(_.when)
         )
@@ -505,12 +521,12 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     // the ISBN and the near-identical OCR are what matched them
     val matched = RegisteredPlanMatches.kind.all(p.sources)
     assert(
-      matched.exists(m => m.rightCitekey == "west1997_east" && m.why.exists(_.startsWith("ISBN"))),
+      matched.exists(m => m.rightCitekey.value == "west1997_east" && m.why.exists(_.value.startsWith("ISBN"))),
       matched.toString
     )
     assert(
-      matched.exists(m => m.rightCitekey == "olsen2015_penelope" && m.why.exists(_.contains("OCR bodies alike"))),
-      matched.find(_.rightCitekey == "olsen2015_penelope").toString
+      matched.exists(m => m.rightCitekey.value == "olsen2015_penelope" && m.why.exists(_.value.contains("OCR bodies alike"))),
+      matched.find(_.rightCitekey.value == "olsen2015_penelope").toString
     )
     // deterministic, and pure: planning twice gives the same plan and writes nothing
     assertEquals(planIn(home, bundle, sh), p)
@@ -524,30 +540,30 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     val bundle = exportOf(work, sw)
     val before = Files.readAllBytes(exportOf(home, sh))
     val r = importInto(home, bundle, sh)
-    assert(!r.applied)
+    assert(!r.applied.value)
     val p = planIn(home, bundle, sh)
     assertEquals(r.planHash, Some(p.planHash))
     p.open.foreach(i =>
-      assert(r.problems.exists(_.startsWith(i.id)), s"${i.id} not reported:\n${r.problems.mkString("\n")}")
+      assert(r.problems.exists(_.value.startsWith(i.id.value)), s"${i.id} not reported:\n${r.problems.mkString("\n")}")
     )
     assert(
-      r.problems.exists(x => x.contains("guterbock1997_perspectives") && x.contains("merge apply")),
+      r.problems.exists(x => x.value.contains("guterbock1997_perspectives") && x.value.contains("merge apply")),
       r.problems.mkString("\n")
     )
     // decided the importable way, the merges still need merge apply
     val res = MergeResolutions(
-      p.open.filter(i => i.options.contains(DecisionKind.KeepLeft)).map(i => MergeResolution(i.id, com.histmersion.api.exchange.MergeResolution.Decision("keep-left")))
+      p.open.filter(i => i.options.contains(DecisionKind.KeepLeft)).map(i => MergeResolution(MergeResolution.Issue(i.id.value), com.histmersion.api.exchange.MergeResolution.Decision("keep-left")))
     )
     val r2 = importInto(home, bundle, sh, res)
-    assert(!r2.applied)
-    assert(r2.problems.forall(x => x.contains("merge apply") || x.contains("open")), r2.problems.mkString("\n"))
+    assert(!r2.applied.value)
+    assert(r2.problems.forall(x => x.value.contains("merge apply") || x.value.contains("open")), r2.problems.mkString("\n"))
     assert(java.util.Arrays.equals(Files.readAllBytes(exportOf(home, sh)), before), "a refused import wrote something")
 
   test("uid_aliases: a bundle uid redirected here lands on the surviving row — its label wins, nothing is inserted"):
     val (a, b) = (fresh("ua"), fresh("ub"))
     val (sa, sb) = (spool("ua"), spool("ub"))
-    put(a, src("zzx2001_there", "There", List("Doe, John"), 2001, summary = Some("v1")))
-    put(b, src("zzx2001_here", "Here", List("Doe, John"), 2001, summary = Some("ours")))
+    put(a, src("zzx2001_there", "There", List("Doe, John"), 2001, summary = Some(Source.Summary("v1"))))
+    put(b, src("zzx2001_here", "Here", List("Doe, John"), 2001, summary = Some(Source.Summary("ours"))))
     val uidThere = connect(a)(sql"SELECT uid FROM sources WHERE citekey = 'zzx2001_there'".query[UUID].run().head)
     val uidHere = connect(b)(sql"SELECT uid FROM sources WHERE citekey = 'zzx2001_here'".query[UUID].run().head)
     // what merge apply (M5) will leave behind: a redirect, and a ledger row whose local rev is ours now
@@ -573,13 +589,13 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     // it changes over there; ours has not changed since the merge → fast-forward onto OUR row
     val _ =
-      SourceFixtures.patch(a, "zzx2001_there", Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("v2 from there"))), cfg.limits.chunkChars)
+      SourceFixtures.patch(a, "zzx2001_there", Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("v2 from there"))), chunkChars.value)
     val bundle = exportOf(a, sa)
     val p = planIn(b, bundle, sb)
     assertEquals(p.issues, Nil)
     assertEquals(p.matches.byLedger, 1)
     val r = importInto(b, bundle, sb)
-    assert(r.applied, r.problems.mkString("\n"))
+    assert(r.applied.value, r.problems.mkString("\n"))
     assertEquals(r.counts.find(_.kind == Bundle.Kind.Source).map(_.updated), Some(1), r.toString)
     assertEquals(count(b, "SELECT count(*)::int FROM sources"), 1)
     assertEquals(SourceFixtures.load(b, "zzx2001_here").flatMap(_.summary), Some("v2 from there"))
@@ -603,8 +619,8 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     val p = planIn(b, bundle, sb)
     val taken = p.open.find(_.kind == Issue.Kind.LabelTaken).getOrElse(fail(p.issues.toString))
     assertEquals(p.open.size, 1, p.issues.mkString("\n"))
-    val r = importInto(b, bundle, sb, MergeResolutions(List(MergeResolution(taken.id, com.histmersion.api.exchange.MergeResolution.Decision("keep-left")))))
-    assert(r.applied, r.problems.mkString("\n"))
+    val r = importInto(b, bundle, sb, MergeResolutions(List(MergeResolution(MergeResolution.Issue(taken.id.value), com.histmersion.api.exchange.MergeResolution.Decision("keep-left")))))
+    assert(r.applied.value, r.problems.mkString("\n"))
     assertEquals(count(b, "SELECT count(*)::int FROM sources WHERE citekey = 'zzy2001_new'"), 1)
     assertEquals(connect(b)(sql"SELECT label FROM events WHERE id = 'zz_both'".query[String].run().head), "Event at b")
 
@@ -618,19 +634,19 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       bundle: Path,
       originals: Path,
       res: MergeResolutions,
-      hash: String
+      hash: MergePlan.PlanHash
   ): MergeApplyResult =
     com.histmersion.util.data.exchange.BundleImporter
       .apply(
         ds,
         com.histmersion.util.storage.ByteSource.file(bundle),
-        BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
+        sha256Of(bundle),
         BundleImport
-          .Options(dryRun = com.histmersion.util.data.exchange.ImportOptions.DryRun(false), cfg.limits.chunkChars, cfg.places.pointToleranceKm),
+          .Options(dryRun = com.histmersion.util.data.exchange.ImportOptions.DryRun(false), importChunkChars, importToleranceKm),
         com.histmersion.util.storage.ContentDirectory(originals),
         res,
         merge,
-        hash,
+        com.histmersion.Sha256.assume(hash.value),
         () => { val _ = backupsTaken.incrementAndGet(); Right("stub.dump") },
         TestExchange.kinds,
         TestExchange.rules,
@@ -647,7 +663,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     val d = i.kind match
       case SameWork                                            => s"map:${i.left.get.label}"
       case YearDiffers                                         => "keep-left"
-      case CitekeyCollision                                    => i.suggested.get.wire
+      case CitekeyCollision                                    => i.suggested.get.wire.value
       case AliasConflict                                       => "keep-left"
       case DoiDiffers                                          => "keep-left"
       case StatusDiffers                                       => "keep-right"
@@ -658,8 +674,12 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       case ArticleDiverged                                     => "both"
       case LabelTaken                                          => "rename-right:zz_siege_work"
       case AttestationUnanchored                               => "drop"
-      case _ => i.suggested.fold(DecisionKind.wireOf(i.options.head))(_.wire)
-    MergeResolution(i.id, d, Option.when(d.startsWith("file:"))(confText))
+      case _ => i.suggested.fold(DecisionKind.wireOf(i.options.head).value)(_.wire.value)
+    MergeResolution(
+      MergeResolution.Issue(i.id.value),
+      MergeResolution.Decision(d),
+      Option.when(d.startsWith("file:"))(MergeResolution.Text(confText))
+    )
 
   /** Plan, decide what is open, plan again — until nothing is open (a decision can make a conditional issue
     * unconditional).
@@ -673,9 +693,12 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       else loop(res.copy(resolve = res.resolve ++ p.open.map(decide)), n - 1)
     loop(MergeResolutions(), 5)
 
-  private def one[A](ds: DataSource, q: String)(using DbCodec[A]): A = connect(ds)(Sql.raw(q).frag.query[A].run().head)
+  private def one[A](ds: DataSource, q: String)(using DbCodec[A]): A =
+    connect(ds)(Sql.raw(Sql.Text(q)).frag.query[A].run().head)
   private def uidOf(ds: DataSource, table: String, col: String, label: String): UUID =
-    connect(ds)(Sql.of(s"SELECT uid FROM $table WHERE $col = ?", Param.S(label)).frag.query[UUID].run().head)
+    connect(ds)(
+      Sql.of(Sql.Text(s"SELECT uid FROM $table WHERE $col = ?"), Param.S(Param.S.V(label))).frag.query[UUID].run().head
+    )
 
   test(
     "merge apply: the crafted pair, every issue decided — one transaction; re-planned, 0 changes; applied again, a no-op"
@@ -684,19 +707,19 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     val bundle = exportOf(work, sw)
     val (res, p) = decideAll(home, bundle, sh)
     assertEquals(p.open, Nil, p.issues.mkString("\n"))
-    assert(p.changes > 0)
+    assert(p.changes.value > 0)
     // a stale plan is refused, and nothing is written — not even a backup
     val before = Files.readAllBytes(exportOf(home, sh))
-    val stale = applyIn(home, bundle, sh, res, "0badc0de")
-    assert(!stale.applied)
-    assert(stale.problems.exists(_.contains("not 0badc0de")), stale.problems.mkString("\n"))
+    val stale = applyIn(home, bundle, sh, res, MergePlan.PlanHash("0badc0de"))
+    assert(!stale.applied.value)
+    assert(stale.problems.exists(_.value.contains("not 0badc0de")), stale.problems.mkString("\n"))
     assertEquals(backupsTaken.get, 0)
     assert(java.util.Arrays.equals(Files.readAllBytes(exportOf(home, sh)), before), "a refused apply wrote something")
 
     val uidW = uidOf(work, "sources", "citekey", "guterbock1997_perspectives")
     val uidH = uidOf(home, "sources", "citekey", "guterbock1997_hittite")
     val r = applyIn(home, bundle, sh, res, p.planHash)
-    assert(r.applied, r.problems.mkString("\n"))
+    assert(r.applied.value, r.problems.mkString("\n"))
     assertEquals(r.backup, Some("stub.dump"))
     assertEquals(backupsTaken.get, 1)
     assertEquals(r.replanChanges, Some(0), "planning the same bundle again after the apply")
@@ -744,14 +767,14 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     // numbered after home's last
     val gf = SourceFixtures.load(home, "guterbock1997_hittite").get.findings
     assertEquals(
-      gf.map(_.id).sorted,
+      gf.map(_.id.value).sorted,
       List("guterbock1997_hittite#1", "guterbock1997_hittite#2", "guterbock1997_hittite#3", "guterbock1997_hittite#4")
     )
-    assertEquals(gf.find(_.id == "guterbock1997_hittite#1").map(_.tags.sorted), Some(List("home", "work")))
-    assert(gf.exists(_.claim == "Hattusa burned around 1180 BC"))
+    assertEquals(gf.find(_.id.value == "guterbock1997_hittite#1").map(_.tags.map(_.value).sorted), Some(List("home", "work")))
+    assert(gf.exists(_.claim.value == "Hattusa burned around 1180 BC"))
     // figures: the same bytes are one, a taken name gets work's label
     assertEquals(
-      AssetFixtures.list(home, "guterbock1997_hittite").map(_.name).toList.sorted,
+      AssetFixtures.list(home, "guterbock1997_hittite").map(_.name.value).toList.sorted,
       List("fig1.png", "fig2.png", "fig3-work.png", "fig3.png")
     )
     // edges: re-pointed through the merge, ours kept, the parked one carried
@@ -832,7 +855,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(again.changes, 0, again.issues.filter(_.decision.isDefined).mkString("\n"))
     val snapshot = Files.readAllBytes(exportOf(home, sh))
     val noop = applyIn(home, bundle, sh, res, again.planHash)
-    assert(noop.applied, noop.problems.mkString("\n"))
+    assert(noop.applied.value, noop.problems.mkString("\n"))
     assertEquals(noop.mergeId, None)
     assertEquals(backupsTaken.get, 1)
     assert(java.util.Arrays.equals(Files.readAllBytes(exportOf(home, sh)), snapshot), "a second apply wrote something")
@@ -847,8 +870,8 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     val p = planIn(home, bundle, sh)
     val taken = backupsTaken.get
     val r = applyIn(home, bundle, sh, MergeResolutions(), p.planHash)
-    assert(!r.applied)
-    p.open.foreach(i => assert(r.problems.exists(_.startsWith(i.id)), s"${i.id} not reported"))
+    assert(!r.applied.value)
+    p.open.foreach(i => assert(r.problems.exists(_.value.startsWith(i.id.value)), s"${i.id} not reported"))
     assertEquals(backupsTaken.get, taken)
 
   test(
@@ -880,8 +903,8 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
               List(s"Author$i, Ann"),
               year,
               doi = Option.when(rnd.nextBoolean())(s"10.9999/w$i"),
-              findings = rnd.shuffle(claims).take(rnd.nextInt(3)).map(_ -> List(tag)),
-              edges = cks.filter(_ != ck).filter(_ => rnd.nextDouble() < 0.3).map(_ -> "references")
+              findings = rnd.shuffle(claims).take(rnd.nextInt(3)).map(c => Finding.Claim(c) -> List(Finding.Tags(tag))),
+              edges = cks.filter(_ != ck).filter(_ => rnd.nextDouble() < 0.3).map(c => Citekey(c) -> Edge.Kind.References)
             )
           )
         }
@@ -895,21 +918,19 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         else
           loop(
             res.copy(resolve =
-              res.resolve ++ p.open.map(i =>
-                MergeResolution(
-                  i.id,
-                  i.kind match
-                    case SameWork => s"map:${i.left.get.label}"
-                    case _        => i.suggested.fold(DecisionKind.wireOf(i.options.head))(_.wire)
-                )
-              )
+              res.resolve ++ p.open.map { i =>
+                val wire = i.kind match
+                  case SameWork => s"map:${i.left.get.label}"
+                  case _        => i.suggested.fold(DecisionKind.wireOf(i.options.head).value)(_.wire.value)
+                MergeResolution(MergeResolution.Issue(i.id.value), MergeResolution.Decision(wire))
+              }
             ),
             n - 1
           )
       val (res, p) = loop(MergeResolutions(), 5)
       assertEquals(p.open, Nil, s"round $round")
       val r = applyIn(b, bundle, sb, res, p.planHash)
-      assert(r.applied, s"round $round: ${r.problems.mkString("\n")}")
+      assert(r.applied.value, s"round $round: ${r.problems.mkString("\n")}")
       assertEquals(r.replanChanges, Some(0), s"round $round")
       assertEquals(
         count(
@@ -937,7 +958,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       assertEquals(again.changes, 0, s"round $round")
       val snapshot = Files.readAllBytes(exportOf(b, sb))
       val noop = applyIn(b, bundle, sb, res, again.planHash)
-      assert(noop.applied && noop.mergeId.isEmpty, s"round $round: ${noop.problems.mkString("\n")}")
+      assert(noop.applied.value && noop.mergeId.isEmpty, s"round $round: ${noop.problems.mkString("\n")}")
       assert(
         java.util.Arrays.equals(Files.readAllBytes(exportOf(b, sb)), snapshot),
         s"round $round: a second apply wrote something"
@@ -952,16 +973,16 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     EventFixtures.put(a, "zz_old_event", EventPut(com.histmersion.api.catalogue.EventSummary.Label("An event"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1200)), None, None, Some(com.histmersion.api.catalogue.Year(-1190)))))
     transact(a)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_old_goal"), Goal.Put(com.histmersion.api.automation.Goal.Title("A goal"))))
     val first = importInto(b, exportOf(a, sa), sb)
-    assert(first.applied, first.problems.mkString("\n"))
+    assert(first.applied.value, first.problems.mkString("\n"))
     transact(a) {
-      ArticleFixtures.renameIn(com.histmersion.domain.research.Slug("zz_old_slug"), com.histmersion.domain.research.Slug("zz_new_slug")).fold(e => fail(e.message), identity)
-      EventFixtures.renameIn("zz_old_event", "zz_new_event").fold(e => fail(e.message), identity)
-      GoalRepo.renameIn(com.histmersion.domain.automation.Goal.Slug("zz_old_goal"), com.histmersion.domain.automation.Goal.Slug("zz_new_goal")).fold(e => fail(e.message), identity)
+      ArticleFixtures.renameIn(com.histmersion.domain.research.Slug("zz_old_slug"), com.histmersion.domain.research.Slug("zz_new_slug")).fold(e => fail(e.message.value), identity)
+      EventFixtures.renameIn("zz_old_event", "zz_new_event").fold(e => fail(e.message.value), identity)
+      GoalRepo.renameIn(com.histmersion.domain.automation.Goal.Slug("zz_old_goal"), com.histmersion.domain.automation.Goal.Slug("zz_new_goal")).fold(e => fail(e.message.value), identity)
     }
     // the rename rewrote the link in the other article over there
     assertEquals(ArticleFixtures.load(a, "zz_linker").map(_.body), Some("See [[zz_new_slug]]."))
     val r = importInto(b, exportOf(a, sa), sb)
-    assert(r.applied, r.problems.mkString("\n"))
+    assert(r.applied.value, r.problems.mkString("\n"))
     assertEquals(ArticleFixtures.load(b, "zz_new_slug").map(_.body), Some("Text."))
     assertEquals(ArticleFixtures.view(b, "zz_old_slug").map(_.article.slug), Some("zz_new_slug"))
     assertEquals(ArticleFixtures.load(b, "zz_linker").map(_.body), Some("See [[zz_new_slug]]."))

@@ -7,9 +7,20 @@ import com.histmersion.api.library.Source
 
 /** The db suites' reads of the citation graph on a database of their own. */
 object CitationFixtures:
-  def neighbors(ds: DataSource, citekey: String, kinds: List[String] = Nil): Vector[NeighborRow] =
+  type Since = CitationRepo.Since
+  val Since: CitationRepo.Since.type = CitationRepo.Since
+
+  def neighbors(
+      ds: DataSource,
+      citekey: com.histmersion.domain.library.Citekey,
+      kinds: List[com.histmersion.domain.library.Edge.Kind.Wire] = Nil
+  ): Vector[NeighborRow] =
     connect(ds)(CitationRepo.neighbors(citekey, kinds))
-  def graph(ds: DataSource, citekey: String, maxDepth: Int): Source.Graph =
+  def graph(ds: DataSource, citekey: com.histmersion.domain.library.Citekey, maxDepth: Source.Graph.Depth): Source.Graph =
     connect(ds)(CitationRepo.graph(citekey, maxDepth))
-  def contradictions(ds: DataSource, citekey: Option[String], since: Option[Long]): ContradictionsResult =
+  def contradictions(
+      ds: DataSource,
+      citekey: Option[com.histmersion.domain.library.Citekey],
+      since: Option[CitationRepo.Since]
+  ): ContradictionsResult =
     connect(ds)(CitationRepo.contradictions(citekey, since))

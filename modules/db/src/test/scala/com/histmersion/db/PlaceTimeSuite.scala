@@ -14,6 +14,8 @@ import com.histmersion.domain.catalogue.evidence.*
 import com.histmersion.api.{GeoPoint, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.domain.catalogue.Place.Id as PlaceId
+import com.histmersion.domain.catalogue.Place.Kind.Wire as KindWire
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Migrate
@@ -41,30 +43,36 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
     Migrate.run(d)
     d
 
-  private val Lat = -55.0
-  private def pt(i: Int) = Some(s"""{"type":"Point","coordinates":[${100 + i}.0,$Lat]}""")
+  private val Lat = com.histmersion.api.catalogue.Latitude(-55.0)
+  private def pt(i: Int) = Some(Place.Geometry(s"""{"type":"Point","coordinates":[${100 + i}.0,$Lat]}"""))
 
-  private def place(id: String, kind: String, i: Int, period: Option[Period], props: Option[String] = None) =
+  private def place(
+      id: Place.Id,
+      kind: Place.KindValue,
+      i: Int,
+      period: Option[Period],
+      props: Option[Place.Properties] = None
+  ) =
     Place.Input(
-      Place(com.histmersion.api.catalogue.Place.Id(id), s"Zqtv ${id.stripPrefix("zqtv_")}", kind, pt(i), period, Some(com.histmersion.api.catalogue.Place.Source("fixture")), props),
-      List(Place.Name(s"Zqtv ${id.stripPrefix("zqtv_")}")),
-      List(Place.Relation(id, com.histmersion.api.catalogue.Place.Relation.ParentId("zqtv_root")))
+      Place(id, Place.Label(s"Zqtv ${id.value.stripPrefix("zqtv_")}"), kind, pt(i), period, Some(com.histmersion.api.catalogue.Place.Source("fixture")), props),
+      List(Place.Name(Place.Name.Value(s"Zqtv ${id.value.stripPrefix("zqtv_")}"))),
+      List(Place.Relation(Place.Relation.ChildId(id.value), com.histmersion.api.catalogue.Place.Relation.ParentId("zqtv_root")))
     )
 
   private val fixtures = List(
     Place.Input(
-      Place(com.histmersion.api.catalogue.Place.Id("zqtv_root"), com.histmersion.api.catalogue.Place.Label("Zqtv root"), com.histmersion.domain.catalogue.Place.Kind.Region),
+      Place(com.histmersion.api.catalogue.Place.Id("zqtv_root"), com.histmersion.api.catalogue.Place.Label("Zqtv root"), Place.KindValue(Place.Kind.Region)),
       List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqtv root")))
     ),
-    place("zqtv_dated", com.histmersion.domain.catalogue.Place.Kind.Site, 0, Some(Period(com.histmersion.api.catalogue.Year(-2600), com.histmersion.api.catalogue.Year(-2400)))),
-    place("zqtv_late", com.histmersion.domain.catalogue.Place.Kind.Site, 1, Some(Period(com.histmersion.api.catalogue.Year(1100), com.histmersion.api.catalogue.Year(1300)))),
-    place("zqtv_bare", com.histmersion.domain.catalogue.Place.Kind.Site, 2, None),
-    place("zqtv_evid", com.histmersion.domain.catalogue.Place.Kind.Site, 3, None),
-    place("zqtv_undfind", com.histmersion.domain.catalogue.Place.Kind.Site, 4, None),
-    place("zqtv_evt", com.histmersion.domain.catalogue.Place.Kind.Site, 5, None),
-    place("zqtv_river", com.histmersion.domain.catalogue.Place.Kind.Feature, 6, Some(Period(com.histmersion.api.catalogue.Year(-30), com.histmersion.api.catalogue.Year(2100)))),
-    place("zqtv_city", com.histmersion.domain.catalogue.Place.Kind.Site, 7, None, Some("""{"modern":true}""")),
-    place("zqtv_su", com.histmersion.domain.catalogue.Place.Kind.Site, 8, Some(Period(com.histmersion.api.catalogue.Year(1469), com.histmersion.api.catalogue.Year(1769))))
+    place(Place.Id("zqtv_dated"), Place.KindValue(Place.Kind.Site), 0, Some(Period(com.histmersion.api.catalogue.Year(-2600), com.histmersion.api.catalogue.Year(-2400)))),
+    place(Place.Id("zqtv_late"), Place.KindValue(Place.Kind.Site), 1, Some(Period(com.histmersion.api.catalogue.Year(1100), com.histmersion.api.catalogue.Year(1300)))),
+    place(Place.Id("zqtv_bare"), Place.KindValue(Place.Kind.Site), 2, None),
+    place(Place.Id("zqtv_evid"), Place.KindValue(Place.Kind.Site), 3, None),
+    place(Place.Id("zqtv_undfind"), Place.KindValue(Place.Kind.Site), 4, None),
+    place(Place.Id("zqtv_evt"), Place.KindValue(Place.Kind.Site), 5, None),
+    place(Place.Id("zqtv_river"), Place.KindValue(Place.Kind.Feature), 6, Some(Period(com.histmersion.api.catalogue.Year(-30), com.histmersion.api.catalogue.Year(2100)))),
+    place(Place.Id("zqtv_city"), Place.KindValue(Place.Kind.Site), 7, None, Some(Place.Properties("""{"modern":true}"""))),
+    place(Place.Id("zqtv_su"), Place.KindValue(Place.Kind.Site), 8, Some(Period(com.histmersion.api.catalogue.Year(1469), com.histmersion.api.catalogue.Year(1769))))
   )
 
   private def clean(): Unit = connect(ds):
@@ -79,7 +87,7 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
       // an unknown start (V074): the stored period is the window the time filters use
       connect(ds)(sql"UPDATE places SET start_unknown = true WHERE id = 'zqtv_su'".update.run())
       def f(i: Int, at: Int, p: Option[Period]) =
-        Finding(s"zqtv_src#$i", com.histmersion.api.library.Citekey("zqtv_src"), s"claim $i", None, Some(GeoPoint(100.0 + at, Lat)), p, None, Nil, None)
+        Finding(Finding.Id(s"zqtv_src#$i"), com.histmersion.api.library.Citekey("zqtv_src"), Finding.Claim(s"claim $i"), None, Some(GeoPoint(com.histmersion.api.catalogue.Longitude(100.0 + at), Lat)), p, None, Nil, None)
       SourceFixtures.upsert(
         ds,
         Source(
@@ -99,36 +107,44 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
           influentialCitations = None,
           provenance = None,
           calibreId = None,
-          findings = List(f(0, 3, Some(Period(com.histmersion.api.catalogue.Year(-2550), com.histmersion.api.catalogue.Year(-2450)))), f(1, 4, None))
+          findings = List(f(0, 3, Some(Period(com.histmersion.api.catalogue.Year(-2550), com.histmersion.api.catalogue.Year(-2450)))), f(1, 4, None)),
+          edges = Nil
         ),
         cfg.limits.chunkChars,
         cfg.places.pointToleranceKm
       )
       EventFixtures.put(
         ds,
-        "zqtv_event",
+        BEventRow.Id("zqtv_event"),
         EventPut(
           com.histmersion.api.catalogue.EventSummary.Label("Zqtv siege"),
           timeSpan = TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1520)), notAfter = Some(com.histmersion.api.catalogue.Year(-1480))),
-          placeId = Some("zqtv_evt")
+          placeId = Some(com.histmersion.api.catalogue.Place.Id("zqtv_evt"))
         )
       )
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private val Ours = "\"id\":\"(zqtv_[a-z]+)\"".r
 
-  private def onMap(kind: String, asOf: Option[Long]): Set[String] =
-    Ours.findAllMatchIn(PlaceFixtures.geoJson(ds, Some(kind), asOf, 100000)).map(_.group(1)).toSet
-  private def found(asOf: Option[Long]): Set[String] = PlaceFixtures.search(ds, Some("Zqtv"), asOf, 100).map(_.id).toSet
-  private def kids(asOf: Option[Long]): Set[String] = PlaceFixtures.children(ds, "zqtv_root", asOf, 100).map(_.id).toSet
-  private def tree(asOf: Option[Long]): Set[String] =
-    PlaceFixtures.hierarchy(ds, asOf, Some("zqtv_root"), 3, 100).map(_.id).toSet
+  private def year(asOf: Option[Long]): Option[DeepTime.SignedYear] = asOf.map(DeepTime.SignedYear.apply)
 
-  private val All = fixtures.map(_.place.id).toSet
+  private def onMap(kind: String, asOf: Option[Long]): Set[String] =
+    Ours
+      .findAllMatchIn(PlaceFixtures.geoJson(ds, Some(KindWire(kind)), year(asOf), PlaceFixtures.Limit(100000)).value)
+      .map(_.group(1))
+      .toSet
+  private def found(asOf: Option[Long]): Set[String] =
+    PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Zqtv")), year(asOf), PlaceFixtures.Limit(100)).map(_.id.value).toSet
+  private def kids(asOf: Option[Long]): Set[String] =
+    PlaceFixtures.children(ds, PlaceId("zqtv_root"), year(asOf), PlaceFixtures.Limit(100)).map(_.id.value).toSet
+  private def tree(asOf: Option[Long]): Set[String] =
+    PlaceFixtures.hierarchy(ds, year(asOf), Some(PlaceId("zqtv_root")), PlaceFixtures.Depth(3), PlaceFixtures.Limit(100)).map(_.id.value).toSet
+
+  private val All = fixtures.map(_.place.id.value).toSet
 
   test("the fixtures' findings and event are where the cases need them"):
-    assertEquals(PlaceFixtures.placesOf(ds, "zqtv_src#0").map(_.id).toSet, Set("zqtv_evid"))
-    assertEquals(PlaceFixtures.placesOf(ds, "zqtv_src#1").map(_.id).toSet, Set("zqtv_undfind"))
+    assertEquals(PlaceFixtures.placesOf(ds, Finding.Id("zqtv_src#0")).map(_.id).toSet, Set("zqtv_evid"))
+    assertEquals(PlaceFixtures.placesOf(ds, Finding.Id("zqtv_src#1")).map(_.id).toSet, Set("zqtv_undfind"))
 
   test(
     "at 2500 BCE every surface shows the dated overlap, the river, the root, and the undated site with a finding then"
@@ -163,7 +179,7 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(found(Some(1500L)).contains("zqtv_su"))
     assert(!found(Some(1400L)).contains("zqtv_su"), "before the window of its unknown start")
     assertEquals(
-      PlaceFixtures.search(ds, Some("Zqtv city"), Some(1499L), 10, modernFrom = 1400L).map(_.id).toList,
+      PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Zqtv city")), Some(DeepTime.SignedYear(1499L)), PlaceFixtures.Limit(10), modernFrom = DeepTime.SignedYear(1400L)).map(_.id).toList,
       List("zqtv_city"),
       "the cutoff is the caller's (configured) value"
     )
@@ -175,13 +191,13 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(onMap("site", None), All -- Set("zqtv_root", "zqtv_river", "zqtv_city"))
 
   test("the map feed says on what ground: findings for the undated site, dated for the rest"):
-    val json = PlaceFixtures.geoJson(ds, Some("site"), Some(-2500L), 100000)
+    val json = PlaceFixtures.geoJson(ds, Some(KindWire("site")), Some(DeepTime.SignedYear(-2500L)), PlaceFixtures.Limit(100000)).value
     def basisOf(id: String) = s"\"id\":\"$id\"[^}]*\"basis\":\"([a-z]+)\"".r.findFirstMatchIn(json).map(_.group(1))
     assertEquals(basisOf("zqtv_evid"), Some("findings"))
     assertEquals(basisOf("zqtv_dated"), Some("dated"))
 
   test("among points, dated places outrank the rest under the limit"):
-    val json = PlaceFixtures.geoJson(ds, Some("site"), Some(1600L), 100000)
+    val json = PlaceFixtures.geoJson(ds, Some(KindWire("site")), Some(DeepTime.SignedYear(1600L)), PlaceFixtures.Limit(100000)).value
     val order = Ours.findAllMatchIn(json).map(_.group(1)).toList
     assertEquals(order, List("zqtv_su", "zqtv_city"))
 
@@ -192,12 +208,12 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     for id <- All do
       val (kind, modern, undated, geom) = attrs(id)
-      val d = PlaceFixtures.get(ds, id, Some(-2500L)).get
+      val d = PlaceFixtures.get(ds, PlaceId.applyUnsafe(id), Some(DeepTime.SignedYear(-2500L))).get
       assertEquals(d.timeBasis, Place.TimeBasis.of(kind, modern, imported = false, undated, geom), id)
-    assert(PlaceFixtures.get(ds, "zqtv_evid", Some(-2500L)).get.datedByFindings)
-    assert(!PlaceFixtures.get(ds, "zqtv_evid", None).get.datedByFindings)
+    assert(PlaceFixtures.get(ds, PlaceId("zqtv_evid"), Some(DeepTime.SignedYear(-2500L))).get.datedByFindings)
+    assert(!PlaceFixtures.get(ds, PlaceId("zqtv_evid"), None).get.datedByFindings)
     assertEquals(
-      PlaceFixtures.get(ds, "zqtv_root", Some(-2500L)).get.children.map(_.id).toSet,
+      PlaceFixtures.get(ds, PlaceId("zqtv_root"), Some(DeepTime.SignedYear(-2500L))).get.children.map(_.id).toSet,
       Set("zqtv_dated", "zqtv_evid", "zqtv_river"),
       "the place's own children follow the rule too"
     )

@@ -7,4 +7,5 @@ import javax.sql.DataSource
 
 /** The figures' repository as the db suites reach it. */
 object FigureFixtures:
-  def fillLicences(ds: DataSource, apply: Boolean): FigureLicenceFill = transact(ds)(FigureRepo.fillLicences(apply))
+  def fillLicences(ds: DataSource, apply: FigureLicenceFill.Applied): FigureLicenceFill =
+    transact(ds)(FigureRepo.fillLicences(apply))

@@ -22,13 +22,13 @@ class ProvenanceRepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private val Prefix = "zzprov"
 
-  private def source(ck: String, provenance: Option[String]) = Source(
-    citekey = com.histmersion.api.library.Citekey(ck),
+  private def source(ck: com.histmersion.domain.library.Citekey, provenance: Option[Source.Provenance]) = Source(
+    citekey = com.histmersion.api.library.Citekey(ck.value),
     title = com.histmersion.api.library.Title(s"Title $ck"),
     authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
     doi = None,
@@ -46,17 +46,17 @@ class ProvenanceRepoSuite extends com.histmersion.db.DbSuite:
     calibreId = None
   )
 
-  private def stored(ck: String): Option[String] =
+  private def stored(ck: com.histmersion.domain.library.Citekey): Option[String] =
     connect(ds)(sql"SELECT source FROM sources WHERE citekey = $ck".query[Option[String]].run().head)
 
   override def beforeEach(context: BeforeEach): Unit =
     connect(ds)(sql"DELETE FROM sources WHERE citekey LIKE ${Prefix + "%"}".update.run())
 
   test("a put and a patch store a provenance as written, a value no code knows included"):
-    val a = s"${Prefix}a2020_x"
-    SourceFixtures.upsert(ds, source(a, Some("Unheard-Of")), cfg.limits.chunkChars)
+    val a = com.histmersion.domain.library.Citekey.applyUnsafe(s"${Prefix}a2020_x")
+    SourceFixtures.upsert(ds, source(a, Some(Source.Provenance("Unheard-Of"))), cfg.limits.chunkChars)
     assertEquals(stored(a), Some("Unheard-Of"))
-    SourceFixtures.upsert(ds, source(a, Some(Provenance.ExternalFile)), cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, source(a, Some(Source.Provenance(Provenance.ExternalFile))), cfg.limits.chunkChars)
     assertEquals(SourceFixtures.load(ds, a).flatMap(_.provenance), Some(Provenance.ExternalFile))
     val patched = SourceFixtures.patch(
       ds,

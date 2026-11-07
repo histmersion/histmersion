@@ -25,16 +25,16 @@ class VocabCodecSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
-  private val ck = "zzvocab_src"
+  private val ck = com.histmersion.domain.library.Citekey("zzvocab_src")
 
   test("an unknown confidence in the store reads as not stated, never as high"):
     SourceFixtures.put(
       ds,
       Source(
-        citekey = com.histmersion.api.library.Citekey(ck),
+        citekey = com.histmersion.api.library.Citekey(ck.value),
         title = com.histmersion.api.library.Title("Vocab"),
         authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
@@ -52,9 +52,9 @@ class VocabCodecSuite extends com.histmersion.db.DbSuite:
         calibreId = None,
         ocrMarkdown = None,
         findings = List(
-          Finding(s"$ck#0", com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Finding.Claim("stated low"), None, None, None, None, Nil, Some(Confidence.Low)),
-          Finding(s"$ck#1", com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Finding.Claim("garbled"), None, None, None, None, Nil, Some(Confidence.Medium)),
-          Finding(s"$ck#2", com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Finding.Claim("not stated"), None, None, None, None, Nil, None)
+          Finding(Finding.Id(s"$ck#0"), com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.library.Finding.Claim("stated low"), None, None, None, None, Nil, Some(Confidence.Low)),
+          Finding(Finding.Id(s"$ck#1"), com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.library.Finding.Claim("garbled"), None, None, None, None, Nil, Some(Confidence.Medium)),
+          Finding(Finding.Id(s"$ck#2"), com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.library.Finding.Claim("not stated"), None, None, None, None, Nil, None)
         )
       ),
       cfg.limits.chunkChars,
@@ -84,8 +84,8 @@ class JsonbCodecSuite extends com.histmersion.db.DbSuite:
     assertEquals(Jsonb.write(Doc(2, None), dropNulls = com.histmersion.util.database.Jsonb.DropNulls(true)), """{"a":2}""")
 
   test("read and decode: a document this build cannot read is absent, or says why"):
-    assertEquals(Jsonb.read[Doc]("""{"a":3}"""), Some(Doc(3)))
-    assertEquals(Jsonb.read[Doc]("""{"a":"x"}"""), None)
+    assertEquals(Jsonb.read[Doc](com.histmersion.util.database.Jsonb.JsonText("""{"a":3}""")), Some(Doc(3)))
+    assertEquals(Jsonb.read[Doc](com.histmersion.util.database.Jsonb.JsonText("""{"a":"x"}""")), None)
     assertEquals(Jsonb.read[Doc](com.histmersion.util.database.Jsonb.JsonText("not json")), None)
-    assert(Jsonb.decode[Doc]("""{"a":"x"}""").isLeft)
+    assert(Jsonb.decode[Doc](com.histmersion.util.database.Jsonb.JsonText("""{"a":"x"}""")).isLeft)
     assertEquals(Jsonb.decode[List[Int]](com.histmersion.util.database.Jsonb.JsonText("[1,2]")), Right(List(1, 2)))

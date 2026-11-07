@@ -15,41 +15,60 @@ import com.histmersion.api.catalogue.Place
 object SearchFixtures:
   private given com.histmersion.util.time.Timer = new com.histmersion.util.time.Timer { def start(): com.histmersion.util.time.Timer.Measure = new com.histmersion.util.time.Timer.Measure { def elapsed: scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.Duration.Zero } }
 
-  def sources(ds: DataSource, filter: Filter, snippetWords: Int, scope: PlaceScope = PlaceScope.empty): SearchResult =
+  type MaxRows = QueryRepo.MaxRows
+  val MaxRows: QueryRepo.MaxRows.type = QueryRepo.MaxRows
+  type MaxCellChars = QueryRepo.MaxCellChars
+  val MaxCellChars: QueryRepo.MaxCellChars.type = QueryRepo.MaxCellChars
+  type Statement = QueryRepo.Statement
+  val Statement: QueryRepo.Statement.type = QueryRepo.Statement
+  type AggregateUnit = AggregateRepo.Unit
+  val AggregateUnit: AggregateRepo.Unit.type = AggregateRepo.Unit
+
+  def sources(
+      ds: DataSource,
+      filter: Filter,
+      snippetWords: Search.SnippetWords,
+      scope: PlaceScope = PlaceScope.empty
+  ): SearchResult =
     connect(ds)(SearchRepo.sources(filter, snippetWords, scope))
-  def count(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Int =
+  def count(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): com.histmersion.RowCount =
     connect(ds)(SearchRepo.count(filter, scope))
-  def unlocated(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Int =
+  def unlocated(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): com.histmersion.RowCount =
     connect(ds)(SearchRepo.unlocated(filter, scope))
   def selectionCounts(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Place.Counts =
     connect(ds)(SearchRepo.selectionCounts(filter, scope))
-  def periods(ds: DataSource, unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty): Vector[Period.Row] =
+  def periods(
+      ds: DataSource,
+      unit: AggregateRepo.Unit,
+      filter: Filter,
+      scope: PlaceScope = PlaceScope.empty
+  ): Vector[Period.Row] =
     connect(ds)(AggregateRepo.periods(unit, filter, scope))
   def treeRows(
       ds: DataSource,
-      unit: String,
+      unit: AggregateRepo.Unit,
       filter: Filter,
       scope: PlaceScope = PlaceScope.empty
   ): Vector[Tree.TreeRow] =
     connect(ds)(AggregateRepo.treeRows(unit, filter, scope))
   def run(
       ds: DataSource,
-      statement: String,
-      timeoutMs: Int,
-      maxRows: Int,
-      maxCellChars: Int
-  ): Either[String, QueryResult] =
+      statement: QueryRepo.Statement,
+      timeoutMs: _root_.com.histmersion.util.database.Transactor.TimeoutMs,
+      maxRows: QueryRepo.MaxRows,
+      maxCellChars: QueryRepo.MaxCellChars
+  ): Either[QueryRepo.Problem, QueryResult] =
     try _root_.com.histmersion.util.database.Transactor(ds).readOnlyRollback(timeoutMs)(QueryRepo.run(statement, maxRows, maxCellChars))
     catch case error: java.sql.SQLException => Left(QueryRepo.message(error))
   def tables(ds: DataSource): List[SchemaTable] = connect(ds)(QueryRepo.tables)
   def periodsQuery(
-      unit: String,
+      unit: AggregateRepo.Unit,
       filter: Filter,
       scope: PlaceScope = PlaceScope.empty
   ): com.histmersion.util.database.Sql =
     AggregateRepo.periodsQuery(unit, filter, scope)
   def treeRowsQuery(
-      unit: String,
+      unit: AggregateRepo.Unit,
       filter: Filter,
       scope: PlaceScope = PlaceScope.empty
   ): com.histmersion.util.database.Sql =

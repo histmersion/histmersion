@@ -8,8 +8,8 @@ class MigrateSuite extends munit.FunSuite:
   test("migration index lists every V*.sql, in order, and each is loadable"):
     val names = Migrate.migrationNames
     assertEquals(names, List(s"V${Migrate.SquashedAt}__schema.sql"), "one migration since the squash")
-    assertEquals(names, names.sorted)
-    assert(names.forall(_.matches("""V\d{3}__[a-z0-9_]+\.sql""")), names)
+    assertEquals(names, names.sortBy(_.value))
+    assert(names.forall(_.value.matches("""V\d{3}__[a-z0-9_]+\.sql""")), names)
     names.foreach(n => assert(getClass.getClassLoader.getResource(s"db/migration/$n") != null, n))
 
   test("a collision with a concurrent migration is retried; anything else is not (#828)"):

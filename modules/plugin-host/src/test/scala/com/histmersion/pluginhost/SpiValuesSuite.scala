@@ -14,15 +14,15 @@ class SpiValuesSuite extends munit.FunSuite:
 
   test("towards a plugin: the host's values as the SPI's, a plain value that does not parse left out"):
     assertEquals(SpiValues.year(com.histmersion.Year(-1600)), Year(-1600))
-    assertEquals(SpiValues.year(-1600L), Some(Year(-1600)))
-    assertEquals(SpiValues.year(5_000_000_000L), None)
+    assertEquals(SpiValues.year(com.histmersion.domain.DeepTime.SignedYear(-1600L)), Some(Year(-1600)))
+    assertEquals(SpiValues.year(com.histmersion.domain.DeepTime.SignedYear(5_000_000_000L)), None)
     assertEquals(
-      List(SpiValues.yearBound(-5_000_000_000L), SpiValues.yearBound(com.histmersion.domain.DeepTime.SignedYear(2026L))),
+      List(SpiValues.yearBound(com.histmersion.domain.DeepTime.SignedYear(-5_000_000_000L)),SpiValues.yearBound(com.histmersion.domain.DeepTime.SignedYear(2026L))),
       List(Year(Int.MinValue), Year(2026))
     )
     assertEquals(SpiValues.period(com.histmersion.domain.DeepTime.SignedYear(-1600L), com.histmersion.domain.DeepTime.SignedYear(-1700L)), Period.from(Year(-1700), Year(-1600)).toOption)
     assertEquals(SpiValues.period(com.histmersion.Period.point(com.histmersion.Year(7))), Some(Period.point(Year(7))))
-    assertEquals((SpiValues.latitude(91.0), SpiValues.longitude(-181.0)), (None, None))
+    assertEquals((SpiValues.latitude(com.histmersion.plugin.Latitude(91.0)), SpiValues.longitude(com.histmersion.plugin.Longitude(-181.0))), (None, None))
     assertEquals(SpiValues.doi(com.histmersion.domain.library.Doi(" 10.1234/abc ")), Some(Doi("10.1234/abc")))
     assertEquals(SpiValues.doi(com.histmersion.domain.library.Doi("abc")), None)
     assertEquals((SpiValues.wikidata(com.histmersion.domain.catalogue.places.Wikidata.Id("Q5788")), SpiValues.wikidata(com.histmersion.domain.catalogue.places.Wikidata.Id("Troy"))), (Some(WikidataId("Q5788")), None))
@@ -117,8 +117,8 @@ class SpiValuesSuite extends munit.FunSuite:
     val got = PluginEvents.record(com.histmersion.api.catalogue.CatalogRecord.Provider("zq"), legacy)
     assert(
       got.left.exists(w =>
-        w.startsWith("q-1: catalogue 'zq' handed over a record the host cannot read") &&
-          w.contains("plugin SPI 2")
+        w.value.startsWith("q-1: catalogue 'zq' handed over a record the host cannot read") &&
+          w.value.contains("plugin SPI 2")
       ),
       got.toString
     )
@@ -140,7 +140,7 @@ class SpiValuesSuite extends munit.FunSuite:
     assert(rec.rights.isRight)
     val broken = PluginMedia.record(item.modify(_.period).setTo(Some("1999").asInstanceOf[Option[Period]]))
     assertEquals(broken.period, None)
-    assert(broken.rights.left.exists(_.startsWith("k1: a period the host cannot read")), broken.rights.toString)
+    assert(broken.rights.left.exists(_.value.startsWith("k1: a period the host cannot read")), broken.rights.toString)
 
   test("a query asks for the import's years and area as the SPI's values"):
     assertEquals(

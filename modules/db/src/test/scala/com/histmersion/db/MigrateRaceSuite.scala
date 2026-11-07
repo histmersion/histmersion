@@ -19,9 +19,9 @@ class MigrateRaceSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
-  private lazy val admin = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+  private lazy val admin = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   private val created = scala.collection.mutable.ListBuffer.empty[String]
-  private val role = s"histmersion_race_${java.lang.Long.toHexString(System.nanoTime)}"
+  private val role = Migrate.RoleName(s"histmersion_race_${java.lang.Long.toHexString(System.nanoTime)}")
 
   private def exec(ds: DataSource, stmt: String): Unit =
     val c = ds.getConnection
@@ -31,11 +31,11 @@ class MigrateRaceSuite extends com.histmersion.db.DbSuite with Bounded:
       finally st.close()
     } finally c.close()
 
-  private def roleExists(name: String): Boolean =
+  private def roleExists(name: Migrate.RoleName): Boolean =
     val c = admin.getConnection
     try
       val ps = c.prepareStatement("SELECT 1 FROM pg_roles WHERE rolname = ?")
-      ps.setString(1, name)
+      ps.setString(1, name.value)
       val rs = ps.executeQuery()
       try rs.next()
       finally { rs.close(); ps.close() }
@@ -70,7 +70,7 @@ class MigrateRaceSuite extends com.histmersion.db.DbSuite with Bounded:
       exec(admin, s"CREATE DATABASE $n")
       created += n
     }
-    val dss = names.map(n => testPool(cfg.db.modify(_.url).setTo(testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$n$$1"))))
+    val dss = names.map(n => testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$n$$1")))))
     val outcomes = together(2)(i => Migrate.run(dss(i)))
     assert(outcomes.forall(_.isSuccess), outcomes.collect { case scala.util.Failure(e) => e.getMessage })
     assertEquals(outcomes.map(_.get).distinct.size, 1, "both at the same version")

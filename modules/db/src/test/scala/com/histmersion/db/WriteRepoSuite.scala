@@ -27,13 +27,14 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.modify(_.url).setTo(testDb.get))
+    val d = testPool(base.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
-  private val ck = "zz_write_source"
+  private val ck = com.histmersion.domain.library.Citekey("zz_write_source")
+  private val chunkChars = Limits.ChunkChars(4000)
 
-  private def seedSource(citekey: String = ck) = Source(
-    citekey = com.histmersion.api.library.Citekey(citekey),
+  private def seedSource(citekey: com.histmersion.domain.library.Citekey = ck) = Source(
+    citekey = com.histmersion.api.library.Citekey(citekey.value),
     title = com.histmersion.api.library.Title("Writes"),
     authors = (List("A", "B")).map(com.histmersion.api.library.AuthorName.apply),
     doi = (Some("10.0/x")).map(com.histmersion.api.library.Doi.apply),
@@ -52,23 +53,23 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
     ocrMarkdown = Some(com.histmersion.api.library.Source.OcrMarkdown("body text")),
     findings = List(
       Finding(
-        s"$citekey#0",
-        com.histmersion.api.library.Citekey(citekey),
+        Finding.Id(s"$citekey#0"),
+        com.histmersion.api.library.Citekey(citekey.value),
         com.histmersion.api.library.Finding.Claim("claim one"),
         Some(com.histmersion.api.library.Finding.Region("Anatolia")),
-        Some(GeoPoint(32.0, 39.0)),
+        Some(GeoPoint(com.histmersion.api.catalogue.Longitude(32.0), com.histmersion.api.catalogue.Latitude(39.0))),
         Some(Period(com.histmersion.api.catalogue.Year(-1800), com.histmersion.api.catalogue.Year(-1700))),
         Some(com.histmersion.api.library.Finding.PeriodName("MBA")),
         List(com.histmersion.api.library.Finding.Tags("f")),
         Some(Confidence.High)
       )
     ),
-    edges = List(Edge(com.histmersion.api.library.Citekey(citekey), com.histmersion.api.library.Citekey("zz_other"), com.histmersion.api.library.Edge.Kind("references"))),
+    edges = List(Edge(com.histmersion.api.library.Citekey(citekey.value), com.histmersion.api.library.Citekey("zz_other"), Edge.Kind.References)),
     notes = Some(com.histmersion.api.library.Source.Notes("# article\n\nagent-written prose"))
   )
 
-  private def fresh(citekey: String = ck): String =
-    SourceFixtures.put(ds, seedSource(citekey), 4000)
+  private def fresh(citekey: com.histmersion.domain.library.Citekey = ck): Source.UpdatedAt =
+    SourceFixtures.put(ds, seedSource(citekey), chunkChars)
 
   // ── put ──────────────────────────────────────────────────────────────────────────────────────
   test("put → get round-trip, including notes and the updatedAt token"):
@@ -77,13 +78,13 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(d.title, "Writes")
     assertEquals(d.notes, Some("# article\n\nagent-written prose"))
     assertEquals(d.updatedAt, Some(token))
-    assert(token.endsWith("Z"), token)
+    assert(token.value.endsWith("Z"), token)
     assertEquals(fs.map(_.claim).toList, List("claim one"))
 
   test("put is idempotent and replaces everything under the citekey"):
     val _ = fresh()
-    val s2 = seedSource().modify(_.tags).setTo(List("only")).modify(_.findings).setTo(Nil).modify(_.summary).setTo(None)
-    val _ = SourceFixtures.put(ds, s2, 4000)
+    val s2 = seedSource().modify(_.tags).setTo(List(Source.Tags("only"))).modify(_.findings).setTo(Nil).modify(_.summary).setTo(None)
+    val _ = SourceFixtures.put(ds, s2, chunkChars)
     val (d, fs) = SourceFixtures.get(ds, ck).get
     assertEquals(d.tags, List("only"))
     assertEquals(fs.size, 0)
@@ -94,8 +95,8 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
     val s = SourceFixtures.load(ds, ck).get
     assertEquals(s.tags, List("adna", "yamnaya"))
     assertEquals(s.findings.map(_.id), List(s"$ck#0"))
-    assertEquals(s.findings.head.geo, Some(GeoPoint(32.0, 39.0)))
-    assertEquals(s.edges, List(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("zz_other"), com.histmersion.api.library.Edge.Kind("references"))))
+    assertEquals(s.findings.head.geo, Some(GeoPoint(com.histmersion.api.catalogue.Longitude(32.0), com.histmersion.api.catalogue.Latitude(39.0))))
+    assertEquals(s.edges, List(Edge(com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.library.Citekey("zz_other"), Edge.Kind.References)))
     assertEquals(s.period, Some(Period(com.histmersion.api.catalogue.Year(-2000), com.histmersion.api.catalogue.Year(-1500))))
     assert(s.updatedAt.isDefined)
 
@@ -103,7 +104,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
   test("patch {tags:{add:[sea-peoples]}} leaves findings and body untouched"):
     val _ = fresh()
     val before = SourceFixtures.load(ds, ck).get
-    val r = SourceFixtures.patch(ds, ck, Source.Patch(tags = Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("sea-peoples"))))), 4000)
+    val r = SourceFixtures.patch(ds, ck, Source.Patch(tags = Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("sea-peoples"))))), chunkChars)
     assert(r.isRight, r.toString)
     val after = SourceFixtures.load(ds, ck).get
     assertEquals(after.tags, List("adna", "yamnaya", "sea-peoples"))
@@ -114,12 +115,22 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
 
   test("patch {findings:{add}} twice adds two findings with distinct ids"):
     val _ = fresh()
-    val add = (claim: String) =>
+    val add = (claim: Finding.Claim) =>
       Source.Patch(findings =
-        Some(FindingsPatch(add = List(Finding.Input(claim = claim, lon = Some(1.0), lat = Some(2.0)))))
+        Some(
+          FindingsPatch(
+            add = List(
+              Finding.Input(
+                claim = claim,
+                lon = Some(com.histmersion.api.catalogue.Longitude(1.0)),
+                lat = Some(com.histmersion.api.catalogue.Latitude(2.0))
+              )
+            )
+          )
+        )
       )
-    assert(SourceFixtures.patch(ds, ck, add("second"), 4000).isRight)
-    assert(SourceFixtures.patch(ds, ck, add("third"), 4000).isRight)
+    assert(SourceFixtures.patch(ds, ck, add(Finding.Claim("second")), chunkChars).isRight)
+    assert(SourceFixtures.patch(ds, ck, add(Finding.Claim("third")), chunkChars).isRight)
     val fs = SourceFixtures.load(ds, ck).get.findings
     assertEquals(fs.map(_.id), List(s"$ck#0", s"$ck#1", s"$ck#2"))
     assertEquals(fs.map(_.id).distinct.size, 3)
@@ -133,37 +144,37 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
           ds,
           ck,
           Source.Patch(findings = Some(FindingsPatch(add = List(Finding.Input(com.histmersion.api.library.Finding.Claim("second")), Finding.Input(com.histmersion.api.library.Finding.Claim("third")))))),
-          4000
+          chunkChars
         )
         .isRight
     )
     assert(
-      SourceFixtures.patch(ds, ck, Source.Patch(findings = Some(FindingsPatch(remove = List(s"$ck#1")))), 4000).isRight
+      SourceFixtures.patch(ds, ck, Source.Patch(findings = Some(FindingsPatch(remove = List(FindingsPatch.Remove(s"$ck#1"))))), chunkChars).isRight
     )
     assertEquals(SourceFixtures.load(ds, ck).get.findings.map(_.claim), List("claim one", "third"))
 
   test("patch bumps updatedAt; an unrelated source is untouched"):
     val t1 = fresh()
-    val _ = fresh("zz_write_other")
-    val t2 = SourceFixtures.patch(ds, ck, Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("new"))), 4000).toOption.get
+    val _ = fresh(com.histmersion.domain.library.Citekey("zz_write_other"))
+    val t2 = SourceFixtures.patch(ds, ck, Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("new"))), chunkChars).toOption.get
     assertNotEquals(t1, t2)
-    assertEquals(SourceFixtures.load(ds, "zz_write_other").get.summary, Some("sum"))
+    assertEquals(SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zz_write_other")).get.summary, Some("sum"))
 
   test("patch of a missing citekey is not_found, not a crash"):
-    val e = SourceFixtures.patch(ds, "zz_no_such_source", Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("x"))), 4000).swap.toOption.get
+    val e = SourceFixtures.patch(ds, com.histmersion.domain.library.Citekey("zz_no_such_source"), Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("x"))), chunkChars).swap.toOption.get
     assertEquals(e.code, Some(Write.CodeNotFound))
 
   test("ifUpdatedAt: current token succeeds, stale token is refused and changes nothing"):
     val t1 = fresh()
-    assert(SourceFixtures.patch(ds, ck, Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("one")), ifUpdatedAt = Some(t1)), 4000).isRight)
+    assert(SourceFixtures.patch(ds, ck, Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("one")), ifUpdatedAt = Some(t1)), chunkChars).isRight)
     val e =
-      SourceFixtures.patch(ds, ck, Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("two")), ifUpdatedAt = Some(t1)), 4000).swap.toOption.get
+      SourceFixtures.patch(ds, ck, Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("two")), ifUpdatedAt = Some(t1)), chunkChars).swap.toOption.get
     assertEquals(e.code, Some(Write.CodePrecondition))
     assertEquals(SourceFixtures.load(ds, ck).get.summary, Some("one"))
 
   test("an invalid patch is rejected as invalid and writes nothing"):
     val _ = fresh()
-    val e = SourceFixtures.patch(ds, ck, Source.Patch(period = Some(Period.Input(com.histmersion.api.catalogue.Year(-100), com.histmersion.api.catalogue.Year(-900)))), 4000).swap.toOption.get
+    val e = SourceFixtures.patch(ds, ck, Source.Patch(period = Some(Period.Input(com.histmersion.api.catalogue.Year(-100), com.histmersion.api.catalogue.Year(-900)))), chunkChars).swap.toOption.get
     assertEquals(e.code, Some(Write.CodeInvalid))
     assertEquals(SourceFixtures.load(ds, ck).get.period, Some(Period(com.histmersion.api.catalogue.Year(-2000), com.histmersion.api.catalogue.Year(-1500))))
 
@@ -188,4 +199,4 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
     val _ = fresh()
     val ks = SourceFixtures.citekeys(ds)
     assert(ks.contains(ck))
-    assertEquals(ks.toList, ks.toList.sorted)
+    assertEquals(ks.toList, ks.toList.sortBy(_.value))

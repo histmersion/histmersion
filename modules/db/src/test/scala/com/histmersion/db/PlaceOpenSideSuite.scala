@@ -45,7 +45,7 @@ class PlaceOpenSideSuite extends com.histmersion.db.DbSuite:
   private type Bounds = (Option[Long], Option[Long], Boolean, Boolean)
 
   test("a place, a name and a relation with one side open keep it open in the store"):
-    val in = Lpf.parse(doc).fold(e => fail(e), identity)
+    val in = Lpf.parse(doc).fold(e => fail(e.value), identity)
     val _ = PlaceFixtures.upsertPlaces(ds, in)
     def read(q: Frag): Bounds = connect(ds)(q.query[Bounds].run().head)
     assertEquals(

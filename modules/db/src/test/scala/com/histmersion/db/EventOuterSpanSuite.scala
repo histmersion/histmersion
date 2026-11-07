@@ -15,7 +15,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Migrate
-import com.histmersion.api.catalogue.{EventPut, Period}
+import com.histmersion.api.catalogue.{EventPut, EventSummary, Period}
 import com.histmersion.api.library.Filter
 import com.histmersion.util.database.given
 
@@ -39,11 +39,16 @@ class EventOuterSpanSuite extends com.histmersion.db.DbSuite:
   override def beforeAll(): Unit = if testDb.isDefined then clean()
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
-  private def put(id: String, ts: TimeSpan, kind: String = "war") =
+  private def put(id: String, ts: TimeSpan, kind: EventSummary.Kind = EventSummary.Kind("war")) =
     EventFixtures.put(
       ds,
       id,
-      EventPut(s"Zqos $id", kind, ts, geometry = Some("""{"type":"Point","coordinates":[163.0,-46.0]}"""))
+      EventPut(
+        EventSummary.Label(s"Zqos $id"),
+        kind,
+        ts,
+        geometry = Some(EventPut.Geometry("""{"type":"Point","coordinates":[163.0,-46.0]}"""))
+      )
     )
 
   /** The stored span as (lower, inclusive upper), `None` for an unbounded side. */

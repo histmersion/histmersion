@@ -36,6 +36,12 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
 
   private val tag = s"zzpg${System.nanoTime().toHexString.takeRight(8)}"
 
+  private def pageStatus(st: String) = Some(JobRepo.PageStatus(st))
+  private def jobCursor(id: String) = Some(JobRepo.PageCursor(id))
+  private def runCursor(id: String) = Some(AgentRepo.PageCursor(id))
+  private def runWire(w: com.histmersion.api.automation.Run.State.Wire) =
+    com.histmersion.domain.automation.Run.State.Wire(w.value)
+
   /** `n` jobs of `status`/`kind`: two share each second (ties broken by id), newest = the highest index. */
   private def jobs(
       prefix: String,
@@ -63,64 +69,65 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
   test("jobs: newest first, ties broken by id, the cursor continues exactly, the counts are the table's"):
     val st = s"${tag}j"
     val all = jobs(s"$tag-j", st, 7)
-    val (p1, more1) = Transactor(ds).read(JobRepo.page(Some(st), com.histmersion.PageSize(3))).toOption.get
+    val (p1, more1) = Transactor(ds).read(JobRepo.page(pageStatus(st), com.histmersion.PageSize(3))).toOption.get
     assertEquals(p1.map(_.id).toList, all.take(3))
     assert(more1)
-    val (p2, more2) = Transactor(ds).read(JobRepo.page(Some(st), com.histmersion.PageSize(3), before = Some(p1.last.id))).toOption.get
+    val (p2, more2) = Transactor(ds).read(JobRepo.page(pageStatus(st), com.histmersion.PageSize(3), before = jobCursor(p1.last.id.value))).toOption.get
     assertEquals(p2.map(_.id).toList, all.slice(3, 6))
     assert(more2)
-    val (p3, more3) = Transactor(ds).read(JobRepo.page(Some(st), com.histmersion.PageSize(3), before = Some(p2.last.id))).toOption.get
+    val (p3, more3) = Transactor(ds).read(JobRepo.page(pageStatus(st), com.histmersion.PageSize(3), before = jobCursor(p2.last.id.value))).toOption.get
     assertEquals(p3.map(_.id).toList, all.drop(6))
     assert(!more3, "the last page says nothing is older")
     // ties: -006 and -007 share their second; -007 (the higher id) comes first
     assertEquals(all.take(2), List(s"$tag-j-007", s"$tag-j-006"))
-    assertEquals(Transactor(ds).read(JobRepo.stateCounts).find(_._1 == st), Some(st -> 7))
+    assertEquals(Transactor(ds).read(JobRepo.stateCounts).find(_._1.value == st), Some(st -> 7))
     // the old list reads the same order
-    assertEquals(Transactor(ds).read(JobRepo.list(Some(st), com.histmersion.PageSize(7))).map(_.id).toList, all)
+    assertEquals(Transactor(ds).read(JobRepo.list(Some(JobRepo.ListStatus(st)), com.histmersion.PageSize(7))).map(_.id).toList, all)
 
   test("jobs: upTo is every row down to that one; a filter narrows the page, not the cursor's place"):
     val st = s"${tag}u"
     val all = jobs(s"$tag-u", st, 6)
-    val (rows, more) = Transactor(ds).read(JobRepo.page(Some(st), com.histmersion.PageSize(10), upTo = Some(all(3)))).toOption.get
+    val (rows, more) = Transactor(ds).read(JobRepo.page(pageStatus(st), com.histmersion.PageSize(10), upTo = jobCursor(all(3)))).toOption.get
     assertEquals(rows.map(_.id).toList, all.take(4))
     assert(more, "rows older than the upTo row exist")
-    val (whole, none) = Transactor(ds).read(JobRepo.page(Some(st), com.histmersion.PageSize(10), upTo = Some(all.last))).toOption.get
+    val (whole, none) = Transactor(ds).read(JobRepo.page(pageStatus(st), com.histmersion.PageSize(10), upTo = jobCursor(all.last))).toOption.get
     assertEquals((whole.size, none), (6, false))
     // more rows down to the upTo row than the limit: the newest `limit`, and more
-    val (cut, cutMore) = Transactor(ds).read(JobRepo.page(Some(st), com.histmersion.PageSize(2), upTo = Some(all.last))).toOption.get
+    val (cut, cutMore) = Transactor(ds).read(JobRepo.page(pageStatus(st), com.histmersion.PageSize(2), upTo = jobCursor(all.last))).toOption.get
     assertEquals((cut.map(_.id).toList, cutMore), (all.take(2), true))
     // a cursor from another state still marks a place: the page is this state's rows older than it
     val other = s"$tag-o-1"
     transact(ds)(sql"""INSERT INTO jobs (id, kind, status, created_at)
                        VALUES ($other, 'ingest', ${s"${tag}o"}, '2001-01-01T00:00:01.5Z'::timestamptz)""".update.run())
     assertEquals(
-      Transactor(ds).read(JobRepo.page(Some(st), com.histmersion.PageSize(10), before = Some(other))).toOption.get._1.map(_.id).toList,
+      Transactor(ds).read(JobRepo.page(pageStatus(st), com.histmersion.PageSize(10), before = jobCursor(other))).toOption.get._1.map(_.id).toList,
       all.drop(2)
     )
     assert(
-      Transactor(ds).read(JobRepo.page(Some(st), com.histmersion.PageSize(10), before = Some(s"$tag-nope"))).isLeft,
+      Transactor(ds).read(JobRepo.page(pageStatus(st), com.histmersion.PageSize(10), before = jobCursor(s"$tag-nope"))).isLeft,
       "a cursor naming no job"
     )
 
   test("agent runs: one goal's runs page by keyset, and the counts are that goal's, per state"):
     val goal = s"${tag}g"
-    val done = jobs(s"$tag-r", RunState.Done.wire, 5, Agents.JobKind, Some(goal))
-    val paused = jobs(s"$tag-s", RunState.Paused.wire, 1, Agents.JobKind, Some(goal))
-    val (p1, more) = connect(ds)(AgentRepo.page(Some(RunState.Done.wire), com.histmersion.PageSize(2), Some(goal))).toOption.get
+    val goalSlug = com.histmersion.domain.automation.Goal.Slug(goal)
+    val done = jobs(s"$tag-r", RunState.Done.wire.value, 5, Agents.JobKind, Some(goal))
+    val paused = jobs(s"$tag-s", RunState.Paused.wire.value, 1, Agents.JobKind, Some(goal))
+    val (p1, more) = connect(ds)(AgentRepo.page(Some(runWire(RunState.Done.wire)), com.histmersion.PageSize(2), Some(goalSlug))).toOption.get
     assertEquals((p1.map(_.id).toList, more), (done.take(2), true))
     val (p2, _) =
-      connect(ds)(AgentRepo.page(Some(RunState.Done.wire), 10, Some(goal), before = Some(p1.last.id))).toOption.get
+      connect(ds)(AgentRepo.page(Some(runWire(RunState.Done.wire)), com.histmersion.PageSize(10), Some(goalSlug), before = runCursor(p1.last.id.value))).toOption.get
     assertEquals(p2.map(_.id).toList, done.drop(2))
-    val (every, _) = connect(ds)(AgentRepo.page(None, com.histmersion.PageSize(10), Some(goal))).toOption.get
+    val (every, _) = connect(ds)(AgentRepo.page(None, com.histmersion.PageSize(10), Some(goalSlug))).toOption.get
     assertEquals(every.size, 6)
     assertEquals(
-      connect(ds)(AgentRepo.stateCounts(Some(goal))).toMap,
+      connect(ds)(AgentRepo.stateCounts(Some(goalSlug))).toMap,
       Map(RunState.Done.wire -> 5, RunState.Paused.wire -> 1)
     )
     // an OCR job is not a run, wherever it sits
-    jobs(s"$tag-x", RunState.Done.wire, 1, "ingest", Some(goal))
-    assertEquals(connect(ds)(AgentRepo.stateCounts(Some(goal))).toMap.get(RunState.Done.wire), Some(5))
-    assert(connect(ds)(AgentRepo.page(None, 10, Some(goal), upTo = Some(s"$tag-nope"))).isLeft)
+    jobs(s"$tag-x", RunState.Done.wire.value, 1, "ingest", Some(goal))
+    assertEquals(connect(ds)(AgentRepo.stateCounts(Some(goalSlug))).toMap.get(runWire(RunState.Done.wire)), Some(5))
+    assert(connect(ds)(AgentRepo.page(None, com.histmersion.PageSize(10), Some(goalSlug), upTo = runCursor(s"$tag-nope"))).isLeft)
     assertEquals(paused.size, 1)
 
   test("approvals: newest first by created_at then id, the cursor and upTo, a state filter, the counts"):
@@ -138,19 +145,19 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
       sql"""INSERT INTO approvals (kind, citekey, proposal, state, created_at)
             VALUES ('status-change', ${s"$tag-top"}, '{}'::jsonb, 'zz', '1971-01-02T00:00:00Z'::timestamptz)
             RETURNING id""".query[Long].run().head
-    val (all, more) = connect(ds)(AgentRepo.approvalPage(None, com.histmersion.PageSize(3), before = Some(probe.toString))).toOption.get
+    val (all, more) = connect(ds)(AgentRepo.approvalPage(None, com.histmersion.PageSize(3), before = runCursor(probe.toString))).toOption.get
     assertEquals(all.map(_.id), newest.take(3))
     assert(more)
-    val (rest, none) = connect(ds)(AgentRepo.approvalPage(None, com.histmersion.PageSize(3), before = Some(all.last.id.toString))).toOption.get
+    val (rest, none) = connect(ds)(AgentRepo.approvalPage(None, com.histmersion.PageSize(3), before = runCursor(all.last.id.toString))).toOption.get
     assertEquals((rest.map(_.id), none), (newest.drop(3), false))
     val (open, _) =
-      connect(ds)(AgentRepo.approvalPage(Some(ApprovalState.Open), com.histmersion.PageSize(10), before = Some(probe.toString))).toOption.get
+      connect(ds)(AgentRepo.approvalPage(Some(ApprovalState.Open), com.histmersion.PageSize(10), before = runCursor(probe.toString))).toOption.get
     assertEquals(open.map(_.id), newest.filterNot(_ == ids(1)))
     val (down, older) =
       connect(ds)(
-        AgentRepo.approvalPage(None, 10, before = Some(probe.toString), upTo = Some(newest(2).toString))
+        AgentRepo.approvalPage(None, com.histmersion.PageSize(10), before = runCursor(probe.toString), upTo = runCursor(newest(2).toString))
       ).toOption.get
     assertEquals((down.map(_.id), older), (newest.take(3), true))
-    assert(connect(ds)(AgentRepo.approvalCounts()).exists((s, n) => s == "zz" && n >= 1))
+    assert(connect(ds)(AgentRepo.approvalCounts()).exists((s, n) => s.value == "zz" && n.value >= 1))
     assert(connect(ds)(AgentRepo.approvalPage(None, com.histmersion.PageSize(3), before = Some(com.histmersion.domain.automation.agents.AgentRepo.PageCursor("not-a-number")))).isLeft)
     assert(connect(ds)(AgentRepo.approvalPage(None, com.histmersion.PageSize(3), before = Some(com.histmersion.domain.automation.agents.AgentRepo.PageCursor("-1")))).isLeft)

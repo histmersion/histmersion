@@ -31,7 +31,7 @@ import com.histmersion.util.data.exchange.{BundleFormat, BundleReader}
 import com.histmersion.util.data.exchange.{BundleExport, MergeRepo}
 import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
 import com.histmersion.domain.automation.managers.ManagerRepo
-import com.histmersion.util.data.exchange.{BundleImport, MergeState}
+import com.histmersion.util.data.exchange.{BundleImport, ImportOptions, MergeState}
 import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.catalogue.{EventPut, Period, Place}
@@ -56,6 +56,14 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   private lazy val merge = cfg.merge.transformInto[MergeSettings]
   private lazy val admin = testPool(cfg.db.modify(_.url).setTo(testDb.get))
   private val tmp = Files.createTempDirectory("histmersion-merge-extras")
+  private lazy val importChunkChars = ImportOptions.ChunkChars(cfg.limits.chunkChars.value)
+  private lazy val importToleranceKm = ImportOptions.ToleranceKm(cfg.places.pointToleranceKm.value)
+
+  private def sha256Of(bundle: Path): com.histmersion.Sha256 =
+    com.histmersion.Sha256.assume(BundleFormat.sha256Hex(Files.readAllBytes(bundle)).value)
+
+  private def applyJob(ds: DataSource, id: com.histmersion.api.SpatialHierarchyResult.Job.Id) =
+    Transactor(ds).read(JobRepo.mergeApply(JobRepo.MergeApplyId(id.value)))
 
   private def exec(ds: DataSource, stmt: String): Unit =
     val c = ds.getConnection
@@ -101,7 +109,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         res,
         merge,
         com.histmersion.util.storage.ContentDirectory(originals),
-        cfg.limits.chunkChars,
+        importChunkChars,
         TestExchange.kinds,
         TestExchange.rules
       )
@@ -112,8 +120,8 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       .run(
         ds,
         com.histmersion.util.storage.ByteSource.file(bundle),
-        BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
-        BundleImport.Options(com.histmersion.util.data.exchange.ImportOptions.DryRun(false), cfg.limits.chunkChars, cfg.places.pointToleranceKm),
+        sha256Of(bundle),
+        BundleImport.Options(ImportOptions.DryRun(false), importChunkChars, importToleranceKm),
         com.histmersion.util.storage.ContentDirectory(originals),
         MergeResolutions(),
         merge,
@@ -133,13 +141,13 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       .apply(
         ds,
         com.histmersion.util.storage.ByteSource.file(bundle),
-        BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
+        sha256Of(bundle),
         BundleImport
-          .Options(dryRun = com.histmersion.util.data.exchange.ImportOptions.DryRun(false), cfg.limits.chunkChars, cfg.places.pointToleranceKm),
+          .Options(dryRun = ImportOptions.DryRun(false), importChunkChars, importToleranceKm),
         com.histmersion.util.storage.ContentDirectory(originals),
         res,
         merge,
-        hash,
+        com.histmersion.Sha256.assume(hash.value),
         () => Right("stub.dump"),
         TestExchange.kinds,
         TestExchange.rules,
@@ -147,27 +155,27 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       )
       .fold(e => fail(e), identity)
 
-  private def count(ds: DataSource, q: String): Int = connect(ds)(Sql.raw(q).frag.query[Int].run().head)
+  private def count(ds: DataSource, q: String): Int = connect(ds)(Sql.raw(Sql.Text(q)).frag.query[Int].run().head)
   private def text(ds: DataSource, q: String): Option[String] =
-    connect(ds)(Sql.raw(q).frag.query[Option[String]].run().headOption.flatten)
+    connect(ds)(Sql.raw(Sql.Text(q)).frag.query[Option[String]].run().headOption.flatten)
 
-  private def site(id: String, label: String, lon: Double, lat: Double): Place.Input =
+  private def site(id: String, label: Place.Label, lon: Double, lat: Double): Place.Input =
     Place.Input(
       Place(
         com.histmersion.api.catalogue.Place.Id(id),
         label,
-        com.histmersion.domain.catalogue.Place.Kind.Site,
-        Some(s"""{"type":"Point","coordinates":[$lon,$lat]}"""),
+        Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+        Some(Place.Geometry(s"""{"type":"Point","coordinates":[$lon,$lat]}""")),
         Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180)))
       ),
-      List(Place.Name(label))
+      List(Place.Name(Place.Name.Value(label.value)))
     )
 
   test("places and periods: the collection's own travel and import; the seeds do not; the dataset marks which"):
     val (work, home) = (fresh("pw"), fresh("ph"))
     val (sw, sh) = (spool("pw"), spool("ph"))
-    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_seed_site", "A seed site", 30.0, 39.0)), Dataset.Seed)
-    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_my_site", "My site", 34.6, 40.0)), Dataset.Local)
+    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_seed_site", Place.Label("A seed site"), 30.0, 39.0)), Dataset.Seed)
+    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_my_site", Place.Label("My site"), 34.6, 40.0)), Dataset.Local)
     val _ = connect(work)(
       sql"""INSERT INTO periods (id, label, authority, period, dataset)
             VALUES ('zz_my_period', 'My period', 'me', '[-1400,-1199)'::int8range, 'local')""".update.run()
@@ -183,9 +191,9 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(es.periods.map(_.id), List("zz_my_period"))
     assertEquals(es.places.head.names.map(_.name), List("My site"))
     // home has only the seeds it imports itself — the event's place comes with the bundle
-    val _ = PlaceFixtures.upsertPlaces(home, List(site("zz_seed_site", "A seed site", 30.0, 39.0)), Dataset.Seed)
+    val _ = PlaceFixtures.upsertPlaces(home, List(site("zz_seed_site", Place.Label("A seed site"), 30.0, 39.0)), Dataset.Seed)
     val r = importInto(home, bundle, sh)
-    assert(r.applied, r.problems.mkString("\n"))
+    assert(r.applied.value, r.problems.mkString("\n"))
     assertEquals(text(home, "SELECT dataset FROM places WHERE id = 'zz_my_site'"), Some("local"))
     assertEquals(text(home, "SELECT place_id FROM events WHERE id = 'zz_at_my_site'"), Some("zz_my_site"))
     assertEquals(text(home, "SELECT dataset FROM periods WHERE id = 'zz_my_period'"), Some("local"))
@@ -204,7 +212,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val (sw, sh) = (spool("qw"), spool("qh"))
     val _ = PlaceFixtures.upsertPlaces(
       work,
-      List(site("zz_ugarit", "Ugarit", 35.78, 35.60), site("work_troy", "Troy", 26.2389, 39.9575)),
+      List(site("zz_ugarit", Place.Label("Ugarit"), 35.78, 35.60), site("work_troy", Place.Label("Troy"), 26.2389, 39.9575)),
       Dataset.Local
     )
     EventFixtures.put(
@@ -212,16 +220,16 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       "zz_troy_burns",
       EventPut(com.histmersion.api.catalogue.EventSummary.Label("Troy burns"), com.histmersion.api.catalogue.EventSummary.Kind("destruction"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1190)), None, None, Some(com.histmersion.api.catalogue.Year(-1180))), placeId = Some(com.histmersion.api.catalogue.Place.Id("work_troy")))
     )
-    val _ = PlaceFixtures.upsertPlaces(home, List(site("zz_ugarit", "Ugarit", 35.70, 35.50)), Dataset.Local)
-    val _ = PlaceFixtures.upsertPlaces(home, List(site("pleiades_550595", "Troy", 26.2390, 39.9576)), Dataset.Seed)
+    val _ = PlaceFixtures.upsertPlaces(home, List(site("zz_ugarit", Place.Label("Ugarit"), 35.70, 35.50)), Dataset.Local)
+    val _ = PlaceFixtures.upsertPlaces(home, List(site("pleiades_550595", Place.Label("Troy"), 26.2390, 39.9576)), Dataset.Seed)
     val bundle = exportOf(work, sw)
     val p = planIn(home, bundle, sh)
     val q = p.issues.find(_.kind == Issue.Kind.PlaceDiffers).getOrElse(fail(p.issues.mkString("\n")))
     // the review screen gets both geometries as GeoJSON
-    assert(q.detail.flatMap(_.place).flatMap(_.rightGeometry).exists(_.contains("\"Point\"")), q.detail.toString)
-    assert(p.info.exists(_.contains("is the same place")), p.info.mkString("\n"))
-    val a = applyIn(home, bundle, sh, MergeResolutions(List(MergeResolution(q.id, com.histmersion.api.exchange.MergeResolution.Decision("keep-right")))))
-    assert(a.applied, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
+    assert(q.detail.flatMap(_.place).flatMap(_.rightGeometry).exists(_.value.contains("\"Point\"")), q.detail.toString)
+    assert(p.info.exists(_.value.contains("is the same place")), p.info.mkString("\n"))
+    val a = applyIn(home, bundle, sh, MergeResolutions(List(MergeResolution(MergeResolution.Issue(q.id.value), com.histmersion.api.exchange.MergeResolution.Decision("keep-right")))))
+    assert(a.applied.value, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
     assertEquals(text(home, "SELECT ST_AsText(geom) FROM places WHERE id = 'zz_ugarit'"), Some("POINT(35.78 35.6)"))
     assertEquals(text(home, "SELECT place_id FROM events WHERE id = 'zz_troy_burns'"), Some("pleiades_550595"))
     assertEquals(count(home, "SELECT count(*)::int FROM places WHERE id = 'work_troy'"), 0)
@@ -250,10 +258,10 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         None,
         None
       ),
-      cfg.limits.chunkChars
+      cfg.limits.chunkChars.value
     )
     transact(work)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_goal"), Goal.Put(com.histmersion.api.automation.Goal.Title("A goal"))))
-    transact(work)(GoalLinkRepo.setPlan(com.histmersion.domain.automation.Goal.Slug("zz_goal"), """{"goal":"zz_goal","rationale":"work's plan"}"""))
+    transact(work)(GoalLinkRepo.setPlan(com.histmersion.domain.automation.Goal.Slug("zz_goal"), com.histmersion.domain.automation.goals.BGoalRow.Plan("""{"goal":"zz_goal","rationale":"work's plan"}""")))
     transact(work)(GoalLinkRepo.setBudget(com.histmersion.domain.automation.Goal.Slug("zz_goal"), Some(BigDecimal("2.5"))))
     assert(transact(work)(GoalLinkRepo.link(com.histmersion.domain.automation.Goal.Slug("zz_goal"), LinkKind.Source, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zzgoal2020_src"), Some(com.histmersion.api.automation.Goal.Plans.GoalLink.Note("why")))))
     assert(transact(work)(GoalLinkRepo.link(com.histmersion.domain.automation.Goal.Slug("zz_goal"), LinkKind.Query, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("hittite storm god"), None)))
@@ -261,14 +269,14 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       GoalLinkRepo.setSchedule(com.histmersion.domain.automation.Goal.Slug("zz_goal"), ScheduleKind.Currency, com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@weekly"), com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true), None, Some(java.time.Instant.now()))
     )
     val bundle = exportOf(work, sw)
-    val g = entitiesOf(bundle).goals.find(_.slug == "zz_goal").getOrElse(fail("no goal"))
+    val g = entitiesOf(bundle).goals.find(_.slug.value == "zz_goal").getOrElse(fail("no goal"))
     assert(g.planApprovedAt.isDefined && g.budgetUsd.contains(2.5), g.toString)
     assertEquals(g.links.map(_.map(_.kind)), Some(List("query", "source")))
     assertEquals(g.schedules.map(_.map(_.cron)), Some(List("@weekly")))
     val r = importInto(home, bundle, sh)
-    assert(r.applied, r.problems.mkString("\n"))
+    assert(r.applied.value, r.problems.mkString("\n"))
     assertEquals(
-      connect(home)(GoalLinkRepo.planAndBudget(com.histmersion.domain.automation.Goal.Slug("zz_goal"))).flatMap(_._1).exists(_.contains("work's plan")),
+      connect(home)(GoalLinkRepo.planAndBudget(com.histmersion.domain.automation.Goal.Slug("zz_goal"))).flatMap(_._1).exists(_.value.contains("work's plan")),
       true
     )
     assertEquals(Transactor(home).read(GoalLinkRepo.refsIn(com.histmersion.domain.automation.Goal.Slug("zz_goal"), LinkKind.Source)), List("zzgoal2020_src"))
@@ -276,7 +284,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       Transactor(home).read(GoalLinkRepo.schedule(com.histmersion.domain.automation.Goal.Slug("zz_goal"), ScheduleKind.Currency)).getOrElse(fail("no schedule"))
     // brought in, it never fires here before a person saves it
     assertEquals((s.cron, s.nextRunAt), ("@weekly", None))
-    assert(s.lastNote.exists(_.contains("save it once")), s.toString)
+    assert(s.lastNote.exists(_.value.contains("save it once")), s.toString)
     assertEquals(importInto(home, bundle, sh).changed, 0)
     // changed on both sides afterwards: one goal; home's schedule stays, the links of both
     transact(home)(GoalLinkRepo.setSchedule(com.histmersion.domain.automation.Goal.Slug("zz_goal"), ScheduleKind.Currency, com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@daily"), com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true), None, None))
@@ -284,9 +292,9 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(transact(work)(GoalLinkRepo.link(com.histmersion.domain.automation.Goal.Slug("zz_goal"), LinkKind.Query, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("mycenae"), None)))
     val again = exportOf(work, sw)
     val p = planIn(home, again, sh)
-    assert(p.info.exists(_.contains("its currency schedule differs")), p.info.mkString("\n"))
+    assert(p.info.exists(_.value.contains("its currency schedule differs")), p.info.mkString("\n"))
     val a = applyIn(home, again, sh)
-    assert(a.applied, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
+    assert(a.applied.value, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
     assertEquals(
       Transactor(home).read(GoalLinkRepo.refsIn(com.histmersion.domain.automation.Goal.Slug("zz_goal"), LinkKind.Query)).toSet,
       Set("hittite storm god", "ahhiyawa", "mycenae")
@@ -308,13 +316,13 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
           Some(com.histmersion.api.automation.Goal.Slug("zz_goal")),
           com.histmersion.api.automation.Managers.State.Paused,
           com.histmersion.api.automation.Managers
-            .ManagerConfig(sweeps = Some(List("acquisition")), budgetUsd = Some(0.3)),
+            .ManagerConfig(sweeps = Some(List("acquisition")), budgetUsd = Some(com.histmersion.api.automation.Managers.ManagerConfig.BudgetUsd(0.3))),
           Some(com.histmersion.api.automation.Managers.ManagerInfo.Cron("@weekly")),
           None
         )
       )
     )
-    val g = entitiesOf(exportOf(work, sw)).goals.find(_.slug == "zz_goal").getOrElse(fail("no goal"))
+    val g = entitiesOf(exportOf(work, sw)).goals.find(_.slug.value == "zz_goal").getOrElse(fail("no goal"))
     assertEquals(
       g.schedules.map(_.map(x => (x.kind, x.cron, x.enabled, x.budgetUsd))),
       Some(List(("acquisition", "@weekly", true, Some(0.3))))
@@ -324,9 +332,9 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val (work, home) = (fresh("aw"), fresh("ah"))
     val (sw, sh) = (spool("aw"), spool("ah"))
     val _ = ArticleFixtures.put(work, Article(com.histmersion.api.research.Article.Slug("zz_first_slug"), com.histmersion.api.research.Article.Title("An article"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("Text.")))
-    val _ = ArticleFixtures.rename(work, "zz_first_slug", "zz_second_slug").fold(e => fail(e.message), identity)
-    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_kadesh", "Kadesh", 36.51, 34.56)), Dataset.Seed)
-    val _ = PlaceFixtures.upsertPlaces(home, List(site("zz_kadesh", "Kadesh", 36.51, 34.56)), Dataset.Seed)
+    val _ = ArticleFixtures.rename(work, "zz_first_slug", "zz_second_slug").fold(e => fail(e.message.value), identity)
+    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_kadesh", Place.Label("Kadesh"), 36.51, 34.56)), Dataset.Seed)
+    val _ = PlaceFixtures.upsertPlaces(home, List(site("zz_kadesh", Place.Label("Kadesh"), 36.51, 34.56)), Dataset.Seed)
     EventFixtures.put(
       work,
       "work_kadesh",
@@ -335,7 +343,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         com.histmersion.api.catalogue.EventSummary.Kind("battle"),
         TimeSpan(Some(com.histmersion.api.catalogue.Year(-1274)), None, None, Some(com.histmersion.api.catalogue.Year(-1274))),
         placeId = Some(com.histmersion.api.catalogue.Place.Id("zz_kadesh")),
-        description = Some("work's account")
+        description = Some(com.histmersion.api.catalogue.EventSummary.Description("work's account"))
       )
     )
     EventFixtures.put(
@@ -351,7 +359,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val bundle = exportOf(work, sw)
     assertEquals(entitiesOf(bundle).articleAliases.map(_.alias), List("zz_first_slug"))
     val a = applyIn(home, bundle, sh)
-    assert(a.applied, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
+    assert(a.applied.value, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
     assertEquals(a.tally.eventsMerged, 1)
     assertEquals(count(home, "SELECT count(*)::int FROM events"), 1)
     assertEquals(text(home, "SELECT description FROM events WHERE id = 'kadesh_1274'"), Some("work's account"))
@@ -361,15 +369,15 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val list = Transactor(home).read(MergeRepo.list(com.histmersion.PageSize(10)))
     assertEquals(list.map(_.planHash.isDefined), List(true))
     val m = list.head
-    assert(m.redirects >= 1 && m.ledgerRows >= 2, m.toString)
-    val d = Transactor(home).read(MergeRepo.detail(m.id.toString.take(8))).fold(e => fail(e.message), identity)
+    assert(m.redirects.value >= 1 && m.ledgerRows.value >= 2, m.toString)
+    val d = Transactor(home).read(MergeRepo.detail(MergeRepo.MergeIdOrPrefix(m.id.toString.take(8)))).fold(e => fail(e.message.value), identity)
     assertEquals(d.applied.map(_.tally.eventsMerged), Some(1))
     assertEquals(d.merge.backup, Some("stub.dump"))
     val evUid = connect(home)(sql"SELECT uid FROM events WHERE id = 'kadesh_1274'".query[java.util.UUID].run().head)
     val led =
       Transactor(home)
-        .read(MergeRepo.ledger(Some(evUid.toString), None, com.histmersion.PageSize(50), TestExchange.rules))
-        .fold(e => fail(e.message), identity)
+        .read(MergeRepo.ledger(Some(MergeRepo.UidText(evUid.toString)), None, com.histmersion.PageSize(50), TestExchange.rules))
+        .fold(e => fail(e.message.value), identity)
     assertEquals(led.entries.map(_.label), List(Some("kadesh_1274")))
     assertEquals(led.redirects.map(_.uid), List(evUid))
     assert(Transactor(home).read(MergeRepo.detail(com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix("zzzz"))).isLeft)
@@ -382,7 +390,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(EventFixtures.rename(ds, "zz_ev_a", "zz_ev_b").isRight)
     assertEquals(EventFixtures.renamedTo(ds, "zz_ev_a"), Some("zz_ev_b"))
     // an old id of one event is not free for another
-    assert(EventFixtures.rename(ds, "zz_ev_other", "zz_ev_a").left.exists(_.message.contains("old id of 'zz_ev_b'")))
+    assert(EventFixtures.rename(ds, "zz_ev_other", "zz_ev_a").left.exists(_.message.value.contains("old id of 'zz_ev_b'")))
     assert(EventFixtures.rename(ds, "zz_ev_b", "zz_ev_a").isRight)
     assertEquals(EventFixtures.renamedTo(ds, "zz_ev_a"), None)
     assertEquals(EventFixtures.renamedTo(ds, "zz_ev_b"), Some("zz_ev_a"))
@@ -395,23 +403,23 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   test("a place renamed over there is followed: the new id here, the old one an alias, events and names follow"):
     val (work, home) = (fresh("prw"), fresh("prh"))
     val (sw, sh) = (spool("prw"), spool("prh"))
-    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_old_site", "My site", 34.6, 40.0)), Dataset.Local)
+    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_old_site", Place.Label("My site"), 34.6, 40.0)), Dataset.Local)
     EventFixtures.put(
       work,
       "zz_at_site",
       EventPut(com.histmersion.api.catalogue.EventSummary.Label("At my site"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1300)), None, None, Some(com.histmersion.api.catalogue.Year(-1290))), placeId = Some(com.histmersion.api.catalogue.Place.Id("zz_old_site")))
     )
     val first = importInto(home, exportOf(work, sw), sh)
-    assert(first.applied, first.problems.mkString("\n"))
+    assert(first.applied.value, first.problems.mkString("\n"))
     // work renames the place: its event follows by key (V055)
     assert(PlaceFixtures.rename(work, "zz_old_site", "zz_new_site").isRight)
     assertEquals(text(work, "SELECT place_id FROM events WHERE id = 'zz_at_site'"), Some("zz_new_site"))
     val bundle = exportOf(work, sw)
     val p = planIn(home, bundle, sh)
-    assert(p.info.exists(_.contains("renamed zz_new_site in the bundle")), p.info.mkString("\n"))
+    assert(p.info.exists(_.value.contains("renamed zz_new_site in the bundle")), p.info.mkString("\n"))
     assertEquals(p.problems, Nil)
     val r = importInto(home, bundle, sh)
-    assert(r.applied, r.problems.mkString("\n"))
+    assert(r.applied.value, r.problems.mkString("\n"))
     assertEquals(count(home, "SELECT count(*)::int FROM places WHERE id = 'zz_old_site'"), 0)
     assertEquals(text(home, "SELECT place_id FROM place_names WHERE name = 'My site'"), Some("zz_new_site"))
     assertEquals(text(home, "SELECT place_id FROM events WHERE id = 'zz_at_site'"), Some("zz_new_site"))
@@ -422,10 +430,10 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   test("a place renamed over there onto an id another place has here keeps ours; the bundle's events point at it"):
     val (work, home) = (fresh("pkw"), fresh("pkh"))
     val (sw, sh) = (spool("pkw"), spool("pkh"))
-    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_old_site", "My site", 34.6, 40.0)), Dataset.Local)
+    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_old_site", Place.Label("My site"), 34.6, 40.0)), Dataset.Local)
     val first = importInto(home, exportOf(work, sw), sh)
-    assert(first.applied, first.problems.mkString("\n"))
-    val _ = PlaceFixtures.upsertPlaces(home, List(site("zz_taken", "A seed site", 30.0, 39.0)), Dataset.Seed)
+    assert(first.applied.value, first.problems.mkString("\n"))
+    val _ = PlaceFixtures.upsertPlaces(home, List(site("zz_taken", Place.Label("A seed site"), 30.0, 39.0)), Dataset.Seed)
     assert(PlaceFixtures.rename(work, "zz_old_site", "zz_taken").isRight)
     EventFixtures.put(
       work,
@@ -440,9 +448,9 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val bundle = exportOf(work, sw)
     val p = planIn(home, bundle, sh)
     assert(!p.issues.exists(_.kind == Issue.Kind.PlaceDiffers), p.issues.map(_.title).mkString("\n"))
-    assert(p.info.exists(_.contains("it keeps its id")), p.info.mkString("\n"))
+    assert(p.info.exists(_.value.contains("it keeps its id")), p.info.mkString("\n"))
     val r = importInto(home, bundle, sh)
-    assert(r.applied, r.problems.mkString("\n"))
+    assert(r.applied.value, r.problems.mkString("\n"))
     assertEquals(text(home, "SELECT label FROM places WHERE id = 'zz_taken'"), Some("A seed site"))
     assertEquals(count(home, "SELECT count(*)::int FROM places WHERE id = 'zz_old_site'"), 1)
     assertEquals(text(home, "SELECT place_id FROM events WHERE id = 'zz_at_taken'"), Some("zz_old_site"))
@@ -451,7 +459,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   test("old event ids, goal slugs and place ids travel in a bundle, are written here, and keep resolving"):
     val (work, home) = (fresh("alw"), fresh("alh"))
     val (sw, sh) = (spool("alw"), spool("alh"))
-    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_pl_before", "My site", 34.6, 40.0)), Dataset.Local)
+    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_pl_before", Place.Label("My site"), 34.6, 40.0)), Dataset.Local)
     EventFixtures.put(work, "zz_ev_before", EventPut(com.histmersion.api.catalogue.EventSummary.Label("E"), com.histmersion.api.catalogue.EventSummary.Kind("battle")))
     transact(work)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_goal_before"), Goal.Put(com.histmersion.api.automation.Goal.Title("G"))))
     assert(PlaceFixtures.rename(work, "zz_pl_before", "zz_pl_after").isRight)
@@ -463,7 +471,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(es.goalAliases.map(_.alias), List("zz_goal_before"))
     assertEquals(es.placeAliases.map(_.alias), List("zz_pl_before"))
     val r = importInto(home, bundle, sh)
-    assert(r.applied, r.problems.mkString("\n"))
+    assert(r.applied.value, r.problems.mkString("\n"))
     assertEquals(EventFixtures.renamedTo(home, "zz_ev_before"), Some("zz_ev_after"))
     assertEquals(Transactor(home).read(GoalRepo.renamedTo(com.histmersion.domain.automation.Goal.Slug("zz_goal_before"))), Some("zz_goal_after"))
     assertEquals(PlaceFixtures.renamedTo(home, "zz_pl_before"), Some("zz_pl_after"))
@@ -475,23 +483,23 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(importInto(home, bundle, sh).changed, 0)
     EventFixtures.put(work, "zz_ev_x", EventPut(com.histmersion.api.catalogue.EventSummary.Label("X"), com.histmersion.api.catalogue.EventSummary.Kind("battle")))
     assert(EventFixtures.rename(work, "zz_ev_x", "zz_ev_y").isRight)
-    EventFixtures.put(home, "zz_ev_x", EventPut("Home's own X", com.histmersion.api.catalogue.EventSummary.Kind("battle")))
+    EventFixtures.put(home, "zz_ev_x", EventPut(com.histmersion.api.catalogue.EventSummary.Label("Home's own X"), com.histmersion.api.catalogue.EventSummary.Kind("battle")))
     val second = importInto(home, exportOf(work, sw), sh)
-    assert(second.applied, second.problems.mkString("\n"))
+    assert(second.applied.value, second.problems.mkString("\n"))
     assertEquals(EventFixtures.renamedTo(home, "zz_ev_x"), None) // a live id here, never an alias
 
   test("place renames keep the old id as an alias: refused when taken, dropped when renamed back"):
     val ds = fresh("prn")
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(site("zz_pl_a", "A", 30.0, 39.0), site("zz_pl_other", "Other", 31.0, 39.0)),
+      List(site("zz_pl_a", Place.Label("A"), 30.0, 39.0), site("zz_pl_other", Place.Label("Other"), 31.0, 39.0)),
       Dataset.Local
     )
     assert(PlaceFixtures.rename(ds, "zz_pl_a", "zz_pl_b").isRight)
     assertEquals(PlaceFixtures.renamedTo(ds, "zz_pl_a"), Some("zz_pl_b"))
     assertEquals(PlaceFixtures.get(ds, "zz_pl_b").map(_.place.label), Some("A"))
-    assert(PlaceFixtures.rename(ds, "zz_pl_other", "zz_pl_a").left.exists(_.message.contains("old id of 'zz_pl_b'")))
-    assert(PlaceFixtures.rename(ds, "zz_pl_b", "zz_pl_other").left.exists(_.message.contains("already the id")))
+    assert(PlaceFixtures.rename(ds, "zz_pl_other", "zz_pl_a").left.exists(_.message.value.contains("old id of 'zz_pl_b'")))
+    assert(PlaceFixtures.rename(ds, "zz_pl_b", "zz_pl_other").left.exists(_.message.value.contains("already the id")))
     assert(PlaceFixtures.rename(ds, "zz_pl_b", "zz_pl_a").isRight)
     assertEquals(PlaceFixtures.renamedTo(ds, "zz_pl_a"), None)
     assertEquals(PlaceFixtures.renamedTo(ds, "zz_pl_b"), Some("zz_pl_a"))
@@ -506,31 +514,31 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       com.histmersion.api.exchange.MergeApplyResult.PlanHash("abc123"),
       notes = List(com.histmersion.api.exchange.MergeApplyResult.Notes("a note"))
     )
-    val a = Transactor(ds).transact(JobRepo.startMergeApply("a" * 64, com.histmersion.util.data.exchange.MergeRow.PlanHash("abc123")))
+    val a = Transactor(ds).transact(JobRepo.startMergeApply(MergeRepo.BundleName("a" * 64), com.histmersion.util.data.exchange.MergeRow.PlanHash("abc123")))
     assert(Transactor(ds).read(JobRepo.mergeApplyRunning))
     assertEquals(
-      Transactor(ds).read(JobRepo.mergeApply(a)).map(j => (j.state, j.bundle, j.planHash)),
+      applyJob(ds, a).map(j => (j.state, j.bundle, j.planHash)),
       Some((MergeJobState.Running, "a" * 64, "abc123"))
     )
-    Transactor(ds).transact(JobRepo.finishMergeApply(a, Right(res)))
+    Transactor(ds).transact(JobRepo.finishMergeApply(JobRepo.FinishMergeApplyId(a.value), Right(res)))
     assert(!Transactor(ds).read(JobRepo.mergeApplyRunning))
     assertEquals(
-      Transactor(ds).read(JobRepo.mergeApply(a)).map(j => (j.state, j.result)),
+      applyJob(ds, a).map(j => (j.state, j.result)),
       Some((MergeJobState.Done, Some(res)))
     )
-    val b = Transactor(ds).transact(JobRepo.startMergeApply("b" * 64, com.histmersion.util.data.exchange.MergeRow.PlanHash("def456")))
+    val b = Transactor(ds).transact(JobRepo.startMergeApply(MergeRepo.BundleName("b" * 64), com.histmersion.util.data.exchange.MergeRow.PlanHash("def456")))
     assertEquals(Transactor(ds).transact(JobRepo.failInterrupted()), 1) // the startup reconciliation
-    assertEquals(Transactor(ds).read(JobRepo.mergeApply(b)).map(_.state), Some(MergeJobState.Interrupted))
+    assertEquals(applyJob(ds, b).map(_.state), Some(MergeJobState.Interrupted))
     // the thread that outlived nothing cannot overwrite it; a crash is failed with its reason
-    Transactor(ds).transact(JobRepo.finishMergeApply(b, Right(res)))
-    assertEquals(Transactor(ds).read(JobRepo.mergeApply(b)).map(_.state), Some(MergeJobState.Interrupted))
-    val c = Transactor(ds).transact(JobRepo.startMergeApply("c" * 64, com.histmersion.util.data.exchange.MergeRow.PlanHash("0")))
-    Transactor(ds).transact(JobRepo.finishMergeApply(c, Left(com.histmersion.util.jobs.JobRepo.Problem("merge apply crashed: boom"))))
+    Transactor(ds).transact(JobRepo.finishMergeApply(JobRepo.FinishMergeApplyId(b.value), Right(res)))
+    assertEquals(applyJob(ds, b).map(_.state), Some(MergeJobState.Interrupted))
+    val c = Transactor(ds).transact(JobRepo.startMergeApply(MergeRepo.BundleName("c" * 64), com.histmersion.util.data.exchange.MergeRow.PlanHash("0")))
+    Transactor(ds).transact(JobRepo.finishMergeApply(JobRepo.FinishMergeApplyId(c.value), Left(com.histmersion.util.jobs.JobRepo.Problem("merge apply crashed: boom"))))
     assertEquals(
-      Transactor(ds).read(JobRepo.mergeApply(c)).map(j => (j.state, j.error)),
+      applyJob(ds, c).map(j => (j.state, j.error)),
       Some((MergeJobState.Failed, Some("merge apply crashed: boom")))
     )
     // not a merge apply, or nothing: no answer
     assertEquals(Transactor(ds).read(JobRepo.mergeApply(com.histmersion.util.jobs.JobRepo.MergeApplyId("no-such-job"))), None)
-    val ocr = Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(com.histmersion.domain.library.Citekey("zz2020_x")), None))
-    assertEquals(Transactor(ds).read(JobRepo.mergeApply(ocr.id)), None)
+    val ocr = Transactor(ds).transact(JobRepo.create(JobRepo.CreateKind(Ingest.KindIngest), Some(com.histmersion.domain.library.Citekey("zz2020_x")), None))
+    assertEquals(applyJob(ds, ocr.id), None)

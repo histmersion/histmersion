@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.approvals
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.AgentProposals.Proposal
 import io.circe.syntax.*
@@ -30,7 +32,7 @@ class ProposalEvidenceSuite extends munit.FunSuite:
 
   test("every proposal's payload reads as its evidence and quote"):
     proposals.foreach { p =>
-      val read = Jsonb.read[ProposalEvidence](p.asJson.noSpaces)
+      val read = Jsonb.read[ProposalEvidence](Jsonb.JsonText(p.asJson.noSpaces))
       assertEquals(read.flatMap(_.evidence).getOrElse(""), p.evidence)
       assertEquals(read.flatMap(_.quote), p.quote)
     }

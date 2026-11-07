@@ -28,7 +28,7 @@ class ListSqlSuite extends munit.FunSuite:
     assertEquals(ListSql.between("created_at", None, None), Sql.empty)
 
   test("a facet is counted under every condition but its own"):
-    val c = ListSql.Conds(List("state" -> Sql.raw(" AND state = 'open'"), "kind" -> Sql.raw(" AND kind = 'edge'")))
+    val c = ListSql.Conds(List("state" -> Sql.raw(Sql.Text(" AND state = 'open'")), "kind" -> Sql.raw(Sql.Text(" AND kind = 'edge'"))))
     assertEquals(c.all.text, " AND state = 'open' AND kind = 'edge'")
     assertEquals(c.except("kind").text, " AND state = 'open'")
     assertEquals(c.except("nothing").text, c.all.text)

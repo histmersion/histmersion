@@ -8,7 +8,9 @@ import com.augustnagro.magnum.DbCon
   * reads.
   */
 object ArticleCheckFixtures:
-  def report(r: Rule, format: FormatChecker, maxItems: Int)(using CheckRun)(using DbCon): LintRuleReport =
+  def report(r: Rule, format: FormatChecker, maxItems: ArticleCheckRepo.ReportMaxItems)(using CheckRun)(using
+      DbCon
+  ): LintRuleReport =
     ArticleCheckRepo.report(r, format, maxItems)
 
   def sqlOf(rule: String): List[String] = ArticleCheckRepo.sqlOf(rule)

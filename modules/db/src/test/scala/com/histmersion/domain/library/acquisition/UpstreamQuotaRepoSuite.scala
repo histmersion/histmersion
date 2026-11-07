@@ -21,18 +21,19 @@ class UpstreamQuotaRepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
-    val d = testPool(AppConfig.load().db.copy(url = testDb.get))
+    val d = testPool(AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
   private val Up = "zzquota-test"
+  private val UpKind = com.histmersion.domain.automation.ProviderKind.Wire(Up)
 
   override def afterSuite(): Unit =
     if testDb.isDefined then
       val _ = transact(ds)(sql"DELETE FROM upstream_quota WHERE upstream = $Up".update.run())
 
   test("a budget is read back as it was saved; the next save replaces it"):
-    assertEquals(connect(ds)(UpstreamQuotaRepo.load(Up)), None)
+    assertEquals(connect(ds)(UpstreamQuotaRepo.load(UpKind)), None)
     val s = CoreQuota.State(
       LocalDate.of(2026, 10, 26),
       com.histmersion.domain.CoreQuota.State.LookupTokens(12),
@@ -40,9 +41,9 @@ class UpstreamQuotaRepoSuite extends com.histmersion.db.DbSuite:
       Some(CoreQuota.Block(Instant.parse("2026-10-26T18:52:11Z"), com.histmersion.domain.CoreQuota.Block.Why("HTTP 429"))),
       Some(CoreQuota.Window(Some(com.histmersion.domain.CoreQuota.Window.Limit(25)), Some(com.histmersion.domain.CoreQuota.Window.Remaining(0)), Instant.parse("2026-10-26T18:50:00Z")))
     )
-    transact(ds)(UpstreamQuotaRepo.save(Up, s.modify(_.recent).setTo(Vector(Instant.parse("2026-10-26T18:49:59Z")))))
+    transact(ds)(UpstreamQuotaRepo.save(UpKind, s.modify(_.recent).setTo(Vector(Instant.parse("2026-10-26T18:49:59Z")))))
     // the recent call slots are not kept
-    assertEquals(connect(ds)(UpstreamQuotaRepo.load(Up)), Some(s))
+    assertEquals(connect(ds)(UpstreamQuotaRepo.load(UpKind)), Some(s))
     val next = CoreQuota.State.fresh(LocalDate.of(2026, 10, 27)).copy(lookupTokens = com.histmersion.domain.CoreQuota.State.LookupTokens(1))
-    transact(ds)(UpstreamQuotaRepo.save(Up, next))
-    assertEquals(connect(ds)(UpstreamQuotaRepo.load(Up)), Some(next))
+    transact(ds)(UpstreamQuotaRepo.save(UpKind, next))
+    assertEquals(connect(ds)(UpstreamQuotaRepo.load(UpKind)), Some(next))

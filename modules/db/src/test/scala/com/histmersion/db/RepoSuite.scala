@@ -14,7 +14,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Confidence
 import com.histmersion.util.database.Migrate
-import com.histmersion.api.catalogue.Period
+import com.histmersion.api.catalogue.{Latitude, Longitude, Period, Year}
 import com.histmersion.api.library.{Edge, Filter, Finding, NeighborTarget, Source}
 import com.histmersion.util.database.given
 
@@ -50,18 +50,18 @@ class RepoSuite extends com.histmersion.db.DbSuite:
         com.histmersion.api.library.Citekey("zz_test_source"),
         com.histmersion.api.library.Finding.Claim("claim"),
         Some(com.histmersion.api.library.Finding.Region("Anatolia")),
-        Some(GeoPoint(32.0, 39.0)),
+        Some(GeoPoint(Longitude(32.0), Latitude(39.0))),
         Some(Period(com.histmersion.api.catalogue.Year(-1800), com.histmersion.api.catalogue.Year(-1700))),
         None,
         List(com.histmersion.api.library.Finding.Tags("f")),
         Some(Confidence.High)
       )
     ),
-    edges = List(Edge(com.histmersion.api.library.Citekey("zz_test_source"), com.histmersion.api.library.Citekey("zz_other"), com.histmersion.api.library.Edge.Kind("references")))
+    edges = List(Edge(com.histmersion.api.library.Citekey("zz_test_source"), com.histmersion.api.library.Citekey("zz_other"), com.histmersion.api.library.Edge.Kind.References))
   )
 
   test("upsert → get round-trip, int8range bounds inclusive"):
-    SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars)
+    SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars.value)
     val (d, fs) = SourceFixtures.get(ds, "zz_test_source").get
     assertEquals((d.periodStart, d.periodEnd), (Some(-2000L), Some(-1500L)))
     assertEquals(d.authors, List("A", "B"))
@@ -69,26 +69,26 @@ class RepoSuite extends com.histmersion.db.DbSuite:
     assertEquals((fs.head.periodStart, fs.head.periodEnd), (Some(-1800L), Some(-1700L)))
 
   test("findingsFor (the map feed): period overlap + bbox"):
-    SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars)
-    val box = Filter(bbox = Some(BBox(30.0, 38.0, 34.0, 40.0)), limit = 10)
-    val hit = FindingFixtures.findingsFor(ds, box.modify(_.period).setTo(Some(Period(-1750, -1750))))
-    val miss = FindingFixtures.findingsFor(ds, box.modify(_.period).setTo(Some(Period(-1000, -900))))
-    assert(hit.exists(_.citekey == "zz_test_source")); assert(!miss.exists(_.citekey == "zz_test_source"))
+    SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars.value)
+    val box = Filter(bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))), limit = 10)
+    val hit = FindingFixtures.findingsFor(ds, box.modify(_.period).setTo(Some(Period(Year(-1750), Year(-1750)))))
+    val miss = FindingFixtures.findingsFor(ds, box.modify(_.period).setTo(Some(Period(Year(-1000), Year(-900)))))
+    assert(hit.exists(_.citekey.value == "zz_test_source")); assert(!miss.exists(_.citekey.value == "zz_test_source"))
 
   test("the map feed says what each finding's source is (core.SourceKinds): its DOI, else its provenance"):
-    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(Some("10.1007/978-3-030-12345-6_7")), AppConfig.load().limits.chunkChars)
-    val box = Filter(bbox = Some(BBox(30.0, 38.0, 34.0, 40.0)), period = Some(Period(com.histmersion.api.catalogue.Year(-1750), com.histmersion.api.catalogue.Year(-1750))), limit = 10)
-    def kind = FindingFixtures.findingsFor(ds, box).find(_.citekey == "zz_test_source").flatMap(_.sourceKind)
+    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(Some("10.1007/978-3-030-12345-6_7")), AppConfig.load().limits.chunkChars.value)
+    val box = Filter(bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))), period = Some(Period(com.histmersion.api.catalogue.Year(-1750), com.histmersion.api.catalogue.Year(-1750))), limit = 10)
+    def kind = FindingFixtures.findingsFor(ds, box).find(_.citekey.value == "zz_test_source").flatMap(_.sourceKind)
     assertEquals(kind, Some(Source.Kinds.Chapter))
-    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(None).modify(_.provenance).setTo(Some("calibre")), AppConfig.load().limits.chunkChars)
+    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(None).modify(_.provenance).setTo(Some("calibre")), AppConfig.load().limits.chunkChars.value)
     assertEquals(kind, Some(Source.Kinds.Book))
-    SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars)
+    SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars.value)
     assertEquals(kind, Some(Source.Kinds.Unknown))
 
   test("neighbors lists an outgoing edge to an unknown target, classified as unresolved"):
-    SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars)
+    SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars.value)
     assert(
       CitationFixtures
         .neighbors(ds, "zz_test_source")
-        .exists(n => n.direction == "out" && n.citekey == "zz_other" && n.target == NeighborTarget.Unresolved)
+        .exists(n => n.direction.value == "out" && n.citekey.value == "zz_other" && n.target == NeighborTarget.Unresolved)
     )

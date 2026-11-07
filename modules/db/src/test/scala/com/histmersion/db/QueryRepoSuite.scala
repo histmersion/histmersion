@@ -96,7 +96,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
   test("count(*) over the whole corpus works — the acceptance query"):
     val r = run("select count(*) from sources").toOption.get
     assertEquals(r.columns, List("count"))
-    assert(r.rows.head.head.exists(_.toInt >= 1), r.rows.toString)
+    assert(r.rows.head.head.exists(_.value.toInt >= 1), r.rows.toString)
 
   test("NULL comes back as an absent cell, not as the string 'null'"):
     assertEquals(run("select null::text as x").toOption.get.rows, List(List(None)))
@@ -162,7 +162,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
 
   test("a huge cell is cut with a visible marker rather than shipped whole"):
     val r = run("select repeat('x', 5000) as big", maxCell = 100).toOption.get
-    val cell = r.rows.head.head.get
+    val cell = r.rows.head.head.get.value
     assert(cell.length < 200, cell.length.toString)
     assert(cell.contains("(+4900 chars)"), cell.takeRight(30))
 
@@ -183,19 +183,19 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
       .foreach(t => assert(names.contains(t), s"$t missing from $names"))
     assert(!names.contains("spatial_ref_sys"), "PostGIS plumbing stays out")
     assert(!names.contains("flyway_schema_history"), "migration bookkeeping stays out")
-    val sources = ts.find(_.name == "sources").get
+    val sources = ts.find(_.name.value == "sources").get
     assertEquals(sources.kind, "table")
     assert(sources.columns.map(_.name).contains("citekey"))
-    assert(sources.columns.find(_.name == "citekey").exists(!_.nullable))
+    assert(sources.columns.find(_.name.value == "citekey").exists(!_.nullable.value))
     // the flat findings VIEW is reported as a view
-    assert(ts.find(_.name == "findings_flat").forall(_.kind == "view"))
+    assert(ts.find(_.name.value == "findings_flat").forall(_.kind.value == "view"))
 
   test("the generated tool description names the tables that exist"):
     // `Query` alone is ambiguous here — magnum exports one too
     val d = com.histmersion.api.library.Query
       .toolDescription(com.histmersion.api.library.Query.SchemaTables(SearchFixtures.tables(ds)))
-    assert(d.contains("sources("), d)
-    assert(d.contains("queue_items("), d)
+    assert(d.value.contains("sources("), d)
+    assert(d.value.contains("queue_items("), d)
 
   // ── the batch / session-control escape (the critical fix) ────────────────────────────────────
   // pgjdbc runs a `;`-batch statement by statement, so `SET TRANSACTION READ WRITE; …` used to turn
