@@ -84,3 +84,7 @@ If a table-generated name shadows a real type of the same name imported in the f
 ## Clients (cli, web)
 
 The clients see only `api` (`com.histmersion.api...`), its unconstrained newtypes, and their own types. They never validate a domain rule and never import `com.histmersion.domain...` or `config` values for domain checks: the server answers 400. Command-line arguments, URL query strings, form fields, local storage and JSON from the server are boundaries: wrap with the API type's constructor there and read `.value` only where text is rendered or sent. Rendering (HTML, terminal text, Markdown) works on concepts; only the finished text handed to the DOM or the terminal is raw. `web` is Scala.js: no JVM-only API (`java.nio.file`, `java.time.ZoneId` beyond what it already uses, threads). Keep every UI string and every behaviour exactly as 7e197c2b: compare event handlers, request building and sort orders line by line when you change a type.
+
+## Style of what you write (applies to every line you touch)
+
+Refer to names as their scope allows: inside `JobType` write `JobType.Wire("goal-plan")`, not the fully qualified path; no new `_root_.` or `com.histmersion.` prefixes where an import or the enclosing package resolves the name. Replace a `type X = a.B.C` + `val X: a.B.C.type = a.B.C` pair you touch with `export a.B.C`. When you need an operation the type lacks (`values.find(_.wire.value.equalsIgnoreCase(s.value))`), add it to the type's companion as an extension and call it.
