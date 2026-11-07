@@ -118,8 +118,8 @@ class AgentSchemaSuite extends munit.FunSuite:
       status = List(com.histmersion.api.library.Filter.Status("contested")),
       from = Some(com.histmersion.api.catalogue.Year(-1600)),
       to = Some(com.histmersion.api.catalogue.Year(-1200)),
-      limit = Some(30),
-      offset = Some(30)
+      limit = Some(com.histmersion.api.library.Filter.Limit(30)),
+      offset = Some(com.histmersion.api.library.Filter.Offset(30))
     ).toFilter
     assertEquals(
       (f.q, f.topics, f.status, f.limit, f.offset),

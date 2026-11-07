@@ -619,7 +619,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     // no selection (refill batch 0): only the extension
     a.managing.update(
       ReviewId,
-      ManagerUpdate(Some(ManagerConfig(extendMinNew = Some(1), refillBatch = Some(com.histmersion.api.automation.Managers.ManagerConfig.RefillBatch(0)), includeTags = Some(List(com.histmersion.api.automation.Managers.ManagerConfig.IncludeTags("zzx"))))))
+      ManagerUpdate(Some(ManagerConfig(extendMinNew = Some(com.histmersion.api.automation.Managers.ManagerConfig.ExtendMinNew(1)), refillBatch = Some(com.histmersion.api.automation.Managers.ManagerConfig.RefillBatch(0)), includeTags = Some(List(com.histmersion.api.automation.Managers.ManagerConfig.IncludeTags("zzx"))))))
     )
     a.managing.action(ReviewId, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None)
     val out = a.managers.tick(t0)

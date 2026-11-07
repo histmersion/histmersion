@@ -205,7 +205,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
   test("loopback: 127.x, ::1 and localhost are; 0.0.0.0 and a LAN address are not — and claude-code is refused there"):
     assert(
       ClaudeCode.Env.isLoopback(com.histmersion.config.ServerConfig.Host("127.0.0.1")) && ClaudeCode.Env.isLoopback(com.histmersion.config.ServerConfig.Host("localhost")) && ClaudeCode.Env.isLoopback(
-        "[::1]"
+        com.histmersion.config.ServerConfig.Host("[::1]")
       )
     )
     assert(!ClaudeCode.Env.isLoopback(com.histmersion.config.ServerConfig.Host("0.0.0.0")) && !ClaudeCode.Env.isLoopback(com.histmersion.config.ServerConfig.Host("192.168.1.5")))

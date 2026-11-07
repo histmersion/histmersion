@@ -352,7 +352,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
         title = Some(com.histmersion.api.library.Title("A critique")),
         year = Some(com.histmersion.api.catalogue.Year(2021)),
         doi = Some(com.histmersion.api.library.Doi("10.1038/zzcritic")),
-        contexts = List("These data contradict the steppe model"),
+        contexts = List(com.histmersion.api.library.FollowupRow.Contexts("These data contradict the steppe model")),
         isInfluential = com.histmersion.api.library.FollowupRow.IsInfluential(true)
       ),
       FollowupRow(
@@ -538,10 +538,10 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     // hybrid on the same host, or gold on a host that does not refuse scripts: the watcher adds nothing
     dropItems(); wipe("zzacq_ingested")
     val _ = handlers(FakeDiscovery(gold.modify(_.oaStatus).setTo(Some("hybrid"))), oa = NoPdf)
-      .ingestLegal(Ingest.Request("10.1038/zztest001"))
+      .ingestLegal(Ingest.Request(com.histmersion.api.library.Ingest.Request.Id("10.1038/zztest001")))
     val _ =
       handlers(FakeDiscovery(gold.modify(_.oaUrl).setTo(Some("https://zenodo.org/records/1")).modify(_.oaLocations).setTo(Nil)), oa = NoPdf)
-        .ingestLegal(Ingest.Request("10.1038/zztest001"))
+        .ingestLegal(Ingest.Request(com.histmersion.api.library.Ingest.Request.Id("10.1038/zztest001")))
     assertEquals(items.size, 0)
     // a copy found: nothing to download by hand
     val _ = handlers(FakeDiscovery(gold), oa = SomePdf()).ingest(Ingest.Request(com.histmersion.api.library.Ingest.Request.Id("10.1038/zztest001")))
