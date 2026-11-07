@@ -102,4 +102,3 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
   val pdfStep: SourceFetcher = ByDoi("pmc", (ctx, d) => lookup(ctx, d).pdf)
   val textStep: SourceFetcher = ByDoi("pmc-text", (ctx, d) => lookup(ctx, d).fullText)
 
-object Pmc:

@@ -168,7 +168,7 @@ private[sources] object SourceRepo:
     */
   private[histmersion] def insertEdges(edges: List[Edge])(using DbCon): com.histmersion.RowCount =
     val es = edges.distinct
-    if es.isEmpty then 0
+    if es.isEmpty then com.histmersion.RowCount(0)
     else
       // an edge to an OLD citekey (V027) is an edge to the source it was renamed to
       val known = canonicalAll(es.map(_.dst.value).distinct).map((key, value) => com.histmersion.api.library.Citekey(key) -> value)
@@ -705,7 +705,7 @@ private[sources] object SourceRepo:
         .run()
         .headOption
         .filter(_.nonEmpty)
-        .map(Chunk(0, None, _))
+        .map(Chunk(com.histmersion.util.ocr.Chunk.Ord(0), None, _))
         .toList
 
   /** Body text under a specific heading: chunks whose heading matches case-insensitively (prefix). */

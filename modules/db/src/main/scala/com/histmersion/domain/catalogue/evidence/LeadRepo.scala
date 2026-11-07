@@ -23,14 +23,14 @@ private[evidence] object LeadRepo:
       .query[(String, Option[String], Option[Int])]
       .run()
       .toList
-      .map((ck, t, y) => EventSourceRef(ck, t, y, "citekey"))
+      .map((ck, t, y) => EventSourceRef(ck, t, y, com.histmersion.api.catalogue.EventSourceRef.Via("citekey")))
     val att = sql"""SELECT DISTINCT ON (a.citekey) a.citekey, s.title, s.year, a.quote
                       FROM attestations a JOIN sources s ON s.citekey = a.citekey
                       WHERE a.target_type = 'event' AND a.target_id = $id ORDER BY a.citekey, a.id"""
       .query[(String, Option[String], Option[Int], Option[String])]
       .run()
       .toList
-      .map((ck, t, y, q) => EventSourceRef(ck, t, y, "attestation", q))
+      .map((ck, t, y, q) => EventSourceRef(ck, t, y, com.histmersion.api.catalogue.EventSourceRef.Via("attestation"), q))
     (own ++ att.filterNot(a => own.exists(_.citekey == a.citekey)))
 
   /** The dated, placed findings within `km` of an event's anchor and `years` of its outer span, nearest in time then
@@ -53,7 +53,7 @@ private[evidence] object LeadRepo:
             FROM ev JOIN findings f
               ON f.geom IS NOT NULL AND ev.pt IS NOT NULL AND ev.span IS NOT NULL
              AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
-             AND f.geom && ${SqlLiteral(EventSql.boxAround("ev.pt", km))}
+             AND f.geom && ${SqlLiteral(EventSql.boxAround(com.histmersion.domain.catalogue.events.EventSql.Point("ev.pt"), km))}
              AND ST_DWithin(f.geom::geography, ev.pt::geography, ${km * 1000.0})
              AND f.period && int8range(${SqlLiteral(RangeSql.start("ev.span"))} - $years, ${SqlLiteral(
         RangeSql.end("ev.span")
@@ -78,7 +78,7 @@ private[evidence] object LeadRepo:
                  (SELECT count(*)::int FROM findings f
                    WHERE a.pt IS NOT NULL AND e.outer_span IS NOT NULL AND f.geom IS NOT NULL
                      AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
-                     AND f.geom && ${EventSql.boxAround("a.pt", km)}
+                     AND f.geom && ${EventSql.boxAround(com.histmersion.domain.catalogue.events.EventSql.Point("a.pt"), km)}
                      AND ST_DWithin(f.geom::geography, a.pt::geography, ?)
                      AND f.period && int8range(${RangeSql.start("e.outer_span")} - ?, ${RangeSql.end(
         "e.outer_span"

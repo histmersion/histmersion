@@ -50,7 +50,7 @@ private[histmersion] object Keyset:
     val bounds = before.fold(Sql.empty)(olderThan(alias, table, _)) ++ upTo.fold(Sql.empty)(atOrNewer(alias, table, _))
     val rows =
       (select ++ where ++ bounds ++ orderBy(alias) ++ Sql.of(
-        " LIMIT ?",
+        com.histmersion.util.database.Sql.OfText(" LIMIT ?"),
         Param.I(math.min(limit, Int.MaxValue - 1) + 1)
       )).frag.query[R].run()
     val (shown, more) = Paging.cut(rows, limit)

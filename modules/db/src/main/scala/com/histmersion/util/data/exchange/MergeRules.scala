@@ -39,4 +39,3 @@ trait MergeRules:
   )(using DbCon): MergePlanner.Input =
     in
 
-object MergeRules:

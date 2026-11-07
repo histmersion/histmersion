@@ -50,7 +50,7 @@ object EventSql:
   /** What only the catalogue work narrows events by: the tier, the catalogue context of the map's layer, and the area
     * the anchor lies in.
     */
-  final case class Narrow(tier: Option[Narrow.Tier] = None, context: Narrow.Context = false, area: Option[BBox] = None)
+  final case class Narrow(tier: Option[Narrow.Tier] = None, context: Narrow.Context = com.histmersion.domain.catalogue.events.EventSql.Narrow.Context(false), area: Option[BBox] = None)
 
   object Narrow:
     type Tier = Tier.T
@@ -80,7 +80,7 @@ object EventSql:
       if more.context then
         // the catalogue's events of the period stay, whatever the sources selected
         val inPeriod = related.eventWhere(Filter(period = filter.period, title = filter.title), PlaceScope.empty)
-        ps += (Sql.raw("(") ++ selected ++ Sql.raw(s" OR ($catalogueOnly AND ") ++ inPeriod ++ Sql.raw("))"))
+        ps += (Sql.raw(com.histmersion.util.database.Sql.RawText("(")) ++ selected ++ Sql.raw(s" OR ($catalogueOnly AND ") ++ inPeriod ++ Sql.raw("))"))
       else ps += selected
     clean(more.tier).map(_.toLowerCase).foreach(t => ps += Sql.of(s"($TierSql) = ?", Param.S(t)))
     more.area.foreach(b => ps += EnvelopeSql.envelopes(s"coalesce(e.geom, ep.geom)", b))
@@ -94,7 +94,7 @@ object EventSql:
     clean(historicity).map(_.toLowerCase).foreach(h => ps += Sql.of("e.historicity = ?", Param.S(h)))
     clean(placeId).foreach(p => ps += Sql.of("e.place_id = ?", Param.S(p)))
     val parts = ps.result()
-    if parts.isEmpty then Sql.raw("TRUE")
+    if parts.isEmpty then Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE"))
     else Sql(parts.map(_.text).mkString(" AND "), parts.flatMap(_.params))
 
   /** An event's ANCHOR over `events e` with its place `ep`: its own geometry, else its place's (`s.g`, `s.src`), as a

@@ -36,10 +36,10 @@ private[maptiles] object TileRepo:
 
   val Groups: Map[TileLayer, List[com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName]] = Map(
     // an undated site is shown by its findings, or by an event, dated then
-    TileLayer.Sites -> List("places", "corpus", "events"),
+    TileLayer.Sites -> List(com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("places"), com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("corpus"), com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("events")),
     // under a filter of sources, an event is one of theirs; its anchor and place's name are its place's
-    TileLayer.Events -> List("events", "places", "corpus"),
-    TileLayer.Media -> List("media")
+    TileLayer.Events -> List(com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("events"), com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("places"), com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("corpus")),
+    TileLayer.Media -> List(com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("media"))
   )
 
   /** Each group's version: the sum of its changes' weights (V105). */
@@ -71,7 +71,7 @@ private[maptiles] object TileRepo:
     val (w, s, e, n) = c.bounds
     val south = if c.y == c.side - 1 then -90.0 else s
     val north = if c.y == 0 then 90.0 else n
-    Sql.of("ST_MakeEnvelope(?, ?, ?, ?, 4326)", Param.D(w), Param.D(south), Param.D(e), Param.D(north))
+    Sql.of(com.histmersion.util.database.Sql.OfText("ST_MakeEnvelope(?, ?, ?, ?, 4326)"), Param.D(w), Param.D(south), Param.D(e), Param.D(north))
 
   /** Web Mercator in SQL over the columns `lon` and `lat`: [[TileCoord.mercator]], each axis held inside the unit
     * square, then in units of tile `c` — `(x, y)`. `TileRepoSuite` holds it to the Scala.
@@ -91,7 +91,7 @@ private[maptiles] object TileRepo:
   private def placedSql(candidates: Sql, c: TileCoord): Sql =
     val (ux, uy) = unitsSql(c)
     val e = TileCoord.Extent
-    Sql.raw("WITH c AS MATERIALIZED (") ++ candidates ++ Sql.raw(
+    Sql.raw(com.histmersion.util.database.Sql.RawText("WITH c AS MATERIALIZED (")) ++ candidates ++ Sql.raw(
       "), k AS MATERIALIZED (SELECT key, lon, lat, ub, CASE WHEN ps IS NOT NULL AND pe IS NOT NULL THEN (ps + pe) / 2.0 END AS mid," +
         s" $ux AS px, $uy AS py FROM c)" +
         s", t AS MATERIALIZED (SELECT * FROM k WHERE px >= 0 AND px < $e AND py >= 0 AND py < $e)"

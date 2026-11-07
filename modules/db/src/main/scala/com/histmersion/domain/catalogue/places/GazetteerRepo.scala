@@ -42,7 +42,7 @@ private[places] object GazetteerRepo:
     * left alone. Idempotent.
     */
   def linkSeedIds(ids: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): com.histmersion.RowCount =
-    if ids.isEmpty then 0
+    if ids.isEmpty then com.histmersion.RowCount(0)
     else
       sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
             SELECT id, scheme, ext, rel FROM (
@@ -314,7 +314,7 @@ private[places] object GazetteerRepo:
 
     /** The records' own places: inserted, or updated where something differs. (inserted, updated) */
     private def writePlaces(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.BPlaceRow.Label)]): (com.histmersion.RowCount, com.histmersion.RowCount) =
-      if rows.isEmpty then (0, 0)
+      if rows.isEmpty then (com.histmersion.RowCount(0), com.histmersion.RowCount(0))
       else
         val doc = Json.arr(rows.map { (r, id) =>
           val v = Gazetteer.validity(source, r.span, windowYears)

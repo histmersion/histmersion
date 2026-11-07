@@ -82,7 +82,7 @@ final class Polite(
             else ""
             Left(s"$h: $why$waited")
       }
-    attempt(0, 0)
+    attempt(com.histmersion.domain.HttpPolicy.Attempt(0), com.histmersion.pluginhost.Polite.RefusalCount(0))
 
   /** One GET answered as JSON. `headers` as for [[get]] — a key-gated API's key travels in one, never in the URL (which
     * an error line or a log may show).
@@ -97,7 +97,7 @@ final class Polite(
     get(url).map(a =>
       (
         a.body,
-        a.header("content-type")
+        a.header(com.histmersion.domain.CoreQuota.HeaderName("content-type"))
           .map(_.split(";").head.trim)
           .filter(_.nonEmpty)
           .getOrElse(fallbackMime)

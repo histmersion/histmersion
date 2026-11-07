@@ -108,9 +108,9 @@ object BundleImport:
 
     /** `work` written as this collection's own: the change clocks move and a delete leaves a tombstone. */
     def asLocal(work: => Unit): Unit =
-      importing(false)
+      importing(com.histmersion.util.data.exchange.BundleImport.Importing(false))
       work
-      importing(true)
+      importing(com.histmersion.util.data.exchange.BundleImport.Importing(true))
 
     // what the derived step and pass 2 need
     private val sourcesTouched = scala.collection.mutable.LinkedHashSet.empty[UUID]
@@ -159,9 +159,9 @@ object BundleImport:
     )(rename: (com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey) => Either[Api.Error, ?]): Unit =
       lines.filter(a => writes(uid(a))).foreach { a =>
         localLabel.get(uid(a)).filter(_ != label(a)).foreach { old =>
-          importing(false)
+          importing(com.histmersion.util.data.exchange.BundleImport.Importing(false))
           rename(old, label(a)).left.foreach(e => throw ImportAbort(List(s"$what $old → ${label(a)}: ${e.message}")))
-          importing(true)
+          importing(com.histmersion.util.data.exchange.BundleImport.Importing(true))
         }
       }
 

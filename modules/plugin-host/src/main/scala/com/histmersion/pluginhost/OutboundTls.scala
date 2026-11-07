@@ -133,7 +133,7 @@ object OutboundTls:
     }
 
   private def describe(t: HttpPolicy.Trust): com.histmersion.pluginhost.OutboundTls.Summary = t match
-    case HttpPolicy.Trust.Jdk          => "the JDK"
-    case HttpPolicy.Trust.Keychains(_) => "the macOS system keychains"
-    case HttpPolicy.Trust.Bundle(_)    => "the system CA bundle"
+    case HttpPolicy.Trust.Jdk          => com.histmersion.pluginhost.OutboundTls.Summary("the JDK")
+    case HttpPolicy.Trust.Keychains(_) => com.histmersion.pluginhost.OutboundTls.Summary("the macOS system keychains")
+    case HttpPolicy.Trust.Bundle(_)    => com.histmersion.pluginhost.OutboundTls.Summary("the system CA bundle")
     case HttpPolicy.Trust.PemFile(p)   => p

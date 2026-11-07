@@ -21,7 +21,7 @@ private[maptiles] object UndatedSiteRepo:
   type CandidatesSiteType = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType
   val CandidatesSiteType: _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType.type = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType
 
-  val Group: com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.Group = "undated"
+  val Group: com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.Group = com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.Group("undated")
 
   /** A site with no known date that a map draws (a point, an informative name), over a `places` row `p` — word for word
     * the predicate of `places_site_undated`, then the label rule.

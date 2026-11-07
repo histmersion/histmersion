@@ -43,7 +43,7 @@ object Sql:
   type Text = Text.T
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val empty: Sql = Sql("", Nil)
+  val empty: Sql = Sql(com.histmersion.util.database.Sql.Text(""), Nil)
   def raw(text: com.histmersion.util.database.Sql.RawText): Sql = Sql(text, Nil)
   def of(text: com.histmersion.util.database.Sql.OfText, ps: Param*): Sql = Sql(text, ps.toList)
 

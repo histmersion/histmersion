@@ -45,39 +45,39 @@ object ReservedNames:
     * catalogue, a media provider or an AI provider is kept for it.
     */
   val firstPartyPlugins: Set[com.histmersion.pluginhost.ReservedNames.Name] = Set(
-    "archive-org",
-    "oa-unpaywall",
-    "oa-core",
-    "oa-openalex",
-    "oa-landing",
-    "pmc",
-    "arxiv",
-    "events-gvp",
-    "events-noaa",
-    "events-wikidata",
-    "media-wikidata",
-    "media-depicts",
-    "media-met",
-    "media-cleveland",
-    "media-aic",
-    "media-loc",
-    "media-pleiades",
-    "media-opencontext",
-    "media-smithsonian",
-    "media-europeana",
-    "ai-anthropic",
-    "ai-openai",
-    "ai-local",
-    "ai-claude-code",
-    "ai-codex",
-    "ai-opencode",
-    "gazetteer-cliopatria",
-    "gazetteer-awmc",
-    "gazetteer-chronontology",
-    "keepassxc",
-    "1password",
-    "bitwarden",
-    "calibre"
+    com.histmersion.pluginhost.ReservedNames.Name("archive-org"),
+    com.histmersion.pluginhost.ReservedNames.Name("oa-unpaywall"),
+    com.histmersion.pluginhost.ReservedNames.Name("oa-core"),
+    com.histmersion.pluginhost.ReservedNames.Name("oa-openalex"),
+    com.histmersion.pluginhost.ReservedNames.Name("oa-landing"),
+    com.histmersion.pluginhost.ReservedNames.Name("pmc"),
+    com.histmersion.pluginhost.ReservedNames.Name("arxiv"),
+    com.histmersion.pluginhost.ReservedNames.Name("events-gvp"),
+    com.histmersion.pluginhost.ReservedNames.Name("events-noaa"),
+    com.histmersion.pluginhost.ReservedNames.Name("events-wikidata"),
+    com.histmersion.pluginhost.ReservedNames.Name("media-wikidata"),
+    com.histmersion.pluginhost.ReservedNames.Name("media-depicts"),
+    com.histmersion.pluginhost.ReservedNames.Name("media-met"),
+    com.histmersion.pluginhost.ReservedNames.Name("media-cleveland"),
+    com.histmersion.pluginhost.ReservedNames.Name("media-aic"),
+    com.histmersion.pluginhost.ReservedNames.Name("media-loc"),
+    com.histmersion.pluginhost.ReservedNames.Name("media-pleiades"),
+    com.histmersion.pluginhost.ReservedNames.Name("media-opencontext"),
+    com.histmersion.pluginhost.ReservedNames.Name("media-smithsonian"),
+    com.histmersion.pluginhost.ReservedNames.Name("media-europeana"),
+    com.histmersion.pluginhost.ReservedNames.Name("ai-anthropic"),
+    com.histmersion.pluginhost.ReservedNames.Name("ai-openai"),
+    com.histmersion.pluginhost.ReservedNames.Name("ai-local"),
+    com.histmersion.pluginhost.ReservedNames.Name("ai-claude-code"),
+    com.histmersion.pluginhost.ReservedNames.Name("ai-codex"),
+    com.histmersion.pluginhost.ReservedNames.Name("ai-opencode"),
+    com.histmersion.pluginhost.ReservedNames.Name("gazetteer-cliopatria"),
+    com.histmersion.pluginhost.ReservedNames.Name("gazetteer-awmc"),
+    com.histmersion.pluginhost.ReservedNames.Name("gazetteer-chronontology"),
+    com.histmersion.pluginhost.ReservedNames.Name("keepassxc"),
+    com.histmersion.pluginhost.ReservedNames.Name("1password"),
+    com.histmersion.pluginhost.ReservedNames.Name("bitwarden"),
+    com.histmersion.pluginhost.ReservedNames.Name("calibre")
   )
 
   /** The network gazetteers `places fetch` and `init.fetch-sources` name, and the other names they take (the coastline,
@@ -88,7 +88,7 @@ object ReservedNames:
       com.histmersion.api.catalogue.Gazetteer.Kind.values.map(_.wire).toSet
 
   /** Histmersion's own source collections: the Calibre library and archive.org. */
-  val sourceCollections: Set[com.histmersion.pluginhost.ReservedNames.Name] = Set("calibre", "archive-org")
+  val sourceCollections: Set[com.histmersion.pluginhost.ReservedNames.Name] = Set(com.histmersion.pluginhost.ReservedNames.Name("calibre"), com.histmersion.pluginhost.ReservedNames.Name("archive-org"))
 
   /** The built-in AI providers. */
   val aiProviders: Set[com.histmersion.pluginhost.ReservedNames.Name] = Agents.ProviderKind.values.map(_.wire).toSet

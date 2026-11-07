@@ -78,7 +78,7 @@ private[periods] object PeriodRepo:
     * `preset` leaves a stored one alone.
     */
   def upsert(ps: List[HistoricalPeriod], dataset: Dataset)(using DbCon): com.histmersion.RowCount =
-    if ps.isEmpty then 0
+    if ps.isEmpty then com.histmersion.RowCount(0)
     else
       val _ = batchUpdate(ps) { p =>
         val preset = p.preset.map(_.wire)

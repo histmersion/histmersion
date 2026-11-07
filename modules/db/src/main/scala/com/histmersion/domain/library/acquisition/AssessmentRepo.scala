@@ -47,7 +47,7 @@ private[acquisition] object AssessmentRepo:
     sql"DELETE FROM retraction_watch".update.run()
     // the export can list a DOI twice (a retraction and a later reinstatement); the last wins
     val unique = rows.map(r => r.doi -> r).toMap.values.toVector
-    if unique.isEmpty then 0
+    if unique.isEmpty then com.histmersion.RowCount(0)
     else
       val _ = batchUpdate(unique)(r => sql"""INSERT INTO retraction_watch (doi, reason, date, nature)
               VALUES (${r.doi}, ${r.reason}, ${Acquire.rwDate(r.date)}::date, ${r.nature})

@@ -69,7 +69,7 @@ object BundleImporter:
         catch case a: ImportAbort => Right(failed(m, opts, a.problems))
 
   private def failed(m: Bundle.Manifest, opts: ImportOptions, problems: List[com.histmersion.util.data.exchange.BundleImporter.Problem]): Bundle.ImportResult =
-    Bundle.ImportResult(m.bundleId, m.instance, opts.dryRun, applied = false, Nil, 0, problems, Nil, Nil)
+    Bundle.ImportResult(m.bundleId, m.instance, opts.dryRun, applied = com.histmersion.api.exchange.Bundle.ImportResult.Applied(false), Nil, com.histmersion.api.exchange.Bundle.ImportResult.Blobs(0), problems, Nil, Nil)
 
   /** The issue as a problem line names it. */
   private def named(i: MergeIssue): com.histmersion.util.data.exchange.BundleImporter.IssueName =
@@ -133,7 +133,7 @@ object BundleImporter:
         opts.dryRun,
         applied,
         counts,
-        if applied then needed.size else 0,
+        if applied then needed.size else com.histmersion.api.exchange.Bundle.ImportResult.Blobs(0),
         problems,
         conflicts,
         planned.notes,
@@ -142,7 +142,7 @@ object BundleImporter:
         Some(plan.planHash)
       )
 
-    if problems.nonEmpty || opts.dryRun then result(applied = false, None)
+    if problems.nonEmpty || opts.dryRun then result(applied = com.histmersion.util.data.exchange.BundleImporter.Applied(false), None)
     else
       writeAll(bundle, input, planned, opts, files, kinds)
       val mergeId = MergeRepo.record(
@@ -150,10 +150,10 @@ object BundleImporter:
         bundleSha,
         ownBundle,
         decided,
-        result(applied = true, None).asJson,
-        result(applied = true, None).changed
+        result(applied = com.histmersion.util.data.exchange.BundleImporter.Applied(true), None).asJson,
+        result(applied = com.histmersion.util.data.exchange.BundleImporter.Applied(true), None).changed
       )
-      result(applied = true, mergeId)
+      result(applied = com.histmersion.util.data.exchange.BundleImporter.Applied(true), mergeId)
 
   /** Every kind's steps over the decided lines: the rows, the blobs, what hangs off them and the derived state. Inside
     * the caller's transaction; the importing flag is left on.
@@ -171,7 +171,7 @@ object BundleImporter:
     val decisionOf: Map[UUID, Decision] = decided.map(d => d.uid -> d.decision).toMap
     def writes(uid: UUID): Boolean = decisionOf.get(uid).exists(d => d == Decision.Insert || d == Decision.FastForward)
     val needed = neededBlobs(es, writes)
-    MergeRepo.importing(true)
+    MergeRepo.importing(com.histmersion.util.data.exchange.MergeRepo.Importing(true))
     val w =
       BundleImport.Writer(es, decided, decisionOf, writes, input.local, planned.skipAliases, planned.apply, opts, kinds)
     kinds.steps(ImportStage.Rows).foreach(_.write(w))
@@ -180,9 +180,9 @@ object BundleImporter:
       val failures = bundle.read(in => blobs(in, needed, w, files, kinds))
       if failures.nonEmpty then throw ImportAbort(failures)
     kinds.steps(ImportStage.AfterBlobs).foreach(_.write(w))
-    MergeRepo.importing(false)
+    MergeRepo.importing(com.histmersion.util.data.exchange.MergeRepo.Importing(false))
     kinds.steps(ImportStage.Derived).foreach(_.write(w))
-    MergeRepo.importing(true)
+    MergeRepo.importing(com.histmersion.util.data.exchange.MergeRepo.Importing(true))
 
   /** sha256 → its uses, for the blobs a WRITTEN row needs (an unchanged row's blob is skipped). */
   private def neededBlobs(es: BundleEntities, writes: UUID => Boolean): Map[com.histmersion.Sha256, List[BlobUse]] =
@@ -282,7 +282,7 @@ object BundleImporter:
           )
         catch
           case a: ImportAbort =>
-            Right(MergeApplyResult(m.bundleId, m.instance, applied = false, planHash, problems = a.problems))
+            Right(MergeApplyResult(m.bundleId, m.instance, applied = com.histmersion.api.exchange.MergeApplyResult.Applied(false), planHash, problems = a.problems))
 
   private def applyIn(
       bundle: ByteSource,
@@ -320,7 +320,7 @@ object BundleImporter:
     val base = MergeApplyResult(
       m.bundleId,
       m.instance,
-      applied = false,
+      applied = com.histmersion.api.exchange.MergeApplyResult.Applied(false),
       plan.planHash,
       counts = counts,
       tally = planned.apply.tally,

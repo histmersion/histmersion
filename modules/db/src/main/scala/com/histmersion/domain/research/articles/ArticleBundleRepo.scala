@@ -89,7 +89,7 @@ private[articles] object ArticleBundleRepo:
   /** Rename what the other side renamed (the same uid, a new slug), through the ordinary rename path. */
   def articleRenamesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.followRenames(w.es.articles, _.uid, _.slug, w.local.articles.map(a => a.uid -> a.slug).toMap, "article")(
+    w.followRenames(w.es.articles, _.uid, _.slug, w.local.articles.map(a => a.uid -> a.slug).toMap, com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("article"))(
       ArticleRepo.renameIn
     )
 

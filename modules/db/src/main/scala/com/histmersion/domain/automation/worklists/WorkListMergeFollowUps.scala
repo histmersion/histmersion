@@ -35,7 +35,7 @@ object WorkListMergeFollowUps extends MergeFollowUps:
         Queue.Kind.Tasks,
         Queue.QueueAdd(
           s"/review-article $slug --fix — merged with $from's (merge $short)",
-          topic = Some("merge"),
+          topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic("merge")),
           reason = Some(s"`merge apply` changed the article; a merged text is not reviewed")
         )
       )
@@ -46,9 +46,9 @@ object WorkListMergeFollowUps extends MergeFollowUps:
       Queue.Kind.Log,
       Queue.QueueAdd(
         s"Merged the bundle of $from (${m.bundleId.toString.take(8)}…) as merge $short: " +
-          s"${Plural.count(t.sourcesMerged, "source")} merged, ${counts.find(_.kind == Bundle.Kind.Source).fold(0)(_.inserted)} new, " +
+          s"${Plural.count(t.sourcesMerged, com.histmersion.api.Plural.CountSingular("source"))} merged, ${counts.find(_.kind == Bundle.Kind.Source).fold(0)(_.inserted)} new, " +
           s"${Plural.count(reviews.size, "article")} to review; backup $dump",
-        topic = Some("merge")
+        topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic("merge"))
       )
     )
     (reviews, log.id)

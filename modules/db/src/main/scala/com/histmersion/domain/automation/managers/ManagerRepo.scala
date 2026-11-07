@@ -51,10 +51,10 @@ object ManagerRepo:
   private def at(col: String) = s"to_char($col AT TIME ZONE 'UTC', $ts)"
 
   // the jsonb columns, through their DTOs' codecs ([[Jsonb]]); absent fields are left out when written
-  private given configCodec: DbCodec[ManagerConfig] = Jsonb.codec(ManagerConfig(), dropNulls = true)
-  private given stateCodec: DbCodec[ItemState] = Jsonb.codec(ItemState(), dropNulls = true)
-  private given holdCodec: DbCodec[Option[Hold]] = Jsonb.optional[Hold](dropNulls = true)
-  private given effectCodec: DbCodec[Option[HintEffect]] = Jsonb.optional[HintEffect](dropNulls = true)
+  private given configCodec: DbCodec[ManagerConfig] = Jsonb.codec(ManagerConfig(), dropNulls = com.histmersion.util.database.Jsonb.DropNulls(true))
+  private given stateCodec: DbCodec[ItemState] = Jsonb.codec(ItemState(), dropNulls = com.histmersion.util.database.Jsonb.DropNulls(true))
+  private given holdCodec: DbCodec[Option[Hold]] = Jsonb.optional[Hold](dropNulls = com.histmersion.util.database.Jsonb.DropNulls(true))
+  private given effectCodec: DbCodec[Option[HintEffect]] = Jsonb.optional[HintEffect](dropNulls = com.histmersion.util.database.Jsonb.DropNulls(true))
 
   // ── managers ───────────────────────────────────────────────────────────────────────────────────
 
@@ -228,7 +228,7 @@ object ManagerRepo:
     */
   def running(id: com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.Id)(using DbCon): com.histmersion.RowCount =
 
-    (Sql.of("SELECT count(*)::int FROM jobs WHERE kind = ? AND manager_id = ? AND ", Param.S(JobKind), Param.S(id)) ++
+    (Sql.of(com.histmersion.util.database.Sql.OfText("SELECT count(*)::int FROM jobs WHERE kind = ? AND manager_id = ? AND "), Param.S(JobKind), Param.S(id)) ++
       occupyingOn("jobs")).frag.query[Int].run().head
 
   /** Every agent run that occupies a place ([[running]]'s rule, a person's runs too): its pipeline, and the goal of the
@@ -416,9 +416,9 @@ object ManagerRepo:
   def itemPage(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.Id, status: Option[ItemStatus], offset: com.histmersion.Offset, limit: com.histmersion.PageSize)(using
       DbCon
   ): (List[ManagerItem], com.histmersion.RowCount) =
-    val where = Sql.of(" WHERE manager_id = ?", Param.S(managerId)) ++
+    val where = Sql.of(com.histmersion.util.database.Sql.OfText(" WHERE manager_id = ?"), Param.S(managerId)) ++
       status.fold(Sql.empty)(s => Sql.of(" AND status = ?", Param.S(s.wire)))
-    val total = (Sql.of("SELECT count(*)::int FROM manager_items") ++ where).frag.query[Int].run().head
+    val total = (Sql.of(com.histmersion.util.database.Sql.OfText("SELECT count(*)::int FROM manager_items")) ++ where).frag.query[Int].run().head
     val rows = (itemSelect ++ where ++ Sql.of(
       """ ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'pending' THEN 1 WHEN 'held' THEN 2 ELSE 3 END,
              priority DESC, coalesce(not_before, '-infinity'::timestamptz), updated_at DESC, id
@@ -548,7 +548,7 @@ object ManagerRepo:
 
   /** Release the focus holds among `ids` (a person's or an approval's hold is never touched); how many. */
   def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Id])(using DbCon): com.histmersion.RowCount =
-    if ids.isEmpty then 0
+    if ids.isEmpty then com.histmersion.RowCount(0)
     else
       val arr = ids.map(_.toString)
       sql"""UPDATE manager_items SET status = 'pending', hold = NULL, updated_at = now()
@@ -947,7 +947,7 @@ object ManagerRepo:
       before.fold(Sql.empty)(b => Sql.of(" AND id < ?", Param.L(b))) ++
       Sql.of(" ORDER BY id DESC LIMIT ?", Param.I(math.max(1, limit)))).frag.query[ManagerEvent].run().toList
 
-  def lastEvent(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.Id)(using DbCon): Option[ManagerEvent] = events(managerId, None, 1).headOption
+  def lastEvent(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.Id)(using DbCon): Option[ManagerEvent] = events(managerId, None, com.histmersion.PageSize(1)).headOption
 
   /** How many events of `kind` a manager has recorded since `since` (a watcher's ingests today). */
   def countEvents(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.Id, kind: com.histmersion.domain.automation.managers.ManagerRepo.CountEventsKind, since: java.time.Instant)(using DbCon): com.histmersion.RowCount =
@@ -976,7 +976,7 @@ object ManagerRepo:
     )).frag.query[ManagerEvent].run().headOption
 
   def pruneEvents(days: com.histmersion.domain.CodexRetention.KeepDays)(using DbCon): com.histmersion.RowCount =
-    if days <= 0 then 0
+    if days <= 0 then com.histmersion.RowCount(0)
     else (sql"DELETE FROM manager_events WHERE at < now() - make_interval(days => $days)".update.run())
 
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────

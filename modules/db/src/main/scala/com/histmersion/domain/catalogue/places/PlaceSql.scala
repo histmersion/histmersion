@@ -21,24 +21,18 @@ object PlaceSql:
   type ImportedListValue = ImportedListValue.T
   object ImportedListValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ModernSqlAlias = String
-  val ModernSqlAlias: String.type = String
   type DefaultModernFrom = DefaultModernFromValue
   type DefaultModernFromValue = com.histmersion.domain.DeepTime.SignedYear
   val DefaultModernFromValue: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
   type UndatedSqlAlias = String
-  val UndatedSqlAlias: String.type = String
   type TimelessSqlAlias = String
-  val TimelessSqlAlias: String.type = String
   type TimeBasisSqlAlias = String
-  val TimeBasisSqlAlias: String.type = String
   type TimeWindowCteModernFrom = _root_.com.histmersion.domain.DeepTime.SignedYear
   val TimeWindowCteModernFrom: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
   type InTimeSqlAlias = String
-  val InTimeSqlAlias: String.type = String
   type InTimeSqlKind = _root_.com.histmersion.domain.catalogue.Place.Kind.Wire
   val InTimeSqlKind: _root_.com.histmersion.domain.catalogue.Place.Kind.Wire.type = _root_.com.histmersion.domain.catalogue.Place.Kind.Wire
   type InWindowSqlAlias = String
-  val InWindowSqlAlias: String.type = String
 
   def importedSql(alias: String): String =
     s"coalesce($alias.import_source, '') IN $ImportedList"
@@ -105,7 +99,7 @@ object PlaceSql:
   /** The configured `places.modern-from` for callers that hold no config (the tests). It MUST equal `reference.conf`;
     * `PlaceTimeSuite` asserts it. Every production read passes the configured value.
     */
-  val DefaultModernFrom: com.histmersion.domain.catalogue.places.PlaceSql.DefaultModernFrom = 1500L
+  val DefaultModernFrom: com.histmersion.domain.catalogue.places.PlaceSql.DefaultModernFrom = com.histmersion.domain.catalogue.places.PlaceSql.DefaultModernFrom(1500L)
 
   /** A stored period open on both sides: the source states no date. An unknown start (V074) is not — it stores a
     * window.
@@ -134,7 +128,7 @@ object PlaceSql:
     */
   def windowCte(window: Option[(com.histmersion.domain.DeepTime.SignedYear, com.histmersion.domain.DeepTime.SignedYear)], modernFrom: com.histmersion.domain.DeepTime.SignedYear): Sql =
     import Param.*
-    window.fold(Sql.raw("tw AS (SELECT NULL::int8range AS w, false AS modern_on)"))((lo, hi) =>
+    window.fold(Sql.raw(com.histmersion.util.database.Sql.RawText("tw AS (SELECT NULL::int8range AS w, false AS modern_on)")))((lo, hi) =>
       Sql.of(
         "tw AS (SELECT int8range(?::bigint, ?::bigint, '[]') AS w, ?::bigint >= ?::bigint AS modern_on)",
         L(lo),

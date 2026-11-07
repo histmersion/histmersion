@@ -183,7 +183,7 @@ private[places] object PlaceOverrideRepo:
     (labelOf(from), labelOf(into)) match
       case (None, _)            => Left(Api.Error(s"No place '$from'", Some(Write.CodeNotFound)))
       case (_, None)            => Left(Api.Error(s"No place '$into'", Some(Write.CodeNotFound)))
-      case _ if from == into    => Left(Api.Error("a place cannot be merged into itself", Some(Write.CodeInvalid)))
+      case _ if from == into    => Left(Api.Error(com.histmersion.api.Api.Error.Message("a place cannot be merged into itself"), Some(Write.CodeInvalid)))
       case (Some(fl), Some(il)) =>
         val had = (linked(from) ++ linked(into)).distinct
         val _ = PlaceReviewRepo.mergeIn(from, into)

@@ -35,4 +35,3 @@ final class MergeRuleSet(val all: List[MergeRules]):
       case Nil       => acc
     loop(all, in)
 
-object MergeRuleSet:

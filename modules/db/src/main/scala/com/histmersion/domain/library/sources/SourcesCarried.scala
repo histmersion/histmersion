@@ -97,7 +97,7 @@ object SourcesCarried:
     ): Option[BlobSink] = SourceBundleRepo.blobIn(use, sha256, writer, files)
 
     override val rowsIn: List[RowsIn] = List(
-      rows(10)(w => SourceBundleRepo.sourcesIn(w, referrers)),
+      rows(com.histmersion.domain.library.sources.SourcesCarried.Rank(10))(w => SourceBundleRepo.sourcesIn(w, referrers)),
       RowsIn(ImportStage.AfterBlobs, ImportRank(100), SourceBundleRepo.bodyRenamesIn),
       RowsIn(ImportStage.Derived, ImportRank(200), SourceBundleRepo.derivedIn)
     )
@@ -106,7 +106,7 @@ object SourcesCarried:
     Library,
     Bundle.Kind.Finding,
     TableName("findings"),
-    List(rows(23)(SourceBundleRepo.findingsIn))
+    List(rows(com.histmersion.domain.library.sources.SourcesCarried.Rank(23))(SourceBundleRepo.findingsIn))
   )(scope => SourceBundleRepo.findings(scope).toList)(_.updatedAt, (es, ls) => es.modify(_.findings).setTo(ls))
 
   /** The entry of a set records own, by its file's stem. */
@@ -114,14 +114,14 @@ object SourcesCarried:
 
   val edges: CarriedKind =
     CarriedKind
-      .owned[com.histmersion.api.exchange.Bundle.Edge](Library, set("edges"), List(rows(20)(SourceBundleRepo.edgesIn)))(
+      .owned[com.histmersion.api.exchange.Bundle.Edge](Library, set(com.histmersion.domain.library.sources.SourcesCarried.Stem("edges")), List(rows(com.histmersion.domain.library.sources.SourcesCarried.Rank(20))(SourceBundleRepo.edgesIn)))(
         scope => SourceBundleRepo.edges(scope).toList
       )(_ => None, (es, ls) => es.modify(_.edges).setTo(ls))
 
   val unresolvedEdges: CarriedKind = CarriedKind.owned[com.histmersion.api.exchange.Bundle.UnresolvedEdge](
     Library,
-    set("unresolved-edges"),
-    List(rows(21)(SourceBundleRepo.unresolvedEdgesIn))
+    set(com.histmersion.domain.library.sources.SourcesCarried.Stem("unresolved-edges")),
+    List(rows(com.histmersion.domain.library.sources.SourcesCarried.Rank(21))(SourceBundleRepo.unresolvedEdgesIn))
   )(scope => SourceBundleRepo.unresolvedEdges(scope).toList)(
     _ => None,
     (es, ls) => es.modify(_.unresolvedEdges).setTo(ls)
@@ -129,8 +129,8 @@ object SourcesCarried:
 
   val assessments: CarriedKind = CarriedKind.owned[com.histmersion.api.exchange.Bundle.Assessment](
     Library,
-    set("assessments"),
-    List(rows(24)(SourceBundleRepo.assessmentsIn))
+    set(com.histmersion.domain.library.sources.SourcesCarried.Stem("assessments")),
+    List(rows(com.histmersion.domain.library.sources.SourcesCarried.Rank(24))(SourceBundleRepo.assessmentsIn))
   )(scope => SourceBundleRepo.assessments(scope).toList)(
     a => Some(a.checkedAt),
     (es, ls) => es.modify(_.assessments).setTo(ls)
@@ -139,8 +139,8 @@ object SourcesCarried:
   val aliases: CarriedKind =
     CarriedKind.owned[com.histmersion.api.exchange.Bundle.Alias](
       Library,
-      set("aliases"),
-      List(rows(22)(SourceBundleRepo.aliasesIn))
+      set(com.histmersion.domain.library.sources.SourcesCarried.Stem("aliases")),
+      List(rows(com.histmersion.domain.library.sources.SourcesCarried.Rank(22))(SourceBundleRepo.aliasesIn))
     )(scope => SourceBundleRepo.aliases(scope).toList)(
       a => Some(a.createdAt),
       (es, ls) => es.modify(_.aliases).setTo(ls)

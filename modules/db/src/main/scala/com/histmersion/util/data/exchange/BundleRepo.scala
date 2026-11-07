@@ -49,8 +49,8 @@ object BundleRepo:
         .query[(Int, String)]
         .run()
         .head
-    val (np, dp) = digest("places")
-    val (nq, dq) = digest("periods")
+    val (np, dp) = digest(com.histmersion.util.data.TableName("places"))
+    val (nq, dq) = digest(com.histmersion.util.data.TableName("periods"))
     com.histmersion.api.exchange.Bundle.Reference(np, dp, nq, dq)
 
   // ── the schema ─────────────────────────────────────────────────────────────────────────────

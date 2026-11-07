@@ -24,13 +24,13 @@ object PlacesCarried:
     Catalogue,
     Bundle.Kind.Place,
     TableName("places"),
-    List(rows(30)(PlaceBundleRepo.placeRenames), rows(31)(PlaceBundleRepo.placesIn))
+    List(rows(com.histmersion.domain.catalogue.places.PlacesCarried.Rank(30))(PlaceBundleRepo.placeRenames), rows(com.histmersion.domain.catalogue.places.PlacesCarried.Rank(31))(PlaceBundleRepo.placesIn))
   )(scope => PlaceBundleRepo.places(scope).toList)(_.updatedAt, (es, ls) => es.modify(_.places).setTo(ls))
 
   val placeAliases: CarriedKind = CarriedKind.owned[com.histmersion.api.exchange.Bundle.PlaceAlias](
     Catalogue,
     BundleEntry(com.histmersion.api.exchange.Bundle.Files.PlaceAliases),
-    List(rows(33)(PlaceBundleRepo.placeAliasesIn))
+    List(rows(com.histmersion.domain.catalogue.places.PlacesCarried.Rank(33))(PlaceBundleRepo.placeAliasesIn))
   )(scope => PlaceBundleRepo.placeAliases(scope).toList)(
     a => Some(a.createdAt),
     (es, ls) => es.modify(_.placeAliases).setTo(ls)
@@ -39,7 +39,7 @@ object PlacesCarried:
   val siteTypes: CarriedKind = CarriedKind.owned[com.histmersion.api.exchange.Bundle.SiteType](
     Catalogue,
     BundleEntry(com.histmersion.api.exchange.Bundle.Files.PlaceSiteTypes),
-    List(rows(64)(PlaceBundleRepo.siteTypesIn))
+    List(rows(com.histmersion.domain.catalogue.places.PlacesCarried.Rank(64))(PlaceBundleRepo.siteTypesIn))
   )(scope => PlaceBundleRepo.siteTypes(scope).toList)(_.checkedAt, (es, ls) => es.modify(_.siteTypes).setTo(ls))
 
   /** Every kind of the places. */

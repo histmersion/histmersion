@@ -20,8 +20,8 @@ private[places] object SiteTypeRepo:
     val asked = (refresh, before) match
       case (true, Some(ms)) =>
         Sql.of("(p.site_type_checked_at IS NULL OR p.site_type_checked_at < to_timestamp(? / 1000.0))", Param.L(ms))
-      case (true, None) => Sql.raw("TRUE")
-      case _            => Sql.raw("p.site_type_checked_at IS NULL")
+      case (true, None) => Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE"))
+      case _            => Sql.raw(com.histmersion.util.database.Sql.RawText("p.site_type_checked_at IS NULL"))
     Sql.raw("p.import_source = 'wikidata' AND p.id ~ '^wikidata_q[1-9][0-9]*$' AND ") ++ asked ++
       Sql.raw(
         " AND (EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)" +
@@ -41,7 +41,7 @@ private[places] object SiteTypeRepo:
       .toList
 
   def countSitesToType(refresh: com.histmersion.domain.catalogue.places.SiteTypeRepo.Refresh, before: Option[com.histmersion.domain.DeepTime.SignedYear])(using DbCon): com.histmersion.RowCount =
-    (Sql.raw("SELECT count(*)::int FROM places p WHERE ") ++ toTypeWhere(refresh, before)).frag.query[Int].run().head
+    (Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT count(*)::int FROM places p WHERE ")) ++ toTypeWhere(refresh, before)).frag.query[Int].run().head
 
   /** Record the refined types (`None` = asked, none of the curated classes). */
   def setSiteTypes(types: List[(com.histmersion.domain.catalogue.Place.Id, Option[com.histmersion.domain.catalogue.places.PlaceRepo.SiteType])])(using DbCon): Unit =

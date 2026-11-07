@@ -178,7 +178,7 @@ object GoalLinkRepo:
 
   /** Every schedule (or one goal's), the next due first. */
   def schedules(goal: Option[com.histmersion.domain.automation.Goal.Slug] = None)(using DbCon): List[GoalSchedule] =
-    val where = goal.fold(Sql.empty)(g => Sql.of(" WHERE goal_slug = ?", Param.S(g)))
+    val where = goal.fold(Sql.empty)(g => Sql.of(com.histmersion.util.database.Sql.OfText(" WHERE goal_slug = ?"), Param.S(g)))
     (scheduleSelect ++ where ++ " ORDER BY next_run_at NULLS LAST, goal_slug, kind").frag
       .query[ScheduleRow]
       .run()

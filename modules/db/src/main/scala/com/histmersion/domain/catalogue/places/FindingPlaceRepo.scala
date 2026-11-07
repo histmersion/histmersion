@@ -63,7 +63,7 @@ private[places] object FindingPlaceRepo:
     */
   def materialisePlaces(placeIds: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id], toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): com.histmersion.RowCount =
     val ids = placeIds.distinct
-    if ids.isEmpty then 0
+    if ids.isEmpty then com.histmersion.RowCount(0)
     else
       val _ = sql"LOCK TABLE findings IN SHARE MODE".update.run()
       val _ = sql"DELETE FROM finding_places WHERE place_id = ANY($ids::text[])".update.run()
@@ -85,7 +85,7 @@ private[places] object FindingPlaceRepo:
   /** The placeholder minimum the assignment's geocoder pass ranks with ([[Geocode.isPlaceholder]]). It MUST equal
     * `places.geocode-placeholder-min` in `reference.conf`; `PlaceRepoSuite` asserts it.
     */
-  val DefaultPlaceholderMin: com.histmersion.domain.catalogue.places.FindingPlaceRepo.DefaultPlaceholderMin = 4
+  val DefaultPlaceholderMin: com.histmersion.domain.catalogue.places.FindingPlaceRepo.DefaultPlaceholderMin = com.histmersion.domain.catalogue.places.FindingPlaceRepo.DefaultPlaceholderMin(4)
 
   /** The share of a placeholder finding's named place an area must cover to take the finding. It MUST equal
     * `places.placeholder-area-share` in `reference.conf`; `PlaceholderPointSuite` asserts it.
@@ -277,7 +277,7 @@ private[places] object FindingPlaceRepo:
     * periods overlap. The shares are computed once per place. Returns the rows inserted.
     */
   private def byPlaceholder(named: List[(com.histmersion.domain.catalogue.places.FindingPlaceRepo.Named.Name, com.histmersion.domain.catalogue.places.FindingPlaceRepo.Named.Id)], anyPlace: Boolean, pids: List[com.histmersion.domain.catalogue.places.FindingPlaceRepo.Placeholder.Id])(using DbCon): com.histmersion.RowCount =
-    if named.isEmpty then 0
+    if named.isEmpty then com.histmersion.RowCount(0)
     else
       val fids = named.map(_._1)
       val rids = named.map(_._2)
@@ -337,7 +337,7 @@ private[places] object FindingPlaceRepo:
       .query[Named]
       .run()
       .toList
-    if named.isEmpty then 0
+    if named.isEmpty then com.histmersion.RowCount(0)
     else
       val keysOf = named
         .map(_.name)
@@ -366,7 +366,7 @@ private[places] object FindingPlaceRepo:
             .toList
             .flatMap(r => fs.map(f => (f.id, r.placeId)))
         }
-      if resolved.isEmpty then 0
+      if resolved.isEmpty then com.histmersion.RowCount(0)
       else
         val fids = resolved.map(_._1)
         val pids = resolved.map(_._2)

@@ -49,5 +49,4 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
       .run()
       .toList
 
-object AssetLinkSourceReferrer:
 

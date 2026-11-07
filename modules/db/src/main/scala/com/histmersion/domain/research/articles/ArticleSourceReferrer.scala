@@ -64,4 +64,3 @@ final class ArticleSourceReferrer extends SourceReferrer:
           WHERE EXISTS (SELECT 1 FROM jsonb_object_keys(a.coverage_reasons) AS k(key) WHERE k.key = ANY($keys::text[]))
           ORDER BY slug""".query[String].run().toList
 
-object ArticleSourceReferrer:

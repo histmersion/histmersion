@@ -27,7 +27,7 @@ private[articles] object CoverageRepo:
   /** How many sources `f` selects, and the first `cap` of them in citekey order. */
   def sourceSet(f: Filter, scope: PlaceScope, cap: com.histmersion.domain.research.articles.ArticleRepo.Limit)(using DbCon): (com.histmersion.RowCount, List[Coverage.Source]) =
     val total = FilterSql.countQuery(f, scope).frag.query[Int].run().headOption.getOrElse(0)
-    val rows = (Sql.raw("SELECT s.citekey, s.title, s.year, s.status, s.authors FROM sources s WHERE ") ++
+    val rows = (Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT s.citekey, s.title, s.year, s.status, s.authors FROM sources s WHERE ")) ++
       FilterSql.where(f, scope) ++ Sql
         .of(" ORDER BY s.citekey LIMIT ?", I(math.max(0, cap)))).frag.query[Coverage.Source].run().toList
     (total, rows)
@@ -38,7 +38,7 @@ private[articles] object CoverageRepo:
     val in =
       if citekeys.isEmpty then Set.empty[String]
       else
-        (Sql.raw("SELECT s.citekey FROM sources s WHERE ") ++ FilterSql.where(f, scope) ++
+        (Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT s.citekey FROM sources s WHERE ")) ++ FilterSql.where(f, scope) ++
           Sql.of(" AND s.citekey = ANY(?)", A(citekeys.distinct))).frag.query[String].run().toSet
     (total, in)
 

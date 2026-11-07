@@ -25,7 +25,7 @@ final class FetchChain(
     steps: List[FetchChain.Step],
     allowUnauthorised: FetchChain.AllowUnauthorised,
     log: HostLog = HostLog.scribe,
-    registered: FetchChain.RegisteredArg1 => FetchChain.RegisteredResult = _ => false
+    registered: FetchChain.RegisteredArg1 => FetchChain.RegisteredResult = _ => com.histmersion.pluginhost.FetchChain.RegisteredResult(false)
 ) extends OaFetcher:
 
   /** The fetchers in the order they run, with their access — what `--self-check` and the log show. */
@@ -80,7 +80,7 @@ final class FetchChain(
         log.info(
           s"acquire: ${s.id}: ${f.url.getOrElse("its copy")} is ${f.bytes.length} bytes that are not a PDF — no copy"
         )
-        Fetch.Miss("not a PDF")
+        Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("not a PDF"))
       case Fetch.Refused(why) =>
         log.info(s"acquire: ${s.id} refused ${FetchChain.describe(work)}: $why")
         answer
@@ -155,8 +155,8 @@ object FetchChain:
     object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     enum Kind(val label: Kind.Label):
-      case Miss extends Kind("no copy")
-      case Refused extends Kind("refused")
+      case Miss extends Kind(com.histmersion.pluginhost.FetchChain.Answer.Kind.Label("no copy"))
+      case Refused extends Kind(com.histmersion.pluginhost.FetchChain.Answer.Kind.Label("refused"))
 
     object Kind:
       type Label = Label.T
@@ -178,9 +178,9 @@ object FetchChain:
     */
   def apply(
       steps: List[(com.histmersion.pluginhost.FetchChain.ApplyStepsPart1, SourceFetcher)],
-      allowUnauthorised: com.histmersion.pluginhost.FetchChain.ApplyAllowUnauthorised = false,
+      allowUnauthorised: com.histmersion.pluginhost.FetchChain.ApplyAllowUnauthorised = com.histmersion.pluginhost.FetchChain.ApplyAllowUnauthorised(false),
       log: HostLog = HostLog.scribe,
-      registered: com.histmersion.pluginhost.FetchChain.ApplyRegisteredArg1 => com.histmersion.pluginhost.FetchChain.ApplyRegisteredResult = _ => false
+      registered: com.histmersion.pluginhost.FetchChain.ApplyRegisteredArg1 => com.histmersion.pluginhost.FetchChain.ApplyRegisteredResult = _ => com.histmersion.pluginhost.FetchChain.ApplyRegisteredResult(false)
   ): FetchChain =
     new FetchChain(steps.map(Step(_, _)), allowUnauthorised, log, registered)
 
@@ -258,4 +258,3 @@ object FetchChain:
           values.update(key, v)
           v
 
-  object Memo:

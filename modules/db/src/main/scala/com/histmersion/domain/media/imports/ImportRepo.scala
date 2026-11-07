@@ -55,7 +55,7 @@ private[imports] object ImportRepo:
     * this provider (neither that place nor that item), or — `since` set, a refresh — not since then; `everyOne` (a
     * refresh with no start) leaves none out.
     */
-  private def placeCandidates(provider: com.histmersion.domain.media.assets.MediaItemRow.Provider, since: Option[com.histmersion.domain.media.imports.ImportRepo.Since], everyOne: com.histmersion.domain.media.imports.ImportRepo.EveryOne = false): com.histmersion.domain.catalogue.Place.Id =
+  private def placeCandidates(provider: com.histmersion.domain.media.assets.MediaItemRow.Provider, since: Option[com.histmersion.domain.media.imports.ImportRepo.Since], everyOne: com.histmersion.domain.media.imports.ImportRepo.EveryOne = com.histmersion.domain.media.imports.ImportRepo.EveryOne(false)): com.histmersion.domain.catalogue.Place.Id =
     s"""WITH used AS (
           SELECT fp.place_id, count(*) AS n, count(DISTINCT f.citekey) AS s
           FROM finding_places fp JOIN findings f ON f.id = fp.finding_id GROUP BY fp.place_id),
@@ -75,7 +75,7 @@ private[imports] object ImportRepo:
 
   private def lit(s: String): String = "'" + s.replace("'", "''") + "'"
 
-  private def eventCandidates(provider: com.histmersion.domain.media.assets.MediaItemRow.Provider, since: Option[com.histmersion.domain.media.imports.ImportRepo.Since], everyOne: com.histmersion.domain.media.imports.ImportRepo.EveryOne = false): com.histmersion.domain.catalogue.Event.Id =
+  private def eventCandidates(provider: com.histmersion.domain.media.assets.MediaItemRow.Provider, since: Option[com.histmersion.domain.media.imports.ImportRepo.Since], everyOne: com.histmersion.domain.media.imports.ImportRepo.EveryOne = com.histmersion.domain.media.imports.ImportRepo.EveryOne(false)): com.histmersion.domain.catalogue.Event.Id =
     s"""SELECT e.id, e.wikidata, e.label FROM events e
         WHERE e.wikidata IS NOT NULL
           AND ($everyOne OR NOT EXISTS (SELECT 1 FROM media_checks c WHERE c.provider = ${lit(provider)}
@@ -188,15 +188,15 @@ private[imports] object ImportRepo:
     val everyOne = refresh && since.isEmpty
     (place.map(_.trim).filter(_.nonEmpty), event.map(_.trim).filter(_.nonEmpty)) match
       case (Some(pid), _) =>
-        if !places then Left("this import is about events: name one with --event")
+        if !places then Left(com.histmersion.domain.media.imports.Target.Id("this import is about events: name one with --event"))
         else
           sql"SELECT label FROM places WHERE id = $pid".query[String].run().headOption match
             case None                                                        => Left(s"No place '$pid'")
             case Some(l) if pleiadesOnly && pleiadesIdsIn(List(pid)).isEmpty =>
               Left(s"place '$pid' ($l) has no Pleiades id (its own, or an exact Pleiades link)")
-            case Some(l) => Right(List(Target(Place, pid, "", l)))
+            case Some(l) => Right(List(Target(Place, pid, com.histmersion.domain.media.imports.Target.Qid(""), l)))
       case (None, Some(eid)) =>
-        if places then Left("this import is about places: name one with --place")
+        if places then Left(com.histmersion.domain.media.imports.Target.Id("this import is about places: name one with --place"))
         else
           sql"SELECT label, wikidata FROM events WHERE id = $eid"
             .query[(String, Option[String])]
@@ -237,8 +237,8 @@ private[imports] object ImportRepo:
   def collectionPending(check: com.histmersion.domain.media.imports.ImportRepo.Check, places: com.histmersion.domain.media.imports.ImportRepo.Places, since: Option[com.histmersion.domain.media.imports.ImportRepo.Since], pleiadesOnly: com.histmersion.domain.media.imports.ImportRepo.PleiadesOnly)(using
       DbCon
   ): com.histmersion.RowCount =
-    val q = if places then mapPlaces(check, since, everyOne = false, pleiadesOnly)
-    else eventCandidates(check, since, everyOne = false)
+    val q = if places then mapPlaces(check, since, everyOne = com.histmersion.domain.media.imports.ImportRepo.EveryOne(false), pleiadesOnly)
+    else eventCandidates(check, since, everyOne = com.histmersion.domain.media.imports.ImportRepo.EveryOne(false))
     Sql.raw(s"SELECT count(*)::int FROM ($q) x").frag.query[Int].run().head
 
   def placeFacts(ids: List[com.histmersion.domain.catalogue.Place.Id])(using DbCon): Map[com.histmersion.domain.catalogue.Place.Id, PlaceFacts] =

@@ -22,9 +22,9 @@ object Transactor:
       require(con.connection.getAutoCommit, "Autocommit work cannot borrow an active transaction")
       work(using con)
 
-    def transact[A](work: DbCon ?=> A): A = run(true, None)(work)
-    def rollback[A](work: DbCon ?=> A): A = run(false, None)(work)
-    def readOnlyRollback[A](timeoutMs: com.histmersion.util.database.Transactor.TimeoutMs)(work: DbCon ?=> A): A = run(false, Some(timeoutMs))(work)
+    def transact[A](work: DbCon ?=> A): A = run(com.histmersion.util.database.Transactor.Session.Commit(true), None)(work)
+    def rollback[A](work: DbCon ?=> A): A = run(com.histmersion.util.database.Transactor.Session.Commit(false), None)(work)
+    def readOnlyRollback[A](timeoutMs: com.histmersion.util.database.Transactor.TimeoutMs)(work: DbCon ?=> A): A = run(com.histmersion.util.database.Transactor.Session.Commit(false), Some(timeoutMs))(work)
 
     private def run[A](commit: com.histmersion.util.database.Transactor.Session.Commit, readOnlyTimeout: Option[com.histmersion.util.database.Transactor.TimeoutMs])(work: DbCon ?=> A): A =
       val jdbc = con.connection

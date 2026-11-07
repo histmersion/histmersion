@@ -10,7 +10,7 @@ import scala.util.control.NonFatal
   */
 final class HostCollection(val name: HostCollection.Name, collection: SourceCollection):
   def title: com.histmersion.domain.Title = guardedValue(collection.title, name)
-  def description: com.histmersion.pluginhost.HostCollection.Description = guardedValue(collection.description, "")
+  def description: com.histmersion.pluginhost.HostCollection.Description = guardedValue(collection.description, com.histmersion.pluginhost.HostCollection.Description(""))
   def capabilities: Set[CollectionCapability] = guardedValue(collection.capabilities, Set(CollectionCapability.Read))
 
   def reach: Either[com.histmersion.pluginhost.HostCollection.Problem, Unit] = guarded(collection.reach)

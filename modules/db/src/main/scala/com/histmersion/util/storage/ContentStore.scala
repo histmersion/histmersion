@@ -27,12 +27,12 @@ object ContentStore:
   val none: ContentStore = new ContentStore:
     def find(sha256: com.histmersion.Sha256): Option[(ByteSource, com.histmersion.util.storage.ContentStore.Ext)] = None
     def store(sha256: com.histmersion.Sha256, ext: com.histmersion.util.storage.ContentStore.Ext, in: InputStream): Either[com.histmersion.util.storage.ContentStore.Problem, Unit] =
-      Left("this server stores no originals")
+      Left(com.histmersion.util.storage.ContentStore.Problem("this server stores no originals"))
 
   /** An extension safe in a file name: short and alphanumeric, else `bin`. Pure. */
   def safeExt(ext: com.histmersion.util.storage.ContentStore.Ext): com.histmersion.util.storage.ContentStore.Ext =
     val e = ext.trim.toLowerCase(java.util.Locale.ROOT)
-    if e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit) then e else "bin"
+    if e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit) then e else com.histmersion.util.storage.ContentStore.Ext("bin")
 
   /** The lower-case hex of a digest. Pure. */
   def hex(digest: com.histmersion.util.storage.ContentStore.Digest): com.histmersion.Sha256 = java.util.HexFormat.of().formatHex(digest)

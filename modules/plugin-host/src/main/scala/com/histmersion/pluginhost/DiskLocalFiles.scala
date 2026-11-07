@@ -18,7 +18,7 @@ final class DiskLocalFiles extends LocalFiles:
 
   def staged[A](name: com.histmersion.pluginhost.DiskLocalFiles.FileName, bytes: com.histmersion.pluginhost.DiskLocalFiles.FileBytes)(use: Path => Either[com.histmersion.pluginhost.DiskLocalFiles.Problem, A]): Either[com.histmersion.pluginhost.DiskLocalFiles.Problem, A] =
     if name.isEmpty || name == "." || name == ".." || name.contains('/') || name.contains('\\') || name.contains('\u0000') then
-      Left("cannot stage the file: expected a single filename")
+      Left(com.histmersion.pluginhost.DiskLocalFiles.Problem("cannot stage the file: expected a single filename"))
     else
       Try(Files.createTempDirectory("histmersion-original-")).toEither.left
         .map(e => s"cannot stage the file: ${e.getMessage}")

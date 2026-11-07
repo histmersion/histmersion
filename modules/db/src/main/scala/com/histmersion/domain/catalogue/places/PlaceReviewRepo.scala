@@ -147,7 +147,7 @@ private[places] object PlaceReviewRepo:
     */
   def apply(ps: List[Proposal], toleranceKm: com.histmersion.domain.catalogue.places.PointAreaRepo.Settings.ToleranceKm)(using DbCon): (com.histmersion.RowCount, com.histmersion.RowCount) =
     val todo = ps.filter(_.fixable)
-    if todo.isEmpty then (0, 0)
+    if todo.isEmpty then (com.histmersion.RowCount(0), com.histmersion.RowCount(0))
     else
       val re = todo.collect { case p: Proposal.Reclassify => p }.filter { p =>
         val range = RangeSql.literalOf(p.period)
@@ -258,7 +258,7 @@ private[places] object PlaceReviewRepo:
     * and match the moved places' findings again, in the same transaction. Returns the places moved.
     */
   def relocate(rs: List[Relocation], toleranceKm: com.histmersion.domain.catalogue.places.PointAreaRepo.Settings.ToleranceKm)(using DbCon): com.histmersion.RowCount =
-    if rs.isEmpty then 0
+    if rs.isEmpty then com.histmersion.RowCount(0)
     else
       val moved = rs.filter { r =>
         sql"""UPDATE places SET geom = ST_SetSRID(ST_MakePoint(${r.lon}, ${r.lat}), 4326)

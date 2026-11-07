@@ -8,4 +8,3 @@ final class SmithsonianPlugin extends KeyedPlugin("media-smithsonian", "smithson
   protected def collection(c: KeyedPlugin.Config, key: Option[com.histmersion.plugins.media.SmithsonianCollection.Key], ctx: Plugin.Context) =
     SmithsonianCollection(c.media.smithsonian, key)
 
-object SmithsonianPlugin:

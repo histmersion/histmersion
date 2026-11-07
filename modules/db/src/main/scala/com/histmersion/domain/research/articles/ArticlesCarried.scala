@@ -45,8 +45,8 @@ object ArticlesCarried:
     Bundle.Kind.Article,
     TableName("articles"),
     List(
-      rows(40)(ArticleBundleRepo.articleRenamesIn),
-      rows(43)(ArticleBundleRepo.articlesIn),
+      rows(com.histmersion.domain.research.articles.ArticlesCarried.Rank(40))(ArticleBundleRepo.articleRenamesIn),
+      rows(com.histmersion.domain.research.articles.ArticlesCarried.Rank(43))(ArticleBundleRepo.articlesIn),
       RowsIn(ImportStage.Derived, ImportRank(201), ArticleBundleRepo.articleLinksIn)
     )
   )(scope => ArticleBundleRepo.articles(scope).toList)(_.updatedAt, (es, ls) => es.modify(_.articles).setTo(ls))
@@ -76,7 +76,7 @@ object ArticlesCarried:
         files: ContentStore
     ): Option[BlobSink] = ArticleBundleRepo.blobIn(use, writer)
 
-    override val rowsIn: List[RowsIn] = List(rows(45)(ArticleBundleRepo.mergedVersionsIn))
+    override val rowsIn: List[RowsIn] = List(rows(com.histmersion.domain.research.articles.ArticlesCarried.Rank(45))(ArticleBundleRepo.mergedVersionsIn))
 
   /** The entry of a set records own, by its file's stem. */
   private def set(stem: com.histmersion.domain.research.articles.ArticlesCarried.Stem): BundleEntry = BundleEntry(s"entities/$stem.ndjson")
@@ -84,8 +84,8 @@ object ArticlesCarried:
   val aliases: CarriedKind =
     CarriedKind.owned[com.histmersion.api.exchange.Bundle.ArticleAlias](
       Research,
-      set("article-aliases"),
-      List(rows(44)(ArticleBundleRepo.articleAliasesIn))
+      set(com.histmersion.domain.research.articles.ArticlesCarried.Stem("article-aliases")),
+      List(rows(com.histmersion.domain.research.articles.ArticlesCarried.Rank(44))(ArticleBundleRepo.articleAliasesIn))
     )(scope => ArticleBundleRepo.articleAliases(scope).toList)(
       a => Some(a.createdAt),
       (es, ls) => es.modify(_.articleAliases).setTo(ls)

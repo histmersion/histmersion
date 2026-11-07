@@ -47,7 +47,7 @@ object PluginMedia:
       case Left(why)                            => Some(why)
       case Right(r) if !allow.allows(r.licence) =>
         Some(s"licence ${r.licence.family.wire} not allowed for $provider")
-      case Right(_) if rec.imageUrl.isEmpty => Some("no image")
+      case Right(_) if rec.imageUrl.isEmpty => Some(com.histmersion.pluginhost.PluginMedia.Refusal("no image"))
       case Right(_)                         => None
 
   /** The run's polite client as the plugin's HTTP: its pace, its User-Agent, Retry-After honoured, a challenge the end
@@ -107,7 +107,7 @@ object PluginMedia:
       if byStatement.family != Licence.Family.Unknown then byStatement
       else r.licenceUrl.map(Licence.ofUrl).filter(_.family != Licence.Family.Unknown).getOrElse(byStatement)
     val credit = Option(r.credit).getOrElse("").trim
-    if credit.isEmpty then Left("no credit line")
+    if credit.isEmpty then Left(com.histmersion.pluginhost.PluginMedia.Problem("no credit line"))
     else
       Right(
         Attribution(

@@ -32,17 +32,11 @@ object FilterSql:
 
 
   type PlaceIdsFindingFa = String
-  val PlaceIdsFindingFa: String.type = String
   type PlaceSourceP = String
-  val PlaceSourceP: String.type = String
   type PlaceFindingFa = String
-  val PlaceFindingFa: String.type = String
   type FindingPlaceWhereFa = String
-  val FindingPlaceWhereFa: String.type = String
   type FindingWhereFa = String
-  val FindingWhereFa: String.type = String
   type FindingWhereSa = String
-  val FindingWhereSa: String.type = String
 
   import Param.*
 
@@ -159,7 +153,7 @@ object FilterSql:
 
     // topics: AND semantics (chip narrowing, like tags); sources only — findings carry no topics
     f.topics.foreach { t =>
-      ps += Sql.of("EXISTS (SELECT 1 FROM unnest(s.topics) x WHERE lower(x) = lower(?))", S(t))
+      ps += Sql.of(com.histmersion.util.database.Sql.OfText("EXISTS (SELECT 1 FROM unnest(s.topics) x WHERE lower(x) = lower(?))"), S(t))
     }
 
     if f.status.nonEmpty then
@@ -168,7 +162,7 @@ object FilterSql:
         f.status.map(x => S(x.trim.toLowerCase))
       )
 
-    f.years.foreach(y => ps += Sql.of("(s.year IS NOT NULL AND s.year BETWEEN ? AND ?)", L(y.start), L(y.end)))
+    f.years.foreach(y => ps += Sql.of(com.histmersion.util.database.Sql.OfText("(s.year IS NOT NULL AND s.year BETWEEN ? AND ?)"), L(y.start), L(y.end)))
 
     f.period.foreach(p =>
       ps += Sql.of(
@@ -201,7 +195,7 @@ object FilterSql:
       )
 
     val parts = ps.result()
-    if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
+    if parts.isEmpty then Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")) else join(" AND ", parts)
 
   /** The filter's title quick-filter, trimmed; `None` when there is nothing to match. */
   def titleLike(f: Filter): Option[com.histmersion.domain.Title] = f.title.map(_.trim).filter(_.nonEmpty)
@@ -213,7 +207,7 @@ object FilterSql:
 
   /** The citekeys of the sources `f` selects — `/api/sources`' predicate as a sub-select. */
   def sourceKeys(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
-    Sql.raw("SELECT s.citekey FROM sources s WHERE ") ++ where(f, scope)
+    Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT s.citekey FROM sources s WHERE ")) ++ where(f, scope)
 
   /** [[sourceKeys]] as an ARRAY computed ONCE per statement (an init-plan): `x = ANY(…)` against it is
     * `x IN (sourceKeys)`. Written as `IN (sub-select)` the planner pulls the sources back into a nested loop and
@@ -238,7 +232,7 @@ object FilterSql:
       ) ++ sourceKeySet(set, scope) ++ Sql.raw("))"))
     titleLike(f).foreach(t => ps += Sql.of(s"a.title ILIKE ?$Esc", S(contains(t))))
     val parts = ps.result()
-    if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
+    if parts.isEmpty then Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")) else join(" AND ", parts)
 
   /** The events for a filter (alias `e`): whose source (`e.citekey`) is among the sources of `f.sourceSet` WITHOUT its
     * period, whose OWN span overlaps the period, and whose label contains `f.title`. The period applies to the event
@@ -251,14 +245,14 @@ object FilterSql:
     if !set.isEmpty then
       // its own source, or a source that attests it (#1449)
       val keys = sourceKeySet(set, scope)
-      ps += (Sql.raw("(e.citekey = ANY(") ++ keys ++ Sql.raw(
+      ps += (Sql.raw(com.histmersion.util.database.Sql.RawText("(e.citekey = ANY(")) ++ keys ++ Sql.raw(
         ") OR EXISTS (SELECT 1 FROM attestations ea " +
           "WHERE ea.target_type = 'event' AND ea.target_id = e.id AND ea.citekey = ANY("
       ) ++ keys ++ Sql.raw(")))"))
     f.period.foreach(p => ps += RangeSql.overlaps("e.outer_span", p))
     titleLike(f).foreach(t => ps += Sql.of(s"e.label ILIKE ?$Esc", S(contains(t))))
     val parts = ps.result()
-    if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
+    if parts.isEmpty then Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")) else join(" AND ", parts)
 
   /** The PostGIS predicate for a viewport. A box with `minLon > maxLon` crosses the **antimeridian** and becomes two
     * envelopes OR'ed together (`minLon…180` and `-180…maxLon`).
@@ -305,16 +299,16 @@ object FilterSql:
     f.bbox.foreach(b => ps += (Sql.raw(s"($fa.geom IS NOT NULL AND ") ++ envelopes(s"$fa.geom", b) ++ Sql.raw(")")))
 
     val parts = ps.result()
-    if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
+    if parts.isEmpty then Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")) else join(" AND ", parts)
 
   /** Deep-time overlap for ONE finding; `TRUE` when the filter carries no period. */
   def findingPeriodWhere(f: Filter, fa: String = "f"): Sql =
-    f.period.fold(Sql.raw("TRUE"))(p => RangeSql.overlaps(s"$fa.period", p))
+    f.period.fold(Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")))(p => RangeSql.overlaps(s"$fa.period", p))
 
   /** Everything ONE finding must satisfy: the period AND the rest. `TRUE` for an empty filter. */
   def findingWhere(f: Filter, fa: com.histmersion.domain.library.search.FilterSql.FindingWhereFa = "f", sa: com.histmersion.domain.library.search.FilterSql.FindingWhereSa = "s", scope: PlaceScope = PlaceScope.empty): Sql =
     val parts = List(findingPeriodWhere(f, fa), findingPlaceWhere(f, fa, sa, scope)).filter(_.text != "TRUE")
-    if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
+    if parts.isEmpty then Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")) else join(" AND ", parts)
 
   /** Deterministic ordering (`, s.citekey` last) so paging is stable. `Relevance` WITHOUT a text query has nothing to
     * rank by, so it falls back to citations; with one it is `ts_rank_cd` — see [[orderBySql]], which is what the
@@ -338,7 +332,7 @@ object FilterSql:
   def orderBySql(f: Filter, useCte: Boolean = false): Sql = (f.sort, text(f)) match
     case (Sort.Relevance, Some(q)) =>
       val rank = if useCte then Search.rankExprCte(q) else Search.rankExpr(q)
-      Sql.raw("ORDER BY ") ++ rank ++
+      Sql.raw(com.histmersion.util.database.Sql.RawText("ORDER BY ")) ++ rank ++
         Sql.raw(" DESC, s.cited_by_count DESC NULLS LAST, s.citekey")
     case _ => Sql.raw(orderBy(f.sort))
 
@@ -371,17 +365,17 @@ object FilterSql:
         (
           Search.bestChunkCte(q),
           Sql.raw("(bc.citekey IS NOT NULL) AS body_hit, NULL::text AS snippet, NULL::text AS heading"),
-          Sql.raw(" LEFT JOIN best_chunks bc ON bc.citekey = s.citekey")
+          Sql.raw(com.histmersion.util.database.Sql.RawText(" LEFT JOIN best_chunks bc ON bc.citekey = s.citekey"))
         )
       case None =>
-        (Sql.empty, Sql.raw("FALSE AS body_hit, NULL::text, NULL::text"), Sql.empty)
+        (Sql.empty, Sql.raw(com.histmersion.util.database.Sql.RawText("FALSE AS body_hit, NULL::text, NULL::text")), Sql.empty)
     cte ++ Sql.raw(s"SELECT $rowCols, ") ++ cols ++ Sql.raw(" FROM sources s") ++ join ++
       Sql.raw(" WHERE ") ++ where(f, scope) ++ Sql.raw(" ") ++ orderBySql(f, useCte = text(f).isDefined) ++
       Sql.raw(" ") ++ Sql.of("LIMIT ? OFFSET ?", I(f.limit.max(0)), I(f.offset.max(0)))
 
   /** `total` = count(DISTINCT source) for the filter, ignoring limit/offset. */
   def countQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
-    Sql.raw("SELECT count(*)::int FROM sources s WHERE ") ++ where(f, scope)
+    Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT count(*)::int FROM sources s WHERE ")) ++ where(f, scope)
 
   /** Snippets for a specific set of citekeys — the second phase of the two-phase FTS approach. Returns
     * `(citekey, heading, snippet)` rows, one per citekey, with `ts_headline` wrapping hits in `**`. An empty `citekeys`
@@ -449,7 +443,7 @@ object FilterSql:
     * checkouts and four statements, one of them a page of articles fetched only for its total.
     */
   def selectionCountsQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
-    Sql.raw("SELECT (") ++ countQuery(f, scope) ++ Sql.raw("), (") ++ findingsCountQuery(f, scope) ++
+    Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT (")) ++ countQuery(f, scope) ++ Sql.raw("), (") ++ findingsCountQuery(f, scope) ++
       Sql.raw("), (SELECT count(*)::int FROM articles a WHERE ") ++ articleWhere(f, scope) ++
       Sql.raw("), (SELECT count(*)::int FROM events e WHERE ") ++ eventWhere(f, scope) ++ Sql.raw(")")
 

@@ -56,7 +56,7 @@ object FirstPartySettings:
   /** The keys that shape the acquisition client every plugin of a generation is lent (its User-Agent, timeouts and TLS
     * trust, its patience with `Retry-After`): a change rebuilds every plugin that uses the client.
     */
-  val ClientKeys: List[com.histmersion.pluginhost.FirstPartySettings.ClientKeys] = List("histmersion.acquire", "histmersion.media.max-retry-after-seconds")
+  val ClientKeys: List[com.histmersion.pluginhost.FirstPartySettings.ClientKeys] = List(com.histmersion.pluginhost.FirstPartySettings.ClientKeysValue("histmersion.acquire"), com.histmersion.pluginhost.FirstPartySettings.ClientKeysValue("histmersion.media.max-retry-after-seconds"))
 
   private val fetcher = ClientKeys
   private val unpaywallContact = s"${PluginHost.Root}.oa-unpaywall.contact-email"
@@ -74,10 +74,10 @@ object FirstPartySettings:
     List("archive-org", "oa-unpaywall", "oa-core", "oa-openalex", "pmc", "arxiv").map(FirstPartySettings(_, fetcher)) ++
       List(
         // the landing step asks Unpaywall with oa-unpaywall's own contact, so the two share one request
-        FirstPartySettings("oa-landing", fetcher :+ unpaywallContact),
-        FirstPartySettings("events-gvp", List("histmersion.events.gvp", "histmersion.events.min-year")),
-        FirstPartySettings("events-noaa", List("histmersion.events.noaa")),
-        FirstPartySettings("events-wikidata", List("histmersion.events.wikidata"))
+        FirstPartySettings(com.histmersion.pluginhost.FirstPartySettings.Plugin("oa-landing"), fetcher :+ unpaywallContact),
+        FirstPartySettings(com.histmersion.pluginhost.FirstPartySettings.Plugin("events-gvp"), List(com.histmersion.pluginhost.FirstPartySettings.Paths("histmersion.events.gvp"), com.histmersion.pluginhost.FirstPartySettings.Paths("histmersion.events.min-year"))),
+        FirstPartySettings(com.histmersion.pluginhost.FirstPartySettings.Plugin("events-noaa"), List(com.histmersion.pluginhost.FirstPartySettings.Paths("histmersion.events.noaa"))),
+        FirstPartySettings(com.histmersion.pluginhost.FirstPartySettings.Plugin("events-wikidata"), List(com.histmersion.pluginhost.FirstPartySettings.Paths("histmersion.events.wikidata")))
       ) ++
       List(
         "media-wikidata",

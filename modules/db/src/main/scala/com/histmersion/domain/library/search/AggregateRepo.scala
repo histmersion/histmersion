@@ -54,8 +54,8 @@ private[search] object AggregateRepo:
         FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope)
     else
       val gate =
-        if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(" AND fp.matched > 0") else Sql.empty
-      val ownPeriod = filter.period.fold(Sql.raw("TRUE"))(RangeSql.overlaps("s.period", _))
+        if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(com.histmersion.util.database.Sql.RawText(" AND fp.matched > 0")) else Sql.empty
+      val ownPeriod = filter.period.fold(Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")))(RangeSql.overlaps("s.period", _))
       Sql.raw(
         s"SELECT COALESCE(${RangeSql.start("s.period")}, fp.min_start), COALESCE(${RangeSql.end("s.period")}, fp.max_end)" +
           " FROM sources s LEFT JOIN LATERAL (" +
@@ -112,15 +112,15 @@ private[search] object AggregateRepo:
   def treeRowsQuery(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
     if unit == "findings" then
       Sql.raw(
-        s"SELECT f.id, f.citekey, s.title, ${RangeSql.cols("f.period")}, ${placesOf("f")}" +
+        s"SELECT f.id, f.citekey, s.title, ${RangeSql.cols("f.period")}, ${placesOf(com.histmersion.domain.library.search.AggregateRepo.PlacesOfFa("f"))}" +
           " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE "
       ) ++
         FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope) ++
         Sql.raw(" ") ++ FilterSql.orderBySql(filter)
     else
       val gate =
-        if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(" AND fp.matched > 0") else Sql.empty
-      val ownPeriod = filter.period.fold(Sql.raw("TRUE"))(RangeSql.overlaps("s.period", _))
+        if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(com.histmersion.util.database.Sql.RawText(" AND fp.matched > 0")) else Sql.empty
+      val ownPeriod = filter.period.fold(Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")))(RangeSql.overlaps("s.period", _))
       Sql.raw(
         "SELECT s.citekey, s.citekey, s.title," +
           s" COALESCE(${RangeSql.start("s.period")}, fp.min_start), COALESCE(${RangeSql.end("s.period")}, fp.max_end)," +

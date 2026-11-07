@@ -89,7 +89,7 @@ private[sources] object SourceDeleteRepo:
         val d = Source.Deletion(
           citekey = ck,
           title = r.title,
-          applied = false,
+          applied = com.histmersion.api.library.Source.Deletion.Applied(false),
           blockers = report.blockers,
           counts = report.counts,
           aliases = aliases,
