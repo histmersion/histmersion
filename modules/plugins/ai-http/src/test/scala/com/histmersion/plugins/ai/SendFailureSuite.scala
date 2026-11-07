@@ -1,5 +1,7 @@
 package com.histmersion.plugins.ai
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** A request without an answer, described as the providers always described it. */
 class SendFailureSuite extends munit.FunSuite:
 
@@ -7,27 +9,27 @@ class SendFailureSuite extends munit.FunSuite:
 
   test("connection, timeout and read failures name their kind, the method and the URL"):
     assertEquals(
-      SendFailure("ConnectException: ").describe("POST", url),
+      SendFailure(com.histmersion.plugins.ai.SendFailure.Reported("ConnectException: ")).describe(com.histmersion.plugins.ai.SendFailure.Method("POST"), url),
       s"ConnectException: Exception when sending request: POST $url"
     )
     assertEquals(
-      SendFailure("HttpConnectTimeoutException: HTTP connect timed out").describe("POST", url),
+      SendFailure(com.histmersion.plugins.ai.SendFailure.Reported("HttpConnectTimeoutException: HTTP connect timed out")).describe(com.histmersion.plugins.ai.SendFailure.Method("POST"), url),
       s"TimeoutException: Exception when sending request: POST $url"
     )
     assertEquals(
-      SendFailure("HttpTimeoutException: request timed out").describe("POST", url),
+      SendFailure(com.histmersion.plugins.ai.SendFailure.Reported("HttpTimeoutException: request timed out")).describe(com.histmersion.plugins.ai.SendFailure.Method("POST"), url),
       s"TimeoutException: Exception when sending request: POST $url"
     )
     assertEquals(
-      SendFailure("EOFException: EOF reached while reading").describe("POST", url),
+      SendFailure(com.histmersion.plugins.ai.SendFailure.Reported("EOFException: EOF reached while reading")).describe(com.histmersion.plugins.ai.SendFailure.Method("POST"), url),
       s"ReadException: Exception when sending request: POST $url"
     )
-    assertEquals(SendFailure("UnknownHostException: x").describe("GET", url).take(16), "ConnectException")
+    assertEquals(SendFailure(com.histmersion.plugins.ai.SendFailure.Reported("UnknownHostException: x")).describe(com.histmersion.plugins.ai.SendFailure.Method("GET"), url).take(16), "ConnectException")
 
   test("a request the client refuses to make, or a report that names no exception, is described as it came"):
     assertEquals(
-      SendFailure("IllegalArgumentException: URI with undefined scheme").describe("POST", "x"),
+      SendFailure(com.histmersion.plugins.ai.SendFailure.Reported("IllegalArgumentException: URI with undefined scheme")).describe(com.histmersion.plugins.ai.SendFailure.Method("POST"), com.histmersion.plugin.AiHttp.GetUrl("x")),
       "IllegalArgumentException: URI with undefined scheme"
     )
-    assertEquals(SendFailure("offline").describe("POST", url), "offline")
-    assertEquals(SendFailure("no scripted answer").describe("POST", url), "no scripted answer")
+    assertEquals(SendFailure(com.histmersion.plugins.ai.SendFailure.Reported("offline")).describe(com.histmersion.plugins.ai.SendFailure.Method("POST"), url), "offline")
+    assertEquals(SendFailure(com.histmersion.plugins.ai.SendFailure.Reported("no scripted answer")).describe(com.histmersion.plugins.ai.SendFailure.Method("POST"), url), "no scripted answer")
