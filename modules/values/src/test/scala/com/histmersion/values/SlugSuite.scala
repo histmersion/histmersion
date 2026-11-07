@@ -1,5 +1,7 @@
 package com.histmersion.values
 
+import com.histmersion.values.testsupport.ComparedByValue.given
+
 /** An article's slug as a person or a model writes it: trimmed and lower-cased, or why it is none. */
 
 import com.histmersion.domain.research.Slug

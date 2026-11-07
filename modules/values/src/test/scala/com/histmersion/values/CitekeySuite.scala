@@ -1,5 +1,7 @@
 package com.histmersion.values
 
+import com.histmersion.values.testsupport.ComparedByValue.given
+
 /** A citekey is a path segment on the server's disk (the ingest spool, the acquisition spool) and a URL segment.
   * Nothing validated one before, which is how `../../../../tmp/x` became a directory.
   */
@@ -33,11 +35,11 @@ class CitekeySuite extends munit.FunSuite:
 
   test("the message says what a citekey looks like"):
     val e = Citekey.parse("Bad Key!").swap.toOption.get
-    assert(e.contains("invalid citekey"), e)
-    assert(e.contains("anthony2007_horse"), e)
+    assert(e.value.contains("invalid citekey"), e)
+    assert(e.value.contains("anthony2007_horse"), e)
 
   test("the traversal guard has its own message"):
-    assert(Citekey.parse("../x").swap.toOption.get.contains("'..'"))
+    assert(Citekey.parse("../x").swap.toOption.get.value.contains("'..'"))
 
   test("valid classifies without a message; a literal is checked by the compiler"):
     assert(Citekey.valid("anthony2007_horse") && !Citekey.valid("x/../y"))
