@@ -28,6 +28,7 @@ import com.histmersion.api.catalogue.{EventPut, Geocode, Period, Place}
 import com.histmersion.api.library.{Filter, Finding, Source}
 import com.histmersion.api.research.Article
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The interactive-latency rewrites (docs/research-interactive-performance.md) return EXACTLY what the shapes they
   * replaced returned, against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Each test runs the new
@@ -41,7 +42,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private def box(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =

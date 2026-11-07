@@ -23,9 +23,9 @@ class SpiValuesSuite extends munit.FunSuite:
     assertEquals(SpiValues.period(com.histmersion.domain.DeepTime.SignedYear(-1600L), com.histmersion.domain.DeepTime.SignedYear(-1700L)), Period.from(Year(-1700), Year(-1600)).toOption)
     assertEquals(SpiValues.period(com.histmersion.Period.point(com.histmersion.Year(7))), Some(Period.point(Year(7))))
     assertEquals((SpiValues.latitude(com.histmersion.plugin.Latitude(91.0)), SpiValues.longitude(com.histmersion.plugin.Longitude(-181.0))), (None, None))
-    assertEquals(SpiValues.doi(com.histmersion.domain.library.Doi(" 10.1234/abc ")), Some(Doi("10.1234/abc")))
-    assertEquals(SpiValues.doi(com.histmersion.domain.library.Doi("abc")), None)
-    assertEquals((SpiValues.wikidata(com.histmersion.domain.catalogue.places.Wikidata.Id("Q5788")), SpiValues.wikidata(com.histmersion.domain.catalogue.places.Wikidata.Id("Troy"))), (Some(WikidataId("Q5788")), None))
+    assertEquals(com.histmersion.domain.library.Doi.normalize(" 10.1234/abc ").flatMap(SpiValues.doi), Some(Doi("10.1234/abc")))
+    assertEquals(com.histmersion.domain.library.Doi.normalize("abc").flatMap(SpiValues.doi), None)
+    assertEquals((SpiValues.wikidata(com.histmersion.domain.catalogue.places.Wikidata.Id("Q5788")), com.histmersion.domain.catalogue.places.Wikidata.Id.option("Troy").flatMap(SpiValues.wikidata)), (Some(WikidataId("Q5788")), None))
     assertEquals(SpiValues.area(com.histmersion.plugin.Longitude(-10), com.histmersion.plugin.Latitude(30), com.histmersion.plugin.Longitude(40), com.histmersion.plugin.Latitude(50)), Some((Longitude(-10), Latitude(30), Longitude(40), Latitude(50))))
     assertEquals(SpiValues.area(com.histmersion.plugin.Longitude(-10), com.histmersion.plugin.Latitude(30), com.histmersion.plugin.Longitude(400), com.histmersion.plugin.Latitude(50)), None)
 

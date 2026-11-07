@@ -44,7 +44,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
@@ -295,10 +295,10 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       ImportFixtures
         .targets(ds, Prov, Some(com.histmersion.domain.catalogue.Place.Id("zqmd_nolink")), None, ImportFixtures.Limit(10), refresh = ImportFixtures.Refresh(false))
         .left
-        .exists(_.contains("no Wikidata link"))
+        .exists(_.value.contains("no Wikidata link"))
     )
     assert(
-      ImportFixtures.targets(ds, Prov, Some(com.histmersion.domain.catalogue.Place.Id("zqmd_nope")), None, ImportFixtures.Limit(10), refresh = ImportFixtures.Refresh(false)).left.exists(_.contains("No place"))
+      ImportFixtures.targets(ds, Prov, Some(com.histmersion.domain.catalogue.Place.Id("zqmd_nope")), None, ImportFixtures.Limit(10), refresh = ImportFixtures.Refresh(false)).left.exists(_.value.contains("No place"))
     )
     assertEquals(
       ImportFixtures.targets(ds, Prov, None, Some(com.histmersion.domain.catalogue.Event.Id("zqmd_battle")), ImportFixtures.Limit(10), refresh = ImportFixtures.Refresh(false)).map(_.map(_.qid)),
@@ -398,7 +398,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       hits.toString
     )
     assertEquals(AssetFixtures.geo(ds, q.modify(_.provider).setTo(Some(MediaProvider.Id("source"))), AssetFixtures.Limit(1000)).filter(_.license.contains(Lic)), Nil)
-    val dated = AssetFixtures.geo(ds, q.modify(_.from).setTo((Some(-1500): _root_.scala.Option[_root_.scala.Long])).modify(_.to).setTo((Some(-1400): _root_.scala.Option[_root_.scala.Long])), AssetFixtures.Limit(1000))
+    val dated = AssetFixtures.geo(ds, q.modify(_.from).setTo(Some(com.histmersion.api.Api.MediaGeoQuery.From(-1500L))).modify(_.to).setTo(Some(com.histmersion.api.Api.MediaGeoQuery.To(-1400L))), AssetFixtures.Limit(1000))
     assert(dated.nonEmpty && dated.forall(_.periodStart.exists(_.value <= -1400)), "the place's period dates the picture")
     assert(!dated.exists(_.assetName.value == "Zqmd_image.jpg"), "a place with no dates gives its picture none")
 
@@ -430,7 +430,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("lint media-licence: a figure with no licence, a provider's picture with no credit line"):
     val (uid, _) = AssetFixtures.save(ds, asset(ProviderAsset.Key("File:Zqmd uncredited.jpg"), credit = ProviderAsset.Credit(" ")), (com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zqmd_site")))
-    val items = AssetFixtures.licenceGaps(ds).map((k, v) => (k.value, v.value)).toMap
+    val items = AssetFixtures.licenceGaps(ds).map((k, v) => (k.value: String, v.value: String)).toMap
     assertEquals(items.get("zqmd2021_nolic/fig.png").map(_.startsWith("no licence")), Some(true))
     assertEquals(items.get(s"media:$uid").map(_.startsWith("no credit line")), Some(true))
     assert(!items.contains("zqmd2020_figs/fig1.png"),"a figure with its source's licence is fine")
@@ -514,7 +514,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     val before = ImportFixtures.pending(ds, Prov)
     ImportFixtures.checked(ds, Prov, com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zqmd_eq_a"), com.histmersion.RowCount(1), Some(com.histmersion.domain.media.imports.Target.Qid("Q90000011")))
     assertEquals(mine(), Nil, "the item was asked about through zqmd_eq_a")
-    assertEquals(ImportFixtures.pending(ds, Prov), before - 1)
+    assertEquals(ImportFixtures.pending(ds, Prov), before.value - 1)
     val since = System.currentTimeMillis() + 60000
     assertEquals(
       ImportFixtures

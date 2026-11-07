@@ -31,7 +31,7 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
 
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.modify(_.url).setTo(testDb.get))
+    val d = testPool(base.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private val tag = s"zzpg${System.nanoTime().toHexString.takeRight(8)}"
@@ -110,7 +110,7 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
 
   test("agent runs: one goal's runs page by keyset, and the counts are that goal's, per state"):
     val goal = s"${tag}g"
-    val goalSlug = com.histmersion.domain.automation.Goal.Slug(goal)
+    val goalSlug = com.histmersion.domain.automation.Goal.Slug.assume(goal)
     val done = jobs(s"$tag-r", RunState.Done.wire.value, 5, Agents.JobKind, Some(goal))
     val paused = jobs(s"$tag-s", RunState.Paused.wire.value, 1, Agents.JobKind, Some(goal))
     val (p1, more) = connect(ds)(AgentRepo.page(Some(runWire(RunState.Done.wire)), com.histmersion.PageSize(2), Some(goalSlug))).toOption.get

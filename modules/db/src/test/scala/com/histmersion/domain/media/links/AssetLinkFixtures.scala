@@ -24,7 +24,7 @@ object AssetLinkFixtures:
 
   def create(ds: DataSource, in: AssetLink.Put): Either[Api.Error, AssetLink] =
     transact(ds):
-      if !AssetLinkRepo.figureExists(Citekey(in.citekey.value), AssetInfoRow.Name(in.assetName.value)) then
+      if !AssetLinkRepo.figureExists(Citekey.assume(in.citekey.value), AssetInfoRow.Name(in.assetName.value)) then
         Left(
           Api.Error(
             Api.Error.Message(s"No asset '${in.citekey}/${in.assetName}'"),

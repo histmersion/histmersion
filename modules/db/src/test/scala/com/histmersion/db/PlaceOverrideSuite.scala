@@ -32,7 +32,7 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
   private def tol = cfg.places.pointToleranceKm
@@ -60,7 +60,7 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
       kind,
       pt(150.5, -30.6),
       period,
-      properties = Some("""{"feature_types":"urban"}""")
+      properties = Some(Place.Properties("""{"feature_types":"urban"}"""))
     )
 
   private def seed(): Unit =
@@ -78,7 +78,7 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
             com.histmersion.api.catalogue.Place.Label("Zzpo Aiantis"),
             Place.KindValue(DPlace.Kind.Region),
             pt(151.5, -31.6),
-            properties = Some("""{"feature_types":"people"}""")
+            properties = Some(Place.Properties("""{"feature_types":"people"}"""))
           ),
           List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzpo Aiantis")))
         )
@@ -303,7 +303,7 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
         com.histmersion.api.catalogue.Place.Label("Zzpo Aiantis"),
         Place.KindValue(DPlace.Kind.Region),
         geometry,
-        properties = Some("""{"feature_types":"people"}""")
+        properties = Some(Place.Properties("""{"feature_types":"people"}"""))
       ),
       List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzpo Aiantis")))
     )

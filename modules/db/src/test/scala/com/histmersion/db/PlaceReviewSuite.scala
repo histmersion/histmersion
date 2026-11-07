@@ -29,14 +29,14 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
   test("place-kind: a dry run lists people, polities, a settlement and a merge, and changes nothing"):
     seed()
     val ps = mine(PlaceFixtures.proposals(ds))
-    val byId = ps.map(p => p.id.value -> p).toMap
+    val byId = ps.map(p => (p.id.value: String) -> p).toMap
     assertEquals(byId.keySet, Set(Aiantis, Thess, Dup, Into, Peir))
     assertEquals(byId(Aiantis).asInstanceOf[Proposal.Reclassify].to, Place.Kind.People)
     assertEquals(byId(Thess).asInstanceOf[Proposal.Reclassify].to, Place.Kind.Polity)
     assertEquals(byId(Into).asInstanceOf[Proposal.Reclassify].to, Place.Kind.Polity, "province-2 filed as a site")
     assertEquals(byId(Peir).asInstanceOf[Proposal.Reclassify].to, Place.Kind.Site)
     assertEquals(byId(Dup).asInstanceOf[Proposal.Merge].into, Into)
-    assert(byId(Aiantis).describe.startsWith(s"$Aiantis Zzrc Aiantis: region → people"), byId(Aiantis).describe)
+    assert(byId(Aiantis).describe.value.startsWith(s"$Aiantis Zzrc Aiantis: region → people"), byId(Aiantis).describe)
     assertEquals(PlaceFixtures.get(ds, AiantisId).map(_.place.kind), Some(Place.Kind.Region), "a dry run writes nothing")
 
   test("place-kind --fix: kinds change, the duplicate merges (links, alias), findings are matched again"):

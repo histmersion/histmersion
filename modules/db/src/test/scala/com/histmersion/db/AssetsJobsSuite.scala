@@ -170,7 +170,7 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
 
   // ── jobs ───────────────────────────────────────────────────────────────────────────────────
   test("job lifecycle: queued → running → done, with progress"):
-    val j = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), Some(com.histmersion.Sha256("abc"))))
+    val j = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), Some(com.histmersion.Sha256.assume("abc"))))
     assertEquals(j.status, JobState.Queued.wire)
     assertEquals(
       Transactor(ds).transact(JobRepo.transition(JobRepo.TransitionId(j.id.value), JobState.Queued, JobState.Running, Some(com.histmersion.util.jobs.JobRepo.TransitionProgress("converting")))),

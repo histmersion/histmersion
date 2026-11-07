@@ -112,7 +112,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
         Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
         GeoTime.Within(com.histmersion.api.catalogue.Year(-2000), com.histmersion.api.catalogue.Year(-1000), latest = com.histmersion.api.catalogue.GeoTime.Within.Latest(false)),
         PlaceFixtures.Limit(50),
-        pairsByIndex = com.histmersion.domain.catalogue.places.PlaceRepo.PairsByIndex(false)
+        pairsByIndex = PlaceFixtures.PairsByIndex(false)
       )
     assert(
       plain.text.value.contains(PlaceFixtures.rangeShadowedSql) && plain.text.value.contains("AND hi.per && lo.per"),
@@ -315,7 +315,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
       val indexed = rows(PlaceFixtures.geoJsonTimeQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")), t, PlaceFixtures.Limit(limit)))
       assertEquals(
         indexed,
-        rows(PlaceFixtures.geoJsonTimeQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")), t, PlaceFixtures.Limit(limit), pairsByIndex = com.histmersion.domain.catalogue.places.PlaceRepo.PairsByIndex(false))),
+        rows(PlaceFixtures.geoJsonTimeQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")), t, PlaceFixtures.Limit(limit), pairsByIndex = PlaceFixtures.PairsByIndex(false))),
         s"$lo..$hi latest=$latest limit=$limit"
       )
     // and the collapse did happen: OHM over Cliopatria, Cliopatria over the sketch of the same state

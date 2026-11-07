@@ -54,7 +54,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
   private lazy val merge = cfg.merge.transformInto[MergeSettings]
-  private lazy val admin = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+  private lazy val admin = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
   private val tmp = Files.createTempDirectory("histmersion-merge-extras")
   private lazy val importChunkChars = ImportOptions.ChunkChars(cfg.limits.chunkChars.value)
   private lazy val importToleranceKm = ImportOptions.ToleranceKm(cfg.places.pointToleranceKm.value)
@@ -78,7 +78,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     ds
 
   // every database a test makes: a copy of one migrated once (#3765)
-  private lazy val scratch = ScratchDatabases("histmersion_mx", cfg.db.modify(_.url).setTo(testDb.get))
+  private lazy val scratch = ScratchDatabases("histmersion_mx", cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
     if testDb.isDefined then scratch.dropAll()

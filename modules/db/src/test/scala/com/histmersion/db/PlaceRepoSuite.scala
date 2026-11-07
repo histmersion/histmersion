@@ -34,7 +34,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   // a square over Anatolia, a smaller Late-Bronze-Age polity inside it, and a point site
@@ -307,7 +307,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
       .find(_.source.citekey.value == "zzp_src")
       .get
     assert(
-      !hit.matched.exists(_.why.exists(_.contains("zzp_hattusa"))),
+      !hit.matched.exists(_.why.exists(_.value.contains("zzp_hattusa"))),
       "the id is never shown to a reader: " + hit.matched.flatMap(_.why)
     )
     val byPlace = hit.matched.filter(_.why.contains("place: Hattusa"))

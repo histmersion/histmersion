@@ -21,7 +21,7 @@ import com.histmersion.util.identity.AliasTable
 object PlaceFixtures:
   export PlaceSql.*
   export PlaceRepo.{geoJsonQuery, geoJsonTimeQuery, rangeShadowedSql, rangeShadowTestSql}
-  export PlaceRepo.{Depth, Lang, Limit, Name, SearchText}
+  export PlaceRepo.{Depth, Lang, Limit, Name, PairsByIndex, SearchText}
   export PlaceOverrideRepo.RemovalReason
   export FindingPlaceRepo.{placeholderSql, DefaultPlaceholderAreaShare, DefaultPlaceholderMin}
   export Geocoder.{apply as applyMoves, candidates, moves, place, placements, resolve, tierSql}

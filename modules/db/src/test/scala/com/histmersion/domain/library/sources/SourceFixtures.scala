@@ -21,6 +21,11 @@ import com.histmersion.api.text.WikiLinks
   * registers.
   */
 object SourceFixtures:
+  type Name = SourceRepo.Name
+  val Name: SourceRepo.Name.type = SourceRepo.Name
+  type Limit = SourceRepo.Limit
+  val Limit: SourceRepo.Limit.type = SourceRepo.Limit
+
   private def db(ds: DataSource): Transactor = Transactor(ds)
 
   def citekeyOfSha256(ds: DataSource, sha: com.histmersion.Sha256): Option[com.histmersion.domain.library.Citekey] = db(ds).read(SourceRepo.citekeyOfSha256(sha))

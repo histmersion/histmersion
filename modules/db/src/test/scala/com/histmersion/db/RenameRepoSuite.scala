@@ -32,7 +32,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private val Prefix = "zzrn"
@@ -268,7 +268,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(art.summary, Some(s"About [[$New]]."))
     assertEquals(ArticleFixtures.listVersions(ds, Slug).size, versionsBefore + 1)
     assertEquals(
-      ArticleFixtures.getVersion(ds, Slug, ArticleFixtures.listVersions(ds, Slug).head.id.value).map(_.body),
+      ArticleFixtures.getVersion(ds, Slug, ArticleFixtures.VersionId(ArticleFixtures.listVersions(ds, Slug).head.id.value)).map(_.body),
       Some(body)
     )
     assertEquals(ArticleFixtures.backlinksForSource(ds, New).map(_.id), List(Slug))
