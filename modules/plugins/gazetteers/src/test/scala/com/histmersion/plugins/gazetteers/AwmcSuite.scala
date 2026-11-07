@@ -7,7 +7,7 @@ import com.histmersion.plugin.*
 class AwmcSuite extends munit.FunSuite:
 
   private val fixture =
-    scala.io.Source.fromResource("gazetteers/awmc.geojson")(using scala.io.Codec.UTF8).mkString
+    DownloadedGazetteer.Text(scala.io.Source.fromResource("gazetteers/awmc.geojson")(using scala.io.Codec.UTF8).mkString)
 
   private def period(a: Int, b: Int): Option[Period] = Period.from(Year(a), Year(b)).toOption
 
@@ -39,25 +39,25 @@ class AwmcSuite extends munit.FunSuite:
   test("geometry is preserved"):
     val places = Awmc.read(fixture).toOption.get
     assert(places(0).geometry.isDefined)
-    assert(places(0).geometry.get.contains("MultiLineString"))
+    assert(places(0).geometry.get.value.contains("MultiLineString"))
 
   // the host stores the dataset's credit with every place that states no source of its own
   test("source is set"):
     val places = Awmc.read(fixture).toOption.get
-    assert(Awmc.rights.credit.contains("Ancient World Mapping Center"))
+    assert(Awmc.rights.credit.value.contains("Ancient World Mapping Center"))
     assertEquals(places(0).source, None)
 
   test("properties contain pleiadesId and awmcType"):
     val places = Awmc.read(fixture).toOption.get
     val props = places(0).properties.get
-    assert(props.contains("pleiadesId"), props)
-    assert(props.contains("511444"), props)
-    assert(props.contains("awmcType"), props)
+    assert(props.value.contains("pleiadesId"), props)
+    assert(props.value.contains("511444"), props)
+    assert(props.value.contains("awmcType"), props)
 
   test("notes stored in properties"):
     val places = Awmc.read(fixture).toOption.get
     val props = places(2).properties.get
-    assert(props.contains("notes"), props)
+    assert(props.value.contains("notes"), props)
 
   test("transform is idempotent"):
     val r1 = Awmc.read(fixture).toOption.get
@@ -69,7 +69,7 @@ class AwmcSuite extends munit.FunSuite:
 
   test("transform returns Left for empty features"):
     val empty = """{"type":"FeatureCollection","features":[]}"""
-    val result = Awmc.read(empty)
+    val result = Awmc.read(DownloadedGazetteer.Text(empty))
     assert(result.isRight)
     assertEquals(result.toOption.get.length, 0)
 
@@ -78,10 +78,10 @@ class AwmcSuite extends munit.FunSuite:
       "type": "FeatureCollection",
       "features": [{"type":"Feature","properties":{"TYPE":"region"},"geometry":null}]
     }"""
-    assertEquals(Awmc.read(noTitle).toOption.get.length, 0)
+    assertEquals(Awmc.read(DownloadedGazetteer.Text(noTitle)).toOption.get.length, 0)
 
   test("the gazetteer-awmc plugin registers the source awmc"):
     val h = com.histmersion.plugin.testkit.PluginHarness
       .load(com.histmersion.plugin.Plugin.Info.Id("gazetteer-awmc"), http = com.histmersion.plugin.testkit.HttpMode.Offline, env = Map.empty)
-      .fold(e => fail(e), identity)
+      .fold(e => fail(e.value), identity)
     assertEquals(h.gazetteerSources, List("awmc"))

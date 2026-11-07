@@ -1,6 +1,9 @@
 package com.histmersion.plugins.gazetteers
 
+import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.testkit.{HttpMode, PluginHarness, StubAnswer}
+import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Registries}
+import com.histmersion.testsupport.ComparedByValue.given
 
 /** Histmersion's own network gazetteers run as any plugin author runs theirs: through the plugin testkit, which loads a
   * plugin from the class path as the server does and runs its source's download through the server's gazetteer client,
@@ -8,17 +11,17 @@ import com.histmersion.plugin.testkit.{HttpMode, PluginHarness, StubAnswer}
   */
 class GazetteerPluginsKitSuite extends munit.FunSuite:
 
-  private def fixture(name: String): Array[Byte] =
-    scala.io.Source.fromResource(s"gazetteers/$name")(using scala.io.Codec.UTF8).mkString.getBytes("UTF-8")
+  private def fixture(name: String): HttpAnswer.Body =
+    HttpAnswer.Body(scala.io.Source.fromResource(s"gazetteers/$name")(using scala.io.Codec.UTF8).mkString.getBytes("UTF-8"))
 
-  private def load(id: String, stubs: Map[String, StubAnswer] = Map.empty) =
-    PluginHarness.load(id, http = HttpMode.Stub(stubs), env = Map.empty).fold(e => fail(e), identity)
+  private def load(id: Plugin.Info.Id, stubs: Map[HttpTransport.Url, StubAnswer] = Map.empty) =
+    PluginHarness.load(id, http = HttpMode.Stub(stubs), env = Map.empty).fold(e => fail(e.value), identity)
 
   private val plugins =
     List(
-      "gazetteer-cliopatria" -> "cliopatria",
-      "gazetteer-awmc" -> "awmc",
-      "gazetteer-chronontology" -> "chronontology"
+      Plugin.Info.Id("gazetteer-cliopatria") -> "cliopatria",
+      Plugin.Info.Id("gazetteer-awmc") -> "awmc",
+      Plugin.Info.Id("gazetteer-chronontology") -> "chronontology"
     )
 
   test("each plugin loads from the class path with its defaults and registers its one source"):
@@ -36,11 +39,11 @@ class GazetteerPluginsKitSuite extends munit.FunSuite:
       http = HttpMode.Offline,
       env = Map.empty
     )
-    assert(refused.left.exists(_.contains("unknown setting")), refused.toString)
+    assert(refused.left.exists(_.value.contains("unknown setting")), refused.toString)
 
   test("awmc and chronontology: one request to the dataset, every place kept with the dataset's credit"):
-    val awmc = load("gazetteer-awmc", Map(Awmc.url -> StubAnswer.ok(fixture("awmc.geojson"))))
-    val r = awmc.readGazetteer("awmc")
+    val awmc = load(Plugin.Info.Id("gazetteer-awmc"), Map(HttpTransport.Url(Awmc.url.value) -> StubAnswer.ok(fixture("awmc.geojson"))))
+    val r = awmc.readGazetteer(Registries.GazetteerSourcesKey("awmc"))
     assertEquals((r.failure, r.refused), (None, Nil))
     assertEquals(r.requests, List(s"GET ${Awmc.url}"))
     assertEquals(
@@ -49,8 +52,8 @@ class GazetteerPluginsKitSuite extends munit.FunSuite:
     )
     assertEquals(r.accepted.map(_.source).distinct, List(Some("Ancient World Mapping Center (UNC), ODbL")))
     val chrono =
-      load("gazetteer-chronontology", Map(ChronOntology.url -> StubAnswer.ok(fixture("chronontology.json"))))
-    val c = chrono.readGazetteer("chronontology")
+      load(Plugin.Info.Id("gazetteer-chronontology"), Map(HttpTransport.Url(ChronOntology.url.value) -> StubAnswer.ok(fixture("chronontology.json"))))
+    val c = chrono.readGazetteer(Registries.GazetteerSourcesKey("chronontology"))
     assertEquals(c.accepted.size, 3)
     assertEquals(c.accepted.map(_.source).distinct, List(Some("ChronOntology (DAI), open access")))
 
@@ -59,18 +62,18 @@ class GazetteerPluginsKitSuite extends munit.FunSuite:
       val out = java.io.ByteArrayOutputStream()
       val z = java.util.zip.ZipOutputStream(out)
       z.putNextEntry(java.util.zip.ZipEntry("cliopatria.geojson"))
-      z.write(fixture("cliopatria.geojson"))
+      z.write(fixture("cliopatria.geojson").value)
       z.closeEntry()
       z.close()
       out.toByteArray
-    val r = load("gazetteer-cliopatria", Map(Cliopatria.url -> StubAnswer.ok(zip))).readGazetteer("cliopatria")
+    val r = load(Plugin.Info.Id("gazetteer-cliopatria"), Map(HttpTransport.Url(Cliopatria.url.value) -> StubAnswer.ok(HttpAnswer.Body(zip)))).readGazetteer(Registries.GazetteerSourcesKey("cliopatria"))
     assertEquals(r.failure, None)
     assertEquals(r.accepted.size, 6)
     assertEquals(r.accepted.take(3).forall(_.place.geometry.isEmpty), true)
     assertEquals(r.accepted.map(_.source).distinct, List(Some("Cliopatria (Seshat Databank), CC BY 4.0")))
-    val missing = load("gazetteer-cliopatria", Map(Cliopatria.url -> StubAnswer(com.histmersion.pluginhost.HttpAnswer.Code(404), Array.emptyByteArray)))
-    assertEquals(missing.readGazetteer("cliopatria").failure, Some(s"HTTP 404 from ${Cliopatria.url}"))
+    val missing = load(Plugin.Info.Id("gazetteer-cliopatria"), Map(HttpTransport.Url(Cliopatria.url.value) -> StubAnswer(com.histmersion.pluginhost.HttpAnswer.Code(404), HttpAnswer.Body(Array.emptyByteArray))))
+    assertEquals(missing.readGazetteer(Registries.GazetteerSourcesKey("cliopatria")).failure, Some(s"HTTP 404 from ${Cliopatria.url}"))
     assertEquals(
-      missing.readGazetteer("nowhere").failure,
+      missing.readGazetteer(Registries.GazetteerSourcesKey("nowhere")).failure,
       Some("the plugin registered no gazetteer source 'nowhere'")
     )

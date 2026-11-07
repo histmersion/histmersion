@@ -44,11 +44,11 @@ class KeyedParsersSuite extends munit.FunSuite:
       "1400 B.C.-1200 B.C." -> Some((-1400L, -1200L)),
       "1550–1196 BCE" -> Some((-1550L, -1196L))
     )
-    cases.foreach((t, want) => assertEquals(FreeTextDates.parse(t), want, t))
+    cases.foreach((t, want) => assertEquals(FreeTextDates.parse(FreeTextDates.Text(t)), want, t))
 
   test("free-text dates: uncertain, backwards or unreadable texts are not read"):
     List("16th century?", "1550-1196", "New Kingdom", "", "undated", "12th", "1883/1884 or later", "0")
-      .foreach(t => assertEquals(FreeTextDates.parse(t), None, t))
+      .foreach(t => assertEquals(FreeTextDates.parse(FreeTextDates.Text(t)), None, t))
 
   // ── Smithsonian ──────────────────────────────────────────────────────────────────────────────
 
@@ -59,11 +59,11 @@ class KeyedParsersSuite extends munit.FunSuite:
       "https://api.si.edu/openaccess/api/v1.0/search?q=%22Tell+el-Amarna%22+AND+online_media_type%3AImages" +
         "&rows=20&type=edanmdm&row_group=objects"
     )
-    assert(!u.contains("api_key"))
-    assert(Smithsonian.searchUrl(com.histmersion.plugins.media.CollectionSettings.ApiUrl("x"), com.histmersion.plugin.MediaPlace.Label("a"), com.histmersion.plugins.media.CollectionSettings.Candidates(5000)).contains("rows=1000"), "the documented maximum")
+    assert(!u.value.contains("api_key"))
+    assert(Smithsonian.searchUrl(com.histmersion.plugins.media.CollectionSettings.ApiUrl("x"), com.histmersion.plugin.MediaPlace.Label("a"), com.histmersion.plugins.media.CollectionSettings.Candidates(5000)).value.contains("rows=1000"), "the documented maximum")
 
   test("Smithsonian: records — CC0 from the media item's usage.access, its screen image stored, places and dates"):
-    val rs = Smithsonian.records(fixture("si-search.json")).fold(fail(_), identity).map(_.fold(fail(_), identity))
+    val rs = Smithsonian.records(fixture("si-search.json")).fold(e => fail(e.value), identity).map(_.fold(e => fail(e.value), identity))
     assertEquals(rs.map(_.key), List("fsg_F1909.1185", "fsg_F1908.119", "fsg_F1916.118"))
     val bead = rs.head
     assertEquals(bead.title, "Bead")
@@ -77,9 +77,9 @@ class KeyedParsersSuite extends munit.FunSuite:
       List("origin" -> "Egypt", "continent" -> "Africa"),
       "Egypt once; then the coarser levels"
     )
-    val rights = bead.rights.fold(fail(_), identity)
+    val rights = bead.rights.fold(e => fail(e.value), identity)
     assertEquals(rights.licence, Licence("CC0-1.0"))
-    assertEquals(licences.readName(rights.licence.value), Licence.Read(com.histmersion.plugin.Licence.Read.Id("CC0-1.0"), Licence.Read.Cc0))
+    assertEquals(licences.readName(LicenceReader.ReadNameName(rights.licence.value)), Licence.Read(com.histmersion.plugin.Licence.Read.Id("CC0-1.0"), Licence.Read.Family(Licence.Read.Cc0)))
     assertEquals(
       rights.credit,
       "Bead, National Museum of Asian Art, Smithsonian Institution, Gift of Charles Lang Freer, CC0"
@@ -138,17 +138,17 @@ class KeyedParsersSuite extends munit.FunSuite:
 
   // ── Europeana ────────────────────────────────────────────────────────────────────────────────
 
-  private val api = "https://api.europeana.eu"
+  private val api = CollectionSettings.ApiUrl("https://api.europeana.eu")
 
   test("Europeana: the search URL — where:(name), reusability=open, media and thumbnail, images, rich profile; no key"):
-    val u = Europeana.searchUrl(api + "/", com.histmersion.plugin.MediaPlace.Label("Tell el-Amarna"), com.histmersion.plugins.media.CollectionSettings.Candidates(20))
+    val u = Europeana.searchUrl(CollectionSettings.ApiUrl(api.value + "/"),com.histmersion.plugin.MediaPlace.Label("Tell el-Amarna"), com.histmersion.plugins.media.CollectionSettings.Candidates(20))
     assertEquals(
       u,
       "https://api.europeana.eu/record/v2/search.json?query=where%3A%28%22Tell+el-Amarna%22%29" +
         "&reusability=open&media=true&thumbnail=true&qf=TYPE%3AIMAGE&profile=rich&rows=20"
     )
-    assert(!u.contains("wskey"))
-    assert(Europeana.searchUrl(api, com.histmersion.plugin.MediaPlace.Label("a"), com.histmersion.plugins.media.CollectionSettings.Candidates(500)).endsWith("rows=100"), "the documented maximum")
+    assert(!u.value.contains("wskey"))
+    assert(Europeana.searchUrl(api, com.histmersion.plugin.MediaPlace.Label("a"), com.histmersion.plugins.media.CollectionSettings.Candidates(500)).value.endsWith("rows=100"), "the documented maximum")
     assertEquals(
       Europeana.recordUrl(api, com.histmersion.plugin.MediaItem.Key("/9200999/fixture_mycenae_lion_gate")),
       "https://api.europeana.eu/record/v2/9200999/fixture_mycenae_lion_gate.json"
@@ -161,7 +161,7 @@ class KeyedParsersSuite extends munit.FunSuite:
     )
     assertEquals(
       Europeana.previewSource(
-        "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fa.example%2Fb.jpg&type=IMAGE"
+        Europeana.Preview("https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fa.example%2Fb.jpg&type=IMAGE")
       ),
       Some("https://a.example/b.jpg")
     )
@@ -169,7 +169,7 @@ class KeyedParsersSuite extends munit.FunSuite:
 
   test("Europeana: items — each one's own rights URL as its licence, places and ids, signed years, renditions"):
     val rs =
-      Europeana.records(fixture("eu-search.json"), api, licences).fold(fail(_), identity).map(_.fold(fail(_), identity))
+      Europeana.records(fixture("eu-search.json"), api, licences).fold(e => fail(e.value), identity).map(_.fold(e => fail(e.value), identity))
     assertEquals(rs.size, 3)
     val gate = rs.head
     assertEquals(gate.key, "9200999/fixture_mycenae_lion_gate")
@@ -192,13 +192,13 @@ class KeyedParsersSuite extends munit.FunSuite:
     assertEquals(gate.imageUrl, Some(Europeana.thumbnailUrl(api, com.histmersion.plugins.media.Europeana.Source("https://images.fixture.example/lion-gate.jpg"), com.histmersion.plugin.MediaRendition.Width(400))))
     assertEquals(gate.thumbUrl, Some(Europeana.thumbnailUrl(api, com.histmersion.plugins.media.Europeana.Source("https://images.fixture.example/lion-gate.jpg"), com.histmersion.plugin.MediaRendition.Width(200))))
     assertEquals(gate.originalUrl, Some("https://images.fixture.example/lion-gate.jpg"))
-    val r = gate.rights.fold(fail(_), identity)
+    val r = gate.rights.fold(e => fail(e.value), identity)
     assertEquals(r.licence, Licence("http://creativecommons.org/licenses/by-sa/4.0/"), "its edm:rights URL")
-    assertEquals(licences.readUrl(r.licence.value), Licence.Read(com.histmersion.plugin.Licence.Read.Id("CC-BY-SA-4.0"), com.histmersion.plugin.Licence.Read.Family("cc-by-sa"), needsAttribution = com.histmersion.plugin.Licence.Read.NeedsAttribution(true)))
+    assertEquals(licences.readUrl(LicenceReader.ReadUrlUrl(r.licence.value)),Licence.Read(com.histmersion.plugin.Licence.Read.Id("CC-BY-SA-4.0"), com.histmersion.plugin.Licence.Read.Family("cc-by-sa"), needsAttribution = com.histmersion.plugin.Licence.Read.NeedsAttribution(true)))
     assertEquals(r.author, Some("Fixture Photographer"))
     assertEquals(r.credit, "The Lion Gate, Mycenae, Fixture Photographer, Fixture Archive, via Europeana, CC BY-SA 4.0")
     assertEquals(
-      rs(1).rights.map(x => licences.readUrl(x.licence.value).family),
+      rs(1).rights.map(x => licences.readUrl(LicenceReader.ReadUrlUrl(x.licence.value)).family),
       Right(Licence.Read.PublicDomain)
     )
     assertEquals(
@@ -263,13 +263,13 @@ class KeyedParsersSuite extends munit.FunSuite:
       "where:(\"Orkney\") NOT PROVIDER:(\"OpenUp!\") NOT proxy_dc_type:(\"PreservedSpecimen\" OR \"Preserved Specimen\")"
     )
     assertEquals(Europeana.query(com.histmersion.plugin.MediaPlace.Label("Orkney")), "where:(\"Orkney\")")
-    assert(Europeana.searchUrl(api, com.histmersion.plugin.MediaPlace.Label("Orkney"), com.histmersion.plugins.media.CollectionSettings.Candidates(20), ex).contains(Europeana.query("Orkney", ex).enc))
+    assert(Europeana.searchUrl(api, com.histmersion.plugin.MediaPlace.Label("Orkney"), com.histmersion.plugins.media.CollectionSettings.Candidates(20), ex).value.contains(Europeana.query(com.histmersion.plugin.MediaPlace.Label("Orkney"), ex).value.enc))
 
   test("Europeana: a specimen record — its aggregator or its institution excluded — is withheld with the reason"):
     val rs = Europeana
       .records(fixture("eu-search-orkney.json"), api, licences, ex)
-      .fold(fail(_), identity)
-      .map(_.fold(fail(_), identity))
+      .fold(e => fail(e.value), identity)
+      .map(_.fold(e => fail(e.value), identity))
     assertEquals(
       rs.map(r => r.key -> r.withheld),
       List(

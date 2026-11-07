@@ -16,8 +16,8 @@ class ResolutionSuite extends munit.FunSuite:
 
   test("the kit's module list parses; a malformed line is named"):
     assertEquals(server.shipped.get(k("io.circe:circe-core_3")).map(_.value: String), Some("0.14.17"))
-    assert((server.provides(k("io.github.cquiroz:scala-java-time-tzdb_3"))).value)
-    assert(!(server.provides(k("org.scala-lang.modules:scala-xml_3"))).value)
+    assert(server.provides(k("io.github.cquiroz:scala-java-time-tzdb_3")))
+    assert(!server.provides(k("org.scala-lang.modules:scala-xml_3")))
     val bad = ServerModules.parse(List(_root_.com.histmersion.pluginresolver.Resolver.ManifestLine("io.circe:circe-core_3")), Nil)
     assert(bad.left.exists((_).value.contains("io.circe:circe-core_3")), bad.toString)
 
