@@ -576,7 +576,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
             com.histmersion.api.catalogue.Place.Label("Zzi Modern Town"),
             Place.KindValue(Place.Kind.Site),
             Some(Place.Geometry("""{"type":"Point","coordinates":[-123.0,-39.0]}""")),
-            properties = Some("""{"modern":true}""")
+            properties = Some(Place.Properties("""{"modern":true}"""))
           ),
           List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzi Modern Town")))
         ),

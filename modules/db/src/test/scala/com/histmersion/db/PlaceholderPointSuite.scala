@@ -38,7 +38,7 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
     val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
     Migrate.run(d)
     d
-  private def tol = cfg.places.pointToleranceKm.value
+  private def tol = cfg.places.pointToleranceKm
 
   private def clean(): Unit = connect(ds):
     val _ = sql"DELETE FROM sources WHERE citekey LIKE 'zzph%'".update.run()
@@ -140,12 +140,12 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
           f(4, Some(Finding.Region("Zzph Hellas")), Some(Grid), Some(Period(com.histmersion.api.catalogue.Year(-500), com.histmersion.api.catalogue.Year(-400))))
         )
       ), // after the Mykenai realm
-      cfg.limits.chunkChars.value,
+      cfg.limits.chunkChars,
       tol
     )
 
   private def at(n: Int): Set[String] =
-    PlaceFixtures.placesOf(ds, s"zzph_src#$n").map(_.id.value).filter(_.startsWith("zzph")).toSet
+    PlaceFixtures.placesOf(ds, Finding.Id(s"zzph_src#$n")).map(_.id.value).filter(_.startsWith("zzph")).toSet
 
   private def holds(): Unit =
     assertEquals(
@@ -173,7 +173,18 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
     connect(ds):
       val _ = sql"DELETE FROM finding_places WHERE finding_id LIKE 'zzph_src#%'".update.run()
     transact(ds):
-      val _ = PlaceFixtures.materialisePlacesIn(List(Hellas, Balkans, Pelop, Mykenai, Tegea, Mantinea, NearRep), tol)
+      val _ = PlaceFixtures.materialisePlacesIn(
+        List(
+          com.histmersion.domain.catalogue.Place.Id("zzph_hellas"),
+          com.histmersion.domain.catalogue.Place.Id("zzph_balkans"),
+          com.histmersion.domain.catalogue.Place.Id("zzph_pelop"),
+          com.histmersion.domain.catalogue.Place.Id("zzph_mykenai"),
+          com.histmersion.domain.catalogue.Place.Id("zzph_tegea"),
+          com.histmersion.domain.catalogue.Place.Id("zzph_mantinea"),
+          com.histmersion.domain.catalogue.Place.Id("zzph_nearrep")
+        ),
+        tol
+      )
     holds()
 
   test(
@@ -209,7 +220,7 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("finding-placeholder lists the placeholders no name resolves; nobody loses their last place"):
     seed()
-    val listed = connect(ds)(PlaceFixtures.unresolvedPlaceholders(ds)).filter(_._1 == "zzph_src")
+    val listed = connect(ds)(PlaceFixtures.unresolvedPlaceholders(ds)).filter(_._1.value == "zzph_src")
     assertEquals(listed.map(_._2), List("zzph_src#1: no place name, placeholder point at -42.5000 N 152.5000 E"))
     (0 to 4).foreach(n => assert(at(n).nonEmpty, s"finding $n has a place"))
 

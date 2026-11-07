@@ -125,13 +125,13 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
     val (u1, u2) = (uid("fig-1.png"), uid("fig-2.png"))
     AssetLinkFixtures
       .create(ds, AssetLink.Put(com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.exchange.Bundle.Asset.FileName("fig-1.png"), com.histmersion.api.media.AssetRelation.Wire("depicts"), com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("hattusa")))
-      .fold(e => fail(e.message), _ => ())
+      .fold(e => fail(e.message.value), _ => ())
     AssetLinkFixtures
       .create(ds, AssetLink.Put(com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.exchange.Bundle.Asset.FileName("fig-2.png"), com.histmersion.api.media.AssetRelation.Wire("depicts"), com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("troy")))
-      .fold(e => fail(e.message), _ => ())
+      .fold(e => fail(e.message.value), _ => ())
     AssetLinkFixtures
       .create(ds, AssetLink.Put(com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.exchange.Bundle.Asset.FileName("fig-3.png"), com.histmersion.api.media.AssetRelation.Wire("depicts"), com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("mycenae")))
-      .fold(e => fail(e.message), _ => ())
+      .fold(e => fail(e.message.value), _ => ())
     // re-OCR: fig-1 re-rendered under its name, fig-2's picture now numbered fig-4, fig-3 gone
     AssetFixtures.replace(
       ds,

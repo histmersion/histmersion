@@ -119,7 +119,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         TestExchange.kinds,
         TestExchange.rules
       )
-      .fold(e => fail(e), identity)
+      .fold(e => fail(e.value), identity)
 
   private def importInto(
       ds: DataSource,
@@ -205,17 +205,17 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
   ): Unit =
     val _ = AttestationRows.create(
       ds,
-      Attestation.Put(ck, com.histmersion.api.catalogue.Attestation.TargetType("place"), target, quote = Some(quote), charStart = Some(com.histmersion.api.catalogue.Attestation.CharStart(0)), charEnd = Some(quote.value.length))
+      Attestation.Put(ck, com.histmersion.api.catalogue.Attestation.TargetType("place"), target, quote = Some(quote), charStart = Some(com.histmersion.api.catalogue.Attestation.CharStart(0)), charEnd = Some(com.histmersion.api.catalogue.Attestation.CharEnd(quote.value.length)))
     )
 
-  private def put(ds: DataSource, s: Source): Unit = SourceFixtures.upsert(ds, s, chunkChars.value)
+  private def put(ds: DataSource, s: Source): Unit = SourceFixtures.upsert(ds, s, chunkChars)
 
   private val olsen: String =
     val rnd = scala.util.Random(2015)
     (1 to 3000).map(_ => rnd.alphanumeric.take(3 + rnd.nextInt(7)).mkString).mkString(" ")
   private val olsenAgain: String =
     olsen.split(" ").zipWithIndex.map((w, i) => if i % 50 == 0 then w.toUpperCase.reverse else w).mkString(" ")
-  private val kuhrtSha = "9f2e" + "0" * 60
+  private val kuhrtSha = com.histmersion.Sha256.assume("9f2e" + "0" * 60)
   private val Isbn = "9780198150428"
 
   /** work, home and its spool; home has already imported work once (the shared history). */
@@ -238,14 +238,14 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         work,
         com.histmersion.domain.library.Citekey("zzshared2001_alpha"),
         Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("edited at work"))),
-        chunkChars.value
+        chunkChars
       )
     val _ =
       SourceFixtures.patch(
         home,
         com.histmersion.domain.library.Citekey("zzshared2001_alpha"),
         Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("edited at home"))),
-        chunkChars.value
+        chunkChars
       )
     val _ = Transactor(work).transact(GoalRepo.deleteIn(com.histmersion.domain.automation.Goal.Slug("zz_shared_goal")))
     val _ = Transactor(home).transact(GoalRepo.patchIn(com.histmersion.domain.automation.Goal.Slug("zz_shared_goal"), Goal.Patch(notes = Some(com.histmersion.api.automation.Goal.Notes("edited at home")))))
@@ -589,7 +589,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     // it changes over there; ours has not changed since the merge → fast-forward onto OUR row
     val _ =
-      SourceFixtures.patch(a, com.histmersion.domain.library.Citekey("zzx2001_there"), Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("v2 from there"))), chunkChars.value)
+      SourceFixtures.patch(a, com.histmersion.domain.library.Citekey("zzx2001_there"), Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("v2 from there"))), chunkChars)
     val bundle = exportOf(a, sa)
     val p = planIn(b, bundle, sb)
     assertEquals(p.issues, Nil)
@@ -831,7 +831,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       1
     )
     // the reviews, the log entry, the merge with its plan and backup, the remembered decisions
-    assertEquals(r.reviews.sorted, List("bronze_age_collapse-work", "zz_shared_art", "zz_shared_conf"))
+    assertEquals(r.reviews.sortBy(_.value), List("bronze_age_collapse-work", "zz_shared_art", "zz_shared_conf"))
     r.reviews.foreach(slug =>
       assertEquals(
         count(

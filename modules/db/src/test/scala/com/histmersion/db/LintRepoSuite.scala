@@ -91,7 +91,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     connect(ds)(sql"DELETE FROM sources WHERE citekey LIKE ${Prefix + "%"}".update.run())
     connect(ds)(sql"DELETE FROM edges WHERE src LIKE ${Prefix + "%"}".update.run())
 
-  private def put(s: Source): Unit = SourceFixtures.upsert(ds, s, cfg.limits.chunkChars.value)
+  private def put(s: Source): Unit = SourceFixtures.upsert(ds, s, cfg.limits.chunkChars)
 
   /** A stand-in for the server's flexmark check (the db module has no renderer): every `**` is a problem, so the
     * formatting rules' SQL and wiring are tested here, the check in `MarkdownLintSuite`.
@@ -116,8 +116,8 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
       SourceCheckFixtures.run(
         ds,
         List(Lint.rule(rule).get),
-        cfg.lint.maxItems.value,
-        cfg.lint.suggestions.value,
+        Lint.ItemLimit(cfg.lint.maxItems.value),
+        Lint.ItemLimit(cfg.lint.suggestions.value),
         checker,
         geo
       )
@@ -141,7 +141,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     Lint.names.filterNot(OwnRules).foreach(n => assert(SourceCheckFixtures.sqlOf(n).nonEmpty, s"$n has no statement"))
 
   test("every rule executes against the real schema"):
-    val rep = SourceCheckFixtures.run(ds, Lint.all, cfg.lint.maxItems.value, cfg.lint.suggestions.value, checker, geo)
+    val rep = SourceCheckFixtures.run(ds, Lint.all, Lint.ItemLimit(cfg.lint.maxItems.value), Lint.ItemLimit(cfg.lint.suggestions.value), checker, geo)
     assertEquals(rep.rules.map(_.rule), Lint.names)
 
   test("no-findings / no-period / no-regions / empty-summary / unassessed-status"):
@@ -234,13 +234,13 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     // NB: `reindexStale` is corpus-wide, so it also sweeps whatever other suites left stale in this
     // shared test database. That is exactly why it is best-effort per source; the assertion is about
     // THIS suite's fixture.
-    val r = SourceCheckFixtures.reindexStale(ds, cfg.limits.chunkChars.value, cfg.limits.reindexChars.value)
+    val r = SourceCheckFixtures.reindexStale(ds, com.histmersion.util.ocr.Chunker.ChunkMaxChars(cfg.limits.chunkChars.value), com.histmersion.domain.library.sources.SourceRepairs.MaxChars(cfg.limits.reindexChars.value))
     assert(r.chunks.value > 0, s"reindexStale wrote no chunks: $r")
     assertEquals(keys(Lint.Rule.Name(StaleChunks)), Nil)
 
   test("reindexStale reports nothing left once it has swept everything stale"):
-    val _ = SourceCheckFixtures.reindexStale(ds, cfg.limits.chunkChars.value, cfg.limits.reindexChars.value)
-    val r = SourceCheckFixtures.reindexStale(ds, cfg.limits.chunkChars.value, cfg.limits.reindexChars.value)
+    val _ = SourceCheckFixtures.reindexStale(ds, com.histmersion.util.ocr.Chunker.ChunkMaxChars(cfg.limits.chunkChars.value), com.histmersion.domain.library.sources.SourceRepairs.MaxChars(cfg.limits.reindexChars.value))
+    val r = SourceCheckFixtures.reindexStale(ds, com.histmersion.util.ocr.Chunker.ChunkMaxChars(cfg.limits.chunkChars.value), com.histmersion.domain.library.sources.SourceRepairs.MaxChars(cfg.limits.reindexChars.value))
     assertEquals(r.remaining, 0)
 
   test("undated-findings and unlocated-findings, named by finding id"):

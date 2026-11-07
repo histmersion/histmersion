@@ -52,7 +52,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
     q
 
   private def run(sql: String, maxRows: Int = 100, timeoutMs: Int = 5000, maxCell: Int = 2000) =
-    SearchFixtures.run(queryDs, sql, timeoutMs, maxRows, maxCell)
+    SearchFixtures.run(queryDs, SearchFixtures.Statement(sql), com.histmersion.util.database.Transactor.TimeoutMs(timeoutMs), SearchFixtures.MaxRows(maxRows), SearchFixtures.MaxCellChars(maxCell))
 
   private val ck = "zzquery_probe"
 
@@ -114,7 +114,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
   // ── writes are refused BY POSTGRES ───────────────────────────────────────────────────────────
 
   private def refused(sql: String): String =
-    val e = run(sql).left.getOrElse(fail(s"'$sql' was NOT refused"))
+    val e = run(sql).left.getOrElse(fail(s"'$sql' was NOT refused")).value
     assert(e.toLowerCase.contains("read-only transaction"), s"'$sql' failed for the wrong reason: $e")
     e
 
@@ -143,7 +143,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
     assert(probeExists)
 
   test("a syntax error is a value carrying Postgres's message, not an exception"):
-    val e = run("select * fom sources").left.getOrElse(fail("expected a failure"))
+    val e = run("select * fom sources").left.getOrElse(fail("expected a failure")).value
     assert(e.toLowerCase.contains("syntax"), e)
 
   test("an empty statement is refused before it reaches the database"):
@@ -167,7 +167,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
     assert(cell.contains("(+4900 chars)"), cell.takeRight(30))
 
   test("statement_timeout aborts a long statement"):
-    val e = run("select pg_sleep(5)", timeoutMs = 200).left.getOrElse(fail("expected a timeout"))
+    val e = run("select pg_sleep(5)", timeoutMs = 200).left.getOrElse(fail("expected a timeout")).value
     assert(e.toLowerCase.contains("statement timeout") || e.toLowerCase.contains("canceling"), e)
 
   test("a refused statement leaves the connection usable for the next one"):
@@ -203,7 +203,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
 
   test("`SET TRANSACTION READ WRITE; SELECT …` is refused, and nothing was executed"):
     val e = run(s"SET TRANSACTION READ WRITE; select * from sources").left
-      .getOrElse(fail("the disarming batch was NOT refused"))
+      .getOrElse(fail("the disarming batch was NOT refused")).value
     assert(e.contains("statements"), e)
     assert(probeExists)
 
@@ -214,7 +214,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
     assert(run("select 1; select 2").isLeft)
 
   test("a lone SET is refused by the keyword check"):
-    val e = run("set statement_timeout = 0").left.getOrElse(fail("a lone SET was NOT refused"))
+    val e = run("set statement_timeout = 0").left.getOrElse(fail("a lone SET was NOT refused")).value
     assert(e.contains("'SET'"), e)
 
   // ── the ROLE is what stops a superuser-only function ─────────────────────────────────────────
@@ -228,7 +228,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
 
   test("pg_read_file is permission denied — the read-only TRANSACTION never stopped this"):
     val e = run("select pg_read_file('/etc/hostname')").left
-      .getOrElse(fail("pg_read_file was NOT refused"))
+      .getOrElse(fail("pg_read_file was NOT refused")).value
     assert(e.toLowerCase.contains("permission denied"), e)
 
   test("the read-only role cannot even be talked into a writable transaction"):
@@ -255,8 +255,8 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
       assertEquals(QueryAccess.provision(ds, qc), Right(()), "idempotent")
       val q = testQueryPool(dbCfg, qc)
       assertEquals(Db.canConnect(q), Right(()))
-      assert(SearchFixtures.run(q, s"SELECT title FROM sources WHERE citekey = '$ck'", com.histmersion.util.database.Transactor.TimeoutMs(5000), com.histmersion.domain.library.search.QueryRepo.MaxRows(10), com.histmersion.domain.library.search.QueryRepo.MaxCellChars(100)).isRight)
-      assert(SearchFixtures.run(q, s"DELETE FROM sources WHERE citekey = '$ck'", com.histmersion.util.database.Transactor.TimeoutMs(5000), com.histmersion.domain.library.search.QueryRepo.MaxRows(10), com.histmersion.domain.library.search.QueryRepo.MaxCellChars(100)).isLeft)
+      assert(SearchFixtures.run(q, SearchFixtures.Statement(s"SELECT title FROM sources WHERE citekey = '$ck'"), com.histmersion.util.database.Transactor.TimeoutMs(5000), SearchFixtures.MaxRows(10), SearchFixtures.MaxCellChars(100)).isRight)
+      assert(SearchFixtures.run(q, SearchFixtures.Statement(s"DELETE FROM sources WHERE citekey = '$ck'"), com.histmersion.util.database.Transactor.TimeoutMs(5000), SearchFixtures.MaxRows(10), SearchFixtures.MaxCellChars(100)).isLeft)
       assert(probeExists)
     finally
       scala.util.Try(admin(s"DROP OWNED BY $role")); scala.util.Try(admin(s"DROP ROLE IF EXISTS $role"))
