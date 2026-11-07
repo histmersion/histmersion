@@ -623,7 +623,7 @@ object PlanPools:
     val fromUnified = unified.flatMap { (kind, w) =>
       num(w, com.histmersion.server.agents.PlanPools.JsonKey("utilization")).map { u =>
         Reading(
-          "claude",
+          com.histmersion.api.automation.PlanQuota.Reading.Limit("claude"),
           kind,
           u * 100,
           w.hcursor.downField("resetsAt").as[Long].toOption.map(_ * 1000),
@@ -640,7 +640,7 @@ object PlanPools:
         // without a utilization the representative window says only "allowed" or "rejected"
         if status.contains("rejected") then
           List(Reading(com.histmersion.api.automation.PlanQuota.Reading.Limit("claude"), kind, used.getOrElse(100.0), repReset, rejected = com.histmersion.api.automation.PlanQuota.Reading.Rejected(true), now, source))
-        else used.map(u => Reading("claude", kind, u, repReset, rejected = false, now, source)).toList
+        else used.map(u => Reading(com.histmersion.api.automation.PlanQuota.Reading.Limit("claude"), kind, u, repReset, rejected = com.histmersion.api.automation.PlanQuota.Reading.Rejected(false), now, source)).toList
       }
 
   /** A mod's `rateLimits` (`percentUsed`, `resetsAt` ISO) → readings. */

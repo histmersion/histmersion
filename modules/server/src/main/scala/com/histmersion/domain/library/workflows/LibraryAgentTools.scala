@@ -76,7 +76,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
           "accent-insensitive."
       )(in =>
         cap(
-          com.histmersion.domain.library.LibraryTools.passagesMarkdown(site.sources, in).value,
+          com.histmersion.domain.library.LibraryTools.passagesMarkdown(site.sources, in),
           max,
           "ask for fewer passages (`limit`), less `context`, or a more specific query"
         )

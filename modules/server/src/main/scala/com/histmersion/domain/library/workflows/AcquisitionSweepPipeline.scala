@@ -136,7 +136,7 @@ final class AcquisitionSweepPipeline(
         p.candidate.isOa && !tried.ingested.exists(_.doi == p.candidate.doi) && !noCopy(p.candidate.doi)
       )
       parked <- ctx.code[Parked](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("backlog"))(Right(park(ctx, goal, waiting)))
-      added <- ctx.code[Int]("queue")(
+      added <- ctx.code[Int](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("queue"))(
         Right(queue(ctx, goal, picks.filter(p => !p.candidate.isOa || noCopy(p.candidate.doi))))
       )
       line <- ctx.code[String]("close")(

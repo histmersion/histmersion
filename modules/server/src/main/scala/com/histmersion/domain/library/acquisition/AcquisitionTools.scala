@@ -228,7 +228,6 @@ object AcquisitionTools:
 
   final case class RefsInput(id: RefsRequest.Id, apply: RefsRequest.Apply = RefsRequest.Apply(false)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
-  object RefsInput:
 
 
   final case class AssessInput(
@@ -255,7 +254,6 @@ object AcquisitionTools:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
-  object FollowupsInput:
 
 
   final case class IngestInput(
