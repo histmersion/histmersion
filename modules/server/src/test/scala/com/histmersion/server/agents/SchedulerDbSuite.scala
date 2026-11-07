@@ -215,7 +215,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   ):
     val (a, h, up) = handlers(); seed(a, h, up)
     on(a)
-    a.focus.set(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("pin"), Some(apiSlug(g(20))), by = Some("test"))).fold(e => fail(e.message.value), identity)
+    a.focus.set(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("pin"), Some(apiSlug(g(20))), by = Some(com.histmersion.api.automation.Autopilot.FocusSet.By("test")))).fold(e => fail(e.message.value), identity)
     a.focus.set(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("priority"), Some(apiSlug(g(15))), Some(com.histmersion.api.automation.Autopilot.FocusSet.Value(5)))).fold(e => fail(e.message.value), identity)
     goals.foreach(s => a.oaBacklog.add(watchId(ref(s)), s, OaWork(doi(s), com.histmersion.api.library.Title(s"Work of $s"))))
     val clock = Clock()
@@ -417,7 +417,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals((dry.matched, dry.decided.size, dry.dryRun), (3, 3, true))
     assert(ps.forall(p => TestRuns.approvals(ds).approval(ApiIds.approval(p.id)).exists(_.state.value == "open")), "a dry run decides nothing")
     val done = a.digest
-      .decideAll(ApprovalDigest.BulkDecide(com.histmersion.api.automation.ApprovalDigest.BulkDecide.Decision("reject"), kind = Some(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")), subject = Some(ApprovalDigest.BulkDecide.Subject(g(2).value)), by = Some("test")))
+      .decideAll(ApprovalDigest.BulkDecide(com.histmersion.api.automation.ApprovalDigest.BulkDecide.Decision("reject"), kind = Some(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")), subject = Some(ApprovalDigest.BulkDecide.Subject(g(2).value)), by = Some(com.histmersion.api.automation.ApprovalDigest.BulkDecide.By("test"))))
       .fold(e => fail(e.message.value), identity)
     assertEquals((done.matched, done.decided, done.failed), (1, List(ps(1).id), Nil))
     assertEquals(

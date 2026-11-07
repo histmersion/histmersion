@@ -168,11 +168,11 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
     val conv = ThumbConverter()
     val h = MediaWiring(Deps(cfg, ds), FakeMediaHttp(u => Left(s"unexpected $u")), conv)
     val dry =
-      h.covers.covers(MediaCoversRequest(citekey = Some(ApiPaper), covers = false)).fold(e => fail(e.message.value), identity)
+      h.covers.covers(MediaCoversRequest(citekey = Some(ApiPaper), covers = com.histmersion.api.media.MediaCoversRequest.Covers(false))).fold(e => fail(e.message.value), identity)
     assertEquals(dry.lines, List(MediaSourceLine(ApiPaper,com.histmersion.api.media.MediaSourceLine.Role("illustration"), com.histmersion.api.media.MediaItem.Provider("source"), com.histmersion.api.media.MediaSourceLine.Detail("fig-0002-01.png"))))
     assertEquals(AssetFixtures.sourceThumb(ds, Paper), None, "a dry run links nothing")
     val done = h.covers
-      .covers(MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(ApiPaper), covers = false))
+      .covers(MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(ApiPaper), covers = com.histmersion.api.media.MediaCoversRequest.Covers(false)))
       .fold(e => fail(e.message.value), identity)
     assertEquals(done.illustrations, 1)
     assertEquals(conv.calls.toList, List("fig-0002-01.png" -> cfg.media.thumbPx))
@@ -189,7 +189,7 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
     }
     val h = MediaWiring(Deps(cfg, ds), fake, ThumbConverter())
     val r = h.covers
-      .covers(MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(ApiBook), illustrations = false))
+      .covers(MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(ApiBook), illustrations = com.histmersion.api.media.MediaCoversRequest.Illustrations(false)))
       .fold(e => fail(e.message.value), identity)
     assertEquals(r.lines, List(MediaSourceLine(ApiBook,com.histmersion.api.media.MediaSourceLine.Role("cover"), com.histmersion.api.media.MediaItem.Provider("open-library"), com.histmersion.api.media.MediaSourceLine.Detail("isbn:9780000000002"))))
     assert(
@@ -210,7 +210,7 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
     // another ISBN Open Library has no cover for: none, and remembered as asked
     val none = h.covers
       .covers(
-        MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(ApiPaper), illustrations = false, isbn = Some(MediaCoversRequest.Isbn("9780000000019")))
+        MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(ApiPaper), illustrations = com.histmersion.api.media.MediaCoversRequest.Illustrations(false), isbn = Some(MediaCoversRequest.Isbn("9780000000019")))
       )
       .fold(e => fail(e.message.value), identity)
     assertEquals((none.covers, none.skipped.map(_.key)), (0, List("cover: Open Library has no cover")))
