@@ -153,11 +153,11 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
       findings = List(
         Finding.Input(
           claim = s"$ck says something",
-          region = Some("Anatolia"),
+          region = Some(com.histmersion.api.library.Finding.Region("Anatolia")),
           lon = Some(32.0),
           lat = Some(39.0),
-          periodStart = Some(-1250),
-          periodEnd = Some(-1150)
+          periodStart = Some(com.histmersion.api.catalogue.Year(-1250)),
+          periodEnd = Some(com.histmersion.api.catalogue.Year(-1150))
         )
       )
     )

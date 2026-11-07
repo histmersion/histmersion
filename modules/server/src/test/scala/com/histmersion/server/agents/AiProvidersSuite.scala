@@ -261,7 +261,7 @@ class AiProvidersSuite extends munit.FunSuite:
     val p = Scripted(
       List(
         _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text(""), List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("c1"), com.histmersion.plugin.AiTool.Call.Tool("ping"), com.histmersion.plugin.AiTool.Call.Input("""{"word":"hi"}"""))), AiStop.ToolUse, u)),
-        _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text("""{"citekey":"x2020","title":"X","year":2020}"""), usage = u, servedBy = Some("pro-002")))
+        _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text("""{"citekey":"x2020","title":"X","year":2020}"""), usage = u, servedBy = Some(com.histmersion.plugin.AiTurn.ServedBy("pro-002"))))
       )
     )
     val r = PluginAiClient(ref, p, AiHttp.Offline).run(call())
