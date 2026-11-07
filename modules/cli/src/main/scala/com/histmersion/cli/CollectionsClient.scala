@@ -24,7 +24,7 @@ import com.histmersion.api.library.{
 /** The typed client for the library's source collections (`CollectionsApi`), over [[Client]]'s transport. */
 final class CollectionsClient(c: Client, name: CollectionsClient.Name):
   def info: Either[Cli.Error, CollectionInfo] = c.call(CollectionsApi.collection)(name)
-  def search(q: Option[com.histmersion.api.Api.Search.Text], limit: Option[com.histmersion.api.Paging.Limit], unlinked: com.histmersion.config.Limits.Search.Unlinked): Either[Cli.Error, CollectionSearch] =
+  def search(q: Option[com.histmersion.api.Api.Search.Text], limit: Option[com.histmersion.api.Paging.Limit], unlinked: com.histmersion.cli.CalibreCmd.Unlinked): Either[Cli.Error, CollectionSearch] =
     c.call(CollectionsApi.search)((name, q, limit, unlinked))
   def importItem(req: CollectionImportRequest): Either[Cli.Error, CollectionImported] =
     c.call(CollectionsApi.importItem)((name, req))
@@ -46,6 +46,8 @@ final class CollectionsClient(c: Client, name: CollectionsClient.Name):
   def onServer: Boolean = info.exists(_.reachable)
 
 object CollectionsClient:
-  type Name = com.histmersion.config.PeriodsConfig.Collection.Name
-  val Name: _root_.com.histmersion.config.PeriodsConfig.Collection.Name.type = _root_.com.histmersion.config.PeriodsConfig.Collection.Name
+  type CollectionName = CollectionName.T
+  object CollectionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Name = com.histmersion.cli.CollectionsClient.CollectionName
+  val Name: _root_.com.histmersion.cli.CollectionsClient.CollectionName.type = _root_.com.histmersion.cli.CollectionsClient.CollectionName
 
