@@ -421,5 +421,5 @@ object GoalPage:
 
   /** Library or the map, showing only this goal's sources. */
   private def showFiltered(slug: com.histmersion.api.automation.Goal.Slug, to: Route): Unit =
-    UiState.set(UiState.goal := Some(slug.value))(push = true)
+    UiState.set(UiState.goal := Some(slug.value))(push = com.histmersion.web.UiState.SetPush(true))
     Router.go(to)

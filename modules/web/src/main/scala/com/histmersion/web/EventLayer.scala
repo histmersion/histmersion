@@ -128,7 +128,7 @@ object EventLayer:
 
   private def drawOutlines(): Unit =
     outlines.foreach(
-      _.set(outlined.toSeq.map((id, g) => ShapeFeature(ShapeFeature.Id(id.value), g, dashed = true, alpha = ShapeFeature.Alpha(shown.get(id).fold(0.0)(_.alpha.value)))))
+      _.set(outlined.toSeq.map((id, g) => ShapeFeature(ShapeFeature.Id(id.value), g, dashed = com.histmersion.web.map.ShapeFeature.Dashed(true), alpha = ShapeFeature.Alpha(shown.get(id).fold(0.0)(_.alpha.value)))))
     )
 
   private def add(e: EventGeo, start: com.histmersion.api.catalogue.Year, a: com.histmersion.web.EventLayer.Alpha): Shown =
@@ -146,7 +146,7 @@ object EventLayer:
     val el = DomMarker.element(com.histmersion.web.map.DomMarker.ElementCls("hd-event-wrap"), DomMarker.ElementHtml(EventPlayback.html(e, a).value))
     val marker = DomMarker(DomMarker.LatV(e.lat.value), DomMarker.LonV(e.lon.value), el)
     // a regional label under the local ones: the battle stays readable inside its war
-    marker.setZ(if e.scale == EventScale.Regional then 1 else 2)
+    marker.setZ(if e.scale == EventScale.Regional then com.histmersion.web.map.DomMarker.ZIndex(1) else com.histmersion.web.map.DomMarker.ZIndex(2))
     pane.add(marker)
     val s = Shown(marker, outline, a, Slot(0))
     MapLabels.trackEvent(e.id, marker, MapLabels.Entry.Rank(EventPlayback.rank(e, start).value), () => nameOf(s))

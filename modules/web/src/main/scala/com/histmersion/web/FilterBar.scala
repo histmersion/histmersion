@@ -115,7 +115,7 @@ object FilterBar:
           Fmt.parseYear(com.histmersion.api.Years.Text(raw)).map(_.value).filter(y => valid(y, other())) match
             case Some(y) =>
               bad.set(false)
-              UiState.set(field := Some(y))(push = true)
+              UiState.set(field := Some(y))(push = com.histmersion.web.UiState.SetPush(true))
             case None => bad.set(true)
         }
       )

@@ -46,7 +46,7 @@ object EventMarkers:
       filter.modify(_.period).setTo(Some(Period(tiles._1, tiles._2))).modify(_.limit).setTo(Filter().limit).modify(_.offset).setTo(0).modify(_.sort).setTo(Filter().sort),
       kind = kind.map(k => TilesApi.TileQuery.Kind(k.value)),
       tier = tier.map(t => TilesApi.TileQuery.Tier(t.value)),
-      context = Some(true),
+      context = Some(com.histmersion.api.catalogue.TilesApi.TileQuery.Context(true)),
       undated = Option.when(undated.value)(true)
     )
 
