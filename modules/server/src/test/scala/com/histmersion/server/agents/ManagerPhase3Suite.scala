@@ -71,9 +71,9 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val b = AppConfig.load()
     val m = Model.wire
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.roles).setTo(b.agents.roles
-          .modify(_.extractor).setTo(m).modify(_.reviewer).setTo(m).modify(_.coldReader).setTo(m).modify(_.skeptic).setTo(m).modify(_.fixer).setTo(m).modify(_.planner).setTo(m).modify(_.writer).setTo(m)
+      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("scripted=1/2")).modify(_.roles).setTo(b.agents.roles
+          .modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(m.value)).modify(_.reviewer).setTo(com.histmersion.config.AgentRolesConfig.Reviewer(m.value)).modify(_.coldReader).setTo(com.histmersion.config.AgentRolesConfig.ColdReader(m.value)).modify(_.skeptic).setTo(com.histmersion.config.AgentRolesConfig.Skeptic(m.value)).modify(_.fixer).setTo(com.histmersion.config.AgentRolesConfig.Fixer(m.value)).modify(_.planner).setTo(com.histmersion.config.AgentRolesConfig.Planner(m.value)).modify(_.writer).setTo(com.histmersion.config.AgentRolesConfig.Writer(m.value))
       )
     )
 
@@ -349,7 +349,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     assertEquals(connect(ds)(ManagerRepo.get(m.id)).get.nextTickAt, Some("2026-11-15T00:00:00Z"))
     // agents.scheduler.enabled = false stops every cron
-    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.scheduler).setTo(baseCfg.agents.scheduler.modify(_.enabled).setTo(false)))
+    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.scheduler).setTo(baseCfg.agents.scheduler.modify(_.enabled).setTo(com.histmersion.config.AgentSchedulerConfig.Enabled(false))))
     val (b, _, _) = handlers(ScriptedClient(Model), off)
     assertEquals(b.managers.tick(Instant.parse("2026-12-01T00:00:00Z")).filter(_.value.contains("cron")), Nil)
 
@@ -532,7 +532,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
         .addHint(ApiIds.manager(Enrich), HintAdd(HintAdd.Text("x"), effect = Some(HintEffect(HintEffect.Action("skip"), List(HintEffect.Targets(CkB.value)))), suggest = Some(HintAdd.Suggest(true))))
         .isLeft
     )
-    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(false))
+    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(false)))
     val (b, _, _) = handlers(ScriptedClient(Model), off)
     val before = Transactor(ds).read(ManagerRepo.hints(Enrich, live = false)).size
     assert(

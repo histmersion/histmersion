@@ -42,7 +42,7 @@ class RenameHttpSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(Key))
+    base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(com.histmersion.config.AuthConfig.ApiKey(Key)))
 
   private def clean(): Unit =
     val ds = testPool(cfg.db)

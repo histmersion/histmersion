@@ -85,17 +85,17 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val b = AppConfig.load()
     val m = Model.wire
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.maxConcurrentRuns).setTo(20).modify(_.roles).setTo(b.agents.roles
-          .modify(_.extractor).setTo(m).modify(_.reviewer).setTo(m).modify(_.coldReader).setTo(m).modify(_.skeptic).setTo(m).modify(_.fixer).setTo(m).modify(_.planner).setTo(m).modify(_.writer).setTo(m)).modify(_.approvals).setTo(b.agents.approvals.modify(
-          _.articlePublish).setTo("checked").modify(_.articlePlan).setTo("auto").modify(_.goalPlan).setTo("auto").modify(_.auto).setTo(b.agents.approvals.auto.modify(_.publishMinSources).setTo(2)
-        )).modify(_.autopilot).setTo(b.agents.autopilot.modify(_.backupHours).setTo(0).modify(_.lintHours).setTo(0).modify(_.ingestPerDay).setTo(2)
-      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.seed).setTo(b.libraryAgents.seed.modify(_.minSources).setTo(2))).modify(_.researchAgents).setTo(b.researchAgents.modify(_.review).setTo(b.researchAgents.review.modify(_.spotChecks).setTo(0))
+      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("scripted=1/2")).modify(_.maxConcurrentRuns).setTo(com.histmersion.config.AgentsConfig.MaxConcurrentRuns(20)).modify(_.roles).setTo(b.agents.roles
+          .modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(m.value)).modify(_.reviewer).setTo(com.histmersion.config.AgentRolesConfig.Reviewer(m.value)).modify(_.coldReader).setTo(com.histmersion.config.AgentRolesConfig.ColdReader(m.value)).modify(_.skeptic).setTo(com.histmersion.config.AgentRolesConfig.Skeptic(m.value)).modify(_.fixer).setTo(com.histmersion.config.AgentRolesConfig.Fixer(m.value)).modify(_.planner).setTo(com.histmersion.config.AgentRolesConfig.Planner(m.value)).modify(_.writer).setTo(com.histmersion.config.AgentRolesConfig.Writer(m.value))).modify(_.approvals).setTo(b.agents.approvals.modify(
+          _.articlePublish).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("checked")).modify(_.articlePlan).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("auto")).modify(_.goalPlan).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("auto")).modify(_.auto).setTo(b.agents.approvals.auto.modify(_.publishMinSources).setTo(com.histmersion.config.AutoApprovalsConfig.PublishMinSources(2))
+        )).modify(_.autopilot).setTo(b.agents.autopilot.modify(_.backupHours).setTo(com.histmersion.config.AgentAutopilotConfig.BackupHours(0)).modify(_.lintHours).setTo(com.histmersion.config.AgentAutopilotConfig.LintHours(0)).modify(_.ingestPerDay).setTo(com.histmersion.config.AgentAutopilotConfig.IngestPerDay(2))
+      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.seed).setTo(b.libraryAgents.seed.modify(_.minSources).setTo(com.histmersion.config.AgentSeedConfig.MinSources(2)))).modify(_.researchAgents).setTo(b.researchAgents.modify(_.review).setTo(b.researchAgents.review.modify(_.spotChecks).setTo(com.histmersion.config.AgentReviewConfig.SpotChecks(0)))
     )
 
   /** The same with every approval a person's (the shipped defaults). */
   private lazy val manualCfg =
-    autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.articlePublish).setTo("manual").modify(_.articlePlan).setTo("manual").modify(_.goalPlan).setTo("manual")
+    autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.articlePublish).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("manual")).modify(_.articlePlan).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("manual")).modify(_.goalPlan).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("manual"))
       )
     )
 
@@ -366,7 +366,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assert(g.doneLast7.value >= 3, g)
     assert(a.autopilotPage(st).contains(s"**$Goal** _(reviewed)_"))
     assert(!a.autopilotPage(st).contains("crons are off"))
-    assert(a.autopilotPage(st.modify(_.cronsEnabled).setTo(false)).contains("crons are off"))
+    assert(a.autopilotPage(st.modify(_.cronsEnabled).setTo(com.histmersion.api.views.AutopilotStatus.CronsEnabled(false))).contains("crons are off"))
 
   test("autopilot, approvals a person's (the defaults): managers and plans start, nothing is approved by itself"):
     val c = ScriptedClient(Model)
@@ -512,7 +512,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   test(
     "article-plan cap: the area's daily cap leaves a second plan for a person; a manager that says no is never decided"
   ):
-    val capped = autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.auto).setTo(autoCfg.agents.approvals.auto.modify(_.articlesPerGoalPerDay).setTo(2))
+    val capped = autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.auto).setTo(autoCfg.agents.approvals.auto.modify(_.articlesPerGoalPerDay).setTo(com.histmersion.config.AutoApprovalsConfig.ArticlesPerGoalPerDay(2)))
       )
     )
     val (a, h) = handlers(ScriptedClient(Model), capped); seed(h)
@@ -572,7 +572,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   test("older approvals a person decides never crowd the code-decided ones out of a tick"):
     val personPlans =
-      autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.goalPlan).setTo("manual")))
+      autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.goalPlan).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("manual"))))
     val (a, h) = handlers(ScriptedClient(Model), personPlans); seed(h)
     import io.circe.syntax.*
     val waiting =
@@ -673,7 +673,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   // ── housekeeping ───────────────────────────────────────────────────────────────────────────────
 
   test("housekeeping: the safe lint repairs run on their cadence, recorded and logged; off, nothing runs"):
-    val hk = autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.autopilot).setTo(autoCfg.agents.autopilot.modify(_.lintHours).setTo(24)))
+    val hk = autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.autopilot).setTo(autoCfg.agents.autopilot.modify(_.lintHours).setTo(com.histmersion.config.AgentAutopilotConfig.LintHours(24))))
     val (a, _) = handlers(ScriptedClient(Model), hk)
     assertEquals(a.autopilot.tick(t0), Nil, "off")
     a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)

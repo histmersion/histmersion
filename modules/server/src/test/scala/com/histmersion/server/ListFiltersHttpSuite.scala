@@ -24,7 +24,7 @@ class ListFiltersHttpSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(90, "s")
 
-  private lazy val cfg = { val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(testDb.get)) }
+  private lazy val cfg = { val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))) }
   private lazy val ds = testPool(cfg.db)
   private val tag = s"zzlh${System.nanoTime().toHexString.takeRight(8)}"
 

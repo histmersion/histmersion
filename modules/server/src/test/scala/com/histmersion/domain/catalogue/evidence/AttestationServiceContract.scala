@@ -46,12 +46,12 @@ abstract class AttestationServiceContract extends CatalogueStoreSuite:
     assertEquals(((all.total.value: Int), all.attestations.map(_.id)), (3, List(first.id, second.id, third.id)))
     assertEquals(a.list(Some(com.histmersion.domain.library.Citekey("zzat2020_one")), None, None, com.histmersion.PageSize(10), com.histmersion.Offset(0)).attestations.map(_.id), List(first.id, second.id))
     assertEquals(a.list(None, Some(com.histmersion.api.catalogue.Attestation.TargetType("place")), Some(com.histmersion.api.catalogue.Attestation.TargetId("zz_hill")), com.histmersion.PageSize(10), com.histmersion.Offset(0)).attestations.map(_.id), List(first.id, third.id))
-    assertEquals((a.list(Some(com.histmersion.domain.library.Citekey(" ")), Some(com.histmersion.api.catalogue.Attestation.TargetType("")), None, com.histmersion.PageSize(10), com.histmersion.Offset(0)).total.value: Int), 3)
+    assertEquals((a.list(Some(com.histmersion.domain.library.Citekey.assume(" ")), Some(com.histmersion.api.catalogue.Attestation.TargetType("")), None, com.histmersion.PageSize(10), com.histmersion.Offset(0)).total.value: Int), 3)
     val page = a.list(None, None, None, com.histmersion.PageSize(1), com.histmersion.Offset(1))
     assertEquals(((page.total.value: Int), page.attestations.map(_.id), (page.offset.value: Int)), (3, List(second.id), 1))
-    assertEquals(a.list(None, None, None, com.histmersion.PageSize(0), com.histmersion.Offset(-5)).attestations.map(_.id), List(first.id))
+    assertEquals(a.list(None, None, None, com.histmersion.PageSize.assume(0), com.histmersion.Offset.assume(-5)).attestations.map(_.id), List(first.id))
     val patched = a.patch(first.id, Attestation.Patch(note = Some(com.histmersion.api.catalogue.Attestation.Note("changed")), page = Some(com.histmersion.api.catalogue.Attestation.Page("13")))).toOption.get
-    assertEquals(patched, first.modify(_.note).setTo(Some("changed")).modify(_.page).setTo(Some("13")))
+    assertEquals(patched, first.modify(_.note).setTo(Some(com.histmersion.api.catalogue.Attestation.Note("changed"))).modify(_.page).setTo(Some(com.histmersion.api.catalogue.Attestation.Page("13"))))
     assert(
       a.patch(Attestation.Id(third.id.value + 100), Attestation.Patch(note = Some(com.histmersion.api.catalogue.Attestation.Note("x")))).left.exists(_.message.value.contains("No attestation"))
     )

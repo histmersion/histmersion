@@ -157,8 +157,8 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.roles).setTo(b.agents.roles.modify(_.reviewer).setTo(Model.wire).modify(_.coldReader).setTo(Model.wire).modify(_.skeptic).setTo(Model.wire).modify(_.fixer).setTo(Model.wire)
+      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("scripted=1/2")).modify(_.roles).setTo(b.agents.roles.modify(_.reviewer).setTo(com.histmersion.config.AgentRolesConfig.Reviewer(Model.wire.value)).modify(_.coldReader).setTo(com.histmersion.config.AgentRolesConfig.ColdReader(Model.wire.value)).modify(_.skeptic).setTo(com.histmersion.config.AgentRolesConfig.Skeptic(Model.wire.value)).modify(_.fixer).setTo(com.histmersion.config.AgentRolesConfig.Fixer(Model.wire.value))
       )
     )
 
@@ -794,7 +794,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val (a, h) = handlers(c); seed(h)
     assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), com.histmersion.api.automation.Agents.RunRequest.Target("zzagent_nope"))).isLeft)
     assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(99)))).left.exists(_.message.value.contains("rounds")))
-    val noSkeptic = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.skeptic).setTo("")))
+    val noSkeptic = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.skeptic).setTo(com.histmersion.config.AgentRolesConfig.Skeptic(""))))
     val (b, _) = handlers(c, noSkeptic)
     assert(b.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget)).left.exists(_.message.value.contains("skeptic")))
 
@@ -977,7 +977,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
       c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
       c.add("fixer", Seq(text(fixerAnswer(List(gloss)))))
-      val cfg = baseCfg.modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.review).setTo(baseCfg.researchAgents.review.modify(_.finalPanel).setTo(mode))
+      val cfg = baseCfg.modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.review).setTo(baseCfg.researchAgents.review.modify(_.finalPanel).setTo(com.histmersion.config.AgentReviewConfig.FinalPanel(mode)))
       )
       val (a, h) = handlers(c, cfg); seed(h)
       (start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2)))), c)
@@ -1148,7 +1148,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       com.histmersion.domain.ReviewArticle.Finding.Fix("define each on first use, and add a Glossary")
     )
     com.histmersion.domain.research.workflows.ReviewLedgerFixtures
-      .put(ds, ReviewLedger.Ledger(LedgerSlug, List(ReviewLedger.Entry(legacy, com.histmersion.domain.ReviewLedger.Entry.Run("old"), com.histmersion.domain.ReviewLedger.Entry.Round(1)))))
+      .put(ds, ReviewLedger.Ledger(LedgerSlug, List(ReviewLedger.Entry(legacy, com.histmersion.domain.ReviewLedger.Entry.Run.assume("old"), com.histmersion.domain.ReviewLedger.Entry.Round(1)))))
     val c = PanelClient(Model)
     c.add("rules", looked(rules("PASS")))
     // the reader still counts 12 and, as its instructions may say, calls that MAJOR
@@ -1206,7 +1206,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
             com.histmersion.domain.ReviewArticle.Finding.Problem("tin is not defined"),
             com.histmersion.domain.ReviewArticle.Finding.Fix("define it")
           ),
-          com.histmersion.domain.ReviewLedger.Entry.Run("run"),
+          com.histmersion.domain.ReviewLedger.Entry.Run.assume("run"),
           com.histmersion.domain.ReviewLedger.Entry.Round(1)
         )
       )
@@ -1228,7 +1228,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private val HaikuOverride = ModelOverride.Model(Haiku.wire.value)
   private val ScriptedOverride = ModelOverride.Model(Model.wire.value)
   private val HaikuRequest = RunRequest.Model(Haiku.wire.value)
-  private lazy val evalCfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.prices).setTo("scripted=1/2; haiku-sim=3/4"))
+  private lazy val evalCfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("scripted=1/2; haiku-sim=3/4")))
 
   private def handlersWith(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)
@@ -1252,9 +1252,9 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     c.add("fixer", Seq(text(fixerAnswer(List(gloss)))))
     val (a, h) = handlers(c); seed(h)
     val before = CorpusSnapshot.of(ds)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(3)), dryRun = Some(true)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(3)), dryRun = Some(com.histmersion.api.automation.Agents.RunRequest.DryRun(true))))
     assertEquals(run.status, "done", run.error)
-    assert(run.dryRun)
+    assert(run.dryRun.value)
     assertEquals(CorpusSnapshot.of(ds), before, "no patch, no approval, no log or tasks line")
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, Body.value.trim)
 
@@ -1421,7 +1421,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
         List("R1 major (Intro): tin is not defined at all")
       )
     )
-    assertEquals(cmp.overlaps, List(RunCompare.MajorOverlap(r1.id, r2.id, com.histmersion.api.automation.RunCompare.MajorOverlap.AMajors(2), com.histmersion.api.automation.RunCompare.MajorOverlap.BMajors(1), com.histmersion.api.automation.RunCompare.MajorOverlap.Shared(1), List(com.histmersion.api.automation.RunCompare.MajorOverlap.Pairs("R1 ↔ R1")))))
+    assertEquals(cmp.overlaps, List(RunCompare.MajorOverlap(RunCompare.MajorOverlap.A(r1.id.value), RunCompare.MajorOverlap.B(r2.id.value), com.histmersion.api.automation.RunCompare.MajorOverlap.AMajors(2), com.histmersion.api.automation.RunCompare.MajorOverlap.BMajors(1), com.histmersion.api.automation.RunCompare.MajorOverlap.Shared(1), List(com.histmersion.api.automation.RunCompare.MajorOverlap.Pairs("R1 ↔ R1")))))
     // the comparison in the record: the runs, each step's models and attempts, the review's outputs and the shared
     // majors (a step's seconds are the wall clock's and stay out)
     note(
@@ -1468,7 +1468,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   test("#1840: on the last attempt an answer without verified spot-checks is kept, with a warning on the run"):
     val c = PanelClient(Model)
-    val cfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.step).setTo(baseCfg.agents.step.modify(_.maxRetries).setTo(0)))
+    val cfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.step).setTo(baseCfg.agents.step.modify(_.maxRetries).setTo(com.histmersion.config.AgentStepConfig.MaxRetries(0))))
     c.add("rules", Seq(text(rules("PASS"))))
     c.add("cold", Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))))
@@ -1542,10 +1542,10 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     * answer carries one (the spot-checks are not what these tests are about).
     */
   private lazy val oneSpot =
-    baseCfg.modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.review).setTo(baseCfg.researchAgents.review.modify(_.spotChecks).setTo(1))
+    baseCfg.modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.review).setTo(baseCfg.researchAgents.review.modify(_.spotChecks).setTo(com.histmersion.config.AgentReviewConfig.SpotChecks(1)))
     )
 
-  private def states(h: ServerWiring): List[(String, String)] =
+  private def states(h: ServerWiring): List[(com.histmersion.api.research.CritiqueRef.Wire, com.histmersion.api.research.CritiqueState.Wire)] =
     h.research.articles
       .critiques(Slug, h.research.articles.get(Slug).toOption.get.article.body)
       .map(p => (p.ref.wire, p.state.wire))

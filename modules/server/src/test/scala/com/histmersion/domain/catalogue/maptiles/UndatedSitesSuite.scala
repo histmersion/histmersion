@@ -14,7 +14,7 @@ class UndatedSitesSuite extends munit.FunSuite:
   private val sites = (0 until 30)
     .flatMap(i =>
       (0 until 30)
-        .map(j => UndatedSite(UndatedSite.Id(f"u$i%02d$j%02d"), com.histmersion.Latitude(37.0 + i * 0.01), com.histmersion.Longitude(22.0 + j * 0.01), Option.when(i % 2 == 0)(com.histmersion.domain.catalogue.maptiles.UndatedSite.SiteType("tower"))))
+        .map(j => UndatedSite(UndatedSite.Id(f"u$i%02d$j%02d"), com.histmersion.Latitude.applyUnsafe(37.0 + i * 0.01), com.histmersion.Longitude.applyUnsafe(22.0 + j * 0.01), Option.when(i % 2 == 0)(com.histmersion.domain.catalogue.maptiles.UndatedSite.SiteType("tower"))))
     )
     .toList
   private val service = UndatedSites.InMemory(AtomicReference(sites))

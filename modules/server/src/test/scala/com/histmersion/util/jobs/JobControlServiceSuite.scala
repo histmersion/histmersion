@@ -127,7 +127,7 @@ class JobControlServiceSuite extends com.histmersion.db.DbSuite:
     val j = BackgroundJob
       .start(
         ds,
-        Job.Kind(com.histmersion.api.media.ImportJobKinds.MediaImport.kind.value),
+        Job.Kind.applyUnsafe(com.histmersion.api.media.ImportJobKinds.MediaImport.kind.value),
         None,
         BackgroundJob.Slot(),
         com.histmersion.util.jobs.BackgroundJob.Work("a test job"),
@@ -152,7 +152,7 @@ class JobControlServiceSuite extends com.histmersion.db.DbSuite:
     val j = BackgroundJob
       .start(
         ds,
-        Job.Kind(com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind.value),
+        Job.Kind.applyUnsafe(com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind.value),
         None,
         BackgroundJob.Slot(),
         com.histmersion.util.jobs.BackgroundJob.Work("a test job"),
@@ -174,7 +174,7 @@ class JobControlServiceSuite extends com.histmersion.db.DbSuite:
     val vac = Transactor(ds).transact(JobRepo.create(com.histmersion.util.jobs.Job.Kind("vacuum"), None, None))
     assert(service(JobStops()).control(jobId(vac), JobAction.Pause).left.exists(_.message.value.contains("one piece")))
     val p = Transactor(ds).transact(
-      JobRepo.create(Job.Kind(com.histmersion.api.media.ImportJobKinds.MediaImport.kind.value), None, None)
+      JobRepo.create(Job.Kind.applyUnsafe(com.histmersion.api.media.ImportJobKinds.MediaImport.kind.value), None, None)
     )
     val _ = Transactor(ds).transact(
       JobRepo.transition(jobId(p), com.histmersion.api.jobs.JobState.Queued, com.histmersion.api.jobs.JobState.Running)

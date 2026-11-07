@@ -36,7 +36,7 @@ class PluginsHttpSuite extends munit.FunSuite:
         |}""".stripMargin)
     val env = ConfigFactory.parseMap(Map("PLUGINS_HTTP_TOKEN" -> "env-secret-value").asJava)
     val services = HostServices(
-      () => new Plugin.Http { def get(u: String, h: Map[String, String]) = Left("offline") },
+      () => new Plugin.Http { def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(Plugin.Http.GetResultPart1("offline")) },
       env,
       (_, _, _) => ()
     )
@@ -46,7 +46,7 @@ class PluginsHttpSuite extends munit.FunSuite:
 
   test("about and config list the plugins; a secret shows as its reference, never as its value"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), plugins = generation()).start()
       try

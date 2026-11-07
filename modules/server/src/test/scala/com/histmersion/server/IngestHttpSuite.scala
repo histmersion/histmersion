@@ -122,7 +122,7 @@ class IngestHttpSuite extends munit.FunSuite:
   private def cfg =
     val base = AppConfig.load()
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.server).setTo(base.server.modify(_.publicUrl).setTo("http://histmersion.test")).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(Files.createTempDirectory("histmersion-spool").toString)
+      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.server).setTo(base.server.modify(_.publicUrl).setTo(com.histmersion.config.ServerConfig.PublicUrl("http://histmersion.test"))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-spool").toString))
     )
 
   /** Poll until the job leaves queued/running. */

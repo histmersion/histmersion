@@ -60,7 +60,7 @@ class AcquireAutoMatchSuite extends com.histmersion.db.DbSuite:
   private lazy val cfg =
     val base = AppConfig.load()
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(Files.createTempDirectory("histmersion-automatch").toString)
+      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-automatch").toString))
     )
 
   private def clean(): Unit =

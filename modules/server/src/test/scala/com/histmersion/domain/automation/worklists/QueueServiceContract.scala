@@ -151,8 +151,8 @@ abstract class QueueServiceContract(name: String) extends com.histmersion.db.DbS
     val a = q.add(Kind.Acquire, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("Drake 2012 doi:10.1000/XYZ.1")))
     val _ = q.add(Kind.Tasks, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("Drake 2012 doi:10.1000/xyz.1")))
     val _ = q.add(Kind.Acquire, QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("Drake 2012 doi:10.1000/xyz.10")))
-    assertEquals(q.naming(Kind.Acquire, com.histmersion.domain.library.Doi(" 10.1000/XYZ.1 ")).map(_.id), List(a.id))
-    assertEquals(q.naming(Kind.Acquire, com.histmersion.domain.library.Doi("")), Nil)
+    assertEquals(q.naming(Kind.Acquire, com.histmersion.domain.library.Doi.assume(" 10.1000/XYZ.1 ")).map(_.id), List(a.id))
+    assertEquals(q.naming(Kind.Acquire, com.histmersion.domain.library.Doi.assume("")), Nil)
   }
 
   // ── import / export ──────────────────────────────────────────────────────────────────────────

@@ -22,12 +22,12 @@ class SeedNoteFilesSuite extends munit.FunSuite:
   test("dirFor falls back to the md/<citekey>/figures convention"):
     val note = Path.of("/corpus/wiki/sources/x.md")
     assertEquals(
-      SeedNoteFiles.dirFor(note, com.histmersion.domain.media.figures.Figures.NoteText("---\ntitle: t\n---\n"), com.histmersion.domain.library.Citekey("x")).map(_.toString),
+      SeedNoteFiles.dirFor(note, com.histmersion.domain.media.figures.Figures.NoteText("---\ntitle: t\n---\n"), com.histmersion.domain.library.Citekey.assume("x")).map(_.toString),
       Some("/corpus/md/x/figures")
     )
 
   test("dirFor gives up when the note is not three levels deep"):
-    assertEquals(SeedNoteFiles.dirFor(Path.of("x.md"), com.histmersion.domain.media.figures.Figures.NoteText(""), com.histmersion.domain.library.Citekey("x")), None)
+    assertEquals(SeedNoteFiles.dirFor(Path.of("x.md"), com.histmersion.domain.media.figures.Figures.NoteText(""), com.histmersion.domain.library.Citekey.assume("x")), None)
 
   test("load reads images, skips non-images, and respects the byte cap"):
     val dir = Files.createTempDirectory("histmersion-figs")

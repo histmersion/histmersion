@@ -45,7 +45,7 @@ class CatalogueOracleSuite extends DbSuite:
 
   private val tmp = Files.createTempDirectory("histmersion-catalogue-oracle")
   private lazy val base = AppConfig.load()
-  private lazy val scratch = ScratchDatabases("histmersion_s8o", base.db.modify(_.url).setTo(testDb.get))
+  private lazy val scratch = ScratchDatabases("histmersion_s8o", base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
     if testDb.isDefined then scratch.dropAll()
@@ -61,7 +61,7 @@ class CatalogueOracleSuite extends DbSuite:
 
   private def cfgFor(name: String): AppConfig =
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s8o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(tmp.resolve(s"$name-backups").toString)).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(tmp.resolve(s"$name-bundles").toString)).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(tmp.resolve(s"$name-spool").toString)).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(tmp.resolve(s"$name-acquire").toString)).modify(_.init).setTo(base.init.modify(_.auto).setTo(false).modify(_.dataDir).setTo(dataDir.toString)).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(tmp.resolve(s"$name-data").toString)).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(tmp.resolve(s"$name-basemap").toString)
+      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s8o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(com.histmersion.config.BackupsConfig.Dir(tmp.resolve(s"$name-backups").toString))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(com.histmersion.config.BundlesConfig.Dir(tmp.resolve(s"$name-bundles").toString))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(tmp.resolve(s"$name-spool").toString))).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(com.histmersion.config.AcquireConfig.SpoolDir(tmp.resolve(s"$name-acquire").toString))).modify(_.init).setTo(base.init.modify(_.auto).setTo(com.histmersion.config.InitConfig.Auto(false)).modify(_.dataDir).setTo(com.histmersion.config.InitConfig.DataDir(dataDir.toString))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(com.histmersion.config.RuntimeConfig.DataDir(tmp.resolve(s"$name-data").toString))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(com.histmersion.config.BasemapConfig.Dir(tmp.resolve(s"$name-basemap").toString))
     )
 
   private def withServer[A](name: String)(body: String => A): A = withServerOn(cfgFor(name))(body)
@@ -992,7 +992,7 @@ class CatalogueOracleSuite extends DbSuite:
     )
     val c = cfgFor("gaz")
     c.modify(
-      _.init).setTo(c.init.modify(_.dataDir).setTo(d.toString)).modify(_.places).setTo(c.places.modify(_.sources).setTo(c.places.sources.modify(_.dir).setTo(extracts.toString).modify(_.lpfDir).setTo(lpf.toString))
+      _.init).setTo(c.init.modify(_.dataDir).setTo(com.histmersion.config.InitConfig.DataDir(d.toString))).modify(_.places).setTo(c.places.modify(_.sources).setTo(c.places.sources.modify(_.dir).setTo(com.histmersion.config.PlaceSourcesConfig.Dir(extracts.toString)).modify(_.lpfDir).setTo(com.histmersion.config.PlaceSourcesConfig.LpfDir(lpf.toString)))
     )
 
   private def gazetteer(url: String, ds: DataSource): String =

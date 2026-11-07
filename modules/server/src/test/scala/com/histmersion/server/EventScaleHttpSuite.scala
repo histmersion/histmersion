@@ -42,7 +42,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
 
   test("PUT/PATCH/GET carry the scale; geo is the map feed; patch_event is the same over MCP"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -106,7 +106,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
 
   test("a geometry that is not GeoJSON is a 400 naming the problem, never a 500 (#2554)"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     val geoId = "zqes_http_geometry"
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()

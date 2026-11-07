@@ -34,7 +34,7 @@ class TilesHttpSuite extends munit.FunSuite:
 
   private def withServer(f: (String, javax.sql.DataSource) => Unit): Unit =
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     val ds = com.histmersion.util.database.Db.pool(cfg.db)
     try
       Migrate.run(ds)

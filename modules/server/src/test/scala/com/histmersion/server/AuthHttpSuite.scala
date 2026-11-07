@@ -52,9 +52,9 @@ class AuthHttpSuite extends munit.FunSuite:
   /** The accepted upload's job converts through this stub, never the live sidecar on :8100. */
   private val converter = OfflineConverter()
 
-  private def withServer(apiKey: String)(body: String => Unit): Unit =
+  private def withServer(apiKey: com.histmersion.config.AuthConfig.ApiKey)(body: String => Unit): Unit =
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(apiKey))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(apiKey))
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), converter).start()
       try body(s"http://127.0.0.1:${b.port}")
@@ -62,7 +62,7 @@ class AuthHttpSuite extends munit.FunSuite:
     }
 
   test("no key configured: the page is told writes are open, and a write needs no header"):
-    withServer("") { url =>
+    withServer(com.histmersion.config.AuthConfig.ApiKey("")) { url =>
       val (cs, cb) = get(s"$url/api/config")
       assertEquals(cs, 200)
       assert(cb.contains("\"writeKeyRequired\":false"), cb)
@@ -74,7 +74,7 @@ class AuthHttpSuite extends munit.FunSuite:
     }
 
   test("a key configured: config says so without leaking it; reads stay open; writes need the key"):
-    withServer("s3cret") { url =>
+    withServer(com.histmersion.config.AuthConfig.ApiKey("s3cret")) { url =>
       val (cs, cb) = get(s"$url/api/config")
       assertEquals(cs, 200)
       assert(cb.contains("\"writeKeyRequired\":true"), cb)
@@ -108,7 +108,7 @@ class AuthHttpSuite extends munit.FunSuite:
       val deadline = System.currentTimeMillis() + 10000
       while converter.converted.isEmpty && System.currentTimeMillis() < deadline do Thread.sleep(50)
       assert(
-        converter.converted.exists(_.endsWith(".pdf")),
+        converter.converted.exists(_.value.endsWith(".pdf")),
         s"the upload never reached the stub: ${converter.converted}"
       )
       // …and a body-less write is gated the same way

@@ -33,7 +33,7 @@ abstract class ReviewLedgerServiceContract extends ResearchStoreSuite:
     s =>
       val _ = s.articles.put(article(Walls), Me)
       assertEquals(s.ledgers.get(Walls), Right(None))
-      val l = Ledger(Walls, List(Entry(finding(R1, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))), task = Some(com.histmersion.domain.ReviewLedger.Ledger.Task(7)))
+      val l = Ledger(Walls, List(Entry(finding(R1, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run.assume("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))), task = Some(com.histmersion.domain.ReviewLedger.Ledger.Task(7)))
       s.ledgers.put(l)
       assertEquals(s.ledgers.get(Walls), Right(Some(l)))
       val again = l.modify(_.task).setTo(None)
@@ -46,13 +46,13 @@ abstract class ReviewLedgerServiceContract extends ResearchStoreSuite:
   stest("an article passed its review once its ledger holds no open MAJOR") { s =>
     val _ = s.articles.put(article(Walls), Me)
     val _ = s.articles.put(article(Gate), Me)
-    s.ledgers.put(Ledger(Walls, List(Entry(finding(R1, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1)))))
+    s.ledgers.put(Ledger(Walls, List(Entry(finding(R1, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run.assume("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1)))))
     s.ledgers.put(
       Ledger(
         Gate,
         List(
-          Entry(finding(R1, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1), status = Status.Fixed),
-          Entry(finding(R2, Severity.Minor), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))
+          Entry(finding(R1, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run.assume("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1), status = Status.Fixed),
+          Entry(finding(R2, Severity.Minor), com.histmersion.domain.ReviewLedger.Entry.Run.assume("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))
         )
       )
     )
@@ -61,7 +61,7 @@ abstract class ReviewLedgerServiceContract extends ResearchStoreSuite:
 
   stest("a ledger follows its article's rename and goes with its delete") { s =>
     val _ = s.articles.put(article(Walls), Me)
-    val l = Ledger(Walls, List(Entry(finding(R1, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))))
+    val l = Ledger(Walls, List(Entry(finding(R1, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run.assume("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))))
     s.ledgers.put(l)
     assert(s.articles.rename(Walls, com.histmersion.domain.research.Slug("zr_city_walls"), Me).isRight)
     assertEquals(s.ledgers.get(com.histmersion.domain.research.Slug("zr_city_walls")), Right(Some(l)))

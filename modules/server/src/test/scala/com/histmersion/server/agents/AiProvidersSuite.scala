@@ -97,7 +97,7 @@ class AiProvidersSuite extends munit.FunSuite:
 
   private val app = AppConfig.load()
   private def rt(host: String = "127.0.0.1") =
-    CliRuntime(app.modify(_.server).setTo(app.server.modify(_.host).setTo(host)), EngineContributions.roster)
+    CliRuntime(app.modify(_.server).setTo(app.server.modify(_.host).setTo(com.histmersion.config.ServerConfig.Host(host))), EngineContributions.roster)
 
   // ── the built-ins ──────────────────────────────────────────────────────────────────────────────
 

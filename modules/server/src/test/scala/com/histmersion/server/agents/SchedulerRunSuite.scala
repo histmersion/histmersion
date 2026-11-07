@@ -19,7 +19,8 @@ import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.automation.goals.GoalLinkRepo
-import com.histmersion.domain.automation.managers.ManagerRepo
+import com.histmersion.domain.automation.managers.{ManagerLight, ManagerRepo}
+import io.scalaland.chimney.dsl.*
 import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
 
@@ -299,9 +300,9 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
   ):
     cleanManagers()
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(h)
-    assert(a.setSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"), ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("not cron")), Now).left.exists(_.message.contains("five fields")))
+    assert(a.setSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"), ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("not cron")), Now).left.exists(_.message.value.contains("five fields")))
     assert(
-      a.setSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"), ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("*/5 * * * *")), Now).left.exists(_.message.contains("min-interval"))
+      a.setSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"), ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("*/5 * * * *")), Now).left.exists(_.message.value.contains("min-interval"))
     )
     assert(a.setSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("weekly"), ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("@daily")), Now).isLeft)
     val s = a.setSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"), ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("@daily"), budgetUsd = Some(com.histmersion.api.automation.Goal.Plans.ScheduleSet.BudgetUsd(0.5))), Now).toOption.get
@@ -310,7 +311,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
       (ScheduleKind.Currency, "@daily", true, Some(0.5), Some("2026-10-05T00:00:00Z"))
     )
     assert(s.lastNote.exists(_.value.contains("paused")), s.lastNote)
-    val w = a.managing.get(Managers.watchId(GoalRef)).toOption.get.manager
+    val w = a.managing.get(Managers.watchId(GoalRef).transformInto[ManagerLight.Id]).toOption.get.manager
     assertEquals(
       (w.kind, w.state, w.cron, w.config.sweeps, w.config.budgetUsd),
       ("watch", "paused", Some("@daily"), Some(List("currency")), Some(0.5))
@@ -328,7 +329,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     assertEquals(a.removeSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("acquisition")).map(_.removed), Right(true))
     assertEquals(a.removeSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("acquisition")).map(_.removed), Right(false))
     assertEquals(a.goalView(Goal).toOption.get.schedules, Nil)
-    assert(a.managing.get(Managers.watchId(GoalRef)).isRight, "the watcher stays")
+    assert(a.managing.get(Managers.watchId(GoalRef).transformInto[ManagerLight.Id]).isRight, "the watcher stays")
     cleanManagers()
 
   test(
@@ -361,7 +362,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     val out = a.managers.migrateSchedules(Now)
     assertEquals(out, List(s"${Managers.watchId(GoalRef)}: migrated"))
     assertEquals(connect(ds)(GoalLinkRepo.schedules(Some(Goal))), Nil, "the rows are gone")
-    val w = a.managing.get(Managers.watchId(GoalRef)).toOption.get.manager
+    val w = a.managing.get(Managers.watchId(GoalRef).transformInto[ManagerLight.Id]).toOption.get.manager
     assertEquals(
       (w.state, w.cron, w.nextTickAt, w.config.sweeps, w.config.budgetUsd),
       ("paused", Some("@daily"), Some("2026-10-05T00:00:00Z"), Some(List("acquisition", "currency")), Some(0.25))
@@ -378,7 +379,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     // a schedule brought in later (a bundle import) joins the watcher, which keeps its own cron
     transact(ds)(GoalLinkRepo.setSchedule(Goal, ScheduleKind.Currency, com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@monthly"), com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(false), None, None))
     assertEquals(a.managers.migrateSchedules(Now).size, 1)
-    val w2 = a.managing.get(Managers.watchId(GoalRef)).toOption.get.manager
+    val w2 = a.managing.get(Managers.watchId(GoalRef).transformInto[ManagerLight.Id]).toOption.get.manager
     assertEquals((w2.cron, w2.config.sweeps), (Some("@daily"), Some(List("acquisition", "currency"))))
     assert(
       connect(ds)(ManagerRepo.events(w.id, None, com.histmersion.PageSize(10))).exists(e =>
@@ -411,7 +412,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     "currency-check dry run: assess without applying; the edge proposal, the acquisition item and the log are only recorded"
   ):
     val (a, h, up) = handlers(ScriptedClient(Model)); seed(h)
-    up.citing = Map(Ck -> citing)
+    up.citing = Map(Ck.value -> citing)
     val before = CorpusSnapshot.of(ds)
     val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("currency-check"), GoalTarget, dryRun = Some(RunRequest.DryRun(true))))
     assertEquals(run.status, "done", run.error)

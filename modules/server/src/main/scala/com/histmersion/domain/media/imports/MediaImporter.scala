@@ -130,9 +130,9 @@ object MediaImporter:
           else
             val collection = CollectionImport(
               PluginCollection(
-                ImportService.Provider(BuiltinMedia.providerOf(BuiltinMedia.ProviderOfName(name.value)).value),
+                BuiltinMedia.providerOf(BuiltinMedia.ProviderOfName(name.value)),
                 col,
-                MediaCollectionConfig.Licences(BuiltinMedia.licencesFor(BuiltinMedia.LicencesForName(name.value), media).value)
+                BuiltinMedia.licencesFor(BuiltinMedia.LicencesForName(name.value), media)
               ),
               fetch,
               media,

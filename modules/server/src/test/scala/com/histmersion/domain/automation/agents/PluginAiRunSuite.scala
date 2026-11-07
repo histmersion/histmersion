@@ -110,7 +110,7 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       u,
       env,
       Plugins.services(
-        () => new com.histmersion.plugin.Plugin.Http { def get(u: String, h: Map[String, String]) = Left("offline") },
+        () => new com.histmersion.plugin.Plugin.Http { def get(u: com.histmersion.plugin.Plugin.Http.GetUrl, h: Map[com.histmersion.plugin.Plugin.Http.GetHeadersPart1, com.histmersion.plugin.Plugin.Http.GetHeadersPart2]) = Left(com.histmersion.plugin.Plugin.Http.GetResultPart1("offline")) },
         env
       ),
       fallback = FirstPartySettings.fallback(_, host),
@@ -120,9 +120,9 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.server).setTo(b.server.modify(_.host).setTo("127.0.0.1")).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(true).modify(_.prices).setTo("echo=1/2; limited=1/2").modify(_.roles).setTo(b.agents.roles.modify(_.extractor).setTo("hello-ai:echo")
-      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(false))
+      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.server).setTo(b.server.modify(_.host).setTo(com.histmersion.config.ServerConfig.Host("127.0.0.1"))).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("echo=1/2; limited=1/2")).modify(_.roles).setTo(b.agents.roles.modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor("hello-ai:echo"))
+      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(com.histmersion.config.AgentEnrichConfig.Upstream(false)))
     )
 
   private lazy val ds = testPool(baseCfg.db)
@@ -185,7 +185,7 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(got.source.notes.exists(_.value.contains("tin by sea")), got.source.notes.toString)
 
   test("a chain passes over a plugin model whose plan reports its limit, to the chain's next model"):
-    val cfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.extractor).setTo("hello-ai:limited > hello-ai:echo"))
+    val cfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor("hello-ai:limited > hello-ai:echo")))
     )
     val (a, h) = handlers(generation(), cfg)
     val run = startAndRun(a, h)

@@ -31,7 +31,7 @@ class EventsControllersSuite extends munit.FunSuite:
   private def controllers(gate: WriteGate = WriteGate()) =
     EventsControllers(
       EventService.InMemory(AtomicReference(CatalogueState.empty)),
-      d => d.modify(_.names).setTo(List("from the card")),
+      d => d.modify(_.names).setTo(List(com.histmersion.api.catalogue.EventEntry.Names("from the card"))),
       current,
       f => f.modify(_.limit).setTo(Filter.Limit(f.limit.value.min(2))),
       _ => PlaceScope.empty,
@@ -74,7 +74,7 @@ class EventsControllersSuite extends munit.FunSuite:
     List("zz_1", "zz_2", "zz_3").foreach(id =>
       c.put(
         Caller.Local,
-        Event.Id(id),
+        Event.Id.applyUnsafe(id),
         EventPut(com.histmersion.api.catalogue.EventSummary.Label(s"Zz $id"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), span, geometry = Some(com.histmersion.api.catalogue.EventPut.Geometry("""{"type":"Point","coordinates":[1,2]}""")))
       )
     )

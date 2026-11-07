@@ -67,7 +67,7 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
     val _ = s.sources.put(source(com.histmersion.api.library.Citekey("zqa_zwei"), Some(com.histmersion.api.library.Doi("10.5555/zq.b")), None), Caller.Local)
     s.sources.setOriginal(com.histmersion.domain.library.Citekey("zqa_zwei"), Sha256.applyUnsafe("f" * 64), Caller.Local)
     assertEquals(
-      s.checks.heldByDoi(List(com.histmersion.domain.library.Doi(" 10.5555/zq.a"), com.histmersion.domain.library.Doi("10.5555/zq.b"), com.histmersion.domain.library.Doi("10.5555/zq.none"), com.histmersion.domain.library.Doi(""))),
+      s.checks.heldByDoi(List(com.histmersion.domain.library.Doi.assume(" 10.5555/zq.a"), com.histmersion.domain.library.Doi("10.5555/zq.b"), com.histmersion.domain.library.Doi("10.5555/zq.none"), com.histmersion.domain.library.Doi.assume(""))),
       Map(
         "10.5555/zq.a" -> AcquireRecheck.Held(com.histmersion.domain.library.Citekey("zqa_one"), com.histmersion.domain.AcquireRecheck.Held.HasOriginal(true)),
         "10.5555/zq.b" -> AcquireRecheck.Held(com.histmersion.domain.library.Citekey("zqa_two"), com.histmersion.domain.AcquireRecheck.Held.HasOriginal(false))

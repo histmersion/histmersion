@@ -31,7 +31,7 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
 
   private lazy val base = AppConfig.load()
   private lazy val ds =
-    val d = testPool(base.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private val repoRoot = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))
@@ -48,7 +48,7 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     d
 
   private def bootstrap(dir: Path, net: HttpDownload.Url => Either[HttpDownload.Problem, HttpDownload.Text] = _ => Right(HttpDownload.Text(dump))) =
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.init).setTo(base.init.modify(_.dataDir).setTo(dir.toString))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.init).setTo(base.init.modify(_.dataDir).setTo(com.histmersion.config.InitConfig.DataDir(dir.toString)))
     Bootstrap(Deps(cfg, ds), net)
 
   /** The periods as the server's controllers reach them, over `b`'s service and imports. */

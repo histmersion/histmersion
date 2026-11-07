@@ -39,7 +39,7 @@ class PlacesControllersSuite extends munit.FunSuite:
     val state = AtomicReference(CatalogueState.empty)
     val places = PlaceService.InMemory(state, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC))
     val current: (AliasKind, PlacesControllers.Alias) => Place.Id = (_, id) =>
-      state.get.placeAliases.get(CatalogueState.PlaceAliasesKey(id.value)).fold(Place.Id(id.value))(a => Place.Id(a.value))
+      state.get.placeAliases.get(CatalogueState.PlaceAliasesKey(id.value)).fold(Place.Id.assume(id.value))(a => Place.Id.assume(a.value))
     (PlacesControllers(places, shapes, geometry, geocoder, current, () => cfg, (l, d) => l.getOrElse(d), gate), places)
 
   private val doc = PlacesControllers.DatasetBody(
@@ -78,7 +78,7 @@ class PlacesControllersSuite extends munit.FunSuite:
         .map(_.added),
       Right(true)
     )
-    assertEquals(c.manualNames(Some(com.histmersion.domain.catalogue.Place.Id(" zzcl_hill "))).map(_.name), List("Zzcl Höyük"))
+    assertEquals(c.manualNames(Some(com.histmersion.domain.catalogue.Place.Id.assume(" zzcl_hill "))).map(_.name), List("Zzcl Höyük"))
     val set = c.setOverride(
       Caller.Local,
       com.histmersion.domain.catalogue.Place.Id("zzcl_hill"),

@@ -123,9 +123,9 @@ object FakeCli:
     )
 
   /** A pool sink in memory: records readings and blocks while `block` says so. */
-  final class Sink(var block: Option[(String, Option[Long])] = None) extends PoolSink:
+  final class Sink(var block: Option[(PoolSink.BlockedReason, Option[com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis])] = None) extends PoolSink:
     val recorded = java.util.concurrent.ConcurrentLinkedQueue[(PoolId, Reading)]()
     @volatile var refreshed = 0 // how often a client asked for a fresh read
     def record(p: PoolId, rs: List[Reading]): Unit = rs.foreach(r => recorded.add(p -> r))
-    def blocked(p: PoolId, model: Option[String]): Option[(String, Option[Long])] = block
-    def refresh(now: Long): Unit = refreshed += 1
+    def blocked(p: PoolId, model: Option[com.histmersion.domain.automation.agents.AgentsControllers.ModelName]): Option[(PoolSink.BlockedReason, Option[com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis])] = block
+    def refresh(now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis): Unit = refreshed += 1

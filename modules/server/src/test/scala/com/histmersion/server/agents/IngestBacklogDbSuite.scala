@@ -67,9 +67,9 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     val b = AppConfig.load()
     val m = Model.wire
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.acquire).setTo(b.acquire.modify(_.recheck).setTo(b.acquire.recheck.modify(_.enabled).setTo(false))).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.maxConcurrentRuns).setTo(20).modify(_.scheduler).setTo(b.agents.scheduler.modify(_.enabled).setTo(false)).modify(_.autopilot).setTo(b.agents.autopilot.modify(_.backupHours).setTo(0).modify(_.lintHours).setTo(0)).modify(_.roles).setTo(b.agents.roles
-          .modify(_.extractor).setTo(m).modify(_.reviewer).setTo(m).modify(_.coldReader).setTo(m).modify(_.skeptic).setTo(m).modify(_.fixer).setTo(m).modify(_.planner).setTo(m).modify(_.writer).setTo(m)
+      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.acquire).setTo(b.acquire.modify(_.recheck).setTo(b.acquire.recheck.modify(_.enabled).setTo(com.histmersion.config.RecheckConfig.Enabled(false)))).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("scripted=1/2")).modify(_.maxConcurrentRuns).setTo(com.histmersion.config.AgentsConfig.MaxConcurrentRuns(20)).modify(_.scheduler).setTo(b.agents.scheduler.modify(_.enabled).setTo(com.histmersion.config.AgentSchedulerConfig.Enabled(false))).modify(_.autopilot).setTo(b.agents.autopilot.modify(_.backupHours).setTo(com.histmersion.config.AgentAutopilotConfig.BackupHours(0)).modify(_.lintHours).setTo(com.histmersion.config.AgentAutopilotConfig.LintHours(0))).modify(_.roles).setTo(b.agents.roles
+          .modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(m.value)).modify(_.reviewer).setTo(com.histmersion.config.AgentRolesConfig.Reviewer(m.value)).modify(_.coldReader).setTo(com.histmersion.config.AgentRolesConfig.ColdReader(m.value)).modify(_.skeptic).setTo(com.histmersion.config.AgentRolesConfig.Skeptic(m.value)).modify(_.fixer).setTo(com.histmersion.config.AgentRolesConfig.Fixer(m.value)).modify(_.planner).setTo(com.histmersion.config.AgentRolesConfig.Planner(m.value)).modify(_.writer).setTo(com.histmersion.config.AgentRolesConfig.Writer(m.value))
       )
     )
 
@@ -303,7 +303,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     val (a, h, up) = handlers(
       ScriptedClient(Model),
       baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(
-          _.autopilot).setTo(baseCfg.agents.autopilot.modify(_.backupHours).setTo(0).modify(_.lintHours).setTo(0).modify(_.ingestPerDay).setTo(2).modify(_.ensureMinutes).setTo(100000)
+          _.autopilot).setTo(baseCfg.agents.autopilot.modify(_.backupHours).setTo(com.histmersion.config.AgentAutopilotConfig.BackupHours(0)).modify(_.lintHours).setTo(com.histmersion.config.AgentAutopilotConfig.LintHours(0)).modify(_.ingestPerDay).setTo(com.histmersion.config.AgentAutopilotConfig.IngestPerDay(2)).modify(_.ensureMinutes).setTo(com.histmersion.config.AgentAutopilotConfig.EnsureMinutes(100000))
         )
       )
     )

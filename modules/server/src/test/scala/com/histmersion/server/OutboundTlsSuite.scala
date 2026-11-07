@@ -98,6 +98,6 @@ class OutboundTlsSuite extends munit.FunSuite:
     val cfg = AppConfig.load().acquire
     val plain = SttpHttp(cfg, tries = com.histmersion.pluginhost.PolicyHttp.Tries(1), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(com.histmersion.domain.library.acquisition.Http.Url("https://archiv.ub.uni-heidelberg.de/"), Map.empty)
     assert(plain.isLeft, s"premise: with the JDK's roots alone the handshake fails, got $plain")
-    val tls = OutboundTls.configure(cfg.tls.modify(_.systemTrust).setTo(true)).map(_._1)
+    val tls = OutboundTls.configure(cfg.tls.modify(_.systemTrust).setTo(com.histmersion.config.TlsConfig.SystemTrust(true))).map(_._1)
     val fixed = SttpHttp(cfg, tries = com.histmersion.pluginhost.PolicyHttp.Tries(1), tls = tls, clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(com.histmersion.domain.library.acquisition.Http.Url("https://archiv.ub.uni-heidelberg.de/"), Map.empty)
     assert(fixed.isRight, s"with the system's roots: $fixed")

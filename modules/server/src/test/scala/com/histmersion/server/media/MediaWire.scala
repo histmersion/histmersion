@@ -3,7 +3,7 @@ package com.histmersion.server.media
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.augustnagro.magnum.*
-import com.histmersion.config.{AppConfig, ConfigLayers, LoadedConfig}
+import com.histmersion.config.{AppConfig, ConfigProblem, LoadedConfig}
 import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
 import com.histmersion.util.ocr.ConverterClient
@@ -146,7 +146,7 @@ object MediaWire:
       |histmersion.plugins.media-europeana { enabled = true, api-key = "env:ZQMT_EU_KEY" }
       |""".stripMargin
 
-  def load(more: String): Either[ConfigLayers.Problem, LoadedConfig] =
+  def load(more: String): Either[ConfigProblem, LoadedConfig] =
     AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), text + more)
 
   private def place(id: Place.Id, label: Place.Label, kind: Place.KindValue, lon: com.histmersion.Longitude, lat: com.histmersion.Latitude, period: Option[Period]) =

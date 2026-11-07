@@ -33,6 +33,9 @@ import scala.collection.immutable.ListMap
   */
 class ProviderPluginsSuite extends munit.FunSuite:
 
+  private def providers(registered: ListMap[Registries.EventCataloguesKey, EventCatalogue]): ListMap[CatalogRecord.Provider, EventCatalogue] =
+    registered.map((k, c) => CatalogRecord.Provider(k.value) -> c)
+
   private val offline = new Plugin.Http {
     def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
       Left(Plugin.Http.GetResultPart1("offline"))
@@ -101,10 +104,10 @@ class ProviderPluginsSuite extends munit.FunSuite:
       BuiltinMedia.ordered(g.registries.mediaCollections.keys.toList),
       List("wikidata", "depicts", "met", "cleveland", "aic", "loc", "pleiades", "opencontext")
     )
-    assertEquals(BuiltinCatalogues.ordered(g.registries.eventCatalogues.keys.toList), List("gvp", "noaa", "wikidata"))
+    assertEquals(BuiltinCatalogues.ordered(providers(g.registries.eventCatalogues).keys.toList), List("gvp", "noaa", "wikidata"))
     // the first-party plugins' catalogues state the terms the host showed for them before they moved
     assertEquals(
-      BuiltinCatalogues.infos(g.registries.eventCatalogues),
+      BuiltinCatalogues.infos(providers(g.registries.eventCatalogues)),
       com.histmersion.domain.catalogue.events.CatalogProvider.all
         .flatMap(com.histmersion.domain.catalogue.events.CatalogProvider.info)
     )
@@ -131,7 +134,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       Some("Met objects (met) is switched off (histmersion.plugins.media-met.enabled = false)")
     )
     assertEquals(
-      BuiltinCatalogues.resolve(com.histmersion.api.catalogue.CatalogProviderInfo.Id("ncei"), g.registries.eventCatalogues).left.toOption,
+      BuiltinCatalogues.resolve(com.histmersion.api.catalogue.CatalogProviderInfo.Id("ncei"), providers(g.registries.eventCatalogues)).left.toOption,
       Some("NOAA NCEI Natural Hazards (noaa) is switched off (histmersion.plugins.events-noaa.enabled = false)")
     )
     // the environment switches one off too
@@ -156,7 +159,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       ),
       unknown
     )
-    val e = ServerPlugins.offline.registries.eventCatalogues
+    val e = providers(ServerPlugins.offline.registries.eventCatalogues)
     assertEquals(BuiltinCatalogues.resolve(com.histmersion.api.catalogue.CatalogProviderInfo.Id("Smithsonian"), e), Right("gvp"))
     assertEquals(BuiltinCatalogues.resolve(com.histmersion.api.catalogue.CatalogProviderInfo.Id("wd"), e), Right("wikidata"))
     assertEquals(
@@ -271,14 +274,14 @@ class ProviderPluginsSuite extends munit.FunSuite:
         .Info(com.histmersion.api.media.MediaItem.Provider("zq-portal"), com.histmersion.api.media.MediaProvider.Info.Title("Zq portal objects"), com.histmersion.api.media.MediaProvider.Info.Over("places"), com.histmersion.api.media.MediaProvider.Info.Description(""), com.histmersion.api.media.MediaProvider.Info.Plugin("zq-plugin"), builtin = com.histmersion.api.media.MediaProvider.Info.Builtin(false), com.histmersion.api.media.MediaProvider.Info.Licences("cc0,cc-by"))
     )
     assert(infos.find(_.name.value == "met").exists(i => i.builtin.value && i.plugin.value == "media-met"), infos.toString)
-    val cats = BuiltinCatalogues.infos(g.registries.eventCatalogues)
+    val cats = BuiltinCatalogues.infos(providers(g.registries.eventCatalogues))
     assertEquals(cats.map(_.id), List("gvp", "noaa", "wikidata", "zq-quakes"))
     assertEquals(
       cats.last,
       com.histmersion.api.catalogue
         .CatalogProviderInfo(com.histmersion.api.catalogue.CatalogProviderInfo.Id("zq-quakes"), com.histmersion.api.catalogue.CatalogProviderInfo.Title("Zq quakes"), com.histmersion.api.catalogue.CatalogProviderInfo.Licence("CC0-1.0"), com.histmersion.api.catalogue.CatalogProviderInfo.Citation("Zq (2026)"), com.histmersion.api.catalogue.CatalogProviderInfo.Home("https://zq.example"))
     )
-    assertEquals(BuiltinCatalogues.resolve(com.histmersion.api.catalogue.CatalogProviderInfo.Id("zq-quakes"), g.registries.eventCatalogues), Right("zq-quakes"))
+    assertEquals(BuiltinCatalogues.resolve(com.histmersion.api.catalogue.CatalogProviderInfo.Id("zq-quakes"), providers(g.registries.eventCatalogues)), Right("zq-quakes"))
 
   test("a plugin may not take a name of the host's providers, nor a role the host does not store"):
     // a registered built-in's name is taken; an alias or a stored provider's name is reserved even when

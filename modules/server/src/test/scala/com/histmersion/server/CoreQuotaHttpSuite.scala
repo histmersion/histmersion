@@ -27,7 +27,7 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
 
   test("the budget is kept in the server's database, read back by the next server, and shown by about"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     import com.augustnagro.magnum.*
     val clean = com.histmersion.util.database.Db.pool(cfg.db)
     try {

@@ -14,8 +14,8 @@ class SupervisorSuite extends munit.FunSuite:
   // independent of the environment the suite runs in (CI sets HISTMERSION_PG_BIN_DIR, HISTMERSION_BIND, …)
   private val base =
     val c = AppConfig.load()
-    c.modify(_.backups).setTo(c.backups.modify(_.dir).setTo("backups").modify(_.pgBinDir).setTo(""))
-  private def rc(home: String = "", data: String = "") = base.runtime.modify(_.enabled).setTo(true).modify(_.home).setTo(home).modify(_.dataDir).setTo(data)
+    c.modify(_.backups).setTo(c.backups.modify(_.dir).setTo(com.histmersion.config.BackupsConfig.Dir("backups")).modify(_.pgBinDir).setTo(com.histmersion.config.BackupsConfig.PgBinDir("")))
+  private def rc(home: String = "", data: String = "") = base.runtime.modify(_.enabled).setTo(com.histmersion.config.RuntimeConfig.Enabled(true)).modify(_.home).setTo(com.histmersion.config.RuntimeConfig.Home(home)).modify(_.dataDir).setTo(com.histmersion.config.RuntimeConfig.DataDir(data))
   private def env(m: (String, String)*): UserPaths.Lookup =
     m.map((k, v) => Environment.VariablesKey(k) -> Environment.VariablesValue(v)).toMap.get
 
@@ -91,20 +91,20 @@ class SupervisorSuite extends munit.FunSuite:
     assertEquals(c.converter.spoolDir, "/d/uploads")
     assertEquals(c.server.host, "127.0.0.1", "a desktop install is private unless HISTMERSION_BIND says otherwise")
     assertEquals(Supervisor.configure(base.modify(_.runtime).setTo(rc()), l, Some(com.histmersion.config.ServerConfig.Host("0.0.0.0"))).server.host, "0.0.0.0")
-    val custom = base.modify(_.runtime).setTo(rc()).modify(_.backups).setTo(base.backups.modify(_.dir).setTo("/mine").modify(_.pgBinDir).setTo("/opt/pg/bin"))
+    val custom = base.modify(_.runtime).setTo(rc()).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(com.histmersion.config.BackupsConfig.Dir("/mine")).modify(_.pgBinDir).setTo(com.histmersion.config.BackupsConfig.PgBinDir("/opt/pg/bin")))
     assertEquals(Supervisor.configure(custom, l).backups.dir, "/mine")
     assertEquals(Supervisor.configure(custom, l).backups.pgBinDir, "/opt/pg/bin")
 
   test("a bundled server builds bundles under <data>/bundles unless told otherwise"):
     val l = Supervisor.Layout(Path.of("/h"), Path.of("/d"))
     assertEquals(Supervisor.configure(base.modify(_.runtime).setTo(rc()), l).bundles.dir, "/d/bundles")
-    val custom = base.modify(_.runtime).setTo(rc()).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo("/srv/bundles"))
+    val custom = base.modify(_.runtime).setTo(rc()).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(com.histmersion.config.BundlesConfig.Dir("/srv/bundles")))
     assertEquals(Supervisor.configure(custom, l).bundles.dir, "/srv/bundles")
 
   test("a bundled server reads its first-run data from the bundle's db/ unless told otherwise (#720)"):
     val l = Supervisor.Layout(Path.of("/h"), Path.of("/d"))
     assertEquals(Supervisor.configure(base.modify(_.runtime).setTo(rc()), l).init.dataDir, "/h/db")
-    val custom = base.modify(_.runtime).setTo(rc()).modify(_.init).setTo(base.init.modify(_.dataDir).setTo("/srv/seed"))
+    val custom = base.modify(_.runtime).setTo(rc()).modify(_.init).setTo(base.init.modify(_.dataDir).setTo(com.histmersion.config.InitConfig.DataDir("/srv/seed")))
     assertEquals(Supervisor.configure(custom, l).init.dataDir, "/srv/seed")
 
   test("a server inside a bundle (pg/bin/pg_ctl beside bin/) enables the runtime by itself"):

@@ -467,7 +467,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
 
   test("the client: a pool below its floor mid-step STOPS the process (no waiting for the answer) — the plan's limit"):
     val fake = FakeCli("claude", List(Init, Turn1, RateLimit), sleepAfter = 60)
-    val sink = FakeCli.Sink(block = Some(("five_hour: 8% left, floor 25%", Some(1791236400000L))))
+    val sink = FakeCli.Sink(block = Some((com.histmersion.domain.automation.agents.PoolSink.BlockedReason("five_hour: 8% left, floor 25%"), Some(com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(1791236400000L)))))
     val (rt, skeptic) = runtime(sink)
     val t0 = System.nanoTime()
     val e = intercept[ModelLimitReached](

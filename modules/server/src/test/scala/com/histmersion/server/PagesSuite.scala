@@ -63,7 +63,7 @@ class PagesSuite extends munit.FunSuite:
     )
 
   test("values from the database are escaped in every attribute and text node"):
-    val evil = cline.modify(_.citekey).setTo("x\"><script>").modify(_.doi).setTo(Some("\"onmouseover=1"))
+    val evil = cline.modify(_.citekey).setTo(com.histmersion.api.library.Citekey("x\"><script>")).modify(_.doi).setTo(Some(com.histmersion.api.library.Doi("\"onmouseover=1")))
     val html = HtmlRender.sourceRef(evil, com.histmersion.server.HtmlRender.Label("<b>")).value
     assert(!html.contains("<script>") && !html.contains("<b>") && !html.contains("\"onmouseover"), html)
 

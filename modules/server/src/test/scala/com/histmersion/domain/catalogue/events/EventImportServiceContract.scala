@@ -27,7 +27,7 @@ abstract class EventImportServiceContract extends CatalogueStoreSuite:
       names = List(CatalogRecord.Names(label.value + " alias"))
     )
   private def placeNew(r: CatalogRecord) =
-    r -> CatalogMerge.Placement.New(com.histmersion.domain.catalogue.Event.Id(CatalogRecord.eventId(r).value), CatalogMerge.Placement.Why("new"))
+    r -> CatalogMerge.Placement.New(com.histmersion.domain.catalogue.Event.Id.applyUnsafe(CatalogRecord.eventId(r).value), CatalogMerge.Placement.Why("new"))
 
   stest("a record makes its event, writing it again refreshes it, an event made by hand is only filled") { s =>
     val im = s.eventImports
