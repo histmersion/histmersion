@@ -26,7 +26,7 @@ abstract class AssetLinkServiceContract extends MediaStoreSuite:
       Left(Some(Write.CodeNotFound))
     )
     val first = l.create(AssetLink.Put(ApiCk, com.histmersion.api.exchange.Bundle.Asset.FileName("a.png"), com.histmersion.api.media.AssetRelation.Wire("depicts"), com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("zq_x"), Some(com.histmersion.api.media.AssetLink.Xywh("0,0,1,1")))).toOption.get
-    val second = l.create(AssetLink.Put(ApiCk, com.histmersion.api.exchange.Bundle.Asset.FileName("b.png"), com.histmersion.api.media.AssetRelation.Wire("illustrates"), com.histmersion.api.media.MediaTarget.TargetType("event"), com.histmersion.api.media.MediaTarget.TargetId("zq_e"), notes = Some("n"))).toOption.get
+    val second = l.create(AssetLink.Put(ApiCk, com.histmersion.api.exchange.Bundle.Asset.FileName("b.png"), com.histmersion.api.media.AssetRelation.Wire("illustrates"), com.histmersion.api.media.MediaTarget.TargetType("event"), com.histmersion.api.media.MediaTarget.TargetId("zq_e"), notes = Some(com.histmersion.api.media.AssetLink.Notes("n")))).toOption.get
     assertEquals((first.id, second.id), (1L, 2L))
     assertEquals(l.list(Some(Ck), None, None, None).links.map(_.id), List(1L, 2L))
     assertEquals(l.list(None, Some(com.histmersion.domain.media.assets.MediaItemRow.Uid(" a.png ")), None, None).links.map(_.id), List(1L))

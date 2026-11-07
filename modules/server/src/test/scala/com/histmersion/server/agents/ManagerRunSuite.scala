@@ -147,7 +147,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     ReviewLedgerFixtures.put(ds, l)
     assert(
       TestRuns
-        .transition(ds, run, RunState.Running, status, error = Option.when(status == RunState.Failed)("boom"))
+        .transition(ds, run, RunState.Running, status, error = Option.when(status == RunState.Failed)(com.histmersion.util.jobs.JobRow.Error("boom")))
         .isDefined
     )
 
@@ -456,7 +456,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
           run2,
           RunState.Running,
           RunState.Paused,
-          error = Some("stalled: no sign of life"),
+          error = Some(com.histmersion.util.jobs.JobRow.Error("stalled: no sign of life")),
           resumeAt = Some(Instant.now().plusSeconds(600))
         )
         .isDefined
@@ -497,7 +497,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val run3 = item("zzagent_r3").runId.get
     assert(
       TestRuns
-        .transition(ds, run3, RunState.Queued, RunState.Paused, error = Some("requested: paused on request"))
+        .transition(ds, run3, RunState.Queued, RunState.Paused, error = Some(com.histmersion.util.jobs.JobRow.Error("requested: paused on request")))
         .isDefined
     )
     assertEquals(connect(ds)(ManagerRepo.running(ReviewId)), 1)

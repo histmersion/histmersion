@@ -77,7 +77,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     val token = s.sources.put(
       source(
         A,
-        "Walls",
+        com.histmersion.api.library.Title("Walls"),
         List(finding(A, 1, Finding.Claim("the walls")), finding(A, 0, Finding.Claim("a gate"), Some(GeoPoint(com.histmersion.api.catalogue.Longitude(34.6), com.histmersion.api.catalogue.Latitude(40.0))))),
         List(Edge(api(A), api(B), Edge.Kind.References), Edge(api(A), com.histmersion.api.library.Citekey("zq_article"), Edge.Kind.References))
       ),
