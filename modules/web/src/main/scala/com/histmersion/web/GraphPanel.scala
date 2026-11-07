@@ -19,19 +19,17 @@ import com.histmersion.api.library.Source
   * window, and nothing is added again per render.
   */
 object GraphPanel:
+  type Citekey = Citekey.T
+  object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Inbound = Inbound.T
+  object Inbound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkLabel = LinkLabel.T
+  object LinkLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Outbound = Outbound.T
+  object Outbound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type OpenCitekey = OpenCitekey.T
-  object OpenCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IndexLinksResultPart1 = IndexLinksResultPart1.T
-  object IndexLinksResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IndexLinksResultPart2 = IndexLinksResultPart2.T
-  object IndexLinksResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IndexLinksResultPart3 = IndexLinksResultPart3.T
-  object IndexLinksResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ElementCitekey = ElementCitekey.T
-  object ElementCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def open(citekey: com.histmersion.web.GraphPanel.OpenCitekey): Unit =
+  def open(citekey: com.histmersion.web.GraphPanel.Citekey): Unit =
     WindowManager.open(WindowKey.Graph(citekey))
 
   private val Depth = 2
@@ -49,7 +47,7 @@ object GraphPanel:
   /** Links as node-index pairs. Every link of a V026 graph joins two of its nodes, so none is lost; a link to a node
     * the graph does not carry is dropped rather than drawn to nowhere.
     */
-  def indexLinks(g: com.histmersion.api.library.Source.Graph): List[(com.histmersion.web.GraphPanel.IndexLinksResultPart1, com.histmersion.web.GraphPanel.IndexLinksResultPart2, com.histmersion.web.GraphPanel.IndexLinksResultPart3)] =
+  def indexLinks(g: com.histmersion.api.library.Source.Graph): List[(com.histmersion.web.GraphPanel.Inbound, com.histmersion.web.GraphPanel.Outbound, com.histmersion.web.GraphPanel.LinkLabel)] =
     val idx = g.nodes.zipWithIndex.map((n, i) => n.id -> i).toMap
     g.links.flatMap(l => for s <- idx.get(l.source); t <- idx.get(l.target) yield (s, t, l.kind))
 
@@ -65,7 +63,7 @@ object GraphPanel:
       type Message = Message.T
       object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def element(citekey: com.histmersion.web.GraphPanel.ElementCitekey): HtmlElement =
+  def element(citekey: com.histmersion.web.GraphPanel.Citekey): HtmlElement =
     val state = Var[Load](Load.Loading)
     val hovered = Var(Option.empty[GraphNode])
     ApiClient.graph(citekey, Some(Depth)).onComplete {
@@ -246,10 +244,10 @@ object GraphPanel:
       running = false
       dom.window.cancelAnimationFrame(frameId)
 
-    private def toWorld(sx: com.histmersion.web.GraphPanel.Simulation.ToWorldSx, sy: com.histmersion.web.GraphPanel.Simulation.ToWorldSy): (com.histmersion.web.GraphPanel.Simulation.ToWorldResultPart1, com.histmersion.web.GraphPanel.Simulation.ToWorldResultPart2) =
+    private def toWorld(sx: com.histmersion.web.GraphPanel.Simulation.ScreenX, sy: com.histmersion.web.GraphPanel.Simulation.ScreenY): (com.histmersion.web.GraphPanel.Simulation.WorldX, com.histmersion.web.GraphPanel.Simulation.WorldY) =
       ((sx - w / 2 - panX) / zoom, (sy - h / 2 - panY) / zoom)
 
-    private def nodeAt(sx: com.histmersion.web.GraphPanel.Simulation.NodeAtSx, sy: com.histmersion.web.GraphPanel.Simulation.NodeAtSy): Option[com.histmersion.web.GraphPanel.Simulation.NodeAtResult] =
+    private def nodeAt(sx: com.histmersion.web.GraphPanel.Simulation.ScreenX, sy: com.histmersion.web.GraphPanel.Simulation.ScreenY): Option[com.histmersion.web.GraphPanel.Simulation.NodeIndex] =
       val (wx, wy) = toWorld(sx, sy)
       nodes.indices
         .map(i => i -> Math.hypot(nodes(i).x - wx, nodes(i).y - wy))
@@ -257,7 +255,7 @@ object GraphPanel:
         .minByOption(_._2)
         .map(_._1)
 
-    private def local(e: dom.MouseEvent): (com.histmersion.web.GraphPanel.Simulation.LocalResultPart1, com.histmersion.web.GraphPanel.Simulation.LocalResultPart2) =
+    private def local(e: dom.MouseEvent): (com.histmersion.web.GraphPanel.Simulation.ScreenX, com.histmersion.web.GraphPanel.Simulation.ScreenY) =
       val r = canvas.getBoundingClientRect()
       (e.clientX - r.left, e.clientY - r.top)
 
@@ -410,34 +408,26 @@ object GraphPanel:
         ctx.fillText(label + n.year.fold("")(y => s" ($y)"), n.x, n.y + radius(i) + 12)
       ctx.restore()
 
-    private def radius(i: com.histmersion.web.GraphPanel.Simulation.RadiusI): com.histmersion.web.GraphPanel.Simulation.RadiusResult =
+    private def radius(i: com.histmersion.web.GraphPanel.Simulation.Degree): com.histmersion.web.GraphPanel.Simulation.Radius =
       if i == rootIdx then GL.rootRadius else if nodes(i).depth <= 1 then GL.depth1Radius else GL.leafRadius
 
   object Simulation:
+    type Degree = Degree.T
+    object Degree extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NodeIndex = NodeIndex.T
+    object NodeIndex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Radius = Radius.T
+    object Radius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ScreenX = ScreenX.T
+    object ScreenX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ScreenY = ScreenY.T
+    object ScreenY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WorldX = WorldX.T
+    object WorldX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WorldY = WorldY.T
+    object WorldY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SizeResultPart1 = SizeResultPart1.T
     object SizeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SizeResultPart2 = SizeResultPart2.T
     object SizeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ToWorldResultPart1 = ToWorldResultPart1.T
-    object ToWorldResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ToWorldResultPart2 = ToWorldResultPart2.T
-    object ToWorldResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ToWorldSx = ToWorldSx.T
-    object ToWorldSx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ToWorldSy = ToWorldSy.T
-    object ToWorldSy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NodeAtResult = NodeAtResult.T
-    object NodeAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NodeAtSx = NodeAtSx.T
-    object NodeAtSx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NodeAtSy = NodeAtSy.T
-    object NodeAtSy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LocalResultPart1 = LocalResultPart1.T
-    object LocalResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LocalResultPart2 = LocalResultPart2.T
-    object LocalResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RadiusResult = RadiusResult.T
-    object RadiusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RadiusI = RadiusI.T
-    object RadiusI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

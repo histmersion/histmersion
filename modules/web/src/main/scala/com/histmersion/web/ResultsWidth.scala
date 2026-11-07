@@ -7,51 +7,33 @@ import com.histmersion.web.ui.Layout
   * Pure, but for [[stored]] and [[keep]].
   */
 object ResultsWidth:
+  type KeyName = KeyName.T
+  object KeyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShiftHeld = ShiftHeld.T
+  object ShiftHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ViewportWidth = ViewportWidth.T
+  object ViewportWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Width = Width.T
+  object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type MinResult = MinResult.T
-  object MinResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxResult = MaxResult.T
-  object MaxResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxViewport = MaxViewport.T
-  object MaxViewport extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClampResult = ClampResult.T
-  object ClampResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClampW = ClampW.T
-  object ClampW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClampViewport = _root_.com.histmersion.web.ResultsWidth.MaxViewport
-  val ClampViewport: _root_.com.histmersion.web.ResultsWidth.MaxViewport.type = _root_.com.histmersion.web.ResultsWidth.MaxViewport
-  type StepResult = StepResult.T
-  object StepResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepW = StepW.T
-  object StepW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepKey = StepKey.T
-  object StepKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepShift = StepShift.T
-  object StepShift extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepViewport = _root_.com.histmersion.web.ResultsWidth.MaxViewport
-  val StepViewport: _root_.com.histmersion.web.ResultsWidth.MaxViewport.type = _root_.com.histmersion.web.ResultsWidth.MaxViewport
-  type DecodeResult = DecodeResult.T
-  object DecodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeRaw = DecodeRaw.T
-  object DecodeRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoredResult = StoredResult.T
-  object StoredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeepW = KeepW.T
-  object KeepW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampViewport = _root_.com.histmersion.web.ResultsWidth.ViewportWidth
+  val ClampViewport: _root_.com.histmersion.web.ResultsWidth.ViewportWidth.type = _root_.com.histmersion.web.ResultsWidth.ViewportWidth
+  type StepViewport = _root_.com.histmersion.web.ResultsWidth.ViewportWidth
+  val StepViewport: _root_.com.histmersion.web.ResultsWidth.ViewportWidth.type = _root_.com.histmersion.web.ResultsWidth.ViewportWidth
 
   val StorageKey = "histmersion.resultsWidth"
 
-  def min: com.histmersion.web.ResultsWidth.MinResult = Layout.sidebarMinWidth.value
+  def min: com.histmersion.web.ResultsWidth.Width = Layout.sidebarMinWidth.value
 
   /** The widest: `sidebarMaxWidth`, and never more than 60 % of the window, so the map keeps the rest. */
-  def max(viewport: com.histmersion.web.ResultsWidth.MaxViewport): com.histmersion.web.ResultsWidth.MaxResult = math.max(min, math.min(Layout.sidebarMaxWidth.value, (viewport * 0.6).toInt))
+  def max(viewport: com.histmersion.web.ResultsWidth.ViewportWidth): com.histmersion.web.ResultsWidth.Width = math.max(min, math.min(Layout.sidebarMaxWidth.value, (viewport * 0.6).toInt))
 
-  def clamp(w: com.histmersion.web.ResultsWidth.ClampW, viewport: com.histmersion.web.ResultsWidth.ClampViewport): com.histmersion.web.ResultsWidth.ClampResult = math.max(min, math.min(max(viewport), w))
+  def clamp(w: com.histmersion.web.ResultsWidth.Width, viewport: com.histmersion.web.ResultsWidth.ClampViewport): com.histmersion.web.ResultsWidth.Width = math.max(min, math.min(max(viewport), w))
 
   /** What one key press does: ← widens (the column is on the right), → narrows, by 16 px (64 with Shift); Home the
     * narrowest, End the widest. None for any other key.
     */
-  def step(w: com.histmersion.web.ResultsWidth.StepW, key: com.histmersion.web.ResultsWidth.StepKey, shift: com.histmersion.web.ResultsWidth.StepShift, viewport: com.histmersion.web.ResultsWidth.StepViewport): Option[com.histmersion.web.ResultsWidth.StepResult] =
+  def step(w: com.histmersion.web.ResultsWidth.Width, key: com.histmersion.web.ResultsWidth.KeyName, shift: com.histmersion.web.ResultsWidth.ShiftHeld, viewport: com.histmersion.web.ResultsWidth.StepViewport): Option[com.histmersion.web.ResultsWidth.Width] =
     val by = if shift then 64 else 16
     key match
       case "ArrowLeft"  => Some(clamp(w + by, viewport))
@@ -60,7 +42,7 @@ object ResultsWidth:
       case "End"        => Some(max(viewport))
       case _            => None
 
-  def decode(raw: Option[com.histmersion.web.ResultsWidth.DecodeRaw]): Option[com.histmersion.web.ResultsWidth.DecodeResult] = raw.flatMap(_.trim.toIntOption).filter(_ > 0)
+  def decode(raw: Option[String]): Option[com.histmersion.web.ResultsWidth.Width] = raw.flatMap(_.trim.toIntOption).filter(_ > 0)
 
-  def stored: Option[com.histmersion.web.ResultsWidth.StoredResult] = decode(Store.Browser.get(StorageKey))
-  def keep(w: com.histmersion.web.ResultsWidth.KeepW): Unit = Store.Browser.put(StorageKey, w.toString)
+  def stored: Option[com.histmersion.web.ResultsWidth.Width] = decode(Store.Browser.get(StorageKey))
+  def keep(w: com.histmersion.web.ResultsWidth.Width): Unit = Store.Browser.put(StorageKey, w.toString)

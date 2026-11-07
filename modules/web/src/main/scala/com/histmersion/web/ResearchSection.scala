@@ -15,9 +15,9 @@ enum ResearchSection(val slug: ResearchSection.Slug, val label: ResearchSection.
   case Models extends ResearchSection("models", "AI models and limits", agents = true)
 
 object ResearchSection:
-  type Slug = Slug.T
-  object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Slug = com.histmersion.web.Preview.Item.Slug
+  val Slug: _root_.com.histmersion.web.Preview.Item.Slug.type = _root_.com.histmersion.web.Preview.Item.Slug
+  type Label = com.histmersion.api.UiLabels.Text
+  val Label: _root_.com.histmersion.api.UiLabels.Text.type = _root_.com.histmersion.api.UiLabels.Text
   type Agents = Agents.T
   object Agents extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

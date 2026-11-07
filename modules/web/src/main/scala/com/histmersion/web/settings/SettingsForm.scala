@@ -12,14 +12,12 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   * Undo drops them), then the server applies them.
   */
 object SettingsForm:
+  type Intro = Intro.T
+  object Intro extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One setting of the form: its key, and the name and help shown instead of reference.conf's words. */
   type ApplyTitle = ApplyTitle.T
   object ApplyTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyIntro = ApplyIntro.T
-  object ApplyIntro extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SaveBarConsentResult = SaveBarConsentResult.T
-  object SaveBarConsentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Item(
       key: Item.Key,
@@ -38,7 +36,7 @@ object SettingsForm:
     type Fallback = Fallback.T
     object Fallback extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def apply(title: com.histmersion.web.settings.SettingsForm.ApplyTitle, intro: Option[com.histmersion.web.settings.SettingsForm.ApplyIntro], items: List[Item], extra: Modifier[HtmlElement]*): HtmlElement =
+  def apply(title: com.histmersion.web.settings.SettingsForm.ApplyTitle, intro: Option[com.histmersion.web.settings.SettingsForm.Intro], items: List[Item], extra: Modifier[HtmlElement]*): HtmlElement =
     val draft = Draft()
     sectionTag(
       cls := "settings-card",
@@ -66,7 +64,7 @@ object SettingsForm:
     )
 
   /** Save / Undo for a form's draft, and what the save did. */
-  def saveBar(draft: Draft, consent: () => com.histmersion.web.settings.SettingsForm.SaveBarConsentResult = () => false): HtmlElement =
+  def saveBar(draft: Draft, consent: () => Boolean = () => false): HtmlElement =
     div(
       cls := "settings-save",
       child.maybe <-- Auth.writable.map(w =>

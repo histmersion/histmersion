@@ -26,109 +26,35 @@ import com.histmersion.api.catalogue.Place
   * `ApiClient.places(q, asOf, limit)`. Selected places draw polygons on the map as shapes ([[ShapeSet]] "place-pick").
   */
 object PlacesInput:
+  type FitToView = FitToView.T
+  object FitToView extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayerVisible = LayerVisible.T
+  object LayerVisible extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceId = PlaceId.T
+  object PlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Cached label/kind/contested for gazetteer ids. */
-  type DrawPendingPart1 = DrawPendingPart1.T
-  object DrawPendingPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type LearnId = _root_.com.histmersion.web.PlacesInput.ChipTextId
-  val LearnId: _root_.com.histmersion.web.PlacesInput.ChipTextId.type = _root_.com.histmersion.web.PlacesInput.ChipTextId
-  type ActiveIdx = ActiveIdx.T
-  object ActiveIdx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Timer = Timer.T
-  object Timer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipsSignalPart1 = ChipsSignalPart1.T
-  object ChipsSignalPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipsSignalPart2 = ChipsSignalPart2.T
-  object ChipsSignalPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipsSignalPart3 = ChipsSignalPart3.T
-  object ChipsSignalPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipsSignalPart4 = ChipsSignalPart4.T
-  object ChipsSignalPart4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Layer = Layer.T
-  object Layer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PreviewId = _root_.com.histmersion.web.PlacesInput.ChipTextId
-  val PreviewId: _root_.com.histmersion.web.PlacesInput.ChipTextId.type = _root_.com.histmersion.web.PlacesInput.ChipTextId
-  type Drawn = Drawn.T
-  object Drawn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LastTextJson = LastTextJson.T
-  object LastTextJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IdsResult = IdsResult.T
-  object IdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextsResult = TextsResult.T
-  object TextsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AsOfResult = AsOfResult.T
-  object AsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FlagResult = FlagResult.T
-  object FlagResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FlagContested = FlagContested.T
-  object FlagContested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FlagLabel = FlagLabel.T
-  object FlagLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetIdsNext = SetIdsNext.T
-  object SetIdsNext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddIdId = AddIdId.T
-  object AddIdId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddTextV = AddTextV.T
-  object AddTextV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveIdAtI = RemoveIdAtI.T
-  object RemoveIdAtI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveTextAtI = RemoveTextAtI.T
-  object RemoveTextAtI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrawPlaceId = _root_.com.histmersion.web.PlacesInput.ChipTextId
-  val DrawPlaceId: _root_.com.histmersion.web.PlacesInput.ChipTextId.type = _root_.com.histmersion.web.PlacesInput.ChipTextId
-  type DrawPlaceAtResult = DrawPlaceAtResult.T
-  object DrawPlaceAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrawFit = DrawFit.T
-  object DrawFit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PreviewAsOfYear = PreviewAsOfYear.T
-  object PreviewAsOfYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RememberId = _root_.com.histmersion.web.PlacesInput.ChipTextId
-  val RememberId: _root_.com.histmersion.web.PlacesInput.ChipTextId.type = _root_.com.histmersion.web.PlacesInput.ChipTextId
+  type LearnId = _root_.com.histmersion.web.PlacesInput.PlaceId
+  val LearnId: _root_.com.histmersion.web.PlacesInput.PlaceId.type = _root_.com.histmersion.web.PlacesInput.PlaceId
+  type PreviewId = _root_.com.histmersion.web.PlacesInput.PlaceId
+  val PreviewId: _root_.com.histmersion.web.PlacesInput.PlaceId.type = _root_.com.histmersion.web.PlacesInput.PlaceId
+  type DrawPlaceId = _root_.com.histmersion.web.PlacesInput.PlaceId
+  val DrawPlaceId: _root_.com.histmersion.web.PlacesInput.PlaceId.type = _root_.com.histmersion.web.PlacesInput.PlaceId
+  type RememberId = _root_.com.histmersion.web.PlacesInput.PlaceId
+  val RememberId: _root_.com.histmersion.web.PlacesInput.PlaceId.type = _root_.com.histmersion.web.PlacesInput.PlaceId
   type RememberLabel = _root_.com.histmersion.web.PlacesInput.KnownPlace.Label
   val RememberLabel: _root_.com.histmersion.web.PlacesInput.KnownPlace.Label.type = _root_.com.histmersion.web.PlacesInput.KnownPlace.Label
   type RememberKind = _root_.com.histmersion.web.PlacesInput.KnownPlace.Kind
   val RememberKind: _root_.com.histmersion.web.PlacesInput.KnownPlace.Kind.type = _root_.com.histmersion.web.PlacesInput.KnownPlace.Kind
   type RememberContested = _root_.com.histmersion.web.PlacesInput.KnownPlace.Contested
   val RememberContested: _root_.com.histmersion.web.PlacesInput.KnownPlace.Contested.type = _root_.com.histmersion.web.PlacesInput.KnownPlace.Contested
-  type ToggleFromMapResult = ToggleFromMapResult.T
-  object ToggleFromMapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToggleFromMapId = _root_.com.histmersion.web.PlacesInput.ChipTextId
-  val ToggleFromMapId: _root_.com.histmersion.web.PlacesInput.ChipTextId.type = _root_.com.histmersion.web.PlacesInput.ChipTextId
-  type ToggleFromMapLabel = ToggleFromMapLabel.T
-  object ToggleFromMapLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToggleFromMapKind = ToggleFromMapKind.T
-  object ToggleFromMapKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceCardId = PlaceCardId.T
-  object PlaceCardId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceCardLabel = PlaceCardLabel.T
-  object PlaceCardLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelOfResult = LabelOfResult.T
-  object LabelOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelOfId = LabelOfId.T
-  object LabelOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribeResultPart1 = DescribeResultPart1.T
-  object DescribeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribeResultPart2 = DescribeResultPart2.T
-  object DescribeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribeId = DescribeId.T
-  object DescribeId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipTextResult = ChipTextResult.T
-  object ChipTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipTextId = ChipTextId.T
-  object ChipTextId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipTextLookupArg1 = ChipTextLookupArg1.T
-  object ChipTextLookupArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipTextLookupResultPart1 = ChipTextLookupResultPart1.T
-  object ChipTextLookupResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipTextLookupResultPart2 = ChipTextLookupResultPart2.T
-  object ChipTextLookupResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnsureKnownId = _root_.com.histmersion.web.PlacesInput.ChipTextId
-  val EnsureKnownId: _root_.com.histmersion.web.PlacesInput.ChipTextId.type = _root_.com.histmersion.web.PlacesInput.ChipTextId
-  type ChipTextSignalResult = ChipTextSignalResult.T
-  object ChipTextSignalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipTextSignalId = _root_.com.histmersion.web.PlacesInput.ChipTextId
-  val ChipTextSignalId: _root_.com.histmersion.web.PlacesInput.ChipTextId.type = _root_.com.histmersion.web.PlacesInput.ChipTextId
+  type ToggleFromMapId = _root_.com.histmersion.web.PlacesInput.PlaceId
+  val ToggleFromMapId: _root_.com.histmersion.web.PlacesInput.PlaceId.type = _root_.com.histmersion.web.PlacesInput.PlaceId
+  type EnsureKnownId = _root_.com.histmersion.web.PlacesInput.PlaceId
+  val EnsureKnownId: _root_.com.histmersion.web.PlacesInput.PlaceId.type = _root_.com.histmersion.web.PlacesInput.PlaceId
+  type ChipTextSignalId = _root_.com.histmersion.web.PlacesInput.PlaceId
+  val ChipTextSignalId: _root_.com.histmersion.web.PlacesInput.PlaceId.type = _root_.com.histmersion.web.PlacesInput.PlaceId
 
   private case class KnownPlace(label: KnownPlace.Label, kind: KnownPlace.Kind, contested: KnownPlace.Contested)
 
@@ -183,8 +109,8 @@ object PlacesInput:
     object PeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private var items: List[SuggestItem] = Nil
-  private var activeIdx: com.histmersion.web.PlacesInput.ActiveIdx = -1
-  private var timer: com.histmersion.web.PlacesInput.Timer = 0
+  private var activeIdx: Int = -1
+  private var timer: Int = 0
   // the suggestions request a late answer must belong to
   private val latest = Latest()
   private var inputEl: dom.HTMLInputElement = null
@@ -194,7 +120,7 @@ object PlacesInput:
   private val menuHidden = Var(true)
 
   // The chip list renders from UiState directly
-  private val chipsSignal: Signal[List[(com.histmersion.web.PlacesInput.ChipsSignalPart1, com.histmersion.web.PlacesInput.ChipsSignalPart2, com.histmersion.web.PlacesInput.ChipsSignalPart3, com.histmersion.web.PlacesInput.ChipsSignalPart4)]] =
+  private val chipsSignal: Signal[List[(com.histmersion.web.PlacesInput.PlaceId, com.histmersion.api.UiLabels.Text, com.histmersion.web.PlacesInput.KnownPlace.Contested, com.histmersion.web.PlacesInput.SuggestItem.TextFallback)]] =
     UiState.placeIds.signal.combineWith(UiState.places.signal, knownVersion.signal).map { (ids, texts, _) =>
       val gazChips = ids.map { id =>
         ensureKnown(id)
@@ -207,21 +133,21 @@ object PlacesInput:
 
   // the chosen places' and the previewed place's drawing: shapes on the map, a point-only region's name
   // as a marker; `layer` is whether the map is up for them
-  private var layer: com.histmersion.web.PlacesInput.Layer = false
+  private var layer: com.histmersion.web.PlacesInput.LayerVisible = false
   private val pickNames = scala.collection.mutable.ListBuffer.empty[DomMarker]
   private val previewNames = scala.collection.mutable.ListBuffer.empty[DomMarker]
   private val drawnPlaces = scala.collection.mutable.HashMap.empty[String, (String, String, String)]
   private var previewShown = false
   private var previewId: com.histmersion.web.PlacesInput.PreviewId = null
-  private var drawn: com.histmersion.web.PlacesInput.Drawn = ""
+  private var drawn: String = ""
   private var uiConfig: UiConfig = null
-  private var lastTextJson: com.histmersion.web.PlacesInput.LastTextJson = "[]"
+  private var lastTextJson: String = "[]"
 
-  private def ids(): List[com.histmersion.web.PlacesInput.IdsResult] = UiState.placeIds.now()
-  private def texts(): List[com.histmersion.web.PlacesInput.TextsResult] = UiState.places.now()
+  private def ids(): List[com.histmersion.web.PlacesInput.PlaceId] = UiState.placeIds.now()
+  private def texts(): List[com.histmersion.api.Api.Search.Text] = UiState.places.now()
 
   /** The year the gazetteer is read at: the middle of the selected span. */
-  private def asOf(): Option[com.histmersion.web.PlacesInput.AsOfResult] =
+  private def asOf(): Option[com.histmersion.api.Years.Astronomical] =
     val f = UiState.from.now()
     val t = UiState.to.now()
     (f, t) match
@@ -230,7 +156,7 @@ object PlacesInput:
       case (Some(a), None)    => Some(a)
       case (Some(a), Some(b)) => Some(Math.round((a.toDouble + b.toDouble) / 2))
 
-  private def flag(contested: com.histmersion.web.PlacesInput.FlagContested, label: com.histmersion.web.PlacesInput.FlagLabel): com.histmersion.web.PlacesInput.FlagResult =
+  private def flag(contested: com.histmersion.web.PlacesInput.KnownPlace.Contested, label: com.histmersion.api.UiLabels.Text): Boolean =
     contested && !Option(label).getOrElse("").toLowerCase.contains("contested")
 
   // ── chips ──────────────────────────────────────────────────────────────────
@@ -242,24 +168,24 @@ object PlacesInput:
     items = Nil
     activeIdx = -1
 
-  private def setIds(next: List[com.histmersion.web.PlacesInput.SetIdsNext]): Unit =
+  private def setIds(next: List[com.histmersion.web.PlacesInput.PlaceId]): Unit =
     UiState.set(UiState.placeIds := next)()
 
-  private def addId(id: com.histmersion.web.PlacesInput.AddIdId): Unit =
+  private def addId(id: com.histmersion.web.PlacesInput.PlaceId): Unit =
     if id.nonEmpty && !ids().contains(id) then setIds(ids() :+ id)
     close()
     if inputEl != null then inputEl.value = ""
 
-  private def addText(v: com.histmersion.web.PlacesInput.AddTextV): Unit =
+  private def addText(v: com.histmersion.api.Api.Search.Text): Unit =
     val t = Option(v).getOrElse("").trim
     if t.nonEmpty && !texts().contains(t) then UiState.set(UiState.places := texts() :+ t)()
     close()
     if inputEl != null then inputEl.value = ""
 
-  private def removeIdAt(i: com.histmersion.web.PlacesInput.RemoveIdAtI): Unit =
+  private def removeIdAt(i: Int): Unit =
     setIds(ids().zipWithIndex.collect { case (v, j) if j != i => v })
 
-  private def removeTextAt(i: com.histmersion.web.PlacesInput.RemoveTextAtI): Unit =
+  private def removeTextAt(i: Int): Unit =
     UiState.set(UiState.places := texts().zipWithIndex.collect { case (v, j) if j != i => v })()
 
   private def pick(it: SuggestItem): Unit =
@@ -349,7 +275,7 @@ object PlacesInput:
       d: PlaceDetail,
       geo: js.Dynamic,
       names: scala.collection.mutable.ListBuffer[DomMarker],
-      at: () => Option[com.histmersion.web.PlacesInput.DrawPlaceAtResult]
+      at: () => Option[com.histmersion.api.Years.Astronomical]
   ): Option[ShapeFeature] =
     drawnPlaces(id) = (id, d.place.label, d.place.kind)
     val t = if js.isUndefined(geo.selectDynamic("type")) then "" else geo.selectDynamic("type").toString
@@ -372,7 +298,7 @@ object PlacesInput:
     names.clear()
 
   /** Draw every selected place's shape. Re-fetched when the selection or span changed. */
-  private def draw(fit: com.histmersion.web.PlacesInput.DrawFit): Unit =
+  private def draw(fit: com.histmersion.web.PlacesInput.FitToView): Unit =
     if !layer then ()
     else
       val key = js.JSON.stringify(js.Array(ids().toJSArray, asOf().map(_.toDouble).getOrElse(0.0): js.Any))
@@ -380,7 +306,7 @@ object PlacesInput:
       else
         drawn = key
         val currentIds = ids()
-        val pending: List[Future[Option[(com.histmersion.web.PlacesInput.DrawPendingPart1, PlaceDetail)]]] = currentIds.map { id =>
+        val pending: List[Future[Option[(com.histmersion.web.PlacesInput.PlaceId, PlaceDetail)]]] = currentIds.map { id =>
           ApiClient.place(id, asOf()).map(detail => Some((id, detail))).recover { case _ => None }
         }
         Future.sequence(pending).foreach { results =>
@@ -581,7 +507,7 @@ object PlacesInput:
 
   /** Draw ONE place's shape as a TRANSIENT overlay and fit the map to it. Toggle behavior: same id clears it.
     */
-  def preview(id: com.histmersion.web.PlacesInput.PreviewId, asOfYear: Option[com.histmersion.web.PlacesInput.PreviewAsOfYear]): Unit =
+  def preview(id: com.histmersion.web.PlacesInput.PreviewId, asOfYear: Option[com.histmersion.api.Years.Astronomical]): Unit =
     if !layer then ()
     else
       val wasShowing = previewId == id && previewShown
@@ -616,7 +542,7 @@ object PlacesInput:
     * the lists narrow to it and its descendants and its chip appears — or, when it already is chosen, it is unchosen.
     * Returns whether it is chosen now.
     */
-  def toggleFromMap(id: com.histmersion.web.PlacesInput.ToggleFromMapId, label: com.histmersion.web.PlacesInput.ToggleFromMapLabel, kind: com.histmersion.web.PlacesInput.ToggleFromMapKind): com.histmersion.web.PlacesInput.ToggleFromMapResult =
+  def toggleFromMap(id: com.histmersion.web.PlacesInput.ToggleFromMapId, label: com.histmersion.api.UiLabels.Text, kind: com.histmersion.web.PlacesInput.KnownPlace.Kind): Boolean =
     remember(id, label, kind, known.get(id).exists(_.contested))
     chosenOnMap = true
     UiState.togglePlace(id)
@@ -649,7 +575,7 @@ object PlacesInput:
   /** A gazetteer chip answers like the place on the map ([[Preview]]): hover or focus shows its card, a click or Enter
     * pins it so its links can be followed.
     */
-  private def placeCard(id: com.histmersion.web.PlacesInput.PlaceCardId, label: com.histmersion.web.PlacesInput.PlaceCardLabel): Modifier[HtmlElement] =
+  private def placeCard(id: com.histmersion.web.PlacesInput.PlaceId, label: com.histmersion.api.UiLabels.Text): Modifier[HtmlElement] =
     List(
       dataAttr("place") := id,
       tabIndex := 0,
@@ -659,16 +585,16 @@ object PlacesInput:
     )
 
   /** What a gazetteer id is CALLED. Falls back to the id when the label is not cached. */
-  def labelOf(id: com.histmersion.web.PlacesInput.LabelOfId): com.histmersion.web.PlacesInput.LabelOfResult =
+  def labelOf(id: com.histmersion.web.PlacesInput.PlaceId): com.histmersion.api.UiLabels.Text =
     known.get(id).map(_.label).getOrElse(id)
 
   /** The (label, kind) of a place this page has seen, if any. */
-  def describe(id: com.histmersion.web.PlacesInput.DescribeId): Option[(com.histmersion.web.PlacesInput.DescribeResultPart1, com.histmersion.web.PlacesInput.DescribeResultPart2)] = known.get(id).map(k => (k.label, k.kind))
+  def describe(id: com.histmersion.web.PlacesInput.PlaceId): Option[(com.histmersion.api.UiLabels.Text, com.histmersion.web.PlacesInput.KnownPlace.Kind)] = known.get(id).map(k => (k.label, k.kind))
 
   /** Pure: a chosen place as a chip names it — its label and kind ("Kingdom of Patones (polity)"), NEVER its id: while
     * the label is still being fetched, "…".
     */
-  def chipText(id: com.histmersion.web.PlacesInput.ChipTextId, lookup: com.histmersion.web.PlacesInput.ChipTextLookupArg1 => Option[(com.histmersion.web.PlacesInput.ChipTextLookupResultPart1, com.histmersion.web.PlacesInput.ChipTextLookupResultPart2)]): com.histmersion.web.PlacesInput.ChipTextResult =
+  def chipText(id: com.histmersion.web.PlacesInput.PlaceId, lookup: com.histmersion.web.PlacesInput.PlaceId => Option[(com.histmersion.api.UiLabels.Text, com.histmersion.web.PlacesInput.KnownPlace.Kind)]): com.histmersion.api.UiLabels.Text =
     lookup(id).fold("…")((label, kind) => if kind.trim.isEmpty then label else s"$label (${Label.display(kind)})")
 
   /** Fetch the label of a chosen place the page has not seen (one from a link or a restored state). */
@@ -683,7 +609,7 @@ object PlacesInput:
   private val fetching = scala.collection.mutable.Set.empty[String]
 
   /** A chip's text for a chosen place, following what the page learns about it ([[chipText]]). */
-  def chipTextSignal(id: com.histmersion.web.PlacesInput.ChipTextSignalId): Signal[com.histmersion.web.PlacesInput.ChipTextSignalResult] =
+  def chipTextSignal(id: com.histmersion.web.PlacesInput.ChipTextSignalId): Signal[com.histmersion.api.UiLabels.Text] =
     ensureKnown(id)
     knownVersion.signal.map(_ => chipText(id, describe))
 

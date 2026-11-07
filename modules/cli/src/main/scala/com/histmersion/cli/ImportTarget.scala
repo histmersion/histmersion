@@ -13,6 +13,8 @@ enum ImportTarget:
   case Update(previous: Option[ImportTarget.Update.Previous])
 
 object ImportTarget:
+  type Explicit = Explicit.T
+  object Explicit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   object Update:
     type Previous = Previous.T
     object Previous extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

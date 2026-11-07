@@ -10,6 +10,8 @@ import com.histmersion.api.library.Ingest
   * ([[DoiIngest]]); the answer says what was found and links to the new source.
   */
 object DoiForm:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private enum State:
     case Idle
@@ -19,8 +21,8 @@ object DoiForm:
 
   object State:
     object Failed:
-      type Message = Message.T
-      object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Message = com.histmersion.web.library.DoiForm.Problem
+      val Message: _root_.com.histmersion.web.library.DoiForm.Problem.type = _root_.com.histmersion.web.library.DoiForm.Problem
 
   def pane: HtmlElement =
     val typed = Var("")

@@ -10,6 +10,9 @@ final case class PeriodsConfig(periodoUrl: PeriodsConfig.PeriodoUrl, periodoColl
   def collections: List[com.histmersion.config.PeriodsConfig.Collection] = PeriodsConfig.split(periodoCollections)
 
 object PeriodsConfig:
+  object Collection:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Collection = Collection.T
   object Collection extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

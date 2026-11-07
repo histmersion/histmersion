@@ -15,33 +15,19 @@ import com.histmersion.api.jobs.JobInfo
   * used to be a toolbar window; Research's and Settings' sections are in a side navigation on the left.
   */
 object Pages:
+  type EventId = EventId.T
+  object EventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobId = JobId.T
+  object JobId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkActive = LinkActive.T
+  object LinkActive extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceId = PlaceId.T
+  object PlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UrlQuery = UrlQuery.T
+  object UrlQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type PageSearch = PageSearch.T
-  object PageSearch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayoutNavName = LayoutNavName.T
-  object LayoutNavName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayoutHeading = LayoutHeading.T
-  object LayoutHeading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SideLinkLabel = SideLinkLabel.T
-  object SideLinkLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SideLinkOn = SideLinkOn.T
-  object SideLinkOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GroupName = GroupName.T
-  object GroupName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResearchGoal = _root_.com.histmersion.web.Pages.ActivityGoal
-  val ResearchGoal: _root_.com.histmersion.web.Pages.ActivityGoal.type = _root_.com.histmersion.web.Pages.ActivityGoal
-  type SectionHeading = SectionHeading.T
-  object SectionHeading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AgentsOffText = AgentsOffText.T
-  object AgentsOffText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ActivityGoal = ActivityGoal.T
-  object ActivityGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobPageId = JobPageId.T
-  object JobPageId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacePageId = PlacePageId.T
-  object PlacePageId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventPageId = EventPageId.T
-  object EventPageId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResearchGoal = _root_.com.histmersion.api.automation.Goal.Ref
+  val ResearchGoal: _root_.com.histmersion.api.automation.Goal.Ref.type = _root_.com.histmersion.api.automation.Goal.Ref
 
   private val currentAttr = htmlAttr("aria-current", StringAsIsCodec)
 
@@ -57,7 +43,7 @@ object Pages:
       child <-- shown.map((r, missing, s) => if missing then notFound else page(ui, r, s))
     )
 
-  private def page(ui: UiConfig, r: Route, search: com.histmersion.web.Pages.PageSearch): HtmlElement = r match
+  private def page(ui: UiConfig, r: Route, search: com.histmersion.web.Pages.UrlQuery): HtmlElement = r match
     case Route.Explore     => div()
     case Route.Library(s)  => libraryPage(ui, s)
     case Route.Settings(s) => layout("Settings sections", settingsSide(s), Some(s.label), settings(ui, s))
@@ -71,9 +57,9 @@ object Pages:
   // ── the frame ───────────────────────────────────────────────────────────────────────────────────
 
   private def layout(
-      navName: com.histmersion.web.Pages.LayoutNavName,
+      navName: com.histmersion.api.UiLabels.Text,
       side: List[Modifier[HtmlElement]],
-      heading: Option[com.histmersion.web.Pages.LayoutHeading],
+      heading: Option[com.histmersion.api.UiLabels.Text],
       body: HtmlElement
   ): HtmlElement =
     div(
@@ -90,7 +76,7 @@ object Pages:
   private def single(body: HtmlElement): HtmlElement =
     div(cls := "page-layout page-single", mainTag(cls := "page-main wm-content", idAttr := "page-main", body))
 
-  private def sideLink(r: Route, label: com.histmersion.web.Pages.SideLinkLabel, on: com.histmersion.web.Pages.SideLinkOn, mods: Modifier[HtmlElement]*): HtmlElement =
+  private def sideLink(r: Route, label: com.histmersion.api.UiLabels.Text, on: com.histmersion.web.Pages.LinkActive, mods: Modifier[HtmlElement]*): HtmlElement =
     RouteLink(
       r,
       cls := "side-link",
@@ -100,7 +86,7 @@ object Pages:
       mods
     )
 
-  private def group(name: com.histmersion.web.Pages.GroupName): HtmlElement = div(cls := "side-group", name)
+  private def group(name: com.histmersion.api.UiLabels.Text): HtmlElement = div(cls := "side-group", name)
 
   /** A watched list's link: bold while it has something new, with the count of what waits on someone. */
   private def notice(b: Board): Modifier[HtmlElement] =
@@ -181,15 +167,15 @@ object Pages:
     case Route.Job(id)     => item(r, jobPage(id))
     case _                 => notFound
 
-  private def section(heading: com.histmersion.web.Pages.SectionHeading, body: HtmlElement): HtmlElement = div(h1(cls := "page-title", heading), body)
+  private def section(heading: com.histmersion.api.UiLabels.Text, body: HtmlElement): HtmlElement = div(h1(cls := "page-title", heading), body)
 
-  private def agentsOff(text: com.histmersion.web.Pages.AgentsOffText): HtmlElement =
+  private def agentsOff(text: com.histmersion.api.UiLabels.Text): HtmlElement =
     p(cls := "muted", text, " Their settings are ", code("agents.enabled"), " in the server's configuration.")
 
   /** The merged list through one of its chips — or one of the detailed lists it sums up, under the chips and a way back
     * to the list.
     */
-  private def activity(ui: UiConfig, t: ActivityTab, goal: Option[com.histmersion.web.Pages.ActivityGoal]): HtmlElement =
+  private def activity(ui: UiConfig, t: ActivityTab, goal: Option[com.histmersion.api.automation.Goal.Ref]): HtmlElement =
     if t.isChip then ActivityView.pane(ui, t, goal)
     else
       div(
@@ -244,7 +230,7 @@ object Pages:
     case _                => Route.Activity(ActivityTab.Everything)
 
   /** A job's page: an agent run is its run's page; any other job, its row of the jobs list. */
-  private def jobPage(id: com.histmersion.web.Pages.JobPageId): HtmlElement =
+  private def jobPage(id: com.histmersion.web.Pages.JobId): HtmlElement =
     val job = Var(Option.empty[Either[String, JobInfo]])
     div(
       onMountCallback(_ => ApiClient.job(com.histmersion.api.SpatialHierarchyResult.Job.Id(id)).onComplete(r => job.set(Some(r.toEither.left.map(_.getMessage))))),
@@ -299,7 +285,7 @@ object Pages:
       }
     )
 
-  private def placePage(id: com.histmersion.web.Pages.PlacePageId): HtmlElement =
+  private def placePage(id: com.histmersion.web.Pages.PlaceId): HtmlElement =
     cardPage(
       Preview.Target.Place(id, None),
       Route.Place(id),
@@ -317,7 +303,7 @@ object Pages:
       )
     )
 
-  private def eventPage(id: com.histmersion.web.Pages.EventPageId): HtmlElement =
+  private def eventPage(id: com.histmersion.web.Pages.EventId): HtmlElement =
     cardPage(Preview.Target.Event(id), Route.Event(id), RouteLink(Route.Explore, cls := "btn", "Back to the map"))
 
   private def notFound: HtmlElement =

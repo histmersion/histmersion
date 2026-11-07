@@ -21,26 +21,24 @@ final case class ReadingHead(
 )
 
 object ReadingHead:
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindWord = KindWord.T
+  object KindWord extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Line = Line.T
+  object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionName = RegionName.T
+  object RegionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionsText = RegionsText.T
+  object RegionsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type LineResult = LineResult.T
-  object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegionsResult = RegionsResult.T
-  object RegionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegionsRs = RegionsRs.T
-  object RegionsRs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextResult = TextResult.T
-  object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextS = TextS.T
-  object TextS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindWordResult = KindWordResult.T
-  object KindWordResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindWordKind = KindWordKind.T
-  object KindWordKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type What = What.T
   object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = com.histmersion.api.library.Title
+  val Title: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title
   type Authors = Authors.T
   object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Period = Period.T
@@ -50,12 +48,12 @@ object ReadingHead:
   type Summary = Summary.T
   object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def line(parts: Option[String]*): com.histmersion.web.library.ReadingHead.LineResult = parts.flatten.map(_.trim).filter(_.nonEmpty).mkString(" · ")
-  private def regions(rs: List[com.histmersion.web.library.ReadingHead.RegionsRs]): com.histmersion.web.library.ReadingHead.RegionsResult = rs.map(Label.display).mkString(" · ")
-  private def text(s: Option[com.histmersion.web.library.ReadingHead.TextS]): Option[com.histmersion.web.library.ReadingHead.TextResult] = s.map(_.trim).filter(_.nonEmpty)
+  private def line(parts: Option[String]*): com.histmersion.web.library.ReadingHead.Line = parts.flatten.map(_.trim).filter(_.nonEmpty).mkString(" · ")
+  private def regions(rs: List[com.histmersion.web.library.ReadingHead.RegionName]): com.histmersion.web.library.ReadingHead.RegionsText = rs.map(Label.display).mkString(" · ")
+  private def text(s: Option[com.histmersion.web.library.ReadingHead.Text]): Option[com.histmersion.web.library.ReadingHead.Text] = s.map(_.trim).filter(_.nonEmpty)
 
   /** A source's type as a word (`Book`), none when it is not known. */
-  def kindWord(kind: com.histmersion.web.library.ReadingHead.KindWordKind): Option[com.histmersion.web.library.ReadingHead.KindWordResult] =
+  def kindWord(kind: com.histmersion.web.library.ReadingHead.Kind): Option[com.histmersion.web.library.ReadingHead.KindWord] =
     Option.when(kind != com.histmersion.api.library.Source.Kinds.Unknown)(Wording.capitalize(kind))
 
   /** From a row of the table: no type or venue yet. */

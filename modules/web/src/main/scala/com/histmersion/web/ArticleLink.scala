@@ -10,18 +10,14 @@ import scala.scalajs.js
   * ([[HtmlAtoms.articleLink]]), so [[Preview]] previews it the same everywhere.
   */
 object ArticleLink:
-  type HrefResult = HrefResult.T
-  object HrefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HrefSlug = HrefSlug.T
-  object HrefSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplySlug = _root_.com.histmersion.web.ArticleLink.HrefSlug
-  val ApplySlug: _root_.com.histmersion.web.ArticleLink.HrefSlug.type = _root_.com.histmersion.web.ArticleLink.HrefSlug
-  type ApplyLabel = ApplyLabel.T
-  object ApplyLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Href = Href.T
+  object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplySlug = _root_.com.histmersion.web.ApiClient.ArticleSlug
+  val ApplySlug: _root_.com.histmersion.web.ApiClient.ArticleSlug.type = _root_.com.histmersion.web.ApiClient.ArticleSlug
 
-  def href(slug: com.histmersion.web.ArticleLink.HrefSlug): com.histmersion.web.ArticleLink.HrefResult = s"/article/${HtmlAtoms.segment(slug)}"
+  def href(slug: com.histmersion.web.ApiClient.ArticleSlug): com.histmersion.web.ArticleLink.Href = s"/article/${HtmlAtoms.segment(slug)}"
 
-  def apply(slug: com.histmersion.web.ArticleLink.ApplySlug, label: com.histmersion.web.ArticleLink.ApplyLabel): HtmlElement =
+  def apply(slug: com.histmersion.web.ArticleLink.ApplySlug, label: String): HtmlElement =
     a(
       cls := "art-ref",
       dataAttr("slug") := slug,

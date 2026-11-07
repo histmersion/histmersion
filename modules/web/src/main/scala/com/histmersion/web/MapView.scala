@@ -20,259 +20,133 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.api.library.Source
 
 object MapView:
+  type BoxHeight = BoxHeight.T
+  object BoxHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoxWidth = BoxWidth.T
+  object BoxWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassName = ClassName.T
+  object ClassName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Color = Color.T
+  object Color extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DotCount = DotCount.T
+  object DotCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Fade = Fade.T
+  object Fade extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HoldsCell = HoldsCell.T
+  object HoldsCell extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Html = Html.T
+  object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxDot = MaxDot.T
+  object MaxDot extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Mid = Mid.T
+  object Mid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MidSum = MidSum.T
+  object MidSum extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Normalized = Normalized.T
+  object Normalized extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Playback = Playback.T
+  object Playback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RangeHigh = RangeHigh.T
+  object RangeHigh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RangeLow = RangeLow.T
+  object RangeLow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Ring = Ring.T
+  object Ring extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Separation = Separation.T
+  object Separation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowSources = ShowSources.T
+  object ShowSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceLabel = SourceLabel.T
+  object SourceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpanEnd = SpanEnd.T
+  object SpanEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpanStart = SpanStart.T
+  object SpanStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearsPerSecond = YearsPerSecond.T
+  object YearsPerSecond extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type AvgMidLoopResult = AvgMidLoopResult.T
-  object AvgMidLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AvgMidLoopSum = AvgMidLoopSum.T
-  object AvgMidLoopSum extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AvgMidLoopN = AvgMidLoopN.T
-  object AvgMidLoopN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RampEndsNormResult = RampEndsNormResult.T
-  object RampEndsNormResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RampEndsNormV = RampEndsNormV.T
-  object RampEndsNormV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadOverlayColorOfResult = LoadOverlayColorOfResult.T
-  object LoadOverlayColorOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Radius = Radius.T
   object Radius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CurrentSpanPart1 = CurrentSpanPart1.T
-  object CurrentSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CurrentSpanPart2 = CurrentSpanPart2.T
-  object CurrentSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OverlayReqId = OverlayReqId.T
-  object OverlayReqId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaybackMode = PlaybackMode.T
-  object PlaybackMode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlayYearsPerSecond = PlayYearsPerSecond.T
-  object PlayYearsPerSecond extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PopupLat = PopupLat.T
-  object PopupLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PopupLon = PopupLon.T
-  object PopupLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PopupHtml = PopupHtml.T
-  object PopupHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetPlaybackModeOn = SetPlaybackModeOn.T
-  object SetPlaybackModeOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlayLead = PlayLead.T
-  object PlayLead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlayFade = PlayFade.T
-  object PlayFade extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Playhead = Playhead.T
   object Playhead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlayFrameSpanPart1 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
-  val PlayFrameSpanPart1: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
-  type PlayFrameSpanPart2 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
-  val PlayFrameSpanPart2: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
-  type PlayFramePh = PlayFramePh.T
-  object PlayFramePh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlayFrameYearsPerSecond = PlayFrameYearsPerSecond.T
-  object PlayFrameYearsPerSecond extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RestylePlayAreasSpanPart1 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
-  val RestylePlayAreasSpanPart1: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
-  type RestylePlayAreasSpanPart2 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
-  val RestylePlayAreasSpanPart2: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
-  type AddPlayAreasSpanPart1 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
-  val AddPlayAreasSpanPart1: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
-  type AddPlayAreasSpanPart2 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
-  val AddPlayAreasSpanPart2: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
-  type AddPlayAreasKeyOfResult = AddPlayAreasKeyOfResult.T
-  object AddPlayAreasKeyOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MidOfResult = MidOfResult.T
-  object MidOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AvgMidResult = AvgMidResult.T
-  object AvgMidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ColorForResult = ColorForResult.T
-  object ColorForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ColorForMid = ColorForMid.T
-  object ColorForMid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ColorForSpanPart1 = ColorForSpanPart1.T
-  object ColorForSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ColorForSpanPart2 = ColorForSpanPart2.T
-  object ColorForSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MidRangeResultPart1 = MidRangeResultPart1.T
-  object MidRangeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MidRangeResultPart2 = MidRangeResultPart2.T
-  object MidRangeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangeOfResultPart1 = RangeOfResultPart1.T
-  object RangeOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangeOfResultPart2 = RangeOfResultPart2.T
-  object RangeOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangeOfMids = RangeOfMids.T
-  object RangeOfMids extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GradientBgResult = GradientBgResult.T
-  object GradientBgResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GradientBgSpanPart1 = _root_.com.histmersion.web.MapView.ColorForSpanPart1
-  val GradientBgSpanPart1: _root_.com.histmersion.web.MapView.ColorForSpanPart1.type = _root_.com.histmersion.web.MapView.ColorForSpanPart1
-  type GradientBgSpanPart2 = _root_.com.histmersion.web.MapView.ColorForSpanPart2
-  val GradientBgSpanPart2: _root_.com.histmersion.web.MapView.ColorForSpanPart2.type = _root_.com.histmersion.web.MapView.ColorForSpanPart2
-  type GradientOfResult = GradientOfResult.T
-  object GradientOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GradientOfMids = _root_.com.histmersion.web.MapView.RangeOfMids
-  val GradientOfMids: _root_.com.histmersion.web.MapView.RangeOfMids.type = _root_.com.histmersion.web.MapView.RangeOfMids
-  type GradientOfSpanPart1 = _root_.com.histmersion.web.MapView.ColorForSpanPart1
-  val GradientOfSpanPart1: _root_.com.histmersion.web.MapView.ColorForSpanPart1.type = _root_.com.histmersion.web.MapView.ColorForSpanPart1
-  type GradientOfSpanPart2 = _root_.com.histmersion.web.MapView.ColorForSpanPart2
-  val GradientOfSpanPart2: _root_.com.histmersion.web.MapView.ColorForSpanPart2.type = _root_.com.histmersion.web.MapView.ColorForSpanPart2
-  type RampEndsResultPart1 = RampEndsResultPart1.T
-  object RampEndsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RampEndsResultPart2 = RampEndsResultPart2.T
-  object RampEndsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RampEndsMids = _root_.com.histmersion.web.MapView.RangeOfMids
-  val RampEndsMids: _root_.com.histmersion.web.MapView.RangeOfMids.type = _root_.com.histmersion.web.MapView.RangeOfMids
-  type RampEndsSpanPart1 = _root_.com.histmersion.web.MapView.ColorForSpanPart1
-  val RampEndsSpanPart1: _root_.com.histmersion.web.MapView.ColorForSpanPart1.type = _root_.com.histmersion.web.MapView.ColorForSpanPart1
-  type RampEndsSpanPart2 = _root_.com.histmersion.web.MapView.ColorForSpanPart2
-  val RampEndsSpanPart2: _root_.com.histmersion.web.MapView.ColorForSpanPart2.type = _root_.com.histmersion.web.MapView.ColorForSpanPart2
+  type PlayFrameSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
+  val PlayFrameSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
+  type PlayFrameSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
+  val PlayFrameSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
+  type RestylePlayAreasSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
+  val RestylePlayAreasSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
+  type RestylePlayAreasSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
+  val RestylePlayAreasSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
+  type AddPlayAreasSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
+  val AddPlayAreasSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
+  type AddPlayAreasSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
+  val AddPlayAreasSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
+  type GradientBgSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
+  val GradientBgSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
+  type GradientBgSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
+  val GradientBgSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
+  type GradientOfMids = _root_.com.histmersion.web.MapView.Mid
+  val GradientOfMids: _root_.com.histmersion.web.MapView.Mid.type = _root_.com.histmersion.web.MapView.Mid
+  type GradientOfSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
+  val GradientOfSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
+  type GradientOfSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
+  val GradientOfSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
+  type RampEndsMids = _root_.com.histmersion.web.MapView.Mid
+  val RampEndsMids: _root_.com.histmersion.web.MapView.Mid.type = _root_.com.histmersion.web.MapView.Mid
+  type RampEndsSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
+  val RampEndsSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
+  type RampEndsSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
+  val RampEndsSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
   type RadiusForResult = RadiusForResult.T
   object RadiusForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RadiusForN = RadiusForN.T
-  object RadiusForN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxDotRadiusResult = MaxDotRadiusResult.T
   object MaxDotRadiusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClusterRadiusResult = ClusterRadiusResult.T
   object ClusterRadiusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClusterRadiusMaxDot = ClusterRadiusMaxDot.T
-  object ClusterRadiusMaxDot extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClusterRadiusBoxesPart1 = ClusterRadiusBoxesPart1.T
-  object ClusterRadiusBoxesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClusterRadiusBoxesPart2 = ClusterRadiusBoxesPart2.T
-  object ClusterRadiusBoxesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RingOfResult = RingOfResult.T
-  object RingOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RingOfN = RingOfN.T
-  object RingOfN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RingOfSpanYears = RingOfSpanYears.T
-  object RingOfSpanYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PopupHtmlResult = PopupHtmlResult.T
-  object PopupHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpiderfiesResult = SpiderfiesResult.T
-  object SpiderfiesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpiderfiesN = SpiderfiesN.T
-  object SpiderfiesN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpiderfiesHoldsCell = SpiderfiesHoldsCell.T
-  object SpiderfiesHoldsCell extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpiderSeparationResult = SpiderSeparationResult.T
-  object SpiderSeparationResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowSourcesOn = ShowSourcesOn.T
-  object ShowSourcesOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdateKeyEvents = UpdateKeyEvents.T
-  object UpdateKeyEvents extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdateKeySites = UpdateKeySites.T
-  object UpdateKeySites extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdateKeyUndated = UpdateKeyUndated.T
-  object UpdateKeyUndated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadEventsSpanPart1 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
-  val LoadEventsSpanPart1: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
-  type LoadEventsSpanPart2 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
-  val LoadEventsSpanPart2: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
-  type TileSpanOfResultPart1 = TileSpanOfResultPart1.T
-  object TileSpanOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileSpanOfResultPart2 = TileSpanOfResultPart2.T
-  object TileSpanOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileSpanOfSpanPart1 = TileSpanOfSpanPart1.T
-  object TileSpanOfSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileSpanOfSpanPart2 = TileSpanOfSpanPart2.T
-  object TileSpanOfSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileSpanOfPlayback = TileSpanOfPlayback.T
-  object TileSpanOfPlayback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileSpanOfYearsPerSecond = TileSpanOfYearsPerSecond.T
-  object TileSpanOfYearsPerSecond extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileSpanOfBucketSeconds = TileSpanOfBucketSeconds.T
-  object TileSpanOfBucketSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileSpanResultPart1 = TileSpanResultPart1.T
-  object TileSpanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileSpanResultPart2 = TileSpanResultPart2.T
-  object TileSpanResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileSpanSpanPart1 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
-  val TileSpanSpanPart1: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
-  type TileSpanSpanPart2 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
-  val TileSpanSpanPart2: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
-  type UpdateLegendSpanPart1 = UpdateLegendSpanPart1.T
-  object UpdateLegendSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdateLegendSpanPart2 = UpdateLegendSpanPart2.T
-  object UpdateLegendSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkerTitleResult = MarkerTitleResult.T
-  object MarkerTitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HoverSourceResult = HoverSourceResult.T
-  object HoverSourceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkerLabelResult = MarkerLabelResult.T
-  object MarkerLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderSpanPart1 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
-  val RenderSpanPart1: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
-  type RenderSpanPart2 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
-  val RenderSpanPart2: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
-  type RevealKey = RevealKey.T
-  object RevealKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WaitsForQuietResult = WaitsForQuietResult.T
-  object WaitsForQuietResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WaitsForQuietPlayback = WaitsForQuietPlayback.T
-  object WaitsForQuietPlayback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeoQueryKind = GeoQueryKind.T
-  object GeoQueryKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeoQueryLimit = GeoQueryLimit.T
-  object GeoQueryLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AreaTimeSpanPart1 = AreaTimeSpanPart1.T
-  object AreaTimeSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AreaTimeSpanPart2 = AreaTimeSpanPart2.T
-  object AreaTimeSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AreaTimePlayback = AreaTimePlayback.T
-  object AreaTimePlayback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OverlayLimitResult = OverlayLimitResult.T
-  object OverlayLimitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacesGeoCachedResult = PlacesGeoCachedResult.T
-  object PlacesGeoCachedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacesGeoCachedKind = PlacesGeoCachedKind.T
-  object PlacesGeoCachedKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacesGeoCachedLimit = PlacesGeoCachedLimit.T
-  object PlacesGeoCachedLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DynStrResult = DynStrResult.T
-  object DynStrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DynPeriodResultPart1 = DynPeriodResultPart1.T
-  object DynPeriodResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DynPeriodResultPart2 = DynPeriodResultPart2.T
-  object DynPeriodResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ViridisAtResult = ViridisAtResult.T
-  object ViridisAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ViridisAtMid = ViridisAtMid.T
-  object ViridisAtMid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ViridisAtSpanPart1 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
-  val ViridisAtSpanPart1: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
-  type ViridisAtSpanPart2 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
-  val ViridisAtSpanPart2: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
-  type LoadOverlaySpanPart1 = _root_.com.histmersion.web.MapView.AreaTimeSpanPart1
-  val LoadOverlaySpanPart1: _root_.com.histmersion.web.MapView.AreaTimeSpanPart1.type = _root_.com.histmersion.web.MapView.AreaTimeSpanPart1
-  type LoadOverlaySpanPart2 = _root_.com.histmersion.web.MapView.AreaTimeSpanPart2
-  val LoadOverlaySpanPart2: _root_.com.histmersion.web.MapView.AreaTimeSpanPart2.type = _root_.com.histmersion.web.MapView.AreaTimeSpanPart2
-  type SyncPointLabelsKeyOfResult = SyncPointLabelsKeyOfResult.T
-  object SyncPointLabelsKeyOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceClassesResult = PlaceClassesResult.T
-  object PlaceClassesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceClassesBase = PlaceClassesBase.T
-  object PlaceClassesBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceClassesBasis = PlaceClassesBasis.T
-  object PlaceClassesBasis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpanMidResult = SpanMidResult.T
-  object SpanMidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileFilterSpanPart1 = TileFilterSpanPart1.T
-  object TileFilterSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileFilterSpanPart2 = TileFilterSpanPart2.T
-  object TileFilterSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadMediaSpanPart1 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
-  val LoadMediaSpanPart1: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
-  type LoadMediaSpanPart2 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
-  val LoadMediaSpanPart2: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
-  type LoadSitesSpanPart1 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
-  val LoadSitesSpanPart1: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
-  type LoadSitesSpanPart2 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
-  val LoadSitesSpanPart2: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
+  type LoadEventsSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
+  val LoadEventsSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
+  type LoadEventsSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
+  val LoadEventsSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
+  type TileSpanSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
+  val TileSpanSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
+  type TileSpanSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
+  val TileSpanSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
+  type RenderSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
+  val RenderSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
+  type RenderSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
+  val RenderSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
+  type ViridisAtSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
+  val ViridisAtSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
+  type ViridisAtSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
+  val ViridisAtSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
+  type LoadOverlaySpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
+  val LoadOverlaySpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
+  type LoadOverlaySpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
+  val LoadOverlaySpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
+  type LoadMediaSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
+  val LoadMediaSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
+  type LoadMediaSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
+  val LoadMediaSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
+  type LoadSitesSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
+  val LoadSitesSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
+  type LoadSitesSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
+  val LoadSitesSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
 
   private var radius: com.histmersion.web.MapView.Radius = Layout.markerRadiusDefault
   private val pickerMax = Layout.pickerMax
   private val fitMaxZoom = Layout.fitMaxZoom
-  private var currentSpan: (com.histmersion.web.MapView.CurrentSpanPart1, com.histmersion.web.MapView.CurrentSpanPart2) = (0L, 1L)
+  private var currentSpan: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End) = (0L, 1L)
   private var legendEl: dom.HTMLElement = uninitialized
-  private var overlayReqId: com.histmersion.web.MapView.OverlayReqId = 0
+  private var overlayReqId: Int = 0
   // the four kinds of point (docs/map-layers.md): ONE layer implementation, four descriptors, one
   // cluster layer; the events' layer is EventMarkers'
   private val findingsLayer = PointLayer(PointKinds.Findings, () => dots, () => spanMid())
@@ -291,10 +165,10 @@ object MapView:
     TileDecode.media,
     () => tilesConfig.maxZoom
   )
-  private var playbackMode: com.histmersion.web.MapView.PlaybackMode = false
+  private var playbackMode: com.histmersion.web.MapView.Playback = false
   // `var`s: the tiles' settings (from the page's config), and playback's speed (its time buckets)
   private[web] var tilesConfig: MapTilesUiConfig = MapTilesUiConfig()
-  private var playYearsPerSecond: com.histmersion.web.MapView.PlayYearsPerSecond = 0.0
+  private var playYearsPerSecond: com.histmersion.web.MapView.YearsPerSecond = 0.0
 
   /** The map's ONE cluster layer, for every kind of point ([[PointLayer]]): what is near on screen is one bubble,
     * whatever it is. Regions never join.
@@ -367,7 +241,7 @@ object MapView:
     polityPlaces.clear()
 
   /** A popup at a map point (a finding's, a picture's). */
-  def popup(lat: com.histmersion.web.MapView.PopupLat, lon: com.histmersion.web.MapView.PopupLon, html: com.histmersion.web.MapView.PopupHtml): Unit =
+  def popup(lat: com.histmersion.api.catalogue.Latitude, lon: com.histmersion.api.catalogue.Longitude, html: com.histmersion.web.MapView.Html): Unit =
     if TheMap.isUp then {
       val _ = TheMap.surface.popup(LatLon(lat, lon), s"""<div class="hd-popup-content">$html</div>""")
     }
@@ -376,7 +250,7 @@ object MapView:
     * Stopped, the map is drawn for the span shown again (the caller's [[App.restoreSpan]]: the findings, the legend,
     * the tiles and the boundaries of the whole span) — this alone only lets go of playback's states.
     */
-  def setPlaybackMode(on: com.histmersion.web.MapView.SetPlaybackModeOn): Unit =
+  def setPlaybackMode(on: com.histmersion.web.MapView.Playback): Unit =
     val was = playbackMode
     playbackMode = on
     if was && !on then playAreas.clear()
@@ -397,14 +271,14 @@ object MapView:
     object Dashed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private val playAreas = scala.collection.mutable.LinkedHashMap.empty[String, PlayArea]
   // `var`s: how far ahead of the playhead the states are fetched, and how long one fades (years); the playhead
-  private var playLead: com.histmersion.web.MapView.PlayLead = 0L
-  private var playFade: com.histmersion.web.MapView.PlayFade = 0.0
+  private var playLead: com.histmersion.api.catalogue.Year = 0L
+  private var playFade: com.histmersion.web.MapView.Fade = 0.0
   private var playhead: com.histmersion.web.MapView.Playhead = 0.0
 
   /** One playback frame: the findings of the window `span` and the states at playhead `ph`, played at `yearsPerSecond`.
     * The findings are diffed (only the colour of a kept one changes); the states are recoloured and faded in place.
     */
-  def playFrame(points: List[GeoHit], span: (com.histmersion.web.MapView.PlayFrameSpanPart1, com.histmersion.web.MapView.PlayFrameSpanPart2), ph: com.histmersion.web.MapView.PlayFramePh, yearsPerSecond: com.histmersion.web.MapView.PlayFrameYearsPerSecond): Unit =
+  def playFrame(points: List[GeoHit], span: (com.histmersion.web.MapView.PlayFrameSpanPart1, com.histmersion.web.MapView.PlayFrameSpanPart2), ph: com.histmersion.api.catalogue.Year, yearsPerSecond: com.histmersion.web.MapView.YearsPerSecond): Unit =
     playLead = (yearsPerSecond * Layout.playbackLeadSeconds).toLong
     playYearsPerSecond = yearsPerSecond
     playFade = math.max(1.0, yearsPerSecond * Layout.playbackAreaFadeSeconds)
@@ -421,7 +295,7 @@ object MapView:
   /** A year's states fetched in playback: added to those held (the ones over for longer than a fade let go), the shapes
     * sent to the map only when that changed what is held.
     */
-  private def addPlayAreas(features: js.Array[js.Dynamic], span: (com.histmersion.web.MapView.AddPlayAreasSpanPart1, com.histmersion.web.MapView.AddPlayAreasSpanPart2), keyOf: js.Dynamic => com.histmersion.web.MapView.AddPlayAreasKeyOfResult): Unit =
+  private def addPlayAreas(features: js.Array[js.Dynamic], span: (com.histmersion.web.MapView.AddPlayAreasSpanPart1, com.histmersion.web.MapView.AddPlayAreasSpanPart2), keyOf: js.Dynamic => com.histmersion.web.MapView.Key): Unit =
     def byFindings(f: js.Dynamic) =
       dynStr(f.properties.basis).flatMap(Place.TimeBasis.parse).contains(Place.TimeBasis.Findings)
     val before = playAreas.keySet.toSet
@@ -457,12 +331,12 @@ object MapView:
         )
       })
 
-  private[web] def midOf(pt: GeoHit): Option[com.histmersion.web.MapView.MidOfResult] =
+  private[web] def midOf(pt: GeoHit): Option[com.histmersion.web.MapView.Mid] =
     for a <- pt.periodStart; b <- pt.periodEnd yield (a + b).toDouble / 2
 
-  private[web] def avgMid(items: Iterable[GeoHit]): Option[com.histmersion.web.MapView.AvgMidResult] =
+  private[web] def avgMid(items: Iterable[GeoHit]): Option[com.histmersion.web.MapView.Mid] =
     val points = items.iterator
-    @tailrec def loop(sum: com.histmersion.web.MapView.AvgMidLoopSum, n: com.histmersion.web.MapView.AvgMidLoopN): Option[com.histmersion.web.MapView.AvgMidLoopResult] =
+    @tailrec def loop(sum: com.histmersion.web.MapView.MidSum, n: Int): Option[com.histmersion.web.MapView.Mid] =
       if points.hasNext then
         midOf(points.next()) match
           case Some(m) => loop(sum + m, n + 1)
@@ -471,7 +345,7 @@ object MapView:
       else None
     loop(0.0, 0)
 
-  private[web] def colorFor(mid: Option[com.histmersion.web.MapView.ColorForMid], span: (com.histmersion.web.MapView.ColorForSpanPart1, com.histmersion.web.MapView.ColorForSpanPart2), certainty: Certainty): com.histmersion.web.MapView.ColorForResult =
+  private[web] def colorFor(mid: Option[com.histmersion.web.MapView.Mid], span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End), certainty: Certainty): com.histmersion.web.MapView.Color =
     val lo = span._1.min(span._2).toDouble
     val hi = span._1.max(span._2).toDouble
     val base = mid match
@@ -479,10 +353,10 @@ object MapView:
       case Some(m) => Fmt.color(if hi == lo then 0.5 else (m - lo) / (hi - lo))
     Certainty.desaturate(base, certainty)
 
-  private[web] def midRange(items: Iterable[GeoHit]): Option[(com.histmersion.web.MapView.MidRangeResultPart1, com.histmersion.web.MapView.MidRangeResultPart2)] = rangeOf(items.flatMap(midOf))
+  private[web] def midRange(items: Iterable[GeoHit]): Option[(com.histmersion.web.MapView.RangeLow, com.histmersion.web.MapView.RangeHigh)] = rangeOf(items.flatMap(midOf))
 
   /** Pure: the least and the greatest of `mids`. */
-  private[web] def rangeOf(mids: Iterable[com.histmersion.web.MapView.RangeOfMids]): Option[(com.histmersion.web.MapView.RangeOfResultPart1, com.histmersion.web.MapView.RangeOfResultPart2)] =
+  private[web] def rangeOf(mids: Iterable[com.histmersion.web.MapView.Mid]): Option[(com.histmersion.web.MapView.RangeLow, com.histmersion.web.MapView.RangeHigh)] =
     // `var`s: one pass over what may be thousands of mids, during a drag
     var lo = Double.MaxValue
     var hi = Double.MinValue
@@ -494,13 +368,13 @@ object MapView:
   /** The CSS background VALUE for a group of findings: flat when they agree, a gradient across their period midpoints
     * when they do not.
     */
-  private[web] def gradientBg(items: Iterable[GeoHit], span: (com.histmersion.web.MapView.GradientBgSpanPart1, com.histmersion.web.MapView.GradientBgSpanPart2), certainty: Certainty): com.histmersion.web.MapView.GradientBgResult =
+  private[web] def gradientBg(items: Iterable[GeoHit], span: (com.histmersion.web.MapView.GradientBgSpanPart1, com.histmersion.web.MapView.GradientBgSpanPart2), certainty: Certainty): com.histmersion.web.MapView.Color =
     gradientOf(items.flatMap(midOf), span, certainty)
 
   /** Pure: the same over the midpoints of any dated dots — a mixed bubble's findings, sites, events and pictures alike
     * (the undated have no say).
     */
-  private[web] def gradientOf(mids: Iterable[com.histmersion.web.MapView.GradientOfMids], span: (com.histmersion.web.MapView.GradientOfSpanPart1, com.histmersion.web.MapView.GradientOfSpanPart2), certainty: Certainty): com.histmersion.web.MapView.GradientOfResult =
+  private[web] def gradientOf(mids: Iterable[com.histmersion.web.MapView.GradientOfMids], span: (com.histmersion.web.MapView.GradientOfSpanPart1, com.histmersion.web.MapView.GradientOfSpanPart2), certainty: Certainty): com.histmersion.web.MapView.Color =
     rampEnds(mids, span, certainty) match
       case (a, b) if a == b => a
       case (a, b)           => s"linear-gradient(135deg,$a,$b)"
@@ -508,7 +382,7 @@ object MapView:
   /** Pure: the colours of the oldest and the newest of `mids` on the ramp (desaturated by `certainty`); the undated
     * colour twice when none is dated.
     */
-  private[web] def rampEnds(mids: Iterable[com.histmersion.web.MapView.RampEndsMids], span: (com.histmersion.web.MapView.RampEndsSpanPart1, com.histmersion.web.MapView.RampEndsSpanPart2), certainty: Certainty): (com.histmersion.web.MapView.RampEndsResultPart1, com.histmersion.web.MapView.RampEndsResultPart2) =
+  private[web] def rampEnds(mids: Iterable[com.histmersion.web.MapView.RampEndsMids], span: (com.histmersion.web.MapView.RampEndsSpanPart1, com.histmersion.web.MapView.RampEndsSpanPart2), certainty: Certainty): (com.histmersion.web.MapView.Color, com.histmersion.web.MapView.Color) =
     rangeOf(mids) match
       case None =>
         val c = colorFor(None, span, certainty)
@@ -516,10 +390,10 @@ object MapView:
       case Some((lo, hi)) =>
         val sLo = span._1.min(span._2).toDouble
         val sHi = span._1.max(span._2).toDouble
-        def norm(v: com.histmersion.web.MapView.RampEndsNormV): com.histmersion.web.MapView.RampEndsNormResult = if sHi == sLo then 0.5 else (v - sLo) / (sHi - sLo)
+        def norm(v: com.histmersion.web.MapView.Mid): com.histmersion.web.MapView.Normalized = if sHi == sLo then 0.5 else (v - sLo) / (sHi - sLo)
         (Certainty.desaturate(Fmt.color(norm(lo)), certainty), Certainty.desaturate(Fmt.color(norm(hi)), certainty))
 
-  private def radiusFor(n: com.histmersion.web.MapView.RadiusForN): com.histmersion.web.MapView.RadiusForResult =
+  private def radiusFor(n: com.histmersion.web.MapView.DotCount): com.histmersion.web.MapView.RadiusForResult =
     if n > 1 then radius + 4 + 3 * n.toString.length else radius
 
   private def maxDotRadius: com.histmersion.web.MapView.MaxDotRadiusResult = radiusFor(999)
@@ -527,14 +401,14 @@ object MapView:
   /** Pure: how near (px) two points' centres are when they join a bubble — the widest bubble's diameter (`maxDot` its
     * radius), or the largest marker box if that is wider: two markers drawn apart never overlap.
     */
-  private[web] def clusterRadius(maxDot: com.histmersion.web.MapView.ClusterRadiusMaxDot, boxes: Iterable[(com.histmersion.web.MapView.ClusterRadiusBoxesPart1, com.histmersion.web.MapView.ClusterRadiusBoxesPart2)]): com.histmersion.web.MapView.ClusterRadiusResult =
+  private[web] def clusterRadius(maxDot: com.histmersion.web.MapView.MaxDot, boxes: Iterable[(com.histmersion.web.MapView.BoxWidth, com.histmersion.web.MapView.BoxHeight)]): com.histmersion.web.MapView.ClusterRadiusResult =
     math.max(2 * maxDot, boxes.map((w, h) => math.max(w, h)).maxOption.getOrElse(0))
 
   // `var`: the next bubble's gradient id (unique on the page)
   private var bubbleSeq = 0
 
   /** Pure: the period-span ring width (0–4) of a single finding spanning `spanYears`. */
-  private[web] def ringOf(n: com.histmersion.web.MapView.RingOfN, spanYears: Option[com.histmersion.web.MapView.RingOfSpanYears]): com.histmersion.web.MapView.RingOfResult =
+  private[web] def ringOf(n: com.histmersion.web.MapView.DotCount, spanYears: Option[com.histmersion.api.Years.Astronomical]): com.histmersion.web.MapView.Ring =
     if n == 1 && spanYears.exists(_ > 0) then
       math.max(1, math.min(4, math.round(math.log10(spanYears.get.toDouble + 1) * 1.3).toInt))
     else 0
@@ -542,7 +416,7 @@ object MapView:
   /** One finding's popup: the source link (identifier label, preview on hover, window on click), title, period, claim
     * and its confidence badge — the same atoms as the server's pages.
     */
-  private[web] def popupHtml(pt: GeoHit): com.histmersion.web.MapView.PopupHtmlResult =
+  private[web] def popupHtml(pt: GeoHit): com.histmersion.web.MapView.Html =
     // a finding that states no confidence says so — it is not drawn as high
     val conf = pt.confidence.fold(s""" <span class="hd-conf">confidence ${Certainty.UnstatedLabel}</span>""")(c =>
       " " + ConfidenceBadge.html(c)
@@ -635,10 +509,10 @@ object MapView:
   /** Pure: is a bubble of `n` dots fanned out (not when it holds a tile's counted cell, which is no one dot, or more
     * than a spiral around the spot shows legibly)?
     */
-  private[web] def spiderfies(n: com.histmersion.web.MapView.SpiderfiesN, holdsCell: com.histmersion.web.MapView.SpiderfiesHoldsCell): com.histmersion.web.MapView.SpiderfiesResult = n >= 2 && n <= Layout.spiderMax && !holdsCell
+  private[web] def spiderfies(n: com.histmersion.web.MapView.DotCount, holdsCell: com.histmersion.web.MapView.HoldsCell): Boolean = n >= 2 && n <= Layout.spiderMax && !holdsCell
 
   /** How far apart fanned-out dots stand: the widest marker box and a gap. */
-  private def spiderSeparation: com.histmersion.web.MapView.SpiderSeparationResult = PointKinds.all.map(k => math.max(k.box._1, k.box._2)).max + 8
+  private def spiderSeparation: com.histmersion.web.MapView.Separation = PointKinds.all.map(k => math.max(k.box._1, k.box._2)).max + 8
 
   def init(ui: UiConfig): HtmlElement =
     radius = ui.markerRadius
@@ -741,7 +615,7 @@ object MapView:
   /** The findings' switch, as every point layer's: their points join or leave the cluster group, which the other kinds
     * share (so it stays on the map); `render` keeps them current while they are out.
     */
-  private def showSources(on: com.histmersion.web.MapView.ShowSourcesOn): Unit =
+  private def showSources(on: com.histmersion.web.MapView.ShowSources): Unit =
     if on then findingsLayer.attach() else findingsLayer.detach()
 
   private def addLegend(surface: MapSurface): Unit =
@@ -779,7 +653,7 @@ object MapView:
     corner.insertBefore(legendEl, corner.firstChild)
 
   /** The legend's key to the icons (#1449), for the layers that draw them. */
-  private def updateKey(events: com.histmersion.web.MapView.UpdateKeyEvents, sites: com.histmersion.web.MapView.UpdateKeySites, undated: com.histmersion.web.MapView.UpdateKeyUndated): Unit =
+  private def updateKey(events: com.histmersion.web.MapKey.Events, sites: com.histmersion.web.MapKey.Sites, undated: com.histmersion.web.MapKey.Undated): Unit =
     if legendEl != null then
       Option(legendEl.querySelector(".hd-key-slot")).foreach(_.innerHTML = MapKey.html(events, sites, undated))
 
@@ -789,15 +663,15 @@ object MapView:
     * whole time buckets ([[PlaybackBuckets]]), so their tiles change once a bucket.
     */
   private[web] def tileSpanOf(
-      span: (com.histmersion.web.MapView.TileSpanOfSpanPart1, com.histmersion.web.MapView.TileSpanOfSpanPart2),
-      playback: com.histmersion.web.MapView.TileSpanOfPlayback,
-      yearsPerSecond: com.histmersion.web.MapView.TileSpanOfYearsPerSecond,
-      bucketSeconds: com.histmersion.web.MapView.TileSpanOfBucketSeconds
-  ): (com.histmersion.web.MapView.TileSpanOfResultPart1, com.histmersion.web.MapView.TileSpanOfResultPart2) =
+      span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End),
+      playback: com.histmersion.web.MapView.Playback,
+      yearsPerSecond: com.histmersion.web.MapView.YearsPerSecond,
+      bucketSeconds: com.histmersion.api.catalogue.MapTilesUiConfig.PlaybackBucketSeconds
+  ): (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End) =
     val ordered = (span._1.min(span._2), span._1.max(span._2))
     if playback then PlaybackBuckets.widen(ordered, PlaybackBuckets.years(yearsPerSecond, bucketSeconds)) else ordered
 
-  private def tileSpan(span: (com.histmersion.web.MapView.TileSpanSpanPart1, com.histmersion.web.MapView.TileSpanSpanPart2)): (com.histmersion.web.MapView.TileSpanResultPart1, com.histmersion.web.MapView.TileSpanResultPart2) =
+  private def tileSpan(span: (com.histmersion.web.MapView.TileSpanSpanPart1, com.histmersion.web.MapView.TileSpanSpanPart2)): (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End) =
     tileSpanOf(span, playbackMode, playYearsPerSecond, tilesConfig.playbackBucketSeconds)
 
   /** The tiled layers on the map (sites, pictures, events). */
@@ -805,7 +679,7 @@ object MapView:
     List(MapLayer.Sites -> sitesLayer, MapLayer.Media -> mediaLayer, MapLayer.Events -> EventMarkers.layer)
       .collect { case (l, t) if layerSync.attached(l) => t }
 
-  private def updateLegend(span: (com.histmersion.web.MapView.UpdateLegendSpanPart1, com.histmersion.web.MapView.UpdateLegendSpanPart2)): Unit =
+  private def updateLegend(span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End)): Unit =
     if legendEl == null then ()
     else
       val lo = legendEl.querySelector(".lo")
@@ -816,18 +690,18 @@ object MapView:
   /** Pure: the native tooltip of a dot holding `items` — "N findings here" where several coincide, none for a single
     * finding (its source's card answers the hover, [[hoverSource]]): never a citekey.
     */
-  private[web] def markerTitle(items: List[GeoHit]): Option[com.histmersion.web.MapView.MarkerTitleResult] =
+  private[web] def markerTitle(items: List[GeoHit]): Option[com.histmersion.web.MapView.Title] =
     Option.when(items.size > 1)(s"${items.size} findings here")
 
   /** Pure: the source whose card a dot's hover shows — its one finding's; none for coincident findings (the first of
     * several would misdescribe the spot: their list opens on a click).
     */
-  private[web] def hoverSource(items: List[GeoHit]): Option[com.histmersion.web.MapView.HoverSourceResult] = items match
+  private[web] def hoverSource(items: List[GeoHit]): Option[com.histmersion.web.MapView.SourceLabel] = items match
     case List(one) => Some(one.citekey)
     case _         => None
 
   /** Pure: a single finding's dot as words, for assistive tech — the source's title and the period. */
-  private[web] def markerLabel(pt: GeoHit): com.histmersion.web.MapView.MarkerLabelResult =
+  private[web] def markerLabel(pt: GeoHit): com.histmersion.web.MapView.Label =
     val title = Option(pt.title).map(_.trim).filter(_.nonEmpty).getOrElse(SourceLink.idLabel(pt.citekey, pt.doi))
     val period = Fmt.periodStr(pt.periodStart, pt.periodEnd)
     if period.isEmpty then title else s"$title ($period)"
@@ -844,7 +718,7 @@ object MapView:
       if layerSync.attached.exists(waitsForQuiet(_, UiState.areaPick.now(), playbackMode)) then reloadQuiet(span)
 
   /** Bring the point `key` out of its bubble (zooming in as far as it takes), then `andThen`. */
-  private[web] def reveal(key: com.histmersion.web.MapView.RevealKey, andThen: () => Unit): Unit =
+  private[web] def reveal(key: com.histmersion.web.MapView.Key, andThen: () => Unit): Unit =
     if TheMap.isUp then dots.zoomToShow(key, andThen)
 
   /** Overlay layers follow the map at most once per `Layout.layerReloadMs`, so a timeline drag (which renders on every
@@ -873,7 +747,7 @@ object MapView:
     * keep what they show, recoloured. A snapshot year follows the drag as before; in playback every layer follows the
     * playhead (the tiled ones by whole time buckets, [[tileSpanOf]]).
     */
-  private[web] def waitsForQuiet(layer: MapLayer, pick: GeoPick, playback: com.histmersion.web.MapView.WaitsForQuietPlayback): com.histmersion.web.MapView.WaitsForQuietResult =
+  private[web] def waitsForQuiet(layer: MapLayer, pick: GeoPick, playback: com.histmersion.web.MapView.Playback): Boolean =
     !playback && (layer match
       case MapLayer.Boundaries => !pick.snapshot
       case _                   => true)
@@ -890,7 +764,7 @@ object MapView:
   def geoCacheStats: BoundedCache.Stats = BoundedCache.stats(geoCache)
 
   /** Pure: the query of a layer of `kind` drawn for `time`. */
-  private[web] def geoQuery(kind: com.histmersion.web.MapView.GeoQueryKind, time: GeoTime, limit: com.histmersion.web.MapView.GeoQueryLimit): Api.PlacesGeoQuery =
+  private[web] def geoQuery(kind: com.histmersion.api.catalogue.Place.Kind.Wire, time: GeoTime, limit: com.histmersion.api.Paging.Limit): Api.PlacesGeoQuery =
     val q = Api.PlacesGeoQuery(kind = Some(kind), limit = Some(limit))
     time match
       case GeoTime.At(y)                  => q.modify(_.asOf).setTo(Some(y))
@@ -901,17 +775,17 @@ object MapView:
   /** Pure: the time the boundaries layer is drawn for over `span`, as `pick` reads it; playback always draws the
     * playhead's one year (the middle of its window).
     */
-  private[web] def areaTime(span: (com.histmersion.web.MapView.AreaTimeSpanPart1, com.histmersion.web.MapView.AreaTimeSpanPart2), pick: GeoPick, playback: com.histmersion.web.MapView.AreaTimePlayback): GeoTime =
+  private[web] def areaTime(span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End), pick: GeoPick, playback: com.histmersion.web.MapView.Playback): GeoTime =
     GeoPick.resolve(None, Some(span._1), Some(span._2), if playback then GeoPick.Mid else pick)
 
   /** Pure: how many areas the boundaries layer asks for at `time` — a year's few hundred at most, or every state of a
     * whole range.
     */
-  private[web] def overlayLimit(time: GeoTime): com.histmersion.web.MapView.OverlayLimitResult = time match
+  private[web] def overlayLimit(time: GeoTime): com.histmersion.api.Paging.Limit = time match
     case _: GeoTime.Within => Layout.overlayRangeFetchLimit
     case _                 => Layout.overlayFetchLimit
 
-  private def placesGeoCached(kind: com.histmersion.web.MapView.PlacesGeoCachedKind, time: GeoTime, limit: com.histmersion.web.MapView.PlacesGeoCachedLimit): scala.concurrent.Future[com.histmersion.web.MapView.PlacesGeoCachedResult] =
+  private def placesGeoCached(kind: com.histmersion.api.catalogue.Place.Kind.Wire, time: GeoTime, limit: com.histmersion.api.Paging.Limit): scala.concurrent.Future[com.histmersion.web.MapView.Text] =
     import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
     val k = (kind, time)
     geoCache.get(k) match
@@ -926,16 +800,16 @@ object MapView:
         }
         f
 
-  private def dynStr(v: js.Dynamic): Option[com.histmersion.web.MapView.DynStrResult] =
+  private def dynStr(v: js.Dynamic): Option[com.histmersion.web.MapView.Text] =
     if js.isUndefined(v) || v == null then None else Some(v.toString)
 
-  private def dynPeriod(props: js.Dynamic): Option[(com.histmersion.web.MapView.DynPeriodResultPart1, com.histmersion.web.MapView.DynPeriodResultPart2)] =
+  private def dynPeriod(props: js.Dynamic): Option[(com.histmersion.web.MapView.SpanStart, com.histmersion.web.MapView.SpanEnd)] =
     val ps = props.selectDynamic("periodStart")
     val pe = props.selectDynamic("periodEnd")
     if js.isUndefined(ps) || js.isUndefined(pe) || ps == null || pe == null then None
     else Some((ps.asInstanceOf[Double], pe.asInstanceOf[Double]))
 
-  private[web] def viridisAt(mid: com.histmersion.web.MapView.ViridisAtMid, span: (com.histmersion.web.MapView.ViridisAtSpanPart1, com.histmersion.web.MapView.ViridisAtSpanPart2)): com.histmersion.web.MapView.ViridisAtResult =
+  private[web] def viridisAt(mid: com.histmersion.web.MapView.Mid, span: (com.histmersion.web.MapView.ViridisAtSpanPart1, com.histmersion.web.MapView.ViridisAtSpanPart2)): com.histmersion.web.MapView.Color =
     val sLo = span._1.min(span._2).toDouble
     val sHi = span._1.max(span._2).toDouble
     Fmt.color(if sHi == sLo then 0.5 else ((mid - sLo) / (sHi - sLo)).max(0).min(1))
@@ -983,7 +857,7 @@ object MapView:
           // largest first, so small polities sit on top and stay hoverable
           val sorted = features.toList.sortBy(f => dynPeriod(f.properties).map((a, b) => a - b).getOrElse(99999.0))
           def keyOf(f: js.Dynamic) = dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?")
-          def colorOf(f: js.Dynamic): com.histmersion.web.MapView.LoadOverlayColorOfResult =
+          def colorOf(f: js.Dynamic): com.histmersion.web.MapView.Color =
             viridisAt(dynPeriod(f.properties).map((a, b) => (a + b) / 2).getOrElse(mid.toDouble), span)
           def byFindings(f: js.Dynamic) =
             dynStr(f.properties.basis).flatMap(Place.TimeBasis.parse).contains(Place.TimeBasis.Findings)
@@ -1027,7 +901,7 @@ object MapView:
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
   /** A polity or region with only a point has no boundary yet: its NAME, never a pin or a dot. */
-  private def syncPointLabels(points: List[js.Dynamic], keyOf: js.Dynamic => com.histmersion.web.MapView.SyncPointLabelsKeyOfResult): Unit =
+  private def syncPointLabels(points: List[js.Dynamic], keyOf: js.Dynamic => com.histmersion.web.MapView.Key): Unit =
     val pane = TheMap.pane(MapStack.Pane.AreaPoints)
     val want = points.map(f => keyOf(f) -> f).toMap
     pointLabels.filterInPlace { (k, m) =>
@@ -1074,7 +948,7 @@ object MapView:
     * dated then are attached to it (an undated place, [[PlaceTimeBasis.Findings]]) — drawn dashed and lighter, so it
     * never reads as a place known to exist then.
     */
-  def placeClasses(base: com.histmersion.web.MapView.PlaceClassesBase, basis: Option[com.histmersion.web.MapView.PlaceClassesBasis]): com.histmersion.web.MapView.PlaceClassesResult =
+  def placeClasses(base: com.histmersion.web.MapView.ClassName, basis: Option[com.histmersion.api.catalogue.Place.TimeBasis.Wire]): com.histmersion.web.MapView.ClassName =
     if basis.flatMap(Place.TimeBasis.parse).contains(Place.TimeBasis.Findings) then s"$base $ByFindingsClass" else base
 
   val ByFindingsClass = "hd-by-findings"
@@ -1083,10 +957,10 @@ object MapView:
   val UndatedClass = "hd-undated"
 
   /** The year a place's card reads the gazetteer at: the middle of the span the map shows. */
-  private[web] def spanMid(): Option[com.histmersion.web.MapView.SpanMidResult] = Some((currentSpan._1 + currentSpan._2) / 2)
+  private[web] def spanMid(): Option[com.histmersion.api.Years.Astronomical] = Some((currentSpan._1 + currentSpan._2) / 2)
 
   /** Pure: a tile query's span — `from`/`to` of the shared filter. */
-  private[web] def tileFilter(span: (com.histmersion.web.MapView.TileFilterSpanPart1, com.histmersion.web.MapView.TileFilterSpanPart2)): Filter = Filter(period = Some(Period(span._1, span._2)))
+  private[web] def tileFilter(span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End)): Filter = Filter(period = Some(Period(span._1, span._2)))
 
   /** Every picture of the span, by provider and licence. */
   private def loadMedia(span: (com.histmersion.web.MapView.LoadMediaSpanPart1, com.histmersion.web.MapView.LoadMediaSpanPart2)): Unit =

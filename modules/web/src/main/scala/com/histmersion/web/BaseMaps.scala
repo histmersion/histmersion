@@ -25,151 +25,115 @@ import com.histmersion.api.instance.UiConfig
   * cheapest drawing — and a line of the notice says so.
   */
 object BaseMaps:
+  type ButtonBottom = ButtonBottom.T
+  object ButtonBottom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ButtonLeft = ButtonLeft.T
+  object ButtonLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ButtonRight = ButtonRight.T
+  object ButtonRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ButtonTop = ButtonTop.T
+  object ButtonTop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContoursNote = ContoursNote.T
+  object ContoursNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContoursWhy = ContoursWhy.T
+  object ContoursWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreditsHeight = CreditsHeight.T
+  object CreditsHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreditsHtml = CreditsHtml.T
+  object CreditsHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreditsLeft = CreditsLeft.T
+  object CreditsLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreditsPageUrl = CreditsPageUrl.T
+  object CreditsPageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreditsRight = CreditsRight.T
+  object CreditsRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DocsLink = DocsLink.T
+  object DocsLink extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DocsPage = DocsPage.T
+  object DocsPage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DocsUrl = DocsUrl.T
+  object DocsUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FootChosen = FootChosen.T
+  object FootChosen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LackingNotice = LackingNotice.T
+  object LackingNotice extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LanguageLabel = LanguageLabel.T
+  object LanguageLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MapLanguage = MapLanguage.T
+  object MapLanguage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MapMoved = MapMoved.T
+  object MapMoved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MapZoom = MapZoom.T
+  object MapZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MissingLayer = MissingLayer.T
+  object MissingLayer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MissingNotice = MissingNotice.T
+  object MissingNotice extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoticeLacking = NoticeLacking.T
+  object NoticeLacking extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoticeLeft = NoticeLeft.T
+  object NoticeLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoticeLift = NoticeLift.T
+  object NoticeLift extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoticeRight = NoticeRight.T
+  object NoticeRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoticeRoom = NoticeRoom.T
+  object NoticeRoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoticeText = NoticeText.T
+  object NoticeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoticeWarns = NoticeWarns.T
+  object NoticeWarns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OptionLabel = OptionLabel.T
+  object OptionLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PanelBottom = PanelBottom.T
+  object PanelBottom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PanelMinBelow = PanelMinBelow.T
+  object PanelMinBelow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PanelTop = PanelTop.T
+  object PanelTop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PanelWidth = PanelWidth.T
+  object PanelWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlacementLeft = PlacementLeft.T
+  object PlacementLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlacementTop = PlacementTop.T
+  object PlacementTop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanNote = PlanNote.T
+  object PlanNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeaDepthWhy = SeaDepthWhy.T
+  object SeaDepthWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SoftFallback = SoftFallback.T
+  object SoftFallback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VectorShown = VectorShown.T
+  object VectorShown extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowHeight = WindowHeight.T
+  object WindowHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowWidth = WindowWidth.T
+  object WindowWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What the server reports (`GET /api/basemap`); `None` until asked. */
   type LocalOnly = LocalOnly.T
   object LocalOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Software = Software.T
   object Software extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ViewPart1 = ViewPart1.T
-  object ViewPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EffectiveLocal = EffectiveLocal.T
   object EffectiveLocal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChoicesLocal = ChoicesLocal.T
   object ChoicesLocal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OptionLabelResult = OptionLabelResult.T
-  object OptionLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PastNotice = PastNoticeValue
   type PastNoticeValue = PastNoticeValue.T
   object PastNoticeValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SoftwareNotice = SoftwareNoticeValue
   type SoftwareNoticeValue = SoftwareNoticeValue.T
   object SoftwareNoticeValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DocsLinkResult = DocsLinkResult.T
-  object DocsLinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DocsLinkDocsUrl = DocsLinkDocsUrl.T
-  object DocsLinkDocsUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DocsLinkPage = DocsLinkPage.T
-  object DocsLinkPage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MissingNoticeResult = MissingNoticeResult.T
-  object MissingNoticeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LackingNoticeResult = LackingNoticeResult.T
-  object LackingNoticeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LackingNoticeMissing = LackingNoticeMissing.T
-  object LackingNoticeMissing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AllCreditsLink = AllCreditsLink.T
-  object AllCreditsLink extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditsHtmlResult = CreditsHtmlResult.T
-  object CreditsHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditsHtmlCredits = CreditsHtmlCredits.T
-  object CreditsHtmlCredits extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticeLiftResult = NoticeLiftResult.T
-  object NoticeLiftResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticeLiftNoticeLeft = NoticeLiftNoticeLeft.T
-  object NoticeLiftNoticeLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticeLiftNoticeRight = NoticeLiftNoticeRight.T
-  object NoticeLiftNoticeRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticeLiftCreditsLeft = NoticeLiftCreditsLeft.T
-  object NoticeLiftCreditsLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticeLiftCreditsRight = NoticeLiftCreditsRight.T
-  object NoticeLiftCreditsRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticeLiftCreditsHeight = NoticeLiftCreditsHeight.T
-  object NoticeLiftCreditsHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticeLiftRoom = NoticeLiftRoom.T
-  object NoticeLiftRoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LanguagesPart1 = LanguagesPart1.T
-  object LanguagesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LanguagesPart2 = LanguagesPart2.T
-  object LanguagesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanResultPart2Part1 = PlanResultPart2Part1.T
-  object PlanResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanResultPart2Part2 = PlanResultPart2Part2.T
-  object PlanResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanResultPart3 = PlanResultPart3.T
-  object PlanResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlanLocal = PlanLocal.T
   object PlanLocal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanSoft = PlanSoft.T
-  object PlanSoft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetNoticeNPart1 = SetNoticeNPart1.T
-  object SetNoticeNPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetNoticeNPart2 = SetNoticeNPart2.T
-  object SetNoticeNPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetNoticeLacking = SetNoticeLacking.T
-  object SetNoticeLacking extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticePart1 = NoticePart1.T
-  object NoticePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticePart2 = NoticePart2.T
-  object NoticePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticePart3 = NoticePart3.T
-  object NoticePart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrawnCredits = DrawnCredits.T
-  object DrawnCredits extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FootOpen = FootOpen.T
   object FootOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FootOpenNowResult = FootOpenNowResult.T
-  object FootOpenNowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FootOpenNowChosen = FootOpenNowChosen.T
-  object FootOpenNowChosen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FootOpenNowMoved = FootOpenNowMoved.T
-  object FootOpenNowMoved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FootOpenNowWarns = FootOpenNowWarns.T
-  object FootOpenNowWarns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeepsOsmCreditResult = KeepsOsmCreditResult.T
-  object KeepsOsmCreditResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Open = Open.T
   object Open extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OnVector = OnVector.T
-  object OnVector extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultLanguageResult = DefaultLanguageResult.T
-  object DefaultLanguageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LanguageChoicesResultPart1 = LanguageChoicesResultPart1.T
-  object LanguageChoicesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LanguageChoicesResultPart2 = LanguageChoicesResultPart2.T
-  object LanguageChoicesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LanguageChoicesDefault = LanguageChoicesDefault.T
-  object LanguageChoicesDefault extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeeperReliefResult = DeeperReliefResult.T
-  object DeeperReliefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ContoursFromZoom = ContoursFromZoomValue
   type ContoursFromZoomValue = ContoursFromZoomValue.T
   object ContoursFromZoomValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContoursWhyResult = ContoursWhyResult.T
-  object ContoursWhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContoursWhySoft = ContoursWhySoft.T
-  object ContoursWhySoft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MeetsResult = MeetsResult.T
-  object MeetsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContoursNoteResult = ContoursNoteResult.T
-  object ContoursNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContoursNoteZ = ContoursNoteZ.T
-  object ContoursNoteZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeaDepthWhyResult = SeaDepthWhyResult.T
-  object SeaDepthWhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeaDepthWhySoft = SeaDepthWhySoft.T
-  object SeaDepthWhySoft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacementResultPart1 = PlacementResultPart1.T
-  object PlacementResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacementResultPart2 = PlacementResultPart2.T
-  object PlacementResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacementButtonLeft = PlacementButtonLeft.T
-  object PlacementButtonLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacementButtonRight = PlacementButtonRight.T
-  object PlacementButtonRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacementButtonBottom = PlacementButtonBottom.T
-  object PlacementButtonBottom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacementWidth = PlacementWidth.T
-  object PlacementWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacementWindowWidth = PlacementWindowWidth.T
-  object PlacementWindowWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PanelSideButtonTop = PanelSideButtonTop.T
-  object PanelSideButtonTop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PanelSideButtonBottom = PanelSideButtonBottom.T
-  object PanelSideButtonBottom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PanelSideWindowHeight = PanelSideWindowHeight.T
-  object PanelSideWindowHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PanelSideMinBelow = PanelSideMinBelow.T
-  object PanelSideMinBelow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val status: Var[Option[Basemap.Status]] = Var(None)
 
@@ -183,7 +147,7 @@ object BaseMaps:
   val software: Var[com.histmersion.web.BaseMaps.Software] = Var(false)
 
   /** The map's view, once it is still (its zoom and region): what the contours' line follows. */
-  val view: Var[Option[(com.histmersion.web.BaseMaps.ViewPart1, GeoBounds)]] = Var(None)
+  val view: Var[Option[(com.histmersion.web.BaseMaps.MapZoom, GeoBounds)]] = Var(None)
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
@@ -204,7 +168,7 @@ object BaseMaps:
   /** A choice's label: a vector style says when the data is missing, or when the download left out layers it draws.
     * Pure.
     */
-  def optionLabel(b: BaseMap, s: Option[Basemap.Status]): com.histmersion.web.BaseMaps.OptionLabelResult =
+  def optionLabel(b: BaseMap, s: Option[Basemap.Status]): com.histmersion.web.BaseMaps.OptionLabel =
     if b.online then b.label
     else if !s.forall(_.available) then s"${b.label} — not downloaded"
     else if s.exists(st => st.missing(b.wire).nonEmpty) then s"${b.label} — needs the full download"
@@ -219,7 +183,7 @@ object BaseMaps:
     "This browser draws maps without a GPU: the relief is left out to keep the map quick."
 
   /** The docs section the notice links to, under `ui.docs-url`. */
-  def docsLink(docsUrl: com.histmersion.web.BaseMaps.DocsLinkDocsUrl, page: com.histmersion.web.BaseMaps.DocsLinkPage = "exploring/web-ui.md#the-base-map"): com.histmersion.web.BaseMaps.DocsLinkResult =
+  def docsLink(docsUrl: com.histmersion.web.BaseMaps.DocsUrl, page: com.histmersion.web.BaseMaps.DocsPage = "exploring/web-ui.md#the-base-map"): com.histmersion.web.BaseMaps.DocsLink =
     val base = if docsUrl.isEmpty || docsUrl.endsWith("/") then docsUrl else docsUrl + "/"
     s"$base$page"
 
@@ -227,44 +191,44 @@ object BaseMaps:
   val OfflinePage = "how-to/offline.md#the-one-time-download"
 
   /** The notice when the extracts are not on the server: what to run. */
-  def missingNotice(s: Option[Basemap.Status]): com.histmersion.web.BaseMaps.MissingNoticeResult =
+  def missingNotice(s: Option[Basemap.Status]): com.histmersion.web.BaseMaps.MissingNotice =
     val cmd = s.map(_.fetchCommand).getOrElse(Basemap.FetchCommand)
     s"This map is not downloaded on this server. Run `$cmd` on the machine that runs it (a few hundred MB to a few GB), " +
       "then choose it again."
 
   /** The notice over a style drawn without some of its layers: which, and what to run. Pure. */
-  def lackingNotice(missing: List[com.histmersion.web.BaseMaps.LackingNoticeMissing]): com.histmersion.web.BaseMaps.LackingNoticeResult =
+  def lackingNotice(missing: List[com.histmersion.web.BaseMaps.MissingLayer]): com.histmersion.web.BaseMaps.LackingNotice =
     s"This map also draws ${missing.mkString(", ")}, which the download on this server left out. Run " +
       s"`${Basemap.KeepAllCommand}` on the machine that runs it, then choose the map again."
 
   /** The credit line's link to every dataset's credit (Settings › Credits): the places, boundaries and events drawn
     * over the base map are credited there.
     */
-  val allCreditsLink: com.histmersion.web.BaseMaps.AllCreditsLink =
+  val allCreditsLink: com.histmersion.web.BaseMaps.CreditsPageUrl =
     s"""<a class="map-credits-all" href="${Route.Settings(SettingsSection.Credits).path}">Data sources</a>"""
 
   /** Pure: the credits line — each source's credit once, in order, separated by a middle dot. */
-  def creditsHtml(credits: Seq[com.histmersion.web.BaseMaps.CreditsHtmlCredits]): com.histmersion.web.BaseMaps.CreditsHtmlResult = credits.map(_.trim).filter(_.nonEmpty).distinct.mkString(" · ")
+  def creditsHtml(credits: Seq[com.histmersion.api.basemap.Basemap.LayerInfo.Attribution]): com.histmersion.web.BaseMaps.CreditsHtml = credits.map(_.trim).filter(_.nonEmpty).distinct.mkString(" · ")
 
   /** How far the notice's corner rises so it clears the right-hand corner's controls: their height and a gap when the
     * two would overlap side by side, else nothing — and nothing when that would take it past the `room` above it in the
     * map (an opened legend as tall as the map lies over it instead). Pure.
     */
   def noticeLift(
-      noticeLeft: com.histmersion.web.BaseMaps.NoticeLiftNoticeLeft,
-      noticeRight: com.histmersion.web.BaseMaps.NoticeLiftNoticeRight,
-      creditsLeft: com.histmersion.web.BaseMaps.NoticeLiftCreditsLeft,
-      creditsRight: com.histmersion.web.BaseMaps.NoticeLiftCreditsRight,
-      creditsHeight: com.histmersion.web.BaseMaps.NoticeLiftCreditsHeight,
-      room: com.histmersion.web.BaseMaps.NoticeLiftRoom = Double.MaxValue
-  ): com.histmersion.web.BaseMaps.NoticeLiftResult =
+      noticeLeft: com.histmersion.web.BaseMaps.NoticeLeft,
+      noticeRight: com.histmersion.web.BaseMaps.NoticeRight,
+      creditsLeft: com.histmersion.web.BaseMaps.CreditsLeft,
+      creditsRight: com.histmersion.web.BaseMaps.CreditsRight,
+      creditsHeight: com.histmersion.web.BaseMaps.CreditsHeight,
+      room: com.histmersion.web.BaseMaps.NoticeRoom = Double.MaxValue
+  ): com.histmersion.web.BaseMaps.NoticeLift =
     val lift = if noticeRight > creditsLeft && creditsRight > noticeLeft then creditsHeight + 4 else 0
     if lift > room then 0 else lift
 
   /** The languages offered for the names: English, each place's own, and those both the map's data and Natural Earth's
     * names carry.
     */
-  val Languages: List[(com.histmersion.web.BaseMaps.LanguagesPart1, com.histmersion.web.BaseMaps.LanguagesPart2)] = List(
+  val Languages: List[(com.histmersion.web.BaseMaps.MapLanguage, com.histmersion.web.BaseMaps.LanguageLabel)] = List(
     "en" -> "English",
     "local" -> "Local (own script)",
     "de" -> "Deutsch",
@@ -297,8 +261,8 @@ object BaseMaps:
       prefs: MapPrefs,
       ui: UiConfig,
       local: com.histmersion.web.BaseMaps.PlanLocal,
-      soft: com.histmersion.web.BaseMaps.PlanSoft
-  ): (BaseMapSpec, Option[(com.histmersion.web.BaseMaps.PlanResultPart2Part1, com.histmersion.web.BaseMaps.PlanResultPart2Part2)], com.histmersion.web.BaseMaps.PlanResultPart3) =
+      soft: com.histmersion.web.BaseMaps.SoftFallback
+  ): (BaseMapSpec, Option[(com.histmersion.web.BaseMaps.PlanNote, Boolean)], com.histmersion.api.basemap.Basemap.Zoom) =
     b.vector match
       case None    => (raster(b, ui), None, ui.tilesMaxZoom)
       case Some(v) =>
@@ -381,14 +345,14 @@ object BaseMaps:
     * credits — one box, where MapLibre's ⓘ button and its folded credits used to sit in the right-hand corner under the
     * legend. Without a notice (an online map) the box holds the credits alone; without either it is gone.
     */
-  private def setNotice(n: Option[(com.histmersion.web.BaseMaps.SetNoticeNPart1, com.histmersion.web.BaseMaps.SetNoticeNPart2)], lacking: com.histmersion.web.BaseMaps.SetNoticeLacking): Unit =
+  private def setNotice(n: Option[(com.histmersion.web.BaseMaps.NoticeText, com.histmersion.web.BaseMaps.NoticeWarns)], lacking: com.histmersion.web.BaseMaps.NoticeLacking): Unit =
     notice = n.map((t, w) => (t, w, lacking))
     drawFoot()
 
   // `var`s: the notice drawn now (its text, whether it warns, whether it is the lacking-layers one), and the
   // credits drawn with it
-  private var notice: Option[(com.histmersion.web.BaseMaps.NoticePart1, com.histmersion.web.BaseMaps.NoticePart2, com.histmersion.web.BaseMaps.NoticePart3)] = None
-  private var drawnCredits: Seq[com.histmersion.web.BaseMaps.DrawnCredits] = Nil
+  private var notice: Option[(com.histmersion.web.BaseMaps.NoticeText, com.histmersion.web.BaseMaps.NoticeWarns, com.histmersion.web.BaseMaps.NoticeLacking)] = None
+  private var drawnCredits: Seq[com.histmersion.api.basemap.Basemap.LayerInfo.Attribution] = Nil
   // whether the reader opened (or closed) the foot with its (i) button: kept when it is drawn again; whether the
   // reader has moved the map yet; how far the foot's corner is lifted now
   private var footOpen: Option[com.histmersion.web.BaseMaps.FootOpen] = None
@@ -398,12 +362,12 @@ object BaseMaps:
   /** Pure: is the foot open — the reader's choice, else open until the first pan or zoom, and open whenever it says the
     * map is not (wholly) downloaded.
     */
-  def footOpenNow(chosen: Option[com.histmersion.web.BaseMaps.FootOpenNowChosen], moved: com.histmersion.web.BaseMaps.FootOpenNowMoved, warns: com.histmersion.web.BaseMaps.FootOpenNowWarns): com.histmersion.web.BaseMaps.FootOpenNowResult = chosen.getOrElse(warns || !moved)
+  def footOpenNow(chosen: Option[com.histmersion.web.BaseMaps.FootChosen], moved: com.histmersion.web.BaseMaps.MapMoved, warns: com.histmersion.web.BaseMaps.NoticeWarns): Boolean = chosen.getOrElse(warns || !moved)
 
   /** Pure: does the folded foot keep a credit in sight? The online OpenStreetMap tiles (and OSM France's) require
     * theirs to stay visible on the map.
     */
-  def keepsOsmCredit(b: BaseMap): com.histmersion.web.BaseMaps.KeepsOsmCreditResult = b.online
+  def keepsOsmCredit(b: BaseMap): Boolean = b.online
 
   /** The first pan or zoom: the credits fold to the (i) button, unless the reader chose otherwise. */
   private def foldAfterMove(): Unit =
@@ -534,7 +498,7 @@ object BaseMaps:
 
   private val open: Var[com.histmersion.web.BaseMaps.Open] = Var(false)
 
-  private val onVector: Signal[com.histmersion.web.BaseMaps.OnVector] = shown.signal.map(_.vector.isDefined)
+  private val onVector: Signal[com.histmersion.web.BaseMaps.VectorShown] = shown.signal.map(_.vector.isDefined)
 
   private def baseSelect: HtmlElement =
     select(
@@ -583,10 +547,10 @@ object BaseMaps:
     )
 
   /** The names' language unless the viewer chose one: `basemap.labels.language`, as the server reports it. */
-  private def defaultLanguage: com.histmersion.web.BaseMaps.DefaultLanguageResult = if ui == null || ui.mapLanguage.isEmpty then "en" else ui.mapLanguage
+  private def defaultLanguage: com.histmersion.web.BaseMaps.MapLanguage = if ui == null || ui.mapLanguage.isEmpty then "en" else ui.mapLanguage
 
   /** The languages the menu offers: [[Languages]], and the configured default when it is not among them. Pure. */
-  def languageChoices(default: com.histmersion.web.BaseMaps.LanguageChoicesDefault): List[(com.histmersion.web.BaseMaps.LanguageChoicesResultPart1, com.histmersion.web.BaseMaps.LanguageChoicesResultPart2)] =
+  def languageChoices(default: com.histmersion.web.BaseMaps.MapLanguage): List[(com.histmersion.web.BaseMaps.MapLanguage, com.histmersion.web.BaseMaps.LanguageLabel)] =
     if Languages.exists(_._1 == default) then Languages else Languages :+ (default -> default)
 
   private def label_(mods: Modifier[HtmlElement]*): HtmlElement = htmlTag("label")(mods*)
@@ -598,7 +562,7 @@ object BaseMaps:
     s.flatMap(_.layers.find(l => l.layer == Basemap.Layer.Terrain.wire && l.present && l.error.isEmpty))
 
   /** Relief deeper than the extract: a focus region downloaded, or the on-demand relief on. Pure. */
-  def deeperRelief(i: Basemap.LayerInfo): com.histmersion.web.BaseMaps.DeeperReliefResult = i.focus.nonEmpty || i.onDemand.exists(_.enabled)
+  def deeperRelief(i: Basemap.LayerInfo): Boolean = i.focus.nonEmpty || i.onDemand.exists(_.enabled)
 
   /** The app zoom from which Physical draws its contours (its style's `contours` layer: MapLibre zoom 10). */
   val ContoursFromZoom: com.histmersion.web.BaseMaps.ContoursFromZoom = 11.0
@@ -607,7 +571,7 @@ object BaseMaps:
     * deeper than the extract — a focus region (`basemap fetch --layer terrain --focus`) or the on-demand relief
     * (`basemap.terrain.on-demand`). Pure.
     */
-  def contoursWhy(b: BaseMap, s: Option[Basemap.Status], soft: com.histmersion.web.BaseMaps.ContoursWhySoft): Option[com.histmersion.web.BaseMaps.ContoursWhyResult] =
+  def contoursWhy(b: BaseMap, s: Option[Basemap.Status], soft: com.histmersion.web.BaseMaps.SoftFallback): Option[com.histmersion.web.BaseMaps.ContoursWhy] =
     if b != BaseMap.Physical then Some("Physical draws contours")
     else if soft then Some("not drawn without a GPU")
     else
@@ -621,14 +585,14 @@ object BaseMaps:
         case _ => None
 
   /** Do a region of the view and a focus region's box meet? Pure. */
-  def meets(v: GeoBounds, b: BBox): com.histmersion.web.BaseMaps.MeetsResult =
+  def meets(v: GeoBounds, b: BBox): Boolean =
     v.south <= b.maxLat && v.north >= b.minLat && v.west <= b.maxLon && v.east >= b.minLon
 
   /** Why the contours, possible on this map, are not drawn in this view (zoom `z`, region `v`): zoomed out too far, or
     * outside every focus region with the on-demand relief off (the contours there follow the extract's coarse relief).
     * `None`: they are drawn. Pure.
     */
-  def contoursNote(s: Option[Basemap.Status], z: com.histmersion.web.BaseMaps.ContoursNoteZ, v: GeoBounds): Option[com.histmersion.web.BaseMaps.ContoursNoteResult] =
+  def contoursNote(s: Option[Basemap.Status], z: com.histmersion.web.BaseMaps.MapZoom, v: GeoBounds): Option[com.histmersion.web.BaseMaps.ContoursNote] =
     relief(s).flatMap { i =>
       val inFocus = i.focus.exists(f => BBox.parse(f.bbox).exists(meets(v, _)))
       if z < ContoursFromZoom then Some(f"zoom in to see contours (from zoom ${ContoursFromZoom.toInt}%d)")
@@ -643,7 +607,7 @@ object BaseMaps:
   /** Why the sea cannot be coloured by its depth, if it cannot: with a GPU, from the sea floor (`basemap fetch --layer
     * bathymetry`). Pure.
     */
-  def seaDepthWhy(b: BaseMap, s: Option[Basemap.Status], soft: com.histmersion.web.BaseMaps.SeaDepthWhySoft): Option[com.histmersion.web.BaseMaps.SeaDepthWhyResult] =
+  def seaDepthWhy(b: BaseMap, s: Option[Basemap.Status], soft: com.histmersion.web.BaseMaps.SoftFallback): Option[com.histmersion.web.BaseMaps.SeaDepthWhy] =
     if b.vector.isEmpty then Some("Readable and Physical draw the sea's depth")
     else if soft then Some("not drawn without a GPU")
     else if !s.exists(_.layers.exists(l => l.layer == Basemap.Layer.Bathymetry.wire && l.present && l.error.isEmpty))
@@ -800,12 +764,12 @@ object BaseMaps:
     * window. Pure.
     */
   def placement(
-      buttonLeft: com.histmersion.web.BaseMaps.PlacementButtonLeft,
-      buttonRight: com.histmersion.web.BaseMaps.PlacementButtonRight,
-      buttonBottom: com.histmersion.web.BaseMaps.PlacementButtonBottom,
-      width: com.histmersion.web.BaseMaps.PlacementWidth,
-      windowWidth: com.histmersion.web.BaseMaps.PlacementWindowWidth
-  ): (com.histmersion.web.BaseMaps.PlacementResultPart1, com.histmersion.web.BaseMaps.PlacementResultPart2) =
+      buttonLeft: com.histmersion.web.BaseMaps.ButtonLeft,
+      buttonRight: com.histmersion.web.BaseMaps.ButtonRight,
+      buttonBottom: com.histmersion.web.BaseMaps.ButtonBottom,
+      width: com.histmersion.web.BaseMaps.PanelWidth,
+      windowWidth: com.histmersion.web.BaseMaps.WindowWidth
+  ): (com.histmersion.web.BaseMaps.PlacementLeft, com.histmersion.web.BaseMaps.PlacementTop) =
     val x = math.max(8.0, math.min(windowWidth - width - 8, buttonRight - width))
     (if buttonLeft < 0 then 8.0 else x, buttonBottom + 4)
 
@@ -818,16 +782,16 @@ object BaseMaps:
 
   object PanelSide:
     object Below:
-      type Top = Top.T
-      object Top extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Top = com.histmersion.web.BaseMaps.PanelTop
+      val Top: _root_.com.histmersion.web.BaseMaps.PanelTop.type = _root_.com.histmersion.web.BaseMaps.PanelTop
     object Above:
-      type Bottom = Bottom.T
-      object Bottom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Bottom = com.histmersion.web.BaseMaps.PanelBottom
+      val Bottom: _root_.com.histmersion.web.BaseMaps.PanelBottom.type = _root_.com.histmersion.web.BaseMaps.PanelBottom
 
   /** Pure: under the button, unless less than `minBelow` px is left under it and more is above — the button low in a
     * tablet's map & tools drawer, where the panel would be squeezed into a strip.
     */
-  def panelSide(buttonTop: com.histmersion.web.BaseMaps.PanelSideButtonTop, buttonBottom: com.histmersion.web.BaseMaps.PanelSideButtonBottom, windowHeight: com.histmersion.web.BaseMaps.PanelSideWindowHeight, minBelow: com.histmersion.web.BaseMaps.PanelSideMinBelow): PanelSide =
+  def panelSide(buttonTop: com.histmersion.web.BaseMaps.ButtonTop, buttonBottom: com.histmersion.web.BaseMaps.ButtonBottom, windowHeight: com.histmersion.web.BaseMaps.WindowHeight, minBelow: com.histmersion.web.BaseMaps.PanelMinBelow): PanelSide =
     val below = windowHeight - buttonBottom - 4
     if below < minBelow && buttonTop - 4 > below then PanelSide.Above(windowHeight - buttonTop + 4)
     else PanelSide.Below(buttonBottom + 4)

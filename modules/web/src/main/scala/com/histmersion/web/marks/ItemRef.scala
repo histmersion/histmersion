@@ -10,20 +10,18 @@ import com.histmersion.web.LibrarySection
   * is called. Pure.
   */
 final case class ItemRef(target: Target, title: ItemRef.Title):
-  def identity: Option[com.histmersion.web.marks.ItemRef.IdentityResult] = target.identity
+  def identity: Option[com.histmersion.web.marks.ItemRef.Identity] = target.identity
   def kind: ItemKind = target.kind
 
   /** Only sources and articles are marked read. */
-  def readable: com.histmersion.web.marks.ItemRef.ReadableResult = ItemKind.Readable.contains(kind)
+  def readable: Boolean = ItemKind.Readable.contains(kind)
 
 object ItemRef:
+  type Href = Href.T
+  object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Identity = Identity.T
+  object Identity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type IdentityResult = IdentityResult.T
-  object IdentityResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadableResult = ReadableResult.T
-  object ReadableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceCk = SourceCk.T
-  object SourceCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourceTitle = _root_.com.histmersion.web.marks.ItemRef.Title
   val SourceTitle: _root_.com.histmersion.web.marks.ItemRef.Title.type = _root_.com.histmersion.web.marks.ItemRef.Title
   type ArticleSlug = ArticleSlug.T
@@ -32,15 +30,11 @@ object ItemRef:
   val ArticleTitle: _root_.com.histmersion.web.marks.ItemRef.Title.type = _root_.com.histmersion.web.marks.ItemRef.Title
   type OfTitle = _root_.com.histmersion.web.marks.ItemRef.Title
   val OfTitle: _root_.com.histmersion.web.marks.ItemRef.Title.type = _root_.com.histmersion.web.marks.ItemRef.Title
-  type PageResult = PageResult.T
-  object PageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BackResult = BackResult.T
-  object BackResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Title = Title.T
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def source(ck: com.histmersion.web.marks.ItemRef.SourceCk, title: com.histmersion.web.marks.ItemRef.SourceTitle): ItemRef = ItemRef(Target.item(ItemKind.Source, ck), title)
+  def source(ck: com.histmersion.web.WindowKey.Source.Citekey, title: com.histmersion.web.marks.ItemRef.SourceTitle): ItemRef = ItemRef(Target.item(ItemKind.Source, ck), title)
   def article(slug: com.histmersion.web.marks.ItemRef.ArticleSlug, title: com.histmersion.web.marks.ItemRef.ArticleTitle): ItemRef = ItemRef(Target.item(ItemKind.Article, slug), title)
 
   /** An item chosen in Explore's results or on the map. */
@@ -53,7 +47,7 @@ object ItemRef:
   /** Where a target opens as its own page, for a link ("Open in a new tab"); a point, a view or a period has none of
     * its own but Explore.
     */
-  def page(t: Target): com.histmersion.web.marks.ItemRef.PageResult =
+  def page(t: Target): com.histmersion.web.marks.ItemRef.Href =
     t.itemKey.fold(Route.Explore.path) { key =>
       t.kind match
         case ItemKind.Source  => Route.Source(key).path
@@ -68,7 +62,7 @@ object ItemRef:
   /** Where a target opens back in the web UI, for a link in My library: a source or an article in Library's reading
     * pane, a goal on its page, anything else in Explore.
     */
-  def back(t: Target): com.histmersion.web.marks.ItemRef.BackResult =
+  def back(t: Target): com.histmersion.web.marks.ItemRef.Href =
     (t.kind, t.itemKey) match
       case (ItemKind.Source, Some(k))  => LibraryAddress.href(LibrarySection.Sources, Some(k))
       case (ItemKind.Article, Some(k)) => LibraryAddress.href(LibrarySection.Articles, Some(k))

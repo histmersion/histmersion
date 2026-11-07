@@ -17,9 +17,9 @@ final class Throttle[A](
     later: (Throttle.LaterArg1, () => Unit) => Throttle.LaterResult = (ms, g) => dom.window.setTimeout(() => g(), ms),
     cancel: Throttle.CancelArg1 => Unit = id => dom.window.clearTimeout(id)
 ):
-  private var lastRun: com.histmersion.web.Throttle.LastRun = Double.NegativeInfinity
+  private var lastRun: com.histmersion.web.ResearchOverview.EpochMillis = Double.NegativeInfinity
   private var pending: Option[A] = None
-  private var timer: com.histmersion.web.Throttle.Timer = 0
+  private var timer: Int = 0
 
   def apply(a: A): Unit =
     val t = now()
@@ -35,7 +35,7 @@ final class Throttle[A](
     if pending.isDefined then cancel(timer)
     pending = None
 
-  private def run(a: A, t: com.histmersion.web.Throttle.RunT): Unit =
+  private def run(a: A, t: com.histmersion.web.ResearchOverview.EpochMillis): Unit =
     pending = None
     lastRun = t
     f(a)
@@ -43,18 +43,12 @@ final class Throttle[A](
 object Throttle:
   type IntervalMs = IntervalMs.T
   object IntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NowResult = NowResult.T
-  object NowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LaterArg1 = LaterArg1.T
-  object LaterArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NowResult = com.histmersion.web.ResearchOverview.EpochMillis
+  val NowResult: _root_.com.histmersion.web.ResearchOverview.EpochMillis.type = _root_.com.histmersion.web.ResearchOverview.EpochMillis
+  type LaterArg1 = com.histmersion.web.ResearchOverview.EpochMillis
+  val LaterArg1: _root_.com.histmersion.web.ResearchOverview.EpochMillis.type = _root_.com.histmersion.web.ResearchOverview.EpochMillis
   type LaterResult = LaterResult.T
   object LaterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CancelArg1 = CancelArg1.T
   object CancelArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type LastRun = LastRun.T
-  object LastRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Timer = Timer.T
-  object Timer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunT = RunT.T
-  object RunT extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]

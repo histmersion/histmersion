@@ -11,32 +11,24 @@ import com.histmersion.util.console.Console
   * same way, and never a hand-built object that could drift from it.
   */
 object Output:
+  type JsonText = JsonText.T
+  object JsonText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Markdown = Markdown.T
+  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `--json` — the same flag, with the same help, on every command that has one. */
-  type JsonFlag = JsonFlag.T
-  object JsonFlag extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JsonResult = JsonResult.T
-  object JsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderResult = RenderResult.T
-  object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderJson = RenderJson.T
-  object RenderJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderMarkdownResult = RenderMarkdownResult.T
-  object RenderMarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EmitJson = EmitJson.T
-  object EmitJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EmitMarkdownResult = EmitMarkdownResult.T
-  object EmitMarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val jsonFlag: Opts[com.histmersion.cli.Output.JsonFlag] = Opts.flag("json", "Print the raw JSON response instead of Markdown").orFalse
+  val jsonFlag: Opts[com.histmersion.cli.Cli.JsonOutput] = Opts.flag("json", "Print the raw JSON response instead of Markdown").orFalse
 
   /** A response as `--json` prints it: the DTO's own codec, two-space indented. Pure. */
-  def json[A: Encoder](a: A): com.histmersion.cli.Output.JsonResult = a.asJson.spaces2
+  def json[A: Encoder](a: A): com.histmersion.cli.Output.JsonText = a.asJson.spaces2
 
   /** What [[emit]] prints. Pure. */
-  def render[A: Encoder](json: com.histmersion.cli.Output.RenderJson, a: A)(markdown: A => com.histmersion.cli.Output.RenderMarkdownResult): com.histmersion.cli.Output.RenderResult =
+  def render[A: Encoder](json: com.histmersion.cli.Cli.JsonOutput, a: A)(markdown: A => com.histmersion.cli.Output.Markdown): com.histmersion.cli.Output.Text =
     if json then Output.json(a) else markdown(a)
 
   /** Print `a` as JSON when `json`, else as its Markdown. */
-  def emit[A: Encoder](json: com.histmersion.cli.Output.EmitJson, a: A)(markdown: A => com.histmersion.cli.Output.EmitMarkdownResult)(using console: Console) : Unit =
+  def emit[A: Encoder](json: com.histmersion.cli.Cli.JsonOutput, a: A)(markdown: A => com.histmersion.cli.Output.Markdown)(using console: Console) : Unit =
     Cli.out.println(render(json, a)(markdown))

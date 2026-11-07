@@ -19,43 +19,43 @@ trait PointKind[A]:
   def icon: Icon
 
   /** Its name in the toolbar, and what one marker means in the map's key. */
-  def layerLabel: com.histmersion.web.PointKind.LayerLabelResult
-  def meaning: com.histmersion.web.PointKind.MeaningResult
+  def layerLabel: com.histmersion.api.UiLabels.Text
+  def meaning: com.histmersion.api.UiLabels.Text
 
   /** The marker's box, in px (the shape is drawn inside it at the same optical size for every kind). */
-  def box: (com.histmersion.web.PointKind.BoxResultPart1, com.histmersion.web.PointKind.BoxResultPart2)
+  def box: (com.histmersion.web.PointKind.BoxPixels, com.histmersion.web.PointKind.BoxPixels)
 
   /** The pane its markers are drawn in (above the areas). */
   def pane: MapStack.Pane = MapStack.Pane.Markers
-  def key(a: A): com.histmersion.web.PointKind.KeyResult
-  def at(a: A): (com.histmersion.web.PointKind.AtResultPart1, com.histmersion.web.PointKind.AtResultPart2)
+  def key(a: A): com.histmersion.web.PointKind.PointKey
+  def at(a: A): (com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude)
 
   /** The badge's content: its glyph ([[Glyphs.badge]]; the exclamation mark when its type is unknown), or a count.
     */
-  def inner(a: A): com.histmersion.web.PointKind.InnerResult
+  def inner(a: A): String
 
   /** Classes beyond the shape — its tier, its basis, its period-span ring. */
-  def classes(a: A): com.histmersion.web.PointKind.ClassesResult = ""
+  def classes(a: A): String = ""
 
   /** Data attributes (`data-…`), each with a leading space. */
-  def attrs(a: A): com.histmersion.web.PointKind.AttrsResult = ""
+  def attrs(a: A): String = ""
 
   /** Its fill for the span shown: the period colour of its dates (a gradient over several). */
-  def fill(a: A, span: (com.histmersion.web.PointKind.FillSpanPart1, com.histmersion.web.PointKind.FillSpanPart2)): com.histmersion.web.PointKind.FillResult
+  def fill(a: A, span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): String
 
   /** What it counts for in a bubble, and its row in the bubble's list. */
   def member(a: A): Member
 
   /** Its accessible name, and what activating it does ("pin its card"). */
-  def label(a: A): com.histmersion.web.PointKind.LabelResult
-  def action(a: A): com.histmersion.web.PointKind.ActionResult
+  def label(a: A): com.histmersion.api.UiLabels.Text
+  def action(a: A): com.histmersion.api.UiLabels.Text
 
   /** A native tooltip, only where it says something the card does not. */
-  def title(a: A): Option[com.histmersion.web.PointKind.TitleResult] = None
+  def title(a: A): Option[com.histmersion.api.UiLabels.Text] = None
 
   /** The card its hover shows, read at the map's year. */
-  def target(a: A, asOf: Option[com.histmersion.web.PointKind.TargetAsOf]): Option[Preview.Target]
-  def zIndex(a: A): com.histmersion.web.PointKind.ZIndexResult = 0
+  def target(a: A, asOf: Option[com.histmersion.api.Years.Astronomical]): Option[Preview.Target]
+  def zIndex(a: A): com.histmersion.web.PointKind.ZIndex = 0
 
   /** A click or Enter on it. */
   def activate(a: A, how: Activation): Unit
@@ -63,58 +63,20 @@ trait PointKind[A]:
   /** Its row in a bubble's list chosen (the row given, to pin a card under); `key` its point's key in the map's cluster
     * layer (to bring it out of its bubble).
     */
-  def open(key: com.histmersion.web.PointKind.OpenKey, a: A, row: dom.Element): Unit
+  def open(key: com.histmersion.web.PointKind.PointKey, a: A, row: dom.Element): Unit
 
   /** The client-side part of its filter (a menu the server is not asked about). */
-  def keep(a: A): com.histmersion.web.PointKind.KeepResult = true
+  def keep(a: A): Boolean = true
 
   /** Its marker drawn alone recoloured in place for `span` (only the colour moved): the badge's `--c`. */
-  def recolour(m: DomMarker, a: A, span: (com.histmersion.web.PointKind.RecolourSpanPart1, com.histmersion.web.PointKind.RecolourSpanPart2)): Unit =
+  def recolour(m: DomMarker, a: A, span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Unit =
     Option(m.el.querySelector(".hd-point"))
       .foreach(_.asInstanceOf[dom.html.Element].style.setProperty("--c", fill(a, span)))
 
 object PointKind:
-  type LayerLabelResult = LayerLabelResult.T
-  object LayerLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MeaningResult = MeaningResult.T
-  object MeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BoxResultPart1 = BoxResultPart1.T
-  object BoxResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BoxResultPart2 = BoxResultPart2.T
-  object BoxResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeyResult = KeyResult.T
-  object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AtResultPart1 = AtResultPart1.T
-  object AtResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AtResultPart2 = AtResultPart2.T
-  object AtResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InnerResult = InnerResult.T
-  object InnerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClassesResult = ClassesResult.T
-  object ClassesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttrsResult = AttrsResult.T
-  object AttrsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FillResult = FillResult.T
-  object FillResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FillSpanPart1 = FillSpanPart1.T
-  object FillSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FillSpanPart2 = FillSpanPart2.T
-  object FillSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelResult = LabelResult.T
-  object LabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ActionResult = ActionResult.T
-  object ActionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TitleResult = TitleResult.T
-  object TitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetAsOf = TargetAsOf.T
-  object TargetAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ZIndexResult = ZIndexResult.T
-  object ZIndexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenKey = OpenKey.T
-  object OpenKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeepResult = KeepResult.T
-  object KeepResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecolourSpanPart1 = RecolourSpanPart1.T
-  object RecolourSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecolourSpanPart2 = RecolourSpanPart2.T
-  object RecolourSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoxPixels = BoxPixels.T
+  object BoxPixels extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointKey = PointKey.T
+  object PointKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ZIndex = ZIndex.T
+  object ZIndex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

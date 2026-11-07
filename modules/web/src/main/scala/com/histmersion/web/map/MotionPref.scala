@@ -14,20 +14,14 @@ import scala.util.Try
   * is no system setting: it reads as off.
   */
 object MotionPref:
+  type SystemReduced = SystemReduced.T
+  object SystemReduced extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SystemNow = SystemNow.T
   object SystemNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatePart2 = StatePart2.T
-  object StatePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SystemReducedResult = SystemReducedResult.T
-  object SystemReducedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AnimateResult = AnimateResult.T
-  object AnimateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Animates = Animates.T
   object Animates extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeldBySystem = HeldBySystem.T
   object HeldBySystem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SystemChangedReduced = SystemChangedReduced.T
-  object SystemChangedReduced extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Query = "(prefers-reduced-motion: reduce)"
 
@@ -36,7 +30,7 @@ object MotionPref:
   private var choiceNow: MapMotion = MapMotion.System
   private var systemNow: com.histmersion.web.map.MotionPref.SystemNow = false
   private var installed = false
-  private val state: Var[(MapMotion, com.histmersion.web.map.MotionPref.StatePart2)] = Var((MapMotion.System, false))
+  private val state: Var[(MapMotion, com.histmersion.web.map.MotionPref.SystemReduced)] = Var((MapMotion.System, false))
 
   /** Read the system's setting and follow its changes (once; also done by the first read). */
   def install(): Unit =
@@ -64,10 +58,10 @@ object MotionPref:
   def choice: MapMotion = choiceNow
 
   /** Does the system ask for reduced motion? */
-  def systemReduced: com.histmersion.web.map.MotionPref.SystemReducedResult = { install(); systemNow }
+  def systemReduced: Boolean = { install(); systemNow }
 
   /** Should the map animate now? */
-  def animate(): com.histmersion.web.map.MotionPref.AnimateResult = MapMotion.animates(choice, systemReduced)
+  def animate(): Boolean = MapMotion.animates(choice, systemReduced)
 
   /** Whether the map animates, as it changes. */
   val animates: Signal[com.histmersion.web.map.MotionPref.Animates] = state.signal.map(MapMotion.animates.tupled)
@@ -76,7 +70,7 @@ object MotionPref:
   val heldBySystem: Signal[com.histmersion.web.map.MotionPref.HeldBySystem] = state.signal.map(MapMotion.heldBySystem.tupled)
 
   /** For a test: the system's setting as if the browser had reported it. */
-  private[web] def systemChanged(reduced: com.histmersion.web.map.MotionPref.SystemChangedReduced): Unit =
+  private[web] def systemChanged(reduced: com.histmersion.web.map.MotionPref.SystemReduced): Unit =
     installed = true
     systemNow = reduced
     changed()

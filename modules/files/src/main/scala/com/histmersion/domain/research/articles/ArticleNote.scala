@@ -19,6 +19,10 @@ import com.histmersion.api.research.{Article, Articles}
   * JVM-only (snakeyaml); the pure text extractors `heading` and `lede` live in [[Articles]].
   */
 object ArticleNote:
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** Frontmatter key order of a rendered article note. `generated` (#958) is the coverage sections code renders from
     * the filter; they go after the body between [[ArticleCoverage.GeneratedStart]] and
     * [[ArticleCoverage.GeneratedEnd]], which [[parse]] drops again — the stored body never holds them, and the filter

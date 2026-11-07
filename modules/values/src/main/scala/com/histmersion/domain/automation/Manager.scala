@@ -1,6 +1,12 @@
 package com.histmersion.domain.automation
 
 object Manager:
+  type ConfigEntry = ConfigEntry.T
+  object ConfigEntry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusArg = FocusArg.T
+  object FocusArg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemId = ItemId.T
+  object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What a manager drives: `review` (library-wide: articles until their review converges), `enrich` (library-wide:
     * sources until enriched), `seed` (one research area: new articles proposed, approved and compiled), `watch` (one

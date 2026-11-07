@@ -17,59 +17,35 @@ import com.histmersion.api.library.Ingest
   * all once every job has finished or the window is closed.
   */
 object JobsView:
+  type AgoText = AgoText.T
+  object AgoText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ButtonLabel = ButtonLabel.T
+  object ButtonLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Iso = Iso.T
+  object Iso extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobId = JobId.T
+  object JobId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindMeaning = KindMeaning.T
+  object KindMeaning extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Millis = Millis.T
+  object Millis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Mine = Mine.T
+  object Mine extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkippedLine = SkippedLine.T
+  object SkippedLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StateCount = StateCount.T
+  object StateCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StateLabel = StateLabel.T
+  object StateLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StateMeaning = StateMeaning.T
+  object StateMeaning extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type What = What.T
+  object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** How many jobs a page lists. */
-  type FilterButtonsBtnLabel = FilterButtonsBtnLabel.T
-  object FilterButtonsBtnLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterButtonsBtnCount = FilterButtonsBtnCount.T
-  object FilterButtonsBtnCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type LiveResult = LiveResult.T
-  object LiveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfKinds = FilterOfKinds.T
-  object FilterOfKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfSince = FilterOfSince.T
-  object FilterOfSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfUntil = FilterOfUntil.T
-  object FilterOfUntil extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfSubject = FilterOfSubject.T
-  object FilterOfSubject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TicksOffResult = TicksOffResult.T
-  object TicksOffResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountsResultPart2 = CountsResultPart2.T
-  object CountsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindLabelResult = KindLabelResult.T
-  object KindLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindLabelKind = KindLabelKind.T
-  object KindLabelKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindMeaningResult = KindMeaningResult.T
-  object KindMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindMeaningKind = KindMeaningKind.T
-  object KindMeaningKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateMeaningResult = StateMeaningResult.T
-  object StateMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WhatResult = WhatResult.T
-  object WhatResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SkippedLineResult = SkippedLineResult.T
-  object SkippedLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateLabelResult = StateLabelResult.T
-  object StateLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SubjectStoredResult = SubjectStoredResult.T
-  object SubjectStoredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AgoResult = AgoResult.T
-  object AgoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AgoThenMs = AgoThenMs.T
-  object AgoThenMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AgoNowMs = AgoNowMs.T
-  object AgoNowMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AgoOfResult = AgoOfResult.T
-  object AgoOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AgoOfIso = AgoOfIso.T
-  object AgoOfIso extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TrackJobId = TrackJobId.T
-  object TrackJobId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RowMine = RowMine.T
-  object RowMine extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Limit = 100
 
@@ -77,30 +53,28 @@ object JobsView:
 
   /** The polling schedule — the one every polled window shares ([[com.histmersion.web.Poll]]). */
   object Poll:
+    type Changed = Changed.T
+    object Changed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Delay = Delay.T
+    object Delay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FirstDelay = FirstDelay.T
+    object FirstDelay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxDelay = MaxDelay.T
+    object MaxDelay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FirstMs = FirstMsValue
-    type FirstMsValue = FirstMsValue.T
-    object FirstMsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MaxMs = MaxMsValue
-    type MaxMsValue = MaxMsValue.T
-    object MaxMsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NextResult = NextResult.T
-    object NextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NextPrevious = NextPrevious.T
-    object NextPrevious extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NextChanged = NextChanged.T
-    object NextChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val FirstMs: com.histmersion.web.JobsView.Poll.FirstMs = com.histmersion.web.Poll.FirstMs
     val MaxMs: com.histmersion.web.JobsView.Poll.MaxMs = com.histmersion.web.Poll.MaxMs
 
     /** The delay before the next poll, or `None` to stop: no job left to wait for. */
-    def next(previous: Option[com.histmersion.web.JobsView.Poll.NextPrevious], jobs: List[JobInfo], changed: com.histmersion.web.JobsView.Poll.NextChanged): Option[com.histmersion.web.JobsView.Poll.NextResult] =
+    def next(previous: Option[com.histmersion.web.JobsView.Poll.Delay], jobs: List[JobInfo], changed: com.histmersion.web.JobsView.Poll.Changed): Option[com.histmersion.web.JobsView.Poll.Delay] =
       com.histmersion.web.Poll.next(previous, jobs.exists(!_.isTerminal), changed)
 
   /** Is any job still queued or running — anywhere in the table (the server's counts), not just among the rows a filter
     * shows; the rows' own states when the server sent no counts.
     */
-  def live(rows: List[JobInfo], page: Paging.Page): com.histmersion.web.JobsView.LiveResult =
+  def live(rows: List[JobInfo], page: Paging.Page): Boolean =
     if page.counts.isEmpty then rows.exists(!_.isTerminal)
     else page.count(JobState.Queued.wire) + page.count(JobState.Running.wire) > 0
 
@@ -118,31 +92,31 @@ object JobsView:
   /** The query the window sends, from its filter fields. Pure. */
   def filterOf(
       status: Option[JobState],
-      kinds: List[com.histmersion.web.JobsView.FilterOfKinds],
-      since: Option[com.histmersion.web.JobsView.FilterOfSince],
-      until: Option[com.histmersion.web.JobsView.FilterOfUntil],
-      subject: Option[com.histmersion.web.JobsView.FilterOfSubject]
+      kinds: List[com.histmersion.api.Jobs.Filter],
+      since: Option[com.histmersion.api.automation.ListFilters.JobFilter.Since],
+      until: Option[com.histmersion.api.automation.ListFilters.JobFilter.Until],
+      subject: Option[com.histmersion.api.automation.ListFilters.JobFilter.Subject]
   ): ListFilters.JobFilter =
     ListFilters.JobFilter(status.toList.map(_.wire), kinds, since, until, subject)
 
   /** Did a job that ticks off an acquisition item finish since `before`? Then that list changed. */
-  def ticksOff(before: List[JobInfo], after: List[JobInfo]): com.histmersion.web.JobsView.TicksOffResult =
+  def ticksOff(before: List[JobInfo], after: List[JobInfo]): Boolean =
     val doneBefore = before.filter(_.succeeded).map(_.id).toSet
     after.exists(j => j.succeeded && j.acquireItem.isDefined && !doneBefore(j.id))
 
   /** How many jobs are in each state, for the filter buttons. */
-  def counts(jobs: List[JobInfo]): Map[JobState, com.histmersion.web.JobsView.CountsResultPart2] =
+  def counts(jobs: List[JobInfo]): Map[JobState, com.histmersion.web.JobsView.StateCount] =
     jobs.groupMapReduce(_.state)(_ => 1)(_ + _)
 
   /** What kind of work a job is, for a person ([[Wording.jobKind]]); a kind it does not know, as words. */
-  def kindLabel(kind: com.histmersion.web.JobsView.KindLabelKind): com.histmersion.web.JobsView.KindLabelResult = Wording.jobKindOf(kind)
+  def kindLabel(kind: com.histmersion.web.JobsView.Kind): com.histmersion.api.ItemKind.Label = Wording.jobKindOf(kind)
 
   /** What each kind of job does; a tooltip on its filter chip, after its identifier (for the command line). */
-  def kindMeaning(kind: com.histmersion.web.JobsView.KindMeaningKind): Option[com.histmersion.web.JobsView.KindMeaningResult] =
+  def kindMeaning(kind: com.histmersion.web.JobsView.Kind): Option[com.histmersion.web.JobsView.KindMeaning] =
     com.histmersion.api.RegisteredJobKinds.all.parse(kind).map(_.meaning.value)
 
   /** What each job state means for a person, and what comes next; a tooltip on its filter button. */
-  def stateMeaning(s: JobState): com.histmersion.web.JobsView.StateMeaningResult = s match
+  def stateMeaning(s: JobState): com.histmersion.web.JobsView.StateMeaning = s match
     case JobState.Queued  => "Waiting for a free worker; it starts by itself."
     case JobState.Running => "A worker is doing it now; its progress line says how far it got."
     case JobState.Done    => "Finished without an error; an ingest's source is stored now."
@@ -155,11 +129,11 @@ object JobsView:
   /** What a job without a citekey is about, from its stored [[JobDetail]] (#770): an init job names what it imports.
     * `None` for a job that has a citekey, or no detail.
     */
-  def what(j: JobInfo): Option[com.histmersion.web.JobsView.WhatResult] =
+  def what(j: JobInfo): Option[com.histmersion.web.JobsView.What] =
     if j.citekey.isDefined then None else JobDetail.subject(j)
 
   /** The period definitions an import left out (#771): how many, and which. */
-  def skippedLine(j: JobInfo): Option[com.histmersion.web.JobsView.SkippedLineResult] =
+  def skippedLine(j: JobInfo): Option[com.histmersion.web.JobsView.SkippedLine] =
     j.detail.filter(SkippedPeriod.SkippedCount.of(_) > 0).map { d =>
       val ids = SkippedPeriod.Skipped.of(d).map(_.id)
       val more = SkippedPeriod.SkippedCount.of(d) - ids.size
@@ -167,22 +141,22 @@ object JobsView:
         (if more > 0 then s" and $more more" else "")
     }
 
-  def stateLabel(s: JobState): com.histmersion.web.JobsView.StateLabelResult = Wording.jobState(s)
+  def stateLabel(s: JobState): com.histmersion.web.JobsView.StateLabel = Wording.jobState(s)
 
   /** Is the job's subject a stored source yet? An ingest creates the source only when its OCR finished; a re-OCR runs
     * on a source that already exists.
     */
-  def subjectStored(j: JobInfo): com.histmersion.web.JobsView.SubjectStoredResult = j.succeeded || j.kind == com.histmersion.api.library.IngestJobKinds.Reocr.kind
+  def subjectStored(j: JobInfo): Boolean = j.succeeded || j.kind == com.histmersion.api.library.IngestJobKinds.Reocr.kind
 
   /** `3 s ago`, `4 min ago`, `2 h ago`, `5 d ago` — `thenMs` and `nowMs` in epoch milliseconds. */
-  def ago(thenMs: com.histmersion.web.JobsView.AgoThenMs, nowMs: com.histmersion.web.JobsView.AgoNowMs): com.histmersion.web.JobsView.AgoResult =
+  def ago(thenMs: com.histmersion.web.JobsView.Millis, nowMs: com.histmersion.web.JobsView.Millis): com.histmersion.web.JobsView.AgoText =
     val s = math.max(0L, ((nowMs - thenMs) / 1000).toLong)
     if s < 60 then s"$s s ago"
     else if s < 3600 then s"${s / 60} min ago"
     else if s < 86400 then s"${s / 3600} h ago"
     else s"${s / 86400} d ago"
 
-  private def agoOf(iso: com.histmersion.web.JobsView.AgoOfIso): com.histmersion.web.JobsView.AgoOfResult =
+  private def agoOf(iso: com.histmersion.web.JobsView.Iso): com.histmersion.web.JobsView.AgoText =
     val t = js.Date.parse(iso)
     if iso.isEmpty || t.isNaN then "" else ago(t, js.Date.now())
 
@@ -219,7 +193,7 @@ object JobsView:
   private val started = Var(Option.empty[String])
 
   /** A job this page started (an upload): show it, and poll quickly again. */
-  def track(jobId: com.histmersion.web.JobsView.TrackJobId): Unit =
+  def track(jobId: com.histmersion.web.JobsView.JobId): Unit =
     started.set(Some(jobId))
     list.refresh(changed = true)
 
@@ -300,7 +274,7 @@ object JobsView:
     listing.signal.combineWith(filterSignal).map((l, f) => (l.copy(rows = visible(l.rows, f)), UiState.jobStatus.now()))
 
   private def filterButtons: HtmlElement =
-    def btn(label: com.histmersion.web.JobsView.FilterButtonsBtnLabel, value: Option[JobState], count: Signal[com.histmersion.web.JobsView.FilterButtonsBtnCount]) =
+    def btn(label: com.histmersion.web.JobsView.ButtonLabel, value: Option[JobState], count: Signal[com.histmersion.web.JobsView.StateCount]) =
       button(
         typ := "button",
         cls := "btn btn--toggle",
@@ -320,7 +294,7 @@ object JobsView:
       )
     )
 
-  private[web] def row(j: JobInfo, mine: com.histmersion.web.JobsView.RowMine): HtmlElement =
+  private[web] def row(j: JobInfo, mine: com.histmersion.web.JobsView.Mine): HtmlElement =
     li(
       cls := s"job-row job-${j.state.wire}",
       cls("job-mine") := mine,

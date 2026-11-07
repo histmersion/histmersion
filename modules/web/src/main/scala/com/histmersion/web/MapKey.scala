@@ -11,33 +11,33 @@ import com.histmersion.api.library.Source
   * layers are on — the event kinds (natural, human) and site types, each icon with its name. Pure markup.
   */
 object MapKey:
-  type ShapesHtmlBadgeShape = ShapesHtmlBadgeShape.T
-  object ShapesHtmlBadgeShape extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShapesHtmlBadgeInner = ShapesHtmlBadgeInner.T
-  object ShapesHtmlBadgeInner extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShapesHtmlListItemsPart1 = ShapesHtmlListItemsPart1.T
-  object ShapesHtmlListItemsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShapesHtmlListItemsPart2 = ShapesHtmlListItemsPart2.T
-  object ShapesHtmlListItemsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BadgeInner = BadgeInner.T
+  object BadgeInner extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BadgeShape = BadgeShape.T
+  object BadgeShape extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Events = Events.T
+  object Events extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventsHtml = EventsHtml.T
+  object EventsHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Html = Html.T
+  object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemHtml = ItemHtml.T
+  object ItemHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemLabel = ItemLabel.T
+  object ItemLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShapesHtml = ShapesHtml.T
+  object ShapesHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sites = Sites.T
+  object Sites extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SitesHtml = SitesHtml.T
+  object SitesHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Undated = Undated.T
+  object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type EventsHtmlResult = EventsHtmlResult.T
-  object EventsHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SitesHtmlResult = SitesHtmlResult.T
-  object SitesHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShapesHtmlResult = ShapesHtmlResult.T
-  object ShapesHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HtmlResult = HtmlResult.T
-  object HtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HtmlEvents = HtmlEvents.T
-  object HtmlEvents extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HtmlSites = HtmlSites.T
-  object HtmlSites extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HtmlUndated = HtmlUndated.T
-  object HtmlUndated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UndatedHtml = UndatedHtml.T
   object UndatedHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def eventsHtml: com.histmersion.web.MapKey.EventsHtmlResult =
+  def eventsHtml: com.histmersion.web.MapKey.EventsHtml =
     EventTaxonomy.groups.map { g =>
       val items = EventTaxonomy.kinds
         .filter(_.group == g)
@@ -53,7 +53,7 @@ object MapKey:
       """<li><span class="hd-badge hd-ev hd-ev--attested hd-key-swatch"></span><span>attested by a source</span></li>""" +
       """<li><span class="hd-badge hd-ev hd-ev--catalogue hd-key-swatch"></span><span>catalogue only (a lead)</span></li></ul></div>"""
 
-  def sitesHtml: com.histmersion.web.MapKey.SitesHtmlResult =
+  def sitesHtml: com.histmersion.web.MapKey.SitesHtml =
     val items = (SiteTypes.all.map(t => t.icon -> t.label) :+ (CardIcons.Unknown -> "site of unknown type"))
       .map((icon, label) =>
         s"""<li><span class="hd-badge hd-badge--circle hd-key-badge">${Glyphs.badge(icon)}</span><span>${Fmt.esc(
@@ -67,8 +67,8 @@ object MapKey:
     * type, the fill its date, the outline its tier — and the findings' icons, by what their source is. Shown whatever
     * layers are on: the findings always are.
     */
-  def shapesHtml: com.histmersion.web.MapKey.ShapesHtmlResult =
-    def badge(shape: com.histmersion.web.MapKey.ShapesHtmlBadgeShape, inner: com.histmersion.web.MapKey.ShapesHtmlBadgeInner) = s"""<span class="hd-badge hd-badge--$shape hd-key-badge">$inner</span>"""
+  def shapesHtml: com.histmersion.web.MapKey.ShapesHtml =
+    def badge(shape: com.histmersion.web.MapKey.BadgeShape, inner: com.histmersion.web.MapKey.BadgeInner) = s"""<span class="hd-badge hd-badge--$shape hd-key-badge">$inner</span>"""
     // the same icons as the toolbar's layer switches
     val shapes = PointKinds.all.map(k => Icon.html(k.icon) -> k.meaning) ++ List(
       Icon.html(Icon.Region) -> "a region or polity (its boundary)",
@@ -100,7 +100,7 @@ object MapKey:
       badge("diamond", Glyphs.badge(CardIcons.sourceKind(k, marker = true))) ->
         (if k == Source.Kinds.Unknown then "source of unknown kind" else k)
     )
-    def list(items: List[(com.histmersion.web.MapKey.ShapesHtmlListItemsPart1, com.histmersion.web.MapKey.ShapesHtmlListItemsPart2)]) =
+    def list(items: List[(com.histmersion.web.MapKey.ItemLabel, com.histmersion.web.MapKey.ItemHtml)]) =
       items.map((m, label) => s"""<li>$m<span>${Fmt.esc(label)}</span></li>""").mkString
     s"""<div class="hd-key-group"><div class="hd-key-title">shapes</div><ul class="hd-key-list">${list(
         shapes
@@ -110,7 +110,7 @@ object MapKey:
         )}</ul></div>"""
 
   /** The key's markup: the shapes, then the icons of the layers on. */
-  def html(events: com.histmersion.web.MapKey.HtmlEvents, sites: com.histmersion.web.MapKey.HtmlSites, undated: com.histmersion.web.MapKey.HtmlUndated = false): com.histmersion.web.MapKey.HtmlResult =
+  def html(events: com.histmersion.web.MapKey.Events, sites: com.histmersion.web.MapKey.Sites, undated: com.histmersion.web.MapKey.Undated = false): com.histmersion.web.MapKey.Html =
     val body = shapesHtml + (if events then eventsHtml else "") + (if sites then sitesHtml else "")
     (if undated then undatedHtml else "") + s"""<details class="hd-key"><summary>key</summary>$body</details>"""
 

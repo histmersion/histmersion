@@ -37,6 +37,9 @@ final case class Limits(
     )
 
 object Limits:
+  object Search:
+    type Unlinked = Unlinked.T
+    object Unlinked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SnippetWords = SnippetWords.T
   object SnippetWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

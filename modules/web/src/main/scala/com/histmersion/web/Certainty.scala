@@ -13,18 +13,16 @@ enum Certainty:
   case Unstated
 
 object Certainty:
+  type MarkerClass = MarkerClass.T
+  object MarkerClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Rank = Rank.T
+  object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Rgb = Rgb.T
+  object Rgb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What a dot that is not a finding (a site, an event, a picture) says about certainty: nothing — the full colour,
     * which never outweighs a finding's own.
     */
-  type RankResult = RankResult.T
-  object RankResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DesaturateResult = DesaturateResult.T
-  object DesaturateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DesaturateRgb = DesaturateRgb.T
-  object DesaturateRgb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkerClassResult = MarkerClassResult.T
-  object MarkerClassResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val NoSay: Certainty = Stated(Confidence.High)
 
@@ -34,7 +32,7 @@ object Certainty:
   /** Weakest first: `contested < low < medium < unstated < high`. An unstated finding never lets a group look high,
     * while a stated low or contested in the same group says more than "not stated" does.
     */
-  def rank(c: Certainty): com.histmersion.web.Certainty.RankResult = c match
+  def rank(c: Certainty): com.histmersion.web.Certainty.Rank = c match
     case Stated(level) => 2 * ConfidenceStyle.rank(level)
     case Unstated      => 2 * ConfidenceStyle.rank(Confidence.High) - 1
 
@@ -49,7 +47,7 @@ object Certainty:
     * badges), turned to its luminance grey when unstated — the neutral look keeps the period ramp's lightness, so an
     * unstated dot still reads older or newer. Anything that is not an `rgb(…)` string comes back unchanged.
     */
-  def desaturate(rgb: com.histmersion.web.Certainty.DesaturateRgb, c: Certainty): com.histmersion.web.Certainty.DesaturateResult = c match
+  def desaturate(rgb: com.histmersion.web.Certainty.Rgb, c: Certainty): com.histmersion.web.Certainty.Rgb = c match
     case Stated(level) => ConfidenceStyle.desaturate(rgb, level)
     case Unstated      =>
       "\\d+".r.findAllIn(rgb).take(3).map(_.toInt).toList match
@@ -59,7 +57,7 @@ object Certainty:
         case _ => rgb
 
   /** The marker class of an unstated dot (its dashed edge, `style.css`); none for a stated one. */
-  def markerClass(c: Certainty): com.histmersion.web.Certainty.MarkerClassResult = c match
+  def markerClass(c: Certainty): com.histmersion.web.Certainty.MarkerClass = c match
     case Unstated  => "hd-unstated"
     case Stated(_) => ""
 

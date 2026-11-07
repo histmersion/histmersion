@@ -17,47 +17,7 @@ import com.histmersion.api.automation.Queue
   */
 object QueueItemRef:
 
-  type AuthorsOfNamesResult = AuthorsOfNamesResult.T
-  object AuthorsOfNamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AuthorsOfNamesGroup = AuthorsOfNamesGroup.T
-  object AuthorsOfNamesGroup extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AuthorsOfIsGroupResult = AuthorsOfIsGroupResult.T
-  object AuthorsOfIsGroupResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AuthorsOfIsGroupP = AuthorsOfIsGroupP.T
-  object AuthorsOfIsGroupP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ParseText = ParseText.T
-  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TopLevelDashResult = TopLevelDashResult.T
-  object TopLevelDashResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TopLevelDashS = TopLevelDashS.T
-  object TopLevelDashS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AuthorsOfResultPart1 = AuthorsOfResultPart1.T
-  object AuthorsOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AuthorsOfResultPart2 = AuthorsOfResultPart2.T
-  object AuthorsOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AuthorsOfParts = AuthorsOfParts.T
-  object AuthorsOfParts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CleanResult = CleanResult.T
-  object CleanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CleanS = CleanS.T
-  object CleanS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LeadingDoiResult = LeadingDoiResult.T
-  object LeadingDoiResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LeadingDoiSlot = LeadingDoiSlot.T
-  object LeadingDoiSlot extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FirstDoiResult = FirstDoiResult.T
-  object FirstDoiResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FirstDoiS = FirstDoiS.T
-  object FirstDoiS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitekeyResult = CitekeyResult.T
-  object CitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WordsResult = WordsResult.T
-  object WordsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WordsS = WordsS.T
-  object WordsS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchQueryResult = SearchQueryResult.T
-  object SearchQueryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Ref(authors: List[Ref.Authors], title: Option[Ref.Title], year: Option[Ref.Year], doi: Option[Ref.Doi])
 
@@ -103,7 +63,7 @@ object QueueItemRef:
   )
 
   /** Pure: the parts of an item's first line, as far as they can be told. */
-  def parse(text: com.histmersion.web.QueueItemRef.ParseText): Ref =
+  def parse(text: com.histmersion.api.Api.Search.Text): Ref =
     val line = text.linesIterator.nextOption().getOrElse("").replace("**", "").trim
     line match
       case AuthorYear(who, year, title, venue) =>
@@ -125,7 +85,7 @@ object QueueItemRef:
         Ref(authors, clean(rest.mkString(", ")), Year.findFirstMatchIn(pub).map(_.group(1).toInt), leadingDoi(slot))
 
   /** Where the citation ends: the first ` — ` that is not inside a parenthesis. */
-  private def topLevelDash(s: com.histmersion.web.QueueItemRef.TopLevelDashS): com.histmersion.web.QueueItemRef.TopLevelDashResult =
+  private def topLevelDash(s: com.histmersion.api.Api.Search.Text): Int =
     var depth = 0
     var i = 0
     var cut = s.length
@@ -140,10 +100,10 @@ object QueueItemRef:
   /** The leading comma-parts that are names, and what is left (the title). The first part is always a name; a following
     * part joins it when it is the initials of a `Surname, I.` or another group of names joined by `&`.
     */
-  private def authorsOf(parts: List[com.histmersion.web.QueueItemRef.AuthorsOfParts]): (List[com.histmersion.web.QueueItemRef.AuthorsOfResultPart1], List[com.histmersion.web.QueueItemRef.AuthorsOfResultPart2]) =
-    def names(group: com.histmersion.web.QueueItemRef.AuthorsOfNamesGroup): List[com.histmersion.web.QueueItemRef.AuthorsOfNamesResult] =
+  private def authorsOf(parts: List[com.histmersion.web.QueueItemRef.Ref.Authors]): (List[com.histmersion.web.QueueItemRef.Ref.Authors], List[com.histmersion.web.QueueItemRef.Ref.Authors]) =
+    def names(group: com.histmersion.web.QueueItemRef.Ref.Authors): List[com.histmersion.web.QueueItemRef.Ref.Authors] =
       group.replaceAll(EdMark, " ").split("""\s+&\s+""").toList.map(_.trim).filter(_.nonEmpty)
-    def isGroup(p: com.histmersion.web.QueueItemRef.AuthorsOfIsGroupP): com.histmersion.web.QueueItemRef.AuthorsOfIsGroupResult =
+    def isGroup(p: com.histmersion.web.QueueItemRef.Ref.Authors): Boolean =
       p.contains(" & ") && !p.contains(":") &&
         p.replaceAll(EdMark, " ").split("""\s+""").forall(w => w == "&" || w.headOption.exists(_.isUpper))
     parts match
@@ -163,27 +123,27 @@ object QueueItemRef:
           else go = false
         (acc.toList, left)
 
-  private def clean(s: com.histmersion.web.QueueItemRef.CleanS): Option[com.histmersion.web.QueueItemRef.CleanResult] =
+  private def clean(s: com.histmersion.api.Api.Search.Text): Option[com.histmersion.api.UiLabels.Text] =
     Some(s.trim.stripPrefix("*").stripSuffix("*").trim).filter(_.nonEmpty)
 
   /** The DOI that OPENS a slot (`10.…`, `doi 10.…`, `JSTOR 10.…`), else none. */
-  private def leadingDoi(slot: com.histmersion.web.QueueItemRef.LeadingDoiSlot): Option[com.histmersion.web.QueueItemRef.LeadingDoiResult] =
+  private def leadingDoi(slot: com.histmersion.api.Api.Search.Text): Option[com.histmersion.web.QueueItemRef.Ref.Doi] =
     QueueView.segments(slot.trim.replaceFirst(DoiLead, "")).headOption.collect { case QueueView.Seg.Doi(d) => d }
 
-  private def firstDoi(s: com.histmersion.web.QueueItemRef.FirstDoiS): Option[com.histmersion.web.QueueItemRef.FirstDoiResult] =
+  private def firstDoi(s: com.histmersion.api.Api.Search.Text): Option[com.histmersion.web.QueueItemRef.Ref.Doi] =
     QueueView.segments(s).collectFirst { case QueueView.Seg.Doi(d) => d }
 
   /** A citekey in the corpus's `surnameYEAR_word` shape, through [[UploadView.suggestCitekey]] so it is always a valid
     * one.
     */
-  def citekey(r: Ref): Option[com.histmersion.web.QueueItemRef.CitekeyResult] =
+  def citekey(r: Ref): Option[com.histmersion.web.Preview.Target.Source.Citekey] =
     val surname = r.authors.headOption.flatMap(_.split("""\s+""").lastOption).map(_.replace(".", ""))
     val word = r.title.flatMap(t => words(t).find(w => w.length > 2 && !Stop(w.toLowerCase)))
     val raw = List(surname.map(_ + r.year.fold("")(_.toString)), word).flatten.mkString(" ")
     Option.when(raw.nonEmpty)(raw).flatMap(UploadView.suggestCitekey)
 
   /** The runs of letters in `s`. */
-  private def words(s: com.histmersion.web.QueueItemRef.WordsS): List[com.histmersion.web.QueueItemRef.WordsResult] =
+  private def words(s: com.histmersion.api.Api.Search.Text): List[com.histmersion.api.UiLabels.Text] =
     s.foldLeft(List(""))((acc, c) => if c.isLetter then (acc.head + c) :: acc.tail else "" :: acc)
       .reverse
       .filter(_.nonEmpty)
@@ -203,7 +163,7 @@ object QueueItemRef:
   /** What to search the corpus for when linking an item to a source already there: its title, else its first author,
     * else the start of its text.
     */
-  def searchQuery(item: Queue.QueueItem): com.histmersion.web.QueueItemRef.SearchQueryResult =
+  def searchQuery(item: Queue.QueueItem): com.histmersion.api.Api.Search.Text =
     val r = parse(item.text)
     r.title
       .map(_.split("""[:.]""").head.trim)

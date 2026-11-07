@@ -9,5 +9,8 @@ enum AuditIssue(val label: AuditIssue.Label):
   case Year extends AuditIssue("years differ")
 
 object AuditIssue:
+  object Label:
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

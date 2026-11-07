@@ -12,23 +12,11 @@ import scala.scalajs.js
   * "Map motion", by default the system's reduced-motion setting) nothing moves: the new groups are drawn at once.
   */
 object ClusterMotion:
+  type ClusterKey = ClusterKey.T
+  object ClusterKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Coordinate = Coordinate.T
+  object Coordinate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** How long a move takes (the stylesheet's animation), ms. */
-  type OriginResultPart1 = OriginResultPart1.T
-  object OriginResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OriginResultPart2 = OriginResultPart2.T
-  object OriginResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OriginPlacesPart1 = OriginPlacesPart1.T
-  object OriginPlacesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OriginPlacesPart2 = OriginPlacesPart2.T
-  object OriginPlacesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergesResult = MergesResult.T
-  object MergesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergesKs = MergesKs.T
-  object MergesKs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergesTarget = MergesTarget.T
-  object MergesTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithinResult = WithinResult.T
-  object WithinResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WithinDrawnBefore = WithinDrawnBefore.T
   object WithinDrawnBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WithinDrawnAfter = WithinDrawnAfter.T
@@ -44,7 +32,7 @@ object ClusterMotion:
   /** Pure: where a marker made of points last drawn at `places` comes from — the one place they all stood at (a split,
     * or the same group), or none when they came from several (a merge) or nowhere.
     */
-  def origin(places: Seq[(com.histmersion.web.map.ClusterMotion.OriginPlacesPart1, com.histmersion.web.map.ClusterMotion.OriginPlacesPart2)]): Option[(com.histmersion.web.map.ClusterMotion.OriginResultPart1, com.histmersion.web.map.ClusterMotion.OriginResultPart2)] =
+  def origin(places: Seq[(com.histmersion.web.map.ClusterMotion.Coordinate, com.histmersion.web.map.ClusterMotion.Coordinate)]): Option[(com.histmersion.web.map.ClusterMotion.Coordinate, com.histmersion.web.map.ClusterMotion.Coordinate)] =
     places.distinct match
       case Seq(one) => Some(one)
       case _        => None
@@ -52,27 +40,27 @@ object ClusterMotion:
   /** Pure: does a marker of the points `ks` merge into the marker of `target` (a group that holds more than it did)? A
     * split's old bubble does not: its points come out of it instead.
     */
-  def merges(ks: Seq[com.histmersion.web.map.ClusterMotion.MergesKs], target: Seq[com.histmersion.web.map.ClusterMotion.MergesTarget]): com.histmersion.web.map.ClusterMotion.MergesResult =
+  def merges(ks: Seq[com.histmersion.web.map.ClusterMotion.ClusterKey], target: Seq[com.histmersion.web.map.ClusterMotion.ClusterKey]): Boolean =
     target.size > ks.size && ks.forall(target.contains)
 
   /** A marker's move from one screen point to another. */
   final case class Slide(marker: DomMarker, from: (Slide.FromPart1, Slide.FromPart2), to: (Slide.ToPart1, Slide.ToPart2))
 
   object Slide:
-    type FromPart1 = FromPart1.T
-    object FromPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FromPart2 = FromPart2.T
-    object FromPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ToPart1 = ToPart1.T
-    object ToPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ToPart2 = ToPart2.T
-    object ToPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromPart1 = com.histmersion.web.map.ClusterMotion.Coordinate
+    val FromPart1: _root_.com.histmersion.web.map.ClusterMotion.Coordinate.type = _root_.com.histmersion.web.map.ClusterMotion.Coordinate
+    type FromPart2 = com.histmersion.web.map.ClusterMotion.Coordinate
+    val FromPart2: _root_.com.histmersion.web.map.ClusterMotion.Coordinate.type = _root_.com.histmersion.web.map.ClusterMotion.Coordinate
+    type ToPart1 = com.histmersion.web.map.ClusterMotion.Coordinate
+    val ToPart1: _root_.com.histmersion.web.map.ClusterMotion.Coordinate.type = _root_.com.histmersion.web.map.ClusterMotion.Coordinate
+    type ToPart2 = com.histmersion.web.map.ClusterMotion.Coordinate
+    val ToPart2: _root_.com.histmersion.web.map.ClusterMotion.Coordinate.type = _root_.com.histmersion.web.map.ClusterMotion.Coordinate
 
   /** Pure: does a zoom from `drawnBefore` markers to `drawnAfter` animate — at most `max` on either side? What an
     * animation costs is the markers drawn and moved on screen, not the points the layer holds: a wide window's view
     * holds thousands of events, of which a few hundred are drawn.
     */
-  def within(drawnBefore: com.histmersion.web.map.ClusterMotion.WithinDrawnBefore, drawnAfter: com.histmersion.web.map.ClusterMotion.WithinDrawnAfter, max: com.histmersion.web.map.ClusterMotion.WithinMax): com.histmersion.web.map.ClusterMotion.WithinResult =
+  def within(drawnBefore: com.histmersion.web.map.ClusterMotion.WithinDrawnBefore, drawnAfter: com.histmersion.web.map.ClusterMotion.WithinDrawnAfter, max: com.histmersion.web.map.ClusterMotion.WithinMax): Boolean =
     drawnBefore <= max && drawnAfter <= max
 
   /** Move every marker of `slides` from its `from` to its `to` over [[Ms]]: the stylesheet animates the offset between

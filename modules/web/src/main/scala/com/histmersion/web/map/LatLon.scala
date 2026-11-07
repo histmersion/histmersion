@@ -23,7 +23,7 @@ import scala.scalajs.js
 final case class LatLon(lat: LatLon.Lat, lon: LatLon.Lon)
 
 object LatLon:
-  type Lat = Lat.T
-  object Lat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Lon = Lon.T
-  object Lon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Lat = com.histmersion.api.Geo.Latitude
+  val Lat: _root_.com.histmersion.api.Geo.Latitude.type = _root_.com.histmersion.api.Geo.Latitude
+  type Lon = com.histmersion.api.Geo.Longitude
+  val Lon: _root_.com.histmersion.api.Geo.Longitude.type = _root_.com.histmersion.api.Geo.Longitude

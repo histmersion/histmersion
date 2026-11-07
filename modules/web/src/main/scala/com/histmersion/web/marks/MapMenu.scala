@@ -28,18 +28,6 @@ object MapMenu:
   object SetLockedOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PointZoom = PointZoom.T
   object PointZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointSpanPart1 = PointSpanPart1.T
-  object PointSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointSpanPart2 = PointSpanPart2.T
-  object PointSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WrapResult = WrapResult.T
-  object WrapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WrapLon = WrapLon.T
-  object WrapLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpanNowResultPart1 = SpanNowResultPart1.T
-  object SpanNowResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpanNowResultPart2 = SpanNowResultPart2.T
-  object SpanNowResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val locked: Var[com.histmersion.web.marks.MapMenu.Locked] = Var(false)
 
@@ -49,7 +37,7 @@ object MapMenu:
     Flash.say(if on then "The map is locked: it does not move until you unlock it." else "The map moves again.")
 
   /** A point on the map, as a target. Pure. */
-  def point(at: LatLon, zoom: com.histmersion.web.marks.MapMenu.PointZoom, span: Option[(com.histmersion.web.marks.MapMenu.PointSpanPart1, com.histmersion.web.marks.MapMenu.PointSpanPart2)]): Target =
+  def point(at: LatLon, zoom: com.histmersion.web.marks.MapMenu.PointZoom, span: Option[(com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)]): Target =
     Target(
       ItemKind.Point,
       lat = Latitude.option(at.lat),
@@ -60,9 +48,9 @@ object MapMenu:
     )
 
   /** A longitude on the world's first copy (the map draws copies side by side). Pure. */
-  def wrap(lon: com.histmersion.web.marks.MapMenu.WrapLon): com.histmersion.web.marks.MapMenu.WrapResult = ((lon + 180) % 360 + 360) % 360 - 180
+  def wrap(lon: com.histmersion.api.Geo.Longitude): com.histmersion.api.Geo.Longitude = ((lon + 180) % 360 + 360) % 360 - 180
 
-  private def spanNow: Option[(com.histmersion.web.marks.MapMenu.SpanNowResultPart1, com.histmersion.web.marks.MapMenu.SpanNowResultPart2)] = UiState.from.now().zip(UiState.to.now())
+  private def spanNow: Option[(com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)] = UiState.from.now().zip(UiState.to.now())
 
   private def writing(act: => Unit): Unit = if Auth.writableNow then act else WindowManager.open(WindowKey.ApiKey)
 

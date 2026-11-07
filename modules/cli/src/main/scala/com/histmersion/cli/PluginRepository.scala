@@ -11,16 +11,14 @@ import java.nio.file.Path
 type PluginRepository = PluginRepository.T
 
 object PluginRepository extends RefinedType[String, Match["(https?|file):.+"]]:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** An `https://`, `http://` or `file:` URL as given, or a local directory as its `file:` URL; a directory must exist.
     */
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseRaw = ParseRaw.T
-  object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseIsDirectoryResult = ParseIsDirectoryResult.T
-  object ParseIsDirectoryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(raw: com.histmersion.cli.PluginRepository.ParseRaw, isDirectory: Path => com.histmersion.cli.PluginRepository.ParseIsDirectoryResult): Either[com.histmersion.cli.PluginRepository.ParseResultPart1, PluginRepository] =
+  def parse(raw: com.histmersion.cli.PluginRepository.Text, isDirectory: Path => Boolean): Either[com.histmersion.cli.PluginRepository.Problem, PluginRepository] =
     val trimmed = raw.trim
     option(trimmed) match
       case Some(url) => Right(url)

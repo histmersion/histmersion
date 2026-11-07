@@ -15,34 +15,28 @@ import org.scalajs.dom
   * link opens on the map).
   */
 object MobileChrome:
+  type DeltaX = DeltaX.T
+  object DeltaX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeltaY = DeltaY.T
+  object DeltaY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HiddenCount = HiddenCount.T
+  object HiddenCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpanLabel = SpanLabel.T
+  object SpanLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A drawer: which edge it comes from. */
-  type SwipesInResult = SwipesInResult.T
-  object SwipesInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SwipesInDx = _root_.com.histmersion.web.MobileChrome.HorizontalDx
-  val SwipesInDx: _root_.com.histmersion.web.MobileChrome.HorizontalDx.type = _root_.com.histmersion.web.MobileChrome.HorizontalDx
-  type SwipesInDy = _root_.com.histmersion.web.MobileChrome.HorizontalDy
-  val SwipesInDy: _root_.com.histmersion.web.MobileChrome.HorizontalDy.type = _root_.com.histmersion.web.MobileChrome.HorizontalDy
-  type SwipesOutResult = SwipesOutResult.T
-  object SwipesOutResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SwipesOutDx = _root_.com.histmersion.web.MobileChrome.HorizontalDx
-  val SwipesOutDx: _root_.com.histmersion.web.MobileChrome.HorizontalDx.type = _root_.com.histmersion.web.MobileChrome.HorizontalDx
-  type SwipesOutDy = _root_.com.histmersion.web.MobileChrome.HorizontalDy
-  val SwipesOutDy: _root_.com.histmersion.web.MobileChrome.HorizontalDy.type = _root_.com.histmersion.web.MobileChrome.HorizontalDy
-  type HorizontalDx = HorizontalDx.T
-  object HorizontalDx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HorizontalDy = HorizontalDy.T
-  object HorizontalDy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HiddenFilterCountResult = HiddenFilterCountResult.T
-  object HiddenFilterCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimelineOpenInResult = TimelineOpenInResult.T
-  object TimelineOpenInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SwipesInDx = _root_.com.histmersion.web.MobileChrome.DeltaX
+  val SwipesInDx: _root_.com.histmersion.web.MobileChrome.DeltaX.type = _root_.com.histmersion.web.MobileChrome.DeltaX
+  type SwipesInDy = _root_.com.histmersion.web.MobileChrome.DeltaY
+  val SwipesInDy: _root_.com.histmersion.web.MobileChrome.DeltaY.type = _root_.com.histmersion.web.MobileChrome.DeltaY
+  type SwipesOutDx = _root_.com.histmersion.web.MobileChrome.DeltaX
+  val SwipesOutDx: _root_.com.histmersion.web.MobileChrome.DeltaX.type = _root_.com.histmersion.web.MobileChrome.DeltaX
+  type SwipesOutDy = _root_.com.histmersion.web.MobileChrome.DeltaY
+  val SwipesOutDy: _root_.com.histmersion.web.MobileChrome.DeltaY.type = _root_.com.histmersion.web.MobileChrome.DeltaY
   type TimelineOpen = TimelineOpen.T
   object TimelineOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpanLabelResult = SpanLabelResult.T
-  object SpanLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrawerHeadName = DrawerHeadName.T
-  object DrawerHeadName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Drawer(val edge: Edge):
     case Filters extends Drawer(Edge.Left)
@@ -58,27 +52,27 @@ object MobileChrome:
   val SwipeRatio = 1.5
 
   /** Is a gesture of (`dx`, `dy`) a horizontal swipe TOWARDS the middle from `edge` (so, opening)? */
-  def swipesIn(edge: Edge, dx: com.histmersion.web.MobileChrome.SwipesInDx, dy: com.histmersion.web.MobileChrome.SwipesInDy): com.histmersion.web.MobileChrome.SwipesInResult =
+  def swipesIn(edge: Edge, dx: com.histmersion.web.MobileChrome.SwipesInDx, dy: com.histmersion.web.MobileChrome.SwipesInDy): Boolean =
     horizontal(dx, dy) && (edge match
       case Edge.Left  => dx > 0
       case Edge.Right => dx < 0)
 
   /** …and back out towards `edge` (so, closing the drawer that came from it)? */
-  def swipesOut(edge: Edge, dx: com.histmersion.web.MobileChrome.SwipesOutDx, dy: com.histmersion.web.MobileChrome.SwipesOutDy): com.histmersion.web.MobileChrome.SwipesOutResult =
+  def swipesOut(edge: Edge, dx: com.histmersion.web.MobileChrome.SwipesOutDx, dy: com.histmersion.web.MobileChrome.SwipesOutDy): Boolean =
     horizontal(dx, dy) && (edge match
       case Edge.Left  => dx < 0
       case Edge.Right => dx > 0)
 
-  private def horizontal(dx: com.histmersion.web.MobileChrome.HorizontalDx, dy: com.histmersion.web.MobileChrome.HorizontalDy) =
+  private def horizontal(dx: com.histmersion.web.MobileChrome.DeltaX, dy: com.histmersion.web.MobileChrome.DeltaY) =
     math.abs(dx) >= SwipeMinPx && math.abs(dx) > SwipeRatio * math.abs(dy)
 
   /** The filters that are set but not visible in the bar (the search is): the ☰ badge. */
-  def hiddenFilterCount(chips: List[UiState.ActiveChip]): com.histmersion.web.MobileChrome.HiddenFilterCountResult = chips.count(_.key != UiState.q.key)
+  def hiddenFilterCount(chips: List[UiState.ActiveChip]): com.histmersion.web.MobileChrome.HiddenCount = chips.count(_.key != UiState.q.key)
 
   /** Whether the timeline is unfolded when the page comes into `mode`: on a tablet, whose map keeps most of the screen
     * with it open; on a phone it waits for ⏱.
     */
-  def timelineOpenIn(mode: Viewport.Mode): com.histmersion.web.MobileChrome.TimelineOpenInResult = mode == Viewport.Mode.Tablet
+  def timelineOpenIn(mode: Viewport.Mode): Boolean = mode == Viewport.Mode.Tablet
 
   // ── state ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -155,13 +149,13 @@ object MobileChrome:
   /** The span the map shows, short: `3500 BCE–500 BCE`. With the timeline folded, this is what says which time the map
     * is at.
     */
-  private def spanLabel(config: UiConfig): Signal[com.histmersion.web.MobileChrome.SpanLabelResult] =
+  private def spanLabel(config: UiConfig): Signal[com.histmersion.web.MobileChrome.SpanLabel] =
     UiState.from.signal.combineWith(UiState.to.signal).map { (a, b) =>
       Fmt.periodStr(a.getOrElse(config.time.defaultFrom), b.getOrElse(config.time.defaultTo))
     }
 
   /** A drawer's heading: its name and a close button. */
-  def drawerHead(name: com.histmersion.web.MobileChrome.DrawerHeadName): HtmlElement =
+  def drawerHead(name: com.histmersion.web.MobileChrome.Name): HtmlElement =
     div(
       cls := "drawer-head",
       span(cls := "drawer-title", name),

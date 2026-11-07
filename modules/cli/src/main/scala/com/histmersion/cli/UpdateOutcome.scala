@@ -20,9 +20,11 @@ enum UpdateOutcome:
   case Refused(reason: UpdateOutcome.Refused.Reason)
 
 object UpdateOutcome:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   object Failed:
-    type Reason = Reason.T
-    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = com.histmersion.cli.UpdateOutcome.Problem
+    val Reason: _root_.com.histmersion.cli.UpdateOutcome.Problem.type = _root_.com.histmersion.cli.UpdateOutcome.Problem
   object Refused:
-    type Reason = Reason.T
-    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = com.histmersion.cli.UpdateOutcome.Problem
+    val Reason: _root_.com.histmersion.cli.UpdateOutcome.Problem.type = _root_.com.histmersion.cli.UpdateOutcome.Problem

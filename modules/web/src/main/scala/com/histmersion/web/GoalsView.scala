@@ -17,107 +17,53 @@ import com.histmersion.api.research.Articles
   * and when a run settles ([[ApprovalsView.changed]]).
   */
 object GoalsView:
+  type ActiveText = ActiveText.T
+  object ActiveText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Busy = Busy.T
+  object Busy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Checked = Checked.T
+  object Checked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreatedNote = CreatedNote.T
+  object CreatedNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Depth = Depth.T
+  object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FieldInput = FieldInput.T
+  object FieldInput extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FieldName = FieldName.T
+  object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Hint = Hint.T
+  object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemId = ItemId.T
+  object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PerDay = PerDay.T
+  object PerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Planned = Planned.T
+  object Planned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResumeNote = ResumeNote.T
+  object ResumeNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeededNote = SeededNote.T
+  object SeededNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Watch = Watch.T
+  object Watch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WatchedNote = WatchedNote.T
+  object WatchedNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteLabel = WriteLabel.T
+  object WriteLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** How many goals the tree lists, and how many of a goal's runs its window shows. */
-  type TreeWalkResultPart2 = TreeWalkResultPart2.T
-  object TreeWalkResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TreeWalkParent = TreeWalkParent.T
-  object TreeWalkParent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TreeWalkDepth = TreeWalkDepth.T
-  object TreeWalkDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TreeWalkSeen = TreeWalkSeen.T
-  object TreeWalkSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreatedNoteMadeId = CreatedNoteMadeId.T
-  object CreatedNoteMadeId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreatedNoteMadeResume = CreatedNoteMadeResume.T
-  object CreatedNoteMadeResume extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewAreaFormFieldV = NewAreaFormFieldV.T
-  object NewAreaFormFieldV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewAreaFormFieldName = NewAreaFormFieldName.T
-  object NewAreaFormFieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewAreaFormFieldHint = NewAreaFormFieldHint.T
-  object NewAreaFormFieldHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewAreaFormBoxV = NewAreaFormBoxV.T
-  object NewAreaFormBoxV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewAreaFormBoxText = NewAreaFormBoxText.T
-  object NewAreaFormBoxText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalPaneWriteWhat = GoalPaneWriteWhat.T
-  object GoalPaneWriteWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type TreeResultPart2 = TreeResultPart2.T
-  object TreeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StagesPart1 = StagesPart1.T
-  object StagesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StagesPart2 = StagesPart2.T
-  object StagesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MeaningResult = MeaningResult.T
-  object MeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MeaningStatus = MeaningStatus.T
-  object MeaningStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PendingPlanSlug = PendingPlanSlug.T
-  object PendingPlanSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultCronResult = DefaultCronResult.T
-  object DefaultCronResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkToAddRaw = LinkToAddRaw.T
-  object LinkToAddRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkToAddNote = LinkToAddNote.T
-  object LinkToAddNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SlugifyResult = SlugifyResult.T
-  object SlugifyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SlugifyTitle = SlugifyTitle.T
-  object SlugifyTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewAreaResultPart1 = NewAreaResultPart1.T
-  object NewAreaResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewAreaTitle = NewAreaTitle.T
-  object NewAreaTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewAreaSlug = NewAreaSlug.T
-  object NewAreaSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewAreaNotes = NewAreaNotes.T
-  object NewAreaNotes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewAreaTags = NewAreaTags.T
-  object NewAreaTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NewAreaPlan = _root_.com.histmersion.web.GoalsView.NewArea.Plan
   val NewAreaPlan: _root_.com.histmersion.web.GoalsView.NewArea.Plan.type = _root_.com.histmersion.web.GoalsView.NewArea.Plan
   type NewAreaSeed = _root_.com.histmersion.web.GoalsView.NewArea.Seed
   val NewAreaSeed: _root_.com.histmersion.web.GoalsView.NewArea.Seed.type = _root_.com.histmersion.web.GoalsView.NewArea.Seed
-  type NewAreaWatch = NewAreaWatch.T
-  object NewAreaWatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewAreaAutoIngest = NewAreaAutoIngest.T
-  object NewAreaAutoIngest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewAreaPerDay = NewAreaPerDay.T
-  object NewAreaPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreatedNoteResult = CreatedNoteResult.T
-  object CreatedNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreatedNotePlanned = CreatedNotePlanned.T
-  object CreatedNotePlanned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreatedNoteSeeded = CreatedNoteSeeded.T
-  object CreatedNoteSeeded extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreatedNoteWatched = CreatedNoteWatched.T
-  object CreatedNoteWatched extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreatedNoteActive = CreatedNoteActive.T
-  object CreatedNoteActive extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BadgeStatus = _root_.com.histmersion.web.GoalsView.MeaningStatus
-  val BadgeStatus: _root_.com.histmersion.web.GoalsView.MeaningStatus.type = _root_.com.histmersion.web.GoalsView.MeaningStatus
+  type BadgeStatus = _root_.com.histmersion.api.automation.Goal.Stage
+  val BadgeStatus: _root_.com.histmersion.api.automation.Goal.Stage.type = _root_.com.histmersion.api.automation.Goal.Stage
   type BadgeText = BadgeText.T
   object BadgeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalPaneSlug = GoalPaneSlug.T
-  object GoalPaneSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanSectionSlug = _root_.com.histmersion.web.GoalsView.PendingPlanSlug
-  val PlanSectionSlug: _root_.com.histmersion.web.GoalsView.PendingPlanSlug.type = _root_.com.histmersion.web.GoalsView.PendingPlanSlug
-  type PlanSectionBusy = PlanSectionBusy.T
-  object PlanSectionBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinksSectionSlug = LinksSectionSlug.T
-  object LinksSectionSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinksSectionBusy = LinksSectionBusy.T
-  object LinksSectionBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinksSectionWriteArg1 = LinksSectionWriteArg1.T
-  object LinksSectionWriteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SchedulesSectionSlug = SchedulesSectionSlug.T
-  object SchedulesSectionSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SchedulesSectionBusy = SchedulesSectionBusy.T
-  object SchedulesSectionBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SchedulesSectionWriteArg1 = SchedulesSectionWriteArg1.T
-  object SchedulesSectionWriteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanSectionSlug = _root_.com.histmersion.api.automation.Goal.Slug
+  val PlanSectionSlug: _root_.com.histmersion.api.automation.Goal.Slug.type = _root_.com.histmersion.api.automation.Goal.Slug
 
   val Limit = 500
   val RunLimit = 15
@@ -127,10 +73,10 @@ object GoalsView:
   /** Goals as a tree, depth first: each root (no parent, or a parent that is not listed) then its sub-goals, by slug,
     * with their depth. A cycle cannot loop: a goal is listed once.
     */
-  def tree(goals: List[Goal]): List[(Goal, com.histmersion.web.GoalsView.TreeResultPart2)] =
+  def tree(goals: List[Goal]): List[(Goal, com.histmersion.web.GoalsView.Depth)] =
     val slugs = goals.map(_.slug).toSet
     val byParent = goals.groupBy(g => g.parentSlug.filter(slugs))
-    def walk(parent: Option[com.histmersion.web.GoalsView.TreeWalkParent], depth: com.histmersion.web.GoalsView.TreeWalkDepth, seen: Set[com.histmersion.web.GoalsView.TreeWalkSeen]): List[(Goal, com.histmersion.web.GoalsView.TreeWalkResultPart2)] =
+    def walk(parent: Option[com.histmersion.api.automation.Goal.Slug], depth: com.histmersion.web.GoalsView.Depth, seen: Set[com.histmersion.api.automation.Goal.Slug]): List[(Goal, com.histmersion.web.GoalsView.Depth)] =
       byParent.getOrElse(parent, Nil).sortBy(_.slug).filterNot(g => seen(g.slug)).flatMap { g =>
         (g, depth) :: walk(Some(g.slug), depth + 1, seen + g.slug)
       }
@@ -139,19 +85,19 @@ object GoalsView:
   /** What each goal stage means, in the order a goal moves through them; the legend above the tree and the tooltip of
     * every status badge.
     */
-  val stages: List[(com.histmersion.web.GoalsView.StagesPart1, com.histmersion.web.GoalsView.StagesPart2)] = Goal.Stages.all
+  val stages: List[(com.histmersion.api.automation.Goal.Stage, com.histmersion.api.automation.Goal.StageMeaning)] = Goal.Stages.all
 
-  def meaning(status: com.histmersion.web.GoalsView.MeaningStatus): Option[com.histmersion.web.GoalsView.MeaningResult] = Goal.Stages.meaning(status)
+  def meaning(status: com.histmersion.api.automation.Goal.Stage): Option[com.histmersion.api.automation.Goal.StageMeaning] = Goal.Stages.meaning(status)
 
   /** The open plan approval of a goal, if a plan run is waiting on one. */
-  def pendingPlan(as: List[ApprovalInfo], slug: com.histmersion.web.GoalsView.PendingPlanSlug): Option[ApprovalInfo] =
+  def pendingPlan(as: List[ApprovalInfo], slug: com.histmersion.api.automation.Goal.Slug): Option[ApprovalInfo] =
     as.find(a =>
       a.approvalKind.contains(ApprovalKind.GoalPlan) && a.subject.contains(slug) &&
         a.state == ApprovalState.Open.wire
     )
 
   /** What the schedule editor starts from: the schedule's own cron, else a sensible default. */
-  def defaultCron(k: ScheduleKind): com.histmersion.web.GoalsView.DefaultCronResult = k match
+  def defaultCron(k: ScheduleKind): com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron = k match
     case ScheduleKind.Currency    => "@weekly"
     case ScheduleKind.Acquisition => "@monthly"
 
@@ -159,11 +105,11 @@ object GoalsView:
   def linksOf(ls: List[GoalLink], k: LinkKind): List[GoalLink] = ls.filter(_.kind == k)
 
   /** A link to add, from the editor's kind and text: `None` when the text is blank. */
-  def linkToAdd(kind: LinkKind, raw: com.histmersion.web.GoalsView.LinkToAddRaw, note: com.histmersion.web.GoalsView.LinkToAddNote): Option[LinkAdd] =
+  def linkToAdd(kind: LinkKind, raw: com.histmersion.api.automation.Goal.Plans.LinkAdd.Ref, note: com.histmersion.api.automation.Goal.Plans.LinkAdd.Note): Option[LinkAdd] =
     Option(raw).map(_.trim).filter(_.nonEmpty).map(r => LinkAdd(kind, r, Option(note).map(_.trim).filter(_.nonEmpty)))
 
   /** A slug from a title: lower case, runs of anything but letters and digits as one '-'. */
-  def slugify(title: com.histmersion.web.GoalsView.SlugifyTitle): com.histmersion.web.GoalsView.SlugifyResult =
+  def slugify(title: com.histmersion.api.automation.Goal.Title): com.histmersion.api.automation.Goal.Slug =
     title.trim.toLowerCase.replaceAll("[^a-z0-9]+", "-").stripPrefix("-").stripSuffix("-")
 
   /** What the New research area form creates: the goal (at `slug`), and whether to plan it (a plan-goal run), seed it
@@ -191,16 +137,16 @@ object GoalsView:
     * OFF unless ticked; its cap (blank = the server's default) a whole number.
     */
   def newArea(
-      title: com.histmersion.web.GoalsView.NewAreaTitle,
-      slug: com.histmersion.web.GoalsView.NewAreaSlug,
-      notes: com.histmersion.web.GoalsView.NewAreaNotes,
-      tags: com.histmersion.web.GoalsView.NewAreaTags,
+      title: com.histmersion.api.automation.Goal.Title,
+      slug: com.histmersion.api.automation.Goal.Slug,
+      notes: com.histmersion.api.automation.Goal.Notes,
+      tags: com.histmersion.api.automation.Goal.Tags,
       plan: com.histmersion.web.GoalsView.NewAreaPlan,
       seed: com.histmersion.web.GoalsView.NewAreaSeed,
-      watch: com.histmersion.web.GoalsView.NewAreaWatch = false,
-      autoIngest: com.histmersion.web.GoalsView.NewAreaAutoIngest = false,
-      perDay: com.histmersion.web.GoalsView.NewAreaPerDay = ""
-  ): Either[com.histmersion.web.GoalsView.NewAreaResultPart1, NewArea] =
+      watch: com.histmersion.web.GoalsView.Watch = false,
+      autoIngest: com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest = false,
+      perDay: com.histmersion.web.GoalsView.PerDay = ""
+  ): Either[com.histmersion.api.automation.Goal.Slug, NewArea] =
     val t = title.trim
     val s = Option(slug.trim).filter(_.nonEmpty).getOrElse(slugify(t))
     val cap = perDay.trim
@@ -233,12 +179,12 @@ object GoalsView:
   /** What the form did, in one line. */
   def createdNote(
       a: NewArea,
-      planned: com.histmersion.web.GoalsView.CreatedNotePlanned,
-      seeded: Option[com.histmersion.web.GoalsView.CreatedNoteSeeded],
-      watched: Option[com.histmersion.web.GoalsView.CreatedNoteWatched] = None,
-      active: Set[com.histmersion.web.GoalsView.CreatedNoteActive] = Set.empty
-  ): com.histmersion.web.GoalsView.CreatedNoteResult =
-    def made(id: com.histmersion.web.GoalsView.CreatedNoteMadeId, resume: com.histmersion.web.GoalsView.CreatedNoteMadeResume) =
+      planned: com.histmersion.web.GoalsView.Planned,
+      seeded: Option[com.histmersion.web.GoalsView.SeededNote],
+      watched: Option[com.histmersion.web.GoalsView.WatchedNote] = None,
+      active: Set[com.histmersion.web.GoalsView.ActiveText] = Set.empty
+  ): com.histmersion.web.GoalsView.CreatedNote =
+    def made(id: com.histmersion.web.GoalsView.ItemId, resume: com.histmersion.web.GoalsView.ResumeNote) =
       if active(id) then s"$id created active (the autopilot is on)" else s"$id created paused — resume it $resume"
     s"research area ${a.slug} created" + (if planned then "; the planner is running (its plan waits for you)" else "") +
       seeded.fold("")(id => s"; seeding manager ${made(id, "to propose its articles")}") +
@@ -308,7 +254,7 @@ object GoalsView:
     val plan = Var(true); val seed = Var(true); val watch = Var(false); val ingest = Var(false); val perDay = Var("")
     val busy = Var(false)
     val msg = Var(Option.empty[Either[String, String]])
-    def field(v: Var[com.histmersion.web.GoalsView.NewAreaFormFieldV], name: com.histmersion.web.GoalsView.NewAreaFormFieldName, hint: com.histmersion.web.GoalsView.NewAreaFormFieldHint) =
+    def field(v: Var[com.histmersion.web.GoalsView.FieldInput], name: com.histmersion.web.GoalsView.FieldName, hint: com.histmersion.web.GoalsView.Hint) =
       input(
         typ := "text",
         cls := "field",
@@ -316,7 +262,7 @@ object GoalsView:
         placeholder := hint,
         controlled(value <-- v.signal, onInput.mapToValue --> v.writer)
       )
-    def box(v: Var[com.histmersion.web.GoalsView.NewAreaFormBoxV], text: com.histmersion.web.GoalsView.NewAreaFormBoxText) =
+    def box(v: Var[com.histmersion.web.GoalsView.Checked], text: com.histmersion.web.GoalsView.Label) =
       label(
         cls := "goal-on",
         input(typ := "checkbox", controlled(checked <-- v.signal, onClick.mapToChecked --> v.writer)),
@@ -445,7 +391,7 @@ object GoalsView:
   // ── one goal ────────────────────────────────────────────────────────────────────────────────────
 
   /** One goal's window; its state is its own (several goals can be open at once). */
-  def goalPane(slug: com.histmersion.web.GoalsView.GoalPaneSlug): HtmlElement =
+  def goalPane(slug: com.histmersion.api.automation.Goal.Slug): HtmlElement =
     val view = Var(Option.empty[GoalView])
     val runs = Var(List.empty[RunInfo])
     val approvals = Var(List.empty[ApprovalInfo])
@@ -467,7 +413,7 @@ object GoalsView:
         )
         .foreach(a => approvals.set(a._1))
 
-    def write[A](what: com.histmersion.web.GoalsView.GoalPaneWriteWhat)(f: => scala.concurrent.Future[A]): Unit =
+    def write[A](what: com.histmersion.web.GoalsView.WriteLabel)(f: => scala.concurrent.Future[A]): Unit =
       busy.set(true)
       f.onComplete { r =>
         busy.set(false)
@@ -551,7 +497,7 @@ object GoalsView:
   private def planSection(
       slug: com.histmersion.web.GoalsView.PlanSectionSlug,
       approvals: Signal[List[ApprovalInfo]],
-      busy: Signal[com.histmersion.web.GoalsView.PlanSectionBusy],
+      busy: Signal[com.histmersion.web.GoalsView.Busy],
       plan: () => Unit
   ): HtmlElement =
     div(
@@ -587,10 +533,10 @@ object GoalsView:
     )
 
   private def linksSection(
-      slug: com.histmersion.web.GoalsView.LinksSectionSlug,
+      slug: com.histmersion.api.automation.Goal.Slug,
       links: List[GoalLink],
-      busy: Signal[com.histmersion.web.GoalsView.LinksSectionBusy],
-      write: com.histmersion.web.GoalsView.LinksSectionWriteArg1 => (=> scala.concurrent.Future[Any]) => Unit
+      busy: Signal[com.histmersion.web.GoalsView.Busy],
+      write: com.histmersion.web.GoalsView.WriteLabel => (=> scala.concurrent.Future[Any]) => Unit
   ): HtmlElement =
     val kind = Var(LinkKind.Source)
     val ref = Var("")
@@ -675,10 +621,10 @@ object GoalsView:
     )
 
   private def schedulesSection(
-      slug: com.histmersion.web.GoalsView.SchedulesSectionSlug,
+      slug: com.histmersion.api.automation.Goal.Slug,
       ss: List[GoalSchedule],
-      busy: Signal[com.histmersion.web.GoalsView.SchedulesSectionBusy],
-      write: com.histmersion.web.GoalsView.SchedulesSectionWriteArg1 => (=> scala.concurrent.Future[Any]) => Unit
+      busy: Signal[com.histmersion.web.GoalsView.Busy],
+      write: com.histmersion.web.GoalsView.WriteLabel => (=> scala.concurrent.Future[Any]) => Unit
   ): HtmlElement =
     def editor(k: ScheduleKind): HtmlElement =
       val current = ss.find(_.kind == k)

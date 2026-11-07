@@ -6,17 +6,13 @@ import scala.scalajs.js
 
 /** A region: south, west, north, east (east may pass 180 across the antimeridian). */
 final case class GeoBounds(south: GeoBounds.South, west: GeoBounds.West, north: GeoBounds.North, east: GeoBounds.East):
-  def contains(p: LatLon): com.histmersion.web.map.GeoBounds.ContainsResult = p.lat >= south && p.lat <= north && p.lon >= west && p.lon <= east
+  def contains(p: LatLon): Boolean = p.lat >= south && p.lat <= north && p.lon >= west && p.lon <= east
   def extend(o: GeoBounds): GeoBounds =
     GeoBounds(math.min(south, o.south), math.min(west, o.west), math.max(north, o.north), math.max(east, o.east))
-  def valid: com.histmersion.web.map.GeoBounds.ValidResult = south <= north && west <= east && !south.isNaN && !west.isNaN
+  def valid: Boolean = south <= north && west <= east && !south.isNaN && !west.isNaN
 
 object GeoBounds:
   /** The bounds of a GeoJSON geometry's coordinates (`None` for none). Pure over the parsed object. */
-  type ContainsResult = ContainsResult.T
-  object ContainsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidResult = ValidResult.T
-  object ValidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type South = South.T
   object South extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]

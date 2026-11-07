@@ -16,35 +16,15 @@ import com.histmersion.api.basemap.Basemap
   * their sources pointed at the server's tiles here; the online maps are a raster source.
   */
 object MapLibreStyles:
+  type Origin = Origin.T
+  object Origin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type BackgroundResult = BackgroundResult.T
-  object BackgroundResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StyleOrigin = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin
-  val StyleOrigin: _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin.type = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin
-  type CreditsResult = CreditsResult.T
-  object CreditsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExpandTemplate = ExpandTemplate.T
-  object ExpandTemplate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InfoLayer = InfoLayer.T
-  object InfoLayer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DropId = DropId.T
-  object DropId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveLang = ResolveLang.T
-  object ResolveLang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveNames = ResolveNames.T
-  object ResolveNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveReduced = ResolveReduced.T
-  object ResolveReduced extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveOrigin = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin
-  val ResolveOrigin: _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin.type = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin
-  type ResolveSeaDepth = ResolveSeaDepth.T
-  object ResolveSeaDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceStringFrom = ReplaceStringFrom.T
-  object ReplaceStringFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceStringTo = ReplaceStringTo.T
-  object ReplaceStringTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContoursOrigin = ContoursOrigin.T
-  object ContoursOrigin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StyleOrigin = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.Origin
+  val StyleOrigin: _root_.com.histmersion.web.map.maplibre.MapLibreStyles.Origin.type = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.Origin
+  type ResolveOrigin = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.Origin
+  val ResolveOrigin: _root_.com.histmersion.web.map.maplibre.MapLibreStyles.Origin.type = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.Origin
 
   private val docs = mutable.HashMap.empty[String, Future[js.Dynamic]]
 
@@ -67,7 +47,7 @@ object MapLibreStyles:
   /** A copy of a JSON value. */
   private def copy(v: js.Any): js.Dynamic = js.JSON.parse(js.JSON.stringify(v)).asInstanceOf[js.Dynamic]
 
-  private def background(): com.histmersion.web.map.maplibre.MapLibreStyles.BackgroundResult = ThemeTokens("--bg")
+  private def background(): com.histmersion.web.map.ShapeStyle.Colour = ThemeTokens("--bg")
 
   /** The page's own background and nothing else. */
   def blank(): js.Object =
@@ -102,7 +82,7 @@ object MapLibreStyles:
   /** The credits a style owes: each source's `attribution` that a layer drawn (not `visibility: none`) reads, once
     * each, in the style's order. Pure over the JSON.
     */
-  def credits(s: js.Dynamic): Seq[com.histmersion.web.map.maplibre.MapLibreStyles.CreditsResult] =
+  def credits(s: js.Dynamic): Seq[com.histmersion.web.map.BaseMapSpec.Raster.Attribution] =
     if js.isUndefined(s) || s == null || js.isUndefined(s.sources) || js.isUndefined(s.layers) then Nil
     else
       val drawn = s.layers
@@ -121,7 +101,7 @@ object MapLibreStyles:
       }.distinct
 
   /** `{s}` → the subdomains a, b, c. Pure. */
-  def expand(template: com.histmersion.web.map.maplibre.MapLibreStyles.ExpandTemplate): js.Array[String] =
+  def expand(template: com.histmersion.api.basemap.BasemapApi.TileTemplate): js.Array[String] =
     if template.contains("{s}") then js.Array("a", "b", "c").map(x => template.replace("{s}", x))
     else js.Array(template)
 
@@ -156,7 +136,7 @@ object MapLibreStyles:
       )
       .asInstanceOf[js.Object]
 
-  private def info(s: Basemap.Status, layer: com.histmersion.web.map.maplibre.MapLibreStyles.InfoLayer): Option[Basemap.LayerInfo] =
+  private def info(s: Basemap.Status, layer: com.histmersion.web.map.MapSurface.LayerId): Option[Basemap.LayerInfo] =
     s.layers.find(i => i.layer == layer && i.present && i.error.isEmpty)
 
   /** The relief, when it reaches deeper than the extract — a focus region, or the on-demand relief: what the contours
@@ -166,7 +146,7 @@ object MapLibreStyles:
     info(s, "terrain").filter(i => i.focus.nonEmpty || i.onDemand.exists(_.enabled))
 
   /** Take source `id` and every layer drawing it out of style `s`. */
-  def drop(s: js.Dynamic, id: com.histmersion.web.map.maplibre.MapLibreStyles.DropId): Unit =
+  def drop(s: js.Dynamic, id: com.histmersion.web.map.MapSurface.LayerId): Unit =
     js.special.delete(s.sources, id)
     s.layers =
       s.layers.asInstanceOf[js.Array[js.Dynamic]].filter(l => js.isUndefined(l.source) || l.source.toString != id)
@@ -182,11 +162,11 @@ object MapLibreStyles:
   def resolve(
       s: js.Dynamic,
       status: Basemap.Status,
-      lang: com.histmersion.web.map.maplibre.MapLibreStyles.ResolveLang,
-      names: com.histmersion.web.map.maplibre.MapLibreStyles.ResolveNames,
-      reduced: com.histmersion.web.map.maplibre.MapLibreStyles.ResolveReduced,
+      lang: com.histmersion.web.map.BaseMapSpec.Vector.Lang,
+      names: com.histmersion.web.map.BaseMapSpec.Vector.Names,
+      reduced: com.histmersion.web.map.BaseMapSpec.Vector.Reduced,
       origin: com.histmersion.web.map.maplibre.MapLibreStyles.ResolveOrigin,
-      seaDepth: com.histmersion.web.map.maplibre.MapLibreStyles.ResolveSeaDepth = true
+      seaDepth: com.histmersion.web.map.BaseMapSpec.Vector.SeaDepth = true
   ): js.Dynamic =
     val meta = s.metadata.selectDynamic("histmersion:sources").asInstanceOf[js.Dictionary[String]]
     js.Object.keys(s.sources.asInstanceOf[js.Object]).foreach { id =>
@@ -245,7 +225,7 @@ object MapLibreStyles:
     js.special.delete(s, "metadata")
     s
 
-  private def replaceString(v: js.Dynamic, from: com.histmersion.web.map.maplibre.MapLibreStyles.ReplaceStringFrom, to: com.histmersion.web.map.maplibre.MapLibreStyles.ReplaceStringTo): js.Dynamic =
+  private def replaceString(v: js.Dynamic, from: com.histmersion.web.map.maplibre.MapLibreStyles.Text, to: com.histmersion.web.map.maplibre.MapLibreStyles.Text): js.Dynamic =
     if js.typeOf(v) == "string" then (if v.toString == from then to.asInstanceOf[js.Dynamic] else v)
     else if js.Array.isArray(v) then
       v.asInstanceOf[js.Array[js.Dynamic]].map(x => replaceString(x, from, to)).asInstanceOf[js.Dynamic]
@@ -270,7 +250,7 @@ object MapLibreStyles:
   // one contour source per relief version and depth (the library registers a page protocol for it)
   private val demSources = mutable.HashMap.empty[String, js.Dynamic]
 
-  private def contours(s: js.Dynamic, status: Basemap.Status, origin: com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin): Future[Unit] =
+  private def contours(s: js.Dynamic, status: Basemap.Status, origin: com.histmersion.web.map.maplibre.MapLibreStyles.Origin): Future[Unit] =
     contourLib.map { lib =>
       val t = deeperRelief(status).get
       val deepest = t.deepest.getOrElse(t.maxZoom.getOrElse(8))

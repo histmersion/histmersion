@@ -6,11 +6,9 @@ import com.histmersion.web.ui.CssClass
   * are then removed, kept ones are restyled in place — so a layer never blinks when the filter or the time span moves.
   */
 object FadingLayer:
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type PlanBefore = PlanBefore.T
-  object PlanBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanAfter = PlanAfter.T
-  object PlanAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Plan(entering: Set[Plan.Entering], staying: Set[Plan.Staying], exiting: Set[Plan.Exiting])
 
@@ -23,7 +21,7 @@ object FadingLayer:
     object Exiting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: what enters, stays and leaves going from `before` to `after`. */
-  private[web] def plan(before: Set[com.histmersion.web.FadingLayer.PlanBefore], after: Set[com.histmersion.web.FadingLayer.PlanAfter]): Plan =
+  private[web] def plan(before: Set[com.histmersion.web.FadingLayer.Key], after: Set[com.histmersion.web.FadingLayer.Key]): Plan =
     Plan(entering = after -- before, staying = after & before, exiting = before -- after)
 
   val fadeIn: CssClass = CssClass("hd-fade-in")

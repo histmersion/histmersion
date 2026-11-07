@@ -11,10 +11,8 @@ import com.histmersion.api.research.Article
   * cached; an identifier that names nothing stays readable text.
   */
 object IdentLink:
-  type ResolveId = ResolveId.T
-  object ResolveId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyId = ApplyId.T
-  object ApplyId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Resolved:
     case Source(ref: com.histmersion.api.library.Source.Ref)
@@ -33,7 +31,7 @@ object IdentLink:
   /** The lookups' figures, for [[Diagnostics]]. */
   def cacheStats: BoundedCache.Stats = BoundedCache.stats(cache)
 
-  private def resolve(id: com.histmersion.web.IdentLink.ResolveId): scala.concurrent.Future[Option[Resolved]] =
+  private def resolve(id: com.histmersion.web.IdentLink.Id): scala.concurrent.Future[Option[Resolved]] =
     import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
     cache.getOrElseUpdate(
       id,
@@ -45,7 +43,7 @@ object IdentLink:
         .recover { case _ => None }
     )
 
-  def apply(id: com.histmersion.web.IdentLink.ApplyId): HtmlElement =
+  def apply(id: com.histmersion.web.IdentLink.Id): HtmlElement =
     import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
     span(
       cls := "ident",

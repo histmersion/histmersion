@@ -9,30 +9,24 @@ import com.raquo.laminar.api.L.*
   * substitution or in an included file is shown, not changed.
   */
 object SettingControl:
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The name a setting is shown by: its last word, as words (`contact-email` → "Contact email"). Pure. */
-  type NameOfResult = NameOfResult.T
-  object NameOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NameOfKey = NameOfKey.T
   object NameOfKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyName = ApplyName.T
-  object ApplyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyHelp = ApplyHelp.T
-  object ApplyHelp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ControlId = ControlId.T
   object ControlId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ControlLocked = ControlLocked.T
   object ControlLocked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultTextResult = DefaultTextResult.T
-  object DefaultTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DefaultTextKind = DefaultTextKind.T
   object DefaultTextKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DefaultTextDefault = DefaultTextDefault.T
   object DefaultTextDefault extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def nameOf(key: com.histmersion.web.settings.SettingControl.NameOfKey): com.histmersion.web.settings.SettingControl.NameOfResult = Wording.humanize(key.split('.').lastOption.getOrElse(key))
+  def nameOf(key: com.histmersion.web.settings.SettingControl.NameOfKey): com.histmersion.web.settings.SettingsForm.Item.Name = Wording.humanize(key.split('.').lastOption.getOrElse(key))
 
-  def apply(f: ConfigEdit.Field, draft: Draft, name: Option[com.histmersion.web.settings.SettingControl.ApplyName] = None, help: Option[com.histmersion.web.settings.SettingControl.ApplyHelp] = None): HtmlElement =
+  def apply(f: ConfigEdit.Field, draft: Draft, name: Option[com.histmersion.web.settings.SettingsForm.Item.Name] = None, help: Option[com.histmersion.web.settings.SettingsForm.Item.Help] = None): HtmlElement =
     val id = "set-" + f.key.replaceAll("[^A-Za-z0-9_-]", "-")
     val locked = f.locked.isDefined
     div(
@@ -85,7 +79,7 @@ object SettingControl:
 
   /** Where the value comes from, and the way back to the default. */
   /** The default, in words: "On by default" for a flag, else "Default: …". Pure. */
-  def defaultText(kind: com.histmersion.web.settings.SettingControl.DefaultTextKind, default: com.histmersion.web.settings.SettingControl.DefaultTextDefault): com.histmersion.web.settings.SettingControl.DefaultTextResult =
+  def defaultText(kind: com.histmersion.web.settings.SettingControl.DefaultTextKind, default: com.histmersion.web.settings.SettingControl.DefaultTextDefault): com.histmersion.web.settings.SettingControl.Text =
     if kind == "flag" then s"${if Draft.isOn(default) then "On" else "Off"} by default."
     else if default.isEmpty then "Default: (empty)."
     else s"Default: $default."

@@ -22,23 +22,19 @@ import com.histmersion.api.media.MediaProvider
   * too.
   */
 object DataSection:
+  type ActionLabel = ActionLabel.T
+  object ActionLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActionWhat = ActionWhat.T
+  object ActionWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SharePercent = SharePercent.T
+  object SharePercent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What Histmersion's files take, as a share of the free space left on the disk, 0–100. Pure. */
-  type PaneActText = PaneActText.T
-  object PaneActText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PaneActWhat = PaneActWhat.T
-  object PaneActWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PaneActPrimary = PaneActPrimary.T
   object PaneActPrimary extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MapsActText = MapsActText.T
-  object MapsActText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MapsActWhat = MapsActWhat.T
-  object MapsActWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MapsActPrimary = MapsActPrimary.T
   object MapsActPrimary extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ShareResult = ShareResult.T
-  object ShareResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShareUsed = ShareUsed.T
   object ShareUsed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShareFree = ShareFree.T
@@ -50,7 +46,7 @@ object DataSection:
   type RowDetail = RowDetail.T
   object RowDetail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def share(used: com.histmersion.web.settings.DataSection.ShareUsed, free: com.histmersion.web.settings.DataSection.ShareFree): com.histmersion.web.settings.DataSection.ShareResult =
+  def share(used: com.histmersion.web.settings.DataSection.ShareUsed, free: com.histmersion.web.settings.DataSection.ShareFree): com.histmersion.web.settings.DataSection.SharePercent =
     if used <= 0 then 0
     else if free <= 0 then 100
     else math.min(100, math.round(used.toDouble * 100 / free.toDouble).toInt)
@@ -68,7 +64,7 @@ object DataSection:
       ApiClient.placeSources().foreach(sources.set)
       ApiClient.eventCatalogues().foreach(cats.set)
       ApiClient.mediaProviders().foreach(media.set)
-    def act(text: com.histmersion.web.settings.DataSection.PaneActText, what: com.histmersion.web.settings.DataSection.PaneActWhat, job: => Future[JobInfo], primary: com.histmersion.web.settings.DataSection.PaneActPrimary = false): HtmlElement =
+    def act(text: com.histmersion.web.settings.DataSection.ActionLabel, what: com.histmersion.web.settings.DataSection.ActionWhat, job: => Future[JobInfo], primary: com.histmersion.web.settings.DataSection.PaneActPrimary = false): HtmlElement =
       starter.act(text, what, job, primary)
     div(
       cls := "settings-section data-section",
@@ -191,7 +187,7 @@ object DataSection:
   /** Starts a download and says what became of the request. */
   final private class Starter:
     val said = Var(Option.empty[Either[String, String]])
-    def act(text: com.histmersion.web.settings.DataSection.Starter.ActText, what: com.histmersion.web.settings.DataSection.Starter.ActWhat, job: => Future[JobInfo], primary: com.histmersion.web.settings.DataSection.Starter.ActPrimary = false): HtmlElement =
+    def act(text: com.histmersion.web.settings.DataSection.ActionLabel, what: com.histmersion.web.settings.DataSection.ActionWhat, job: => Future[JobInfo], primary: com.histmersion.web.settings.DataSection.Starter.ActPrimary = false): HtmlElement =
       button(
         typ := "button",
         cls := (if primary then "btn btn--primary data-action" else "btn data-action"),
@@ -200,7 +196,7 @@ object DataSection:
         disabled <-- Auth.writable.map(!_),
         onClick --> (_ => start(text, what, job))
       )
-    private def start(text: com.histmersion.web.settings.DataSection.Starter.StartText, what: com.histmersion.web.settings.DataSection.Starter.StartWhat, job: => Future[JobInfo]): Unit =
+    private def start(text: com.histmersion.web.settings.DataSection.ActionLabel, what: com.histmersion.web.settings.DataSection.ActionWhat, job: => Future[JobInfo]): Unit =
       job.onComplete { r =>
         r.toEither.left.map(SettingsStore.message) match
           case Left(why) => said.set(Some(Left(why)))
@@ -214,7 +210,7 @@ object DataSection:
       }
 
     /** A check (a dry run) is quick: follow it to its end and say what it found. */
-    private def follow(text: com.histmersion.web.settings.DataSection.Starter.FollowText, id: JobInfo.Id, n: com.histmersion.web.settings.DataSection.Starter.FollowN): Unit =
+    private def follow(text: com.histmersion.web.settings.DataSection.ActionLabel, id: JobInfo.Id, n: com.histmersion.web.settings.DataSection.Starter.FollowN): Unit =
       val _ = scala.scalajs.js.timers.setTimeout(1000) {
         ApiClient.job(id).foreach { j =>
           if !j.isTerminal && n < 120 then follow(text, id, n + 1)
@@ -225,23 +221,13 @@ object DataSection:
       }
 
   object Starter:
-    type ActText = ActText.T
-    object ActText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ActWhat = ActWhat.T
-    object ActWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ActPrimary = ActPrimary.T
     object ActPrimary extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StartText = StartText.T
-    object StartText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StartWhat = StartWhat.T
-    object StartWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FollowText = FollowText.T
-    object FollowText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FollowN = FollowN.T
     object FollowN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def maps(b: Basemap.Status, starter: Starter): List[HtmlElement] =
-    def act(text: com.histmersion.web.settings.DataSection.MapsActText, what: com.histmersion.web.settings.DataSection.MapsActWhat, job: => Future[JobInfo], primary: com.histmersion.web.settings.DataSection.MapsActPrimary) =
+    def act(text: com.histmersion.web.settings.DataSection.ActionLabel, what: com.histmersion.web.settings.DataSection.ActionWhat, job: => Future[JobInfo], primary: com.histmersion.web.settings.DataSection.MapsActPrimary) =
       starter.act(text, what, job, primary)
     val main =
       b.layers.filter(l =>

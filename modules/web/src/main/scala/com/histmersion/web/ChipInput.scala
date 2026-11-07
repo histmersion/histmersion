@@ -17,28 +17,18 @@ import com.histmersion.api.library.{Facet, Label}
   * last chip.
   */
 object ChipInput:
+  type Entry = Entry.T
+  object Entry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintLabel = HintLabel.T
+  object HintLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Index = Index.T
+  object Index extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Preview = Preview.T
+  object Preview extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ApplyTimer = ApplyTimer.T
-  object ApplyTimer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyPreviewValue = ApplyPreviewValue.T
-  object ApplyPreviewValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyPreviewV = ApplyPreviewV.T
-  object ApplyPreviewV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyAddRaw = ApplyAddRaw.T
-  object ApplyAddRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyRemoveAtI = ApplyRemoveAtI.T
-  object ApplyRemoveAtI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type Seq = Seq.T
-  object Seq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyValues = ApplyValues.T
-  object ApplyValues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HintLabelResult = HintLabelResult.T
-  object HintLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HintLabelValue = HintLabelValue.T
-  object HintLabelValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private var seq: com.histmersion.web.ChipInput.Seq = 0
+  private var seq: Int = 0
 
   case class Config(
       field: Config.Field,
@@ -83,7 +73,7 @@ object ChipInput:
   /** A CONTROLLED chip input: it shows `values` (a UiState field's signal) and reports every change through
     * `config.onChange` — it keeps no list of its own, so it cannot drift from the state.
     */
-  def apply(config: Config, values: StrictSignal[List[com.histmersion.web.ChipInput.ApplyValues]]): HtmlElement =
+  def apply(config: Config, values: StrictSignal[List[com.histmersion.web.Chip.Choice]]): HtmlElement =
     seq += 1
     val id = s"chips-${config.field}-$seq"
 
@@ -91,13 +81,13 @@ object ChipInput:
     val active = Var(-1)
     val menuHidden = Var(true)
 
-    var timer: com.histmersion.web.ChipInput.ApplyTimer = 0
+    var timer: Int = 0
     // the suggestions request a late answer must belong to
     val latest = Latest()
     var inputEl: dom.HTMLInputElement = null
-    var previewValue: Option[com.histmersion.web.ChipInput.ApplyPreviewValue] = None
+    var previewValue: Option[com.histmersion.web.ChipInput.Preview] = None
 
-    def preview(v: Option[com.histmersion.web.ChipInput.ApplyPreviewV]): Unit =
+    def preview(v: Option[com.histmersion.web.ChipInput.Preview]): Unit =
       if previewValue != v then
         previewValue = v
         config.onPreview(v)
@@ -144,7 +134,7 @@ object ChipInput:
       if timer != 0 then dom.window.clearTimeout(timer)
       timer = dom.window.setTimeout(() => suggest(), config.debounceMs.toDouble).toInt
 
-    def add(raw: com.histmersion.web.ChipInput.ApplyAddRaw): Unit =
+    def add(raw: com.histmersion.web.ChipInput.Entry): Unit =
       val v = Option(raw).getOrElse("").trim
       if inputEl != null then inputEl.value = ""
       menuHidden.set(true)
@@ -157,7 +147,7 @@ object ChipInput:
       // commit first, then drop the preview: the filter stays identical, so nothing reloads twice
       endPreview()
 
-    def removeAt(i: com.histmersion.web.ChipInput.ApplyRemoveAtI): Unit =
+    def removeAt(i: com.histmersion.web.ChipInput.Index): Unit =
       config.onChange(values.now().zipWithIndex.collect { case (v, j) if j != i => v })
 
     div(
@@ -278,6 +268,6 @@ object ChipInput:
   /** What a suggestion shows: the display form (`_` as a space), as a plain text node — Laminar escapes it, so it must
     * NOT be HTML-escaped first (that shows `&amp;` literally). The value itself is what gets committed.
     */
-  private[web] def hintLabel(value: com.histmersion.web.ChipInput.HintLabelValue): com.histmersion.web.ChipInput.HintLabelResult = Fmt.display(value)
+  private[web] def hintLabel(value: com.histmersion.web.Chip.Choice): com.histmersion.web.ChipInput.HintLabel = Fmt.display(value)
 
 end ChipInput

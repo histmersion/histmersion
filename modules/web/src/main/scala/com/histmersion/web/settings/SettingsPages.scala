@@ -8,12 +8,12 @@ import com.raquo.laminar.api.L.*
   * (read when a page opens).
   */
 object SettingsPages:
+  type Lead = Lead.T
+  object Lead extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What a section's page says under its title. Pure. */
-  type LeadResult = LeadResult.T
-  object LeadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def lead(s: SettingsSection): Option[com.histmersion.web.settings.SettingsPages.LeadResult] = s match
+  def lead(s: SettingsSection): Option[com.histmersion.web.settings.SettingsPages.Lead] = s match
     case SettingsSection.General => Some("How Histmersion looks and where the map opens.")
     case SettingsSection.Finders => Some("Where Histmersion looks for the free, legal copy of a paper you add.")
     case SettingsSection.Agents  => Some("Research agents that read, enrich and write for you — optional.")

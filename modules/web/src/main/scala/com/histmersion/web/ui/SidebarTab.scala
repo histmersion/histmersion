@@ -14,7 +14,5 @@ object SidebarTab:
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type OfKey = OfKey.T
-  object OfKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def of(key: Option[com.histmersion.web.ui.SidebarTab.OfKey]): SidebarTab = key.flatMap(k => values.find(_.key == k)).getOrElse(Sources)
+  def of(key: Option[com.histmersion.web.ui.SidebarTab.Key]): SidebarTab = key.flatMap(k => values.find(_.key == k)).getOrElse(Sources)

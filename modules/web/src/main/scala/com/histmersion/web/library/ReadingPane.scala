@@ -19,50 +19,38 @@ import com.histmersion.api.research.Article
   * row holds is shown at once; the rest when the item is read.
   */
 object ReadingPane:
+  type ArticleSlug = ArticleSlug.T
+  object ArticleSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CacheKey = CacheKey.T
+  object CacheKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Href = Href.T
+  object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Ref = Ref.T
+  object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RowKey = RowKey.T
+  object RowKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ArticlePaneRefOfVPart1 = ArticlePaneRefOfVPart1.T
-  object ArticlePaneRefOfVPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type CachedCachePart1 = CachedCachePart1.T
-  object CachedCachePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CachedKey = CachedKey.T
-  object CachedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadSourceCk = _root_.com.histmersion.web.library.ReadingPane.FindingsCk
-  val ReadSourceCk: _root_.com.histmersion.web.library.ReadingPane.FindingsCk.type = _root_.com.histmersion.web.library.ReadingPane.FindingsCk
-  type ReadArticleSlug = ReadArticleSlug.T
-  object ReadArticleSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ElementChosen = ElementChosen.T
-  object ElementChosen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ActionsPage = ActionsPage.T
-  object ActionsPage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ActionsByline = ActionsByline.T
-  object ActionsByline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExploreResult = ExploreResult.T
-  object ExploreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourcePaneCk = _root_.com.histmersion.web.library.ReadingPane.FindingsCk
-  val SourcePaneCk: _root_.com.histmersion.web.library.ReadingPane.FindingsCk.type = _root_.com.histmersion.web.library.ReadingPane.FindingsCk
-  type FindingsCk = FindingsCk.T
-  object FindingsCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountLinkHref0 = CountLinkHref0.T
-  object CountLinkHref0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadSourceCk = _root_.com.histmersion.web.WindowKey.Source.Citekey
+  val ReadSourceCk: _root_.com.histmersion.web.WindowKey.Source.Citekey.type = _root_.com.histmersion.web.WindowKey.Source.Citekey
+  type SourcePaneCk = _root_.com.histmersion.web.WindowKey.Source.Citekey
+  val SourcePaneCk: _root_.com.histmersion.web.WindowKey.Source.Citekey.type = _root_.com.histmersion.web.WindowKey.Source.Citekey
   type CountLinkText = CountLinkText.T
   object CountLinkText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CountLinkN = CountLinkN.T
   object CountLinkN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceLinksCk = _root_.com.histmersion.web.library.ReadingPane.FindingsCk
-  val SourceLinksCk: _root_.com.histmersion.web.library.ReadingPane.FindingsCk.type = _root_.com.histmersion.web.library.ReadingPane.FindingsCk
-  type ArticlePaneSlug = _root_.com.histmersion.web.library.ReadingPane.ReadArticleSlug
-  val ArticlePaneSlug: _root_.com.histmersion.web.library.ReadingPane.ReadArticleSlug.type = _root_.com.histmersion.web.library.ReadingPane.ReadArticleSlug
-  type RefNowReadingPart1 = RefNowReadingPart1.T
-  object RefNowReadingPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MessageResult = MessageResult.T
-  object MessageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceLinksCk = _root_.com.histmersion.web.WindowKey.Source.Citekey
+  val SourceLinksCk: _root_.com.histmersion.web.WindowKey.Source.Citekey.type = _root_.com.histmersion.web.WindowKey.Source.Citekey
+  type ArticlePaneSlug = _root_.com.histmersion.web.library.ReadingPane.ArticleSlug
+  val ArticlePaneSlug: _root_.com.histmersion.web.library.ReadingPane.ArticleSlug.type = _root_.com.histmersion.web.library.ReadingPane.ArticleSlug
 
   private val sourceReads = BoundedCache[String, Future[SourceReading]](Layout.libraryPage)
   private val articleReads = BoundedCache[String, Future[Article.View]](Layout.libraryPage)
 
   /** A failed read is forgotten, so choosing the item again tries again. */
-  private def cached[A](cache: BoundedCache[com.histmersion.web.library.ReadingPane.CachedCachePart1, Future[A]], key: com.histmersion.web.library.ReadingPane.CachedKey)(read: => Future[A]): Future[A] =
+  private def cached[A](cache: BoundedCache[com.histmersion.web.library.ReadingPane.CacheKey, Future[A]], key: com.histmersion.web.library.ReadingPane.CacheKey)(read: => Future[A]): Future[A] =
     cache.getOrElseUpdate(
       key, {
         val f = read
@@ -81,10 +69,10 @@ object ReadingPane:
       for r <- record; e <- edges; a <- articles yield SourceReading(r, CitationCounts.of(e, a.size))
     }
 
-  private def readArticle(slug: com.histmersion.web.library.ReadingPane.ReadArticleSlug): Future[Article.View] =
+  private def readArticle(slug: com.histmersion.web.library.ReadingPane.ArticleSlug): Future[Article.View] =
     cached(articleReads, slug)(ApiClient.getArticle(slug, brief = true))
 
-  def element(section: LibrarySection, chosen: Signal[Option[com.histmersion.web.library.ReadingPane.ElementChosen]]): HtmlElement =
+  def element(section: LibrarySection, chosen: Signal[Option[com.histmersion.web.library.ReadingPane.RowKey]]): HtmlElement =
     htmlTag("aside")(
       cls := "reading-pane",
       aria.label := "Reading pane",
@@ -104,11 +92,11 @@ object ReadingPane:
 
   private def actions(
       section: LibrarySection,
-      page: com.histmersion.web.library.ReadingPane.ActionsPage,
+      page: com.histmersion.web.library.TableRow.Page,
       pin: () => Unit,
       showOnMap: () => Unit,
       ref: Signal[marks.ItemRef],
-      byline: com.histmersion.web.library.ReadingPane.ActionsByline
+      byline: com.histmersion.web.library.TableRow.Byline
   ): HtmlElement =
     div(
       cls := "reading-actions",
@@ -147,7 +135,7 @@ object ReadingPane:
     )
 
   /** Explore's address with the filters: what a modifier click on "Show on the map" opens. */
-  private def explore: com.histmersion.web.library.ReadingPane.ExploreResult =
+  private def explore: com.histmersion.web.library.ReadingPane.Href =
     val hash = UiState.hashString
     Route.Explore.path + (if hash.nonEmpty then s"#$hash" else "")
 
@@ -231,7 +219,7 @@ object ReadingPane:
       GeoBounds(points.map(_._1).min, points.map(_._2).min, points.map(_._1).max, points.map(_._2).max)
     )
 
-  private def findings(ck: com.histmersion.web.library.ReadingPane.FindingsCk, all: List[Finding.Row]): Modifier[HtmlElement] =
+  private def findings(ck: com.histmersion.web.WindowKey.Source.Citekey, all: List[Finding.Row]): Modifier[HtmlElement] =
     Option.when(all.nonEmpty)(
       div(
         cls := "reading-findings",
@@ -252,7 +240,7 @@ object ReadingPane:
       )
     )
 
-  private def countLink(href0: com.histmersion.web.library.ReadingPane.CountLinkHref0, text: com.histmersion.web.library.ReadingPane.CountLinkText, n: com.histmersion.web.library.ReadingPane.CountLinkN): HtmlElement =
+  private def countLink(href0: com.histmersion.web.library.ReadingPane.Href, text: com.histmersion.web.library.ReadingPane.CountLinkText, n: com.histmersion.web.library.ReadingPane.CountLinkN): HtmlElement =
     if n > 0 then a(href := href0, text) else span(cls := "reading-none", text)
 
   private def sourceLinks(ck: com.histmersion.web.library.ReadingPane.SourceLinksCk, c: CitationCounts): HtmlElement =
@@ -281,7 +269,7 @@ object ReadingPane:
       Router.go(Route.Explore)
       ResultsPanel.show(Preview.Target.Article(slug))
     val ref0 = marks.ItemRef.article(slug, row.map(_.title).getOrElse(slug))
-    def refOf(v: Option[Either[com.histmersion.web.library.ReadingPane.ArticlePaneRefOfVPart1, Article.View]]) =
+    def refOf(v: Option[Either[com.histmersion.web.library.ReadingPane.Ref, Article.View]]) =
       v.flatMap(_.toOption).fold(ref0)(a => marks.ItemRef.article(slug, a.article.title))
     val ref = reading.signal.map(refOf).distinct
     div(
@@ -330,10 +318,10 @@ object ReadingPane:
       )
     )
 
-  private def refNow(reading: Var[Option[Either[com.histmersion.web.library.ReadingPane.RefNowReadingPart1, SourceReading]]], ref0: marks.ItemRef): marks.ItemRef =
+  private def refNow(reading: Var[Option[Either[com.histmersion.web.library.ReadingPane.Ref, SourceReading]]], ref0: marks.ItemRef): marks.ItemRef =
     reading
       .now()
       .flatMap(_.toOption)
       .fold(ref0)(r => marks.ItemRef.source(ref0.target.itemKey.getOrElse(""), r.source.source.title.value))
 
-  private def message(e: Throwable): com.histmersion.web.library.ReadingPane.MessageResult = Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString)
+  private def message(e: Throwable): com.histmersion.web.library.ReadingPane.Problem = Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString)

@@ -14,28 +14,20 @@ import com.histmersion.api.library.Filter
   * are [[PointKinds.Events]], the crowded tiles' cells bubbles.
   */
 object EventMarkers:
+  type TileX = TileX.T
+  object TileX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileY = TileY.T
+  object TileY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Undated = Undated.T
+  object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The markers — a [[TiledPoints]] of [[PointKinds.Events]], attached and detached by the map with its other overlays
     * ([[MapView]]).
     */
-  type QueryTilesPart1 = QueryTilesPart1.T
-  object QueryTilesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryTilesPart2 = QueryTilesPart2.T
-  object QueryTilesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryKind = QueryKind.T
-  object QueryKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryTier = QueryTier.T
-  object QueryTier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryUndated = QueryUndated.T
-  object QueryUndated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadTilesPart1 = _root_.com.histmersion.web.EventMarkers.QueryTilesPart1
-  val LoadTilesPart1: _root_.com.histmersion.web.EventMarkers.QueryTilesPart1.type = _root_.com.histmersion.web.EventMarkers.QueryTilesPart1
-  type LoadTilesPart2 = _root_.com.histmersion.web.EventMarkers.QueryTilesPart2
-  val LoadTilesPart2: _root_.com.histmersion.web.EventMarkers.QueryTilesPart2.type = _root_.com.histmersion.web.EventMarkers.QueryTilesPart2
-  type LoadSpanPart1 = LoadSpanPart1.T
-  object LoadSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadSpanPart2 = LoadSpanPart2.T
-  object LoadSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadTilesPart1 = _root_.com.histmersion.web.EventMarkers.TileX
+  val LoadTilesPart1: _root_.com.histmersion.web.EventMarkers.TileX.type = _root_.com.histmersion.web.EventMarkers.TileX
+  type LoadTilesPart2 = _root_.com.histmersion.web.EventMarkers.TileY
+  val LoadTilesPart2: _root_.com.histmersion.web.EventMarkers.TileY.type = _root_.com.histmersion.web.EventMarkers.TileY
 
   val layer: TiledPoints[EventGeo] = TiledPoints(
     TileLayer.Events,
@@ -50,10 +42,10 @@ object EventMarkers:
     */
   def query(
       filter: Filter,
-      tiles: (com.histmersion.web.EventMarkers.QueryTilesPart1, com.histmersion.web.EventMarkers.QueryTilesPart2),
-      kind: Option[com.histmersion.web.EventMarkers.QueryKind],
-      tier: Option[com.histmersion.web.EventMarkers.QueryTier],
-      undated: com.histmersion.web.EventMarkers.QueryUndated = false
+      tiles: (com.histmersion.web.EventMarkers.TileX, com.histmersion.web.EventMarkers.TileY),
+      kind: Option[com.histmersion.api.Api.EventQuery.Kind],
+      tier: Option[com.histmersion.api.Api.EventQuery.Tier],
+      undated: com.histmersion.web.EventMarkers.Undated = false
   ): TilesApi.TileQuery =
     TilesApi.TileQuery(
       TileLayer.Events.wire,
@@ -68,7 +60,7 @@ object EventMarkers:
     )
 
   /** Load the events of `tiles` (a span, playback's widened to its bucket), drawn for `span`. */
-  def load(tiles: (com.histmersion.web.EventMarkers.LoadTilesPart1, com.histmersion.web.EventMarkers.LoadTilesPart2), span: (com.histmersion.web.EventMarkers.LoadSpanPart1, com.histmersion.web.EventMarkers.LoadSpanPart2)): Unit =
+  def load(tiles: (com.histmersion.web.EventMarkers.LoadTilesPart1, com.histmersion.web.EventMarkers.LoadTilesPart2), span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Unit =
     layer.load(
       ApiClient.tileTemplate(
         query(UiState.toFilter(), tiles, UiState.eventKind.now(), UiState.eventTier.now(), UiState.eventsUndated.now())

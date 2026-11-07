@@ -19,43 +19,27 @@ import com.raquo.laminar.api.L.*
   * Pure, but for [[olderButton]].
   */
 object ListPaging:
+  type Busy = Busy.T
+  object Busy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Count = Count.T
+  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FilterText = FilterText.T
+  object FilterText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HasOlder = HasOlder.T
+  object HasOlder extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Heading = Heading.T
+  object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type State = State.T
+  object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What is shown: the rows, newest first, and the last page's word on the rest of the list. */
-  type AppendedIdResult = AppendedIdResult.T
-  object AppendedIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeepOlderOlderThanResult = KeepOlderOlderThanResult.T
-  object KeepOlderOlderThanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PollUpToResult = PollUpToResult.T
-  object PollUpToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PollUpToIdResult = PollUpToIdResult.T
-  object PollUpToIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeadingResult = HeadingResult.T
-  object HeadingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeadingSingular = HeadingSingular.T
-  object HeadingSingular extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeadingState = HeadingState.T
-  object HeadingState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeadingStateOfResult = HeadingStateOfResult.T
-  object HeadingStateOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeadingFilters = HeadingFilters.T
-  object HeadingFilters extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountResult = CountResult.T
-  object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountState = CountState.T
-  object CountState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountStateOfResult = CountStateOfResult.T
-  object CountStateOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OlderButtonHasOlder = OlderButtonHasOlder.T
-  object OlderButtonHasOlder extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OlderButtonBusy = OlderButtonBusy.T
-  object OlderButtonBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Listing[A](rows: List[A], page: Paging.Page, extended: Listing.Extended = false):
-    def hasOlder: com.histmersion.web.ListPaging.Listing.HasOlderResult = page.hasMore
+    def hasOlder: Boolean = page.hasMore
 
   object Listing:
-    type HasOlderResult = HasOlderResult.T
-    object HasOlderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Extended = Extended.T
     object Extended extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -68,7 +52,7 @@ object ListPaging:
   /** The answer to "Show older": appended below, any row already shown left out (it can only be there twice if the list
     * changed between the two requests).
     */
-  def appended[A](cur: Listing[A], rows: List[A], page: Paging.Page, id: A => com.histmersion.web.ListPaging.AppendedIdResult): Listing[A] =
+  def appended[A](cur: Listing[A], rows: List[A], page: Paging.Page, id: A => com.histmersion.web.ListPaging.Id): Listing[A] =
     val shown = cur.rows.iterator.map(id).toSet
     Listing(cur.rows ++ rows.filterNot(r => shown(id(r))), page, extended = true)
 
@@ -80,12 +64,12 @@ object ListPaging:
     * top, then the rows already loaded that are older than all of them — so a poll keeps the older pages a person
     * loaded (it used to replace them with the newest page).
     */
-  def keepOlder[A](cur: List[A], fresh: List[A], olderThan: (A, A) => com.histmersion.web.ListPaging.KeepOlderOlderThanResult): List[A] =
+  def keepOlder[A](cur: List[A], fresh: List[A], olderThan: (A, A) => Boolean): List[A] =
     fresh.lastOption.fold(fresh)(last => fresh ++ cur.filter(olderThan(_, last)))
 
   /** What a poll asks for: `upTo` the last row shown when older pages are loaded, else nothing (the newest page).
     */
-  def pollUpTo[A](cur: Listing[A], id: A => com.histmersion.web.ListPaging.PollUpToIdResult): Option[com.histmersion.web.ListPaging.PollUpToResult] =
+  def pollUpTo[A](cur: Listing[A], id: A => com.histmersion.web.ListPaging.Id): Option[com.histmersion.web.ListPaging.Id] =
     if cur.extended then cur.rows.lastOption.map(id) else None
 
   /** The window's heading: `37 jobs`, `Latest 100 of 2,431 jobs`, `Latest 100 of 412 jobs · Failed`. `l` holds the rows
@@ -95,24 +79,24 @@ object ListPaging:
     */
   def heading[A](
       l: Listing[A],
-      singular: com.histmersion.web.ListPaging.HeadingSingular,
-      state: Option[com.histmersion.web.ListPaging.HeadingState],
-      stateOf: A => com.histmersion.web.ListPaging.HeadingStateOfResult,
-      filters: List[com.histmersion.web.ListPaging.HeadingFilters] = Nil
-  ): com.histmersion.web.ListPaging.HeadingResult =
+      singular: com.histmersion.api.Plural.Noun.Singular,
+      state: Option[com.histmersion.web.ListPaging.State],
+      stateOf: A => com.histmersion.web.ListPaging.State,
+      filters: List[com.histmersion.web.ListPaging.FilterText] = Nil
+  ): com.histmersion.web.ListPaging.Heading =
     Paging.heading(l.rows.size, count(l, state, stateOf), singular) +
       (if filters.isEmpty then "" else filters.mkString(" · ", ", ", ""))
 
   /** A filter button's count: the server's count of that state over the whole list (`None` = every state); the loaded
     * rows' when the server sent none.
     */
-  def count[A](l: Listing[A], state: Option[com.histmersion.web.ListPaging.CountState], stateOf: A => com.histmersion.web.ListPaging.CountStateOfResult): com.histmersion.web.ListPaging.CountResult =
+  def count[A](l: Listing[A], state: Option[com.histmersion.web.ListPaging.State], stateOf: A => com.histmersion.web.ListPaging.State): com.histmersion.web.ListPaging.Count =
     if l.page.counts.nonEmpty then state.fold(l.page.all)(l.page.count)
     else state.fold(l.rows.size)(s => l.rows.count(stateOf(_) == s))
 
   /** The "Show older" button under a list: there only while older rows exist, disabled while a page is on its way.
     */
-  def olderButton(hasOlder: Signal[com.histmersion.web.ListPaging.OlderButtonHasOlder], busy: Signal[com.histmersion.web.ListPaging.OlderButtonBusy], load: () => Unit): HtmlElement =
+  def olderButton(hasOlder: Signal[com.histmersion.web.ListPaging.HasOlder], busy: Signal[com.histmersion.web.ListPaging.Busy], load: () => Unit): HtmlElement =
     div(
       cls := "list-more",
       cls("is-hidden") <-- hasOlder.map(!_),

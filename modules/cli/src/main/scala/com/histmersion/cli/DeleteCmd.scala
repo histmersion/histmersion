@@ -17,25 +17,19 @@ import com.histmersion.util.console.Console
   * there.
   */
 object DeleteCmd:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type CalibreCheckCalibreId = CalibreCheckCalibreId.T
-  object CalibreCheckCalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CalibreCheckLibrary = CalibreCheckLibrary.T
-  object CalibreCheckLibrary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CalibreCheckByIdArg1 = CalibreCheckByIdArg1.T
-  object CalibreCheckByIdArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CalibreCheckByIdResultPart1 = CalibreCheckByIdResultPart1.T
-  object CalibreCheckByIdResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Args(citekey: Args.Citekey, apply: Args.Apply, json: Args.Json)
 
   object Args:
-    type Citekey = Citekey.T
-    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Apply = Apply.T
-    object Apply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Json = Json.T
-    object Json extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Citekey = com.histmersion.plugin.FetchedFile.Source.Citekey
+    val Citekey: _root_.com.histmersion.plugin.FetchedFile.Source.Citekey.type = _root_.com.histmersion.plugin.FetchedFile.Source.Citekey
+    type Apply = com.histmersion.api.Api.Apply
+    val Apply: _root_.com.histmersion.api.Api.Apply.type = _root_.com.histmersion.api.Api.Apply
+    type Json = com.histmersion.cli.Cli.JsonOutput
+    val Json: _root_.com.histmersion.cli.Cli.JsonOutput.type = _root_.com.histmersion.cli.Cli.JsonOutput
 
   val args: Opts[Args] =
     (
@@ -56,10 +50,10 @@ object DeleteCmd:
     * person has deleted since. Not a number, or no library: unchecked, with why.
     */
   def calibreCheck(
-      calibreId: com.histmersion.cli.DeleteCmd.CalibreCheckCalibreId,
+      calibreId: com.histmersion.plugin.FetchedFile.Source.CalibreId,
       libraryExists: => Boolean,
-      library: com.histmersion.cli.DeleteCmd.CalibreCheckLibrary,
-      byId: com.histmersion.cli.DeleteCmd.CalibreCheckByIdArg1 => Either[com.histmersion.cli.DeleteCmd.CalibreCheckByIdResultPart1, Option[Calibre.Book]]
+      library: com.histmersion.cli.Calibre.LibraryDir,
+      byId: com.histmersion.cli.Calibre.Book.Id => Either[com.histmersion.cli.DeleteCmd.Problem, Option[Calibre.Book]]
   ): CalibreEntryCheck =
     calibreId.trim.toIntOption match
       case None                      => CalibreEntryCheck.Unchecked(s"'$calibreId' is not a Calibre id")

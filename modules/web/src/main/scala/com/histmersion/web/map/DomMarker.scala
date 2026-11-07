@@ -34,11 +34,11 @@ final class DomMarker(
     el.style.setProperty("--mh", s"${h}px")
   }
 
-  def lat: com.histmersion.web.map.DomMarker.LatResult = latV
-  def lon: com.histmersion.web.map.DomMarker.LonResult = lonV
+  def lat: com.histmersion.api.Geo.Latitude = latV
+  def lon: com.histmersion.api.Geo.Longitude = lonV
   def at: LatLon = LatLon(latV, lonV)
 
-  def setLatLng(lat: com.histmersion.web.map.DomMarker.SetLatLngLat, lon: com.histmersion.web.map.DomMarker.SetLatLngLon): Unit =
+  def setLatLng(lat: com.histmersion.api.Geo.Latitude, lon: com.histmersion.api.Geo.Longitude): Unit =
     latV = lat
     lonV = lon
     if TheMap.isUp then place(View.of(TheMap.surface))
@@ -49,7 +49,7 @@ final class DomMarker(
   private[map] def removed(): Unit = onRemove.foreach(_())
 
   /** Where it is drawn now, container pixels (NaN before it was drawn). */
-  def screen: (com.histmersion.web.map.DomMarker.ScreenResultPart1, com.histmersion.web.map.DomMarker.ScreenResultPart2) = (lastX, lastY)
+  def screen: (com.histmersion.web.map.DomMarker.ScreenCoordinate, com.histmersion.web.map.DomMarker.ScreenCoordinate) = (lastX, lastY)
 
   private[map] def place(v: View): Unit =
     // the copy of the world nearest the view's centre (the map draws the world's copies side by side)
@@ -69,42 +69,30 @@ final class DomMarker(
         moveTo(rx, ry)
 
   /** Draw it at screen point (`x`, `y`) now (an animation's start), whatever the map says. */
-  def moveTo(x: com.histmersion.web.map.DomMarker.MoveToX, y: com.histmersion.web.map.DomMarker.MoveToY): Unit =
+  def moveTo(x: com.histmersion.web.map.DomMarker.ScreenCoordinate, y: com.histmersion.web.map.DomMarker.ScreenCoordinate): Unit =
     el.style.setProperty("--tx", s"${x}px")
     el.style.setProperty("--ty", s"${y}px")
 
   /** Its stacking among the markers of its pane. */
-  def setZ(z: com.histmersion.web.map.DomMarker.SetZZ): Unit = el.style.setProperty("--z", z.toString)
+  def setZ(z: com.histmersion.web.map.DomMarker.ZIndex): Unit = el.style.setProperty("--z", z.toString)
 
 object DomMarker:
+  type BoxSize = BoxSize.T
+  object BoxSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScreenCoordinate = ScreenCoordinate.T
+  object ScreenCoordinate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ZIndex = ZIndex.T
+  object ZIndex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** A marker element of class `cls` holding `html`. */
-  type LatV = LatV.T
-  object LatV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LonV = LonV.T
-  object LonV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BoxPart1 = BoxPart1.T
-  object BoxPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BoxPart2 = BoxPart2.T
-  object BoxPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LatV = com.histmersion.api.Geo.Latitude
+  val LatV: _root_.com.histmersion.api.Geo.Latitude.type = _root_.com.histmersion.api.Geo.Latitude
+  type LonV = com.histmersion.api.Geo.Longitude
+  val LonV: _root_.com.histmersion.api.Geo.Longitude.type = _root_.com.histmersion.api.Geo.Longitude
+  type BoxPart1 = com.histmersion.web.map.DomMarker.BoxSize
+  val BoxPart1: _root_.com.histmersion.web.map.DomMarker.BoxSize.type = _root_.com.histmersion.web.map.DomMarker.BoxSize
+  type BoxPart2 = com.histmersion.web.map.DomMarker.BoxSize
+  val BoxPart2: _root_.com.histmersion.web.map.DomMarker.BoxSize.type = _root_.com.histmersion.web.map.DomMarker.BoxSize
 
-  type LatResult = LatResult.T
-  object LatResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LonResult = LonResult.T
-  object LonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetLatLngLat = SetLatLngLat.T
-  object SetLatLngLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetLatLngLon = SetLatLngLon.T
-  object SetLatLngLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ScreenResultPart1 = ScreenResultPart1.T
-  object ScreenResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ScreenResultPart2 = ScreenResultPart2.T
-  object ScreenResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MoveToX = MoveToX.T
-  object MoveToX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MoveToY = MoveToY.T
-  object MoveToY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetZZ = SetZZ.T
-  object SetZZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ElementCls = ElementCls.T
   object ElementCls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ElementHtml = ElementHtml.T

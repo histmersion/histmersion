@@ -7,19 +7,9 @@ import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object ArticleModal:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type OpenId = OpenId.T
-  object OpenId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenOptsPart1 = OpenOptsPart1.T
-  object OpenOptsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenOptsPart2 = OpenOptsPart2.T
-  object OpenOptsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenSlugSlug = OpenSlugSlug.T
-  object OpenSlugSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenSlugOptsPart1 = OpenSlugOptsPart1.T
-  object OpenSlugOptsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenSlugOptsPart2 = OpenSlugOptsPart2.T
-  object OpenSlugOptsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val element: HtmlElement =
     div(
@@ -42,10 +32,10 @@ object ArticleModal:
       }
     )
 
-  def open(id: com.histmersion.web.ArticleModal.OpenId, opts: Map[com.histmersion.web.ArticleModal.OpenOptsPart1, com.histmersion.web.ArticleModal.OpenOptsPart2] = Map.empty): Unit =
+  def open(id: com.histmersion.web.ArticleModal.Id, opts: Map[String, String] = Map.empty): Unit =
     WindowManager.open(WindowKey.Source(id))
 
-  def openSlug(slug: com.histmersion.web.ArticleModal.OpenSlugSlug, opts: Map[com.histmersion.web.ArticleModal.OpenSlugOptsPart1, com.histmersion.web.ArticleModal.OpenSlugOptsPart2] = Map.empty): Unit =
+  def openSlug(slug: com.histmersion.web.ApiClient.ArticleSlug, opts: Map[String, String] = Map.empty): Unit =
     WindowManager.open(WindowKey.Article(slug))
 
   def close(): Unit = ()

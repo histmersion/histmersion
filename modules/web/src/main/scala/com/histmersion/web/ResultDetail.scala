@@ -13,19 +13,15 @@ import com.histmersion.api.catalogue.Place
 object ResultDetail:
 
   /** Pure: an item's own page. */
-  type PageOfResult = PageOfResult.T
-  object PageOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindOfResult = KindOfResult.T
-  object KindOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def pageOf(t: Preview.Target): com.histmersion.web.ResultDetail.PageOfResult = t match
+  def pageOf(t: Preview.Target): com.histmersion.api.UiLabels.Text = t match
     case Preview.Target.Source(ck)    => Route.Source(ck).path
     case Preview.Target.Article(slug) => Route.Article(slug).path
     case Preview.Target.Place(id, _)  => Route.Place(id).path
     case Preview.Target.Event(id)     => Route.Event(id).path
 
   /** Pure: what the item is, for the actions' names. */
-  def kindOf(t: Preview.Target): com.histmersion.web.ResultDetail.KindOfResult = t match
+  def kindOf(t: Preview.Target): com.histmersion.api.UiLabels.Text = t match
     case _: Preview.Target.Source  => "source"
     case _: Preview.Target.Article => "article"
     case _: Preview.Target.Place   => "place"

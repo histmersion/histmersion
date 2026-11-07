@@ -8,17 +8,15 @@ import scala.scalajs.js
 
 /** The page's one map: its surface, and the DOM panes over it ([[MapStack]]'s order). */
 object TheMap:
+  type MarkerCount = MarkerCount.T
+  object MarkerCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // `var`: the surface, made once by `install`
-  type IsUpResult = IsUpResult.T
-  object IsUpResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkerCountResult = MarkerCountResult.T
-  object MarkerCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private var s: MapSurface = null
 
   def surface: MapSurface = s
-  def isUp: com.histmersion.web.map.TheMap.IsUpResult = s != null
+  def isUp: Boolean = s != null
 
   private val panes = mutable.LinkedHashMap.empty[String, MarkerPane]
 
@@ -42,4 +40,4 @@ object TheMap:
     panes.values.foreach(_.reposition(v))
 
   /** Every marker on the map now, by pane (for [[com.histmersion.web.Diagnostics]]). */
-  def markerCount: com.histmersion.web.map.TheMap.MarkerCountResult = panes.values.map(_.size).sum
+  def markerCount: com.histmersion.web.map.TheMap.MarkerCount = panes.values.map(_.size).sum

@@ -19,7 +19,5 @@ object MapTone:
   type Wire = Wire.T
   object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ParseS = ParseS.T
-  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.web.MapTone.ParseS): MapTone = if s.trim.equalsIgnoreCase("dark") then Dark else Light
+  def parse(s: com.histmersion.web.MapTone.Wire): MapTone = if s.trim.equalsIgnoreCase("dark") then Dark else Light

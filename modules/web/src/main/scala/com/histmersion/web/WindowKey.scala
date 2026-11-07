@@ -67,7 +67,7 @@ enum WindowKey:
   /** One manager: its state, items in flight, items, hints, events and settings. */
   case Manager(id: WindowKey.Manager.Id)
 
-  def wire: com.histmersion.web.WindowKey.WireResult = this match
+  def wire: com.histmersion.web.WindowKey.Wire = this match
     case Source(ck)     => s"source:$ck"
     case Article(slug)  => s"article:$slug"
     case Graph(ck)      => s"graph:$ck"
@@ -90,7 +90,7 @@ enum WindowKey:
     case Manager(id)    => s"manager:$id"
 
   /** The citekey or slug a window is about, if any. */
-  def subject: Option[com.histmersion.web.WindowKey.SubjectResult] = this match
+  def subject: Option[com.histmersion.web.WindowKey.Subject] = this match
     case Source(ck)     => Some(ck)
     case Article(slug)  => Some(slug)
     case Graph(ck)      => Some(ck)
@@ -100,7 +100,7 @@ enum WindowKey:
   /** A title to show before the content has told us a better one (the item's own title: the window retitles itself once
     * it is loaded, `WindowManager.retitle`). Sentence case; never an identifier, which the title's tooltip carries.
     */
-  def initialTitle: com.histmersion.web.WindowKey.InitialTitleResult = this match
+  def initialTitle: com.histmersion.web.WindowKey.Title = this match
     case Source(_)     => "Source"
     case Article(_)    => "Article"
     case Graph(_)      => "Citation graph"
@@ -125,9 +125,19 @@ enum WindowKey:
   /** The page this window mirrors, for "open in a new tab": a source's or an article's standalone page, a run's, a
     * goal's or a manager's page of the web UI.
     */
-  def pageHref: Option[com.histmersion.web.WindowKey.PageHrefResult] = Route.ofItem(this).map(_.path)
+  def pageHref: Option[com.histmersion.web.WindowKey.PageHref] = Route.ofItem(this).map(_.path)
 
 object WindowKey:
+  type PageHref = PageHref.T
+  object PageHref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Route = Route.T
+  object Route extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Subject = Subject.T
+  object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The window of each bookkeeping list, and back. */
   object Source:
     type Citekey = Citekey.T
@@ -138,6 +148,8 @@ object WindowKey:
     object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Graph:
+    type Depth = Depth.T
+    object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Citekey = Citekey.T
     object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -157,16 +169,6 @@ object WindowKey:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type WireResult = WireResult.T
-  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SubjectResult = SubjectResult.T
-  object SubjectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InitialTitleResult = InitialTitleResult.T
-  object InitialTitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageHrefResult = PageHrefResult.T
-  object PageHrefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseRaw = ParseRaw.T
-  object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def ofQueue(kind: Queue.Kind): WindowKey = kind match
     case Queue.Kind.Acquire => Acquire
@@ -183,7 +185,7 @@ object WindowKey:
   private val Keyed = "^(source|article|graph|edit|run|goal|manager):(.+)$".r
 
   /** Pure: a hash entry back into a key; anything unknown is `None` (dropped, not guessed). */
-  def parse(raw: com.histmersion.web.WindowKey.ParseRaw): Option[WindowKey] =
+  def parse(raw: com.histmersion.web.WindowKey.Route): Option[WindowKey] =
     Option(raw).map(_.trim).getOrElse("") match
       case Keyed("source", id)  => Some(Source(id))
       case Keyed("article", id) => Some(Article(id))

@@ -19,8 +19,6 @@ object LibrarySort:
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type OfWire = OfWire.T
-  object OfWire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def of(wire: Option[com.histmersion.web.library.LibrarySort.OfWire]): LibrarySort =
+  def of(wire: Option[com.histmersion.web.library.LibrarySort.Wire]): LibrarySort =
     wire.flatMap(w => values.find(_.wire == w.trim.toLowerCase)).getOrElse(Relevance)

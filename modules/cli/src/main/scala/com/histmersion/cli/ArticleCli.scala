@@ -37,47 +37,13 @@ object ArticleCli:
     * directory itself (articles are then one level up). Anything else is treated as a plain directory of notes, as
     * before.
     */
-  type ImportAllLoopRestPart2 = ImportAllLoopRestPart2.T
-  object ImportAllLoopRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImportAllLoopNumber = ImportAllLoopNumber.T
-  object ImportAllLoopNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImportAllLoopImported = ImportAllLoopImported.T
-  object ImportAllLoopImported extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImportAllLoopFailed = ImportAllLoopFailed.T
-  object ImportAllLoopFailed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImportAllLoopSkipped = ImportAllLoopSkipped.T
-  object ImportAllLoopSkipped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckReadF = CheckReadF.T
-  object CheckReadF extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type FilesResultPart2 = FilesResultPart2.T
-  object FilesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilesSkip = FilesSkip.T
-  object FilesSkip extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindOfResult = KindOfResult.T
-  object KindOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToImportKind = ToImportKind.T
-  object ToImportKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToImportForce = ToImportForce.T
-  object ToImportForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImportAllForce = ImportAllForce.T
-  object ImportAllForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImportAllSkip = ImportAllSkip.T
-  object ImportAllSkip extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExportAllResultPart2 = ExportAllResultPart2.T
-  object ExportAllResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindOfNoteResult = KindOfNoteResult.T
-  object KindOfNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindOfNoteText = KindOfNoteText.T
-  object KindOfNoteText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReasonFlags = ReasonFlags.T
-  object ReasonFlags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CritiqueReasonFlags = CritiqueReasonFlags.T
-  object CritiqueReasonFlags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class WikiLayout(sources: Path, root: Option[Path])
 
   object WikiLayout:
+    type DirName = DirName.T
+    object DirName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SourcesDir = SourcesDirValue
     type SourcesDirValue = SourcesDirValue.T
     object SourcesDirValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -94,14 +60,14 @@ object ArticleCli:
     * fallback KIND — `concepts/` holds `concept`s), plus any `*.md` sitting at the top level (e.g. `wiki/index.md`).
     * Frontmatter `type:` always wins over the directory.
     */
-  def files(root: Path, skip: Set[com.histmersion.cli.ArticleCli.FilesSkip] = Set(WikiLayout.SourcesDir)): List[(Path, com.histmersion.cli.ArticleCli.FilesResultPart2)] =
+  def files(root: Path, skip: Set[com.histmersion.cli.ArticleCli.WikiLayout.DirName] = Set(WikiLayout.SourcesDir)): List[(Path, com.histmersion.domain.research.Article.Slug)] =
     val top = markdown(root).map(_ -> kindOf(root))
     val sub = dirs(root)
       .filterNot(d => skip.contains(d.getFileName.toString.toLowerCase))
       .flatMap(d => markdown(d).map(_ -> kindOf(d)))
     (top ++ sub).sortBy((p, _) => p.toString)
 
-  private def kindOf(dir: Path): com.histmersion.cli.ArticleCli.KindOfResult =
+  private def kindOf(dir: Path): com.histmersion.domain.research.Article.KindText =
     com.histmersion.api.research.Articles.kindOfDir(Option(dir.getFileName).map(_.toString).getOrElse(""))
 
   private def markdown(dir: Path): List[Path] =
@@ -125,7 +91,7 @@ object ArticleCli:
   /** Package one article note for the server: text, fallback slug/kind, and the mtime that drives the "stored row is
     * newer than the file" skip.
     */
-  def toImport(file: Path, kind: com.histmersion.cli.ArticleCli.ToImportKind, force: com.histmersion.cli.ArticleCli.ToImportForce): Article.Import =
+  def toImport(file: Path, kind: com.histmersion.domain.research.Article.KindText, force: com.histmersion.api.Api.Overwrite): Article.Import =
     Article.Import(
       text = Files.readString(file),
       slug = Some(file.getFileName.toString.stripSuffix(".md")),
@@ -137,16 +103,16 @@ object ArticleCli:
   /** Import every article note under `root`, printing progress. Returns the accumulated result so a caller
     * (`histmersion seed`) can fold it into its own report.
     */
-  def importAll(c: Client, root: Path, force: com.histmersion.cli.ArticleCli.ImportAllForce, skip: Set[com.histmersion.cli.ArticleCli.ImportAllSkip])(using console: Console): SeedResult =
+  def importAll(c: Client, root: Path, force: com.histmersion.api.Api.Overwrite, skip: Set[com.histmersion.cli.ArticleCli.WikiLayout.DirName])(using console: Console): SeedResult =
     val fs = files(root, skip)
     val total = fs.size
     if total > 0 then Cli.out.println(s"importing $total article(s) from $root")
     @tailrec def loop(
-        rest: List[(Path, com.histmersion.cli.ArticleCli.ImportAllLoopRestPart2)],
-        number: com.histmersion.cli.ArticleCli.ImportAllLoopNumber,
-        imported: com.histmersion.cli.ArticleCli.ImportAllLoopImported,
-        failed: List[com.histmersion.cli.ArticleCli.ImportAllLoopFailed],
-        skipped: List[com.histmersion.cli.ArticleCli.ImportAllLoopSkipped]
+        rest: List[(Path, String)],
+        number: Int,
+        imported: Int,
+        failed: List[String],
+        skipped: List[String]
     )(using console: Console): SeedResult =
       rest match
         case Nil               => SeedResult(imported, failed, 0, skipped)
@@ -159,7 +125,7 @@ object ArticleCli:
     loop(fs, 1, 0, Nil, Nil)
 
   /** Write every article to `<dir>/<kind>/<slug>.md`. Returns how many were written. */
-  def exportAll(c: Client, out: Path)(using console: Console): Either[Cli.Error, com.histmersion.cli.ArticleCli.ExportAllResultPart2] =
+  def exportAll(c: Client, out: Path)(using console: Console): Either[Cli.Error, com.histmersion.cli.ArticleExport.Exported] =
     c.articleSlugs.flatMap { slugs =>
       val total = slugs.size
       val failed = slugs.zipWithIndex.flatMap { (slug, i) =>
@@ -182,7 +148,7 @@ object ArticleCli:
     * the fallback only guards a hand-edited file.
     */
   private val TypeKey = """(?m)^type:\s*["']?([^"'\r\n]+)["']?\s*$""".r
-  def kindOfNote(text: com.histmersion.cli.ArticleCli.KindOfNoteText): com.histmersion.cli.ArticleCli.KindOfNoteResult =
+  def kindOfNote(text: com.histmersion.domain.research.articles.ArticleNote.Text): com.histmersion.domain.research.articles.ArticleNote.Kind =
     TypeKey
       .findFirstMatchIn(text)
       .map(_.group(1).trim)
@@ -303,7 +269,7 @@ object ArticleCli:
         .orNone,
       Output.jsonFlag
     ).mapN { (slug, editsFile, bodyFile, kind, json) => (c: Client) =>
-      def read(f: com.histmersion.cli.ArticleCli.CheckReadF) =
+      def read(f: com.histmersion.cli.ArticleCheck.EditsFile) =
         val p = Path.of(f)
         if Files.isRegularFile(p) then Right(Files.readString(p))
         else Left(Cli.Error(s"no such file: $f", exitCode = ExitCode.Usage))
@@ -375,7 +341,7 @@ object ArticleCli:
         .orFalse
     ).mapN(ArticlePatches.FilterFlags.apply)
 
-  private val reasonFlags: Opts[List[com.histmersion.cli.ArticleCli.ReasonFlags]] =
+  private val reasonFlags: Opts[List[com.histmersion.cli.ArticleCoverage.Reason]] =
     Opts
       .options[String](
         "reason",
@@ -383,7 +349,7 @@ object ArticleCli:
       )
       .orEmpty
 
-  private val critiqueReasonFlags: Opts[List[com.histmersion.cli.ArticleCli.CritiqueReasonFlags]] =
+  private val critiqueReasonFlags: Opts[List[com.histmersion.cli.ArticleCritiques.Reason]] =
     Opts
       .options[String](
         "critique-reason",

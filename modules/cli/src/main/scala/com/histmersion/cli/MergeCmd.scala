@@ -31,19 +31,15 @@ import com.histmersion.util.console.Console
   * bundle.
   */
 object MergeCmd:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `--resolutions`, `--resolve ID=decision`…, `--editions`, as given. */
-  type ResolutionsFromFilePart1 = ResolutionsFromFilePart1.T
-  object ResolutionsFromFilePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolutionsEditionsPart1 = ResolutionsEditionsPart1.T
-  object ResolutionsEditionsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class ResolutionFlags(file: Option[ResolutionFlags.File], resolve: List[ResolutionFlags.Resolve], editions: Option[ResolutionFlags.Editions]):
-    def isEmpty: com.histmersion.cli.MergeCmd.ResolutionFlags.IsEmptyResult = file.isEmpty && resolve.isEmpty && editions.isEmpty
+    def isEmpty: Boolean = file.isEmpty && resolve.isEmpty && editions.isEmpty
 
   object ResolutionFlags:
-    type IsEmptyResult = IsEmptyResult.T
-    object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type File = File.T
     object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -66,14 +62,14 @@ object MergeCmd:
 
   /** The file, then the flags over it. Every bad line is reported at once. Reads the file; else pure. */
   def resolutions(f: ResolutionFlags): Either[Cli.Error, MergeResolutions] =
-    val fromFile: Either[List[com.histmersion.cli.MergeCmd.ResolutionsFromFilePart1], MergeResolutions] = f.file match
+    val fromFile: Either[List[com.histmersion.cli.MergeCmd.Problem], MergeResolutions] = f.file match
       case None    => Right(MergeResolutions())
       case Some(p) =>
         val path = Path.of(p)
         if !Files.isRegularFile(path) then Left(List(s"no such file: $p"))
         else MergeResolutionsFile.parse(Files.readString(path)).left.map(_.map(e => s"$p: $e"))
     val flags = f.resolve.map(MergeResolutionsFile.flag)
-    val editions: Either[com.histmersion.cli.MergeCmd.ResolutionsEditionsPart1, Option[EditionsPolicy]] = f.editions match
+    val editions: Either[com.histmersion.cli.MergeCmd.Problem, Option[EditionsPolicy]] = f.editions match
       case None    => Right(None)
       case Some(e) =>
         EditionsPolicy.values

@@ -10,23 +10,17 @@ import org.scalajs.dom
   * gives the focus back.
   */
 object ContextMenu:
+  type KeyName = KeyName.T
+  object KeyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Position = Position.T
+  object Position extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One action. `disabled`: shown, with why it cannot run now (`hint`). */
   type MenuGoI = MenuGoI.T
   object MenuGoI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type IsOpenResult = IsOpenResult.T
-  object IsOpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsMenuKeyResult = IsMenuKeyResult.T
-  object IsMenuKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsMenuKeyKey = IsMenuKeyKey.T
-  object IsMenuKeyKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsMenuKeyShift = IsMenuKeyShift.T
   object IsMenuKeyShift extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceResultPart1 = PlaceResultPart1.T
-  object PlaceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceResultPart2 = PlaceResultPart2.T
-  object PlaceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceX = PlaceX.T
   object PlaceX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceY = PlaceY.T
@@ -49,14 +43,10 @@ object ContextMenu:
   val ShowY: _root_.com.histmersion.web.ui.ContextMenu.Open.Y.type = _root_.com.histmersion.web.ui.ContextMenu.Open.Y
   type CloseReturnFocus = CloseReturnFocus.T
   object CloseReturnFocus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowUnderTitle = ShowUnderTitle.T
-  object ShowUnderTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NativeWantedResult = NativeWantedResult.T
-  object NativeWantedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OnTitle = _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle
-  val OnTitle: _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle.type = _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle
-  type ButtonTitle = _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle
-  val ButtonTitle: _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle.type = _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle
+  type OnTitle = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
+  val OnTitle: _root_.com.histmersion.web.ui.ContextMenu.Open.Title.type = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
+  type ButtonTitle = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
+  val ButtonTitle: _root_.com.histmersion.web.ui.ContextMenu.Open.Title.type = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
   type ButtonExtraCls = ButtonExtraCls.T
   object ButtonExtraCls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -99,15 +89,15 @@ object ContextMenu:
 
   private val open = Var(Option.empty[Open])
 
-  def isOpen: com.histmersion.web.ui.ContextMenu.IsOpenResult = open.now().isDefined
+  def isOpen: Boolean = open.now().isDefined
 
   /** The menu key: the keyboard's own, or Shift+F10. Pure. */
-  def isMenuKey(key: com.histmersion.web.ui.ContextMenu.IsMenuKeyKey, shift: com.histmersion.web.ui.ContextMenu.IsMenuKeyShift): com.histmersion.web.ui.ContextMenu.IsMenuKeyResult = key == "ContextMenu" || (shift && key == "F10")
+  def isMenuKey(key: com.histmersion.web.ui.ContextMenu.KeyName, shift: com.histmersion.web.ui.ContextMenu.IsMenuKeyShift): Boolean = key == "ContextMenu" || (shift && key == "F10")
 
   /** Where a menu of `w`×`h` opened at (`x`, `y`) stands so that it stays inside a `vw`×`vh` viewport (with a margin),
     * flipped to the other side of the point where it would not fit. Pure.
     */
-  def place(x: com.histmersion.web.ui.ContextMenu.PlaceX, y: com.histmersion.web.ui.ContextMenu.PlaceY, w: com.histmersion.web.ui.ContextMenu.PlaceW, h: com.histmersion.web.ui.ContextMenu.PlaceH, vw: com.histmersion.web.ui.ContextMenu.PlaceVw, vh: com.histmersion.web.ui.ContextMenu.PlaceVh, margin: com.histmersion.web.ui.ContextMenu.PlaceMargin = 8): (com.histmersion.web.ui.ContextMenu.PlaceResultPart1, com.histmersion.web.ui.ContextMenu.PlaceResultPart2) =
+  def place(x: com.histmersion.web.ui.ContextMenu.PlaceX, y: com.histmersion.web.ui.ContextMenu.PlaceY, w: com.histmersion.web.ui.ContextMenu.PlaceW, h: com.histmersion.web.ui.ContextMenu.PlaceH, vw: com.histmersion.web.ui.ContextMenu.PlaceVw, vh: com.histmersion.web.ui.ContextMenu.PlaceVh, margin: com.histmersion.web.ui.ContextMenu.PlaceMargin = 8): (com.histmersion.web.ui.ContextMenu.Position, com.histmersion.web.ui.ContextMenu.Position) =
     val px = if x + w + margin > vw then math.max(margin, x - w) else x
     val py = if y + h + margin > vh then math.max(margin, y - h) else y
     (math.max(margin, math.min(px, vw - w - margin)), math.max(margin, math.min(py, vh - h - margin)))
@@ -121,7 +111,7 @@ object ContextMenu:
     if returnFocus then was.flatMap(_.back).filter(_.isConnected).foreach(_.focus())
 
   /** Under (or, near the bottom, over) an element: how the keyboard and the "⋯" button open it. */
-  def showUnder(el: dom.HTMLElement, title: com.histmersion.web.ui.ContextMenu.ShowUnderTitle, entries: List[Entry]): Unit =
+  def showUnder(el: dom.HTMLElement, title: com.histmersion.web.ui.ContextMenu.Open.Title, entries: List[Entry]): Unit =
     val r = el.getBoundingClientRect()
     show(title, entries, r.left, r.bottom + 2, Some(el))
 
@@ -131,7 +121,7 @@ object ContextMenu:
   private val NativeHere =
     "input, textarea, select, [contenteditable], .note-text a, .reading-links a, .reading-findings a, .detail-card a"
 
-  private def nativeWanted(ev: dom.MouseEvent): com.histmersion.web.ui.ContextMenu.NativeWantedResult =
+  private def nativeWanted(ev: dom.MouseEvent): Boolean =
     val selected = scala.util.Try(dom.window.getSelection().toString.trim.nonEmpty).getOrElse(false)
     selected || Option(ev.target).collect { case e: dom.Element => e }.exists(_.closest(NativeHere) != null)
 

@@ -14,35 +14,31 @@ import com.histmersion.api.catalogue.Place
   * span.
   */
 object MapLists:
+  type Asked = Asked.T
+  object Asked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountLine = CountLine.T
+  object CountLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListedCount = ListedCount.T
+  object ListedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnMap = OnMap.T
+  object OnMap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteNote = SiteNote.T
+  object SiteNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TotalCount = TotalCount.T
+  object TotalCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: the count line — `12 places on the map`, `40 listed of 312 (zoom in to list the rest)`. */
-  type CountLineResult = CountLineResult.T
-  object CountLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountLineListed = CountLineListed.T
-  object CountLineListed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountLineTotal = CountLineTotal.T
-  object CountLineTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountLineOne = CountLineOne.T
-  object CountLineOne extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountLineMany = CountLineMany.T
-  object CountLineMany extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountLineOnMap = CountLineOnMap.T
-  object CountLineOnMap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SiteNoteResult = SiteNoteResult.T
-  object SiteNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AskedEverywhere = AskedEverywhere.T
-  object AskedEverywhere extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PaneName = PaneName.T
   object PaneName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def countLine(listed: com.histmersion.web.MapLists.CountLineListed, total: com.histmersion.web.MapLists.CountLineTotal, one: com.histmersion.web.MapLists.CountLineOne, many: com.histmersion.web.MapLists.CountLineMany, onMap: com.histmersion.web.MapLists.CountLineOnMap): com.histmersion.web.MapLists.CountLineResult =
+  def countLine(listed: com.histmersion.web.MapLists.ListedCount, total: com.histmersion.web.MapLists.TotalCount, one: com.histmersion.api.Plural.Noun.Singular, many: com.histmersion.api.Plural.Noun.Plural, onMap: com.histmersion.web.MapLists.OnMap): com.histmersion.web.MapLists.CountLine =
     val where = if onMap then " on the map" else ""
     if total <= listed then s"${Plural.count(total, one, many)}$where"
     else
       s"${Plural.count(total, one, many)}$where · $listed listed${if onMap then ", zoom in to list the rest" else ""}"
 
   /** Pure: a site's row note — its type, its dates, or that it has none. */
-  def siteNote(p: SitePoint): com.histmersion.web.MapLists.SiteNoteResult =
+  def siteNote(p: SitePoint): com.histmersion.web.MapLists.SiteNote =
     List(
       p.known.fold("site")(_.label),
       if p.undated then "date unknown" else p.period.fold("")((a, b) => Fmt.periodStr(Some(a.toLong), Some(b.toLong)))
@@ -93,7 +89,7 @@ object MapLists:
   private val picturesLatest = Latest()
 
   // `var`: what the lists were last asked for everywhere (asked again only when it changed)
-  private var askedEverywhere: Option[com.histmersion.web.MapLists.AskedEverywhere] = None
+  private var askedEverywhere: Option[com.histmersion.web.MapLists.Asked] = None
 
   /** The lists follow the map's layers as they read their tiles, the view, and the filter. */
   def follow(config: UiConfig): Unit =

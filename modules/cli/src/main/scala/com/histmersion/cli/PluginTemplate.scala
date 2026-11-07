@@ -9,33 +9,11 @@ import java.nio.file.Path
   * files.
   */
 object PluginTemplate:
+  type ClassName = ClassName.T
+  object ClassName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Path = Path.T
+  object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type DefaultsPathResult = DefaultsPathResult.T
-  object DefaultsPathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NativeMetadataPathResult = NativeMetadataPathResult.T
-  object NativeMetadataPathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PluginClassResult = PluginClassResult.T
-  object PluginClassResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContributionClassResult = ContributionClassResult.T
-  object ContributionClassResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DirectivesResult = DirectivesResult.T
-  object DirectivesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RepositoryNoteResult = RepositoryNoteResult.T
-  object RepositoryNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeaderResult = HeaderResult.T
-  object HeaderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FillResult = FillResult.T
-  object FillResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FillText = FillText.T
-  object FillText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NativeMetadataResult = NativeMetadataResult.T
-  object NativeMetadataResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PackagingSuite = PackagingSuite.T
-  object PackagingSuite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Readme = Readme.T
-  object Readme extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AgentNotesResult = AgentNotesResult.T
-  object AgentNotesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Request(
       id: PluginId,
@@ -68,18 +46,18 @@ object PluginTemplate:
 
   val ServicesPath = "resources/META-INF/services/com.histmersion.plugin.Plugin"
 
-  def defaultsPath(id: PluginId): com.histmersion.cli.PluginTemplate.DefaultsPathResult = s"resources/META-INF/histmersion/plugins/${id.value}.conf"
+  def defaultsPath(id: PluginId): com.histmersion.cli.PluginTemplate.Path = s"resources/META-INF/histmersion/plugins/${id.value}.conf"
 
   /** GraalVM's convention, `META-INF/native-image/<group>/<artifact>/`: the published organization and name, so no two
     * jars' metadata files share a path.
     */
-  def nativeMetadataPath(id: PluginId, pkg: ScalaPackage): com.histmersion.cli.PluginTemplate.NativeMetadataPathResult =
+  def nativeMetadataPath(id: PluginId, pkg: ScalaPackage): com.histmersion.cli.PluginTemplate.Path =
     s"resources/META-INF/native-image/${pkg.value}/${id.value}/reachability-metadata.json"
 
-  def pluginClass(id: PluginId): com.histmersion.cli.PluginTemplate.PluginClassResult =
+  def pluginClass(id: PluginId): com.histmersion.cli.PluginTemplate.ClassName =
     if id.typeName.endsWith("Plugin") then id.typeName else s"${id.typeName}Plugin"
 
-  def contributionClass(id: PluginId, kind: PluginKind): com.histmersion.cli.PluginTemplate.ContributionClassResult = s"${id.typeName}${kind.classSuffix}"
+  def contributionClass(id: PluginId, kind: PluginKind): com.histmersion.cli.PluginTemplate.ClassName = s"${id.typeName}${kind.classSuffix}"
 
   def files(r: Request): List[TemplateFile] =
     val name = r.id.typeName
@@ -104,7 +82,7 @@ object PluginTemplate:
     * and runs it as the server does, and brings the plugin API with it. A library of the plugin's own is a plain
     * `//> using dep`: its POM lists it, and `histmersion plugin add` installs it beside the plugin.
     */
-  private def directives(r: Request): com.histmersion.cli.PluginTemplate.DirectivesResult =
+  private def directives(r: Request): String =
     s"""// The build of the @Name@ plugin: every //> using directive of the project, for the plugin and its
        |// tests. Keep them all in this file when you add sources (scala-cli reads directives from any
        |// file, but one place is one place to change them).
@@ -132,16 +110,16 @@ object PluginTemplate:
        |//> using test.javaProp $ProjectProperty=$${.}
        |""".stripMargin
 
-  private def repositoryNote(repository: TemplateRepository): com.histmersion.cli.PluginTemplate.RepositoryNoteResult = repository match
+  private def repositoryNote(repository: TemplateRepository): String = repository match
     case TemplateRepository.MavenLocal =>
       "The plugin API, the platform and the testkit come from the local Maven repository (m2Local), where\n" +
         "// `histmersion plugin repo --m2` puts the install's."
     case TemplateRepository.Remote(_) =>
       "The plugin API, the platform and the testkit come from the Maven repository named below."
 
-  private def header(r: Request): com.histmersion.cli.PluginTemplate.HeaderResult = s"package ${r.pkg.value}\n\n"
+  private def header(r: Request): String = s"package ${r.pkg.value}\n\n"
 
-  private def fill(r: Request, text: com.histmersion.cli.PluginTemplate.FillText): com.histmersion.cli.PluginTemplate.FillResult =
+  private def fill(r: Request, text: String): String =
     List(
       "@id@" -> r.id.value,
       "@Name@" -> r.id.typeName,
@@ -166,7 +144,7 @@ object PluginTemplate:
     * derived reader in every config companion. The compiler numbers the fields of one name through the source file, in
     * the order they are written.
     */
-  private def nativeMetadata(r: Request): com.histmersion.cli.PluginTemplate.NativeMetadataResult =
+  private def nativeMetadata(r: Request): String =
     val p = r.pkg.value
     val fields = (s"$p.${pluginClass(r.id)}" -> "configReader$lzy1") ::
       KindSources
@@ -188,7 +166,7 @@ object PluginTemplate:
        |}
        |""".stripMargin
 
-  private val packagingSuite: com.histmersion.cli.PluginTemplate.PackagingSuite =
+  private val packagingSuite: String =
     """
       |/** What the server reads from the jar besides the classes: the ServiceLoader file that names the
       |  * plugin, its defaults, and the native-image metadata a relinked server needs. */
@@ -228,7 +206,7 @@ object PluginTemplate:
       |""".stripMargin
 
   /** How to build and test the plugin: unit tests, the live check, recording and replaying. */
-  private val readme: com.histmersion.cli.PluginTemplate.Readme =
+  private val readme: String =
     """# @Name@
       |
       |A Histmersion plugin: a @kind@ (`@provides@:@id@`), built with [scala-cli](https://scala-cli.virtuslab.org)
@@ -382,7 +360,7 @@ object PluginTemplate:
       |Histmersion and its plugin API are licensed under the AGPL-3.0, and so is a plugin built on the API.
       |""".stripMargin
 
-  private def agentNotes(r: Request): com.histmersion.cli.PluginTemplate.AgentNotesResult =
+  private def agentNotes(r: Request): String =
     """# @Name@: a Histmersion plugin
       |
       |A plugin for Histmersion, built with scala-cli. It adds a @kind@ (`@provides@:@id@`). These notes are

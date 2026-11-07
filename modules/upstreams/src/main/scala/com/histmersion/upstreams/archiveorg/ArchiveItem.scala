@@ -11,6 +11,8 @@ final case class ArchiveItem(
 )
 
 object ArchiveItem:
+  type IdentifierText = IdentifierText.T
+  object IdentifierText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Identifier = com.histmersion.upstreams.ArchiveId
   val Identifier: _root_.com.histmersion.upstreams.ArchiveId.type = _root_.com.histmersion.upstreams.ArchiveId
   type Title = com.histmersion.plugin.WorkKey.Title

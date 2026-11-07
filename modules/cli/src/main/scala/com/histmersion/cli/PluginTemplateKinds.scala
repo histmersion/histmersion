@@ -6,30 +6,22 @@ package com.histmersion.cli
   */
 private[cli] object KindSources:
 
-  type MainResult = MainResult.T
-  object MainResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TestResult = TestResult.T
-  object TestResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultsResult = DefaultsResult.T
-  object DefaultsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConfigTypesResult = ConfigTypesResult.T
-  object ConfigTypesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def main(kind: PluginKind): com.histmersion.cli.KindSources.MainResult = kind match
+  def main(kind: PluginKind): String = kind match
     case PluginKind.SourceFetcher   => SourceFetcherMain
     case PluginKind.MediaCollection => MediaCollectionMain
     case PluginKind.EventCatalogue  => EventCatalogueMain
     case PluginKind.AiProvider      => AiProviderMain
     case PluginKind.SecretVault     => SecretVaultMain
 
-  def test(kind: PluginKind): com.histmersion.cli.KindSources.TestResult = TestImports + (kind match
+  def test(kind: PluginKind): String = TestImports + (kind match
     case PluginKind.SourceFetcher   => SourceFetcherTest + SourceFetcherLive
     case PluginKind.MediaCollection => MediaCollectionTest + MediaCollectionLive
     case PluginKind.EventCatalogue  => EventCatalogueTest + EventCatalogueLive
     case PluginKind.AiProvider      => AiProviderTest
     case PluginKind.SecretVault     => SecretVaultTest)
 
-  def defaults(kind: PluginKind): com.histmersion.cli.KindSources.DefaultsResult = kind match
+  def defaults(kind: PluginKind): String = kind match
     case PluginKind.SourceFetcher   => SourceFetcherDefaults
     case PluginKind.MediaCollection => MediaCollectionDefaults
     case PluginKind.EventCatalogue  => EventCatalogueDefaults
@@ -37,7 +29,7 @@ private[cli] object KindSources:
     case PluginKind.SecretVault     => SecretVaultDefaults
 
   /** The case classes that `derives ConfigReader` in the kind's sources, in the order they are written. */
-  def configTypes(kind: PluginKind): List[com.histmersion.cli.KindSources.ConfigTypesResult] = kind match
+  def configTypes(kind: PluginKind): List[String] = kind match
     case PluginKind.MediaCollection => List("ListedPicture", "@Name@Config")
     case PluginKind.EventCatalogue  => List("ListedEvent", "@Name@Config")
     case _                          => List("@Name@Config")

@@ -180,14 +180,14 @@ enum Icon(val paths: List[Icon.Paths]):
   case Read extends Icon(List("M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z", "M8 12.5l2.5 2.5 5-5.5"))
 
 object Icon:
+  type Html = Html.T
+  object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** Pure: the icon as markup, for the places that are HTML strings (the map's key). */
   type Paths = Paths.T
   object Paths extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type HtmlResult = HtmlResult.T
-  object HtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def html(i: Icon): com.histmersion.web.Icon.HtmlResult =
+  def html(i: Icon): com.histmersion.web.Icon.Html =
     s"""<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${i.paths
         .map(d => s"""<path d="$d"/>""")
         .mkString}</svg>"""

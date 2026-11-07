@@ -12,8 +12,6 @@ object ItemActions:
 
   type BookmarkButtonCompact = BookmarkButtonCompact.T
   object BookmarkButtonCompact extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyByline = ApplyByline.T
-  object ApplyByline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def writing(act: => Unit): Unit =
     if Auth.writableNow then act else WindowManager.open(WindowKey.ApiKey)
@@ -36,7 +34,7 @@ object ItemActions:
       onClick --> { ev => ev.stopPropagation(); bookmark(ref) }
     )
 
-  def apply(ref: ItemRef, byline: com.histmersion.web.marks.ItemActions.ApplyByline = ""): HtmlElement =
+  def apply(ref: ItemRef, byline: com.histmersion.web.library.TableRow.Byline = ""): HtmlElement =
     val read = MyItems.isRead(ref)
     div(
       cls := "btn-group item-actions",

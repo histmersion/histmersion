@@ -15,29 +15,25 @@ import com.histmersion.api.media.MediaProvider
   * Ported from viewport.js.
   */
 object ViewportToggle:
+  type AreaPickHelpText = AreaPickHelpText.T
+  object AreaPickHelpText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Coordinate = Coordinate.T
+  object Coordinate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayerCountCount = LayerCountCount.T
+  object LayerCountCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayersLabel = LayersLabel.T
+  object LayersLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type R5Result = R5Result.T
-  object R5Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type R5X = R5X.T
-  object R5X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WrapLonResult = WrapLonResult.T
-  object WrapLonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WrapLonX = WrapLonX.T
-  object WrapLonX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BboxOfResult = BboxOfResult.T
-  object BboxOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AreaPickHelp = AreaPickHelpValue
-  type AreaPickHelpValue = AreaPickHelpValue.T
-  object AreaPickHelpValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayersLabelResult = LayersLabelResult.T
-  object LayersLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AreaPickHelpValue = com.histmersion.web.ViewportToggle.AreaPickHelpText
+  val AreaPickHelpValue: _root_.com.histmersion.web.ViewportToggle.AreaPickHelpText.type = _root_.com.histmersion.web.ViewportToggle.AreaPickHelpText
   type LayersLabelOn = LayersLabelOn.T
   object LayersLabelOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LayersLabelTotal = LayersLabelTotal.T
   object LayersLabelTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LayerCount = LayerCountValue
-  type LayerCountValue = LayerCountValue.T
-  object LayerCountValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayerCountValue = com.histmersion.web.ViewportToggle.LayerCountCount
+  val LayerCountValue: _root_.com.histmersion.web.ViewportToggle.LayerCountCount.type = _root_.com.histmersion.web.ViewportToggle.LayerCountCount
   type Open = Open.T
   object Open extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OnCount = OnCount.T
@@ -51,10 +47,10 @@ object ViewportToggle:
   type SetInViewOn = SetInViewOn.T
   object SetInViewOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def r5(x: com.histmersion.web.ViewportToggle.R5X): com.histmersion.web.ViewportToggle.R5Result = Math.round(x * 1e5) / 1e5
+  private def r5(x: com.histmersion.web.ViewportToggle.Coordinate): com.histmersion.web.ViewportToggle.Coordinate = Math.round(x * 1e5) / 1e5
 
   /** Wrap longitude to [-180, 180]. The map can give unwrapped values past the antimeridian. */
-  private def wrapLon(x: com.histmersion.web.ViewportToggle.WrapLonX): com.histmersion.web.ViewportToggle.WrapLonResult =
+  private def wrapLon(x: com.histmersion.api.Geo.Longitude): com.histmersion.api.Geo.Longitude =
     val y = ((x + 180) % 360 + 360) % 360 - 180
     if y == -180 && x > 0 then 180.0 else y
 
@@ -62,7 +58,7 @@ object ViewportToggle:
     * comes back with minLon > maxLon; the server splits it into two envelopes. A viewport wider than the world becomes
     * the whole world.
     */
-  private def bboxOf(map: MapSurface): com.histmersion.web.ViewportToggle.BboxOfResult =
+  private def bboxOf(map: MapSurface): com.histmersion.api.BBox.Text =
     val b = map.bounds
     val w = b.west
     val e = b.east
@@ -82,7 +78,7 @@ object ViewportToggle:
       "for “all states in period”; playback shows one year at a time."
 
   /** Pure: how many of the map's `total` layers are on, as the layers button says it. */
-  def layersLabel(on: com.histmersion.web.ViewportToggle.LayersLabelOn, total: com.histmersion.web.ViewportToggle.LayersLabelTotal): com.histmersion.web.ViewportToggle.LayersLabelResult = s"Layers · $on of $total on"
+  def layersLabel(on: com.histmersion.web.ViewportToggle.LayersLabelOn, total: com.histmersion.web.ViewportToggle.LayersLabelTotal): com.histmersion.web.ViewportToggle.LayersLabel = s"Layers · $on of $total on"
 
   /** The layers the button counts: the findings, then every [[MapLayer]]. */
   val LayerCount: com.histmersion.web.ViewportToggle.LayerCount = 1 + MapLayer.values.length

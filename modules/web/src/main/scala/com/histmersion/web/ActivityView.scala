@@ -15,55 +15,35 @@ import com.histmersion.api.jobs.JobActions
   * Runs and long jobs get Pause / Resume / Cancel in place. Also the overview's short list and a goal's history.
   */
 object ActivityView:
+  type Action = Action.T
+  object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Clock = Clock.T
+  object Clock extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Message = Message.T
+  object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParamText = ParamText.T
+  object ParamText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Search = Search.T
+  object Search extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Url = Url.T
+  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type When = When.T
+  object When extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Wording = Wording.T
+  object Wording extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** The row's first words: what is going on, or what it was and when (`hm` = the clock time it shows). */
-  type ClockTwoN = ClockTwoN.T
-  object ClockTwoN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RowActAction = RowActAction.T
-  object RowActAction extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type WhenResult = WhenResult.T
-  object WhenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WhenHm = WhenHm.T
-  object WhenHm extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProblemResult = ProblemResult.T
-  object ProblemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ActionsResult = ActionsResult.T
-  object ActionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindOfResult = KindOfResult.T
-  object KindOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchResult = SearchResult.T
-  object SearchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchGoal = SearchGoal.T
-  object SearchGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParamResult = ParamResult.T
-  object ParamResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParamSearch = ParamSearch.T
-  object ParamSearch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParamName = ParamName.T
   object ParamName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClockResult = ClockResult.T
-  object ClockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClockIso = ClockIso.T
-  object ClockIso extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalLinkG = GoalLinkG.T
-  object GoalLinkG extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListEmpty = ListEmpty.T
-  object ListEmpty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipsGoal = _root_.com.histmersion.web.ActivityView.SearchGoal
-  val ChipsGoal: _root_.com.histmersion.web.ActivityView.SearchGoal.type = _root_.com.histmersion.web.ActivityView.SearchGoal
-  type PaneGoal = _root_.com.histmersion.web.ActivityView.SearchGoal
-  val PaneGoal: _root_.com.histmersion.web.ActivityView.SearchGoal.type = _root_.com.histmersion.web.ActivityView.SearchGoal
-  type ShortLimit = ShortLimit.T
-  object ShortLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HistoryGoal = HistoryGoal.T
-  object HistoryGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HistoryLimit = HistoryLimit.T
-  object HistoryLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChipsGoal = _root_.com.histmersion.api.automation.Goal.Slug
+  val ChipsGoal: _root_.com.histmersion.api.automation.Goal.Slug.type = _root_.com.histmersion.api.automation.Goal.Slug
+  type PaneGoal = _root_.com.histmersion.api.automation.Goal.Slug
+  val PaneGoal: _root_.com.histmersion.api.automation.Goal.Slug.type = _root_.com.histmersion.api.automation.Goal.Slug
 
-  def when(e: Entry, hm: com.histmersion.web.ActivityView.WhenHm): com.histmersion.web.ActivityView.WhenResult = e.entryKind match
+  def when(e: Entry, hm: com.histmersion.web.ActivityView.Clock): com.histmersion.web.ActivityView.When = e.entryKind match
     case Some(EntryKind.Run | EntryKind.Job) =>
       e.state match
         case "running"   => "Running"
@@ -77,12 +57,12 @@ object ActivityView:
     case _                        => s"Note · $hm"
 
   /** Does the row read as a problem (its first words in the attention colour)? */
-  def problem(e: Entry): com.histmersion.web.ActivityView.ProblemResult = e.state == "failed"
+  def problem(e: Entry): Boolean = e.state == "failed"
 
   /** The actions a row offers: an agent run or a long background job that is going (pause, cancel), paused (resume,
     * cancel) or waiting its turn (cancel).
     */
-  def actions(e: Entry): List[com.histmersion.web.ActivityView.ActionsResult] =
+  def actions(e: Entry): List[com.histmersion.web.ActivityView.Action] =
     val controllable = e.entryKind.contains(EntryKind.Run) ||
       (e.entryKind.contains(EntryKind.Job) && JobActions.Stoppable.contains(e.what))
     if !controllable || e.job.isEmpty then Nil
@@ -94,13 +74,13 @@ object ActivityView:
         case _                    => Nil
 
   /** What the row says it is, in words: agent work, a background job, a note, a decision. */
-  def kindOf(e: Entry): com.histmersion.web.ActivityView.KindOfResult = e.entryKind.fold(Wording.humanize(e.kind))(_.wording)
+  def kindOf(e: Entry): com.histmersion.web.ActivityView.Wording = e.entryKind.fold(Wording.humanize(e.kind))(_.wording)
 
   /** The query string of a page of the list: its goal, kept from one chip to the next. */
-  def search(goal: Option[com.histmersion.web.ActivityView.SearchGoal]): com.histmersion.web.ActivityView.SearchResult = goal.fold("")(g => s"?goal=${js.URIUtils.encodeURIComponent(g)}")
+  def search(goal: Option[com.histmersion.api.automation.Goal.Slug]): com.histmersion.web.ActivityView.Url = goal.fold("")(g => s"?goal=${js.URIUtils.encodeURIComponent(g)}")
 
   /** A `name=value` of a page's query string (`?goal=…`), decoded; `None` when absent or blank. */
-  def param(search: com.histmersion.web.ActivityView.ParamSearch, name: com.histmersion.web.ActivityView.ParamName): Option[com.histmersion.web.ActivityView.ParamResult] =
+  def param(search: com.histmersion.web.ActivityView.Search, name: com.histmersion.web.ActivityView.ParamName): Option[com.histmersion.web.ActivityView.ParamText] =
     Option(search)
       .getOrElse("")
       .stripPrefix("?")
@@ -118,17 +98,17 @@ object ActivityView:
   private val Months = Vector("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
   /** `12:40` today, `29 Oct` before, in the reader's own time zone. */
-  private def clock(iso: com.histmersion.web.ActivityView.ClockIso): com.histmersion.web.ActivityView.ClockResult =
+  private def clock(iso: com.histmersion.api.automation.Activity.Entry.At): com.histmersion.web.ActivityView.Clock =
     val d = new js.Date(iso)
     if d.getTime().isNaN then iso.take(16)
     else
-      def two(n: com.histmersion.web.ActivityView.ClockTwoN) = f"${n.toInt}%02d"
+      def two(n: Double) = f"${n.toInt}%02d"
       if d.toDateString() == new js.Date().toDateString() then s"${two(d.getHours())}:${two(d.getMinutes())}"
       else s"${d.getDate().toInt} ${Months(d.getMonth().toInt)}"
 
   // ── one row ─────────────────────────────────────────────────────────────────────────────────────
 
-  private def goalLink(g: com.histmersion.web.ActivityView.GoalLinkG): HtmlElement =
+  private def goalLink(g: com.histmersion.api.automation.Goal.Slug): HtmlElement =
     RouteLink(Route.Goal(g), cls := "goal-ref", Wording.humanize(g))
 
   /** What an entry touched, as links. */
@@ -183,7 +163,7 @@ object ActivityView:
   def row(e: Entry, changed: () => Unit): HtmlElement =
     val busy = Var(false)
     val failure = Var(Option.empty[String])
-    def act(action: com.histmersion.web.ActivityView.RowActAction): Unit =
+    def act(action: com.histmersion.web.ActivityView.Action): Unit =
       if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
       else
         busy.set(true)
@@ -266,7 +246,7 @@ object ActivityView:
     type Limit = Limit.T
     object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def list(feed: Feed, empty: com.histmersion.web.ActivityView.ListEmpty): HtmlElement =
+  private def list(feed: Feed, empty: com.histmersion.web.ActivityView.Message): HtmlElement =
     div(
       child.maybe <-- feed.failure.signal
         .map(_.map(m => p(cls := "form-error", role := "alert", s"Could not read the activity: $m"))),
@@ -343,12 +323,12 @@ object ActivityView:
     )
 
   /** The overview's few latest entries, linking to the whole list. */
-  def short(limit: com.histmersion.web.ActivityView.ShortLimit): HtmlElement =
+  def short(limit: com.histmersion.api.Paging.Limit): HtmlElement =
     val feed = Feed(Activity.Show.Everything, None, limit)
     div(cls := "activity-short", polled(feed), list(feed, "Nothing has happened yet."))
 
   /** A goal's slice of the list. */
-  def history(goal: com.histmersion.web.ActivityView.HistoryGoal, limit: com.histmersion.web.ActivityView.HistoryLimit): HtmlElement =
+  def history(goal: com.histmersion.api.automation.Goal.Slug, limit: com.histmersion.api.Paging.Limit): HtmlElement =
     val feed = Feed(Activity.Show.Everything, Some(goal), limit)
     div(cls := "activity-history", polled(feed), list(feed, "Nothing has happened for this goal yet."))
 

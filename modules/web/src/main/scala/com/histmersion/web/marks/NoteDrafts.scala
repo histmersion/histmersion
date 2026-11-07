@@ -7,26 +7,18 @@ import com.histmersion.web.Store
   * nothing. Never sent anywhere.
   */
 object NoteDrafts:
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type KeyResult = KeyResult.T
-  object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KeyNoteId = KeyNoteId.T
   object KeyNoteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetResult = GetResult.T
-  object GetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetKey = GetKey.T
-  object GetKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutKey = PutKey.T
-  object PutKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutText = PutText.T
-  object PutText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DropKey = DropKey.T
-  object DropKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Prefix = "histmersion.noteDraft."
 
   /** Which draft a note being written is: the note's own id, else what it is being left on. Pure. */
-  def key(target: Target, noteId: Option[com.histmersion.web.marks.NoteDrafts.KeyNoteId]): com.histmersion.web.marks.NoteDrafts.KeyResult =
+  def key(target: Target, noteId: Option[com.histmersion.web.marks.NoteDrafts.KeyNoteId]): com.histmersion.web.marks.NoteDrafts.Key =
     noteId
       .map(id => s"note:$id")
       .orElse(target.identity)
@@ -37,7 +29,7 @@ object NoteDrafts:
   // `var`: tests swap the browser's storage for a Store.Memory
   private[web] var store: Store = Store.Browser
 
-  def get(key: com.histmersion.web.marks.NoteDrafts.GetKey): Option[com.histmersion.web.marks.NoteDrafts.GetResult] = store.get(Prefix + key).filter(_.nonEmpty)
-  def put(key: com.histmersion.web.marks.NoteDrafts.PutKey, text: com.histmersion.web.marks.NoteDrafts.PutText): Unit =
+  def get(key: com.histmersion.web.marks.NoteDrafts.Key): Option[com.histmersion.web.marks.NoteDrafts.Text] = store.get(Prefix + key).filter(_.nonEmpty)
+  def put(key: com.histmersion.web.marks.NoteDrafts.Key, text: com.histmersion.web.marks.NoteDrafts.Text): Unit =
     if text.trim.isEmpty then store.remove(Prefix + key) else store.put(Prefix + key, text)
-  def drop(key: com.histmersion.web.marks.NoteDrafts.DropKey): Unit = store.remove(Prefix + key)
+  def drop(key: com.histmersion.web.marks.NoteDrafts.Key): Unit = store.remove(Prefix + key)

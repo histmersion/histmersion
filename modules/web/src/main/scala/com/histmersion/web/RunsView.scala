@@ -17,126 +17,24 @@ import com.histmersion.api.library.Label
   * once everything has settled or the window is closed — the same schedule as the jobs window.
   */
 object RunsView:
+  type Busy = Busy.T
+  object Busy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** How many runs a page lists. */
-  type FilterButtonsBtnLabel = FilterButtonsBtnLabel.T
-  object FilterButtonsBtnLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterButtonsBtnCount = FilterButtonsBtnCount.T
-  object FilterButtonsBtnCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunPaneRefreshChanged = RunPaneRefreshChanged.T
-  object RunPaneRefreshChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Enabled = Enabled.T
   object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LiveResult = LiveResult.T
-  object LiveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LiveStatus = LiveStatus.T
-  object LiveStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextPollResult = NextPollResult.T
-  object NextPollResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextPollPrevious = NextPollPrevious.T
-  object NextPollPrevious extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextPollAnyLive = NextPollAnyLive.T
-  object NextPollAnyLive extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextPollChanged = NextPollChanged.T
-  object NextPollChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateLabelResult = StateLabelResult.T
-  object StateLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PipelineLabelResult = PipelineLabelResult.T
-  object PipelineLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PipelineLabelPipeline = PipelineLabelPipeline.T
-  object PipelineLabelPipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateMeaningResult = StateMeaningResult.T
-  object StateMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatusLabelResult = StatusLabelResult.T
-  object StatusLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatusLabelStatus = StatusLabelStatus.T
-  object StatusLabelStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PipelineMeaningResult = PipelineMeaningResult.T
-  object PipelineMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PipelineMeaningPipeline = PipelineMeaningPipeline.T
-  object PipelineMeaningPipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OriginLabelResult = OriginLabelResult.T
-  object OriginLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OriginLabelOrigin = OriginLabelOrigin.T
-  object OriginLabelOrigin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OriginMeaningResult = OriginMeaningResult.T
-  object OriginMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OriginMeaningOrigin = OriginMeaningOrigin.T
-  object OriginMeaningOrigin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProviderMeaningResult = ProviderMeaningResult.T
-  object ProviderMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProviderMeaningProvider = ProviderMeaningProvider.T
-  object ProviderMeaningProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfPipelines = FilterOfPipelines.T
-  object FilterOfPipelines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfOrigins = FilterOfOrigins.T
-  object FilterOfOrigins extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfManager = FilterOfManager.T
-  object FilterOfManager extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfProvider = FilterOfProvider.T
-  object FilterOfProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfModel = FilterOfModel.T
-  object FilterOfModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfGoal = FilterOfGoal.T
-  object FilterOfGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfSince = FilterOfSince.T
-  object FilterOfSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfUntil = FilterOfUntil.T
-  object FilterOfUntil extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfSubject = FilterOfSubject.T
-  object FilterOfSubject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountsResultPart1 = CountsResultPart1.T
-  object CountsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountsResultPart2 = CountsResultPart2.T
-  object CountsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AnyLiveResult = AnyLiveResult.T
-  object AnyLiveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ActionsStatus = ActionsStatus.T
-  object ActionsStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WaitingForResult = WaitingForResult.T
-  object WaitingForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PausedForResult = PausedForResult.T
-  object PausedForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PausedTextResult = PausedTextResult.T
-  object PausedTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PausedTextWhy = PausedTextWhy.T
-  object PausedTextWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BudgetResult = BudgetResult.T
-  object BudgetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BudgetS = BudgetS.T
-  object BudgetS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TokensResult = TokensResult.T
-  object TokensResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StepColumns = StepColumnsValue
   type StepColumnsValue = StepColumnsValue.T
   object StepColumnsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepCellsResultPart1 = StepCellsResultPart1.T
-  object StepCellsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepCellsResultPart2 = StepCellsResultPart2.T
-  object StepCellsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FacetResultPart1 = FacetResultPart1.T
-  object FacetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FacetResultPart2 = FacetResultPart2.T
-  object FacetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FacetName = FacetName.T
-  object FacetName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateBadgeStatus = _root_.com.histmersion.web.RunsView.StatusLabelStatus
-  val StateBadgeStatus: _root_.com.histmersion.web.RunsView.StatusLabelStatus.type = _root_.com.histmersion.web.RunsView.StatusLabelStatus
-  type AgoResult = AgoResult.T
-  object AgoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AgoIso = AgoIso.T
-  object AgoIso extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunPaneId = RunPaneId.T
-  object RunPaneId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunBodyBusy = _root_.com.histmersion.web.RunsView.ControlsBusy
-  val RunBodyBusy: _root_.com.histmersion.web.RunsView.ControlsBusy.type = _root_.com.histmersion.web.RunsView.ControlsBusy
-  type RunBodyRaise = _root_.com.histmersion.web.RunsView.ControlsRaise
-  val RunBodyRaise: _root_.com.histmersion.web.RunsView.ControlsRaise.type = _root_.com.histmersion.web.RunsView.ControlsRaise
-  type ControlsBusy = ControlsBusy.T
-  object ControlsBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ControlsRaise = ControlsRaise.T
-  object ControlsRaise extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StateBadgeStatus = _root_.com.histmersion.api.automation.Agents.RunInfo.Status
+  val StateBadgeStatus: _root_.com.histmersion.api.automation.Agents.RunInfo.Status.type = _root_.com.histmersion.api.automation.Agents.RunInfo.Status
+  type RunBodyBusy = _root_.com.histmersion.web.RunsView.Busy
+  val RunBodyBusy: _root_.com.histmersion.web.RunsView.Busy.type = _root_.com.histmersion.web.RunsView.Busy
+  type RunBodyRaise = _root_.com.histmersion.web.RunsView.Problem
+  val RunBodyRaise: _root_.com.histmersion.web.RunsView.Problem.type = _root_.com.histmersion.web.RunsView.Problem
 
   val Limit = 100
 
@@ -146,24 +44,24 @@ object RunsView:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** A run still moving: worth polling for. (A `waiting` run waits for a person, not for the server.) */
-  def live(status: com.histmersion.web.RunsView.LiveStatus): com.histmersion.web.RunsView.LiveResult =
+  def live(status: com.histmersion.api.automation.Agents.RunInfo.Status): Boolean =
     RunState.parse(status).exists(s => s == RunState.Queued || s == RunState.Running)
 
   /** The polling schedule: `None` = stop (nothing is live); a change goes back to the quick delay. */
-  def nextPoll(previous: Option[com.histmersion.web.RunsView.NextPollPrevious], anyLive: com.histmersion.web.RunsView.NextPollAnyLive, changed: com.histmersion.web.RunsView.NextPollChanged): Option[com.histmersion.web.RunsView.NextPollResult] =
+  def nextPoll(previous: Option[com.histmersion.web.Poll.Revision], anyLive: com.histmersion.web.Poll.LiveMode, changed: com.histmersion.web.Poll.DataChanged): Option[com.histmersion.web.Poll.Revision] =
     Poll.next(previous, anyLive, changed)
 
   /** A run state as a person reads it — the filter buttons and the badges say `waiting for approval`, not the wire word
     * `waiting`.
     */
-  def stateLabel(s: RunState): com.histmersion.web.RunsView.StateLabelResult = Wording.runState(s)
+  def stateLabel(s: RunState): com.histmersion.api.UiLabels.Text = Wording.runState(s)
 
   /** A pipeline as a person reads it ([[Wording.pipeline]]); its identifier stays in the tooltip. */
-  def pipelineLabel(pipeline: com.histmersion.web.RunsView.PipelineLabelPipeline): com.histmersion.web.RunsView.PipelineLabelResult =
+  def pipelineLabel(pipeline: com.histmersion.api.automation.Agents.RunInfo.Pipeline): com.histmersion.api.UiLabels.Text =
     Pipeline.parse(pipeline).fold(Wording.humanize(pipeline))(Wording.pipeline)
 
   /** What each run state means for a person, and what comes next; a tooltip on its filter button. */
-  def stateMeaning(s: RunState): com.histmersion.web.RunsView.StateMeaningResult = s match
+  def stateMeaning(s: RunState): com.histmersion.api.UiLabels.Text = s match
     case RunState.Queued  => "Waiting for a free place among the runs at once; it starts by itself."
     case RunState.Running => "Its steps are being worked on now; the run's window shows each one."
     case RunState.Paused  =>
@@ -176,7 +74,7 @@ object RunsView:
     case RunState.Cancelled => "Stopped for good by a person, or because its manager was stopped; it does not resume."
 
   /** [[stateLabel]] of a status as stored; an unknown one as words. */
-  def statusLabel(status: com.histmersion.web.RunsView.StatusLabelStatus): com.histmersion.web.RunsView.StatusLabelResult = RunState.parse(status).fold(Wording.humanize(status))(stateLabel)
+  def statusLabel(status: com.histmersion.api.automation.Agents.RunInfo.Status): com.histmersion.api.UiLabels.Text = RunState.parse(status).fold(Wording.humanize(status))(stateLabel)
 
   /** The runs a status filter shows. */
   def visible(runs: List[RunInfo], filter: Option[RunState]): List[RunInfo] =
@@ -194,7 +92,7 @@ object RunsView:
     )
 
   /** What each pipeline does; a tooltip on its filter chip. */
-  def pipelineMeaning(pipeline: com.histmersion.web.RunsView.PipelineMeaningPipeline): Option[com.histmersion.web.RunsView.PipelineMeaningResult] = pipeline match
+  def pipelineMeaning(pipeline: com.histmersion.api.automation.Agents.RunInfo.Pipeline): Option[com.histmersion.api.UiLabels.Text] = pipeline match
     case "plan-goal" => Some("Plans a research goal: sub-goals, search queries, works to read (a goal-plan approval).")
     case "propose-articles"  => Some("Proposes which articles a goal needs (an article-plan approval).")
     case "compile-article"   => Some("Writes an article draft from the corpus (an article-publish approval).")
@@ -210,7 +108,7 @@ object RunsView:
   /** Who started a run, for a person: `ingest` is the enrichment an ingest started itself, before the enrich manager
     * took that over (16 Oct 2026); since then those runs are the manager's.
     */
-  def originLabel(origin: com.histmersion.web.RunsView.OriginLabelOrigin): com.histmersion.web.RunsView.OriginLabelResult = origin match
+  def originLabel(origin: com.histmersion.api.automation.Agents.Origin.Wire): com.histmersion.api.UiLabels.Text = origin match
     case "person"    => "by a person"
     case "manager"   => "by a manager"
     case "ingest"    => "by an ingest (before the enrich manager)"
@@ -219,7 +117,7 @@ object RunsView:
     case other       => Label.display(other)
 
   /** Who started a run, in a sentence; a tooltip on its filter chip. */
-  def originMeaning(origin: com.histmersion.web.RunsView.OriginMeaningOrigin): Option[com.histmersion.web.RunsView.OriginMeaningResult] = Agents.Origin.values.find(_.wire == origin).map {
+  def originMeaning(origin: com.histmersion.api.automation.Agents.Origin.Wire): Option[com.histmersion.api.UiLabels.Text] = Agents.Origin.values.find(_.wire == origin).map {
     case Agents.Origin.Person    => "Started by a person: from this page, the CLI or an MCP tool."
     case Agents.Origin.Scheduler =>
       "Started by a goal's schedule; nobody watches it, so a failure or a pause leaves a backlog item."
@@ -233,7 +131,7 @@ object RunsView:
   /** Who serves a model, for a person; a tooltip on the provider menu's options. A provider a plugin registered has no
     * meaning here.
     */
-  def providerMeaning(provider: com.histmersion.web.RunsView.ProviderMeaningProvider): Option[com.histmersion.web.RunsView.ProviderMeaningResult] = provider match
+  def providerMeaning(provider: com.histmersion.api.automation.Agents.ProviderDoctor.Provider): Option[com.histmersion.api.UiLabels.Text] = provider match
     case "anthropic" => Some("Anthropic's API, with an API key: metered, billed per token.")
     case "openai"    => Some("OpenAI's API, with an API key: metered, billed per token.")
     case "local" => Some("A model behind an OpenAI-compatible endpoint you run (llama.cpp, LM Studio, vLLM, Ollama).")
@@ -246,15 +144,15 @@ object RunsView:
   /** The query the window sends, from its filter fields. Pure. */
   def filterOf(
       status: Option[RunState],
-      pipelines: List[com.histmersion.web.RunsView.FilterOfPipelines],
-      origins: List[com.histmersion.web.RunsView.FilterOfOrigins],
-      manager: Option[com.histmersion.web.RunsView.FilterOfManager],
-      provider: Option[com.histmersion.web.RunsView.FilterOfProvider],
-      model: Option[com.histmersion.web.RunsView.FilterOfModel],
-      goal: Option[com.histmersion.web.RunsView.FilterOfGoal],
-      since: Option[com.histmersion.web.RunsView.FilterOfSince],
-      until: Option[com.histmersion.web.RunsView.FilterOfUntil],
-      subject: Option[com.histmersion.web.RunsView.FilterOfSubject]
+      pipelines: List[com.histmersion.api.automation.Agents.RunInfo.Pipeline],
+      origins: List[com.histmersion.api.automation.Agents.Origin.Wire],
+      manager: Option[com.histmersion.api.automation.Managers.ManagerInfo.Id],
+      provider: Option[com.histmersion.api.automation.Agents.ProviderDoctor.Provider],
+      model: Option[com.histmersion.api.automation.Agents.ModelRef.Model],
+      goal: Option[com.histmersion.api.automation.Goal.Ref],
+      since: Option[com.histmersion.api.automation.ListFilters.JobFilter.Since],
+      until: Option[com.histmersion.api.automation.ListFilters.JobFilter.Until],
+      subject: Option[com.histmersion.api.automation.ListFilters.RunFilter.Subject]
   ): ListFilters.RunFilter =
     ListFilters.RunFilter(
       status.toList.map(_.wire),
@@ -269,12 +167,12 @@ object RunsView:
       subject
     )
 
-  def counts(runs: List[RunInfo]): Map[com.histmersion.web.RunsView.CountsResultPart1, com.histmersion.web.RunsView.CountsResultPart2] = runs.groupMapReduce(_.status)(_ => 1)(_ + _)
+  def counts(runs: List[RunInfo]): Map[com.histmersion.api.automation.Agents.RunInfo.Status, com.histmersion.api.RowCount] = runs.groupMapReduce(_.status)(_ => 1)(_ + _)
 
   /** Is any run still queued or running — anywhere (the server's counts), not just among the rows a filter shows; the
     * rows' own states when the server sent no counts.
     */
-  def anyLive(rows: List[RunInfo], page: Paging.Page): com.histmersion.web.RunsView.AnyLiveResult =
+  def anyLive(rows: List[RunInfo], page: Paging.Page): Boolean =
     if page.counts.isEmpty then rows.exists(r => live(r.status))
     else page.count(RunState.Queued.wire) + page.count(RunState.Running.wire) > 0
 
@@ -287,10 +185,10 @@ object RunsView:
   object Action:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = com.histmersion.api.UiLabels.Text
+    val Label: _root_.com.histmersion.api.UiLabels.Text.type = _root_.com.histmersion.api.UiLabels.Text
 
-  def actions(status: com.histmersion.web.RunsView.ActionsStatus): List[Action] = RunState.parse(status) match
+  def actions(status: com.histmersion.api.automation.Agents.RunInfo.Status): List[Action] = RunState.parse(status) match
     case Some(RunState.Queued) | Some(RunState.Running) => List(Action.Pause, Action.Cancel)
     case Some(RunState.Paused)                          => List(Action.Resume, Action.Cancel)
     // a run waiting for an approval goes on when the approval is decided; it can only be cancelled
@@ -300,16 +198,16 @@ object RunsView:
   private val WaitingOn = """approval (\d+)""".r.unanchored
 
   /** The approval a waiting run waits for, from its progress line (`approve: waiting for approval 12`). */
-  def waitingFor(r: RunInfo): Option[com.histmersion.web.RunsView.WaitingForResult] =
+  def waitingFor(r: RunInfo): Option[com.histmersion.api.automation.AgentScheduler.Waiting.WaitedMinutes] =
     if !r.isWaiting then None
     else r.progress.collect { case WaitingOn(id) => id.toLong }
 
   /** Why a paused run stopped, from its `error` (`budget: …`, `provider: …`, `interrupted`). */
-  def pausedFor(r: RunInfo): Option[com.histmersion.web.RunsView.PausedForResult] =
+  def pausedFor(r: RunInfo): Option[com.histmersion.api.UiLabels.Text] =
     Option.when(r.status == RunState.Paused.wire)(r.error.map(_.takeWhile(_ != ':').trim).getOrElse("requested"))
 
   /** What a paused run's window says about its pause. An allowance pause ends by itself. */
-  def pausedText(r: RunInfo, why: com.histmersion.web.RunsView.PausedTextWhy): com.histmersion.web.RunsView.PausedTextResult =
+  def pausedText(r: RunInfo, why: com.histmersion.api.automation.Agents.PauseReason.Wire): com.histmersion.api.UiLabels.Text =
     if why == Agents.PauseReason.Budget.wire then s"Paused: $why. Raise the budget to resume."
     else if why == Agents.PauseReason.Allowance.wire then
       s"Paused: every model of a role is below its allowance; ${r.resumeAt.fold(
@@ -323,15 +221,15 @@ object RunsView:
     else s"Paused: $why."
 
   /** A budget the person typed: a positive number of dollars, or nothing. */
-  def budget(s: com.histmersion.web.RunsView.BudgetS): Option[com.histmersion.web.RunsView.BudgetResult] = s.trim.toDoubleOption.filter(_ > 0)
+  def budget(s: com.histmersion.api.UiLabels.Text): Option[com.histmersion.api.automation.Agents.RunRequest.BudgetUsd] = s.trim.toDoubleOption.filter(_ > 0)
 
-  def tokens(u: Agents.Usage): com.histmersion.web.RunsView.TokensResult = s"${u.input} in / ${u.output} out"
+  def tokens(u: Agents.Usage): com.histmersion.api.UiLabels.Text = s"${u.input} in / ${u.output} out"
 
   /** The columns of a run's steps table, in order. */
   val StepColumns: List[com.histmersion.web.RunsView.StepColumns] = List("#", "step", "kind", "try", "status", "model", "tokens", "USD", "note")
 
   /** One step's cells, each with its column's name (the label a narrow card shows). Pure. */
-  def stepCells(s: Agents.StepInfo): List[(com.histmersion.web.RunsView.StepCellsResultPart1, com.histmersion.web.RunsView.StepCellsResultPart2)] =
+  def stepCells(s: Agents.StepInfo): List[(com.histmersion.api.UiLabels.Text, com.histmersion.api.UiLabels.Text)] =
     StepColumns.zip(
       List(
         s.seq.toString,
@@ -389,7 +287,7 @@ object RunsView:
   )
   private def listing = list.listing
 
-  private def facet(name: com.histmersion.web.RunsView.FacetName): Signal[List[(com.histmersion.web.RunsView.FacetResultPart1, com.histmersion.web.RunsView.FacetResultPart2)]] = listing.signal.map(_.page.facet(name))
+  private def facet(name: com.histmersion.api.Api.Facets.Field): Signal[List[(com.histmersion.api.UiLabels.Text, com.histmersion.api.RowCount)]] = listing.signal.map(_.page.facet(name))
 
   def pane: HtmlElement =
     div(
@@ -507,7 +405,7 @@ object RunsView:
     listing.signal.combineWith(filterSignal).map((l, f) => (l.copy(rows = visible(l.rows, f)), UiState.runStatus.now()))
 
   private def filterButtons: HtmlElement =
-    def btn(label: com.histmersion.web.RunsView.FilterButtonsBtnLabel, value: Option[RunState], count: Signal[com.histmersion.web.RunsView.FilterButtonsBtnCount]) =
+    def btn(label: com.histmersion.api.UiLabels.Text, value: Option[RunState], count: Signal[com.histmersion.api.RowCount]) =
       button(
         typ := "button",
         cls := "btn btn--toggle",
@@ -571,14 +469,14 @@ object RunsView:
       )
     )
 
-  private def ago(iso: com.histmersion.web.RunsView.AgoIso): com.histmersion.web.RunsView.AgoResult =
+  private def ago(iso: com.histmersion.api.automation.Activity.Entry.At): com.histmersion.api.UiLabels.Text =
     val t = js.Date.parse(iso)
     if iso.isEmpty || t.isNaN then "" else JobsView.ago(t, js.Date.now())
 
   // ── one run ─────────────────────────────────────────────────────────────────────────────────────
 
   /** One run's window. Its state is its own (several runs can be open at once). */
-  def runPane(id: com.histmersion.web.RunsView.RunPaneId): HtmlElement =
+  def runPane(id: com.histmersion.api.automation.Agents.RunInfo.Id): HtmlElement =
     val busy = Var(false)
     val raise = Var("")
     // the poll, the closed-window and stale-answer guards and the error: the list windows' controller
@@ -590,7 +488,7 @@ object RunsView:
         if before.exists(b => live(b.run.status)) && !live(d.run.status) then ApprovalsView.changed.emit(())
     )
 
-    def refresh(changed: com.histmersion.web.RunsView.RunPaneRefreshChanged): Unit = run.refresh(changed)
+    def refresh(changed: com.histmersion.web.Poll.DataChanged): Unit = run.refresh(changed)
 
     def act(a: Action): Unit =
       busy.set(true)
@@ -700,7 +598,7 @@ object RunsView:
       )
     )
 
-  private def controls(r: RunInfo, busy: Signal[com.histmersion.web.RunsView.ControlsBusy], raise: Var[com.histmersion.web.RunsView.ControlsRaise], act: Action => Unit): HtmlElement =
+  private def controls(r: RunInfo, busy: Signal[com.histmersion.web.RunsView.Busy], raise: Var[com.histmersion.web.RunsView.Problem], act: Action => Unit): HtmlElement =
     val acts = actions(r.status)
     div(
       cls := "form-row run-controls",

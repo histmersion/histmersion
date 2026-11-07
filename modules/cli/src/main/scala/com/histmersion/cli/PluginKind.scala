@@ -13,6 +13,10 @@ enum PluginKind(val name: PluginKind.Name, val classSuffix: PluginKind.ClassSuff
   case SecretVault extends PluginKind("secret-vault", "Vault", "secret-vault")
 
 object PluginKind:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClassSuffix = ClassSuffix.T
@@ -20,13 +24,7 @@ object PluginKind:
   type Provides = Provides.T
   object Provides extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type Names = Names.T
-  object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseRaw = ParseRaw.T
-  object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val names: com.histmersion.cli.PluginKind.Names = values.map(_.name).mkString(", ")
-  def parse(raw: com.histmersion.cli.PluginKind.ParseRaw): Either[com.histmersion.cli.PluginKind.ParseResultPart1, PluginKind] =
+  val names: String = values.map(_.name).mkString(", ")
+  def parse(raw: com.histmersion.cli.PluginKind.Text): Either[com.histmersion.cli.PluginKind.Problem, PluginKind] =
     values.find(_.name == raw.trim).toRight(s"unknown plugin kind '$raw' (one of: $names)")
