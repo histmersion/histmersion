@@ -342,7 +342,7 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
 
   test("versions: a write moves its group's version, once per transaction, and folding keeps it"):
     val before = connect(ds)(TileRepo.versions)
-    site("zztile_v1", "Zztile V", "int8range(1, 2, '[]')")
+    site(com.histmersion.domain.catalogue.Place.Id("zztile_v1"), com.histmersion.api.catalogue.Place.Label("Zztile V"), "int8range(1, 2, '[]')")
     val after = connect(ds)(TileRepo.versions)
     assertEquals(
       after.getOrElse(com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("places"), UndatedBuild.Version(0L)).value,

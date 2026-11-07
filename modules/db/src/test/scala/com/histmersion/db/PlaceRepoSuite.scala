@@ -295,9 +295,9 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
       )
       val r = SearchFixtures.sources(ds, f, com.histmersion.domain.library.search.Search.SnippetWords(cfg.limits.snippetWords.value), PlaceFixtures.scopeFor(ds, f.places, f.period))
       r.hits.map(_.source.citekey).toSet
-    assert(found("zzp_asia", -1400, -1200).contains("zzp_src"), "Hattusa → Hatti → Turkey → Asia")
-    assert(found("zzp_hatti", -1400, -1200).contains("zzp_src"))
-    assert(!found("zzp_hatti", -600, -500).contains("zzp_src"), "no finding of it is in that window")
+    assert(found("zzp_asia", -1400, -1200).contains(com.histmersion.api.library.Citekey("zzp_src")), "Hattusa → Hatti → Turkey → Asia")
+    assert(found("zzp_hatti", -1400, -1200).contains(com.histmersion.api.library.Citekey("zzp_src")))
+    assert(!found("zzp_hatti", -600, -500).contains(com.histmersion.api.library.Citekey("zzp_src")), "no finding of it is in that window")
     // the matched finding explains WHICH place chip it satisfied — by the place's NAME, not by the
     // gazetteer id the filter carries (item 15: `place: pleiades_589831` explains nothing)
     val f = Filter(places = List(com.histmersion.api.library.Filter.Places("zzp_hattusa")), period = Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1200))), limit = Filter.Limit(50))
