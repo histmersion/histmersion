@@ -38,10 +38,10 @@ final class PageBuilder(
         .toMap
       def entry(r: NeighborRow): Option[Citation] = r.target match
         case NeighborTarget.Source     =>
-          refs.get(r.citekey.value).map(Citation.ToSource(_, com.histmersion.domain.library.Edge.Kind.Wire(r.kind.value)))
+          refs.get(r.citekey.value).map(Citation.ToSource(_, com.histmersion.domain.library.Edge.Kind.Wire(r.kind)))
         case NeighborTarget.Article    => linked.get(r.citekey.value).map(a => Citation.ToArticle(a, Some(r.kind)))
         case NeighborTarget.Unresolved =>
-          Some(Citation.Unresolved(Citation.Unresolved.Id(r.citekey.value), com.histmersion.domain.library.Edge.Kind.Wire(r.kind.value)))
+          Some(Citation.Unresolved(Citation.Unresolved.Id(r.citekey.value), com.histmersion.domain.library.Edge.Kind.Wire(r.kind)))
       val citingArticles = articles
         .sourceArticles(ck)
         .getOrElse(Nil)

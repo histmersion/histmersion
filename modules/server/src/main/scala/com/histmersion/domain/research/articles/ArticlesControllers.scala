@@ -112,7 +112,7 @@ final class ArticlesControllers(
   def fix(slug: com.histmersion.domain.research.Slug): Either[Api.Error, FormatReport] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("fix_article_format")):
       store.load(store.canonical(slug)).toRight(notFound(slug)).flatMap { a =>
-        val (body, fb) = MarkdownLint.fix(a.body.value, FormatField.Body, MarkdownLint.Context(article = true))
+        val (body, fb) = MarkdownLint.fix(a.body.value, FormatField.Body, MarkdownLint.Context(article = com.histmersion.server.MarkdownLint.Context.Article(true)))
         val (summary, fs) =
           a.summary.map(t => MarkdownLint.fix(t.value, FormatField.Summary)).fold((None, Nil))((t, f) => (Some(t), f))
         val done = fb.map("body: " + _) ++ fs.map("summary: " + _)
@@ -508,7 +508,7 @@ final class ArticlesControllers(
                 .fold(Right(()))(cur =>
                   Articles
                     .applyPatch(cur, p)
-                    .fold(_ => Right(()), next => strictGate(true, formatting(next.body, next.summary)))
+                    .fold(_ => Right(()), next => strictGate(com.histmersion.domain.research.Article.StrictMode(true), formatting(next.body, next.summary)))
                 )
           gate.flatMap(_ => store.patch(s, p.modify(_.reasons).setTo(canonicalReasons(p.reasons)), Caller.Local))
         }

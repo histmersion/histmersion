@@ -353,7 +353,7 @@ final class CompileArticlePipeline(
           RunRequest.Pipeline(Pipeline.ReviewArticle.wire.value),
           RunRequest.Target(s.slug.value),
           model = ctx.run.model.map(m => RunRequest.Model(m.value)),
-          fix = Some(true),
+          fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)),
           goal = ctx.run.goal,
           modelFor = overrides
         ),
