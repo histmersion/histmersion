@@ -20,19 +20,19 @@ class CliopatriaSuite extends munit.FunSuite:
 
   test("place IDs include the time slice"):
     val places = Cliopatria.read(fixture).toOption.get
-    val ids = places.map(_.id).sorted
+    val ids = places.map(_.id.value).sorted
     assert(ids.exists(_.contains("hittite_empire_-1650_-1401")), ids.mkString(", "))
     assert(ids.exists(_.contains("hittite_empire_-1400_-1201")), ids.mkString(", "))
     assert(ids.exists(_.contains("kingdom_of_elam_-3200_-2701")), ids.mkString(", "))
 
   test("period is set from FromYear/ToYear"):
     val places = Cliopatria.read(fixture).toOption.get
-    val hittite1 = places.find(_.id.contains("-1650_-1401")).get
+    val hittite1 = places.find(_.id.value.contains("-1650_-1401")).get
     assertEquals(hittite1.period, period(-1650, -1401))
 
   test("geometry is preserved as GeoJSON text"):
     val places = Cliopatria.read(fixture).toOption.get
-    val hittite1 = places.find(_.id.contains("-1650_-1401")).get
+    val hittite1 = places.find(_.id.value.contains("-1650_-1401")).get
     assert(hittite1.geometry.isDefined)
     assert(hittite1.geometry.get.value.contains("Polygon"))
 
@@ -48,19 +48,19 @@ class CliopatriaSuite extends munit.FunSuite:
 
   test("names include the display name"):
     val places = Cliopatria.read(fixture).toOption.get
-    val elam = places.find(_.id.contains("kingdom_of_elam")).get
+    val elam = places.find(_.id.value.contains("kingdom_of_elam")).get
     assert(elam.names.exists(_.name.value == "Kingdom of Elam"))
 
   test("same polity with different time slices gets a part_of relation to parent concept"):
     val places = Cliopatria.read(fixture).toOption.get
-    val hittite1 = places.find(_.id.contains("-1650_-1401")).get
+    val hittite1 = places.find(_.id.value.contains("-1650_-1401")).get
     assert(
       hittite1.relations.exists(r => r.parentId.value == "cliopatria_hittite_empire" && r.kind.value == GazetteerRelation.PartOf)
     )
 
   test("MemberOf creates an additional relation"):
     val places = Cliopatria.read(fixture).toOption.get
-    val elam = places.find(_.id.contains("kingdom_of_elam")).get
+    val elam = places.find(_.id.value.contains("kingdom_of_elam")).get
     assert(
       elam.relations.exists(_.parentId.value == "cliopatria_sumerian_city_states"),
       elam.relations.map(_.parentId).mkString(", ")
@@ -114,7 +114,7 @@ class CliopatriaSuite extends munit.FunSuite:
 
   test("wikidata stored in properties"):
     val places = Cliopatria.read(fixture).toOption.get
-    val hittite1 = places.find(_.id.contains("-1650_-1401")).get
+    val hittite1 = places.find(_.id.value.contains("-1650_-1401")).get
     assert(hittite1.properties.exists(_.value.contains("Q170494")))
 
   test("the gazetteer-cliopatria plugin registers the source cliopatria"):

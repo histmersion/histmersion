@@ -48,7 +48,7 @@ class ChatWireSuite extends munit.FunSuite:
       ),
       strict
     )
-    val bare = ChatRequest.of(r.copy(tools = Nil, maxTokens = 0, answerSchema = None), com.histmersion.plugins.ai.ProviderSettings.StrictTools(false)).body
+    val bare = ChatRequest.of(r.copy(tools = Nil, maxTokens = com.histmersion.plugin.AiTurn.Request.MaxTokens(0), answerSchema = None), com.histmersion.plugins.ai.ProviderSettings.StrictTools(false)).body
     assert(!bare.value.contains("tools") && !bare.value.contains("max_completion") && !bare.value.contains("response_format"), bare)
 
   private val ok =
