@@ -64,7 +64,7 @@ class ResearchOracleSuite extends DbSuite:
 
   private def withServer[A](name: String)(body: String => A): A =
     supervised {
-      val b = Composition.server(cfgFor(name), "127.0.0.1", 0, OfflineConverter()).start()
+      val b = Composition.server(cfgFor(name), com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter()).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }

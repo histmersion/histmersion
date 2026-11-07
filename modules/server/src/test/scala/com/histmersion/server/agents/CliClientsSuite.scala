@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.agents.{LlmCall, ModelLimitReached, RunScope, StepAgent}
@@ -23,8 +25,8 @@ class CliClientsSuite extends munit.FunSuite:
   private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
   private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
-  private val CodexCfg = CodexConfig("codex", "", useApiKey = false, timeoutSeconds = 30, appServer = false)
-  private val OcCfg = OpencodeConfig("opencode", timeoutSeconds = 30, chatgptLogin = true)
+  private val CodexCfg = CodexConfig(com.histmersion.config.CodexConfig.Command("codex"), com.histmersion.config.CodexConfig.Home(""), useApiKey = com.histmersion.config.CodexConfig.UseApiKey(false), timeoutSeconds = com.histmersion.config.CodexConfig.TimeoutSeconds(30), appServer = com.histmersion.config.CodexConfig.AppServer(false))
+  private val OcCfg = OpencodeConfig(com.histmersion.config.OpencodeConfig.Command("opencode"), timeoutSeconds = com.histmersion.config.OpencodeConfig.TimeoutSeconds(30), chatgptLogin = com.histmersion.config.OpencodeConfig.ChatgptLogin(true))
 
   private def runtime(sink: FakeCli.Sink = FakeCli.Sink()): (CliRuntime, Path) =
     val dir = Files.createTempDirectory("hm-cli-")
@@ -36,14 +38,14 @@ class CliClientsSuite extends munit.FunSuite:
   private def call(rt: CliRuntime, s: StepAgent) =
     val a = rt.definitions.agent(s).toOption.get
     LlmCall[ProbeAnswer](
-      "SYSTEM",
-      "USER <article>data</article>",
+      com.histmersion.domain.automation.agents.LlmCall.System("SYSTEM"),
+      com.histmersion.domain.automation.agents.LlmCall.User("USER <article>data</article>"),
       Nil,
       ResponseSchema.derived[ProbeAnswer](),
-      maxIterations = 3,
-      maxTokens = 500,
+      maxIterations = com.histmersion.domain.automation.agents.LlmCall.MaxIterations(3),
+      maxTokens = com.histmersion.domain.automation.agents.LlmCall.MaxTokens(500),
       agent = Some(a),
-      scope = Some(RunScope("r", 2))
+      scope = Some(RunScope(com.histmersion.domain.automation.agents.RunScope.Run("r"), com.histmersion.domain.automation.agents.RunScope.Step(2)))
     )
 
   // ── codex ──────────────────────────────────────────────────────────────────────────────────────
@@ -63,9 +65,9 @@ class CliClientsSuite extends munit.FunSuite:
     val fake = FakeCli("codex", CodexOk)
     val sink = FakeCli.Sink()
     val (rt, dir) = runtime(sink)
-    val r = CodexExecClient(ModelRef(ProviderKind.Codex, "gpt-5.6"), CodexCfg.modify(_.command).setTo(fake.script.toString), rt)
+    val r = CodexExecClient(ModelRef(ProviderKind.Codex, com.histmersion.api.automation.Agents.ModelRef.Model("gpt-5.6")), CodexCfg.modify(_.command).setTo(fake.script.toString), rt)
       .run(call(rt, StepAgent.Skeptic))
-    assertEquals(r.finalAnswer, Right(ProbeAnswer("x2020", "X", Some(2020))))
+    assertEquals(r.finalAnswer, Right(ProbeAnswer(com.histmersion.api.library.Citekey("x2020"), com.histmersion.api.library.Title("X"), Some(com.histmersion.api.catalogue.Year(2020)))))
     assertEquals(r.usage, TokenUsage(Tokens(1200), Tokens(60), Tokens(800), Tokens.Zero, Tokens.Zero))
     assertEquals(r.toolCalls.map(c => (c.toolName, c.output)).toList, List(("get_source", "# X 2020")))
     assertEquals(fake.args.take(4), List("exec", "--json", "-p", "article-skeptic"))
@@ -90,13 +92,13 @@ class CliClientsSuite extends munit.FunSuite:
     val fake = FakeCli("codex", lim)
     val (rt, _) = runtime()
     val e = intercept[ModelLimitReached](
-      CodexExecClient(ModelRef(ProviderKind.Codex, "gpt-5.6"), CodexCfg.modify(_.command).setTo(fake.script.toString), rt)
+      CodexExecClient(ModelRef(ProviderKind.Codex, com.histmersion.api.automation.Agents.ModelRef.Model("gpt-5.6")), CodexCfg.modify(_.command).setTo(fake.script.toString), rt)
         .run(call(rt, StepAgent.Skeptic))
     )
     assert(e.getMessage.contains("usage limit"), e.getMessage)
     val bare = CliRuntime(FakeCli.app(Files.createTempDirectory("hm-empty-")), EngineContributions.roster)
     val io = intercept[java.io.IOException](
-      CodexExecClient(ModelRef(ProviderKind.Codex, "x"), CodexCfg, bare).run(call(bare, StepAgent.Skeptic))
+      CodexExecClient(ModelRef(ProviderKind.Codex, com.histmersion.api.automation.Agents.ModelRef.Model("x")), CodexCfg, bare).run(call(bare, StepAgent.Skeptic))
     )
     assert(io.getMessage.contains("histmersion agent generate"), io.getMessage)
 
@@ -106,7 +108,7 @@ class CliClientsSuite extends munit.FunSuite:
       List("""{"type":"item.completed","item":{"id":"i","type":"agent_message","text":"I could not do it"}}""")
     )
     val (rt, _) = runtime()
-    val r = CodexExecClient(ModelRef(ProviderKind.Codex, "m"), CodexCfg.modify(_.command).setTo(fake.script.toString), rt)
+    val r = CodexExecClient(ModelRef(ProviderKind.Codex, com.histmersion.api.automation.Agents.ModelRef.Model("m")), CodexCfg.modify(_.command).setTo(fake.script.toString), rt)
       .run(call(rt, StepAgent.Skeptic))
     assert(r.finalAnswer.isLeft)
 
@@ -115,7 +117,7 @@ class CliClientsSuite extends munit.FunSuite:
       FakeCli.app(Files.createTempDirectory("hm-lan-"), "HISTMERSION_BIND" -> "0.0.0.0"),
       EngineContributions.roster
     )
-    assert(Codex.client(CodexCfg, lan, ModelRef(ProviderKind.Codex, "m")).isLeft)
+    assert(Codex.client(CodexCfg, lan, ModelRef(ProviderKind.Codex, com.histmersion.api.automation.Agents.ModelRef.Model("m"))).isLeft)
 
   // ── opencode ───────────────────────────────────────────────────────────────────────────────────
 
@@ -130,9 +132,9 @@ class CliClientsSuite extends munit.FunSuite:
     val fake = FakeCli("opencode", OcOk)
     val (rt, dir) = runtime()
     val r =
-      OpencodeRunClient(ModelRef(ProviderKind.Opencode, "openai/gpt-5"), OcCfg.modify(_.command).setTo(fake.script.toString), rt)
+      OpencodeRunClient(ModelRef(ProviderKind.Opencode, com.histmersion.api.automation.Agents.ModelRef.Model("openai/gpt-5")), OcCfg.modify(_.command).setTo(fake.script.toString), rt)
         .run(call(rt, StepAgent.Skeptic))
-    assertEquals(r.finalAnswer, Right(ProbeAnswer("x2020", "X", Some(2020))))
+    assertEquals(r.finalAnswer, Right(ProbeAnswer(com.histmersion.api.library.Citekey("x2020"), com.histmersion.api.library.Title("X"), Some(com.histmersion.api.catalogue.Year(2020)))))
     assertEquals(r.usage, TokenUsage(Tokens(400), Tokens(25), Tokens(300), Tokens.Zero, Tokens.Zero))
     assertEquals(r.toolCalls.map(_.toolName).toList, List("get_source"))
     assertEquals(fake.args.take(5), List("run", "--agent", "article-skeptic", "--format", "json"))
@@ -152,11 +154,11 @@ class CliClientsSuite extends munit.FunSuite:
     )
     val (rt, _) = runtime()
     intercept[ModelLimitReached](
-      OpencodeRunClient(ModelRef(ProviderKind.Opencode, "openai/gpt-5"), OcCfg.modify(_.command).setTo(fake.script.toString), rt)
+      OpencodeRunClient(ModelRef(ProviderKind.Opencode, com.histmersion.api.automation.Agents.ModelRef.Model("openai/gpt-5")), OcCfg.modify(_.command).setTo(fake.script.toString), rt)
         .run(call(rt, StepAgent.Skeptic))
     )
     assert(
-      Opencode.client(OcCfg, rt, ModelRef(ProviderKind.Opencode, "gpt-5")).left.exists(_.contains("<provider>/<model>"))
+      Opencode.client(OcCfg, rt, ModelRef(ProviderKind.Opencode, com.histmersion.api.automation.Agents.ModelRef.Model("gpt-5"))).left.exists(_.contains("<provider>/<model>"))
     )
 
   test("the fence around a JSON answer is tolerated; plan limit wording is recognised"):

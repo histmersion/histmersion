@@ -30,8 +30,8 @@ object BasemapExtractTool:
   /** The keep list the extract used before the drop list (earth, water, natural land cover). */
   val OldKeep: Map[String, Mvt.Rule] = Map(
     "earth" -> Mvt.Rule(),
-    "water" -> Mvt.Rule(drop = Set("canal", "ditch", "drain", "dock", "swimming_pool", "fountain", "basin")),
-    "landcover" -> Mvt.Rule(keep = Set("forest", "grassland", "scrub", "barren", "glacier"))
+    "water" -> Mvt.Rule(drop = Set(com.histmersion.util.basemap.Mvt.Rule.Drop("canal"), com.histmersion.util.basemap.Mvt.Rule.Drop("ditch"), com.histmersion.util.basemap.Mvt.Rule.Drop("drain"), com.histmersion.util.basemap.Mvt.Rule.Drop("dock"), com.histmersion.util.basemap.Mvt.Rule.Drop("swimming_pool"), com.histmersion.util.basemap.Mvt.Rule.Drop("fountain"), com.histmersion.util.basemap.Mvt.Rule.Drop("basin"))),
+    "landcover" -> Mvt.Rule(keep = Set(com.histmersion.util.basemap.Mvt.Rule.Keep("forest"), com.histmersion.util.basemap.Mvt.Rule.Keep("grassland"), com.histmersion.util.basemap.Mvt.Rule.Keep("scrub"), com.histmersion.util.basemap.Mvt.Rule.Keep("barren"), com.histmersion.util.basemap.Mvt.Rule.Keep("glacier")))
   )
 
   /** The store of `p`'s directory and `p`'s name in it. */
@@ -84,7 +84,7 @@ object BasemapExtractTool:
     out.foreach { o =>
       val (base, workKey) = workOf(o)
       val work = base.sub(workKey)
-      BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, "relief"))
+      BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, com.histmersion.util.basemap.BasemapFetch.Note("relief")))
       BasemapFetch.download(http, plan, work, pace, note, _ => Right(())).fold(sys.error, identity)
       val meta = BasemapFetch.localMetadata(
         plan,
@@ -114,7 +114,7 @@ object BasemapExtractTool:
     val plan = BasemapFetch.plan(http, src, b, z, pace, note).fold(sys.error, identity)
     val (base, workKey) = workOf(out)
     val work = base.sub(workKey)
-    BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, if keepAll then "keep-all" else cfg.vector.drop))
+    BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, if keepAll then com.histmersion.util.basemap.BasemapFetch.Note("keep-all") else cfg.vector.drop))
     BasemapFetch.download(http, plan, work, pace, note, _ => Right(())).fold(sys.error, identity)
     val drop = Basemap.parseDrop(cfg.vector.drop).fold(sys.error, identity)
     val rules = if keepAll then Map.empty[String, Mvt.Rule] else BasemapService.mvtRules(drop)

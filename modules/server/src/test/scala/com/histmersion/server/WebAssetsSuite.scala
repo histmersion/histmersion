@@ -44,7 +44,7 @@ class WebAssetsSuite extends munit.FunSuite:
     val key = "localStorage.getItem(\"histmersion.theme\")"
     for (name, html) <- List(
         "index.html" -> asset("index.html"),
-        "a server page" -> ArticleHtml.page("t", "<p>b</p>", PageKind.values.head)
+        "a server page" -> ArticleHtml.page(com.histmersion.domain.Title("t"), com.histmersion.server.HtmlRender.Html("<p>b</p>"), PageKind.values.head)
       )
     do
       val at = html.indexOf(key)

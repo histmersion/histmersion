@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.ocr.{ConverterClient, ConverterState, HttpConverterClient}
@@ -22,31 +24,31 @@ class ConverterClientSuite extends munit.FunSuite:
   test("the timeout is the configured one, or pages × seconds-per-page when that is longer"):
     val c = base.modify(_.timeoutSeconds).setTo(600).modify(_.secondsPerPage).setTo(2).modify(_.secondsPerPageQuality).setTo(8).modify(_.secondsPerScannedPage).setTo(15)
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(10), quality = false),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(10), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
       Duration.ofSeconds(600)
     )
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(600), quality = false),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(600), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
       Duration.ofSeconds(1200)
     )
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(600), quality = true),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(600), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(true)),
       Duration.ofSeconds(4800)
     )
-    assertEquals(ConverterClient.timeoutFor(ConverterWiring.settings(c), None, quality = true), Duration.ofSeconds(600))
+    assertEquals(ConverterClient.timeoutFor(ConverterWiring.settings(c), None, quality = com.histmersion.util.ocr.ConverterClient.HighQuality(true)), Duration.ofSeconds(600))
 
   test("scanned pages get the scanned rate: the 155-page scan that failed at 600 s now gets 2325 s"):
     val c = base.modify(_.timeoutSeconds).setTo(600).modify(_.secondsPerPage).setTo(2).modify(_.secondsPerPageQuality).setTo(8).modify(_.secondsPerScannedPage).setTo(15)
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(155, scanned = 155), quality = false),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(155, scanned = 155), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
       Duration.ofSeconds(2325)
     )
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(400, scanned = 100), quality = false),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(400, scanned = 100), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
       Duration.ofSeconds(300 * 2 + 100 * 15)
     )
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(10, scanned = 99), quality = false),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(10, scanned = 99), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
       Duration.ofSeconds(600),
       "scanned is capped at pages"
     )
@@ -78,7 +80,7 @@ class ConverterClientSuite extends munit.FunSuite:
         ConverterWiring.settings(base.modify(_.url).setTo(url).modify(_.timeoutSeconds).setTo(1).modify(_.secondsPerPage).setTo(3)),
         ConverterWiring.http()
       )
-        .convert(OfflineConverter.blob(file), "book.pdf", quality = false)
+        .convert(OfflineConverter.blob(file), com.histmersion.util.ocr.ConverterClient.Filename("book.pdf"), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false))
     finally Files.deleteIfExists(file)
 
   test("a long document gets the scaled time: a 2 s conversion of 1 page at 3 s/page succeeds past a 1 s timeout"):
@@ -95,12 +97,12 @@ class ConverterClientSuite extends munit.FunSuite:
 /** #692: what `/api/health` says about the sidecar, from the probe and the job it is converting. */
 class ConverterStateSuite extends munit.FunSuite:
   test("a failed probe during a conversion is busy (healthy); without one it is down"):
-    assertEquals(ConverterState.of("ok", None), ConverterState.Ok)
-    assertEquals(ConverterState.of("ok", Some("j1")), ConverterState.Ok)
-    val busy = ConverterState.of("degraded: no answer from the converter within 5000 ms", Some("j1"))
-    assertEquals(busy, ConverterState.Busy("j1"))
+    assertEquals(ConverterState.of(com.histmersion.util.ocr.ConverterState.Probe("ok"), None), ConverterState.Ok)
+    assertEquals(ConverterState.of(com.histmersion.util.ocr.ConverterState.Probe("ok"), Some(com.histmersion.util.jobs.Job.Id("j1"))), ConverterState.Ok)
+    val busy = ConverterState.of(com.histmersion.util.ocr.ConverterState.Probe("degraded: no answer from the converter within 5000 ms"), Some(com.histmersion.util.jobs.Job.Id("j1")))
+    assertEquals(busy, ConverterState.Busy(com.histmersion.util.ocr.ConverterState.Busy.JobId("j1")))
     assert(busy.healthy)
     assertEquals(busy.render, "converter busy: job j1")
-    val down = ConverterState.of("converter at http://x is unreachable", None)
+    val down = ConverterState.of(com.histmersion.util.ocr.ConverterState.Probe("converter at http://x is unreachable"), None)
     assert(!down.healthy)
     assertEquals(down.render, "converter at http://x is unreachable")

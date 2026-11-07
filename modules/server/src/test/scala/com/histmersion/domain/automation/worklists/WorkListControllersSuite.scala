@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.worklists
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueuePatch}
 import com.histmersion.util.data.maintenance.WriteGate
 
@@ -16,27 +18,27 @@ class WorkListControllersSuite extends munit.FunSuite:
 
   test("a log item with no topic joins the entry of the clock's UTC day; another list's stays without one"):
     val c = controllers()
-    assertEquals(c.add("log", QueueAdd("ran the lint")).map(_.topic), Right(Some("2026-10-30")))
-    assertEquals(c.add("log", QueueAdd("named", topic = Some("Later"))).map(_.topic), Right(Some("Later")))
-    assertEquals(c.add("tasks", QueueAdd("read Cline")).map(_.topic), Right(None))
+    assertEquals(c.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("ran the lint"))).map(_.topic), Right(Some("2026-10-30")))
+    assertEquals(c.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("named"), topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic("Later")))).map(_.topic), Right(Some("Later")))
+    assertEquals(c.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("tasks"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("read Cline"))).map(_.topic), Right(None))
 
   test("an unknown list, an empty text, a bad status or instant are refused with today's messages"):
     val c = controllers()
     assertEquals(
-      c.add("notes", QueueAdd("x")).left.map(_.message),
+      c.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("notes"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("x"))).left.map(_.message),
       Left("unknown queue list 'notes' — one of: acquire, tasks, log")
     )
-    assertEquals(c.add("tasks", QueueAdd("  ")).left.map(_.message), Left("queue item text is empty"))
-    assert(c.add("tasks", QueueAdd("x", status = Some("maybe"))).left.exists(_.message.contains("unknown status")))
-    assert(c.add("tasks", QueueAdd("x", createdAt = Some("yesterday"))).left.exists(_.message.contains("ISO-8601")))
-    assertEquals(c.patch(42, QueuePatch(text = Some(" "))).left.map(_.message), Left("queue item text is empty"))
-    assertEquals(c.delete(42).left.map(e => (e.message, e.code)), Left(("No queue item #42", Some("not_found"))))
+    assertEquals(c.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("tasks"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("  "))).left.map(_.message), Left("queue item text is empty"))
+    assert(c.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("tasks"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("x"), status = Some(com.histmersion.api.automation.Queue.QueueItem.Status("maybe")))).left.exists(_.message.contains("unknown status")))
+    assert(c.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("tasks"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("x"), createdAt = Some(com.histmersion.api.automation.Queue.QueueItem.CreatedAt("yesterday")))).left.exists(_.message.contains("ISO-8601")))
+    assertEquals(c.patch(com.histmersion.domain.automation.worklists.QueueItemId(42), QueuePatch(text = Some(com.histmersion.api.automation.Queue.QueueItem.Text(" ")))).left.map(_.message), Left("queue item text is empty"))
+    assertEquals(c.delete(com.histmersion.domain.automation.worklists.QueueItemId(42)).left.map(e => (e.message, e.code)), Left(("No queue item #42", Some("not_found"))))
 
   test("an import counts the items and the notes apart; the export renders what was imported"):
     val c = controllers()
     val file = "# TASKS\n\n## Backlog\n- [ ] read Cline\n- [x] read Kuhrt\n"
     val r =
-      c.importText("tasks", com.histmersion.api.automation.Queue.QueueImport(file)).fold(e => fail(e.message), identity)
+      c.importText(com.histmersion.api.automation.Queue.Kind.Label("tasks"), com.histmersion.api.automation.Queue.QueueImport(file)).fold(e => fail(e.message), identity)
     assertEquals((r.list, r.items, r.replaced), ("tasks", 2, 0))
-    assertEquals(c.exportText("tasks").map(_.contains("- [x] read Kuhrt")), Right(true))
+    assertEquals(c.exportText(com.histmersion.api.automation.Queue.Kind.Label("tasks")).map(_.contains("- [x] read Kuhrt")), Right(true))
     assertEquals(c.files().map(_._1), Kind.values.toList.map(_.file))

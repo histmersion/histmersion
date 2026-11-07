@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -31,9 +33,9 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
     val ds = testPool(cfg.db)
     Migrate.run(ds)
     val converter = new ConverterClient:
-      def health = Right("ok")
+      def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
       def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
-        Right(ConvertedDoc(markdown = "# Fixture\n\nOCR succeeded.", pages = 1, images = Nil))
+        Right(ConvertedDoc(markdown = com.histmersion.api.ocr.ConvertedDoc.Markdown("# Fixture\n\nOCR succeeded."), pages = com.histmersion.api.ocr.ConvertedDoc.Pages(1), images = Nil))
     val deps = Deps(cfg, ds)
     val handler = IngestWiring(
       deps,
@@ -63,7 +65,7 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
       handler.queue.start()
       val accepted = handler.controllers
         .ingest(
-          Ingest.Params(key, Some("fixture.pdf"), force = true, acquireItem = Some(item.id)),
+          Ingest.Params(key, Some(com.histmersion.api.exchange.Bundle.Asset.FileName("fixture.pdf")), force = true, acquireItem = Some(item.id)),
           com.histmersion.domain.library.ingest.Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(pdf.toFile))
         )
         .toOption

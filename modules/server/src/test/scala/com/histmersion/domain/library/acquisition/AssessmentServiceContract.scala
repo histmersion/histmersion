@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.library.{Acquire, RetractionNotice}
 
 /** What the assessments' store answers, the same on the database and in memory: the mirror replaced whole (a DOI listed
@@ -8,7 +10,7 @@ import com.histmersion.api.library.{Acquire, RetractionNotice}
 abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
 
   private def row(doi: String, reason: String, date: String) =
-    Acquire.RetractionRow(doi, Some(reason), Some(date), Some("Retraction"))
+    Acquire.RetractionRow(doi, Some(reason), Some(date), Some(com.histmersion.api.library.RetractionNotice.Nature("Retraction")))
 
   stest("the mirror is replaced whole; a DOI listed twice keeps its last row") { s =>
     assertEquals(s.assessments.retractionCount, 0)
@@ -24,11 +26,11 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
     )
     assertEquals(s.assessments.retractionCount, 2)
     assertEquals(
-      s.assessments.retractionsFor("10.5555/ZQ.A"),
-      List(RetractionNotice(Some("Retraction"), Some("again"), Some("2021-12-15")))
+      s.assessments.retractionsFor(com.histmersion.domain.library.Doi("10.5555/ZQ.A")),
+      List(RetractionNotice(Some(com.histmersion.api.library.RetractionNotice.Nature("Retraction")), Some(com.histmersion.api.library.RetractionNotice.Reason("again")), Some(com.histmersion.api.library.RetractionNotice.Date("2021-12-15"))))
     )
     assertEquals(s.assessments.replaceRetractionWatch(List(row("10.5555/zq.c", "c", "1/1/2020 0:00"))), 1)
-    assertEquals(s.assessments.retractionsFor("10.5555/zq.a"), Nil)
+    assertEquals(s.assessments.retractionsFor(com.histmersion.domain.library.Doi("10.5555/zq.a")), Nil)
     assertEquals(s.assessments.retractionCount, 1)
   }
 
@@ -54,12 +56,12 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
       ),
       com.histmersion.domain.Caller.Local
     )
-    assertEquals(s.assessments.lastFor("zqa_one"), None)
-    val first = s.assessments.record(AssessmentRecord("zqa_one", "current", false, "{}", Some(3), None))
+    assertEquals(s.assessments.lastFor(com.histmersion.domain.library.Citekey("zqa_one")), None)
+    val first = s.assessments.record(AssessmentRecord(com.histmersion.domain.library.Citekey("zqa_one"), com.histmersion.domain.library.acquisition.AssessmentRecord.Verdict("current"), com.histmersion.domain.library.acquisition.AssessmentRecord.Retracted(false), com.histmersion.domain.library.acquisition.AssessmentRecord.NoticesJson("{}"), Some(com.histmersion.domain.library.acquisition.AssessmentRecord.CitedBy(3)), None))
     assert(first.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z"), first)
-    assertEquals(s.assessments.lastFor("zqa_one").map(_._1), Some("current"))
-    val _ = s.assessments.record(AssessmentRecord("zqa_one", "retracted", true, """{"n":1}""", Some(4), Some(1)))
-    assertEquals(s.assessments.lastFor("zqa_one").map(_._1), Some("retracted"))
+    assertEquals(s.assessments.lastFor(com.histmersion.domain.library.Citekey("zqa_one")).map(_._1), Some("current"))
+    val _ = s.assessments.record(AssessmentRecord(com.histmersion.domain.library.Citekey("zqa_one"), com.histmersion.domain.library.acquisition.AssessmentRecord.Verdict("retracted"), com.histmersion.domain.library.acquisition.AssessmentRecord.Retracted(true), """{"n":1}""", Some(com.histmersion.domain.library.acquisition.AssessmentRecord.CitedBy(4)), Some(com.histmersion.domain.library.acquisition.AssessmentRecord.Influential(1))))
+    assertEquals(s.assessments.lastFor(com.histmersion.domain.library.Citekey("zqa_one")).map(_._1), Some("retracted"))
   }
 
 class AssessmentServiceInMemorySuite extends AssessmentServiceContract with AcquisitionStoreSuite.InMemory

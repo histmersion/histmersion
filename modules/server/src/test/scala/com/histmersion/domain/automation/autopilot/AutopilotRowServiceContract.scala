@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.autopilot
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 
 import java.time.Instant
@@ -14,17 +16,17 @@ abstract class AutopilotRowServiceContract extends EngineStoreSuite:
   stest("made off on first use; a switch changes it once; turning it on forgets the last ensure") { s =>
     val r = a(s).row()
     assertEquals((r.enabled, r.changedBy, r.paused, r.lastEnsureAt), (false, "", Nil, None))
-    assert(a(s).set(enabled = true, "p", Nil))
-    assert(!a(s).set(enabled = true, "q", Nil), "already on")
+    assert(a(s).set(enabled = com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled(true), com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy("p"), Nil))
+    assert(!a(s).set(enabled = com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled(true), com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy("q"), Nil), "already on")
     assertEquals(a(s).row().changedBy, "p")
     a(s).ensured(t)
     assertEquals(a(s).row().lastEnsureAt, Some("2026-10-20T08:30:00Z"))
-    assert(a(s).set(enabled = false, "q", List("seed:x", "watch:x")))
+    assert(a(s).set(enabled = com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled(false), com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy("q"), List(com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Paused("seed:x"), com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Paused("watch:x"))))
     assertEquals(
       (a(s).row().enabled, a(s).row().paused, a(s).row().lastEnsureAt),
       (false, List("seed:x", "watch:x"), None)
     )
-    a(s).unpaused("seed:x")
+    a(s).unpaused(com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:x"))
     assertEquals(a(s).row().paused, List("watch:x"))
     a(s).ensured(t)
     a(s).ensureSoon()
@@ -39,11 +41,11 @@ abstract class AutopilotRowServiceContract extends EngineStoreSuite:
 
   stest("a person's strategy is kept with who chose it; cleared, the config's is back") { s =>
     assertEquals(a(s).strategy(), None)
-    a(s).setStrategy(Some("type-balanced"), "p")
+    a(s).setStrategy(Some(com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName("type-balanced")), com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy("p"))
     val Some((name, by, at)) = a(s).strategy(): @unchecked
     assertEquals((name, by), ("type-balanced", "p"))
     assert(at.matches("\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ"), at)
-    a(s).setStrategy(None, "q")
+    a(s).setStrategy(None, com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy("q"))
     assertEquals(a(s).strategy(), None)
   }
 
@@ -56,15 +58,15 @@ abstract class AutopilotRowServiceContract extends EngineStoreSuite:
   stest("a drain keeps its start and who started it; drained is recorded only while draining; lifted, all goes") { s =>
     a(s).drained(Some(t))
     assertEquals(a(s).drain(), None)
-    assert(!a(s).setDrain(on = false, "p"), "not draining")
-    assert(a(s).setDrain(on = true, "p"))
+    assert(!a(s).setDrain(on = false, com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy("p")), "not draining")
+    assert(a(s).setDrain(on = true, com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy("p")))
     val Some((since, by, at)) = a(s).drain(): @unchecked
     assertEquals((by, at), ("p", None))
-    assert(!a(s).setDrain(on = true, "q"), "already draining")
+    assert(!a(s).setDrain(on = true, com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy("q")), "already draining")
     a(s).drained(Some(t))
     assertEquals(a(s).drain(), Some((since, "p", Some("2026-10-20T08:30:00Z"))))
     a(s).drained(None)
     assertEquals(a(s).drain().flatMap(_._3), None)
-    assert(a(s).setDrain(on = false, "q"))
+    assert(a(s).setDrain(on = false, com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy("q")))
     assertEquals(a(s).drain(), None)
   }

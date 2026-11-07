@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.workflows.*
@@ -38,31 +40,31 @@ class ClaudeCodeSuite extends munit.FunSuite:
   private given java.time.Clock = java.time.Clock.systemUTC()
   private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val Cfg = ClaudeCodeConfig(
-    command = "claude",
-    configDir = "",
-    extraArgs = "",
-    useApiKey = false,
-    allowNonLoopback = false,
-    mcpUrl = "",
-    timeoutSeconds = 30,
-    limitCooldownMinutes = 60,
-    disableSlashCommands = false,
+    command = com.histmersion.config.ClaudeCodeConfig.Command("claude"),
+    configDir = com.histmersion.config.ClaudeCodeConfig.ConfigDir(""),
+    extraArgs = com.histmersion.config.ClaudeCodeConfig.ExtraArgs(""),
+    useApiKey = com.histmersion.config.ClaudeCodeConfig.UseApiKey(false),
+    allowNonLoopback = com.histmersion.config.ClaudeCodeConfig.AllowNonLoopback(false),
+    mcpUrl = com.histmersion.config.ClaudeCodeConfig.McpUrl(""),
+    timeoutSeconds = com.histmersion.config.ClaudeCodeConfig.TimeoutSeconds(30),
+    limitCooldownMinutes = com.histmersion.config.ClaudeCodeConfig.LimitCooldownMinutes(60),
+    disableSlashCommands = com.histmersion.config.ClaudeCodeConfig.DisableSlashCommands(false),
     env = Map.empty
   )
-  private val Sonnet = ModelRef(ProviderKind.ClaudeCode, "sonnet")
+  private val Sonnet = ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("sonnet"))
   private val AllTools = ToolboxOrder.names.map(_.value)
   private val Launch =
-    ClaudeCode.Launch.Agent("/g/headless", "article-skeptic", "/g/roles/article-skeptic/settings.json")
+    ClaudeCode.Launch.Agent(com.histmersion.server.agents.ClaudeCode.Launch.Agent.PluginDir("/g/headless"), com.histmersion.server.agents.ClaudeCode.Launch.Agent.Name("article-skeptic"), com.histmersion.server.agents.ClaudeCode.Launch.Agent.Settings("/g/roles/article-skeptic/settings.json"))
 
   test("argv: the generated plugin's agent and role settings; no hooks switch, no slash-command switch, our MCP only"):
     val a = ClaudeCode.argv(
       Cfg,
-      "sonnet",
-      4,
+      com.histmersion.api.automation.Agents.ModelRef.Model("sonnet"),
+      com.histmersion.domain.automation.agents.AgentDef.MaxTurns(4),
       """{"type":"object"}""",
       Launch,
       Some("/t/mcp.json"),
-      List("get_source", "search"),
+      List(com.histmersion.domain.automation.agents.ToolUse.Tool("get_source"), com.histmersion.domain.automation.agents.ToolUse.Tool("search")),
       AllTools
     )
     assertEquals(a.take(2), List("claude", "-p"))
@@ -99,7 +101,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
   test(
     "argv: --disable-slash-commands by default (a role's skills are in its prompt), never --bare or the dynamic-sections flag"
   ):
-    val a = ClaudeCode.argv(Ref, "sonnet", 4, "{}", Launch, Some("/t/mcp.json"), List("get_source"), AllTools)
+    val a = ClaudeCode.argv(Ref, com.histmersion.api.automation.Agents.ModelRef.Model("sonnet"), com.histmersion.domain.automation.agents.AgentDef.MaxTurns(4), com.histmersion.server.agents.ClaudeCode.SchemaJson("{}"), Launch, Some("/t/mcp.json"), List(com.histmersion.domain.automation.agents.ToolUse.Tool("get_source")), AllTools)
     assert(a.contains("--disable-slash-commands"), a)
     assertEquals(
       a.slice(a.indexOf("--setting-sources"), a.indexOf("--setting-sources") + 3),
@@ -111,7 +113,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     assert(!a.contains("--bare") && !a.contains("--exclude-dynamic-system-prompt-sections"), a)
     assert(
       !ClaudeCode
-        .argv(Ref.modify(_.disableSlashCommands).setTo(false), "sonnet", 4, "{}", Launch, None, Nil, AllTools)
+        .argv(Ref.modify(_.disableSlashCommands).setTo(false), com.histmersion.api.automation.Agents.ModelRef.Model("sonnet"), com.histmersion.domain.automation.agents.AgentDef.MaxTurns(4), com.histmersion.server.agents.ClaudeCode.SchemaJson("{}"), Launch, None, Nil, AllTools)
         .contains("--disable-slash-commands")
     )
 
@@ -121,7 +123,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val env = new java.util.HashMap[String, String](
       java.util.Map.of("PATH", "/bin", "CLAUDE_CODE_DISABLE_CRON", "1", "ANTHROPIC_API_KEY", "sk-x")
     )
-    ClaudeCode.environment(Ref, 2048, Some("hmrt_1"), "http://q", env)
+    ClaudeCode.environment(Ref, com.histmersion.domain.automation.agents.LlmCall.MaxTokens(2048), Some(com.histmersion.domain.automation.agents.RunGrant.Token("hmrt_1")), com.histmersion.domain.automation.agents.GenSettings.QuotaUrl("http://q"), env)
     Ref.envChanges.collect { case (k, Some(v)) => k -> v }.foreach((k, v) => assertEquals(env.get(k), v, k))
     assertEquals(env.get("CLAUDE_CODE_DISABLE_ARTIFACT"), "1")
     assertEquals(env.get("CLAUDE_CODE_DISABLE_ADVISOR_TOOL"), "1")
@@ -143,7 +145,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     )
     val env2 =
       new java.util.HashMap[String, String](java.util.Map.of("PATH", "/bin", "CLAUDE_CODE_DISABLE_ARTIFACT", "1"))
-    ClaudeCode.environment(mine, 2048, Some("hmrt_1"), "http://q", env2)
+    ClaudeCode.environment(mine, com.histmersion.domain.automation.agents.LlmCall.MaxTokens(2048), Some(com.histmersion.domain.automation.agents.RunGrant.Token("hmrt_1")), com.histmersion.domain.automation.agents.GenSettings.QuotaUrl("http://q"), env2)
     assert(!env2.containsKey("CLAUDE_CODE_DISABLE_ARTIFACT") && !env2.containsKey("PATH"), env2)
     assertEquals(env2.get("MY_FLAG"), "x")
     assertEquals(env2.get("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "2048")
@@ -152,17 +154,17 @@ class ClaudeCodeSuite extends munit.FunSuite:
 
   test("probe environment: the configured env too (the probe stays a minimal call)"):
     val env = new java.util.HashMap[String, String]()
-    ClaudeCode.probeEnvironment(Ref, 16, env)
+    ClaudeCode.probeEnvironment(Ref, com.histmersion.config.ClaudePlanConfig.ProbeMaxTokens(16), env)
     assertEquals(env.get("CLAUDE_CODE_DISABLE_BUNDLED_SKILLS"), "1")
     assertEquals(env.get("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "16")
 
   test("argv: without a generated plugin the prompt goes as a file; a web role keeps the web tools"):
     val a = ClaudeCode.argv(
       Cfg,
-      "opus",
-      1,
-      "{}",
-      ClaudeCode.Launch.SystemPrompt("/s"),
+      com.histmersion.api.automation.Agents.ModelRef.Model("opus"),
+      com.histmersion.domain.automation.agents.AgentDef.MaxTurns(1),
+      com.histmersion.server.agents.ClaudeCode.SchemaJson("{}"),
+      ClaudeCode.Launch.SystemPrompt(com.histmersion.server.agents.ClaudeCode.Launch.SystemPrompt.File("/s")),
       None,
       Nil,
       AllTools,
@@ -177,7 +179,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val env = new java.util.HashMap[String, String](
       java.util.Map.of("ANTHROPIC_API_KEY", "sk-x", "ANTHROPIC_AUTH_TOKEN", "t", "PATH", "/bin")
     )
-    ClaudeCode.environment(Cfg, 2048, Some("hmrt_1"), "http://h/api/agents/quota/claude", env)
+    ClaudeCode.environment(Cfg, com.histmersion.domain.automation.agents.LlmCall.MaxTokens(2048), Some(com.histmersion.domain.automation.agents.RunGrant.Token("hmrt_1")), com.histmersion.domain.automation.agents.GenSettings.QuotaUrl("http://h/api/agents/quota/claude"), env)
     assert(!env.containsKey("ANTHROPIC_API_KEY") && !env.containsKey("ANTHROPIC_AUTH_TOKEN"), env)
     assertEquals(env.get("PATH"), "/bin")
     assertEquals(env.get("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "2048")
@@ -185,13 +187,13 @@ class ClaudeCodeSuite extends munit.FunSuite:
     assertEquals(env.get("HISTMERSION_RUN_TOKEN"), "hmrt_1")
     assertEquals(env.get("HISTMERSION_QUOTA_URL"), "http://h/api/agents/quota/claude")
     val keep = new java.util.HashMap[String, String](java.util.Map.of("ANTHROPIC_API_KEY", "sk-x"))
-    ClaudeCode.environment(Cfg.modify(_.useApiKey).setTo(true).modify(_.configDir).setTo("/c/hm"), 10, None, "u", keep)
+    ClaudeCode.environment(Cfg.modify(_.useApiKey).setTo(true).modify(_.configDir).setTo("/c/hm"), com.histmersion.domain.automation.agents.LlmCall.MaxTokens(10), None, com.histmersion.domain.automation.agents.GenSettings.QuotaUrl("u"), keep)
     assertEquals(keep.get("ANTHROPIC_API_KEY"), "sk-x")
     assertEquals(keep.get("CLAUDE_CONFIG_DIR"), "/c/hm")
 
   test("mcp config: http to the agent endpoint, the step's run token as the bearer"):
     assertEquals(
-      ClaudeCode.mcpConfig("http://127.0.0.1:18000/mcp/agent", Some("hmrt_9")).noSpaces,
+      ClaudeCode.mcpConfig(com.histmersion.domain.automation.agents.GenSettings.AgentMcpUrl("http://127.0.0.1:18000/mcp/agent"), Some(com.histmersion.domain.automation.agents.RunGrant.Token("hmrt_9"))).noSpaces,
       """{"mcpServers":{"histmersion":{"type":"http","url":"http://127.0.0.1:18000/mcp/agent","headers":{"Authorization":"Bearer hmrt_9"}}}}"""
     )
 
@@ -202,18 +204,18 @@ class ClaudeCodeSuite extends munit.FunSuite:
 
   test("loopback: 127.x, ::1 and localhost are; 0.0.0.0 and a LAN address are not — and claude-code is refused there"):
     assert(
-      ClaudeCode.Env.isLoopback("127.0.0.1") && ClaudeCode.Env.isLoopback("localhost") && ClaudeCode.Env.isLoopback(
+      ClaudeCode.Env.isLoopback(com.histmersion.config.ServerConfig.Host("127.0.0.1")) && ClaudeCode.Env.isLoopback(com.histmersion.config.ServerConfig.Host("localhost")) && ClaudeCode.Env.isLoopback(
         "[::1]"
       )
     )
-    assert(!ClaudeCode.Env.isLoopback("0.0.0.0") && !ClaudeCode.Env.isLoopback("192.168.1.5"))
+    assert(!ClaudeCode.Env.isLoopback(com.histmersion.config.ServerConfig.Host("0.0.0.0")) && !ClaudeCode.Env.isLoopback(com.histmersion.config.ServerConfig.Host("192.168.1.5")))
     val dir = Files.createTempDirectory("hm-rt-")
     val lan = CliRuntime(FakeCli.app(dir, "HISTMERSION_BIND" -> "0.0.0.0"), EngineContributions.roster)
     assert(ClaudeCode.client(Cfg, lan, Sonnet).left.exists(_.contains("beyond loopback")))
     assert(ClaudeCode.client(Cfg.modify(_.allowNonLoopback).setTo(true), lan, Sonnet).isRight)
     assert(
       ClaudeCode
-        .client(Cfg, CliRuntime(FakeCli.app(dir), EngineContributions.roster), ModelRef(ProviderKind.Local, "x"))
+        .client(Cfg, CliRuntime(FakeCli.app(dir), EngineContributions.roster), ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("x")))
         .isLeft
     )
 
@@ -222,7 +224,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
   import ClaudeStreams.*
 
   test("parse: the trace (text, tool call, tool result), the typed answer, usage with cache tokens counted as input"):
-    val o = ClaudeCode.parse(List(Init, "not json", Turn1, Tool1, Turn2, Success))
+    val o = ClaudeCode.parse(List(Init, com.histmersion.server.agents.CliProcess.Run.Lines("not json"), Turn1, Tool1, Turn2, Success))
     assertEquals(o.modelId, Some("claude-sonnet-4-5"))
     assertEquals(
       o.toolCalls.map(c => (c.toolName, c.input, c.output)),
@@ -230,8 +232,8 @@ class ClaudeCodeSuite extends munit.FunSuite:
     )
     assertEquals(o.usage, TokenUsage(Tokens(450), Tokens(20), Tokens(300), Tokens.Zero, Tokens(50)))
     assertEquals(o.mcpProblem, None)
-    val r = ClaudeCode.result(o, "the prompt", ResponseSchema.derived[ProbeAnswer]()).toOption.get
-    assertEquals(r.finalAnswer, Right(ProbeAnswer("x2020", "X", Some(2020))))
+    val r = ClaudeCode.result(o, com.histmersion.domain.automation.agents.LlmCall.User("the prompt"), ResponseSchema.derived[ProbeAnswer]()).toOption.get
+    assertEquals(r.finalAnswer, Right(ProbeAnswer(com.histmersion.api.library.Citekey("x2020"), com.histmersion.api.library.Title("X"), Some(com.histmersion.api.catalogue.Year(2020)))))
     assertEquals(r.finishReason, FinishReason.NaturalStop)
     assertEquals(r.iterations, 2)
     val roles = r.history.entries.map(_.getClass.getSimpleName).toList
@@ -259,8 +261,8 @@ class ClaudeCodeSuite extends munit.FunSuite:
       .replace("\"result\":\"Done.\"", "\"result\":\"working on it\"")
     val o = ClaudeCode.parse(List(Init, interim, Success))
     assertEquals(
-      ClaudeCode.result(o, "u", ResponseSchema.derived[ProbeAnswer]()).toOption.get.finalAnswer,
-      Right(ProbeAnswer("x2020", "X", Some(2020)))
+      ClaudeCode.result(o, com.histmersion.domain.automation.agents.LlmCall.User("u"), ResponseSchema.derived[ProbeAnswer]()).toOption.get.finalAnswer,
+      Right(ProbeAnswer(com.histmersion.api.library.Citekey("x2020"), com.histmersion.api.library.Title("X"), Some(com.histmersion.api.catalogue.Year(2020))))
     )
 
   test("result: a JSON answer written as text (no structured_output) is still the answer"):
@@ -272,8 +274,8 @@ class ClaudeCodeSuite extends munit.FunSuite:
       )
     val o = ClaudeCode.parse(List(Init, fenced))
     assertEquals(
-      ClaudeCode.result(o, "u", ResponseSchema.derived[ProbeAnswer]()).toOption.get.finalAnswer,
-      Right(ProbeAnswer("x2020", "X", Some(2020)))
+      ClaudeCode.result(o, com.histmersion.domain.automation.agents.LlmCall.User("u"), ResponseSchema.derived[ProbeAnswer]()).toOption.get.finalAnswer,
+      Right(ProbeAnswer(com.histmersion.api.library.Citekey("x2020"), com.histmersion.api.library.Title("X"), Some(com.histmersion.api.catalogue.Year(2020))))
     )
 
   test("result: a step cut off by max turns is not rescued from its text"):
@@ -282,20 +284,20 @@ class ClaudeCodeSuite extends munit.FunSuite:
       .replace("\"subtype\":\"success\"", "\"subtype\":\"error_max_turns\"")
       .replace("\"result\":\"Done.\"", "\"result\":\"{\\\"citekey\\\":\\\"x2020\\\",\\\"title\\\":\\\"X\\\"}\"")
     val o = ClaudeCode.parse(List(Init, cut))
-    assert(ClaudeCode.result(o, "u", ResponseSchema.derived[ProbeAnswer]()).toOption.get.finalAnswer.isLeft)
+    assert(ClaudeCode.result(o, com.histmersion.domain.automation.agents.LlmCall.User("u"), ResponseSchema.derived[ProbeAnswer]()).toOption.get.finalAnswer.isLeft)
 
   test("jsonInText: a fence wins, else first brace to last; prose and arrays are not answers"):
     assertEquals(
-      ClaudeCode.jsonInText("a\n```json\n{\"x\":1}\n```\nb {not}").flatMap(_.hcursor.get[Int]("x").toOption),
+      ClaudeCode.jsonInText(com.histmersion.server.agents.ClaudeCode.Result.Text("a\n```json\n{\"x\":1}\n```\nb {not}")).flatMap(_.hcursor.get[Int]("x").toOption),
       Some(1)
     )
     assertEquals(
-      ClaudeCode.jsonInText("so: {\"x\": {\"y\": 2}} done").flatMap(_.hcursor.downField("x").get[Int]("y").toOption),
+      ClaudeCode.jsonInText(com.histmersion.server.agents.ClaudeCode.Result.Text("so: {\"x\": {\"y\": 2}} done")).flatMap(_.hcursor.downField("x").get[Int]("y").toOption),
       Some(2)
     )
-    assertEquals(ClaudeCode.jsonInText("no json here"), None)
-    assertEquals(ClaudeCode.jsonInText("[1, 2]"), None)
-    assertEquals(ClaudeCode.jsonInText("{broken"), None)
+    assertEquals(ClaudeCode.jsonInText(com.histmersion.server.agents.ClaudeCode.Result.Text("no json here")), None)
+    assertEquals(ClaudeCode.jsonInText(com.histmersion.server.agents.ClaudeCode.Result.Text("[1, 2]")), None)
+    assertEquals(ClaudeCode.jsonInText(com.histmersion.server.agents.ClaudeCode.Result.Text("{broken")), None)
 
   test("parse: the quota-guard mod's abort is a success with an empty answer and terminal_reason aborted_streaming"):
     val o = ClaudeCode.parse(List(Init, Aborted))
@@ -305,11 +307,11 @@ class ClaudeCodeSuite extends munit.FunSuite:
   test("the plan's usage limit is told apart from an error, with its reset time when the CLI gives one"):
     val lim =
       """{"type":"result","subtype":"success","is_error":true,"num_turns":0,"result":"Claude AI usage limit reached|1759683600","usage":{}}"""
-    val l = ClaudeCode.result(ClaudeCode.parse(List(lim)), "u", ResponseSchema.derived[ProbeAnswer]()).left.toOption.get
+    val l = ClaudeCode.result(ClaudeCode.parse(List(lim)), com.histmersion.domain.automation.agents.LlmCall.User("u"), ResponseSchema.derived[ProbeAnswer]()).left.toOption.get
     assertEquals(l.until, Some(java.time.Instant.ofEpochSecond(1759683600L)))
     val other = lim.replace("Claude AI usage limit reached|1759683600", "API Error: 500")
     assert(
-      ClaudeCode.result(ClaudeCode.parse(List(other)), "u", ResponseSchema.derived[ProbeAnswer]()).isRight,
+      ClaudeCode.result(ClaudeCode.parse(List(other)), com.histmersion.domain.automation.agents.LlmCall.User("u"), ResponseSchema.derived[ProbeAnswer]()).isRight,
       "an error is not a limit"
     )
 
@@ -318,7 +320,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val res =
       """{"type":"result","subtype":"error_during_execution","is_error":true,"num_turns":1,"result":"","permission_denials":[{"tool_name":"mcp__histmersion__query"}],"usage":{}}"""
     val r =
-      ClaudeCode.result(ClaudeCode.parse(List(init, res)), "u", ResponseSchema.derived[ProbeAnswer]()).toOption.get
+      ClaudeCode.result(ClaudeCode.parse(List(init, res)), com.histmersion.domain.automation.agents.LlmCall.User("u"), ResponseSchema.derived[ProbeAnswer]()).toOption.get
     r.finishReason match
       case FinishReason.Error(m) =>
         assert(m.contains("agent MCP server is failed") && m.contains("mcp__histmersion__query"), m)
@@ -332,7 +334,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val o = ClaudeCode.parse(List(Init, two))
     assertEquals(o.modelId, Some("claude-haiku-5-5"), "not the first key, nor the init line's model")
     assertEquals(o.served.map(_._1), List("claude-haiku-5-5", "claude-haiku-4-5"))
-    val r = ClaudeCode.result(o, "p", ResponseSchema.derived[ProbeAnswer]()).toOption.get
+    val r = ClaudeCode.result(o, com.histmersion.domain.automation.agents.LlmCall.User("p"), ResponseSchema.derived[ProbeAnswer]()).toOption.get
     assertEquals(
       r.llmCalls.map(c => (c.model, c.usage.outputTokens.value)),
       Seq((Some("claude-haiku-5-5"), 17L), (Some("claude-haiku-4-5"), 3L))
@@ -384,7 +386,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     List(4200L, 6100L, 8000L).foreach(n => http.aroundLlmCall(ctx)(resp(n)))
     assertEquals(http.tokens, Some(4200L))
     val cli = FirstCallProbe()
-    cli.aroundLlmCall(ctx) { FirstCallProbe.report(List(cli), Some(5000L)); resp(90000L) }
+    cli.aroundLlmCall(ctx) { FirstCallProbe.report(List(cli), Some(com.histmersion.domain.automation.agents.AgentRepo.StepRecord.FirstCallTokens(5000L))); resp(90000L) }
     assertEquals(cli.tokens, Some(5000L), "the process's total is never taken for its first call")
     val unknown = FirstCallProbe()
     unknown.aroundLlmCall(ctx) { FirstCallProbe.report(List(unknown), None); resp(90000L) }
@@ -405,15 +407,15 @@ class ClaudeCodeSuite extends munit.FunSuite:
 
   private def call(agent: AgentDef, interceptors: List[AgentInterceptor[Identity]] = Nil) =
     LlmCall[ProbeAnswer](
-      "SYSTEM PROMPT",
-      "USER <source-text>data</source-text>",
+      com.histmersion.domain.automation.agents.LlmCall.System("SYSTEM PROMPT"),
+      com.histmersion.domain.automation.agents.LlmCall.User("USER <source-text>data</source-text>"),
       List(getSource),
       ResponseSchema.derived[ProbeAnswer](),
-      maxIterations = 3,
-      maxTokens = 777,
+      maxIterations = com.histmersion.domain.automation.agents.LlmCall.MaxIterations(3),
+      maxTokens = com.histmersion.domain.automation.agents.LlmCall.MaxTokens(777),
       interceptors,
       Some(agent),
-      Some(RunScope("run-1", 4))
+      Some(RunScope(com.histmersion.domain.automation.agents.RunScope.Run("run-1"), com.histmersion.domain.automation.agents.RunScope.Step(4)))
     )
 
   test(
@@ -427,7 +429,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
       override def aroundLlmCall(ctx: LlmCallContext)(next: => Identity[AgentResponse]): Identity[AgentResponse] =
         val _ = calls.incrementAndGet(); next
     val r = ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(fake.script.toString), rt).run(call(skeptic, List(counting)))
-    assertEquals(r.finalAnswer, Right(ProbeAnswer("x2020", "X", Some(2020))))
+    assertEquals(r.finalAnswer, Right(ProbeAnswer(com.histmersion.api.library.Citekey("x2020"), com.histmersion.api.library.Title("X"), Some(com.histmersion.api.catalogue.Year(2020)))))
     assertEquals(calls.get, 1, "the interceptors (the LLM-slot semaphore, latency) see the process as one call")
     assertEquals(fake.stdin, "USER <source-text>data</source-text>", "untrusted data on stdin, never in argv")
     assert(!fake.args.exists(_.contains("<source-text>")))
@@ -453,7 +455,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val first = FirstCallProbe()
     val r = ClaudeCodeClient(Sonnet, Ref.modify(_.command).setTo(fake.script.toString).modify(_.timeoutSeconds).setTo(30), rt)
       .run(call(skeptic, List(first)))
-    assertEquals(r.finalAnswer, Right(ProbeAnswer("x2020", "X", Some(2020))))
+    assertEquals(r.finalAnswer, Right(ProbeAnswer(com.histmersion.api.library.Citekey("x2020"), com.histmersion.api.library.Title("X"), Some(com.histmersion.api.catalogue.Year(2020)))))
     assert(fake.args.contains("--disable-slash-commands"), fake.args)
     assertEquals(fake.env("CLAUDE_CODE_DISABLE_ARTIFACT"), "1")
     assertEquals(first.tokens, Some(6963L), "the first call's input, not the run's total")

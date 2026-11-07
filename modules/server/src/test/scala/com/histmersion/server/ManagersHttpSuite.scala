@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import ox.supervised
@@ -52,7 +54,7 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     clean(cfg)
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         assertEquals(put(s"$url/api/goals/$Goal", """{"title":"Zq tin"}""")._1, 200)

@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.media.imports.ImportFixtures
@@ -169,16 +171,16 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
         ds,
         List(
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmp_site"), "Zqmpetra", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0)),
-            List(Place.Name("Zqmpetra"))
+            Place(com.histmersion.api.catalogue.Place.Id("zqmp_site"), com.histmersion.api.catalogue.Place.Label("Zqmpetra"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0)),
+            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmpetra")))
           ),
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmp_region"), "Zqmpjordan", com.histmersion.domain.catalogue.Place.Kind.Region, pt(141.0)),
-            List(Place.Name("Zqmpjordan"))
+            Place(com.histmersion.api.catalogue.Place.Id("zqmp_region"), com.histmersion.api.catalogue.Place.Label("Zqmpjordan"), com.histmersion.domain.catalogue.Place.Kind.Region, pt(141.0)),
+            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmpjordan")))
           ),
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("pleiades_99900002"), "Zqmp Zygouries", com.histmersion.domain.catalogue.Place.Kind.Site, pt(142.0)),
-            List(Place.Name("Zqmp Zygouries"))
+            Place(com.histmersion.api.catalogue.Place.Id("pleiades_99900002"), com.histmersion.api.catalogue.Place.Label("Zqmp Zygouries"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(142.0)),
+            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmp Zygouries")))
           )
         )
       )
@@ -221,11 +223,11 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
       .collectionTargets(
         ds,
         MediaProvider.Pleiades,
-        places = true,
+        places = com.histmersion.domain.media.imports.ImportRepo.Places(true),
         None,
         None,
         100_000,
-        refresh = false,
+        refresh = com.histmersion.domain.media.imports.ImportRepo.Refresh(false),
         pleiadesOnly = true
       )
       .fold(fail(_), identity)
@@ -236,21 +238,21 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
     val none = ImportFixtures.collectionTargets(
       ds,
       MediaProvider.Pleiades,
-      places = true,
-      Some("zqmp_region"),
+      places = com.histmersion.domain.media.imports.ImportRepo.Places(true),
+      Some(com.histmersion.domain.catalogue.Place.Id("zqmp_region")),
       None,
-      1,
-      false,
+      com.histmersion.domain.media.imports.ImportRepo.Limit(1),
+      com.histmersion.domain.media.imports.ImportRepo.Refresh(false),
       pleiadesOnly = true
     )
     assert(none.left.exists(_.contains("no Pleiades id")), none.toString)
-    assert(ImportFixtures.collectionPending(ds, MediaProvider.Pleiades, places = true, pleiadesOnly = true) >= 2)
+    assert(ImportFixtures.collectionPending(ds, MediaProvider.Pleiades, places = com.histmersion.domain.media.imports.ImportRepo.Places(true), pleiadesOnly = true) >= 2)
 
   test(
     "Open Context and Pleiades through the server: a dry run's reason, both jobs storing with the basis on the link"
   ):
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, MediaWiring.NoThumbnails, plugins = plugins).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = plugins).start()
       val url = s"http://127.0.0.1:${b.port}"
       def job(body: String): JobInfo =
         val (js, jb) = post(s"$url/api/media/import/job", body)

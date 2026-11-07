@@ -56,7 +56,7 @@ class AuthHttpSuite extends munit.FunSuite:
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(apiKey))
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, converter).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), converter).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }

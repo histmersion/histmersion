@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
@@ -15,24 +17,24 @@ abstract class AttestationServiceContract extends CatalogueStoreSuite:
     s.source("zzat2021_two")
     val first = a.create(
       Attestation.Put(
-        "zzat2020_one",
-        "place",
-        "zz_hill",
-        Some("the hill"),
-        Some("on "),
-        Some(" stood"),
-        Some(3),
-        Some(11),
-        Some(0),
-        Some("12"),
-        Some("https://iiif.test/c1"),
-        Some("1,2,3,4"),
-        Some("urn:cts:x"),
-        Some("n")
+        com.histmersion.api.library.Citekey("zzat2020_one"),
+        com.histmersion.api.catalogue.Attestation.TargetType("place"),
+        com.histmersion.api.catalogue.Attestation.TargetId("zz_hill"),
+        Some(com.histmersion.api.catalogue.Attestation.Quote("the hill")),
+        Some(com.histmersion.api.catalogue.Attestation.Prefix("on ")),
+        Some(com.histmersion.api.catalogue.Attestation.Suffix(" stood")),
+        Some(com.histmersion.api.catalogue.Attestation.CharStart(3)),
+        Some(com.histmersion.api.catalogue.Attestation.CharEnd(11)),
+        Some(com.histmersion.api.catalogue.Attestation.ChunkOrd(0)),
+        Some(com.histmersion.api.catalogue.Attestation.Page("12")),
+        Some(com.histmersion.api.catalogue.Attestation.Canvas("https://iiif.test/c1")),
+        Some(com.histmersion.api.catalogue.Attestation.Xywh("1,2,3,4")),
+        Some(com.histmersion.api.catalogue.Attestation.CtsUrn("urn:cts:x")),
+        Some(com.histmersion.api.catalogue.Attestation.Note("n"))
       )
     )
-    val second = a.create(Attestation.Put("zzat2020_one", "event", "zz_battle", quote = Some("the battle")))
-    val third = a.create(Attestation.Put("zzat2021_two", "place", "zz_hill"))
+    val second = a.create(Attestation.Put(com.histmersion.api.library.Citekey("zzat2020_one"), com.histmersion.api.catalogue.Attestation.TargetType("event"), com.histmersion.api.catalogue.Attestation.TargetId("zz_battle"), quote = Some(com.histmersion.api.catalogue.Attestation.Quote("the battle"))))
+    val third = a.create(Attestation.Put(com.histmersion.api.library.Citekey("zzat2021_two"), com.histmersion.api.catalogue.Attestation.TargetType("place"), com.histmersion.api.catalogue.Attestation.TargetId("zz_hill")))
     assert(first.id < second.id && second.id < third.id)
     assertEquals(a.get(first.id), Some(first))
     assertEquals(
@@ -40,20 +42,20 @@ abstract class AttestationServiceContract extends CatalogueStoreSuite:
       (Some("the hill"), Some(11), Some("urn:cts:x"), Some("n"))
     )
     assertEquals(a.get(third.id + 100), None)
-    val all = a.list(None, None, None, 10, 0)
+    val all = a.list(None, None, None, com.histmersion.PageSize(10), com.histmersion.Offset(0))
     assertEquals(((all.total.value: Int), all.attestations.map(_.id)), (3, List(first.id, second.id, third.id)))
-    assertEquals(a.list(Some("zzat2020_one"), None, None, 10, 0).attestations.map(_.id), List(first.id, second.id))
-    assertEquals(a.list(None, Some("place"), Some("zz_hill"), 10, 0).attestations.map(_.id), List(first.id, third.id))
-    assertEquals((a.list(Some(" "), Some(""), None, 10, 0).total.value: Int), 3)
-    val page = a.list(None, None, None, 1, 1)
+    assertEquals(a.list(Some(com.histmersion.domain.library.Citekey("zzat2020_one")), None, None, com.histmersion.PageSize(10), com.histmersion.Offset(0)).attestations.map(_.id), List(first.id, second.id))
+    assertEquals(a.list(None, Some(com.histmersion.api.catalogue.Attestation.TargetType("place")), Some(com.histmersion.api.catalogue.Attestation.TargetId("zz_hill")), com.histmersion.PageSize(10), com.histmersion.Offset(0)).attestations.map(_.id), List(first.id, third.id))
+    assertEquals((a.list(Some(com.histmersion.domain.library.Citekey(" ")), Some(com.histmersion.api.catalogue.Attestation.TargetType("")), None, com.histmersion.PageSize(10), com.histmersion.Offset(0)).total.value: Int), 3)
+    val page = a.list(None, None, None, com.histmersion.PageSize(1), com.histmersion.Offset(1))
     assertEquals(((page.total.value: Int), page.attestations.map(_.id), (page.offset.value: Int)), (3, List(second.id), 1))
-    assertEquals(a.list(None, None, None, 0, -5).attestations.map(_.id), List(first.id))
-    val patched = a.patch(first.id, Attestation.Patch(note = Some("changed"), page = Some("13"))).toOption.get
+    assertEquals(a.list(None, None, None, com.histmersion.PageSize(0), com.histmersion.Offset(-5)).attestations.map(_.id), List(first.id))
+    val patched = a.patch(first.id, Attestation.Patch(note = Some(com.histmersion.api.catalogue.Attestation.Note("changed")), page = Some(com.histmersion.api.catalogue.Attestation.Page("13")))).toOption.get
     assertEquals(patched, first.modify(_.note).setTo(Some("changed")).modify(_.page).setTo(Some("13")))
     assert(
-      a.patch(third.id + 100, Attestation.Patch(note = Some("x"))).left.exists(_.message.contains("No attestation"))
+      a.patch(third.id + 100, Attestation.Patch(note = Some(com.histmersion.api.catalogue.Attestation.Note("x")))).left.exists(_.message.contains("No attestation"))
     )
     assert(a.delete(second.id))
     assert(!a.delete(second.id))
-    assertEquals(a.list(None, None, None, 10, 0).attestations.map(_.id), List(first.id, third.id))
+    assertEquals(a.list(None, None, None, com.histmersion.PageSize(10), com.histmersion.Offset(0)).attestations.map(_.id), List(first.id, third.id))
   }

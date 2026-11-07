@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.media.imports.ImportsControllers
@@ -163,7 +165,7 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
         EventFixtures.put(
           ds,
           id(i),
-          EventPut(s"Zqmj event $i", "battle", TimeSpan(Some(-1200), None, None, Some(-1190)))
+          EventPut(s"Zqmj event $i", com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1200)), None, None, Some(com.histmersion.api.catalogue.Year(-1190))))
         )
       )
       connect(ds)(sql"""UPDATE events SET wikidata = 'Q' || (9100000 + substring(id FROM 7)::int)::text
@@ -185,7 +187,7 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
 
   test("a 300-event import: the request answers at once with a job, progress is n/total, failures are collected"):
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, MediaWiring.NoThumbnails, plugins = plugins).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = plugins).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         // the synchronous endpoint keeps the dry run and ONE place/event; many is a job

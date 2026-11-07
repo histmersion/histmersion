@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.automation.agents.{AgentDefinitions, AgentRuntime, AgentTrees, Prompts}
 
 import com.histmersion.config.{AppConfig, LoadedConfig}

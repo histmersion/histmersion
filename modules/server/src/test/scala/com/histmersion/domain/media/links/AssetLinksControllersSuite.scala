@@ -1,5 +1,7 @@
 package com.histmersion.domain.media.links
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.domain.media.{MediaState, MediaStoreSuite}
@@ -25,22 +27,22 @@ class AssetLinksControllersSuite extends munit.FunSuite:
     val state = AtomicReference(MediaState.empty)
     val _ = AssetService
       .InMemory(state, MediaStoreSuite.Ticking())
-      .addFigures("zqnew2001_x", List(NewFigure("a.png", "image/png", Array[Byte](1), None, None)))
+      .addFigures(com.histmersion.domain.library.Citekey("zqnew2001_x"), List(NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("a.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), Array[Byte](1), None, None)))
     AssetLinksControllers(AssetLinkService.InMemory(state), current, gate)
 
   test("old identifiers resolved on a write and a read; a missing link not found"):
     val c = controllers()
-    val made = c.create(AssetLink.Put("zqold", "a.png", "depicts", "place", "zq_oldplace"))
+    val made = c.create(AssetLink.Put(com.histmersion.api.library.Citekey("zqold"), com.histmersion.api.exchange.Bundle.Asset.FileName("a.png"), com.histmersion.api.media.AssetRelation.Wire("depicts"), com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("zq_oldplace")))
     assertEquals(made.map(l => (l.citekey, l.targetId)), Right(("zqnew2001_x", "zq_place")))
-    assertEquals(c.list(Some("zqold"), None, Some("place"), Some("zq_oldplace")).links.map(_.id), List(1L))
-    assertEquals(c.delete(9L).left.map(_.message), Left("No asset link #9"))
-    assertEquals(c.delete(1L), Right(AssetLink.Deleted(1L, true)))
+    assertEquals(c.list(Some(com.histmersion.domain.library.Citekey("zqold")), None, Some(com.histmersion.domain.media.imports.Target.TargetType("place")), Some(com.histmersion.domain.media.imports.Target.Id("zq_oldplace"))).links.map(_.id), List(1L))
+    assertEquals(c.delete(com.histmersion.domain.media.links.AssetLinkService.LinkId(9L)).left.map(_.message), Left("No asset link #9"))
+    assertEquals(c.delete(com.histmersion.domain.media.links.AssetLinkService.LinkId(1L)), Right(AssetLink.Deleted(com.histmersion.api.media.AssetLink.Id(1L), com.histmersion.api.media.AssetLink.Deleted.Value(true))))
 
   test("a held lock refuses every write"):
     val gate = WriteGate()
     val c = controllers(gate)
-    val held = gate.exclusively("restore")(
-      Right((c.create(AssetLink.Put("zqold", "a.png", "depicts", "place", "zq_x")), c.delete(1L)))
+    val held = gate.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(
+      Right((c.create(AssetLink.Put(com.histmersion.api.library.Citekey("zqold"), com.histmersion.api.exchange.Bundle.Asset.FileName("a.png"), com.histmersion.api.media.AssetRelation.Wire("depicts"), com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("zq_x"))), c.delete(com.histmersion.domain.media.links.AssetLinkService.LinkId(1L))))
     )
     val (a, b) = held.fold(e => fail(e.message), identity)
     assert(a.isLeft && b.isLeft, (a, b))

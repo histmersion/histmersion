@@ -25,7 +25,7 @@ class SeedImportSuite extends com.histmersion.db.DbSuite:
   private lazy val ds =
     val d = testPool(AppConfig.load().db.copy(url = testDb.get))
     Migrate.run(d); d
-  private lazy val sources = SourceService(Transactor(ds), SourceReferrers(Nil), () => SourceSettings(4000, 25.0))
+  private lazy val sources = SourceService(Transactor(ds), SourceReferrers(Nil), () => SourceSettings(com.histmersion.domain.library.sources.SourceSettings.ChunkChars(4000), 25.0))
   private lazy val seed = SeedImport(sources, (_, figures) => figures.size)
 
   private def run(dir: java.nio.file.Path, force: Boolean = false) = seed.run(SeedNoteFiles(dir, None), force, 1 << 20)
@@ -42,7 +42,7 @@ class SeedImportSuite extends com.histmersion.db.DbSuite:
     assertEquals(first.skipped, Nil)
 
     // an agent enriches the row → updated_at now newer than the file's mtime
-    assert(sources.patch(ckS, Source.Patch(tags = Some(ListPatch(add = List("enriched")))), Caller.Local).isRight)
+    assert(sources.patch(ckS, Source.Patch(tags = Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("enriched"))))), Caller.Local).isRight)
 
     // 2nd seed: the file is older than the row → skipped, enrichment preserved
     val second = run(dir)
@@ -65,10 +65,10 @@ class SeedImportSuite extends com.histmersion.db.DbSuite:
     assertEquals(r.failed, List("zz_seed_bad.md: no frontmatter"))
 
   test("isStale: only a STRICTLY newer row blocks the file"):
-    assert(SeedImport.isStale(Map("a" -> 100L), "a", 99L))
-    assert(!SeedImport.isStale(Map("a" -> 100L), "a", 100L))
-    assert(!SeedImport.isStale(Map("a" -> 100L), "a", 101L))
-    assert(!SeedImport.isStale(Map.empty, "a", 1L)) // unknown citekey: always import
+    assert(SeedImport.isStale(Map("a" -> 100L), com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(99L)))
+    assert(!SeedImport.isStale(Map("a" -> 100L), com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(100L)))
+    assert(!SeedImport.isStale(Map("a" -> 100L), com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(101L)))
+    assert(!SeedImport.isStale(Map.empty, com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(1L))) // unknown citekey: always import
 
   test("export then re-import (force) leaves identical frontmatter — the §1.9a round trip"):
     val ck = "zz_seed_roundtrip"

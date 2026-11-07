@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.util.ocr.{ConverterClient, JatsConverter}
 
 import com.histmersion.config.*
@@ -36,7 +38,7 @@ class PmcFetchSuite extends munit.FunSuite:
     def json(url: String, headers: Map[String, String]): Either[String, Json] =
       text(url, headers).flatMap(s => io.circe.parser.parse(s).left.map(_.getMessage))
 
-  private def cfg = AppConfig.load().acquire.copy(contactEmail = "someone@example.org")
+  private def cfg = AppConfig.load().acquire.copy(contactEmail = com.histmersion.config.AcquireConfig.ContactEmail("someone@example.org"))
 
   private def routes(
       c: AcquireConfig,
@@ -187,8 +189,8 @@ class PmcFetchSuite extends munit.FunSuite:
     var calls: List[String] = Nil // a test double: which files reached the sidecar
     def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
       calls = calls :+ filename
-      Right(ConvertedDoc("from the sidecar", pages = 3))
-    def health = Right("ok")
+      Right(ConvertedDoc(com.histmersion.api.ocr.ConvertedDoc.Markdown("from the sidecar"), pages = com.histmersion.api.ocr.ConvertedDoc.Pages(3)))
+    def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
 
   test("a JATS original is rendered to Markdown without the sidecar; anything else goes to it"):
     val dir = Files.createTempDirectory("jats-conv")
@@ -198,15 +200,15 @@ class PmcFetchSuite extends munit.FunSuite:
       val other = Files.write(dir.resolve("list.xml"), "<?xml version=\"1.0\"?><ListBucketResult/>".getBytes("UTF-8"))
       val side = Sidecar()
       val conv = JatsConverter(side)
-      val doc = conv.convert(OfflineConverter.blob(xml), "paper.xml", quality = false).fold(fail(_), identity)
+      val doc = conv.convert(OfflineConverter.blob(xml), com.histmersion.util.ocr.ConverterClient.Filename("paper.xml"), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)).fold(fail(_), identity)
       assert(doc.markdown.startsWith("# The first horse herders"), doc.markdown.take(200))
       assertEquals(doc.images, Nil)
       assertEquals(
-        conv.convert(OfflineConverter.blob(pdf), "paper.pdf", quality = false).map(_.markdown),
+        conv.convert(OfflineConverter.blob(pdf), com.histmersion.util.ocr.ConverterClient.Filename("paper.pdf"), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)).map(_.markdown),
         Right("from the sidecar")
       )
       assertEquals(
-        conv.convert(OfflineConverter.blob(other), "list.xml", quality = false).map(_.markdown),
+        conv.convert(OfflineConverter.blob(other), com.histmersion.util.ocr.ConverterClient.Filename("list.xml"), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)).map(_.markdown),
         Right("from the sidecar")
       )
       assertEquals(side.calls, List("paper.pdf", "list.xml"))

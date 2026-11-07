@@ -26,13 +26,13 @@ object FakeMediaHttp:
     Right(HttpAnswer(code, Map("content-type" -> "application/json") ++ headers, body.getBytes("UTF-8")))
 
   def bytes(b: Array[Byte], mime: String): Either[String, HttpAnswer] =
-    Right(HttpAnswer(200, Map("content-type" -> mime), b))
+    Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> mime), b))
 
   def fixture(name: String): String = scala.io.Source.fromResource(s"media/$name")(using scala.io.Codec.UTF8).mkString
 
   /** The default media config with no pause between requests. */
   lazy val cfg: MediaConfig =
-    AppConfig.load(org.ekrich.config.ConfigFactory.empty).media.copy(requestIntervalMs = 0)
+    AppConfig.load(org.ekrich.config.ConfigFactory.empty).media.copy(requestIntervalMs = com.histmersion.config.MediaConfig.RequestIntervalMs(0))
 
   /** A [[Polite]] over `http` whose sleeps are recorded, not slept, on a clock that sleeping advances. */
   def polite(

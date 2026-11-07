@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.Write
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.{LibraryState, LibraryStoreSuite}
@@ -21,11 +23,11 @@ class MediaSourceBoundarySuite extends munit.FunSuite:
     }
 
   test("source parser errors reach the media boundary unchanged"):
-    assertEquals(controllers().putFigures("../escape", Nil).left.map(_.message),
+    assertEquals(controllers().putFigures(com.histmersion.domain.library.Citekey("../escape"), Nil).left.map(_.message),
       Left("invalid citekey '../escape' — it may not contain '..'"))
 
   test("a valid absent source is not found"):
-    assertEquals(controllers().putFigures("missing2026_source", Nil).left.map(_.code), Left(Some(Write.CodeNotFound)))
+    assertEquals(controllers().putFigures(com.histmersion.domain.library.Citekey("missing2026_source"), Nil).left.map(_.code), Left(Some(Write.CodeNotFound)))
 
   test("lookup and missing-source errors retain the original input"):
     val raw = "  missing2026_source  "

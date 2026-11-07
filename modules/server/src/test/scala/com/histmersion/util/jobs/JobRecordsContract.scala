@@ -1,5 +1,7 @@
 package com.histmersion.util.jobs
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.config.AppConfig
 
@@ -15,29 +17,29 @@ abstract class JobRecordsContract extends com.histmersion.db.DbSuite:
   private def jtest(title: String)(body: JobRecords => Unit): Unit = test(title)(fresh().foreach(body))
 
   jtest("a job is created queued, claimed once, annotated while running, and done") { jobs =>
-    val j = jobs.create("ingest", Some("zq_job"), Some("a" * 64), Some(7))
+    val j = jobs.create(com.histmersion.util.jobs.Job.Kind("ingest"), Some(com.histmersion.domain.library.Citekey("zq_job")), Some("a" * 64), Some(com.histmersion.util.jobs.JobRow.AcquireItem(7)))
     assertEquals(
       (j.kind, j.status, j.citekey, j.sha256, j.acquireItem),
       ("ingest", "queued", Some("zq_job"), Some("a" * 64), Some(7))
     )
     assertEquals(jobs.get(j.id).map(_.status), Some("queued"))
-    jobs.progress(j.id, "not yet")
+    jobs.progress(j.id, com.histmersion.util.jobs.JobRow.Progress("not yet"))
     assertEquals(jobs.get(j.id).flatMap(_.progress), None, "a queued job takes no progress")
-    assertEquals(jobs.transition(j.id, JobState.Queued, JobState.Running, Some("converting")), Some(JobState.Running))
+    assertEquals(jobs.transition(j.id, JobState.Queued, JobState.Running, Some(com.histmersion.util.jobs.JobRow.Progress("converting"))), Some(JobState.Running))
     assertEquals(jobs.transition(j.id, JobState.Queued, JobState.Running), None, "a second claim is refused")
-    jobs.progress(j.id, "storing 1 asset(s)")
+    jobs.progress(j.id, com.histmersion.util.jobs.JobRow.Progress("storing 1 asset(s)"))
     assertEquals(jobs.get(j.id).flatMap(_.progress), Some("storing 1 asset(s)"))
-    assertEquals(jobs.transition(j.id, JobState.Running, JobState.Done, Some("2 page(s)")), Some(JobState.Done))
+    assertEquals(jobs.transition(j.id, JobState.Running, JobState.Done, Some(com.histmersion.util.jobs.JobRow.Progress("2 page(s)"))), Some(JobState.Done))
     val done: Option[JobInfo] = jobs.get(j.id)
     assertEquals(done.map(j => (j.status, j.progress, j.error)), Some(("done", Some("2 page(s)"), None)))
-    assertEquals(jobs.get("no-such-job"), None)
+    assertEquals(jobs.get(com.histmersion.util.jobs.Job.Id("no-such-job")), None)
   }
 
   jtest("a failed job keeps its error") { jobs =>
-    val j = jobs.create("reocr", None, None, None)
+    val j = jobs.create(com.histmersion.util.jobs.Job.Kind("reocr"), None, None, None)
     val _ = jobs.transition(j.id, JobState.Queued, JobState.Running)
     assertEquals(
-      jobs.transition(j.id, JobState.Running, JobState.Failed, error = Some("offline")),
+      jobs.transition(j.id, JobState.Running, JobState.Failed, error = Some(com.histmersion.util.jobs.JobRow.Error("offline"))),
       Some(JobState.Failed)
     )
     assertEquals(jobs.get(j.id).map(j => (j.status, j.error)), Some(("failed", Some("offline"))))

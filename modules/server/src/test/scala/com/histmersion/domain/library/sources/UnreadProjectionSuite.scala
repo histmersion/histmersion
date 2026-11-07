@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.{Caller, Referable, Referables}
 import com.histmersion.domain.personal.{PersonalControllers, PersonalState}
 import com.histmersion.domain.personal.bookmarks.BookmarkService
@@ -23,25 +25,25 @@ class UnreadProjectionSuite extends munit.FunSuite:
       WriteGate(),
       Clock.fixed(Instant.parse("2026-11-01T00:00:00Z"), ZoneOffset.UTC)
     )
-    controller.unread(Caller.Local, Some("source"), None, None).toOption.get.rows.head
+    controller.unread(Caller.Local, Some(com.histmersion.api.ItemKind.Wire("source")), None, None).toOption.get.rows.head
 
   test("every library status keeps its wire spelling in the personal projection"):
     List("foundational", "current", "contested", "superseded", "debunked", "retracted", "unassessed").foreach { spelling =>
-      val item = SourceReadable.row("reader2026_a", "Title", Nil, None, Some(spelling.toUpperCase(java.util.Locale.ROOT)), None, None)
+      val item = SourceReadable.row(com.histmersion.domain.library.Citekey("reader2026_a"), com.histmersion.domain.Title("Title"), Nil, None, Some(spelling.toUpperCase(java.util.Locale.ROOT)), None, None)
       assertEquals(render(item).status, Some(spelling))
     }
 
   test("missing and unknown statuses stay absent, without trimming or inventing a default"):
     List(None, Some("unknown"), Some(" current ")).foreach { raw =>
-      assertEquals(render(SourceReadable.row("reader2026_a", "Title", Nil, None, raw, None, None)).status, None)
+      assertEquals(render(SourceReadable.row(com.histmersion.domain.library.Citekey("reader2026_a"), com.histmersion.domain.Title("Title"), Nil, None, raw, None, None)).status, None)
     }
 
   test("author spelling, order, duplicates and whitespace survive the projection"):
     val authors = List("  Doe, Ann  ", "Li", "Li", "")
-    val shown = render(SourceReadable.row("reader2026_a", "Title", authors, None, None, None, None))
+    val shown = render(SourceReadable.row(com.histmersion.domain.library.Citekey("reader2026_a"), com.histmersion.domain.Title("Title"), authors, None, None, None, None))
     assertEquals(shown.authors, authors)
 
   test("identity, title, year and period survive the same conversion and rendering"):
-    val shown = render(SourceReadable.row("reader2026_a", "  A title  ", Nil, Some(2026), None, Some(-1200L), Some(-1100L)))
+    val shown = render(SourceReadable.row(com.histmersion.domain.library.Citekey("reader2026_a"), com.histmersion.domain.Title("  A title  "), Nil, Some(com.histmersion.Year(2026)), None, Some(com.histmersion.domain.library.sources.SourceReadable.RowStart(-1200L)), Some(com.histmersion.domain.library.sources.SourceReadable.RowEnd(-1100L))))
     assertEquals((shown.id.value: String, shown.title, shown.year, shown.periodStart, shown.periodEnd),
       ("reader2026_a", "  A title  ", Some(2026), Some(-1200L), Some(-1100L)))

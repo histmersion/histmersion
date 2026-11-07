@@ -105,7 +105,7 @@ class AiTrafficSuite extends munit.FunSuite:
       interceptors: List[AgentInterceptor[Identity]] = Nil
   ): LlmCall[A] =
     LlmCall[A](
-      "You are a careful research assistant. Answer with JSON only.",
+      com.histmersion.domain.automation.agents.LlmCall.System("You are a careful research assistant. Answer with JSON only."),
       "Classify the source.\n<source>Tin was essential for bronze.</source>",
       offered,
       schema,
@@ -212,9 +212,9 @@ class AiTrafficSuite extends munit.FunSuite:
             sb ++= s"trace: ${Trace.messages(res.history, Vector.empty, 4000).map(m => s"${m.role}${m.toolName.fold("")(t => s"($t)")}").mkString(" ")}\n"
     sb.result().replace(s"127.0.0.1:${up.port}", "127.0.0.1:<port>")
 
-  private val sonnet = ModelRef(ProviderKind.Anthropic, "claude-sonnet-4-5")
-  private val gpt = ModelRef(ProviderKind.OpenAI, "gpt-5")
-  private val qwen = ModelRef(ProviderKind.Local, "qwen3-coder")
+  private val sonnet = ModelRef(ProviderKind.Anthropic, com.histmersion.api.automation.Agents.ModelRef.Model("claude-sonnet-4-5"))
+  private val gpt = ModelRef(ProviderKind.OpenAI, com.histmersion.api.automation.Agents.ModelRef.Model("gpt-5"))
+  private val qwen = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("qwen3-coder"))
 
   private def transcript: String =
     val up = Upstream()
@@ -290,7 +290,7 @@ class AiTrafficSuite extends munit.FunSuite:
         scenario(
           up,
           "anthropic: a model without structured output",
-          ModelRef(ProviderKind.Anthropic, "claude-3-haiku-20240307"),
+          ModelRef(ProviderKind.Anthropic, com.histmersion.api.automation.Agents.ModelRef.Model("claude-3-haiku-20240307")),
           call(AnswerSchemas.probe, 2),
           Nil,
           base

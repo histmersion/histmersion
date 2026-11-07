@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -140,11 +142,11 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
       authors = (List("Tester")).map(com.histmersion.api.library.AuthorName.apply),
       year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
       status = Some(Source.Status.Current),
-      topics = List("backup"),
-      regions = List("Anatolia"),
-      tags = List("zz-backup-test"),
-      periodStart = Some(-1300),
-      periodEnd = Some(-1100),
+      topics = List(com.histmersion.api.library.Source.Topics("backup")),
+      regions = List(com.histmersion.api.library.Source.Regions("Anatolia")),
+      tags = List(com.histmersion.api.library.Source.Tags("zz-backup-test")),
+      periodStart = Some(com.histmersion.api.catalogue.Year(-1300)),
+      periodEnd = Some(com.histmersion.api.catalogue.Year(-1100)),
       summary = Some(s"fixture $ck"),
       findings = List(
         Finding.Input(
@@ -170,13 +172,13 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
 
   test("backup → download → drop a source → restore --force → search finds it again"):
     val h = ServerWiring(Deps(cfg, ds))
-    assert(h.library.sources.put("zz_backup_a", fixture("zz_backup_a", "The Kept One")).isRight)
-    assert(h.library.sources.put("zz_backup_b", fixture("zz_backup_b", "The Other One")).isRight)
-    val before = h.library.search.sources(Filter(tags = List("zz-backup-test"), limit = 10)).total
+    assert(h.library.sources.put(com.histmersion.domain.library.Citekey("zz_backup_a"), fixture("zz_backup_a", "The Kept One")).isRight)
+    assert(h.library.sources.put(com.histmersion.domain.library.Citekey("zz_backup_b"), fixture("zz_backup_b", "The Other One")).isRight)
+    val before = h.library.search.sources(Filter(tags = List(com.histmersion.api.library.Filter.Tags("zz-backup-test")), limit = com.histmersion.api.library.Filter.Limit(10))).total
     assertEquals((before.value: Int), 2)
 
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         // 1. POST /api/backup writes an archive and reports its size + checksum
@@ -225,8 +227,8 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
 
         // 6. lose a source
         sql("DELETE FROM sources WHERE citekey = 'zz_backup_a'")
-        assert(h.library.sources.get("zz_backup_a").isLeft)
-        assertEquals((h.library.search.sources(Filter(tags = List("zz-backup-test"), limit = 10)).total.value: Int), 1)
+        assert(h.library.sources.get(com.histmersion.domain.library.Citekey("zz_backup_a")).isLeft)
+        assertEquals((h.library.search.sources(Filter(tags = List(com.histmersion.api.library.Filter.Tags("zz-backup-test")), limit = com.histmersion.api.library.Filter.Limit(10))).total.value: Int), 1)
 
         // 7. restore it
         val (fs, fb) = post(s"$url/api/restore", s"""{"file":"$file","force":true}""")
@@ -239,16 +241,16 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
         com.histmersion.util.database.Db.evict(ds)
 
         // 8. …and search finds it again, findings and all
-        val after = h.library.search.sources(Filter(tags = List("zz-backup-test"), limit = 10))
+        val after = h.library.search.sources(Filter(tags = List(com.histmersion.api.library.Filter.Tags("zz-backup-test")), limit = com.histmersion.api.library.Filter.Limit(10)))
         assertEquals((after.total.value: Int), 2)
         assertEquals(after.hits.map(_.source.citekey).sorted, List("zz_backup_a", "zz_backup_b"))
-        val got = h.library.sources.get("zz_backup_a").toOption.get
+        val got = h.library.sources.get(com.histmersion.domain.library.Citekey("zz_backup_a")).toOption.get
         assertEquals(got.source.title, "The Kept One")
         assertEquals(got.findings.map(_.claim), List("zz_backup_a says something"))
         assertEquals(got.source.periodStart, Some(-1300L))
 
         // 9. the maintenance lock was released — writes work again
-        assert(h.library.sources.put("zz_backup_c", fixture("zz_backup_c", "After The Restore")).isRight)
+        assert(h.library.sources.put(com.histmersion.domain.library.Citekey("zz_backup_c"), fixture("zz_backup_c", "After The Restore")).isRight)
       finally b.stop()
     }
 
@@ -272,7 +274,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
   // A dump from another installation, whose roles are named differently, must still come back.
   test("a dump owned by and granted to roles this cluster no longer has restores cleanly"):
     val h = ServerWiring(Deps(cfg, ds))
-    assert(h.library.sources.put("zz_backup_roles", fixture("zz_backup_roles", "Under Old Names")).isRight)
+    assert(h.library.sources.put(com.histmersion.domain.library.Citekey("zz_backup_roles"), fixture("zz_backup_roles", "Under Old Names")).isRight)
     admin("DROP ROLE IF EXISTS zz_gone_owner"); admin("DROP ROLE IF EXISTS zz_gone_reader")
     admin("CREATE ROLE zz_gone_owner"); admin("CREATE ROLE zz_gone_reader")
     sql("ALTER TABLE articles OWNER TO zz_gone_owner")
@@ -283,7 +285,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     sql("DROP OWNED BY zz_gone_owner"); sql("DROP OWNED BY zz_gone_reader")
     admin("DROP ROLE zz_gone_owner"); admin("DROP ROLE zz_gone_reader")
 
-    val r = h.upkeep.restore(RestoreRequest(dump.file, force = true))
+    val r = h.upkeep.restore(RestoreRequest(dump.file, force = com.histmersion.api.backup.RestoreRequest.Force(true)))
     assert(r.isRight, r.toString)
     assert(!r.toOption.get.warnings.exists(_.contains("does not exist")), r.toString)
     assertEquals(
@@ -298,7 +300,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     val h = ServerWiring(Deps(cfg, ds))
     val dump = takeBackup(h)
     sql("TRUNCATE sources CASCADE")
-    assertEquals((h.library.search.sources(Filter(limit = 10)).total.value: Int), 0)
-    val r = h.upkeep.restore(RestoreRequest(dump.file, force = false))
+    assertEquals((h.library.search.sources(Filter(limit = com.histmersion.api.library.Filter.Limit(10))).total.value: Int), 0)
+    val r = h.upkeep.restore(RestoreRequest(dump.file, force = com.histmersion.api.backup.RestoreRequest.Force(false)))
     assert(r.isRight, r.toString)
     assert(r.toOption.get.sourcesAfter > 0, r.toString)

@@ -15,21 +15,21 @@ class HtmlEscapeSuite extends munit.FunSuite:
   private val payload = """<script>alert(1)</script>"""
 
   test("ArticleHtml.page escapes the title into <title> (pure)"):
-    val html = ArticleHtml.page(payload, "<p>body</p>", PageKind.Source)
+    val html = ArticleHtml.page(payload, com.histmersion.server.HtmlRender.Html("<p>body</p>"), PageKind.Source)
     // the page's own <head> script (the reader's theme) is not the payload
     assert(!html.contains(payload) && !html.contains("<script>alert"), html.take(300))
     assert(html.contains("&lt;script&gt;alert(1)&lt;/script&gt; · Histmersion"), html.take(300))
     assert(html.contains("<p>body</p>"), "the body is already HTML and stays as it is")
 
   test("a page title with quotes and ampersands survives escaping"):
-    val html = ArticleHtml.page("""Sea "Peoples" & Co""", "", PageKind.Article)
+    val html = ArticleHtml.page("""Sea "Peoples" & Co""", com.histmersion.server.HtmlRender.Html(""), PageKind.Article)
     assert(html.contains("Sea &quot;Peoples&quot; &amp; Co"), html.take(300))
 
   test("GET /source/<script> reflects nothing executable, and /api/junk is a JSON 404"):
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       def get(u: String): (Int, String) =
         val c = java.net.http.HttpClient.newHttpClient()

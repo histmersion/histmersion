@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.media.MediaMarkdown
@@ -129,16 +131,16 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
         ds,
         List(
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmc_site"), "Zqmcenae", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0)),
-            List(Place.Name("Zqmcenae"), Place.Name("Zqmcenai"))
+            Place(com.histmersion.api.catalogue.Place.Id("zqmc_site"), com.histmersion.api.catalogue.Place.Label("Zqmcenae"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0)),
+            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmcenae")), Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmcenai")))
           ),
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmc_thebai_a"), "Zqmc Thebai", com.histmersion.domain.catalogue.Place.Kind.Site, pt(141.0)),
-            List(Place.Name("Zqmc Thebai"))
+            Place(com.histmersion.api.catalogue.Place.Id("zqmc_thebai_a"), com.histmersion.api.catalogue.Place.Label("Zqmc Thebai"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(141.0)),
+            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmc Thebai")))
           ),
           Place.Input(
-            Place(com.histmersion.api.catalogue.Place.Id("zqmc_thebai_b"), "Zqmc Thebai", com.histmersion.domain.catalogue.Place.Kind.Site, pt(150.0)),
-            List(Place.Name("Zqmc Thebai"))
+            Place(com.histmersion.api.catalogue.Place.Id("zqmc_thebai_b"), com.histmersion.api.catalogue.Place.Label("Zqmc Thebai"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(150.0)),
+            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmc Thebai")))
           )
         )
       )
@@ -159,26 +161,26 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
       providerServer.stop(0)
 
   test("the places as a match reads them: every name's key, the findings' span, and what a name names on the map"):
-    val f = ImportFixtures.placeFacts(ds, List("zqmc_site"))("zqmc_site")
+    val f = ImportFixtures.placeFacts(ds, List(com.histmersion.domain.catalogue.Place.Id("zqmc_site")))(com.histmersion.domain.catalogue.Place.Id("zqmc_site"))
     assertEquals(f.keys, Set("zqmcenae", "zqmcenai"))
     assertEquals(f.period, Some((-1600L, -1100L)))
-    val named = ImportFixtures.mapPlacesNamed(ds, List("zqmcenai", "zqmc thebai", "zqmc nowhere"))
+    val named = ImportFixtures.mapPlacesNamed(ds, List(com.histmersion.domain.media.imports.ImportRepo.NameKey("zqmcenai"), com.histmersion.domain.media.imports.ImportRepo.NameKey("zqmc thebai"), com.histmersion.domain.media.imports.ImportRepo.NameKey("zqmc nowhere")))
     assertEquals(
       named.view.mapValues(_.map(_.id).sorted).toMap,
       Map("zqmcenai" -> List("zqmc_site"), "zqmc thebai" -> List("zqmc_thebai_a", "zqmc_thebai_b"))
     )
     val ts = ImportFixtures
-      .collectionTargets(ds, MediaProvider.ArtInstitute, places = true, None, None, 10_000, refresh = false)
+      .collectionTargets(ds, MediaProvider.ArtInstitute, places = com.histmersion.domain.media.imports.ImportRepo.Places(true), None, None, 10_000, refresh = com.histmersion.domain.media.imports.ImportRepo.Refresh(false))
       .fold(fail(_), identity)
     assert(Set("zqmc_site", "zqmc_thebai_a").subsetOf(ts.map(_.id).toSet), ts.toString)
     assert(
-      ImportFixtures.collectionTargets(ds, MediaProvider.ArtInstitute, places = true, None, Some("e"), 1, false).isLeft,
+      ImportFixtures.collectionTargets(ds, MediaProvider.ArtInstitute, places = com.histmersion.domain.media.imports.ImportRepo.Places(true), None, Some(com.histmersion.domain.catalogue.Event.Id("e")), com.histmersion.domain.media.imports.ImportRepo.Limit(1), com.histmersion.domain.media.imports.ImportRepo.Refresh(false)).isLeft,
       "a collection is about places"
     )
 
   test("dry run, a job, the link's reason and the check — through the server"):
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, MediaWiring.NoThumbnails, plugins = plugins).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = plugins).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (us, ub) = post(s"$url/api/media/import", """{"provider":"rijks","dryRun":true}""")

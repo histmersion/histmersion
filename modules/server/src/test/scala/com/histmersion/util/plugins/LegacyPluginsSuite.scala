@@ -1,5 +1,7 @@
 package com.histmersion.util.plugins
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import org.ekrich.config.ConfigFactory
 
 import scala.jdk.CollectionConverters.*
@@ -61,7 +63,7 @@ class LegacyPluginsSuite extends munit.FunSuite:
     )
 
   test("expand and the environment name"):
-    assertEquals(LegacyPlugins.expand("oa-index"), LegacyPlugins.OaIndex.into)
-    assertEquals(LegacyPlugins.expand("pmc"), List("pmc"))
-    assertEquals(LegacyPlugins.enabledEnv("oa-unpaywall"), "HISTMERSION_PLUGIN_OA_UNPAYWALL_ENABLED")
+    assertEquals(LegacyPlugins.expand(com.histmersion.util.plugins.Plugin.Id("oa-index")), LegacyPlugins.OaIndex.into)
+    assertEquals(LegacyPlugins.expand(com.histmersion.util.plugins.Plugin.Id("pmc")), List("pmc"))
+    assertEquals(LegacyPlugins.enabledEnv(com.histmersion.util.plugins.Plugin.Id("oa-unpaywall")), "HISTMERSION_PLUGIN_OA_UNPAYWALL_ENABLED")
     assertEquals(LegacyPlugins.ids, Set("oa-index"))

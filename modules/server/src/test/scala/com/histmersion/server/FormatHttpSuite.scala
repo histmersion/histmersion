@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import ox.supervised
@@ -70,7 +72,7 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -197,20 +199,20 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
           Place.Input(
             Place(
               com.histmersion.api.catalogue.Place.Id("zz_fmt_place_a"),
-              "Fmt A",
+              com.histmersion.api.catalogue.Place.Label("Fmt A"),
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[30.0,39.0]}""")
             ),
-            List(Place.Name("Fmt A"))
+            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Fmt A")))
           ),
           Place.Input(
             Place(
               com.histmersion.api.catalogue.Place.Id("zz_fmt_place_other"),
-              "Fmt Other",
+              com.histmersion.api.catalogue.Place.Label("Fmt Other"),
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[31.0,39.0]}""")
             ),
-            List(Place.Name("Fmt Other"))
+            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Fmt Other")))
           )
         )
       )
@@ -218,7 +220,7 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       assertEquals(is, 200, ib)
       val (rs, rb) = post(s"$url/api/places/zz_fmt_place_a/rename", """{"to":"zz_fmt_place_b"}""")
       assertEquals(rs, 200, rb)
-      assertEquals(decode[LabelRenamed](rb), LabelRenamed(Bundle.Kind.Place, "zz_fmt_place_a", "zz_fmt_place_b"))
+      assertEquals(decode[LabelRenamed](rb), LabelRenamed(Bundle.Kind.Place, com.histmersion.api.aliases.LabelRenamed.From("zz_fmt_place_a"), com.histmersion.api.aliases.LabelRenamed.To("zz_fmt_place_b")))
       val (gs, gb) = get(s"$url/api/places/zz_fmt_place_a")
       assertEquals(gs, 200, gb)
       assert(gb.contains("\"zz_fmt_place_b\""), gb)

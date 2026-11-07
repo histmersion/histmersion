@@ -1,5 +1,7 @@
 package com.histmersion.util.basemap
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.BBox
@@ -15,15 +17,15 @@ import com.histmersion.util.storage.Store
   */
 class BasemapFetchSuite extends munit.FunSuite:
 
-  private val noPause = BasemapFetch.Pace(0, 1L << 20, 0.05, _ => ())
-  private val aegean = BBox(22, 35, 29, 41)
+  private val noPause = BasemapFetch.Pace(com.histmersion.util.basemap.BasemapFetch.Pace.GapMs(0), 1L << 20, 0.05, _ => ())
+  private val aegean = BBox(com.histmersion.api.catalogue.Longitude(22), com.histmersion.api.catalogue.Latitude(35), com.histmersion.api.catalogue.Longitude(29), com.histmersion.api.catalogue.Latitude(41))
   private val dropRules = Basemap.parseDrop(AppConfig.load().basemap.vector.drop).fold(fail(_), identity)
   private val keep = BasemapService.mvtRules(dropRules)
 
   private def tmp(): Path = Files.createTempDirectory("basemap")
 
   test("tile ranges and counts follow Web Mercator"):
-    assertEquals(Basemap.tileRange(BBox(-180, -85, 180, 85), 2), ((0L, 3L), (0L, 3L)))
+    assertEquals(Basemap.tileRange(BBox(-18com.histmersion.api.basemap.Basemap.Zoom(0), com.histmersion.api.basemap.Basemap.Zoom(-85), 180, 85), 2), ((0L, 3L), (0L, 3L)))
     assertEquals(Basemap.tileRange(aegean, 6), ((35L, 37L), (23L, 25L)))
     assertEquals(Basemap.tileCount(aegean, 0, 2), 3L)
     assertEquals(BasemapFetch.wantedIds(aegean, 0, 1).toList, List(PmTiles.tileId(0, 0, 0), PmTiles.tileId(1, 1, 0)))
@@ -107,7 +109,7 @@ class BasemapFetchSuite extends munit.FunSuite:
         Mvt.layer(
           "roads",
           List(
-            (2, line, Map("kind" -> "highway", "ref" -> "A1")),
+            (com.histmersion.util.basemap.Mvt.GeomType(2), line, Map("kind" -> "highway", "ref" -> "A1")),
             (2, line, Map("kind" -> "minor_road")),
             (2, line, Map("kind" -> "rail"))
           )
@@ -148,10 +150,10 @@ class BasemapFetchSuite extends munit.FunSuite:
     assertEquals(Mvt.features(PmTiles.gunzip(whole).toOption.get).toOption.get.head._3("name:fr"), "Athènes")
 
   test("Content-Range is checked: a 200 to a range request is refused, a short answer named"):
-    assertEquals(RangeHttp.contentRange("bytes 0-99/1000"), Some((0L, 99L, Some(1000L))))
+    assertEquals(RangeHttp.contentRange("bytes 0-99/1000"), Some((com.histmersion.ByteOffset(0)L, 99L, Some(1000L))))
     assertEquals(RangeHttp.check("u", 206, Some("bytes 10-19/1000"), 10, 10), Right(1000L))
     assertEquals(RangeHttp.check("u", 206, Some("bytes 0-49/50"), 0, 16384), Right(50L))
-    assert(RangeHttp.check("u", 200, None, 0, 10).left.exists(_.contains("ignores range requests")))
+    assert(RangeHttp.check(com.histmersion.util.basemap.RangeHttp.Url("u"), 200, None, com.histmersion.ByteOffset(0), com.histmersion.ByteCount(10)).left.exists(_.contains("ignores range requests")))
     assert(RangeHttp.check("u", 206, Some("bytes 0-9/1000"), 10, 10).isLeft)
     assert(RangeHttp.check("u", 404, None, 0, 10).isLeft)
 

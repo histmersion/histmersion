@@ -57,20 +57,20 @@ class InteractiveLatencySuite extends munit.FunSuite:
   private val doc = Lpf.render(
     List(
       Place.Input(
-        Place(com.histmersion.api.catalogue.Place.Id("zzl_world"), "Zzl World", com.histmersion.domain.catalogue.Place.Kind.Region),
-        List(Place.Name("Zzl World"))
+        Place(com.histmersion.api.catalogue.Place.Id("zzl_world"), com.histmersion.api.catalogue.Place.Label("Zzl World"), com.histmersion.domain.catalogue.Place.Kind.Region),
+        List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzl World")))
       ),
       Place.Input(
         Place(
           com.histmersion.api.catalogue.Place.Id("zzl_land"),
-          "Zzl Land",
+          com.histmersion.api.catalogue.Place.Label("Zzl Land"),
           com.histmersion.domain.catalogue.Place.Kind.Region,
           Some(
             """{"type":"Polygon","coordinates":[[[60.0,-50.0],[70.0,-50.0],[70.0,-40.0],[60.0,-40.0],[60.0,-50.0]]]}"""
           )
         ),
-        List(Place.Name("Zzl Land"), Place.Name("Zzlandia", "xx")),
-        List(Place.Relation("zzl_land", "zzl_world"))
+        List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzl Land")), Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzlandia"), com.histmersion.api.catalogue.Place.Name.Lang("xx"))),
+        List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzl_land"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzl_world")))
       )
     )
   )
@@ -79,7 +79,7 @@ class InteractiveLatencySuite extends munit.FunSuite:
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}/api"
       try
         assertEquals(post(s"$url/places/import", doc)._1, 200)

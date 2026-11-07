@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.data.backup.BackupJobs
@@ -36,33 +38,33 @@ class BackupSuite extends munit.FunSuite:
 
   test("guard runs the operation when no restore is in progress"):
     val m = WriteGate()
-    assertEquals(m.guard("seed")(Right(42)), Right(42))
+    assertEquals(m.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("seed"))(Right(42)), Right(42))
     assertEquals(m.active, false)
 
   test("while a restore holds the lock, other writes are refused with the 503 code"):
     val m = WriteGate()
-    val seen = m.exclusively("restore") {
+    val seen = m.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore")) {
       assertEquals(m.active, true)
-      Right(m.guard("seed")(Right(42)))
+      Right(m.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("seed"))(Right(42)))
     }
     assertEquals(seen, Right(Left(Backup.maintenance("seed"))))
     assertEquals(seen.toOption.flatMap(_.left.toOption).flatMap(_.code), Some(Backup.CodeMaintenance))
 
   test("one server's restore does not freeze another server's writes (locks are per instance)"):
     val a, b = WriteGate()
-    assertEquals(a.exclusively("restore")(Right(b.guard("seed")(Right(42)))), Right(Right(42)))
+    assertEquals(a.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(Right(b.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("seed"))(Right(42)))), Right(Right(42)))
 
   test("a second concurrent restore is refused, and the lock is released afterwards"):
     val m = WriteGate()
     // the inner attempt cannot take the flag the outer one holds, so its Left is what comes back
-    val nested: Either[Api.Error, String] = m.exclusively("restore")(m.exclusively("restore")(Right("inner")))
+    val nested: Either[Api.Error, String] = m.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(m.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(Right("inner")))
     assertEquals(nested, Left(Backup.maintenance("restore")))
     assertEquals(m.active, false)
-    assertEquals(m.exclusively("restore")(Right("again")), Right("again"))
+    assertEquals(m.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(Right("again")), Right("again"))
 
   test("the lock is released even when the operation throws"):
     val m = WriteGate()
-    intercept[RuntimeException](m.exclusively("restore")(throw new RuntimeException("boom")))
+    intercept[RuntimeException](m.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(throw new RuntimeException("boom")))
     assertEquals(m.active, false)
 
   // ── listing and name resolution ──────────────────────────────────────────────────────────────
@@ -89,7 +91,7 @@ class BackupSuite extends munit.FunSuite:
     val svc = BackupFixtures.service(cfgWith(d))
     assertEquals(svc.archive(name).map(_.toPath), Right(d.toAbsolutePath.normalize.resolve(name)))
     // present on disk but never listed → refused
-    assertEquals(svc.resolve("histmersion-20260101T000000Z.dump").left.map(_.code), Left(Some(Write.CodeNotFound)))
+    assertEquals(svc.resolve(com.histmersion.util.data.backup.PreparedBackup.File("histmersion-20260101T000000Z.dump")).left.map(_.code), Left(Some(Write.CodeNotFound)))
   }
 
   tmp.test("resolve refuses to escape the backups directory") { d =>

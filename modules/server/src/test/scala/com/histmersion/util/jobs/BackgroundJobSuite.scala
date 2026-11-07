@@ -1,5 +1,7 @@
 package com.histmersion.util.jobs
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.util.jobs.BackgroundJob
@@ -20,13 +22,13 @@ class BackgroundJobSuite extends com.histmersion.db.DbSuite:
   import BackgroundJob.Outcome
 
   test("an outcome: a summary, and why it failed when it did"):
-    assertEquals(Outcome.of(Right("3 places")), Outcome(Some("3 places"), None))
-    assertEquals(Outcome.of(Left("HTTP 404")), Outcome(None, Some("HTTP 404")))
-    assert(Outcome.failed("x").failed && !Outcome.done("y").failed)
+    assertEquals(Outcome.of(Right(com.histmersion.util.jobs.BackgroundJob.Outcome.Summary("3 places"))), Outcome(Some(com.histmersion.util.jobs.BackgroundJob.Outcome.Summary("3 places")), None))
+    assertEquals(Outcome.of(Left(com.histmersion.util.jobs.BackgroundJob.Outcome.Error("HTTP 404"))), Outcome(None, Some(com.histmersion.util.jobs.BackgroundJob.Outcome.Error("HTTP 404"))))
+    assert(Outcome.failed(com.histmersion.util.jobs.BackgroundJob.Outcome.Error("x")).failed && !Outcome.done(com.histmersion.util.jobs.BackgroundJob.Outcome.Summary("y")).failed)
 
   test("a refusal names the running job; an exception names its class"):
     assertEquals(
-      BackgroundJob.busy("a vacuum job", Some("job 42")).message,
+      BackgroundJob.busy(com.histmersion.util.jobs.BackgroundJob.Work("a vacuum job"), Some(com.histmersion.util.jobs.BackgroundJob.Work("job 42"))).message,
       "a vacuum job is already running (job 42) — see `histmersion jobs`"
     )
     assertEquals(BackgroundJob.describe(InterruptedException()), "interrupted")
@@ -49,16 +51,16 @@ class BackgroundJobSuite extends com.histmersion.db.DbSuite:
     val slot = BackgroundJob.Slot()
     val go = CountDownLatch(1)
     val j = BackgroundJob
-      .start(ds, "zz-test", Some(JobDetail.Purpose(Some("a test"))), slot, "a test job") { (job, progress) =>
+      .start(ds, com.histmersion.util.jobs.Job.Kind("zz-test"), Some(JobDetail.Purpose(Some(com.histmersion.api.jobs.JobKinds.Subject("a test")))), slot, com.histmersion.util.jobs.BackgroundJob.Work("a test job")) { (job, progress) =>
         go.await()
         progress(s"working on ${job.kind}")
-        Outcome.done("all done")
+        Outcome.done(com.histmersion.util.jobs.BackgroundJob.Outcome.Summary("all done"))
       }
       .fold(e => fail(e.message), identity)
     assertEquals(j.detail.flatMap(JobDetail.Purpose.of), Some("a test"))
     assert(slot.isRunning, "the slot is held while the job runs")
     assertEquals(
-      BackgroundJob.start(ds, "zz-test", None, slot, "a test job")((_, _) => Outcome.done("no")).left.map(_.message),
+      BackgroundJob.start(ds, com.histmersion.util.jobs.Job.Kind("zz-test"), None, slot, com.histmersion.util.jobs.BackgroundJob.Work("a test job"))((_, _) => Outcome.done(com.histmersion.util.jobs.BackgroundJob.Outcome.Summary("no"))).left.map(_.message),
       Left(s"a test job is already running (job ${j.id}) — see `histmersion jobs`")
     )
     go.countDown()
@@ -70,12 +72,12 @@ class BackgroundJobSuite extends com.histmersion.db.DbSuite:
   dbTest("a failure keeps its summary and its reason; an exception fails the job with its message"):
     val slot = BackgroundJob.Slot()
     val f = BackgroundJob
-      .start(ds, "zz-test", None, slot, "a test job")((_, _) => Outcome(Some("half"), Some("disk full")))
+      .start(ds, com.histmersion.util.jobs.Job.Kind("zz-test"), None, slot, com.histmersion.util.jobs.BackgroundJob.Work("a test job"))((_, _) => Outcome(Some(com.histmersion.util.jobs.BackgroundJob.Outcome.Summary("half")), Some(com.histmersion.util.jobs.BackgroundJob.Outcome.Error("disk full"))))
       .fold(e => fail(e.message), identity)
     assertEquals(await(f.id).error, Some("disk full"))
     Thread.sleep(50)
     val x = BackgroundJob
-      .start(ds, "zz-test", None, slot, "a test job")((_, _) => throw IllegalStateException("boom"))
+      .start(ds, com.histmersion.util.jobs.Job.Kind("zz-test"), None, slot, com.histmersion.util.jobs.BackgroundJob.Work("a test job"))((_, _) => throw IllegalStateException("boom"))
       .fold(e => fail(e.message), identity)
     val failed = await(x.id)
     assertEquals((failed.status, failed.error), ("failed", Some("IllegalStateException: boom")))

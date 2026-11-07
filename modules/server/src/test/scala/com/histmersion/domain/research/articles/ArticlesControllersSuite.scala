@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.articles
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Write
@@ -48,7 +50,7 @@ class ArticlesControllersSuite extends munit.FunSuite:
   /** Not reached by these tests: the list is a mechanism over the library's filter SQL. */
   private val noSearch = new ArticleSearch:
     def list(f: Filter, s: PlaceScope, k: Option[String], t: Option[String], l: Int, o: Int): Article.List =
-      Article.List.of(0, Nil, 0)
+      Article.List.of(com.histmersion.api.research.Article.List.Total(0), Nil, com.histmersion.api.personal.UnreadPage.Offset(0))
 
   private val formatting = new SourceFormatting:
     def issues(summary: Option[String], notes: Option[String]): List[FormatIssue] = Nil
@@ -111,64 +113,64 @@ class ArticlesControllersSuite extends munit.FunSuite:
     c
 
   private val put = Article.Put(
-    title = "Walls",
-    kind = "concept",
-    body = "## Overview\n\nThe walls of Zrtown.\n",
-    filter = Some(Article.Filter(tags = List("zr-oracle")))
+    title = com.histmersion.api.research.Article.Title("Walls"),
+    kind = com.histmersion.api.research.Article.Kind.Wire("concept"),
+    body = com.histmersion.api.research.Article.Body("## Overview\n\nThe walls of Zrtown.\n"),
+    filter = Some(Article.Filter(tags = List(com.histmersion.api.library.Filter.Tags("zr-oracle"))))
   )
 
   test("a slug that is not one is refused; a strict write with a formatting error too, a lenient one carries it"):
     val c = controllers()
-    assertEquals(c.put("Not A Slug", put).left.map(_.code), Left(Some(Write.CodeInvalid)))
+    assertEquals(c.put(com.histmersion.domain.research.Slug("Not A Slug"), put).left.map(_.code), Left(Some(Write.CodeInvalid)))
     val messy = put.modify(_.body).setTo("<div> never closed\n")
-    assertEquals(c.put("zr_walls", messy, strict = true).left.map(_.code), Left(Some(Write.CodeInvalid)))
-    assertEquals(c.store.exists("zr_walls"), false)
-    val written = c.put("zr_walls", messy).toOption.get
+    assertEquals(c.put(com.histmersion.domain.research.Slug("zr_walls"), messy, strict = com.histmersion.domain.research.Article.StrictMode(true)).left.map(_.code), Left(Some(Write.CodeInvalid)))
+    assertEquals(c.store.exists(com.histmersion.domain.research.Slug("zr_walls")), false)
+    val written = c.put(com.histmersion.domain.research.Slug("zr_walls"), messy).toOption.get
     assert(written.formatting.exists(_.severity == FormatSeverity.Error), written.formatting)
 
   test("an old slug is followed by every read and write; the coverage of a filter that returns no source"):
     val c = controllers()
-    val _ = c.put("zr_walls", put)
-    val _ = c.put("zr_index", put.modify(_.title).setTo("Index").modify(_.kind).setTo("index").modify(_.body).setTo("- [[zr_walls]]\n").modify(_.filter).setTo(None))
-    assertEquals(c.rename("zr_walls", LabelRename("zr_city_walls")).map(_.rewritten), Right(List("zr_index")))
-    assertEquals(c.get("ZR_WALLS").map(_.article.slug), Right("zr_city_walls"))
+    val _ = c.put(com.histmersion.domain.research.Slug("zr_walls"), put)
+    val _ = c.put(com.histmersion.domain.research.Slug("zr_index"), put.modify(_.title).setTo("Index").modify(_.kind).setTo("index").modify(_.body).setTo("- [[zr_walls]]\n").modify(_.filter).setTo(None))
+    assertEquals(c.rename(com.histmersion.domain.research.Slug("zr_walls"), LabelRename(com.histmersion.api.aliases.LabelRename.To("zr_city_walls"))).map(_.rewritten), Right(List("zr_index")))
+    assertEquals(c.get(com.histmersion.domain.research.Slug("ZR_WALLS")).map(_.article.slug), Right("zr_city_walls"))
     assertEquals(
-      c.patch("zr_walls", Article.Patch(title = Some("City walls"))).map(_.article.title),
+      c.patch(com.histmersion.domain.research.Slug("zr_walls"), Article.Patch(title = Some(com.histmersion.api.research.Article.Title("City walls")))).map(_.article.title),
       Right("City walls")
     )
-    assertEquals(c.versions("zr_walls").map(_.size), Right(1))
-    val coverage = c.coverage("zr_walls").toOption.get
+    assertEquals(c.versions(com.histmersion.domain.research.Slug("zr_walls")).map(_.size), Right(1))
+    val coverage = c.coverage(com.histmersion.domain.research.Slug("zr_walls")).toOption.get
     assertEquals((coverage.slug, coverage.total, coverage.cited), ("zr_city_walls", 0, Nil))
-    assertEquals(c.coverage("zr_index").left.map(_.code), Left(Some(Write.CodeNotFound)))
-    assertEquals(c.versions("zr_nothing").left.map(_.code), Left(Some(Write.CodeNotFound)))
-    assertEquals(c.review("zr_walls").map(_.slug), Right("zr_city_walls"))
-    assert(c.exportNote("zr_walls").toOption.get.contains("slug: zr_city_walls"))
-    assertEquals(c.delete("zr_walls").map(_.slug), Right("zr_city_walls"))
-    assertEquals(c.get("zr_walls").left.map(_.code), Left(Some(Write.CodeNotFound)))
+    assertEquals(c.coverage(com.histmersion.domain.research.Slug("zr_index")).left.map(_.code), Left(Some(Write.CodeNotFound)))
+    assertEquals(c.versions(com.histmersion.domain.research.Slug("zr_nothing")).left.map(_.code), Left(Some(Write.CodeNotFound)))
+    assertEquals(c.review(com.histmersion.domain.research.Slug("zr_walls")).map(_.slug), Right("zr_city_walls"))
+    assert(c.exportNote(com.histmersion.domain.research.Slug("zr_walls")).toOption.get.contains("slug: zr_city_walls"))
+    assertEquals(c.delete(com.histmersion.domain.research.Slug("zr_walls")).map(_.slug), Right("zr_city_walls"))
+    assertEquals(c.get(com.histmersion.domain.research.Slug("zr_walls")).left.map(_.code), Left(Some(Write.CodeNotFound)))
 
   test("a note: stale when the row is newer, refused under an old slug, imported fresh"):
     val c = controllers()
-    val _ = c.put("zr_walls", put)
-    val note = c.exportNote("zr_walls").toOption.get
-    assertEquals(c.importNote(Article.Import(note, mtime = Some(1000L))).map(_.skipped), Right(List("zr_walls")))
-    assertEquals(c.importNote(Article.Import(note, mtime = Some(1000L), force = true)).map(_.imported), Right(1))
-    val _ = c.rename("zr_walls", LabelRename("zr_city_walls"))
+    val _ = c.put(com.histmersion.domain.research.Slug("zr_walls"), put)
+    val note = c.exportNote(com.histmersion.domain.research.Slug("zr_walls")).toOption.get
+    assertEquals(c.importNote(Article.Import(note, mtime = Some(com.histmersion.api.research.Article.Import.Mtime(1000L)))).map(_.skipped), Right(List("zr_walls")))
+    assertEquals(c.importNote(Article.Import(note, mtime = Some(com.histmersion.api.research.Article.Import.Mtime(1000L)), force = com.histmersion.api.research.Article.Import.Force(true))).map(_.imported), Right(1))
+    val _ = c.rename(com.histmersion.domain.research.Slug("zr_walls"), LabelRename(com.histmersion.api.aliases.LabelRename.To("zr_city_walls")))
     assertEquals(c.importNote(Article.Import(note)).left.map(_.code), Left(Some(Write.CodeInvalid)))
-    assertEquals(c.importNote(Article.Import("no frontmatter")).isLeft, true)
+    assertEquals(c.importNote(Article.Import(com.histmersion.api.research.Article.Import.Text("no frontmatter"))).isLeft, true)
 
   test("a held lock refuses every write"):
     val gate = WriteGate()
     val c = controllers(gate)
-    val _ = c.put("zr_walls", put)
-    val held = gate.exclusively("restore")(
+    val _ = c.put(com.histmersion.domain.research.Slug("zr_walls"), put)
+    val held = gate.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(
       Right(
         List(
-          c.put("zr_harbour", put).isLeft,
-          c.patch("zr_walls", Article.Patch(title = Some("x"))).isLeft,
-          c.rename("zr_walls", LabelRename("zr_city_walls")).isLeft,
-          c.delete("zr_walls").isLeft,
-          c.fix("zr_walls").isLeft,
-          c.importNote(Article.Import("---\nslug: zr_n\ntitle: N\nkind: concept\n---\n")).isLeft
+          c.put(com.histmersion.domain.research.Slug("zr_harbour"), put).isLeft,
+          c.patch(com.histmersion.domain.research.Slug("zr_walls"), Article.Patch(title = Some(com.histmersion.api.research.Article.Title("x")))).isLeft,
+          c.rename(com.histmersion.domain.research.Slug("zr_walls"), LabelRename(com.histmersion.api.aliases.LabelRename.To("zr_city_walls"))).isLeft,
+          c.delete(com.histmersion.domain.research.Slug("zr_walls")).isLeft,
+          c.fix(com.histmersion.domain.research.Slug("zr_walls")).isLeft,
+          c.importNote(Article.Import(com.histmersion.api.research.Article.Import.Text("---\nslug: zr_n\ntitle: N\nkind: concept\n---\n"))).isLeft
         )
       )
     )

@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.identifiers.Identifiers
@@ -35,11 +37,11 @@ class UpstreamRecordsSuite extends munit.FunSuite:
     val ups = com.histmersion.domain.library.acquisition.DiscoveryClient
       .notices(AcquireParse.crossrefUpdates(fixture("crossref_retracted.json")))
     assertEquals(
-      api.library.Acquire.verdict(Nil, ups, false, Some(5), Some(2019), 50, 3, 2018),
+      api.library.Acquire.verdict(Nil, ups, false, Some(com.histmersion.api.library.Acquire.CitedByCount(5)), Some(com.histmersion.api.catalogue.Year(2019)), com.histmersion.api.library.Acquire.CitationThreshold(50), com.histmersion.api.library.Acquire.CitationThreshold(3), com.histmersion.api.catalogue.Year(2018)),
       api.library.Acquire.Verdicts.Retracted
     )
     val rows = AcquireParse.s2Citations(fixture("s2_citations.json")).map(_.wire)
-    val kinds = rows.map(r => api.library.Acquire.classify(r.intents, r.contexts, r.isInfluential, r.year, Some(2015)))
+    val kinds = rows.map(r => api.library.Acquire.classify(r.intents, r.contexts, r.isInfluential, r.year, Some(com.histmersion.api.catalogue.Year(2015))))
     assert(kinds.forall(api.library.Acquire.EdgeKinds.all.contains), kinds)
 
   test("the upstreams' DOI and arXiv rules are the wire's"):

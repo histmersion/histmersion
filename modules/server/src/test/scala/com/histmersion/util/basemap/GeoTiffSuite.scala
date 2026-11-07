@@ -28,14 +28,14 @@ class GeoTiffSuite extends munit.FunSuite:
 
   test("the window of a box, half-open on the east and south; none for a box that only touches the grid"):
     val g = parsed(tiff(8, 6, west = 10, north = 50, step = 0.5)).fold(e => fail(e), identity)
-    assertEquals(g.window(BBox(10.6, 48.1, 11.4, 49.9)), Some(GridWindow(0, 3, 1, 2)))
-    assertEquals(g.window(BBox(0, 0, 100, 80)), Some(GridWindow(0, 5, 0, 7)))
+    assertEquals(g.window(BBox(10.6, 48.1, 11.4, 49.9)), Some(GridWindow(com.histmersion.util.basemap.GridWindow.First(0), com.histmersion.util.basemap.GridWindow.Last(3), com.histmersion.util.basemap.GridWindow.FirstCol(1), com.histmersion.util.basemap.GridWindow.LastCol(2))))
+    assertEquals(g.window(BBox(0, 0, 100, 80)), Some(GridWindow(com.histmersion.util.basemap.GridWindow.First(0), com.histmersion.util.basemap.GridWindow.Last(5), com.histmersion.util.basemap.GridWindow.FirstCol(0), com.histmersion.util.basemap.GridWindow.LastCol(7))))
     assertEquals(g.window(BBox(14, 40, 20, 45)), None)
     assertEquals(g.window(BBox(0, 50, 20, 60)), None)
 
   test("row runs: whole rows that follow each other share a request, at most the size asked"):
     val g = parsed(tiff(8, 6, west = 10, north = 50, step = 0.5)).fold(e => fail(e), identity)
-    val w = GridWindow(1, 5, 2, 3)
+    val w = GridWindow(com.histmersion.util.basemap.GridWindow.First(1), com.histmersion.util.basemap.GridWindow.Last(5), com.histmersion.util.basemap.GridWindow.FirstCol(2), com.histmersion.util.basemap.GridWindow.LastCol(3))
     assertEquals(
       g.runs(w, 1 << 20).map(r => (r.firstRow, r.rows, r.offset.value, r.length)),
       List((1, 5, DataAt + 16L, 80L))

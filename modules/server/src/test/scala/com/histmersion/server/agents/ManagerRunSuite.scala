@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.agents.TestRuns
@@ -48,7 +50,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private val Tag = "zzmgr"
   private val Ck = "zzagent2019_tin"
-  private val Model = ModelRef(ProviderKind.Local, "scripted")
+  private val Model = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
   private val t0 = Instant.parse("2026-10-15T12:00:00Z")
 
@@ -123,7 +125,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         .isRight
     )
     slugs.foreach(s =>
-      assert(h.research.articles.put(s, Article.Put(s"Tin $s", "concept", Body, tags = List(Tag))).isRight)
+      assert(h.research.articles.put(s, Article.Put(s"Tin $s", com.histmersion.api.research.Article.Kind.Wire("concept"), Body, tags = List(Tag))).isRight)
     )
 
   /** The review manager, active, narrowed to this suite's articles. */
@@ -133,15 +135,15 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       .update(ReviewId, ManagerUpdate(Some(cfg.copy(includeTags = Some(List(Tag))))))
       .fold(e => fail(e.message), identity)
     assertEquals(m.state, "paused", "created paused")
-    a.managing.action(ReviewId, "resume", None).fold(e => fail(e.message), identity)
+    a.managing.action(ReviewId, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None).fold(e => fail(e.message), identity)
 
   private def finding(id: String, r: Reviewer, kind: String = "synth") =
-    Finding(id, r, Severity.Major, kind, s"where $id", s"quote $id", s"problem $id", "fix")
+    Finding(id, r, Severity.Major, kind, s"where $id", s"quote $id", s"problem $id", com.histmersion.domain.ReviewArticle.Finding.Fix("fix"))
 
   /** Settle a manager's run by hand: done (with a ledger of `majors` open MAJORs raised by it), or another state. */
   private def settle(run: String, slug: String, majors: List[Finding], status: RunState = RunState.Done): Unit =
     assert(TestRuns.transition(ds, run, RunState.Queued, RunState.Running).isDefined)
-    val l = absorb(Ledger(slug), majors, run, 1)._1
+    val l = absorb(Ledger(slug), majors, run, com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
     ReviewLedgerFixtures.put(ds, l)
     assert(
       TestRuns
@@ -150,15 +152,15 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
 
   private def item(slug: String): ManagerItem = connect(ds)(ManagerRepo.itemFor(ReviewId, ArticleReview, slug)).get
-  private def events: List[ManagerEvent] = connect(ds)(ManagerRepo.events(ReviewId, None, 200)).reverse
+  private def events: List[ManagerEvent] = connect(ds)(ManagerRepo.events(ReviewId, None, com.histmersion.PageSize(200))).reverse
 
   test("selection, dispatch and the stop rules over runs: 3 runs to converge; max runs, no progress, churn"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_m1", "zzagent_m2")
-    activeReview(a, ManagerConfig(maxRuns = Some(2), maxRunsPerArticle = Some(3)))
+    activeReview(a, ManagerConfig(maxRuns = Some(com.histmersion.api.automation.Managers.ManagerConfig.MaxRuns(2)), maxRunsPerArticle = Some(com.histmersion.api.automation.Managers.ManagerConfig.MaxRunsPerArticle(3))))
     // m1 has open MAJORs (selected first), m2 was never reviewed
     ReviewLedgerFixtures.put(
       ds,
-      absorb(Ledger("zzagent_m1"), List(finding("R1", Reviewer.Rules), finding("S1", Reviewer.Skeptic)), "old", 1)._1
+      absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("zzagent_m1")), List(finding("R1", Reviewer.Rules), finding("S1", Reviewer.Skeptic)), com.histmersion.domain.automation.Run.Id("old"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
     )
     val out1 = a.managers.tick(t0)
     assert(out1.exists(_.contains("selected 2")), out1)
@@ -167,7 +169,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(
       (i1.status, i2.status),
       ("active", "active"),
-      s"$out1 ${events.map(_.text)} ${connect(ds)(AgentRepo.list(None, 50)).filter(r => r.status == "queued" || r.status == "running").map(r => (r.target, r.pipeline, r.status))}"
+      s"$out1 ${events.map(_.text)} ${connect(ds)(AgentRepo.list(None, com.histmersion.PageSize(50))).filter(r => r.status == "queued" || r.status == "running").map(r => (r.target, r.pipeline, r.status))}"
     )
     val r1 = connect(ds)(AgentRepo.get(i1.runId.get)).get
     assertEquals(
@@ -222,7 +224,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.managers.tick(t0.plusSeconds(105 * 60))
     assertEquals(events.count(e => e.kind == Feed.Stopped && e.itemId.contains(stopped.id)), 1)
     // re-open in one click: pending again, its runs counted from zero
-    val re = a.managing.patchItem(ReviewId, "zzagent_m2", ItemPatch("reopen")).fold(e => fail(e.message), identity)
+    val re = a.managing.patchItem(ReviewId, com.histmersion.api.automation.Managers.ManagerItem.Ref("zzagent_m2"), ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("reopen"))).fold(e => fail(e.message), identity)
     assertEquals((re.status, re.attempts, re.state.reopened), ("pending", 0, 1))
 
   test("omission churn no longer stops an article whose open critique pairs go down (§6.8)"):
@@ -233,7 +235,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         h.library.sources
           .put(
             ck,
-            Source.Put(title = com.histmersion.api.library.Title(s"Against $ck"), year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply), body = Some("The tin was not from Anatolia."))
+            Source.Put(title = com.histmersion.api.library.Title(s"Against $ck"), year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply), body = Some(com.histmersion.api.library.Source.OcrMarkdown("The tin was not from Anatolia.")))
           )
           .isRight
       )
@@ -248,8 +250,8 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
           .isRight
       )
     }
-    activeReview(a, ManagerConfig(maxRunsPerArticle = Some(4), noProgressRuns = Some(2), cooldownMinutes = Some(0)))
-    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_m5")).fold(e => fail(e.message), identity)
+    activeReview(a, ManagerConfig(maxRunsPerArticle = Some(com.histmersion.api.automation.Managers.ManagerConfig.MaxRunsPerArticle(4)), noProgressRuns = Some(com.histmersion.api.automation.Managers.ManagerConfig.NoProgressRuns(2)), cooldownMinutes = Some(com.histmersion.api.automation.Managers.ManagerConfig.CooldownMinutes(0))))
+    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_m5"))).fold(e => fail(e.message), identity)
     a.managers.tick(t0)
     assertEquals(item("zzagent_m5").state.pairsBefore, Some(2))
     val sk = finding("S1", Reviewer.Skeptic, "missing-critique")
@@ -259,8 +261,8 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       s"Tin reached the Aegean by sea [[$Ck]].",
       s"Tin reached the Aegean by sea [[$Ck]], which [[zzagent2020_critic]] disputes."
     )
-    assert(h.research.articles.patch("zzagent_m5", Article.Patch(body = Some(addressed))).isRight)
-    assertEquals(h.research.articles.openCritiques("zzagent_m5"), Some(1))
+    assert(h.research.articles.patch(com.histmersion.domain.research.Slug("zzagent_m5"), Article.Patch(body = Some(addressed))).isRight)
+    assertEquals(h.research.articles.openCritiques(com.histmersion.domain.research.Slug("zzagent_m5")), Some(1))
     // (no cooldown: the tick that evaluates a run dispatches the next)
     a.managers.tick(t0)
     val run2 = item("zzagent_m5")
@@ -283,14 +285,14 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   test("max runs per article and no progress stop with a task; a failed run backs off, the third stops"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_m3", "zzagent_m4")
-    activeReview(a, ManagerConfig(maxRunsPerArticle = Some(2), noProgressRuns = Some(1), cooldownMinutes = Some(0)))
-    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_m3")).fold(e => fail(e.message), identity)
-    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_m4")).fold(e => fail(e.message), identity)
+    activeReview(a, ManagerConfig(maxRunsPerArticle = Some(com.histmersion.api.automation.Managers.ManagerConfig.MaxRunsPerArticle(2)), noProgressRuns = Some(com.histmersion.api.automation.Managers.ManagerConfig.NoProgressRuns(1)), cooldownMinutes = Some(com.histmersion.api.automation.Managers.ManagerConfig.CooldownMinutes(0))))
+    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_m3"))).fold(e => fail(e.message), identity)
+    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_m4"))).fold(e => fail(e.message), identity)
     a.managers.tick(t0)
     // m3: no progress in one run (2 before, 2 after)
     ReviewLedgerFixtures.put(
       ds,
-      absorb(Ledger("zzagent_m3"), List(finding("R1", Reviewer.Rules), finding("R2", Reviewer.Rules)), "x", 1)._1
+      absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("zzagent_m3")), List(finding("R1", Reviewer.Rules), finding("R2", Reviewer.Rules)), com.histmersion.domain.automation.Run.Id("x"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
     )
     val m3 = item("zzagent_m3")
     connect(ds)(sql"UPDATE manager_items SET state = '{\"before\":2}'::jsonb WHERE id = ${m3.id}".update.run())
@@ -315,9 +317,9 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("capacity: the global cap counts a person's runs; maxRuns; another writer on the article waits"):
     val (a, h) = handlers(PanelClient(Model), baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.maxConcurrentRuns).setTo(2)));
     seed(h, "zzagent_c1", "zzagent_c2", "zzagent_c3")
-    activeReview(a, ManagerConfig(maxRuns = Some(2)))
+    activeReview(a, ManagerConfig(maxRuns = Some(com.histmersion.api.automation.Managers.ManagerConfig.MaxRuns(2))))
     // a person's run on c1 takes one of the two places and holds c1
-    val mine = a.startRun(RunRequest("review-article", "zzagent_c1")).fold(e => fail(e.message), identity)
+    val mine = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), com.histmersion.api.automation.Agents.RunRequest.Target("zzagent_c1"))).fold(e => fail(e.message), identity)
     List("zzagent_c1", "zzagent_c2", "zzagent_c3").foreach(s =>
       a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, s))
     )
@@ -341,24 +343,24 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("pause stops new runs; pause with runs pauses them and resume brings them back; stop cancels"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_p1", "zzagent_p2")
     activeReview(a)
-    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_p1"))
-    a.managing.action(ReviewId, "pause", None)
+    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_p1")))
+    a.managing.action(ReviewId, com.histmersion.domain.automation.managers.ManagersControllers.Action("pause"), None)
     a.managers.tick(t0)
     assertEquals(item("zzagent_p1").status, "pending", "a paused manager starts nothing")
-    a.managing.action(ReviewId, "resume", None)
+    a.managing.action(ReviewId, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None)
     a.managers.tick(t0)
     val run = item("zzagent_p1").runId.get
     assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "queued")
-    val p = a.managing.action(ReviewId, "pause", Some(true)).fold(e => fail(e.message), identity)
+    val p = a.managing.action(ReviewId, com.histmersion.domain.automation.managers.ManagersControllers.Action("pause"), Some(com.histmersion.api.automation.Managers.ManagerInfo.PauseRuns(true))).fold(e => fail(e.message), identity)
     assert(p.pauseRuns)
     assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "paused")
     // pausing it is not a settle: the item stays active
     a.managers.tick(t0)
     assertEquals(item("zzagent_p1").status, "active")
-    a.managing.action(ReviewId, "resume", None)
+    a.managing.action(ReviewId, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None)
     assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "queued")
-    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_p2"))
-    val s = a.managing.action(ReviewId, "stop", None).fold(e => fail(e.message), identity)
+    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_p2")))
+    val s = a.managing.action(ReviewId, com.histmersion.domain.automation.managers.ManagersControllers.Action("stop"), None).fold(e => fail(e.message), identity)
     assertEquals(s.state, "stopped")
     assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "cancelled")
     assertEquals(List("zzagent_p1", "zzagent_p2").map(item(_).status), List("cancelled", "cancelled"))
@@ -366,8 +368,8 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   test("starved: a role with no usable model starts nothing and says so once; freed, it starts"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_s1")
-    activeReview(a, ManagerConfig(models = Some(List(ModelOverride("skeptic", "local:unpriced")))))
-    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_s1"))
+    activeReview(a, ManagerConfig(models = Some(List(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("skeptic"), com.histmersion.api.automation.Agents.ModelOverride.Model("local:unpriced"))))))
+    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_s1")))
     a.managers.tick(t0); a.managers.tick(t0)
     assertEquals(item("zzagent_s1").status, "pending")
     val m = connect(ds)(ManagerRepo.get(ReviewId)).get
@@ -380,17 +382,17 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("holds: until a date, until a source exists; released by the tick"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_h1", "zzagent_h2")
     activeReview(a)
-    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_h1"))
-    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_h2"))
+    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_h1")))
+    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_h2")))
     a.managing
-      .patchItem(ReviewId, "zzagent_h1", ItemPatch("hold", until = Some("2026-10-16")))
+      .patchItem(ReviewId, com.histmersion.api.automation.Managers.ManagerItem.Ref("zzagent_h1"), ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("hold"), until = Some(com.histmersion.api.automation.Managers.ItemPatch.Until("2026-10-16"))))
       .fold(e => fail(e.message), identity)
     a.managing
-      .patchItem(ReviewId, "zzagent_h2", ItemPatch("hold", untilSource = Some("zzagent2030_new")))
+      .patchItem(ReviewId, com.histmersion.api.automation.Managers.ManagerItem.Ref("zzagent_h2"), ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("hold"), untilSource = Some(com.histmersion.api.automation.Managers.ItemPatch.UntilSource("zzagent2030_new"))))
       .fold(e => fail(e.message), identity)
     a.managers.tick(t0)
     assertEquals(List("zzagent_h1", "zzagent_h2").map(item(_).status), List("held", "held"))
-    assert(h.library.sources.put("zzagent2030_new", Source.Put(title = com.histmersion.api.library.Title("New"), year = (Some(2030)).map(com.histmersion.api.catalogue.Year.apply))).isRight)
+    assert(h.library.sources.put(com.histmersion.domain.library.Citekey("zzagent2030_new"), Source.Put(title = com.histmersion.api.library.Title("New"), year = (Some(2030)).map(com.histmersion.api.catalogue.Year.apply))).isRight)
     a.managers.tick(t0)
     assertEquals(item("zzagent_h2").status, "active")
     a.managers.tick(Instant.parse("2026-10-16T00:00:01Z"))
@@ -400,7 +402,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val c = PanelClient(Model)
     val (a, h) = handlers(c); seed(h, "zzagent_k1")
     activeReview(a)
-    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_k1"))
+    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_k1")))
     a.managers.tick(t0) // committed and submitted to an engine that never started: as if the process died
     val run = item("zzagent_k1").runId.get
     // a fresh process: its engine re-enqueues the queued run, which passes at once
@@ -423,7 +425,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("crash: a manager's run running at boot is paused interrupted and resumes by itself"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_b1")
     activeReview(a)
-    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_b1"))
+    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_b1")))
     a.managers.tick(t0)
     val run = item("zzagent_b1").runId.get
     assert(TestRuns.transition(ds, run, RunState.Queued, RunState.Running).isDefined)
@@ -440,7 +442,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     "restart: runs interrupted or paused at boot hold their places; maxRuns 2 never has more than 2 running (#1803)"
   ):
     val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_r1", "zzagent_r2", "zzagent_r3", "zzagent_r4")
-    activeReview(a, ManagerConfig(maxRuns = Some(2), cooldownMinutes = Some(0)))
+    activeReview(a, ManagerConfig(maxRuns = Some(com.histmersion.api.automation.Managers.ManagerConfig.MaxRuns(2)), cooldownMinutes = Some(com.histmersion.api.automation.Managers.ManagerConfig.CooldownMinutes(0))))
     List("zzagent_r1", "zzagent_r2").foreach(s => a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, s)))
     a.managers.tick(t0)
     val (run1, run2) = (item("zzagent_r1").runId.get, item("zzagent_r2").runId.get)
@@ -501,23 +503,23 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(connect(ds)(ManagerRepo.running(ReviewId)), 1)
 
   test("lease: one holder; another takes over only after it expires; renewing keeps it"):
-    assert(transact(ds)(LeaseRepo.claim("zzlease", "one", 2)))
-    assert(!transact(ds)(LeaseRepo.claim("zzlease", "two", 2)))
-    assert(transact(ds)(LeaseRepo.claim("zzlease", "one", 2)), "the holder renews")
+    assert(transact(ds)(LeaseRepo.claim(com.histmersion.domain.automation.agents.LeaseRepo.LeaseName("zzlease"), com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner("one"), com.histmersion.domain.automation.agents.LeaseRepo.TtlSeconds(2))))
+    assert(!transact(ds)(LeaseRepo.claim(com.histmersion.domain.automation.agents.LeaseRepo.LeaseName("zzlease"), com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner("two"), com.histmersion.domain.automation.agents.LeaseRepo.TtlSeconds(2))))
+    assert(transact(ds)(LeaseRepo.claim(com.histmersion.domain.automation.agents.LeaseRepo.LeaseName("zzlease"), com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner("one"), com.histmersion.domain.automation.agents.LeaseRepo.TtlSeconds(2))), "the holder renews")
     Thread.sleep(2300)
-    assert(transact(ds)(LeaseRepo.claim("zzlease", "two", 2)), "taken over after the ttl")
-    assert(!transact(ds)(LeaseRepo.claim("zzlease", "one", 2)), "the old holder lost it")
-    assertEquals(connect(ds)(LeaseRepo.holder("zzlease")).map(_._1), Some("two"))
-    transact(ds)(LeaseRepo.release("zzlease", "two"))
-    assert(transact(ds)(LeaseRepo.claim("zzlease", "one", 2)), "free once released")
+    assert(transact(ds)(LeaseRepo.claim(com.histmersion.domain.automation.agents.LeaseRepo.LeaseName("zzlease"), com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner("two"), com.histmersion.domain.automation.agents.LeaseRepo.TtlSeconds(2))), "taken over after the ttl")
+    assert(!transact(ds)(LeaseRepo.claim(com.histmersion.domain.automation.agents.LeaseRepo.LeaseName("zzlease"), com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner("one"), com.histmersion.domain.automation.agents.LeaseRepo.TtlSeconds(2))), "the old holder lost it")
+    assertEquals(connect(ds)(LeaseRepo.holder(com.histmersion.domain.automation.agents.LeaseRepo.LeaseName("zzlease"))).map(_._1), Some("two"))
+    transact(ds)(LeaseRepo.release(com.histmersion.domain.automation.agents.LeaseRepo.LeaseName("zzlease"), com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner("two")))
+    assert(transact(ds)(LeaseRepo.claim(com.histmersion.domain.automation.agents.LeaseRepo.LeaseName("zzlease"), com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner("one"), com.histmersion.domain.automation.agents.LeaseRepo.TtlSeconds(2))), "free once released")
 
   test("lease: a second server's agents wait for the lease; its holder's start runs them"):
     val (a, _) = handlers(PanelClient(Model))
-    val other = AgentLease(ds, 60, owner = "elsewhere:1")
+    val other = AgentLease(ds, com.histmersion.domain.automation.agents.AgentLease.TtlSeconds(60), owner = com.histmersion.domain.automation.agents.AgentLease.Owner("elsewhere:1"))
     connect(ds)(sql"DELETE FROM agent_leases WHERE name = 'agents'".update.run())
     assert(other.claim())
     val started = java.util.concurrent.atomic.AtomicBoolean(false)
-    val mine = AgentLease(ds, 60, owner = "here:2")
+    val mine = AgentLease(ds, com.histmersion.domain.automation.agents.AgentLease.TtlSeconds(60), owner = com.histmersion.domain.automation.agents.AgentLease.Owner("here:2"))
     assert(!mine.start(() => started.set(true)))
     assert(!started.get)
     assertEquals(mine.status.map(s => (s._1, s._4)), Some(("elsewhere:1", false)))
@@ -531,11 +533,11 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   ):
     val c = PanelClient(Model)
     val (a, h) = handlers(c); seed(h, "zzagent_n1")
-    activeReview(a, ManagerConfig(rounds = Some(2)))
-    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_n1"))
-    val standing = a.managing.addHint(ReviewId, HintAdd("Prefer the 2019 dating.")).fold(e => fail(e.message), identity)
+    activeReview(a, ManagerConfig(rounds = Some(com.histmersion.api.automation.Managers.ManagerConfig.Rounds(2))))
+    a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_n1")))
+    val standing = a.managing.addHint(ReviewId, HintAdd(com.histmersion.api.automation.Managers.HintAdd.Text("Prefer the 2019 dating."))).fold(e => fail(e.message), identity)
     val once = a.managing
-      .addHint(ReviewId, HintAdd("Check the tin isotopes this time.", item = Some("zzagent_n1"), once = Some(true)))
+      .addHint(ReviewId, HintAdd(com.histmersion.api.automation.Managers.HintAdd.Text("Check the tin isotopes this time."), item = Some(com.histmersion.api.automation.Managers.HintAdd.Item("zzagent_n1")), once = Some(com.histmersion.api.automation.Managers.HintAdd.Once(true))))
       .fold(e => fail(e.message), identity)
     a.managers.tick(t0)
     val run = item("zzagent_n1").runId.get
@@ -578,38 +580,38 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_e1", "zzagent_e2", "zzagent_e3")
     a.managers.ensureDefaults()
     List("zzagent_e1", "zzagent_e2").foreach(s =>
-      a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, s, Some(0)))
+      a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, s, Some(com.histmersion.api.automation.Managers.EnqueueRequest.Priority(0))))
     )
     a.managing.addHint(
       ReviewId,
       HintAdd(
-        "e3 first",
-        effect = Some(HintEffect(HintEffect.Prioritise, targets = List("zzagent_e3"), priority = Some(7)))
+        com.histmersion.api.automation.Managers.HintAdd.Text("e3 first"),
+        effect = Some(HintEffect(HintEffect.Prioritise, targets = List(com.histmersion.api.automation.Managers.HintEffect.Targets("zzagent_e3")), priority = Some(7)))
       )
     )
     assertEquals(item("zzagent_e3").priority, 7)
     a.managing.addHint(
       ReviewId,
       HintAdd(
-        "wait for the new edition",
-        effect = Some(HintEffect(HintEffect.HoldAction, targets = List("zzagent_e1"), until = Some("2027-01-01")))
+        com.histmersion.api.automation.Managers.HintAdd.Text("wait for the new edition"),
+        effect = Some(HintEffect(HintEffect.HoldAction, targets = List(com.histmersion.api.automation.Managers.HintEffect.Targets("zzagent_e1")), until = Some("2027-01-01")))
       )
     )
     assertEquals(item("zzagent_e1").status, "held")
     assertEquals(item("zzagent_e1").hold.flatMap(_.until), Some("2027-01-01"))
-    a.managing.addHint(ReviewId, HintAdd("not this one", effect = Some(HintEffect(HintEffect.Skip, tag = Some(Tag)))))
+    a.managing.addHint(ReviewId, HintAdd(com.histmersion.api.automation.Managers.HintAdd.Text("not this one"), effect = Some(HintEffect(HintEffect.Skip, tag = Some(Tag)))))
     assertEquals(item("zzagent_e2").status, "stopped")
     assert(
-      a.managing.addHint(ReviewId, HintAdd("x", effect = Some(HintEffect("frobnicate", targets = List("a"))))).isLeft
+      a.managing.addHint(ReviewId, HintAdd(com.histmersion.api.automation.Managers.HintAdd.Text("x"), effect = Some(HintEffect(com.histmersion.api.automation.Managers.HintEffect.Action("frobnicate"), targets = List(com.histmersion.api.automation.Managers.HintEffect.Targets("a")))))).isLeft
     )
     assert(events.exists(e => e.kind == Feed.Hint && e.text.contains("hold: 1 item")), events.map(_.text))
 
   test("the Review button: enqueue routes to the review manager (created paused), priority 10"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_q1")
-    val i = a.managing.enqueue(EnqueueRequest("review", "zzagent_q1")).fold(e => fail(e.message), _.items.head)
+    val i = a.managing.enqueue(EnqueueRequest(com.histmersion.api.automation.Managers.EnqueueRequest.Kind("review"), com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_q1"))).fold(e => fail(e.message), _.items.head)
     assertEquals((i.managerId, i.priority, i.status, i.origin), (ReviewId, 10, "pending", "person"))
     assertEquals(connect(ds)(ManagerRepo.get(ReviewId)).map(_.state), Some("paused"))
-    assert(a.managing.enqueue(EnqueueRequest("review", "zzagent_nope")).isLeft)
+    assert(a.managing.enqueue(EnqueueRequest(com.histmersion.api.automation.Managers.EnqueueRequest.Kind("review"), com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_nope"))).isLeft)
 
   // ── scripted answers (the shapes ReviewArticleRunSuite uses) ────────────────────────────────────
 

@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.workflows.guards
@@ -149,10 +151,10 @@ class AgentsSettingsSuite extends munit.FunSuite:
     assert(on.agents.providers.claudeCode.allowNonLoopback)
 
   test("config: article-plan/goal-plan take auto or checked; article-publish only checked reaches the supervisor"):
-    val c = AgentApprovalsConfig("manual", "manual", "auto", articlePlan = "Auto", goalPlan = "checked")
+    val c = AgentApprovalsConfig(com.histmersion.config.AgentApprovalsConfig.Gate("manual"), com.histmersion.config.AgentApprovalsConfig.Gate("manual"), com.histmersion.config.AgentApprovalsConfig.Gate("auto"), articlePlan = com.histmersion.config.AgentApprovalsConfig.Gate("Auto"), goalPlan = com.histmersion.config.AgentApprovalsConfig.Gate("checked"))
     assert(c.checked(com.histmersion.domain.automation.Approval.Kind.ArticlePlan) && c.checked(com.histmersion.domain.automation.Approval.Kind.GoalPlan))
     assert(c.checked(com.histmersion.domain.automation.Approval.Kind.ArticlePublish), "auto publishes in the run; what it left open the supervisor checks")
-    assert(!AgentApprovalsConfig("manual", "manual", "manual").checked(com.histmersion.domain.automation.Approval.Kind.ArticlePlan))
+    assert(!AgentApprovalsConfig(com.histmersion.config.AgentApprovalsConfig.Gate("manual"), com.histmersion.config.AgentApprovalsConfig.Gate("manual"), com.histmersion.config.AgentApprovalsConfig.Gate("manual")).checked(com.histmersion.domain.automation.Approval.Kind.ArticlePlan))
     assert(!c.checked(com.histmersion.domain.automation.Approval.Kind.Edge))
     assertEquals(c.publishMode, com.histmersion.domain.automation.Approval.Mode.Auto)
     assertEquals(
@@ -200,6 +202,6 @@ class AgentsSettingsSuite extends munit.FunSuite:
   test("a plan pool's read schedule: 0 is off, minutes become the interval"):
     assertEquals(ScheduledRefresh.Off.readSchedule, ReadSchedule.Off)
     assertEquals(
-      ScheduledRefresh.fromMinutes(180).map(_.readSchedule),
+      ScheduledRefresh.fromMinutes(com.histmersion.config.Minutes(180)).map(_.readSchedule),
       Right(ReadSchedule.Every(Duration.ofMinutes(180)))
     )

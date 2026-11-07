@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.database.Transactor
@@ -97,7 +99,7 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
     def health: Either[String, String] = Right("ok")
     override def thumbnail(bytes: Array[Byte], filename: String, maxPx: Int): Either[String, ConverterClient.Thumb] =
       calls += filename -> maxPx
-      Right(ConverterClient.Thumb(Jpeg ++ Array[Byte](42), "image/jpeg", 330, 250))
+      Right(ConverterClient.Thumb(Jpeg ++ Array[Byte](42), com.histmersion.util.ocr.ConverterClient.Thumb.Mime("image/jpeg"), com.histmersion.util.ocr.ConverterClient.Thumb.Width(330), com.histmersion.util.ocr.ConverterClient.Thumb.Height(250)))
 
   private def clean(): Unit = connect(ds):
     val _ = sql"DELETE FROM media_links WHERE target_id LIKE 'zqms%'".update.run()
@@ -123,13 +125,13 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
         Paper,
         List(
           NewFigure(
-            "fig-0001-01.png",
-            "image/png",
+            com.histmersion.domain.media.assets.NewFigure.Name("fig-0001-01.png"),
+            com.histmersion.domain.media.assets.NewFigure.Mime("image/png"),
             Png ++ Array[Byte](1),
-            Some(80),
-            Some(80)
+            Some(com.histmersion.domain.media.assets.NewFigure.Width(80)),
+            Some(com.histmersion.domain.media.assets.NewFigure.Height(80))
           ), // a logo, on every page
-          NewFigure("fig-0002-01.png", "image/png", Png ++ Array[Byte](2), Some(900), Some(650))
+          NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig-0002-01.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), Png ++ Array[Byte](2), Some(com.histmersion.domain.media.assets.NewFigure.Width(900)), Some(com.histmersion.domain.media.assets.NewFigure.Height(650)))
         )
       ) // the map
       val _ = PlaceFixtures.upsertPlaces(
@@ -138,20 +140,20 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
           Place.Input(
             Place(
               com.histmersion.api.catalogue.Place.Id("zqms_site"),
-              "Zqms Mykenai",
+              com.histmersion.api.catalogue.Place.Label("Zqms Mykenai"),
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[-60,-50]}""")
             ),
-            List(Place.Name("Zqms Mykenai"))
+            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqms Mykenai")))
           ),
           Place.Input(
             Place(
               com.histmersion.api.catalogue.Place.Id("zqms_dup"),
-              "Zqms Mykenai",
+              com.histmersion.api.catalogue.Place.Label("Zqms Mykenai"),
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[-60.005,-50]}""")
             ),
-            List(Place.Name("Zqms Mykenai"))
+            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqms Mykenai")))
           )
         )
       )
@@ -162,29 +164,29 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
     val h = MediaWiring(Deps(cfg, ds), FakeMediaHttp(u => Left(s"unexpected $u")), conv)
     val dry =
       h.covers.covers(MediaCoversRequest(citekey = Some(Paper), covers = false)).fold(e => fail(e.message), identity)
-    assertEquals(dry.lines, List(MediaSourceLine(Paper, "illustration", "source", "fig-0002-01.png")))
+    assertEquals(dry.lines, List(MediaSourceLine(Paper, com.histmersion.api.media.MediaSourceLine.Role("illustration"), com.histmersion.api.media.MediaItem.Provider("source"), com.histmersion.api.media.MediaSourceLine.Detail("fig-0002-01.png"))))
     assertEquals(AssetFixtures.sourceThumb(ds, Paper), None, "a dry run links nothing")
     val done = h.covers
-      .covers(MediaCoversRequest(dryRun = false, citekey = Some(Paper), covers = false))
+      .covers(MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(Paper), covers = false))
       .fold(e => fail(e.message), identity)
     assertEquals(done.illustrations, 1)
     assertEquals(conv.calls.toList, List("fig-0002-01.png" -> cfg.media.thumbPx))
     val t = AssetFixtures.sourceThumb(ds, Paper).get
     assertEquals((t.role, t.width, t.height), ("illustration", Some(330), Some(250)))
     assertEquals(AssetFixtures.thumb(ds, t.uid).map(_._1), Some("image/jpeg"))
-    assert(h.covers.covers(MediaCoversRequest(dryRun = false)).isLeft, "a run over every source is a job")
+    assert(h.covers.covers(MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false))).isLeft, "a run over every source is a job")
 
   test("Open Library: the cover by ISBN, at its own pace, as the source's cover; a 404 is 'none'"):
     val fake = FakeMediaHttp { url =>
       if url.contains("/b/isbn/9780000000002-L.jpg") then FakeMediaHttp.bytes(Jpeg ++ Array[Byte](1), "image/jpeg")
       else if url.contains("/b/isbn/9780000000002-M.jpg") then FakeMediaHttp.bytes(Jpeg ++ Array[Byte](2), "image/jpeg")
-      else Right(HttpAnswer(404, Map.empty, Array.emptyByteArray))
+      else Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(404), Map.empty, Array.emptyByteArray))
     }
     val h = MediaWiring(Deps(cfg, ds), fake, ThumbConverter())
     val r = h.covers
-      .covers(MediaCoversRequest(dryRun = false, citekey = Some(Book), illustrations = false))
+      .covers(MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(Book), illustrations = false))
       .fold(e => fail(e.message), identity)
-    assertEquals(r.lines, List(MediaSourceLine(Book, "cover", "open-library", "isbn:9780000000002")))
+    assertEquals(r.lines, List(MediaSourceLine(Book, com.histmersion.api.media.MediaSourceLine.Role("cover"), com.histmersion.api.media.MediaItem.Provider("open-library"), com.histmersion.api.media.MediaSourceLine.Detail("isbn:9780000000002"))))
     assert(
       fake.requests.forall(_._2 == Map("User-Agent" -> cfg.media.userAgent)),
       "the project's User-Agent, nothing else"
@@ -203,14 +205,14 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
     // another ISBN Open Library has no cover for: none, and remembered as asked
     val none = h.covers
       .covers(
-        MediaCoversRequest(dryRun = false, citekey = Some(Paper), illustrations = false, isbn = Some("9780000000019"))
+        MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(Paper), illustrations = false, isbn = Some("9780000000019"))
       )
       .fold(e => fail(e.message), identity)
     assertEquals((none.covers, none.skipped.map(_.key)), (0, List("cover: Open Library has no cover")))
 
   test("the server: a Calibre cover uploaded is the source's card picture, before its illustration"):
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, ThumbConverter()).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), ThumbConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (bad, bb) = send(
@@ -251,29 +253,29 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
       ds,
       ProviderAsset(
         MediaProvider.Commons,
-        "File:Zqms lions.jpg",
-        "zqms.jpg",
-        "image/jpeg",
+        com.histmersion.domain.media.assets.ProviderAsset.Key("File:Zqms lions.jpg"),
+        com.histmersion.domain.media.assets.ProviderAsset.Name("zqms.jpg"),
+        com.histmersion.domain.media.assets.ProviderAsset.Mime("image/jpeg"),
         Jpeg,
-        Some(1),
-        Some(1),
+        Some(com.histmersion.domain.media.assets.ProviderAsset.Width(1)),
+        Some(com.histmersion.domain.media.assets.ProviderAsset.Height(1)),
         Some(Jpeg),
-        Some("image/jpeg"),
-        Some(1),
-        Some(1),
-        "CC0-1.0",
+        Some(com.histmersion.domain.media.assets.ProviderAsset.ThumbMime("image/jpeg")),
+        Some(com.histmersion.domain.media.assets.ProviderAsset.ThumbWidth(1)),
+        Some(com.histmersion.domain.media.assets.ProviderAsset.ThumbHeight(1)),
+        com.histmersion.domain.media.assets.ProviderAsset.License("CC0-1.0"),
         None,
         None,
-        "Ann, CC0, via Wikimedia Commons",
-        "https://commons.wikimedia.org/wiki/File:Zqms_lions.jpg",
+        com.histmersion.domain.media.assets.ProviderAsset.Credit("Ann, CC0, via Wikimedia Commons"),
+        com.histmersion.domain.media.assets.ProviderAsset.SourceUrl("https://commons.wikimedia.org/wiki/File:Zqms_lions.jpg"),
         None,
         None
       ),
-      ("place", "zqms_dup")
+      (com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zqms_dup"))
     )
-    AssetFixtures.link(ds, uid, "place", "zqms_dup", MediaRole.Image, Some("P18"), Some("Q90000077"), 0)
+    AssetFixtures.link(ds, uid, com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zqms_dup"), MediaRole.Image, Some(com.histmersion.domain.media.assets.MediaRepo.LinkProperty("P18")), Some(com.histmersion.domain.media.assets.MediaRepo.LinkItem("Q90000077")), com.histmersion.domain.media.assets.MediaRepo.LinkRank(0))
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (ps, pb) = get(s"$url/api/places/zqms_site?counts=true")
@@ -290,9 +292,9 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
       else Left(s"unexpected $url")
     }
     val h = MediaWiring(Deps(cfg, ds), fake)
-    assert(h.imports.importJob(MediaImportRequest(dryRun = true)).isLeft, "a dry run is not a job")
+    assert(h.imports.importJob(MediaImportRequest(dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(true))).isLeft, "a dry run is not a job")
     val j =
-      h.imports.importJob(MediaImportRequest(dryRun = false, limit = Some(3))).fold(e => fail(e.message), identity)
+      h.imports.importJob(MediaImportRequest(dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), limit = Some(com.histmersion.api.media.MediaImportRequest.Limit(3)))).fold(e => fail(e.message), identity)
     assertEquals(j.kind, ImportsControllers.ImportJobKind)
     assert(
       j.detail.flatMap(com.histmersion.api.media.ImportJobKinds.Media.of).exists(_.contains("up to 3")),

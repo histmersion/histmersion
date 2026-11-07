@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.research.workflows.*
 
 import com.histmersion.domain.library.workflows.*
@@ -275,7 +277,7 @@ class AnswerSchemasSuite extends munit.FunSuite:
 
   private def decode(s: ResponseSchema[?], answer: Json): Either[AgentFailure, Any] =
     CliOutcomes
-      .result(CliOutcome(Vector.empty, Vector.empty, Some(answer.noSpaces), TokenUsage.Zero, None, 1), "u", s, None)
+      .result(CliOutcome(Vector.empty, Vector.empty, Some(answer.noSpaces), TokenUsage.Zero, None, com.histmersion.server.agents.CliOutcome.Turns(1)), com.histmersion.domain.automation.agents.LlmCall.User("u"), s, None)
       .finalAnswer
 
   test("a Codex answer (every optional field null) is valid under the strict schema; one leaving them out is not"):

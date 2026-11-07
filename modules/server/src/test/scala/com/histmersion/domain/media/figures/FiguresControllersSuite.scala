@@ -8,6 +8,6 @@ class FiguresControllersSuite extends munit.FunSuite:
   test("a dry run answers under the lock; the fill itself does not"):
     val gate = WriteGate()
     val c = FiguresControllers(FigureService.InMemory(), gate)
-    val held = gate.exclusively("restore")(Right((c.fillLicences(apply = false), c.fillLicences(apply = true))))
+    val held = gate.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(Right((c.fillLicences(apply = com.histmersion.domain.media.figures.FigureService.Apply(false)), c.fillLicences(apply = com.histmersion.domain.media.figures.FigureService.Apply(true)))))
     val (dry, wet) = held.fold(e => fail(e.message), identity)
     assert(dry.isRight && wet.isLeft, (dry, wet))

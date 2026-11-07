@@ -1,5 +1,7 @@
 package com.histmersion.util.data.diagnostics
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.config.AppConfig
 import com.histmersion.server.Deps
 import com.histmersion.util.storage.{Location, MeasureBudget, Storage}
@@ -52,6 +54,6 @@ class StorageFiguresSuite extends munit.FunSuite:
     assertEquals((entry.bytes, entry.files), (Some(6000L), Some(3L)))
     assertEquals(
       r.entries.find(_.key == "backups").map(_.shrink),
-      Some(com.histmersion.api.maintenance.Storage.Advice.shrink("backups", cfg.backups.keep))
+      Some(com.histmersion.api.maintenance.Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), cfg.backups.keep))
     )
     assertEquals(r.problems, Nil)

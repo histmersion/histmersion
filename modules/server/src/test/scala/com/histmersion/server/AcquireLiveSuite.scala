@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.library.acquisition.OpenAlexDiscovery
 
 import com.histmersion.config.*
@@ -62,14 +64,14 @@ class AcquireLiveSuite extends munit.FunSuite:
 
   // #1523: OpenAlex knows no PDF for these; PMC has one (the OA subset) or only the JATS text
   test("PMC: the dataset PDF of an open-access author manuscript (Mathieson 2018)"):
-    val f = OaFetch(loaded(""), http, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some("10.1038/nature25778"), None).fold(fail(_), identity)
+    val f = OaFetch(loaded(""), http, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some(com.histmersion.domain.library.Doi("10.1038/nature25778")), None).fold(fail(_), identity)
     assertEquals((f.source, f.extension), ("pmc", "pdf"))
     assert(f.url.exists(_.contains("PMC6091220")), f.url.toString)
 
   // europepmc.org renders this manuscript's PDF when its bot protection lets the request through
   // (it did on 2026-10-11, and challenged curl an hour earlier); else the dataset's JATS is the copy
   test("PMC: Europe PMC's rendered PDF, or the JATS full text, of a manuscript with no dataset PDF (Damgaard 2018)"):
-    val f = OaFetch(loaded(""), http, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some("10.1126/science.aar7711"), None).fold(fail(_), identity)
+    val f = OaFetch(loaded(""), http, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some(com.histmersion.domain.library.Doi("10.1126/science.aar7711")), None).fold(fail(_), identity)
     (f.source, f.extension) match
       case ("europepmc", "pdf") => assert(new String(f.bytes.take(8), "ISO-8859-1").contains("%PDF"))
       case ("pmc", "xml")       =>
@@ -80,7 +82,7 @@ class AcquireLiveSuite extends munit.FunSuite:
   test("Semantic Scholar returns citing papers with intents"):
     val work = openalex.meta(doi).fold(fail(_), identity)
     val (backend, rows) = SemanticScholar(cfg, http)
-      .citing(work, None, 10)
+      .citing(work, None, com.histmersion.domain.library.acquisition.CitationsClient.CitingLimit(10))
       .fold(fail(_), identity)
     assert(rows.nonEmpty, s"no citations from $backend")
     assert(

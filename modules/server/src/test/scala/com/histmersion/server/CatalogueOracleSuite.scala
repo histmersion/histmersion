@@ -67,7 +67,7 @@ class CatalogueOracleSuite extends DbSuite:
 
   private def withServerOn[A](cfg: AppConfig)(body: String => A): A =
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, OfflineConverter()).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter()).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -436,12 +436,12 @@ class CatalogueOracleSuite extends DbSuite:
     val catalog = com.histmersion.server.CatalogueWiring(
       Deps(cfgFor(name), ds, ds, plugins = ServerPlugins.load(oracleLoaded, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))),
       FakeMediaHttp(gvp),
-      () => 2026L
+      () => com.histmersion.domain.DeepTime.SignedYear(2026L)
     )
     val job = catalog.eventImports
       .importJob(
         com.histmersion.domain.Caller.Local,
-        EventImportRequest("gvp", dryRun = false, from = Some(-2000), to = Some(-1000))
+        EventImportRequest(com.histmersion.api.catalogue.EventImportRequest.Provider("gvp"), dryRun = com.histmersion.api.catalogue.EventImportRequest.DryRun(false), from = Some(com.histmersion.api.catalogue.EventImportRequest.From(-2000)), to = Some(com.histmersion.api.catalogue.EventImportRequest.To(-1000)))
       )
       .fold(e => fail(e.message), identity)
     val _ = step("events import gvp", awaitJob(url, job.id))
@@ -968,17 +968,17 @@ class CatalogueOracleSuite extends DbSuite:
     val _ = Files.writeString(d.resolve("places/sites/sites.json"), seedSites, UTF_8)
     val pins = List(
       Gazetteer.Extract(
-        "geonames",
-        "geonames-fixture.ndjson.gz",
+        com.histmersion.api.catalogue.Gazetteer.Extract.Name("geonames"),
+        com.histmersion.api.catalogue.Gazetteer.Extract.File("geonames-fixture.ndjson.gz"),
         FixtureSha,
-        438,
-        2,
-        "fixture-1",
-        "GeoNames fixture",
-        "CC BY 4.0",
-        Some("GeoNames (geonames.org)")
+        com.histmersion.api.catalogue.Gazetteer.Extract.Bytes(438),
+        com.histmersion.api.catalogue.Gazetteer.Extract.Features(2),
+        com.histmersion.api.catalogue.Gazetteer.Extract.Version("fixture-1"),
+        com.histmersion.api.catalogue.Gazetteer.Extract.Title("GeoNames fixture"),
+        com.histmersion.api.catalogue.Gazetteer.Extract.Licence("CC BY 4.0"),
+        Some(com.histmersion.api.catalogue.Gazetteer.Extract.Attribution("GeoNames (geonames.org)"))
       ),
-      Gazetteer.Extract("tgn", "tgn-absent.ndjson.gz", "0" * 64, 1, 1, "fixture-2", "TGN fixture", "ODC-By 1.0")
+      Gazetteer.Extract(com.histmersion.api.catalogue.Gazetteer.Extract.Name("tgn"), com.histmersion.api.catalogue.Gazetteer.Extract.File("tgn-absent.ndjson.gz"), "0" * 64, com.histmersion.api.catalogue.Gazetteer.Extract.Bytes(1), com.histmersion.api.catalogue.Gazetteer.Extract.Features(1), com.histmersion.api.catalogue.Gazetteer.Extract.Version("fixture-2"), com.histmersion.api.catalogue.Gazetteer.Extract.Title("TGN fixture"), com.histmersion.api.catalogue.Gazetteer.Extract.Licence("ODC-By 1.0"))
     )
     val _ = Files.writeString(d.resolve("gazetteer/extracts.json"), Gazetteer.Manifest(pins).asJson.spaces2, UTF_8)
     val extracts = tmp.resolve("gaz-extracts")
@@ -1043,17 +1043,17 @@ class CatalogueOracleSuite extends DbSuite:
     tools.foreach((n, a) => step(s"tool $n ${a.noSpaces}", tool(url, n, a)))
     // the geocoder, as the enrichment and the checks ask it
     val asks = List(
-      ("Zztell", Geocode.KindHint.Site, Some(Period(-1500, -1400))),
+      ("Zztell", Geocode.KindHint.Site, Some(Period(com.histmersion.api.catalogue.Year(-1500), com.histmersion.api.catalogue.Year(-1400)))),
       ("Zzhöyük", Geocode.KindHint.Unknown, None),
       ("Zzcrossing", Geocode.KindHint.Site, None),
-      ("Zzvale", Geocode.KindHint.Region, Some(Period(-1300, -1200))),
+      ("Zzvale", Geocode.KindHint.Region, Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200)))),
       ("Eastern Zzshore", Geocode.KindHint.Region, None),
       ("Zztell, Zzshore", Geocode.KindHint.Site, None),
       ("Zzgaz Hattusas", Geocode.KindHint.Unknown, None),
       ("Zznowhere", Geocode.KindHint.Unknown, None)
     )
     asks.foreach { (name, hint, at) =>
-      val r = Geocoding(com.histmersion.util.database.Transactor(ds)).resolve(name, hint, at, 4)
+      val r = Geocoding(com.histmersion.util.database.Transactor(ds)).resolve(name, hint, at, com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin(4))
       val _ = step(
         s"geocode $name ${hint.wire} ${at.map(p => s"${p.start}..${p.end}").getOrElse("-")}",
         r.fold("none")(r =>

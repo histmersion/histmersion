@@ -1,5 +1,7 @@
 package com.histmersion.server.plugins
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.server.ServerPlugins
 import com.histmersion.util.plugins.{LegacyPlugins, Plugins}
 
@@ -97,7 +99,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
     // CORE is asked once, not retried, through its budget
     override def once(url: String, headers: Map[String, String]) =
       asked = asked :+ (url -> headers);
-      Right(com.histmersion.pluginhost.HttpAnswer(200, Map.empty, "{}".getBytes("UTF-8")))
+      Right(com.histmersion.pluginhost.HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map.empty, "{}".getBytes("UTF-8")))
 
   private def emailOf(url: String): Option[String] =
     java.net.URI(url).getRawQuery.split("&").toList.collectFirst {
@@ -232,7 +234,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
 
   test("reload: a change of an oa-index key rebuilds the four successors, and only them"):
     val g = generation()
-    val carried = Plugins.carried(g, List("histmersion.plugins.oa-index.enabled"))
+    val carried = Plugins.carried(g, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.plugins.oa-index.enabled")))
     assertEquals(carried.keySet, Set("archive-org", "pmc", "arxiv"))
 
   test("the shipped default chain names exactly the built-in fetchers, in today's order"):
@@ -256,7 +258,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
 
   test("a reordered chain is honoured, unlisted fetchers following in registration order"):
     val g = generation()
-    val (c, notes) = FetchChain.of(g.registries.sourceFetchers, List("arxiv", "pmc"), allowUnauthorised = false)
+    val (c, notes) = FetchChain.of(g.registries.sourceFetchers, List(com.histmersion.util.plugins.Plugin.Id("arxiv"), com.histmersion.util.plugins.Plugin.Id("pmc")), allowUnauthorised = com.histmersion.pluginhost.FetchChain.AllowUnauthorised(false))
     assertEquals(c.plan.map(_._1).take(2), List("arxiv", "pmc"))
     assertEquals(c.plan.map(_._1).toSet, Today.toSet)
     assertEquals(notes, Nil)
@@ -352,7 +354,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
       http = h
     )
     val got =
-      FetchChain(List("landing" -> g.registries.sourceFetchers("landing")), registered = g.registered)
+      FetchChain(List("landing" -> g.registries.sourceFetchers(com.histmersion.pluginhost.Registries.SourceFetchersKey("landing"))), registered = g.registered)
         .fetch(Some("10.5281/zenodo.3695551"), None)
     assertEquals(got, Left(FetchChain.NoCopy))
     assert(h.asked.contains(s"${host.zenodo.url}/api/records/3695551"), h.asked.mkString("\n"))
@@ -382,11 +384,11 @@ class FetcherPluginsSuite extends munit.FunSuite:
     }
     // … but it asks Unpaywall with oa-unpaywall's own contact, which it is supplied at registration
     assertEquals(
-      Plugins.carried(g, List("histmersion.plugins.oa-unpaywall.contact-email")).keySet,
+      Plugins.carried(g, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.plugins.oa-unpaywall.contact-email"))).keySet,
       Set("archive-org", "oa-core", "oa-openalex", "pmc", "arxiv")
     )
     // a host key every fetcher reads rebuilds them all; one no fetcher reads, none
-    assertEquals(Plugins.carried(g, List("histmersion.acquire.landing.max-pages")), Map.empty)
+    assertEquals(Plugins.carried(g, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.acquire.landing.max-pages"))), Map.empty)
     assertEquals(Plugins.carried(g, Nil).keySet.size, 7)
 
   private object Ctx extends Fetch.Context:

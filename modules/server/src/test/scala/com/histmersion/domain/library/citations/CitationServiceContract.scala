@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.citations
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.LibraryStoreSuite
 import com.histmersion.api.library.{Edge, GraphLink, NeighborTarget, Source}
@@ -47,18 +49,18 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
     List(
       source(E, 1950, com.histmersion.api.library.Source.Status.Contested),
       source(D, 2010, com.histmersion.api.library.Source.Status.Current),
-      source(C, 1975, com.histmersion.api.library.Source.Status.Superseded, List(Edge(com.histmersion.api.library.Citekey(C), com.histmersion.api.library.Citekey(A), "superseded_by"))),
+      source(C, 1975, com.histmersion.api.library.Source.Status.Superseded, List(Edge(com.histmersion.api.library.Citekey(C), com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Edge.Kind("superseded_by")))),
       source(
         B,
         2001,
         com.histmersion.api.library.Source.Status.Current,
-        List(Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey(A), "refutes"), Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey(D), "references"))
+        List(Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Edge.Kind("refutes")), Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey(D), com.histmersion.api.library.Edge.Kind("references")))
       ),
       source(
         A,
         1990,
         com.histmersion.api.library.Source.Status.Current,
-        List(Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey(B), "references"), Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey("zq_topic"), "references"))
+        List(Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Edge.Kind("references")), Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey("zq_topic"), com.histmersion.api.library.Edge.Kind("references")))
       )
     ).foreach(x => s.sources.put(x, Caller.Local): Unit)
 
@@ -79,22 +81,22 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
         ("out", "references", B, Some(com.histmersion.api.library.Source.Status.Current), NeighborTarget.Source)
       )
     )
-    assertEquals(s.citations.neighbors(A, List("refutes")).map(_.citekey), List(B))
-    assertEquals(s.citations.neighbors("zqnone2000_x", Nil), Nil)
+    assertEquals(s.citations.neighbors(A, List(com.histmersion.domain.library.Edge.Kind.Wire("refutes"))).map(_.citekey), List(B))
+    assertEquals(s.citations.neighbors(com.histmersion.domain.library.Citekey("zqnone2000_x"), Nil), Nil)
   }
 
   stest("graph: breadth-first to a depth, every link between two nodes") { s =>
     corpus(s)
-    assertEquals(s.citations.graph(A, 0).nodes.map(n => (n.id, n.depth)), List((A, 0)))
-    val one = s.citations.graph(A, 1)
+    assertEquals(s.citations.graph(A, com.histmersion.domain.library.citations.CitationService.Depth(0)).nodes.map(n => (n.id, n.depth)), List((A, 0)))
+    val one = s.citations.graph(A, com.histmersion.domain.library.citations.CitationService.Depth(1))
     assertEquals(one.nodes.map(n => (n.id, n.depth)), List((A, 0), (B, 1), (C, 1)))
     assertEquals(
       one.links,
-      List(GraphLink(A, B, "references"), GraphLink(B, A, "refutes"), GraphLink(C, A, "superseded_by"))
+      List(GraphLink(A, B, com.histmersion.api.library.Edge.Kind("references")), GraphLink(B, A, com.histmersion.api.library.Edge.Kind("refutes")), GraphLink(C, A, com.histmersion.api.library.Edge.Kind("superseded_by")))
     )
-    val two = s.citations.graph(A, 9)
+    val two = s.citations.graph(A, com.histmersion.domain.library.citations.CitationService.Depth(9))
     assertEquals((two.depth, two.nodes.map(_.id)), (4, List(A, B, C, D)))
-    assertEquals(s.citations.graph("zqnone2000_x", 2).nodes, Nil)
+    assertEquals(s.citations.graph(com.histmersion.domain.library.Citekey("zqnone2000_x"), com.histmersion.domain.library.citations.CitationService.Depth(2)).nodes, Nil)
   }
 
   stest("contradictions: a source's disagreeing edges both ways; the corpus's, by year; statuses without an edge") {
@@ -117,10 +119,10 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
       )
       assertEquals(all.total, 5)
       assertEquals(
-        s.citations.contradictions(None, Some(1980)).rows.map(r => (r.citekey, r.otherCitekey)),
+        s.citations.contradictions(None, Some(com.histmersion.domain.library.citations.CitationService.Since(1980))).rows.map(r => (r.citekey, r.otherCitekey)),
         List((A, Some(B)), (B, Some(A)), (C, Some(A)), (E, None))
       )
-      assertEquals(s.citations.contradictions(Some("zqnone2000_x"), None).total, 0)
+      assertEquals(s.citations.contradictions(Some(com.histmersion.domain.library.Citekey("zqnone2000_x")), None).total, 0)
   }
 
 class CitationServiceInMemorySuite extends CitationServiceContract with LibraryStoreSuite.InMemory

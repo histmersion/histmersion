@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.Api
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.plugins.PluginsReport
@@ -77,7 +79,7 @@ class ContractSnapshotSuite extends munit.FunSuite:
         java.util.concurrent.atomic.AtomicReference(Nil),
         com.histmersion.domain.library.collections.RefusingCollectionLibrary(),
         () => scala.collection.immutable.ListMap.empty,
-        8
+        com.histmersion.domain.library.collections.CollectionsService.Limit(8)
       ),
       deps.maintenance
     )

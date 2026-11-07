@@ -9,7 +9,7 @@ class McpOutSuite extends munit.FunSuite:
 
   test("a refusal is the reason in italics; an answer is its Markdown"):
     assertEquals(McpOut.refusal(Api.Error("No source 'x'")), "_No source 'x'_")
-    assertEquals(McpOut.markdown(Left(Api.Error("nope")): Either[Api.Error, Int])(_.toString), "_nope_")
+    assertEquals(McpOut.markdown(Left(Api.Error(com.histmersion.api.Api.Error.Message("nope"))): Either[Api.Error, Int])(_.toString), "_nope_")
     assertEquals(McpOut.markdown(Right(3): Either[Api.Error, Int])(n => s"**$n**"), "**3**")
 
   test("no MCP tool spells a refusal itself"):

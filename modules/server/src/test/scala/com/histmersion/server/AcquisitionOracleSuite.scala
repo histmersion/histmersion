@@ -313,40 +313,40 @@ class AcquisitionOracleSuite extends DbSuite:
 
   final private class ZqUnauthorisedPlugin extends spi.Plugin:
     type Config = ZqOracleConfig
-    val info = spi.Plugin.Info("zq-unauthorised", "0.1.0", spi.Spi.Version)
-    override def defaultsResource = "zq-none.conf"
+    val info = spi.Plugin.Info(com.histmersion.plugin.Plugin.Info.Id("zq-unauthorised"), com.histmersion.plugin.Plugin.Info.Version("0.1.0"), spi.Spi.Version)
+    override def defaultsResource = com.histmersion.plugin.Plugin.DefaultsResourceResult("zq-none.conf")
     def register(c: ZqOracleConfig, ctx: spi.Plugin.Context) =
       ctx.sourceFetchers.add(
-        "zq-unauthorised",
+        com.histmersion.plugin.Registry.AddId("zq-unauthorised"),
         new spi.SourceFetcher:
           val access = spi.Access.Unauthorised
           def fetch(w: spi.WorkKey, c: spi.Fetch.Context) =
             unauthorisedAsked.incrementAndGet()
-            spi.Fetch.Miss("the zq fixture has no copy")
+            spi.Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("the zq fixture has no copy"))
       )
 
   /** An open fetcher a plugin adds: it has one work, and states that copy's licence. */
   final private class ZqShelfPlugin extends spi.Plugin:
     type Config = ZqOracleConfig
-    val info = spi.Plugin.Info("zq-shelf", "0.1.0", spi.Spi.Version)
-    override def defaultsResource = "zq-none.conf"
+    val info = spi.Plugin.Info(com.histmersion.plugin.Plugin.Info.Id("zq-shelf"), com.histmersion.plugin.Plugin.Info.Version("0.1.0"), spi.Spi.Version)
+    override def defaultsResource = com.histmersion.plugin.Plugin.DefaultsResourceResult("zq-none.conf")
     def register(c: ZqOracleConfig, ctx: spi.Plugin.Context) =
       ctx.sourceFetchers.add(
-        "zq-shelf",
+        com.histmersion.plugin.Registry.AddId("zq-shelf"),
         new spi.SourceFetcher:
           val access = spi.Access.Open
           def fetch(w: spi.WorkKey, c: spi.Fetch.Context) =
             if w.doi.map(_.value).contains("10.5555/zq.licensed") then
               spi.Fetch.Found(
                 spi.FetchedFile(
-                  "zq-shelf",
-                  Some("https://shelf.zq.example/licensed.pdf"),
+                  com.histmersion.plugin.FetchedFile.Source("zq-shelf"),
+                  Some(com.histmersion.plugin.FetchedFile.Url("https://shelf.zq.example/licensed.pdf")),
                   Fixtures.pdf("licensed"),
-                  "pdf",
+                  com.histmersion.plugin.FetchedFile.Extension("pdf"),
                   Some(spi.Licence("CC BY 4.0"))
                 )
               )
-            else spi.Fetch.Miss("the zq shelf has only one work")
+            else spi.Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("the zq shelf has only one work"))
       )
 
   // ── the converter: every document converts, deterministically ──────────────────────────────
@@ -360,8 +360,8 @@ class AcquisitionOracleSuite extends DbSuite:
       Right(
         ConvertedDoc(
           s"# Converted $filename\n\nA body of ${file.size} bytes (quality: $quality).\n\n![fig](assets/zq-fig.png)\n",
-          pages = 2,
-          images = List(ConvertedImage("zq-fig.png", "image/png", Png, Some(1), Some(1)))
+          pages = com.histmersion.api.ocr.ConvertedDoc.Pages(2),
+          images = List(ConvertedImage(com.histmersion.api.ocr.ConvertedImage.Name("zq-fig.png"), com.histmersion.api.ocr.ConvertedImage.Mime("image/png"), Png, Some(com.histmersion.api.media.ImageSize.Width(1)), Some(com.histmersion.api.media.ImageSize.Height(1))))
         )
       )
 
@@ -414,7 +414,7 @@ class AcquisitionOracleSuite extends DbSuite:
       _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s10p_${name}_test"))).modify(_.backups).setTo(c.backups.modify(_.dir).setTo(tmp.resolve(s"$name-backups").toString)).modify(_.bundles).setTo(c.bundles.modify(_.dir).setTo(tmp.resolve(s"$name-bundles").toString)).modify(_.converter).setTo(c.converter.modify(_.spoolDir).setTo(tmp.resolve(s"$name-spool").toString)).modify(_.acquire).setTo(c.acquire.modify(_.spoolDir).setTo(tmp.resolve(s"$name-acquire").toString)).modify(_.init).setTo(c.init.modify(_.auto).setTo(false)).modify(_.runtime).setTo(c.runtime.modify(_.dataDir).setTo(tmp.resolve(s"$name-data").toString)).modify(_.basemap).setTo(c.basemap.modify(_.dir).setTo(tmp.resolve(s"$name-basemap").toString)
     )
     val core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))
-    val http = com.histmersion.domain.library.acquisition.SttpHttp(cfg.acquire, tries = 1, clock = () => java.time.Instant.now(java.time.Clock.systemUTC()))
+    val http = com.histmersion.domain.library.acquisition.SttpHttp(cfg.acquire, tries = com.histmersion.pluginhost.PolicyHttp.Tries(1), clock = () => java.time.Instant.now(java.time.Clock.systemUTC()))
     val plugins = ServerPlugins.fetchers(
       loaded,
       () => com.histmersion.domain.library.acquisition.HttpPlugin(http),
@@ -422,7 +422,7 @@ class AcquisitionOracleSuite extends DbSuite:
       extra = List(ZqShelfPlugin(), ZqUnauthorisedPlugin(), CalibrePlugin())
     )
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, FixtureConverter(), plugins = plugins, core = Some(core)).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), FixtureConverter(), plugins = plugins, core = Some(core)).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }

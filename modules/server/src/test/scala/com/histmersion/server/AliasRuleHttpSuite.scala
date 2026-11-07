@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import ox.supervised
@@ -53,7 +55,7 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -178,11 +180,11 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
           Place.Input(
             Place(
               com.histmersion.api.catalogue.Place.Id("zz_alias_p1"),
-              "Zzalias Hill",
+              com.histmersion.api.catalogue.Place.Label("Zzalias Hill"),
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[30.5,39.5]}""")
             ),
-            List(Place.Name("Zzalias Hill"))
+            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzalias Hill")))
           )
         )
       )

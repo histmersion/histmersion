@@ -1,5 +1,7 @@
 package com.histmersion.util.storage
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import java.nio.file.{Files, Path}
 import java.util.Comparator
 
@@ -58,7 +60,7 @@ class DiskMeasureSuite extends munit.FunSuite:
     (1 to 20).foreach(i => file(d.resolve(s"f$i.bin"), 10))
     // a clock that passes the deadline after five reads
     var t = 0L
-    val r = at(d).measure(MeasureBudget(Long.MaxValue, 5L, () => { t += 1; t }))
+    val r = at(d).measure(MeasureBudget(Long.MaxValue, com.histmersion.util.storage.MeasureBudget.DeadlineNanos(5L), () => { t += 1; t }))
     assert(r.partial && r.files < 20L, r)
 
   tmp.test("an unreadable directory is skipped and counted, the rest is measured"): d =>

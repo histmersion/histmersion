@@ -34,11 +34,11 @@ class ActivityServiceSuite extends com.histmersion.db.DbSuite:
     )
     List(
       Entry(
-        "run:r1",
-        "run",
+        com.histmersion.api.automation.Activity.Entry.Key("run:r1"),
+        com.histmersion.api.automation.Activity.Entry.Kind("run"),
         ago(1).toString,
-        state = "running",
-        what = "review-article",
+        state = com.histmersion.api.automation.Activity.Entry.State("running"),
+        what = com.histmersion.api.automation.Activity.Entry.What("review-article"),
         goal = Some("g1"),
         job = Some("r1"),
         article = Some("sea-peoples"),
@@ -46,32 +46,32 @@ class ActivityServiceSuite extends com.histmersion.db.DbSuite:
         targetKind = Some("article")
       ),
       Entry(
-        "job:j1",
-        "job",
+        com.histmersion.api.automation.Activity.Entry.Key("job:j1"),
+        com.histmersion.api.automation.Activity.Entry.Kind("job"),
         ago(2).toString,
-        state = "failed",
-        what = "media-import",
+        state = com.histmersion.api.automation.Activity.Entry.State("failed"),
+        what = com.histmersion.api.automation.Activity.Entry.What("media-import"),
         error = Some("HTTP 500"),
         job = Some("j1")
       ),
-      Entry("job:j0", "job", ago(60 * 24 * 9).toString, state = "failed", what = "basemap-fetch", job = Some("j0")),
+      Entry(com.histmersion.api.automation.Activity.Entry.Key("job:j0"), com.histmersion.api.automation.Activity.Entry.Kind("job"), ago(60 * 24 * 9).toString, state = com.histmersion.api.automation.Activity.Entry.State("failed"), what = com.histmersion.api.automation.Activity.Entry.What("basemap-fetch"), job = Some("j0")),
       Entry(
-        "log:1",
-        "log",
+        com.histmersion.api.automation.Activity.Entry.Key("log:1"),
+        com.histmersion.api.automation.Activity.Entry.Kind("log"),
         ago(3).toString,
         text = "reviewed",
         goal = Some("g1"),
         job = Some("r1"),
         by = Some("agent")
       ),
-      Entry("log:2", "log", ago(3).toString, text = "fetched", job = Some("j1"), by = Some("job")),
-      Entry("log:3", "log", ago(3).toString, text = "a person's note"),
+      Entry(com.histmersion.api.automation.Activity.Entry.Key("log:2"), com.histmersion.api.automation.Activity.Entry.Kind("log"), ago(3).toString, text = "fetched", job = Some("j1"), by = Some("job")),
+      Entry(com.histmersion.api.automation.Activity.Entry.Key("log:3"), com.histmersion.api.automation.Activity.Entry.Kind("log"), ago(3).toString, text = "a person's note"),
       Entry(
-        "decision:1",
-        "decision",
+        com.histmersion.api.automation.Activity.Entry.Key("decision:1"),
+        com.histmersion.api.automation.Activity.Entry.Kind("decision"),
         ago(4).toString,
-        state = "approved",
-        what = "edge",
+        state = com.histmersion.api.automation.Activity.Entry.State("approved"),
+        what = com.histmersion.api.automation.Activity.Entry.What("edge"),
         goal = Some("g1"),
         job = Some("r1"),
         approval = Some(1L)
@@ -159,7 +159,7 @@ class ActivityServiceSuite extends com.histmersion.db.DbSuite:
       assertEquals(keysOf(w, ActivityQuery(show = Show.Problems)), named(w, "j1", "j0"))
 
     test(s"$label: a goal's history and a time bound"):
-      assertEquals(keysOf(w, ActivityQuery(goal = Some("g1"))), named(w, "r1", "l1", "a5"))
+      assertEquals(keysOf(w, ActivityQuery(goal = Some(com.histmersion.domain.activity.ActivityQuery.Goal("g1")))), named(w, "r1", "l1", "a5"))
       assertEquals(keysOf(w, ActivityQuery(since = Some(ago(2)))), named(w, "r1", "j1"))
 
     test(s"$label: each entry names what it touched"):
@@ -182,7 +182,7 @@ class ActivityServiceSuite extends com.histmersion.db.DbSuite:
       assertEquals(es(w.key("j1")).error, Some("HTTP 500"))
 
     test(s"$label: the counts: one running, one problem this week"):
-      assertEquals(w.service.page(ActivityQuery(), now).counts, Activity.Counts(running = 1, problemsWeek = 1))
+      assertEquals(w.service.page(ActivityQuery(), now).counts, Activity.Counts(running = com.histmersion.api.automation.Activity.Counts.Running(1), problemsWeek = com.histmersion.api.automation.Activity.Counts.ProblemsWeek(1)))
 
   spec("in memory", inMemory)
 

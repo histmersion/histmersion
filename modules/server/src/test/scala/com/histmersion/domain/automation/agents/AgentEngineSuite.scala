@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.server.agents.*
@@ -71,7 +73,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
   private val Ck = "zzagent2019_tin"
-  private val Model = ModelRef(ProviderKind.Local, "scripted")
+  private val Model = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
   private val Body =
@@ -144,7 +146,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       .put(Ck, com.histmersion.api.library.Source.Put(title = com.histmersion.api.library.Title("Bronze Age tin"), year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply), body = Some(body)))
     assert(r.isRight, r)
 
-  private def startAndRun(a: AgentsControllers, req: RunRequest = RunRequest("enrich-source", Ck)): RunInfo =
+  private def startAndRun(a: AgentsControllers, req: RunRequest = RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck)): RunInfo =
     val run = a.startRun(req).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
     connect(ds)(AgentRepo.get(run.id)).get
@@ -166,7 +168,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals((f.lon, f.lat), (Some(31.4), Some(36.1)), "coordinates come from the gazetteer")
     assertEquals(f.periodStart, Some(-1320L))
 
-    val steps = connect(ds)(AgentRepo.steps(run.id, 200))
+    val steps = connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(200)))
     assertEquals(
       steps.map(s => (s.name, s.attempt, s.status)),
       List(
@@ -193,7 +195,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(steps.find(_.name == "metadata").flatMap(_.output).exists(_.contains("no DOI")), steps)
     assert(steps.exists(s => s.name == "findings-1" && s.error.exists(_.contains("quote is not in the text"))))
     // 5 LLM calls of 1000 in / 100 out at 1 and 2 USD per Mtok
-    assertEquals(run.usage, Usage(5000, 500, 0, 0))
+    assertEquals(run.usage, Usage(com.histmersion.api.automation.Agents.Usage.Input(5000), com.histmersion.api.automation.Agents.Usage.Output(500), com.histmersion.api.automation.Agents.Usage.CacheRead(0), com.histmersion.api.automation.Agents.Usage.CacheWrite(0)))
     assertEqualsDouble(run.costUsd, 5 * 0.0012, 1e-9)
     assert(steps.filter(_.kind == "llm").forall(_.promptHash.exists(_.length == 64)))
 
@@ -204,7 +206,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val msgs = connect(ds)(AgentRepo.messages(run.id))
     assert(msgs.exists(m => m.toolName.contains("facets") && m.role == "tool"))
     // bookkeeping: one log line
-    val log = h.workListView.list("log", all = true).toOption.get.items.filter(_.text.contains(Ck))
+    val log = h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("log"), all = com.histmersion.server.views.WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.contains(Ck))
     assertEquals(log.size, 1, log)
 
   test("#1424 enrich-source: findings whose places the gazetteer does not know are asked again, naming them"):
@@ -264,7 +266,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val second = ScriptedClient(Model)
     second.scripts += Seq(text(notesJson))
     val (a2, h2) = handlers(second)
-    assert(a2.control(paused.id, "resume", None, None).isRight)
+    assert(a2.control(paused.id, com.histmersion.api.automation.Agents.Action("resume"), None, None).isRight)
     a2.engine.execute(paused.id)
     val done = connect(ds)(AgentRepo.get(paused.id)).get
     assertEquals(done.status, "done", done.error)
@@ -291,25 +293,25 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Unassessed)
     assert(run.warnings.exists(_.contains("status retracted not applied")), run.warnings)
     // the proposal waits in the approvals, not in the backlog (P2); nothing is applied until approved
-    val open = TestRuns.approvals(ds).approvals(Some(ApprovalState.Open), 50).filter(_.citekey == Ck)
+    val open = TestRuns.approvals(ds).approvals(Some(ApprovalState.Open), com.histmersion.domain.automation.approvals.ApprovalQuery.Limit(50)).filter(_.citekey == Ck)
     assertEquals(
       open.map(a => (a.kind, a.status, a.current, a.runId)),
       List(("status-change", Some("retracted"), Some("unassessed"), Some(run.id)))
     )
-    assertEquals(h.workListView.list("tasks", all = false).toOption.get.items.filter(_.text.contains(Ck)), Nil)
+    assertEquals(h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("tasks"), all = com.histmersion.server.views.WorkListView.IncludeAll(false)).toOption.get.items.filter(_.text.contains(Ck)), Nil)
 
   test("a run that reaches its budget is paused, not failed, and can resume with a higher one"):
     val c = ScriptedClient(Model)
     // the first iteration spends 0.0012 USD, past the cap: the loop is told to finish (a second, forced call)
     c.scripts += Seq(tool("facets", """{"field":"tags"}"""), text(classifyJson))
     val (a, h) = handlers(c); seed(h)
-    val run = startAndRun(a, RunRequest("enrich-source", Ck, budgetUsd = Some(0.001)))
+    val run = startAndRun(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, budgetUsd = Some(0.001)))
     assertEquals(run.status, "paused")
     assert(run.error.exists(_.startsWith("budget:")), run.error)
     // resuming WITHOUT raising it pauses again before any call — and says so in a locale-free
     // number even where the default locale writes a decimal comma (en_PL, pl_PL)
     c.scripts.clear()
-    assert(a.control(run.id, "resume", None, None).isRight)
+    assert(a.control(run.id, com.histmersion.api.automation.Agents.Action("resume"), None, None).isRight)
     val locale = java.util.Locale.getDefault
     java.util.Locale.setDefault(java.util.Locale.forLanguageTag("pl-PL"))
     try a.engine.execute(run.id)
@@ -320,7 +322,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(c.steps.size, 1)
     // raised, it runs to the end
     c.scripts ++= List(Seq(text(classifyJson)), Seq(text(s"""{"findings":[$goodFinding]}""")), Seq(text(notesJson)))
-    assert(a.control(run.id, "resume", Some(1.0), None).isRight)
+    assert(a.control(run.id, com.histmersion.api.automation.Agents.Action("resume"), Some(1.0), None).isRight)
     a.engine.execute(run.id)
     assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "done")
 
@@ -328,38 +330,38 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val c = ScriptedClient(Model)
     val (off, h) = handlers(c, baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(false)))
     seed(h)
-    assert(off.startRun(RunRequest("enrich-source", Ck)).left.exists(_.message.contains("off")))
+    assert(off.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck)).left.exists(_.message.contains("off")))
     val (a, _) = handlers(c)
     assert(
-      a.startRun(RunRequest("enrich-source", Ck, model = Some("local:unpriced")))
+      a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, model = Some(com.histmersion.api.automation.Agents.RunRequest.Model("local:unpriced"))))
         .left
         .exists(_.message.contains("has no price"))
     )
-    assert(a.startRun(RunRequest("summarise", Ck)).left.exists(_.message.contains("unknown pipeline")))
-    assert(a.startRun(RunRequest("enrich-source", "zzagent_nope")).isLeft)
+    assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("summarise"), Ck)).left.exists(_.message.contains("unknown pipeline")))
+    assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), com.histmersion.api.automation.Agents.RunRequest.Target("zzagent_nope"))).isLeft)
 
   test("cancel a queued run; a finished run cannot be resumed or cancelled"):
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c); seed(h)
-    val run = a.startRun(RunRequest("enrich-source", Ck)).toOption.get
-    assertEquals(a.control(run.id, "cancel", None, None).map(_.status), Right("cancelled"))
+    val run = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck)).toOption.get
+    assertEquals(a.control(run.id, com.histmersion.api.automation.Agents.Action("cancel"), None, None).map(_.status), Right("cancelled"))
     a.engine.execute(run.id) // a cancelled run is not picked up
     assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "cancelled")
     assertEquals(c.steps.size, 0)
-    assert(a.control(run.id, "resume", None, None).left.exists(_.code.contains(AgentsApi.CodeConflict)))
-    assert(a.control(run.id, "frobnicate", None, None).isLeft)
+    assert(a.control(run.id, com.histmersion.api.automation.Agents.Action("resume"), None, None).left.exists(_.code.contains(AgentsApi.CodeConflict)))
+    assert(a.control(run.id, com.histmersion.api.automation.Agents.Action("frobnicate"), None, None).isLeft)
     // the paged list (core Paging): the cancelled run is counted, a cursor pages past it
-    val (cancelled, page) = a.runsPage(Some("cancelled"), Some(500)).toOption.get
+    val (cancelled, page) = a.runsPage(Some(com.histmersion.domain.automation.agents.RunQuery.Status("cancelled")), Some(com.histmersion.PageSize(500))).toOption.get
     assert(cancelled.exists(_.id == run.id))
-    assertEquals(page.total, page.count("cancelled"))
-    assert(a.runsPage(Some("cancelled"), Some(500), before = Some(run.id)).toOption.get._1.forall(_.id != run.id))
-    assert(a.runsPage(None, None, before = Some("no-such-run")).left.exists(_.code.contains(Write.CodeNotFound)))
-    assert(a.runsPage(Some("bogus"), None).isLeft)
+    assertEquals(page.total, page.count(com.histmersion.api.Paging.Page.CountState("cancelled")))
+    assert(a.runsPage(Some(com.histmersion.domain.automation.agents.RunQuery.Status("cancelled")), Some(com.histmersion.PageSize(500)), before = Some(run.id)).toOption.get._1.forall(_.id != run.id))
+    assert(a.runsPage(None, None, before = Some(com.histmersion.api.Paging.Cursor("no-such-run"))).left.exists(_.code.contains(Write.CodeNotFound)))
+    assert(a.runsPage(Some(com.histmersion.domain.automation.agents.RunQuery.Status("bogus")), None).isLeft)
 
   test("restart: a running agent run is paused as interrupted, and the OCR reconciliation leaves it alone"):
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c); seed(h)
-    val run = a.startRun(RunRequest("enrich-source", Ck)).toOption.get
+    val run = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck)).toOption.get
     assert(TestRuns.transition(ds, run.id, RunState.Queued, RunState.Running).isDefined)
     Transactor(ds).transact(JobRepo.failInterrupted())
     assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "running")
@@ -380,23 +382,23 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     def meta(doi: String) = { calls.add(s"meta $doi"); Right(meta) }
     def refs(citekey: String, apply: Boolean) =
       calls.add(s"refs $citekey"); applies.add(apply)
-      Right(RefsResult(citekey, Some("10.1/zz"), "crossref", 12, 3, 3, Nil))
+      Right(RefsResult(citekey, Some(com.histmersion.api.library.Doi("10.1/zz")), com.histmersion.api.library.RefsResult.Backend("crossref"), com.histmersion.api.library.RefsResult.Count(12), com.histmersion.api.library.RefsResult.Resolved(3), com.histmersion.api.library.RefsResult.EdgesAdded(3), Nil))
     def assess(citekey: String, apply: Boolean) =
       calls.add(s"assess $citekey"); applies.add(apply)
       Right(
         Assessment(
           citekey,
-          Some("10.1/zz"),
+          Some(com.histmersion.api.library.Doi("10.1/zz")),
           Some(citekey),
-          Some(2019),
-          Some(10),
+          Some(com.histmersion.api.catalogue.Year(2019)),
+          Some(com.histmersion.api.library.Acquire.CitedByCount(10)),
           None,
           retracted,
           Nil,
           Nil,
           retracted,
-          if retracted then "retracted" else "ok",
-          if retracted then "do not cite" else "fine",
+          if retracted then com.histmersion.api.library.Assessment.Verdict("retracted") else com.histmersion.api.library.Assessment.Verdict("ok"),
+          if retracted then com.histmersion.api.library.Assessment.Recommendation("do not cite") else com.histmersion.api.library.Assessment.Recommendation("fine"),
           None,
           None,
           None
@@ -416,8 +418,8 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val up =
       FakeUpstream(WorkRef(doi = (Some("10.1/zz")).map(com.histmersion.api.library.Doi.apply), title = (Some("Bronze Age tin")).map(com.histmersion.api.library.Title.apply), year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply)), retracted = false)
     a.attach(up)
-    val item = h.workLists.add("acquire", Queue.QueueAdd("zzagent: buy the tin book")).toOption.get
-    val run = startAndRun(a, RunRequest("enrich-source", Ck, acquireItem = Some(item.id)))
+    val item = h.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("acquire"), Queue.QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("zzagent: buy the tin book"))).toOption.get
+    val run = startAndRun(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, acquireItem = Some(item.id)))
     assertEquals(run.status, "done", run.error)
     assertEquals(run.acquireItem, Some(item.id))
     import scala.jdk.CollectionConverters.*
@@ -426,7 +428,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val done = QueueRows.get(ds, item.id).get
     assertEquals(done.status, Queue.Done)
     assert(done.reason.exists(_.contains(Ck)), done)
-    val log = h.workListView.list("log", all = true).toOption.get.items.filter(_.text.contains(Ck))
+    val log = h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("log"), all = com.histmersion.server.views.WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.contains(Ck))
     assert(log.exists(_.text.contains(s"ticked off acquisition item ${item.id}")), log)
 
   test("enrich-source P2: a retraction found by assess outranks the model's status proposal"):
@@ -446,19 +448,19 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
     assert(run.warnings.exists(_.contains("RETRACTED")), run.warnings)
-    assertEquals(TestRuns.approvals(ds).approvals(None, 50).filter(_.citekey == Ck), Nil)
+    assertEquals(TestRuns.approvals(ds).approvals(None, com.histmersion.domain.automation.approvals.ApprovalQuery.Limit(50)).filter(_.citekey == Ck), Nil)
 
   test("an acquisition item, fix or rounds on the wrong pipeline is refused before the run is queued"):
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c); seed(h)
     assert(
-      a.startRun(RunRequest("enrich-source", Ck, fix = Some(true))).left.exists(_.message.contains("review-article"))
+      a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, fix = Some(true))).left.exists(_.message.contains("review-article"))
     )
     assert(
-      a.startRun(RunRequest("enrich-source", Ck, rounds = Some(2))).left.exists(_.message.contains("review-article"))
+      a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, rounds = Some(2))).left.exists(_.message.contains("review-article"))
     )
     assert(
-      a.startRun(RunRequest("enrich-source", Ck, acquireItem = Some(-7)))
+      a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, acquireItem = Some(-7)))
         .left
         .exists(_.message.contains("no acquisition item"))
     )
@@ -475,35 +477,35 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     // the same proposal while it is open is not doubled
     assert(TestRuns.proposals(a, h, ds).propose(None, p).isInstanceOf[SourceProposals.Outcome.AlreadyOpen])
     assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Unassessed)
-    val decided = a.decide(id, "approve", DecisionRequest(Some("checked the rebuttal"))).toOption.get
+    val decided = a.decide(id, com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest(Some(com.histmersion.api.automation.Approval.Note("checked the rebuttal")))).toOption.get
     assertEquals((decided.state, decided.note), ("approved", Some("checked the rebuttal")))
     assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Contested)
-    assert(a.decide(id, "reject", DecisionRequest()).left.exists(_.code.contains(AgentsApi.CodeConflict)))
-    assert(a.decide(999999999L, "approve", DecisionRequest()).left.exists(_.code.contains(Write.CodeNotFound)))
-    assert(a.decide(id, "maybe", DecisionRequest()).isLeft)
+    assert(a.decide(id, com.histmersion.domain.automation.Approval.Outcome("reject"), DecisionRequest()).left.exists(_.code.contains(AgentsApi.CodeConflict)))
+    assert(a.decide(com.histmersion.domain.automation.Approval.Id(999999999L), com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).left.exists(_.code.contains(Write.CodeNotFound)))
+    assert(a.decide(id, com.histmersion.domain.automation.Approval.Outcome("maybe"), DecisionRequest()).isLeft)
     val p2 = p.modify(_.status).setTo(Some(Source.Status.Debunked))
     val id2 = TestRuns.proposals(a, h, ds).propose(None, p2) match
       case SourceProposals.Outcome.Recorded(i, _) => i
       case other                                  => fail(s"expected an open approval, got $other")
-    assertEquals(a.decide(id2, "reject", DecisionRequest()).map(_.state), Right("rejected"))
+    assertEquals(a.decide(id2, com.histmersion.domain.automation.Approval.Outcome("reject"), DecisionRequest()).map(_.state), Right("rejected"))
     assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Contested)
-    assertEquals(a.approvalsList(Some("all"), None).map(_.count(_.citekey == Ck)), Right(2))
-    assert(a.approvalsList(Some("pending"), None).isLeft)
+    assertEquals(a.approvalsList(Some(com.histmersion.domain.automation.approvals.ApprovalQuery.State("all")), None).map(_.count(_.citekey == Ck)), Right(2))
+    assert(a.approvalsList(Some(com.histmersion.domain.automation.approvals.ApprovalQuery.State("pending")), None).isLeft)
     // paged (core Paging): newest first, id2 then id; the counts are every state's, the total the filter's
-    val (one, page) = a.approvalsPage(Some("all"), Some(1)).toOption.get
+    val (one, page) = a.approvalsPage(Some(com.histmersion.domain.automation.approvals.ApprovalQuery.State("all")), Some(com.histmersion.PageSize(1))).toOption.get
     assertEquals(one.size, 1)
     assertEquals(page.total, page.all)
-    assert(page.count("approved") >= 1 && page.count("rejected") >= 1, page.toString)
-    val (afterId2, _) = a.approvalsPage(Some("all"), Some(500), before = Some(id2.toString)).toOption.get
+    assert(page.count(com.histmersion.api.Paging.Page.CountState("approved")) >= 1 && page.count("rejected") >= 1, page.toString)
+    val (afterId2, _) = a.approvalsPage(Some(com.histmersion.domain.automation.approvals.ApprovalQuery.State("all")), Some(com.histmersion.PageSize(500)), before = Some(id2.toString)).toOption.get
     assert(afterId2.exists(_.id == id) && !afterId2.exists(_.id == id2))
-    val (rejected, rp) = a.approvalsPage(Some("rejected"), Some(500)).toOption.get
+    val (rejected, rp) = a.approvalsPage(Some(com.histmersion.domain.automation.approvals.ApprovalQuery.State("rejected")), Some(com.histmersion.PageSize(500))).toOption.get
     assertEquals(rp.total, rejected.size)
-    assert(a.approvalsPage(Some("all"), Some(1), before = Some("x")).left.exists(_.code.contains(Write.CodeNotFound)))
-    assert(a.approvalsPage(Some("pending"), None).isLeft)
+    assert(a.approvalsPage(Some(com.histmersion.domain.automation.approvals.ApprovalQuery.State("all")), Some(com.histmersion.PageSize(1)), before = Some(com.histmersion.api.Paging.Cursor("x"))).left.exists(_.code.contains(Write.CodeNotFound)))
+    assert(a.approvalsPage(Some(com.histmersion.domain.automation.approvals.ApprovalQuery.State("pending")), None).isLeft)
 
   test("approvals configured auto are applied at once and recorded already approved"):
     val c = ScriptedClient(Model)
-    val auto = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.approvals).setTo(AgentApprovalsConfig("auto", "manual", "manual")))
+    val auto = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.approvals).setTo(AgentApprovalsConfig(com.histmersion.config.AgentApprovalsConfig.Gate("auto"), com.histmersion.config.AgentApprovalsConfig.Gate("manual"), com.histmersion.config.AgentApprovalsConfig.Gate("manual"))))
     val (a, h) = handlers(c, auto); seed(h)
     val o = TestRuns
       .proposals(a, h, ds)
@@ -514,7 +516,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(o.isInstanceOf[SourceProposals.Outcome.Applied], o)
     assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Debunked)
     assertEquals(
-      TestRuns.approvals(ds).approvals(Some(ApprovalState.Approved), 50).filter(_.citekey == Ck).map(_.status),
+      TestRuns.approvals(ds).approvals(Some(ApprovalState.Approved), com.histmersion.domain.automation.approvals.ApprovalQuery.Limit(50)).filter(_.citekey == Ck).map(_.status),
       List(Some("debunked"))
     )
 
@@ -530,14 +532,14 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         .run()
     val firstSeq = connect(ds)(AgentRepo.messages(run.id)).map(_.seq).min
     val old = connect(ds)(AgentRepo.messages(run.id)).count(_.seq == firstSeq)
-    assertEquals(a.engine.pruneTrace(force = true), old)
+    assertEquals(a.engine.pruneTrace(force = com.histmersion.domain.automation.agents.Engine.PruneTraceForce(true)), old)
     assertEquals(connect(ds)(AgentRepo.messages(run.id)).size, before - old)
-    assertEquals(connect(ds)(AgentRepo.steps(run.id, 10)).size, 12, "steps are never pruned")
+    assertEquals(connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(10))).size, 12, "steps are never pruned")
     // not again within prune-every-minutes, and never with keep-messages-days = 0
     assertEquals(a.engine.pruneTrace(), 0)
     val (keepAll, _) =
       handlers(c, baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.trace).setTo(baseCfg.agents.trace.modify(_.keepMessagesDays).setTo(0))))
-    assertEquals(keepAll.engine.pruneTrace(force = true), 0)
+    assertEquals(keepAll.engine.pruneTrace(force = com.histmersion.domain.automation.agents.Engine.PruneTraceForce(true)), 0)
 
   // #882: a blocking approval decided after the step opened it but BEFORE the run reached `waiting`.
   // The decision's wake finds the run still `running` and does nothing; unless the engine looks again
@@ -545,15 +547,15 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("a blocking approval decided between being opened and the run's move to waiting is not lost"):
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c); seed(h)
-    val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
+    val run = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck)).fold(e => fail(e.message), identity)
     val seen = mutable.ListBuffer.empty[Decided]
     val racing = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
       def run(ctx: RunCtx): Either[Halt, String] =
-        ctx.approval("publish", ApprovalKind.ArticlePublish, Ck, ApprovalMode.Manual)(Right("""{"zz":1}""")) match
+        ctx.approval(com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("publish"), ApprovalKind.ArticlePublish, Ck, ApprovalMode.Manual)(Right("""{"zz":1}""")) match
           case Left(w @ Halt.Wait(id, _)) =>
             // the person decides NOW: the run is still `running`, so the wake this triggers is a no-op
-            val decided = a.decide(id, "approve", DecisionRequest(Some("zzagent race")))
+            val decided = a.decide(id, com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest(Some(com.histmersion.api.automation.Approval.Note("zzagent race"))))
             assert(decided.isRight, decided)
             assertEquals(connect(ds)(AgentRepo.get(ctx.run.id)).map(_.status), Some("running"))
             Left(w)
@@ -574,7 +576,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("stop() while a run is executing: the run is paused and the pool thread exits"):
     val c = ScriptedClient(Model); happyScripts(c)
     val (a, h) = handlers(c); seed(h)
-    val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
+    val run = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck)).fold(e => fail(e.message), identity)
     val entered = java.util.concurrent.CountDownLatch(1)
     val blocking = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
@@ -596,7 +598,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   // ── #992: dry runs, a role's own model, the model that served, compare ──────────────────────────
 
-  private val Haiku = ModelRef(ProviderKind.Local, "haiku-sim")
+  private val Haiku = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("haiku-sim"))
   private lazy val evalCfg =
     baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.prices).setTo("scripted=1/2; haiku-sim=3/4").modify(_.autoEnrich).setTo(true))
 
@@ -629,16 +631,16 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val up =
       FakeUpstream(WorkRef(doi = (Some("10.1/zz")).map(com.histmersion.api.library.Doi.apply), title = (Some("Bronze Age tin")).map(com.histmersion.api.library.Title.apply), year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply)), retracted = false)
     a.attach(up)
-    val item = h.workLists.add("acquire", Queue.QueueAdd("zzagent: buy the tin book")).toOption.get
+    val item = h.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("acquire"), Queue.QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("zzagent: buy the tin book"))).toOption.get
     val before = CorpusSnapshot.of(ds)
-    val run = startAndRun(a, RunRequest("enrich-source", Ck, acquireItem = Some(item.id), dryRun = Some(true)))
+    val run = startAndRun(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, acquireItem = Some(item.id), dryRun = Some(true)))
     assertEquals(run.status, "done", run.error)
     assert(run.dryRun)
     assertEquals(CorpusSnapshot.of(ds), before, "a dry run writes nothing: source, findings, edges, queues, approvals")
     assertEquals(c.steps.size, 3, "every model step ran")
     assertEquals(up.applies.asScala.toList, List(false, false), "refs and assess only read")
 
-    val steps = connect(ds)(AgentRepo.steps(run.id, 100000))
+    val steps = connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000)))
     def would(n: String) = steps.filter(_.name == n).flatMap(_.wouldWrite)
     val patch = would("patch")
     assertEquals(patch.size, 1)
@@ -671,40 +673,40 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         if first.scripts.isEmpty then throw java.net.ConnectException("provider down") else first.run(call)
     val (a, h) = handlersFor((_, _) => Right(flaky)); seed(h)
     val before = CorpusSnapshot.of(ds)
-    val paused = startAndRun(a, RunRequest("enrich-source", Ck, dryRun = Some(true)))
+    val paused = startAndRun(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, dryRun = Some(true)))
     assertEquals(paused.status, "paused")
     assert(paused.dryRun)
     val second = ScriptedClient(Model)
     second.scripts += Seq(text(notesJson))
     val (a2, _) = handlersFor(byModel(second))
-    assert(a2.control(paused.id, "resume", None, None).exists(_.dryRun))
+    assert(a2.control(paused.id, com.histmersion.api.automation.Agents.Action("resume"), None, None).exists(_.dryRun))
     a2.engine.execute(paused.id)
     val done = connect(ds)(AgentRepo.get(paused.id)).get
     assertEquals(done.status, "done", done.error)
     assert(done.dryRun)
     assertEquals(CorpusSnapshot.of(ds), before)
-    assert(connect(ds)(AgentRepo.steps(done.id, 100000)).exists(s => s.name == "patch" && s.wouldWrite.nonEmpty))
+    assert(connect(ds)(AgentRepo.steps(done.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000))).exists(s => s.name == "patch" && s.wouldWrite.nonEmpty))
 
   test("a role's own model (--model-for) is checked before the run is queued"):
     val (a, h) = handlersFor(byModel(ScriptedClient(Model), ScriptedClient(Haiku))); seed(h)
     def refused(o: ModelOverride*) =
-      a.startRun(RunRequest("enrich-source", Ck, modelFor = o.toList)).left.map(_.message)
+      a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, modelFor = o.toList)).left.map(_.message)
     assert(
-      refused(ModelOverride("editor", Haiku.wire)).left.exists(_.contains("unknown role 'editor'")),
-      refused(ModelOverride("editor", Haiku.wire))
+      refused(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("editor"), Haiku.wire)).left.exists(_.contains("unknown role 'editor'")),
+      refused(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("editor"), Haiku.wire))
     )
-    assert(refused(ModelOverride("skeptic", Haiku.wire)).left.exists(_.contains("enrich-source uses no skeptic role")))
-    assert(refused(ModelOverride("extractor", "haiku")).left.exists(_.contains("is not provider:model")))
-    assert(refused(ModelOverride("extractor", "local:unpriced")).left.exists(_.contains("has no price")))
+    assert(refused(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("skeptic"), Haiku.wire)).left.exists(_.contains("enrich-source uses no skeptic role")))
+    assert(refused(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("extractor"), com.histmersion.api.automation.Agents.ModelOverride.Model("haiku"))).left.exists(_.contains("is not provider:model")))
+    assert(refused(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("extractor"), com.histmersion.api.automation.Agents.ModelOverride.Model("local:unpriced"))).left.exists(_.contains("has no price")))
     assert(
-      refused(ModelOverride("extractor", Haiku.wire), ModelOverride("Extractor", Model.wire)).left
+      refused(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("extractor"), Haiku.wire), ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("Extractor"), Model.wire)).left
         .exists(_.contains("given twice"))
     )
-    assertEquals(ModelOverride.parse("fixer"), Left("'fixer' is not <role>=<provider:model>"))
+    assertEquals(ModelOverride.parse(com.histmersion.api.automation.Agents.ModelOverride.Wire("fixer")), Left("'fixer' is not <role>=<provider:model>"))
     val ok = a
-      .startRun(RunRequest("enrich-source", Ck, modelFor = List(ModelOverride("Extractor", s" ${Haiku.wire} "))))
+      .startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, modelFor = List(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("Extractor"), s" ${Haiku.wire} "))))
       .fold(e => fail(e.message), identity)
-    assertEquals(ok.params.overrides, List(ModelOverride("extractor", Haiku.wire)))
+    assertEquals(ok.params.overrides, List(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("extractor"), Haiku.wire)))
     assertEquals((ok.modelFor(Role.Extractor), ok.modelFor(Role.Writer)), (Some(Haiku.wire), None))
 
   test("the model that served a step is recorded beside the configured one (claude -p's modelUsage)"):
@@ -714,19 +716,19 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         """"claude-haiku-5-5":{"inputTokens":90,"outputTokens":18}}}"""
     val fake = FakeCli("claude", List(ClaudeStreams.Init, result))
     val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
-    val Plan = ModelRef(ProviderKind.ClaudeCode, "haiku")
+    val Plan = ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("haiku"))
     val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.modify(_.command).setTo(fake.script.toString), rt)
     val cfg = evalCfg.modify(_.agents).setTo(evalCfg.agents.modify(_.roles).setTo(evalCfg.agents.roles.modify(_.extractor).setTo(Plan.wire)))
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
-    val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
+    val run = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck)).fold(e => fail(e.message), identity)
     // one LLM step of the pipeline's own agent, so the fake's one answer fits it
     val notesOnly = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
       def run(ctx: RunCtx): Either[Halt, String] =
         ctx.llm[EnrichSource.Notes, String](
-          "notes",
+          com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("notes"),
           StepAgent.EnrichNotes,
-          "Write the notes.",
+          com.histmersion.domain.automation.agents.Prompt.UserText("Write the notes."),
           ResponseSchema.derived[EnrichSource.Notes]()
         )((n, _) => Right(Checked(n.notes)))
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(notesOnly, a.definitions)))
@@ -761,18 +763,18 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       )
     )
     val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
-    val Plan = ModelRef(ProviderKind.ClaudeCode, "sonnet")
+    val Plan = ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("sonnet"))
     val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.modify(_.command).setTo(fake.script.toString), rt)
     val cfg = evalCfg.modify(_.agents).setTo(evalCfg.agents.modify(_.roles).setTo(evalCfg.agents.roles.modify(_.extractor).setTo(Plan.wire)))
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
-    val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
+    val run = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck)).fold(e => fail(e.message), identity)
     val notesOnly = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
       def run(ctx: RunCtx): Either[Halt, String] =
         ctx.llm[EnrichSource.Notes, String](
-          "notes",
+          com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("notes"),
           StepAgent.EnrichNotes,
-          "Write the notes.",
+          com.histmersion.domain.automation.agents.Prompt.UserText("Write the notes."),
           ResponseSchema.derived[EnrichSource.Notes]()
         )((n, _) => Right(Checked(n.notes)))
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(notesOnly, a.definitions)))
@@ -808,24 +810,24 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     val (a, h) = handlersFor(byModel(scripted, haiku)); seed(h)
     // two dry runs: neither changes what the other reads
-    val r1 = startAndRun(a, RunRequest("enrich-source", Ck, dryRun = Some(true)))
+    val r1 = startAndRun(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, dryRun = Some(true)))
     val r2 = startAndRun(
       a,
-      RunRequest("enrich-source", Ck, dryRun = Some(true), modelFor = List(ModelOverride("extractor", Haiku.wire)))
+      RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, dryRun = Some(true), modelFor = List(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("extractor"), Haiku.wire)))
     )
     assertEquals((r1.status, r2.status), ("done", "done"), s"${r1.error} ${r2.error}")
     val cmp = a.compare(List(r1.id, r2.id)).fold(e => fail(e.message), identity)
     assertEquals((cmp.pipeline, cmp.target, cmp.runs.map(_.id)), ("enrich-source", Ck, List(r1.id, r2.id)))
     assertEquals(
       cmp.runs.map(r => (r.dryRun, r.modelFor)),
-      List((true, Nil), (true, List(ModelOverride("extractor", Haiku.wire))))
+      List((true, Nil), (true, List(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("extractor"), Haiku.wire))))
     )
     val classify = cmp.steps.find(_.name == "classify").get
     assertEquals(
       classify.runs.map(_.map(s => (s.models, s.billing, s.usage))),
       List(
-        Some((List("local:scripted"), List("price: 1/2 USD per million tokens"), Usage(2000, 200))),
-        Some((List("local:haiku-sim"), List("price: 3/4 USD per million tokens"), Usage(1000, 100)))
+        Some((List("local:scripted"), List("price: 1/2 USD per million tokens"), Usage(com.histmersion.api.automation.Agents.Usage.Input(2000), com.histmersion.api.automation.Agents.Usage.Output(200)))),
+        Some((List("local:haiku-sim"), List("price: 3/4 USD per million tokens"), Usage(com.histmersion.api.automation.Agents.Usage.Input(1000), com.histmersion.api.automation.Agents.Usage.Output(100))))
       )
     )
     assertEquals(classify.runs.map(_.map(_.actual)), List(Some(List("scripted")), Some(List("scripted"))))
@@ -885,7 +887,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     // what cannot be compared is refused
     assert(a.compare(List(r1.id)).left.exists(_.message.contains("at least two")))
-    assert(a.compare(List(r1.id, "zzagent-no-such-run")).left.exists(_.code.contains(Write.CodeNotFound)))
+    assert(a.compare(List(r1.id, com.histmersion.domain.automation.Run.Id("zzagent-no-such-run"))).left.exists(_.code.contains(Write.CodeNotFound)))
     assert(a.compare(List(s"${r1.id},${r2.id}")).isRight, "ids may come comma-separated")
 
   // ── #1450 the output cap · #941 the decoder's error ─────────────────────────────────────────────
@@ -895,9 +897,9 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     def pipeline: Pipeline = Pipeline.EnrichSource
     def run(ctx: RunCtx): Either[Halt, String] =
       ctx.llm[EnrichSource.Notes, String](
-        "notes",
+        com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("notes"),
         StepAgent.EnrichNotes,
-        "Write the notes.",
+        com.histmersion.domain.automation.agents.Prompt.UserText("Write the notes."),
         LibraryAnswers.notes,
         cap
       )((n, _) => Right(Checked(n.notes)))
@@ -905,14 +907,14 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   /** A run of `pipeline` on the fake `claude`, configured with `agents.step.max-tokens = stepCap`. */
   private def claudeRun(fake: FakeCli.Fake, stepCap: Int, pipeline: PipelineDef): (AgentsControllers, String) =
     val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
-    val Plan = ModelRef(ProviderKind.ClaudeCode, "haiku")
+    val Plan = ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("haiku"))
     val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.modify(_.command).setTo(fake.script.toString), rt)
     val cfg = evalCfg.modify(_.agents).setTo(evalCfg.agents.modify(
         _.roles).setTo(evalCfg.agents.roles.modify(_.extractor).setTo(Plan.wire)).modify(_.step).setTo(evalCfg.agents.step.modify(_.maxTokens).setTo(stepCap)
       )
     )
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
-    val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
+    val run = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck)).fold(e => fail(e.message), identity)
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(pipeline, a.definitions)))
       .execute(run.id)
     (a, run.id)
@@ -954,7 +956,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val c = ScriptedClient(Model)
     c.scripts ++= List(Seq(text("""{"notes": 5}""")), Seq(text(notesJson)))
     val (a, h) = handlersFor((_, _) => Right(c)); seed(h)
-    val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
+    val run = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck)).fold(e => fail(e.message), identity)
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(notesOnly(), a.definitions)))
       .execute(run.id)
     assertEquals(connect(ds)(AgentRepo.get(run.id)).map(_.status), Some("done"))
@@ -976,22 +978,22 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       def run(ctx: RunCtx): Either[Halt, String] =
         for
           a <- ctx.llm[EnrichSource.Notes, String](
-            "notes-1",
+            com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("notes-1"),
             StepAgent.EnrichNotes,
-            "Write the notes.",
+            com.histmersion.domain.automation.agents.Prompt.UserText("Write the notes."),
             LibraryAnswers.notes
           )((n, _) => Right(Checked(n.notes)))
           b <- ctx.llm[EnrichSource.Notes, String](
-            "notes-2",
+            com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("notes-2"),
             StepAgent.EnrichNotes,
-            "Write the notes.",
+            com.histmersion.domain.automation.agents.Prompt.UserText("Write the notes."),
             LibraryAnswers.notes
           )((n, _) => Right(Checked(n.notes)))
         yield a + b
     // 301k raw tokens per step against a 400k budget: counted in full the second step would not run
     val (a, h) = handlersFor((_, _) => Right(c)); seed(h)
     val run =
-      a.startRun(RunRequest("enrich-source", Ck, budgetTokens = Some(400000L))).fold(e => fail(e.message), identity)
+      a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, budgetTokens = Some(400000L))).fold(e => fail(e.message), identity)
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(twoNotes, a.definitions)))
       .execute(run.id)
     assertEquals(
@@ -1006,22 +1008,22 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     clean(); beforeEach(null)
     val (a2, h2) = handlersFor((_, _) => Right(c2), full); seed(h2)
     val run2 =
-      a2.startRun(RunRequest("enrich-source", Ck, budgetTokens = Some(300000L))).fold(e => fail(e.message), identity)
+      a2.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, budgetTokens = Some(300000L))).fold(e => fail(e.message), identity)
     Engine(ds, a2.engine.cfg, a2, a2.engine.workflows.replaced(PipelineWorkflow.of(twoNotes, a2.definitions)))
       .execute(run2.id)
     assertEquals(connect(ds)(AgentRepo.get(run2.id)).map(_.status), Some("paused"))
 
   test("#1461 a review-article run gets its pipeline's run-tokens default; another pipeline the global one"):
     val (a, h) = handlersFor((_, _) => Right(ScriptedClient(Model))); seed(h)
-    val enrich = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
+    val enrich = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck)).fold(e => fail(e.message), identity)
     assertEquals(enrich.budgetTokens, 400000L)
-    assertEquals(evalCfg.agents.budgets.runTokensFor("review-article"), 1200000L)
+    assertEquals(evalCfg.agents.budgets.runTokensFor(com.histmersion.domain.automation.Pipeline.Wire("review-article")), 1200000L)
 
   // ── defects fixed with the process managers (docs/research-process-managers.md §0) ───────────────
 
   test("restart: an interrupted run nobody watches resumes by itself; a person's run waits for them"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
-    val mine = a.startRun(RunRequest("enrich-source", Ck)).toOption.get
+    val mine = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck)).toOption.get
     val sched = TestRuns.create(ds, Pipeline.EnrichSource, Ck, None, BigDecimal(1), 1000L, origin = Origin.Scheduler)
     val mgr = TestRuns.create(ds, Pipeline.EnrichSource, Ck, None, BigDecimal(1), 1000L, origin = Origin.Manager)
     List(mine, sched, mgr).foreach(r =>
@@ -1040,12 +1042,12 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   final private class Hang(dir: java.nio.file.Path) extends PipelineDef:
     val pipeline = Pipeline.EnrichSource
     def run(ctx: RunCtx): Either[Halt, String] =
-      ctx.code[String]("hang") {
+      ctx.code[String](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("hang")) {
         val f = dir.resolve("cli")
         java.nio.file.Files
           .writeString(f, s"#!/bin/bash\nsleep 300 & echo $$! > '$dir/child'\necho $$$$ > '$dir/pid'\nsleep 300\n")
         f.toFile.setExecutable(true)
-        val r = CliProcess.run(List(f.toString), dir, _ => (), "", 600, "hint")
+        val r = CliProcess.run(List(f.toString), dir, _ => (), com.histmersion.server.agents.CliProcess.RunStdin(""), com.histmersion.server.agents.CliProcess.RunTimeoutSeconds(600), com.histmersion.server.agents.CliProcess.RunHint("hint"))
         Right(r.lines.mkString)
       }
 

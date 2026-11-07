@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.library.workflows.*
 
 import com.histmersion.domain.automation.agents.Toolbox
@@ -111,11 +113,11 @@ class AgentSchemaSuite extends munit.FunSuite:
     List("\"query\"", "\"topics\"", "\"status\"", "\"limit\"", "\"offset\"").foreach(k => assert(search.contains(k), k))
     List("groupBy", "minLon", "samples", "verbose", "asOf").foreach(k => assert(!search.contains(k), k))
     val f = AgentSearchInput(
-      query = Some("Hittite"),
-      topics = List("a,b"),
-      status = List("contested"),
-      from = Some(-1600),
-      to = Some(-1200),
+      query = Some(com.histmersion.api.library.Filter.Q("Hittite")),
+      topics = List(com.histmersion.api.library.Filter.Topics("a,b")),
+      status = List(com.histmersion.api.library.Filter.Status("contested")),
+      from = Some(com.histmersion.api.catalogue.Year(-1600)),
+      to = Some(com.histmersion.api.catalogue.Year(-1200)),
       limit = Some(30),
       offset = Some(30)
     ).toFilter
@@ -130,20 +132,20 @@ class AgentSchemaSuite extends munit.FunSuite:
       ).contains("\"prefix\"")
     )
     assert(!schema(com.histmersion.domain.library.workflows.LibraryAgentTools.GetSource).contains("fullText"))
-    assertEquals(AgentGetSourceInput("x").sectionOrBody, None, "no section: summary, findings and notes")
-    assertEquals(AgentGetSourceInput("x", offset = Some(120)).sectionOrBody, Some("body"), "a slice reads the body")
-    assertEquals(AgentGetSourceInput("x", section = Some("all"), offset = Some(120)).sectionOrBody, Some("all"))
+    assertEquals(AgentGetSourceInput(com.histmersion.domain.library.Citekey("x")).sectionOrBody, None, "no section: summary, findings and notes")
+    assertEquals(AgentGetSourceInput(com.histmersion.domain.library.Citekey("x"), offset = Some(com.histmersion.Offset(120))).sectionOrBody, Some("body"), "a slice reads the body")
+    assertEquals(AgentGetSourceInput(com.histmersion.domain.library.Citekey("x"), section = Some(com.histmersion.api.library.Source.Section.Wire("all")), offset = Some(com.histmersion.Offset(120))).sectionOrBody, Some("all"))
 
   test("an agent's arguments may leave out what has a default, and a stray one costs no turn (2026-10-16)"):
     import io.circe.parser.decode
     // a Codex skeptic spent ~3 calls a step on "DecodingFailure at .tags: Missing required field"
     assertEquals(
       decode[AgentSearchInput]("""{"topics":["dragon_slaying_myth"],"limit":50}"""),
-      Right(AgentSearchInput(topics = List("dragon_slaying_myth"), limit = Some(50)))
+      Right(AgentSearchInput(topics = List(com.histmersion.api.library.Filter.Topics("dragon_slaying_myth")), limit = Some(com.histmersion.api.library.Filter.Limit(50))))
     )
-    assertEquals(decode[AgentGetSourceInput]("""{"citekey":"x","fullText":true}"""), Right(AgentGetSourceInput("x")))
-    assertEquals(decode[AgentFacetsInput]("""{"field":"tags"}"""), Right(AgentFacetsInput("tags")))
-    assertEquals(decode[FollowupsInput]("""{"id":"x"}"""), Right(FollowupsInput("x")))
+    assertEquals(decode[AgentGetSourceInput]("""{"citekey":"x","fullText":true}"""), Right(AgentGetSourceInput(com.histmersion.domain.library.Citekey("x"))))
+    assertEquals(decode[AgentFacetsInput]("""{"field":"tags"}"""), Right(AgentFacetsInput(com.histmersion.domain.library.workflows.AgentFacetsInput.Field("tags"))))
+    assertEquals(decode[FollowupsInput]("""{"id":"x"}"""), Right(FollowupsInput(com.histmersion.domain.library.workflows.FollowupsInput.Id("x"))))
     val t = box.tool(com.histmersion.domain.library.workflows.LibraryAgentTools.Search).get
     assert(
       t.codec.decodeJson(io.circe.Json.obj("topics" -> io.circe.Json.arr(io.circe.Json.fromString("a")))).isRight,

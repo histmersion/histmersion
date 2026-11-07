@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.agents.ModelPicker
@@ -23,15 +25,15 @@ class PlanRefreshSuite extends munit.FunSuite:
   private given java.time.Clock = java.time.Clock.systemUTC()
   private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val Cfg = ClaudeCodeConfig(
-    command = "claude",
-    configDir = "",
-    extraArgs = "",
-    useApiKey = false,
-    allowNonLoopback = false,
-    mcpUrl = "",
-    timeoutSeconds = 30,
-    limitCooldownMinutes = 60,
-    disableSlashCommands = false,
+    command = com.histmersion.config.ClaudeCodeConfig.Command("claude"),
+    configDir = com.histmersion.config.ClaudeCodeConfig.ConfigDir(""),
+    extraArgs = com.histmersion.config.ClaudeCodeConfig.ExtraArgs(""),
+    useApiKey = com.histmersion.config.ClaudeCodeConfig.UseApiKey(false),
+    allowNonLoopback = com.histmersion.config.ClaudeCodeConfig.AllowNonLoopback(false),
+    mcpUrl = com.histmersion.config.ClaudeCodeConfig.McpUrl(""),
+    timeoutSeconds = com.histmersion.config.ClaudeCodeConfig.TimeoutSeconds(30),
+    limitCooldownMinutes = com.histmersion.config.ClaudeCodeConfig.LimitCooldownMinutes(60),
+    disableSlashCommands = com.histmersion.config.ClaudeCodeConfig.DisableSlashCommands(false),
     env = Map.empty
   )
 
@@ -51,7 +53,7 @@ class PlanRefreshSuite extends munit.FunSuite:
     """{"type":"result","subtype":"success","is_error":false,"result":"Quota.","num_turns":1,"usage":{"input_tokens":9,"output_tokens":3}}"""
 
   test("the probe's argv: the probe model, ONE turn, no tools, no MCP server, no skills or settings, no session"):
-    val a = ClaudeCode.probeArgv(Cfg, "haiku")
+    val a = ClaudeCode.probeArgv(Cfg, com.histmersion.config.ClaudePlanConfig.ProbeModel("haiku"))
     def after(flag: String) = a(a.indexOf(flag) + 1)
     assertEquals(a.take(2), List("claude", "-p"))
     assertEquals(after("--model"), "haiku")
@@ -67,14 +69,14 @@ class PlanRefreshSuite extends munit.FunSuite:
     )
     assertEquals(after("--system-prompt"), "Reply with one word.", "Claude Code's long system prompt is replaced")
     assertEquals(
-      ClaudeCode.probeArgv(Cfg.modify(_.extraArgs).setTo(" --effort low "), "haiku").takeRight(2),
+      ClaudeCode.probeArgv(Cfg.modify(_.extraArgs).setTo(" --effort low "), com.histmersion.config.ClaudePlanConfig.ProbeModel("haiku")).takeRight(2),
       List("--effort", "low")
     )
 
   test("the probe's environment: output capped, no API key, no run token or quota URL"):
     val env =
       new java.util.HashMap[String, String](java.util.Map.of("ANTHROPIC_API_KEY", "sk-x", "HISTMERSION_RUN_TOKEN", "t"))
-    ClaudeCode.probeEnvironment(Cfg, 16, env)
+    ClaudeCode.probeEnvironment(Cfg, com.histmersion.config.ClaudePlanConfig.ProbeMaxTokens(16), env)
     assertEquals(env.get("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "16")
     assert(
       !env.containsKey("ANTHROPIC_API_KEY") && !env.containsKey("HISTMERSION_RUN_TOKEN") && !env.containsKey(
@@ -86,36 +88,36 @@ class PlanRefreshSuite extends munit.FunSuite:
 
   test("the probe's output: its rate_limit_event is the reading (source probe, observed now)"):
     val rs = PlanPools
-      .probeReadings(CliProcess.Run(List(Init, Answer, Event, Result), 0, "", None), 5000L, 60)
+      .probeReadings(CliProcess.Run(List(Init, Answer, Event, Result), com.histmersion.server.agents.CliProcess.Run.Exit(0), com.histmersion.server.agents.CliProcess.Run.Stderr(""), None), com.histmersion.api.automation.PlanQuota.Now(5000L), com.histmersion.config.ClaudeCodeConfig.LimitCooldownMinutes(60))
       .fold(fail(_), identity)
     assertEquals(
       rs.map(r => (r.kind, r.usedPct, r.source, r.observedAt, r.rejected)).toSet,
       Set(("five_hour", 12.0, Source.Probe, 5000L, false), ("seven_day", 42.0, Source.Probe, 5000L, false))
     )
     assertEquals(rs.find(_.kind == "seven_day").flatMap(_.resetsAt), Some(1791522000000L))
-    assertEquals(PlanPools.summary(rs, 5000L), "five_hour 12% used, seven_day 42% used")
+    assertEquals(PlanPools.summary(rs, com.histmersion.api.automation.PlanQuota.Now(5000L)), "five_hour 12% used, seven_day 42% used")
 
   test("a probe the plan refuses records a refused window; a rejected rate_limit_event is read as it is"):
     val limit =
       """{"type":"result","subtype":"error_during_execution","is_error":true,"result":"Claude AI usage limit reached|1791236400"}"""
-    val rs = PlanPools.probeReadings(CliProcess.Run(List(Init, limit), 1, "", None), 5000L, 60).fold(fail(_), identity)
+    val rs = PlanPools.probeReadings(CliProcess.Run(List(Init, limit), com.histmersion.server.agents.CliProcess.Run.Exit(1), com.histmersion.server.agents.CliProcess.Run.Stderr(""), None), com.histmersion.api.automation.PlanQuota.Now(5000L), com.histmersion.config.ClaudeCodeConfig.LimitCooldownMinutes(60)).fold(fail(_), identity)
     assertEquals(rs.map(r => (r.kind, r.rejected, r.resetsAt)), List(("usage_limit", true, Some(1791236400000L))))
     val rejected = Event.replace("\"status\":\"allowed\"", "\"status\":\"rejected\"")
     val rr = PlanPools
-      .probeReadings(CliProcess.Run(List(Init, rejected, limit), 1, "", None), 5000L, 60)
+      .probeReadings(CliProcess.Run(List(Init, rejected, limit), com.histmersion.server.agents.CliProcess.Run.Exit(1), com.histmersion.server.agents.CliProcess.Run.Stderr(""), None), com.histmersion.api.automation.PlanQuota.Now(5000L), com.histmersion.config.ClaudeCodeConfig.LimitCooldownMinutes(60))
       .fold(fail(_), identity)
     assertEquals(rr.filter(_.rejected).map(_.kind), List("five_hour"))
     // no reset in the message: the cool-down
     val noReset = limit.replace("|1791236400", "")
     assertEquals(
-      PlanPools.probeReadings(CliProcess.Run(List(noReset), 1, "", None), 5000L, 60).toOption.get.head.resetsAt,
+      PlanPools.probeReadings(CliProcess.Run(List(noReset), com.histmersion.server.agents.CliProcess.Run.Exit(1), com.histmersion.server.agents.CliProcess.Run.Stderr(""), None), com.histmersion.api.automation.PlanQuota.Now(5000L), com.histmersion.config.ClaudeCodeConfig.LimitCooldownMinutes(60)).toOption.get.head.resetsAt,
       Some(5000L + 3600000L)
     )
 
   test("a probe that says nothing about the plan is no reading (and says why)"):
-    val r = PlanPools.probeReadings(CliProcess.Run(List(Init, Result), 0, "", None), 5000L, 60)
+    val r = PlanPools.probeReadings(CliProcess.Run(List(Init, Result), com.histmersion.server.agents.CliProcess.Run.Exit(0), com.histmersion.server.agents.CliProcess.Run.Stderr(""), None), com.histmersion.api.automation.PlanQuota.Now(5000L), com.histmersion.config.ClaudeCodeConfig.LimitCooldownMinutes(60))
     assert(r.left.exists(_.contains("no rate_limit_event")), r)
-    val e = PlanPools.probeReadings(CliProcess.Run(Nil, 1, "Not logged in", None), 5000L, 60)
+    val e = PlanPools.probeReadings(CliProcess.Run(Nil, com.histmersion.server.agents.CliProcess.Run.Exit(1), com.histmersion.server.agents.CliProcess.Run.Stderr("Not logged in"), None), com.histmersion.api.automation.PlanQuota.Now(5000L), com.histmersion.config.ClaudeCodeConfig.LimitCooldownMinutes(60))
     assert(e.left.exists(_.contains("Not logged in")), e)
 
   test("single flight: a second refresh of the same pool WAITS for the first and then takes none"):
@@ -124,7 +126,7 @@ class PlanRefreshSuite extends munit.FunSuite:
     val inside = CountDownLatch(1)
     val release = CountDownLatch(1)
     def body(last: Option[Long]): Either[String, Int] =
-      if throttled(last, 600000L, 1000L) then Left("throttled")
+      if throttled(last, com.histmersion.api.automation.PlanQuota.Rules.MinGap(600000L), com.histmersion.api.automation.PlanQuota.Now(1000L)) then Left("throttled")
       else
         val n = calls.incrementAndGet()
         inside.countDown()
@@ -151,19 +153,19 @@ class PlanRefreshSuite extends munit.FunSuite:
 
   test("logins: claude auth status read like the doctor; a codex home's login is a file that exists (never read)"):
     assertEquals(
-      PlanPools.claudeLogin("""{"loggedIn":true,"authMethod":"claude.ai","subscriptionType":"max"}""", false),
-      Login.Present("logged in (claude.ai, plan max)")
+      PlanPools.claudeLogin("""{"loggedIn":true,"authMethod":"claude.ai","subscriptionType":"max"}""", com.histmersion.config.ClaudeCodeConfig.UseApiKey(false)),
+      Login.Present(com.histmersion.api.automation.PlanQuota.Login.Present.Detail("logged in (claude.ai, plan max)"))
     )
-    assert(PlanPools.claudeLogin("""{"loggedIn":false}""", false).isInstanceOf[Login.Missing])
-    assert(PlanPools.claudeLogin("""{"loggedIn":true,"authMethod":"api_key"}""", false).isInstanceOf[Login.Missing])
-    assert(PlanPools.claudeLogin("Error: timeout", false).isInstanceOf[Login.Unknown], "not an answer: not known")
+    assert(PlanPools.claudeLogin("""{"loggedIn":false}""", com.histmersion.config.ClaudeCodeConfig.UseApiKey(false)).isInstanceOf[Login.Missing])
+    assert(PlanPools.claudeLogin("""{"loggedIn":true,"authMethod":"api_key"}""", com.histmersion.config.ClaudeCodeConfig.UseApiKey(false)).isInstanceOf[Login.Missing])
+    assert(PlanPools.claudeLogin(com.histmersion.server.agents.AgentDoctor.Output("Error: timeout"), com.histmersion.config.ClaudeCodeConfig.UseApiKey(false)).isInstanceOf[Login.Unknown], "not an answer: not known")
     val home = Files.createTempDirectory("hm-codex-home-")
-    assert(PlanPools.codexLogin(Some(home), "codex") match
+    assert(PlanPools.codexLogin(Some(home), com.histmersion.config.CodexConfig.Command("codex")) match
       case Login.Missing(w) => w.contains("codex login") && w.contains(home.toString)
       case _                => false)
-    assert(PlanPools.codexLogin(None, "codex").isInstanceOf[Login.Missing])
+    assert(PlanPools.codexLogin(None, com.histmersion.config.CodexConfig.Command("codex")).isInstanceOf[Login.Missing])
     Files.writeString(home.resolve("auth.json"), "") // an empty stand-in: only its presence is looked at
-    assert(PlanPools.codexLogin(Some(home), "codex").isInstanceOf[Login.Present])
+    assert(PlanPools.codexLogin(Some(home), com.histmersion.config.CodexConfig.Command("codex")).isInstanceOf[Login.Present])
 
   test("the role a plan-quota pause names, so a paused run is asked about that role again"):
     assertEquals(
@@ -173,26 +175,26 @@ class PlanRefreshSuite extends munit.FunSuite:
       Some(Role.Extractor)
     )
     assertEquals(
-      ModelPicker.pausedRole("plan-quota: review: all models for role cold-reader are below their allowance"),
+      ModelPicker.pausedRole(com.histmersion.domain.automation.agents.ModelPicker.Problem("plan-quota: review: all models for role cold-reader are below their allowance")),
       Some(Role.ColdReader)
     )
-    assertEquals(ModelPicker.pausedRole("plan-quota: something else"), None)
+    assertEquals(ModelPicker.pausedRole(com.histmersion.domain.automation.agents.ModelPicker.Problem("plan-quota: something else")), None)
 
   // 2026-10-08: the Claude plan's five_hour window at its floor (reset 00:20Z) and the ChatGPT plan
   // held read as "no window frees by itself", and the run kept no resume time
   test("#1827: only a reading OBSERVED after the reported limit, with a usable verdict, lifts a cool-down"):
-    assert(ModelPicker.lifts(since = 1000L, observed = Some(1001L), usable = true))
+    assert(ModelPicker.lifts(since = com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(1000L), observed = Some(com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(1001L)), usable = com.histmersion.domain.automation.agents.ModelPicker.PoolUsable(true)))
     assert(
-      !ModelPicker.lifts(1000L, Some(1000L), usable = true),
+      !ModelPicker.lifts(com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(1000L), Some(com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(1000L)), usable = com.histmersion.domain.automation.agents.ModelPicker.PoolUsable(true)),
       "the reading the limit came with says nothing about a reset"
     )
-    assert(!ModelPicker.lifts(1000L, Some(999L), usable = true))
-    assert(!ModelPicker.lifts(1000L, Some(2000L), usable = false), "still below its floor")
-    assert(!ModelPicker.lifts(1000L, None, usable = true), "no reading at all")
+    assert(!ModelPicker.lifts(com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(1000L), Some(com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(999L)), usable = com.histmersion.domain.automation.agents.ModelPicker.PoolUsable(true)))
+    assert(!ModelPicker.lifts(com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(1000L), Some(com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(2000L)), usable = com.histmersion.domain.automation.agents.ModelPicker.PoolUsable(false)), "still below its floor")
+    assert(!ModelPicker.lifts(com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(1000L), None, usable = com.histmersion.domain.automation.agents.ModelPicker.PoolUsable(true)), "no reading at all")
 
   test("a held pool in the chain does not hide another pool's reset: the earliest one counts, the held one is named"):
     import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
-    val (opus, gpt) = (ModelRef(ProviderKind.ClaudeCode, "opus"), ModelRef(ProviderKind.Codex, "gpt-6-luna"))
+    val (opus, gpt) = (ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("opus")), ModelRef(ProviderKind.Codex, com.histmersion.api.automation.Agents.ModelRef.Model("gpt-6-luna")))
     val reset = java.time.Instant.parse("2026-10-09T00:20:00Z").toEpochMilli
     val (at, text) = ModelPicker.whenFrees(List((opus, Some(reset), None), (gpt, None, Some(PoolId.ChatgptPlan))))
     assertEquals(at, Some(reset))
@@ -216,10 +218,10 @@ class PlanRefreshSuite extends munit.FunSuite:
     val cc = Cfg.modify(_.command).setTo(fake.script.toString)
     val run = PlanPools
       .runProbe(
-        ClaudeCode.probeArgv(cc, "haiku"),
-        env => ClaudeCode.probeEnvironment(cc, 16, env),
+        ClaudeCode.probeArgv(cc, com.histmersion.config.ClaudePlanConfig.ProbeModel("haiku")),
+        env => ClaudeCode.probeEnvironment(cc, com.histmersion.config.ClaudePlanConfig.ProbeMaxTokens(16), env),
         ClaudeCode.ProbePrompt,
-        30
+        com.histmersion.server.agents.CliProcess.RunTimeoutSeconds(30)
       )
       .fold(fail(_), identity)
     assertEquals(fake.stdin, "quota")
@@ -228,7 +230,7 @@ class PlanRefreshSuite extends munit.FunSuite:
     assert(fake.cwdWasEmpty, "an empty working directory: no project CLAUDE.md or .claude/")
     assertEquals(fake.env("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "16")
     assertEquals(fake.env("HISTMERSION_RUN_TOKEN"), "<unset>")
-    assertEquals(PlanPools.probeReadings(run, 1L, 60).map(_.map(_.kind).toSet), Right(Set("five_hour", "seven_day")))
+    assertEquals(PlanPools.probeReadings(run, com.histmersion.api.automation.PlanQuota.Now(1L), com.histmersion.config.ClaudeCodeConfig.LimitCooldownMinutes(60)).map(_.map(_.kind).toSet), Right(Set("five_hour", "seven_day")))
     // a command that cannot start is a reason, not an exception
-    val gone = PlanPools.runProbe(List("/nonexistent/claude", "-p"), _ => (), "quota", 5)
+    val gone = PlanPools.runProbe(List(com.histmersion.server.agents.ClaudeCode.Argument("/nonexistent/claude"), com.histmersion.server.agents.ClaudeCode.Argument("-p")), _ => (), com.histmersion.server.agents.CliProcess.RunStdin("quota"), com.histmersion.server.agents.CliProcess.RunTimeoutSeconds(5))
     assert(gone.left.exists(_.contains("cannot run")), gone)

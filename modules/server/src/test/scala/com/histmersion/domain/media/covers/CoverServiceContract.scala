@@ -6,8 +6,8 @@ import com.histmersion.domain.media.{MediaStores, MediaStoreSuite}
 abstract class CoverServiceContract extends MediaStoreSuite:
 
   stest("no source: nothing to illustrate, no cover to ask for") { s =>
-    assertEquals(s.covers.illustrationCandidates(None, refresh = true, 10), Nil)
-    assertEquals(s.covers.coverCandidates(Some("zq"), refresh = false, 10), Nil)
+    assertEquals(s.covers.illustrationCandidates(None, refresh = com.histmersion.domain.media.covers.CoverService.CandidatesRefresh(true), com.histmersion.domain.media.covers.CoverService.CandidatesLimit(10)), Nil)
+    assertEquals(s.covers.coverCandidates(Some(com.histmersion.domain.library.Citekey("zq")), refresh = com.histmersion.domain.media.covers.CoverService.CandidatesRefresh(false), com.histmersion.domain.media.covers.CoverService.CandidatesLimit(10)), Nil)
   }
 
 class CoverServiceInMemorySuite extends CoverServiceContract with MediaStoreSuite.InMemory

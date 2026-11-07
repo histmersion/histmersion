@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import ox.supervised
@@ -51,7 +53,7 @@ class VacuumHttpSuite extends munit.FunSuite:
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
 
       val (s, body) =
@@ -61,7 +63,7 @@ class VacuumHttpSuite extends munit.FunSuite:
       assertEquals(started.kind, Vacuum.JobKind)
       assertEquals(
         started.detail.flatMap(VacuumPlan.Detail.of),
-        Some(VacuumPlan(true, List("place_overrides", "place_removals")))
+        Some(VacuumPlan(com.histmersion.api.maintenance.VacuumPlan.Analyze(true), List(com.histmersion.api.maintenance.Vacuum.Request.Tables("place_overrides"), com.histmersion.api.maintenance.Vacuum.Request.Tables("place_removals"))))
       )
       val done = await(url, started.id)
       assertEquals((done.status, done.error), ("done", None), done.toString)

@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.media.assets.AssetFixtures
@@ -88,21 +90,21 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
           Place.Input(
             Place(
               com.histmersion.api.catalogue.Place.Id("zqmh_mycenae"),
-              "Zqmh Mycenae",
+              com.histmersion.api.catalogue.Place.Label("Zqmh Mycenae"),
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[22.75,37.73]}"""),
-              Some(Period(-1600, -1100))
+              Some(Period(com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1100)))
             ),
-            List(Place.Name("Zqmh Mycenae"))
+            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmh Mycenae")))
           ),
           Place.Input(
             Place(
               com.histmersion.api.catalogue.Place.Id("zqmh_nolink"),
-              "Zqmh no link",
+              com.histmersion.api.catalogue.Place.Label("Zqmh no link"),
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[22.0,37.0]}""")
             ),
-            List(Place.Name("Zqmh no link"))
+            List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqmh no link")))
           )
         )
       )
@@ -111,7 +113,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
       EventFixtures.put(
         ds,
         EventId,
-        EventPut("Zqmh battle", "battle", TimeSpan(Some(-1200), None, None, Some(-1190)), placeId = Some(PlaceId))
+        EventPut(com.histmersion.api.catalogue.EventSummary.Label("Zqmh battle"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1200)), None, None, Some(com.histmersion.api.catalogue.Year(-1190))), placeId = Some(PlaceId))
       )
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
@@ -131,13 +133,13 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
     val dry = h.imports.importMedia(MediaImportRequest(place = Some(PlaceId))).fold(e => fail(e.message), identity)
     assert(dry.dryRun)
     assertEquals(dry.byLicence.map(c => (c.key, c.allowed)), List(("CC-BY-NC-SA-4.0", false), ("CC-BY-SA-2.5", true)))
-    assertEquals(AssetFixtures.thumbs(ds, "place", PlaceId), Nil)
+    assertEquals(AssetFixtures.thumbs(ds, com.histmersion.domain.media.imports.Target.TargetType("place"), PlaceId), Nil)
     val done =
       h.imports
-        .importMedia(MediaImportRequest(dryRun = false, place = Some(PlaceId)))
+        .importMedia(MediaImportRequest(dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(PlaceId)))
         .fold(e => fail(e.message), identity)
     assertEquals((done.stored, done.linked, done.categories), (1, 1, 1))
-    assertEquals(AssetFixtures.thumbs(ds, "place", PlaceId).map(_.license), List(Some("CC-BY-SA-2.5")))
+    assertEquals(AssetFixtures.thumbs(ds, com.histmersion.domain.media.imports.Target.TargetType("place"), PlaceId).map(_.license), List(Some("CC-BY-SA-2.5")))
     assert(fake.requests.forall(_._2 == Map("User-Agent" -> cfg.media.userAgent)))
     val checked = connect(ds)(sql"SELECT found FROM media_checks WHERE target_id = $PlaceId".query[Int].run())
     assertEquals(checked, Vector(1))
@@ -146,13 +148,13 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
     val h = MediaWiring(Deps(cfg, ds), fakeProvider)
     assert(
       h.imports
-        .importMedia(MediaImportRequest(provider = "flickr"))
+        .importMedia(MediaImportRequest(provider = com.histmersion.api.media.MediaItem.Provider("flickr")))
         .left
         .exists(_.message.contains("unknown media provider"))
     )
     assert(
       h.imports
-        .importMedia(MediaImportRequest(place = Some("zqmh_nolink")))
+        .importMedia(MediaImportRequest(place = Some(com.histmersion.api.catalogue.Place.Id("zqmh_nolink"))))
         .left
         .exists(_.message.contains("no Wikidata link"))
     )
@@ -162,7 +164,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
 
   test("the server: the place card carries the thumbnail, served locally with its type; list, show, facets"):
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (ps, pb) = get(s"$url/api/places/$PlaceId?counts=true")
@@ -208,7 +210,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
 
   test("the server: an event's Wikidata item is patched (and checked), and its card reads it"):
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (bad, bb) = send("PATCH", s"$url/api/events/$EventId", """{"wikidata":"132564"}""")

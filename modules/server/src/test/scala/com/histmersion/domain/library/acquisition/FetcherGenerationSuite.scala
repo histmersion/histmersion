@@ -12,25 +12,25 @@ class FetcherGenerationSuite extends munit.FunSuite:
 
   private val plan = List("unpaywall" -> Access.Open, "core" -> Access.Open)
   private def core(key: String) = PluginStatus(
-    "oa-core",
-    "1.0",
-    2,
-    enabled = true,
-    "registered",
-    provides = List("source-fetcher:core"),
-    settings = List(PluginSetting("api-key", key))
+    com.histmersion.api.plugins.PluginStatus.Id("oa-core"),
+    com.histmersion.api.plugins.PluginStatus.Version("1.0"),
+    com.histmersion.api.plugins.PluginStatus.SpiVersion(2),
+    enabled = com.histmersion.api.plugins.PluginStatus.Enabled(true),
+    com.histmersion.api.plugins.PluginStatus.State("registered"),
+    provides = List(com.histmersion.api.plugins.PluginDescription.Provides("source-fetcher:core")),
+    settings = List(PluginSetting(com.histmersion.api.plugins.PluginSetting.Key("api-key"), key))
   )
   private val unpaywall = PluginStatus(
-    "oa-unpaywall",
-    "1.0",
-    2,
-    enabled = true,
-    "registered",
-    provides = List("source-fetcher:unpaywall"),
-    settings = List(PluginSetting("contact-email", "null"))
+    com.histmersion.api.plugins.PluginStatus.Id("oa-unpaywall"),
+    com.histmersion.api.plugins.PluginStatus.Version("1.0"),
+    com.histmersion.api.plugins.PluginStatus.SpiVersion(2),
+    enabled = com.histmersion.api.plugins.PluginStatus.Enabled(true),
+    com.histmersion.api.plugins.PluginStatus.State("registered"),
+    provides = List(com.histmersion.api.plugins.PluginDescription.Provides("source-fetcher:unpaywall")),
+    settings = List(PluginSetting(com.histmersion.api.plugins.PluginSetting.Key("contact-email"), com.histmersion.api.plugins.PluginSetting.Value("null")))
   )
   private val vault =
-    PluginStatus("keepassxc", "0.1", 2, enabled = true, "registered", provides = List("secret-vault:keepassxc"))
+    PluginStatus(com.histmersion.api.plugins.PluginStatus.Id("keepassxc"), com.histmersion.api.plugins.PluginStatus.Version("0.1"), com.histmersion.api.plugins.PluginStatus.SpiVersion(2), enabled = com.histmersion.api.plugins.PluginStatus.Enabled(true), com.histmersion.api.plugins.PluginStatus.State("registered"), provides = List(com.histmersion.api.plugins.PluginDescription.Provides("secret-vault:keepassxc")))
   private def gen(
       p: List[(String, Access)] = plan,
       ps: List[PluginStatus] = List(unpaywall, core("null"), vault),
@@ -53,13 +53,13 @@ class FetcherGenerationSuite extends munit.FunSuite:
     val g = gen()
     assertEquals(gen(p = plan :+ ("stub" -> Access.Unauthorised)), g)
     val stubPlugin = PluginStatus(
-      "stub",
-      "9",
-      2,
-      enabled = true,
-      "registered",
-      provides = List("source-fetcher:stub"),
-      settings = List(PluginSetting("token", "env:X"))
+      com.histmersion.api.plugins.PluginStatus.Id("stub"),
+      com.histmersion.api.plugins.PluginStatus.Version("9"),
+      com.histmersion.api.plugins.PluginStatus.SpiVersion(2),
+      enabled = com.histmersion.api.plugins.PluginStatus.Enabled(true),
+      com.histmersion.api.plugins.PluginStatus.State("registered"),
+      provides = List(com.histmersion.api.plugins.PluginDescription.Provides("source-fetcher:stub")),
+      settings = List(PluginSetting(com.histmersion.api.plugins.PluginSetting.Key("token"), com.histmersion.api.plugins.PluginSetting.Value("env:X")))
     )
     assertEquals(
       gen(p = plan :+ ("stub" -> Access.Unauthorised), ps = List(unpaywall, core("null"), vault, stubPlugin)),

@@ -225,7 +225,7 @@ class LandingFetchSuite extends munit.FunSuite:
     assertEquals(fetch(c, http, "10.17863/CAM.11325"), Left("no legal open-access PDF found"))
     assert(!http.asked.exists(_.contains("/bitstreams/")), http.asked.mkString("\n"))
     assert(
-      Challenge.isChallenge(403, Map.empty, fixture("challenge_synthetic.html").getBytes("UTF-8")),
+      Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(403), Map.empty, fixture("challenge_synthetic.html").getBytes("UTF-8")),
       "the fixture is what the layer refuses"
     )
 

@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -84,7 +86,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       span,
       Gazetteer.mergeNames(GazName(label) :: names),
       links,
-      Some("fixture"),
+      Some(com.histmersion.api.catalogue.GazRecord.Source("fixture")),
       None
     )
 
@@ -117,14 +119,14 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
         Place.Input(
           Place(
             com.histmersion.api.catalogue.Place.Id(Seed),
-            "Zzgazhattusa",
+            com.histmersion.api.catalogue.Place.Label("Zzgazhattusa"),
             com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[34.6,40.0]}"""),
-            Some(Period(-1650, -1180)),
-            Some("Pleiades"),
+            Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180))),
+            Some(com.histmersion.api.catalogue.Place.Source("Pleiades")),
             Some("""{"pleiades_uri":"https://pleiades.stoa.org/places/999000001"}""")
           ),
-          List(Place.Name("Zzgazhattusa"))
+          List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzgazhattusa")))
         )
       )
     )
@@ -149,15 +151,15 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     val w = rec(
       wd("Q999000001"),
       "Zzgazhattusa",
-      List(GazName("Zzḫattuša", "hit", Span(Some(-1650), Some(-1180)))),
-      List(GazLink(ExternalId(LinkScheme.Pleiades, "999000001"), LinkMatch.Close))
+      List(GazName(com.histmersion.api.catalogue.GazName.Name("Zzḫattuša"), com.histmersion.api.catalogue.GazName.Lang("hit"), Span(Some(com.histmersion.api.catalogue.Year(-1650)), Some(com.histmersion.api.catalogue.Year(-1180))))),
+      List(GazLink(ExternalId(LinkScheme.Pleiades, com.histmersion.api.library.ExternalId.Id("999000001")), LinkMatch.Close))
     )
     val c1 = run("lpf:zzgazwd", "v1", List(w))
     assertEquals((c1.created, c1.joined), (0L, 1L))
     val g = rec(
       gn("999000002"),
       "Zzgazbogazkale",
-      List(GazName("Zzgazboğazköy", "tr")),
+      List(GazName(com.histmersion.api.catalogue.GazName.Name("Zzgazboğazköy"), com.histmersion.api.catalogue.GazName.Lang("tr"))),
       List(GazLink(wd("Q999000001"), LinkMatch.Exact))
     )
     // a GeoNames record at the SAME point that shares no id stays a place of its own
@@ -213,10 +215,10 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     val w = rec(
       wd("Q999000001"),
       "Zzgazhattusa",
-      List(GazName("Zzgazhattuša", "de")),
-      List(GazLink(ExternalId(LinkScheme.Pleiades, "999000001"), LinkMatch.Close))
+      List(GazName(com.histmersion.api.catalogue.GazName.Name("Zzgazhattuša"), com.histmersion.api.catalogue.GazName.Lang("de"))),
+      List(GazLink(ExternalId(LinkScheme.Pleiades, com.histmersion.api.library.ExternalId.Id("999000001")), LinkMatch.Close))
     )
-    val g = rec(gn("999000003"), "Zzgazlonely", List(GazName("Zzgazlonely2", "en", Span(None, Some(1935)))))
+    val g = rec(gn("999000003"), "Zzgazlonely", List(GazName(com.histmersion.api.catalogue.GazName.Name("Zzgazlonely2"), com.histmersion.api.catalogue.GazName.Lang("en"), Span(None, Some(com.histmersion.api.catalogue.Year(1935))))))
     val first = run("lpf:zzgazwd", "v1", List(w))
     assert(!first.unchanged)
     val firstG = run("lpf:zzgazgn", "v1", List(g))
@@ -231,11 +233,11 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     assertEquals(names(Seed), before._1, "a re-seed replaces only the seed's own names")
 
   test("a new version: dropped records and names go (the sweep), changed ones move"):
-    val a = rec(gn("999000004"), "Zzgaza", List(GazName("Zzgaza old", "en")))
+    val a = rec(gn("999000004"), "Zzgaza", List(GazName(com.histmersion.api.catalogue.GazName.Name("Zzgaza old"), com.histmersion.api.catalogue.GazName.Lang("en"))))
     val b = rec(gn("999000005"), "Zzgazb")
     run("lpf:zzgazgn", "v1", List(a, b))
     assert(exists("geonames_999000004") && exists("geonames_999000005"))
-    val a2 = rec(gn("999000004"), "Zzgaza", List(GazName("Zzgaza new", "en")))
+    val a2 = rec(gn("999000004"), "Zzgaza", List(GazName(com.histmersion.api.catalogue.GazName.Name("Zzgaza new"), com.histmersion.api.catalogue.GazName.Lang("en"))))
     val c = run("lpf:zzgazgn", "v2", List(a2))
     assertEquals(c.placesRemoved, 1L)
     assert(!exists("geonames_999000005"))
@@ -284,47 +286,47 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     seedPlace()
     run("lpf:zzgazgn", "v1", List(rec(gn("999000009"), "Zzgazhattusa"), rec(gn("999000010"), "Zq")))
     assertEquals(
-      PlaceFixtures.search(ds, Some("Zzgazhattusa"), None, 5).map(_.id).take(2).toList,
+      PlaceFixtures.search(ds, Some(com.histmersion.domain.catalogue.places.PlaceRepo.SearchText("Zzgazhattusa")), None, com.histmersion.domain.catalogue.places.PlaceRepo.Limit(5)).map(_.id).take(2).toList,
       List(Seed, "geonames_999000009")
     )
-    assertEquals(PlaceFixtures.search(ds, Some("zq"), None, 5).map(_.id).toList, List("geonames_999000010"))
+    assertEquals(PlaceFixtures.search(ds, Some(com.histmersion.domain.catalogue.places.PlaceRepo.SearchText("zq")), None, com.histmersion.domain.catalogue.places.PlaceRepo.Limit(5)).map(_.id).toList, List("geonames_999000010"))
 
   test("the geocoder: a dated historical name wins for a finding in its period (#1064)"):
     // two imported places that both carry "Zzgazmikoyan" as an alternative name: on one it is dated
     // 1935–1956 (the Soviet name), on the other undated. Before #1064 the name's dates were not read and
     // the tie went to the smaller id, the undated one, at every date.
     val undated = GazRecord(
-      "lpf:zzgaz:a",
+      com.histmersion.api.catalogue.GazRecord.Ref("lpf:zzgaz:a"),
       None,
       com.histmersion.api.catalogue.Place.Id("zzgaz_a_farm"),
-      "Zzgaz farm",
+      com.histmersion.api.catalogue.GazRecord.Label("Zzgaz farm"),
       com.histmersion.domain.catalogue.Place.Kind.Site,
       pt(44.0, 39.0),
       Span.always,
-      Gazetteer.mergeNames(List(GazName("Zzgaz farm"), GazName("Zzgazmikoyan", "en"))),
+      Gazetteer.mergeNames(List(GazName(com.histmersion.api.catalogue.GazName.Name("Zzgaz farm")), GazName(com.histmersion.api.catalogue.GazName.Name("Zzgazmikoyan"), com.histmersion.api.catalogue.GazName.Lang("en")))),
       Nil,
       None,
       None
     )
     val dated = GazRecord(
-      "lpf:zzgaz:b",
+      com.histmersion.api.catalogue.GazRecord.Ref("lpf:zzgaz:b"),
       None,
       com.histmersion.api.catalogue.Place.Id("zzgaz_b_village"),
-      "Zzgaz village",
+      com.histmersion.api.catalogue.GazRecord.Label("Zzgaz village"),
       com.histmersion.domain.catalogue.Place.Kind.Site,
       pt(45.0, 39.5),
       Span.always,
-      Gazetteer.mergeNames(List(GazName("Zzgaz village"), GazName("Zzgazmikoyan", "en", Span(Some(1935), Some(1956))))),
+      Gazetteer.mergeNames(List(GazName(com.histmersion.api.catalogue.GazName.Name("Zzgaz village")), GazName(com.histmersion.api.catalogue.GazName.Name("Zzgazmikoyan"), com.histmersion.api.catalogue.GazName.Lang("en"), Span(Some(com.histmersion.api.catalogue.Year(1935)), Some(com.histmersion.api.catalogue.Year(1956)))))),
       Nil,
       None,
       None
     )
     run("lpf:zzgaz", "v1", List(undated, dated))
     def at(p: Option[Period]) =
-      connect(ds)(PlaceFixtures.resolve("Zzgazmikoyan", KindHint.Unknown, p, cfg.places.geocodePlaceholderMin))
+      connect(ds)(PlaceFixtures.resolve(com.histmersion.api.catalogue.Geocode.Attempt.Name("Zzgazmikoyan"), KindHint.Unknown, p, cfg.places.geocodePlaceholderMin))
         .map(_.placeId)
-    assertEquals(at(Some(Period(1940, 1945))), Some("zzgaz_b_village"))
-    assertEquals(at(Some(Period(1990, 2000))), Some("zzgaz_a_farm"))
+    assertEquals(at(Some(Period(com.histmersion.api.catalogue.Year(1940), com.histmersion.api.catalogue.Year(1945)))), Some("zzgaz_b_village"))
+    assertEquals(at(Some(Period(com.histmersion.api.catalogue.Year(1990), com.histmersion.api.catalogue.Year(2000)))), Some("zzgaz_a_farm"))
     assertEquals(at(None), Some("zzgaz_a_farm"))
 
   // ── an area known only by a point (2026-10-09) ────────────────────────────────────────────────
@@ -381,7 +383,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       links = List(GazLink(wd("Q999000702"), LinkMatch.Exact))
     )
     val gSite = rec(gn("999000707"), "Zzgaz hamlet", links = List(GazLink(wd("Q999000702"), LinkMatch.Exact)))
-    val g = connect(ds)(GazetteerImport.session("geonames", "v1", apply = true).batch(List(gArea, gSite)))
+    val g = connect(ds)(GazetteerImport.session(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("geonames"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), apply = true).batch(List(gArea, gSite)))
     assertEquals((g.created, g.joined, g.pointAreasSkipped), (1L, 0L, 1L), g.describe)
     assert(!exists("geonames_999000706") && exists("geonames_999000707"))
     // "" keeps every record (the rule is the config's)
@@ -399,7 +401,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     assertEquals(first.created, 1L)
     // a GeoNames site joined it before the rule
     val joiner = rec(gn("999000712"), "Zzgaz old region (gn)", links = List(GazLink(wd("Q999000711"), LinkMatch.Exact)))
-    assertEquals(connect(ds)(GazetteerImport.session("geonames", "v1", apply = true).batch(List(joiner))).joined, 1L)
+    assertEquals(connect(ds)(GazetteerImport.session(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("geonames"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), apply = true).batch(List(joiner))).joined, 1L)
     assert(names("wikidata_q999000711").exists(_._3 == "geonames"))
     val dry = run("wikidata", "v1", List(area), apply = false)
     assertEquals((dry.placesRemoved, dry.pointAreasSkipped), (1L, 1L), dry.describe)
@@ -430,7 +432,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     // the town makes its own place — which the area, sharing the GeoNames id, then joins (an area
     // known only by a point still joins a place its ids name; it only never makes one)
     val c = connect(ds):
-      val s = GazetteerImport.session("wikidata", "v1", apply = true)
+      val s = GazetteerImport.session(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), apply = true)
       s.batch(List(site, area)) + s.sweep()
     assertEquals((c.placesRemoved, c.pointAreasSkipped, c.created, c.joined), (1L, 0L, 1L, 1L), c.describe)
     assert(!exists("wikidata_q999000721") && exists("wikidata_q999000722"))
@@ -440,7 +442,7 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     clean()
     run("wikidata", "v1", List(area, site), kinds = Set.empty)
     val c2 = connect(ds):
-      val s = GazetteerImport.session("wikidata", "v1", apply = true)
+      val s = GazetteerImport.session(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), apply = true)
       s.batch(List(area, site)) + s.sweep()
     assertEquals((c2.placesRemoved, c2.pointAreasSkipped, c2.created, c2.joined), (1L, 1L, 1L, 0L), c2.describe)
     assertEquals(names("wikidata_q999000722").map(_._1), List("Zzgaz town by the region"))
@@ -450,14 +452,14 @@ class GazetteerRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     run("wikidata", "v1", List(area), kinds = Set.empty)
     assert(exists("wikidata_q999000731"))
     connect(ds):
-      assertEquals(GazetteerImport.session("wikidata", "v1", apply = false).prune(10), 0L)
+      assertEquals(GazetteerImport.session(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), apply = false).prune(10), 0L)
     assert(exists("wikidata_q999000731"))
     connect(ds):
-      assertEquals(GazetteerImport.session("geonames", "v1", apply = true).prune(10), 0L, "only the source's own")
-      assertEquals(GazetteerImport.session("lpf:zzgazwd", "v1", apply = true).prune(10), 0L, "never an LPF dataset's")
-      assertEquals(GazetteerImport.session("wikidata", "v1", apply = true, pointAreaKinds = Set.empty).prune(10), 0L)
+      assertEquals(GazetteerImport.session(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("geonames"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), apply = true).prune(10), 0L, "only the source's own")
+      assertEquals(GazetteerImport.session(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("lpf:zzgazwd"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), apply = true).prune(10), 0L, "never an LPF dataset's")
+      assertEquals(GazetteerImport.session(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), apply = true, pointAreaKinds = Set.empty).prune(10), 0L)
     assert(exists("wikidata_q999000731"))
-    connect(ds)(assert(GazetteerImport.session("wikidata", "v1", apply = true).prune(1) >= 1L))
+    connect(ds)(assert(GazetteerImport.session(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), apply = true).prune(1) >= 1L))
     assert(!exists("wikidata_q999000731"))
 
   test("evidence keeps a place: a point-only area an attestation names stays, its record on it"):

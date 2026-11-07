@@ -32,13 +32,13 @@ class FetcherTrafficSuite extends munit.FunSuite:
   private def md5(b: Array[Byte]): String = OaFetch.md5(b).getOrElse(fail("no MD5 in this runtime"))
 
   private def json(s: String): Either[String, HttpAnswer] =
-    Right(HttpAnswer(200, Map("content-type" -> "application/json"), s.getBytes(UTF_8)))
+    Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> "application/json"), s.getBytes(UTF_8)))
   private def html(s: String): Either[String, HttpAnswer] =
-    Right(HttpAnswer(200, Map("content-type" -> "text/html"), s.getBytes(UTF_8)))
+    Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> "text/html"), s.getBytes(UTF_8)))
   private def file(b: Array[Byte], mime: String): Either[String, HttpAnswer] =
-    Right(HttpAnswer(200, Map("content-type" -> mime), b))
+    Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> mime), b))
   private val notFound: Either[String, HttpAnswer] =
-    Right(HttpAnswer(404, Map("content-type" -> "text/plain"), "not found".getBytes(UTF_8)))
+    Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(404), Map("content-type" -> "text/plain"), "not found".getBytes(UTF_8)))
 
   /** Answers from `routes`, 404 otherwise; every request written to `out`. */
   final private class Wire(routes: PartialFunction[String, Either[String, HttpAnswer]]) extends HttpTransport:
@@ -113,10 +113,10 @@ class FetcherTrafficSuite extends munit.FunSuite:
     {
       case u if u.startsWith(c.europepmc.url + "/search") => json(fixture("europepmc_oa.json"))
       case u if u.startsWith("https://europepmc.org/")    =>
-        Right(HttpAnswer(403, Map("cf-mitigated" -> "challenge"), "Just a moment...".getBytes(UTF_8)))
+        Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(403), Map("cf-mitigated" -> "challenge"), "Just a moment...".getBytes(UTF_8)))
       case u if u.startsWith(c.pmcDataset.url + "/?") =>
         Right(
-          HttpAnswer(200, Map("content-type" -> "application/xml"), fixture("pmc_dataset_list.xml").getBytes(UTF_8))
+          HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> "application/xml"), fixture("pmc_dataset_list.xml").getBytes(UTF_8))
         )
       case u if u.startsWith(c.pmcDataset.url + "/metadata/")        => json(record)
       case u if u.startsWith(c.pmcDataset.url) && u.endsWith(".pdf") => file(Pdf, "application/pdf")
@@ -131,7 +131,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
       case u if u.startsWith(c.pmcDataset.url + "/?")     =>
         Right(
           HttpAnswer(
-            200,
+            com.histmersion.pluginhost.HttpAnswer.Code(200),
             Map("content-type" -> "application/xml"),
             fixture("pmc_dataset_list.xml").replace("PMC6091220", "PMC6748862").getBytes(UTF_8)
           )
@@ -162,14 +162,14 @@ class FetcherTrafficSuite extends munit.FunSuite:
     case u if u.startsWith(s"${c.core.url.value}/search/works/") && u.contains("10.1/core") =>
       Right(
         HttpAnswer(
-          200,
+          com.histmersion.pluginhost.HttpAnswer.Code(200),
           Map("content-type" -> "application/json", "x-ratelimit-limit" -> "25", "x-ratelimit-remaining" -> "20"),
           """{"results":[{"doi":"10.1/core","downloadUrl":"https://core.example.org/core.pdf"}]}""".getBytes(UTF_8)
         )
       )
     case "https://core.example.org/core.pdf"                     => file(Pdf, "application/pdf")
     case u if u.startsWith(s"${c.core.url.value}/search/works/") =>
-      Right(HttpAnswer(200, Map("content-type" -> "application/json"), """{"results":[]}""".getBytes(UTF_8)))
+      Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> "application/json"), """{"results":[]}""".getBytes(UTF_8)))
     case u if u.startsWith(s"${c.openalex.url}/") && u.contains("10.1/oa") =>
       json(
         """{"id":"https://openalex.org/W9","best_oa_location":{"pdf_url":"https://oa.example.org/oa.pdf"},
@@ -235,10 +235,10 @@ class FetcherTrafficSuite extends munit.FunSuite:
           doi("10.1/up"),
           doi("10.1/core"),
           doi("10.1/oa"),
-          WorkKey(arxiv = Some("2101.00001")),
-          WorkKey(archive = Some("zqbook")),
-          WorkKey(archive = Some("zqbook"), format = Some("pdf")),
-          WorkKey(archive = Some("zqlent")),
+          WorkKey(arxiv = Some(com.histmersion.plugin.WorkKey.Arxiv("2101.00001"))),
+          WorkKey(archive = Some(com.histmersion.plugin.WorkKey.Archive("zqbook"))),
+          WorkKey(archive = Some(com.histmersion.plugin.WorkKey.Archive("zqbook")), format = Some(com.histmersion.plugin.WorkKey.Format("pdf"))),
+          WorkKey(archive = Some(com.histmersion.plugin.WorkKey.Archive("zqlent"))),
           doi("10.1/none")
         ),
         direct
@@ -246,7 +246,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
       scenario("pmc: Europe PMC's challenge, then the dataset's PDF", List(doi(PmcDoi)), pmc),
       scenario(
         "pmc-text: an author manuscript's JATS, after arXiv",
-        List(WorkKey(doi = Some(Doi.applyUnsafe(ManuscriptDoi)), arxiv = Some("1805.00001"))),
+        List(WorkKey(doi = Some(Doi.applyUnsafe(ManuscriptDoi)), arxiv = Some(com.histmersion.plugin.WorkKey.Arxiv("1805.00001")))),
         manuscript
       ),
       scenario("landing: every index on", List(doi(IndexDoi)), indexes),
@@ -335,7 +335,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
       ),
       scenario(
         "arxiv, pmc and archive-org switched off",
-        List(WorkKey(arxiv = Some("2101.00001")), doi(PmcDoi)),
+        List(WorkKey(arxiv = Some(com.histmersion.plugin.WorkKey.Arxiv("2101.00001"))), doi(PmcDoi)),
         c => direct(c).orElse(pmc(c)),
         baseText + "histmersion.plugins { arxiv.enabled = false, pmc.enabled = false, archive-org.enabled = false }\n"
       )

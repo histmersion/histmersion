@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.media.imports.MediaStore
@@ -58,9 +60,9 @@ class WikidataCommonsSuite extends munit.FunSuite:
   }
 
   private val targets = List(
-    Target("place", "pleiades_570491", "Q132564", "Mycenae"),
-    Target("place", "x_site", "Q999", "X"),
-    Target("event", "fall_of_x", "Q404", "Fall of X")
+    Target(com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("pleiades_570491"), com.histmersion.domain.media.imports.Target.Qid("Q132564"), com.histmersion.domain.media.imports.Target.Label("Mycenae")),
+    Target(com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("x_site"), com.histmersion.domain.media.imports.Target.Qid("Q999"), com.histmersion.domain.media.imports.Target.Label("X")),
+    Target(com.histmersion.domain.media.imports.Target.TargetType("event"), com.histmersion.domain.media.imports.Target.Id("fall_of_x"), com.histmersion.domain.media.imports.Target.Qid("Q404"), com.histmersion.domain.media.imports.Target.Label("Fall of X"))
   )
 
   private def run(
@@ -73,7 +75,7 @@ class WikidataCommonsSuite extends munit.FunSuite:
       settings: String = ""
   ): MediaImportReport =
     val (polite, _) = FakeMediaHttp.polite(http, cfg)
-    OwnImport("wikidata", FakeMediaHttp.collection("wikidata", settings), polite, cfg).run(ts, dryRun, refresh, store)
+    OwnImport(com.histmersion.domain.media.imports.MediaImporter.ImporterName("wikidata"), FakeMediaHttp.collection("wikidata", settings), polite, cfg).run(ts, dryRun, refresh, store)
 
   test("dry run: counts per provider, licence and role, the refusals with reasons — two requests, nothing stored"):
     val http = provider()
@@ -84,15 +86,15 @@ class WikidataCommonsSuite extends munit.FunSuite:
     assertEquals(
       r.byLicence,
       List(
-        MediaCount("CC-BY-4.0", 1),
-        MediaCount("CC-BY-NC-SA-4.0", 1, allowed = false),
-        MediaCount("CC-BY-SA-2.5", 1),
-        MediaCount("all-rights-reserved", 1, allowed = false)
+        MediaCount(com.histmersion.api.media.MediaCount.Key("CC-BY-4.0"), com.histmersion.api.media.MediaCount.N(1)),
+        MediaCount(com.histmersion.api.media.MediaCount.Key("CC-BY-NC-SA-4.0"), com.histmersion.api.media.MediaCount.N(1), allowed = com.histmersion.api.media.MediaCount.Allowed(false)),
+        MediaCount(com.histmersion.api.media.MediaCount.Key("CC-BY-SA-2.5"), com.histmersion.api.media.MediaCount.N(1)),
+        MediaCount(com.histmersion.api.media.MediaCount.Key("all-rights-reserved"), com.histmersion.api.media.MediaCount.N(1), allowed = com.histmersion.api.media.MediaCount.Allowed(false))
       )
     )
     assertEquals(
       r.byRole,
-      List(MediaCount("image", 2), MediaCount("aerial-view", 1), MediaCount("plan", 1), MediaCount("route-map", 1))
+      List(MediaCount(com.histmersion.api.media.MediaCount.Key("image"), com.histmersion.api.media.MediaCount.N(2)), MediaCount(com.histmersion.api.media.MediaCount.Key("aerial-view"), com.histmersion.api.media.MediaCount.N(1)), MediaCount(com.histmersion.api.media.MediaCount.Key("plan"), com.histmersion.api.media.MediaCount.N(1)), MediaCount(com.histmersion.api.media.MediaCount.Key("route-map"), com.histmersion.api.media.MediaCount.N(1)))
     )
     assertEquals(
       r.rejected.map(_.key).sorted,

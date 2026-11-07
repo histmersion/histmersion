@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import ox.supervised
@@ -38,7 +40,7 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
   private val RunB = "zzrev-run-b"
 
   private def finding(id: String, r: Reviewer, s: Severity, problem: String) =
-    Finding(id, r, s, "undefined-term", "Background", "", problem, "")
+    Finding(id, r, s, com.histmersion.domain.ReviewArticle.Finding.Kind("undefined-term"), com.histmersion.domain.ReviewArticle.Finding.Where("Background"), com.histmersion.domain.ReviewArticle.Finding.Quote(""), problem, com.histmersion.domain.ReviewArticle.Finding.Fix(""))
 
   private val ledger = Ledger(
     Running,
@@ -46,18 +48,18 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
       Entry(
         finding("R1", Reviewer.Rules, Severity.Major, "a decorative citation"),
         RunA,
-        1,
+        com.histmersion.domain.ReviewLedger.Entry.Round(1),
         Status.Rejected,
-        closed = Some(Closure("fixer", 1, RunA, "the record supports the sentence"))
+        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("fixer"), com.histmersion.domain.ReviewLedger.Closure.Round(1), RunA, com.histmersion.domain.ReviewLedger.Closure.Note("the record supports the sentence")))
       ),
       Entry(
         finding("C1", Reviewer.ColdReader, Severity.Minor, "term not defined"),
         RunA,
-        1,
+        com.histmersion.domain.ReviewLedger.Entry.Round(1),
         Status.Fixed,
-        closed = Some(Closure("cold-reader", 2, RunA))
+        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("cold-reader"), com.histmersion.domain.ReviewLedger.Closure.Round(2), RunA))
       ),
-      Entry(finding("S1", Reviewer.Skeptic, Severity.Major, "a critique is missing"), RunB, 1)
+      Entry(finding("S1", Reviewer.Skeptic, Severity.Major, "a critique is missing"), RunB, com.histmersion.domain.ReviewLedger.Entry.Round(1))
     )
   )
 
@@ -94,7 +96,7 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         clean(url, cfg)
@@ -128,7 +130,7 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
         )
         assertEquals(r.rounds.head.startedAt, Some("2026-10-01T10:00:00Z"))
         assertEquals(r.rounds.head.findings.head.note, "the record supports the sentence")
-        assertEquals(r.goals, List(ReviewGoal(Goal, "Zz review goal", "compiled")))
+        assertEquals(r.goals, List(ReviewGoal(Goal, com.histmersion.api.research.ReviewGoal.Title("Zz review goal"), com.histmersion.api.research.ReviewGoal.Status("compiled"))))
         assertEquals(r.approvals.map(_.kind), List("article-filter"))
         assertEquals(get(s"$url/api/articles/zzrev-nothing/review")._1, 404)
         val fresh = io.circe.parser.decode[Article.ReviewView](get(s"$url/api/articles/$Fresh/review")._2).toOption.get
