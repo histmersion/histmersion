@@ -1,0 +1,211 @@
+## CONCEPTS NEARBY
+com.histmersion.api.ByteCount (Long)
+com.histmersion.api.Offset (Int)
+com.histmersion.api.RowCount (Int)
+com.histmersion.api.Sha256 (String)
+com.histmersion.web.ui.ContextMenu.Entry.Disabled (Boolean)
+com.histmersion.web.ui.ContextMenu.Entry.Hint (String)
+com.histmersion.web.ui.ContextMenu.Entry.Label (String)
+com.histmersion.web.ui.ContextMenu.Entry.Pressed (Boolean)
+com.histmersion.web.ui.ContextMenu.Open.Title (String)
+com.histmersion.web.ui.ContextMenu.Open.X (Double)
+com.histmersion.web.ui.ContextMenu.Open.Y (Double)
+com.histmersion.web.ui.CssClass (String)
+com.histmersion.web.ui.Px (Int)
+com.histmersion.web.ui.SidebarTab.Key (String)
+com.histmersion.web.ui.SidebarTab.Label (String)
+
+## TYPES TO DECIDE
+com.histmersion.web.ui.ContextMenu.ButtonExtraCls | base String | generated | method-parameter
+    def button(title: com.histmersion.web.ui.ContextMenu.ButtonTitle, entries: () => List[Entry], extraCls: com.histmersion.web.ui.ContextMenu.ButtonExtraCls = ""): HtmlEleme
+com.histmersion.web.ui.ContextMenu.CloseReturnFocus | base Boolean | generated | method-parameter
+    def close(returnFocus: com.histmersion.web.ui.ContextMenu.CloseReturnFocus = true): Unit =
+com.histmersion.web.ui.ContextMenu.Entry.Disabled | base Boolean | original | constructor-parameter
+com.histmersion.web.ui.ContextMenu.Entry.Hint | base String | original | constructor-parameter
+com.histmersion.web.ui.ContextMenu.Entry.Label | base String | original | constructor-parameter
+com.histmersion.web.ui.ContextMenu.Entry.Pressed | base Boolean | original | constructor-parameter
+com.histmersion.web.ui.ContextMenu.IsMenuKeyKey | base String | generated | method-parameter
+    def isMenuKey(key: com.histmersion.web.ui.ContextMenu.IsMenuKeyKey, shift: com.histmersion.web.ui.ContextMenu.IsMenuKeyShift): com.histmersion.web.ui.ContextMenu.IsMenuKe
+com.histmersion.web.ui.ContextMenu.IsMenuKeyResult | base Boolean | generated | method-result
+    def isMenuKey(key: com.histmersion.web.ui.ContextMenu.IsMenuKeyKey, shift: com.histmersion.web.ui.ContextMenu.IsMenuKeyShift): com.histmersion.web.ui.ContextMenu.IsMenuKe
+com.histmersion.web.ui.ContextMenu.IsMenuKeyShift | base Boolean | generated | method-parameter
+    def isMenuKey(key: com.histmersion.web.ui.ContextMenu.IsMenuKeyKey, shift: com.histmersion.web.ui.ContextMenu.IsMenuKeyShift): com.histmersion.web.ui.ContextMenu.IsMenuKe
+com.histmersion.web.ui.ContextMenu.IsOpenResult | base Boolean | generated | method-result
+    def isOpen: com.histmersion.web.ui.ContextMenu.IsOpenResult = open.now().isDefined
+com.histmersion.web.ui.ContextMenu.MenuGoI | base Int | generated | method-parameter
+    def go(i: com.histmersion.web.ui.ContextMenu.MenuGoI): Unit = if all.nonEmpty then { ev.preventDefault(); all((i + all.size) % all.size).focus() }
+com.histmersion.web.ui.ContextMenu.NativeWantedResult | base Boolean | generated | method-result
+    private def nativeWanted(ev: dom.MouseEvent): com.histmersion.web.ui.ContextMenu.NativeWantedResult =
+com.histmersion.web.ui.ContextMenu.Open.Title | base String | original | alias,constructor-parameter
+    val ShowTitle: _root_.com.histmersion.web.ui.ContextMenu.Open.Title.type = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
+com.histmersion.web.ui.ContextMenu.Open.X | base Double | original | alias,constructor-parameter
+com.histmersion.web.ui.ContextMenu.Open.Y | base Double | original | alias,constructor-parameter
+com.histmersion.web.ui.ContextMenu.PlaceH | base Double | generated | method-parameter
+    def place(x: com.histmersion.web.ui.ContextMenu.PlaceX, y: com.histmersion.web.ui.ContextMenu.PlaceY, w: com.histmersion.web.ui.ContextMenu.PlaceW, h: com.histmersion.web
+com.histmersion.web.ui.ContextMenu.PlaceMargin | base Double | generated | method-parameter
+    def place(x: com.histmersion.web.ui.ContextMenu.PlaceX, y: com.histmersion.web.ui.ContextMenu.PlaceY, w: com.histmersion.web.ui.ContextMenu.PlaceW, h: com.histmersion.web
+com.histmersion.web.ui.ContextMenu.PlaceResultPart1 | base Double | generated | method-result
+    def place(x: com.histmersion.web.ui.ContextMenu.PlaceX, y: com.histmersion.web.ui.ContextMenu.PlaceY, w: com.histmersion.web.ui.ContextMenu.PlaceW, h: com.histmersion.web
+com.histmersion.web.ui.ContextMenu.PlaceResultPart2 | base Double | generated | method-result
+    def place(x: com.histmersion.web.ui.ContextMenu.PlaceX, y: com.histmersion.web.ui.ContextMenu.PlaceY, w: com.histmersion.web.ui.ContextMenu.PlaceW, h: com.histmersion.web
+com.histmersion.web.ui.ContextMenu.PlaceVh | base Double | generated | method-parameter
+    def place(x: com.histmersion.web.ui.ContextMenu.PlaceX, y: com.histmersion.web.ui.ContextMenu.PlaceY, w: com.histmersion.web.ui.ContextMenu.PlaceW, h: com.histmersion.web
+com.histmersion.web.ui.ContextMenu.PlaceVw | base Double | generated | method-parameter
+    def place(x: com.histmersion.web.ui.ContextMenu.PlaceX, y: com.histmersion.web.ui.ContextMenu.PlaceY, w: com.histmersion.web.ui.ContextMenu.PlaceW, h: com.histmersion.web
+com.histmersion.web.ui.ContextMenu.PlaceW | base Double | generated | method-parameter
+    def place(x: com.histmersion.web.ui.ContextMenu.PlaceX, y: com.histmersion.web.ui.ContextMenu.PlaceY, w: com.histmersion.web.ui.ContextMenu.PlaceW, h: com.histmersion.web
+com.histmersion.web.ui.ContextMenu.PlaceX | base Double | generated | method-parameter
+    def place(x: com.histmersion.web.ui.ContextMenu.PlaceX, y: com.histmersion.web.ui.ContextMenu.PlaceY, w: com.histmersion.web.ui.ContextMenu.PlaceW, h: com.histmersion.web
+com.histmersion.web.ui.ContextMenu.PlaceY | base Double | generated | method-parameter
+    def place(x: com.histmersion.web.ui.ContextMenu.PlaceX, y: com.histmersion.web.ui.ContextMenu.PlaceY, w: com.histmersion.web.ui.ContextMenu.PlaceW, h: com.histmersion.web
+com.histmersion.web.ui.ContextMenu.ShowUnderTitle | base String | generated | alias,method-parameter
+    val OnTitle: _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle.type = _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle
+    val ButtonTitle: _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle.type = _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle
+com.histmersion.web.ui.CssClass.ApplyRaw | base String | generated | method-parameter
+    def apply(raw: com.histmersion.web.ui.CssClass.ApplyRaw): CssClass = raw
+com.histmersion.web.ui.CssClass.ValueResult | base String | generated | method-result
+    extension (c: CssClass) def value: com.histmersion.web.ui.CssClass.ValueResult = c
+com.histmersion.web.ui.Flash.SayText | base String | generated | method-parameter
+    def say(text: com.histmersion.web.ui.Flash.SayText): Unit =
+com.histmersion.web.ui.GraphLayout.Centering | base Double | generated | value
+    val centering: com.histmersion.web.ui.GraphLayout.Centering = 0.01
+com.histmersion.web.ui.GraphLayout.Damping | base Double | generated | value
+    val damping: com.histmersion.web.ui.GraphLayout.Damping = 0.92
+com.histmersion.web.ui.GraphLayout.Depth1Radius | base Double | generated | value
+    val depth1Radius: com.histmersion.web.ui.GraphLayout.Depth1Radius = 6.0
+com.histmersion.web.ui.GraphLayout.LabelMaxLen | base Int | generated | value
+    val labelMaxLen: com.histmersion.web.ui.GraphLayout.LabelMaxLen = 30
+com.histmersion.web.ui.GraphLayout.LabelTruncLen | base Int | generated | value
+    val labelTruncLen: com.histmersion.web.ui.GraphLayout.LabelTruncLen = 28
+com.histmersion.web.ui.GraphLayout.LeafRadius | base Double | generated | value
+    val leafRadius: com.histmersion.web.ui.GraphLayout.LeafRadius = 4.5
+com.histmersion.web.ui.GraphLayout.MaxTicks | base Int | generated | value
+    val maxTicks: com.histmersion.web.ui.GraphLayout.MaxTicks = 300
+com.histmersion.web.ui.GraphLayout.Repulsion | base Double | generated | value
+    val repulsion: com.histmersion.web.ui.GraphLayout.Repulsion = 3000.0
+com.histmersion.web.ui.GraphLayout.RestLen | base Double | generated | value
+    val restLen: com.histmersion.web.ui.GraphLayout.RestLen = 120.0
+com.histmersion.web.ui.GraphLayout.RootRadius | base Double | generated | value
+    val rootRadius: com.histmersion.web.ui.GraphLayout.RootRadius = 8.0
+com.histmersion.web.ui.GraphLayout.SpringK | base Double | generated | value
+    val springK: com.histmersion.web.ui.GraphLayout.SpringK = 0.008
+com.histmersion.web.ui.Layout.AreaLabelMinZoom | base Int | generated | value
+    val areaLabelMinZoom: com.histmersion.web.ui.Layout.AreaLabelMinZoom = 5
+com.histmersion.web.ui.Layout.CardCacheSize | base Int | generated | value
+    val cardCacheSize: com.histmersion.web.ui.Layout.CardCacheSize = 300
+com.histmersion.web.ui.Layout.ClusterAnimateMax | base Int | generated | value
+    val clusterAnimateMax: com.histmersion.web.ui.Layout.ClusterAnimateMax = 1000
+com.histmersion.web.ui.Layout.CountersRefreshMs | base Int | generated | value
+    val countersRefreshMs: com.histmersion.web.ui.Layout.CountersRefreshMs = 250
+com.histmersion.web.ui.Layout.ExitAnimMs | base Int | generated | value
+    val exitAnimMs: com.histmersion.web.ui.Layout.ExitAnimMs = 350
+com.histmersion.web.ui.Layout.FitMaxZoom | base Int | generated | value
+    val fitMaxZoom: com.histmersion.web.ui.Layout.FitMaxZoom = 9
+com.histmersion.web.ui.Layout.GeoCacheChars | base Long | generated | value
+    val geoCacheChars: com.histmersion.web.ui.Layout.GeoCacheChars = 24L * 1024 * 1024
+com.histmersion.web.ui.Layout.GeoCacheSize | base Int | generated | value
+    val geoCacheSize: com.histmersion.web.ui.Layout.GeoCacheSize = 48
+com.histmersion.web.ui.Layout.HandleWidth | base Double | generated | value
+    val handleWidth: com.histmersion.web.ui.Layout.HandleWidth = 6.0
+com.histmersion.web.ui.Layout.HoverDelayMs | base Int | generated | value
+    val hoverDelayMs: com.histmersion.web.ui.Layout.HoverDelayMs = 180
+com.histmersion.web.ui.Layout.IdentCacheSize | base Int | generated | value
+    val identCacheSize: com.histmersion.web.ui.Layout.IdentCacheSize = 1000
+com.histmersion.web.ui.Layout.LayerReloadMs | base Int | generated | value
+    val layerReloadMs: com.histmersion.web.ui.Layout.LayerReloadMs = 200
+com.histmersion.web.ui.Layout.LibraryPage | base Int | generated | value
+    val libraryPage: com.histmersion.web.ui.Layout.LibraryPage = 50
+com.histmersion.web.ui.Layout.MarkerRadiusDefault | base Int | generated | value
+    val markerRadiusDefault: com.histmersion.web.ui.Layout.MarkerRadiusDefault = 5
+com.histmersion.web.ui.Layout.MaxBuckets | base Long | generated | value
+    val maxBuckets: com.histmersion.web.ui.Layout.MaxBuckets = 1500L
+com.histmersion.web.ui.Layout.MergeWindowMaxHeight | base Double | generated | value
+    val mergeWindowMaxHeight: com.histmersion.web.ui.Layout.MergeWindowMaxHeight = 1000.0
+com.histmersion.web.ui.Layout.MergeWindowMaxWidth | base Double | generated | value
+    val mergeWindowMaxWidth: com.histmersion.web.ui.Layout.MergeWindowMaxWidth = 1500.0
+com.histmersion.web.ui.Layout.MinSpan | base Long | generated | value
+    val minSpan: com.histmersion.web.ui.Layout.MinSpan = 10L
+com.histmersion.web.ui.Layout.OverlayFetchLimit | base Int | generated | value
+    val overlayFetchLimit: com.histmersion.web.ui.Layout.OverlayFetchLimit = 400 // polities alive in one year: up to ~140 (1200 CE); after de-duplication
+com.histmersion.web.ui.Layout.OverlayRangeFetchLimit | base Int | generated | value
+    val overlayRangeFetchLimit: com.histmersion.web.ui.Layout.OverlayRangeFetchLimit = 2000
+com.histmersion.web.ui.Layout.PickerMax | base Int | generated | value
+    val pickerMax: com.histmersion.web.ui.Layout.PickerMax = 15
+com.histmersion.web.ui.Layout.PlaceLabelCacheSize | base Int | generated | value
+    val placeLabelCacheSize: com.histmersion.web.ui.Layout.PlaceLabelCacheSize = 5000
+com.histmersion.web.ui.Layout.PlaybackAreaFadeSeconds | base Double | generated | value
+    val playbackAreaFadeSeconds: com.histmersion.web.ui.Layout.PlaybackAreaFadeSeconds = 0.3
+com.histmersion.web.ui.Layout.PlaybackDuration | base Double | generated | value
+    val playbackDuration: com.histmersion.web.ui.Layout.PlaybackDuration = 30.0
+com.histmersion.web.ui.Layout.PlaybackFetchLimit | base Int | generated | value
+    val playbackFetchLimit: com.histmersion.web.ui.Layout.PlaybackFetchLimit = 2000
+com.histmersion.web.ui.Layout.PlaybackFetchSeconds | base Double | generated | value
+    val playbackFetchSeconds: com.histmersion.web.ui.Layout.PlaybackFetchSeconds = 4.0
+com.histmersion.web.ui.Layout.PlaybackLeadSeconds | base Double | generated | value
+    val playbackLeadSeconds: com.histmersion.web.ui.Layout.PlaybackLeadSeconds = 0.5
+com.histmersion.web.ui.Layout.PlaybackWindowHalf | base Long | generated | value
+    val playbackWindowHalf: com.histmersion.web.ui.Layout.PlaybackWindowHalf = 50L
+com.histmersion.web.ui.Layout.RangeReloadMs | base Int | generated | value
+    val rangeReloadMs: com.histmersion.web.ui.Layout.RangeReloadMs = 250
+com.histmersion.web.ui.Layout.ReadingFindings | base Int | generated | value
+    val readingFindings: com.histmersion.web.ui.Layout.ReadingFindings = 3
+com.histmersion.web.ui.Layout.ReadingOpening | base Int | generated | value
+    val readingOpening: com.histmersion.web.ui.Layout.ReadingOpening = 600
+com.histmersion.web.ui.Layout.ResizeSettleMs | base Int | generated | value
+    val resizeSettleMs: com.histmersion.web.ui.Layout.ResizeSettleMs = 120
+com.histmersion.web.ui.Layout.SpiderMax | base Int | generated | value
+    val spiderMax: com.histmersion.web.ui.Layout.SpiderMax = 40
+com.histmersion.web.ui.Layout.TabFetch | base Int | generated | value
+    val tabFetch: com.histmersion.web.ui.Layout.TabFetch = 200
+com.histmersion.web.ui.Layout.TabPage | base Int | generated | value
+    val tabPage: com.histmersion.web.ui.Layout.TabPage = 25
+com.histmersion.web.ui.Layout.TabReloadMs | base Int | generated | value
+    val tabReloadMs: com.histmersion.web.ui.Layout.TabReloadMs = 150
+com.histmersion.web.ui.Layout.WindowCascadeOffset | base Int | generated | value
+    val windowCascadeOffset: com.histmersion.web.ui.Layout.WindowCascadeOffset = 28
+com.histmersion.web.ui.Layout.WindowCascadeSlots | base Int | generated | value
+    val windowCascadeSlots: com.histmersion.web.ui.Layout.WindowCascadeSlots = 5
+com.histmersion.web.ui.Layout.WindowMaxHeight | base Double | generated | value
+    val windowMaxHeight: com.histmersion.web.ui.Layout.WindowMaxHeight = 600.0
+    val mergeWindowMaxHeight: com.histmersion.web.ui.Layout.MergeWindowMaxHeight = 1000.0
+com.histmersion.web.ui.Layout.WindowMaxWidth | base Double | generated | value
+    val windowMaxWidth: com.histmersion.web.ui.Layout.WindowMaxWidth = 780.0
+    val mergeWindowMaxWidth: com.histmersion.web.ui.Layout.MergeWindowMaxWidth = 1500.0
+com.histmersion.web.ui.Px.ApplyV | base Int | generated | method-parameter
+    def apply(v: com.histmersion.web.ui.Px.ApplyV): Px = v
+com.histmersion.web.ui.Px.CssResult | base String | generated | method-result
+    def css: com.histmersion.web.ui.Px.CssResult = s"${p}px"
+com.histmersion.web.ui.Px.ValueResult | base Int | generated | method-result
+    def value: com.histmersion.web.ui.Px.ValueResult = p
+com.histmersion.web.ui.SidebarTab.Key | base String | generated | constructor-parameter
+    enum SidebarTab(val key: SidebarTab.Key, val label: SidebarTab.Label):
+com.histmersion.web.ui.SidebarTab.Label | base String | generated | constructor-parameter
+    enum SidebarTab(val key: SidebarTab.Key, val label: SidebarTab.Label):
+com.histmersion.web.ui.SidebarTab.OfKey | base String | generated | method-parameter
+    def of(key: Option[com.histmersion.web.ui.SidebarTab.OfKey]): SidebarTab = key.flatMap(k => values.find(_.key == k)).getOrElse(Sources)
+com.histmersion.web.ui.ThemeTokens.ApplyName | base String | generated | method-parameter
+    def apply(name: com.histmersion.web.ui.ThemeTokens.ApplyName): com.histmersion.web.ui.ThemeTokens.ApplyResult =
+com.histmersion.web.ui.ThemeTokens.ApplyResult | base String | generated | method-result
+    def apply(name: com.histmersion.web.ui.ThemeTokens.ApplyName): com.histmersion.web.ui.ThemeTokens.ApplyResult =
+com.histmersion.web.ui.ThemeTokens.FromDocumentName | base String | generated | method-parameter
+    private def fromDocument(name: com.histmersion.web.ui.ThemeTokens.FromDocumentName): Option[com.histmersion.web.ui.ThemeTokens.FromDocumentResult] =
+com.histmersion.web.ui.ThemeTokens.FromDocumentResult | base String | generated | method-result
+    private def fromDocument(name: com.histmersion.web.ui.ThemeTokens.FromDocumentName): Option[com.histmersion.web.ui.ThemeTokens.FromDocumentResult] =
+com.histmersion.web.ui.ThemeTokens.LookupArg1 | base String | generated | variable
+    private[web] var lookup: com.histmersion.web.ui.ThemeTokens.LookupArg1 => Option[com.histmersion.web.ui.ThemeTokens.LookupResult] = fromDocument
+com.histmersion.web.ui.ThemeTokens.LookupResult | base String | generated | variable
+    private[web] var lookup: com.histmersion.web.ui.ThemeTokens.LookupArg1 => Option[com.histmersion.web.ui.ThemeTokens.LookupResult] = fromDocument
+com.histmersion.web.ui.ThemeTokens.RampResultPart1 | base Int | generated | method-result
+    def ramp: Vector[(com.histmersion.web.ui.ThemeTokens.RampResultPart1, com.histmersion.web.ui.ThemeTokens.RampResultPart2, com.histmersion.web.ui.ThemeTokens.RampResultPar
+com.histmersion.web.ui.ThemeTokens.RampResultPart2 | base Int | generated | method-result
+    def ramp: Vector[(com.histmersion.web.ui.ThemeTokens.RampResultPart1, com.histmersion.web.ui.ThemeTokens.RampResultPart2, com.histmersion.web.ui.ThemeTokens.RampResultPar
+com.histmersion.web.ui.ThemeTokens.RampResultPart3 | base Int | generated | method-result
+    def ramp: Vector[(com.histmersion.web.ui.ThemeTokens.RampResultPart1, com.histmersion.web.ui.ThemeTokens.RampResultPart2, com.histmersion.web.ui.ThemeTokens.RampResultPar
+com.histmersion.web.ui.ThemeTokens.RgbResultPart1 | base Int | generated | method-result
+    def rgb(value: com.histmersion.web.ui.ThemeTokens.RgbValue): Option[(com.histmersion.web.ui.ThemeTokens.RgbResultPart1, com.histmersion.web.ui.ThemeTokens.RgbResultPart2,
+com.histmersion.web.ui.ThemeTokens.RgbResultPart2 | base Int | generated | method-result
+    def rgb(value: com.histmersion.web.ui.ThemeTokens.RgbValue): Option[(com.histmersion.web.ui.ThemeTokens.RgbResultPart1, com.histmersion.web.ui.ThemeTokens.RgbResultPart2,
+com.histmersion.web.ui.ThemeTokens.RgbResultPart3 | base Int | generated | method-result
+    def rgb(value: com.histmersion.web.ui.ThemeTokens.RgbValue): Option[(com.histmersion.web.ui.ThemeTokens.RgbResultPart1, com.histmersion.web.ui.ThemeTokens.RgbResultPart2,
+com.histmersion.web.ui.ThemeTokens.RgbValue | base String | generated | method-parameter
+    def rgb(value: com.histmersion.web.ui.ThemeTokens.RgbValue): Option[(com.histmersion.web.ui.ThemeTokens.RgbResultPart1, com.histmersion.web.ui.ThemeTokens.RgbResultPart2,

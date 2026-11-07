@@ -1,0 +1,729 @@
+## CONCEPTS NEARBY
+com.histmersion.api.BBox.Text (String)
+com.histmersion.api.ByteCount (Long)
+com.histmersion.api.Offset (Int)
+com.histmersion.api.RowCount (Int)
+com.histmersion.api.Sha256 (String)
+com.histmersion.api.basemap.BaseMapSource.AllValue (String)
+com.histmersion.api.basemap.BaseMapSource.Wire (String)
+com.histmersion.api.basemap.Basemap.DropRule.Drop (String)
+com.histmersion.api.basemap.Basemap.DropRule.Spare (String)
+com.histmersion.api.basemap.Basemap.DropRule.Spec (String)
+com.histmersion.api.basemap.Basemap.DropRule.Whole (Boolean)
+com.histmersion.api.basemap.Basemap.FetchQuery.DryRun (Boolean)
+com.histmersion.api.basemap.Basemap.FetchQuery.KeepAll (Boolean)
+com.histmersion.api.basemap.Basemap.FetchQuery.TerrainMaxZoom (Int)
+com.histmersion.api.basemap.Basemap.Focus.MaxZoom (Int)
+com.histmersion.api.basemap.Basemap.Focus.Name (String)
+com.histmersion.api.basemap.Basemap.Focus.Spec (String)
+com.histmersion.api.basemap.Basemap.Layer.Problem (String)
+com.histmersion.api.basemap.Basemap.Layer.Title (String)
+com.histmersion.api.basemap.Basemap.Layer.Wire (String)
+com.histmersion.api.basemap.Basemap.Layer.Wires (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.Attribution (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.Dropped (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.Error (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.FetchedAt (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.File (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.Kept (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.MinZoom (Int)
+com.histmersion.api.basemap.Basemap.LayerInfo.Present (Boolean)
+com.histmersion.api.basemap.Basemap.LayerInfo.Source (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.TileType (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.Tiles (Long)
+com.histmersion.api.basemap.Basemap.LayerInfo.Version (String)
+com.histmersion.api.basemap.Basemap.OnDemand.Dir (String)
+com.histmersion.api.basemap.Basemap.OnDemand.Enabled (Boolean)
+com.histmersion.api.basemap.Basemap.OnDemand.MaxBytes (Long)
+com.histmersion.api.basemap.Basemap.OnDemand.OfflineUntil (String)
+com.histmersion.api.basemap.Basemap.Problem (String)
+com.histmersion.api.basemap.Basemap.Read.Geoms (Int)
+com.histmersion.api.basemap.Basemap.Read.Kinds (String)
+com.histmersion.api.basemap.Basemap.RemoveQuery.Cache (Boolean)
+com.histmersion.api.basemap.Basemap.Removed.Value (String)
+com.histmersion.api.basemap.Basemap.Status.Available (Boolean)
+com.histmersion.api.basemap.Basemap.Status.FetchCommand (String)
+com.histmersion.api.basemap.Basemap.Status.FreeBytes (Long)
+com.histmersion.api.basemap.Basemap.Status.Hints (String)
+com.histmersion.api.basemap.Basemap.Status.MapMaxZoom (Int)
+com.histmersion.api.basemap.Basemap.Status.Running (String)
+com.histmersion.api.basemap.Basemap.StyleState.Id (String)
+com.histmersion.api.basemap.Basemap.StyleState.Name (String)
+com.histmersion.api.basemap.Basemap.Subset.Spec (String)
+com.histmersion.api.basemap.Basemap.Tile.Column (Long)
+com.histmersion.api.basemap.Basemap.Tile.Row (Long)
+com.histmersion.api.basemap.Basemap.Zoom (Int)
+com.histmersion.api.basemap.BasemapApi.Tile.Bytes (Array[Byte])
+com.histmersion.api.basemap.BasemapApi.Tile.ContentType (String)
+com.histmersion.api.basemap.BasemapApi.Tile.Encoding (String)
+com.histmersion.api.basemap.BasemapApi.Tile.Etag (String)
+com.histmersion.api.basemap.BasemapApi.Tile.Format (String)
+com.histmersion.api.basemap.BasemapApi.TileTemplate (String)
+com.histmersion.api.catalogue.ArticleEventLead.Body (String)
+com.histmersion.api.catalogue.ArticleEventLead.FindingsNear (Int)
+com.histmersion.api.catalogue.ArticleEventLead.Markdown (String)
+com.histmersion.api.catalogue.ArticleEventLead.Size (String)
+com.histmersion.api.catalogue.ArticleEventLead.Years (String)
+com.histmersion.api.catalogue.Attestation.Canvas (String)
+com.histmersion.api.catalogue.Attestation.CharEnd (Int)
+com.histmersion.api.catalogue.Attestation.CharStart (Int)
+com.histmersion.api.catalogue.Attestation.ChunkOrd (Int)
+com.histmersion.api.catalogue.Attestation.CtsUrn (String)
+com.histmersion.api.catalogue.Attestation.Deleted.Value (Boolean)
+com.histmersion.api.catalogue.Attestation.Id (Long)
+com.histmersion.api.catalogue.Attestation.Note (String)
+com.histmersion.api.catalogue.Attestation.Page (String)
+com.histmersion.api.catalogue.Attestation.Prefix (String)
+com.histmersion.api.catalogue.Attestation.Quote (String)
+com.histmersion.api.catalogue.Attestation.Suffix (String)
+com.histmersion.api.catalogue.Attestation.TargetId (String)
+com.histmersion.api.catalogue.Attestation.TargetType (String)
+com.histmersion.api.catalogue.Attestation.Xywh (String)
+com.histmersion.api.catalogue.CatalogProviderInfo.Home (String)
+com.histmersion.api.catalogue.CatalogRecord.Central (Long)
+com.histmersion.api.catalogue.CatalogRecord.Description (String)
+com.histmersion.api.catalogue.CatalogRecord.EventId (String)
+com.histmersion.api.catalogue.CatalogRecord.Group (String)
+com.histmersion.api.catalogue.CatalogRecord.Group.Label (String)
+com.histmersion.api.catalogue.CatalogRecord.Historicity (String)
+com.histmersion.api.catalogue.CatalogRecord.Kind (String)
+com.histmersion.api.catalogue.CatalogRecord.Label (String)
+com.histmersion.api.catalogue.CatalogRecord.OwnerKeysPart2 (String)
+com.histmersion.api.catalogue.CatalogRecord.PlusMinus (Long)
+com.histmersion.api.catalogue.CatalogRecord.Provider (String)
+com.histmersion.api.catalogue.CatalogRecord.Raw (String)
+com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class (String)
+com.histmersion.api.catalogue.CatalogRecord.Wikidata.ImportClass (String)
+com.histmersion.api.catalogue.CatalogRecord.Wikidata.P31Json (String)
+com.histmersion.api.catalogue.Correction.CheckedAt (String)
+com.histmersion.api.catalogue.Correction.Counts.Conflicts (Int)
+com.histmersion.api.catalogue.Correction.Counts.Kept (Int)
+com.histmersion.api.catalogue.Correction.Counts.Retired (Int)
+com.histmersion.api.catalogue.Correction.CreatedAt (String)
+com.histmersion.api.catalogue.Correction.Field (String)
+com.histmersion.api.catalogue.Correction.Id (Long)
+com.histmersion.api.catalogue.Correction.List.Total (Int)
+com.histmersion.api.catalogue.Correction.Status.All (String)
+com.histmersion.api.catalogue.Correction.Status.Applied (String)
+com.histmersion.api.catalogue.Correction.StatusValue (String)
+com.histmersion.api.catalogue.Correction.TargetId (String)
+com.histmersion.api.catalogue.Correction.TargetKind (String)
+com.histmersion.api.catalogue.Correction.Upstream (String)
+com.histmersion.api.catalogue.Correction.UpstreamNow (String)
+com.histmersion.api.catalogue.Correction.UpstreamValue (String)
+com.histmersion.api.catalogue.Correction.Value (String)
+com.histmersion.api.catalogue.Corrections.Markdown (String)
+com.histmersion.api.catalogue.Corrections.StatusResult (String)
+com.histmersion.api.catalogue.Event.Id (String)
+com.histmersion.api.catalogue.Event.Uid (String)
+com.histmersion.api.catalogue.EventCandidatesRequest.All (Boolean)
+com.histmersion.api.catalogue.EventCandidatesRequest.Limit (Int)
+com.histmersion.api.catalogue.EventCatalogueRef.Citation (String)
+com.histmersion.api.catalogue.EventCatalogueRef.Deaths (Long)
+com.histmersion.api.catalogue.EventCatalogueRef.Licence (String)
+com.histmersion.api.catalogue.EventCatalogueRef.Magnitude (Double)
+com.histmersion.api.catalogue.EventCatalogueRef.ProviderId (String)
+com.histmersion.api.catalogue.EventCatalogueRef.RetrievedAt (String)
+com.histmersion.api.catalogue.EventCatalogueRef.Title (String)
+com.histmersion.api.catalogue.EventCatalogueRef.Url (String)
+com.histmersion.api.catalogue.EventCatalogueRef.Vei (Int)
+com.histmersion.api.catalogue.EventCorrection.Status (String)
+com.histmersion.api.catalogue.EventCount.Key (String)
+com.histmersion.api.catalogue.EventCount.N (Int)
+com.histmersion.api.catalogue.EventDating.Method (String)
+com.histmersion.api.catalogue.EventDating.Note (String)
+com.histmersion.api.catalogue.EventDeleted.Deleted (Boolean)
+com.histmersion.api.catalogue.EventEdge.Kind (String)
+com.histmersion.api.catalogue.EventEdge.Note (String)
+com.histmersion.api.catalogue.EventEntry.Names (String)
+com.histmersion.api.catalogue.EventEntry.Wikidata (String)
+com.histmersion.api.catalogue.EventFindingRef.Claim (String)
+com.histmersion.api.catalogue.EventFindingRef.Id (String)
+com.histmersion.api.catalogue.EventFindingRef.Km (Double)
+com.histmersion.api.catalogue.EventFindingRef.YearGap (Long)
+com.histmersion.api.catalogue.EventGeo.Anchor (String)
+com.histmersion.api.catalogue.EventGeo.Dating (String)
+com.histmersion.api.catalogue.EventGeo.Dating.Description (String)
+com.histmersion.api.catalogue.EventGeo.Historicity (String)
+com.histmersion.api.catalogue.EventGeo.Kind (String)
+com.histmersion.api.catalogue.EventGeo.Label (String)
+com.histmersion.api.catalogue.EventGeo.List.Imprecise (Int)
+com.histmersion.api.catalogue.EventGeo.List.Unplaced (Int)
+com.histmersion.api.catalogue.EventGeo.Outline (String)
+com.histmersion.api.catalogue.EventGeo.ParentId (String)
+com.histmersion.api.catalogue.EventGeo.PlaceLabel (String)
+com.histmersion.api.catalogue.EventGeo.Precision (String)
+com.histmersion.api.catalogue.EventGeo.Problem (String)
+com.histmersion.api.catalogue.EventGeo.Scale (String)
+com.histmersion.api.catalogue.EventGeo.Size (String)
+com.histmersion.api.catalogue.EventGeo.Tier (String)
+com.histmersion.api.catalogue.EventGeometry.Geojson (String)
+com.histmersion.api.catalogue.EventGeometry.Problem (String)
+com.histmersion.api.catalogue.EventGeometry.Type (String)
+com.histmersion.api.catalogue.EventImportReport.Citation (String)
+com.histmersion.api.catalogue.EventImportReport.Created (Int)
+com.histmersion.api.catalogue.EventImportReport.DryRun (Boolean)
+com.histmersion.api.catalogue.EventImportReport.Failed (String)
+com.histmersion.api.catalogue.EventImportReport.Kept (Int)
+com.histmersion.api.catalogue.EventImportReport.Licence (String)
+com.histmersion.api.catalogue.EventImportReport.Markdown (String)
+com.histmersion.api.catalogue.EventImportReport.Matched (Int)
+com.histmersion.api.catalogue.EventImportReport.MatchedEvents (String)
+com.histmersion.api.catalogue.EventImportReport.Merged (Int)
+com.histmersion.api.catalogue.EventImportReport.Parts (Int)
+com.histmersion.api.catalogue.EventImportReport.Pending (Int)
+com.histmersion.api.catalogue.EventImportReport.Provider (String)
+com.histmersion.api.catalogue.EventImportReport.Records (Int)
+com.histmersion.api.catalogue.EventImportReport.Requests (Int)
+com.histmersion.api.catalogue.EventImportReport.Updated (Int)
+com.histmersion.api.catalogue.EventImportRequest.Bbox (String)
+com.histmersion.api.catalogue.EventImportRequest.DryRun (Boolean)
+com.histmersion.api.catalogue.EventImportRequest.From (Long)
+com.histmersion.api.catalogue.EventImportRequest.Limit (Int)
+com.histmersion.api.catalogue.EventImportRequest.MinMagnitude (Double)
+com.histmersion.api.catalogue.EventImportRequest.MinVei (Int)
+com.histmersion.api.catalogue.EventImportRequest.Refresh (Boolean)
+com.histmersion.api.catalogue.EventImportRequest.To (Long)
+com.histmersion.api.catalogue.EventLead.Action.Command (String)
+com.histmersion.api.catalogue.EventLead.Action.Kind (String)
+com.histmersion.api.catalogue.EventLead.Action.Label (String)
+com.histmersion.api.catalogue.EventLead.Action.Query (String)
+com.histmersion.api.catalogue.EventLead.Candidates (Int)
+com.histmersion.api.catalogue.EventLead.FindingsNear (Int)
+com.histmersion.api.catalogue.EventLead.Kind (String)
+com.histmersion.api.catalogue.EventLead.Label (String)
+com.histmersion.api.catalogue.EventLead.List.Total (Int)
+com.histmersion.api.catalogue.EventLead.Text (String)
+com.histmersion.api.catalogue.EventLead.Tier (String)
+com.histmersion.api.catalogue.EventLead.Years (String)
+com.histmersion.api.catalogue.EventLeads.LeadList (String)
+com.histmersion.api.catalogue.EventLinkCandidate.Reasons (String)
+com.histmersion.api.catalogue.EventLinkCandidate.Score (Double)
+com.histmersion.api.catalogue.EventLinkCandidate.Status.All (String)
+com.histmersion.api.catalogue.EventLinkCandidate.StatusValue (String)
+com.histmersion.api.catalogue.EventLinkList.Label (String)
+com.histmersion.api.catalogue.EventLinksRequest.Confirm (String)
+com.histmersion.api.catalogue.EventLinksRequest.Recompute (Boolean)
+com.histmersion.api.catalogue.EventLinksRequest.Reject (String)
+com.histmersion.api.catalogue.EventLinksResult.Refused (String)
+com.histmersion.api.catalogue.EventLinksResult.Rejected (String)
+com.histmersion.api.catalogue.EventList.Limit (Int)
+com.histmersion.api.catalogue.EventList.Total (Int)
+com.histmersion.api.catalogue.EventParticipant.Actor (String)
+com.histmersion.api.catalogue.EventParticipant.Role (String)
+com.histmersion.api.catalogue.EventPassage.Context (String)
+com.histmersion.api.catalogue.EventPassage.End (Int)
+com.histmersion.api.catalogue.EventPassage.Name (String)
+com.histmersion.api.catalogue.EventPassage.Quote (String)
+com.histmersion.api.catalogue.EventPassage.Start (Int)
+com.histmersion.api.catalogue.EventPatch.Geometry (String)
+com.histmersion.api.catalogue.EventPatch.Wikidata (String)
+com.histmersion.api.catalogue.EventPrecision.Uncertainty (Long)
+com.histmersion.api.catalogue.EventRederiveReport.Changed (Int)
+com.histmersion.api.catalogue.EventRederiveReport.DryRun (Boolean)
+com.histmersion.api.catalogue.EventRederiveReport.Examples (String)
+com.histmersion.api.catalogue.EventRederiveReport.FromRaw (Int)
+com.histmersion.api.catalogue.EventRederiveReport.OffMap (Int)
+com.histmersion.api.catalogue.EventRederiveReport.Providers (String)
+com.histmersion.api.catalogue.EventRederiveReport.Records (Int)
+com.histmersion.api.catalogue.EventRederiveReport.Report (String)
+com.histmersion.api.catalogue.EventRederiveReport.Updated (Int)
+com.histmersion.api.catalogue.EventRederiveRequest.DryRun (Boolean)
+com.histmersion.api.catalogue.EventScale.GeometryType (String)
+com.histmersion.api.catalogue.EventScale.LocalKinds (String)
+com.histmersion.api.catalogue.EventScale.RegionalKinds (String)
+com.histmersion.api.catalogue.EventSourceRef.Title (String)
+com.histmersion.api.catalogue.EventSourceRef.Via (String)
+com.histmersion.api.catalogue.EventSummary.Central (Long)
+com.histmersion.api.catalogue.EventSummary.DatingMethod (String)
+com.histmersion.api.catalogue.EventSummary.Description (String)
+com.histmersion.api.catalogue.EventSummary.Historicity (String)
+com.histmersion.api.catalogue.EventSummary.Kind (String)
+com.histmersion.api.catalogue.EventSummary.Label (String)
+com.histmersion.api.catalogue.EventSummary.PlusMinus (Long)
+com.histmersion.api.catalogue.EventSummary.Precision (String)
+com.histmersion.api.catalogue.EventSummary.Scale (String)
+com.histmersion.api.catalogue.EventSummary.ScaleStated (Boolean)
+com.histmersion.api.catalogue.EventSummary.Tier (String)
+com.histmersion.api.catalogue.EventTaxonomy.Kind.Group (String)
+com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon (String)
+com.histmersion.api.catalogue.EventTaxonomy.Kind.Label (String)
+com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter (String)
+com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Negate (Boolean)
+com.histmersion.api.catalogue.GazDescription.Text (String)
+com.histmersion.api.catalogue.GazGeometry.GeoJson.Text (String)
+com.histmersion.api.catalogue.GazGeometry.Wkt.Text (String)
+com.histmersion.api.catalogue.GazName.Citation (String)
+com.histmersion.api.catalogue.GazName.Lang (String)
+com.histmersion.api.catalogue.GazName.Name (String)
+com.histmersion.api.catalogue.GazRecord.ItemClass (String)
+com.histmersion.api.catalogue.GazRecord.Kind (String)
+com.histmersion.api.catalogue.GazRecord.Label (String)
+com.histmersion.api.catalogue.GazRecord.Properties (String)
+com.histmersion.api.catalogue.GazRecord.Ref (String)
+com.histmersion.api.catalogue.GazRecord.Source (String)
+com.histmersion.api.catalogue.Gazetteer.DatasetField (String)
+com.histmersion.api.catalogue.Gazetteer.DatasetName (String)
+com.histmersion.api.catalogue.Gazetteer.Extract.Attribution (String)
+com.histmersion.api.catalogue.Gazetteer.Extract.Built (String)
+com.histmersion.api.catalogue.Gazetteer.Extract.Bytes (Long)
+com.histmersion.api.catalogue.Gazetteer.Extract.Features (Long)
+com.histmersion.api.catalogue.Gazetteer.Extract.Name (String)
+com.histmersion.api.catalogue.Gazetteer.Extract.Sha256 (String)
+com.histmersion.api.catalogue.Gazetteer.Extract.Url (String)
+com.histmersion.api.catalogue.Gazetteer.Extract.Version (String)
+com.histmersion.api.catalogue.Gazetteer.Kind.Wire (String)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Created (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsAdded (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsChanged (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsRemoved (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Joined (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.LinksAdded (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.LinksChanged (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.LinksRemoved (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.NamesAdded (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.NamesChanged (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.NamesRemoved (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.PlacesChanged (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.PlacesRemoved (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.PointAreasSkipped (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Records (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Skipped (String)
+com.histmersion.api.catalogue.Gazetteer.OpenStartWindowYears (Int)
+com.histmersion.api.catalogue.Gazetteer.PlaceRef (String)
+com.histmersion.api.catalogue.Gazetteer.PointAreaKinds (String)
+com.histmersion.api.catalogue.Gazetteer.Problem (String)
+com.histmersion.api.catalogue.Gazetteer.Rank (Int)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Citation (String)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.File (String)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.ImportedAt (String)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.ImportedVersion (String)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key (String)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Licence (String)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Links (Int)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Names (Int)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.PinnedVersion (String)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Places (Int)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Present (Boolean)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Title (String)
+com.histmersion.api.catalogue.Gazetteer.ValidityWindowYears (Int)
+com.histmersion.api.catalogue.GeoTime.Within.Latest (Boolean)
+com.histmersion.api.catalogue.Geocode.Approximation.OnlyWithin.Missing (String)
+com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped (String)
+com.histmersion.api.catalogue.Geocode.Approximation.Rough.Places (Int)
+com.histmersion.api.catalogue.Geocode.Attempt.Name (String)
+com.histmersion.api.catalogue.Geocode.Attempt.Within (String)
+com.histmersion.api.catalogue.Geocode.Candidate.Area (Double)
+com.histmersion.api.catalogue.Geocode.Candidate.ByLabel (Boolean)
+com.histmersion.api.catalogue.Geocode.Candidate.Dimension (Int)
+com.histmersion.api.catalogue.Geocode.Candidate.Gap (Long)
+com.histmersion.api.catalogue.Geocode.Candidate.GridCell (Boolean)
+com.histmersion.api.catalogue.Geocode.Candidate.Kind (String)
+com.histmersion.api.catalogue.Geocode.Candidate.Span (Long)
+com.histmersion.api.catalogue.Geocode.Compass.Fraction (Double)
+com.histmersion.api.catalogue.Geocode.DistanceKm (Double)
+com.histmersion.api.catalogue.Geocode.Key (String)
+com.histmersion.api.catalogue.Geocode.KindHint.Wire (String)
+com.histmersion.api.catalogue.Geocode.KindRank (Int)
+com.histmersion.api.catalogue.Geocode.Move.Asked (String)
+com.histmersion.api.catalogue.Geocode.Move.MinKm (Double)
+com.histmersion.api.catalogue.Geocode.Move.Region (String)
+com.histmersion.api.catalogue.Geocode.Placeholder.Min (Int)
+com.histmersion.api.catalogue.Geocode.Placement.Region (String)
+com.histmersion.api.catalogue.Geocode.Resolution.Asked (String)
+com.histmersion.api.catalogue.Geocode.TimeRank.Class (Int)
+com.histmersion.api.catalogue.HistoricalPeriod.Authority (String)
+com.histmersion.api.catalogue.HistoricalPeriod.Id (String)
+com.histmersion.api.catalogue.HistoricalPeriod.Label (String)
+com.histmersion.api.catalogue.HistoricalPeriod.ParentId (String)
+com.histmersion.api.catalogue.HistoricalPeriod.Region (String)
+com.histmersion.api.catalogue.Historicity.Wire (String)
+com.histmersion.api.catalogue.Latitude (Double)
+com.histmersion.api.catalogue.LeadFacts.Attesting (Int)
+com.histmersion.api.catalogue.LeadFacts.FindingsNear (Int)
+com.histmersion.api.catalogue.LeadFacts.Kind (String)
+com.histmersion.api.catalogue.LeadFacts.Km (Double)
+com.histmersion.api.catalogue.LeadFacts.Label (String)
+com.histmersion.api.catalogue.LeadFacts.Magnitude (Double)
+com.histmersion.api.catalogue.LeadFacts.Proposed (Int)
+com.histmersion.api.catalogue.LeadFacts.Tier (String)
+com.histmersion.api.catalogue.LeadFacts.Vei (Int)
+com.histmersion.api.catalogue.LeadFacts.Years (Long)
+com.histmersion.api.catalogue.LinkMatch.Wire (String)
+com.histmersion.api.catalogue.LinkScheme.Wire (String)
+com.histmersion.api.catalogue.Longitude (Double)
+com.histmersion.api.catalogue.Lpf.Bound.Wire (String)
+com.histmersion.api.catalogue.Lpf.Document (String)
+com.histmersion.api.catalogue.Lpf.Problem (String)
+com.histmersion.api.catalogue.ManualPlaceName.Label (String)
+com.histmersion.api.catalogue.ManualPlaceName.Lang (String)
+com.histmersion.api.catalogue.ManualPlaceName.Name (String)
+com.histmersion.api.catalogue.MapArea.ApproxGb (Double)
+com.histmersion.api.catalogue.MapArea.Bbox (String)
+com.histmersion.api.catalogue.MapArea.Label (String)
+com.histmersion.api.catalogue.MapTilesUiConfig.MaxZoom (Int)
+com.histmersion.api.catalogue.MapTilesUiConfig.PlaybackBucketSeconds (Double)
+com.histmersion.api.catalogue.MatchSpan.End (Int)
+com.histmersion.api.catalogue.MatchSpan.Start (Int)
+com.histmersion.api.catalogue.Period.End (Long)
+com.histmersion.api.catalogue.Period.Id (String)
+com.histmersion.api.catalogue.Period.ImportResult.Periods (Int)
+com.histmersion.api.catalogue.Period.ImportResult.Presets (Int)
+com.histmersion.api.catalogue.Period.ImportResult.Removed (Int)
+com.histmersion.api.catalogue.Period.ImportResult.Roots (Int)
+com.histmersion.api.catalogue.Period.ImportResult.SkippedCount (Int)
+com.histmersion.api.catalogue.Period.IsoYear (Long)
+com.histmersion.api.catalogue.Period.Skip.Wire (String)
+com.histmersion.api.catalogue.Period.Start (Long)
+com.histmersion.api.catalogue.PeriodO.MaxYearNumber (Long)
+com.histmersion.api.catalogue.PeriodO.MinImplausibleSpanNumber (Long)
+com.histmersion.api.catalogue.PeriodO.MinSiblingsCount (Int)
+com.histmersion.api.catalogue.PeriodO.MinYearNumber (Long)
+com.histmersion.api.catalogue.PeriodO.Problem (String)
+com.histmersion.api.catalogue.PeriodO.SpanFactorNumber (Long)
+com.histmersion.api.catalogue.PeriodO.Wire (String)
+com.histmersion.api.catalogue.Place.Add.Kind (String)
+com.histmersion.api.catalogue.Place.Card.Note (String)
+com.histmersion.api.catalogue.Place.Counts.Articles (Int)
+com.histmersion.api.catalogue.Place.Counts.Events (Int)
+com.histmersion.api.catalogue.Place.Counts.Findings (Int)
+com.histmersion.api.catalogue.Place.Counts.Sources (Int)
+com.histmersion.api.catalogue.Place.Dating.Description (String)
+com.histmersion.api.catalogue.Place.Dating.Wire (String)
+com.histmersion.api.catalogue.Place.Depth (Int)
+com.histmersion.api.catalogue.Place.Description.Text (String)
+com.histmersion.api.catalogue.Place.Designation.End (String)
+com.histmersion.api.catalogue.Place.Designation.Id (String)
+com.histmersion.api.catalogue.Place.Designation.Label (String)
+com.histmersion.api.catalogue.Place.Designation.Start (String)
+com.histmersion.api.catalogue.Place.Detail (Boolean)
+com.histmersion.api.catalogue.Place.Edits.Csv (String)
+com.histmersion.api.catalogue.Place.Entry.Contested (Boolean)
+com.histmersion.api.catalogue.Place.Entry.HasBoundary (Boolean)
+com.histmersion.api.catalogue.Place.Entry.SiteType (String)
+com.histmersion.api.catalogue.Place.Footprint.AccuracyM (Float)
+com.histmersion.api.catalogue.Place.Footprint.Certainty (String)
+com.histmersion.api.catalogue.Place.Footprint.Id (Int)
+com.histmersion.api.catalogue.Place.Footprint.Role (String)
+com.histmersion.api.catalogue.Place.Geometry (String)
+com.histmersion.api.catalogue.Place.Gone.FindingsAfter (Int)
+com.histmersion.api.catalogue.Place.Gone.FindingsBefore (Int)
+com.histmersion.api.catalogue.Place.Gone.Into (String)
+com.histmersion.api.catalogue.Place.Gone.IntoLabel (String)
+com.histmersion.api.catalogue.Place.Gone.Unlocated (Int)
+com.histmersion.api.catalogue.Place.Hit.Findings (Int)
+com.histmersion.api.catalogue.Place.Hit.MatchedName (String)
+com.histmersion.api.catalogue.Place.Id (String)
+com.histmersion.api.catalogue.Place.ImportResult.Failed (String)
+com.histmersion.api.catalogue.Place.ImportResult.Job (String)
+com.histmersion.api.catalogue.Place.ImportResult.Names (Int)
+com.histmersion.api.catalogue.Place.ImportResult.Places (Int)
+com.histmersion.api.catalogue.Place.ImportResult.Relations (Int)
+com.histmersion.api.catalogue.Place.Kind.All (String)
+com.histmersion.api.catalogue.Place.Kind.ParseS (String)
+com.histmersion.api.catalogue.Place.Kind.Parsed (String)
+com.histmersion.api.catalogue.Place.Kind.Wire (String)
+com.histmersion.api.catalogue.Place.KindValue (String)
+com.histmersion.api.catalogue.Place.Label (String)
+com.histmersion.api.catalogue.Place.Link.ExternalId (String)
+com.histmersion.api.catalogue.Place.Link.Relation (String)
+com.histmersion.api.catalogue.Place.Link.Scheme (String)
+com.histmersion.api.catalogue.Place.Link.SchemeTitle (String)
+com.histmersion.api.catalogue.Place.Link.Url (String)
+com.histmersion.api.catalogue.Place.Match.ImportSource (String)
+com.histmersion.api.catalogue.Place.Match.Native (Boolean)
+com.histmersion.api.catalogue.Place.MergeIn.Reason (String)
+com.histmersion.api.catalogue.Place.Name.Lang (String)
+com.histmersion.api.catalogue.Place.Name.Value (String)
+com.histmersion.api.catalogue.Place.NameAdd.Name (String)
+com.histmersion.api.catalogue.Place.NameChanged.Added (Boolean)
+com.histmersion.api.catalogue.Place.NameChanged.Changed (Boolean)
+com.histmersion.api.catalogue.Place.NameChanged.Name (String)
+com.histmersion.api.catalogue.Place.NameChanged.WasImported (Boolean)
+com.histmersion.api.catalogue.Place.NameRemove.Name (String)
+com.histmersion.api.catalogue.Place.Override.Kind (String)
+com.histmersion.api.catalogue.Place.Override.PeriodSet (Boolean)
+com.histmersion.api.catalogue.Place.Override.Reason (String)
+com.histmersion.api.catalogue.Place.Override.SourceKind (String)
+com.histmersion.api.catalogue.Place.Override.UpdatedAt (String)
+com.histmersion.api.catalogue.Place.OverrideChanged.FindingsAfter (Int)
+com.histmersion.api.catalogue.Place.OverrideChanged.FindingsBefore (Int)
+com.histmersion.api.catalogue.Place.OverrideChanged.KindAfter (String)
+com.histmersion.api.catalogue.Place.OverrideChanged.KindBefore (String)
+com.histmersion.api.catalogue.Place.OverrideChanged.PeriodAfter (String)
+com.histmersion.api.catalogue.Place.OverrideChanged.PeriodBefore (String)
+com.histmersion.api.catalogue.Place.OverrideChanged.Reset (Boolean)
+com.histmersion.api.catalogue.Place.OverrideChanged.Unlocated (Int)
+com.histmersion.api.catalogue.Place.OverrideEdit.Put.Kind (String)
+com.histmersion.api.catalogue.Place.OverrideEdit.Put.Reason (String)
+com.histmersion.api.catalogue.Place.OverrideSet.Kind (String)
+com.histmersion.api.catalogue.Place.OverrideSet.Reason (String)
+com.histmersion.api.catalogue.Place.OverrideSet.Reset (Boolean)
+com.histmersion.api.catalogue.Place.Overrides.PointText (String)
+com.histmersion.api.catalogue.Place.Overrides.Problem (String)
+com.histmersion.api.catalogue.Place.Precision.CellsMicroNumber (Long)
+com.histmersion.api.catalogue.Place.Precision.Wire (String)
+com.histmersion.api.catalogue.Place.Properties (String)
+com.histmersion.api.catalogue.Place.RebuildResult.ByGeometry (Int)
+com.histmersion.api.catalogue.Place.RebuildResult.ByName (Int)
+com.histmersion.api.catalogue.Place.RebuildResult.Links (Int)
+com.histmersion.api.catalogue.Place.RebuildResult.Located (Int)
+com.histmersion.api.catalogue.Place.RebuildResult.Places (Int)
+com.histmersion.api.catalogue.Place.RebuildResult.Unlocated (Int)
+com.histmersion.api.catalogue.Place.Record.DateSource (String)
+com.histmersion.api.catalogue.Place.Record.DateSourceText (String)
+com.histmersion.api.catalogue.Place.Record.Periods (String)
+com.histmersion.api.catalogue.Place.Region (String)
+com.histmersion.api.catalogue.Place.Register.Id (String)
+com.histmersion.api.catalogue.Place.Register.Name (String)
+com.histmersion.api.catalogue.Place.Register.Property (String)
+com.histmersion.api.catalogue.Place.Relation.ChildId (String)
+com.histmersion.api.catalogue.Place.Relation.Kind (String)
+com.histmersion.api.catalogue.Place.Relation.ParentId (String)
+com.histmersion.api.catalogue.Place.RemoveIn.Reason (String)
+com.histmersion.api.catalogue.Place.Source (String)
+com.histmersion.api.catalogue.Place.Summary.Contested (Boolean)
+com.histmersion.api.catalogue.Place.Summary.Kind (String)
+com.histmersion.api.catalogue.Place.Summary.Names (String)
+com.histmersion.api.catalogue.Place.TimeBasis.FindingsNoteText (String)
+com.histmersion.api.catalogue.Place.TimeBasis.ModernFrom (Long)
+com.histmersion.api.catalogue.Place.TimeBasis.OfKind (String)
+com.histmersion.api.catalogue.Place.TimeBasis.VisibleEnd (Long)
+com.histmersion.api.catalogue.Place.TimeBasis.Wire (String)
+com.histmersion.api.catalogue.Place.TreeRow.Contested (Boolean)
+com.histmersion.api.catalogue.Place.TreeRow.Depth (Int)
+com.histmersion.api.catalogue.Place.TreeRow.Findings (Int)
+com.histmersion.api.catalogue.Place.TreeRow.Kind (String)
+com.histmersion.api.catalogue.Place.Type.TypeLabel (String)
+com.histmersion.api.catalogue.PresetMenu.PeriodSource (String)
+com.histmersion.api.catalogue.PresetMenu.PeriodoId (String)
+com.histmersion.api.catalogue.PresetMenu.Share (Double)
+com.histmersion.api.catalogue.PresetRegion.Label (String)
+com.histmersion.web.map.View.CentreLon (Double)
+com.histmersion.web.map.View.H (Double)
+com.histmersion.web.map.View.W (Double)
+com.histmersion.web.map.maplibre.GlPointTiles.Id (String)
+com.histmersion.web.map.maplibre.GlPointTiles.Layer (String)
+com.histmersion.web.map.maplibre.GlPointTiles.MaxZoom (Int)
+com.histmersion.web.map.maplibre.GlShapes.Drawn.Alpha (Double)
+com.histmersion.web.map.maplibre.GlShapes.Drawn.Colour (String)
+com.histmersion.web.map.maplibre.GlShapes.Drawn.Dashed (Boolean)
+com.histmersion.web.map.maplibre.GlShapes.Drawn.N (Int)
+com.histmersion.web.map.maplibre.GlShapes.Id (String)
+com.histmersion.web.map.maplibre.MapLibreSurface.MaxZoom0 (Double)
+com.histmersion.web.map.maplibre.MapLibreSurface.PixelRatio (Double)
+com.histmersion.web.marks.ItemRef.Title (String)
+
+## TYPES TO DECIDE
+com.histmersion.web.map.View.CentreLon | base Double | original | constructor-parameter
+    final case class View(surface: MapSurface, centreLon: View.CentreLon, w: View.W, h: View.H)
+com.histmersion.web.map.View.H | base Double | original | constructor-parameter
+com.histmersion.web.map.View.W | base Double | original | constructor-parameter
+com.histmersion.web.map.maplibre.GlEvent.Type | base String | generated | value
+    val `type`: com.histmersion.web.map.maplibre.GlEvent.Type = js.native
+com.histmersion.web.map.maplibre.GlPointTiles.Id | base String | generated | constructor-parameter
+    final private[maplibre] class GlPointTiles(gl: GlMap, id: GlPointTiles.Id, layer: GlPointTiles.Layer, maxZoom: GlPointTiles.MaxZoom) extends PointTiles:
+com.histmersion.web.map.maplibre.GlPointTiles.Layer | base String | generated | constructor-parameter
+    final private[maplibre] class GlPointTiles(gl: GlMap, id: GlPointTiles.Id, layer: GlPointTiles.Layer, maxZoom: GlPointTiles.MaxZoom) extends PointTiles:
+    private val hitLayer = s"$id-points"
+com.histmersion.web.map.maplibre.GlPointTiles.LoadedResult | base Boolean | generated | method-result
+    def loaded: com.histmersion.web.map.maplibre.GlPointTiles.LoadedResult =
+com.histmersion.web.map.maplibre.GlPointTiles.MaxZoom | base Int | generated | constructor-parameter
+    final private[maplibre] class GlPointTiles(gl: GlMap, id: GlPointTiles.Id, layer: GlPointTiles.Layer, maxZoom: GlPointTiles.MaxZoom) extends PointTiles:
+com.histmersion.web.map.maplibre.GlPointTiles.SetTilesT | base String | generated | method-parameter
+    def setTiles(t: Option[com.histmersion.web.map.maplibre.GlPointTiles.SetTilesT]): Unit =
+com.histmersion.web.map.maplibre.GlPointTiles.Template | base String | generated | variable
+    private var template: Option[com.histmersion.web.map.maplibre.GlPointTiles.Template] = None
+com.histmersion.web.map.maplibre.GlShapes.Drawn.Alpha | base Double | generated | constructor-parameter
+    var alpha: Drawn.Alpha,
+com.histmersion.web.map.maplibre.GlShapes.Drawn.Colour | base String | generated | constructor-parameter
+    var colour: Drawn.Colour,
+com.histmersion.web.map.maplibre.GlShapes.Drawn.Dashed | base Boolean | generated | constructor-parameter
+    val dashed: Drawn.Dashed
+com.histmersion.web.map.maplibre.GlShapes.Drawn.N | base Int | generated | constructor-parameter
+com.histmersion.web.map.maplibre.GlShapes.Id | base String | generated | constructor-parameter
+    final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look: ShapeStyle) extends ShapeSet:
+com.histmersion.web.map.maplibre.GlShapes.IdsResult | base String | generated | method-result
+    def ids: Seq[com.histmersion.web.map.maplibre.GlShapes.IdsResult] = drawn.keys.toSeq
+com.histmersion.web.map.maplibre.GlShapes.LayerIdsResult | base String | generated | method-result
+    def layerIds: List[com.histmersion.web.map.maplibre.GlShapes.LayerIdsResult] =
+com.histmersion.web.map.maplibre.GlShapes.RestyleAlpha | base Double | generated | method-parameter
+    def restyle(k: com.histmersion.web.map.maplibre.GlShapes.RestyleK, colour: com.histmersion.web.map.maplibre.GlShapes.RestyleColour, alpha: com.histmersion.web.map.maplibr
+com.histmersion.web.map.maplibre.GlShapes.RestyleColour | base String | generated | method-parameter
+    def restyle(k: com.histmersion.web.map.maplibre.GlShapes.RestyleK, colour: com.histmersion.web.map.maplibre.GlShapes.RestyleColour, alpha: com.histmersion.web.map.maplibr
+com.histmersion.web.map.maplibre.GlShapes.RestyleK | base String | generated | method-parameter
+    def restyle(k: com.histmersion.web.map.maplibre.GlShapes.RestyleK, colour: com.histmersion.web.map.maplibre.GlShapes.RestyleColour, alpha: com.histmersion.web.map.maplibr
+com.histmersion.web.map.maplibre.GlShapes.SameGeometryResult | base Boolean | generated | method-result
+    private def sameGeometry(a: js.Any, b: js.Any): com.histmersion.web.map.maplibre.GlShapes.SameGeometryResult =
+com.histmersion.web.map.maplibre.GlShapes.SameGeometrySigResult | base String | generated | method-result
+    def sig(g: js.Any): com.histmersion.web.map.maplibre.GlShapes.SameGeometrySigResult =
+com.histmersion.web.map.maplibre.GlShapes.SameGeometrySigWalkDepth | base Int | generated | method-parameter
+    def walk(c: js.Dynamic, depth: com.histmersion.web.map.maplibre.GlShapes.SameGeometrySigWalkDepth): Unit =
+com.histmersion.web.map.maplibre.GlShapes.TimesK | base Double | generated | method-parameter
+    private def times(k: com.histmersion.web.map.maplibre.GlShapes.TimesK): js.Any = js.Array("*", k, alphaExpr)
+com.histmersion.web.map.maplibre.GlShapes.UnderResult | base String | generated | method-result
+    def under(at: LatLon, p: ScreenPt, s: MapSurface): Seq[com.histmersion.web.map.maplibre.GlShapes.UnderResult] =
+com.histmersion.web.map.maplibre.LngLat.Lat | base Double | generated | value
+    val lat: com.histmersion.web.map.maplibre.LngLat.Lat = js.native
+com.histmersion.web.map.maplibre.LngLat.Lng | base Double | generated | value
+    val lng: com.histmersion.web.map.maplibre.LngLat.Lng = js.native
+com.histmersion.web.map.maplibre.MapLibreEngine.CreateMaxZoom | base Double | generated | method-parameter
+    def create(el: dom.HTMLElement, maxZoom: com.histmersion.web.map.maplibre.MapLibreEngine.CreateMaxZoom, pixelRatio: Option[com.histmersion.web.map.maplibre.MapLibreEngine
+com.histmersion.web.map.maplibre.MapLibreEngine.CreatePixelRatio | base Double | generated | method-parameter
+    def create(el: dom.HTMLElement, maxZoom: com.histmersion.web.map.maplibre.MapLibreEngine.CreateMaxZoom, pixelRatio: Option[com.histmersion.web.map.maplibre.MapLibreEngine
+com.histmersion.web.map.maplibre.MapLibreStyles.BackgroundResult | base String | generated | method-result
+    private def background(): com.histmersion.web.map.maplibre.MapLibreStyles.BackgroundResult = ThemeTokens("--bg")
+com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin | base String | generated | alias,method-parameter
+    val StyleOrigin: _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin.type = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin
+    val ResolveOrigin: _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin.type = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin
+com.histmersion.web.map.maplibre.MapLibreStyles.CreditsResult | base String | generated | method-result
+    def credits(s: js.Dynamic): Seq[com.histmersion.web.map.maplibre.MapLibreStyles.CreditsResult] =
+com.histmersion.web.map.maplibre.MapLibreStyles.DropId | base String | generated | method-parameter
+    def drop(s: js.Dynamic, id: com.histmersion.web.map.maplibre.MapLibreStyles.DropId): Unit =
+com.histmersion.web.map.maplibre.MapLibreStyles.ExpandTemplate | base String | generated | method-parameter
+    def expand(template: com.histmersion.web.map.maplibre.MapLibreStyles.ExpandTemplate): js.Array[String] =
+com.histmersion.web.map.maplibre.MapLibreStyles.InfoLayer | base String | generated | method-parameter
+    private def info(s: Basemap.Status, layer: com.histmersion.web.map.maplibre.MapLibreStyles.InfoLayer): Option[Basemap.LayerInfo] =
+com.histmersion.web.map.maplibre.MapLibreStyles.ReplaceStringFrom | base String | generated | method-parameter
+    private def replaceString(v: js.Dynamic, from: com.histmersion.web.map.maplibre.MapLibreStyles.ReplaceStringFrom, to: com.histmersion.web.map.maplibre.MapLibreStyles.Repl
+com.histmersion.web.map.maplibre.MapLibreStyles.ReplaceStringTo | base String | generated | method-parameter
+    private def replaceString(v: js.Dynamic, from: com.histmersion.web.map.maplibre.MapLibreStyles.ReplaceStringFrom, to: com.histmersion.web.map.maplibre.MapLibreStyles.Repl
+com.histmersion.web.map.maplibre.MapLibreStyles.ResolveLang | base String | generated | method-parameter
+com.histmersion.web.map.maplibre.MapLibreStyles.ResolveNames | base Boolean | generated | method-parameter
+com.histmersion.web.map.maplibre.MapLibreStyles.ResolveReduced | base Boolean | generated | method-parameter
+com.histmersion.web.map.maplibre.MapLibreStyles.ResolveSeaDepth | base Boolean | generated | method-parameter
+com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapAreasAtResult | base String | generated | method-result
+    def baseMapAreasAt(p: ScreenPt): Seq[com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapAreasAtResult] =
+com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapDrawnId | base String | generated | method-parameter
+    def baseMapDrawn(id: com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapDrawnId): com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapDrawnResult =
+com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapDrawnResult | base Int | generated | method-result
+    def baseMapDrawn(id: com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapDrawnId): com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapDrawnResult =
+com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLabelsResultPart1 | base String | generated | method-result
+    def baseMapLabels: Seq[(com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLabelsResultPart1, com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLabelsResultPar
+com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLabelsResultPart2 | base String | generated | method-result
+    def baseMapLabels: Seq[(com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLabelsResultPart1, com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLabelsResultPar
+com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLayerId | base String | generated | method-parameter
+    def baseMapLayer(id: com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLayerId): Option[com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLayerResult] =
+com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLayerResult | base String | generated | method-result
+    def baseMapLayer(id: com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLayerId): Option[com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLayerResult] =
+com.histmersion.web.map.maplibre.MapLibreSurface.CreditsV | base String | generated | variable
+    private var creditsV: Seq[com.histmersion.web.map.maplibre.MapLibreSurface.CreditsV] = Nil
+com.histmersion.web.map.maplibre.MapLibreSurface.DrawnNamesResult | base String | generated | method-result
+    def drawnNames: Seq[com.histmersion.web.map.maplibre.MapLibreSurface.DrawnNamesResult] =
+com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated | base Boolean | generated | alias,method-parameter
+    val MotionAnimated: _root_.com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated.type = _root_.com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated
+    def eases(animated: com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated): com.histmersion.web.map.maplibre.MapLibreSurface.EasesResult = animated && MotionPref
+com.histmersion.web.map.maplibre.MapLibreSurface.EasesResult | base Boolean | generated | method-result
+    def eases(animated: com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated): com.histmersion.web.map.maplibre.MapLibreSurface.EasesResult = animated && MotionPref
+com.histmersion.web.map.maplibre.MapLibreSurface.FitBoundsAnimate | base Boolean | generated | method-parameter
+    def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.maplibre.MapLibreSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.maplibre.MapLibreSurface.FitBound
+com.histmersion.web.map.maplibre.MapLibreSurface.FitBoundsMaxZoom | base Double | generated | method-parameter
+    def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.maplibre.MapLibreSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.maplibre.MapLibreSurface.FitBound
+com.histmersion.web.map.maplibre.MapLibreSurface.FitBoundsPadding | base Int | generated | method-parameter
+    def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.maplibre.MapLibreSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.maplibre.MapLibreSurface.FitBound
+com.histmersion.web.map.maplibre.MapLibreSurface.IsDrawnResult | base Boolean | generated | method-result
+    def isDrawn: com.histmersion.web.map.maplibre.MapLibreSurface.IsDrawnResult = !gl.isMoving() && gl.loaded() && gl.areTilesLoaded()
+com.histmersion.web.map.maplibre.MapLibreSurface.IsMovingResult | base Boolean | generated | method-result
+    def isMoving: com.histmersion.web.map.maplibre.MapLibreSurface.IsMovingResult = gl.isMoving()
+com.histmersion.web.map.maplibre.MapLibreSurface.MaxZoom0 | base Double | generated | constructor-parameter
+    final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZoom0, pixelRatio: Option[MapLibreSurface.PixelRatio], caps: Capabilities)
+com.histmersion.web.map.maplibre.MapLibreSurface.MaxZoomResult | base Double | generated | method-result
+    def maxZoom: com.histmersion.web.map.maplibre.MapLibreSurface.MaxZoomResult = gl.getMaxZoom() + ZoomShift
+com.histmersion.web.map.maplibre.MapLibreSurface.NameResult | base String | generated | method-result
+    private def name(k: MapEventKind): com.histmersion.web.map.maplibre.MapLibreSurface.NameResult = k match
+com.histmersion.web.map.maplibre.MapLibreSurface.PanByAnimate | base Boolean | generated | method-parameter
+    def panBy(dx: com.histmersion.web.map.maplibre.MapLibreSurface.PanByDx, dy: com.histmersion.web.map.maplibre.MapLibreSurface.PanByDy, animate: com.histmersion.web.map.map
+com.histmersion.web.map.maplibre.MapLibreSurface.PanByDx | base Double | generated | method-parameter
+    def panBy(dx: com.histmersion.web.map.maplibre.MapLibreSurface.PanByDx, dy: com.histmersion.web.map.maplibre.MapLibreSurface.PanByDy, animate: com.histmersion.web.map.map
+com.histmersion.web.map.maplibre.MapLibreSurface.PanByDy | base Double | generated | method-parameter
+    def panBy(dx: com.histmersion.web.map.maplibre.MapLibreSurface.PanByDx, dy: com.histmersion.web.map.maplibre.MapLibreSurface.PanByDy, animate: com.histmersion.web.map.map
+com.histmersion.web.map.maplibre.MapLibreSurface.PixelRatio | base Double | generated | constructor-parameter
+    final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZoom0, pixelRatio: Option[MapLibreSurface.PixelRatio], caps: Capabilities)
+com.histmersion.web.map.maplibre.MapLibreSurface.PointTilesId | base String | generated | method-parameter
+    def pointTiles(id: com.histmersion.web.map.maplibre.MapLibreSurface.PointTilesId, layer: com.histmersion.web.map.maplibre.MapLibreSurface.PointTilesLayer, maxZoom: com.hi
+com.histmersion.web.map.maplibre.MapLibreSurface.PointTilesLayer | base String | generated | method-parameter
+    def pointTiles(id: com.histmersion.web.map.maplibre.MapLibreSurface.PointTilesId, layer: com.histmersion.web.map.maplibre.MapLibreSurface.PointTilesLayer, maxZoom: com.hi
+com.histmersion.web.map.maplibre.MapLibreSurface.PointTilesMaxZoom | base Int | generated | method-parameter
+    def pointTiles(id: com.histmersion.web.map.maplibre.MapLibreSurface.PointTilesId, layer: com.histmersion.web.map.maplibre.MapLibreSurface.PointTilesLayer, maxZoom: com.hi
+com.histmersion.web.map.maplibre.MapLibreSurface.PopupCls | base String | generated | method-parameter
+    def popup(at: LatLon, html: com.histmersion.web.map.maplibre.MapLibreSurface.PopupHtml, cls: com.histmersion.web.map.maplibre.MapLibreSurface.PopupCls): Popup =
+com.histmersion.web.map.maplibre.MapLibreSurface.PopupHtml | base String | generated | method-parameter
+    def popup(at: LatLon, html: com.histmersion.web.map.maplibre.MapLibreSurface.PopupHtml, cls: com.histmersion.web.map.maplibre.MapLibreSurface.PopupCls): Popup =
+com.histmersion.web.map.maplibre.MapLibreSurface.PopupIsOpenResult | base Boolean | generated | method-result
+    def isOpen: com.histmersion.web.map.maplibre.MapLibreSurface.PopupIsOpenResult = p.isOpen()
+com.histmersion.web.map.maplibre.MapLibreSurface.SetBaseMapMakeRetry | base Boolean | generated | method-parameter
+    def make(retry: com.histmersion.web.map.maplibre.MapLibreSurface.SetBaseMapMakeRetry): Unit =
+com.histmersion.web.map.maplibre.MapLibreSurface.SetMaxZoomZ | base Double | generated | method-parameter
+    def setMaxZoom(z: com.histmersion.web.map.maplibre.MapLibreSurface.SetMaxZoomZ): Unit = { val _ = gl.setMaxZoom(z - ZoomShift) }
+com.histmersion.web.map.maplibre.MapLibreSurface.SetViewAnimate | base Boolean | generated | method-parameter
+    def setView(at: LatLon, z: com.histmersion.web.map.maplibre.MapLibreSurface.SetViewZ, animate: com.histmersion.web.map.maplibre.MapLibreSurface.SetViewAnimate): Unit =
+com.histmersion.web.map.maplibre.MapLibreSurface.SetViewZ | base Double | generated | method-parameter
+    def setView(at: LatLon, z: com.histmersion.web.map.maplibre.MapLibreSurface.SetViewZ, animate: com.histmersion.web.map.maplibre.MapLibreSurface.SetViewAnimate): Unit =
+com.histmersion.web.map.maplibre.MapLibreSurface.ShapeSetId | base String | generated | method-parameter
+    def shapeSet(id: com.histmersion.web.map.maplibre.MapLibreSurface.ShapeSetId): Option[ShapeSet] = shapeSets.get(id)
+com.histmersion.web.map.maplibre.MapLibreSurface.ShapesId | base String | generated | method-parameter
+    def shapes(id: com.histmersion.web.map.maplibre.MapLibreSurface.ShapesId, style: ShapeStyle): ShapeSet =
+com.histmersion.web.map.maplibre.MapLibreSurface.SizeResultPart1 | base Double | generated | method-result
+    def size: (com.histmersion.web.map.maplibre.MapLibreSurface.SizeResultPart1, com.histmersion.web.map.maplibre.MapLibreSurface.SizeResultPart2) = sizeV
+com.histmersion.web.map.maplibre.MapLibreSurface.SizeResultPart2 | base Double | generated | method-result
+    def size: (com.histmersion.web.map.maplibre.MapLibreSurface.SizeResultPart1, com.histmersion.web.map.maplibre.MapLibreSurface.SizeResultPart2) = sizeV
+com.histmersion.web.map.maplibre.MapLibreSurface.SizeVPart1 | base Double | generated | variable
+    private var sizeV: (com.histmersion.web.map.maplibre.MapLibreSurface.SizeVPart1, com.histmersion.web.map.maplibre.MapLibreSurface.SizeVPart2) = (el.clientWidth.toDouble, 
+com.histmersion.web.map.maplibre.MapLibreSurface.SizeVPart2 | base Double | generated | variable
+    private var sizeV: (com.histmersion.web.map.maplibre.MapLibreSurface.SizeVPart1, com.histmersion.web.map.maplibre.MapLibreSurface.SizeVPart2) = (el.clientWidth.toDouble, 
+com.histmersion.web.map.maplibre.MapLibreSurface.ZoomResult | base Double | generated | method-result
+    def zoom: com.histmersion.web.map.maplibre.MapLibreSurface.ZoomResult = gl.getZoom() + ZoomShift
+com.histmersion.web.map.maplibre.RenderedFeature.Source | base String | generated | value
+    val source: com.histmersion.web.map.maplibre.RenderedFeature.Source = js.native
+com.histmersion.web.map.maplibre.ScreenPoint.X | base Double | generated | value
+com.histmersion.web.map.maplibre.ScreenPoint.Y | base Double | generated | value
+com.histmersion.web.marks.Ago.ApplyIsoDate | base String | generated | method-parameter
+    def apply(thenMs: com.histmersion.web.marks.Ago.ApplyThenMs, nowMs: com.histmersion.web.marks.Ago.ApplyNowMs, isoDate: com.histmersion.web.marks.Ago.ApplyIsoDate): com.hi
+com.histmersion.web.marks.Ago.ApplyNOne | base String | generated | method-parameter
+    def n(v: com.histmersion.web.marks.Ago.ApplyNV, one: com.histmersion.web.marks.Ago.ApplyNOne) =
+com.histmersion.web.marks.Ago.ApplyNV | base Double | generated | method-parameter
+    def n(v: com.histmersion.web.marks.Ago.ApplyNV, one: com.histmersion.web.marks.Ago.ApplyNOne) =
+com.histmersion.web.marks.Ago.ApplyNowMs | base Double | generated | method-parameter
+    def apply(thenMs: com.histmersion.web.marks.Ago.ApplyThenMs, nowMs: com.histmersion.web.marks.Ago.ApplyNowMs, isoDate: com.histmersion.web.marks.Ago.ApplyIsoDate): com.hi
+com.histmersion.web.marks.Ago.ApplyResult | base String | generated | method-result
+    def apply(thenMs: com.histmersion.web.marks.Ago.ApplyThenMs, nowMs: com.histmersion.web.marks.Ago.ApplyNowMs, isoDate: com.histmersion.web.marks.Ago.ApplyIsoDate): com.hi
+com.histmersion.web.marks.Ago.ApplyThenMs | base Double | generated | method-parameter
+    def apply(thenMs: com.histmersion.web.marks.Ago.ApplyThenMs, nowMs: com.histmersion.web.marks.Ago.ApplyNowMs, isoDate: com.histmersion.web.marks.Ago.ApplyIsoDate): com.hi
+com.histmersion.web.marks.Ago.MsIso | base String | generated | alias,method-parameter
+    val OfIso: _root_.com.histmersion.web.marks.Ago.MsIso.type = _root_.com.histmersion.web.marks.Ago.MsIso
+    def ms(iso: com.histmersion.web.marks.Ago.MsIso): com.histmersion.web.marks.Ago.MsResult = scala.scalajs.js.Date.parse(iso)
+com.histmersion.web.marks.Ago.MsResult | base Double | generated | method-result
+    def ms(iso: com.histmersion.web.marks.Ago.MsIso): com.histmersion.web.marks.Ago.MsResult = scala.scalajs.js.Date.parse(iso)
+com.histmersion.web.marks.Ago.OfResult | base String | generated | method-result
+    def of(iso: com.histmersion.web.marks.Ago.OfIso): com.histmersion.web.marks.Ago.OfResult = apply(ms(iso), scala.scalajs.js.Date.now(), iso)
+com.histmersion.web.marks.ItemActions.ApplyByline | base String | generated | method-parameter
+    def apply(ref: ItemRef, byline: com.histmersion.web.marks.ItemActions.ApplyByline = ""): HtmlElement =
+com.histmersion.web.marks.ItemActions.BookmarkButtonCompact | base Boolean | generated | method-parameter
+    def bookmarkButton(ref: ItemRef, compact: com.histmersion.web.marks.ItemActions.BookmarkButtonCompact = false): HtmlElement =
+com.histmersion.web.marks.ItemMenu.LinkOrigin | base String | generated | alias,method-parameter
+    val MarkdownOrigin: _root_.com.histmersion.web.marks.ItemMenu.LinkOrigin.type = _root_.com.histmersion.web.marks.ItemMenu.LinkOrigin
+    def link(origin: com.histmersion.web.marks.ItemMenu.LinkOrigin, ref: ItemRef): com.histmersion.web.marks.ItemMenu.LinkResult = origin.stripSuffix("/") + ItemRef.page(ref.
+com.histmersion.web.marks.ItemMenu.LinkResult | base String | generated | method-result
+    def link(origin: com.histmersion.web.marks.ItemMenu.LinkOrigin, ref: ItemRef): com.histmersion.web.marks.ItemMenu.LinkResult = origin.stripSuffix("/") + ItemRef.page(ref.
+com.histmersion.web.marks.ItemMenu.MarkdownByline | base String | generated | alias,method-parameter
+    val TextByline: _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline.type = _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline
+    val EntriesByline: _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline.type = _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline
+com.histmersion.web.marks.ItemMenu.MarkdownResult | base String | generated | method-result
+    def markdown(origin: com.histmersion.web.marks.ItemMenu.MarkdownOrigin, ref: ItemRef, byline: com.histmersion.web.marks.ItemMenu.MarkdownByline): com.histmersion.web.mark
+com.histmersion.web.marks.ItemMenu.TextResult | base String | generated | method-result
+    def text(ref: ItemRef, byline: com.histmersion.web.marks.ItemMenu.TextByline): com.histmersion.web.marks.ItemMenu.TextResult =
+com.histmersion.web.marks.ItemRef.ArticleSlug | base String | generated | method-parameter
+    def article(slug: com.histmersion.web.marks.ItemRef.ArticleSlug, title: com.histmersion.web.marks.ItemRef.ArticleTitle): ItemRef = ItemRef(Target.item(ItemKind.Article, s
+com.histmersion.web.marks.ItemRef.BackResult | base String | generated | method-result
+    def back(t: Target): com.histmersion.web.marks.ItemRef.BackResult =
+com.histmersion.web.marks.ItemRef.IdentityResult | base String | generated | method-result
+    def identity: Option[com.histmersion.web.marks.ItemRef.IdentityResult] = target.identity
+com.histmersion.web.marks.ItemRef.PageResult | base String | generated | method-result
+    def page(t: Target): com.histmersion.web.marks.ItemRef.PageResult =
+com.histmersion.web.marks.ItemRef.ReadableResult | base Boolean | generated | method-result
+    def readable: com.histmersion.web.marks.ItemRef.ReadableResult = ItemKind.Readable.contains(kind)
+com.histmersion.web.marks.ItemRef.SourceCk | base String | generated | method-parameter
+    def source(ck: com.histmersion.web.marks.ItemRef.SourceCk, title: com.histmersion.web.marks.ItemRef.SourceTitle): ItemRef = ItemRef(Target.item(ItemKind.Source, ck), titl
+com.histmersion.web.marks.ItemRef.Title | base String | original | alias,constructor-parameter
+    final case class ItemRef(target: Target, title: ItemRef.Title):
+    val SourceTitle: _root_.com.histmersion.web.marks.ItemRef.Title.type = _root_.com.histmersion.web.marks.ItemRef.Title

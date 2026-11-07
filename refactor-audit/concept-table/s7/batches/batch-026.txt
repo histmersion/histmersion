@@ -1,0 +1,718 @@
+## CONCEPTS NEARBY
+com.histmersion.api.automation.Activity.Actor (String)
+com.histmersion.api.automation.Activity.Counts.ProblemsWeek (Int)
+com.histmersion.api.automation.Activity.Counts.Running (Int)
+com.histmersion.api.automation.Activity.Counts.Wire (String)
+com.histmersion.api.automation.Activity.Cursor (String)
+com.histmersion.api.automation.Activity.Entry.Approval (Long)
+com.histmersion.api.automation.Activity.Entry.At (String)
+com.histmersion.api.automation.Activity.Entry.By (String)
+com.histmersion.api.automation.Activity.Entry.EndedAt (String)
+com.histmersion.api.automation.Activity.Entry.Error (String)
+com.histmersion.api.automation.Activity.Entry.Id (String)
+com.histmersion.api.automation.Activity.Entry.Key (String)
+com.histmersion.api.automation.Activity.Entry.QueueList (String)
+com.histmersion.api.automation.Activity.Entry.State (String)
+com.histmersion.api.automation.Activity.Entry.Target (String)
+com.histmersion.api.automation.Activity.Entry.TargetKind (String)
+com.histmersion.api.automation.Activity.Entry.Text (String)
+com.histmersion.api.automation.Activity.Entry.What (String)
+com.histmersion.api.automation.Activity.EntryKind.Wire (String)
+com.histmersion.api.automation.Activity.Kind (String)
+com.histmersion.api.automation.Activity.Limit (Int)
+com.histmersion.api.automation.Activity.Show.Label (String)
+com.histmersion.api.automation.Activity.Show.Wire (String)
+com.histmersion.api.automation.Activity.Subject (String)
+com.histmersion.api.automation.Activity.Writer.Wire (String)
+com.histmersion.api.automation.AgentLeaseInfo.Expired (Boolean)
+com.histmersion.api.automation.AgentLeaseInfo.Owner (String)
+com.histmersion.api.automation.AgentLeaseInfo.ThisServer (Boolean)
+com.histmersion.api.automation.AgentLeaseInfo.Until (String)
+com.histmersion.api.automation.AgentMode.ModeSet.By (String)
+com.histmersion.api.automation.AgentMode.Step.Autopilot.On (Boolean)
+com.histmersion.api.automation.AgentMode.Step.Drain.On (Boolean)
+com.histmersion.api.automation.AgentMode.Wire (String)
+com.histmersion.api.automation.AgentRole.Wire (String)
+com.histmersion.api.automation.AgentScheduler.PoolUse.Cap (Int)
+com.histmersion.api.automation.AgentScheduler.PoolUse.Pool (String)
+com.histmersion.api.automation.AgentScheduler.PoolUse.Used (Int)
+com.histmersion.api.automation.AgentScheduler.SchedulerSet.By (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerSet.Strategy (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.At (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Changes (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Dry (Boolean)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.ForPerson (Int)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.MaxRuns (Int)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Occupied (Int)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Settings (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Stop (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Strategy (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.StrategyFrom (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.WaitingTotal (Int)
+com.histmersion.api.automation.AgentScheduler.Started.Item (Long)
+com.histmersion.api.automation.AgentScheduler.Started.Kind (String)
+com.histmersion.api.automation.AgentScheduler.Started.Manager (String)
+com.histmersion.api.automation.AgentScheduler.Started.Target (String)
+com.histmersion.api.automation.AgentScheduler.Started.Why (String)
+com.histmersion.api.automation.AgentScheduler.StrategyLine.Describe (String)
+com.histmersion.api.automation.AgentScheduler.StrategyLine.Name (String)
+com.histmersion.api.automation.AgentScheduler.TypeLine.Label (String)
+com.histmersion.api.automation.AgentScheduler.TypeLine.Priority (Int)
+com.histmersion.api.automation.AgentScheduler.TypeLine.Recent (Int)
+com.histmersion.api.automation.AgentScheduler.TypeLine.Waiting (Int)
+com.histmersion.api.automation.AgentScheduler.TypeLine.Weight (Int)
+com.histmersion.api.automation.AgentScheduler.Waiting.Behind (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.Code (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.Item (Long)
+com.histmersion.api.automation.AgentScheduler.Waiting.Kind (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.Manager (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.Position (Int)
+com.histmersion.api.automation.AgentScheduler.Waiting.Priority (Int)
+com.histmersion.api.automation.AgentScheduler.Waiting.Target (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.WaitedMinutes (Long)
+com.histmersion.api.automation.AgentScheduler.Waiting.Why (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Approval (Long)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Behind (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Code (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Item (Long)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Kind (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Manager (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Position (Int)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Run (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Status (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Target (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Why (String)
+com.histmersion.api.automation.AgentStateDeleted.Deleted (Boolean)
+com.histmersion.api.automation.AgentStateDeleted.Key.Wire (String)
+com.histmersion.api.automation.AgentStateEntry.UpdatedAt (String)
+com.histmersion.api.automation.AgentStateEntry.Value (String)
+com.histmersion.api.automation.AgentStatePut.Value (String)
+com.histmersion.api.automation.Agents.Action (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.CreatedAt (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Current (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.DecidedAt (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Evidence (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Id (Long)
+com.histmersion.api.automation.Agents.ApprovalInfo.Quote (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Result (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Status (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Subject (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Target (String)
+com.histmersion.api.automation.Agents.CheckLevel.Wire (String)
+com.histmersion.api.automation.Agents.Decision.Wire (String)
+com.histmersion.api.automation.Agents.DoctorCheck.Detail (String)
+com.histmersion.api.automation.Agents.DoctorCheck.Name (String)
+com.histmersion.api.automation.Agents.DoctorReport.Enabled (Boolean)
+com.histmersion.api.automation.Agents.DoctorReport.Online (Boolean)
+com.histmersion.api.automation.Agents.GenerateRequest.Out (String)
+com.histmersion.api.automation.Agents.GenerateRequest.Runtimes (String)
+com.histmersion.api.automation.Agents.GenerateResult.Definitions (String)
+com.histmersion.api.automation.Agents.GenerateResult.Dir (String)
+com.histmersion.api.automation.Agents.GenerateResult.Files (Int)
+com.histmersion.api.automation.Agents.GenerateResult.Removed (Int)
+com.histmersion.api.automation.Agents.GenerateResult.Runtimes (String)
+com.histmersion.api.automation.Agents.GenerateResult.Written (Int)
+com.histmersion.api.automation.Agents.MessageInfo.Content (String)
+com.histmersion.api.automation.Agents.MessageInfo.LatencyMs (Int)
+com.histmersion.api.automation.Agents.MessageInfo.N (Int)
+com.histmersion.api.automation.Agents.MessageInfo.Role (String)
+com.histmersion.api.automation.Agents.MessageInfo.Seq (Int)
+com.histmersion.api.automation.Agents.MessageInfo.ToolInput (String)
+com.histmersion.api.automation.Agents.MessageInfo.ToolName (String)
+com.histmersion.api.automation.Agents.MessageInfo.ToolResult (String)
+com.histmersion.api.automation.Agents.ModelOverride.Model (String)
+com.histmersion.api.automation.Agents.ModelOverride.Problem (String)
+com.histmersion.api.automation.Agents.ModelOverride.Wire (String)
+com.histmersion.api.automation.Agents.ModelRef.Model (String)
+com.histmersion.api.automation.Agents.ModelRef.Model.Problem (String)
+com.histmersion.api.automation.Agents.ModelRef.Model.Spec (String)
+com.histmersion.api.automation.Agents.ModelRef.Problem (String)
+com.histmersion.api.automation.Agents.ModelRef.Wire (String)
+com.histmersion.api.automation.Agents.ModelsInfo.Enabled (Boolean)
+com.histmersion.api.automation.Agents.ModelsInfo.MaxConcurrentRuns (Int)
+com.histmersion.api.automation.Agents.ModelsInfo.Now (String)
+com.histmersion.api.automation.Agents.ModelsInfo.Pipelines (String)
+com.histmersion.api.automation.Agents.ModelsInfo.Problems (String)
+com.histmersion.api.automation.Agents.Origin.Wire (String)
+com.histmersion.api.automation.Agents.PauseReason.Wire (String)
+com.histmersion.api.automation.Agents.Prices.Problem (String)
+com.histmersion.api.automation.Agents.Prices.Wire (String)
+com.histmersion.api.automation.Agents.ProbeAnswer.Problem (String)
+com.histmersion.api.automation.Agents.ProbeAnswer.RecordYear (Int)
+com.histmersion.api.automation.Agents.ProbeRequest.Model (String)
+com.histmersion.api.automation.Agents.ProbeResult.Attempts (Int)
+com.histmersion.api.automation.Agents.ProbeResult.CostUsd (Double)
+com.histmersion.api.automation.Agents.ProbeResult.Finish (String)
+com.histmersion.api.automation.Agents.ProbeResult.Iterations (Int)
+com.histmersion.api.automation.Agents.ProbeResult.MatchesRecord (Boolean)
+com.histmersion.api.automation.Agents.ProbeResult.Millis (Long)
+com.histmersion.api.automation.Agents.ProbeResult.Model (String)
+com.histmersion.api.automation.Agents.ProbeResult.Problems (String)
+com.histmersion.api.automation.Agents.ProbeResult.RawAnswer (String)
+com.histmersion.api.automation.Agents.ProbeResult.ToolCalls (String)
+com.histmersion.api.automation.Agents.ProviderDoctor.Models (String)
+com.histmersion.api.automation.Agents.ProviderDoctor.Provider (String)
+com.histmersion.api.automation.Agents.ProviderDoctor.UpstreamModels (String)
+com.histmersion.api.automation.Agents.ProviderDoctor.Used (Boolean)
+com.histmersion.api.automation.Agents.RoleModel.Model (String)
+com.histmersion.api.automation.Agents.RoleModel.Problem (String)
+com.histmersion.api.automation.Agents.RoleModel.Ready (Boolean)
+com.histmersion.api.automation.Agents.RunInfo.BudgetTokens (Long)
+com.histmersion.api.automation.Agents.RunInfo.BudgetUsd (Double)
+com.histmersion.api.automation.Agents.RunInfo.CostUsd (Double)
+com.histmersion.api.automation.Agents.RunInfo.CreatedAt (String)
+com.histmersion.api.automation.Agents.RunInfo.DryRun (Boolean)
+com.histmersion.api.automation.Agents.RunInfo.Error (String)
+com.histmersion.api.automation.Agents.RunInfo.HeartbeatAt (String)
+com.histmersion.api.automation.Agents.RunInfo.Id (String)
+com.histmersion.api.automation.Agents.RunInfo.Model (String)
+com.histmersion.api.automation.Agents.RunInfo.Pipeline (String)
+com.histmersion.api.automation.Agents.RunInfo.Progress (String)
+com.histmersion.api.automation.Agents.RunInfo.ResumeAt (String)
+com.histmersion.api.automation.Agents.RunInfo.Status (String)
+com.histmersion.api.automation.Agents.RunInfo.Target (String)
+com.histmersion.api.automation.Agents.RunInfo.TargetKind (String)
+com.histmersion.api.automation.Agents.RunInfo.UpdatedAt (String)
+com.histmersion.api.automation.Agents.RunInfo.Warnings (String)
+com.histmersion.api.automation.Agents.RunParams.AutoIngest (Int)
+com.histmersion.api.automation.Agents.RunParams.ChainReview (Boolean)
+com.histmersion.api.automation.Agents.RunParams.Hint (Long)
+com.histmersion.api.automation.Agents.RunParams.MaxArticles (Int)
+com.histmersion.api.automation.Agents.RunParams.MinSources (Int)
+com.histmersion.api.automation.Agents.RunParams.Notes (String)
+com.histmersion.api.automation.Agents.RunParams.OaBacklog (Boolean)
+com.histmersion.api.automation.Agents.RunParams.SubGoals (Int)
+com.histmersion.api.automation.Agents.RunRequest.BudgetTokens (Long)
+com.histmersion.api.automation.Agents.RunRequest.BudgetUsd (Double)
+com.histmersion.api.automation.Agents.RunRequest.DryRun (Boolean)
+com.histmersion.api.automation.Agents.RunRequest.Fix (Boolean)
+com.histmersion.api.automation.Agents.RunRequest.Kind (String)
+com.histmersion.api.automation.Agents.RunRequest.Model (String)
+com.histmersion.api.automation.Agents.RunRequest.Pipeline (String)
+com.histmersion.api.automation.Agents.RunRequest.Query (String)
+com.histmersion.api.automation.Agents.RunRequest.Rounds (Int)
+com.histmersion.api.automation.Agents.RunRequest.Tags (String)
+com.histmersion.api.automation.Agents.RunRequest.Target (String)
+com.histmersion.api.automation.Agents.RunRequest.Title (String)
+com.histmersion.api.automation.Agents.RunRequest.Topics (String)
+com.histmersion.api.automation.Agents.StepInfo.ActualModel (String)
+com.histmersion.api.automation.Agents.StepInfo.Attempt (Int)
+com.histmersion.api.automation.Agents.StepInfo.CostUsd (Double)
+com.histmersion.api.automation.Agents.StepInfo.Error (String)
+com.histmersion.api.automation.Agents.StepInfo.FinishedAt (String)
+com.histmersion.api.automation.Agents.StepInfo.FirstCallTokens (Long)
+com.histmersion.api.automation.Agents.StepInfo.Kind (String)
+com.histmersion.api.automation.Agents.StepInfo.Model (String)
+com.histmersion.api.automation.Agents.StepInfo.Name (String)
+com.histmersion.api.automation.Agents.StepInfo.Output (String)
+com.histmersion.api.automation.Agents.StepInfo.PromptHash (String)
+com.histmersion.api.automation.Agents.StepInfo.Seq (Int)
+com.histmersion.api.automation.Agents.StepInfo.StartedAt (String)
+com.histmersion.api.automation.Agents.StepInfo.Status (String)
+com.histmersion.api.automation.Agents.StepInfo.Turns (Int)
+com.histmersion.api.automation.Agents.StepKind.Wire (String)
+com.histmersion.api.automation.Agents.Usage.BudgetedTokens (Long)
+com.histmersion.api.automation.Agents.Usage.CacheRead (Long)
+com.histmersion.api.automation.Agents.Usage.CacheReadWeight (Double)
+com.histmersion.api.automation.Agents.Usage.CacheWrite (Long)
+com.histmersion.api.automation.Agents.Usage.Input (Long)
+com.histmersion.api.automation.Agents.Usage.Output (Long)
+com.histmersion.api.automation.Agents.Usage.TotalTokens (Long)
+com.histmersion.api.automation.Agents.WouldWrite.Payload (String)
+com.histmersion.api.automation.Agents.WouldWrite.What (String)
+com.histmersion.api.automation.Approval.DecidedBy.Describe (String)
+com.histmersion.api.automation.Approval.DecidedBy.Wire (String)
+com.histmersion.api.automation.Approval.Kind.Blocking (Boolean)
+com.histmersion.api.automation.Approval.Kind.Wire (String)
+com.histmersion.api.automation.Approval.Mode.Wire (String)
+com.histmersion.api.automation.Approval.Note (String)
+com.histmersion.api.automation.Approval.Outcome (String)
+com.histmersion.api.automation.Approval.State.Wire (String)
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.By (String)
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Decision (String)
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.DryRun (Boolean)
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Ids (Long)
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Limit (Int)
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Subject (String)
+com.histmersion.api.automation.ApprovalDigest.BulkFailed.Error (String)
+com.histmersion.api.automation.ApprovalDigest.BulkFailed.Id (Long)
+com.histmersion.api.automation.ApprovalDigest.BulkResult.Decided (Long)
+com.histmersion.api.automation.ApprovalDigest.BulkResult.Decision (String)
+com.histmersion.api.automation.ApprovalDigest.BulkResult.DryRun (Boolean)
+com.histmersion.api.automation.ApprovalDigest.BulkResult.Left (Int)
+com.histmersion.api.automation.ApprovalDigest.BulkResult.Matched (Int)
+com.histmersion.api.automation.ApprovalDigest.Digest.At (String)
+com.histmersion.api.automation.ApprovalDigest.Digest.GoalPlansWait (String)
+com.histmersion.api.automation.ApprovalDigest.Digest.HeldForPerson (Int)
+com.histmersion.api.automation.ApprovalDigest.Digest.LastWritten (String)
+com.histmersion.api.automation.ApprovalDigest.Digest.Total (Int)
+com.histmersion.api.automation.ApprovalDigest.KindGroup.Count (Int)
+com.histmersion.api.automation.ApprovalDigest.KindGroup.Ids (Long)
+com.histmersion.api.automation.ApprovalDigest.KindGroup.Oldest (String)
+com.histmersion.api.automation.ApprovalDigest.Line (String)
+com.histmersion.api.automation.ApprovalDigest.Open.CreatedAt (String)
+com.histmersion.api.automation.ApprovalDigest.Open.Id (Long)
+com.histmersion.api.automation.ApprovalDigest.Open.Subject (String)
+com.histmersion.api.automation.ApprovalDigest.SubjectCount.Count (Int)
+com.histmersion.api.automation.ApprovalDigest.SubjectCount.Subject (String)
+com.histmersion.api.automation.Autopilot.ApprovalRule.Cap (String)
+com.histmersion.api.automation.Autopilot.AutopilotSet.By (String)
+com.histmersion.api.automation.Autopilot.AutopilotSet.On (Boolean)
+com.histmersion.api.automation.Autopilot.DrainInfo.By (String)
+com.histmersion.api.automation.Autopilot.DrainInfo.Drained (Boolean)
+com.histmersion.api.automation.Autopilot.DrainInfo.DrainedAt (String)
+com.histmersion.api.automation.Autopilot.DrainInfo.InFlight (Int)
+com.histmersion.api.automation.Autopilot.DrainInfo.Since (String)
+com.histmersion.api.automation.Autopilot.DrainSet.By (String)
+com.histmersion.api.automation.Autopilot.DrainSet.On (Boolean)
+com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled (Boolean)
+com.histmersion.api.automation.Autopilot.EngineStatus.Backlog (Int)
+com.histmersion.api.automation.Autopilot.EngineStatus.BacklogDays (Int)
+com.histmersion.api.automation.Autopilot.EngineStatus.By (String)
+com.histmersion.api.automation.Autopilot.EngineStatus.Changes (String)
+com.histmersion.api.automation.Autopilot.EngineStatus.CronsEnabled (Boolean)
+com.histmersion.api.automation.Autopilot.EngineStatus.GoalPlansWait (String)
+com.histmersion.api.automation.Autopilot.EngineStatus.IngestCap (Int)
+com.histmersion.api.automation.Autopilot.EngineStatus.IngestedToday (Int)
+com.histmersion.api.automation.Autopilot.EngineStatus.LastBackup (String)
+com.histmersion.api.automation.Autopilot.EngineStatus.LastLint (String)
+com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled (Boolean)
+com.histmersion.api.automation.Autopilot.EngineStatus.MaxConcurrentRuns (Int)
+com.histmersion.api.automation.Autopilot.EngineStatus.On (Boolean)
+com.histmersion.api.automation.Autopilot.EngineStatus.Since (String)
+com.histmersion.api.automation.Autopilot.FocusGoal.Doing (String)
+com.histmersion.api.automation.Autopilot.FocusGoal.DoneLast7 (Int)
+com.histmersion.api.automation.Autopilot.FocusGoal.EtaDays (Int)
+com.histmersion.api.automation.Autopilot.FocusGoal.Open (Int)
+com.histmersion.api.automation.Autopilot.FocusGoal.Pinned (Boolean)
+com.histmersion.api.automation.Autopilot.FocusGoal.Priority (Int)
+com.histmersion.api.automation.Autopilot.FocusGoal.Since (String)
+com.histmersion.api.automation.Autopilot.FocusGoal.Stage (String)
+com.histmersion.api.automation.Autopilot.FocusGoal.Status (String)
+com.histmersion.api.automation.Autopilot.FocusGoal.Why (String)
+com.histmersion.api.automation.Autopilot.FocusInfo.Changes (String)
+com.histmersion.api.automation.Autopilot.FocusInfo.Held (Int)
+com.histmersion.api.automation.Autopilot.FocusInfo.Max (Int)
+com.histmersion.api.automation.Autopilot.FocusInfo.MaxFrom (String)
+com.histmersion.api.automation.Autopilot.FocusInfo.Note (String)
+com.histmersion.api.automation.Autopilot.FocusInfo.On (Boolean)
+com.histmersion.api.automation.Autopilot.FocusInfo.Queued (Int)
+com.histmersion.api.automation.Autopilot.FocusSet.Action (String)
+com.histmersion.api.automation.Autopilot.FocusSet.By (String)
+com.histmersion.api.automation.Autopilot.FocusSet.Value (Int)
+com.histmersion.api.automation.Autopilot.FocusWaiting.Code (String)
+com.histmersion.api.automation.Autopilot.FocusWaiting.Pinned (Boolean)
+com.histmersion.api.automation.Autopilot.FocusWaiting.Why (String)
+com.histmersion.api.automation.Autopilot.GoalProgress.Articles (Int)
+com.histmersion.api.automation.Autopilot.GoalProgress.DoneLast7 (Int)
+com.histmersion.api.automation.Autopilot.GoalProgress.EtaDays (Int)
+com.histmersion.api.automation.Autopilot.GoalProgress.LastActivity (String)
+com.histmersion.api.automation.Autopilot.GoalProgress.Open (Int)
+com.histmersion.api.automation.Autopilot.GoalProgress.OpenApprovals (Int)
+com.histmersion.api.automation.Autopilot.GoalProgress.Sources (Int)
+com.histmersion.api.automation.Autopilot.GoalProgress.Status (String)
+com.histmersion.api.automation.Autopilot.ManagerBrief.Id (String)
+com.histmersion.api.automation.Autopilot.ManagerBrief.Kind (String)
+com.histmersion.api.automation.Autopilot.ManagerBrief.Note (String)
+com.histmersion.api.automation.Goal.Deleted.Value (Boolean)
+com.histmersion.api.automation.Goal.Export (String)
+com.histmersion.api.automation.Goal.LinkKind.Wire (String)
+com.histmersion.api.automation.Goal.LinkSectionKey (String)
+com.histmersion.api.automation.Goal.Notes (String)
+com.histmersion.api.automation.Goal.Patch.BudgetUsd (Double)
+com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter (String)
+com.histmersion.api.automation.Goal.Plans.ArticleDraft.Problems (String)
+com.histmersion.api.automation.Goal.Plans.ArticleDraft.Section (String)
+com.histmersion.api.automation.Goal.Plans.ArticleDraft.Text (String)
+com.histmersion.api.automation.Goal.Plans.GoalLink.CreatedAt (String)
+com.histmersion.api.automation.Goal.Plans.GoalLink.Note (String)
+com.histmersion.api.automation.Goal.Plans.GoalLink.Queue (String)
+com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber (Int)
+com.histmersion.api.automation.Goal.Plans.GoalLink.Ref (String)
+com.histmersion.api.automation.Goal.Plans.GoalLink.Title (String)
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.BudgetUsd (Double)
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron (String)
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled (Boolean)
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.LastNote (String)
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.LastRun (String)
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.LastRunAt (String)
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.NextRunAt (String)
+com.histmersion.api.automation.Goal.Plans.GoalView.BudgetUsd (Double)
+com.histmersion.api.automation.Goal.Plans.LinkAdd.Note (String)
+com.histmersion.api.automation.Goal.Plans.LinkAdd.Ref (String)
+com.histmersion.api.automation.Goal.Plans.Plan.Dropped (String)
+com.histmersion.api.automation.Goal.Plans.Plan.Queries (String)
+com.histmersion.api.automation.Goal.Plans.Plan.Rationale (String)
+com.histmersion.api.automation.Goal.Plans.PlannedWork.InCorpus (Boolean)
+com.histmersion.api.automation.Goal.Plans.PlannedWork.IsOa (Boolean)
+com.histmersion.api.automation.Goal.Plans.PlannedWork.Why (String)
+com.histmersion.api.automation.Goal.Plans.Removed.Value (Boolean)
+com.histmersion.api.automation.Goal.Plans.ScheduleSet.BudgetUsd (Double)
+com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron (String)
+com.histmersion.api.automation.Goal.Plans.ScheduleSet.Enabled (Boolean)
+com.histmersion.api.automation.Goal.Ref (String)
+com.histmersion.api.automation.Goal.Regions (String)
+com.histmersion.api.automation.Goal.Slug (String)
+com.histmersion.api.automation.Goal.Stage (String)
+com.histmersion.api.automation.Goal.StageMeaning (String)
+com.histmersion.api.automation.Goal.Status.All (String)
+com.histmersion.api.automation.Goal.StatusValue (String)
+com.histmersion.api.automation.Goal.Tags (String)
+com.histmersion.api.automation.Goal.Title (String)
+com.histmersion.api.automation.Goal.Uid (String)
+com.histmersion.api.automation.Goal.UpdatedAt (String)
+com.histmersion.api.automation.ItemStatus.Wire (String)
+com.histmersion.api.automation.ListFilters.ApprovalFilter.Subject (String)
+com.histmersion.api.automation.ListFilters.EncodedFacets (String)
+com.histmersion.api.automation.ListFilters.FacetLine (String)
+com.histmersion.api.automation.ListFilters.FacetName (String)
+com.histmersion.api.automation.ListFilters.JobFilter.Since (String)
+com.histmersion.api.automation.ListFilters.JobFilter.Subject (String)
+com.histmersion.api.automation.ListFilters.JobFilter.Until (String)
+com.histmersion.api.automation.ListFilters.OptionLabel (String)
+com.histmersion.api.automation.ListFilters.Problem (String)
+com.histmersion.api.automation.ListFilters.Qualifier (String)
+com.histmersion.api.automation.ListFilters.RunFilter.Manager (String)
+com.histmersion.api.automation.ListFilters.RunFilter.Model (String)
+com.histmersion.api.automation.ListFilters.RunFilter.Pipeline (String)
+com.histmersion.api.automation.ListFilters.RunFilter.Provider (String)
+com.histmersion.api.automation.ListFilters.RunFilter.Since (String)
+com.histmersion.api.automation.ListFilters.RunFilter.Status (String)
+com.histmersion.api.automation.ListFilters.RunFilter.Subject (String)
+com.histmersion.api.automation.ListFilters.RunFilter.Until (String)
+com.histmersion.api.automation.ListFilters.Term (String)
+com.histmersion.api.automation.ListFilters.TimeBound (String)
+com.histmersion.api.automation.Manager.Kind.Wire (String)
+com.histmersion.api.automation.Manager.State.Wire (String)
+com.histmersion.api.automation.Managers.ActionsValue (String)
+com.histmersion.api.automation.Managers.ArticleSpec.Why (String)
+com.histmersion.api.automation.Managers.EnqueueKind.Wire (String)
+com.histmersion.api.automation.Managers.EnqueueRequest.Priority (Int)
+com.histmersion.api.automation.Managers.EnqueueRequest.Target (String)
+com.histmersion.api.automation.Managers.EnqueueResult.Skipped (String)
+com.histmersion.api.automation.Managers.EventPage.Before (Long)
+com.histmersion.api.automation.Managers.EventPage.Limit (Int)
+com.histmersion.api.automation.Managers.HintAdd.Author (String)
+com.histmersion.api.automation.Managers.HintAdd.Item (String)
+com.histmersion.api.automation.Managers.HintAdd.Once (Boolean)
+com.histmersion.api.automation.Managers.HintAdd.Propose (Boolean)
+com.histmersion.api.automation.Managers.HintAdd.Suggest (Boolean)
+com.histmersion.api.automation.Managers.HintAdd.Text (String)
+com.histmersion.api.automation.Managers.HintEffect.Action (String)
+com.histmersion.api.automation.Managers.HintEffect.Priority (Int)
+com.histmersion.api.automation.Managers.HintEffect.Tag (String)
+com.histmersion.api.automation.Managers.HintEffect.Targets (String)
+com.histmersion.api.automation.Managers.HintEffect.Topic (String)
+com.histmersion.api.automation.Managers.HintEffect.Until (String)
+com.histmersion.api.automation.Managers.HintEffect.UntilSource (String)
+com.histmersion.api.automation.Managers.HintProposal.By (String)
+com.histmersion.api.automation.Managers.HintProposal.Hint (Long)
+com.histmersion.api.automation.Managers.HintProposal.Text (String)
+com.histmersion.api.automation.Managers.HintProposal.Why (String)
+com.histmersion.api.automation.Managers.Hold.Focus (String)
+com.histmersion.api.automation.Managers.Hold.Hint (Long)
+com.histmersion.api.automation.Managers.Hold.Reason (String)
+com.histmersion.api.automation.Managers.Hold.Until (String)
+com.histmersion.api.automation.Managers.Hold.UntilApproval (Long)
+com.histmersion.api.automation.Managers.Hold.UntilSource (String)
+com.histmersion.api.automation.Managers.ItemCounts.Active (Int)
+com.histmersion.api.automation.Managers.ItemCounts.Cancelled (Int)
+com.histmersion.api.automation.Managers.ItemCounts.Count (Int)
+com.histmersion.api.automation.Managers.ItemCounts.Done (Int)
+com.histmersion.api.automation.Managers.ItemCounts.Failed (Int)
+com.histmersion.api.automation.Managers.ItemCounts.Held (Int)
+com.histmersion.api.automation.Managers.ItemCounts.Open (Int)
+com.histmersion.api.automation.Managers.ItemCounts.Pending (Int)
+com.histmersion.api.automation.Managers.ItemCounts.Stopped (Int)
+com.histmersion.api.automation.Managers.ItemOrigin.Wire (String)
+com.histmersion.api.automation.Managers.ItemPage.Limit (Int)
+com.histmersion.api.automation.Managers.ItemPage.Offset (Int)
+com.histmersion.api.automation.Managers.ItemPage.Total (Int)
+com.histmersion.api.automation.Managers.ItemPatch.Action (String)
+com.histmersion.api.automation.Managers.ItemPatch.Priority (Int)
+com.histmersion.api.automation.Managers.ItemPatch.Reason (String)
+com.histmersion.api.automation.Managers.ItemPatch.Until (String)
+com.histmersion.api.automation.Managers.ItemPatch.UntilSource (String)
+com.histmersion.api.automation.Managers.ItemState.Before (Int)
+com.histmersion.api.automation.Managers.ItemState.FilterHits (Int)
+com.histmersion.api.automation.Managers.ItemState.PairsBefore (Int)
+com.histmersion.api.automation.Managers.ItemState.Reopened (Int)
+com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove (Boolean)
+com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest (Boolean)
+com.histmersion.api.automation.Managers.ManagerConfig.AutoIngestPerDay (Int)
+com.histmersion.api.automation.Managers.ManagerConfig.BudgetUsd (Double)
+com.histmersion.api.automation.Managers.ManagerConfig.CooldownMinutes (Int)
+com.histmersion.api.automation.Managers.ManagerConfig.DailyUsd (Double)
+com.histmersion.api.automation.Managers.ManagerConfig.ExtendMinNew (Int)
+com.histmersion.api.automation.Managers.ManagerConfig.IncludeGoal (String)
+com.histmersion.api.automation.Managers.ManagerConfig.IncludeTags (String)
+com.histmersion.api.automation.Managers.ManagerConfig.InferFilter (Boolean)
+com.histmersion.api.automation.Managers.ManagerConfig.LowWater (Int)
+com.histmersion.api.automation.Managers.ManagerConfig.MaxArticles (Int)
+com.histmersion.api.automation.Managers.ManagerConfig.MaxFailures (Int)
+com.histmersion.api.automation.Managers.ManagerConfig.MaxOpen (Int)
+com.histmersion.api.automation.Managers.ManagerConfig.MaxRuns (Int)
+com.histmersion.api.automation.Managers.ManagerConfig.MaxRunsPerArticle (Int)
+com.histmersion.api.automation.Managers.ManagerConfig.MinSources (Int)
+com.histmersion.api.automation.Managers.ManagerConfig.NoProgressRuns (Int)
+com.histmersion.api.automation.Managers.ManagerConfig.Problem (String)
+com.histmersion.api.automation.Managers.ManagerConfig.RefillBatch (Int)
+com.histmersion.api.automation.Managers.ManagerConfig.ReopenLimit (Int)
+com.histmersion.api.automation.Managers.ManagerConfig.Rounds (Int)
+com.histmersion.api.automation.Managers.ManagerConfig.Spec (String)
+com.histmersion.api.automation.Managers.ManagerConfig.StaleAfterDays (Int)
+com.histmersion.api.automation.Managers.ManagerCreate.Cron (String)
+com.histmersion.api.automation.Managers.ManagerCreate.Paused (Boolean)
+com.histmersion.api.automation.Managers.ManagerEvent.At (String)
+com.histmersion.api.automation.Managers.ManagerEvent.Id (Long)
+com.histmersion.api.automation.Managers.ManagerEvent.ItemId (Long)
+com.histmersion.api.automation.Managers.ManagerEvent.Kind (String)
+com.histmersion.api.automation.Managers.ManagerEvent.Text (String)
+com.histmersion.api.automation.Managers.ManagerHint.Author (String)
+com.histmersion.api.automation.Managers.ManagerHint.CreatedAt (String)
+com.histmersion.api.automation.Managers.ManagerHint.Id (Long)
+com.histmersion.api.automation.Managers.ManagerHint.ItemId (Long)
+com.histmersion.api.automation.Managers.ManagerHint.Proposal (Long)
+com.histmersion.api.automation.Managers.ManagerHint.RetiredAt (String)
+com.histmersion.api.automation.Managers.ManagerHint.Standing (Boolean)
+com.histmersion.api.automation.Managers.ManagerHint.Text (String)
+com.histmersion.api.automation.Managers.ManagerHint.Uses (Int)
+com.histmersion.api.automation.Managers.ManagerInfo.Backlog (Int)
+com.histmersion.api.automation.Managers.ManagerInfo.BacklogDays (Int)
+com.histmersion.api.automation.Managers.ManagerInfo.CreatedAt (String)
+com.histmersion.api.automation.Managers.ManagerInfo.Cron (String)
+com.histmersion.api.automation.Managers.ManagerInfo.Id (String)
+com.histmersion.api.automation.Managers.ManagerInfo.InFlight (Int)
+com.histmersion.api.automation.Managers.ManagerInfo.NextTickAt (String)
+com.histmersion.api.automation.Managers.ManagerInfo.PauseRuns (Boolean)
+com.histmersion.api.automation.Managers.ManagerInfo.SpentTodayUsd (Double)
+com.histmersion.api.automation.Managers.ManagerInfo.StatusNote (String)
+com.histmersion.api.automation.Managers.ManagerInfo.TokensToday (Long)
+com.histmersion.api.automation.Managers.ManagerInfo.UpdatedAt (String)
+com.histmersion.api.automation.Managers.ManagerItem.Attempts (Int)
+com.histmersion.api.automation.Managers.ManagerItem.CreatedAt (String)
+com.histmersion.api.automation.Managers.ManagerItem.Failures (Int)
+com.histmersion.api.automation.Managers.ManagerItem.Id (Long)
+com.histmersion.api.automation.Managers.ManagerItem.Kind (String)
+com.histmersion.api.automation.Managers.ManagerItem.NotBefore (String)
+com.histmersion.api.automation.Managers.ManagerItem.Outcome (String)
+com.histmersion.api.automation.Managers.ManagerItem.Priority (Int)
+com.histmersion.api.automation.Managers.ManagerItem.Ref (String)
+com.histmersion.api.automation.Managers.ManagerItem.Target (String)
+com.histmersion.web.Preview.Anchor.At.X (Double)
+com.histmersion.web.Preview.Anchor.At.Y (Double)
+com.histmersion.web.Preview.Anchor.Under.Bottom (Double)
+com.histmersion.web.Preview.Anchor.Under.Left (Double)
+com.histmersion.web.Preview.Anchor.Under.Top (Double)
+com.histmersion.web.Preview.Anchor.Under.Width (Double)
+com.histmersion.web.Preview.Card.Byline (String)
+com.histmersion.web.Preview.Card.ChipsPart1 (String)
+com.histmersion.web.Preview.Card.ChipsPart2 (String)
+com.histmersion.web.Preview.Card.Facts (String)
+com.histmersion.web.Preview.Card.Icon (String)
+com.histmersion.web.Preview.Card.Identifier (String)
+com.histmersion.web.Preview.Card.LinksPart1 (String)
+com.histmersion.web.Preview.Card.LinksPart2 (String)
+com.histmersion.web.Preview.Card.Summary (String)
+com.histmersion.web.Preview.Card.Tier (String)
+com.histmersion.web.Preview.Card.Title (String)
+com.histmersion.web.Preview.Card.Where (String)
+com.histmersion.web.Preview.Fit.MaxH (Double)
+com.histmersion.web.Preview.Fit.X (Double)
+com.histmersion.web.Preview.Fit.Y (Double)
+com.histmersion.web.Preview.Item.Citekey (String)
+com.histmersion.web.Preview.Item.Command (String)
+com.histmersion.web.Preview.Item.Href (String)
+com.histmersion.web.Preview.Item.Query (String)
+com.histmersion.web.Preview.Item.Slug (String)
+com.histmersion.web.Preview.Item.Text (String)
+com.histmersion.web.Preview.Section.Kind (String)
+com.histmersion.web.Preview.Section.Note (String)
+com.histmersion.web.Preview.Section.Title (String)
+com.histmersion.web.Preview.Target.Article.Slug (String)
+com.histmersion.web.Preview.Target.Event.Id (String)
+com.histmersion.web.Preview.Target.Place.AsOf (Long)
+com.histmersion.web.Preview.Target.Place.Id (String)
+com.histmersion.web.Preview.Target.Source.Citekey (String)
+
+## TYPES TO DECIDE
+com.histmersion.web.Preview.Anchor.At.X | base Double | generated | constructor-parameter
+com.histmersion.web.Preview.Anchor.At.Y | base Double | generated | constructor-parameter
+com.histmersion.web.Preview.Anchor.Under.Bottom | base Double | generated | constructor-parameter
+    case Under(left: Anchor.Under.Left, top: Anchor.Under.Top, bottom: Anchor.Under.Bottom, width: Anchor.Under.Width)
+com.histmersion.web.Preview.Anchor.Under.Left | base Double | generated | constructor-parameter
+    case Under(left: Anchor.Under.Left, top: Anchor.Under.Top, bottom: Anchor.Under.Bottom, width: Anchor.Under.Width)
+    case Failure(e) => found.set(Some(Left(s"no answer: ${e.getMessage}")))
+com.histmersion.web.Preview.Anchor.Under.Top | base Double | generated | constructor-parameter
+    case Under(left: Anchor.Under.Left, top: Anchor.Under.Top, bottom: Anchor.Under.Bottom, width: Anchor.Under.Width)
+com.histmersion.web.Preview.Anchor.Under.Width | base Double | generated | constructor-parameter
+    val maxW = math.min(360.0, window.innerWidth - 20)
+    case Under(left: Anchor.Under.Left, top: Anchor.Under.Top, bottom: Anchor.Under.Bottom, width: Anchor.Under.Width)
+com.histmersion.web.Preview.ApplyNatural | base Double | generated | method-parameter
+    private def apply(box: dom.HTMLElement, fit: Fit, natural: com.histmersion.web.Preview.ApplyNatural): Unit =
+com.histmersion.web.Preview.CacheStatsResultPart1 | base String | generated | method-result
+    def cacheStats: List[(com.histmersion.web.Preview.CacheStatsResultPart1, BoundedCache.Stats)] =
+com.histmersion.web.Preview.CachedCachePart1 | base String | generated | method-parameter
+    private def cached(cache: BoundedCache[com.histmersion.web.Preview.CachedCachePart1, Future[Card]], key: com.histmersion.web.Preview.CachedKey)(fetch: => Future[Card]): F
+com.histmersion.web.Preview.CachedKey | base String | generated | method-parameter
+    private def cached(cache: BoundedCache[com.histmersion.web.Preview.CachedCachePart1, Future[Card]], key: com.histmersion.web.Preview.CachedKey)(fetch: => Future[Card]): F
+com.histmersion.web.Preview.Card.Byline | base String | original | constructor-parameter
+com.histmersion.web.Preview.Card.ChipsPart1 | base String | original | constructor-parameter
+com.histmersion.web.Preview.Card.ChipsPart2 | base String | original | constructor-parameter
+com.histmersion.web.Preview.Card.Facts | base String | original | constructor-parameter
+    def eventFacts(d: EventDetail, years: com.histmersion.web.Preview.EventFactsYears): List[com.histmersion.web.Preview.EventFactsResult] =
+com.histmersion.web.Preview.Card.Icon | base String | original | constructor-parameter
+com.histmersion.web.Preview.Card.Identifier | base String | original | constructor-parameter
+com.histmersion.web.Preview.Card.LinksPart1 | base String | original | constructor-parameter
+com.histmersion.web.Preview.Card.LinksPart2 | base String | original | constructor-parameter
+com.histmersion.web.Preview.Card.Summary | base String | original | constructor-parameter
+    private[web] def datasetOf(p: com.histmersion.api.catalogue.Place.Summary): Option[com.histmersion.web.Preview.DatasetOfResult] =
+com.histmersion.web.Preview.Card.Tier | base String | original | constructor-parameter
+com.histmersion.web.Preview.Card.Title | base String | original | constructor-parameter
+    final case class Section(title: Section.Title, items: List[Item], note: Option[Section.Note] = None, kind: Section.Kind = "")
+com.histmersion.web.Preview.Card.Where | base String | original | constructor-parameter
+com.histmersion.web.Preview.CommandViewCmd | base String | generated | method-parameter
+    private def commandView(cmd: com.histmersion.web.Preview.CommandViewCmd): HtmlElement =
+com.histmersion.web.Preview.CreditLineResultPart1 | base String | generated | method-result
+    def creditLine(t: MediaThumb): (com.histmersion.web.Preview.CreditLineResultPart1, Option[(com.histmersion.web.Preview.CreditLineResultPart2Part1, com.histmersion.web.Pre
+com.histmersion.web.Preview.CreditLineResultPart2Part1 | base String | generated | method-result
+    def creditLine(t: MediaThumb): (com.histmersion.web.Preview.CreditLineResultPart1, Option[(com.histmersion.web.Preview.CreditLineResultPart2Part1, com.histmersion.web.Pre
+com.histmersion.web.Preview.CreditLineResultPart2Part2 | base String | generated | method-result
+    def creditLine(t: MediaThumb): (com.histmersion.web.Preview.CreditLineResultPart1, Option[(com.histmersion.web.Preview.CreditLineResultPart2Part1, com.histmersion.web.Pre
+com.histmersion.web.Preview.DatasetOfResult | base String | generated | method-result
+    private[web] def datasetOf(p: com.histmersion.api.catalogue.Place.Summary): Option[com.histmersion.web.Preview.DatasetOfResult] =
+com.histmersion.web.Preview.DiscoverButtonQ | base String | generated | method-parameter
+    private def discoverButton(q: com.histmersion.web.Preview.DiscoverButtonQ): HtmlElement =
+com.histmersion.web.Preview.EventFactsResult | base String | generated | method-result
+    def eventFacts(d: EventDetail, years: com.histmersion.web.Preview.EventFactsYears): List[com.histmersion.web.Preview.EventFactsResult] =
+com.histmersion.web.Preview.EventFactsYears | base String | generated | method-parameter
+    def eventFacts(d: EventDetail, years: com.histmersion.web.Preview.EventFactsYears): List[com.histmersion.web.Preview.EventFactsResult] =
+com.histmersion.web.Preview.EventSectionsKmX | base Double | generated | method-parameter
+    def km(x: com.histmersion.web.Preview.EventSectionsKmX) = s"${math.round(x)} km"
+com.histmersion.web.Preview.Fit.MaxH | base Double | original | constructor-parameter
+    final case class Fit(x: Fit.X, y: Fit.Y, maxH: Fit.MaxH)
+com.histmersion.web.Preview.Fit.X | base Double | original | constructor-parameter
+com.histmersion.web.Preview.Fit.Y | base Double | original | constructor-parameter
+com.histmersion.web.Preview.ForgetCk | base String | generated | method-parameter
+    def forget(ck: com.histmersion.web.Preview.ForgetCk): Unit = { val _ = sourceCache.remove(ck) }
+com.histmersion.web.Preview.FullAttrsResultPart1 | base String | generated | method-result
+    def fullAttrs(t: MediaThumb): List[(com.histmersion.web.Preview.FullAttrsResultPart1, com.histmersion.web.Preview.FullAttrsResultPart2)] =
+com.histmersion.web.Preview.FullAttrsResultPart2 | base String | generated | method-result
+    def fullAttrs(t: MediaThumb): List[(com.histmersion.web.Preview.FullAttrsResultPart1, com.histmersion.web.Preview.FullAttrsResultPart2)] =
+com.histmersion.web.Preview.IsPinnedResult | base Boolean | generated | method-result
+    def isPinned(t: Target): com.histmersion.web.Preview.IsPinnedResult = pinned.exists(p => sameCard(p.target, t))
+com.histmersion.web.Preview.Item.Citekey | base String | original | constructor-parameter
+    case Source(citekey: Target.Source.Citekey)
+com.histmersion.web.Preview.Item.Command | base String | original | constructor-parameter
+com.histmersion.web.Preview.Item.Href | base String | original | constructor-parameter
+com.histmersion.web.Preview.Item.Query | base String | original | constructor-parameter
+com.histmersion.web.Preview.Item.Slug | base String | original | constructor-parameter
+    case Article(slug: Target.Article.Slug)
+com.histmersion.web.Preview.Item.Text | base String | original | constructor-parameter
+com.histmersion.web.Preview.LastPointPart1 | base Double | generated | variable
+    private var lastPoint: Option[(com.histmersion.web.Preview.LastPointPart1, com.histmersion.web.Preview.LastPointPart2)] = None
+com.histmersion.web.Preview.LastPointPart2 | base Double | generated | variable
+    private var lastPoint: Option[(com.histmersion.web.Preview.LastPointPart1, com.histmersion.web.Preview.LastPointPart2)] = None
+com.histmersion.web.Preview.NaturalSizeResultPart1 | base Double | generated | method-result
+    private def naturalSize(box: dom.HTMLElement): (com.histmersion.web.Preview.NaturalSizeResultPart1, com.histmersion.web.Preview.NaturalSizeResultPart2) =
+com.histmersion.web.Preview.NaturalSizeResultPart2 | base Double | generated | method-result
+    private def naturalSize(box: dom.HTMLElement): (com.histmersion.web.Preview.NaturalSizeResultPart1, com.histmersion.web.Preview.NaturalSizeResultPart2) =
+com.histmersion.web.Preview.PinKeyboard | base Boolean | generated | alias,method-parameter
+    val PinUnderKeyboard: _root_.com.histmersion.web.Preview.PinKeyboard.type = _root_.com.histmersion.web.Preview.PinKeyboard
+    def pin(t: Target, anchor: () => Option[Anchor], owner: Option[dom.Element] = None, keyboard: com.histmersion.web.Preview.PinKeyboard = false): Unit =
+com.histmersion.web.Preview.Pinned.SizePart1 | base Double | generated | variable
+    var size: (com.histmersion.web.Preview.Pinned.SizePart1, com.histmersion.web.Preview.Pinned.SizePart2) = (0, 0)
+com.histmersion.web.Preview.Pinned.SizePart2 | base Double | generated | variable
+    var size: (com.histmersion.web.Preview.Pinned.SizePart1, com.histmersion.web.Preview.Pinned.SizePart2) = (0, 0)
+com.histmersion.web.Preview.PlaceAsOfResult | base Long | generated | variable
+    var placeAsOf: () => Option[com.histmersion.web.Preview.PlaceAsOfResult] = () => None
+com.histmersion.web.Preview.PluralN | base Int | generated | method-parameter
+    private def plural(n: com.histmersion.web.Preview.PluralN, one: com.histmersion.web.Preview.PluralOne): com.histmersion.web.Preview.PluralResult = s"$n $one${if n == 1 th
+com.histmersion.web.Preview.PluralOne | base String | generated | method-parameter
+    private def plural(n: com.histmersion.web.Preview.PluralN, one: com.histmersion.web.Preview.PluralOne): com.histmersion.web.Preview.PluralResult = s"$n $one${if n == 1 th
+com.histmersion.web.Preview.PluralResult | base String | generated | method-result
+    private def plural(n: com.histmersion.web.Preview.PluralN, one: com.histmersion.web.Preview.PluralOne): com.histmersion.web.Preview.PluralResult = s"$n $one${if n == 1 th
+com.histmersion.web.Preview.PointFitVw | base Double | generated | alias,method-parameter
+    val PointPlacementVw: _root_.com.histmersion.web.Preview.PointFitVw.type = _root_.com.histmersion.web.Preview.PointFitVw
+    def pointFit(x: com.histmersion.web.Preview.PointFitX, y: com.histmersion.web.Preview.PointFitY, w: com.histmersion.web.Preview.PointFitW, h: com.histmersion.web.Preview.
+com.histmersion.web.Preview.PointFitW | base Double | generated | alias,method-parameter
+    val PointPlacementW: _root_.com.histmersion.web.Preview.PointFitW.type = _root_.com.histmersion.web.Preview.PointFitW
+    def pointFit(x: com.histmersion.web.Preview.PointFitX, y: com.histmersion.web.Preview.PointFitY, w: com.histmersion.web.Preview.PointFitW, h: com.histmersion.web.Preview.
+com.histmersion.web.Preview.PointFitX | base Double | generated | alias,method-parameter
+    val ShowAtX: _root_.com.histmersion.web.Preview.PointFitX.type = _root_.com.histmersion.web.Preview.PointFitX
+    val MoveToX: _root_.com.histmersion.web.Preview.PointFitX.type = _root_.com.histmersion.web.Preview.PointFitX
+com.histmersion.web.Preview.PointFitY | base Double | generated | alias,method-parameter
+    val ShowAtY: _root_.com.histmersion.web.Preview.PointFitY.type = _root_.com.histmersion.web.Preview.PointFitY
+    val MoveToY: _root_.com.histmersion.web.Preview.PointFitY.type = _root_.com.histmersion.web.Preview.PointFitY
+com.histmersion.web.Preview.PointPlacementResultPart1 | base Double | generated | method-result
+    def pointPlacement(x: com.histmersion.web.Preview.PointPlacementX, y: com.histmersion.web.Preview.PointPlacementY, w: com.histmersion.web.Preview.PointPlacementW, h: com.
+com.histmersion.web.Preview.PointPlacementResultPart2 | base Double | generated | method-result
+    def pointPlacement(x: com.histmersion.web.Preview.PointPlacementX, y: com.histmersion.web.Preview.PointPlacementY, w: com.histmersion.web.Preview.PointPlacementW, h: com.
+com.histmersion.web.Preview.SameCardResult | base Boolean | generated | method-result
+    def sameCard(a: Target, b: Target): com.histmersion.web.Preview.SameCardResult = (a, b) match
+com.histmersion.web.Preview.Section.Kind | base String | original | constructor-parameter
+    final case class Section(title: Section.Title, items: List[Item], note: Option[Section.Note] = None, kind: Section.Kind = "")
+com.histmersion.web.Preview.Section.Note | base String | original | constructor-parameter
+    final case class Section(title: Section.Title, items: List[Item], note: Option[Section.Note] = None, kind: Section.Kind = "")
+com.histmersion.web.Preview.Section.Title | base String | original | constructor-parameter
+    final case class Section(title: Section.Title, items: List[Item], note: Option[Section.Note] = None, kind: Section.Kind = "")
+com.histmersion.web.Preview.ShowingAtResult | base Boolean | generated | method-result
+    def showingAt(t: Target): com.histmersion.web.Preview.ShowingAtResult = atPoint.contains(t) && tip.isDefined
+com.histmersion.web.Preview.SizeOfResultPart1 | base Int | generated | method-result
+    def sizeOf(t: MediaThumb): Option[(com.histmersion.web.Preview.SizeOfResultPart1, com.histmersion.web.Preview.SizeOfResultPart2)] = (t.width, t.height) match
+com.histmersion.web.Preview.SizeOfResultPart2 | base Int | generated | method-result
+    def sizeOf(t: MediaThumb): Option[(com.histmersion.web.Preview.SizeOfResultPart1, com.histmersion.web.Preview.SizeOfResultPart2)] = (t.width, t.height) match
+com.histmersion.web.Preview.Target.Article.Slug | base String | generated | constructor-parameter
+    case Article(slug: Target.Article.Slug)
+com.histmersion.web.Preview.Target.Event.Id | base String | generated | constructor-parameter
+    case Place(id: Target.Place.Id, asOf: Option[Target.Place.AsOf])
+    case Event(id: Target.Event.Id)
+com.histmersion.web.Preview.Target.Place.AsOf | base Long | generated | constructor-parameter
+    case Place(id: Target.Place.Id, asOf: Option[Target.Place.AsOf])
+    var placeAsOf: () => Option[com.histmersion.web.Preview.PlaceAsOfResult] = () => None
+com.histmersion.web.Preview.Target.Place.Id | base String | generated | constructor-parameter
+    case Place(id: Target.Place.Id, asOf: Option[Target.Place.AsOf])
+    case Event(id: Target.Event.Id)
+com.histmersion.web.Preview.Target.Source.Citekey | base String | generated | constructor-parameter
+    case Source(citekey: Target.Source.Citekey)
+com.histmersion.web.Preview.TargetOfCk | base String | generated | method-parameter
+    def targetOf(ck: Option[com.histmersion.web.Preview.TargetOfCk], slug: Option[com.histmersion.web.Preview.TargetOfSlug]): Option[Target] =
+    def targetOf(ck: Option[com.histmersion.web.Preview.TargetOfCk], slug: Option[com.histmersion.web.Preview.TargetOfSlug], place: Option[com.histmersion.web.Preview.TargetO
+com.histmersion.web.Preview.TargetOfEvent | base String | generated | method-parameter
+com.histmersion.web.Preview.TargetOfPlace | base String | generated | method-parameter
+    def targetOf(ck: Option[com.histmersion.web.Preview.TargetOfCk], slug: Option[com.histmersion.web.Preview.TargetOfSlug], place: Option[com.histmersion.web.Preview.TargetO
+com.histmersion.web.Preview.TargetOfSlug | base String | generated | method-parameter
+    def targetOf(ck: Option[com.histmersion.web.Preview.TargetOfCk], slug: Option[com.histmersion.web.Preview.TargetOfSlug]): Option[Target] =
+    def targetOf(ck: Option[com.histmersion.web.Preview.TargetOfCk], slug: Option[com.histmersion.web.Preview.TargetOfSlug], place: Option[com.histmersion.web.Preview.TargetO
+com.histmersion.web.Preview.UnderFitLeft | base Double | generated | alias,method-parameter
+    val UnderPlacementLeft: _root_.com.histmersion.web.Preview.UnderFitLeft.type = _root_.com.histmersion.web.Preview.UnderFitLeft
+com.histmersion.web.Preview.UnderFitVw | base Double | generated | alias,method-parameter
+    val UnderPlacementVw: _root_.com.histmersion.web.Preview.UnderFitVw.type = _root_.com.histmersion.web.Preview.UnderFitVw
+com.histmersion.web.Preview.UnderFitW | base Double | generated | alias,method-parameter
+    val UnderPlacementW: _root_.com.histmersion.web.Preview.UnderFitW.type = _root_.com.histmersion.web.Preview.UnderFitW
+com.histmersion.web.Preview.UnderFitWidth | base Double | generated | alias,method-parameter
+    val UnderPlacementWidth: _root_.com.histmersion.web.Preview.UnderFitWidth.type = _root_.com.histmersion.web.Preview.UnderFitWidth
+com.histmersion.web.Preview.UnderPlacementResultPart1 | base Double | generated | method-result
+com.histmersion.web.Preview.UnderPlacementResultPart2 | base Double | generated | method-result
+com.histmersion.web.Preview.UnpinRestoreFocus | base Boolean | generated | method-parameter
+    def unpin(restoreFocus: com.histmersion.web.Preview.UnpinRestoreFocus = true): Unit =
+com.histmersion.web.Preview.VerticalFitBottom | base Double | generated | alias,method-parameter
+    val UnderFitBottom: _root_.com.histmersion.web.Preview.VerticalFitBottom.type = _root_.com.histmersion.web.Preview.VerticalFitBottom
+    val UnderPlacementBottom: _root_.com.histmersion.web.Preview.VerticalFitBottom.type = _root_.com.histmersion.web.Preview.VerticalFitBottom
+com.histmersion.web.Preview.VerticalFitGap | base Double | generated | method-parameter
+    def verticalFit(top: com.histmersion.web.Preview.VerticalFitTop, bottom: com.histmersion.web.Preview.VerticalFitBottom, gap: com.histmersion.web.Preview.VerticalFitGap, h
+com.histmersion.web.Preview.VerticalFitH | base Double | generated | alias,method-parameter
+    val PointFitH: _root_.com.histmersion.web.Preview.VerticalFitH.type = _root_.com.histmersion.web.Preview.VerticalFitH
+    val UnderFitH: _root_.com.histmersion.web.Preview.VerticalFitH.type = _root_.com.histmersion.web.Preview.VerticalFitH
+com.histmersion.web.Preview.VerticalFitResultPart1 | base Double | generated | method-result
+    def verticalFit(top: com.histmersion.web.Preview.VerticalFitTop, bottom: com.histmersion.web.Preview.VerticalFitBottom, gap: com.histmersion.web.Preview.VerticalFitGap, h
+com.histmersion.web.Preview.VerticalFitResultPart2 | base Double | generated | method-result
+    def verticalFit(top: com.histmersion.web.Preview.VerticalFitTop, bottom: com.histmersion.web.Preview.VerticalFitBottom, gap: com.histmersion.web.Preview.VerticalFitGap, h
+com.histmersion.web.Preview.VerticalFitTop | base Double | generated | alias,method-parameter
+    val UnderFitTop: _root_.com.histmersion.web.Preview.VerticalFitTop.type = _root_.com.histmersion.web.Preview.VerticalFitTop
+    val UnderPlacementTop: _root_.com.histmersion.web.Preview.VerticalFitTop.type = _root_.com.histmersion.web.Preview.VerticalFitTop
+com.histmersion.web.Preview.VerticalFitVh | base Double | generated | alias,method-parameter
+    val PointFitVh: _root_.com.histmersion.web.Preview.VerticalFitVh.type = _root_.com.histmersion.web.Preview.VerticalFitVh
+    val UnderFitVh: _root_.com.histmersion.web.Preview.VerticalFitVh.type = _root_.com.histmersion.web.Preview.VerticalFitVh
+com.histmersion.web.QueueItemLink.ApplyId | base Int | generated | method-parameter
+    def apply(kind: com.histmersion.api.automation.Queue.Kind, id: com.histmersion.web.QueueItemLink.ApplyId, mods: Modifier[HtmlElement]*): HtmlElement =

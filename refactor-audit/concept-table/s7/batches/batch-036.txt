@@ -1,0 +1,303 @@
+## CONCEPTS NEARBY
+com.histmersion.api.ByteCount (Long)
+com.histmersion.api.Offset (Int)
+com.histmersion.api.RowCount (Int)
+com.histmersion.api.Sha256 (String)
+com.histmersion.api.instance.About.LastBackupAgeSeconds (Long)
+com.histmersion.api.instance.About.Name (String)
+com.histmersion.api.instance.About.Problems (String)
+com.histmersion.api.instance.BuildStamp.CommitDate (String)
+com.histmersion.api.instance.BuildStamp.Dirty (Boolean)
+com.histmersion.api.instance.BuildStamp.GitCommit (String)
+com.histmersion.api.instance.BuildStamp.Licence (String)
+com.histmersion.api.instance.BuildStamp.SourceUrl (String)
+com.histmersion.api.instance.BuildStamp.Version (String)
+com.histmersion.api.instance.CorpusCounts.Articles (Int)
+com.histmersion.api.instance.CorpusCounts.Events (Int)
+com.histmersion.api.instance.CorpusCounts.Findings (Int)
+com.histmersion.api.instance.CorpusCounts.Periods (Int)
+com.histmersion.api.instance.CorpusCounts.Periods.Collection (String)
+com.histmersion.api.instance.CorpusCounts.Periods.Name (String)
+com.histmersion.api.instance.CorpusCounts.Periods.Source (String)
+com.histmersion.api.instance.CorpusCounts.Places (Int)
+com.histmersion.api.instance.CorpusCounts.Presets (Int)
+com.histmersion.api.instance.CorpusCounts.Sources (Int)
+com.histmersion.api.instance.DebounceConfig.PreviewMs (Int)
+com.histmersion.api.instance.DebounceConfig.ReloadMs (Int)
+com.histmersion.api.instance.DebounceConfig.SearchMs (Int)
+com.histmersion.api.instance.DebounceConfig.SuggestMs (Int)
+com.histmersion.api.instance.EventsUiConfig.LocalFadeSeconds (Double)
+com.histmersion.api.instance.EventsUiConfig.MapLimit (Int)
+com.histmersion.api.instance.EventsUiConfig.OutlineToleranceDeg (Double)
+com.histmersion.api.instance.EventsUiConfig.RegionalFadeSeconds (Double)
+com.histmersion.api.instance.Health.Converter (String)
+com.histmersion.api.instance.Health.Db (String)
+com.histmersion.api.instance.Health.SchemaVersion (String)
+com.histmersion.api.instance.Health.Status (String)
+com.histmersion.api.instance.Health.Warnings (String)
+com.histmersion.api.instance.MapStartConfig.Label (String)
+com.histmersion.api.instance.MapStartConfig.Zoom (Double)
+com.histmersion.api.instance.MapStartMode.Label (String)
+com.histmersion.api.instance.MapStartMode.Wire (String)
+com.histmersion.api.instance.UiConfig.AgentsEnabled (Boolean)
+com.histmersion.api.instance.UiConfig.CountersPollSeconds (Int)
+com.histmersion.api.instance.UiConfig.DocsUrl (String)
+com.histmersion.api.instance.UiConfig.FacetSuggestions (Int)
+com.histmersion.api.instance.UiConfig.JobPollMs (Int)
+com.histmersion.api.instance.UiConfig.MapLanguage (String)
+com.histmersion.api.instance.UiConfig.MarkerRadius (Int)
+com.histmersion.api.instance.UiConfig.MaxBuckets (Int)
+com.histmersion.api.instance.UiConfig.NarrowMaxHeightPx (Int)
+com.histmersion.api.instance.UiConfig.NarrowMaxWidthPx (Int)
+com.histmersion.api.instance.UiConfig.PageSize (Int)
+com.histmersion.api.instance.UiConfig.SetupDue (Boolean)
+com.histmersion.api.instance.UiConfig.TabletMaxWidthPx (Int)
+com.histmersion.api.instance.UiConfig.Tiles (String)
+com.histmersion.api.instance.UiConfig.TilesMaxZoom (Int)
+com.histmersion.api.instance.UiConfig.TilesTone (String)
+com.histmersion.api.instance.UiConfig.TreeDepth (Int)
+com.histmersion.api.instance.UiConfig.TreeSamples (Int)
+com.histmersion.api.instance.UiConfig.ViewportDebounceMs (Int)
+com.histmersion.api.instance.UiConfig.WriteKeyRequired (Boolean)
+com.histmersion.api.instance.UiNotices.AgentsGlance.Draining (Boolean)
+com.histmersion.api.instance.UiNotices.AgentsGlance.On (Boolean)
+com.histmersion.api.instance.UiNotices.AgentsGlance.Queued (Int)
+com.histmersion.api.instance.UiNotices.AgentsGlance.Running (Int)
+com.histmersion.api.instance.UiNotices.Board.Counted (Boolean)
+com.histmersion.api.instance.UiNotices.Board.Wire (String)
+com.histmersion.api.instance.UiNotices.Counter.Count (Int)
+com.histmersion.api.instance.UiNotices.Counter.Fresh (Boolean)
+com.histmersion.api.instance.UiNotices.Counter.Latest (String)
+com.histmersion.api.instance.UiNotices.Counter.Seen (String)
+com.histmersion.api.instance.Version.Info.Name (String)
+com.histmersion.api.instance.Version.Info.Version (String)
+com.histmersion.api.instance.Version.Licence (String)
+com.histmersion.web.map.DomMarker.BoxPart1 (Int)
+com.histmersion.web.map.DomMarker.BoxPart2 (Int)
+com.histmersion.web.map.DomMarker.LatV (Double)
+com.histmersion.web.map.DomMarker.LonV (Double)
+com.histmersion.web.map.GeoBounds.East (Double)
+com.histmersion.web.map.GeoBounds.North (Double)
+com.histmersion.web.map.GeoBounds.South (Double)
+com.histmersion.web.map.GeoBounds.West (Double)
+com.histmersion.web.map.LatLon.Lat (Double)
+com.histmersion.web.map.LatLon.Lon (Double)
+com.histmersion.web.map.MapMotion.Label (String)
+com.histmersion.web.map.MapMotion.Wire (String)
+
+## TYPES TO DECIDE
+com.histmersion.web.map.Clustering.DrawnGroupsPart1 | base String | generated | method-parameter
+    def drawn(groups: Vector[(Vector[com.histmersion.web.map.Clustering.DrawnGroupsPart1], LatLon)], s: MapSurface): (Set[com.histmersion.web.map.Clustering.DrawnResultPart1]
+com.histmersion.web.map.Clustering.DrawnResultPart1 | base String | generated | method-result
+    def drawn(groups: Vector[(Vector[com.histmersion.web.map.Clustering.DrawnGroupsPart1], LatLon)], s: MapSurface): (Set[com.histmersion.web.map.Clustering.DrawnResultPart1]
+com.histmersion.web.map.Clustering.DrawnResultPart2Part1 | base String | generated | method-result
+    def drawn(groups: Vector[(Vector[com.histmersion.web.map.Clustering.DrawnGroupsPart1], LatLon)], s: MapSurface): (Set[com.histmersion.web.map.Clustering.DrawnResultPart1]
+com.histmersion.web.map.Clustering.DrawnResultPart2Part2 | base String | generated | method-result
+    def drawn(groups: Vector[(Vector[com.histmersion.web.map.Clustering.DrawnGroupsPart1], LatLon)], s: MapSurface): (Set[com.histmersion.web.map.Clustering.DrawnResultPart1]
+com.histmersion.web.map.Clustering.GroupCellCx | base Double | generated | method-parameter
+    def cell(cx: com.histmersion.web.map.Clustering.GroupCellCx, cy: com.histmersion.web.map.Clustering.GroupCellCy): com.histmersion.web.map.Clustering.GroupCellResult = cx 
+com.histmersion.web.map.Clustering.GroupCellCy | base Double | generated | method-parameter
+    def cell(cx: com.histmersion.web.map.Clustering.GroupCellCx, cy: com.histmersion.web.map.Clustering.GroupCellCy): com.histmersion.web.map.Clustering.GroupCellResult = cx 
+com.histmersion.web.map.Clustering.GroupCellResult | base Double | generated | method-result
+    def cell(cx: com.histmersion.web.map.Clustering.GroupCellCx, cy: com.histmersion.web.map.Clustering.GroupCellCy): com.histmersion.web.map.Clustering.GroupCellResult = cx 
+com.histmersion.web.map.Clustering.GroupRadius | base Double | generated | alias,method-parameter
+    val GroupsRadius: _root_.com.histmersion.web.map.Clustering.GroupRadius.type = _root_.com.histmersion.web.map.Clustering.GroupRadius
+    def group(xs: Array[Double], ys: Array[Double], radius: com.histmersion.web.map.Clustering.GroupRadius): com.histmersion.web.map.Clustering.GroupResult =
+com.histmersion.web.map.Clustering.GroupResult | base Array[Int] | generated | method-result
+    def group(xs: Array[Double], ys: Array[Double], radius: com.histmersion.web.map.Clustering.GroupRadius): com.histmersion.web.map.Clustering.GroupResult =
+com.histmersion.web.map.Clustering.GroupsPtsPart1 | base String | generated | method-parameter
+    def groups(pts: Seq[(com.histmersion.web.map.Clustering.GroupsPtsPart1, LatLon)], z: com.histmersion.web.map.Clustering.GroupsZ, radius: com.histmersion.web.map.Clusterin
+com.histmersion.web.map.Clustering.GroupsResultPart1 | base String | generated | method-result
+    def groups(pts: Seq[(com.histmersion.web.map.Clustering.GroupsPtsPart1, LatLon)], z: com.histmersion.web.map.Clustering.GroupsZ, radius: com.histmersion.web.map.Clusterin
+com.histmersion.web.map.Clustering.GroupsZ | base Int | generated | method-parameter
+    def groups(pts: Seq[(com.histmersion.web.map.Clustering.GroupsPtsPart1, LatLon)], z: com.histmersion.web.map.Clustering.GroupsZ, radius: com.histmersion.web.map.Clusterin
+com.histmersion.web.map.Clustering.InViewMargin | base Double | generated | method-parameter
+    def inView(s: MapSurface, at: LatLon, margin: com.histmersion.web.map.Clustering.InViewMargin): com.histmersion.web.map.Clustering.InViewResult =
+com.histmersion.web.map.Clustering.InViewResult | base Boolean | generated | method-result
+    def inView(s: MapSurface, at: LatLon, margin: com.histmersion.web.map.Clustering.InViewMargin): com.histmersion.web.map.Clustering.InViewResult =
+com.histmersion.web.map.Clustering.LevelResult | base Int | generated | method-result
+    def level(zoom: com.histmersion.web.map.Clustering.LevelZoom): com.histmersion.web.map.Clustering.LevelResult = math.round(zoom).toInt
+com.histmersion.web.map.Clustering.LevelZoom | base Double | generated | method-parameter
+    def level(zoom: com.histmersion.web.map.Clustering.LevelZoom): com.histmersion.web.map.Clustering.LevelResult = math.round(zoom).toInt
+com.histmersion.web.map.Clustering.OnePlaceResult | base Boolean | generated | method-result
+    def onePlace(pts: Seq[LatLon]): com.histmersion.web.map.Clustering.OnePlaceResult =
+com.histmersion.web.map.Clustering.WorldLat | base Double | generated | method-parameter
+    def world(lat: com.histmersion.web.map.Clustering.WorldLat, lon: com.histmersion.web.map.Clustering.WorldLon, z: com.histmersion.web.map.Clustering.WorldZ): (com.histmers
+com.histmersion.web.map.Clustering.WorldLon | base Double | generated | method-parameter
+    def world(lat: com.histmersion.web.map.Clustering.WorldLat, lon: com.histmersion.web.map.Clustering.WorldLon, z: com.histmersion.web.map.Clustering.WorldZ): (com.histmers
+com.histmersion.web.map.Clustering.WorldResultPart1 | base Double | generated | method-result
+    def world(lat: com.histmersion.web.map.Clustering.WorldLat, lon: com.histmersion.web.map.Clustering.WorldLon, z: com.histmersion.web.map.Clustering.WorldZ): (com.histmers
+com.histmersion.web.map.Clustering.WorldResultPart2 | base Double | generated | method-result
+    def world(lat: com.histmersion.web.map.Clustering.WorldLat, lon: com.histmersion.web.map.Clustering.WorldLon, z: com.histmersion.web.map.Clustering.WorldZ): (com.histmers
+com.histmersion.web.map.Clustering.WorldZ | base Double | generated | method-parameter
+    def world(lat: com.histmersion.web.map.Clustering.WorldLat, lon: com.histmersion.web.map.Clustering.WorldLon, z: com.histmersion.web.map.Clustering.WorldZ): (com.histmers
+com.histmersion.web.map.DomMarker.BoxPart1 | base Int | generated | constructor-parameter
+com.histmersion.web.map.DomMarker.BoxPart2 | base Int | generated | constructor-parameter
+com.histmersion.web.map.DomMarker.ElementCls | base String | generated | method-parameter
+    def element(cls: com.histmersion.web.map.DomMarker.ElementCls, html: com.histmersion.web.map.DomMarker.ElementHtml): dom.HTMLElement =
+com.histmersion.web.map.DomMarker.ElementHtml | base String | generated | method-parameter
+    def element(cls: com.histmersion.web.map.DomMarker.ElementCls, html: com.histmersion.web.map.DomMarker.ElementHtml): dom.HTMLElement =
+com.histmersion.web.map.DomMarker.LatResult | base Double | generated | method-result
+    def lat: com.histmersion.web.map.DomMarker.LatResult = latV
+com.histmersion.web.map.DomMarker.LatV | base Double | generated | constructor-parameter
+    private var latV: DomMarker.LatV,
+com.histmersion.web.map.DomMarker.LonResult | base Double | generated | method-result
+    def lon: com.histmersion.web.map.DomMarker.LonResult = lonV
+com.histmersion.web.map.DomMarker.LonV | base Double | generated | constructor-parameter
+    private var lonV: DomMarker.LonV,
+com.histmersion.web.map.DomMarker.MoveToX | base Double | generated | method-parameter
+    def moveTo(x: com.histmersion.web.map.DomMarker.MoveToX, y: com.histmersion.web.map.DomMarker.MoveToY): Unit =
+com.histmersion.web.map.DomMarker.MoveToY | base Double | generated | method-parameter
+    def moveTo(x: com.histmersion.web.map.DomMarker.MoveToX, y: com.histmersion.web.map.DomMarker.MoveToY): Unit =
+com.histmersion.web.map.DomMarker.ScreenResultPart1 | base Double | generated | method-result
+    def screen: (com.histmersion.web.map.DomMarker.ScreenResultPart1, com.histmersion.web.map.DomMarker.ScreenResultPart2) = (lastX, lastY)
+com.histmersion.web.map.DomMarker.ScreenResultPart2 | base Double | generated | method-result
+    def screen: (com.histmersion.web.map.DomMarker.ScreenResultPart1, com.histmersion.web.map.DomMarker.ScreenResultPart2) = (lastX, lastY)
+com.histmersion.web.map.DomMarker.SetLatLngLat | base Double | generated | method-parameter
+    def setLatLng(lat: com.histmersion.web.map.DomMarker.SetLatLngLat, lon: com.histmersion.web.map.DomMarker.SetLatLngLon): Unit =
+com.histmersion.web.map.DomMarker.SetLatLngLon | base Double | generated | method-parameter
+    def setLatLng(lat: com.histmersion.web.map.DomMarker.SetLatLngLat, lon: com.histmersion.web.map.DomMarker.SetLatLngLon): Unit =
+com.histmersion.web.map.DomMarker.SetZZ | base Int | generated | method-parameter
+    def setZ(z: com.histmersion.web.map.DomMarker.SetZZ): Unit = el.style.setProperty("--z", z.toString)
+com.histmersion.web.map.Engines.SurfaceMaxZoom | base Double | generated | method-parameter
+com.histmersion.web.map.Engines.SurfacePixelRatioResult | base Double | generated | method-parameter
+com.histmersion.web.map.GeoBounds.ContainsResult | base Boolean | generated | method-result
+    def contains(p: LatLon): com.histmersion.web.map.GeoBounds.ContainsResult = p.lat >= south && p.lat <= north && p.lon >= west && p.lon <= east
+com.histmersion.web.map.GeoBounds.East | base Double | original | constructor-parameter
+    final case class GeoBounds(south: GeoBounds.South, west: GeoBounds.West, north: GeoBounds.North, east: GeoBounds.East):
+com.histmersion.web.map.GeoBounds.North | base Double | original | constructor-parameter
+    final case class GeoBounds(south: GeoBounds.South, west: GeoBounds.West, north: GeoBounds.North, east: GeoBounds.East):
+com.histmersion.web.map.GeoBounds.South | base Double | original | constructor-parameter
+    final case class GeoBounds(south: GeoBounds.South, west: GeoBounds.West, north: GeoBounds.North, east: GeoBounds.East):
+com.histmersion.web.map.GeoBounds.ValidResult | base Boolean | generated | method-result
+    def valid: com.histmersion.web.map.GeoBounds.ValidResult = south <= north && west <= east && !south.isNaN && !west.isNaN
+com.histmersion.web.map.GeoBounds.West | base Double | original | constructor-parameter
+    final case class GeoBounds(south: GeoBounds.South, west: GeoBounds.West, north: GeoBounds.North, east: GeoBounds.East):
+com.histmersion.web.map.LatLon.Lat | base Double | original | constructor-parameter
+    final case class LatLon(lat: LatLon.Lat, lon: LatLon.Lon)
+com.histmersion.web.map.LatLon.Lon | base Double | original | constructor-parameter
+    final case class LatLon(lat: LatLon.Lat, lon: LatLon.Lon)
+com.histmersion.web.map.MapEngine.CreateMaxZoom | base Double | generated | method-parameter
+    def create(el: dom.HTMLElement, maxZoom: com.histmersion.web.map.MapEngine.CreateMaxZoom, pixelRatio: Option[com.histmersion.web.map.MapEngine.CreatePixelRatio]): MapSurf
+com.histmersion.web.map.MapEngine.CreatePixelRatio | base Double | generated | method-parameter
+    def create(el: dom.HTMLElement, maxZoom: com.histmersion.web.map.MapEngine.CreateMaxZoom, pixelRatio: Option[com.histmersion.web.map.MapEngine.CreatePixelRatio]): MapSurf
+com.histmersion.web.map.MapEngine.UnsupportedResult | base String | generated | method-result
+    def unsupported(c: Capabilities): Option[com.histmersion.web.map.MapEngine.UnsupportedResult] = None
+com.histmersion.web.map.MapEvent.ClientXYResultPart1 | base Double | generated | method-result
+    def clientXY: Option[(com.histmersion.web.map.MapEvent.ClientXYResultPart1, com.histmersion.web.map.MapEvent.ClientXYResultPart2)] = native.collect { case e: dom.MouseEve
+com.histmersion.web.map.MapEvent.ClientXYResultPart2 | base Double | generated | method-result
+    def clientXY: Option[(com.histmersion.web.map.MapEvent.ClientXYResultPart1, com.histmersion.web.map.MapEvent.ClientXYResultPart2)] = native.collect { case e: dom.MouseEve
+com.histmersion.web.map.MapEvent.OverMarkerResult | base Boolean | generated | method-result
+    def overMarker: com.histmersion.web.map.MapEvent.OverMarkerResult = native.flatMap(e => Option(e.target)).exists { t =>
+com.histmersion.web.map.MapMotion.AnimatesResult | base Boolean | generated | method-result
+    def animates(m: MapMotion, systemReduced: com.histmersion.web.map.MapMotion.AnimatesSystemReduced): com.histmersion.web.map.MapMotion.AnimatesResult = m match
+com.histmersion.web.map.MapMotion.AnimatesSystemReduced | base Boolean | generated | method-parameter
+    def animates(m: MapMotion, systemReduced: com.histmersion.web.map.MapMotion.AnimatesSystemReduced): com.histmersion.web.map.MapMotion.AnimatesResult = m match
+com.histmersion.web.map.MapMotion.AttributeAnimates | base Boolean | generated | method-parameter
+    def attribute(animates: com.histmersion.web.map.MapMotion.AttributeAnimates): com.histmersion.web.map.MapMotion.AttributeResult = if animates then "animate" else "still"
+com.histmersion.web.map.MapMotion.AttributeResult | base String | generated | method-result
+    def attribute(animates: com.histmersion.web.map.MapMotion.AttributeAnimates): com.histmersion.web.map.MapMotion.AttributeResult = if animates then "animate" else "still"
+com.histmersion.web.map.MapMotion.FromWireS | base String | generated | method-parameter
+    def fromWire(s: com.histmersion.web.map.MapMotion.FromWireS): Option[MapMotion] = values.find(_.wire == s.trim.toLowerCase)
+com.histmersion.web.map.MapMotion.HeldBySystemResult | base Boolean | generated | method-result
+    def heldBySystem(m: MapMotion, systemReduced: com.histmersion.web.map.MapMotion.HeldBySystemSystemReduced): com.histmersion.web.map.MapMotion.HeldBySystemResult = m == Sy
+com.histmersion.web.map.MapMotion.HeldBySystemSystemReduced | base Boolean | generated | method-parameter
+    def heldBySystem(m: MapMotion, systemReduced: com.histmersion.web.map.MapMotion.HeldBySystemSystemReduced): com.histmersion.web.map.MapMotion.HeldBySystemResult = m == Sy
+com.histmersion.web.map.MapMotion.Label | base String | generated | constructor-parameter
+    enum MapMotion(val wire: MapMotion.Wire, val label: MapMotion.Label):
+com.histmersion.web.map.MapMotion.MapLibreReduceResult | base Boolean | generated | method-result
+    def mapLibreReduce(m: MapMotion): Option[com.histmersion.web.map.MapMotion.MapLibreReduceResult] = m match
+com.histmersion.web.map.MapMotion.Wire | base String | generated | constructor-parameter
+    enum MapMotion(val wire: MapMotion.Wire, val label: MapMotion.Label):
+    def fromWire(s: com.histmersion.web.map.MapMotion.FromWireS): Option[MapMotion] = values.find(_.wire == s.trim.toLowerCase)
+com.histmersion.web.map.MapStart.DecodeResultPart2 | base Double | generated | method-result
+    def decode(s: com.histmersion.web.map.MapStart.DecodeS): Option[(LatLon, com.histmersion.web.map.MapStart.DecodeResultPart2)] =
+com.histmersion.web.map.MapStart.DecodeS | base String | generated | method-parameter
+    def decode(s: com.histmersion.web.map.MapStart.DecodeS): Option[(LatLon, com.histmersion.web.map.MapStart.DecodeResultPart2)] =
+com.histmersion.web.map.MapStart.EncodeResult | base String | generated | method-result
+    def encode(at: LatLon, zoom: com.histmersion.web.map.MapStart.EncodeZoom): com.histmersion.web.map.MapStart.EncodeResult =
+com.histmersion.web.map.MapStart.EncodeZoom | base Double | generated | alias,method-parameter
+    val RememberZoom: _root_.com.histmersion.web.map.MapStart.EncodeZoom.type = _root_.com.histmersion.web.map.MapStart.EncodeZoom
+    def encode(at: LatLon, zoom: com.histmersion.web.map.MapStart.EncodeZoom): com.histmersion.web.map.MapStart.EncodeResult =
+com.histmersion.web.map.MapStart.InitialResultPart2 | base Double | generated | method-result
+    def initial(cfg: MapStartConfig, stored: Option[com.histmersion.web.map.MapStart.InitialStored]): (LatLon, com.histmersion.web.map.MapStart.InitialResultPart2) =
+com.histmersion.web.map.MapStart.InitialStored | base String | generated | method-parameter
+    def initial(cfg: MapStartConfig, stored: Option[com.histmersion.web.map.MapStart.InitialStored]): (LatLon, com.histmersion.web.map.MapStart.InitialResultPart2) =
+com.histmersion.web.map.MapStart.RoundPlaces | base Int | generated | method-parameter
+    private def round(v: com.histmersion.web.map.MapStart.RoundV, places: com.histmersion.web.map.MapStart.RoundPlaces): com.histmersion.web.map.MapStart.RoundResult =
+com.histmersion.web.map.MapStart.RoundResult | base String | generated | method-result
+    private def round(v: com.histmersion.web.map.MapStart.RoundV, places: com.histmersion.web.map.MapStart.RoundPlaces): com.histmersion.web.map.MapStart.RoundResult =
+com.histmersion.web.map.MapStart.RoundV | base Double | generated | method-parameter
+    private def round(v: com.histmersion.web.map.MapStart.RoundV, places: com.histmersion.web.map.MapStart.RoundPlaces): com.histmersion.web.map.MapStart.RoundResult =
+com.histmersion.web.map.MapSurface.BaseMapAreasAtResult | base String | generated | method-result
+    def baseMapAreasAt(p: ScreenPt): Seq[com.histmersion.web.map.MapSurface.BaseMapAreasAtResult]
+com.histmersion.web.map.MapSurface.BaseMapDrawnId | base String | generated | method-parameter
+    def baseMapDrawn(id: com.histmersion.web.map.MapSurface.BaseMapDrawnId): com.histmersion.web.map.MapSurface.BaseMapDrawnResult
+com.histmersion.web.map.MapSurface.BaseMapDrawnResult | base Int | generated | method-result
+    def baseMapDrawn(id: com.histmersion.web.map.MapSurface.BaseMapDrawnId): com.histmersion.web.map.MapSurface.BaseMapDrawnResult
+com.histmersion.web.map.MapSurface.BaseMapLabelsResultPart1 | base String | generated | method-result
+    def baseMapLabels: Seq[(com.histmersion.web.map.MapSurface.BaseMapLabelsResultPart1, com.histmersion.web.map.MapSurface.BaseMapLabelsResultPart2, ScreenPt)]
+com.histmersion.web.map.MapSurface.BaseMapLabelsResultPart2 | base String | generated | method-result
+    def baseMapLabels: Seq[(com.histmersion.web.map.MapSurface.BaseMapLabelsResultPart1, com.histmersion.web.map.MapSurface.BaseMapLabelsResultPart2, ScreenPt)]
+com.histmersion.web.map.MapSurface.BaseMapLayerId | base String | generated | method-parameter
+    def baseMapLayer(id: com.histmersion.web.map.MapSurface.BaseMapLayerId): Option[com.histmersion.web.map.MapSurface.BaseMapLayerResult]
+com.histmersion.web.map.MapSurface.BaseMapLayerResult | base String | generated | method-result
+    def baseMapLayer(id: com.histmersion.web.map.MapSurface.BaseMapLayerId): Option[com.histmersion.web.map.MapSurface.BaseMapLayerResult]
+com.histmersion.web.map.MapSurface.CreditsResult | base String | generated | method-result
+    def credits: Seq[com.histmersion.web.map.MapSurface.CreditsResult] = Nil
+com.histmersion.web.map.MapSurface.DrawnNamesResult | base String | generated | method-result
+    def drawnNames: Seq[com.histmersion.web.map.MapSurface.DrawnNamesResult]
+com.histmersion.web.map.MapSurface.FitBoundsAnimate | base Boolean | generated | method-parameter
+    def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.MapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.FitBoundsMaxZoom, animate: com.histm
+com.histmersion.web.map.MapSurface.FitBoundsMaxZoom | base Double | generated | method-parameter
+    def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.MapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.FitBoundsMaxZoom, animate: com.histm
+com.histmersion.web.map.MapSurface.FitBoundsPadding | base Int | generated | method-parameter
+    def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.MapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.FitBoundsMaxZoom, animate: com.histm
+com.histmersion.web.map.MapSurface.IsChromeResult | base Boolean | generated | method-result
+    def isChrome(el: dom.Element): com.histmersion.web.map.MapSurface.IsChromeResult = false
+com.histmersion.web.map.MapSurface.IsDrawnResult | base Boolean | generated | method-result
+    def isDrawn: com.histmersion.web.map.MapSurface.IsDrawnResult
+com.histmersion.web.map.MapSurface.IsMovingResult | base Boolean | generated | method-result
+    def isMoving: com.histmersion.web.map.MapSurface.IsMovingResult
+com.histmersion.web.map.MapSurface.MaxZoomResult | base Double | generated | method-result
+    def maxZoom: com.histmersion.web.map.MapSurface.MaxZoomResult
+com.histmersion.web.map.MapSurface.PanByAnimate | base Boolean | generated | method-parameter
+    def panBy(dx: com.histmersion.web.map.MapSurface.PanByDx, dy: com.histmersion.web.map.MapSurface.PanByDy, animate: com.histmersion.web.map.MapSurface.PanByAnimate = false
+com.histmersion.web.map.MapSurface.PanByDx | base Double | generated | method-parameter
+    def panBy(dx: com.histmersion.web.map.MapSurface.PanByDx, dy: com.histmersion.web.map.MapSurface.PanByDy, animate: com.histmersion.web.map.MapSurface.PanByAnimate = false
+com.histmersion.web.map.MapSurface.PanByDy | base Double | generated | method-parameter
+    def panBy(dx: com.histmersion.web.map.MapSurface.PanByDx, dy: com.histmersion.web.map.MapSurface.PanByDy, animate: com.histmersion.web.map.MapSurface.PanByAnimate = false
+com.histmersion.web.map.MapSurface.PointTilesId | base String | generated | method-parameter
+    def pointTiles(id: com.histmersion.web.map.MapSurface.PointTilesId, layer: com.histmersion.web.map.MapSurface.PointTilesLayer, maxZoom: com.histmersion.web.map.MapSurface
+com.histmersion.web.map.MapSurface.PointTilesLayer | base String | generated | method-parameter
+    def pointTiles(id: com.histmersion.web.map.MapSurface.PointTilesId, layer: com.histmersion.web.map.MapSurface.PointTilesLayer, maxZoom: com.histmersion.web.map.MapSurface
+com.histmersion.web.map.MapSurface.PointTilesMaxZoom | base Int | generated | method-parameter
+    def pointTiles(id: com.histmersion.web.map.MapSurface.PointTilesId, layer: com.histmersion.web.map.MapSurface.PointTilesLayer, maxZoom: com.histmersion.web.map.MapSurface
+com.histmersion.web.map.MapSurface.PopupCls | base String | generated | method-parameter
+    def popup(at: LatLon, html: com.histmersion.web.map.MapSurface.PopupHtml, cls: com.histmersion.web.map.MapSurface.PopupCls = ""): Popup
+com.histmersion.web.map.MapSurface.PopupHtml | base String | generated | method-parameter
+    def popup(at: LatLon, html: com.histmersion.web.map.MapSurface.PopupHtml, cls: com.histmersion.web.map.MapSurface.PopupCls = ""): Popup
+com.histmersion.web.map.MapSurface.ResizeCountResult | base Int | generated | method-result
+    def resizeCount: com.histmersion.web.map.MapSurface.ResizeCountResult = 0
+com.histmersion.web.map.MapSurface.SetLockedLocked | base Boolean | generated | method-parameter
+    def setLocked(locked: com.histmersion.web.map.MapSurface.SetLockedLocked): Unit = ()
+com.histmersion.web.map.MapSurface.SetMaxZoomZ | base Double | generated | method-parameter
+    def setMaxZoom(z: com.histmersion.web.map.MapSurface.SetMaxZoomZ): Unit
+com.histmersion.web.map.MapSurface.SetViewAnimate | base Boolean | generated | method-parameter
+    def setView(at: LatLon, zoom: com.histmersion.web.map.MapSurface.SetViewZoom, animate: com.histmersion.web.map.MapSurface.SetViewAnimate = false): Unit
+com.histmersion.web.map.MapSurface.SetViewZoom | base Double | generated | method-parameter
+    def setView(at: LatLon, zoom: com.histmersion.web.map.MapSurface.SetViewZoom, animate: com.histmersion.web.map.MapSurface.SetViewAnimate = false): Unit
+com.histmersion.web.map.MapSurface.SetZoomAnimate | base Boolean | generated | method-parameter
+    def setZoom(zoom: com.histmersion.web.map.MapSurface.SetZoomZoom, animate: com.histmersion.web.map.MapSurface.SetZoomAnimate = true): Unit = setView(center, zoom, animate
+com.histmersion.web.map.MapSurface.SetZoomZoom | base Double | generated | method-parameter
+    def setZoom(zoom: com.histmersion.web.map.MapSurface.SetZoomZoom, animate: com.histmersion.web.map.MapSurface.SetZoomAnimate = true): Unit = setView(center, zoom, animate
+com.histmersion.web.map.MapSurface.ShapeSetId | base String | generated | method-parameter
+    def shapeSet(id: com.histmersion.web.map.MapSurface.ShapeSetId): Option[ShapeSet]
+com.histmersion.web.map.MapSurface.ShapesId | base String | generated | method-parameter
+    def shapes(id: com.histmersion.web.map.MapSurface.ShapesId, style: ShapeStyle): ShapeSet
+com.histmersion.web.map.MapSurface.SizeResultPart1 | base Double | generated | method-result
+    def size: (com.histmersion.web.map.MapSurface.SizeResultPart1, com.histmersion.web.map.MapSurface.SizeResultPart2)
+com.histmersion.web.map.MapSurface.SizeResultPart2 | base Double | generated | method-result
+    def size: (com.histmersion.web.map.MapSurface.SizeResultPart1, com.histmersion.web.map.MapSurface.SizeResultPart2)
+com.histmersion.web.map.MapSurface.ZoomResult | base Double | generated | method-result
+    def zoom: com.histmersion.web.map.MapSurface.ZoomResult

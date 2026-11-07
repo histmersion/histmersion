@@ -57,7 +57,7 @@ for f, d in raw.items():
     inApi = f.startswith('com.histmersion.api.')
     if inApi and t.startswith('com.histmersion.domain.'):
         t = 'com.histmersion.api.' + t[len('com.histmersion.domain.'):]
-    elif not inApi and t.startswith('com.histmersion.api.'):
+    elif not inApi and t.startswith('com.histmersion.api.') and not os.environ.get('CONCEPT_CLIENT'):
         why['domain type onto api'] += 1; continue
     if t == 'com.histmersion.api.Markdown.Text' and RENDERER.search(r['owner']):
         table[f] = 'native'; continue

@@ -1,0 +1,125 @@
+## CONCEPTS NEARBY
+com.histmersion.api.ByteCount (Long)
+com.histmersion.api.Offset (Int)
+com.histmersion.api.RowCount (Int)
+com.histmersion.api.Sha256 (String)
+com.histmersion.web.map.NoMap.Shapes.Id (String)
+com.histmersion.web.map.NoMapSurface.MaxZoom0 (Double)
+com.histmersion.web.map.NoMapSurface.Why (String)
+
+## TYPES TO DECIDE
+com.histmersion.web.map.MarkerPane.HasResult | base Boolean | generated | method-result
+    def has(m: DomMarker): com.histmersion.web.map.MarkerPane.HasResult = markers.contains(m)
+com.histmersion.web.map.MarkerPane.RetireMs | base Int | generated | method-parameter
+    def retire(m: DomMarker, ms: com.histmersion.web.map.MarkerPane.RetireMs): Unit =
+com.histmersion.web.map.MarkerPane.SizeResult | base Int | generated | method-result
+    def size: com.histmersion.web.map.MarkerPane.SizeResult = markers.size
+com.histmersion.web.map.MotionPref.AnimateResult | base Boolean | generated | method-result
+    def animate(): com.histmersion.web.map.MotionPref.AnimateResult = MapMotion.animates(choice, systemReduced)
+com.histmersion.web.map.MotionPref.Animates | base Boolean | generated | value
+    val animates: Signal[com.histmersion.web.map.MotionPref.Animates] = state.signal.map(MapMotion.animates.tupled)
+com.histmersion.web.map.MotionPref.HeldBySystem | base Boolean | generated | value
+    val heldBySystem: Signal[com.histmersion.web.map.MotionPref.HeldBySystem] = state.signal.map(MapMotion.heldBySystem.tupled)
+com.histmersion.web.map.MotionPref.StatePart2 | base Boolean | generated | value
+    private val state: Var[(MapMotion, com.histmersion.web.map.MotionPref.StatePart2)] = Var((MapMotion.System, false))
+com.histmersion.web.map.MotionPref.SystemChangedReduced | base Boolean | generated | method-parameter
+    private[web] def systemChanged(reduced: com.histmersion.web.map.MotionPref.SystemChangedReduced): Unit =
+com.histmersion.web.map.MotionPref.SystemNow | base Boolean | generated | variable
+    private var systemNow: com.histmersion.web.map.MotionPref.SystemNow = false
+com.histmersion.web.map.MotionPref.SystemReducedResult | base Boolean | generated | method-result
+    def systemReduced: com.histmersion.web.map.MotionPref.SystemReducedResult = { install(); systemNow }
+com.histmersion.web.map.NoMap.EscS | base String | generated | method-parameter
+    private def esc(s: com.histmersion.web.map.NoMap.EscS) = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+com.histmersion.web.map.NoMap.HtmlResult | base String | generated | method-result
+    def html(why: com.histmersion.web.map.NoMap.HtmlWhy): com.histmersion.web.map.NoMap.HtmlResult =
+com.histmersion.web.map.NoMap.MessageResultPart1 | base String | generated | method-result
+    def message(why: com.histmersion.web.map.NoMap.MessageWhy): (com.histmersion.web.map.NoMap.MessageResultPart1, com.histmersion.web.map.NoMap.MessageResultPart2) =
+com.histmersion.web.map.NoMap.MessageResultPart2 | base String | generated | method-result
+    def message(why: com.histmersion.web.map.NoMap.MessageWhy): (com.histmersion.web.map.NoMap.MessageResultPart1, com.histmersion.web.map.NoMap.MessageResultPart2) =
+com.histmersion.web.map.NoMap.MessageWhy | base String | generated | alias,method-parameter
+    val HtmlWhy: _root_.com.histmersion.web.map.NoMap.MessageWhy.type = _root_.com.histmersion.web.map.NoMap.MessageWhy
+    def message(why: com.histmersion.web.map.NoMap.MessageWhy): (com.histmersion.web.map.NoMap.MessageResultPart1, com.histmersion.web.map.NoMap.MessageResultPart2) =
+com.histmersion.web.map.NoMap.Shapes.Current | base String | generated | variable
+    private var current: Seq[com.histmersion.web.map.NoMap.Shapes.Current] = Nil
+com.histmersion.web.map.NoMap.Shapes.Id | base String | generated | constructor-parameter
+    final class Shapes(val id: Shapes.Id) extends ShapeSet:
+com.histmersion.web.map.NoMap.Shapes.IdsResult | base String | generated | method-result
+    def ids: Seq[com.histmersion.web.map.NoMap.Shapes.IdsResult] = current
+com.histmersion.web.map.NoMap.Shapes.RestyleAlpha | base Double | generated | method-parameter
+    def restyle(id: com.histmersion.web.map.NoMap.Shapes.RestyleId, colour: com.histmersion.web.map.NoMap.Shapes.RestyleColour, alpha: com.histmersion.web.map.NoMap.Shapes.Re
+com.histmersion.web.map.NoMap.Shapes.RestyleColour | base String | generated | method-parameter
+    def restyle(id: com.histmersion.web.map.NoMap.Shapes.RestyleId, colour: com.histmersion.web.map.NoMap.Shapes.RestyleColour, alpha: com.histmersion.web.map.NoMap.Shapes.Re
+com.histmersion.web.map.NoMap.Shapes.RestyleId | base String | generated | method-parameter
+    def restyle(id: com.histmersion.web.map.NoMap.Shapes.RestyleId, colour: com.histmersion.web.map.NoMap.Shapes.RestyleColour, alpha: com.histmersion.web.map.NoMap.Shapes.Re
+com.histmersion.web.map.NoMap.Tiles.LoadedResult | base Boolean | generated | method-result
+    def loaded: com.histmersion.web.map.NoMap.Tiles.LoadedResult = true
+com.histmersion.web.map.NoMap.Tiles.SetTilesTemplate | base String | generated | method-parameter
+    def setTiles(template: Option[com.histmersion.web.map.NoMap.Tiles.SetTilesTemplate]): Unit = ()
+com.histmersion.web.map.NoMapSurface.BaseMapAreasAtResult | base String | generated | method-result
+    def baseMapAreasAt(p: ScreenPt): Seq[com.histmersion.web.map.NoMapSurface.BaseMapAreasAtResult] = Nil
+com.histmersion.web.map.NoMapSurface.BaseMapDrawnId | base String | generated | method-parameter
+    def baseMapDrawn(id: com.histmersion.web.map.NoMapSurface.BaseMapDrawnId): com.histmersion.web.map.NoMapSurface.BaseMapDrawnResult = 0
+com.histmersion.web.map.NoMapSurface.BaseMapDrawnResult | base Int | generated | method-result
+    def baseMapDrawn(id: com.histmersion.web.map.NoMapSurface.BaseMapDrawnId): com.histmersion.web.map.NoMapSurface.BaseMapDrawnResult = 0
+com.histmersion.web.map.NoMapSurface.BaseMapLabelsResultPart1 | base String | generated | method-result
+    def baseMapLabels: Seq[(com.histmersion.web.map.NoMapSurface.BaseMapLabelsResultPart1, com.histmersion.web.map.NoMapSurface.BaseMapLabelsResultPart2, ScreenPt)] = Nil
+com.histmersion.web.map.NoMapSurface.BaseMapLabelsResultPart2 | base String | generated | method-result
+    def baseMapLabels: Seq[(com.histmersion.web.map.NoMapSurface.BaseMapLabelsResultPart1, com.histmersion.web.map.NoMapSurface.BaseMapLabelsResultPart2, ScreenPt)] = Nil
+com.histmersion.web.map.NoMapSurface.BaseMapLayerId | base String | generated | method-parameter
+    def baseMapLayer(id: com.histmersion.web.map.NoMapSurface.BaseMapLayerId): Option[com.histmersion.web.map.NoMapSurface.BaseMapLayerResult] = None
+com.histmersion.web.map.NoMapSurface.BaseMapLayerResult | base String | generated | method-result
+    def baseMapLayer(id: com.histmersion.web.map.NoMapSurface.BaseMapLayerId): Option[com.histmersion.web.map.NoMapSurface.BaseMapLayerResult] = None
+com.histmersion.web.map.NoMapSurface.DrawnNamesResult | base String | generated | method-result
+    def drawnNames: Seq[com.histmersion.web.map.NoMapSurface.DrawnNamesResult] = Nil
+com.histmersion.web.map.NoMapSurface.FitBoundsAnimate | base Boolean | generated | method-parameter
+    def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.NoMapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.NoMapSurface.FitBoundsMaxZoom, animate: com.h
+com.histmersion.web.map.NoMapSurface.FitBoundsMaxZoom | base Double | generated | method-parameter
+    def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.NoMapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.NoMapSurface.FitBoundsMaxZoom, animate: com.h
+com.histmersion.web.map.NoMapSurface.FitBoundsPadding | base Int | generated | method-parameter
+    def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.NoMapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.NoMapSurface.FitBoundsMaxZoom, animate: com.h
+com.histmersion.web.map.NoMapSurface.IsDrawnResult | base Boolean | generated | method-result
+    def isDrawn: com.histmersion.web.map.NoMapSurface.IsDrawnResult = false
+com.histmersion.web.map.NoMapSurface.IsMovingResult | base Boolean | generated | method-result
+    def isMoving: com.histmersion.web.map.NoMapSurface.IsMovingResult = false
+com.histmersion.web.map.NoMapSurface.MaxZoom0 | base Double | generated | constructor-parameter
+    final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capabilities, maxZoom0: NoMapSurface.MaxZoom0) extends MapSurface:
+com.histmersion.web.map.NoMapSurface.MaxZoomResult | base Double | generated | method-result
+    def maxZoom: com.histmersion.web.map.NoMapSurface.MaxZoomResult = maxZ
+com.histmersion.web.map.NoMapSurface.PanByAnimate | base Boolean | generated | method-parameter
+    def panBy(dx: com.histmersion.web.map.NoMapSurface.PanByDx, dy: com.histmersion.web.map.NoMapSurface.PanByDy, animate: com.histmersion.web.map.NoMapSurface.PanByAnimate =
+com.histmersion.web.map.NoMapSurface.PanByDx | base Double | generated | method-parameter
+    def panBy(dx: com.histmersion.web.map.NoMapSurface.PanByDx, dy: com.histmersion.web.map.NoMapSurface.PanByDy, animate: com.histmersion.web.map.NoMapSurface.PanByAnimate =
+com.histmersion.web.map.NoMapSurface.PanByDy | base Double | generated | method-parameter
+    def panBy(dx: com.histmersion.web.map.NoMapSurface.PanByDx, dy: com.histmersion.web.map.NoMapSurface.PanByDy, animate: com.histmersion.web.map.NoMapSurface.PanByAnimate =
+com.histmersion.web.map.NoMapSurface.PointTilesId | base String | generated | method-parameter
+    def pointTiles(id: com.histmersion.web.map.NoMapSurface.PointTilesId, layer: com.histmersion.web.map.NoMapSurface.PointTilesLayer, maxZoom: com.histmersion.web.map.NoMapS
+com.histmersion.web.map.NoMapSurface.PointTilesLayer | base String | generated | method-parameter
+    def pointTiles(id: com.histmersion.web.map.NoMapSurface.PointTilesId, layer: com.histmersion.web.map.NoMapSurface.PointTilesLayer, maxZoom: com.histmersion.web.map.NoMapS
+com.histmersion.web.map.NoMapSurface.PointTilesMaxZoom | base Int | generated | method-parameter
+    def pointTiles(id: com.histmersion.web.map.NoMapSurface.PointTilesId, layer: com.histmersion.web.map.NoMapSurface.PointTilesLayer, maxZoom: com.histmersion.web.map.NoMapS
+com.histmersion.web.map.NoMapSurface.PopupCls | base String | generated | method-parameter
+    def popup(at: LatLon, html: com.histmersion.web.map.NoMapSurface.PopupHtml, cls: com.histmersion.web.map.NoMapSurface.PopupCls = ""): Popup = new Popup:
+com.histmersion.web.map.NoMapSurface.PopupHtml | base String | generated | method-parameter
+    def popup(at: LatLon, html: com.histmersion.web.map.NoMapSurface.PopupHtml, cls: com.histmersion.web.map.NoMapSurface.PopupCls = ""): Popup = new Popup:
+com.histmersion.web.map.NoMapSurface.PopupIsOpenResult | base Boolean | generated | method-result
+    def isOpen: com.histmersion.web.map.NoMapSurface.PopupIsOpenResult = false
+com.histmersion.web.map.NoMapSurface.SetMaxZoomV | base Double | generated | method-parameter
+    def setMaxZoom(v: com.histmersion.web.map.NoMapSurface.SetMaxZoomV): Unit = maxZ = v
+com.histmersion.web.map.NoMapSurface.SetViewAnimate | base Boolean | generated | method-parameter
+    def setView(p: LatLon, zoom: com.histmersion.web.map.NoMapSurface.SetViewZoom, animate: com.histmersion.web.map.NoMapSurface.SetViewAnimate = false): Unit = { at = p; z =
+com.histmersion.web.map.NoMapSurface.SetViewZoom | base Double | generated | method-parameter
+    def setView(p: LatLon, zoom: com.histmersion.web.map.NoMapSurface.SetViewZoom, animate: com.histmersion.web.map.NoMapSurface.SetViewAnimate = false): Unit = { at = p; z =
+com.histmersion.web.map.NoMapSurface.ShapeSetId | base String | generated | method-parameter
+    def shapeSet(id: com.histmersion.web.map.NoMapSurface.ShapeSetId): Option[ShapeSet] = sets.get(id)
+com.histmersion.web.map.NoMapSurface.ShapesId | base String | generated | method-parameter
+    def shapes(id: com.histmersion.web.map.NoMapSurface.ShapesId, style: ShapeStyle): ShapeSet = sets.getOrElseUpdate(id, NoMap.Shapes(id))
+com.histmersion.web.map.NoMapSurface.SizeResultPart1 | base Double | generated | method-result
+    def size: (com.histmersion.web.map.NoMapSurface.SizeResultPart1, com.histmersion.web.map.NoMapSurface.SizeResultPart2) = (0.0, 0.0)
+com.histmersion.web.map.NoMapSurface.SizeResultPart2 | base Double | generated | method-result
+    def size: (com.histmersion.web.map.NoMapSurface.SizeResultPart1, com.histmersion.web.map.NoMapSurface.SizeResultPart2) = (0.0, 0.0)
+com.histmersion.web.map.NoMapSurface.UnavailableResult | base String | generated | method-result
+    def unavailable: com.histmersion.web.map.NoMapSurface.UnavailableResult = why
+com.histmersion.web.map.NoMapSurface.Why | base String | generated | constructor-parameter
+    final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capabilities, maxZoom0: NoMapSurface.MaxZoom0) extends MapSurface:
+com.histmersion.web.map.NoMapSurface.ZoomResult | base Double | generated | method-result
+    def zoom: com.histmersion.web.map.NoMapSurface.ZoomResult = z

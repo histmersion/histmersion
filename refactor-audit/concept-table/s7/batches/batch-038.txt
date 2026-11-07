@@ -1,0 +1,219 @@
+## CONCEPTS NEARBY
+com.histmersion.api.ByteCount (Long)
+com.histmersion.api.Offset (Int)
+com.histmersion.api.RowCount (Int)
+com.histmersion.api.Sha256 (String)
+com.histmersion.web.map.PointSet.AnimateMax (Int)
+com.histmersion.web.map.PointSet.ExitMs (Int)
+com.histmersion.web.map.PointSet.FadeOut (String)
+com.histmersion.web.map.PointSet.KeyResult (String)
+com.histmersion.web.map.PointSet.RadiusResult (Double)
+com.histmersion.web.map.PointSet.SingleArg2 (Boolean)
+com.histmersion.web.map.PointSet.Spider.Keys (String)
+com.histmersion.web.map.PointSet.Spider.MembersPart1 (String)
+com.histmersion.web.map.ScreenPt.X (Double)
+com.histmersion.web.map.ScreenPt.Y (Double)
+com.histmersion.web.map.ShapeFeature.Alpha (Double)
+com.histmersion.web.map.ShapeFeature.Colour (String)
+com.histmersion.web.map.ShapeFeature.Dashed (Boolean)
+com.histmersion.web.map.ShapeFeature.Id (String)
+com.histmersion.web.map.ShapeHit.Id (String)
+com.histmersion.web.map.ShapeHit.Set (String)
+com.histmersion.web.map.ShapeStyle.CircleRadius (Double)
+com.histmersion.web.map.ShapeStyle.Colour (String)
+com.histmersion.web.map.ShapeStyle.Dash (Double)
+com.histmersion.web.map.ShapeStyle.DashedLineOpacity (Double)
+com.histmersion.web.map.ShapeStyle.FillOpacity (Double)
+com.histmersion.web.map.ShapeStyle.Interactive (Boolean)
+com.histmersion.web.map.ShapeStyle.LineOpacity (Double)
+com.histmersion.web.map.ShapeStyle.LineWidth (Double)
+com.histmersion.web.map.VectorStyle.Id (String)
+com.histmersion.web.map.VectorStyle.Label (String)
+
+## TYPES TO DECIDE
+com.histmersion.web.map.PointSet.AnimateFreshPart2 | base String | generated | method-parameter
+com.histmersion.web.map.PointSet.AnimateGonePart3 | base String | generated | method-parameter
+com.histmersion.web.map.PointSet.AnimateMax | base Int | generated | constructor-parameter
+com.histmersion.web.map.PointSet.AnimateSeenAtPart1 | base Double | generated | method-parameter
+    def seen(at: (com.histmersion.web.map.PointSet.AnimateSeenAtPart1, com.histmersion.web.map.PointSet.AnimateSeenAtPart2)): com.histmersion.web.map.PointSet.AnimateSeenResu
+com.histmersion.web.map.PointSet.AnimateSeenAtPart2 | base Double | generated | method-parameter
+    def seen(at: (com.histmersion.web.map.PointSet.AnimateSeenAtPart1, com.histmersion.web.map.PointSet.AnimateSeenAtPart2)): com.histmersion.web.map.PointSet.AnimateSeenResu
+com.histmersion.web.map.PointSet.AnimateSeenResult | base Boolean | generated | method-result
+    def seen(at: (com.histmersion.web.map.PointSet.AnimateSeenAtPart1, com.histmersion.web.map.PointSet.AnimateSeenAtPart2)): com.histmersion.web.map.PointSet.AnimateSeenResu
+com.histmersion.web.map.PointSet.AnimateWasPart1 | base String | generated | method-parameter
+com.histmersion.web.map.PointSet.AnimateWasPart2Part1 | base Double | generated | method-parameter
+com.histmersion.web.map.PointSet.AnimateWasPart2Part2 | base Double | generated | method-parameter
+com.histmersion.web.map.PointSet.Animations | base Int | generated | variable
+    var animations: com.histmersion.web.map.PointSet.Animations = 0
+com.histmersion.web.map.PointSet.AwaitingMovesPart2 | base Double | generated | variable
+    private var awaitingMoves: Option[(LatLon, com.histmersion.web.map.PointSet.AwaitingMovesPart2)] = None
+com.histmersion.web.map.PointSet.DrawBeforePart1 | base String | generated | method-parameter
+com.histmersion.web.map.PointSet.DrawBeforePart2Part1 | base Double | generated | method-parameter
+com.histmersion.web.map.PointSet.DrawBeforePart2Part2 | base Double | generated | method-parameter
+com.histmersion.web.map.PointSet.DrawDistKs | base String | generated | method-parameter
+    def dist(ks: Vector[com.histmersion.web.map.PointSet.DrawDistKs]): com.histmersion.web.map.PointSet.DrawDistResult =
+com.histmersion.web.map.PointSet.DrawDistResult | base Double | generated | method-result
+    def dist(ks: Vector[com.histmersion.web.map.PointSet.DrawDistKs]): com.histmersion.web.map.PointSet.DrawDistResult =
+com.histmersion.web.map.PointSet.DrawLeaveKs | base String | generated | method-parameter
+    def leave(m: DomMarker, mp: MarkerPane, ks: Seq[com.histmersion.web.map.PointSet.DrawLeaveKs]): Unit =
+com.histmersion.web.map.PointSet.DrawMakeOnePart1 | base String | generated | method-parameter
+    def make(one: (com.histmersion.web.map.PointSet.DrawMakeOnePart1, Vector[com.histmersion.web.map.PointSet.DrawMakeOnePart2], com.histmersion.web.map.PointSet.DrawMakeOneP
+com.histmersion.web.map.PointSet.DrawMakeOnePart2 | base String | generated | method-parameter
+    def make(one: (com.histmersion.web.map.PointSet.DrawMakeOnePart1, Vector[com.histmersion.web.map.PointSet.DrawMakeOnePart2], com.histmersion.web.map.PointSet.DrawMakeOneP
+com.histmersion.web.map.PointSet.DrawMakeOnePart3 | base Boolean | generated | method-parameter
+    def make(one: (com.histmersion.web.map.PointSet.DrawMakeOnePart1, Vector[com.histmersion.web.map.PointSet.DrawMakeOnePart2], com.histmersion.web.map.PointSet.DrawMakeOneP
+com.histmersion.web.map.PointSet.DrawNearestFirstVPart1 | base String | generated | method-parameter
+    def nearestFirst(v: Vector[(com.histmersion.web.map.PointSet.DrawNearestFirstVPart1, Vector[com.histmersion.web.map.PointSet.DrawNearestFirstVPart2], com.histmersion.web.
+com.histmersion.web.map.PointSet.DrawNearestFirstVPart2 | base String | generated | method-parameter
+    def nearestFirst(v: Vector[(com.histmersion.web.map.PointSet.DrawNearestFirstVPart1, Vector[com.histmersion.web.map.PointSet.DrawNearestFirstVPart2], com.histmersion.web.
+com.histmersion.web.map.PointSet.DrawNearestFirstVPart3 | base Boolean | generated | method-parameter
+    def nearestFirst(v: Vector[(com.histmersion.web.map.PointSet.DrawNearestFirstVPart1, Vector[com.histmersion.web.map.PointSet.DrawNearestFirstVPart2], com.histmersion.web.
+com.histmersion.web.map.PointSet.DrawOnScreenKs | base String | generated | method-parameter
+    def onScreen(ks: Vector[com.histmersion.web.map.PointSet.DrawOnScreenKs]): com.histmersion.web.map.PointSet.DrawOnScreenResult =
+com.histmersion.web.map.PointSet.DrawOnScreenResult | base Boolean | generated | method-result
+    def onScreen(ks: Vector[com.histmersion.web.map.PointSet.DrawOnScreenKs]): com.histmersion.web.map.PointSet.DrawOnScreenResult =
+com.histmersion.web.map.PointSet.DrawWantedPart1 | base String | generated | method-parameter
+com.histmersion.web.map.PointSet.DrawWantedPart2Part1 | base String | generated | method-parameter
+com.histmersion.web.map.PointSet.DrawWantedPart2Part2 | base String | generated | method-parameter
+com.histmersion.web.map.PointSet.DrawnAloneK | base String | generated | method-parameter
+    def drawnAlone(k: com.histmersion.web.map.PointSet.DrawnAloneK): Option[DomMarker] =
+com.histmersion.web.map.PointSet.DrawnMarkersResult | base Int | generated | method-result
+    private def drawnMarkers: com.histmersion.web.map.PointSet.DrawnMarkersResult =
+com.histmersion.web.map.PointSet.DrawnPlacesResultPart1 | base String | generated | method-result
+    private def drawnPlaces(): Map[com.histmersion.web.map.PointSet.DrawnPlacesResultPart1, (com.histmersion.web.map.PointSet.DrawnPlacesResultPart2Part1, com.histmersion.web
+com.histmersion.web.map.PointSet.DrawnPlacesResultPart2Part1 | base Double | generated | method-result
+    private def drawnPlaces(): Map[com.histmersion.web.map.PointSet.DrawnPlacesResultPart1, (com.histmersion.web.map.PointSet.DrawnPlacesResultPart2Part1, com.histmersion.web
+com.histmersion.web.map.PointSet.DrawnPlacesResultPart2Part2 | base Double | generated | method-result
+    private def drawnPlaces(): Map[com.histmersion.web.map.PointSet.DrawnPlacesResultPart1, (com.histmersion.web.map.PointSet.DrawnPlacesResultPart2Part1, com.histmersion.web
+com.histmersion.web.map.PointSet.ExitMs | base Int | generated | constructor-parameter
+com.histmersion.web.map.PointSet.FadeOut | base String | generated | constructor-parameter
+com.histmersion.web.map.PointSet.GetK | base String | generated | method-parameter
+    def get(k: com.histmersion.web.map.PointSet.GetK): Option[D] = items.get(k)
+com.histmersion.web.map.PointSet.GroupKeysK | base String | generated | method-parameter
+    def groupKeys(k: com.histmersion.web.map.PointSet.GroupKeysK): Seq[com.histmersion.web.map.PointSet.GroupKeysResult] = groupOf.get(k).fold(Seq(k))(g => groups(g)._1)
+com.histmersion.web.map.PointSet.GroupKeysResult | base String | generated | method-result
+    def groupKeys(k: com.histmersion.web.map.PointSet.GroupKeysK): Seq[com.histmersion.web.map.PointSet.GroupKeysResult] = groupOf.get(k).fold(Seq(k))(g => groups(g)._1)
+com.histmersion.web.map.PointSet.GroupOfPart1 | base String | generated | variable
+    private var groupOf: collection.Map[com.histmersion.web.map.PointSet.GroupOfPart1, com.histmersion.web.map.PointSet.GroupOfPart2] = Map.empty
+com.histmersion.web.map.PointSet.GroupOfPart2 | base Int | generated | variable
+    private var groupOf: collection.Map[com.histmersion.web.map.PointSet.GroupOfPart1, com.histmersion.web.map.PointSet.GroupOfPart2] = Map.empty
+com.histmersion.web.map.PointSet.GroupsPart1 | base String | generated | variable
+    private var groups: Vector[(Vector[com.histmersion.web.map.PointSet.GroupsPart1], LatLon)] = Vector.empty
+com.histmersion.web.map.PointSet.KeyResult | base String | generated | constructor-parameter
+com.histmersion.web.map.PointSet.KeysResult | base String | generated | method-result
+    def keys: Iterable[com.histmersion.web.map.PointSet.KeysResult] = items.keys
+com.histmersion.web.map.PointSet.LayoutAnimate | base Boolean | generated | method-parameter
+    def layout(animate: com.histmersion.web.map.PointSet.LayoutAnimate): Unit =
+com.histmersion.web.map.PointSet.Level | base Int | generated | variable
+    private var level: com.histmersion.web.map.PointSet.Level = Int.MinValue
+com.histmersion.web.map.PointSet.MeasureName | base String | generated | method-parameter
+    private def measure(name: com.histmersion.web.map.PointSet.MeasureName, t0: com.histmersion.web.map.PointSet.MeasureT0, t1: com.histmersion.web.map.PointSet.MeasureT1): U
+com.histmersion.web.map.PointSet.MeasureT0 | base Double | generated | method-parameter
+    private def measure(name: com.histmersion.web.map.PointSet.MeasureName, t0: com.histmersion.web.map.PointSet.MeasureT0, t1: com.histmersion.web.map.PointSet.MeasureT1): U
+com.histmersion.web.map.PointSet.MeasureT1 | base Double | generated | method-parameter
+    private def measure(name: com.histmersion.web.map.PointSet.MeasureName, t0: com.histmersion.web.map.PointSet.MeasureT0, t1: com.histmersion.web.map.PointSet.MeasureT1): U
+com.histmersion.web.map.PointSet.RadiusResult | base Double | generated | constructor-parameter
+com.histmersion.web.map.PointSet.RegroupZ | base Int | generated | method-parameter
+    private def regroup(z: com.histmersion.web.map.PointSet.RegroupZ): Unit =
+com.histmersion.web.map.PointSet.RemoveKs | base String | generated | method-parameter
+    def remove(ks: Iterable[com.histmersion.web.map.PointSet.RemoveKs]): Unit =
+com.histmersion.web.map.PointSet.SingleArg2 | base Boolean | generated | constructor-parameter
+com.histmersion.web.map.PointSet.SizeResult | base Int | generated | method-result
+    def size: com.histmersion.web.map.PointSet.SizeResult = items.size
+com.histmersion.web.map.PointSet.Spider.Keys | base String | generated | constructor-parameter
+    val keys: Seq[Spider.Keys],
+    def groupKeys(k: com.histmersion.web.map.PointSet.GroupKeysK): Seq[com.histmersion.web.map.PointSet.GroupKeysResult] = groupOf.get(k).fold(Seq(k))(g => groups(g)._1)
+com.histmersion.web.map.PointSet.Spider.MembersPart1 | base String | generated | constructor-parameter
+    val members: Seq[(Spider.MembersPart1, (DomMarker, MarkerPane))],
+com.histmersion.web.map.PointSet.SpideredResult | base String | generated | method-result
+    def spidered: Seq[com.histmersion.web.map.PointSet.SpideredResult] = spider.fold(Seq.empty)(_.keys)
+com.histmersion.web.map.PointSet.SpiderfyKs | base String | generated | method-parameter
+    def spiderfy(ks: Seq[com.histmersion.web.map.PointSet.SpiderfyKs], separation: com.histmersion.web.map.PointSet.SpiderfySeparation): Unit =
+com.histmersion.web.map.PointSet.SpiderfySeparation | base Double | generated | method-parameter
+    def spiderfy(ks: Seq[com.histmersion.web.map.PointSet.SpiderfyKs], separation: com.histmersion.web.map.PointSet.SpiderfySeparation): Unit =
+com.histmersion.web.map.PointSet.ZoomToShowDeepestResult | base Boolean | generated | method-result
+    def deepest: com.histmersion.web.map.PointSet.ZoomToShowDeepestResult = s.zoom >= s.maxZoom - 0.01
+com.histmersion.web.map.PointSet.ZoomToShowDoneResult | base Boolean | generated | method-result
+    def done(): com.histmersion.web.map.PointSet.ZoomToShowDoneResult = drawnAlone(k).isDefined
+com.histmersion.web.map.PointSet.ZoomToShowInseparableResult | base Boolean | generated | method-result
+    def inseparable: com.histmersion.web.map.PointSet.ZoomToShowInseparableResult = Clustering.onePlace(groupKeys(k).flatMap(items.get).map(at))
+com.histmersion.web.map.PointSet.ZoomToShowK | base String | generated | method-parameter
+    def zoomToShow(k: com.histmersion.web.map.PointSet.ZoomToShowK, andThen: () => Unit): Unit =
+com.histmersion.web.map.PointTiles.LoadedResult | base Boolean | generated | method-result
+    def loaded: com.histmersion.web.map.PointTiles.LoadedResult
+com.histmersion.web.map.PointTiles.SetTilesTemplate | base String | generated | method-parameter
+    def setTiles(template: Option[com.histmersion.web.map.PointTiles.SetTilesTemplate]): Unit
+com.histmersion.web.map.Popup.IsOpenResult | base Boolean | generated | method-result
+    def isOpen: com.histmersion.web.map.Popup.IsOpenResult
+com.histmersion.web.map.ScreenPt.X | base Double | original | constructor-parameter
+com.histmersion.web.map.ScreenPt.Y | base Double | original | constructor-parameter
+com.histmersion.web.map.ShapeFeature.Alpha | base Double | original | constructor-parameter
+com.histmersion.web.map.ShapeFeature.Colour | base String | original | constructor-parameter
+com.histmersion.web.map.ShapeFeature.Dashed | base Boolean | original | constructor-parameter
+com.histmersion.web.map.ShapeFeature.Id | base String | original | constructor-parameter
+com.histmersion.web.map.ShapeHit.Id | base String | original | constructor-parameter
+    final case class ShapeHit(set: ShapeHit.Set, id: ShapeHit.Id)
+com.histmersion.web.map.ShapeHit.Set | base String | original | constructor-parameter
+    final case class ShapeHit(set: ShapeHit.Set, id: ShapeHit.Id)
+com.histmersion.web.map.ShapeHits.ContainsLat | base Double | generated | method-parameter
+    def contains(g: js.Dynamic, lat: com.histmersion.web.map.ShapeHits.ContainsLat, lon: com.histmersion.web.map.ShapeHits.ContainsLon): com.histmersion.web.map.ShapeHits.Con
+com.histmersion.web.map.ShapeHits.ContainsLon | base Double | generated | method-parameter
+    def contains(g: js.Dynamic, lat: com.histmersion.web.map.ShapeHits.ContainsLat, lon: com.histmersion.web.map.ShapeHits.ContainsLon): com.histmersion.web.map.ShapeHits.Con
+com.histmersion.web.map.ShapeHits.ContainsPolygonResult | base Boolean | generated | method-result
+    def polygon(p: js.Array[js.Array[js.Array[Double]]]): com.histmersion.web.map.ShapeHits.ContainsPolygonResult = p.count(ring) % 2 == 1
+com.histmersion.web.map.ShapeHits.ContainsResult | base Boolean | generated | method-result
+    def contains(g: js.Dynamic, lat: com.histmersion.web.map.ShapeHits.ContainsLat, lon: com.histmersion.web.map.ShapeHits.ContainsLon): com.histmersion.web.map.ShapeHits.Con
+com.histmersion.web.map.ShapeHits.ContainsRingResult | base Boolean | generated | method-result
+    def ring(r: js.Array[js.Array[Double]]): com.histmersion.web.map.ShapeHits.ContainsRingResult =
+com.histmersion.web.map.ShapeSet.IdResult | base String | generated | method-result
+    def id: com.histmersion.web.map.ShapeSet.IdResult
+com.histmersion.web.map.ShapeSet.IdsResult | base String | generated | method-result
+    def ids: Seq[com.histmersion.web.map.ShapeSet.IdsResult]
+com.histmersion.web.map.ShapeSet.RestyleAlpha | base Double | generated | method-parameter
+    def restyle(id: com.histmersion.web.map.ShapeSet.RestyleId, colour: com.histmersion.web.map.ShapeSet.RestyleColour, alpha: com.histmersion.web.map.ShapeSet.RestyleAlpha):
+com.histmersion.web.map.ShapeSet.RestyleColour | base String | generated | method-parameter
+    def restyle(id: com.histmersion.web.map.ShapeSet.RestyleId, colour: com.histmersion.web.map.ShapeSet.RestyleColour, alpha: com.histmersion.web.map.ShapeSet.RestyleAlpha):
+com.histmersion.web.map.ShapeSet.RestyleId | base String | generated | method-parameter
+    def restyle(id: com.histmersion.web.map.ShapeSet.RestyleId, colour: com.histmersion.web.map.ShapeSet.RestyleColour, alpha: com.histmersion.web.map.ShapeSet.RestyleAlpha):
+com.histmersion.web.map.ShapeSet.StyleOfId | base String | generated | method-parameter
+    def styleOf(id: com.histmersion.web.map.ShapeSet.StyleOfId): Option[(com.histmersion.web.map.ShapeSet.StyleOfResultPart1, com.histmersion.web.map.ShapeSet.StyleOfResultPa
+com.histmersion.web.map.ShapeSet.StyleOfResultPart1 | base String | generated | method-result
+    def styleOf(id: com.histmersion.web.map.ShapeSet.StyleOfId): Option[(com.histmersion.web.map.ShapeSet.StyleOfResultPart1, com.histmersion.web.map.ShapeSet.StyleOfResultPa
+com.histmersion.web.map.ShapeSet.StyleOfResultPart2 | base Double | generated | method-result
+    def styleOf(id: com.histmersion.web.map.ShapeSet.StyleOfId): Option[(com.histmersion.web.map.ShapeSet.StyleOfResultPart1, com.histmersion.web.map.ShapeSet.StyleOfResultPa
+com.histmersion.web.map.ShapeSet.UploadsResult | base Int | generated | method-result
+    def uploads: com.histmersion.web.map.ShapeSet.UploadsResult = 0
+com.histmersion.web.map.ShapeStyle.CircleRadius | base Double | original | constructor-parameter
+com.histmersion.web.map.ShapeStyle.Colour | base String | original | constructor-parameter
+com.histmersion.web.map.ShapeStyle.Dash | base Double | original | constructor-parameter
+com.histmersion.web.map.ShapeStyle.DashedLineOpacity | base Double | original | constructor-parameter
+com.histmersion.web.map.ShapeStyle.FillOpacity | base Double | original | constructor-parameter
+com.histmersion.web.map.ShapeStyle.Interactive | base Boolean | original | constructor-parameter
+com.histmersion.web.map.ShapeStyle.LineOpacity | base Double | original | constructor-parameter
+com.histmersion.web.map.ShapeStyle.LineWidth | base Double | original | constructor-parameter
+com.histmersion.web.map.Spiderfy.LegsSvgOffsetsPart1 | base Double | generated | method-parameter
+    def legsSvg(offsets: Seq[(com.histmersion.web.map.Spiderfy.LegsSvgOffsetsPart1, com.histmersion.web.map.Spiderfy.LegsSvgOffsetsPart2)], side: com.histmersion.web.map.Spid
+com.histmersion.web.map.Spiderfy.LegsSvgOffsetsPart2 | base Double | generated | method-parameter
+    def legsSvg(offsets: Seq[(com.histmersion.web.map.Spiderfy.LegsSvgOffsetsPart1, com.histmersion.web.map.Spiderfy.LegsSvgOffsetsPart2)], side: com.histmersion.web.map.Spid
+com.histmersion.web.map.Spiderfy.LegsSvgResult | base String | generated | method-result
+    def legsSvg(offsets: Seq[(com.histmersion.web.map.Spiderfy.LegsSvgOffsetsPart1, com.histmersion.web.map.Spiderfy.LegsSvgOffsetsPart2)], side: com.histmersion.web.map.Spid
+com.histmersion.web.map.Spiderfy.LegsSvgSide | base Int | generated | method-parameter
+    def legsSvg(offsets: Seq[(com.histmersion.web.map.Spiderfy.LegsSvgOffsetsPart1, com.histmersion.web.map.Spiderfy.LegsSvgOffsetsPart2)], side: com.histmersion.web.map.Spid
+com.histmersion.web.map.Spiderfy.OffsetsN | base Int | generated | method-parameter
+    def offsets(n: com.histmersion.web.map.Spiderfy.OffsetsN, separation: com.histmersion.web.map.Spiderfy.OffsetsSeparation): Vector[(com.histmersion.web.map.Spiderfy.Offset
+com.histmersion.web.map.Spiderfy.OffsetsResultPart1 | base Double | generated | method-result
+    def offsets(n: com.histmersion.web.map.Spiderfy.OffsetsN, separation: com.histmersion.web.map.Spiderfy.OffsetsSeparation): Vector[(com.histmersion.web.map.Spiderfy.Offset
+com.histmersion.web.map.Spiderfy.OffsetsResultPart2 | base Double | generated | method-result
+    def offsets(n: com.histmersion.web.map.Spiderfy.OffsetsN, separation: com.histmersion.web.map.Spiderfy.OffsetsSeparation): Vector[(com.histmersion.web.map.Spiderfy.Offset
+com.histmersion.web.map.Spiderfy.OffsetsSeparation | base Double | generated | method-parameter
+    def offsets(n: com.histmersion.web.map.Spiderfy.OffsetsN, separation: com.histmersion.web.map.Spiderfy.OffsetsSeparation): Vector[(com.histmersion.web.map.Spiderfy.Offset
+com.histmersion.web.map.TheMap.IsUpResult | base Boolean | generated | method-result
+    def isUp: com.histmersion.web.map.TheMap.IsUpResult = s != null
+com.histmersion.web.map.TheMap.MarkerCountResult | base Int | generated | method-result
+    def markerCount: com.histmersion.web.map.TheMap.MarkerCountResult = panes.values.map(_.size).sum
+com.histmersion.web.map.VectorStyle.Id | base String | generated | constructor-parameter
+    enum VectorStyle(val id: VectorStyle.Id, val label: VectorStyle.Label):
+com.histmersion.web.map.VectorStyle.Label | base String | generated | constructor-parameter
+    enum VectorStyle(val id: VectorStyle.Id, val label: VectorStyle.Label):
+com.histmersion.web.map.VectorStyle.ParseS | base String | generated | method-parameter
+    def parse(s: com.histmersion.web.map.VectorStyle.ParseS): Option[VectorStyle] = values.find(_.id == s.trim.toLowerCase)
