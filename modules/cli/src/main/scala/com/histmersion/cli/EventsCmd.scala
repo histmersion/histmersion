@@ -76,7 +76,7 @@ object EventsCmd:
 
   private def showCmd (using console: Console) = Opts.subcommand("show", "One event: datings, edges, participants") {
     (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
-      c.getEvent(Event.Uid(id)).map(d => Output.emit(json, d)(_.markdown))
+      c.getEvent(Event.Uid(id)).map(d => Output.emit(json, d)(_.markdown.value))
     }
   }
 

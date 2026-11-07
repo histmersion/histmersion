@@ -24,14 +24,8 @@ object GoalPage:
   object DaysText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LastCheck = LastCheck.T
   object LastCheck extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LibraryLink = LibraryLink.T
-  object LibraryLink extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkTarget = LinkTarget.T
   object LinkTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListLink = ListLink.T
-  object ListLink extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MapLink = MapLink.T
-  object MapLink extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Millis = Millis.T
   object Millis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProducedCount = ProducedCount.T
@@ -59,7 +53,7 @@ object GoalPage:
   enum Mark:
     case Done, Going, Todo, Stopped
 
-  def markOf(i: ManagerItem): Mark = i.status match
+  def markOf(i: ManagerItem): Mark = i.status.value match
     case "done"                             => Mark.Done
     case "active"                           => Mark.Going
     case "failed" | "stopped" | "cancelled" => Mark.Stopped
@@ -67,8 +61,10 @@ object GoalPage:
 
   /** A step's name: what kind of work it is, on what. */
   def stepName(i: ManagerItem): com.histmersion.api.automation.Agents.StepInfo.Name =
-    val what = UiLabels.label(i.kind)
-    if i.target.isEmpty || i.target == i.managerId then what else s"$what — ${Wording.value(i.target)}"
+    val what = UiLabels.label(Wording.Id(i.kind.value)).value
+    com.histmersion.api.automation.Agents.StepInfo.Name(
+      if i.target.value.isEmpty || i.target.value == i.managerId.value then what else s"$what — ${Wording.value(i.target.value)}"
+    )
 
   /** The steps the plan shows: going now first, then still to do, then done, newest first in each. */
   def steps(items: List[ManagerItem]): List[ManagerItem] =
@@ -77,37 +73,37 @@ object GoalPage:
       case Mark.Todo    => 1
       case Mark.Stopped => 2
       case Mark.Done    => 3
-    items.sortBy(i => (rank(i), -js.Date.parse(Option(i.updatedAt).filter(_.nonEmpty).getOrElse(i.createdAt))))
+    items.sortBy(i => (rank(i), -js.Date.parse(Option(i.updatedAt.value).filter(_.nonEmpty).getOrElse(i.createdAt.value))))
 
   /** `3 days ago`, `today`, `in 2 days`, from two instants in epoch ms: calendar days in the reader's time zone. */
   def days(thenMs: com.histmersion.web.GoalPage.Millis, nowMs: com.histmersion.web.GoalPage.Millis): com.histmersion.web.GoalPage.DaysText =
-    def day(ms: com.histmersion.web.GoalPage.Millis) = ((ms - new js.Date(ms).getTimezoneOffset() * 60000) / 86400000).floor.toLong
+    def day(ms: com.histmersion.web.GoalPage.Millis) = ((ms.value - new js.Date(ms.value).getTimezoneOffset() * 60000) / 86400000).floor.toLong
     val d = day(nowMs) - day(thenMs)
     if d == 0 then com.histmersion.web.GoalPage.DaysText("today")
-    else if d > 0 then (if d == 1 then com.histmersion.web.GoalPage.DaysText("yesterday") else s"$d days ago")
+    else if d > 0 then (if d == 1 then com.histmersion.web.GoalPage.DaysText("yesterday") else DaysText(s"$d days ago"))
     else if d == -1 then com.histmersion.web.GoalPage.DaysText("tomorrow")
-    else s"in ${-d} days"
+    else DaysText(s"in ${-d} days")
 
   /** When it was last checked for new publications and when next: the currency schedule, else the watcher. */
   def schedule(v: GoalView, watcher: Option[ManagerInfo], lastCheck: Option[com.histmersion.web.GoalPage.LastCheck], nowMs: com.histmersion.web.GoalPage.ScheduleNowMs): Option[com.histmersion.web.GoalPage.ScheduleText] =
     val currency = v.schedules.find(_.kind == ScheduleKind.Currency)
-    val last = currency.flatMap(_.lastRunAt).orElse(lastCheck)
-    val next = currency.flatMap(_.nextRunAt).orElse(watcher.flatMap(_.nextTickAt))
-    val parts = last.map(t => s"checked for new publications ${days(js.Date.parse(t), nowMs)}").toList ++
-      next.map(t => s"next check ${days(js.Date.parse(t), nowMs)}").toList
-    Option.when(parts.nonEmpty)(parts.mkString(" · "))
+    val last = currency.flatMap(_.lastRunAt).map(_.value).orElse(lastCheck.map(_.value))
+    val next = currency.flatMap(_.nextRunAt).map(_.value).orElse(watcher.flatMap(_.nextTickAt).map(_.value))
+    val parts = last.map(t => s"checked for new publications ${days(Millis(js.Date.parse(t)), nowMs)}").toList ++
+      next.map(t => s"next check ${days(Millis(js.Date.parse(t)), nowMs)}").toList
+    Option.when(parts.nonEmpty)(ScheduleText(parts.mkString(" · ")))
 
   /** The goal's managers paused (all of them): what "Pause this goal" undoes. */
   def paused(ms: List[ManagerInfo]): Boolean = ms.nonEmpty && ms.forall(_.state == Managers.State.Paused.wire)
 
   /** The address of a list page that shows only this goal's items. */
-  def listOf(section: ResearchSection, goal: com.histmersion.api.automation.Goal.Slug): com.histmersion.web.GoalPage.ListLink =
-    s"${Route.Research(section).path}?goal=${js.URIUtils.encodeURIComponent(goal)}"
+  def listOf(section: ResearchSection, goal: com.histmersion.api.automation.Goal.Slug): com.histmersion.web.GoalPage.LinkTarget =
+    LinkTarget(s"${Route.Research(section).path}?goal=${js.URIUtils.encodeURIComponent(goal.value)}")
 
   /** Library and the map, filtered to the goal's sources. */
-  def libraryOf(goal: com.histmersion.api.automation.Goal.Slug): com.histmersion.web.GoalPage.LibraryLink =
-    s"${Route.Library(LibrarySection.Sources).path}#goal=${js.URIUtils.encodeURIComponent(goal)}"
-  def mapOf(goal: com.histmersion.api.automation.Goal.Slug): com.histmersion.web.GoalPage.MapLink = s"${Route.Explore.path}#goal=${js.URIUtils.encodeURIComponent(goal)}"
+  def libraryOf(goal: com.histmersion.api.automation.Goal.Slug): com.histmersion.web.GoalPage.LinkTarget =
+    LinkTarget(s"${Route.Library(LibrarySection.Sources).path}#goal=${js.URIUtils.encodeURIComponent(goal.value)}")
+  def mapOf(goal: com.histmersion.api.automation.Goal.Slug): com.histmersion.web.GoalPage.LinkTarget = LinkTarget(s"${Route.Explore.path}#goal=${js.URIUtils.encodeURIComponent(goal.value)}")
 
   // ── the page ────────────────────────────────────────────────────────────────────────────────────
 
@@ -117,42 +113,42 @@ object GoalPage:
     val view = Var(Option.empty[Either[String, GoalView]])
     val managers = Var(List.empty[ManagerInfo])
     val items = Var(List.empty[ManagerItem])
-    val backlog = Var(Option.empty[Int])
-    val acquire = Var(Option.empty[Int])
-    val note = Var(Option.empty[String])
+    val backlog = Var(Option.empty[BacklogCount])
+    val acquire = Var(Option.empty[AcquireCount])
+    val note = Var(Option.empty[HeaderNote])
     val editing = Var(false)
 
     def load(): Unit =
-      ApiClient.goalView(slug).onComplete(r => view.set(Some(r.toEither.left.map(_.getMessage))))
-      ApiClient.queueForGoal(Queue.Kind.Tasks.label, slug).foreach(l => backlog.set(Some(l.items.size)))
-      ApiClient.queueForGoal(Queue.Kind.Acquire.label, slug).foreach(l => acquire.set(Some(l.items.size)))
-      if ui.agentsEnabled then
+      ApiClient.goalView(ApiClient.GoalSlug(slug.value)).onComplete(r => view.set(Some(r.toEither.left.map(_.getMessage))))
+      ApiClient.queueForGoal(ApiClient.QueueName(Queue.Kind.Tasks.label.value), ApiClient.GoalSlug(slug.value)).foreach(l => backlog.set(Some(BacklogCount(l.items.size))))
+      ApiClient.queueForGoal(ApiClient.QueueName(Queue.Kind.Acquire.label.value), ApiClient.GoalSlug(slug.value)).foreach(l => acquire.set(Some(AcquireCount(l.items.size))))
+      if ui.agentsEnabled.value then
         ApiClient.managers.foreach { all =>
           val mine = all.filter(_.goal.contains(slug))
           managers.set(mine)
           scala.concurrent.Future
-            .sequence(mine.map(m => ApiClient.managerItems(m.id, None, com.histmersion.api.Offset(0), StepLimit)))
+            .sequence(mine.map(m => ApiClient.managerItems(ApiClient.ManagerItemsId(m.id.value), None, com.histmersion.api.Offset(0), com.histmersion.api.Paging.Limit(StepLimit))))
             .foreach(pages => items.set(pages.flatMap(_.items)))
         }
 
     def checkNow(): Unit = write { () =>
-      ApiClient.startRun(Agents.RunRequest(Agents.Pipeline.CurrencyCheck.wire, slug)).onComplete {
+      ApiClient.startRun(Agents.RunRequest(Agents.RunRequest.Pipeline(Agents.Pipeline.CurrencyCheck.wire.value), Agents.RunRequest.Target(slug.value))).onComplete {
         case scala.util.Success(r) =>
-          note.set(Some(s"Checking for new publications: agent work ${r.id.take(8)} started.")); load()
-        case scala.util.Failure(e) => note.set(Some(s"Could not start the check: ${e.getMessage}"))
+          note.set(Some(HeaderNote(s"Checking for new publications: agent work ${r.id.value.take(8)} started."))); load()
+        case scala.util.Failure(e) => note.set(Some(HeaderNote(s"Could not start the check: ${e.getMessage}")))
       }
     }
 
     def pauseOrResume(): Unit = write { () =>
       val resume = paused(managers.now())
       scala.concurrent.Future
-        .sequence(managers.now().map(m => ApiClient.managerAction(m.id, if resume then com.histmersion.web.ApiClient.ManagerAction("resume") else com.histmersion.web.ApiClient.ManagerAction("pause"))))
+        .sequence(managers.now().map(m => ApiClient.managerAction(ApiClient.ManagerActionId(m.id.value), if resume then com.histmersion.web.ApiClient.ManagerAction("resume") else com.histmersion.web.ApiClient.ManagerAction("pause"))))
         .onComplete { r =>
           note.set(
             r.failed.toOption
-              .map(e => s"Could not ${if resume then "resume" else "pause"} the goal: ${e.getMessage}")
-              .orElse(Some(if resume then "The goal goes on."
-              else "The goal is paused: its agents start nothing new for it."))
+              .map(e => HeaderNote(s"Could not ${if resume then "resume" else "pause"} the goal: ${e.getMessage}"))
+              .orElse(Some(HeaderNote(if resume then "The goal goes on."
+              else "The goal is paused: its agents start nothing new for it.")))
           )
           load()
         }
@@ -165,7 +161,7 @@ object GoalPage:
         case None           => p(cls := "muted", "Loading…")
         case Some(Left(m))  => p(cls := "form-error", role := "alert", s"Could not read the goal $slug: $m")
         case Some(Right(v)) =>
-          Router.retitle(Route.Goal(slug), v.goal.title)
+          Router.retitle(Route.Goal(slug), UiLabels.Text(v.goal.title.value))
           div(
             header(
               v,
@@ -207,7 +203,7 @@ object GoalPage:
                       }
                     )
                   ),
-                  ActivityView.history(slug, HistoryLimit)
+                  ActivityView.history(slug, com.histmersion.api.Paging.Limit(HistoryLimit))
                 )
               )
             )
@@ -234,30 +230,31 @@ object GoalPage:
           cls := "muted goal-crumbs",
           RouteLink(Route.Research(ResearchSection.Goals), "Goals"),
           s" › ${g.title}",
-          g.parentSlug.map(p => span(" · part of ", RouteLink(Route.Goal(p), Wording.humanize(p))))
+          g.parentSlug.map(p => span(" · part of ", RouteLink(Route.Goal(p), Wording.humanize(Wording.Id(p.value)))))
         ),
-        g.notes.filter(_.trim.nonEmpty).map(n => p(cls := "goal-question", n)),
+        g.notes.filter(_.value.trim.nonEmpty).map(n => p(cls := "goal-question", n.value)),
         div(
           cls := "muted goal-state",
           GoalsView.badge(g.status),
           child.text <-- managers.combineWith(items).map { (ms, is) =>
-            val pr = ResearchOverview.progressOf(g.slug, ms)
-            val watcher = ms.find(_.id == Managers.watchId(g.slug))
+            val ref = com.histmersion.api.automation.Goal.Ref(g.slug.value)
+            val pr = ResearchOverview.progressOf(ref, ms)
+            val watcher = ms.find(_.id == Managers.watchId(ref))
             val lastCheck =
-              is.filter(i => i.kind == Managers.CurrencyCheck && i.status == "done").map(_.updatedAt).maxOption
+              is.filter(i => i.kind.value == Managers.CurrencyCheck && i.status.value == "done").map(_.updatedAt.value).maxOption.map(LastCheck(_))
             val parts = List(
               if paused(ms) then Some("Paused") else None,
               Option.when(pr.total > 0)(s"${pr.done} of ${pr.total} steps done"),
-              schedule(v, watcher, lastCheck, js.Date.now())
+              schedule(v, watcher, lastCheck, ScheduleNowMs(js.Date.now())).map(_.value)
             ).flatten
             if parts.isEmpty then "" else parts.mkString(" · ", " · ", "")
           }
         ),
-        child.maybe <-- note.map(_.map(n => p(cls := "muted goal-note", role := "status", n)))
+        child.maybe <-- note.map(_.map(n => p(cls := "muted goal-note", role := "status", n.value)))
       ),
       div(
         cls := "btn-group goal-actions",
-        Option.when(ui.agentsEnabled)(
+        Option.when(ui.agentsEnabled.value)(
           button(
             typ := "button",
             cls := "btn goal-check",
@@ -265,7 +262,7 @@ object GoalPage:
             onClick --> (_ => checkNow())
           )
         ),
-        Option.when(ui.agentsEnabled)(
+        Option.when(ui.agentsEnabled.value)(
           button(
             typ := "button",
             cls := "btn goal-pause",
@@ -288,14 +285,14 @@ object GoalPage:
         if is.isEmpty then
           div(
             cls := "row muted",
-            if !ui.agentsEnabled then "Research agents are off on this server: no step runs."
+            if !ui.agentsEnabled.value then "Research agents are off on this server: no step runs."
             else
               v.plan.fold("No steps yet: the goal's agents have not planned its work.")(pl =>
-                s"Approved plan: ${Plural.count(pl.subGoals.size, com.histmersion.api.Plural.CountSingular("sub-goal"))}, ${Plural.count(pl.queries.size, com.histmersion.api.Plural.CountSingular("query"), com.histmersion.api.Plural.CountPlural("queries"))}, " +
-                  s"${Plural.count(pl.works.size, "work")} to read."
+                s"Approved plan: ${Plural.count(Plural.CountN(pl.subGoals.size), com.histmersion.api.Plural.CountSingular("sub-goal"))}, ${Plural.count(Plural.CountN(pl.queries.size), com.histmersion.api.Plural.CountSingular("query"), com.histmersion.api.Plural.CountPlural("queries"))}, " +
+                  s"${Plural.count(Plural.CountN(pl.works.size), Plural.CountSingular("work"))} to read."
               )
           )
-        else ol(cls := "goal-steps-list", steps(is).take(StepLimit).zipWithIndex.map((i, n) => step(i, n + 1)))
+        else ol(cls := "goal-steps-list", steps(is).take(StepLimit).zipWithIndex.map((i, n) => step(i, com.histmersion.api.automation.Agents.StepInfo.Seq(n + 1))))
       }
     )
 
@@ -316,18 +313,18 @@ object GoalPage:
       ),
       div(
         cls := "step-main",
-        strong(stepName(i)),
+        strong(stepName(i).value),
         div(
           cls := "muted",
           mark match
-            case Mark.Done    => span("Done", i.outcome.filter(_.nonEmpty).map(o => s" · ${o.take(160)}"))
+            case Mark.Done    => span("Done", i.outcome.filter(_.value.nonEmpty).map(o => s" · ${o.value.take(160)}"))
             case Mark.Going   => span("Running now")
-            case Mark.Stopped => span("Stopped", i.outcome.filter(_.nonEmpty).map(o => s" · ${o.take(160)}"))
+            case Mark.Stopped => span("Stopped", i.outcome.filter(_.value.nonEmpty).map(o => s" · ${o.value.take(160)}"))
             case Mark.Todo    =>
               span(
-                i.hold.map(h => s"Waiting: ${Option(h.reason).filter(_.nonEmpty).getOrElse("held")}").getOrElse("To do")
+                i.hold.map(h => s"Waiting: ${Option(h.reason.value).filter(_.nonEmpty).getOrElse("held")}").getOrElse("To do")
               ),
-          i.runId.map(id => span(" · ", RouteLink(Route.Run(id), "see what it did")))
+          i.runId.map(id => span(" · ", RouteLink(Route.Run(Route.Run.Id(id.value)), "see what it did")))
         )
       ),
       if mark == Mark.Going && i.runId.isDefined then
@@ -339,7 +336,7 @@ object GoalPage:
           onClick --> (_ =>
             write { () =>
               busy.set(true)
-              i.runId.foreach(id => ApiClient.jobControl(id, com.histmersion.api.Api.JobControl.Action("pause")).onComplete(_ => busy.set(false)))
+              i.runId.foreach(id => ApiClient.jobControl(com.histmersion.api.SpatialHierarchyResult.Job.Id(id.value), com.histmersion.api.Api.JobControl.Action("pause")).onComplete(_ => busy.set(false)))
             }
           )
         )
@@ -364,9 +361,9 @@ object GoalPage:
     val sources = v.links.count(_.kind == LinkKind.Source)
     def countLink(n: Signal[Option[com.histmersion.web.GoalPage.ProducedCount]], one: com.histmersion.api.Plural.Noun.Singular, many: com.histmersion.api.Plural.Noun.Plural, to: com.histmersion.web.GoalPage.LinkTarget) =
       a(
-        href := to,
-        child.text <-- n.map(_.fold("…")(c => if c == 1 then s"1 $one" else s"$c $many")),
-        onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); Router.goHref(to) } }
+        href := to.value,
+        child.text <-- n.map(_.fold("…")(c => if c.value == 1 then s"1 $one" else s"$c $many")),
+        onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); Router.goHref(to.value) } }
       )
     sectionTag(
       cls := "card goal-produced",
@@ -381,7 +378,7 @@ object GoalPage:
             articles
               .take(4)
               .flatMap(l =>
-                List[HtmlElement](span(" · "), com.histmersion.web.ArticleLink(l.ref, l.title.getOrElse(l.ref)))
+                List[HtmlElement](span(" · "), com.histmersion.web.ArticleLink(com.histmersion.api.research.Article.Slug(l.ref.value), l.title.map(_.value).getOrElse(l.ref.value)))
               )
               .drop(1),
             Option.when(articles.size > 4)(span(cls := "muted", s" and ${articles.size - 4} more"))
@@ -392,8 +389,8 @@ object GoalPage:
         span(cls := "li-what", "Sources brought in"),
         span(
           a(
-            href := libraryOf(slug),
-            Plural.count(sources, com.histmersion.api.Plural.CountSingular("source")),
+            href := libraryOf(slug).value,
+            Plural.count(Plural.CountN(sources), com.histmersion.api.Plural.CountSingular("source")),
             onClick --> { ev =>
               if Router.plain(ev) then {
                 ev.preventDefault(); showFiltered(slug, Route.Library(LibrarySection.Sources))
@@ -402,7 +399,7 @@ object GoalPage:
           ),
           " · ",
           a(
-            href := mapOf(slug),
+            href := mapOf(slug).value,
             "on the map",
             onClick --> { ev =>
               if Router.plain(ev) then { ev.preventDefault(); showFiltered(slug, Route.Explore) }
@@ -424,5 +421,5 @@ object GoalPage:
 
   /** Library or the map, showing only this goal's sources. */
   private def showFiltered(slug: com.histmersion.api.automation.Goal.Slug, to: Route): Unit =
-    UiState.set(UiState.goal := Some(slug))(push = true)
+    UiState.set(UiState.goal := Some(slug.value))(push = true)
     Router.go(to)

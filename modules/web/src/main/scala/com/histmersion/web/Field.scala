@@ -45,8 +45,8 @@ final class Field[A](
   private[web] def remove(value: com.histmersion.web.Field.Token): Unit = load(encoded.filterNot(_ == value))
 
 object Field:
-  type Token = Token.T
-  object Token extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Token = FieldCodec.Token
+  val Token: FieldCodec.Token.type = FieldCodec.Token
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HashKey = HashKey.T

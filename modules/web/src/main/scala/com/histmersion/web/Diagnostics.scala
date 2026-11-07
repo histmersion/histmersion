@@ -17,21 +17,21 @@ object Diagnostics:
 
   def caches: List[(com.histmersion.web.Diagnostics.CacheName, BoundedCache.Stats)] =
     List(
-      "places.geo" -> MapView.geoCacheStats,
-      "ident" -> IdentLink.cacheStats,
-      "places.labels" -> PlacesInput.cacheStats
-    ) ++ Preview.cacheStats ++ MapLabels.stats ++
-      List("findings.kept" -> BoundedCache.Stats(App.keptFindings, com.histmersion.web.BoundedCache.Stats.MaxEntries(0), com.histmersion.web.BoundedCache.Stats.Weight(0L), com.histmersion.web.BoundedCache.Stats.MaxWeight(0L)))
+      CacheName("places.geo") -> MapView.geoCacheStats,
+      CacheName("ident") -> IdentLink.cacheStats,
+      CacheName("places.labels") -> PlacesInput.cacheStats
+    ) ++ Preview.cacheStats.map((n, s) => CacheName(n.value) -> s) ++ MapLabels.stats.map((n, s) => CacheName(n.value) -> s) ++
+      List(CacheName("findings.kept") -> BoundedCache.Stats(App.keptFindings, com.histmersion.web.BoundedCache.Stats.MaxEntries(0), com.histmersion.web.BoundedCache.Stats.Weight(0L), com.histmersion.web.BoundedCache.Stats.MaxWeight(0L)))
 
   /** Pure: the figures as a plain object (one per cache: entries, maxEntries, weight, maxWeight). */
   def toJs(cs: List[(com.histmersion.web.Diagnostics.CacheName, BoundedCache.Stats)]): js.Object =
     val o = js.Dictionary.empty[js.Any]
     cs.foreach { (n, s) =>
-      o(n) = js.Dynamic.literal(
-        entries = s.entries,
-        maxEntries = s.maxEntries,
-        weight = s.weight.toDouble,
-        maxWeight = if s.maxWeight == Long.MaxValue then -1.0 else s.maxWeight.toDouble
+      o(n.value) = js.Dynamic.literal(
+        entries = s.entries.value,
+        maxEntries = s.maxEntries.value,
+        weight = s.weight.value.toDouble,
+        maxWeight = if s.maxWeight.value == Long.MaxValue then -1.0 else s.maxWeight.value.toDouble
       )
     }
     js.Dynamic.literal(caches = o).asInstanceOf[js.Object]
@@ -42,9 +42,9 @@ object Diagnostics:
       // the map: the points its cluster layer holds, the DOM markers drawn, the shapes drawn
       if com.histmersion.web.map.TheMap.isUp then
         o.map = js.Dynamic.literal(
-          points = MapView.dots.size,
-          markers = com.histmersion.web.map.TheMap.markerCount,
-          animations = MapView.dots.animations
+          points = MapView.dots.size.value,
+          markers = com.histmersion.web.map.TheMap.markerCount.value,
+          animations = MapView.dots.animations.value
         )
       o.asInstanceOf[js.Object]
     ): js.Function0[js.Object]

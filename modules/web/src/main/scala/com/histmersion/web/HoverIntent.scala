@@ -10,18 +10,18 @@ import org.scalajs.dom
 final class HoverIntent[K](
     delayMs: HoverIntent.DelayMs,
     fire: K => Unit,
-    later: (HoverIntent.LaterArg1, () => Unit) => HoverIntent.LaterResult = (ms, g) => dom.window.setTimeout(() => g(), ms),
-    cancel: HoverIntent.CancelArg1 => Unit = id => dom.window.clearTimeout(id)
+    later: (HoverIntent.DelayMs, () => Unit) => HoverIntent.TimerId = (ms, g) => HoverIntent.TimerId(dom.window.setTimeout(() => g(), ms.value.toDouble)),
+    cancel: HoverIntent.TimerId => Unit = id => dom.window.clearTimeout(id.value)
 ):
   // `var`: the one pending hover and its timer
-  private var pending: Option[(K, Int)] = None
+  private var pending: Option[(K, HoverIntent.TimerId)] = None
 
   def isPending(k: K): Boolean = pending.exists(_._1 == k)
 
   def enter(k: K): Unit =
     if !isPending(k) then
       cancelPending()
-      val id = later(delayMs.toDouble, () => { pending = None; fire(k) })
+      val id = later(delayMs, () => { pending = None; fire(k) })
       pending = Some(k -> id)
 
   /** The pointer left `k`: its pending card is dropped (a pending card for another target stays). */
@@ -34,10 +34,6 @@ final class HoverIntent[K](
 object HoverIntent:
   type DelayMs = DelayMs.T
   object DelayMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LaterArg1 = LaterArg1.T
-  object LaterArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LaterResult = LaterResult.T
-  object LaterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CancelArg1 = CancelArg1.T
-  object CancelArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimerId = TimerId.T
+  object TimerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

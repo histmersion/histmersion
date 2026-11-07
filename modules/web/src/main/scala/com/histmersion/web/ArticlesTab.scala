@@ -26,11 +26,11 @@ object ArticlesTab:
       ApiClient
         .articles(q.modify(_.filter.offset).setTo(offset))
         .map(r =>
-          TabPage(r.articles, r.total, kindCounts(r.kinds) :+ ResultsPaging.span(UiState.from.now().map(com.histmersion.api.catalogue.Year(_)), UiState.to.now().map(com.histmersion.api.catalogue.Year(_))).value)
+          TabPage(r.articles, r.total, kindCounts(r.kinds).map(TabPage.Extras(_)) :+ TabPage.Extras(ResultsPaging.span(UiState.from.now().map(com.histmersion.api.catalogue.Year(_)), UiState.to.now().map(com.histmersion.api.catalogue.Year(_))).value))
         ),
     render = renderArticle(_, inPanel = true),
     empty = com.histmersion.web.FilterTab.Empty("No articles relate to the current filter."),
-    page = Layout.tabPage,
+    page = ResultsPaging.PageNumber(Layout.tabPage.value),
     debounceMs = () => UiState.reloadDelay(UiState.ReloadDelayNormalMs(Layout.tabReloadMs.value))
   )
 
@@ -45,7 +45,7 @@ object ArticlesTab:
   private[web] def renderArticle(art: Article.Summary, inPanel: Boolean = false): HtmlElement =
     li(
       cls := "article-row",
-      marks.RowActions(marks.ItemRef.article(marks.ItemRef.ArticleSlug(art.slug.value), marks.ItemRef.ArticleTitle(art.title.value)), Route.Article(Route.Article.Slug(art.slug.value)).path, Fmt.display(com.histmersion.api.UiLabels.Text(art.kind.value))),
+      marks.RowActions(marks.ItemRef.article(marks.ItemRef.ArticleSlug(art.slug.value), marks.ItemRef.ArticleTitle(art.title.value)), marks.ItemRef.Href(Route.Article(Route.Article.Slug(art.slug.value)).path), com.histmersion.web.library.TableRow.Byline(Fmt.display(com.histmersion.api.UiLabels.Text(art.kind.value)).value)),
       a(
         href := Route.Article(Route.Article.Slug(art.slug.value)).path,
         cls := "article-link",
@@ -59,7 +59,7 @@ object ArticlesTab:
           cls := "article-meta",
           span(cls := "article-kind", Fmt.display(com.histmersion.api.UiLabels.Text(art.kind.value)).value),
           art.review.map(reviewBadge),
-          Fmt.periodStr(art.periodStart, art.periodEnd) match
+          Fmt.periodStr(art.periodStart, art.periodEnd).value match
             case ""  => emptyNode
             case per => span(cls := "article-period", per)
         ),

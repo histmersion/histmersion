@@ -19,26 +19,10 @@ import com.histmersion.api.library.Label
   * map. On a phone it is the filters drawer.
   */
 object FilterBar:
-  type DragTarget = DragTarget.T
-  object DragTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FieldName = FieldName.T
   object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HandleAtStart = HandleAtStart.T
-  object HandleAtStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MoreFiltersSet = MoreFiltersSet.T
-  object MoreFiltersSet extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NarrowScreen = NarrowScreen.T
-  object NarrowScreen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointerX = PointerX.T
-  object PointerX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SliderPercent = SliderPercent.T
-  object SliderPercent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SliderWidth = SliderWidth.T
-  object SliderWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StorageKey = StorageKey.T
   object StorageKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoredOn = StoredOn.T
-  object StoredOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StoredText = StoredText.T
   object StoredText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -48,32 +32,20 @@ object FilterBar:
 
   type Folded = Folded.T
   object Folded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetFoldedOn = _root_.com.histmersion.web.FilterBar.StoredOn
-  val SetFoldedOn: _root_.com.histmersion.web.FilterBar.StoredOn.type = _root_.com.histmersion.web.FilterBar.StoredOn
 
-  final private case class ChipField(state: Field[List[ChipField.State]], facet: ChipField.Facet, label: ChipField.Label, placeholder: ChipField.Placeholder)
+  final private case class ChipField(state: Field[List[String]], facet: ChipInput.Config.Field, label: ChipInput.Config.Label, placeholder: ChipInput.Config.Placeholder)
 
-  object ChipField:
-    type State = State.T
-    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Facet = Facet.T
-    object Facet extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Placeholder = Placeholder.T
-    object Placeholder extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  private val topicField = ChipField(UiState.topics, com.histmersion.web.FilterBar.ChipField.Facet("topics"), com.histmersion.web.FilterBar.ChipField.Label("Topic"), com.histmersion.web.FilterBar.ChipField.Placeholder("e.g. bronze age collapse"))
+  private val topicField = ChipField(UiState.topics, ChipInput.Config.Field("topics"), ChipInput.Config.Label("Topic"), ChipInput.Config.Placeholder("e.g. bronze age collapse"))
 
   /** Behind "More filters", in this order (then "Published between"). */
   private val moreFields = List(
-    ChipField(UiState.authors, com.histmersion.web.FilterBar.ChipField.Facet("authors"), com.histmersion.web.FilterBar.ChipField.Label("Authors"), com.histmersion.web.FilterBar.ChipField.Placeholder("e.g. Reich")),
-    ChipField(UiState.status, com.histmersion.web.FilterBar.ChipField.Facet("status"), com.histmersion.web.FilterBar.ChipField.Label("Status"), com.histmersion.web.FilterBar.ChipField.Placeholder("e.g. foundational")),
-    ChipField(UiState.tags, com.histmersion.web.FilterBar.ChipField.Facet("tags"), com.histmersion.web.FilterBar.ChipField.Label("Tags"), com.histmersion.web.FilterBar.ChipField.Placeholder("e.g. sea peoples"))
+    ChipField(UiState.authors, ChipInput.Config.Field("authors"), ChipInput.Config.Label("Authors"), ChipInput.Config.Placeholder("e.g. Reich")),
+    ChipField(UiState.status, ChipInput.Config.Field("status"), ChipInput.Config.Label("Status"), ChipInput.Config.Placeholder("e.g. foundational")),
+    ChipField(UiState.tags, ChipInput.Config.Field("tags"), ChipInput.Config.Label("Tags"), ChipInput.Config.Placeholder("e.g. sea peoples"))
   )
 
-  private val moreKey = "histmersion.moreFilters"
-  private val foldedKey = "histmersion.filtersFolded"
+  private val moreKey = StorageKey("histmersion.moreFilters")
+  private val foldedKey = StorageKey("histmersion.filtersFolded")
 
   private val moreOpen = Var(false)
 
@@ -85,45 +57,51 @@ object FilterBar:
   /** Pure: is "More filters" open at start-up? Closed unless it was left open — or a filter in it is set (from a shared
     * link, say), so nothing that filters is hidden.
     */
-  def moreOpenInitially(stored: Option[com.histmersion.web.FilterBar.StoredText], someMoreSet: com.histmersion.web.FilterBar.MoreFiltersSet, narrow: com.histmersion.web.FilterBar.NarrowScreen = com.histmersion.web.FilterBar.NarrowScreen(false)): Boolean =
-    stored.contains("1") || someMoreSet
+  def moreOpenInitially(stored: Option[com.histmersion.web.FilterBar.StoredText], someMoreSet: Boolean, narrow: Boolean = false): Boolean =
+    stored.exists(_.value == "1") || someMoreSet
 
   /** Pure: is the panel folded at start-up? Only when this browser left it folded. */
-  def foldedInitially(stored: Option[com.histmersion.web.FilterBar.StoredText]): Boolean = stored.contains("1")
+  def foldedInitially(stored: Option[com.histmersion.web.FilterBar.StoredText]): Boolean = stored.exists(_.value == "1")
 
   private def stored(key: com.histmersion.web.FilterBar.StorageKey): Option[com.histmersion.web.FilterBar.StoredText] =
-    try Option(dom.window.localStorage.getItem(key))
+    try Option(dom.window.localStorage.getItem(key.value)).map(StoredText(_))
     catch case _: Exception => None
 
-  private def keep(key: com.histmersion.web.FilterBar.StorageKey, on: com.histmersion.web.FilterBar.StoredOn): Unit =
-    try dom.window.localStorage.setItem(key, if on then "1" else "0")
+  private def keep(key: com.histmersion.web.FilterBar.StorageKey, on: Boolean): Unit =
+    try dom.window.localStorage.setItem(key.value, if on then "1" else "0")
     catch case _: Exception => ()
 
-  def setFolded(on: com.histmersion.web.FilterBar.SetFoldedOn): Unit =
+  def setFolded(on: com.histmersion.web.FilterBar.Folded): Unit =
     folded.set(on)
-    keep(foldedKey, on)
+    keep(foldedKey, on.value)
 
   private def chipInput(c: ChipField, config: UiConfig): HtmlElement =
     val chipConfig = ChipInput.Config(
       field = c.facet,
       label = c.label,
       placeholder = c.placeholder,
-      debounceMs = config.debounce.suggestMs,
+      debounceMs = ChipInput.Config.DebounceMs(config.debounce.suggestMs.value),
       getSuggestions = prefix =>
         ApiClient
-          .facets(c.facet, Some(prefix), UiState.toFilter(except = Set(c.state.key)))
+          .facets(
+            com.histmersion.api.Api.Facets.Field(c.facet.value),
+            Some(com.histmersion.api.Api.Facets.Prefix(prefix.value)),
+            UiState.toFilter(except = Set(UiState.ToFilterExcept(c.state.key.value)))
+          )
           .map(_.take(config.facetSuggestions)),
-      onChange = values => UiState.set(c.state := values)(),
-      onPreview = v => UiState.setPreview(v.map(UiState.Preview(c.state.key, _))),
+      onChange = values => UiState.set(c.state := values.map(_.value))(),
+      onPreview = v => UiState.setPreview(v.map(x => UiState.Preview(UiState.Preview.Key(c.state.key.value), UiState.Preview.Value(x.value)))),
       // a status reads as the status code: its mark and its word
-      display = if c.state.key == UiState.status.key then Wording.statusOf else Label.display,
-      mark = v => Option.when(c.state.key == UiState.status.key)(s"st-${v.trim.toLowerCase}")
+      display =
+        if c.state.key == UiState.status.key then wire => ChipInput.Config.DisplayResult(Wording.statusOf(com.histmersion.api.Api.GoalQuery.Status(wire.value)))
+        else v => ChipInput.Config.DisplayResult(Label.display(Label.Text(v.value)).value),
+      mark = v => Option.when(c.state.key == UiState.status.key)(ChipInput.Config.MarkResult(s"st-${v.value.trim.toLowerCase}"))
     )
-    div(cls := "f", label(c.label), ChipInput(chipConfig, c.state.signal))
+    div(cls := "f", label(c.label.value), ChipInput(chipConfig, c.state.signal))
 
   /** The period's two ends: the timeline's span, written as years (`500 BCE`, `-500`, `1200`). */
   private def periodField(config: UiConfig): HtmlElement =
-    def end(name: com.histmersion.web.FilterBar.FieldName, field: Field[Option[com.histmersion.api.Years.Astronomical]], dflt: com.histmersion.api.Years.Astronomical, other: () => com.histmersion.api.Years.Astronomical, valid: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical) => Boolean) =
+    def end(name: com.histmersion.web.FilterBar.FieldName, field: Field[Option[Long]], dflt: Long, other: () => Long, valid: (Long, Long) => Boolean) =
       val bad = Var(false)
       input(
         typ := "text",
@@ -132,9 +110,9 @@ object FilterBar:
         aria.label := s"Period $name",
         inputMode := "numeric",
         aria.invalid <-- bad.signal.map(_.toString),
-        value <-- field.signal.map(v => Fmt.yr(v.getOrElse(dflt))),
+        value <-- field.signal.map(v => Fmt.yr(com.histmersion.api.catalogue.Year(v.getOrElse(dflt))).value),
         onChange.mapToValue --> { raw =>
-          Fmt.parseYear(raw).filter(y => valid(y, other())) match
+          Fmt.parseYear(com.histmersion.api.Years.Text(raw)).map(_.value).filter(y => valid(y, other())) match
             case Some(y) =>
               bad.set(false)
               UiState.set(field := Some(y))(push = true)
@@ -149,16 +127,16 @@ object FilterBar:
         end(
           com.histmersion.web.FilterBar.FieldName("from"),
           UiState.from,
-          config.time.defaultFrom,
-          () => UiState.to.now().getOrElse(config.time.defaultTo),
+          config.time.defaultFrom.value,
+          () => UiState.to.now().getOrElse(config.time.defaultTo.value),
           _ <= _
         ),
         span(cls := "dash", "to"),
         end(
           com.histmersion.web.FilterBar.FieldName("to"),
           UiState.to,
-          config.time.defaultTo,
-          () => UiState.from.now().getOrElse(config.time.defaultFrom),
+          config.time.defaultTo.value,
+          () => UiState.from.now().getOrElse(config.time.defaultFrom.value),
           _ >= _
         )
       ),
@@ -176,12 +154,12 @@ object FilterBar:
     val someMoreSet = moreFields.exists(_.state.now().nonEmpty) ||
       UiState.yearFrom.now().isDefined || UiState.yearTo.now().isDefined
     moreOpen.set(moreOpenInitially(stored(moreKey), someMoreSet, Viewport.narrowNow))
-    folded.set(foldedInitially(stored(foldedKey)))
+    folded.set(Folded(foldedInitially(stored(foldedKey))))
     val active = UiState.signal.map(_ => FilterChips.countNow(config))
 
     div(
       cls := "fbar filter-panel",
-      cls("is-folded") <-- folded.signal,
+      cls("is-folded") <-- folded.signal.map(_.value),
       role := "search",
       aria.label := "Filters",
       // on a phone this panel is the filters drawer, and this its heading
@@ -195,8 +173,8 @@ object FilterBar:
         aria.label <-- active.map(n => s"Show the filters ($n active)"),
         title := "Show the filters",
         Icon(Icon.Filter),
-        child.maybe <-- active.map(n => Option.when(n > 0)(span(cls := "rail-count", n.toString))),
-        onClick --> (_ => setFolded(com.histmersion.web.FilterBar.SetFoldedOn(false)))
+        child.maybe <-- active.map(n => Option.when(n.value > 0)(span(cls := "rail-count", n.toString))),
+        onClick --> (_ => setFolded(com.histmersion.web.FilterBar.Folded(false)))
       ),
       div(
         cls := "filter-body",
@@ -212,7 +190,7 @@ object FilterBar:
             aria.label := "Fold the filters",
             title := "Fold the filters to the side",
             Icon(Icon.FoldLeft),
-            onClick --> (_ => setFolded(com.histmersion.web.FilterBar.SetFoldedOn(true)))
+            onClick --> (_ => setFolded(com.histmersion.web.FilterBar.Folded(true)))
           )
         ),
         div(
@@ -224,7 +202,7 @@ object FilterBar:
             idAttr := "f-words",
             placeholder := "words in the sources",
             // the same state as the top bar's search: typing in either is typing in both
-            controlled(value <-- UiState.q.signal.map(_.getOrElse("")), onInput.mapToValue --> UiState.setSearch)
+            controlled(value <-- UiState.q.signal.map(_.getOrElse("")), onInput.mapToValue --> (t => UiState.setSearch(com.histmersion.api.Api.Search.Text(t))))
           )
         ),
         div(cls := "f f-gazetteer", label(forId := "f-place-search", "Place"), PlacesInput.init(config)),
@@ -247,7 +225,7 @@ object FilterBar:
           cls := "frow-more",
           idAttr := "f-more",
           // in the phone's filters drawer, always shown
-          hidden <-- moreOpen.signal.combineWith(Viewport.narrow).map((open, narrow) => !open && !narrow),
+          hidden <-- moreOpen.signal.combineWith(Viewport.narrow).map((open, narrow) => !open && !narrow.value),
           moreFields.map(chipInput(_, config)),
           yearRangeSlider()
         ),
@@ -257,17 +235,17 @@ object FilterBar:
             cls := "filter-active-head",
             span(
               cls := "filter-active-title",
-              child.text <-- active.map(n => if n == 0 then "No active filters" else s"Active filters · $n")
+              child.text <-- active.map(n => if n.value == 0 then "No active filters" else s"Active filters · $n")
             ),
             button(
               typ := "button",
               cls := "btn btn--ghost btn--sm f-clear",
               idAttr := "f-clear",
-              disabled <-- active.map(_ == 0),
+              disabled <-- active.map(_.value == 0),
               "Clear all",
               onClick --> { _ =>
                 UiState.clearFilters()
-                UiState.set(UiState.from := Some(config.time.defaultFrom), UiState.to := Some(config.time.defaultTo))()
+                UiState.set(UiState.from := Some(config.time.defaultFrom.value), UiState.to := Some(config.time.defaultTo.value))()
                 PlacesInput.sync()
               }
             )
@@ -286,17 +264,17 @@ object FilterBar:
     // the handles show UiState.yearFrom/yearTo directly; a drag commits every step
     val sliderFrom = UiState.yearFrom.signal
     val sliderTo = UiState.yearTo.signal
-    var dragTarget: com.histmersion.web.FilterBar.DragTarget = com.histmersion.web.FilterBar.DragTarget("")
+    var dragTarget = ""
     var trackEl: dom.Element = null
 
-    def pxToYear(x: com.histmersion.web.FilterBar.PointerX, w: com.histmersion.web.FilterBar.SliderWidth): com.histmersion.api.Years.Astronomical =
+    def pxToYear(x: Double, w: Double): Long =
       val t = (x / w).max(0).min(1)
       Math.round(YEAR_MIN + t * (YEAR_MAX - YEAR_MIN))
 
-    def yearToPct(y: com.histmersion.api.Years.Astronomical): com.histmersion.web.FilterBar.SliderPercent =
+    def yearToPct(y: Long): Double =
       ((y - YEAR_MIN).toDouble / (YEAR_MAX - YEAR_MIN).toDouble * 100).max(0).min(100)
 
-    def handlePointer(ev: dom.PointerEvent, start: com.histmersion.web.FilterBar.HandleAtStart): Unit =
+    def handlePointer(ev: dom.PointerEvent, start: Boolean): Unit =
       if trackEl == null then ()
       else
         val rect = trackEl.getBoundingClientRect()
@@ -306,7 +284,7 @@ object FilterBar:
         if start then
           val fromDist = Math.abs(yr - sliderFrom.now().getOrElse(YEAR_MIN))
           val toDist = Math.abs(yr - sliderTo.now().getOrElse(YEAR_MAX))
-          dragTarget = if fromDist <= toDist then com.histmersion.web.FilterBar.DragTarget("from") else com.histmersion.web.FilterBar.DragTarget("to")
+          dragTarget = if fromDist <= toDist then "from" else "to"
         if dragTarget == "from" then
           UiState.set(UiState.yearFrom := Some(Math.min(yr, sliderTo.now().getOrElse(YEAR_MAX))))()
         else UiState.set(UiState.yearTo := Some(Math.max(yr, sliderFrom.now().getOrElse(YEAR_MIN))))()
@@ -335,30 +313,30 @@ object FilterBar:
           styleAttr <-- sliderFrom.map(f => s"--at:${yearToPct(f.getOrElse(YEAR_MIN))}%"),
           onPointerDown --> { ev =>
             ev.preventDefault()
-            dragTarget = com.histmersion.web.FilterBar.DragTarget("from")
+            dragTarget = ("from")
             ev.target.asInstanceOf[dom.HTMLElement].setPointerCapture(ev.pointerId)
           },
           onPointerMove --> { ev =>
-            if dragTarget == "from" then handlePointer(ev, start = com.histmersion.web.FilterBar.HandleAtStart(false))
+            if dragTarget == "from" then handlePointer(ev, start = false)
           },
-          onPointerUp --> { _ => dragTarget = com.histmersion.web.FilterBar.DragTarget("") }
+          onPointerUp --> { _ => dragTarget = ("") }
         ),
         div(
           cls := "year-range-handle",
           styleAttr <-- sliderTo.map(t => s"--at:${yearToPct(t.getOrElse(YEAR_MAX))}%"),
           onPointerDown --> { ev =>
             ev.preventDefault()
-            dragTarget = com.histmersion.web.FilterBar.DragTarget("to")
+            dragTarget = ("to")
             ev.target.asInstanceOf[dom.HTMLElement].setPointerCapture(ev.pointerId)
           },
           onPointerMove --> { ev =>
-            if dragTarget == "to" then handlePointer(ev, start = com.histmersion.web.FilterBar.HandleAtStart(false))
+            if dragTarget == "to" then handlePointer(ev, start = false)
           },
-          onPointerUp --> { _ => dragTarget = com.histmersion.web.FilterBar.DragTarget("") }
+          onPointerUp --> { _ => dragTarget = ("") }
         ),
         onPointerDown --> { ev =>
           val target = ev.target.asInstanceOf[dom.Element]
-          if !target.classList.contains("year-range-handle") then handlePointer(ev, start = com.histmersion.web.FilterBar.HandleAtStart(true))
+          if !target.classList.contains("year-range-handle") then handlePointer(ev, start = true)
         }
       ),
       htmlTag("span")(

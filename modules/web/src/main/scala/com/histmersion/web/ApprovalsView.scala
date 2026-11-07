@@ -165,7 +165,7 @@ object ApprovalsView:
       "Each is decided as if its own button were pressed, one after another, with the same checks."
 
   /** Who decided an approval, as its row says it (nothing while it is open). */
-  def decidedLine(a: ApprovalInfo): Option[String] = ListFilters.DecidedBy.of(a.state, a.note, a.result.map(r => Approval.Outcome(r.value))).map(_.describe)
+  def decidedLine(a: ApprovalInfo): Option[String] = ListFilters.DecidedBy.of(a.state, a.note, a.result.map(r => Approval.Outcome(r.value))).map(_.describe.value)
 
   /** The self-check line of a draft. */
   def selfCheck(d: Goal.Plans.ArticleDraft): String =
@@ -266,7 +266,7 @@ object ApprovalsView:
     busy.update(_ + a.id)
     ApiClient.decide(a.id, d, Some(note).map(_.trim).filter(_.nonEmpty).map(Agents.DecisionRequest.Note(_))).onComplete { r =>
       busy.update(_ - a.id)
-      r.failed.foreach(e => list.failure.set(Some(e.getMessage)))
+      r.failed.foreach(e => list.failure.set(Some(PolledList.Problem(e.getMessage))))
       refresh()
       // decided here or in a goal's window: the count drops, and the decision is not news to its maker
       Notices.ownWrite(com.histmersion.api.instance.UiNotices.Board.Approvals)
@@ -291,7 +291,7 @@ object ApprovalsView:
       busy.update(_ -- as.map(_.id))
       selected.set(Set.empty)
       list.failure.set(
-        Option.when(errs.nonEmpty)(s"${Plural.count(Plural.CountN(errs.size), Plural.CountSingular("approval"))} not decided: ${errs.mkString("; ")}")
+        Option.when(errs.nonEmpty)(PolledList.Problem(s"${Plural.count(Plural.CountN(errs.size), Plural.CountSingular("approval"))} not decided: ${errs.mkString("; ")}"))
       )
       refresh()
       Notices.ownWrite(com.histmersion.api.instance.UiNotices.Board.Approvals)
@@ -428,22 +428,22 @@ object ApprovalsView:
       div(
         cls := "toolbar list-filters",
         ListFilterBar.chips(
-          com.histmersion.web.ListFilterBar.Label("kind"),
+          "kind",
           list.listing.signal.map(_.page.facet(com.histmersion.api.library.Facet.Name("kind"))),
           UiState.approvalKinds,
-          hint = kindMeaning,
+          hint = v => kindMeaning(Approval.Kind.Wire(v)),
           about = "Show only approvals of the kinds picked (any of them): what the change is."
         ),
         ListFilterBar.chips(
-          com.histmersion.web.ListFilterBar.Label("decided by"),
+          "decided by",
           list.listing.signal.map(_.page.facet(com.histmersion.api.library.Facet.Name("decidedBy"))),
           UiState.approvalBy,
-          hint = decidedByMeaning,
+          hint = v => decidedByMeaning(Approval.DecidedBy.Wire(v)),
           about = "Show only approvals decided the ways picked (any of them)."
         ),
         div(
           cls := "btn-group",
-          ListFilterBar.text(com.histmersion.web.ListFilterBar.Label("subject: a goal, article, manager or citekey"), UiState.approvalSubject),
+          ListFilterBar.text("subject: a goal, article, manager or citekey", UiState.approvalSubject),
           ListFilterBar.clearButton(filterFields)
         )
       ),
@@ -462,9 +462,9 @@ object ApprovalsView:
             ListPaging.heading(
               l,
               com.histmersion.api.Plural.Noun.Singular("approval"),
-              Option.when(st.value != "all")(ListPaging.State(st.value)),
-              a => ListPaging.State(a.state.value),
-              (Option.when(st.value != "all")(stateLabel(st)).toList ++ f.normalized.kind.map(kindLabel)).map(ListPaging.FilterText(_))
+              Option.when(st.value != "all")(st.value),
+              a => a.state.value,
+              Option.when(st.value != "all")(stateLabel(st)).toList ++ f.normalized.kind.map(kindLabel)
             )
           )
         )

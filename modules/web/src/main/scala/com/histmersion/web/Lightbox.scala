@@ -10,60 +10,26 @@ import org.scalajs.dom.document
   * closes it.
   */
 object Lightbox:
-  type AttrKey = AttrKey.T
-  object AttrKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttrText = AttrText.T
-  object AttrText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Attrs = Attrs.T
-  object Attrs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CaptionHtml = CaptionHtml.T
-  object CaptionHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FullSrc = FullSrc.T
-  object FullSrc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What a full-size view shows: the picture and what its licence asks to be said beside it. */
-
-  type FromAttrsAlt = _root_.com.histmersion.web.Lightbox.Item.Alt
-  val FromAttrsAlt: _root_.com.histmersion.web.Lightbox.Item.Alt.type = _root_.com.histmersion.web.Lightbox.Item.Alt
-
   final case class Item(
-      src: Item.Src,
-      alt: Item.Alt,
-      title: Option[Item.Title] = None,
-      credit: Option[Item.Credit] = None,
-      author: Option[Item.Author] = None,
-      license: Option[Item.License] = None,
-      licenseUrl: Option[Item.LicenseUrl] = None,
-      sourceUrl: Option[Item.SourceUrl] = None,
-      provider: Option[Item.Provider] = None
+      src: String,
+      alt: String,
+      title: Option[String] = None,
+      credit: Option[String] = None,
+      author: Option[String] = None,
+      license: Option[String] = None,
+      licenseUrl: Option[String] = None,
+      sourceUrl: Option[String] = None,
+      provider: Option[String] = None
   )
-
-  object Item:
-    type Src = Src.T
-    object Src extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Alt = Alt.T
-    object Alt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Credit = Credit.T
-    object Credit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Author = Author.T
-    object Author extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type License = License.T
-    object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LicenseUrl = LicenseUrl.T
-    object LicenseUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SourceUrl = SourceUrl.T
-    object SourceUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Provider = Provider.T
-    object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // the data attributes an `<img>` names its full-size view in
   private val Full = "data-full"
   private val keys = List("title", "credit", "author", "license", "license-url", "source-url", "provider")
 
   /** Pure: the attributes of a thumbnail that opens `item` full size (escaped, each with a leading space). */
-  def attrs(item: Item): com.histmersion.web.Lightbox.Attrs =
+  def attrs(item: Item): String =
     val vals = List(item.title, item.credit, item.author, item.license, item.licenseUrl, item.sourceUrl, item.provider)
     s""" $Full="${Fmt.esc(item.src)}"""" + keys
       .zip(vals)
@@ -74,24 +40,24 @@ object Lightbox:
       .mkString
 
   /** Pure: the item an image's attributes (`attr`, absent → None) and `src`/`alt` describe. */
-  def fromAttrs(attr: com.histmersion.web.Lightbox.AttrKey => Option[com.histmersion.web.Lightbox.AttrText], src: com.histmersion.web.Lightbox.Item.Src, alt: com.histmersion.web.Lightbox.FromAttrsAlt): Item =
-    def a(k: com.histmersion.web.Lightbox.AttrKey) = attr(s"data-lb-$k").map(_.trim).filter(_.nonEmpty)
+  def fromAttrs(attr: String => Option[String], src: String, alt: String): Item =
+    def a(k: String) = attr(s"data-lb-$k").map(_.trim).filter(_.nonEmpty)
     Item(
       attr(Full).filter(_.nonEmpty).getOrElse(src),
       alt,
-      a(com.histmersion.web.Lightbox.AttrKey("title")),
-      a(com.histmersion.web.Lightbox.AttrKey("credit")),
-      a(com.histmersion.web.Lightbox.AttrKey("author")),
-      a(com.histmersion.web.Lightbox.AttrKey("license")),
-      a(com.histmersion.web.Lightbox.AttrKey("license-url")),
-      a(com.histmersion.web.Lightbox.AttrKey("source-url")),
-      a(com.histmersion.web.Lightbox.AttrKey("provider"))
+      a("title"),
+      a("credit"),
+      a("author"),
+      a("license"),
+      a("license-url"),
+      a("source-url"),
+      a("provider")
     )
 
   /** Pure: the caption under the picture (escaped): its title, then the credit (and the author when the credit does not
     * name them), the licence's name linked to its text, and the provider's page.
     */
-  def captionHtml(i: Item): com.histmersion.web.Lightbox.CaptionHtml =
+  def captionHtml(i: Item): String =
     val title = i.title.map(t => s"""<div class="lightbox-title">${Fmt.esc(t)}</div>""")
     val who = (i.credit, i.author) match
       case (Some(c), Some(a)) if !c.contains(a) => Some(s"${Fmt.esc(a)} · ${Fmt.esc(c)}")
@@ -100,13 +66,13 @@ object Lightbox:
       case _                                    => None
     val lic = i.license.map(l => LicenseName.html(l, i.licenseUrl))
     val page = i.sourceUrl.map { u =>
-      val where = i.provider.map(MediaProvider.title).filter(_.nonEmpty).fold("the source")(p => p)
+      val where = i.provider.map(p => MediaProvider.title(MediaProvider.Id(p)).value).filter(_.nonEmpty).fold("the source")(p => p)
       s"""<a class="lightbox-source" href="${Fmt.esc(u)}" target="_blank" rel="noopener">view on ${Fmt.esc(
           where
         )} ↗</a>"""
     }
     val line = List(who, lic, page).flatten
-    if title.isEmpty && line.isEmpty then com.histmersion.web.Lightbox.CaptionHtml("")
+    if title.isEmpty && line.isEmpty then ""
     else
       s"""<figcaption class="lightbox-caption">${title.getOrElse("")}""" +
         (if line.isEmpty then ""
@@ -115,7 +81,7 @@ object Lightbox:
   /** Pure: does an image with these `src` and `data-full` open in the lightbox? A page's figure (`/assets/`) or a
     * picture that names its full size.
     */
-  def opens(src: com.histmersion.web.Lightbox.Item.Src, full: Option[com.histmersion.web.Lightbox.FullSrc]): Boolean =
+  def opens(src: String, full: Option[String]): Boolean =
     full.exists(_.nonEmpty) || (src != null && src.contains("/assets/"))
 
   // `var`: the lightbox shown now

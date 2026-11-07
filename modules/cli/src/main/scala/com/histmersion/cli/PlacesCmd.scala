@@ -96,7 +96,7 @@ object PlacesCmd:
               acc.flatMap { sum =>
                 if total > 1 then
                   Cli.err.print(s"\r${file.getFileName}: batch ${i + 1}/$total (${sum.places} place(s))")
-                c.importPlaces(kind, Lpf.render(g), dataset)
+                c.importPlaces(kind.map(k => Api.ExternalPlaces.Source(k.value)), Api.ExternalPlaces.Format(Lpf.render(g).value), dataset)
                   .map(r =>
                     com.histmersion.api.catalogue.Place.ImportResult(
                       Place.ImportResult.Places(sum.places.value + r.places.value),
@@ -265,7 +265,7 @@ object PlacesCmd:
       .mapN { (source, dryRun, nw) => (c: Client) =>
         c.fetchExternalPlaces(Api.ExternalPlaces.Source(source), Cli.DryRun(dryRun)).flatMap { r =>
           r.job match
-            case Some(id) => started(c, id, nw)
+            case Some(id) => started(c, com.histmersion.api.SpatialHierarchyResult.Job.Id(id.value), nw)
             case None     => Right(Cli.out.println(s"${if dryRun then "[dry run] " else ""}${PlacesMarkdown.placeImport(r)}"))
         }
       }
@@ -484,7 +484,7 @@ object PlacesCmd:
             limit.map(SiteTypes.Request.Limit(_)),
             SiteTypes.Request.Refresh(refresh)
           ))
-          .flatMap(EventsCmd.follow(c, _, noWait))
+          .flatMap(EventsCmd.follow(c, _, Cli.NoWait(noWait)))
       }
   }
 

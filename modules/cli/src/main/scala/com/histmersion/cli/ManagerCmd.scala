@@ -133,7 +133,7 @@ object ManagerCmd:
         case "repair-acquire" =>
           c.call(com.histmersion.api.library.AcquisitionWorkApi.repairAcquire)(
             RepairAcquire.RepairRequest(RepairAcquire.RepairRequest.DryRun(dry), Some(com.histmersion.api.automation.Activity.Actor("cli")))
-          ).map(r => Output.emit(json, r)(RepairAcquire.markdown))
+          ).map(r => Output.emit(json, r)(RepairAcquire.markdown(_).value))
         case "focus" =>
           focusRequest(rest)
             .flatMap {

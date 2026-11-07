@@ -11,7 +11,7 @@ import scala.scalajs.js
   */
 final class LatestOnly[A](run: (A, () => Unit) => Unit):
   // `var`s: whether a run is in flight, and the newest value waiting for it
-  private var busy: com.histmersion.web.LatestOnly.Busy = com.histmersion.web.LatestOnly.Busy(false)
+  private var busy = false
   private var waiting: Option[A] = None
 
   def apply(a: A): Unit =
@@ -22,17 +22,13 @@ final class LatestOnly[A](run: (A, () => Unit) => Unit):
   def drop(): Unit = waiting = None
 
   private def start(a: A): Unit =
-    busy = com.histmersion.web.LatestOnly.Busy(true)
+    busy = true
     run(
       a,
       () => {
-        busy = com.histmersion.web.LatestOnly.Busy(false)
+        busy = false
         val next = waiting
         waiting = None
         next.foreach(start)
       }
     )
-
-object LatestOnly:
-  type Busy = Busy.T
-  object Busy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

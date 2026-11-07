@@ -7,10 +7,7 @@ import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object ManagerPolicyText:
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   private val Date = "^\\d{4}-\\d{2}-\\d{2}(T.*)?$".r
 
   /** A date (or an instant) rather than a DOI or a citekey. */
-  def isDate(s: com.histmersion.web.ManagerPolicyText.Text): Boolean = Date.matches(s.trim)
+  def isDate(s: String): Boolean = Date.matches(s.trim)

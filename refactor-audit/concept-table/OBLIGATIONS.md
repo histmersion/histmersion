@@ -179,3 +179,9 @@ Reported by client and server agents; each is wrapped `X(v.value)` at the call s
 - Found and fixed silently-false: ActivityView `e.by.contains(Writer.Agent.wire)`.
 - PluginOps.addFrom recomputes the index SHA because Installed.Sha256 is the constrained type, not api.Sha256.
 - Article slug has five types in web (Article.Slug, ReviewGoal.Slug, ApiClient.ArticleSlug, Preview.Item.Slug, WindowKey.Article.Slug); citekey three; job id three; year three (Years.Astronomical, catalogue.Year, Long). Merge in the split-concepts pass.
+
+## From client wave 2
+
+- web component signatures back to plain String/Int/Boolean as master and tests have them (JobsView.Poll, ago, row; LayerToggle.apply; Latest; LatestOnly; ListFilterBar; Fmt.esc/clip; MapLabels internals). G1 review: UI internals or concepts?
+- GoalsView.newArea lost the client-side slug check (server 400, as decided). GraphPanel.legend no longer drops unknown link kinds because GraphLink.kind is now an enum: check the decoder of an unknown kind.
+- Two api types for one concept: AgentsMarkdown/IngestMarkdown take State.Wire, Status, JobStatus, JobAge where cli has ListFilters.Qualifier and OlderLine.Text; Client takes ReviewGoal.Slug for article slugs; Api.EventQuery.Kind/Tier vs TilesApi.TileQuery.Kind/Tier; EventGeo.Precision vs EventSummary.Precision; Api.Job.Id vs SpatialHierarchyResult.Job.Id; Wcag.Hex vs ConfidenceStyle.Rgb; UiLabels.Text vs Label.Text. `ui.CssClass.value` returns a positional ValueResult.

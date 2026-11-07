@@ -11,55 +11,29 @@ import com.raquo.laminar.api.L.*
   * the server's, over every other filter. Pure, but for the view builders.
   */
 object ListFilterBar:
-  type About = About.T
-  object About extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipLabel = ChipLabel.T
-  object ChipLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Choice = Choice.T
-  object Choice extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChoiceLabel = ChoiceLabel.T
-  object ChoiceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Date = Date.T
-  object Date extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FieldName = FieldName.T
-  object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Hint = Hint.T
-  object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Tooltip = Tooltip.T
-  object Tooltip extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   // `var`: the typing pause (`ui.debounce.search-ms`), known once `/api/config` has answered
-
-  type DateS = _root_.com.histmersion.web.ListFilterBar.Text
-  val DateS: _root_.com.histmersion.web.ListFilterBar.Text.type = _root_.com.histmersion.web.ListFilterBar.Text
 
   private[web] var typingMs: Int = 0
 
   /** The chips of a facet: the counted values in the server's order (largest first), then any value still selected that
     * the server did not count (it has none now), with 0 — so it can be unpicked.
     */
-  def chipItems(counts: List[(com.histmersion.web.ListFilterBar.Choice, com.histmersion.web.ListFilterBar.Count)], selected: List[com.histmersion.web.ListFilterBar.Choice]): List[(com.histmersion.web.ListFilterBar.ChipLabel, com.histmersion.web.ListFilterBar.Count)] =
+  def chipItems(counts: List[(String, Int)], selected: List[String]): List[(String, Int)] =
     counts ++ selected.filterNot(v => counts.exists(_._1 == v)).map(_ -> 0)
 
   /** A chip clicked: picked when it was not, unpicked when it was; the others stay. */
-  def toggled(selected: List[com.histmersion.web.ListFilterBar.Choice], v: com.histmersion.web.ListFilterBar.Choice): List[com.histmersion.web.ListFilterBar.Choice] =
+  def toggled(selected: List[String], v: String): List[String] =
     if selected.contains(v) then selected.filterNot(_ == v) else selected :+ v
 
   /** What a text box commits: the trimmed text, or nothing. */
-  def typed(s: com.histmersion.web.ListFilterBar.Text): Option[com.histmersion.web.ListFilterBar.Text] = Option(s).map(_.trim).filter(_.nonEmpty)
+  def typed(s: String): Option[String] = Option(s).map(_.trim).filter(_.nonEmpty)
 
   /** What a date box commits: its `YYYY-MM-DD`, or nothing (cleared, or a browser without one). */
-  def date(s: com.histmersion.web.ListFilterBar.DateS): Option[com.histmersion.web.ListFilterBar.Date] = typed(s).filter(_.matches("""\d{4}-\d{2}-\d{2}"""))
+  def date(s: String): Option[String] = typed(s).filter(_.matches("""\d{4}-\d{2}-\d{2}"""))
 
   /** `Review an article (223)` — a value and its count, as a `<select>` option reads. */
-  def optionLabel(v: com.histmersion.web.ListFilterBar.Choice, n: com.histmersion.web.ListFilterBar.Count, show: com.histmersion.web.ListFilterBar.Choice => com.histmersion.web.ListFilterBar.ChoiceLabel = UiLabels.label): com.histmersion.web.ListFilterBar.ChoiceLabel =
-    if n > 0 then s"${show(v)} (${Paging.grouped(n)})" else show(v)
+  def optionLabel(v: String, n: Int, show: String => String = v => UiLabels.label(UiLabels.Key(v)).value): String =
+    if n > 0 then s"${show(v)} (${Paging.grouped(Paging.GroupSize(n.toLong))})" else show(v)
 
   /** Is any of these filters set (the "clear" button is offered then)? */
   def anySet(fields: List[Field[?]]): Boolean = fields.exists(f => f.encoded != f.codec.encode(f.default))
@@ -74,7 +48,7 @@ object ListFilterBar:
   /** A value's tooltip: its meaning, then the identifier it stands for when the label is not that identifier (for
     * people who type it on the command line).
     */
-  def tooltip(v: com.histmersion.web.ListFilterBar.Choice, show: com.histmersion.web.ListFilterBar.Choice => com.histmersion.web.ListFilterBar.ChoiceLabel, hint: com.histmersion.web.ListFilterBar.Hint => Option[com.histmersion.web.ListFilterBar.Hint]): Option[com.histmersion.web.ListFilterBar.Tooltip] =
+  def tooltip(v: String, show: String => String, hint: String => Option[String]): Option[String] =
     val id = Option.when(show(v) != v)(s"($v)")
     (hint(v).toList ++ id.toList) match
       case Nil   => None
@@ -85,15 +59,18 @@ object ListFilterBar:
     * meaning (with the identifier, its chip's tooltip), `about` what the group filters.
     */
   def chips(
-      label: com.histmersion.web.ListFilterBar.Label,
-      counts: Signal[List[(com.histmersion.web.ListFilterBar.Choice, com.histmersion.web.ListFilterBar.Count)]],
-      field: Field[List[com.histmersion.web.ListFilterBar.FieldName]],
-      show: com.histmersion.web.ListFilterBar.Choice => com.histmersion.web.ListFilterBar.ChoiceLabel = UiLabels.label,
-      hint: com.histmersion.web.ListFilterBar.Hint => Option[com.histmersion.web.ListFilterBar.Hint] = _ => None,
-      about: com.histmersion.web.ListFilterBar.About = com.histmersion.web.ListFilterBar.About("")
+      label: String,
+      counts: Signal[List[(com.histmersion.api.library.Facet.Value, com.histmersion.api.library.Facet.Count)]],
+      field: Field[List[String]],
+      show: String => String = v => UiLabels.label(UiLabels.Key(v)).value,
+      hint: String => Option[String] = _ => None,
+      about: String = ""
   ): HtmlElement =
     val items =
-      counts.combineWith(field.signal).map((c, sel) => chipItems(c, sel).map((v, n) => (v, n, sel.contains(v))))
+      counts
+        .map(_.map((v, n) => (v.value: String, n.value)))
+        .combineWith(field.signal)
+        .map((c, sel) => chipItems(c, sel).map((v, n) => (v, n, sel.contains(v))))
     div(
       cls := "btn-group list-facet",
       role := "group",
@@ -109,7 +86,7 @@ object ListFilterBar:
           tooltip(v, show, hint).map(h => title := h),
           aria.pressed <-- item.map(_._3.toString),
           span(show(v)),
-          span(cls := "btn-count", child.text <-- item.map(t => Paging.grouped(t._2))),
+          span(cls := "btn-count", child.text <-- item.map(t => Paging.grouped(Paging.GroupSize(t._2.toLong)).value)),
           onClick --> (_ => UiState.set(field := toggled(field.now(), v))())
         )
       }
@@ -119,19 +96,19 @@ object ListFilterBar:
     * is a value's meaning (its option's tooltip), `about` what the menu filters.
     */
   def picker(
-      label: com.histmersion.web.ListFilterBar.Label,
-      counts: Signal[List[(com.histmersion.web.ListFilterBar.Choice, com.histmersion.web.ListFilterBar.Count)]],
-      field: Field[Option[com.histmersion.web.ListFilterBar.FieldName]],
-      show: com.histmersion.web.ListFilterBar.Choice => com.histmersion.web.ListFilterBar.ChoiceLabel = UiLabels.label,
-      hint: com.histmersion.web.ListFilterBar.Hint => Option[com.histmersion.web.ListFilterBar.Hint] = _ => None,
-      about: com.histmersion.web.ListFilterBar.About = com.histmersion.web.ListFilterBar.About("")
+      label: String,
+      counts: Signal[List[(com.histmersion.api.library.Facet.Value, com.histmersion.api.library.Facet.Count)]],
+      field: Field[Option[String]],
+      show: String => String = v => UiLabels.label(UiLabels.Key(v)).value,
+      hint: String => Option[String] = _ => None,
+      about: String = ""
   ): HtmlElement =
     select(
       cls := "field list-select",
       aria.label := label,
       dataAttr("facet") := label,
       Option.when(about.nonEmpty)(title := about),
-      children <-- counts.combineWith(field.signal).map { (c, sel) =>
+      children <-- counts.map(_.map((v, n) => (v.value: String, n.value))).combineWith(field.signal).map { (c, sel) =>
         option(value := "", selected := sel.isEmpty, s"Any $label") ::
           chipItems(c, sel.toList).map((v, n) =>
             option(
@@ -148,9 +125,9 @@ object ListFilterBar:
   /** A text filter: typed freely, committed after the typing pause (or at once on Enter), and following its field when
     * that changes elsewhere (cleared, back/forward).
     */
-  def text(label: com.histmersion.web.ListFilterBar.Label, field: Field[Option[com.histmersion.web.ListFilterBar.Text]]): HtmlElement =
+  def text(label: String, field: Field[Option[String]]): HtmlElement =
     val draft = Var(field.now().getOrElse(""))
-    def commit(s: com.histmersion.web.ListFilterBar.Text): Unit = if typed(s) != field.now() then UiState.set(field := typed(s))()
+    def commit(s: String): Unit = if typed(s) != field.now() then UiState.set(field := typed(s))()
     input(
       typ := "search",
       cls := "field list-text",
@@ -163,7 +140,7 @@ object ListFilterBar:
     )
 
   /** A date filter (`since` / `until` a day, UTC). */
-  def day(label: com.histmersion.web.ListFilterBar.Label, field: Field[Option[com.histmersion.web.ListFilterBar.Date]]): HtmlElement =
+  def day(label: String, field: Field[Option[String]]): HtmlElement =
     input(
       typ := "date",
       cls := "field list-date",

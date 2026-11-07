@@ -12,7 +12,7 @@ object Settings:
   type Prefix = Prefix.T
   object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  lazy val loaded: Either[ConfigLayers.Problem, LoadedConfig] = AppConfig.loadWithUserFile()
+  lazy val loaded: Either[ConfigProblem, LoadedConfig] = AppConfig.loadWithUserFile()
 
    lazy val app: AppConfig = loaded match
     case Right(l)  => l.config

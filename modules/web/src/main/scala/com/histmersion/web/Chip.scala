@@ -30,9 +30,9 @@ object Chip:
   ): HtmlElement =
     span(
       cls := s"chip $extraCls".trim,
-      tip.map(title := _),
-      prefix.map(p => span(cls := "pfx", p)),
-      text,
+      tip.map(t => title := t.value),
+      prefix.map(p => span(cls := "pfx", p.value)),
+      text.value,
       mods,
       remove.map(r =>
         button(
@@ -47,4 +47,4 @@ object Chip:
 
   /** A chip for a stored VALUE: the label is its display form. */
   def value(v: com.histmersion.web.Chip.Choice, remove: Option[() => Unit] = None, prefix: Option[com.histmersion.web.Chip.Prefix] = None): HtmlElement =
-    apply(Label.display(v), remove, prefix)
+    apply(Chip.Text(Label.display(Label.Text(v.value)).value), remove, prefix)

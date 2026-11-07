@@ -18,26 +18,16 @@ import com.histmersion.api.instance.EventsUiConfig
   * point: the label at the point).
   */
 object EventLayer:
-  type Alpha = Alpha.T
-  object Alpha extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Anchor = Anchor.T
-  object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Slot = Slot.T
-  object Slot extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearsPerSecond = YearsPerSecond.T
-  object YearsPerSecond extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Alpha = EventPlayback.Alpha
+  val Alpha: EventPlayback.Alpha.type = EventPlayback.Alpha
+  type Slot = EventPlayback.Slot
+  val Slot: EventPlayback.Slot.type = EventPlayback.Slot
+  type YearsPerSecond = EventPlayback.YearsPerSecond
+  val YearsPerSecond: EventPlayback.YearsPerSecond.type = EventPlayback.YearsPerSecond
 
   // `var`s: a shown event's visibility and stacking slot change frame by frame, in place
 
-  final private case class Shown(marker: DomMarker, outline: Shown.Outline, var alpha: Shown.Alpha, var slot: Shown.Slot)
-
-  object Shown:
-    type Outline = Outline.T
-    object Outline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Alpha = Alpha.T
-    object Alpha extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Slot = Slot.T
-    object Slot extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final private case class Shown(marker: DomMarker, outline: Boolean, var alpha: Alpha, var slot: Slot)
 
   /** The pane the labels go in: above the finding markers, so a bubble never hides an event. */
   private def pane = TheMap.pane(MapStack.Pane.Events)
@@ -46,23 +36,23 @@ object EventLayer:
   val OutlineSet = "event-outlines"
   private def outlines: Option[ShapeSet] = Option.when(TheMap.isUp)(
     TheMap.surface.shapes(
-      OutlineSet,
+      MapSurface.ShapesId(OutlineSet),
       // `.hd-event-outline`'s look: the accent, dashed, faint — its strength the event's visibility
       ShapeStyle(
-        fillOpacity = 0.06,
-        lineWidth = 1.5,
-        lineOpacity = 0.55,
-        colour = Some(com.histmersion.web.ui.ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--accent"))),
-        dash = List(2.7, 2.7)
+        fillOpacity = ShapeStyle.FillOpacity(0.06),
+        lineWidth = ShapeStyle.LineWidth(1.5),
+        lineOpacity = ShapeStyle.LineOpacity(0.55),
+        colour = Some(ShapeStyle.Colour(com.histmersion.web.ui.ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--accent")).value)),
+        dash = List(ShapeStyle.Dash(2.7), ShapeStyle.Dash(2.7))
       )
     )
   )
 
   private var running = false
   private var config: EventsUiConfig = null
-  private var items: Vector[(EventGeo, (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End))] = Vector.empty
+  private var items: Vector[(EventGeo, (com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year))] = Vector.empty
   // the events at each anchor, by start: who stacks over whom
-  private var anchors: Map[com.histmersion.web.EventLayer.Anchor, Vector[com.histmersion.api.catalogue.Event.Id]] = Map.empty
+  private var anchors: Map[EventPlayback.AnchorKey, Vector[com.histmersion.api.catalogue.Event.Id]] = Map.empty
   private val shown = mutable.HashMap.empty[com.histmersion.api.catalogue.Event.Id, Shown]
   // the outlines drawn now, by event id, with their geometry
   private val outlined = mutable.LinkedHashMap.empty[com.histmersion.api.catalogue.Event.Id, js.Any]
@@ -79,7 +69,7 @@ object EventLayer:
     latest.onCurrent(ApiClient.eventsGeo(query))(_.foreach { list =>
       if running then
         items = EventPlayback.playable(list.events)
-        anchors = items.sortBy(_._2._1).groupMap((e, _) => EventPlayback.anchorKey(e))((e, _) => e.id)
+        anchors = items.sortBy(_._2._1.value).groupMap((e, _) => EventPlayback.anchorKey(e))((e, _) => e.id)
         lastFrame.foreach((ph, yps) => frame(ph, yps))
     })(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
@@ -87,20 +77,20 @@ object EventLayer:
   def frame(playhead: com.histmersion.api.catalogue.Year, yearsPerSecond: com.histmersion.web.EventLayer.YearsPerSecond): Unit =
     lastFrame = Some((playhead, yearsPerSecond))
     if running && config != null && TheMap.isUp then
-      val localFade = EventPlayback.fadeYears(config.localFadeSeconds, yearsPerSecond)
-      val regionalFade = EventPlayback.fadeYears(config.regionalFadeSeconds, yearsPerSecond)
-      val moved = mutable.Set.empty[String]
+      val localFade = EventPlayback.fadeYears(EventPlayback.Seconds(config.localFadeSeconds.value), yearsPerSecond)
+      val regionalFade = EventPlayback.fadeYears(EventPlayback.Seconds(config.regionalFadeSeconds.value), yearsPerSecond)
+      val moved = mutable.Set.empty[EventPlayback.AnchorKey]
       var outlinesChanged = false
       items.foreach { (e, span) =>
-        val fade = if e.scale == EventScale.Regional then regionalFade else localFade
+        val fade = if e.scale.value == EventScale.Regional then regionalFade else localFade
         val a = EventPlayback.step(EventPlayback.alpha(span, playhead, fade))
         shown.get(e.id) match
-          case None if a > 0 =>
+          case None if a.value > 0 =>
             val s = add(e, span._1, a)
             shown(e.id) = s
             if s.outline then outlinesChanged = true
             moved += EventPlayback.anchorKey(e)
-          case Some(s) if a <= 0 =>
+          case Some(s) if a.value <= 0 =>
             remove(e.id, s)
             shown.remove(e.id)
             if s.outline then outlinesChanged = true
@@ -138,14 +128,14 @@ object EventLayer:
 
   private def drawOutlines(): Unit =
     outlines.foreach(
-      _.set(outlined.toSeq.map((id, g) => ShapeFeature(id.value, g, dashed = true, alpha = shown.get(id).fold(0.0)(_.alpha))))
+      _.set(outlined.toSeq.map((id, g) => ShapeFeature(ShapeFeature.Id(id.value), g, dashed = true, alpha = ShapeFeature.Alpha(shown.get(id).fold(0.0)(_.alpha.value)))))
     )
 
-  private def add(e: EventGeo, start: com.histmersion.api.catalogue.Period.Start, a: com.histmersion.web.EventLayer.Alpha): Shown =
+  private def add(e: EventGeo, start: com.histmersion.api.catalogue.Year, a: com.histmersion.web.EventLayer.Alpha): Shown =
     val outline = e.outline
-      .filter(_ => e.scale == EventScale.Regional)
+      .filter(_ => e.scale.value == EventScale.Regional)
       .flatMap { geometry =>
-        scala.util.Try(js.JSON.parse(geometry)).toOption.map { g =>
+        scala.util.Try(js.JSON.parse(geometry.value)).toOption.map { g =>
           // a Feature or a bare geometry
           val geom = if !js.isUndefined(g.geometry) then g.geometry else g
           outlined(e.id) = geom
@@ -153,13 +143,13 @@ object EventLayer:
         }
       }
       .getOrElse(false)
-    val el = DomMarker.element(com.histmersion.web.map.DomMarker.ElementCls("hd-event-wrap"), EventPlayback.html(e, a))
-    val marker = DomMarker(e.lat.value, e.lon.value, el)
+    val el = DomMarker.element(com.histmersion.web.map.DomMarker.ElementCls("hd-event-wrap"), DomMarker.ElementHtml(EventPlayback.html(e, a).value))
+    val marker = DomMarker(DomMarker.LatV(e.lat.value), DomMarker.LonV(e.lon.value), el)
     // a regional label under the local ones: the battle stays readable inside its war
     marker.setZ(if e.scale == EventScale.Regional then 1 else 2)
     pane.add(marker)
-    val s = Shown(marker, outline, a, com.histmersion.web.EventLayer.Shown.Slot(0))
-    MapLabels.trackEvent(e.id, marker, EventPlayback.rank(e, start), () => nameOf(s))
+    val s = Shown(marker, outline, a, Slot(0))
+    MapLabels.trackEvent(e.id, marker, MapLabels.Entry.Rank(EventPlayback.rank(e, start).value), () => nameOf(s))
     s
 
   private def remove(id: com.histmersion.api.catalogue.Event.Id, s: Shown): Unit =
@@ -178,7 +168,7 @@ object EventLayer:
   /** The visibility, as `--a` on the label and the outline's own. */
   private def setAlpha(id: com.histmersion.api.catalogue.Event.Id, s: Shown, a: com.histmersion.web.EventLayer.Alpha): Unit =
     labelOf(s).foreach(_.style.setProperty("--a", a.toString))
-    if s.outline then outlines.foreach(_.restyle(id.value, com.histmersion.web.map.ShapeFeature.Colour(""), a))
+    if s.outline then outlines.foreach(_.restyle(ShapeFeature.Id(id.value), com.histmersion.web.map.ShapeFeature.Colour(""), ShapeFeature.Alpha(a.value)))
 
   /** The stacking slot, as `--i`, on the label. */
   private def setSlot(s: Shown, slot: com.histmersion.web.EventLayer.Slot): Unit =

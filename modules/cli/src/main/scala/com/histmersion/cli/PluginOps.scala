@@ -271,7 +271,7 @@ final class PluginOps(using console: Console)(
         _ <- signer.fold(Right(()))(fpr => PluginKit.checkSigner(jar.plugins.map(_.id), fpr, idx).left.map(p => err(p.value)))
         _ = show(jar.modify(_.file).setTo(name), sha, source, signer, replaced, deps)
         _ <- Either.cond(
-          o.yes || confirm(Cli.Question(s"Install ${jar.plugins.map(p => s"${p.id} ${p.version}").mkString(", ")}?")),
+          o.yes.value || confirm(Cli.Question(s"Install ${jar.plugins.map(p => s"${p.id} ${p.version}").mkString(", ")}?")),
           (),
           err("not installed (answer y, or pass --yes when there is no terminal)", ExitCode.Usage)
         )

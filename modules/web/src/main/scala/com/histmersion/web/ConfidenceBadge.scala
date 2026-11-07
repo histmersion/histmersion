@@ -26,12 +26,12 @@ object ConfidenceBadge:
         ConfidenceStyle
           .iconParts(c)
           .map(p =>
-            if p.filled then svg.path(svg.d := p.d, svg.fill := "currentColor")
-            else svg.path(svg.d := p.d, svg.fill := "none", svg.stroke := "currentColor")
+            if p.filled.value then svg.path(svg.d := p.d.value, svg.fill := "currentColor")
+            else svg.path(svg.d := p.d.value, svg.fill := "none", svg.stroke := "currentColor")
           )
       ),
       span(cls := "conf-text", c.toString.toLowerCase)
     )
 
   /** As an HTML string, for map popups — the server's markup, from [[HtmlAtoms]]. */
-  def html(c: Confidence): com.histmersion.web.ConfidenceBadge.Html = HtmlAtoms.confidenceBadge(c)
+  def html(c: Confidence): com.histmersion.web.ConfidenceBadge.Html = Html(HtmlAtoms.confidenceBadge(c))

@@ -26,18 +26,18 @@ object FieldCodec:
   type Token = Token.T
   object Token extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def clean(vs: List[com.histmersion.web.FieldCodec.Token]) = vs.map(_.trim).filter(_.nonEmpty)
+  private def clean(vs: List[com.histmersion.web.FieldCodec.Token]): List[String] = vs.map(_.value.trim).filter(_.nonEmpty)
 
   given optString: FieldCodec[Option[String]]:
-    def encode(a: Option[com.histmersion.web.FieldCodec.Token]) = a.toList.map(_.trim).filter(_.nonEmpty)
+    def encode(a: Option[String]) = a.toList.map(_.trim).filter(_.nonEmpty).map(Token(_))
     def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = Some(clean(vs).headOption)
 
   given optLong: FieldCodec[Option[Long]]:
-    def encode(a: Option[Long]) = a.toList.map(_.toString)
+    def encode(a: Option[Long]) = a.toList.map(l => Token(l.toString))
     def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = Some(clean(vs).headOption.flatMap(_.toLongOption))
 
   given strings: FieldCodec[List[String]]:
-    def encode(a: List[com.histmersion.web.FieldCodec.Token]) = a
+    def encode(a: List[String]) = a.map(Token(_))
     def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = Some(clean(vs).distinct)
     override def multi = true
 
@@ -46,35 +46,35 @@ object FieldCodec:
     def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = Some(clean(vs).headOption.contains("true"))
 
   given mapLayers: FieldCodec[Set[MapLayer]]:
-    def encode(a: Set[MapLayer]) = MapLayer.values.toList.filter(a).map(_.wire)
-    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = Some(clean(vs).flatMap(MapLayer.fromWire).toSet)
+    def encode(a: Set[MapLayer]) = MapLayer.values.toList.filter(a).map(l => Token(l.wire.value))
+    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = Some(clean(vs).flatMap(t => MapLayer.fromWire(MapLayer.Wire(t))).toSet)
     override def multi = true
 
   given windowKeys: FieldCodec[List[WindowKey]]:
-    def encode(a: List[WindowKey]) = a.map(_.wire)
-    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = Some(clean(vs).flatMap(WindowKey.parse).distinct)
+    def encode(a: List[WindowKey]) = a.map(k => Token(k.wire.value))
+    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = Some(clean(vs).flatMap(t => WindowKey.parse(WindowKey.Route(t))).distinct)
     override def multi = true
 
   given optJobState: FieldCodec[Option[JobState]]:
-    def encode(a: Option[JobState]) = a.toList.map(_.wire)
-    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = Some(clean(vs).headOption.flatMap(JobState.parse))
+    def encode(a: Option[JobState]) = a.toList.map(j => Token(j.wire.value))
+    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = Some(clean(vs).headOption.flatMap(t => JobState.parse(JobState.Wire(t))))
 
   given optRunState: FieldCodec[Option[Agents.RunState]]:
-    def encode(a: Option[Agents.RunState]) = a.toList.map(_.wire)
-    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = Some(clean(vs).headOption.flatMap(Agents.RunState.parse))
+    def encode(a: Option[Agents.RunState]) = a.toList.map(r => Token(r.wire.value))
+    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = Some(clean(vs).headOption.flatMap(t => Agents.RunState.parse(com.histmersion.api.automation.Run.State.Wire(t))))
 
   given sheet: FieldCodec[Sheet]:
-    def encode(a: Sheet) = List(a.wire)
+    def encode(a: Sheet) = List(Token(a.wire.value))
     def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = clean(vs).headOption.flatMap(Sheet.fromWire)
 
   given baseMap: FieldCodec[BaseMap]:
-    def encode(a: BaseMap) = List(a.wire)
-    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = clean(vs).headOption.flatMap(BaseMap.fromWire)
+    def encode(a: BaseMap) = List(Token(a.wire.value))
+    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = clean(vs).headOption.flatMap(t => BaseMap.fromWire(BaseMap.Wire(t)))
 
   given mapMotion: FieldCodec[MapMotion]:
-    def encode(a: MapMotion) = List(a.wire)
-    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = clean(vs).headOption.flatMap(MapMotion.fromWire)
+    def encode(a: MapMotion) = List(Token(a.wire.value))
+    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = clean(vs).headOption.flatMap(t => MapMotion.fromWire(MapMotion.Wire(t)))
 
   given geoPick: FieldCodec[GeoPick]:
-    def encode(a: GeoPick) = List(a.wire)
-    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = clean(vs).headOption.flatMap(GeoPick.parse)
+    def encode(a: GeoPick) = List(Token(a.wire.value))
+    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = clean(vs).headOption.flatMap(t => GeoPick.parse(GeoPick.Wire(t)))

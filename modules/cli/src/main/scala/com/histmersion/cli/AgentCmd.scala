@@ -66,7 +66,7 @@ object AgentCmd:
           else
             c.call(AgentsApi.removeAllowance)(com.histmersion.api.research.ReviewGoal.Slug(target))
               .map(r =>
-                Cli.out.println(if r.removed then s"The saved allowance of $target is removed."
+                Cli.out.println(if r.removed.value then s"The saved allowance of $target is removed."
                 else s"No saved allowance for $target.")
               )
         else
@@ -327,8 +327,8 @@ object AgentCmd:
             AgentsMarkdown.approvals(
               as,
               page,
-              f.qualifier,
-              PageCmd.older(page, "agent approvals", f.options ++ List("limit" -> limit.map(_.toString)))
+              f.qualifier.map(q => com.histmersion.api.automation.Approval.State.Wire(q.value)),
+              PageCmd.older(page, "agent approvals", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString)))
             )
           )
         }
@@ -367,8 +367,8 @@ object AgentCmd:
               AgentsMarkdown.runs(
                 rs,
                 page,
-                f.qualifier,
-                PageCmd.older(page, "agent runs", f.options ++ List("limit" -> limit.map(_.toString)))
+                f.qualifier.map(q => RunInfo.Status(q.value)),
+                PageCmd.older(page, "agent runs", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString)))
               )
             )
           }

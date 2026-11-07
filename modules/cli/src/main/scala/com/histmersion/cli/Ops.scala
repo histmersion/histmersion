@@ -215,7 +215,7 @@ object Ops:
     if !java.nio.file.Files.isRegularFile(p) then Left(Cli.Error(Cli.Error.Message(s"no such file: $p"), exitCode = ExitCode.Usage))
     else
       val raw = java.nio.file.Files.readString(p)
-      val (head, body) = FileFormat.splitFrontmatter(raw)
+      val (head, body) = FileFormat.splitFrontmatter(FileFormat.Text(raw))
       c.lintMarkdown(FormatCheck(FormatCheck.Text(body.value), FormatField.Body, FormatCheck.Fix(fix))).map { r =>
         r.text
           .map(_.value)

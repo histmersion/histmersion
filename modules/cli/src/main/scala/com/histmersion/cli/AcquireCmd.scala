@@ -220,16 +220,16 @@ object AcquireCmd:
             IngestCmd.upload(
               c,
               path,
-              citekey.getOrElse(""),
-              quality,
-              com.histmersion.api.Api.Overwrite(force),
-              title,
-              authors,
-              year,
-              doi,
+              Citekey(citekey.getOrElse("")),
+              Ingest.Params.Quality(quality),
+              Ingest.Params.Force(force),
+              title.map(com.histmersion.api.library.Title(_)),
+              authors.map(com.histmersion.api.library.AuthorName(_)),
+              year.map(y => com.histmersion.api.catalogue.Year(y.toLong)),
+              doi.map(com.histmersion.api.library.Doi(_)),
               Cli.NoWait(noWait),
-              prov,
-              item
+              prov.map(Ingest.Params.Provenance(_)),
+              item.map(Ingest.Params.AcquireItem(_))
             )
           else if item.isDefined then
             Left(

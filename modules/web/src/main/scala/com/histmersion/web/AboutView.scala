@@ -34,7 +34,7 @@ object AboutView:
   /** A health text as a row: its state, and the text itself as the detail unless it only says "ok". */
   private[web] def check(label: String, text: Option[String]): Row =
     val st = ServiceState.of(text.map(ServiceState.Wire(_)))
-    Row(label, st.label, Some(st), text.map(_.trim).filter(t => t.nonEmpty && !t.equalsIgnoreCase(st.label)))
+    Row(label, st.label.value, Some(st), text.map(_.trim).filter(t => t.nonEmpty && !t.equalsIgnoreCase(st.label.value)))
 
   /** The panel's content, as data — so what it says is a unit test. */
   def sections(a: About): List[Section] =

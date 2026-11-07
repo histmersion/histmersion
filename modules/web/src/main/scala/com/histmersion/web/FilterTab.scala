@@ -24,14 +24,14 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 final class FilterTab[Q, Row](
     name: FilterTab.Name,
-    singular: FilterTab.Singular,
-    noun: FilterTab.Noun,
+    singular: com.histmersion.api.Plural.Noun.Singular,
+    noun: com.histmersion.api.Plural.Noun.Plural,
     query: () => Q,
-    fetch: (Q, FilterTab.FetchArg2) => Future[TabPage[Row]],
+    fetch: (Q, com.histmersion.api.library.Filter.Offset) => Future[TabPage[Row]],
     render: Row => HtmlElement,
     empty: FilterTab.Empty,
-    page: FilterTab.Page,
-    debounceMs: () => FilterTab.DebounceMsResult
+    page: ResultsPaging.PageNumber,
+    debounceMs: () => UiState.ReloadDelay
 )(using ExecutionContext):
 
   val state: Var[TabState[Row]] = Var(TabState[Row]())
@@ -45,17 +45,17 @@ final class FilterTab[Q, Row](
       cls := s"$name-pane",
       ResultsPaging.countBar(
         state.signal.map(_.countLine(singular, noun)),
-        state.signal.map(s => s.loading && s.loaded),
-        state.signal.map(_.error.nonEmpty)
+        state.signal.map(s => ResultsPaging.Loading(s.loading.value && s.loaded.value)),
+        state.signal.map(s => ResultsPaging.Failed(s.error.nonEmpty))
       ),
       child.maybe <-- state.signal.map(
         _.error.map(m => p(cls := "form-error", role := "alert", s"Could not list $noun: $m"))
       ),
       child.maybe <-- state.signal.map(s =>
-        Option.when(s.loaded && !s.loading && s.error.isEmpty && s.rows.isEmpty)(p(cls := "muted", empty))
+        Option.when(s.loaded.value && !s.loading.value && s.error.isEmpty && s.rows.isEmpty)(p(cls := "muted", empty.value))
       ),
       ul(cls := s"$name-list", children <-- state.signal.map(s => s.rows.take(s.shown.value).map(render))),
-      ResultsPaging.moreButton(state.signal.map(_.moreLabel(page)), state.signal.map(_.loading), () => more())
+      ResultsPaging.moreButton(state.signal.map(_.moreLabel(page)), state.signal.map(s => ResultsPaging.Loading(s.loading.value)), () => more())
     )
 
   /** Called on every UiState change: refetch only when the query has changed, after the debounce. */
@@ -64,14 +64,14 @@ final class FilterTab[Q, Row](
     if !lastQuery.contains(q) then
       lastQuery = Some(q)
       dom.window.clearTimeout(timer)
-      timer = dom.window.setTimeout(() => load(), debounceMs())
+      timer = dom.window.setTimeout(() => load(), debounceMs().value)
 
   /** The first page of the current query, now. */
   def load(): Unit =
     val q = query()
     lastQuery = Some(q)
     state.update(TabState.loading)
-    latest(fetch(q, com.histmersion.web.FilterTab.FetchArg2(0)))(p => state.set(TabState.first(p, page)), m => state.update(TabState.failed(_, m)))
+    latest(fetch(q, com.histmersion.api.library.Filter.Offset(0)))(p => state.set(TabState.first(p, page)), m => state.update(TabState.failed(_, TabState.Problem(m.value))))
 
   /** "show more": the loaded rows first, then the next page from the server. */
   def more(): Unit =
@@ -80,24 +80,14 @@ final class FilterTab[Q, Row](
       case Left(offset) =>
         val q = lastQuery.getOrElse(query())
         state.update(TabState.loading)
-        latest(fetch(q, offset))(
+        latest(fetch(q, com.histmersion.api.library.Filter.Offset(offset.value)))(
           p => state.update(TabState.appended(_, p, page)),
-          m => state.update(TabState.failed(_, m))
+          m => state.update(TabState.failed(_, TabState.Problem(m.value)))
         )
 
 object FilterTab:
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Singular = Singular.T
-  object Singular extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Noun = Noun.T
-  object Noun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchArg2 = FetchArg2.T
-  object FetchArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Empty = Empty.T
   object Empty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Page = Page.T
-  object Page extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DebounceMsResult = DebounceMsResult.T
-  object DebounceMsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

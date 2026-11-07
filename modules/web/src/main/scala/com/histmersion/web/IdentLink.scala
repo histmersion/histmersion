@@ -16,17 +16,12 @@ object IdentLink:
 
   enum Resolved:
     case Source(ref: com.histmersion.api.library.Source.Ref)
-    case Article(slug: Resolved.Article.Slug, title: Resolved.Article.Title)
-
-  object Resolved:
-    object Article:
-      type Slug = Slug.T
-      object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Title = Title.T
-      object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    case Article(slug: com.histmersion.api.research.Article.Slug, title: com.histmersion.api.research.Article.Title)
 
   private val cache =
-    BoundedCache[String, scala.concurrent.Future[Option[Resolved]]](com.histmersion.web.ui.Layout.identCacheSize)
+    BoundedCache[String, scala.concurrent.Future[Option[Resolved]]](
+      BoundedCache.MaxEntries(com.histmersion.web.ui.Layout.identCacheSize.value)
+    )
 
   /** The lookups' figures, for [[Diagnostics]]. */
   def cacheStats: BoundedCache.Stats = BoundedCache.stats(cache)
@@ -34,9 +29,9 @@ object IdentLink:
   private def resolve(id: com.histmersion.web.IdentLink.Id): scala.concurrent.Future[Option[Resolved]] =
     import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
     cache.getOrElseUpdate(
-      id,
+      id.value,
       ApiClient
-        .resolveId(id)
+        .resolveId(ApiClient.Id(id.value))
         .map(r =>
           r.source.map(s => Resolved.Source(s.ref)).orElse(r.article.map(a => Resolved.Article(a.slug, a.title)))
         )
@@ -48,8 +43,12 @@ object IdentLink:
     span(
       cls := "ident",
       child <-- Signal.fromFuture(resolve(id)).map {
-        case Some(Some(Resolved.Source(r)))        => SourceLink(r.citekey.value.toString, r.doi.map(_.value), Some(r.shortCite))
-        case Some(Some(Resolved.Article(sl, tit))) => ArticleLink(sl, tit)
-        case _                                     => span(Label.display(id))
+        case Some(Some(Resolved.Source(r)))        => SourceLink(
+          Preview.Target.Source.Citekey(r.citekey.value),
+          r.doi.map(d => SourceLink.Doi(d.value)),
+          Some(com.histmersion.api.UiLabels.Text(r.shortCite.value))
+        )
+        case Some(Some(Resolved.Article(sl, tit))) => ArticleLink(sl, tit.value)
+        case _                                     => span(Label.display(Label.Text(id.value)).value)
       }
     )

@@ -34,51 +34,53 @@ object EventPlayback:
     * frame).
     */
 
-  def alpha(span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical), playhead: com.histmersion.api.Years.Astronomical, fadeYears: com.histmersion.web.EventPlayback.FadeYears): com.histmersion.web.EventPlayback.Alpha =
+  def alpha(span: (com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year), playhead: com.histmersion.api.catalogue.Year, fadeYears: com.histmersion.web.EventPlayback.FadeYears): com.histmersion.web.EventPlayback.Alpha =
     val (start, end) = span
-    if playhead < start then 0.0
-    else if playhead <= end then 1.0
-    else if fadeYears <= 0 then 0.0
-    else (1.0 - (playhead - end).toDouble / fadeYears).max(0.0)
+    Alpha(
+      if playhead.value < start.value then 0.0
+      else if playhead.value <= end.value then 1.0
+      else if fadeYears.value <= 0 then 0.0
+      else (1.0 - (playhead.value - end.value).toDouble / fadeYears.value).max(0.0)
+    )
 
   /** Pure: the years a fade of `seconds` of playback takes at `yearsPerSecond`. */
-  def fadeYears(seconds: com.histmersion.web.EventPlayback.Seconds, yearsPerSecond: com.histmersion.web.EventPlayback.YearsPerSecond): com.histmersion.web.EventPlayback.FadeYears = (seconds * yearsPerSecond).max(0.0)
+  def fadeYears(seconds: com.histmersion.web.EventPlayback.Seconds, yearsPerSecond: com.histmersion.web.EventPlayback.YearsPerSecond): com.histmersion.web.EventPlayback.FadeYears = FadeYears((seconds.value * yearsPerSecond.value).max(0.0))
 
   /** Pure: `alpha` rounded to twentieths — what the page is told, so a slow fade does not rewrite the same element on
     * every frame.
     */
-  def step(alpha: com.histmersion.web.EventPlayback.Alpha): com.histmersion.web.EventPlayback.Alpha = math.round(alpha * 20).toDouble / 20
+  def step(alpha: com.histmersion.web.EventPlayback.Alpha): com.histmersion.web.EventPlayback.Alpha = Alpha(math.round(alpha.value * 20).toDouble / 20)
 
   /** Pure: the events playback draws, with the years each covers: the dated ones precise enough to stand at a year
     * ([[EventPrecision.mapped]] — the feed leaves the imprecise out already).
     */
-  def playable(events: List[EventGeo]): Vector[(EventGeo, (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical))] =
+  def playable(events: List[EventGeo]): Vector[(EventGeo, (com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year))] =
     events.toVector
-      .filter(e => EventPrecision.mapped(e.precision))
+      .filter(e => EventPrecision.mapped(com.histmersion.api.catalogue.EventSummary.Precision(e.precision.value)))
       .flatMap(e => e.timeSpan.outer.map(span => (e, span)))
 
   /** Pure: the line under an event's name — its kind and its years. */
   def note(e: EventGeo): com.histmersion.web.EventPlayback.Note =
-    s"${Fmt.display(e.kind)} · ${YearFmt.span(e.timeSpan)}"
+    Note(s"${Fmt.display(com.histmersion.api.UiLabels.Text(e.kind.value))} · ${YearFmt.span(e.timeSpan)}")
 
   /** Pure: the key events share when they are drawn at the same point (a site with several destructions): their labels
     * are stacked there rather than drawn over each other.
     */
-  def anchorKey(e: EventGeo): com.histmersion.web.EventPlayback.AnchorKey = f"${e.lat}%.4f|${e.lon}%.4f"
+  def anchorKey(e: EventGeo): com.histmersion.web.EventPlayback.AnchorKey = AnchorKey(f"${e.lat.value}%.4f|${e.lon.value}%.4f")
 
   /** Pure: the stacking slot of each SHOWN event at one anchor — `ids` in their order there (by start), numbered 0, 1,
     * 2… among those shown, so a label moves up when the one above it goes.
     */
   def slots[A](ids: Seq[A], shown: A => Boolean): Map[A, com.histmersion.web.EventPlayback.Slot] =
-    ids.filter(shown).zipWithIndex.toMap
+    ids.filter(shown).zipWithIndex.map((a, i) => a -> Slot(i)).toMap
 
   /** Pure: an event name's rank in the map's collision pass ([[MapLabels]], [[LabelPlacement.cull]]): above every area
     * name (whose rank is its zoom-0 area, at most the 256² px world) and point name — an event is on screen for a
     * moment, the static names return when it goes; a local event above a regional one (the battle stays readable inside
     * its war); among each, the later start first (the event just arrived wins over the one fading out).
     */
-  def rank(e: EventGeo, start: com.histmersion.api.Years.Astronomical): com.histmersion.web.EventPlayback.Rank =
-    (if e.scale == EventScale.Regional then RegionalRank else LocalRank) + start.toDouble
+  def rank(e: EventGeo, start: com.histmersion.api.catalogue.Year): com.histmersion.web.EventPlayback.Rank =
+    Rank((if e.scale.value == EventScale.Regional then RegionalRank else LocalRank) + start.value.toDouble)
 
   private val RegionalRank = 1e9
   private val LocalRank = 2e9
@@ -89,17 +91,17 @@ object EventPlayback:
     * it collides with no higher-ranked name.
     */
   def html(e: EventGeo, alpha: com.histmersion.web.EventPlayback.Alpha): com.histmersion.web.EventPlayback.Html =
-    val local = e.scale != EventScale.Regional
+    val local = e.scale.value != EventScale.Regional
     val title =
       s"${e.label} — ${note(e)}${e.dating.fold("")(d => s" · $d")}${e.placeLabel.fold("")(p => s" · $p")} (${e.historicity})"
     // the dot carries the kind's icon (#1449): what happened reads before the name does
     val dot = if local then
-      s"""<span class="hd-event-dot hd-badge">${Glyphs.badge(EventTaxonomy.icon(e.kind))}</span>"""
+      s"""<span class="hd-event-dot hd-badge">${Glyphs.badge(Glyphs.BadgeName(EventTaxonomy.icon(com.histmersion.api.catalogue.EventSummary.Kind(e.kind.value)).value))}</span>"""
     else ""
-    val approx = if e.precision == EventPrecision.Approximate then " hd-event--approximate" else ""
-    s"""<span class="hd-event ${
+    val approx = if e.precision.value == EventPrecision.Approximate then " hd-event--approximate" else ""
+    Html(s"""<span class="hd-event ${
         if local then "hd-event--local" else "hd-event--regional"
       }$approx" style="--a:$alpha" """ +
       s"""title="${Fmt.esc(title)}">$dot<span class="hd-area-point is-culled">""" +
-      s"""<span class="hd-area-point-name">${Fmt.esc(e.label)}</span>""" +
-      s"""<span class="hd-area-point-note">${Fmt.esc(note(e))}</span></span></span>"""
+      s"""<span class="hd-area-point-name">${Fmt.esc(e.label.value)}</span>""" +
+      s"""<span class="hd-area-point-note">${Fmt.esc(note(e).value)}</span></span></span>""")

@@ -10,8 +10,6 @@ import com.histmersion.api.library.GeoHit
 object DotCluster:
   type BubbleHtml = BubbleHtml.T
   object BubbleHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ByKeyboard = ByKeyboard.T
-  object ByKeyboard extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Count = Count.T
   object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EndLabel = EndLabel.T
@@ -24,12 +22,6 @@ object DotCluster:
   object KindCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Mid = Mid.T
   object Mid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RingClass = RingClass.T
-  object RingClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RingExtraClass = RingExtraClass.T
-  object RingExtraClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RingOutset = RingOutset.T
-  object RingOutset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Size = Size.T
   object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SpokenText = SpokenText.T
@@ -45,24 +37,14 @@ object DotCluster:
 
   /** A bubble's content: what its markers hold. */
 
-  type Ring = RingValue
-  type RingValue = RingValue.T
-  object RingValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SquareCorner = SquareCornerValue
-  type SquareCornerValue = SquareCornerValue.T
-  object SquareCornerValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Tab = TabValue
-  type TabValue = TabValue.T
-  object TabValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   final case class Contents(members: List[Member]):
-    def total: com.histmersion.web.DotCluster.Total = members.map(_.n).sum
-    def counts: Map[DotKind, com.histmersion.web.DotCluster.KindCount] = members.groupMapReduce(_.kind)(_.n)(_ + _)
+    def total: com.histmersion.web.DotCluster.Total = Total(members.map(_.n.value).sum)
+    def counts: Map[DotKind, com.histmersion.web.DotCluster.KindCount] = members.groupMapReduce(_.kind)(_.n.value)(_ + _).map((k, n) => k -> KindCount(n))
     def findings: List[GeoHit] = members.flatMap(_.findings)
     def entries: List[DotEntry] = members.flatMap(_.entry)
 
     /** The middle of every dated member's span: the bubble's colour is their range. */
-    def mids: List[com.histmersion.web.DotCluster.Mid] = members.flatMap(_.mids)
+    def mids: List[com.histmersion.web.DotCluster.Mid] = members.flatMap(_.mids).map(m => Mid(m.value))
 
     /** The least certain member's certainty (only findings carry one other than [[Certainty.NoSay]]). */
     def certainty: Certainty = Certainty.worst(members.map(_.certainty))
@@ -74,44 +56,44 @@ object DotCluster:
     def cells: List[com.histmersion.web.map.GeoBounds] = members.flatMap(_.cell)
 
     /** How many of what it holds have no known date. */
-    def undated: com.histmersion.web.DotCluster.Undated = members.map(_.undated).sum
+    def undated: com.histmersion.web.DotCluster.Undated = Undated(members.map(_.undated.value).sum)
 
 
   /** Pure: what a bubble holds, in words — "12 findings · 3 sites · 2 events", the kinds in a fixed order, those it has
     * none of left out.
     */
   def summary(counts: Map[DotKind, com.histmersion.web.DotCluster.KindCount]): com.histmersion.web.DotCluster.Summary =
-    DotKind.values.toList
-      .flatMap(k => counts.get(k).filter(_ > 0).map(n => Plural.count(n, k.one, k.many)))
-      .mkString(" · ")
+    Summary(DotKind.values.toList
+      .flatMap(k => counts.get(k).filter(_.value > 0).map(n => Plural.count(Plural.CountN(n.value), Plural.CountSingular(k.one.value), Plural.CountPlural(k.many.value))))
+      .mkString(" · "))
 
   /** Pure: the same, then how many of them have no known date — "12 sites, 5 with no known date". */
   def summary(counts: Map[DotKind, com.histmersion.web.DotCluster.KindCount], undated: com.histmersion.web.DotCluster.Undated): com.histmersion.web.DotCluster.Summary =
     val all = summary(counts)
-    if undated <= 0 then all else s"$all, $undated with no known date"
+    if undated.value <= 0 then all else Summary(s"$all, $undated with no known date")
 
   def summary(c: Contents): com.histmersion.web.DotCluster.Summary = summary(c.counts, c.undated)
 
   /** Is it a bubble of more than one kind? */
-  def mixed(c: Contents): Boolean = c.counts.count(_._2 > 0) > 1
+  def mixed(c: Contents): Boolean = c.counts.count(_._2.value > 0) > 1
 
   /** How far a bubble's rings reach outside its disc, px: a dark line, the white coin ring, a dark line. */
-  val Ring: com.histmersion.web.DotCluster.Ring = com.histmersion.web.DotCluster.Ring(5)
+  val Ring: Int = 5
 
   /** Pure: a bubble's outline (#1647) — square when it holds events only, tabbed when events are among other kinds,
     * round otherwise.
     */
   def form(c: Contents): BubbleForm =
-    val events = c.counts.getOrElse(DotKind.Event, 0)
+    val events = c.counts.get(DotKind.Event).fold(0)(_.value)
     if events == 0 then BubbleForm.Round
-    else if events == c.total then BubbleForm.Events
+    else if events == c.total.value then BubbleForm.Events
     else BubbleForm.WithEvents
 
   /** The corner radius of an events bubble's square, px (each ring's rounds by its distance out). */
-  val SquareCorner: com.histmersion.web.DotCluster.SquareCorner = 4.0
+  val SquareCorner: Double = 4.0
 
   /** The side of the square tab of a bubble with events among other kinds, px. */
-  val Tab: com.histmersion.web.DotCluster.Tab = com.histmersion.web.DotCluster.Tab(8)
+  val Tab: Int = 8
 
   /** Pure: a bubble's markup — its count on a disc of diameter `d` in its colour (`ends`: the colours of the oldest and
     * the newest of its dates, the same when they agree), ringed by a dark line, a white coin ring and a dark line, and
@@ -132,14 +114,14 @@ object DotCluster:
       says: Option[com.histmersion.web.DotCluster.SpokenText],
       form: BubbleForm = BubbleForm.Round
   ): com.histmersion.web.DotCluster.BubbleHtml =
-    val label = if n > 1 then n.toString else ""
-    val words = says.fold("")(w => s""" role="img" title="${Fmt.esc(w)}" aria-label="${Fmt.esc(w)}"""")
-    val s = d + 2 * Ring
+    val label = if n.value > 1 then n.value.toString else ""
+    val words = says.fold("")(w => s""" role="img" title="${Fmt.esc(w.value)}" aria-label="${Fmt.esc(w.value)}"""")
+    val s = d.value + 2 * Ring
     val c = s / 2.0
-    val r = d / 2.0
+    val r = d.value / 2.0
     // the disc and its rings, each `out` px beyond the disc's edge: circles, or (events only) rounded
     // squares whose corners round by the same distance out — concentric either way
-    def ring(cls: com.histmersion.web.DotCluster.RingClass, out: com.histmersion.web.DotCluster.RingOutset, extra: com.histmersion.web.DotCluster.RingExtraClass = com.histmersion.web.DotCluster.RingExtraClass("")) = form match
+    def ring(cls: String, out: Double, extra: String = "") = form match
       case BubbleForm.Events =>
         val h = r + out
         s"""<rect class="$cls" x="${c - h}" y="${c - h}" width="${2 * h}" height="${2 * h}" rx="${SquareCorner + out}"$extra/>"""
@@ -153,16 +135,16 @@ object DotCluster:
       s"""<svg class="hd-bubble" viewBox="0 0 $s $s" aria-hidden="true" focusable="false">""" +
         s"""<defs><linearGradient id="$id" x1="0" y1="0" x2="1" y2="1">""" +
         """<stop offset="0" class="hd-bubble-g0"/><stop offset="1" class="hd-bubble-g1"/></linearGradient></defs>""" +
-        ring(com.histmersion.web.DotCluster.RingClass("hd-bubble-fill"), com.histmersion.web.DotCluster.RingOutset(0), s""" fill="url(#$id)"""") +
-        ring("hd-bubble-line", com.histmersion.web.DotCluster.RingOutset(0).5) + ring("hd-bubble-coin", 2.5) + ring("hd-bubble-line", 4.5) + tab +
+        ring("hd-bubble-fill", 0, s""" fill="url(#$id)"""") +
+        ring("hd-bubble-line", 0.5) + ring("hd-bubble-coin", 2.5) + ring("hd-bubble-line", 4.5) + tab +
         "</svg>"
-    val classes = List("hd-dot hd-cluster", form.cls, extraClass).filter(_.nonEmpty).mkString(" ")
-    s"""<span class="$classes" style="--d:${d}px;--fs:${math.min(12, d / 2)}px;--ring:${Ring}px;""" +
-      s"""--g0:${ends._1};--g1:${ends._2}"$words>$svg<span class="hd-dot-count">$label</span></span>"""
+    val classes = List("hd-dot hd-cluster", form.cls.value, extraClass.value).filter(_.nonEmpty).mkString(" ")
+    BubbleHtml(s"""<span class="$classes" style="--d:${d}px;--fs:${math.min(12, d.value / 2)}px;--ring:${Ring}px;""" +
+      s"""--g0:${ends._1};--g1:${ends._2}"$words>$svg<span class="hd-dot-count">$label</span></span>""")
 
   /** Pure: the middle of a dated span, for the ramp. */
   def mid(start: Option[com.histmersion.api.catalogue.Period.Start], end: Option[com.histmersion.api.catalogue.Period.End]): Option[com.histmersion.web.DotCluster.Mid] =
-    for a <- start; b <- end yield (a + b).toDouble / 2
+    for a <- start; b <- end yield Mid((a.value + b.value).toDouble / 2)
 
   // ── the members, as the map's cluster layer holds them ──────────────────────────────────────
 
@@ -175,18 +157,18 @@ object DotCluster:
 
   /** Pure: the order of a bubble's list — by kind, then by name. */
   def ordered(others: List[(DotEntry, dom.Element => Unit)]): List[(DotEntry, dom.Element => Unit)] =
-    others.sortBy((e, _) => (e.kind.ordinal, e.label.toLowerCase, e.id))
+    others.sortBy((e, _) => (e.kind.ordinal, e.label.value.toLowerCase, e.id.value))
 
   /** A card pinned under a list row (`row`): the row is its owner, so the click that pinned it does not count as a
     * click outside it.
     */
-  def pinUnder(t: Preview.Target, row: dom.Element, keyboard: com.histmersion.web.DotCluster.ByKeyboard = com.histmersion.web.DotCluster.ByKeyboard(false)): Unit =
+  def pinUnder(t: Preview.Target, row: dom.Element, keyboard: Preview.KeyboardDriven = Preview.KeyboardDriven(false)): Unit =
     Preview.pin(
       t,
       () =>
         Option.when(row.isConnected) {
           val r = row.getBoundingClientRect()
-          Preview.Anchor.Under(r.left, r.top, r.bottom, r.width)
+          Preview.Anchor.Under(Preview.Anchor.Under.Left(r.left), Preview.Anchor.Under.Top(r.top), Preview.Anchor.Under.Bottom(r.bottom), Preview.Anchor.Under.Width(r.width))
         },
       owner = Some(row),
       keyboard = keyboard

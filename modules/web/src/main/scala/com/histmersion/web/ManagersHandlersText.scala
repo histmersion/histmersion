@@ -8,10 +8,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /** The settings line a manager window shows (the server's own wording). */
 object ManagersHandlersText:
-  type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  def describe(c: ManagerConfig): com.histmersion.web.ManagersHandlersText.Description =
+  def describe(c: ManagerConfig): String =
     List(
       c.maxRuns.map(n => s"$n at once"),
       c.rounds.map(n => s"$n rounds"),
@@ -23,5 +20,5 @@ object ManagersHandlersText:
       c.includeGoal.map(g => s"goal $g"),
       c.models.filter(_.nonEmpty).map(ms => ms.map(_.text).mkString("; ")),
       c.budgetUsd.map(u => s"$u USD per run"),
-      c.dailyUsd.filter(_ > 0).map(u => s"$u USD a day")
+      c.dailyUsd.filter(_.value > 0).map(u => s"$u USD a day")
     ).flatten.mkString(" · ")

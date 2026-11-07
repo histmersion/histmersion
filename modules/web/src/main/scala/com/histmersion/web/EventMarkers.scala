@@ -14,21 +14,12 @@ import com.histmersion.api.library.Filter
   * are [[PointKinds.Events]], the crowded tiles' cells bubbles.
   */
 object EventMarkers:
-  type TileX = TileX.T
-  object TileX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileY = TileY.T
-  object TileY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Undated = Undated.T
   object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The markers — a [[TiledPoints]] of [[PointKinds.Events]], attached and detached by the map with its other overlays
     * ([[MapView]]).
     */
-  type LoadTilesPart1 = _root_.com.histmersion.web.EventMarkers.TileX
-  val LoadTilesPart1: _root_.com.histmersion.web.EventMarkers.TileX.type = _root_.com.histmersion.web.EventMarkers.TileX
-  type LoadTilesPart2 = _root_.com.histmersion.web.EventMarkers.TileY
-  val LoadTilesPart2: _root_.com.histmersion.web.EventMarkers.TileY.type = _root_.com.histmersion.web.EventMarkers.TileY
-
   val layer: TiledPoints[EventGeo] = TiledPoints(
     TileLayer.Events,
     PointLayer(PointKinds.Events, () => MapView.dots, () => MapView.spanMid()),
@@ -42,7 +33,7 @@ object EventMarkers:
     */
   def query(
       filter: Filter,
-      tiles: (com.histmersion.web.EventMarkers.TileX, com.histmersion.web.EventMarkers.TileY),
+      tiles: (com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year),
       kind: Option[com.histmersion.api.Api.EventQuery.Kind],
       tier: Option[com.histmersion.api.Api.EventQuery.Tier],
       undated: com.histmersion.web.EventMarkers.Undated = com.histmersion.web.EventMarkers.Undated(false)
@@ -53,17 +44,17 @@ object EventMarkers:
       com.histmersion.api.catalogue.TilesApi.TileQuery.X(0),
       com.histmersion.api.catalogue.TilesApi.TileQuery.Y(0),
       filter.modify(_.period).setTo(Some(Period(tiles._1, tiles._2))).modify(_.limit).setTo(Filter().limit).modify(_.offset).setTo(0).modify(_.sort).setTo(Filter().sort),
-      kind = kind,
-      tier = tier,
+      kind = kind.map(k => TilesApi.TileQuery.Kind(k.value)),
+      tier = tier.map(t => TilesApi.TileQuery.Tier(t.value)),
       context = Some(true),
-      undated = Option.when(undated)(true)
+      undated = Option.when(undated.value)(true)
     )
 
   /** Load the events of `tiles` (a span, playback's widened to its bucket), drawn for `span`. */
-  def load(tiles: (com.histmersion.web.EventMarkers.LoadTilesPart1, com.histmersion.web.EventMarkers.LoadTilesPart2), span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Unit =
+  def load(tiles: (com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year), span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Unit =
     layer.load(
       ApiClient.tileTemplate(
-        query(UiState.toFilter(), tiles, UiState.eventKind.now(), UiState.eventTier.now(), UiState.eventsUndated.now())
+        query(UiState.toFilter(), tiles, UiState.eventKind.now().map(com.histmersion.api.Api.EventQuery.Kind(_)), UiState.eventTier.now().map(com.histmersion.api.Api.EventQuery.Tier(_)), Undated(UiState.eventsUndated.now()))
       ),
       span
     )
