@@ -42,7 +42,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
   private lazy val settings =
@@ -241,7 +241,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
           lang = Some(com.histmersion.api.catalogue.Place.Add.Lang("hr"))
         )
       )
-      .fold(e => fail(e.message), identity)
+      .fold(e => fail(e.message.value), identity)
     val p = PlaceFixtures.addPlace(ds, in).fold(e => fail(e.message.value), identity)
     assertEquals((p.id, p.kind, p.source), ("local_zzgn_gornji", Place.Kind.Site, Some("fixture: a hand-checked map")))
     val dataset = connect(ds)(sql"SELECT dataset FROM places WHERE id = 'local_zzgn_gornji'".query[String].run().head)

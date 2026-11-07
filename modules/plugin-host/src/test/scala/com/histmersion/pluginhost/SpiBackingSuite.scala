@@ -218,7 +218,7 @@ class SpiBackingSuite extends munit.FunSuite:
     def citation = com.histmersion.plugin.EventCatalogue.CitationResult("Volcanoes")
     def home = com.histmersion.plugin.EventCatalogue.HomeResult("https://volcanoes.example")
     def parts(query: CatalogueQuery) = Nil
-    def read(part: String, query: CatalogueQuery, http: Plugin.Http) = Right(CataloguePage(Nil))
+    def read(part: com.histmersion.plugin.EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http) = Right(CataloguePage(Nil))
 
   test("a reserved catalogue name is kept for the first-party plugin; any other plugin is refused it"):
     val third = build(List(Volcanoes(Plugin.Info.Id("zq-volcanoes"))), "histmersion.plugins.zq-volcanoes.enabled = true")

@@ -18,7 +18,7 @@ class HostCollectionSuite extends munit.FunSuite:
     private val one = CollectionItem(CollectionId("b1"), Some(com.histmersion.plugin.CollectionItem.Title("A book")), List(com.histmersion.plugin.CollectionItem.Authors("An Author")))
     def search(query: CollectionQuery) = Right(List(one))
     def item(id: CollectionId) = if id.value == "boom" then throw IllegalStateException("broken") else Right(Some(one))
-    def file(item: CollectionItem, format: Option[String]) = Right(CollectionFile(com.histmersion.plugin.CollectionFile.Name("a.pdf")))
+    def file(item: CollectionItem, format: Option[com.histmersion.plugin.SourceCollection.FileFormat]) = Right(CollectionFile(com.histmersion.plugin.CollectionFile.Name("a.pdf")))
     def original(item: CollectionItem, file: CollectionFile) = Right(FetchedFile(com.histmersion.plugin.FetchedFile.Source("t"), None, com.histmersion.plugin.FetchedFile.Bytes(Array[Byte](1)), com.histmersion.plugin.FetchedFile.Extension("pdf")))
     override def add(metadata: CollectionMetadata, file: FetchedFile) = Right(CollectionId("written"))
     override def readOnlyReason = com.histmersion.plugin.SourceCollection.ReadOnlyReasonResult("the shelf is full")

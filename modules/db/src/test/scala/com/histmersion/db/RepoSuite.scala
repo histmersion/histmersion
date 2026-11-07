@@ -24,7 +24,7 @@ class RepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.modify(_.url).setTo(testDb.get))
+    val d = testPool(base.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private val src = Source(
@@ -76,11 +76,11 @@ class RepoSuite extends com.histmersion.db.DbSuite:
     assert(hit.exists(_.citekey.value == "zz_test_source")); assert(!miss.exists(_.citekey.value == "zz_test_source"))
 
   test("the map feed says what each finding's source is (core.SourceKinds): its DOI, else its provenance"):
-    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(Some("10.1007/978-3-030-12345-6_7")), AppConfig.load().limits.chunkChars)
+    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(Some(com.histmersion.api.library.Doi("10.1007/978-3-030-12345-6_7"))), AppConfig.load().limits.chunkChars)
     val box = Filter(bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))), period = Some(Period(com.histmersion.api.catalogue.Year(-1750), com.histmersion.api.catalogue.Year(-1750))), limit = com.histmersion.api.library.Filter.Limit(10))
     def kind = FindingFixtures.findingsFor(ds, box).find(_.citekey.value == "zz_test_source").flatMap(_.sourceKind)
     assertEquals(kind, Some(Source.Kinds.Chapter))
-    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(None).modify(_.provenance).setTo(Some("calibre")), AppConfig.load().limits.chunkChars)
+    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(None).modify(_.provenance).setTo(Some(com.histmersion.api.library.Source.Provenance("calibre"))), AppConfig.load().limits.chunkChars)
     assertEquals(kind, Some(Source.Kinds.Book))
     SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars)
     assertEquals(kind, Some(Source.Kinds.Unknown))

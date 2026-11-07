@@ -30,7 +30,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.modify(_.url).setTo(testDb.get))
+    val d = testPool(base.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private val slug = com.histmersion.domain.research.Slug("zz_article_sea")
@@ -252,7 +252,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     reset()
     val _ = ArticleFixtures.put(ds, article(Article.Body("# T\n\nbody")))
     assert(ArticleFixtures.slugs(ds).contains(slug))
-    assert(ArticleFixtures.updatedAtMillis(ds).get(slug).exists(_ > 0L))
+    assert(ArticleFixtures.updatedAtMillis(ds).get(slug).exists(_.value > 0L))
 
   // ── article versions (V013) ─────────────────────────────────────────────────────────────────
 
@@ -318,7 +318,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     )
     val _ = ArticleFixtures.put(
       ds,
-      article(Article.Body("# T\n\nbody")).modify(_.filter).setTo(Some(f)).modify(_.reasons).setTo(Map("zz_cov2001_egypt" -> "about Egypt"))
+      article(Article.Body("# T\n\nbody")).modify(_.filter).setTo(Some(f)).modify(_.reasons).setTo(Map(com.histmersion.api.library.Citekey("zz_cov2001_egypt") -> com.histmersion.api.research.Article.ReasonsValue("about Egypt")))
     )
     val a = ArticleFixtures.load(ds, slug).get
     assertEquals((a.filter, a.reasons), (Some(f), Map("zz_cov2001_egypt" -> "about Egypt")))
@@ -351,7 +351,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     val _ = ArticleFixtures.put(
       ds,
       article(Article.Body("# T\n\nbody"))
-        .modify(_.filter).setTo(Some(Article.Filter(tags = List(Article.Filter.Tags("x"))))).modify(_.reasons).setTo(Map("zz_covren2001_old" -> "about Egypt"))
+        .modify(_.filter).setTo(Some(Article.Filter(tags = List(Article.Filter.Tags("x"))))).modify(_.reasons).setTo(Map(com.histmersion.api.library.Citekey("zz_covren2001_old") -> com.histmersion.api.research.Article.ReasonsValue("about Egypt")))
     )
     assert(SourceFixtures.rename(ds, com.histmersion.domain.library.Citekey("zz_covren2001_old"), com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw("zz_covren2001_new")).isRight)
     assertEquals(ArticleFixtures.load(ds, slug).get.reasons, Map("zz_covren2001_new" -> "about Egypt"))

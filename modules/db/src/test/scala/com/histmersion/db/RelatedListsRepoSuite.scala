@@ -33,7 +33,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.modify(_.url).setTo(testDb.get))
+    val d = testPool(base.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private val Tag = "zz-rel-tag"

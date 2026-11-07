@@ -44,7 +44,7 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
@@ -62,7 +62,7 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
     EventFixtures.put(
       ds,
       id,
-      EventPut(com.histmersion.api.catalogue.EventSummary.Label(s"Zqcr ${id.value}"), com.histmersion.api.catalogue.EventSummary.Kind("eruption"), ts, geometry = Some(s"""{"type":"Point","coordinates":[${lon.value},-45.0]}"""))
+      EventPut(com.histmersion.api.catalogue.EventSummary.Label(s"Zqcr ${id.value}"), com.histmersion.api.catalogue.EventSummary.Kind("eruption"), ts, geometry = Some(com.histmersion.api.catalogue.EventPatch.Geometry(s"""{"type":"Point","coordinates":[${lon.value},-45.0]}""")))
     )
 
   test("V088: the generated uncertainty is core.EventPrecision.uncertainty"):
@@ -95,7 +95,7 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
       geo.events.map(g => g.id -> g.precision).toSet,
       Set("zqcr_precise" -> EventPrecision.Precise, "zqcr_approx" -> EventPrecision.Approximate)
     )
-    assert(geo.imprecise >= 1, geo.imprecise.toString)
+    assert(geo.imprecise.value >= 1, geo.imprecise.toString)
     val listed = EventFixtures
       .list(ds, f, PlaceScope.empty, Some(com.histmersion.domain.catalogue.events.EventSelection.Text("Zqcr zqcr_")), None, None, None, com.histmersion.PageSize(100), com.histmersion.Offset(0))
       .events
@@ -199,7 +199,7 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
       Set(EventFields.Label -> Correction.Status.Active, EventFields.Description -> Correction.Status.Active)
     )
     assertEquals(
-      corrections.find(_.field == EventFields.Label).map(c => Corrections.show(c.upstreamValue)),
+      corrections.find(_.field.value == EventFields.Label).map(c => Corrections.show(c.upstreamValue.value)),
       Some("Eruption of Zqcr")
     )
     val again = reimport(upstream0)
@@ -214,7 +214,7 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
   test("corrections: retired once the catalogue agrees; flagged when it changes to something else"):
     val agrees = reimport(upstream0.modify(_.label).setTo(CatalogRecord.Label("Hekla 3 (Zqcr)")))
     assertEquals(agrees.corrections, Correction.Counts(kept = com.histmersion.api.catalogue.Correction.Counts.Kept(1), retired = com.histmersion.api.catalogue.Correction.Counts.Retired(1)))
-    assertEquals(corrections.find(_.field == EventFields.Label).map(_.status), Some(Correction.Status.Agreed))
+    assertEquals(corrections.find(_.field.value == EventFields.Label).map(_.status), Some(Correction.Status.Agreed))
     assertEquals(event.event.label, "Hekla 3 (Zqcr)")
     // the catalogue now says something else about the description: the person's stays, flagged
     val changed =
@@ -227,7 +227,7 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
       .corrections
       .filter(_.targetId == TargetId)
     assertEquals(
-      conflict.map(x => (x.field, x.upstreamNow.map(Corrections.show))),
+      conflict.map(x => (x.field, x.upstreamNow.map(n => Corrections.show(n.value)))),
       List(EventFields.Description -> Some("Confirmed Eruption at Zqcr; area: SW flank"))
     )
     assertEquals(conflict.head.label, Some("Hekla 3 (Zqcr)"))
@@ -238,7 +238,7 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(reimport(upstream0.modify(_.label).setTo(CatalogRecord.Label("Hekla 3 (Zqcr)"))).corrections, Correction.Counts(kept = com.histmersion.api.catalogue.Correction.Counts.Kept(1)))
     // setting the field to the catalogue's value takes the catalogue's: the correction goes
     assert(EventFixtures.patch(ds, Id, EventPatch(description = Some(com.histmersion.api.catalogue.EventSummary.Description("Confirmed Eruption at Zqcr")))).isRight)
-    assertEquals(corrections.filter(_.field == EventFields.Description), Nil)
+    assertEquals(corrections.filter(_.field.value == EventFields.Description), Nil)
 
   test("corrections: a span set by hand drops the stated year and ±, and survives; a rename and a delete carry them"):
     val mine = TimeSpan(Some(com.histmersion.api.catalogue.Year(1104)), Some(com.histmersion.api.catalogue.Year(1104)), Some(com.histmersion.api.catalogue.Year(1104)), Some(com.histmersion.api.catalogue.Year(1104)))

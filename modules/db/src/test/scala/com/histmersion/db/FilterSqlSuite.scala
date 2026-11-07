@@ -218,7 +218,7 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(FilterSql.sourcesQuery(Filter(limit = com.histmersion.api.library.Filter.Limit(-3), offset = com.histmersion.api.library.Filter.Offset(-9)), com.histmersion.domain.library.search.Search.SnippetWords(30)).params, List(I(com.histmersion.util.database.Param.I.V(0)), I(com.histmersion.util.database.Param.I.V(0))))
 
   test("snippetsQuery computes ts_headline for specific citekeys via two-level query"):
-    val s = FilterSql.snippetsQuery(com.histmersion.domain.library.search.Search.Query("collapse"), com.histmersion.domain.library.search.Search.SnippetWords(30), List(com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.library.Citekey("b")))
+    val s = FilterSql.snippetsQuery(com.histmersion.domain.library.search.Search.Query("collapse"), com.histmersion.domain.library.search.Search.SnippetWords(30), List(com.histmersion.domain.library.Citekey.assume("a"), com.histmersion.domain.library.Citekey.assume("b")))
     // inner subquery: DISTINCT ON to find best chunk per citekey (no ts_headline)
     assert(s.text.value.contains("DISTINCT ON (citekey) citekey, ord"), s.text)
     assert(s.text.value.contains("citekey IN (?, ?)"), s.text)
@@ -262,7 +262,7 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(FilterSql.text(Filter()), None)
 
   test("findingsQuery binds one parameter per citekey"):
-    val s = FilterSql.findingsQuery(List(com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.library.Citekey("b"), com.histmersion.domain.library.Citekey("c")))
+    val s = FilterSql.findingsQuery(List(com.histmersion.domain.library.Citekey.assume("a"), com.histmersion.domain.library.Citekey.assume("b"), com.histmersion.domain.library.Citekey.assume("c")))
     assert(s.text.value.contains("WHERE f.citekey IN (?, ?, ?)"), s.text)
     assertEquals(s.params, List(S(com.histmersion.util.database.Param.S.V("a")), S(com.histmersion.util.database.Param.S.V("b")), S(com.histmersion.util.database.Param.S.V("c"))))
 

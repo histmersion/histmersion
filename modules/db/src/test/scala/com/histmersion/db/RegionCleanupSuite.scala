@@ -40,7 +40,7 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
       val want = com.histmersion.api.catalogue.Place.Precision.of(p.id, com.histmersion.api.catalogue.Longitude(c.group(1).toDouble), com.histmersion.api.catalogue.Latitude(c.group(2).toDouble))
       assertEquals(
         stored(p.id.value)
-          .flatMap(com.histmersion.api.catalogue.Place.Precision.parse)
+          .flatMap(s => com.histmersion.api.catalogue.Place.Precision.parse(com.histmersion.api.catalogue.Place.Precision.Wire(s)))
           .getOrElse(com.histmersion.api.catalogue.Place.Precision.Stated),
         want,
         p.id
@@ -68,7 +68,7 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
         pt(com.histmersion.api.catalogue.Longitude(141.9), com.histmersion.api.catalogue.Latitude(-47.1)),
         properties = types("region")
       )
-    val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(precise, List(Place.Name(precise.label)))))
+    val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(precise, List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value(precise.label.value))))))
     val r =
       connect(ds)(
         PlaceFixtures.resolve(com.histmersion.api.catalogue.Geocode.Attempt.Name("Zzrc Thessalia"), Geocode.KindHint.Unknown, None, com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value))

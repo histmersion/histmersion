@@ -17,8 +17,8 @@ class MigrateSquashSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
-  private lazy val admin = testPool(cfg.db.modify(_.url).setTo(testDb.get))
-  private lazy val dbs = ScratchDatabases("histmersion_squash", cfg.db.modify(_.url).setTo(testDb.get))
+  private lazy val admin = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+  private lazy val dbs = ScratchDatabases("histmersion_squash", cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
   private val created = scala.collection.mutable.ListBuffer.empty[String]
 
   private def exec(ds: DataSource, stmt: String): Unit =

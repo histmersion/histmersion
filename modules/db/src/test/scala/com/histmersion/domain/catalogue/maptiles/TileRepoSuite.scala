@@ -37,7 +37,7 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
@@ -187,8 +187,8 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
     assert(transact(ds)(UndatedSiteRepo.rebuild(v, com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide(16), com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom(6))))
     assertEquals(connect(ds)(UndatedSiteRepo.built()).map(_.version), Some(v))
     val kept = connect(ds)(UndatedSiteRepo.kept(shallow, com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide(16), None))
-    assertEquals(kept.map(k => (k.gx, k.gy, k.n)).sortBy(_._1.value), counted.map(k => (k.gx, k.gy, k.n)).sortBy(_._1.value))
-    kept.zip(counted.sortBy(_.gx.value)).foreach((k, c) => assertEqualsDouble(k.sumX, c.sumX, 1e-3))
+    assertEquals(kept.map(k => (k.gx, k.gy, k.n)).sortBy(t => t._1.value: Long), counted.map(k => (k.gx, k.gy, k.n)).sortBy(t => t._1.value: Long))
+    kept.zip(counted.sortBy(c => c.gx.value: Long)).foreach((k, c) => assertEqualsDouble(k.sumX.value, c.sumX.value, 1e-3))
     assertEquals(counted.map(_.n.value).sum, 3)
     // the dated site is no undated one, and the span's dated count marks no site as undated
     assertEquals(

@@ -87,3 +87,8 @@ Also check: `ModelChains.headroom` returns `Option[LimitState.FreesAt]` for a to
 - Hand-written stored reads use `.assume`: Goal.Slug in FocusRepo, GoalRepo; Place.Id in PlaceRepo, PlaceBundleRepo; Event.Id in EventRepo; Citekey in BundleImporter; Doi in OaFetcher.fetchWork. Review each.
 - Reported mangled and fixed, to compare with master: EventRepo regional filter id; PlaceMergeRules renamedIds lookup; JobRepo limit; lens setTo values; SourceReferrers.Entry and Queue.QueueItem.Id in MergeFollowUps.
 - server PluginCollection.place and SpiValuesSuite must pass spi.Latitude/Longitude.
+
+## From the db test finisher
+
+- SpiValuesSuite and PluginHarnessSuite lost direct coverage of trim and refuse on SpiValues.doi/wikidata and WorkKey.fromDoi, because those now take validated types; `Doi.assume` keeps the URL-stripping test running. Review whether SpiValues.doi, wikidata and workFromDoi should take unconstrained SPI text at the plugin edge, as latitude and longitude now do.
+- Test inputs changed: fake hashes in AssetReconcileSuite became valid hex; `Place.Id.applyUnsafe` in GazetteerNames and RegionCleanup for ids like "levant" that fail the pattern. Stored place ids must load: covered by the stored-data check.

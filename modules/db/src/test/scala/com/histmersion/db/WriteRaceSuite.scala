@@ -31,7 +31,7 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   /** Run `a` and `b` at the same moment (a latch, not a hope) and collect both outcomes. */

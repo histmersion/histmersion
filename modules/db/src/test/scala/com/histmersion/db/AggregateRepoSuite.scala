@@ -23,7 +23,7 @@ class AggregateRepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.modify(_.url).setTo(testDb.get))
+    val d = testPool(base.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   /** A source dated −1300…−1200 with one Anatolian finding at −1250 (the §1.7 acceptance shape). */

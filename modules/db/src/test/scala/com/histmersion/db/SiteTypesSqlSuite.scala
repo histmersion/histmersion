@@ -24,7 +24,7 @@ class SiteTypesSqlSuite extends com.histmersion.db.DbSuite:
 
   private lazy val ds =
     val cfg = AppConfig.load()
-    testPool(cfg.db.modify(_.url).setTo(testDb.get))
+    testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
 
   private val site = Place.Kind.Wire("site")
   private val polity = Place.Kind.Wire("polity")

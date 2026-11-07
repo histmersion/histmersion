@@ -25,7 +25,7 @@ class StatsRepoSuite extends com.histmersion.db.DbSuite:
 
   private lazy val ds =
     val base = AppConfig.load().db
-    val d = testPool(base.modify(_.url).setTo(testDb.get))
+    val d = testPool(base.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private def count(table: String): Int =
@@ -64,6 +64,6 @@ class StatsRepoSuite extends com.histmersion.db.DbSuite:
     assert(bytes.value > 0, bytes)
     val top = connect(ds)(StatsRepo.tableBytes).take(5).map((table, size) => TableSize(TableSize.Name(table.value), com.histmersion.api.ByteCount(size.value)))
     assert(top.nonEmpty && top.size <= 5, top)
-    assertEquals(top.map(_.bytes), top.map(_.bytes).sortBy(_.value).reverse)
+    assertEquals(top.map(_.bytes), top.map(_.bytes).sortBy(b => b.value: Long).reverse)
     assert(top.forall(t => t.bytes.value <= bytes.value), top)
     assert(!top.exists(_.name.value.startsWith("pg_")), top)
