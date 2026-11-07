@@ -9,7 +9,11 @@ import com.augustnagro.magnum.connect
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.Transactor
-import com.histmersion.util.jobs.JobRuns
+import com.histmersion.util.jobs.{Job, JobRow, JobRuns, RunRow}
+import com.histmersion.domain.automation.{Goal, Run}
+import com.histmersion.domain.automation.goals.FocusRepo
+import com.histmersion.domain.automation.managers.{ManagerLight, SweepAcquireItem}
+import com.histmersion.domain.library.sources.SourcesControllers
 import com.augustnagro.magnum.DbCon
 
 import javax.sql.DataSource
@@ -33,39 +37,39 @@ object TestRuns:
   def create(
       ds: DataSource,
       p: Pipeline,
-      target: String,
-      model: Option[String],
+      target: AgentsControllers.Target,
+      model: Option[AgentsControllers.ModelName],
       budgetUsd: BigDecimal,
-      budgetTokens: Long,
+      budgetTokens: AgentsControllers.BudgetTokens,
       params: RunParams = RunParams(),
-      acquireItem: Option[Int] = None,
-      goal: Option[String] = None,
-      parent: Option[String] = None,
+      acquireItem: Option[SweepAcquireItem.Item] = None,
+      goal: Option[Goal.Slug] = None,
+      parent: Option[Run.Id] = None,
       origin: Origin = Origin.Person,
-      dryRun: Boolean = false
+      dryRun: RunService.DryRun = RunService.DryRun(false)
   ): RunInfo =
     val id = runs(ds).create(
       com.histmersion.domain.automation.agents.RunService
         .row(p, target, model, budgetUsd, budgetTokens, params, acquireItem, goal, parent, origin, dryRun)
     )
-    connect(ds)(AgentRepo.get(id)).get
+    connect(ds)(AgentRepo.get(RunInfo.Id(id.value))).get
 
   def createIn(
       ds: DataSource,
       p: Pipeline,
-      target: String,
-      model: Option[String],
+      target: AgentsControllers.Target,
+      model: Option[AgentsControllers.ModelName],
       budgetUsd: BigDecimal,
-      budgetTokens: Long,
+      budgetTokens: AgentsControllers.BudgetTokens,
       params: RunParams,
-      acquireItem: Option[Int],
-      goal: Option[String],
-      parent: Option[String],
+      acquireItem: Option[SweepAcquireItem.Item],
+      goal: Option[Goal.Slug],
+      parent: Option[Run.Id],
       origin: Origin,
-      dryRun: Boolean,
-      managerId: Option[String] = None,
-      managerItem: Option[Long] = None
-  )(using DbCon): String =
+      dryRun: RunService.DryRun,
+      managerId: Option[ManagerLight.Id] = None,
+      managerItem: Option[FocusRepo.WorkRow.Id] = None
+  )(using DbCon): Run.Id =
     runs(ds).createIn(
       com.histmersion.domain.automation.agents.RunService.row(
         p,
@@ -86,23 +90,25 @@ object TestRuns:
 
   def transition(
       ds: DataSource,
-      id: String,
+      id: Run.Id,
       from: RunState,
       to: RunState,
-      error: Option[String] = None,
+      error: Option[JobRow.Error] = None,
       resumeAt: Option[java.time.Instant] = None
   ): Option[RunState] =
     RunState
       .next(from, to)
-      .flatMap(t => Option.when(runs(ds).move(JobKind, id, from.wire, t.wire, error, None, resumeAt))(t))
+      .flatMap(t =>
+        Option.when(runs(ds).move(Job.Kind.assume(JobKind), id, RunRow.Status(from.wire.value), RunRow.Status(t.wire.value), error, None, resumeAt))(t)
+      )
 
-  def reconcile(ds: DataSource): (Vector[(String, Option[String])], Vector[String]) =
+  def reconcile(ds: DataSource): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =
     runs(ds).reconcile(
-      JobKind,
-      RunState.Running.wire,
-      RunState.Paused.wire,
-      PauseReason.Interrupted.wire,
-      RunState.Queued.wire,
+      Job.Kind.assume(JobKind),
+      RunRow.Status(RunState.Running.wire.value),
+      RunRow.Status(RunState.Paused.wire.value),
+      JobRow.Error(PauseReason.Interrupted.wire.value),
+      RunRow.Status(RunState.Queued.wire.value),
       Nil
     )
 
@@ -112,9 +118,14 @@ object TestRuns:
       h: com.histmersion.server.ServerWiring,
       ds: DataSource
   ): SourceProposals =
-    SourceProposals(
+    new SourceProposals(
       SourceApprovalService(Transactor(ds), a.approvalStore, a.clock),
       a.config,
-      ck => h.library.sources.get(ck, body = false).toOption.map(_.source.status),
-      p => h.library.sources.patch(p.citekey, p.patch).left.map(_.message).map(_ => p.describe)
+      ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)).toOption.map(_.source.status),
+      p =>
+        h.library.sources
+          .patch(p.citekey, p.patch)
+          .left
+          .map(e => SourceProposals.Outcome.Failed.Why(e.message.value))
+          .map(_ => SourceProposals.Outcome.Applied.What(p.describe.value))
     )

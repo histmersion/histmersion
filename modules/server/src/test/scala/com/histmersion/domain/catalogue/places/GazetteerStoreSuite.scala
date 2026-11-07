@@ -4,9 +4,10 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.config.AppConfig
+import com.histmersion.config.{AppConfig, DbConfig}
+import com.histmersion.domain.CoreQuota
 import com.histmersion.db.TestDb
-import com.histmersion.pluginhost.{HttpTransport, PluginGazetteers}
+import com.histmersion.pluginhost.{HttpTransport, PluginGazetteers, Registries}
 import com.histmersion.server.{Bootstrap, Deps, ServerWiring}
 
 import com.augustnagro.magnum.*
@@ -30,7 +31,7 @@ class GazetteerStoreSuite extends com.histmersion.db.DbSuite:
 
   private val loop = GazetteerLoopback()
   private lazy val cfg = AppConfig.load()
-  private lazy val scratch = ScratchDatabases("gazetteers", cfg.db.modify(_.url).setTo(testDb.get))
+  private lazy val scratch = ScratchDatabases("gazetteers", cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   private lazy val ds = scratch("store")
 
   override def afterSuite(): Unit =
@@ -51,9 +52,9 @@ class GazetteerStoreSuite extends com.histmersion.db.DbSuite:
   private def http: Plugin.Http =
     val wire = PluginGazetteers.transport(cfg.places)
     PluginGazetteers.http(new HttpTransport:
-      def get(url: String, headers: Map[String, String]) = wire.get(loop.local(url), headers))
+      def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = wire.get(HttpTransport.Url(loop.local(url.value)), headers))
 
-  private def importOnce(name: String): Either[String, Place.ImportResult] =
+  private def importOnce(name: Registries.GazetteerSourcesKey): Either[String, Place.ImportResult] =
     val db = com.histmersion.util.database.Transactor(ds)
     ImportRunner.fetchAndImport(
       sources(name),
@@ -61,7 +62,7 @@ class GazetteerStoreSuite extends com.histmersion.db.DbSuite:
       PlaceService(db),
       PlaceGeometry(db)(using new com.histmersion.util.time.SystemTimer),
       dryRun = com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun(false),
-      cfg.places.pointToleranceKm
+      GeocodeSettings.ToleranceKm(cfg.places.pointToleranceKm.value)
     )
 
   // ── the transcript ──────────────────────────────────────────────────────────────────────────
@@ -89,18 +90,18 @@ class GazetteerStoreSuite extends com.histmersion.db.DbSuite:
 
   private def transcript: String =
     val sb = StringBuilder()
-    def run(name: String, served: String, body: Array[Byte]): Unit =
+    def run(name: Registries.GazetteerSourcesKey, served: String, body: Array[Byte]): Unit =
       loop.answerWith(200, body)
       sb ++= s"## import $name: $served\nresult: ${importOnce(name)}\n"
       val _ = loop.take()
-    run("cliopatria", "cliopatria.geojson, zipped", zipped("cliopatria.geojson"))
-    run("awmc", "awmc.geojson", fixture("awmc.geojson"))
-    run("chronontology", "chronontology.json", fixture("chronontology.json"))
+    run(Registries.GazetteerSourcesKey("cliopatria"), "cliopatria.geojson, zipped", zipped("cliopatria.geojson"))
+    run(Registries.GazetteerSourcesKey("awmc"), "awmc.geojson", fixture("awmc.geojson"))
+    run(Registries.GazetteerSourcesKey("chronontology"), "chronontology.json", fixture("chronontology.json"))
     sb ++= "## stored after the three imports\n" + stored
-    run("cliopatria", "cliopatria-more.geojson, zipped (over the first)", zipped("cliopatria-more.geojson"))
-    run("awmc", "awmc-more.geojson", fixture("awmc-more.geojson"))
-    run("chronontology", "chronontology-more.json", fixture("chronontology-more.json"))
-    run("cliopatria", "cliopatria.geojson again, zipped", zipped("cliopatria.geojson"))
+    run(Registries.GazetteerSourcesKey("cliopatria"), "cliopatria-more.geojson, zipped (over the first)", zipped("cliopatria-more.geojson"))
+    run(Registries.GazetteerSourcesKey("awmc"), "awmc-more.geojson", fixture("awmc-more.geojson"))
+    run(Registries.GazetteerSourcesKey("chronontology"), "chronontology-more.json", fixture("chronontology-more.json"))
+    run(Registries.GazetteerSourcesKey("cliopatria"), "cliopatria.geojson again, zipped", zipped("cliopatria.geojson"))
     sb ++= "## stored after the second imports\n" + stored
     // the names the server takes, and what it says to one it does not know
     val h = ServerWiring(Deps(cfg, ds))

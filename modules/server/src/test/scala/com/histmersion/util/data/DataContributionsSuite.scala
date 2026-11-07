@@ -47,7 +47,7 @@ class DataContributionsSuite extends DbSuite:
 
   test("every table of the migrated schema has exactly one owner"):
     assume(testDb.isDefined, "HISTMERSION_TEST_DB_URL is not set")
-    val ds = testPool(AppConfig.load().db.copy(url = testDb.get))
+    val ds = testPool(AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get)))
     com.histmersion.util.database.Migrate.run(ds)
     val schema = connect(ds)(
       sql"""SELECT table_name::text FROM information_schema.tables WHERE table_schema = 'public'

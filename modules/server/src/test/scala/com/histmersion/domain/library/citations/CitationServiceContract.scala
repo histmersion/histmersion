@@ -12,17 +12,17 @@ import com.histmersion.api.library.{Edge, GraphLink, NeighborTarget, Source}
 abstract class CitationServiceContract extends LibraryStoreSuite:
 
   private def source(
-      ck: String,
-      year: Int,
+      ck: com.histmersion.api.library.Citekey,
+      year: com.histmersion.api.catalogue.Year,
       status: com.histmersion.api.library.Source.Status,
       edges: List[Edge] = Nil
   ): Source =
     Source(
-      com.histmersion.api.library.Citekey(ck),
+      ck,
       com.histmersion.api.library.Title(s"Title of $ck"),
-      (Nil).map(com.histmersion.api.library.AuthorName.apply),
+      Nil,
       None,
-      (Some(year)).map(com.histmersion.api.catalogue.Year.apply),
+      Some(year),
       None,
       status,
       Nil,
@@ -39,35 +39,36 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
       edges
     )
 
-  private val A = "zqa1990_a"
-  private val B = "zqb2001_b"
-  private val C = "zqc1975_c"
-  private val D = "zqd2010_d"
-  private val E = "zqe1950_e"
+  private def dom(c: com.histmersion.api.library.Citekey) = com.histmersion.domain.library.Citekey(c.value)
+  private val A = com.histmersion.api.library.Citekey("zqa1990_a")
+  private val B = com.histmersion.api.library.Citekey("zqb2001_b")
+  private val C = com.histmersion.api.library.Citekey("zqc1975_c")
+  private val D = com.histmersion.api.library.Citekey("zqd2010_d")
+  private val E = com.histmersion.api.library.Citekey("zqe1950_e")
 
   private def corpus(s: com.histmersion.domain.library.LibraryStores): Unit =
     List(
-      source(E, 1950, com.histmersion.api.library.Source.Status.Contested),
-      source(D, 2010, com.histmersion.api.library.Source.Status.Current),
-      source(C, 1975, com.histmersion.api.library.Source.Status.Superseded, List(Edge(com.histmersion.api.library.Citekey(C), com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Edge.Kind("superseded_by")))),
+      source(E, com.histmersion.api.catalogue.Year(1950), com.histmersion.api.library.Source.Status.Contested),
+      source(D, com.histmersion.api.catalogue.Year(2010), com.histmersion.api.library.Source.Status.Current),
+      source(C, com.histmersion.api.catalogue.Year(1975), com.histmersion.api.library.Source.Status.Superseded, List(Edge(C, A, Edge.Kind.SupersededBy))),
       source(
         B,
-        2001,
+        com.histmersion.api.catalogue.Year(2001),
         com.histmersion.api.library.Source.Status.Current,
-        List(Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Edge.Kind("refutes")), Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey(D), com.histmersion.api.library.Edge.Kind("references")))
+        List(Edge(B, A, Edge.Kind.Refutes), Edge(B, D, Edge.Kind.References))
       ),
       source(
         A,
-        1990,
+        com.histmersion.api.catalogue.Year(1990),
         com.histmersion.api.library.Source.Status.Current,
-        List(Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Edge.Kind("references")), Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey("zq_topic"), com.histmersion.api.library.Edge.Kind("references")))
+        List(Edge(A, B, Edge.Kind.References), Edge(A, com.histmersion.api.library.Citekey("zq_topic"), Edge.Kind.References))
       )
     ).foreach(x => s.sources.put(x, Caller.Local): Unit)
 
   stest("neighbors: both ways, narrowed by kind, a parked target unresolved, an unknown source none") { s =>
     corpus(s)
     assertEquals(
-      s.citations.neighbors(A, Nil).map(r => (r.direction, r.kind, r.citekey, r.status, r.target)),
+      s.citations.neighbors(dom(A), Nil).map(r => (r.direction, Edge.Kind.wireOf(r.kind), r.citekey, r.status, r.target)),
       List(
         ("in", "refutes", B, Some(com.histmersion.api.library.Source.Status.Current), NeighborTarget.Source),
         (
@@ -81,20 +82,20 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
         ("out", "references", B, Some(com.histmersion.api.library.Source.Status.Current), NeighborTarget.Source)
       )
     )
-    assertEquals(s.citations.neighbors(A, List(com.histmersion.domain.library.Edge.Kind.Wire("refutes"))).map(_.citekey), List(B))
+    assertEquals(s.citations.neighbors(dom(A), List(com.histmersion.domain.library.Edge.Kind.Wire("refutes"))).map(_.citekey), List(B))
     assertEquals(s.citations.neighbors(com.histmersion.domain.library.Citekey("zqnone2000_x"), Nil), Nil)
   }
 
   stest("graph: breadth-first to a depth, every link between two nodes") { s =>
     corpus(s)
-    assertEquals(s.citations.graph(A, com.histmersion.domain.library.citations.CitationService.Depth(0)).nodes.map(n => (n.id, n.depth)), List((A, 0)))
-    val one = s.citations.graph(A, com.histmersion.domain.library.citations.CitationService.Depth(1))
+    assertEquals(s.citations.graph(dom(A), com.histmersion.domain.library.citations.CitationService.Depth(0)).nodes.map(n => (n.id, n.depth)), List((A, 0)))
+    val one = s.citations.graph(dom(A), com.histmersion.domain.library.citations.CitationService.Depth(1))
     assertEquals(one.nodes.map(n => (n.id, n.depth)), List((A, 0), (B, 1), (C, 1)))
     assertEquals(
       one.links,
-      List(GraphLink(A, B, com.histmersion.api.library.Edge.Kind("references")), GraphLink(B, A, com.histmersion.api.library.Edge.Kind("refutes")), GraphLink(C, A, com.histmersion.api.library.Edge.Kind("superseded_by")))
+      List(GraphLink(A, B, Edge.Kind.References), GraphLink(B, A, Edge.Kind.Refutes), GraphLink(C, A, Edge.Kind.SupersededBy))
     )
-    val two = s.citations.graph(A, com.histmersion.domain.library.citations.CitationService.Depth(9))
+    val two = s.citations.graph(dom(A), com.histmersion.domain.library.citations.CitationService.Depth(9))
     assertEquals((two.depth, two.nodes.map(_.id)), (4, List(A, B, C, D)))
     assertEquals(s.citations.graph(com.histmersion.domain.library.Citekey("zqnone2000_x"), com.histmersion.domain.library.citations.CitationService.Depth(2)).nodes, Nil)
   }
@@ -103,12 +104,12 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
     s =>
       corpus(s)
       assertEquals(
-        s.citations.contradictions(Some(A), None).rows.map(r => (r.direction, r.kind, r.otherCitekey)),
+        s.citations.contradictions(Some(dom(A)), None).rows.map(r => (r.direction, r.kind.map(Edge.Kind.wireOf), r.otherCitekey)),
         List((Some("in"), Some("refutes"), Some(B)), (Some("in"), Some("superseded_by"), Some(C)))
       )
       val all = s.citations.contradictions(None, None)
       assertEquals(
-        all.rows.map(r => (r.citekey, r.direction, r.kind, r.otherCitekey)),
+        all.rows.map(r => (r.citekey, r.direction, r.kind.map(Edge.Kind.wireOf), r.otherCitekey)),
         List(
           (A, Some("in"), Some("refutes"), Some(B)),
           (A, Some("in"), Some("superseded_by"), Some(C)),

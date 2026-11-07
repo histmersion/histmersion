@@ -5,6 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.BBox
+import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.server.Composition
@@ -37,12 +38,12 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val cfg = base.modify(
       _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo("k3y")).modify(_.basemap).setTo(base.basemap.copy(
-        dir = dir.toString,
-        terrain = base.basemap.terrain.modify(_.onDemand).setTo(base.basemap.terrain.onDemand.modify(_.enabled).setTo(onDemand && base.basemap.terrain.onDemand.enabled)
+        dir = BasemapConfig.Dir(dir.toString),
+        terrain = base.basemap.terrain.modify(_.onDemand).setTo(base.basemap.terrain.onDemand.modify(_.enabled).setTo(BasemapOnDemandConfig.Enabled(onDemand && base.basemap.terrain.onDemand.enabled.value))
         ),
         // the map and the sea floor outside the extract are read from the network: never in this suite (#3760)
-        vector = base.basemap.vector.modify(_.onDemand).setTo(base.basemap.vector.onDemand.modify(_.enabled).setTo(false)),
-        bathymetry = base.basemap.bathymetry.modify(_.onDemand).setTo(base.basemap.bathymetry.onDemand.modify(_.enabled).setTo(false))
+        vector = base.basemap.vector.modify(_.onDemand).setTo(base.basemap.vector.onDemand.modify(_.enabled).setTo(BasemapOnDemandConfig.Enabled(false))),
+        bathymetry = base.basemap.bathymetry.modify(_.onDemand).setTo(base.basemap.bathymetry.onDemand.modify(_.enabled).setTo(BasemapOnDemandConfig.Enabled(false)))
       )
     )
     supervised {
@@ -56,7 +57,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
     withServer(dir) { url =>
       // nothing downloaded yet: the status says so, and how to fetch it
       val s0 = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
-      assert(!s0.available)
+      assert(!s0.available.value)
       assertEquals(s0.fetchCommand, "histmersion basemap fetch")
       assertEquals(s0.dir, dir.toString)
       assertEquals(get(s"$url/vector/0/0/0").statusCode, 404)
@@ -64,17 +65,17 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       BasemapFixtures.vectorArchive(dir.resolve("vector.pmtiles"), maxZoom = 3)
       BasemapFixtures.terrainArchive(dir.resolve("terrain.pmtiles"), maxZoom = 2)
       val s1 = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
-      assert(s1.available, s1.toString)
-      val v = s1.layers.find(_.layer == "vector").get
+      assert(s1.available.value, s1.toString)
+      val v = s1.layers.find(_.layer == Basemap.Layer.Wire("vector")).get
       assertEquals((v.present, v.maxZoom, v.tileType), (true, Some(3), Some("application/vnd.mapbox-vector-tile")))
-      assert(v.version.nonEmpty && v.attribution.nonEmpty, v.toString)
+      assert(v.version.nonEmpty && v.attribution.value.nonEmpty, v.toString)
 
       val t = get(s"$url/vector/2/1/1?v=${v.version.get}")
       assertEquals(t.statusCode, 200)
       assertEquals(t.headers.firstValue("content-encoding").orElse(""), "gzip")
       assertEquals(t.headers.firstValue("content-type").orElse(""), "application/vnd.mapbox-vector-tile")
       assert(t.headers.firstValue("cache-control").orElse("").contains("max-age"))
-      assert(PmTiles.isGzip(t.body))
+      assert(PmTiles.isGzip(PmTiles.TileBytes(t.body)))
       val r = get(s"$url/terrain/2/3/1")
       assertEquals((r.statusCode, r.headers.firstValue("content-type").orElse("")), (200, "image/webp"))
       assertEquals(String(r.body), "RIFF2/3/1")
@@ -128,10 +129,10 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       // the page's cut: only the kinds and properties it reads
       val t = get(s"$url/vector/3/4/3?layers=water:p~sea&keys=kind,name")
       assertEquals(t.statusCode, 200)
-      val fs = Mvt.features(PmTiles.gunzip(t.body).toOption.get).fold(fail(_), identity)
+      val fs = Mvt.features(PmTiles.gunzip(PmTiles.CompressedBytes(t.body)).toOption.get).fold(e => fail(e.value), identity)
       assert(
         fs.nonEmpty && fs.forall((l, g, p) =>
-          l == "water" && g == 1 && p.get(com.histmersion.util.basemap.Mvt.PropKey("kind")).contains("sea") && p.keySet.subsetOf(Set(com.histmersion.util.basemap.Mvt.PropKey("kind"), com.histmersion.util.basemap.Mvt.PropKey("name")))
+          l == Mvt.LayerName("water") && g == Mvt.GeomType(1) && p.get(Mvt.PropKey("kind")).contains(Mvt.PropText("sea")) && p.keySet.subsetOf(Set(com.histmersion.util.basemap.Mvt.PropKey("kind"), com.histmersion.util.basemap.Mvt.PropKey("name")))
         ),
         fs.toString
       )
@@ -162,18 +163,18 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
         val t = terrain(url)
         val focus = t.downField("focus").downArray
         assertEquals(focus.get[String]("name"), Right("argolid"))
-        assertEquals(focus.get[String]("bbox").map(b => BBox.parse(b).isDefined), Right(true))
+        assertEquals(focus.get[String]("bbox").map(b => BBox.parse(BBox.Text(b)).isDefined), Right(true))
         assertEquals((focus.get[Int]("minZoom"), focus.get[Int]("maxZoom")), (Right(9), Right(11)))
         assert(focus.get[Long]("bytes").exists(_ > 0), focus.focus.toString)
         val od = t.downField("onDemand")
-        assertEquals(od.get[Boolean]("enabled"), Right(onDemand && AppConfig.load().basemap.terrain.onDemand.enabled))
+        assertEquals(od.get[Boolean]("enabled"), Right(onDemand && AppConfig.load().basemap.terrain.onDemand.enabled.value))
         assertEquals(od.get[Int]("maxZoom"), Right(AppConfig.load().basemap.terrain.onDemand.maxZoom))
         assert(od.get[Long]("maxBytes").isRight && od.get[String]("dir").isRight, od.focus.toString)
         // and the typed status a page decodes says the same
         val st = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
-        val info = st.layers.find(_.layer == "terrain").get
+        val info = st.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get
         assertEquals(info.focus.map(_.name), List("argolid"))
-        assertEquals(info.onDemand.map(_.enabled), Some(onDemand && AppConfig.load().basemap.terrain.onDemand.enabled))
+        assertEquals(info.onDemand.map(_.enabled), Some(onDemand && AppConfig.load().basemap.terrain.onDemand.enabled.value))
       }
 
   test("the relief deeper than any archive holds: cut from its nearest ancestor, resampled in metres, a terrarium PNG"):
@@ -184,34 +185,37 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
     Files.copy(fixture.resolve("terrain-focus/argolid.pmtiles"), dir.resolve("terrain-focus/argolid.pmtiles"))
     withServer(dir, onDemand = false) { url =>
       val st = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
-      val t = st.layers.find(_.layer == "terrain").get
+      val t = st.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get
       assertEquals((t.maxZoom, t.deepest), (Some(6), Some(11)))
-      def tile(z: Int, lon: Double, lat: Double) =
+      def tile(z: Basemap.Zoom, lon: Longitude, lat: Latitude) =
         get(s"$url/terrain/$z/${Basemap.tileX(lon, z)}/${Basemap.tileY(lat, z)}")
       def heights(r: HttpResponse[Array[Byte]]) =
         TerrainResample
-          .decode(r.body)
+          .decode(Png.PngBytes(r.body))
           .fold(
-            e => fail(e),
-            i => { assertEquals((i.width, i.height), (512, 512)); i.pixels.map(TerrainResample.metres) }
+            e => fail(e.value),
+            i => {
+              assertEquals((i.width, i.height), (512, 512))
+              i.pixels.value.map(px => TerrainResample.metres(TerrainResample.Pixel(px)).value)
+            }
           )
       // zoom 8 over Naxos (no focus region there): from the extract's zoom-6 tile, a PNG
-      val naxos = tile(8, 25.45, 37.05)
+      val naxos = tile(Basemap.Zoom(8), Longitude(25.45), Latitude(37.05))
       assertEquals(naxos.statusCode, 200)
       assertEquals(naxos.headers.firstValue("content-type").orElse(""), "image/png")
       val hs = heights(naxos)
       assert(hs.max > 300 && hs.min < 5, s"the island and its sea: ${hs.min} … ${hs.max}")
       // zoom 10 inside the Argolid: the focus region's own tile, as stored
-      val mycenae = tile(10, 22.756, 37.73)
+      val mycenae = tile(Basemap.Zoom(10), Longitude(22.756), Latitude(37.73))
       assertEquals((mycenae.statusCode, mycenae.headers.firstValue("content-type").orElse("")), (200, "image/webp"))
       // zoom 11 at the Argolid's edge outside it (Nafplio's gulf, south of the region): cut from the extract
-      assertEquals(tile(11, 22.80, 37.50).headers.firstValue("content-type").orElse(""), "image/png")
+      assertEquals(tile(Basemap.Zoom(11), Longitude(22.80), Latitude(37.50)).headers.firstValue("content-type").orElse(""), "image/png")
       // deeper than every archive: none (the map draws its deepest tile larger)
-      assertEquals(tile(12, 25.45, 37.05).statusCode, 204)
+      assertEquals(tile(Basemap.Zoom(12), Longitude(25.45), Latitude(37.05)).statusCode, 204)
       // outside every region: none
-      assertEquals(tile(9, -40.0, 10.0).statusCode, 204)
+      assertEquals(tile(Basemap.Zoom(9), Longitude(-40.0), Latitude(10.0)).statusCode, 204)
       // the tiles' URLs change with the focus regions: a resampled tile is never kept past a new region
       Files.delete(dir.resolve("terrain-focus/argolid.pmtiles"))
       val after = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
-      assertNotEquals(after.layers.find(_.layer == "terrain").get.version, t.version)
+      assertNotEquals(after.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get.version, t.version)
     }

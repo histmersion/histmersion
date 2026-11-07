@@ -2,6 +2,7 @@ package com.histmersion.util.plugins
 
 import com.histmersion.testsupport.ComparedByValue.given
 
+import com.histmersion.util.settings.SettingsService
 import org.ekrich.config.ConfigFactory
 
 import scala.jdk.CollectionConverters.*
@@ -11,8 +12,11 @@ import scala.jdk.CollectionConverters.*
   */
 class LegacyPluginsSuite extends munit.FunSuite:
 
-  private val known: String => Set[String] = Map("oa-unpaywall" -> Set("contact-email"), "oa-core" -> Set("api-key"))
-    .withDefaultValue(Set.empty)
+  private val known: Plugin.Id => Set[SettingsService.ConfigPath] =
+    Map(
+      Plugin.Id("oa-unpaywall") -> Set(SettingsService.ConfigPath("contact-email")),
+      Plugin.Id("oa-core") -> Set(SettingsService.ConfigPath("api-key"))
+    ).withDefaultValue(Set.empty)
   private def migrate(user: String, env: Map[String, String] = Map.empty) =
     LegacyPlugins.migrate(ConfigFactory.parseString(user), ConfigFactory.parseMap(env.asJava), known)
 
@@ -20,8 +24,8 @@ class LegacyPluginsSuite extends munit.FunSuite:
     val user = ConfigFactory.parseString("histmersion.plugins.arxiv.enabled = false")
     val env = ConfigFactory.parseMap(Map("PATH" -> "/bin").asJava)
     val m = LegacyPlugins.migrate(user, env, known)
-    assert(m.user eq user)
-    assert(m.env eq env)
+    assert(m.user.eq(user))
+    assert(m.env.eq(env))
     assertEquals(m.warnings, Nil)
 
   test("the block is removed and enabled copied to each successor that does not set its own"):
@@ -44,7 +48,7 @@ class LegacyPluginsSuite extends munit.FunSuite:
   test("oa-index that is no block: removed, said"):
     val m = migrate("histmersion.plugins.oa-index = false")
     assert(!m.user.hasPath("histmersion.plugins.oa-index"))
-    assert(m.warnings.exists(_.contains("must be a block")), m.warnings)
+    assert(m.warnings.exists(_.value.contains("must be a block")), m.warnings)
 
   test("the environment: the former variable fills only the successors' variables that are not set"):
     val m = migrate(

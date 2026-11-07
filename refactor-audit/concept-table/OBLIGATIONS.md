@@ -214,3 +214,11 @@ The rules let agents put primitives in private helpers, loops, renderers, binary
 ## Tool bug found: apply.py "move onto the real owner" matched by short name across modules
 
 The client table's new concepts were placed on same-named owners in other modules (domain.research.Article, Goal, Manager, Edge, Job, plugin.FetchedFile, server.Static, util.storage.Store ...), shadowing and unused: undone. Stage 4 reported 1 such move: check it. Fix apply.py to stay within the module set before reuse.
+
+## Server tests that will fail at run time because validation moved to the route (rewrite to call the route with raw API values, assertions unchanged)
+
+- MediaSourceBoundarySuite: invalid source identifiers fail before absence; parser errors reach the media boundary; lookup and missing-source errors retain the input.
+- SourcesControllersSuite: a put under a citekey that is not one is refused.
+- AgentEngineSuite compare: comma-separated ids (splitting moved to AgentsControllers.runIds); the test passes `Run.Id.assume("a,b")`.
+- ArticleServiceContract and ArticlesControllersSuite: `Slug("ZR_WALLS")` pre-normalised with Slug.parse in the test (test took over behaviour): send the raw upper-case value through the boundary; ArticleRepo.refs lowercasing now unreachable.
+- MergeApplyJobs planHash went from free String to Sha256: confirm against master that the plan hash is a SHA-256 hex.

@@ -31,7 +31,7 @@ abstract class ImportServiceContract extends MediaStoreSuite:
     assertEquals(i.collectionPending(com.histmersion.domain.media.imports.ImportService.CheckName("zq"), places = com.histmersion.domain.media.imports.ImportService.Places(false), None, pleiadesOnly = com.histmersion.domain.media.imports.ImportService.PleiadesOnly(false)), 0)
     assertEquals(i.placeFacts(List(com.histmersion.domain.catalogue.Place.Id("zq_p"))), Map.empty)
     assertEquals(i.mapPlacesNamed(List(com.histmersion.domain.media.imports.ImportService.PlaceKey("zq"))), Map.empty)
-    assertEquals(i.mapPlacesWithIds(List("pleiades" -> "1")), Map.empty)
+    assertEquals(i.mapPlacesWithIds(List(com.histmersion.domain.catalogue.places.ExternalIds.Pleiades -> com.histmersion.domain.catalogue.places.ExternalIds.ExternalId("1"))), Map.empty)
     assertEquals(i.pleiadesIds(List(com.histmersion.domain.catalogue.Place.Id("zq_p"))), Map.empty)
     assertEquals(i.placeExternalIds(List(com.histmersion.domain.catalogue.Place.Id("zq_p"))), Map.empty)
     i.checked(com.histmersion.domain.media.imports.ImportService.Provider("zq"), com.histmersion.domain.media.imports.ImportService.TargetType("place"), com.histmersion.domain.media.imports.ImportService.TargetId("zq_p"), com.histmersion.domain.media.imports.ImportService.FoundCount(2), Some(com.histmersion.domain.catalogue.places.Wikidata.Id("Q1")))

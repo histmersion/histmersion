@@ -2,7 +2,7 @@ package com.histmersion.util.process
 
 import com.histmersion.testsupport.ComparedByValue.given
 
-import com.histmersion.util.storage.{Location, Storage}
+import com.histmersion.util.storage.{ByteSource, Location, Storage}
 
 import java.nio.file.Files
 import com.histmersion.util.storage.Store
@@ -16,19 +16,19 @@ class ProcessesSuite extends munit.FunSuite:
         ProcessLaunch(
           List(com.histmersion.util.process.ProcessLaunch.Command("/bin/sh"), com.histmersion.util.process.ProcessLaunch.Command("-c"), com.histmersion.util.process.ProcessLaunch.Command("echo \"$GREETING\"; pwd; echo oops >&2; exit 3")),
           workingStore = Some(Storage.at(Location.Scratch, dir)),
-          environment = Map("GREETING" -> "hello")
+          environment = Map(ProcessLaunch.EnvironmentKey("GREETING") -> ProcessLaunch.EnvironmentValue("hello"))
         )
       )
-      .fold(fail(_), identity)
+      .fold(e => fail(e.value), identity)
     assertEquals(r.exitCode, 3)
     assertEquals(r.lines.head, "hello")
-    assertEquals(java.nio.file.Path.of(r.lines(1)).toRealPath(), dir.toRealPath())
+    assertEquals(java.nio.file.Path.of(r.lines(1).value).toRealPath(), dir.toRealPath())
     assertEquals(r.lines(2), "oops", "errors go with the output")
 
   test("output appended to a file of a store"):
     val dir = Files.createTempDirectory("histmersion-process")
     val logs = Storage.at(Location.Logs, dir)
-    logs.put(Store.Key("child.log"), "before\n".getBytes): Unit
+    logs.put(Store.Key("child.log"), ByteSource.Content("before\n".getBytes)): Unit
     val p = Processes()
       .start(
         ProcessLaunch(
@@ -36,7 +36,7 @@ class ProcessesSuite extends munit.FunSuite:
           output = ProcessOutput.AppendTo(logs, Store.Key("child.log"))
         )
       )
-      .fold(fail(_), identity)
+      .fold(e => fail(e.value), identity)
     assertEquals(p.waitFor(), 0)
     assertEquals(logs.get(Store.Key("child.log")).map(_.text()), Some("before\nafter\n"))
 
@@ -44,7 +44,7 @@ class ProcessesSuite extends munit.FunSuite:
     assert(Processes().run(ProcessLaunch(List(com.histmersion.util.process.ProcessLaunch.Command("/nonexistent/histmersion-no-such-program")))).isLeft)
 
   test("in memory: nothing starts, each launch is recorded and answered"):
-    val mem = Processes.InMemory(l => ProcessResult(if l.command.head == "ok" then com.histmersion.util.process.ProcessResult.ExitCode(0) else com.histmersion.util.process.ProcessResult.ExitCode(1), List(com.histmersion.util.process.ProcessResult.Lines("out"))))
+    val mem = Processes.InMemory(l => ProcessResult(if l.command.head == ProcessLaunch.Command("ok") then com.histmersion.util.process.ProcessResult.ExitCode(0) else com.histmersion.util.process.ProcessResult.ExitCode(1), List(com.histmersion.util.process.ProcessResult.Lines("out"))))
     assertEquals(mem.run(ProcessLaunch(List(com.histmersion.util.process.ProcessLaunch.Command("ok")))), Right(ProcessResult(com.histmersion.util.process.ProcessResult.ExitCode(0), List(com.histmersion.util.process.ProcessResult.Lines("out")))))
     assertEquals(mem.run(ProcessLaunch(List(com.histmersion.util.process.ProcessLaunch.Command("no")))).map(_.succeeded), Right(false))
     assertEquals(mem.launches.map(_.command.head), List("ok", "no"))

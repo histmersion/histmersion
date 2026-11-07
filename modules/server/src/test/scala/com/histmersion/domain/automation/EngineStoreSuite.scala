@@ -6,7 +6,10 @@ import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.agents.{ApprovalService, RunService}
 import com.histmersion.domain.automation.autopilot.AutopilotRowService
 import com.histmersion.util.jobs.{JobRuns, JobRunState}
-import com.histmersion.domain.automation.goals.{FocusService, GoalLinkTargets, GoalService}
+import com.histmersion.domain.Title
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.automation.goals.{BGoalLinkRow, FocusService, GoalLinkTargets, GoalService}
 import com.histmersion.domain.automation.managers.ManagerService
 import com.histmersion.util.database.Transactor
 import com.augustnagro.magnum.*
@@ -63,11 +66,11 @@ object EngineStoreSuite:
     protected def fresh(test: String): Option[EngineStores] =
       val state = AtomicReference(AutomationState.empty)
       val clock = Moving()
-      val titles = TrieMap.empty[(Goal.LinkKind, String), String]
+      val titles = TrieMap.empty[(Goal.LinkKind, BGoalLinkRow.Ref), GoalLinkTargets.TitleResult]
       val targets = new GoalLinkTargets:
-        def title(kind: Goal.LinkKind, ref: String): Option[String] = titles.get((kind, ref))
-        def queueList(ref: String): Option[String] = None
-      val jobs = JobRuns.InMemory(AtomicReference(Map.empty[String, JobRunState]), () => Instant.now(clock))
+        def title(kind: Goal.LinkKind, ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.TitleResult] = titles.get((kind, ref))
+        def queueList(ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.QueueListResult] = None
+      val jobs = JobRuns.InMemory(AtomicReference(Map.empty[Run.Id, JobRunState]), () => Instant.now(clock))
       Some(new EngineStores:
         val autopilot = AutopilotRowService.InMemory(state, clock)
         val goals = GoalService.InMemory(state, clock, targets)
@@ -78,8 +81,10 @@ object EngineStoreSuite:
         val managers = ManagerService.InMemory(state, jobs, clock)
         val focus = FocusService.InMemory(state, clock)
         val agentState = com.histmersion.domain.automation.agents.AgentStateService.InMemory(state, clock)
-        def article(slug: String, title: String): Unit = titles.update((Goal.LinkKind.Article, slug), title)
-        def source(citekey: String, title: String): Unit = titles.update((Goal.LinkKind.Source, citekey), title)
+        def article(slug: Slug, title: Title): Unit =
+          titles.update((Goal.LinkKind.Article, BGoalLinkRow.Ref(slug.value)), GoalLinkTargets.TitleResult(title.value))
+        def source(citekey: Citekey, title: Title): Unit =
+          titles.update((Goal.LinkKind.Source, BGoalLinkRow.Ref(citekey.value)), GoalLinkTargets.TitleResult(title.value))
         def within[A](work: DbCon ?=> A): A = connect(NoDatabase)(work))
 
   /** The stores on a scratch database of their own per test. */
@@ -89,7 +94,7 @@ object EngineStoreSuite:
     private lazy val scratch =
       ScratchDatabases(
         s"histmersion_s7c_${getClass.getSimpleName.toLowerCase.take(24)}",
-        AppConfig.load().db.copy(url = testDb.get)
+        AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get))
       )
     private val made = AtomicLong(0L)
     override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
@@ -107,11 +112,11 @@ object EngineStoreSuite:
           val managers = ManagerService(db)
           val focus = FocusService(db)
           val agentState = com.histmersion.domain.automation.agents.AgentStateService(db)
-          def article(slug: String, title: String): Unit =
+          def article(slug: Slug, title: Title): Unit =
             connect(ds)(
-              sql"INSERT INTO articles (slug, title, kind, body) VALUES ($slug, $title, 'concept', '')".update.run()
+              sql"INSERT INTO articles (slug, title, kind, body) VALUES (${slug.value}, ${title.value}, 'concept', '')".update.run()
             ): Unit
-          def source(citekey: String, title: String): Unit =
-            connect(ds)(sql"INSERT INTO sources (citekey, title) VALUES ($citekey, $title)".update.run()): Unit
+          def source(citekey: Citekey, title: Title): Unit =
+            connect(ds)(sql"INSERT INTO sources (citekey, title) VALUES (${citekey.value}, ${title.value})".update.run()): Unit
           def within[A](work: DbCon ?=> A): A = transact(ds)(work)
       }

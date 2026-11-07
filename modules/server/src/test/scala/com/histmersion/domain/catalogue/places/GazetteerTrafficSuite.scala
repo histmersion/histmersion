@@ -2,7 +2,8 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.pluginhost.{HttpTransport, PluginGazetteers}
+import com.histmersion.domain.CoreQuota
+import com.histmersion.pluginhost.{HttpTransport, PluginGazetteers, Registries}
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
@@ -28,6 +29,10 @@ class GazetteerTrafficSuite extends munit.FunSuite:
   private def fixture(name: String): Array[Byte] =
     Files.readAllBytes(Path.of(s"modules/plugins/gazetteers/src/test/resources/gazetteers/$name"))
 
+  private val Cliopatria = Registries.GazetteerSourcesKey("cliopatria")
+  private val Awmc = Registries.GazetteerSourcesKey("awmc")
+  private val Chronontology = Registries.GazetteerSourcesKey("chronontology")
+
   private val Transport = Set("host", "connection", "accept", "content-length", "upgrade", "http2-settings")
 
   private lazy val cfg = com.histmersion.config.AppConfig.load()
@@ -38,10 +43,10 @@ class GazetteerTrafficSuite extends munit.FunSuite:
   private lazy val sources = ServerPlugins.offline.registries.gazetteerSources
 
   /** The address a source downloads: what it asks a client that answers nothing. */
-  private def sourceUrl(name: String): String =
+  private def sourceUrl(name: Registries.GazetteerSourcesKey): String =
     val asked = java.util.concurrent.ConcurrentLinkedQueue[String]()
     val probe = new HttpTransport:
-      def get(url: String, headers: Map[String, String]) = { asked.add(url); Left("probe") }
+      def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = { asked.add(url.value); Left(HttpTransport.Problem("probe")) }
     val _ = ImportRunner.places(sources(name), PluginGazetteers.http(probe))
     asked.peek()
 
@@ -51,24 +56,24 @@ class GazetteerTrafficSuite extends munit.FunSuite:
   private def http: Plugin.Http =
     val wire = PluginGazetteers.transport(cfg.places)
     PluginGazetteers.http(new HttpTransport:
-      def get(url: String, headers: Map[String, String]) = wire.get(loop.local(url), headers))
+      def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = wire.get(HttpTransport.Url(loop.local(url.value)), headers))
 
   /** Every place a download of `name` makes, in the order the runner upserts them. */
-  private def places(name: String): Either[String, List[Place.Input]] =
+  private def places(name: Registries.GazetteerSourcesKey): Either[GazetteerImports.Problem, List[Place.Input]] =
     ImportRunner.places(sources(name), http).map(_._1)
 
-  private def dryRun(name: String): Either[String, Place.ImportResult] =
-    ImportRunner.fetchAndImport(sources(name), http, null, null, dryRun = com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun(true), 0.0)
+  private def dryRun(name: Registries.GazetteerSourcesKey): Either[GazetteerImports.Problem, Place.ImportResult] =
+    ImportRunner.fetchAndImport(sources(name), http, null, null, dryRun = com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun(true), GeocodeSettings.ToleranceKm(0.0))
 
   // ── the transcript ──────────────────────────────────────────────────────────────────────────
 
-  private def normalised(s: String, name: String): String =
+  private def normalised(s: String, name: Registries.GazetteerSourcesKey): String =
     val real = java.net.URI.create(sourceUrl(name))
     s.replace(loop.origin, "<origin>")
       .replace(s"${real.getScheme}://${real.getRawAuthority}", "<origin>")
-      .replace(Version.version, "<version>")
+      .replace(Version.version.value, "<version>")
 
-  private def requests(name: String): String =
+  private def requests(name: Registries.GazetteerSourcesKey): String =
     loop
       .take()
       .map { r =>
@@ -83,17 +88,17 @@ class GazetteerTrafficSuite extends munit.FunSuite:
       }
       .mkString
 
-  private def run(sb: StringBuilder, name: String, served: String, body: Array[Byte]): Unit =
+  private def run(sb: StringBuilder, name: Registries.GazetteerSourcesKey, served: String, body: Array[Byte]): Unit =
     sb ++= s"## $name: $served\nsource: ${sourceUrl(name)}\n"
     loop.answerWith(200, body)
     val made = places(name)
     sb ++= requests(name)
     made match
-      case Left(e)   => sb ++= s"places: failed: ${normalised(e, name)}\n"
+      case Left(e)   => sb ++= s"places: failed: ${normalised(e.value, name)}\n"
       case Right(ps) => sb ++= s"places: ${ps.size}\n" + ps.map(p => s"  $p\n").mkString
     val dry = dryRun(name)
     sb ++= requests(name)
-    sb ++= s"dry run: ${dry.fold(e => s"failed: ${normalised(e, name)}", _.toString)}\n"
+    sb ++= s"dry run: ${dry.fold(e => s"failed: ${normalised(e.value, name)}", _.toString)}\n"
 
   private def zipped(name: String): Array[Byte] =
     GazetteerLoopback.zip(
@@ -107,26 +112,26 @@ class GazetteerTrafficSuite extends munit.FunSuite:
 
   private def transcript: String =
     val sb = StringBuilder()
-    run(sb, "cliopatria", "cliopatria.geojson, zipped", zipped("cliopatria.geojson"))
-    run(sb, "cliopatria", "cliopatria-more.geojson, zipped", zipped("cliopatria-more.geojson"))
-    run(sb, "awmc", "awmc.geojson", fixture("awmc.geojson"))
-    run(sb, "awmc", "awmc-more.geojson", fixture("awmc-more.geojson"))
-    run(sb, "chronontology", "chronontology.json", fixture("chronontology.json"))
-    run(sb, "chronontology", "chronontology-more.json", fixture("chronontology-more.json"))
+    run(sb, Cliopatria, "cliopatria.geojson, zipped", zipped("cliopatria.geojson"))
+    run(sb, Cliopatria, "cliopatria-more.geojson, zipped", zipped("cliopatria-more.geojson"))
+    run(sb, Awmc, "awmc.geojson", fixture("awmc.geojson"))
+    run(sb, Awmc, "awmc-more.geojson", fixture("awmc-more.geojson"))
+    run(sb, Chronontology, "chronontology.json", fixture("chronontology.json"))
+    run(sb, Chronontology, "chronontology-more.json", fixture("chronontology-more.json"))
     run(
       sb,
-      "cliopatria",
+      Cliopatria,
       "a zip with no usable file",
       GazetteerLoopback.zip(List("__MACOSX/" -> Array.emptyByteArray, "data/" -> Array.emptyByteArray))
     )
-    run(sb, "awmc", "a body that is not JSON", "<html>moved</html>".getBytes(UTF_8))
-    run(sb, "chronontology", "a JSON body of another shape", """{"error":"busy"}""".getBytes(UTF_8))
+    run(sb, Awmc, "a body that is not JSON", "<html>moved</html>".getBytes(UTF_8))
+    run(sb, Chronontology, "a JSON body of another shape", """{"error":"busy"}""".getBytes(UTF_8))
     // an error answer: the download says which, and nothing is read
     sb ++= "## chronontology: HTTP 503\n"
     loop.answerWith(503, "busy".getBytes(UTF_8))
-    val failed = places("chronontology")
-    sb ++= requests("chronontology")
-    sb ++= s"places: ${failed.fold(e => s"failed: ${normalised(e, "chronontology")}", _.size.toString)}\n"
+    val failed = places(Chronontology)
+    sb ++= requests(Chronontology)
+    sb ++= s"places: ${failed.fold(e => s"failed: ${normalised(e.value, Chronontology)}", _.size.toString)}\n"
     sb.result()
 
   private val transcriptFile = Path.of("modules/server/src/test/resources/traffic/gazetteers.txt")

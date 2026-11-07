@@ -16,12 +16,12 @@ abstract class StoreContractSuite extends munit.FunSuite:
   def fresh(): Store
 
   private def key(s: String) = Store.Key.applyUnsafe(s)
-  private def utf(s: String) = s.getBytes(UTF_8)
+  private def utf(s: String) = ByteSource.Content(s.getBytes(UTF_8))
 
   test("put, get, stat, list and walk"):
     val s = fresh()
     assert(s.put(key("a/b/one.txt"), utf("one")).isRight)
-    assert(s.write(key("a/two.bin"), Array[Byte](1, 2, 3)).isRight)
+    assert(s.write(key("a/two.bin"), ByteSource.Content(Array[Byte](1, 2, 3))).isRight)
     assertEquals(s.get(key("a/b/one.txt")).map(_.text()), Some("one"))
     assertEquals(s.stat(key("a/two.bin")).map(st => (st.kind, st.size.value: Long)), Some((Stored.Kind.File, 3L)))
     assert(s.isDirectory(key("a/b")) && s.isFile(key("a/two.bin")) && !s.exists(key("a/none")))
@@ -46,7 +46,7 @@ abstract class StoreContractSuite extends munit.FunSuite:
   test("a reservation is invisible until committed, and gone when discarded"):
     val s = fresh()
     val r = s.reserve(key("out.pmtiles")).toOption.get
-    Using.resource(r.output())(_.write(utf("0123456789")))
+    Using.resource(r.output())(_.write(utf("0123456789").value))
     r.writeAt(ByteOffset.applyUnsafe(2L), utf("ab"))
     assertEquals(r.size.value: Long, 10L)
     assert(!s.exists(key("out.pmtiles")))
@@ -54,7 +54,7 @@ abstract class StoreContractSuite extends munit.FunSuite:
     r.close()
     assertEquals(s.get(key("out.pmtiles")).map(_.text()), Some("01ab456789"))
     val d = s.reserve(key("gone")).toOption.get
-    Using.resource(d.output())(_.write(utf("x")))
+    Using.resource(d.output())(_.write(utf("x").value))
     d.close()
     assertEquals(s.walk().map(st => st.key.value: String), List("out.pmtiles"))
 
@@ -62,10 +62,10 @@ abstract class StoreContractSuite extends munit.FunSuite:
     val s = fresh()
     s.put(key("f"), utf("hello world")): Unit
     val b = s.get(key("f")).get
-    assertEquals(String(b.readAt(ByteOffset.applyUnsafe(6L), com.histmersion.util.basemap.PmTiles.ByteLength(5)), UTF_8), "world")
+    assertEquals(String(b.readAt(ByteOffset.applyUnsafe(6L), com.histmersion.util.basemap.PmTiles.ByteLength(5)).value, UTF_8), "world")
     Using.resource(b.reader()) { r =>
       assertEquals(r.size.value: Long, 11L)
-      assertEquals(String(r.readUpTo(ByteOffset.applyUnsafe(6L), com.histmersion.util.basemap.PmTiles.ByteLength(100)), UTF_8), "world")
+      assertEquals(String(r.readUpTo(ByteOffset.applyUnsafe(6L), com.histmersion.util.basemap.PmTiles.ByteLength(100)).value, UTF_8), "world")
       intercept[java.io.EOFException](r.read(ByteOffset.applyUnsafe(6L), com.histmersion.util.basemap.PmTiles.ByteLength(100)))
     }
     assertEquals(Using.resource(b.open())(in => String(in.readAllBytes(), UTF_8)), "hello world")
@@ -89,7 +89,7 @@ abstract class StoreContractSuite extends munit.FunSuite:
     val s = fresh()
     s.put(key("t/x.pmtiles"), utf("an older archive, longer")): Unit
     val r = s.reserve(key("t/x.pmtiles")).toOption.get
-    Using.resource(r.output()) { out => out.write(utf("....")); out.write(utf("body")) }
+    Using.resource(r.output()) { out => out.write(utf("....").value); out.write(utf("body").value) }
     assertEquals(r.size.value: Long, 8L)
     r.writeAt(ByteOffset.applyUnsafe(0L), utf("head"))
     assertEquals(s.get(key("t/x.pmtiles")).map(_.text()), Some("an older archive, longer"))
@@ -123,8 +123,8 @@ abstract class StoreContractSuite extends munit.FunSuite:
 
   test("measure: the files below the store, by bytes and count; a sub-store not made yet is absent"):
     val s = fresh()
-    s.put(key("a.bin"), Array.fill[Byte](100)(1)): Unit
-    s.put(key("x/y/b.bin"), Array.fill[Byte](200)(1)): Unit
+    s.put(key("a.bin"), ByteSource.Content(Array.fill[Byte](100)(1))): Unit
+    s.put(key("x/y/b.bin"), ByteSource.Content(Array.fill[Byte](200)(1))): Unit
     val r = s.measure(MeasureBudget.unlimited)
     assertEquals((r.bytes.value: Long, r.files, r.exists, r.partial), (300L, 2L, true, false))
     assertEquals(s.sub(key("x")).measure(MeasureBudget.unlimited).bytes.value: Long, 200L)
@@ -132,17 +132,17 @@ abstract class StoreContractSuite extends munit.FunSuite:
 
   test("measure: a budget that runs out stops the walk, partial, and is shared by the next walk"):
     val s = fresh()
-    (1 to 30).foreach(i => s.put(key(f"f$i%02d.bin"), Array.fill[Byte](10)(1)): Unit)
-    val b = MeasureBudget(com.histmersion.util.storage.MeasureBudget.MaxEntries(10), Long.MaxValue)
+    (1 to 30).foreach(i => s.put(key(f"f$i%02d.bin"), ByteSource.Content(Array.fill[Byte](10)(1))): Unit)
+    val b = MeasureBudget(MeasureBudget.MaxEntries(10), MeasureBudget.DeadlineNanos(Long.MaxValue))
     val r = s.measure(b)
-    assert(r.partial && r.files < 30L && r.bytes.value < 300L, r)
+    assert(r.partial.value && r.files.value < 30L && r.bytes.value < 300L, r)
     assert(b.exhausted)
-    assert(s.measure(b).partial)
+    assert(s.measure(b).partial.value)
 
   test("names: what a directory holds directly, by name; none for a missing one"):
     val s = fresh()
-    s.put(key("b/x"), Array[Byte](1)): Unit
-    s.put(key("a"), Array[Byte](1)): Unit
+    s.put(key("b/x"), ByteSource.Content(Array[Byte](1))): Unit
+    s.put(key("a"), ByteSource.Content(Array[Byte](1))): Unit
     assertEquals(s.names(), List("a", "b"))
     assertEquals(s.names(key("nowhere")), Nil)
     assert(!s.isLink(key("a")) && !s.isExecutable(key("a")))
@@ -150,7 +150,7 @@ abstract class StoreContractSuite extends munit.FunSuite:
   test("a reservation with a suffixed temporary name commits over its key"):
     val s = fresh()
     val r = s.reserve(key("d/x.dump"), TempName.Suffixed(com.histmersion.util.storage.TempName.Suffixed.Suffix(".part"))).toOption.get
-    Using.resource(r.output())(_.write(utf("dump")))
+    Using.resource(r.output())(_.write(utf("dump").value))
     assert(!s.isFile(key("d/x.dump")))
     assertEquals(r.commit().map(_.size.value: Long), Right(4L))
     assertEquals(s.get(key("d/x.dump")).map(_.text()), Some("dump"))
@@ -184,7 +184,7 @@ class DiskStoreSuite extends StoreContractSuite:
   test("a store at a directory is the store the storage gives for a location placed there"):
     val dir = Files.createTempDirectory("histmersion-store")
     val at = Storage.at(Location.Basemap, dir)
-    at.put(Store.Key.applyUnsafe("vector.pmtiles"), "v".getBytes(UTF_8)): Unit
+    at.put(Store.Key.applyUnsafe("vector.pmtiles"), ByteSource.Content("v".getBytes(UTF_8))): Unit
     val placed = Storage(_ => Some(dir), () => dir).store(Location.Basemap)
     assertEquals(placed.get(Store.Key.applyUnsafe("vector.pmtiles")).map(_.text()), Some("v"))
     assertEquals((at.location, at.where()), (Location.Basemap, dir.toString))
@@ -193,7 +193,7 @@ class DiskStoreSuite extends StoreContractSuite:
     val base = Files.createTempDirectory("histmersion-scratch")
     val storage = Storage(_ => None, () => base)
     val scratch = storage.scratch(com.histmersion.util.storage.Storage.ScratchPurpose("histmersion-test-"))
-    scratch.store.put(Store.Key.applyUnsafe("a/b"), Array[Byte](1)): Unit
+    scratch.store.put(Store.Key.applyUnsafe("a/b"), ByteSource.Content(Array[Byte](1))): Unit
     assertEquals(Files.list(base).count(), 1L)
     scratch.close()
     assertEquals(Files.list(base).count(), 0L)
@@ -205,7 +205,7 @@ class MemoryStoreSuite extends StoreContractSuite:
 
   test("in memory: nothing is on disk, and each location is one store for everyone holding the storage"):
     val storage = Storage.InMemory()
-    storage.store(Location.Spool).put(Store.Key.applyUnsafe("x"), Array[Byte](1)): Unit
+    storage.store(Location.Spool).put(Store.Key.applyUnsafe("x"), ByteSource.Content(Array[Byte](1))): Unit
     assert(storage.store(Location.Spool).isFile(Store.Key.applyUnsafe("x")))
     assert(storage.store(Location.Spool).onDisk(Store.Key.applyUnsafe("x")).isLeft)
     assertEquals(storage.store(Location.Spool).volume, None)

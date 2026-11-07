@@ -13,7 +13,7 @@ import com.histmersion.api.catalogue.{EventPatch, EventPut}
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.Caller
-import com.histmersion.domain.catalogue.CatalogueState
+import com.histmersion.domain.catalogue.{CatalogueState, Event}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
 
@@ -24,8 +24,8 @@ import java.util.concurrent.atomic.AtomicReference
   * lock.
   */
 class EventsControllersSuite extends munit.FunSuite:
-  private val renamed = Map[(AliasKind, String), String]((AliasKinds.EventRecords, "zz_old") -> "zz_ev")
-  private def current(k: AliasKind, id: String) = renamed.getOrElse((k, id), id)
+  private val renamed = Map[(AliasKind, Event.Id), Event.Id]((AliasKinds.EventRecords, Event.Id("zz_old")) -> Event.Id("zz_ev"))
+  private def current(k: AliasKind, id: Event.Id) = renamed.getOrElse((k, id), id)
   private val span = TimeSpan(Some(com.histmersion.api.catalogue.Year(-1200)), None, None, Some(com.histmersion.api.catalogue.Year(-1190)))
 
   private def controllers(gate: WriteGate = WriteGate()) =
@@ -33,9 +33,9 @@ class EventsControllersSuite extends munit.FunSuite:
       EventService.InMemory(AtomicReference(CatalogueState.empty)),
       d => d.modify(_.names).setTo(List("from the card")),
       current,
-      f => f.modify(_.limit).setTo(f.limit.min(2)),
+      f => f.modify(_.limit).setTo(Filter.Limit(f.limit.value.min(2))),
       _ => PlaceScope.empty,
-      () => (com.histmersion.PageSize(10), 0.01),
+      () => (com.histmersion.PageSize(10), GeoTolerance(0.01)),
       gate
     )
 
@@ -74,8 +74,8 @@ class EventsControllersSuite extends munit.FunSuite:
     List("zz_1", "zz_2", "zz_3").foreach(id =>
       c.put(
         Caller.Local,
-        id,
-        EventPut(s"Zz $id", com.histmersion.api.catalogue.EventSummary.Kind("battle"), span, geometry = Some("""{"type":"Point","coordinates":[1,2]}"""))
+        Event.Id(id),
+        EventPut(com.histmersion.api.catalogue.EventSummary.Label(s"Zz $id"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), span, geometry = Some(com.histmersion.api.catalogue.EventPut.Geometry("""{"type":"Point","coordinates":[1,2]}""")))
       )
     )
     val l = c.list(Api.EventQuery(Filter(limit = com.histmersion.api.library.Filter.Limit(50))))
@@ -85,7 +85,7 @@ class EventsControllersSuite extends munit.FunSuite:
   test("a rename checks the new id against the current one; a held lock refuses every write"):
     val c = controllers()
     val _ = c.put(Caller.Local, com.histmersion.domain.catalogue.Event.Id("zz_ev"), EventPut(com.histmersion.api.catalogue.EventSummary.Label("Zz event"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), span))
-    def bad(from: String) = Left(Api.Error(s"'$from' is already that event id", Some(Write.CodeInvalid)))
+    def bad(from: Event.Id) = Left(Api.Error(Api.Error.Message(s"'$from' is already that event id"), Some(Api.Error.Code(Write.CodeInvalid))))
     assertEquals(code(c.rename(Caller.Local, com.histmersion.domain.catalogue.Event.Id("zz_old"), bad)), Some(Write.CodeInvalid))
     assertEquals(c.rename(Caller.Local, com.histmersion.domain.catalogue.Event.Id("zz_old"), _ => Right(com.histmersion.domain.catalogue.Event.Id("zz_new"))), Right(("zz_ev", "zz_new")))
     val gate = WriteGate()

@@ -1,5 +1,7 @@
 package com.histmersion.util.storage
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
 
@@ -8,22 +10,23 @@ import java.nio.file.Files
   */
 class StoreContentsSuite extends munit.FunSuite:
 
-  private def sha(b: Array[Byte]) = ContentStore.hex(java.security.MessageDigest.getInstance("SHA-256").digest(b))
+  private def sha(b: ByteSource.Content) =
+    ContentStore.hex(ContentStore.Digest(java.security.MessageDigest.getInstance("SHA-256").digest(b.value)))
 
   private def cases(name: String, store: () => Store): Unit =
     test(s"$name: content-addressed — stored only when the content is its name, found by digest"):
       val s = store()
       val contents = Store.Contents(s)
-      val data = "an original".getBytes(UTF_8)
+      val data = ByteSource.Content("an original".getBytes(UTF_8))
       assertEquals(contents.find(sha(data)), None)
-      assert(contents.store(sha(data), com.histmersion.util.storage.ContentStore.Ext("pdf"), java.io.ByteArrayInputStream("not it".getBytes(UTF_8))).isLeft)
+      assert(contents.store(sha(data), ContentStore.Ext("pdf"), java.io.ByteArrayInputStream("not it".getBytes(UTF_8))).isLeft)
       assertEquals(contents.find(sha(data)), None)
       assertEquals(s.list().size, 0)
-      assertEquals(contents.store(sha(data), com.histmersion.util.storage.ContentStore.Ext("../evil"), java.io.ByteArrayInputStream(data)), Right(()))
+      assertEquals(contents.store(sha(data), ContentStore.Ext("../evil"), java.io.ByteArrayInputStream(data.value)), Right(()))
       assertEquals(contents.find(sha(data)).map(_._2), Some("bin"))
-      assertEquals(contents.store(sha(data), com.histmersion.util.storage.ContentStore.Ext("pdf"), java.io.ByteArrayInputStream(data)), Right(()))
+      assertEquals(contents.store(sha(data), ContentStore.Ext("pdf"), java.io.ByteArrayInputStream(data.value)), Right(()))
       assertEquals(s.list().map(_.key.value), List(s"${sha(data)}.bin"))
-      assertEquals(contents.find(sha(data)).map(_._1.read(_.readAllBytes()).toList), Some(data.toList))
+      assertEquals(contents.find(sha(data)).map(_._1.read(_.readAllBytes()).toList), Some(data.value.toList))
 
   cases("on disk", () => Storage.at(Location.IngestOriginals, Files.createTempDirectory("histmersion-originals")))
   cases("in memory", () => Storage.InMemory().store(Location.IngestOriginals))

@@ -21,65 +21,80 @@ import com.histmersion.api.Api
   */
 class JobControlServiceSuite extends com.histmersion.db.DbSuite:
 
-  private def job(id: String, kind: JobInfo.Kind, status: String) =
-    JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id(id), com.histmersion.api.jobs.JobKinds.Wire(kind.value), status, None, progress = Some(com.histmersion.api.jobs.JobInfo.Progress("2/6")))
+  private val M1 = Job.Id.applyUnsafe("00000000-0000-0000-0000-0000000000a1")
+  private val P1 = Job.Id.applyUnsafe("00000000-0000-0000-0000-0000000000a2")
+  private val R1 = Job.Id.applyUnsafe("00000000-0000-0000-0000-0000000000a3")
+  private val A1 = Job.Id.applyUnsafe("00000000-0000-0000-0000-0000000000a4")
+  private val X = Job.Id.applyUnsafe("00000000-0000-0000-0000-0000000000a5")
+  private val Nope = Job.Id.applyUnsafe("00000000-0000-0000-0000-0000000000a6")
+
+  private def job(id: Job.Id, kind: JobInfo.Kind, status: JobInfo.Status) =
+    JobInfo(
+      com.histmersion.api.SpatialHierarchyResult.Job.Id(id.value),
+      kind,
+      status,
+      None,
+      progress = Some(com.histmersion.api.jobs.JobInfo.Progress("2/6"))
+    )
+
+  private def jobId(info: JobInfo): Job.Id = Job.Id.applyUnsafe(info.id.value)
 
   test("in memory: a pause is asked of a running job, which stops at its next part and resumes later"):
     val stops = JobStops()
     val mem = JobControlService.InMemory(AtomicReference(Map.empty), stops)
-    mem.put(job("m1", com.histmersion.api.media.ImportJobKinds.MediaImport.kind, "running"))
-    assertEquals(mem.control(com.histmersion.util.jobs.Job.Id("m1"), JobAction.Pause).map(_.status), Right("running"), "it stops after the part it is on")
-    assertEquals(stops.requestedFor(com.histmersion.util.jobs.Job.Id("m1")), Some(JobStop.Pause))
+    mem.put(job(M1, com.histmersion.api.media.ImportJobKinds.MediaImport.kind, JobInfo.Status("running")))
+    assertEquals(mem.control(M1, JobAction.Pause).map(_.status), Right("running"), "it stops after the part it is on")
+    assertEquals(stops.requestedFor(M1), Some(JobStop.Pause))
     var resumed = 0
-    mem.stopped(com.histmersion.util.jobs.Job.Id("m1"), Some(com.histmersion.api.jobs.JobInfo.Progress("3/6")), () => { resumed += 1; Right(()) })
-    assertEquals(mem.get(com.histmersion.util.jobs.Job.Id("m1")).map(j => (j.status, j.progress)), Some(("paused", Some("paused after: 3/6"))))
-    assertEquals(mem.control(com.histmersion.util.jobs.Job.Id("m1"), JobAction.Resume).map(_.status), Right("running"))
+    mem.stopped(M1, Some(com.histmersion.api.jobs.JobInfo.Progress("3/6")), () => { resumed += 1; Right(()) })
+    assertEquals(mem.get(M1).map(j => (j.status, j.progress)), Some(("paused", Some("paused after: 3/6"))))
+    assertEquals(mem.control(M1, JobAction.Resume).map(_.status), Right("running"))
     assertEquals(resumed, 1)
-    assert(mem.control(com.histmersion.util.jobs.Job.Id("m1"), JobAction.Resume).left.exists(_.code.contains("conflict")), "a running job is not resumed")
+    assert(mem.control(M1, JobAction.Resume).left.exists(_.code.contains("conflict")), "a running job is not resumed")
 
   test("in memory: cancel — a paused job at once, a running one at its next part; an ended one is refused"):
     val stops = JobStops()
     val mem = JobControlService.InMemory(AtomicReference(Map.empty), stops)
-    mem.put(job("p1", com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind, "paused"))
+    mem.put(job(P1, com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind, JobInfo.Status("paused")))
     assertEquals(
-      mem.control(com.histmersion.util.jobs.Job.Id("p1"), JobAction.Cancel).map(j => (j.status, j.error)),
+      mem.control(P1, JobAction.Cancel).map(j => (j.status, j.error)),
       Right(("cancelled", Some("cancelled by a person")))
     )
-    mem.put(job(com.histmersion.util.jobs.Job.Id("r1"), com.histmersion.api.library.AcquisitionJobKinds.AcquireRecheck.kind, "running"))
-    assertEquals(mem.control(com.histmersion.util.jobs.Job.Id("r1"), JobAction.Cancel).map(_.status), Right("running"))
-    mem.stopped(com.histmersion.util.jobs.Job.Id("r1"), Some(com.histmersion.api.jobs.JobInfo.Progress("5 of 9 items")), () => Right(()))
-    assertEquals(mem.get(com.histmersion.util.jobs.Job.Id("r1")).map(_.status), Some("cancelled"))
-    assert(mem.control(com.histmersion.util.jobs.Job.Id("r1"), JobAction.Pause).left.exists(_.message.contains("ended")))
+    mem.put(job(R1, com.histmersion.api.library.AcquisitionJobKinds.AcquireRecheck.kind, JobInfo.Status("running")))
+    assertEquals(mem.control(R1, JobAction.Cancel).map(_.status), Right("running"))
+    mem.stopped(R1, Some(com.histmersion.api.jobs.JobInfo.Progress("5 of 9 items")), () => Right(()))
+    assertEquals(mem.get(R1).map(_.status), Some("cancelled"))
+    assert(mem.control(R1, JobAction.Pause).left.exists(_.message.value.contains("ended")))
     assertEquals(
-      mem.control(com.histmersion.util.jobs.Job.Id("nope"), JobAction.Pause).left.map(_.code),
+      mem.control(Nope, JobAction.Pause).left.map(_.code),
       Left(Some(com.histmersion.api.Write.CodeNotFound))
     )
 
   test("in memory: an agent run takes its own control"):
-    val asked = AtomicReference(List.empty[(String, JobAction)])
+    val asked = AtomicReference(List.empty[(Job.Id, JobAction)])
     val mem = JobControlService.InMemory(
       AtomicReference(Map.empty),
       JobStops(),
       (id, a) => { asked.updateAndGet((id, a) :: _); Right(()) }
     )
-    mem.put(job("a1", com.histmersion.api.automation.AgentJobKinds.Agent.kind, "running"))
-    assert(mem.control(com.histmersion.util.jobs.Job.Id("a1"), JobAction.Cancel).isRight)
-    assertEquals(asked.get, List(("a1", JobAction.Cancel)))
+    mem.put(job(A1, com.histmersion.api.automation.AgentJobKinds.Agent.kind, JobInfo.Status("running")))
+    assert(mem.control(A1, JobAction.Cancel).isRight)
+    assertEquals(asked.get, List((A1, JobAction.Cancel)))
 
   test("the controller: an unknown action is a 400 naming the three"):
     val c = JobControlControllers(JobControlService.InMemory(AtomicReference(Map.empty), JobStops()))
-    assert(c.control(com.histmersion.util.jobs.Job.Id("x"), com.histmersion.util.jobs.JobAction.Wire("stop")).left.exists(_.message.contains("pause, resume, cancel")))
+    assert(c.control(X, com.histmersion.util.jobs.JobAction.Wire("stop")).left.exists(_.message.value.contains("pause, resume, cancel")))
 
   // ── a real job on a test database ────────────────────────────────────────────────────────────
   private val testDb = com.histmersion.db.TestDb.url
   private lazy val ds =
-    val d = testPool(AppConfig.load().db.copy(url = testDb.get))
+    val d = testPool(AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private def dbTest(name: String)(body: => Unit): Unit =
     test(name)(if testDb.isEmpty then assume(false, "HISTMERSION_TEST_DB_URL is unset") else body)
 
-  private def until(id: String, status: String, left: Int = 400): JobInfo =
+  private def until(id: Job.Id, status: JobInfo.Status, left: Int = 400): JobInfo =
     val j = Transactor(ds).read(JobRepo.get(id)).getOrElse(fail(s"no job $id"))
     if j.status == status then j
     else if left == 0 then fail(s"job $id is ${j.status}, not $status (${j.progress})")
@@ -93,13 +108,13 @@ class JobControlServiceSuite extends com.histmersion.db.DbSuite:
     val ran = AtomicReference(Vector.empty[Int])
     val holding = CountDownLatch(1)
     val release = CountDownLatch(1)
-    def body(progress: String => Unit): BackgroundJob.Outcome =
+    def body(progress: JobInfo.Progress => Unit): BackgroundJob.Outcome =
       (1 to 6).foreach { n =>
         if !done.get.contains(n) then
           if n == hold && release.getCount > 0 then { holding.countDown(); release.await(10, TimeUnit.SECONDS) }
           ran.updateAndGet(_ :+ n)
           done.updateAndGet(_ + n)
-          progress(s"$n/6 parts")
+          progress(JobInfo.Progress(s"$n/6 parts"))
       }
       BackgroundJob.Outcome.done(com.histmersion.util.jobs.BackgroundJob.Outcome.Summary("6/6 parts"))
 
@@ -112,24 +127,24 @@ class JobControlServiceSuite extends com.histmersion.db.DbSuite:
     val j = BackgroundJob
       .start(
         ds,
-        com.histmersion.api.media.ImportJobKinds.MediaImport.kind.value,
+        Job.Kind(com.histmersion.api.media.ImportJobKinds.MediaImport.kind.value),
         None,
         BackgroundJob.Slot(),
         com.histmersion.util.jobs.BackgroundJob.Work("a test job"),
         stops = Some(stops)
       )((_, progress) => parts.body(progress))
-      .fold(e => fail(e.message), identity)
+      .fold(e => fail(e.message.value), identity)
     assert(parts.holding.await(10, TimeUnit.SECONDS), "part 3 started")
-    assertEquals(service(stops).control(j.id, JobAction.Pause).map(_.status), Right("running"))
+    assertEquals(service(stops).control(jobId(j), JobAction.Pause).map(_.status), Right("running"))
     parts.release.countDown()
-    val paused = until(j.id, "paused")
+    val paused = until(jobId(j), JobInfo.Status("paused"))
     assertEquals(paused.progress, Some("paused after: 3/6 parts"))
     assertEquals(parts.ran.get, Vector(1, 2, 3), "part 3 was finished, part 4 never started")
-    assertEquals(service(stops).control(j.id, JobAction.Resume).map(_.id), Right(j.id))
-    val done = until(j.id, "done")
+    assertEquals(service(stops).control(jobId(j), JobAction.Resume).map(_.id), Right(j.id))
+    val done = until(jobId(j), JobInfo.Status("done"))
     assertEquals(done.progress, Some("6/6 parts"))
     assertEquals(parts.ran.get, Vector(1, 2, 3, 4, 5, 6), "no part ran twice")
-    assert(service(stops).control(j.id, JobAction.Resume).isLeft, "a finished job is not resumed")
+    assert(service(stops).control(jobId(j), JobAction.Resume).isLeft, "a finished job is not resumed")
 
   dbTest("a cancelled job stops at a part boundary and is recorded as cancelled; it cannot be resumed"):
     val stops = JobStops()
@@ -137,44 +152,44 @@ class JobControlServiceSuite extends com.histmersion.db.DbSuite:
     val j = BackgroundJob
       .start(
         ds,
-        com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind.value,
+        Job.Kind(com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind.value),
         None,
         BackgroundJob.Slot(),
         com.histmersion.util.jobs.BackgroundJob.Work("a test job"),
         stops = Some(stops)
       )((_, progress) => parts.body(progress))
-      .fold(e => fail(e.message), identity)
+      .fold(e => fail(e.message.value), identity)
     assert(parts.holding.await(10, TimeUnit.SECONDS))
-    assert(service(stops).control(j.id, JobAction.Cancel).isRight)
+    assert(service(stops).control(jobId(j), JobAction.Cancel).isRight)
     parts.release.countDown()
-    val cancelled = until(j.id, "cancelled")
+    val cancelled = until(jobId(j), JobInfo.Status("cancelled"))
     assertEquals(
       (cancelled.error, cancelled.progress),
       (Some("cancelled by a person"), Some("cancelled after: 2/6 parts"))
     )
     assertEquals(parts.ran.get, Vector(1, 2))
-    assert(service(stops).control(j.id, JobAction.Resume).isLeft)
+    assert(service(stops).control(jobId(j), JobAction.Resume).isLeft)
 
   dbTest("a job that runs as one piece is refused; a paused job is failed as interrupted by a restart"):
     val vac = Transactor(ds).transact(JobRepo.create(com.histmersion.util.jobs.Job.Kind("vacuum"), None, None))
-    assert(service(JobStops()).control(vac.id, JobAction.Pause).left.exists(_.message.contains("one piece")))
+    assert(service(JobStops()).control(jobId(vac), JobAction.Pause).left.exists(_.message.value.contains("one piece")))
     val p = Transactor(ds).transact(
-      JobRepo.create(com.histmersion.api.media.ImportJobKinds.MediaImport.kind.value, None, None)
+      JobRepo.create(Job.Kind(com.histmersion.api.media.ImportJobKinds.MediaImport.kind.value), None, None)
     )
     val _ = Transactor(ds).transact(
-      JobRepo.transition(p.id, com.histmersion.api.jobs.JobState.Queued, com.histmersion.api.jobs.JobState.Running)
+      JobRepo.transition(jobId(p), com.histmersion.api.jobs.JobState.Queued, com.histmersion.api.jobs.JobState.Running)
     )
     val _ = Transactor(ds).transact(
       JobRepo.transition(
-        p.id,
+        jobId(p),
         com.histmersion.api.jobs.JobState.Running,
         com.histmersion.api.jobs.JobState.Paused,
         Some(com.histmersion.util.jobs.JobRow.Progress("paused after: 1/6"))
       )
     )
-    assert(service(JobStops()).control(p.id, JobAction.Resume).left.exists(_.message.contains("restarted")))
+    assert(service(JobStops()).control(jobId(p), JobAction.Resume).left.exists(_.message.value.contains("restarted")))
     val _ = Transactor(ds).transact(JobRepo.failInterrupted())
     assertEquals(
-      Transactor(ds).read(JobRepo.get(p.id)).map(j => (j.status, j.error)),
+      Transactor(ds).read(JobRepo.get(jobId(p))).map(j => (j.status, j.error)),
       Some(("failed", Some("interrupted")))
     )

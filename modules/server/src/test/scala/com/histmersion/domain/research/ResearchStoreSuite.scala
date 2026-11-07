@@ -1,6 +1,6 @@
 package com.histmersion.domain.research
 
-import com.histmersion.config.AppConfig
+import com.histmersion.config.{AppConfig, DbConfig}
 import com.histmersion.domain.library.LibraryStoreSuite.Ticking
 import com.histmersion.domain.research.articles.ArticleService
 import com.histmersion.domain.research.workflows.ReviewLedgerService
@@ -36,7 +36,7 @@ object ResearchStoreSuite:
     private lazy val scratch =
       ScratchDatabases(
         s"histmersion_s11c_${getClass.getSimpleName.toLowerCase.take(24)}",
-        AppConfig.load().db.copy(url = testDb.get)
+        AppConfig.load().db.copy(url = DbConfig.Url(testDb.get))
       )
     private val made = AtomicLong(0L)
     override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()

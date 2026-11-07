@@ -21,18 +21,18 @@ trait EngineStores:
   def managers: ManagerService
   def focus: FocusService
   def agentState: com.histmersion.domain.automation.agents.AgentStateService
-  def article(slug: String, title: String): Unit
-  def source(citekey: String, title: String): Unit
+  def article(slug: com.histmersion.domain.research.Slug, title: com.histmersion.domain.Title): Unit
+  def source(citekey: com.histmersion.domain.library.Citekey, title: com.histmersion.domain.Title): Unit
   def within[A](work: DbCon ?=> A): A
 
   /** A new queued agent run of `pipeline` on `target` (for `goal`, by `manager`'s `item`); its id. */
   def run(
-      target: String,
-      goal: Option[String] = None,
-      manager: Option[String] = None,
-      item: Option[Long] = None,
-      pipeline: String = "enrich-source"
-  ): String =
+      target: RunRow.Target,
+      goal: Option[RunRow.Goal] = None,
+      manager: Option[RunRow.ManagerId] = None,
+      item: Option[RunRow.ManagerItem] = None,
+      pipeline: RunRow.Pipeline = RunRow.Pipeline("enrich-source")
+  ): Run.Id =
     runs.create(
       RunRow(
         com.histmersion.util.jobs.RunRow.Kind("agent"),

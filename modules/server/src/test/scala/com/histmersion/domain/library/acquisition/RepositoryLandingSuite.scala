@@ -22,9 +22,9 @@ class RepositoryLandingSuite extends munit.FunSuite:
     assertEquals(host(com.histmersion.upstreams.landing.RepositoryLanding.HostUrl("not a url")), None)
 
   test("meta tags: any attribute order, either quote, self-closing or not, entities decoded"):
-    val html = """<head><meta name="Generator" content="DSpace 6.3" />
+    val html = Html("""<head><meta name="Generator" content="DSpace 6.3" />
       |<meta content="https://x.uni-a.de/bitstream/1/a.pdf?seq=1&amp;x=2" name="citation_pdf_url">
-      |<meta property='og:title' content='T'><META NAME=citation_title CONTENT="Title"></head>""".stripMargin
+      |<meta property='og:title' content='T'><META NAME=citation_title CONTENT="Title"></head>""".stripMargin)
     assertEquals(
       metaTags(html),
       List(
@@ -37,16 +37,16 @@ class RepositoryLandingSuite extends munit.FunSuite:
     assertEquals(generators(html), List("DSpace 6.3"))
 
   test("citation_pdf_url is made absolute against the page; other schemes are dropped"):
-    def pdfs(href: String) =
-      citationPdfUrls(s"""<meta name="citation_pdf_url" content="$href">""", com.histmersion.upstreams.landing.RepositoryLanding.CitationPdfUrlsPageUrl("https://eprints.x.ac.uk/123/"))
-    assertEquals(pdfs("/123/1/paper.pdf"), List("https://eprints.x.ac.uk/123/1/paper.pdf"))
-    assertEquals(pdfs("1/paper.pdf"), List("https://eprints.x.ac.uk/123/1/paper.pdf"))
-    assertEquals(pdfs("//cdn.x.ac.uk/p.pdf"), List("https://cdn.x.ac.uk/p.pdf"))
-    assertEquals(pdfs("javascript:alert(1)"), Nil)
-    assertEquals(pdfs(""), Nil)
+    def pdfs(href: Href) =
+      citationPdfUrls(Html(s"""<meta name="citation_pdf_url" content="$href">"""), com.histmersion.upstreams.landing.RepositoryLanding.CitationPdfUrlsPageUrl("https://eprints.x.ac.uk/123/"))
+    assertEquals(pdfs(Href("/123/1/paper.pdf")), List("https://eprints.x.ac.uk/123/1/paper.pdf"))
+    assertEquals(pdfs(Href("1/paper.pdf")), List("https://eprints.x.ac.uk/123/1/paper.pdf"))
+    assertEquals(pdfs(Href("//cdn.x.ac.uk/p.pdf")), List("https://cdn.x.ac.uk/p.pdf"))
+    assertEquals(pdfs(Href("javascript:alert(1)")), Nil)
+    assertEquals(pdfs(Href("")), Nil)
 
   test("a repository: the index says so, an allowed host, an academic host, or a repository platform"):
-    val plain = "<html><head></head></html>"
+    val plain = Html("<html><head></head></html>")
     assert(isRepository(com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryPageUrl("https://zenodo.org/record/1"), com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(false), plain, rules))
     assert(isRepository(com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryPageUrl("https://researchprofiles.ku.dk/en/publications/x"), com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(false), plain, rules))
     assert(isRepository(com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryPageUrl("https://www.repository.cam.ac.uk/items/1"), com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(false), plain, rules), "a .ac.uk host")
@@ -57,7 +57,7 @@ class RepositoryLandingSuite extends munit.FunSuite:
       isRepository(
         com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryPageUrl("https://archive.example.org/item/1"),
         com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(false),
-        """<meta name="generator" content="EPrints 3.4.3">""",
+        Html("""<meta name="generator" content="EPrints 3.4.3">"""),
         rules
       ),
       "a repository platform's generator"
@@ -65,7 +65,7 @@ class RepositoryLandingSuite extends munit.FunSuite:
     assert(!isRepository(com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryPageUrl("https://blog.example.com/post"), com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(false), plain, rules), "nothing says repository")
 
   test("never a publisher: a denied host wins over the index, the host and the generator"):
-    val dspace = """<meta name="generator" content="DSpace 7">"""
+    val dspace = Html("""<meta name="generator" content="DSpace 7">""")
     assert(!isRepository(com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryPageUrl("https://www.tandfonline.com/doi/full/10.1080/x"), com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(true), dspace, rules))
     assert(
       !isRepository(com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryPageUrl("https://www.academia.edu/24835567/x"), com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(true), com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryHtml(""), rules),
@@ -77,25 +77,25 @@ class RepositoryLandingSuite extends munit.FunSuite:
       !isRepository(
         com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryPageUrl("https://sa.example-uni.edu/index.php/sa/article/view/12"),
         com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(false),
-        """<meta name="generator" content="Open Journal Systems 3.3.0.8">""",
+        Html("""<meta name="generator" content="Open Journal Systems 3.3.0.8">"""),
         rules
       ),
       "a journal platform"
     )
     assert(!isRepository(com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryPageUrl("https://www.cambridge.org/core/x"), com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(false), com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryHtml(""), rules))
     // a repository page pointing at a publisher's PDF: that PDF is not taken
-    val off = """<meta name="citation_pdf_url" content="https://link.springer.com/content/pdf/10.1007/x.pdf">"""
+    val off = Html("""<meta name="citation_pdf_url" content="https://link.springer.com/content/pdf/10.1007/x.pdf">""")
     assertEquals(pdfsOf(com.histmersion.upstreams.landing.RepositoryLanding.PdfsOfPageUrl("https://repository.example.ac.uk/1"), com.histmersion.upstreams.landing.RepositoryLanding.PdfsOfIndexSaysRepository(true), off, rules), Nil)
 
   test("host words are whole labels (or a prefix ending in '-'), never part of a longer word"):
     val r = Rules(Nil, Nil, List(com.histmersion.upstreams.landing.RepositoryLanding.HostWord("uni-"), com.histmersion.upstreams.landing.RepositoryLanding.HostWord("pure"), com.histmersion.upstreams.landing.RepositoryLanding.HostWord("eprints"), com.histmersion.upstreams.landing.RepositoryLanding.HostWord("opus")), Nil, denyHostWords = List(com.histmersion.upstreams.landing.RepositoryLanding.HostWord("press")))
     assert(r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("publications.uni-tuebingen.de")))
-    assert(r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("pure.mpg.de")) && r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("opus4.kobv.de")) && r.academic("pure-portal.example.dk"))
+    assert(r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("pure.mpg.de")) && r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("opus4.kobv.de")) && r.academic(Host("pure-portal.example.dk")))
     assert(!r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("purepharma.com")) && !r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("eprintsandmore.com")))
     assert(!r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("x.example.com")))
     assert(r.denied(com.histmersion.upstreams.landing.RepositoryLanding.Host("press.example.edu")) && !r.denied(com.histmersion.upstreams.landing.RepositoryLanding.Host("pressreader.com")))
     assert(wordLabel(com.histmersion.upstreams.landing.RepositoryLanding.HostLabel("uni-koeln"), com.histmersion.upstreams.landing.RepositoryLanding.HostWord("uni-")) && !wordLabel(com.histmersion.upstreams.landing.RepositoryLanding.HostLabel("unicorn"), com.histmersion.upstreams.landing.RepositoryLanding.HostWord("uni-")))
-    assert(r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("x.ac.at")) && r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("x.edu")) && r.academic("x.edu.au"))
+    assert(r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("x.ac.at")) && r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("x.edu")) && r.academic(Host("x.edu.au")))
 
   test("candidates: OpenAlex's landing pages and record-page pdf_urls, repositories marked, distinct, best first"):
     val j = parse(
@@ -136,7 +136,7 @@ class RepositoryLandingSuite extends munit.FunSuite:
       {"is_oa":false,"landing_page_url":"https://ejournals.eu/b","source":{"type":"journal"}},
       {"landing_page_url":"https://ejournals.eu/c","source":{"type":"journal"}}]}""").toOption.get
     assertEquals(
-      openalexCandidates(j).map(c => c.url.takeRight(1) -> c.open),
+      openalexCandidates(j).map(c => c.url.value.takeRight(1) -> c.open),
       List("a" -> true, "b" -> false, "c" -> false)
     )
     assertEquals(
@@ -155,10 +155,10 @@ class RepositoryLandingSuite extends munit.FunSuite:
       !oaPublisherPage(Candidate(com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url("https://brill.com/a"), com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(false), publisher = com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Publisher(true), open = com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Open(true)), rules),
       "not on the list"
     )
-    val page = "https://ejournals.eu/czasopismo/x/artykul/y"
+    val page = PdfsOfPageUrl("https://ejournals.eu/czasopismo/x/artykul/y")
     val html =
-      """<meta name="citation_pdf_url" content="https://ejournals.eu/pliki_artykulu_czasopisma/pelny_tekst/u/pobierz">
-      |<meta name="citation_pdf_url" content="https://cdn.elsewhere.example/u.pdf">""".stripMargin
+      Html("""<meta name="citation_pdf_url" content="https://ejournals.eu/pliki_artykulu_czasopisma/pelny_tekst/u/pobierz">
+      |<meta name="citation_pdf_url" content="https://cdn.elsewhere.example/u.pdf">""".stripMargin)
     assertEquals(
       pdfsOf(page, com.histmersion.upstreams.landing.RepositoryLanding.PdfsOfIndexSaysRepository(false), html, rules, oaPublisher = com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Publisher(true)),
       List("https://ejournals.eu/pliki_artykulu_czasopisma/pelny_tekst/u/pobierz"),
@@ -170,14 +170,14 @@ class RepositoryLandingSuite extends munit.FunSuite:
     "OJS PDF galleys: the classic galley link and an OJS 3.6 theme's escaped JSON; a viewer link becomes its download"
   ):
     val classic =
-      """<ul class="galleys_links"><li><a class="obj_galley_link pdf" href="https://j.example.org/index.php/j/article/view/12/34">PDF</a></li>
-      |<li><a class="obj_galley_link file" href="https://j.example.org/index.php/j/article/view/12/35">XML</a></li></ul>""".stripMargin
+      Html("""<ul class="galleys_links"><li><a class="obj_galley_link pdf" href="https://j.example.org/index.php/j/article/view/12/34">PDF</a></li>
+      |<li><a class="obj_galley_link file" href="https://j.example.org/index.php/j/article/view/12/35">XML</a></li></ul>""".stripMargin)
     assertEquals(
       galleyPdfUrls(classic, com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsPageUrl("https://j.example.org/index.php/j/article/view/12")),
       List("https://j.example.org/index.php/j/article/view/12/34")
     )
     val ore =
-      """<pkp-dropdown-menu :items="JSON.parse('[{\u0022name\u0022:\u0022galley-3617\u0022,\u0022label\u0022:\u0022PDF\u0022,\u0022href\u0022:\u0022https:\\\/\\\/ore.eu\\\/ore\\\/article\\\/view\\\/1056\\\/3617\u0022},{\u0022name\u0022:\u0022galley-3618\u0022,\u0022label\u0022:\u0022HTML\u0022,\u0022href\u0022:\u0022https:\\\/\\\/ore.eu\\\/ore\\\/article\\\/view\\\/1056\\\/3618\u0022}]')">"""
+      Html("""<pkp-dropdown-menu :items="JSON.parse('[{\u0022name\u0022:\u0022galley-3617\u0022,\u0022label\u0022:\u0022PDF\u0022,\u0022href\u0022:\u0022https:\\\/\\\/ore.eu\\\/ore\\\/article\\\/view\\\/1056\\\/3617\u0022},{\u0022name\u0022:\u0022galley-3618\u0022,\u0022label\u0022:\u0022HTML\u0022,\u0022href\u0022:\u0022https:\\\/\\\/ore.eu\\\/ore\\\/article\\\/view\\\/1056\\\/3618\u0022}]')">""")
     assertEquals(
       galleyPdfUrls(ore, com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsPageUrl("https://ore.eu/ore/article/view/1056/version/1810")),
       List("https://ore.eu/ore/article/view/1056/3617")
@@ -222,7 +222,7 @@ class RepositoryLandingSuite extends munit.FunSuite:
       zenodoFiles(parse(rec.format("open")).toOption.get),
       List(
         ZenodoFile(
-          "https://zenodo.org/api/records/3695551/files/Oreshko%20Ahhiyawa-Danuna-offprint.pdf/content",
+          ZenodoFile.Url("https://zenodo.org/api/records/3695551/files/Oreshko%20Ahhiyawa-Danuna-offprint.pdf/content"),
           Some(com.histmersion.upstreams.landing.RepositoryLanding.ZenodoFile.Md5("b0fee7a942761b0dedd5f16cb10b01e9"))
         )
       )
@@ -253,9 +253,9 @@ class RepositoryLandingSuite extends munit.FunSuite:
     assertEquals(dataciteUrl(parse("""{"errors":[{"status":"404"}]}""").toOption.get), None)
 
   test("an HTML answer is told from other bytes"):
-    assert(looksLikeHtml("<!DOCTYPE html><html>".getBytes("UTF-8")))
-    assert(looksLikeHtml("  <html lang=en>".getBytes("UTF-8")))
-    assert(!looksLikeHtml("PK\u0003\u0004 zip".getBytes("UTF-8")))
+    assert(looksLikeHtml(PageBytes("<!DOCTYPE html><html>".getBytes("UTF-8"))))
+    assert(looksLikeHtml(PageBytes("  <html lang=en>".getBytes("UTF-8"))))
+    assert(!looksLikeHtml(PageBytes("PK\u0003\u0004 zip".getBytes("UTF-8"))))
 
   private def env(kv: (String, String)*): org.ekrich.config.Config =
     org.ekrich.config.ConfigFactory.parseMap(scala.jdk.CollectionConverters.MapHasAsJava(kv.toMap).asJava)
@@ -266,7 +266,7 @@ class RepositoryLandingSuite extends munit.FunSuite:
 
   test("user file: deny-hosts-extra adds to the shipped deny-hosts instead of replacing them"):
     val f = landingConf("histmersion.acquire.landing.deny-hosts-extra = \"blocked.example, .Other.Example\"")
-    val rules = AppConfig.loadWithUserFile(env(), Some(f)).fold(m => fail(m), identity).config.acquire.landing.rules
+    val rules = AppConfig.loadWithUserFile(env(), Some(f)).fold(m => fail(m.value), identity).config.acquire.landing.rules
     assert(rules.denied(com.histmersion.upstreams.landing.RepositoryLanding.Host("blocked.example")) && rules.denied(com.histmersion.upstreams.landing.RepositoryLanding.Host("www.other.example")), "the added hosts are denied")
     assert(rules.denied(com.histmersion.upstreams.landing.RepositoryLanding.Host("sciencedirect.com")), "a shipped host is still denied")
     assertEquals(rules.denyHosts.size, AppConfig.load().acquire.landing.rules.denyHosts.size + 2)

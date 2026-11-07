@@ -9,13 +9,17 @@ import com.histmersion.api.automation.ScheduleKind
 
 import java.time.Instant
 import com.histmersion.api.automation.Goal
+import com.histmersion.domain.automation.Goal as DomainGoal
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.Title
 
 /** The contract the goals keep: put and read back (sub-goals, a refused period), links in their order with what they
   * point at, plans and caps, the schedules not moved yet and their move.
   */
 abstract class GoalServiceContract extends EngineStoreSuite:
   private def g(s: EngineStores) = s.goals
-  private def bare(s: EngineStores, slug: String) = g(s).get(slug).map(_.modify(_.updatedAt).setTo(None))
+  private def bare(s: EngineStores, slug: DomainGoal.Slug) = g(s).get(slug).map(_.modify(_.updatedAt).setTo(None))
 
   stest("a goal is put, replaced and read back; its sub-goals by slug; a period ending before it starts is refused") {
     s =>
@@ -32,21 +36,21 @@ abstract class GoalServiceContract extends EngineStoreSuite:
       assert(g(s).put(com.histmersion.domain.automation.Goal.Slug("zz-a2"), com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("A2"), parentSlug = Some(com.histmersion.api.automation.Goal.Slug("zz-a")))).isRight)
       assert(g(s).put(com.histmersion.domain.automation.Goal.Slug("zz-a1"), com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("A1"), parentSlug = Some(com.histmersion.api.automation.Goal.Slug("zz-a")))).isRight)
       assertEquals(
-        bare(s, "zz-a").map(x => (x.title, x.status, x.notes, x.tags, x.regions, x.periodStart, x.periodEnd)),
+        bare(s, DomainGoal.Slug("zz-a")).map(x => (x.title, x.status, x.notes, x.tags, x.regions, x.periodStart, x.periodEnd)),
         Some(("A", "active", Some("n"), List("t"), List("r"), Some(-3000L), Some(-2000L)))
       )
       assertEquals(
-        bare(s, "zz-b").map(x => (x.status, x.periodStart, x.periodEnd)),
+        bare(s, DomainGoal.Slug("zz-b")).map(x => (x.status, x.periodStart, x.periodEnd)),
         Some(("planned", Some(-1200L), None))
       )
       assert(g(s).get(com.histmersion.domain.automation.Goal.Slug("zz-a")).flatMap(_.updatedAt).isDefined)
       assertEquals(g(s).all().map(_.slug), List("zz-a", "zz-a1", "zz-a2", "zz-b"))
       assertEquals(g(s).children(com.histmersion.domain.automation.Goal.Slug("zz-a")).map(_.slug), List("zz-a1", "zz-a2"))
       assert(g(s).put(com.histmersion.domain.automation.Goal.Slug("zz-b"), com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("B again"))).isRight)
-      assertEquals(bare(s, "zz-b").map(x => (x.title, x.periodStart)), Some(("B again", None)))
+      assertEquals(bare(s, DomainGoal.Slug("zz-b")).map(x => (x.title, x.periodStart)), Some(("B again", None)))
       val bad =
         g(s).put(com.histmersion.domain.automation.Goal.Slug("zz-c"), com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("C"), periodStart = Some(com.histmersion.api.catalogue.Year(100)), periodEnd = Some(com.histmersion.api.catalogue.Year(-100))))
-      assert(bad.left.exists(_.message.contains("goal 'zz-c'")), bad)
+      assert(bad.left.exists(_.message.value.contains("goal 'zz-c'")), bad)
       assertEquals(g(s).get(com.histmersion.domain.automation.Goal.Slug("zz-c")), None)
   }
 
@@ -54,7 +58,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
     "links: only to a goal that exists, sources then articles then queries, a note kept unless a new one is given"
   ) { s =>
     assert(g(s).put(com.histmersion.domain.automation.Goal.Slug("zz-g"), com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("G"))).isRight)
-    s.source("zz2020_src", "A source")
+    s.source(Citekey("zz2020_src"), Title("A source"))
     assert(!g(s).link(com.histmersion.domain.automation.Goal.Slug("zz-none"), com.histmersion.domain.automation.Goal.LinkKind.Source, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_src"), None), "no such goal")
     assert(g(s).link(com.histmersion.domain.automation.Goal.Slug("zz-g"), com.histmersion.domain.automation.Goal.LinkKind.Query, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("tin trade"), None))
     assert(g(s).link(com.histmersion.domain.automation.Goal.Slug("zz-g"), com.histmersion.domain.automation.Goal.LinkKind.Article, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz-art"), Some(com.histmersion.api.automation.Goal.Plans.GoalLink.Note("why"))))
@@ -69,11 +73,11 @@ abstract class GoalServiceContract extends EngineStoreSuite:
         (Goal.LinkKind.Query, "tin trade", None, None)
       )
     )
-    assert(ls.forall(_.createdAt.matches("\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ")), ls)
+    assert(ls.forall(_.createdAt.value.matches("\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ")), ls)
     assert(g(s).link(com.histmersion.domain.automation.Goal.Slug("zz-g"), com.histmersion.domain.automation.Goal.LinkKind.Source, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_src"), Some(com.histmersion.api.automation.Goal.Plans.GoalLink.Note("second"))))
     assertEquals(g(s).links(com.histmersion.domain.automation.Goal.Slug("zz-g")).head.note, Some("second"))
     assertEquals(g(s).linkCounts(), Map(("zz-g", "source") -> 1, ("zz-g", "query") -> 1))
-    s.article("zz-art", "An article")
+    s.article(Slug("zz-art"), Title("An article"))
     assertEquals(g(s).linkCounts().get((com.histmersion.domain.automation.Goal.Slug("zz-g"), com.histmersion.domain.automation.Goal.LinkKind.Wire("article"))), Some(1))
     assertEquals(g(s).links(com.histmersion.domain.automation.Goal.Slug("zz-g"))(1).title, Some("An article"))
     assert(g(s).unlink(com.histmersion.domain.automation.Goal.Slug("zz-g"), com.histmersion.domain.automation.Goal.LinkKind.Query, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("tin trade")))
@@ -98,11 +102,11 @@ abstract class GoalServiceContract extends EngineStoreSuite:
     assert(g(s).put(com.histmersion.domain.automation.Goal.Slug("zz-q"), com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Q"))).isRight)
     assertEquals(g(s).planAndBudget(com.histmersion.domain.automation.Goal.Slug("zz-none")), None)
     assertEquals(g(s).planAndBudget(com.histmersion.domain.automation.Goal.Slug("zz-p")), Some((None, None)))
-    g(s).setPlan(com.histmersion.domain.automation.Goal.Slug("zz-p"), """{"goal":"zz-p"}""")
+    g(s).setPlan(com.histmersion.domain.automation.Goal.Slug("zz-p"), BGoalRow.Plan("""{"goal":"zz-p"}"""))
     g(s).setBudget(com.histmersion.domain.automation.Goal.Slug("zz-p"), Some(BigDecimal("2.50")))
     val Some((plan, usd)) = g(s).planAndBudget(com.histmersion.domain.automation.Goal.Slug("zz-p")): @unchecked
     assertEquals(
-      plan.map(io.circe.parser.parse(_).toOption),
+      plan.map(p => io.circe.parser.parse(p.value).toOption),
       Some(io.circe.parser.parse("""{"goal":"zz-p"}""").toOption)
     )
     assertEquals(usd.map(_.toDouble), Some(2.5))
@@ -112,7 +116,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
   }
 
   stest("schedules not moved yet: one per goal and kind, the next due first; removed, or taken out to move") { s =>
-    List("zz-s1", "zz-s2").foreach(x => assert(g(s).put(x, com.histmersion.api.automation.Goal.Put(x)).isRight))
+    List(DomainGoal.Slug("zz-s1"), DomainGoal.Slug("zz-s2")).foreach(x => assert(g(s).put(x, Goal.Put(Goal.Title(x.value))).isRight))
     val t = Instant.parse("2026-11-02T03:00:00Z")
     g(s).setSchedule(com.histmersion.domain.automation.Goal.Slug("zz-s2"), com.histmersion.domain.automation.ScheduleKind.Currency, com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@weekly"), enabled = com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true), None, None)
     g(s).setSchedule(com.histmersion.domain.automation.Goal.Slug("zz-s1"), com.histmersion.domain.automation.ScheduleKind.Currency, com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@daily"), enabled = com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true), Some(BigDecimal(1)), Some(t))
@@ -137,9 +141,11 @@ abstract class GoalServiceContract extends EngineStoreSuite:
   }
 
   stest("a page of goals by slug, of one status, with the total and the next offset") { s =>
-    List("zz-c" -> "active", "zz-a" -> "planned", "zz-b" -> "active").foreach((slug, st) =>
-      assert(g(s).put(slug, com.histmersion.api.automation.Goal.Put(slug.toUpperCase, st)).isRight)
-    )
+    List(
+      DomainGoal.Slug("zz-c") -> Goal.StatusValue("active"),
+      DomainGoal.Slug("zz-a") -> Goal.StatusValue("planned"),
+      DomainGoal.Slug("zz-b") -> Goal.StatusValue("active")
+    ).foreach((slug, st) => assert(g(s).put(slug, Goal.Put(Goal.Title(slug.value.toUpperCase), st)).isRight))
     val first = g(s).page(None, com.histmersion.PageSize(2), com.histmersion.Offset(0))
     assertEquals(
       ((first.total.value: Int), first.goals.map(_.slug), (first.offset.value: Int), first.next.map(n => (n.value: Int))),
@@ -164,10 +170,10 @@ abstract class GoalServiceContract extends EngineStoreSuite:
         .isRight
     )
     assertEquals(
-      bare(s, "zz-p").map(x => (x.title, x.tags, x.periodStart, x.periodEnd)),
+      bare(s, DomainGoal.Slug("zz-p")).map(x => (x.title, x.tags, x.periodStart, x.periodEnd)),
       Some(("P2", List("t"), Some(-2000L), Some(-1500L)))
     )
-    assert(g(s).patch(com.histmersion.domain.automation.Goal.Slug("zz-p"), com.histmersion.api.automation.Goal.Patch(budgetUsd = Some(3.5))).isRight)
+    assert(g(s).patch(com.histmersion.domain.automation.Goal.Slug("zz-p"), com.histmersion.api.automation.Goal.Patch(budgetUsd = Some(com.histmersion.api.automation.Goal.Patch.BudgetUsd(3.5)))).isRight)
     assertEquals(g(s).planAndBudget(com.histmersion.domain.automation.Goal.Slug("zz-p")).flatMap(_._2), Some(BigDecimal(3.5)))
     assert(g(s).patch(com.histmersion.domain.automation.Goal.Slug("zz-p"), com.histmersion.api.automation.Goal.Patch(budgetUsd = Some(com.histmersion.api.automation.Goal.Patch.BudgetUsd(0)))).isRight)
     assertEquals(g(s).planAndBudget(com.histmersion.domain.automation.Goal.Slug("zz-p")).flatMap(_._2), None)
@@ -175,7 +181,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
       g(s)
         .patch(com.histmersion.domain.automation.Goal.Slug("zz-none"), com.histmersion.api.automation.Goal.Patch(title = Some(com.histmersion.api.automation.Goal.Title("x"))))
         .left
-        .exists(_.message.contains("zz-none"))
+        .exists(_.message.value.contains("zz-none"))
     )
   }
 
@@ -188,11 +194,11 @@ abstract class GoalServiceContract extends EngineStoreSuite:
     assert(g(s).rename(com.histmersion.domain.automation.Goal.Slug("zz-none"), com.histmersion.domain.automation.Goal.Slug("zz-x")).isLeft)
     assertEquals(g(s).rename(com.histmersion.domain.automation.Goal.Slug(" zz-old "), com.histmersion.domain.automation.Goal.Slug("zz-new ")), Right(()))
     assertEquals(g(s).get(com.histmersion.domain.automation.Goal.Slug("zz-old")), None)
-    assertEquals(bare(s, "zz-new").map(_.title), Some("Old"))
-    assertEquals(bare(s, "zz-kid").flatMap(_.parentSlug), Some("zz-new"))
+    assertEquals(bare(s, DomainGoal.Slug("zz-new")).map(_.title), Some("Old"))
+    assertEquals(bare(s, DomainGoal.Slug("zz-kid")).flatMap(_.parentSlug), Some("zz-new"))
     assertEquals(g(s).refs(com.histmersion.domain.automation.Goal.Slug("zz-new"), com.histmersion.domain.automation.Goal.LinkKind.Query), List("tin"))
     assert(g(s).put(com.histmersion.domain.automation.Goal.Slug("zz-third"), com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Third"))).isRight)
-    assert(g(s).rename(com.histmersion.domain.automation.Goal.Slug("zz-third"), com.histmersion.domain.automation.Goal.Slug("zz-old")).left.exists(_.message.contains("old slug of 'zz-new'")))
+    assert(g(s).rename(com.histmersion.domain.automation.Goal.Slug("zz-third"), com.histmersion.domain.automation.Goal.Slug("zz-old")).left.exists(_.message.value.contains("old slug of 'zz-new'")))
     assert(g(s).delete(com.histmersion.domain.automation.Goal.Slug("zz-other")))
     assert(!g(s).delete(com.histmersion.domain.automation.Goal.Slug("zz-other")))
   }

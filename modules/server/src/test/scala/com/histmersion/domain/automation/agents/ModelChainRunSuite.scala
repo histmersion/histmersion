@@ -29,6 +29,9 @@ import java.time.Instant
 import com.histmersion.db.*
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.library.Source
+import com.histmersion.domain.automation.Run
+import com.histmersion.domain.library.Citekey
+import com.histmersion.util.jobs.Job
 
 /** Model chains and allowances end to end against a `*_test` database, with sttp-ai's scripted model per chained model:
   * the chain's next model takes over when the first is below its allowance (before a step, during one, or when its plan
@@ -41,16 +44,23 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
-  private val Ck = "zzchain2019_tin"
+  private val Ck = Citekey("zzchain2019_tin")
+  private val ApiTarget = RunRequest.Target(Ck.value)
   private val A = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("zzA"))
   private val B = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("zzB"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
-  private val Body =
+  private val Body = Source.OcrMarkdown(
     """# Introduction
       |
       |Tin was essential for bronze. The Uluburun ship carried ten tons of copper and one ton of tin.
       |""".stripMargin
+  )
+
+  private def runId(id: RunInfo.Id): Run.Id = Run.Id.assume(id.value)
+  private def jobId(id: RunInfo.Id): Job.Id = Job.Id.assume(id.value)
+  private def chainModel(m: ModelRef): ChainSet.Models = ChainSet.Models(m.wire.value)
+  private def allowanceTarget(m: ModelRef): AllowanceSet.Target = AllowanceSet.Target(m.wire.value)
 
   private lazy val baseCfg =
     val b = AppConfig.load()
@@ -85,7 +95,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     (
       AgentsControllers(
         ServerEngineSite(deps, h),
-        (_, ref) => clients.get(ref).toRight(s"no scripted client for ${ref.wire}")
+        (_, ref) => clients.get(ref).toRight(PickFailure.Problem(s"no scripted client for ${ref.wire}"))
       ),
       h
     )
@@ -110,14 +120,14 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
 
   /** Spend `tokens` on `model`, finished `minutesAgo`, as a recorded LLM attempt of a run of its own. */
-  private def spend(model: ModelRef, tokens: Long, minutesAgo: Int = 1): String =
+  private def spend(model: ModelRef, tokens: Usage.Input, minutesAgo: Int = 1): RunInfo.Id =
     val run = TestRuns.create(
       ds,
       Pipeline.EnrichSource,
-      "zzchain_spent",
+      AgentsControllers.Target("zzchain_spent"),
       None,
       BigDecimal(1),
-      1000000L,
+      AgentsControllers.BudgetTokens(1000000L),
       RunParams(),
       None,
       None,
@@ -126,7 +136,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     transact(ds)(
       AgentRepo.record(
-        run.id,
+        jobId(run.id),
         AgentRepo.StepRecord(
           com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq(1),
           com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Attempt(1),
@@ -135,8 +145,8 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
           StepStatus.Done,
           Some(com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output("{}")),
           None,
-          Some(model.wire),
-          Usage(tokens, com.histmersion.api.automation.Agents.Usage.Output(0)),
+          Some(AgentRepo.StepRecord.Model(model.wire.value)),
+          Usage(tokens, Usage.Output(0)),
           BigDecimal(0),
           None,
           Instant.now()
@@ -151,34 +161,34 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     run.id
 
   private def startAndRun(a: AgentsControllers): RunInfo =
-    val run = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck)).fold(e => fail(e.message), identity)
-    a.engine.execute(run.id)
+    val run = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), ApiTarget)).fold(e => fail(e.message.value), identity)
+    a.engine.execute(runId(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
-  private def llmModels(id: String) =
-    connect(ds)(AgentRepo.steps(id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(200))).filter(_.kind == "llm").map(s => (s.name, s.attempt, s.status, s.model))
+  private def llmModels(id: RunInfo.Id) =
+    connect(ds)(AgentRepo.steps(jobId(id), AgentRepo.OutputChars(200))).filter(_.kind.value == "llm").map(s => (s.name, s.attempt, s.status, s.model))
 
   test(
     "the first model below its allowance is passed over: the chain's next one runs every step, the run says so once"
   ):
     val (ca, cb) = (ScriptedClient(A), ScriptedClient(B)); enrichScripts(cb)
     val (a, h) = handlers(Map(A -> ca, B -> cb), withAllowances("local:zzA = 1000 tokens/1h")); seed(h)
-    val _ = spend(A, 1500)
+    val _ = spend(A, Usage.Input(1500))
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
     assertEquals(ca.steps.size, 0, "the spent model was never called")
     assertEquals(llmModels(run.id).map(_._4).distinct, List(Some(B.wire)))
-    val passed = run.warnings.filter(_.contains("passed over local:zzA"))
+    val passed = run.warnings.filter(_.value.contains("passed over local:zzA"))
     assertEquals(passed.size, 1, run.warnings)
-    assert(passed.head.contains("1k tokens/1h"), passed)
+    assert(passed.head.value.contains("1k tokens/1h"), passed)
     // the picture: zzA paused until its spend leaves the window, zzB the active model
     val m = a.models
-    val ex = m.chains.find(_.role == "extractor").get
+    val ex = m.chains.find(_.role.value == "extractor").get
     assertEquals(ex.active, Some(B.wire))
-    assert(!ex.models.head.usable && ex.models.head.freesAt.isDefined, ex)
-    val al = m.allowances.find(_.target == A.wire).get
-    assert(!al.usable && al.limits.head.used >= 1500, al)
-    assertEquals(m.roles.find(_.role == "extractor").flatMap(_.model), Some(B.wire))
+    assert(!ex.models.head.usable.value && ex.models.head.freesAt.isDefined, ex)
+    val al = m.allowances.find(_.target.value == A.wire.value).get
+    assert(!al.usable.value && al.limits.head.used.value >= 1500, al)
+    assertEquals(m.roles.find(_.role.value == "extractor").flatMap(_.model), Some(B.wire))
 
   test(
     "every model below its allowance: the run PAUSES with the reset time, and resumes by itself once a window frees"
@@ -187,17 +197,17 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) =
       handlers(Map(A -> ca, B -> ScriptedClient(B)), withAllowances("local:* = 10000 tokens/1h, reserve 10%"));
     seed(h)
-    val spent = spend(A, 15000, minutesAgo = 50)
+    val spent = spend(A, Usage.Input(15000), minutesAgo = 50)
     val run = startAndRun(a)
     assertEquals(run.status, "paused")
     assert(
-      run.error.exists(e =>
+      run.error.map(_.value).exists(e =>
         e.startsWith("allowance:") && e.contains("all models for role extractor are below their allowance")
           && e.contains("next reset at")
       ),
       run.error
     )
-    val at = Instant.parse(run.resumeAt.getOrElse(fail("no resume time")))
+    val at = Instant.parse(run.resumeAt.map(_.value).getOrElse(fail("no resume time")))
     val expected = Instant.now().plusSeconds(10 * 60)
     assert(math.abs(at.getEpochSecond - expected.getEpochSecond) < 120, s"$at vs $expected")
     // not yet: nothing is re-queued before the reset time
@@ -207,7 +217,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(a.engine.resumeDue(at.plusSeconds(1)), List(run.id))
     assertEquals(connect(ds)(AgentRepo.get(run.id)).get.resumeAt, None, "re-queued: the reset time is cleared")
     enrichScripts(ca) // the chain's first model has room again
-    a.engine.execute(run.id)
+    a.engine.execute(runId(run.id))
     val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", done.error)
 
@@ -220,12 +230,12 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(Map(A -> ca, B -> cb), withAllowances("local:zzA = 1000 tokens/1h")); seed(h)
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
-    val classify = connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(200))).filter(_.name == "classify")
+    val classify = connect(ds)(AgentRepo.steps(jobId(run.id), AgentRepo.OutputChars(200))).filter(_.name.value == "classify")
     assertEquals(
       classify.map(s => (s.attempt, s.status, s.model)),
       List((1, "failed", Some(A.wire)), (2, "done", Some(B.wire)))
     )
-    assert(classify.head.error.exists(_.contains("reached its allowance during the step")), classify.head.error)
+    assert(classify.head.error.exists(_.value.contains("reached its allowance during the step")), classify.head.error)
 
   test("a plan's own usage limit (claude -p) skips the model until its reset; the chain's next takes the step"):
     val until = Instant.now().plusSeconds(3600)
@@ -237,10 +247,10 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(Map(A -> limited, B -> cb)); seed(h)
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
-    val first = connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(200))).filter(_.kind == "llm").head
-    assert(first.error.exists(e => e.contains("usage limit") && e.contains("skipped until")), first)
+    val first = connect(ds)(AgentRepo.steps(jobId(run.id), AgentRepo.OutputChars(200))).filter(_.kind.value == "llm").head
+    assert(first.error.map(_.value).exists(e => e.contains("usage limit") && e.contains("skipped until")), first)
     assertEquals(llmModels(run.id).count(_._4.contains(A.wire)), 1, "zzA was tried once, then skipped")
-    val ex = a.models.chains.find(_.role == "extractor").get
+    val ex = a.models.chains.find(_.role.value == "extractor").get
     assertEquals(ex.models.head.freesAt, Some(until.truncatedTo(java.time.temporal.ChronoUnit.MILLIS).toString))
 
   test("a provider failure still pauses the run (provider) — only a plan's limit moves down the chain"):
@@ -250,26 +260,26 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(Map(A -> down, B -> ScriptedClient(B))); seed(h)
     val run = startAndRun(a)
     assertEquals(run.status, "paused")
-    assert(run.error.exists(_.startsWith("provider:")), run.error)
+    assert(run.error.exists(_.value.startsWith("provider:")), run.error)
 
   test("chains and allowances saved over config survive a restart; reset goes back to config; bad input is refused"):
     val (a, _) = handlers(Map(A -> ScriptedClient(A), B -> ScriptedClient(B)), withAllowances("local:zzA = 5 usd/day"))
-    val saved = a.setChain(com.histmersion.api.automation.Agents.Role.Wire("extractor"), ChainSet(List(B.wire, A.wire))).fold(e => fail(e.message), identity)
+    val saved = a.setChain(com.histmersion.api.automation.Agents.Role.Wire("extractor"), ChainSet(List(chainModel(B), chainModel(A)))).fold(e => fail(e.message.value), identity)
     assertEquals((saved.source, saved.active, saved.models.map(_.model)), ("saved", Some(B.wire), List(B.wire, A.wire)))
     val st = a
-      .setAllowance(AllowanceSet(A.wire, List(LimitSpec(com.histmersion.api.automation.ModelChains.LimitSpec.Amount(2000000), Measure.Tokens, com.histmersion.api.automation.ModelChains.LimitSpec.Window("5h"))), com.histmersion.api.automation.ModelChains.AllowanceSet.ReservePct(20)))
-      .fold(e => fail(e.message), identity)
+      .setAllowance(AllowanceSet(allowanceTarget(A), List(LimitSpec(com.histmersion.api.automation.ModelChains.LimitSpec.Amount(2000000), Measure.Tokens, com.histmersion.api.automation.ModelChains.LimitSpec.Window("5h"))), com.histmersion.api.automation.ModelChains.AllowanceSet.ReservePct(20)))
+      .fold(e => fail(e.message.value), identity)
     assertEquals((st.source, st.reservePct, st.limits.map(_.limit)), ("saved", 20, List("2M tokens/5h")))
     // a new process sees the same
     val (again, _) =
       handlers(Map(A -> ScriptedClient(A), B -> ScriptedClient(B)), withAllowances("local:zzA = 5 usd/day"))
     val m = again.models
     assertEquals(
-      m.chains.find(_.role == "extractor").map(c => (c.source, c.models.map(_.model))),
+      m.chains.find(_.role.value == "extractor").map(c => (c.source, c.models.map(_.model))),
       Some(("saved", List(B.wire, A.wire)))
     )
     assertEquals(
-      m.allowances.filter(_.target == A.wire).map(a => (a.source, a.limits.map(_.limit))),
+      m.allowances.filter(_.target.value == A.wire.value).map(a => (a.source, a.limits.map(_.limit))),
       List(("saved", List("2M tokens/5h"))),
       "the saved allowance replaces config's for the same target"
     )
@@ -279,36 +289,36 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       again.resetChain(com.histmersion.api.automation.Agents.Role.Wire("extractor")).map(c => (c.source, c.models.map(_.model))),
       Right(("config", List(A.wire, B.wire)))
     )
-    assertEquals(again.removeAllowance(A.wire).map(_.removed), Right(true))
-    assertEquals(again.removeAllowance(A.wire).map(_.removed), Right(false))
+    assertEquals(again.removeAllowance(allowanceTarget(A)).map(_.removed), Right(true))
+    assertEquals(again.removeAllowance(allowanceTarget(A)).map(_.removed), Right(false))
     assertEquals(
-      again.models.allowances.filter(_.target == A.wire).map(a => (a.source, a.limits.map(_.limit))),
+      again.models.allowances.filter(_.target.value == A.wire.value).map(a => (a.source, a.limits.map(_.limit))),
       List(("config", List("5 usd/1d")))
     )
     // refused
-    assert(again.setChain(com.histmersion.api.automation.Agents.Role.Wire("narrator"), ChainSet(List(A.wire))).left.exists(_.message.contains("unknown role")))
-    assert(again.setChain(com.histmersion.api.automation.Agents.Role.Wire("extractor"), ChainSet(List(com.histmersion.api.automation.ModelChains.ChainEntry.Model("ollama:x")))).left.exists(_.message.contains("unknown provider")))
-    assert(again.setChain(com.histmersion.api.automation.Agents.Role.Wire("extractor"), ChainSet(Nil)).left.exists(_.message.contains("at least one")))
+    assert(again.setChain(com.histmersion.api.automation.Agents.Role.Wire("narrator"), ChainSet(List(chainModel(A)))).left.exists(_.message.value.contains("unknown role")))
+    assert(again.setChain(com.histmersion.api.automation.Agents.Role.Wire("extractor"), ChainSet(List(com.histmersion.api.automation.ModelChains.ChainEntry.Model("ollama:x")))).left.exists(_.message.value.contains("unknown provider")))
+    assert(again.setChain(com.histmersion.api.automation.Agents.Role.Wire("extractor"), ChainSet(Nil)).left.exists(_.message.value.contains("at least one")))
     assert(
       again
-        .setAllowance(AllowanceSet(A.wire, List(LimitSpec(com.histmersion.api.automation.ModelChains.LimitSpec.Amount(1), Measure.Usd, com.histmersion.api.automation.ModelChains.LimitSpec.Window("fortnight")))))
+        .setAllowance(AllowanceSet(allowanceTarget(A), List(LimitSpec(com.histmersion.api.automation.ModelChains.LimitSpec.Amount(1), Measure.Usd, com.histmersion.api.automation.ModelChains.LimitSpec.Window("fortnight")))))
         .left
-        .exists(_.message.contains("not a window"))
+        .exists(_.message.value.contains("not a window"))
     )
-    assert(again.setAllowance(AllowanceSet(A.wire, Nil, com.histmersion.api.automation.ModelChains.AllowanceSet.ReservePct(120))).left.exists(_.message.contains("0 to 99")))
-    assert(again.setAllowance(AllowanceSet(com.histmersion.api.automation.ModelChains.AllowanceSet.Target("nobody:*"), Nil)).left.exists(_.message.contains("unknown provider")))
+    assert(again.setAllowance(AllowanceSet(allowanceTarget(A), Nil, com.histmersion.api.automation.ModelChains.AllowanceSet.ReservePct(120))).left.exists(_.message.value.contains("0 to 99")))
+    assert(again.setAllowance(AllowanceSet(com.histmersion.api.automation.ModelChains.AllowanceSet.Target("nobody:*"), Nil)).left.exists(_.message.value.contains("unknown provider")))
 
   test("a saved chain decides which model a run uses; an unready chained model is shown, not refused"):
     val cb = ScriptedClient(B); enrichScripts(cb)
     val (a, h) = handlers(Map(B -> cb)); seed(h)
-    val c = a.setChain(com.histmersion.api.automation.Agents.Role.Wire("extractor"), ChainSet(List(com.histmersion.api.automation.ModelChains.ChainEntry.Model("local:zzUnpriced"), B.wire))).fold(e => fail(e.message), identity)
+    val c = a.setChain(com.histmersion.api.automation.Agents.Role.Wire("extractor"), ChainSet(List(com.histmersion.api.automation.ModelChains.ChainEntry.Model("local:zzUnpriced"), chainModel(B)))).fold(e => fail(e.message.value), identity)
     assertEquals(c.models.map(e => (e.model, e.ready)), List(("local:zzUnpriced", false), (B.wire, true)))
-    assert(c.models.head.problem.exists(_.contains("has no price")), c)
+    assert(c.models.head.problem.exists(_.value.contains("has no price")), c)
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
     assertEquals(llmModels(run.id).map(_._4).distinct, List(Some(B.wire)))
     // a run's own --model still wins over the chain
-    assert(a.runnable(Role.Extractor, Some(com.histmersion.domain.automation.agents.AgentsControllers.ModelName("local:zzUnpriced"))).left.exists(_.contains("has no price")))
+    assert(a.runnable(Role.Extractor, Some(com.histmersion.domain.automation.agents.AgentsControllers.ModelName("local:zzUnpriced"))).left.exists(_.value.contains("has no price")))
 
   // ── agent doctor ───────────────────────────────────────────────────────────────────────────────
 
@@ -353,48 +363,48 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
           ServerEngineSite(deps, ServerWiring(deps))
         ) // the server's own factory: real clients, nothing called
       val d = a.doctor(offline = com.histmersion.domain.automation.agents.AgentsControllers.Offline(false))
-      val local = d.providers.find(_.provider == "local").get
-      assert(local.used && local.upstreamModels.contains("zzA"), local)
-      assert(local.checks.exists(c => c.name == "upstream local:zzMissing" && c.level == CheckLevel.Warn), local.checks)
+      val local = d.providers.find(_.provider.value == "local").get
+      assert(local.used.value && local.upstreamModels.map(_.value).contains("zzA"), local)
+      assert(local.checks.exists(c => c.name.value == "upstream local:zzMissing" && c.level == CheckLevel.Warn), local.checks)
       assert(
         local.checks.exists(c =>
-          c.name == "model local:zzMissing" && c.level == CheckLevel.Fail && c.detail.contains("no price")
+          c.name.value == "model local:zzMissing" && c.level == CheckLevel.Fail && c.detail.value.contains("no price")
         ),
         local.checks
       )
-      assert(local.checks.exists(c => c.name == "model local:zzA" && c.level == CheckLevel.Ok), local.checks)
-      val code = d.providers.find(_.provider == "claude-code").get
+      assert(local.checks.exists(c => c.name.value == "model local:zzA" && c.level == CheckLevel.Ok), local.checks)
+      val code = d.providers.find(_.provider.value == "claude-code").get
       assert(
-        code.checks.exists(c => c.name == "login" && c.level == CheckLevel.Ok && c.detail.contains("plan max")),
+        code.checks.exists(c => c.name.value == "login" && c.level == CheckLevel.Ok && c.detail.value.contains("plan max")),
         code.checks
       )
       assert(
-        code.checks.exists(c => c.name == "allowance" && c.level == CheckLevel.Ok && c.detail.contains("plan floors")),
+        code.checks.exists(c => c.name.value == "allowance" && c.level == CheckLevel.Ok && c.detail.value.contains("plan floors")),
         "no metered allowance: the plan pool's floors are the cap"
       )
-      assert(code.checks.exists(c => c.name == "bind" && c.level == CheckLevel.Ok), code.checks)
+      assert(code.checks.exists(c => c.name.value == "bind" && c.level == CheckLevel.Ok), code.checks)
       val md = AgentsMarkdown.doctor(d)
       assert(!md.contains("someone@example.org") && !md.contains("o-1"), "the account never leaves the doctor")
-      assert(d.providers.find(_.provider == "anthropic").exists(p => !p.used && p.level != CheckLevel.Fail))
+      assert(d.providers.find(_.provider.value == "anthropic").exists(p => !p.used.value && p.level != CheckLevel.Fail))
       import scala.jdk.CollectionConverters.*
       assertEquals(requests.asScala.toList, List("GET /v1/models"), "one free listing; never a generation")
       // offline: no request at all
       requests.clear()
       assert(
-        a.doctor(offline = com.histmersion.domain.automation.agents.AgentsControllers.Offline(true)).providers.find(_.provider == "local").get.checks.exists(_.detail.contains("offline"))
+        a.doctor(offline = com.histmersion.domain.automation.agents.AgentsControllers.Offline(true)).providers.find(_.provider.value == "local").get.checks.exists(_.detail.value.contains("offline"))
       )
       assert(requests.isEmpty)
       // the same server bound beyond loopback refuses claude-code (and says why)
       val lan = cfg.modify(_.server).setTo(cfg.server.modify(_.host).setTo("0.0.0.0"))
       val ld = AgentsControllers(ServerEngineSite(Deps(lan, ds), ServerWiring(Deps(lan, ds)))).doctor(offline = com.histmersion.domain.automation.agents.AgentsControllers.Offline(true))
-      val bind = ld.providers.find(_.provider == "claude-code").get.checks.find(_.name == "bind").get
+      val bind = ld.providers.find(_.provider.value == "claude-code").get.checks.find(_.name.value == "bind").get
       assertEquals(bind.level, CheckLevel.Fail)
       assert(
         ld.providers
-          .find(_.provider == "claude-code")
+          .find(_.provider.value == "claude-code")
           .get
           .checks
-          .exists(c => c.name == "model claude-code:sonnet" && c.detail.contains("beyond loopback"))
+          .exists(c => c.name.value == "model claude-code:sonnet" && c.detail.value.contains("beyond loopback"))
       )
     finally stub.stop(0)
 
@@ -405,7 +415,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   ):
     val http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()
     def send(r: HttpRequest) = { val x = http.send(r, HttpResponse.BodyHandlers.ofString()); (x.statusCode, x.body) }
-    def mcp(url: String, body: String, token: Option[String] = None) = send(
+    def mcp(url: String, body: String, token: Option[RunGrant.Token] = None) = send(
       token
         .foldLeft(
           HttpRequest
@@ -440,7 +450,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         val a = hs.get.agents
         // no token, a made-up token: refused before MCP sees the request
         assertEquals(mcp(s"$url/mcp/agent", list)._1, 401)
-        assertEquals(mcp(s"$url/mcp/agent", list, Some("hmrt_nope"))._1, 401)
+        assertEquals(mcp(s"$url/mcp/agent", list, Some(RunGrant.Token("hmrt_nope")))._1, 401)
         val skeptic = a.definitions.agent(StepAgent.Skeptic).toOption.get
         val cold = a.definitions.agent(StepAgent.ColdReader).toOption.get
         val g = a.tokens.issue(skeptic, Some(RunScope(com.histmersion.domain.automation.agents.RunScope.Run("r1"), com.histmersion.domain.automation.agents.RunScope.Step(3))), com.histmersion.domain.automation.agents.RunTokens.TtlMillis(60000))
@@ -474,7 +484,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         // a revoked (or expired) token is dead
         a.tokens.revoke(g.token)
         assertEquals(mcp(s"$url/mcp/agent", list, Some(g.token))._1, 401)
-        val expired = a.tokens.issue(skeptic, None, com.histmersion.domain.automation.agents.RunTokens.TtlMillis(1000), now = System.currentTimeMillis() - 5000)
+        val expired = a.tokens.issue(skeptic, None, com.histmersion.domain.automation.agents.RunTokens.TtlMillis(1000), now = PlanQuotaRepo.EpochMillis(System.currentTimeMillis() - 5000))
         assertEquals(mcp(s"$url/mcp/agent", list, Some(expired.token))._1, 401)
         val (ps, pb) = send(
           HttpRequest

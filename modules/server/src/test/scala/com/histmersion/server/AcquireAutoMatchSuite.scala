@@ -54,8 +54,8 @@ class AcquireAutoMatchSuite extends com.histmersion.db.DbSuite:
 
   private object Stub extends ConverterClient:
     def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
-    def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
-      Right(ConvertedDoc(markdown = com.histmersion.api.ocr.ConvertedDoc.Markdown("# Converted\n\nBody.\n"), pages = com.histmersion.api.ocr.ConvertedDoc.Pages(1), filename = Some(filename)))
+    def convert(file: com.histmersion.util.storage.Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
+      Right(ConvertedDoc(markdown = com.histmersion.api.ocr.ConvertedDoc.Markdown("# Converted\n\nBody.\n"), pages = com.histmersion.api.ocr.ConvertedDoc.Pages(1), filename = Some(ConvertedDoc.Filename(filename.value))))
 
   private lazy val cfg =
     val base = AppConfig.load()

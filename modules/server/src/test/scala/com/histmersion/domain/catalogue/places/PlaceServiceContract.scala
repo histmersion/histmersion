@@ -14,33 +14,37 @@ import com.histmersion.api.catalogue.{Period, Place}
   */
 abstract class PlaceServiceContract extends CatalogueStoreSuite:
 
-  private def square(x0: Double, y0: Double, x1: Double, y1: Double): Option[String] =
-    Some(s"""{"type":"Polygon","coordinates":[[[$x0,$y0],[$x1,$y0],[$x1,$y1],[$x0,$y1],[$x0,$y0]]]}""")
-  private def point(x: Double, y: Double): Option[String] = Some(s"""{"type":"Point","coordinates":[$x,$y]}""")
+  private val Tolerance = GeocodeSettings.ToleranceKm(10.0)
+  private val RegionKind = Place.KindValue("region")
+  private val SiteKind = Place.KindValue("site")
 
-  private def place(id: String, label: String, kind: String, geometry: Option[String], period: Option[Period] = None) =
-    Place(com.histmersion.api.catalogue.Place.Id(id), label, kind, geometry, period, Some(com.histmersion.api.catalogue.Place.Source("zz test")))
+  private def square(x0: Double, y0: Double, x1: Double, y1: Double): Option[Place.Geometry] =
+    Some(Place.Geometry(s"""{"type":"Polygon","coordinates":[[[$x0,$y0],[$x1,$y0],[$x1,$y1],[$x0,$y1],[$x0,$y0]]]}"""))
+  private def point(x: Double, y: Double): Option[Place.Geometry] = Some(Place.Geometry(s"""{"type":"Point","coordinates":[$x,$y]}"""))
+
+  private def place(id: Place.Id, label: Place.Label, kind: Place.KindValue, geometry: Option[Place.Geometry], period: Option[Period] = None) =
+    Place(id, label, kind, geometry, period, Some(com.histmersion.api.catalogue.Place.Source("zz test")))
 
   /** A region, a region inside it, two sites in that, one named twice; a site whose parent is nowhere. */
   private val batch = List(
-    Place.Input(place("zzp_land", "Zzpland", "region", square(30, 36, 40, 42)), List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzpland"), com.histmersion.api.catalogue.Place.Name.Lang("en")))),
+    Place.Input(place(Place.Id("zzp_land"), Place.Label("Zzpland"), RegionKind, square(30, 36, 40, 42)), List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzpland"), com.histmersion.api.catalogue.Place.Name.Lang("en")))),
     Place.Input(
-      place("zzp_march", "Zzpmarch", "region", square(33, 38, 36, 41), Some(Period(com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1200)))),
+      place(Place.Id("zzp_march"), Place.Label("Zzpmarch"), RegionKind, square(33, 38, 36, 41), Some(Period(com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1200)))),
       Nil,
       List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzp_march"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzp_land")))
     ),
     Place.Input(
-      place("zzp_hill", "Zzphill", "site", point(34.6, 40.0), Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180)))),
+      place(Place.Id("zzp_hill"), Place.Label("Zzphill"), SiteKind, point(34.6, 40.0), Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180)))),
       List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzphill"), com.histmersion.api.catalogue.Place.Name.Lang("en")), Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzphügel"), com.histmersion.api.catalogue.Place.Name.Lang("de"))),
       List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzp_hill"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzp_march")))
     ),
     Place.Input(
-      place("zzp_well", "Zzpwell", "site", point(34.9, 39.7)),
+      place(Place.Id("zzp_well"), Place.Label("Zzpwell"), SiteKind, point(34.9, 39.7)),
       Nil,
       List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzp_well"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzp_march")))
     ),
     Place.Input(
-      place("zzp_lost", "Zzplost", "site", point(25, 32)),
+      place(Place.Id("zzp_lost"), Place.Label("Zzplost"), SiteKind, point(25, 32)),
       Nil,
       List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzp_lost"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzp_nowhere")))
     )
@@ -95,17 +99,17 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
       val p = s.places
       val _ = p.importPlaces(
         List(
-          Place.Input(place("zzq_c", "Bzzqa town", "site", point(1, 1))),
-          Place.Input(place("zzq_b", "Zzqa harbour", "site", point(1, 2))),
-          Place.Input(place("zzq_a", "Zzqa", "site", point(1, 3))),
-          Place.Input(place("zzq_d", "Elsewhere", "site", point(1, 4)), List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Old Zzqa"), com.histmersion.api.catalogue.Place.Name.Lang("en"))))
+          Place.Input(place(Place.Id("zzq_c"), Place.Label("Bzzqa town"), SiteKind, point(1, 1))),
+          Place.Input(place(Place.Id("zzq_b"), Place.Label("Zzqa harbour"), SiteKind, point(1, 2))),
+          Place.Input(place(Place.Id("zzq_a"), Place.Label("Zzqa"), SiteKind, point(1, 3))),
+          Place.Input(place(Place.Id("zzq_d"), Place.Label("Elsewhere"), SiteKind, point(1, 4)), List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Old Zzqa"), com.histmersion.api.catalogue.Place.Name.Lang("en"))))
         ),
         Dataset.Seed
       )
       val hits = p.search(Some(com.histmersion.domain.catalogue.places.PlaceService.SearchQ("zzqa")), None, com.histmersion.PageSize(10))
       assertEquals(hits.map(_.id).take(2), List("zzq_a", "zzq_b"))
       assertEquals(hits.map(_.id).toSet, Set("zzq_a", "zzq_b", "zzq_c", "zzq_d"))
-      assertEquals(hits.find(_.id == "zzq_d").flatMap(_.matchedName), Some("Old Zzqa"))
+      assertEquals(hits.find(_.id == Place.Id("zzq_d")).flatMap(_.matchedName), Some("Old Zzqa"))
       assertEquals(p.search(Some(com.histmersion.domain.catalogue.places.PlaceService.SearchQ("zzqa")), None, com.histmersion.PageSize(1)).map(_.id), List("zzq_a"), "the limit")
       assertEquals(p.search(Some(com.histmersion.domain.catalogue.places.PlaceService.SearchQ("nothing like it")), None, com.histmersion.PageSize(10)), Nil)
   }
@@ -149,11 +153,11 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
   stest("a person's own place: added once, refused when its id is taken or an old id") { s =>
     val p = s.places
     val _ = p.importPlaces(batch, Dataset.Seed)
-    val own = Place.Input(place("local_zzp_cairn", "Zzpcairn", "site", point(34.7, 40.1)), List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzpcairn"))))
+    val own = Place.Input(place(Place.Id("local_zzp_cairn"), Place.Label("Zzpcairn"), SiteKind, point(34.7, 40.1)), List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzpcairn"))))
     assertEquals(p.add(own).map(x => (x.id, x.label, x.kind)), Right(("local_zzp_cairn", "Zzpcairn", "site")))
     assertEquals(p.add(own).left.map(_.code), Left(Some(Write.CodeInvalid)))
     assertEquals(p.rename(com.histmersion.domain.catalogue.Place.Id("zzp_well"), com.histmersion.domain.catalogue.Place.Id("zzp_spring")), Right(()))
-    val again = Place.Input(place("zzp_well", "Zzpwell", "site", point(1, 1)))
+    val again = Place.Input(place(Place.Id("zzp_well"), Place.Label("Zzpwell"), SiteKind, point(1, 1)))
     assertEquals(p.add(again).left.map(_.code), Left(Some(Write.CodeInvalid)), "an old id")
     assertEquals(p.count(), 6)
   }
@@ -167,7 +171,7 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
     val set = p.setOverride(
       com.histmersion.domain.catalogue.Place.Id("zzp_hill"),
       Place.OverrideEdit.Put(Some(com.histmersion.api.catalogue.Place.OverrideEdit.Put.Kind("polity")), Some((Some(com.histmersion.api.catalogue.Year(-1500L)), Some(com.histmersion.api.catalogue.Year(-1100L)))), Some(com.histmersion.api.catalogue.Place.OverrideEdit.Put.Reason("the survey"))),
-      10.0
+      Tolerance
     )
     assertEquals(
       set.map(changed),
@@ -196,15 +200,15 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
     assertEquals(p.overrides(None).map(_.placeId), List("zzp_hill"))
     val _ = p.importPlaces(batch, Dataset.Seed)
     assertEquals(p.get(com.histmersion.domain.catalogue.Place.Id("zzp_hill")).map(_.place.kind), Some("polity"), "the next import keeps it")
-    val reset = p.setOverride(com.histmersion.domain.catalogue.Place.Id("zzp_hill"), Place.OverrideEdit.Reset, 10.0)
+    val reset = p.setOverride(com.histmersion.domain.catalogue.Place.Id("zzp_hill"), Place.OverrideEdit.Reset, Tolerance)
     assertEquals(reset.map(c => (c.reset, c.kindAfter)), Right((true, "site")))
     assertEquals(p.get(com.histmersion.domain.catalogue.Place.Id("zzp_hill")).map(d => (d.place.kind, d.place.periodStart)), Some(("site", Some(-1650L))))
     assertEquals(
-      p.setOverride(com.histmersion.domain.catalogue.Place.Id("zzp_hill"), Place.OverrideEdit.Reset, 10.0).left.map(_.code),
+      p.setOverride(com.histmersion.domain.catalogue.Place.Id("zzp_hill"), Place.OverrideEdit.Reset, Tolerance).left.map(_.code),
       Left(Some(Write.CodeNotFound))
     )
     assertEquals(
-      p.setOverride(com.histmersion.domain.catalogue.Place.Id("zzp_none"), Place.OverrideEdit.Reset, 10.0).left.map(_.code),
+      p.setOverride(com.histmersion.domain.catalogue.Place.Id("zzp_none"), Place.OverrideEdit.Reset, Tolerance).left.map(_.code),
       Left(Some(Write.CodeNotFound))
     )
     assertEquals(p.overrides(None), Nil)
@@ -213,15 +217,15 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
   stest("a merge and a removal: what referred to the place moves or refuses, and no import brings it back") { s =>
     val p = s.places
     val _ = p.importPlaces(batch, Dataset.Seed)
-    val gone = p.merge(com.histmersion.domain.catalogue.Place.Id("zzp_well"), com.histmersion.domain.catalogue.Place.Id("zzp_hill"), 10.0).getOrElse(fail("merged"))
+    val gone = p.merge(com.histmersion.domain.catalogue.Place.Id("zzp_well"), com.histmersion.domain.catalogue.Place.Id("zzp_hill"), Tolerance).getOrElse(fail("merged"))
     assertEquals(
       (gone.placeId, gone.label, gone.into, gone.intoLabel),
       ("zzp_well", "Zzpwell", Some("zzp_hill"), Some("Zzphill"))
     )
     assertEquals(p.get(com.histmersion.domain.catalogue.Place.Id("zzp_well")), None)
     assertEquals(p.scopeFor(List(com.histmersion.domain.catalogue.places.PlaceService.ScopeForValues("zzp_well")), None).idsFor(com.histmersion.domain.catalogue.places.PlaceScope.Value("zzp_well")).map(_.contains("zzp_hill")), Some(true))
-    assertEquals(p.merge(com.histmersion.domain.catalogue.Place.Id("zzp_hill"), com.histmersion.domain.catalogue.Place.Id("zzp_hill"), 10.0).left.map(_.code), Left(Some(Write.CodeInvalid)))
-    assertEquals(p.merge(com.histmersion.domain.catalogue.Place.Id("zzp_none"), com.histmersion.domain.catalogue.Place.Id("zzp_hill"), 10.0).left.map(_.code), Left(Some(Write.CodeNotFound)))
+    assertEquals(p.merge(com.histmersion.domain.catalogue.Place.Id("zzp_hill"), com.histmersion.domain.catalogue.Place.Id("zzp_hill"), Tolerance).left.map(_.code), Left(Some(Write.CodeInvalid)))
+    assertEquals(p.merge(com.histmersion.domain.catalogue.Place.Id("zzp_none"), com.histmersion.domain.catalogue.Place.Id("zzp_hill"), Tolerance).left.map(_.code), Left(Some(Write.CodeNotFound)))
     assertEquals(
       p.remove(com.histmersion.domain.catalogue.Place.Id("zzp_march"), Some(com.histmersion.api.catalogue.Place.Override.Reason("a child"))).left.map(_.code),
       Left(Some(Write.CodeInvalid)),

@@ -5,6 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.CoreQuota
 import com.histmersion.domain.library.acquisition.CoreBudget
+import com.histmersion.plugin.Plugin
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
@@ -33,14 +34,14 @@ class CoreQuotaLendSuite extends munit.FunSuite:
     val lent = CoreQuotaLend(b, limits)
     assertEquals(lent.waitingUntil, None)
     assert(lent.take(com.histmersion.plugin.UpstreamQuota.TakePurpose("lookup")).isRight)
-    lent.observe(com.histmersion.plugin.UpstreamQuota.ObserveStatus(429), Map("x-ratelimit-retry-after" -> "2026-10-26T18:52:11+0000"))
+    lent.observe(com.histmersion.plugin.UpstreamQuota.ObserveStatus(429), Map(Plugin.HttpResponse.HeadersKey("x-ratelimit-retry-after") -> Plugin.HttpResponse.HeadersValue("2026-10-26T18:52:11+0000")))
     assertEquals(lent.waitingUntil, Some("2026-10-26T18:52:11Z"))
-    assert(lent.take(com.histmersion.plugin.UpstreamQuota.TakePurpose("lookup")).left.exists(_.contains("CORE asked to wait until 2026-10-26T18:52:11Z (HTTP 429)")))
+    assert(lent.take(com.histmersion.plugin.UpstreamQuota.TakePurpose("lookup")).left.exists(_.value.contains("CORE asked to wait until 2026-10-26T18:52:11Z (HTTP 429)")))
     assert(b.unavailable(limits, CoreQuota.Purpose.Search).isDefined, "the host's search is blocked too")
     now.set(t0.plusSeconds(300))
     assertEquals(lent.take(com.histmersion.plugin.UpstreamQuota.TakePurpose("lookup")), Right(()))
 
   test("a purpose CORE's budget does not know is refused, and nothing is counted"):
     val b = budget(AtomicReference(t0))
-    assert(CoreQuotaLend(b, limits).take(com.histmersion.plugin.UpstreamQuota.TakePurpose("scroll")).left.exists(_.contains("lookup, search")))
+    assert(CoreQuotaLend(b, limits).take(com.histmersion.plugin.UpstreamQuota.TakePurpose("scroll")).left.exists(_.value.contains("lookup, search")))
     assertEquals(b.state.spent, 0)

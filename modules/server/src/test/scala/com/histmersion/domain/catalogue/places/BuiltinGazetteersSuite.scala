@@ -2,6 +2,7 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.testsupport.ComparedByValue.given
 
+import com.histmersion.pluginhost.Registries
 import com.histmersion.server.ServerPlugins
 
 import com.histmersion.plugin.*
@@ -44,10 +45,10 @@ class BuiltinGazetteersSuite extends munit.FunSuite:
           "(histmersion.plugins.gazetteer-awmc.enabled = false)"
       )
     )
-    assertEquals(BuiltinGazetteers.resolve(com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("nowhere"), off, "unknown 'nowhere'"), Left("unknown 'nowhere'"))
+    assertEquals(BuiltinGazetteers.resolve(com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("nowhere"), off, GazetteerImports.Problem("unknown 'nowhere'")), Left("unknown 'nowhere'"))
     assertEquals(BuiltinGazetteers.available(off), List("cliopatria", "awmc", "chronontology"))
 
   test("a plugin's source is listed after the first-party ones and found by its name"):
-    val registered = ListMap[String, GazetteerSource]("elsewhere" -> Elsewhere, "cliopatria" -> Elsewhere)
+    val registered = ListMap[Registries.GazetteerSourcesKey, GazetteerSource](Registries.GazetteerSourcesKey("elsewhere") -> Elsewhere, Registries.GazetteerSourcesKey("cliopatria") -> Elsewhere)
     assertEquals(BuiltinGazetteers.available(registered), List("cliopatria", "awmc", "chronontology", "elsewhere"))
     assertEquals(BuiltinGazetteers.resolve(com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("elsewhere"), registered, com.histmersion.domain.catalogue.places.GazetteerImports.Problem("unknown")), Right(Elsewhere))

@@ -7,7 +7,7 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.domain.Caller
 import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
 import com.histmersion.domain.ReviewLedger.{Entry, Ledger, Status}
-import com.histmersion.domain.research.{ResearchStores, ResearchStoreSuite}
+import com.histmersion.domain.research.{ResearchStores, ResearchStoreSuite, Slug}
 import com.histmersion.api.research.Article
 
 /** What the review ledgers answer, the same on the database and in memory: a ledger written and read back, none for an
@@ -18,20 +18,22 @@ abstract class ReviewLedgerServiceContract extends ResearchStoreSuite:
 
   private val Me = Caller.Local
 
-  private def article(slug: String): Article =
-    Article(slug, com.histmersion.api.research.Article.Title("Walls"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("## Overview\n\nThe walls.\n"), None, Nil, Nil, None, None, None, Map.empty)
+  private def article(slug: Slug): Article =
+    Article(Article.Slug(slug.value), com.histmersion.api.research.Article.Title("Walls"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("## Overview\n\nThe walls.\n"), None, Nil, Nil, None, None, None, Map.empty)
 
-  private def finding(id: String, severity: Severity) =
-    Finding(id, Reviewer.Rules, severity, com.histmersion.domain.ReviewArticle.Finding.Kind("synth"), s"where $id", s"quote $id", s"problem $id", com.histmersion.domain.ReviewArticle.Finding.Fix("fix"))
+  private def finding(id: Finding.Id, severity: Severity) =
+    Finding(id, Reviewer.Rules, severity, com.histmersion.domain.ReviewArticle.Finding.Kind("synth"), Finding.Where(s"where $id"), Finding.Quote(s"quote $id"), Finding.Problem(s"problem $id"), com.histmersion.domain.ReviewArticle.Finding.Fix("fix"))
 
-  private val Walls = "zr_walls"
-  private val Gate = "zr_gate"
+  private val Walls = Slug("zr_walls")
+  private val Gate = Slug("zr_gate")
+  private val R1 = Finding.Id("R1")
+  private val R2 = Finding.Id("R2")
 
   stest("a ledger written and read back; none for an article never reviewed; refused for one that does not exist") {
     s =>
       val _ = s.articles.put(article(Walls), Me)
       assertEquals(s.ledgers.get(Walls), Right(None))
-      val l = Ledger(Walls, List(Entry(finding("R1", Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))), task = Some(7))
+      val l = Ledger(Walls, List(Entry(finding(R1, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))), task = Some(7))
       s.ledgers.put(l)
       assertEquals(s.ledgers.get(Walls), Right(Some(l)))
       val again = l.modify(_.task).setTo(None)
@@ -44,13 +46,13 @@ abstract class ReviewLedgerServiceContract extends ResearchStoreSuite:
   stest("an article passed its review once its ledger holds no open MAJOR") { s =>
     val _ = s.articles.put(article(Walls), Me)
     val _ = s.articles.put(article(Gate), Me)
-    s.ledgers.put(Ledger(Walls, List(Entry(finding("R1", Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1)))))
+    s.ledgers.put(Ledger(Walls, List(Entry(finding(R1, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1)))))
     s.ledgers.put(
       Ledger(
         Gate,
         List(
-          Entry(finding("R1", Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1), status = Status.Fixed),
-          Entry(finding("R2", Severity.Minor), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))
+          Entry(finding(R1, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1), status = Status.Fixed),
+          Entry(finding(R2, Severity.Minor), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))
         )
       )
     )
@@ -59,7 +61,7 @@ abstract class ReviewLedgerServiceContract extends ResearchStoreSuite:
 
   stest("a ledger follows its article's rename and goes with its delete") { s =>
     val _ = s.articles.put(article(Walls), Me)
-    val l = Ledger(Walls, List(Entry(finding("R1", Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))))
+    val l = Ledger(Walls, List(Entry(finding(R1, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))))
     s.ledgers.put(l)
     assert(s.articles.rename(Walls, com.histmersion.domain.research.Slug("zr_city_walls"), Me).isRight)
     assertEquals(s.ledgers.get(com.histmersion.domain.research.Slug("zr_city_walls")), Right(Some(l)))

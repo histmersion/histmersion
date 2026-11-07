@@ -37,14 +37,16 @@ class BackgroundJobSuite extends com.histmersion.db.DbSuite:
   // ── on a test database ────────────────────────────────────────────────────────────────────────
   private val testDb = com.histmersion.db.TestDb.url
   private lazy val ds =
-    val d = testPool(AppConfig.load().db.copy(url = testDb.get))
+    val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private def dbTest(name: String)(body: => Unit): Unit =
     test(name)(if testDb.isEmpty then assume(false, "HISTMERSION_TEST_DB_URL is unset") else body)
 
-  private def await(id: String, left: Int = 200): JobInfo =
-    val j = Transactor(ds).read(JobRepo.get(id)).getOrElse(fail(s"no job $id"))
+  private def await(id: com.histmersion.api.SpatialHierarchyResult.Job.Id, left: Int = 200): JobInfo =
+    val j = Transactor(ds)
+      .read(JobRepo.get(com.histmersion.util.jobs.Job.Id.applyUnsafe(id.value)))
+      .getOrElse(fail(s"no job $id"))
     if j.isTerminal || left == 0 then j else { Thread.sleep(25); await(id, left - 1) }
 
   dbTest("a job runs on its own thread: its row moves queued → running → done with the summary"):
@@ -53,10 +55,10 @@ class BackgroundJobSuite extends com.histmersion.db.DbSuite:
     val j = BackgroundJob
       .start(ds, com.histmersion.util.jobs.Job.Kind("zz-test"), Some(JobDetail.Purpose(Some(com.histmersion.api.jobs.JobKinds.Subject("a test")))), slot, com.histmersion.util.jobs.BackgroundJob.Work("a test job")) { (job, progress) =>
         go.await()
-        progress(s"working on ${job.kind}")
+        progress(JobInfo.Progress(s"working on ${job.kind}"))
         Outcome.done(com.histmersion.util.jobs.BackgroundJob.Outcome.Summary("all done"))
       }
-      .fold(e => fail(e.message), identity)
+      .fold(e => fail(e.message.value), identity)
     assertEquals(j.detail.flatMap(JobDetail.Purpose.of), Some("a test"))
     assert(slot.isRunning, "the slot is held while the job runs")
     assertEquals(
@@ -73,11 +75,11 @@ class BackgroundJobSuite extends com.histmersion.db.DbSuite:
     val slot = BackgroundJob.Slot()
     val f = BackgroundJob
       .start(ds, com.histmersion.util.jobs.Job.Kind("zz-test"), None, slot, com.histmersion.util.jobs.BackgroundJob.Work("a test job"))((_, _) => Outcome(Some(com.histmersion.util.jobs.BackgroundJob.Outcome.Summary("half")), Some(com.histmersion.util.jobs.BackgroundJob.Outcome.Error("disk full"))))
-      .fold(e => fail(e.message), identity)
+      .fold(e => fail(e.message.value), identity)
     assertEquals(await(f.id).error, Some("disk full"))
     Thread.sleep(50)
     val x = BackgroundJob
       .start(ds, com.histmersion.util.jobs.Job.Kind("zz-test"), None, slot, com.histmersion.util.jobs.BackgroundJob.Work("a test job"))((_, _) => throw IllegalStateException("boom"))
-      .fold(e => fail(e.message), identity)
+      .fold(e => fail(e.message.value), identity)
     val failed = await(x.id)
     assertEquals((failed.status, failed.error), ("failed", Some("IllegalStateException: boom")))

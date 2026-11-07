@@ -2,7 +2,9 @@ package com.histmersion.util.basemap
 
 import hearth.kindlings.optics.syntax.*
 
+import com.histmersion.ByteCount
 import com.histmersion.api.BBox
+import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -28,10 +30,10 @@ import com.histmersion.api.basemap.Basemap
 object BasemapExtractTool:
 
   /** The keep list the extract used before the drop list (earth, water, natural land cover). */
-  val OldKeep: Map[String, Mvt.Rule] = Map(
-    "earth" -> Mvt.Rule(),
-    "water" -> Mvt.Rule(drop = Set(com.histmersion.util.basemap.Mvt.Rule.Drop("canal"), com.histmersion.util.basemap.Mvt.Rule.Drop("ditch"), com.histmersion.util.basemap.Mvt.Rule.Drop("drain"), com.histmersion.util.basemap.Mvt.Rule.Drop("dock"), com.histmersion.util.basemap.Mvt.Rule.Drop("swimming_pool"), com.histmersion.util.basemap.Mvt.Rule.Drop("fountain"), com.histmersion.util.basemap.Mvt.Rule.Drop("basin"))),
-    "landcover" -> Mvt.Rule(keep = Set(com.histmersion.util.basemap.Mvt.Rule.Keep("forest"), com.histmersion.util.basemap.Mvt.Rule.Keep("grassland"), com.histmersion.util.basemap.Mvt.Rule.Keep("scrub"), com.histmersion.util.basemap.Mvt.Rule.Keep("barren"), com.histmersion.util.basemap.Mvt.Rule.Keep("glacier")))
+  val OldKeep: Map[Mvt.LayerName, Mvt.Rule] = Map(
+    Mvt.LayerName("earth") -> Mvt.Rule(),
+    Mvt.LayerName("water") -> Mvt.Rule(drop = Set(com.histmersion.util.basemap.Mvt.Rule.Drop("canal"), com.histmersion.util.basemap.Mvt.Rule.Drop("ditch"), com.histmersion.util.basemap.Mvt.Rule.Drop("drain"), com.histmersion.util.basemap.Mvt.Rule.Drop("dock"), com.histmersion.util.basemap.Mvt.Rule.Drop("swimming_pool"), com.histmersion.util.basemap.Mvt.Rule.Drop("fountain"), com.histmersion.util.basemap.Mvt.Rule.Drop("basin"))),
+    Mvt.LayerName("landcover") -> Mvt.Rule(keep = Set(com.histmersion.util.basemap.Mvt.Rule.Keep("forest"), com.histmersion.util.basemap.Mvt.Rule.Keep("grassland"), com.histmersion.util.basemap.Mvt.Rule.Keep("scrub"), com.histmersion.util.basemap.Mvt.Rule.Keep("barren"), com.histmersion.util.basemap.Mvt.Rule.Keep("glacier")))
   )
 
   /** The store of `p`'s directory and `p`'s name in it. */
@@ -42,42 +44,80 @@ object BasemapExtractTool:
   /** The work store of an extract written to `out`: `<out>.work` beside it. */
   private def workOf(out: Path): (Store, Store.Key) = at(out.resolveSibling(out.getFileName.toString + ".work"))
 
+  /** The failure of a step, as the tool's own error. */
+  private def orDie[A](r: Either[RangeHttp.Problem, A]): A = r.fold(p => sys.error(p.value), identity)
+
+  /** The politeness the configuration asks for. */
+  private def paceOf(cfg: BasemapConfig): BasemapFetch.Pace = BasemapFetch.Pace(
+    BasemapFetch.Pace.GapMs(cfg.requestGapMs.value.toLong),
+    ByteCount.applyUnsafe(cfg.maxRequestMb.value.toLong << 20),
+    BasemapFetch.Pace.Overfetch(cfg.overfetch.value)
+  )
+
+  /** The region an archive's header covers. */
+  private def boxOf(h: PmTiles.Header): BBox =
+    BBox(Longitude(h.minLon.value), Latitude(h.minLat.value), Longitude(h.maxLon.value), Latitude(h.maxLat.value))
+
   def run(args: List[String]): Unit = args match
     case "extract" :: build :: bbox :: z :: out :: rest =>
-      extract(build, bbox, z.toInt, Path.of(out), rest.headOption.contains("keep-all"))
-    case "sizes" :: file :: Nil                     => sizes(Path.of(file))
-    case "kinds" :: file :: z :: Nil                => kinds(Path.of(file), z.toInt)
-    case "relief" :: bbox :: z0 :: z1 :: out :: Nil => relief(bbox, z0.toInt, z1.toInt, Some(Path.of(out)))
-    case "relief-size" :: bbox :: z0 :: z1 :: Nil   => relief(bbox, z0.toInt, z1.toInt, None)
-    case "inspect" :: file :: bbox :: z :: Nil      => inspect(Path.of(file), BBox.parse(bbox).get, z.toInt)
-    case "subset" :: in :: bbox :: z :: out :: Nil  => subset(Path.of(in), BBox.parse(bbox).get, z.toInt, Path.of(out))
+      extract(
+        BasemapVectorConfig.Build(build),
+        BBox.Text(bbox),
+        BasemapFetch.Plan.MaxZoom(z.toInt),
+        Path.of(out),
+        rest.headOption.contains("keep-all")
+      )
+    case "sizes" :: file :: Nil      => sizes(Path.of(file))
+    case "kinds" :: file :: z :: Nil => kinds(Path.of(file), Basemap.Zoom(z.toInt))
+    case "relief" :: bbox :: z0 :: z1 :: out :: Nil =>
+      relief(
+        BBox.Text(bbox),
+        BasemapFetch.Plan.MinZoom(z0.toInt),
+        BasemapFetch.Plan.MaxZoom(z1.toInt),
+        Some(Path.of(out))
+      )
+    case "relief-size" :: bbox :: z0 :: z1 :: Nil =>
+      relief(BBox.Text(bbox), BasemapFetch.Plan.MinZoom(z0.toInt), BasemapFetch.Plan.MaxZoom(z1.toInt), None)
+    case "inspect" :: file :: bbox :: z :: Nil =>
+      inspect(Path.of(file), BBox.parse(BBox.Text(bbox)).get, Basemap.Zoom(z.toInt))
+    case "subset" :: in :: bbox :: z :: out :: Nil =>
+      subset(Path.of(in), BBox.parse(BBox.Text(bbox)).get, PmTiles.Zoom(z.toInt), Path.of(out))
     case _ => sys.error("extract <build|latest> <bbox> <maxZoom> <out> [keep-all] | sizes <file>")
 
   /** Every layer's `kind`s at zoom `z` of an archive, counted over its tiles (what a style can select). */
-  private def kinds(file: Path, z: Int): Unit =
-    val f = BasemapFixtures.open(file).fold(sys.error, identity)
+  private def kinds(file: Path, z: Basemap.Zoom): Unit =
+    val f = orDie(BasemapFixtures.open(file))
     val h = f.header
-    val ((x0, x1), (y0, y1)) = Basemap.tileRange(BBox(h.minLon, h.minLat, h.maxLon, h.maxLat), z)
+    val ((x0, x1), (y0, y1)) = Basemap.tileRange(boxOf(h), z)
     val counts = scala.collection.mutable.Map.empty[(String, String), Int].withDefaultValue(0)
-    for x <- x0 to x1; y <- y0 to y1; b <- f.tile(z, x, y).toOption.flatten do
-      val raw = PmTiles.gunzip(b).getOrElse(b)
+    for
+      x <- x0.value to x1.value
+      y <- y0.value to y1.value
+      b <- f.tile(PmTiles.Zoom(z.value), PmTiles.TileColumn(x), PmTiles.TileRow(y)).toOption.flatten
+    do
+      val raw = PmTiles.gunzip(PmTiles.CompressedBytes(b.value)).getOrElse(PmTiles.PlainBytes(b.value))
       Mvt
         .layerNames(raw)
         .getOrElse(Nil)
-        .foreach(l => Mvt.kinds(raw, l).getOrElse(Nil).foreach(k => counts((l, k)) += 1))
+        .foreach(l => Mvt.kinds(raw, l).getOrElse(Nil).foreach(k => counts((l.value, k.value)) += 1))
     counts.toList.sortBy(_._1).foreach { case ((l, k), n) => println(s"$l\t$k\t$n") }
 
   /** The relief of a region from zoom `z0` to `z1` (a focus region, as `fetch --focus` stores it): its download
     * measured from the directories alone, or written to `out`.
     */
-  private def relief(bbox: String, z0: Int, z1: Int, out: Option[Path]): Unit =
+  private def relief(
+      bbox: BBox.Text,
+      z0: BasemapFetch.Plan.MinZoom,
+      z1: BasemapFetch.Plan.MaxZoom,
+      out: Option[Path]
+  ): Unit =
     val cfg = AppConfig.load().basemap
     val http = BasemapWiring.http(cfg)(using java.time.Clock.systemUTC())
-    val src = BasemapFetch.Source(cfg.terrain.url, cfg.terrain.url)
-    val pace = BasemapFetch.Pace(cfg.requestGapMs.toLong, cfg.maxRequestMb.toLong << 20, cfg.overfetch)
-    val note = (s: String) => scribe.info(s)
+    val src = BasemapFetch.Source(RangeHttp.Url(cfg.terrain.url.value), BasemapFetch.Source.Label(cfg.terrain.url.value))
+    val pace = paceOf(cfg)
+    val note = (n: BasemapFetch.Note) => scribe.info(n.value)
     val plan =
-      BasemapFetch.plan(http, src, BBox.parse(bbox).get, z1, pace, note, minZoom = Some(z0)).fold(sys.error, identity)
+      orDie(BasemapFetch.plan(http, src, BBox.parse(bbox).get, z1, pace, note, minZoom = Some(z0)))
     println(
       s"RELIEF $bbox z$z0-$z1: ${plan.tiles.size} tiles, ${plan.requestBytes} bytes in ${plan.requests.size} requests, contents ${plan.contentBytes}"
     )
@@ -85,89 +125,117 @@ object BasemapExtractTool:
       val (base, workKey) = workOf(o)
       val work = base.sub(workKey)
       BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, com.histmersion.util.basemap.BasemapFetch.Note("relief")))
-      BasemapFetch.download(http, plan, work, pace, note, _ => Right(())).fold(sys.error, identity)
+      orDie(BasemapFetch.download(http, plan, work, pace, note, _ => Right(())))
       val meta = BasemapFetch.localMetadata(
         plan,
         Set.empty,
-        cfg.terrain.attribution,
-        java.time.Instant.now().toString,
+        BasemapFetch.Attribution(cfg.terrain.attribution.value),
+        BasemapFetch.FetchedAt(java.time.Instant.now().toString),
         Basemap.Layer.Terrain
       )
       val (outStore, outKey) = at(o)
-      val (bytes, tiles) = BasemapFetch
-        .assemble(plan, work, outStore, outKey, b => Right(Some(b)), BasemapFetch.localHeader(plan), meta, note)
-        .fold(sys.error, identity)
+      val (bytes, tiles) = orDie(
+        BasemapFetch
+          .assemble(plan, work, outStore, outKey, b => Right(Some(b)), BasemapFetch.localHeader(plan), meta, note)
+      )
       val _ = base.deleteTree(workKey)
       println(s"RELIEF $o: $tiles tiles, $bytes bytes")
     }
 
-  private def extract(build: String, bbox: String, z: Int, out: Path, keepAll: Boolean): Unit =
+  private def extract(
+      build: BasemapVectorConfig.Build,
+      bbox: BBox.Text,
+      z: BasemapFetch.Plan.MaxZoom,
+      out: Path,
+      keepAll: Boolean
+  ): Unit =
     val cfg = AppConfig.load().basemap
     val http = BasemapWiring.http(cfg)(using java.time.Clock.systemUTC())
-    val key = if build == "latest" then
-      http.text(cfg.vector.buildsUrl).flatMap(BasemapService.builds).toOption.get.last._1
-    else build
-    val src = BasemapFetch.Source(cfg.vector.url.replace("{build}", key), key)
+    val key: BasemapService.BuildName = if build == BasemapVectorConfig.Build("latest") then
+      http
+        .text(RangeHttp.Url(cfg.vector.buildsUrl.value))
+        .flatMap(t => BasemapService.builds(BasemapService.JsonText(t.value)))
+        .toOption
+        .get
+        .last
+        ._1
+    else BasemapService.BuildName(build.value)
+    val src = BasemapFetch.Source(
+      RangeHttp.Url(cfg.vector.url.value.replace("{build}", key.value)),
+      BasemapFetch.Source.Label(key.value)
+    )
     val b = BBox.parse(bbox).get
-    val pace = BasemapFetch.Pace(cfg.requestGapMs.toLong, cfg.maxRequestMb.toLong << 20, cfg.overfetch)
-    val note = (s: String) => scribe.info(s)
-    val plan = BasemapFetch.plan(http, src, b, z, pace, note).fold(sys.error, identity)
+    val pace = paceOf(cfg)
+    val note = (n: BasemapFetch.Note) => scribe.info(n.value)
+    val plan = orDie(BasemapFetch.plan(http, src, b, z, pace, note))
     val (base, workKey) = workOf(out)
     val work = base.sub(workKey)
-    BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, if keepAll then com.histmersion.util.basemap.BasemapFetch.Note("keep-all") else cfg.vector.drop))
-    BasemapFetch.download(http, plan, work, pace, note, _ => Right(())).fold(sys.error, identity)
-    val drop = Basemap.parseDrop(cfg.vector.drop).fold(sys.error, identity)
-    val rules = if keepAll then Map.empty[String, Mvt.Rule] else BasemapService.mvtRules(drop)
+    BasemapFetch.prepare(
+      work,
+      BasemapFetch.stateOf(
+        plan,
+        if keepAll then BasemapFetch.Note("keep-all") else BasemapFetch.Note(cfg.vector.drop.value)
+      )
+    )
+    orDie(BasemapFetch.download(http, plan, work, pace, note, _ => Right(())))
+    val drop = Basemap.parseDrop(Basemap.DropRule.Spec(cfg.vector.drop.value)).fold(p => sys.error(p.value), identity)
+    val rules = if keepAll then Map.empty[Mvt.LayerName, Mvt.Rule] else BasemapService.mvtRules(drop)
     val meta = BasemapFetch.localMetadata(
       plan,
-      if keepAll then Set.empty else drop.filter(_.whole).map(_.layer).toSet,
-      cfg.vector.attribution,
-      java.time.Instant.now().toString,
+      if keepAll then Set.empty else drop.filter(_.whole.value).map(_.layer).toSet,
+      BasemapFetch.Attribution(cfg.vector.attribution.value),
+      BasemapFetch.FetchedAt(java.time.Instant.now().toString),
       Basemap.Layer.Vector,
-      Some((keepAll, cfg.vector.drop))
+      Some((BasemapFetch.Filtered(keepAll), BasemapFetch.FilterSpec(cfg.vector.drop.value)))
     )
-    val (bytes, tiles) = BasemapFetch
-      .assemble(
-        plan,
-        work,
-        at(out)._1,
-        at(out)._2,
-        t => BasemapService.thin(t, plan.header.tileCompression, rules),
-        BasemapFetch.localHeader(plan),
-        meta,
-        note
-      )
-      .fold(sys.error, identity)
+    val (bytes, tiles) = orDie(
+      BasemapFetch
+        .assemble(
+          plan,
+          work,
+          at(out)._1,
+          at(out)._2,
+          t => BasemapService.thin(t, plan.header.tileCompression, rules),
+          BasemapFetch.localHeader(plan),
+          meta,
+          note
+        )
+    )
     val _ = base.deleteTree(workKey)
     scribe.info(s"$out: $tiles tiles, $bytes bytes, downloaded ${plan.requestBytes} bytes")
 
   private def sizes(file: Path): Unit =
-    val f = BasemapFixtures.open(file).fold(sys.error, identity)
+    val f = orDie(BasemapFixtures.open(file))
     val drop =
-      BasemapService.mvtRules(Basemap.parseDrop(AppConfig.load().basemap.vector.drop).fold(sys.error, identity))
+      BasemapService.mvtRules(
+        Basemap
+          .parseDrop(Basemap.DropRule.Spec(AppConfig.load().basemap.vector.drop.value))
+          .fold(p => sys.error(p.value), identity)
+      )
     val h = f.header
-    val b = BBox(h.minLon, h.minLat, h.maxLon, h.maxLat)
+    val b = boxOf(h)
     // per zoom: (all, default drop, old keep) bytes of distinct contents, and the layers' share
     val seen = Array.fill(3)(collection.mutable.HashSet.empty[String])
-    def digest(a: Array[Byte]) = MessageDigest.getInstance("SHA-1").digest(a).map(x => f"$x%02x").mkString
+    def digest(a: PmTiles.CompressedBytes) =
+      MessageDigest.getInstance("SHA-1").digest(a.value).map(x => f"$x%02x").mkString
     val perLayer = collection.mutable.TreeMap.empty[String, Long]
-    for z <- h.minZoom to h.maxZoom do
+    for z <- h.minZoom.value to h.maxZoom.value do
       val sums = Array(0L, 0L, 0L)
-      val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, z)
-      for x <- x0 to x1; y <- y0 to y1 do
-        f.tile(z, x, y).toOption.flatten.foreach { stored =>
-          val raw = PmTiles.gunzip(stored).fold(sys.error, identity)
-          if z == h.maxZoom then
+      val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, Basemap.Zoom(z))
+      for x <- x0.value to x1.value; y <- y0.value to y1.value do
+        f.tile(PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y)).toOption.flatten.foreach { stored =>
+          val raw = orDie(PmTiles.gunzip(PmTiles.CompressedBytes(stored.value)))
+          if z == h.maxZoom.value then
             Mvt.layerNames(raw).toOption.get.foreach { l =>
               val one = Mvt.filter(raw, Map(l -> Mvt.Rule())).toOption.get
-              perLayer(l) = perLayer.getOrElse(l, 0L) + PmTiles.gzip(one).length
+              perLayer(l.value) = perLayer.getOrElse(l.value, 0L) + PmTiles.gzip(one).value.length
             }
           List(
-            Some(stored),
-            Mvt.filter(raw, drop, others = true).toOption.filter(_.nonEmpty).map(PmTiles.gzip),
-            Mvt.filter(raw, OldKeep).toOption.filter(_.nonEmpty).map(PmTiles.gzip)
+            Some(PmTiles.CompressedBytes(stored.value)),
+            Mvt.filter(raw, drop, others = Mvt.Others(true)).toOption.filter(_.value.nonEmpty).map(PmTiles.gzip),
+            Mvt.filter(raw, OldKeep).toOption.filter(_.value.nonEmpty).map(PmTiles.gzip)
           ).zipWithIndex.foreach {
-            case (Some(t), i) => if seen(i).add(digest(t)) then sums(i) += t.length
+            case (Some(t), i) => if seen(i).add(digest(t)) then sums(i) += t.value.length
             case _            => ()
           }
         }
@@ -179,39 +247,43 @@ object BasemapExtractTool:
     )
     f.close()
 
-  private def inspect(file: Path, b: BBox, z: Int): Unit =
-    val f = BasemapFixtures.open(file).fold(sys.error, identity)
+  private def inspect(file: Path, b: BBox, z: Basemap.Zoom): Unit =
+    val f = orDie(BasemapFixtures.open(file))
     val kinds = collection.mutable.TreeMap.empty[String, Int]
     val keys = collection.mutable.TreeMap.empty[String, Int]
     val bytes = collection.mutable.TreeMap.empty[String, Long]
     val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, z)
-    for x <- x0 to x1; y <- y0 to y1 do
-      f.tile(z, x, y).toOption.flatten.foreach { stored =>
-        val raw = PmTiles.gunzip(stored).fold(sys.error, identity)
+    for x <- x0.value to x1.value; y <- y0.value to y1.value do
+      f.tile(PmTiles.Zoom(z.value), PmTiles.TileColumn(x), PmTiles.TileRow(y)).toOption.flatten.foreach { stored =>
+        val raw = orDie(PmTiles.gunzip(PmTiles.CompressedBytes(stored.value)))
         Mvt.layerNames(raw).toOption.get.foreach { l =>
-          bytes(l) = bytes.getOrElse(l, 0L) + PmTiles.gzip(Mvt.filter(raw, Map(l -> Mvt.Rule())).toOption.get).length
+          bytes(l.value) = bytes.getOrElse(l.value, 0L) +
+            PmTiles.gzip(Mvt.filter(raw, Map(l -> Mvt.Rule())).toOption.get).value.length
         }
-        Mvt.features(raw).fold(sys.error, identity).foreach { (l, g, p) =>
-          val k = s"$l g$g ${p.getOrElse("kind", "-")}/${p.getOrElse("kind_detail", "-")}"
+        orDie(Mvt.features(raw)).foreach { (l, g, p) =>
+          val k =
+            s"$l g$g ${p.get(Mvt.PropKey("kind")).fold("-")(_.value)}/${p.get(Mvt.PropKey("kind_detail")).fold("-")(_.value)}"
           kinds(k) = kinds.getOrElse(k, 0) + 1
           p.keys
+            .map(_.value)
             .map(k => if k.startsWith("name:") || k.startsWith("pgf:name:") then k.takeWhile(_ != ':') + ":*" else k)
             .toSet
             .foreach(k => keys(s"$l.$k") = keys.getOrElse(s"$l.$k", 0) + 1)
         }
       }
-    println(s"z$z bytes per layer (gzip, alone): " + bytes.map((l, n) => f"$l ${n / 1e6}%.2f MB").mkString(", "))
+    println(s"z${z.value} bytes per layer (gzip, alone): " + bytes.map((l, n) => f"$l ${n / 1e6}%.2f MB").mkString(", "))
     kinds.foreach((k, n) => println(f"$n%8d  $k"))
     keys.foreach((k, n) => println(f"$n%8d  key $k"))
     f.close()
 
-  private def subset(in: Path, b: BBox, maxZoom: Int, out: Path): Unit =
-    val f = BasemapFixtures.open(in).fold(sys.error, identity)
+  private def subset(in: Path, b: BBox, maxZoom: PmTiles.Zoom, out: Path): Unit =
+    val f = orDie(BasemapFixtures.open(in))
     val w = BasemapFixtures.writer(out.toAbsolutePath)
-    val ids = (f.header.minZoom to maxZoom.min(f.header.maxZoom)).flatMap { z =>
-      val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, z)
-      for x <- x0 to x1; y <- y0 to y1 yield PmTiles.tileId(z, x, y)
-    }.sorted
+    val ids = (f.header.minZoom.value to maxZoom.value.min(f.header.maxZoom.value)).flatMap { z =>
+      val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, Basemap.Zoom(z))
+      for x <- x0.value to x1.value; y <- y0.value to y1.value
+      yield PmTiles.tileId(PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y))
+    }.sortBy(_.value)
     ids.foreach { id =>
       val (z, x, y) = PmTiles.zxy(id)
       f.tile(z, x, y).toOption.flatten.foreach(w.add(id, _))
@@ -225,15 +297,29 @@ object BasemapExtractTool:
           .deepMerge(
             io.circe.Json.obj(
               "bbox" -> io.circe.Json.fromString(s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}"),
-              "maxZoom" -> io.circe.Json.fromInt(maxZoom)
+              "maxZoom" -> io.circe.Json.fromInt(maxZoom.value)
             )
           )
       )
     )
     val size = w.finish(
-      f.header.modify(
-        _.maxZoom).setTo(maxZoom.min(f.header.maxZoom)).modify(_.minLon).setTo((b.minLon: _root_.scala.Double)).modify(_.minLat).setTo((b.minLat: _root_.scala.Double)).modify(_.maxLon).setTo((b.maxLon: _root_.scala.Double)).modify(_.maxLat).setTo((b.maxLat: _root_.scala.Double)).modify(_.centerLon).setTo(((b.minLon + b.maxLon) / 2: _root_.scala.Double)).modify(_.centerLat).setTo(((b.minLat + b.maxLat) / 2: _root_.scala.Double)).modify(_.centerZoom).setTo(maxZoom.min(f.header.maxZoom) / 2
-      ),
+      f.header
+        .modify(_.maxZoom)
+        .setTo(PmTiles.Zoom(maxZoom.value.min(f.header.maxZoom.value)))
+        .modify(_.minLon)
+        .setTo(PmTiles.Header.MinLon(b.minLon.value))
+        .modify(_.minLat)
+        .setTo(PmTiles.Header.MinLat(b.minLat.value))
+        .modify(_.maxLon)
+        .setTo(PmTiles.Header.MaxLon(b.maxLon.value))
+        .modify(_.maxLat)
+        .setTo(PmTiles.Header.MaxLat(b.maxLat.value))
+        .modify(_.centerLon)
+        .setTo(PmTiles.Header.CenterLon((b.minLon.value + b.maxLon.value) / 2))
+        .modify(_.centerLat)
+        .setTo(PmTiles.Header.CenterLat((b.minLat.value + b.maxLat.value) / 2))
+        .modify(_.centerZoom)
+        .setTo(PmTiles.Zoom(maxZoom.value.min(f.header.maxZoom.value) / 2)),
       meta
     )
     scribe.info(s"$out: ${w.tileCount} tiles, $size bytes")

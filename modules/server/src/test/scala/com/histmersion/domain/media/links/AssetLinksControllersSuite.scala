@@ -7,6 +7,7 @@ import com.histmersion.api.aliases.AliasKinds
 import com.histmersion.domain.media.{MediaState, MediaStoreSuite}
 import com.histmersion.domain.media.assets.{AssetService, NewFigure}
 import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.util.identity.AliasTable
 import com.histmersion.api.aliases.AliasKind
 
 import java.util.concurrent.atomic.AtomicReference
@@ -18,16 +19,16 @@ import com.histmersion.api.media.AssetLink
 class AssetLinksControllersSuite extends munit.FunSuite:
 
   private val renamed = Map(
-    (AliasKinds.SourceRecords, "zqold") -> "zqnew2001_x",
-    (AliasKinds.PlaceRecords, "zq_oldplace") -> "zq_place"
+    (AliasKinds.SourceRecords, AliasTable.Id("zqold")) -> AliasTable.Id("zqnew2001_x"),
+    (AliasKinds.PlaceRecords, AliasTable.Id("zq_oldplace")) -> AliasTable.Id("zq_place")
   )
-  private def current(k: AliasKind, id: String) = renamed.getOrElse((k, id), id)
+  private def current(k: AliasKind, id: AliasTable.Id) = renamed.getOrElse((k, id), id)
 
   private def controllers(gate: WriteGate = WriteGate()) =
     val state = AtomicReference(MediaState.empty)
     val _ = AssetService
       .InMemory(state, MediaStoreSuite.Ticking())
-      .addFigures(com.histmersion.domain.library.Citekey("zqnew2001_x"), List(NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("a.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), Array[Byte](1), None, None)))
+      .addFigures(com.histmersion.domain.library.Citekey("zqnew2001_x"), List(NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("a.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), NewFigure.Bytes(Array[Byte](1)), None, None)))
     AssetLinksControllers(AssetLinkService.InMemory(state), current, gate)
 
   test("old identifiers resolved on a write and a read; a missing link not found"):
@@ -44,5 +45,5 @@ class AssetLinksControllersSuite extends munit.FunSuite:
     val held = gate.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(
       Right((c.create(AssetLink.Put(com.histmersion.api.library.Citekey("zqold"), com.histmersion.api.exchange.Bundle.Asset.FileName("a.png"), com.histmersion.api.media.AssetRelation.Wire("depicts"), com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("zq_x"))), c.delete(com.histmersion.domain.media.links.AssetLinkService.LinkId(1L))))
     )
-    val (a, b) = held.fold(e => fail(e.message), identity)
+    val (a, b) = held.fold(e => fail(e.message.value), identity)
     assert(a.isLeft && b.isLeft, (a, b))

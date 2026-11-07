@@ -4,11 +4,16 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.config.{AcquireConfig, AppConfig, LoadedConfig}
+import com.histmersion.config.{AcquireConfig, AppConfig, DbConfig, LoadedConfig}
+import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.{FetchChain, Generation, HttpAnswer, HttpTransport, PolicyHttp}
 import com.histmersion.server.Deps
 import com.histmersion.domain.library.acquisition.*
 import com.histmersion.api.library.WorkRef
+import com.histmersion.domain.library.ArchiveId
+import com.histmersion.domain.library.search.Search
+import com.histmersion.util.plugins.Plugin
+import scala.collection.immutable.ListMap
 import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
 
@@ -33,24 +38,26 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
 
   private lazy val scratch =
     val b = AppConfig.load()
-    ScratchDatabases("archive_traffic", b.db.modify(_.url).setTo(testDb.get))
+    ScratchDatabases("archive_traffic", b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   override protected def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 
-  private def json(s: String): Either[String, HttpAnswer] =
-    Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> "application/json"), s.getBytes(UTF_8)))
-  private val notFound: Either[String, HttpAnswer] =
-    Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(404), Map("content-type" -> "text/plain"), "not found".getBytes(UTF_8)))
+  private val ContentType = CoreQuota.HeaderName("content-type")
 
-  final private class Wire(routes: PartialFunction[String, Either[String, HttpAnswer]]) extends HttpTransport:
+  private def json(s: String): Either[HttpTransport.Problem, HttpAnswer] =
+    Right(HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> CoreQuota.HeaderValue("application/json")), HttpAnswer.Body(s.getBytes(UTF_8))))
+  private val notFound: Either[HttpTransport.Problem, HttpAnswer] =
+    Right(HttpAnswer(HttpAnswer.Code(404), Map(ContentType -> CoreQuota.HeaderValue("text/plain")), HttpAnswer.Body("not found".getBytes(UTF_8))))
+
+  final private class Wire(routes: PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]]) extends HttpTransport:
     val out = StringBuilder()
-    def get(url: String, headers: Map[String, String]): Either[String, HttpAnswer] =
-      val answer = routes.applyOrElse(url, (_: String) => notFound)
+    def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[HttpTransport.Problem, HttpAnswer] =
+      val answer = routes.applyOrElse(url.value, (_: String) => notFound)
       out ++= s"GET $url\n"
-      headers.toList.sortBy(_._1.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
+      headers.toList.sortBy(_._1.value.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
       out ++= s"  -> ${answer.fold(e => s"error $e", a => a.code.toString)}\n"
       answer
 
-  private def routes(c: AcquireConfig): PartialFunction[String, Either[String, HttpAnswer]] =
+  private def routes(c: AcquireConfig): PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]] =
     val base = c.archiveOrg.url
     {
       case u if u.startsWith(s"$base/advancedsearch.php") =>
@@ -74,10 +81,10 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
         )
       case u if u.startsWith(s"$base/download/zqbook/zqbook.epub") =>
         Right(
-          HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> "application/epub+zip"), ("PK epub " + ("e" * 20480)).getBytes(UTF_8))
+          HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> CoreQuota.HeaderValue("application/epub+zip")), HttpAnswer.Body(("PK epub " + ("e" * 20480)).getBytes(UTF_8)))
         )
       case u if u.startsWith(s"$base/download/zqbook/zqbook.pdf") =>
-        Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> "application/pdf"), ("%PDF-1.4\n" + ("p" * 20480)).getBytes(UTF_8)))
+        Right(HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> CoreQuota.HeaderValue("application/pdf")), HttpAnswer.Body(("%PDF-1.4\n" + ("p" * 20480)).getBytes(UTF_8))))
     }
 
   private val Text =
@@ -88,11 +95,11 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
     val loaded: LoadedConfig =
       AppConfig
         .loadWithUserText(ConfigFactory.parseMap(Map.empty[String, String].asJava), Text)
-        .fold(e => fail(e), identity)
+        .fold(e => fail(e.value), identity)
     val ds = scratch("run")
     val spool = Files.createTempDirectory("histmersion-archive-spool-")
     val app = loaded.config.modify(
-      _.db).setTo(loaded.config.db.modify(_.url).setTo(scratch.urlOf("archive_traffic_run_test"))).modify(_.acquire).setTo(loaded.config.acquire.modify(_.spoolDir).setTo(spool.toString)
+      _.db).setTo(loaded.config.db.modify(_.url).setTo(scratch.urlOf("archive_traffic_run_test"))).modify(_.acquire).setTo(loaded.config.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(spool.toString))
     )
     val wire = Wire(routes(app.acquire))
     val g: Generation = ServerPlugins.load(loaded, transport = _ => wire, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
@@ -104,14 +111,14 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
       sb ++= s"## $name\n" + wire.out.result() + a + "\n\n"
     def show[A: io.circe.Encoder](r: Either[Api.Error, A]): String =
       r.fold(e => s"refused: ${e.message}", _.asJson.spaces2)
-    step("archive search bronze")(show(surface.search("bronze", None)))
-    step("archive search bronze --rows 2")(show(surface.search("bronze", Some(2))))
-    step("archive search (blank)")(show(surface.search("  ", None)))
-    step("archive info zqbook")(show(surface.info("zqbook")))
+    step("archive search bronze")(show(surface.search(Search.Query("bronze"), None)))
+    step("archive search bronze --rows 2")(show(surface.search(Search.Query("bronze"), Some(CollectionsService.Limit(2)))))
+    step("archive search (blank)")(show(surface.search(Search.Query("  "), None)))
+    step("archive info zqbook")(show(surface.info(ArchiveId("zqbook"))))
     step("archive info https://archive.org/details/zqbook/page/2")(
-      show(surface.info("https://archive.org/details/zqbook/page/2"))
+      show(surface.info(ArchiveId("https://archive.org/details/zqbook/page/2")))
     )
-    step("archive info zqgone")(show(surface.info("zqgone")))
+    step("archive info zqgone")(show(surface.info(ArchiveId("zqgone"))))
     step("archive import zqlent")(show(surface.importItem(ArchiveImportRequest(com.histmersion.api.library.ArchiveImportRequest.Id("zqlent")))))
     step("archive import zqnofile")(show(surface.importItem(ArchiveImportRequest(com.histmersion.api.library.ArchiveImportRequest.Id("zqnofile")))))
     step("archive import zqbook --format pdf --citekey zqarch_book")(
@@ -136,31 +143,31 @@ object ArchiveTrafficSuite:
 
   /** The archive.org operations as the server runs them, over the generation `g` (built on `wire`). */
   final case class Surface(
-      search: (String, Option[Int]) => Either[Api.Error, ArchiveSearchResult],
-      info: String => Either[Api.Error, ArchiveItem],
+      search: (Search.Query, Option[CollectionsService.Limit]) => Either[Api.Error, ArchiveSearchResult],
+      info: ArchiveId => Either[Api.Error, ArchiveItem],
       importItem: ArchiveImportRequest => Either[Api.Error, Ingest.Report]
   )
 
   def surface(app: AppConfig, ds: javax.sql.DataSource, g: Generation, wire: HttpTransport): Surface =
     val (chain, _) =
       FetchChain.of(
-        g.registries.sourceFetchers,
-        app.acquire.chainIds,
-        app.acquire.allowUnauthorised,
-        plugins = g.registered
+        ListMap.from(g.registries.sourceFetchers.toList.flatMap((k, f) => Plugin.Id.option(k.value).map(_ -> f))),
+        app.acquire.chainIds.flatMap(c => Plugin.Id.option(c.value)),
+        FetchChain.AllowUnauthorised(app.acquire.allowUnauthorised.value),
+        plugins = g.registered.flatMap(i => Plugin.Id.option(i.value))
       )
     val none = new DiscoveryClient:
-      def search(q: String, since: Option[Int], sort: Option[String], limit: Int) = Left("not used")
-      def meta(doi: String) = Left("not used")
-      def references(doi: String) = Left("not used")
-      def updates(doi: String) = Left("not used")
+      def search(query: Search.Query, since: Option[com.histmersion.Year], sort: Option[DiscoveryClient.SearchSort], limit: DiscoveryClient.SearchLimit) = Left(DiscoveryClient.Problem("not used"))
+      def meta(doi: com.histmersion.domain.library.Doi) = Left(DiscoveryClient.Problem("not used"))
+      def references(doi: com.histmersion.domain.library.Doi) = Left(DiscoveryClient.Problem("not used"))
+      def updates(doi: com.histmersion.domain.library.Doi) = Left(DiscoveryClient.Problem("not used"))
     val deps = Deps(app, ds)
     val h = com.histmersion.server.AcquisitionTesting.controllers(
       deps,
       none,
-      new CitationsClient { def citing(w: WorkRef, s: Option[Int], l: Int) = Left("not used") },
+      new CitationsClient { def citing(w: WorkRef, s: Option[com.histmersion.Year], l: CitationsClient.CitingLimit) = Left(CitationsClient.Problem("not used")) },
       chain,
-      new WikiClient { def refs(url: String) = Left("not used") },
+      new WikiClient { def refs(url: WikiClient.ArticleUrl) = Left(WikiClient.Problem("not used")) },
       new RetractionWatchClient { def csv() = Left(com.histmersion.domain.library.acquisition.RetractionWatchClient.Problem("not used")) },
       com.histmersion.server.AcquisitionTesting.skeleton(deps)
     )
@@ -171,7 +178,7 @@ object ArchiveTrafficSuite:
       java.util.concurrent.atomic.AtomicReference(Nil),
       library,
       () => g.registries.sourceCollections,
-      app.acquire.defaults.archiveRows.value
+      CollectionsService.Limit(app.acquire.defaults.archiveRows.value)
     )
     Surface(
       service.archiveSearch,

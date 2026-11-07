@@ -5,54 +5,60 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.{Api, Write}
 import com.histmersion.domain.media.{MediaStores, MediaStoreSuite}
 import com.histmersion.domain.media.MediaRole
+import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.api.media.{AssetKind, AssetPatch, MediaProvider}
+import com.histmersion.domain.catalogue.evidence.EventMatcher
 
 /** What the pictures' service answers, the same on the database and in memory. */
 abstract class AssetServiceContract extends MediaStoreSuite:
 
-  private val Ck = "zqas2001_x"
+  private val Ck = com.histmersion.domain.library.Citekey("zqas2001_x")
+  private val ImageRole = MediaRole.Wire(MediaRole.Image)
+  private val LocatorMapRole = MediaRole.Wire(MediaRole.LocatorMap)
+  private val CoverRole = MediaRole.Wire(MediaRole.Cover)
   private def bytes(tag: String): Array[Byte] = Array[Byte](-1, -40, -1) ++ tag.getBytes("UTF-8")
-  private def fig(name: String, tag: String) = NewFigure(name, com.histmersion.domain.media.assets.NewFigure.Mime("image/jpeg"), bytes(tag), Some(com.histmersion.domain.media.assets.NewFigure.Width(10)), Some(com.histmersion.domain.media.assets.NewFigure.Height(8)))
+  private def figureBytes(tag: String): NewFigure.Bytes = NewFigure.Bytes(bytes(tag))
+  private def fig(name: NewFigure.Name, tag: String) = NewFigure(name, com.histmersion.domain.media.assets.NewFigure.Mime("image/jpeg"), figureBytes(tag), Some(com.histmersion.domain.media.assets.NewFigure.Width(10)), Some(com.histmersion.domain.media.assets.NewFigure.Height(8)))
 
-  private def picture(key: String, license: String = "CC0-1.0", kind: Option[String] = Some(AssetKind.Photo)) =
+  private def picture(key: ProviderAsset.Key, license: ProviderAsset.License = ProviderAsset.License("CC0-1.0"), kind: Option[ProviderAsset.Kind] = Some(ProviderAsset.Kind(AssetKind.Photo))) =
     ProviderAsset(
       com.histmersion.domain.media.assets.ProviderAsset.Provider("zq-provider"),
       key,
-      s"zq-$key.jpg",
+      ProviderAsset.Name(s"zq-$key.jpg"),
       com.histmersion.domain.media.assets.ProviderAsset.Mime("image/jpeg"),
-      bytes(key),
+      ProviderAsset.Bytes(bytes(key.value)),
       Some(com.histmersion.domain.media.assets.ProviderAsset.Width(40)),
       Some(com.histmersion.domain.media.assets.ProviderAsset.Height(30)),
-      Some(bytes(s"thumb $key")),
+      Some(ProviderAsset.Thumb(bytes(s"thumb $key"))),
       Some(com.histmersion.domain.media.assets.ProviderAsset.ThumbMime("image/jpeg")),
       Some(com.histmersion.domain.media.assets.ProviderAsset.ThumbWidth(4)),
       Some(com.histmersion.domain.media.assets.ProviderAsset.ThumbHeight(3)),
       license,
       Some(com.histmersion.domain.media.assets.ProviderAsset.LicenseUrl("https://creativecommons.org/publicdomain/zero/1.0/")),
       Some(com.histmersion.domain.media.assets.ProviderAsset.Author("Zq")),
-      s"Zq picture $key",
-      s"https://zq.example/$key",
+      ProviderAsset.Credit(s"Zq picture $key"),
+      ProviderAsset.SourceUrl(s"https://zq.example/$key"),
       None,
       kind
     )
 
   stest("a source's figures: one per name and bytes, listed by name, read, counted; replaced, a moved one renamed") {
     s =>
-      s.source(Ck)
+      s.source(Ck.value)
       val a = s.assets
-      assertEquals(a.addFigures(Ck, List(fig("b.jpg", "2"), fig("a.jpg", "1"), fig("again.jpg", "1"))), 2)
-      assertEquals(a.addFigures(Ck, List(fig("a.jpg", "3"))), 1)
+      assertEquals(a.addFigures(Ck, List(fig(NewFigure.Name("b.jpg"), "2"), fig(NewFigure.Name("a.jpg"), "1"), fig(NewFigure.Name("again.jpg"), "1"))), 2)
+      assertEquals(a.addFigures(Ck, List(fig(NewFigure.Name("a.jpg"), "3"))), 1)
       assertEquals(
         a.figures(Ck).map(f => (f.name, f.sha256)),
-        List("a.jpg" -> NewFigure.sha256(bytes("1")), "b.jpg" -> NewFigure.sha256(bytes("2")))
+        List("a.jpg" -> NewFigure.sha256(figureBytes("1")), "b.jpg" -> NewFigure.sha256(figureBytes("2")))
       )
       assertEquals(a.figureCount(Ck), 2)
-      assertEquals(a.figure(Ck, com.histmersion.domain.media.assets.AssetService.AssetName("a.jpg")).map((m, b) => (m, b.toList)), Some(("image/jpeg", bytes("1").toList)))
+      assertEquals(a.figure(Ck, com.histmersion.domain.media.assets.AssetService.AssetName("a.jpg")).map((m, b) => (m, b.value.toList)), Some(("image/jpeg", bytes("1").toList)))
       assertEquals(a.figure(Ck, com.histmersion.domain.media.assets.AssetService.AssetName("nope.jpg")), None)
-      assertEquals(a.replaceFigures(Ck, List(fig("c.jpg", "2"), fig("a.jpg", "4"))), 2)
+      assertEquals(a.replaceFigures(Ck, List(fig(NewFigure.Name("c.jpg"), "2"), fig(NewFigure.Name("a.jpg"), "4"))), 2)
       assertEquals(
         a.figures(Ck).map(f => (f.name, f.sha256)),
-        List("a.jpg" -> NewFigure.sha256(bytes("4")), "c.jpg" -> NewFigure.sha256(bytes("2")))
+        List("a.jpg" -> NewFigure.sha256(figureBytes("4")), "c.jpg" -> NewFigure.sha256(figureBytes("2")))
       )
       assertEquals(
         a.sourceFigures(Ck).map(f => (f.name, f.width, f.hasThumb)),
@@ -63,9 +69,9 @@ abstract class AssetServiceContract extends MediaStoreSuite:
   stest(
     "a figure described and patched: kind, caption, licence, point, a period bound by bound; an inverted one refused"
   ) { s =>
-    s.source(Ck)
+    s.source(Ck.value)
     val a = s.assets
-    val _ = a.addFigures(Ck, List(fig("a.jpg", "1")))
+    val _ = a.addFigures(Ck, List(fig(NewFigure.Name("a.jpg"), "1")))
     assertEquals(
       a.patch(Ck, com.histmersion.domain.media.assets.AssetService.AssetName("nope.jpg"), AssetPatch(caption = Some(com.histmersion.api.media.MediaItem.Caption("x")))).left.map(_.code),
       Left(Some(Write.CodeNotFound))
@@ -76,8 +82,8 @@ abstract class AssetServiceContract extends MediaStoreSuite:
       AssetPatch(
         kind = Some(com.histmersion.api.media.MediaItem.Kind("plan")),
         caption = Some(com.histmersion.api.media.MediaItem.Caption("A plan")),
-        lat = Some(40.0),
-        lon = Some(34.5),
+        lat = Some(Latitude(40.0)),
+        lon = Some(Longitude(34.5)),
         periodStart = Some(com.histmersion.api.catalogue.Year(-1600L))
       )
     )
@@ -96,10 +102,10 @@ abstract class AssetServiceContract extends MediaStoreSuite:
 
   stest("a provider's picture: stored once under its key, its kind kept, its rights re-read, a thumbnail set") { s =>
     val a = s.assets
-    val (uid, fresh) = a.save(picture("k1", license = ""), (com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zq_nowhere")))
+    val (uid, fresh) = a.save(picture(ProviderAsset.Key("k1"), license = ProviderAsset.License("")), (com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zq_nowhere")))
     assert(fresh)
     assertEquals(a.known(com.histmersion.domain.media.assets.AssetService.Provider("zq-provider"), List(com.histmersion.domain.media.assets.MediaItemRow.ProviderKey("k1"), com.histmersion.domain.media.assets.MediaItemRow.ProviderKey("k2"))), Map("k1" -> Known(uid, None)))
-    val (again, inserted) = a.save(picture("k1", kind = Some(AssetKind.Map)), (com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zq_nowhere")))
+    val (again, inserted) = a.save(picture(ProviderAsset.Key("k1"), kind = Some(ProviderAsset.Kind(AssetKind.Map))), (com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zq_nowhere")))
     assertEquals((again, inserted), (uid, false))
     assertEquals(
       a.show(uid).map(i => (i.kind, i.license, i.provider, i.providerKey)),
@@ -110,23 +116,23 @@ abstract class AssetServiceContract extends MediaStoreSuite:
       a.show(uid).map(i => (i.license, i.licenseUrl, i.author, i.credit)),
       Some((Some("CC-BY-4.0"), None, Some("Ann"), Some("Ann, CC BY")))
     )
-    assertEquals(a.thumb(uid).map((m, b) => (m, b.toList)), Some(("image/jpeg", bytes("thumb k1").toList)))
-    a.setThumb(uid, bytes("t2"), com.histmersion.domain.media.assets.ProviderAsset.ThumbMime("image/png"), Some(com.histmersion.domain.media.assets.ProviderAsset.ThumbWidth(2)), None)
-    assertEquals(a.thumb(uid).map((m, b) => (m, b.toList)), Some(("image/png", bytes("t2").toList)))
-    assertEquals(a.file(uid).map(_._2.toList), Some(bytes("k1").toList))
-    assert(a.show(uid).flatMap(_.retrievedAt).exists(_.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z")))
+    assertEquals(a.thumb(uid).map((m, b) => (m, b.value.toList)), Some(("image/jpeg", bytes("thumb k1").toList)))
+    a.setThumb(uid, ProviderAsset.Thumb(bytes("t2")), com.histmersion.domain.media.assets.ProviderAsset.ThumbMime("image/png"), Some(com.histmersion.domain.media.assets.ProviderAsset.ThumbWidth(2)), None)
+    assertEquals(a.thumb(uid).map((m, b) => (m, b.value.toList)), Some(("image/png", bytes("t2").toList)))
+    assertEquals(a.file(uid).map(_._2.value.toList), Some(bytes("k1").toList))
+    assert(a.show(uid).flatMap(_.retrievedAt).exists(_.value.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z")))
     assertEquals(a.show(com.histmersion.domain.media.assets.AssetService.AssetUid("00000000-0000-0000-0000-000000000000")), None)
   }
 
   stest("where pictures are shown: a link made once and updated, a source's picture replaced in its role, the cards") {
     s =>
-      s.source(Ck)
+      s.source(Ck.value)
       val a = s.assets
-      val (p1, _) = a.save(picture("p1"), (com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zq_x")))
-      val (p2, _) = a.save(picture("p2"), (com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zq_x")))
-      assert(a.link(p2, com.histmersion.domain.media.assets.AssetService.TargetType("place"), com.histmersion.domain.media.assets.AssetService.TargetId("zq_x"), MediaRole.LocatorMap, None, None, com.histmersion.domain.media.assets.AssetService.LinkRank(0), None))
-      assert(a.link(p1, com.histmersion.domain.media.assets.AssetService.TargetType("place"), com.histmersion.domain.media.assets.AssetService.TargetId("zq_x"), MediaRole.Image, Some(com.histmersion.domain.media.assets.AssetService.LinkProperty("P18")), Some(com.histmersion.domain.media.assets.AssetService.LinkItem("Q1")), com.histmersion.domain.media.assets.AssetService.LinkRank(1), None))
-      assert(!a.link(p1, com.histmersion.domain.media.assets.AssetService.TargetType("place"), com.histmersion.domain.media.assets.AssetService.TargetId("zq_x"), MediaRole.Image, Some(com.histmersion.domain.media.assets.AssetService.LinkProperty("P18")), Some(com.histmersion.domain.media.assets.AssetService.LinkItem("Q1")), com.histmersion.domain.media.assets.AssetService.LinkRank(0), Some(com.histmersion.domain.media.imports.MediaMatch.Basis("its own picture"))))
+      val (p1, _) = a.save(picture(ProviderAsset.Key("p1")), (com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zq_x")))
+      val (p2, _) = a.save(picture(ProviderAsset.Key("p2")), (com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zq_x")))
+      assert(a.link(p2, com.histmersion.domain.media.assets.AssetService.TargetType("place"), com.histmersion.domain.media.assets.AssetService.TargetId("zq_x"), LocatorMapRole, None, None, com.histmersion.domain.media.assets.AssetService.LinkRank(0), None))
+      assert(a.link(p1, com.histmersion.domain.media.assets.AssetService.TargetType("place"), com.histmersion.domain.media.assets.AssetService.TargetId("zq_x"), ImageRole, Some(com.histmersion.domain.media.assets.AssetService.LinkProperty("P18")), Some(com.histmersion.domain.media.assets.AssetService.LinkItem("Q1")), com.histmersion.domain.media.assets.AssetService.LinkRank(1), None))
+      assert(!a.link(p1, com.histmersion.domain.media.assets.AssetService.TargetType("place"), com.histmersion.domain.media.assets.AssetService.TargetId("zq_x"), ImageRole, Some(com.histmersion.domain.media.assets.AssetService.LinkProperty("P18")), Some(com.histmersion.domain.media.assets.AssetService.LinkItem("Q1")), com.histmersion.domain.media.assets.AssetService.LinkRank(0), Some(com.histmersion.domain.media.imports.MediaMatch.Basis("its own picture"))))
       assertEquals(
         a.thumbs(com.histmersion.domain.media.assets.AssetService.TargetType("place"), com.histmersion.domain.media.assets.AssetService.TargetId("zq_x"), com.histmersion.domain.media.assets.AssetService.Limit(4)).map(t => (t.uid, t.role)),
         List(p1 -> MediaRole.Image, p2 -> MediaRole.LocatorMap)
@@ -136,26 +142,26 @@ abstract class AssetServiceContract extends MediaStoreSuite:
         a.show(p1).map(_.targets.map(t => (t.targetId, t.role, t.basis))),
         Some(List(("zq_x", MediaRole.Image, Some("its own picture"))))
       )
-      a.setSourcePicture(Ck, p1, MediaRole.Cover, Some(com.histmersion.domain.media.assets.AssetService.LinkProperty("calibre")))
-      a.setSourcePicture(Ck, p2, MediaRole.Cover, Some(com.histmersion.domain.media.assets.AssetService.LinkProperty("calibre")))
-      assertEquals(a.sourcePicture(Ck, MediaRole.Cover), Some((p2, "p2")))
-      assertEquals(a.thumbs(com.histmersion.domain.media.assets.AssetService.TargetType("source"), Ck, com.histmersion.domain.media.assets.AssetService.Limit(4)).map(_.uid), List(p2))
-      assertEquals(a.placeThumbs(com.histmersion.domain.catalogue.Place.Id("zq_nowhere"), 3.0, com.histmersion.domain.media.assets.AssetService.Limit(4)), Nil)
+      a.setSourcePicture(Ck, p1, CoverRole, Some(com.histmersion.domain.media.assets.AssetService.LinkProperty("calibre")))
+      a.setSourcePicture(Ck, p2, CoverRole, Some(com.histmersion.domain.media.assets.AssetService.LinkProperty("calibre")))
+      assertEquals(a.sourcePicture(Ck, CoverRole), Some((p2, "p2")))
+      assertEquals(a.thumbs(com.histmersion.domain.media.assets.AssetService.TargetType("source"), com.histmersion.domain.media.assets.AssetService.TargetId(Ck.value), com.histmersion.domain.media.assets.AssetService.Limit(4)).map(_.uid), List(p2))
+      assertEquals(a.placeThumbs(com.histmersion.domain.catalogue.Place.Id("zq_nowhere"), EventMatcher.NearFinding.Km(3.0), com.histmersion.domain.media.assets.AssetService.Limit(4)), Nil)
   }
 
   stest("the list, its facets and the map's pictures: by provider, licence and text; in the span") { s =>
-    s.source(Ck)
+    s.source(Ck.value)
     val a = s.assets
-    val _ = a.addFigures(Ck, List(fig("f1.jpg", "1"), fig("f2.jpg", "2")))
-    val (p1, _) = a.save(picture("p1"), (com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zq_x")))
+    val _ = a.addFigures(Ck, List(fig(NewFigure.Name("f1.jpg"), "1"), fig(NewFigure.Name("f2.jpg"), "2")))
+    val (p1, _) = a.save(picture(ProviderAsset.Key("p1")), (com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zq_x")))
     val _ = a.patch(
       Ck,
       com.histmersion.domain.media.assets.AssetService.AssetName("f1.jpg"),
-      AssetPatch(lat = Some(40.0), lon = Some(34.0), periodStart = Some(com.histmersion.api.catalogue.Year(-1600L)), periodEnd = Some(com.histmersion.api.catalogue.Year(-1500L)))
+      AssetPatch(lat = Some(Latitude(40.0)), lon = Some(Longitude(34.0)), periodStart = Some(com.histmersion.api.catalogue.Year(-1600L)), periodEnd = Some(com.histmersion.api.catalogue.Year(-1500L)))
     )
     val _ = a.patch(Ck, com.histmersion.domain.media.assets.AssetService.AssetName("f2.jpg"), AssetPatch(license = Some(com.histmersion.api.media.MediaItem.License("CC-BY-4.0"))))
     assertEquals(
-      a.list(Api.MediaQuery(provider = Some(MediaProvider.Source)), com.histmersion.domain.media.assets.AssetService.Limit(50)).items.map(_.name),
+      a.list(Api.MediaQuery(provider = Some(MediaProvider.Id(MediaProvider.Source))), com.histmersion.domain.media.assets.AssetService.Limit(50)).items.map(_.name),
       List("f1.jpg", "f2.jpg")
     )
     assertEquals(a.list(Api.MediaQuery(provider = Some(com.histmersion.api.media.MediaProvider.Id("zq-provider"))), com.histmersion.domain.media.assets.AssetService.Limit(50)).items.map(_.uid), List(p1))

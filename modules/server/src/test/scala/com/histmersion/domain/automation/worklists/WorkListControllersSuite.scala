@@ -29,16 +29,16 @@ class WorkListControllersSuite extends munit.FunSuite:
       Left("unknown queue list 'notes' — one of: acquire, tasks, log")
     )
     assertEquals(c.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("tasks"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("  "))).left.map(_.message), Left("queue item text is empty"))
-    assert(c.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("tasks"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("x"), status = Some(com.histmersion.api.automation.Queue.QueueItem.Status("maybe")))).left.exists(_.message.contains("unknown status")))
-    assert(c.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("tasks"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("x"), createdAt = Some(com.histmersion.api.automation.Queue.QueueItem.CreatedAt("yesterday")))).left.exists(_.message.contains("ISO-8601")))
+    assert(c.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("tasks"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("x"), status = Some(com.histmersion.api.automation.Queue.QueueItem.Status("maybe")))).left.exists(_.message.value.contains("unknown status")))
+    assert(c.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("tasks"), QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("x"), createdAt = Some(com.histmersion.api.automation.Queue.QueueItem.CreatedAt("yesterday")))).left.exists(_.message.value.contains("ISO-8601")))
     assertEquals(c.patch(com.histmersion.domain.automation.worklists.QueueItemId(42), QueuePatch(text = Some(com.histmersion.api.automation.Queue.QueueItem.Text(" ")))).left.map(_.message), Left("queue item text is empty"))
     assertEquals(c.delete(com.histmersion.domain.automation.worklists.QueueItemId(42)).left.map(e => (e.message, e.code)), Left(("No queue item #42", Some("not_found"))))
 
   test("an import counts the items and the notes apart; the export renders what was imported"):
     val c = controllers()
-    val file = "# TASKS\n\n## Backlog\n- [ ] read Cline\n- [x] read Kuhrt\n"
+    val file = com.histmersion.api.automation.Queue.QueueItem.Text("# TASKS\n\n## Backlog\n- [ ] read Cline\n- [x] read Kuhrt\n")
     val r =
-      c.importText(com.histmersion.api.automation.Queue.Kind.Label("tasks"), com.histmersion.api.automation.Queue.QueueImport(file)).fold(e => fail(e.message), identity)
+      c.importText(com.histmersion.api.automation.Queue.Kind.Label("tasks"), com.histmersion.api.automation.Queue.QueueImport(file)).fold(e => fail(e.message.value), identity)
     assertEquals((r.list, r.items, r.replaced), ("tasks", 2, 0))
-    assertEquals(c.exportText(com.histmersion.api.automation.Queue.Kind.Label("tasks")).map(_.contains("- [x] read Kuhrt")), Right(true))
+    assertEquals(c.exportText(com.histmersion.api.automation.Queue.Kind.Label("tasks")).map(_.value.contains("- [x] read Kuhrt")), Right(true))
     assertEquals(c.files().map(_._1), Kind.values.toList.map(_.file))
