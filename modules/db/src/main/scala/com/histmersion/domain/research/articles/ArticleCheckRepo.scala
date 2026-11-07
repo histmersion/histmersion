@@ -6,6 +6,7 @@ import com.histmersion.util.database.Sql
 import com.histmersion.util.data.checks.{CheckInput, CheckRun}
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.checks.{FormatField, Lint}
 import com.histmersion.api.research.CritiquePairing
@@ -61,37 +62,50 @@ private[articles] object ArticleCheckRepo:
     case ArticleFormat          => List(articleTextsSql)
     case r                      => projections.get(r).toList
 
-  private def pairs(sql: String)(using DbCon): List[(com.histmersion.domain.research.Slug, com.histmersion.domain.library.Citekey)] =
-    Sql.raw(sql).frag.query[(String, String)].run().toList
+  private def pairs(sql: String)(using DbCon): List[(String, String)] =
+    Sql.raw(Sql.Text(sql)).frag.query[(String, String)].run().toList
 
-  private def triples(sql: String)(using DbCon): List[(com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Edge.Kind.Wire, com.histmersion.domain.library.Citekey)] =
-    Sql.raw(sql).frag.query[(String, String, String)].run().toList
+  private def triples(sql: String)(using DbCon): List[(String, String, String)] =
+    Sql.raw(Sql.Text(sql)).frag.query[(String, String, String)].run().toList
+
+  private def articles(sql: String)(using DbCon): List[(Article.Slug, Article.Body)] =
+    pairs(sql).map((slug, body) => (Article.Slug(slug), Article.Body(body)))
 
   // the stored citekeys and the articles several rules classify, read at most once per run
-  private val StoredCitekeys = CheckInput(Sql.raw(citekeysSql).frag.query[String].run().toSet)
-  private val ArticleRows = CheckInput(pairs(articlesSql))
+  private val StoredCitekeys = CheckInput(Sql.raw(Sql.Text(citekeysSql)).frag.query[String].run().toSet)
+  private val ArticleRows = CheckInput(articles(articlesSql))
 
   /** Whether a citekey is stored — what the formatting rules check a bare citekey against, read once per run. */
-  def storedCitekey(using run: CheckRun)(using DbCon): com.histmersion.domain.library.Citekey => Boolean = ck => run(StoredCitekeys).contains(ck)
+  def storedCitekey(using run: CheckRun)(using DbCon): com.histmersion.domain.library.Citekey => Boolean = ck => run(StoredCitekeys).contains(ck.value)
 
   /** One rule's report, on the run's connection; `format` is the formatting check. */
   def report(r: Rule, format: FormatChecker, maxItems: com.histmersion.domain.research.articles.ArticleCheckRepo.ReportMaxItems)(using run: CheckRun)(using DbCon): LintRuleReport =
-    val items = r.name match
+    val rule: String = r.name.value
+    val items = rule match
       case ArticleFiller           => Article.Lint.articleFiller(run(ArticleRows))
       case ArticleUncitedParagraph => Article.Lint.articleUncitedParagraphs(run(ArticleRows))
       case ArticleCritiquePairing  =>
         val p = pairingCorpusIn()
         Article.Lint.articleCritiquePairing(run(ArticleRows), p.resolve, p.edges, p.work)
-      case ArticleThinSummary => Article.Lint.articleThinSummary(pairs(articleSummariesSql))
-      case ArticleFormat      =>
+      case ArticleThinSummary =>
+        Article.Lint.articleThinSummary(pairs(articleSummariesSql).map((slug, summary) => (Article.Slug(slug), Article.SummaryText(summary))))
+      case ArticleFormat =>
         Lint.formatItems(
           triples(articleTextsSql).flatMap((slug, body, summary) =>
-            List((slug, FormatField.Body, body), (slug, FormatField.Summary, summary))
+            List(
+              (com.histmersion.api.library.Citekey(slug), FormatField.Body, Lint.FormatItemDetail(body)),
+              (com.histmersion.api.library.Citekey(slug), FormatField.Summary, Lint.FormatItemDetail(summary))
+            )
           ),
           format
         )
-      case name => projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
-    Lint.report(r, items, maxItems)
+      case name =>
+        projections
+          .get(name)
+          .toList
+          .flatMap(pairs)
+          .map((ck, detail) => LintItem(com.histmersion.api.library.Citekey(ck), LintItem.Detail(detail)))
+    Lint.report(r, items, Lint.ItemLimit(maxItems.value))
 
   // ── article-critique-pairing ─────────────────────────────────────────────────────────────────
 
@@ -99,44 +113,43 @@ private[articles] object ArticleCheckRepo:
     * source's names and year.
     */
   final case class PairingCorpus(
-      resolve: PairingCorpus.ResolveArg1 => Option[PairingCorpus.ResolveResult],
+      resolve: CritiquePairing.Mention.Key => Option[com.histmersion.api.library.Citekey],
       edges: List[Coverage.Edge],
-      work: PairingCorpus.WorkArg1 => Option[CritiquePairing.Work]
+      work: com.histmersion.api.library.Citekey => Option[CritiquePairing.Work]
   )
-
-  object PairingCorpus:
-    type ResolveArg1 = com.histmersion.domain.library.Citekey
-    val ResolveArg1: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
-    type ResolveResult = com.histmersion.domain.library.Citekey
-    val ResolveResult: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
-    type WorkArg1 = com.histmersion.domain.library.Citekey
-    val WorkArg1: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
 
   private def pairingCorpusIn()(using DbCon): PairingCorpus =
     val names = Sql
-      .raw(sourceNamesSql)
+      .raw(Sql.Text(sourceNamesSql))
       .frag
       .query[(String, List[String], Option[Int])]
       .run()
-      .map((ck, authors, year) =>
-        ck -> CritiquePairing.Work(ck, CritiquePairing.names(ck, Option(authors).getOrElse(Nil)), year)
-      )
+      .map { (ck, authors, year) =>
+        val key = com.histmersion.api.library.Citekey(ck)
+        key -> CritiquePairing.Work(
+          key,
+          CritiquePairing.names(key, Option(authors).getOrElse(Nil).map(com.histmersion.api.library.AuthorName(_))),
+          year.map(y => com.histmersion.api.catalogue.Year(y.toLong))
+        )
+      }
       .toMap
-    val aliases = pairs(sourceAliasesSql).toMap
-    val edges = Sql
-      .raw(disagreementEdgesSql)
-      .frag
-      .query[(String, String, String)]
-      .run()
-      .map((src, kind, dst) => Coverage.Edge(src, kind, dst))
-      .toList
+    val aliases = pairs(sourceAliasesSql)
+      .map((alias, ck) => com.histmersion.api.library.Citekey(alias) -> com.histmersion.api.library.Citekey(ck))
+      .toMap
+    val edges = triples(disagreementEdgesSql).map((src, kind, dst) =>
+      Coverage.Edge(
+        com.histmersion.api.library.Citekey(src),
+        com.histmersion.api.library.Edge.Kind.Wire(kind),
+        com.histmersion.api.library.Citekey(dst)
+      )
+    )
     PairingCorpus(CritiquePairing.resolver(names.keySet, aliases), edges, names.get)
 
   /** One article the pairing repair would change: its token, the repaired body, the hits applied. */
   final case class PairingRepair(
       slug: PairingRepair.Slug,
       updatedAt: Option[PairingRepair.UpdatedAt],
-      body: PairingRepair.Body,
+      body: Article.Body,
       applied: List[CritiquePairing.Hit]
   )
 
@@ -145,8 +158,6 @@ private[articles] object ArticleCheckRepo:
     val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Body = Body.T
-    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The mechanical pairing repairs of every article ([[CritiquePairing.repair]]) — computed, not written:
     * `histmersion lint --rule article-critique-pairing --fix` writes each through the article patch, guarded by its
@@ -155,10 +166,11 @@ private[articles] object ArticleCheckRepo:
   def pairingRepairs(using DbCon): List[PairingRepair] =
     val c = pairingCorpusIn()
     sql"""SELECT slug, body, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') FROM articles ORDER BY slug"""
-      .query[(String, String, Option[String])]
+      .query[(PairingRepair.Slug, String, Option[String])]
       .run()
       .toList
-      .flatMap { (slug, body, at) =>
+      .flatMap { (slug, text, at) =>
+        val body = Article.Body(text)
         val (fixed, done) = CritiquePairing.repair(body, CritiquePairing.hits(body, c.resolve, c.edges, c.work))
-        Option.when(done.nonEmpty)(PairingRepair(slug, at, fixed, done))
+        Option.when(done.nonEmpty)(PairingRepair(slug, at.map(PairingRepair.UpdatedAt(_)), fixed, done))
       }

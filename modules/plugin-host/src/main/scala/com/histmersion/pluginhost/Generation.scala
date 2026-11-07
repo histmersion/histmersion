@@ -16,55 +16,37 @@ final case class Generation(
     registries: Registries,
     report: PluginsReport,
     /** What each registered plugin contributed — what a partial rebuild carries over unchanged. */
-    contributions: Map[Generation.ContributionsKey, Registries] = Map.empty,
+    contributions: Map[Plugin.Info.Id, Registries] = Map.empty,
     /** The plugins this build registered afresh (all of them on a full build); the others were carried over from the
       * previous generation (config reload, §3.5).
       */
-    rebuilt: List[Generation.Rebuilt] = Nil,
+    rebuilt: List[Plugin.Info.Id] = Nil,
     /** The registered plugins whose config holds a secret: never carried over, so a reload resolves their secrets again
       * (a rotated password needs only `config reload`, §3.7).
       */
-    withSecrets: Set[Generation.WithSecrets] = Set.empty,
+    withSecrets: Set[Plugin.Info.Id] = Set.empty,
     /** The effective block of each plugin this build registered (its own block over its defaults, as reported). */
-    blocks: Map[Generation.BlocksKey, Config] = Map.empty,
+    blocks: Map[Plugin.Info.Id, Config] = Map.empty,
     /** The secrets each plugin this build registered was given, by reference, as this build resolved them. */
-    secretValues: Map[Generation.SecretValuesKey, Map[Secret.Ref, Generation.SecretValuesValueValue]] = Map.empty
+    secretValues: Map[Plugin.Info.Id, Map[Secret.Ref, PluginHost.SecretValue]] = Map.empty
 ):
   /** A plugin's status and contributions, to carry into the next generation unchanged. */
-  def carry(id: com.histmersion.util.plugins.Plugin.Id): Option[(PluginStatus, Registries)] =
-    report.plugins.find(_.id == id).map(st => st -> contributions.getOrElse(id, Registries.empty))
+  def carry(id: Plugin.Info.Id): Option[(PluginStatus, Registries)] =
+    report.plugins.find(_.id.value == id.value).map(st => st -> contributions.getOrElse(id, Registries.empty))
 
   /** The plugins registered in this generation (afresh or carried over). */
-  def registered: Set[com.histmersion.util.plugins.Plugin.Id] = contributions.keySet
+  def registered: Set[Plugin.Info.Id] = contributions.keySet
 
   /** The value of the secret the setting `key` of the registered plugin `pluginId` refers to, as this generation
     * resolved it for that plugin; `None` when the setting holds no secret reference (or the plugin is not registered).
     */
-  def secret(pluginId: com.histmersion.util.plugins.Plugin.Id, key: com.histmersion.pluginhost.Generation.SecretKey): Option[com.histmersion.pluginhost.Generation.SecretResult] =
+  def secret(pluginId: Plugin.Info.Id, key: PluginHost.ConfigPath): Option[PluginHost.SecretValue] =
     for
       block <- blocks.get(pluginId)
-      text <- Try(block.getString(key)).toOption
-      ref <- Secret.Ref.parse(text).toOption
+      text <- Try(block.getString(key.value)).toOption
+      ref <- Secret.Ref.parse(Secret.ParseText(text)).toOption
       value <- secretValues.get(pluginId).flatMap(_.get(ref))
     yield value
 
 object Generation:
-  type SecretResult = SecretResult.T
-  object SecretResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SecretKey = SecretKey.T
-  object SecretKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type ContributionsKey = ContributionsKey.T
-  object ContributionsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Rebuilt = Rebuilt.T
-  object Rebuilt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithSecrets = WithSecrets.T
-  object WithSecrets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlocksKey = BlocksKey.T
-  object BlocksKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SecretValuesKey = SecretValuesKey.T
-  object SecretValuesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SecretValuesValueValue = SecretValuesValueValue.T
-  object SecretValuesValueValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  val empty: Generation = Generation(Registries.empty, PluginsReport(Spi.Version))
+  val empty: Generation = Generation(Registries.empty, PluginsReport(PluginsReport.SpiVersion(Spi.Version)))

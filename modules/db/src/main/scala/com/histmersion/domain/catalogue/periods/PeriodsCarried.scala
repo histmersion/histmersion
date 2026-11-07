@@ -16,7 +16,7 @@ object PeriodsCarried:
     Bundle.Kind.Period,
     TableName("periods"),
     List(RowsIn(ImportStage.Rows, ImportRank(32), PeriodBundleRepo.periodsIn))
-  )(scope => PeriodBundleRepo.periods(scope).toList)(_.updatedAt, (es, ls) => es.modify(_.periods).setTo(ls))
+  )(scope => PeriodBundleRepo.periods(scope).toList)(p => CarriedKind.RecordsClock(p.updatedAt.value), (es, ls) => es.modify(_.periods).setTo(ls))
 
   /** Every kind of the periods. */
   val all: List[CarriedKind] = List(periods)

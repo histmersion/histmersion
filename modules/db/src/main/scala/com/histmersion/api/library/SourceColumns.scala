@@ -5,4 +5,8 @@ import com.histmersion.util.database.Vocab
 
 private[histmersion] object SourceColumns:
   given apiStatus: DbCodec[Source.Status] =
-    Vocab.codec(s => Source.Status.values.find(_.wire.equalsIgnoreCase(s)), _.wire, Source.Status.Unassessed)
+    Vocab.codec(
+      s => Source.Status.values.find(_.wire.value.equalsIgnoreCase(s.value)),
+      e => com.histmersion.WireEnumValues.Wire(e.wire.value),
+      Source.Status.Unassessed
+    )

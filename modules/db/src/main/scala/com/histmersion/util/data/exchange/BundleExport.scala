@@ -35,41 +35,45 @@ object BundleExport:
       val scope = since.fold(BundleScope.All)(BundleScope.Since(_))
       val inst = BundleRepo.instance
       val schema = BundleRepo.schemaVersion
-      val carried = kinds.inBundleOrder.map(k => k.entry.value -> k.out(scope, files))
+      val carried = kinds.inBundleOrder.map(k => k.entry -> k.out(scope, files))
 
       // the first use of a digest is the one read
       val blobs: Map[com.histmersion.Sha256, BlobOut] =
-        carried.flatMap(_._2.blobs).foldLeft(Map.empty[String, BlobOut]) { (m, b) =>
+        carried.flatMap(_._2.blobs).foldLeft(Map.empty[com.histmersion.Sha256, BlobOut]) { (m, b) =>
           if m.contains(b.sha256) then m else m + (b.sha256 -> b)
         }
-      val shas = blobs.keys.toList.sorted
+      val shas = blobs.keys.toList.sortBy(_.value)
       val payloads = carried.map((entry, o) => entry -> o.payload)
-      val listed = payloads.map((p, b) => BundleFormat.fileInfo(p, b))
+      val listed = payloads.map((p, b) => BundleFormat.fileInfo(Bundle.FileInfo.Path(p.value), b.value))
+      val manifestSince = since.map(at => Bundle.Manifest.Since(at.value))
       val manifest = Bundle.Manifest(
-        format = Bundle.Format,
-        formatVersion = Bundle.FormatVersion,
-        schemaVersion = schema.getOrElse("0"),
-        bundleId = BundleFormat.bundleId(inst.id, since, listed, shas),
-        instance = Bundle.Instance(inst.id, inst.label),
-        since = since,
-        asOf = carried.flatMap(_._2.asOf).maxOption,
+        format = Bundle.Manifest.Format(Bundle.Format),
+        formatVersion = Bundle.Manifest.FormatVersion(Bundle.FormatVersion),
+        schemaVersion = Bundle.Manifest.SchemaVersion(schema.getOrElse("0")),
+        bundleId = BundleFormat.bundleId(inst.id, manifestSince, listed, shas),
+        instance = Bundle.Instance(inst.id, inst.label.map(l => Bundle.Instance.Label(l.value))),
+        since = manifestSince,
+        asOf = carried.flatMap(_._2.asOf.map(_.value)).maxOption.map(Bundle.Manifest.AsOf(_)),
         files = listed,
-        blobs = Bundle.Blobs(shas.size, shas.map(blobs(_).size).sum),
+        blobs = Bundle.Blobs(
+          Bundle.Blobs.Count(shas.size),
+          com.histmersion.api.ByteCount(shas.map(blobs(_).size.value).sum)
+        ),
         reference = BundleRepo.reference
       )
 
       val tar = BundleTar.Writer(out)
       val written =
         for
-          _ <- tar.bytes(Bundle.ManifestPath, BundleFormat.manifestBytes(manifest))
-          _ <- payloads.foldLeft[Either[String, Unit]](Right(()))((acc, pb) =>
-            acc.flatMap(_ => tar.bytes(pb._1, pb._2))
+          _ <- tar.bytes(BundleTar.Entry.Name(Bundle.ManifestPath), BundleFormat.manifestBytes(manifest))
+          _ <- payloads.foldLeft[Either[BundleTar.Problem, Unit]](Right(()))((acc, pb) =>
+            acc.flatMap(_ => tar.bytes(BundleTar.Entry.Name(pb._1.value), pb._2.value))
           )
-          _ <- shas.foldLeft[Either[String, Unit]](Right(())) { (acc, sha) =>
+          _ <- shas.foldLeft[Either[BundleTar.Problem, Unit]](Right(())) { (acc, sha) =>
             acc.flatMap { _ =>
               val b = blobs(sha)
-              tar.entry(Bundle.blobPath(sha), b.size)(b.copy)
+              tar.entry(BundleTar.Entry.Name(Bundle.blobPath(com.histmersion.api.Sha256(sha.value))), b.size)(b.copy)
             }
           }
         yield tar.finish()
-      written.map(_ => manifest)
+      written.left.map(_.value).map(_ => manifest)

@@ -19,22 +19,22 @@ final private[periods] case class PeriodRow(
       id,
       label,
       authority,
-      Period(periodStart, periodEnd),
+      Period(com.histmersion.api.catalogue.Year(periodStart.value.toLong), com.histmersion.api.catalogue.Year(periodEnd.value.toLong)),
       region,
       parentId,
       preset.flatMap(PresetRegion.fromWire)
     )
 
 object PeriodRow:
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Authority = Authority.T
-  object Authority extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Region = Region.T
-  object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParentId = ParentId.T
-  object ParentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Preset = Preset.T
-  object Preset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Id = HistoricalPeriod.Id
+  val Id: HistoricalPeriod.Id.type = HistoricalPeriod.Id
+  type Label = HistoricalPeriod.Label
+  val Label: HistoricalPeriod.Label.type = HistoricalPeriod.Label
+  type Authority = HistoricalPeriod.Authority
+  val Authority: HistoricalPeriod.Authority.type = HistoricalPeriod.Authority
+  type Region = HistoricalPeriod.Region
+  val Region: HistoricalPeriod.Region.type = HistoricalPeriod.Region
+  type ParentId = HistoricalPeriod.ParentId
+  val ParentId: HistoricalPeriod.ParentId.type = HistoricalPeriod.ParentId
+  type Preset = PresetRegion.Wire
+  val Preset: PresetRegion.Wire.type = PresetRegion.Wire

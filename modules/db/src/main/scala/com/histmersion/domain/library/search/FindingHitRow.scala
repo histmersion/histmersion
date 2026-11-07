@@ -22,8 +22,21 @@ final private[search] case class FindingHitRow(
     placeIds: List[FindingHitRow.PlaceIds] = Nil
 ) derives DbCodec:
   def toMatch: Finding.Match =
-    Finding.Match(id, claim, regionName, lon, lat, periodStart, periodEnd, periodName, tags, Nil, places)
-  def assignedPlaceIds: List[com.histmersion.domain.catalogue.Place.Id] = placeIds
+    Finding.Match(
+      Finding.Id(id.value),
+      Finding.Claim(claim.value),
+      regionName.map(r => com.histmersion.api.catalogue.Place.Region(r.value)),
+      lon.map(l => com.histmersion.api.catalogue.Longitude(l.value)),
+      lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)),
+      periodStart.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+      periodEnd.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+      periodName.map(n => Finding.PeriodName(n.value)),
+      tags.map(t => Finding.Tags(t.value)),
+      Nil,
+      places.map(p => Finding.Match.Places(p.value))
+    )
+  def assignedPlaceIds: List[com.histmersion.domain.catalogue.Place.Id] =
+    placeIds.map(id => com.histmersion.domain.catalogue.Place.Id.applyUnsafe(id.value))
 
 object FindingHitRow:
 

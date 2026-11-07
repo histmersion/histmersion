@@ -12,7 +12,7 @@ import com.histmersion.api.library.Rename
 final class AssetLinkSourceReferrer extends SourceReferrer:
 
   override def renamed(rename: SourceRename)(using DbCon): RenamedReferences =
-    val (to, prefix, cut) = (rename.to, rename.findingPrefix, rename.findingPrefix.length)
+    val (to, prefix, cut) = (rename.to, rename.findingPrefix, rename.findingPrefix.value.length)
     RenamedReferences(
       List(
         "asset_links.target_id (finding)" ->
@@ -21,18 +21,18 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
         "asset_links.target_id (source)" ->
           sql"""UPDATE asset_links SET target_id = $to
                 WHERE target_type = 'source' AND target_id = ${rename.from}""".update.run()
-      ).collect { case (t, n) if n > 0 => Rename.Count(t, n) }
+      ).collect { case (t, n) if n > 0 => Rename.Count(Rename.Count.Table(t), Rename.Count.Rows(n)) }
     )
 
   override def report(source: SourceKeys)(using DbCon): DeleteReport =
     val ck = source.citekey
-    def n(q: Frag): com.histmersion.RowCount = q.query[Int].run().headOption.getOrElse(0)
+    def n(q: Frag): com.histmersion.RowCount = com.histmersion.RowCount(q.query[Int].run().headOption.getOrElse(0))
     DeleteReport(counts =
       List(
         DeletePart.Assets -> n(sql"SELECT count(*)::int FROM assets WHERE citekey = $ck"),
         DeletePart.AssetLinks -> n(sql"SELECT count(*)::int FROM asset_links WHERE citekey = $ck"),
-        DeletePart.AssetLinksTo -> linksTo(source).size
-      ).collect { case (p, rows) if rows > 0 => DeleteCount(p, rows) }
+        DeletePart.AssetLinksTo -> com.histmersion.RowCount(linksTo(source).size)
+      ).collect { case (p, rows) if rows.value > 0 => DeleteCount(p, DeleteCount.Rows(rows.value)) }
     )
 
   override def deleting(source: SourceKeys, report: DeleteReport)(using DbCon): Unit =
@@ -44,9 +44,10 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
     val (ck, keys, hash) = (source.citekey, source.keys, source.findingPrefix)
     sql"""SELECT id FROM asset_links WHERE citekey <> $ck
             AND ((target_type = 'source' AND target_id = ANY($keys::text[]))
-              OR (target_type = 'finding' AND left(target_id, ${hash.length}) = $hash))"""
+              OR (target_type = 'finding' AND left(target_id, ${hash.value.length}) = $hash))"""
       .query[Long]
       .run()
       .toList
+      .map(com.histmersion.domain.media.links.AssetLinkRepo.LinkId(_))
 
 

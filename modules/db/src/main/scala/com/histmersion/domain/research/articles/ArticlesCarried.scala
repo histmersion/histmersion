@@ -31,25 +31,23 @@ import hearth.kindlings.optics.syntax.*
   * carry the new slug; the articles before their old slugs and versions; their links in the derived step.
   */
 object ArticlesCarried:
-  type Rank = Rank.T
-  object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Stem = Stem.T
   object Stem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Research = DataOwner("research")
 
-  private def rows(rank: com.histmersion.domain.research.articles.ArticlesCarried.Rank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
+  private def rows(rank: ImportRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, rank, write)
 
   val articles: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.Article](
     Research,
     Bundle.Kind.Article,
     TableName("articles"),
     List(
-      rows(com.histmersion.domain.research.articles.ArticlesCarried.Rank(40))(ArticleBundleRepo.articleRenamesIn),
-      rows(com.histmersion.domain.research.articles.ArticlesCarried.Rank(43))(ArticleBundleRepo.articlesIn),
+      rows(ImportRank(40))(ArticleBundleRepo.articleRenamesIn),
+      rows(ImportRank(43))(ArticleBundleRepo.articlesIn),
       RowsIn(ImportStage.Derived, ImportRank(201), ArticleBundleRepo.articleLinksIn)
     )
-  )(scope => ArticleBundleRepo.articles(scope).toList)(_.updatedAt, (es, ls) => es.modify(_.articles).setTo(ls))
+  )(scope => ArticleBundleRepo.articles(scope).toList)(a => CarriedKind.RecordsClock(a.updatedAt.value), (es, ls) => es.modify(_.articles).setTo(ls))
 
   /** The versions: the lines without their bodies are what a merge compares, the lines with them what an export writes.
     */
@@ -63,7 +61,7 @@ object ArticlesCarried:
       val rs = ArticleBundleRepo.versions(scope).toList
       val bodies = rs.map(r => BlobOut(r.bodySha, r.bodyBytes, ArticleBundleRepo.versionBody(r.uid)))
       val as = rs.map(ArticleBundleRepo.versionLine)
-      CarriedOut(BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line)), as.map(_.updatedAt).maxOption, bodies)
+      CarriedOut(CarriedOut.Payload(BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line))), as.map(_.updatedAt.value).maxOption.map(CarriedOut.AsOf(_)), bodies)
 
     def into(scope: BundleScope, files: ContentStore)(using DbCon): BundleEntities => BundleEntities =
       val as = ArticleBundleRepo.versions(scope).toList.map(ArticleBundleRepo.versionLine)
@@ -76,7 +74,7 @@ object ArticlesCarried:
         files: ContentStore
     ): Option[BlobSink] = ArticleBundleRepo.blobIn(use, writer)
 
-    override val rowsIn: List[RowsIn] = List(rows(com.histmersion.domain.research.articles.ArticlesCarried.Rank(45))(ArticleBundleRepo.mergedVersionsIn))
+    override val rowsIn: List[RowsIn] = List(rows(ImportRank(45))(ArticleBundleRepo.mergedVersionsIn))
 
   /** The entry of a set records own, by its file's stem. */
   private def set(stem: com.histmersion.domain.research.articles.ArticlesCarried.Stem): BundleEntry = BundleEntry(s"entities/$stem.ndjson")
@@ -85,7 +83,7 @@ object ArticlesCarried:
     CarriedKind.owned[com.histmersion.api.exchange.Bundle.ArticleAlias](
       Research,
       set(com.histmersion.domain.research.articles.ArticlesCarried.Stem("article-aliases")),
-      List(rows(com.histmersion.domain.research.articles.ArticlesCarried.Rank(44))(ArticleBundleRepo.articleAliasesIn))
+      List(rows(ImportRank(44))(ArticleBundleRepo.articleAliasesIn))
     )(scope => ArticleBundleRepo.articleAliases(scope).toList)(
       a => Some(a.createdAt),
       (es, ls) => es.modify(_.articleAliases).setTo(ls)

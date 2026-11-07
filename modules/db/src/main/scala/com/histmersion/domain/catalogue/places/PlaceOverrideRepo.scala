@@ -59,7 +59,7 @@ private[places] object PlaceOverrideRepo:
                  coalesce(GeometryType(p.geom) <> 'POINT', false)
           FROM places p WHERE p.id = $id""".query[Row].run().headOption
 
-  private def linked(id: com.histmersion.domain.catalogue.places.BPlaceRow.Id)(using DbCon): List[com.histmersion.domain.catalogue.places.BPlaceRow.Id] =
+  private def linked(id: com.histmersion.domain.catalogue.places.BPlaceRow.Id)(using DbCon): List[String] =
     sql"SELECT finding_id FROM finding_places WHERE place_id = $id".query[String].run().toList
 
   /** Apply `edit` to place `id` and re-match its findings. `Left` when there is no such place, or a reset finds no
@@ -70,7 +70,7 @@ private[places] object PlaceOverrideRepo:
       edit: Place.OverrideEdit,
       toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm
   )(using DbCon): Either[Api.Error, Place.OverrideChanged] =
-    rowOf(id).toRight(Api.Error(s"No place '$id'", Some(Write.CodeNotFound))).flatMap { before =>
+    rowOf(id).toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))).flatMap { before =>
       val had = linked(id)
       val done: Either[Api.Error, Unit] = edit match
         case Place.OverrideEdit.Reset =>
@@ -86,8 +86,8 @@ private[places] object PlaceOverrideRepo:
             case None =>
               Left(
                 Api.Error(
-                  s"'${before.label}' [$id] has no kind, period or point set by hand",
-                  Some(Write.CodeNotFound)
+                  Api.Error.Message(s"'${before.label}' [${id.value}] has no kind, period or point set by hand"),
+                  Some(Api.Error.Code(Write.CodeNotFound))
                 )
               )
             case Some((k, p, su, hadPoint, srcGeom)) =>
@@ -98,9 +98,11 @@ private[places] object PlaceOverrideRepo:
         case Place.OverrideEdit.Put(_, _, _, Some(_)) if before.hasShape =>
           Left(
             Api.Error(
-              s"'${before.label}' [$id] has a shape, not a point — a point set by hand moves only a place " +
-                "known by a point",
-              Some(Write.CodeInvalid)
+              Api.Error.Message(
+                s"'${before.label}' [${id.value}] has a shape, not a point — a point set by hand moves only a place " +
+                  "known by a point"
+              ),
+              Some(Api.Error.Code(Write.CodeInvalid))
             )
           )
         case Place.OverrideEdit.Put(kind, period, reason, point) =>
@@ -169,11 +171,11 @@ private[places] object PlaceOverrideRepo:
     }
 
   private def labelOf(id: com.histmersion.domain.catalogue.places.BPlaceRow.Id)(using DbCon): Option[com.histmersion.domain.catalogue.places.BPlaceRow.Label] =
-    sql"SELECT label FROM places WHERE id = $id".query[String].run().headOption
+    sql"SELECT label FROM places WHERE id = $id".query[com.histmersion.domain.catalogue.places.BPlaceRow.Label].run().headOption
 
-  private def stillLocated(ids: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): com.histmersion.RowCount =
+  private def stillLocated(ids: List[String])(using DbCon): com.histmersion.RowCount =
     sql"""SELECT count(*)::int FROM unnest(${ids.distinct}::text[]) AS f(id)
-          WHERE NOT EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id)""".query[Int].run().head
+          WHERE NOT EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id)""".query[com.histmersion.RowCount].run().head
 
   /** Merge place `from` into `into` ([[PlaceReviewRepo.mergeIn]]: findings, links, children, events, attestations and
     * asset links move, `from` is deleted and stays an old id of `into`, which no seed import re-creates) and match
@@ -181,21 +183,21 @@ private[places] object PlaceOverrideRepo:
     */
   def merge(from: com.histmersion.domain.catalogue.places.BPlaceRow.Id, into: com.histmersion.domain.catalogue.places.BPlaceRow.Id, toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): Either[Api.Error, Place.Gone] =
     (labelOf(from), labelOf(into)) match
-      case (None, _)            => Left(Api.Error(s"No place '$from'", Some(Write.CodeNotFound)))
-      case (_, None)            => Left(Api.Error(s"No place '$into'", Some(Write.CodeNotFound)))
-      case _ if from == into    => Left(Api.Error(com.histmersion.api.Api.Error.Message("a place cannot be merged into itself"), Some(Write.CodeInvalid)))
+      case (None, _)            => Left(Api.Error(Api.Error.Message(s"No place '${from.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      case (_, None)            => Left(Api.Error(Api.Error.Message(s"No place '${into.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      case _ if from == into    => Left(Api.Error(com.histmersion.api.Api.Error.Message("a place cannot be merged into itself"), Some(Api.Error.Code(Write.CodeInvalid))))
       case (Some(fl), Some(il)) =>
         val had = (linked(from) ++ linked(into)).distinct
-        val _ = PlaceReviewRepo.mergeIn(from, into)
+        val _ = PlaceReviewRepo.mergeIn(com.histmersion.domain.catalogue.Place.Id.assume(from.value), com.histmersion.domain.catalogue.Place.Id.assume(into.value))
         val _ = FindingPlaceRepo.materialisePlaces(List(into), toleranceKm)
-        Right(Place.Gone(from, fl, Some(into), Some(il), had.size, linked(into).size, stillLocated(had)))
+        Right(Place.Gone(Place.Id(from.value), Place.Gone.Label(fl.value), Some(Place.Gone.Into(into.value)), Some(Place.Gone.IntoLabel(il.value)), Place.Gone.FindingsBefore(had.size), Place.Gone.FindingsAfter(linked(into).size), Place.Gone.Unlocated(stillLocated(had).value)))
 
   /** Remove place `id` when nothing refers to it — no event, attestation, asset link, child place, name added by hand,
     * nor a finding it is the ONLY place of — and remember the removal, so no seed import brings it back
     * (`place_removals`, V080).
     */
   def remove(id: com.histmersion.domain.catalogue.places.BPlaceRow.Id, reason: Option[com.histmersion.domain.catalogue.places.PlaceOverrideRepo.RemovalReason])(using DbCon): Either[Api.Error, Place.Gone] =
-    labelOf(id).toRight(Api.Error(s"No place '$id'", Some(Write.CodeNotFound))).flatMap { label =>
+    labelOf(id).toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))).flatMap { label =>
       def n(q: Frag) = q.query[Int].run().head
       val refs = List(
         "event(s)" -> n(sql"SELECT count(*)::int FROM events WHERE place_id = $id"),
@@ -215,9 +217,11 @@ private[places] object PlaceOverrideRepo:
       if refs.nonEmpty then
         Left(
           Api.Error(
-            s"'$label' [$id] is referred to by ${refs.map((w, c) => s"$c $w").mkString(", ")} — " +
-              "merge it into the place it is the same as instead, or move those first",
-            Some(Write.CodeInvalid)
+            Api.Error.Message(
+              s"'${label.value}' [${id.value}] is referred to by ${refs.map((w, c) => s"$c $w").mkString(", ")} — " +
+                "merge it into the place it is the same as instead, or move those first"
+            ),
+            Some(Api.Error.Code(Write.CodeInvalid))
           )
         )
       else
@@ -226,7 +230,7 @@ private[places] object PlaceOverrideRepo:
                       ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, reason = EXCLUDED.reason,
                         removed_at = now()""".update.run()
         val _ = sql"DELETE FROM places WHERE id = $id".update.run()
-        Right(Place.Gone(id, label, None, None, had.size, 0, stillLocated(had)))
+        Right(Place.Gone(Place.Id(id.value), Place.Gone.Label(label.value), None, None, Place.Gone.FindingsBefore(had.size), Place.Gone.FindingsAfter(0), Place.Gone.Unlocated(stillLocated(had).value)))
     }
 
   /** The overrides, by place id; `id` narrows to one place. */

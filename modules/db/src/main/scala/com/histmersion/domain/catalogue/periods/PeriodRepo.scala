@@ -7,6 +7,7 @@ import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.util.database.{LikePattern, RangeSql}
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** Named historical periods (`periods`, V016) — the timeline's presets and the PeriodO definitions behind them: the
   * search, the single-period reads and the write path. The period is `int8range '[]'`, so the inclusive upper bound
@@ -27,7 +28,7 @@ private[periods] object PeriodRepo:
 
   def get(id: com.histmersion.domain.catalogue.periods.PeriodRow.Id)(using DbCon): Option[HistoricalPeriod] =
     Sql
-      .of(s"SELECT $columns FROM periods WHERE id = ?", Param.S(id))
+      .of(Sql.OfText(s"SELECT $columns FROM periods WHERE id = ?"), Param.S(Param.S.V(id.value)))
       .frag
       .query[PeriodRow]
       .run()
@@ -36,7 +37,10 @@ private[periods] object PeriodRepo:
 
   def children(id: com.histmersion.domain.catalogue.periods.PeriodRow.Id)(using DbCon): Vector[HistoricalPeriod] =
     Sql
-      .of(s"SELECT $columns FROM periods WHERE parent_id = ? ORDER BY ${RangeSql.start("period")}, label", Param.S(id))
+      .of(
+        Sql.OfText(s"SELECT $columns FROM periods WHERE parent_id = ? ORDER BY ${RangeSql.start("period")}, label"),
+        Param.S(Param.S.V(id.value))
+      )
       .frag
       .query[PeriodRow]
       .run()
@@ -48,9 +52,9 @@ private[periods] object PeriodRepo:
   def search(q: Option[com.histmersion.domain.catalogue.periods.PeriodRepo.SearchText], region: Option[com.histmersion.domain.catalogue.periods.PeriodRow.Region], from: Option[com.histmersion.domain.DeepTime.SignedYear], to: Option[com.histmersion.domain.DeepTime.SignedYear])(using
       DbCon
   ): Vector[HistoricalPeriod] =
-    val text = q.map(_.trim).filter(_.nonEmpty)
+    val text = q.map(_.value.trim).filter(_.nonEmpty)
     val cont = text.map(LikePattern.contains).getOrElse("%")
-    val reg = region.map(_.trim).filter(_.nonEmpty)
+    val reg = region.map(_.value.trim).filter(_.nonEmpty)
     sql"""SELECT ${SqlLiteral(columns)}
           FROM periods
           WHERE ($text::text IS NULL OR label ILIKE $cont ESCAPE '\\')
@@ -59,18 +63,19 @@ private[periods] object PeriodRepo:
                  OR period && int8range($from::bigint, $to::bigint, '[]'))
           ORDER BY ${SqlLiteral(RangeSql.start("period"))}, label""".query[PeriodRow].run().map(_.toPeriod)
 
-  def count(using DbCon): com.histmersion.RowCount = sql"SELECT count(*)::int FROM periods".query[Int].run().head
+  def count(using DbCon): com.histmersion.RowCount =
+    com.histmersion.RowCount(sql"SELECT count(*)::int FROM periods".query[Int].run().head)
 
   /** The periods the web timeline offers as presets (those filed under a region heading). */
   def presetCount(using DbCon): com.histmersion.RowCount =
-    sql"SELECT count(*)::int FROM periods WHERE preset IS NOT NULL".query[Int].run().head
+    com.histmersion.RowCount(sql"SELECT count(*)::int FROM periods WHERE preset IS NOT NULL".query[Int].run().head)
 
   /** Where each of `ids` sits now: every stored id → its parent (`None` = top level). Ids with no row are absent. */
   def placement(ids: List[com.histmersion.domain.catalogue.periods.PeriodRow.Id])(using DbCon): Map[com.histmersion.domain.catalogue.periods.PeriodRow.Id, Option[com.histmersion.domain.catalogue.periods.PeriodRow.Label]] =
     if ids.isEmpty then Map.empty
     else
       sql"SELECT id, parent_id FROM periods WHERE id = ANY($ids::text[])"
-        .query[(String, Option[String])]
+        .query[(com.histmersion.domain.catalogue.periods.PeriodRow.Id, Option[com.histmersion.domain.catalogue.periods.PeriodRow.Label])]
         .run()
         .toMap
 
@@ -91,19 +96,23 @@ private[periods] object PeriodRepo:
                 region = EXCLUDED.region, parent_id = EXCLUDED.parent_id, dataset = EXCLUDED.dataset,
                 preset = coalesce(EXCLUDED.preset, periods.preset)""".update
       }
-      ps.size
+      com.histmersion.RowCount(ps.size)
 
   /** Take every preset that is NOT one of `ids` off the menu (the row itself stays). */
   def retainPresets(ids: List[com.histmersion.domain.catalogue.periods.PeriodRow.Id])(using DbCon): com.histmersion.RowCount =
-    sql"""UPDATE periods SET preset = NULL
+    com.histmersion.RowCount(
+      sql"""UPDATE periods SET preset = NULL
           WHERE preset IS NOT NULL AND NOT (id = ANY($ids::text[]))""".update.run()
+    )
 
   /** Delete the SEED rows that are not among `ids`; a collection's own (`local`) periods are never touched. */
   def deleteSeedExcept(ids: List[com.histmersion.domain.catalogue.periods.PeriodRow.Id])(using DbCon): com.histmersion.RowCount =
-    sql"""DELETE FROM periods WHERE dataset = 'seed' AND NOT (id = ANY($ids::text[]))""".update.run()
+    com.histmersion.RowCount(
+      sql"""DELETE FROM periods WHERE dataset = 'seed' AND NOT (id = ANY($ids::text[]))""".update.run()
+    )
 
   def seedVersion(name: com.histmersion.domain.catalogue.periods.PeriodRepo.SeedVersionName)(using DbCon): Option[com.histmersion.domain.catalogue.periods.PeriodRepo.SeedVersion] =
-    sql"SELECT version FROM seed_versions WHERE name = $name".query[Int].run().headOption
+    sql"SELECT version FROM seed_versions WHERE name = $name".query[Int].run().headOption.map(SeedVersion(_))
 
   def setSeedVersion(name: com.histmersion.domain.catalogue.periods.PeriodRepo.SetSeedVersionName, version: com.histmersion.domain.catalogue.periods.PeriodRepo.SeedVersion)(using DbCon): Unit =
     val _ = sql"""INSERT INTO seed_versions (name, version) VALUES ($name, $version)

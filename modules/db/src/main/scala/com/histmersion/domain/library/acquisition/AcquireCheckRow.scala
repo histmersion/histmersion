@@ -10,8 +10,8 @@ import java.time.Instant
 final case class AcquireCheckRow(
     item: AcquireCheckRow.Item,
     at: Instant,
-    generation: AcquireCheckRow.Generation,
-    outcome: AcquireCheckRow.Outcome,
+    generation: AcquireRecheck.LastCheck.Generation,
+    outcome: AcquireRecheck.Outcome.Wire,
     reason: AcquireCheckRow.Reason,
     checks: AcquireCheckRow.Checks
 ):
@@ -19,16 +19,12 @@ final case class AcquireCheckRow(
     AcquireRecheck.LastCheck(
       at,
       generation,
-      failed = AcquireRecheck.Outcome.parse(outcome).contains(AcquireRecheck.Outcome.Failed)
+      failed = AcquireRecheck.LastCheck.Failed(AcquireRecheck.Outcome.parse(outcome).contains(AcquireRecheck.Outcome.Failed))
     )
 
 object AcquireCheckRow:
   type Item = Item.T
   object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Generation = Generation.T
-  object Generation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Outcome = Outcome.T
-  object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Reason = Reason.T
   object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Checks = Checks.T

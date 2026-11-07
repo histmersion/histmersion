@@ -12,6 +12,10 @@ object AutopilotRepo:
   object Digest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StrategyName = StrategyName.T
   object StrategyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrainSince = DrainSince.T
+  object DrainSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrainedAt = DrainedAt.T
+  object DrainedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
@@ -48,8 +52,8 @@ object AutopilotRepo:
   def get()(using DbCon): Row =
     val _ = sql"INSERT INTO agent_autopilot (id) VALUES (true) ON CONFLICT DO NOTHING".update.run()
     Sql
-      .raw(s"""SELECT enabled, ${at("changed_at")}, changed_by, paused, ${at("last_ensure_at")},
-                       ${at("last_backup_at")}, ${at("last_lint_at")} FROM agent_autopilot WHERE id""")
+      .raw(Sql.RawText(s"""SELECT enabled, ${at("changed_at")}, changed_by, paused, ${at("last_ensure_at")},
+                       ${at("last_backup_at")}, ${at("last_lint_at")} FROM agent_autopilot WHERE id"""))
       .frag
       .query[Row]
       .run()
@@ -89,10 +93,10 @@ object AutopilotRepo:
   def strategy()(using DbCon): Option[(com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName, com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy, com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedAt)] =
     val _ = get()
     Sql
-      .raw(s"""SELECT scheduler_strategy, coalesce(scheduler_by, ''), coalesce(${at("scheduler_at")}, '')
-                FROM agent_autopilot WHERE id AND scheduler_strategy IS NOT NULL""")
+      .raw(Sql.RawText(s"""SELECT scheduler_strategy, coalesce(scheduler_by, ''), coalesce(${at("scheduler_at")}, '')
+                FROM agent_autopilot WHERE id AND scheduler_strategy IS NOT NULL"""))
       .frag
-      .query[(String, String, String)]
+      .query[(StrategyName, Row.ChangedBy, Row.ChangedAt)]
       .run()
       .headOption
 
@@ -106,7 +110,7 @@ object AutopilotRepo:
   /** When the daily approval digest was last written (V101), if ever. */
   def lastDigest()(using DbCon): Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.Digest] =
     val _ = get()
-    Sql.raw(s"SELECT ${at("last_digest_at")} FROM agent_autopilot WHERE id").frag.query[Option[String]].run().head
+    Sql.raw(Sql.RawText(s"SELECT ${at("last_digest_at")} FROM agent_autopilot WHERE id")).frag.query[Option[Digest]].run().head
 
   /** The digest was written at `now`. */
   def digested(now: java.time.Instant)(using DbCon): Unit =
@@ -114,13 +118,13 @@ object AutopilotRepo:
     val _ = sql"UPDATE agent_autopilot SET last_digest_at = $t::timestamptz WHERE id".update.run()
 
   /** Draining (V102): since when, by whom, and when it was first seen drained; None = not draining. */
-  def drain()(using DbCon): Option[(com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy, com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedAt, Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Paused])] =
+  def drain()(using DbCon): Option[(DrainSince, Row.ChangedBy, Option[DrainedAt])] =
     val _ = get()
     Sql
-      .raw(s"""SELECT ${at("drain_since")}, coalesce(drain_by, ''), ${at("drained_at")}
-                FROM agent_autopilot WHERE id AND drain_since IS NOT NULL""")
+      .raw(Sql.RawText(s"""SELECT ${at("drain_since")}, coalesce(drain_by, ''), ${at("drained_at")}
+                FROM agent_autopilot WHERE id AND drain_since IS NOT NULL"""))
       .frag
-      .query[(String, String, Option[String])]
+      .query[(DrainSince, Row.ChangedBy, Option[DrainedAt])]
       .run()
       .headOption
 

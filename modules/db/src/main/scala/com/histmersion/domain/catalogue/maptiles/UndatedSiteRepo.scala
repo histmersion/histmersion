@@ -4,6 +4,7 @@ import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.catalogue.places.{PlaceSql, SiteTypesSql}
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.catalogue.Place
 
 /** The sites with no known date, for the map when a viewer asks for them (V106): every site whose period is open on
@@ -15,13 +16,12 @@ import com.histmersion.domain.catalogue.Place
 private[maptiles] object UndatedSiteRepo:
 
   /** The group of `map_changes` a write to an undated site moves (V106's trigger). */
-  type Group = GroupValue
-  type GroupValue = GroupValue.T
-  object GroupValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Group = Group.T
+  object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CandidatesSiteType = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType
   val CandidatesSiteType: _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType.type = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType
 
-  val Group: com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.Group = com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.Group("undated")
+  val UndatedGroup: Group = Group("undated")
 
   /** A site with no known date that a map draws (a point, an informative name), over a `places` row `p` — word for word
     * the predicate of `places_site_undated`, then the label rule.
@@ -31,21 +31,25 @@ private[maptiles] object UndatedSiteRepo:
 
   private def typed(siteType: Option[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType]): Sql =
     siteType
-      .map(_.trim.toLowerCase)
+      .map(_.value.trim.toLowerCase)
       .filter(_.nonEmpty)
-      .fold(Sql.empty)(t => Sql.of(s" AND ${SiteTypesSql.expr("p")} = ?", Param.S(t)))
+      .fold(Sql.empty)(t => Sql.of(Sql.OfText(s" AND ${SiteTypesSql.expr("p")} = ?"), Param.S(Param.S.V(t))))
 
   /** The undated sites in the box `envelope` (of type `siteType` when one is asked for), but those of `except`, as a
     * tile's candidates ([[TileRepo.cellsSql]]: no dates, each marked `ub`). Pure.
     */
   def candidates(siteType: Option[com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.CandidatesSiteType], envelope: Sql, except: List[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteId] = Nil): Sql =
     Sql.raw(
-      "SELECT p.id AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, NULL::bigint AS ps, NULL::bigint AS pe, true AS ub" +
-        " FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom" +
-        s" ELSE ST_PointOnSurface(p.geom) END AS pt) q WHERE $UndatedSiteSql AND p.geom && "
+      Sql.Text(
+        "SELECT p.id AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, NULL::bigint AS ps, NULL::bigint AS pe, true AS ub" +
+          " FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom" +
+          s" ELSE ST_PointOnSurface(p.geom) END AS pt) q WHERE $UndatedSiteSql AND p.geom && "
+      )
     ) ++ envelope ++
-      Sql.of(" AND p.label !~* ?", Param.S(PlaceSql.UninformativeLabel)) ++ typed(siteType) ++
-      (if except.isEmpty then Sql.empty else Sql.of(" AND NOT (p.id = ANY(?::text[]))", Param.A(except)))
+      Sql.of(Sql.OfText(" AND p.label !~* ?"), Param.S(Param.S.V(PlaceSql.UninformativeLabel))) ++ typed(siteType) ++
+      (if except.isEmpty then Sql.empty
+       else
+         Sql.of(Sql.OfText(" AND NOT (p.id = ANY(?::text[]))"), Param.A(except.map(e => Param.A.V(e.value)))))
 
   /** Every undated site in tile `c`, each alone, but those of `except`. */
   def items(c: TileCoord, siteType: Option[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType], except: List[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteId])(using DbCon): List[TileCell] =
@@ -61,19 +65,21 @@ private[maptiles] object UndatedSiteRepo:
     * Pure.
     */
   def keptSql(c: TileCoord, perSide: com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide, siteType: Option[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType]): Sql =
-    val side = c.side.toDouble
+    val side = c.side.value.toDouble
     val e = TileCoord.Extent
-    val (gx0, gy0) = (c.x * perSide, c.y * perSide)
+    val (gx0, gy0) = (c.x.value * perSide.value, c.y.value * perSide.value)
     Sql.raw(
-      s"SELECT gx, gy, sum(n)::int, 0, (sum(sx) * $side - sum(n) * ${c.x}) * $e, (sum(sy) * $side - sum(n) * ${c.y}) * $e," +
-        " 0::float8, 0::float8, NULL::float8, NULL::float8, min(w), min(s), max(e), max(nn), min(one)" +
-        s" FROM site_undated_cells WHERE z = ${c.z} AND gx >= $gx0 AND gx < ${gx0 + perSide} AND gy >= $gy0 AND gy < ${gy0 + perSide}"
+      Sql.Text(
+        s"SELECT gx, gy, sum(n)::int, 0, (sum(sx) * $side - sum(n) * ${c.x}) * $e, (sum(sy) * $side - sum(n) * ${c.y}) * $e," +
+          " 0::float8, 0::float8, NULL::float8, NULL::float8, min(w), min(s), max(e), max(nn), min(one)" +
+          s" FROM site_undated_cells WHERE z = ${c.z} AND gx >= $gx0 AND gx < ${gx0 + perSide.value} AND gy >= $gy0 AND gy < ${gy0 + perSide.value}"
+      )
     ) ++
       siteType
-        .map(_.trim.toLowerCase)
+        .map(_.value.trim.toLowerCase)
         .filter(_.nonEmpty)
-        .fold(Sql.empty)(t => Sql.of(" AND site_type = ?", Param.S(t))) ++
-      Sql.raw(" GROUP BY gx, gy")
+        .fold(Sql.empty)(t => Sql.of(Sql.OfText(" AND site_type = ?"), Param.S(Param.S.V(t)))) ++
+      Sql.raw(Sql.Text(" GROUP BY gx, gy"))
 
   /** The kept counts of tile `c`'s squares ([[keptSql]]). */
   def kept(c: TileCoord, perSide: com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide, siteType: Option[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType])(using DbCon): List[GridCell] =
@@ -84,20 +90,20 @@ private[maptiles] object UndatedSiteRepo:
     */
   def built()(using DbCon): Option[UndatedBuild] =
     sql"SELECT version, per_side, max_zoom FROM site_undated_build"
-      .query[(Long, Int, Int)]
+      .query[(UndatedBuild.Version, UndatedBuild.PerSide, UndatedBuild.MaxZoom)]
       .run()
       .headOption
       .map((v, p, z) => UndatedBuild(v, p, z))
 
   /** The `undated` group's version now (0 before any write to an undated site). */
   def version()(using DbCon): com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version =
-    sql"SELECT coalesce(sum(weight), 0)::bigint FROM map_changes WHERE grp = $Group".query[Long].run().head
+    sql"SELECT coalesce(sum(weight), 0)::bigint FROM map_changes WHERE grp = $UndatedGroup".query[UndatedBuild.Version].run().head
 
   /** The sites' places on Web Mercator's unit square, each axis held inside it (as [[TileRepo.unitsSql]]), over the
     * columns `lon` and `lat`.
     */
   private val unitSquare: (String, String) =
-    val l = s"radians(greatest(${-TileCoord.MaxLat}, least(${TileCoord.MaxLat}, lat)))"
+    val l = s"radians(greatest(${-TileCoord.MaxLat.value}, least(${TileCoord.MaxLat}, lat)))"
     def held(v: String) = s"least(greatest($v, 0), 0.99999999999)"
     (held("(lon + 180) / 360.0"), held(s"(1 - ln(tan($l) + 1 / cos($l)) / pi()) / 2"))
 
@@ -107,15 +113,17 @@ private[maptiles] object UndatedSiteRepo:
   def rebuildSql(perSide: com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide, maxZoom: com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom): Sql =
     val (mx, my) = unitSquare
     Sql.raw(
-      "INSERT INTO site_undated_cells (z, gx, gy, site_type, n, sx, sy, w, s, e, nn, one)" +
-        " SELECT z.z, floor(m.mx * ((1::bigint << z.z) * " + perSide + "))::bigint, floor(m.my * ((1::bigint << z.z) * " + perSide + "))::bigint," +
-        " m.st, count(*)::int, sum(m.mx), sum(m.my), min(m.lon), min(m.lat), max(m.lon), max(m.lat), min(m.id)" +
-        s" FROM (SELECT id, lon, lat, st, $mx AS mx, $my AS my FROM (SELECT p.id, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat," +
-        s" coalesce(${SiteTypesSql.expr("p")}, '') AS st FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT'" +
-        s" THEN p.geom ELSE ST_PointOnSurface(p.geom) END AS pt) q WHERE $UndatedSiteSql"
+      Sql.Text(
+        "INSERT INTO site_undated_cells (z, gx, gy, site_type, n, sx, sy, w, s, e, nn, one)" +
+          " SELECT z.z, floor(m.mx * ((1::bigint << z.z) * " + perSide + "))::bigint, floor(m.my * ((1::bigint << z.z) * " + perSide + "))::bigint," +
+          " m.st, count(*)::int, sum(m.mx), sum(m.my), min(m.lon), min(m.lat), max(m.lon), max(m.lat), min(m.id)" +
+          s" FROM (SELECT id, lon, lat, st, $mx AS mx, $my AS my FROM (SELECT p.id, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat," +
+          s" coalesce(${SiteTypesSql.expr("p")}, '') AS st FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT'" +
+          s" THEN p.geom ELSE ST_PointOnSurface(p.geom) END AS pt) q WHERE $UndatedSiteSql"
+      )
     ) ++
-      Sql.of(" AND p.label !~* ?) s) m", Param.S(PlaceSql.UninformativeLabel)) ++
-      Sql.of(" CROSS JOIN generate_series(0, ?) z(z) GROUP BY 1, 2, 3, 4", Param.I(maxZoom))
+      Sql.of(Sql.OfText(" AND p.label !~* ?) s) m"), Param.S(Param.S.V(PlaceSql.UninformativeLabel))) ++
+      Sql.of(Sql.OfText(" CROSS JOIN generate_series(0, ?) z(z) GROUP BY 1, 2, 3, 4"), Param.I(Param.I.V(maxZoom.value)))
 
   /** Count every undated site again ([[rebuildSql]]) and record what from (`version` of the `undated` group, read
     * before), replacing the kept counts — in the caller's transaction, so readers see the old counts until it commits.

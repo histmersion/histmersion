@@ -24,10 +24,16 @@ private[acquisition] object UpstreamQuotaRepo:
       .map { (day, lookups, searches, until, why, limit, remaining, at) =>
         CoreQuota.State(
           LocalDate.parse(day),
-          lookups,
-          searches,
-          until.map(u => CoreQuota.Block(Instant.ofEpochMilli(u), why.getOrElse("asked to wait"))),
-          at.map(t => CoreQuota.Window(limit, remaining, Instant.ofEpochMilli(t)))
+          CoreQuota.State.LookupTokens(lookups),
+          CoreQuota.State.SearchTokens(searches),
+          until.map(u => CoreQuota.Block(Instant.ofEpochMilli(u), CoreQuota.Block.Why(why.getOrElse("asked to wait")))),
+          at.map(t =>
+            CoreQuota.Window(
+              limit.map(CoreQuota.Window.Limit(_)),
+              remaining.map(CoreQuota.Window.Remaining(_)),
+              Instant.ofEpochMilli(t)
+            )
+          )
         )
       }
 

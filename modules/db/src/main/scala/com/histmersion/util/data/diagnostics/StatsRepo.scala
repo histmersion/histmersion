@@ -15,23 +15,25 @@ object StatsRepo:
   /** The rows of `table`. */
 
   def rows(table: com.histmersion.util.data.TableName)(using DbCon): com.histmersion.util.data.diagnostics.StatsRepo.Count =
-    Sql.raw(s"SELECT count(*)::int FROM ${quoted(table)}").frag.query[Int].run().head.toLong
+    StatsRepo.Count(Sql.raw(Sql.RawText(s"SELECT count(*)::int FROM ${quoted(table.value)}")).frag.query[Int].run().head.toLong)
 
   /** The rows of `table` whose `column` is set. */
   def rowsWith(table: com.histmersion.util.data.TableName, column: com.histmersion.util.data.diagnostics.StatsRepo.ColumnName)(using DbCon): com.histmersion.util.data.diagnostics.StatsRepo.Count =
-    Sql
-      .raw(s"SELECT count(*)::int FROM ${quoted(table)} WHERE ${quoted(column)} IS NOT NULL")
-      .frag
-      .query[Int]
-      .run()
-      .head
-      .toLong
+    StatsRepo.Count(
+      Sql
+        .raw(Sql.RawText(s"SELECT count(*)::int FROM ${quoted(table.value)} WHERE ${quoted(column.value)} IS NOT NULL"))
+        .frag
+        .query[Int]
+        .run()
+        .head
+        .toLong
+    )
 
   /** The database's name and its size on disk (`pg_database_size`: tables, indexes, TOAST — what a dump would read
     * back, plus the free space inside the files).
     */
   def databaseSize(using DbCon): (com.histmersion.util.data.TableName, com.histmersion.ByteCount) =
-    sql"SELECT current_database()::text, pg_database_size(current_database())".query[(String, Long)].run().head
+    sql"SELECT current_database()::text, pg_database_size(current_database())".query[(com.histmersion.util.data.TableName, com.histmersion.ByteCount)].run().head
 
   /** Every table of the database by `pg_total_relation_size` (indexes and TOAST included), largest first. */
   def tableBytes(using DbCon): List[(com.histmersion.util.data.TableName, com.histmersion.ByteCount)] =
@@ -40,8 +42,8 @@ object StatsRepo:
            WHERE c.relkind IN ('r', 'm') AND ns.nspname NOT IN ('pg_catalog', 'information_schema')
              AND ns.nspname NOT LIKE 'pg_toast%'
            ORDER BY 2 DESC, 1"""
-      .query[(String, Long)]
+      .query[(com.histmersion.util.data.TableName, com.histmersion.ByteCount)]
       .run()
       .toList
 
-  private def quoted(name: com.histmersion.util.data.TableName): String = "\"" + name.replace("\"", "\"\"") + "\""
+  private def quoted(name: String): String = "\"" + name.replace("\"", "\"\"") + "\""

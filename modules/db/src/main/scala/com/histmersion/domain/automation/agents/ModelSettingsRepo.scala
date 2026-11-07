@@ -2,6 +2,7 @@ package com.histmersion.domain.automation.agents
 import com.histmersion.api.automation.ModelChains.{LimitSpec, Spend}
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.Jsonb
 import com.histmersion.util.database.given
 
@@ -17,7 +18,11 @@ private[agents] object ModelSettingsRepo:
   /** A saved chain: the role and its models (`provider:model`, first choice first). */
 
   def chains(using DbCon): Map[com.histmersion.domain.automation.agents.ModelSettingsRepo.ChainRole, List[com.histmersion.domain.automation.agents.AgentRepo.RunRow.Model]] =
-    sql"SELECT role, models FROM agent_role_chains".query[(String, List[String])].run().toMap
+    sql"SELECT role, models FROM agent_role_chains"
+      .query[(String, List[String])]
+      .run()
+      .map((r, ms) => ChainRole(r) -> ms.map(com.histmersion.domain.automation.agents.AgentRepo.RunRow.Model(_)))
+      .toMap
 
   def setChain(role: com.histmersion.domain.automation.agents.ModelSettingsRepo.ChainRole, models: List[com.histmersion.domain.automation.agents.AgentRepo.RunRow.Model])(using DbCon): Unit =
     val _ =
@@ -30,13 +35,13 @@ private[agents] object ModelSettingsRepo:
   /** A saved allowance: target, limits, reserve %. Limits that no longer decode are a `Left` the caller reports and
     * treats as BLOCKING — never silently as unlimited.
     */
-  final case class Saved(target: Saved.Target, limits: Either[Saved.LimitsPart1, List[LimitSpec]], reservePct: Saved.ReservePct)
+  final case class Saved(target: Saved.Target, limits: Either[Saved.Problem, List[LimitSpec]], reservePct: Saved.ReservePct)
 
   object Saved:
     type Target = Target.T
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LimitsPart1 = LimitsPart1.T
-    object LimitsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ReservePct = ReservePct.T
     object ReservePct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -46,7 +51,11 @@ private[agents] object ModelSettingsRepo:
       .run()
       .toList
       .map { (t, json, r) =>
-        Saved(t, Jsonb.decode[List[LimitSpec]](json).left.map(e => s"saved limits of $t do not decode: $e"), r)
+        Saved(
+          Saved.Target(t),
+          Jsonb.decode[List[LimitSpec]](Jsonb.JsonText(json)).left.map(e => Saved.Problem(s"saved limits of $t do not decode: $e")),
+          Saved.ReservePct(r)
+        )
       }
 
   def setAllowance(target: com.histmersion.domain.automation.agents.ModelSettingsRepo.Saved.Target, limits: List[LimitSpec], reservePct: com.histmersion.domain.automation.agents.ModelSettingsRepo.Saved.ReservePct)(using DbCon): Unit =
@@ -69,6 +78,6 @@ private[agents] object ModelSettingsRepo:
       val likes = prefixes.map(_.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%")
       sql"""SELECT (extract(epoch FROM finished_at) * 1000)::bigint, (tokens_in + tokens_out)::bigint, cost_usd
             FROM agent_steps
-            WHERE kind = 'llm' AND finished_at > now() - make_interval(secs => ${seconds.toDouble})
+            WHERE kind = 'llm' AND finished_at > now() - make_interval(secs => ${seconds.value.toDouble})
               AND (model = ANY($models::text[]) OR model LIKE ANY($likes::text[]))
             ORDER BY finished_at""".query[(Long, Long, BigDecimal)].run().map((at, t, c) => Spend(at, t, c))

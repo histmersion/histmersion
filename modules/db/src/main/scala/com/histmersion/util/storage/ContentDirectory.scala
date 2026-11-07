@@ -6,21 +6,21 @@ import java.nio.file.{Files, Path, StandardCopyOption}
 /** A [[ContentStore]] in a directory: `<dir>/<sha256>.<ext>`. */
 final class ContentDirectory(dir: Path) extends ContentStore:
 
-  def find(sha256: com.histmersion.Sha256): Option[(ByteSource, com.histmersion.util.storage.ContentDirectory.Ext)] =
+  def find(sha256: com.histmersion.Sha256): Option[(ByteSource, ContentStore.Ext)] =
     scala.util
       .Try {
         val s = Files.list(dir)
-        try s.filter(p => p.getFileName.toString.startsWith(sha256 + ".")).findFirst().orElse(null)
+        try s.filter(p => p.getFileName.toString.startsWith(sha256.value + ".")).findFirst().orElse(null)
         finally s.close()
       }
       .toOption
       .flatMap(Option(_))
-      .map(p => ByteSource.file(p) -> p.getFileName.toString.drop(sha256.length + 1))
+      .map(p => ByteSource.file(p) -> ContentStore.Ext(p.getFileName.toString.drop(sha256.value.length + 1)))
 
   /** Written to a temporary file, hashed, and moved into place only when the content IS `sha256`: the directory is
     * content-addressed, and whoever reads it trusts the name.
     */
-  def store(sha256: com.histmersion.Sha256, ext: com.histmersion.util.storage.ContentDirectory.Ext, in: InputStream): Either[com.histmersion.util.storage.ContentDirectory.Problem, Unit] =
+  def store(sha256: com.histmersion.Sha256, ext: ContentStore.Ext, in: InputStream): Either[ContentStore.Problem, Unit] =
     if find(sha256).isDefined then
       val _ = in.transferTo(java.io.OutputStream.nullOutputStream())
       Right(())
@@ -34,8 +34,8 @@ final class ContentDirectory(dir: Path) extends ContentStore:
             val out = java.security.DigestOutputStream(Files.newOutputStream(tmp), md)
             try { val _ = in.transferTo(out) }
             finally out.close()
-            val actual = ContentStore.hex(md.digest())
-            if actual != sha256 then Left(s"its content hashes to $actual")
+            val actual = ContentStore.hex(ContentStore.Digest(md.digest()))
+            if actual != sha256 then Left(ContentStore.Problem(s"its content hashes to $actual"))
             else
               val _ =
                 Files.move(tmp, dir.resolve(s"$sha256.${ContentStore.safeExt(ext)}"), StandardCopyOption.ATOMIC_MOVE)
@@ -45,11 +45,6 @@ final class ContentDirectory(dir: Path) extends ContentStore:
         }
         .toEither
         .left
-        .map(e => s"cannot store it in $dir: ${e.getMessage}")
+        .map(e => ContentStore.Problem(s"cannot store it in $dir: ${e.getMessage}"))
         .flatten
 
-object ContentDirectory:
-  type Ext = Ext.T
-  object Ext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

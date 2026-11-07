@@ -18,13 +18,13 @@ final case class Registries(
     sourceCollections: ListMap[Registries.SourceCollectionsKey, SourceCollection] = ListMap.empty
 ):
   def provides: List[com.histmersion.pluginhost.Registries.RegistryKey] =
-    secretVaults.keys.toList.map(k => s"${Registries.SecretVault}:$k") ++
-      sourceFetchers.keys.toList.map(k => s"${Registries.SourceFetcher}:$k") ++
-      mediaCollections.keys.toList.map(k => s"${Registries.MediaCollection}:$k") ++
-      eventCatalogues.keys.toList.map(k => s"${Registries.EventCatalogue}:$k") ++
-      aiProviders.keys.toList.map(k => s"${Registries.AiProvider}:$k") ++
-      gazetteerSources.keys.toList.map(k => s"${Registries.GazetteerSource}:$k") ++
-      sourceCollections.keys.toList.map(k => s"${Registries.SourceCollection}:$k")
+    secretVaults.keys.toList.map(k => Registries.RegistryKey(s"${Registries.SecretVault}:$k")) ++
+      sourceFetchers.keys.toList.map(k => Registries.RegistryKey(s"${Registries.SourceFetcher}:$k")) ++
+      mediaCollections.keys.toList.map(k => Registries.RegistryKey(s"${Registries.MediaCollection}:$k")) ++
+      eventCatalogues.keys.toList.map(k => Registries.RegistryKey(s"${Registries.EventCatalogue}:$k")) ++
+      aiProviders.keys.toList.map(k => Registries.RegistryKey(s"${Registries.AiProvider}:$k")) ++
+      gazetteerSources.keys.toList.map(k => Registries.RegistryKey(s"${Registries.GazetteerSource}:$k")) ++
+      sourceCollections.keys.toList.map(k => Registries.RegistryKey(s"${Registries.SourceCollection}:$k"))
 
   /** Every registry, the other's entries after this one's. */
   def ++(other: Registries): Registries =

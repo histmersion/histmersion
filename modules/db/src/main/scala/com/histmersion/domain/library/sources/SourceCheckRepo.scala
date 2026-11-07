@@ -11,6 +11,7 @@ import com.histmersion.util.data.checks.{CheckInput, CheckRun}
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.checks.{FormatField, Lint}
 import com.histmersion.api.library.Edge
 
@@ -30,11 +31,6 @@ import com.histmersion.api.library.Edge
 private[sources] object SourceCheckRepo:
 
   /** Rules that are one SQL statement. Ordered `citekey` so the report is stable. */
-  type ArraysResultPart2 = ArraysResultPart2.T
-  object ArraysResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReportMaxItems = ReportMaxItems.T
-  object ReportMaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   val projections: Map[String, String] = Map(
     NoFindings ->
       """SELECT s.citekey, left(coalesce(s.title, ''), 80)
@@ -130,76 +126,106 @@ private[sources] object SourceCheckRepo:
     case FindingPlaceholder                      => List(FindingPlacement.placeholderFindingsSql)
     case r                                       => projections.get(r).toList
 
-  private def pairs(sql: String)(using DbCon): List[(com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey)] =
-    Sql.raw(sql).frag.query[(String, String)].run().toList
+  private def pairs(sql: String)(using DbCon): List[(String, String)] =
+    Sql.raw(Sql.RawText(sql)).frag.query[(String, String)].run().toList
 
-  private def triples(sql: String)(using DbCon): List[(com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Edge.Kind.Wire, com.histmersion.domain.library.Citekey)] =
-    Sql.raw(sql).frag.query[(String, String, String)].run().toList
+  private def triples(sql: String)(using DbCon): List[(String, String, String)] =
+    Sql.raw(Sql.RawText(sql)).frag.query[(String, String, String)].run().toList
 
-  private def arrays(sql: String)(using DbCon): List[(com.histmersion.domain.library.Citekey, List[com.histmersion.domain.library.sources.SourceCheckRepo.ArraysResultPart2])] =
-    Sql.raw(sql).frag.query[(String, List[String])].run().toList
+  private def arrays(sql: String)(using DbCon): List[(String, List[String])] =
+    Sql.raw(Sql.RawText(sql)).frag.query[(String, List[String])].run().toList
 
   /** What the rules read besides the database: how many prefix candidates a dangling target is offered
     * (`lint.suggestions`), the formatting check and the geocoder's knobs (`finding-geocode`, `finding-unplaced`).
     */
-  final case class Context(suggestions: Context.Suggestions, format: FormatChecker, geocode: GeocodeSettings)
+  final case class Context(suggestions: Lint.ItemLimit, format: FormatChecker, geocode: GeocodeSettings)
 
   object Context:
-    type Suggestions = Suggestions.T
-    object Suggestions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-    def of(cfg: AppConfig, format: FormatChecker): Context = Context(cfg.lint.suggestions, format, geocodeOf(cfg))
+    def of(cfg: AppConfig, format: FormatChecker): Context =
+      Context(Lint.ItemLimit(cfg.lint.suggestions.value), format, geocodeOf(cfg))
 
   /** The geocoder's knobs (`places.geocode-*`), as `finding-geocode` and its repair use them. */
   def geocodeOf(cfg: AppConfig): GeocodeSettings =
-    GeocodeSettings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
+    GeocodeSettings(
+      GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value),
+      GeocodeSettings.RepairKm(cfg.places.geocodeRepairKm.value),
+      GeocodeSettings.ToleranceKm(cfg.places.pointToleranceKm.value)
+    )
 
   // the graph inputs and the fetches several rules classify, read at most once per run
-  private val StoredCitekeys = CheckInput(Sql.raw(citekeysSql).frag.query[String].run().toSet)
+  private val StoredCitekeys = CheckInput(Sql.raw(Sql.RawText(citekeysSql)).frag.query[String].run().toSet)
   private val EdgeRows = CheckInput(
     Sql
-      .raw(edgesSql)
+      .raw(Sql.RawText(edgesSql))
       .frag
       .query[(String, String, String)]
       .run()
-      .map((src, dst, kind) => Edge(com.histmersion.api.library.Citekey(src), com.histmersion.api.library.Citekey(dst), kind))
+      .flatMap((src, dst, kind) =>
+        Edge.Kind
+          .fromWire(Edge.Kind.Wire(kind))
+          .map(k => Edge(com.histmersion.api.library.Citekey(src), com.histmersion.api.library.Citekey(dst), k))
+      )
       .toList
   )
-  private val TagRows = CheckInput(arrays(tagsSql))
+  private val TagRows = CheckInput(
+    arrays(tagsSql).map((ck, tags) => (com.histmersion.api.library.Citekey(ck), tags.map(Lint.Tag(_))))
+  )
   private val YearRows = CheckInput(
-    pairs(yearsSql).map((ck, y) => (ck, Option(y).flatMap(_.toIntOption)))
+    pairs(yearsSql).map((ck, y) =>
+      (com.histmersion.api.library.Citekey(ck), Option(y).flatMap(_.toIntOption).map(i => com.histmersion.api.catalogue.Year(i.toLong)))
+    )
   ) // year is nullable
-  private val AuthorRows = CheckInput(arrays(authorsSql))
+  private val AuthorRows = CheckInput(
+    arrays(authorsSql).map((ck, authors) =>
+      (com.histmersion.api.library.Citekey(ck), authors.map(com.histmersion.api.library.AuthorName(_)))
+    )
+  )
 
   /** Whether a citekey is stored — what the formatting rules check a bare citekey against, read once per run. */
-  def storedCitekey(using run: CheckRun)(using DbCon): com.histmersion.domain.library.Citekey => Boolean = ck => run(StoredCitekeys).contains(ck)
+  def storedCitekey(using run: CheckRun)(using DbCon): com.histmersion.domain.library.Citekey => Boolean = ck => run(StoredCitekeys).contains(ck.value)
 
   /** One rule's report, on the run's connection. */
-  def report(r: Rule, c: Context, maxItems: com.histmersion.domain.library.sources.SourceCheckRepo.ReportMaxItems)(using run: CheckRun)(using DbCon): LintRuleReport =
-    val items = r.name match
-      case DanglingEdges           => CitationLint.danglingEdges(run(EdgeRows), (run(StoredCitekeys)).map(com.histmersion.api.library.Citekey.apply), c.suggestions)
+  def report(r: Rule, c: Context, maxItems: Lint.ItemLimit)(using run: CheckRun)(using DbCon): LintRuleReport =
+    val items = r.name.value match
+      case DanglingEdges =>
+        CitationLint.danglingEdges(run(EdgeRows), run(StoredCitekeys).map(com.histmersion.api.library.Citekey(_)), c.suggestions)
       case UnresolvedShortCitekeys =>
-        CitationLint.unresolvedShortCitekeys(run(EdgeRows), (run(StoredCitekeys)).map(com.histmersion.api.library.Citekey.apply), c.suggestions)
-      case DuplicateDoi        => Lint.duplicates(pairs(doiSql), "doi")
-      case DuplicateSha256     => Lint.duplicates(pairs(sha256Sql), "sha256")
+        CitationLint.unresolvedShortCitekeys(run(EdgeRows), run(StoredCitekeys).map(com.histmersion.api.library.Citekey(_)), c.suggestions)
+      case DuplicateDoi =>
+        Lint.duplicates(pairs(doiSql).map((ck, k) => (com.histmersion.api.library.Citekey(ck), Lint.DuplicateKey(k))), "doi")
+      case DuplicateSha256 =>
+        Lint.duplicates(pairs(sha256Sql).map((ck, k) => (com.histmersion.api.library.Citekey(ck), Lint.DuplicateKey(k))), "sha256")
       case NonCanonicalTag     => Lint.nonCanonicalTags(run(TagRows))
       case YearCitekeyMismatch => Lint.yearCitekeyMismatch(run(YearRows))
       case AuthorPipe          => Lint.authorPipe(run(AuthorRows))
       case NoteFormat          =>
         Lint.formatItems(
           triples(noteTextsSql).flatMap((ck, summary, notes) =>
-            List((ck, FormatField.Summary, summary), (ck, FormatField.Notes, notes))
+            val key = com.histmersion.api.library.Citekey(ck)
+            List(
+              (key, FormatField.Summary, Lint.FormatItemDetail(summary)),
+              (key, FormatField.Notes, Lint.FormatItemDetail(notes))
+            )
           ),
           c.format
         )
-      case FindingGeocode     => FindingPlacement.movesIn(c.geocode).map(m => LintItem(m.citekey, m.describe))
-      case FindingUnplaced    => FindingPlacement.placementsIn(c.geocode).map(p => LintItem(p.citekey, p.describe))
+      case FindingGeocode  => FindingPlacement.movesIn(c.geocode).map(m => LintItem(m.citekey, LintItem.Detail(m.describe)))
+      case FindingUnplaced =>
+        FindingPlacement.placementsIn(c.geocode).map(p => LintItem(p.citekey, LintItem.Detail(p.describe)))
       case FindingPlaceholder =>
-        FindingPlacement.unresolvedPlaceholdersIn().map((ck, detail) => LintItem(ck, detail))
-      case name => projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
+        FindingPlacement
+          .unresolvedPlaceholdersIn()
+          .map((ck, detail) => LintItem(com.histmersion.api.library.Citekey(ck.value), LintItem.Detail(detail.value)))
+      case name =>
+        projections
+          .get(name)
+          .toList
+          .flatMap(pairs)
+          .map((ck, detail) => LintItem(com.histmersion.api.library.Citekey(ck), LintItem.Detail(detail)))
     Lint.report(r, items, maxItems)
 
   // ── the safe fixes ───────────────────────────────────────────────────────────────────────────
 
   /** The sources with a body and no full-text chunks, each with its body's length (`stale-chunks`). */
-  def stale()(using DbCon): Vector[(com.histmersion.domain.library.Citekey, com.histmersion.RowCount)] = Sql.raw(staleCitekeysSql).frag.query[(String, Int)].run()
+  def stale()(using DbCon): Vector[(com.histmersion.domain.library.Citekey, com.histmersion.RowCount)] =
+    Sql.raw(Sql.RawText(staleCitekeysSql)).frag.query[(com.histmersion.domain.library.Citekey, com.histmersion.RowCount)].run()

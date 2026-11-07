@@ -6,6 +6,7 @@ import com.histmersion.api.Write
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.research.{CritiqueReason, Critiques}
 import com.histmersion.api.Api
 
@@ -26,28 +27,19 @@ private[articles] object CritiqueRepo:
       .query[(String, String, String, String)]
       .run()
       .toList
-      .map((s, d, r, b) => CritiqueReason(s, d, r, Some(b)))
+      .map((s, d, r, b) =>
+        CritiqueReason(
+          com.histmersion.api.library.Citekey(s),
+          com.histmersion.api.library.Citekey(d),
+          CritiqueReason.Reason(r),
+          Some(CritiqueReason.By(b))
+        )
+      )
 
   /** One checked change: set `reason` on the edge's direction, or remove the pair's reason. */
   private enum Change:
-    case Set(src: Change.Set.Src, dst: Change.Set.Dst, reason: Change.Set.Reason, by: Change.Set.By)
-    case Remove(a: Change.Remove.A, b: Change.Remove.B)
-
-  object Change:
-    object Set:
-      type Src = com.histmersion.domain.library.Citekey
-      val Src: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
-      type Dst = com.histmersion.domain.library.Citekey
-      val Dst: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
-      type Reason = com.histmersion.domain.research.articles.CritiqueRepo.Reason
-      val Reason: _root_.com.histmersion.domain.research.articles.CritiqueRepo.Reason.type = _root_.com.histmersion.domain.research.articles.CritiqueRepo.Reason
-      type By = com.histmersion.domain.research.articles.CritiqueRepo.By
-      val By: _root_.com.histmersion.domain.research.articles.CritiqueRepo.By.type = _root_.com.histmersion.domain.research.articles.CritiqueRepo.By
-    object Remove:
-      type A = com.histmersion.domain.library.Citekey
-      val A: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
-      type B = com.histmersion.domain.library.Citekey
-      val B: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
+    case Set(src: com.histmersion.domain.library.Citekey, dst: com.histmersion.domain.library.Citekey, reason: Reason, by: By)
+    case Remove(a: com.histmersion.domain.library.Citekey, b: com.histmersion.domain.library.Citekey)
 
   /** Check the reasons of a patch, inside the caller's transaction, writing nothing. Each pair's citekeys resolve as
     * links do (an old citekey names its source); a reason is kept under the direction of the disagreement edge between
@@ -58,23 +50,35 @@ private[articles] object CritiqueRepo:
   private def check(reasons: List[CritiqueReason], by: com.histmersion.domain.research.articles.CritiqueRepo.By)(using DbCon): Either[Api.Error, List[Change]] =
     val tidy = reasons.map(CritiqueReason.tidy)
     tidy.collectFirst { case Left(m) => m } match
-      case Some(m) => Left(Api.Error(m, Some(Write.CodeInvalid)))
+      case Some(m) => Left(Api.Error(Api.Error.Message(m.value), Some(Api.Error.Code(Write.CodeInvalid))))
       case None    =>
         val rs = tidy.collect { case Right(r) => r }
-        val known = CitekeyResolver.stored.canonical(rs.flatMap(r => List(r.src, r.dst)).distinct)
+        def stored(c: com.histmersion.api.library.Citekey): Option[com.histmersion.domain.library.Citekey] =
+          com.histmersion.domain.library.Citekey.option(c.value)
+        val known = CitekeyResolver.stored.canonical(rs.flatMap(r => List(r.src, r.dst)).flatMap(stored).distinct)
         val kinds = Critiques.Kinds
         rs.foldLeft[Either[Api.Error, Vector[Change]]](Right(Vector.empty)) { (acc, r) =>
           acc.flatMap { done =>
-            (known.get(r.src), known.get(r.dst)) match
+            (stored(r.src).flatMap(known.get), stored(r.dst).flatMap(known.get)) match
               case (None, _) =>
-                Left(Api.Error(s"critique reason ${r.ref.wire}: '${r.src}' is not a citekey", Some(Write.CodeInvalid)))
+                Left(
+                  Api.Error(
+                    Api.Error.Message(s"critique reason ${r.ref.wire}: '${r.src}' is not a citekey"),
+                    Some(Api.Error.Code(Write.CodeInvalid))
+                  )
+                )
               case (_, None) =>
-                Left(Api.Error(s"critique reason ${r.ref.wire}: '${r.dst}' is not a citekey", Some(Write.CodeInvalid)))
-              case (Some(a), Some(b)) if r.reason.isEmpty => Right(done :+ Change.Remove(a, b))
+                Left(
+                  Api.Error(
+                    Api.Error.Message(s"critique reason ${r.ref.wire}: '${r.dst}' is not a citekey"),
+                    Some(Api.Error.Code(Write.CodeInvalid))
+                  )
+                )
+              case (Some(a), Some(b)) if r.reason.value.isEmpty => Right(done :+ Change.Remove(a, b))
               case (Some(a), Some(b))                     =>
                 val dirs = sql"""SELECT src, dst FROM edges WHERE kind = ANY($kinds::text[])
                                  AND ((src = $a AND dst = $b) OR (src = $b AND dst = $a))"""
-                  .query[(String, String)]
+                  .query[(com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey)]
                   .run()
                   .toList
                   .distinct
@@ -82,14 +86,21 @@ private[articles] object CritiqueRepo:
                   case None =>
                     Left(
                       Api.Error(
-                        s"critique reason ${r.ref.wire}: no ${kinds.mkString("/")} edge joins [[$a]] and [[$b]] — " +
-                          "a reason is for a recorded disagreement (add the edge first: histmersion patch <critic> --add-edge <kind>:<other>)",
-                        Some(Write.CodeInvalid)
+                        Api.Error.Message(
+                          s"critique reason ${r.ref.wire}: no ${kinds.mkString("/")} edge joins [[$a]] and [[$b]] — " +
+                            "a reason is for a recorded disagreement (add the edge first: histmersion patch <critic> --add-edge <kind>:<other>)"
+                        ),
+                        Some(Api.Error.Code(Write.CodeInvalid))
                       )
                     )
                   case Some((s, d)) =>
                     Right(
-                      done :+ Change.Set(s, d, r.reason, r.by.map(_.trim).filter(_.nonEmpty).getOrElse(by).take(200))
+                      done :+ Change.Set(
+                        s,
+                        d,
+                        Reason(r.reason.value),
+                        By(r.by.map(_.value.trim).filter(_.nonEmpty).getOrElse(by.value).take(200))
+                      )
                     )
           }
         }.map(_.toList)
@@ -103,7 +114,7 @@ private[articles] object CritiqueRepo:
   )(using DbCon): Either[Api.Error, com.histmersion.RowCount] =
     check(reasons, by).map { changes =>
       write
-      changes.map {
+      com.histmersion.RowCount(changes.map {
         case Change.Remove(a, b) =>
           sql"""DELETE FROM article_critique_reasons
                 WHERE slug = $slug AND ((src = $a AND dst = $b) OR (src = $b AND dst = $a))""".update.run()
@@ -112,5 +123,5 @@ private[articles] object CritiqueRepo:
           sql"""INSERT INTO article_critique_reasons (slug, src, dst, reason, set_by) VALUES ($slug, $s, $d, $reason, $who)
                 ON CONFLICT (slug, src, dst) DO UPDATE SET reason = EXCLUDED.reason, set_by = EXCLUDED.set_by, set_at = now()""".update
             .run()
-      }.sum
+      }.sum)
     }

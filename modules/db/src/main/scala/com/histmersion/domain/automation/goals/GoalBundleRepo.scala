@@ -23,28 +23,28 @@ private[goals] object GoalBundleRepo:
 
   def goals(scope: BundleScope)(using DbCon): Vector[Bundle.Goal] =
     val w = where(scope, "g.uid", "g.updated_at")
-    val rows = (Sql.raw(s"""SELECT g.uid, g.origin, g.slug, g.title, g.status, g.notes, g.tags, g.regions,
+    val rows = (Sql.raw(Sql.RawText(s"""SELECT g.uid, g.origin, g.slug, g.title, g.status, g.notes, g.tags, g.regions,
                        ${rangeCols("g.period")}, p.uid, ${ts("g.created_at")}, ${ts("g.updated_at")},
                        g.plan::text, ${ts("g.plan_approved_at")}, g.budget_usd
-                FROM goals g LEFT JOIN goals p ON p.slug = g.parent_slug WHERE """) ++ w ++ " ORDER BY g.uid").frag
+                FROM goals g LEFT JOIN goals p ON p.slug = g.parent_slug WHERE """)) ++ w ++ " ORDER BY g.uid").frag
       .query[BGoalRow]
       .run()
     // a linked source, article or queue item travels by uid (a queue item's id is a local serial)
-    val links = (Sql.raw(s"""SELECT g.uid, l.kind,
+    val links = (Sql.raw(Sql.RawText(s"""SELECT g.uid, l.kind,
                         CASE l.kind WHEN 'queue-item' THEN coalesce(q.uid::text, l.ref) ELSE l.ref END,
                         CASE l.kind WHEN 'source' THEN s.uid WHEN 'article' THEN a.uid WHEN 'queue-item' THEN q.uid END,
                         l.note, ${ts("l.created_at")}
                  FROM goal_links l JOIN goals g ON g.slug = l.goal_slug
                  LEFT JOIN sources s ON l.kind = 'source' AND s.citekey = l.ref
                  LEFT JOIN articles a ON l.kind = 'article' AND a.slug = l.ref
-                 LEFT JOIN queue_items q ON l.kind = 'queue-item' AND q.id::text = l.ref WHERE """) ++ w ++
+                 LEFT JOIN queue_items q ON l.kind = 'queue-item' AND q.id::text = l.ref WHERE """)) ++ w ++
       """ ORDER BY g.uid, l.kind COLLATE "C", l.ref COLLATE "C"""").frag.query[BGoalLinkRow].run().groupBy(_.goalUid)
     // a goal's schedules are its watcher's sweeps since phase 3 (docs/research-process-managers.md); the rows
     // the managers have not moved into a watcher yet travel as they are. A bundle carries the cron, the
     // sweeps and the budget — the watcher's state (paused, items, events) stays here.
-    val schedules = (Sql.raw("""SELECT u.uid, u.kind, u.cron, u.enabled, u.budget_usd FROM (
+    val schedules = (Sql.raw(Sql.RawText("""SELECT u.uid, u.kind, u.cron, u.enabled, u.budget_usd FROM (
                        SELECT g.uid, x.kind, x.cron, x.enabled, x.budget_usd
-                       FROM goal_schedules x JOIN goals g ON g.slug = x.goal_slug WHERE """) ++ w ++
+                       FROM goal_schedules x JOIN goals g ON g.slug = x.goal_slug WHERE """)) ++ w ++
       """ UNION ALL
                        SELECT g.uid, k.kind, m.cron, true, (m.config->>'budgetUsd')::numeric
                        FROM agent_managers m JOIN goals g ON g.slug = m.goal_slug
@@ -85,10 +85,10 @@ private[goals] object GoalBundleRepo:
     }
 
   def goalAliases(scope: BundleScope)(using DbCon): Vector[Bundle.GoalAlias] =
-    (Sql.raw(s"""SELECT x.alias, g.uid, ${ts("x.created_at")}
-                FROM goal_aliases x JOIN goals g ON g.slug = x.goal_slug WHERE """) ++
+    (Sql.raw(Sql.RawText(s"""SELECT x.alias, g.uid, ${ts("x.created_at")}
+                FROM goal_aliases x JOIN goals g ON g.slug = x.goal_slug WHERE """)) ++
       where(scope, "g.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""").frag
-      .query[(String, UUID, String)]
+      .query[(Bundle.GoalAlias.Alias, UUID, Bundle.GoalAlias.CreatedAt)]
       .run()
       .map(Bundle.GoalAlias.apply)
 
@@ -96,7 +96,7 @@ private[goals] object GoalBundleRepo:
 
   def goalRenamesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.followRenames(w.es.goals, _.uid, _.slug, w.local.goals.map(g => g.uid -> g.slug).toMap, com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("goal"))(GoalRepo.renameIn)
+    w.followRenames(w.es.goals, _.uid, g => BundleImport.Writer.Label(g.slug.value), w.local.goals.map(g => g.uid -> BundleImport.Writer.Label(g.slug.value)).toMap, com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("goal"))(GoalRepo.renameIn)
 
   /** A goal's links (unioned with this collection's) and schedules (this collection's kept, #881). A linked record is
     * found by its uid, so the link follows a rename or a merge; a queue item that is not here is left out. A schedule
@@ -105,15 +105,15 @@ private[goals] object GoalBundleRepo:
   private def goalSets(w: BundleImport.Writer, g: Bundle.Goal)(using DbCon): Unit =
     val slug = sql"SELECT slug FROM goals WHERE uid = ${g.uid}".query[String].run().head
     g.links.getOrElse(Nil).foreach { l =>
-      val ref: Option[com.histmersion.domain.automation.goals.GoalLinkRepo.LinkRow.Ref] = l.kind match
-        case "source"  => l.refUid.flatMap(w.citekeyHere).orElse(Some(l.ref))
+      val ref: Option[String] = l.kind.value match
+        case "source"  => l.refUid.flatMap(w.citekeyHere).map(_.value).orElse(Some(l.ref.value))
         case "article" =>
           l.refUid
             .flatMap(u => sql"SELECT slug FROM articles WHERE uid = $u".query[String].run().headOption)
-            .orElse(Some(l.ref))
+            .orElse(Some(l.ref.value))
         case "queue-item" =>
           l.refUid.flatMap(u => sql"SELECT id::text FROM queue_items WHERE uid = $u".query[String].run().headOption)
-        case _ => Some(l.ref)
+        case _ => Some(l.ref.value)
       ref.foreach { r =>
         sql"""INSERT INTO goal_links (goal_slug, kind, ref, note, created_at)
               VALUES ($slug, ${l.kind}, $r, ${l.note}, ${l.createdAt}::timestamptz) ON CONFLICT DO NOTHING""".update
@@ -121,7 +121,7 @@ private[goals] object GoalBundleRepo:
       }
     }
     g.schedules.getOrElse(Nil).foreach { x =>
-      val usd = x.budgetUsd.map(BigDecimal(_))
+      val usd = x.budgetUsd.map(b => BigDecimal(b.value))
       sql"""INSERT INTO goal_schedules (goal_slug, kind, cron, enabled, budget_usd, last_note)
             VALUES ($slug, ${x.kind}, ${x.cron}, ${x.enabled}, $usd,
               'brought in by a merge: save it once here to schedule it')
@@ -133,10 +133,10 @@ private[goals] object GoalBundleRepo:
     */
   def goalsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    val goals = w.es.goals.filter(g => w.writes(g.uid))
+    val goals = w.es.goals.filter(g => w.writes(g.uid).value)
     goals.foreach { g =>
       val plan = g.plan.map(BundleFormat.printer.print)
-      val usd = g.budgetUsd.map(BigDecimal(_))
+      val usd = g.budgetUsd.map(b => BigDecimal(b.value))
       sql"""INSERT INTO goals (uid, origin, slug, title, status, notes, tags, regions, period, created_at, updated_at,
               plan, plan_approved_at, budget_usd)
             VALUES (${g.uid}, ${g.origin}, ${g.slug}, ${g.title}, ${g.status}, ${g.notes}, ${g.tags}::text[],
@@ -157,7 +157,7 @@ private[goals] object GoalBundleRepo:
     goals.foreach(goalSets(w, _))
 
   private def goalSlugOf(u: UUID)(using DbCon): Option[com.histmersion.domain.automation.Goal.Slug] =
-    sql"SELECT slug FROM goals WHERE uid = $u".query[String].run().headOption
+    sql"SELECT slug FROM goals WHERE uid = $u".query[com.histmersion.domain.automation.Goal.Slug].run().headOption
 
   def goalAliasesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction

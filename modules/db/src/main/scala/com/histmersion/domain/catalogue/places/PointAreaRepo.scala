@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -21,8 +22,6 @@ import com.histmersion.api.checks.Lint
 private[places] object PointAreaRepo:
   type NameKey = NameKey.T
   object NameKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SampleSize = SampleSize.T
-  object SampleSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `kinds` is `places.sources.point-area-kinds`; `batch` places per transaction; `budgetMs` the time one call may
     * spend before it returns what is left (an HTTP request must end well inside netty's idle timeout); `toleranceKm`
@@ -44,12 +43,15 @@ private[places] object PointAreaRepo:
   /** What one [[remove]] call did. */
   final case class Removal(removed: Removal.Removed, remaining: Removal.Remaining, findings: Removal.Findings, sources: Removal.Sources):
     /** The line `lint --fix` reports it with. */
-    def line: com.histmersion.domain.catalogue.places.PointAreaRepo.Removal.LineResult = PointAreas.fixed(removed, remaining, findings, sources)
+    def line: PointAreas.FixedResult =
+      PointAreas.fixed(
+        PointAreas.FixedRemoved(removed.value),
+        PointAreas.FixedRemaining(remaining.value),
+        PointAreas.FixedFindings(findings.value),
+        PointAreas.FixedSources(sources.value)
+      )
 
   object Removal:
-    type LineResult = LineResult.T
-    object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     type Removed = Removed.T
     object Removed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Remaining = Remaining.T
@@ -59,7 +61,8 @@ private[places] object PointAreaRepo:
     type Sources = Sources.T
     object Sources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private val sources: List[com.histmersion.domain.catalogue.places.PointAreas.Group.Source] = Gazetteer.PointAreaSources
+  private val sources: List[com.histmersion.domain.catalogue.places.PointAreas.Group.Source] =
+    Gazetteer.PointAreaSources.map(s => Group.Source(s.value))
 
   final private case class Row(
       id: Row.Id,
@@ -74,7 +77,16 @@ private[places] object PointAreaRepo:
       pinned: Row.Pinned
   ) derives DbCodec:
     def listed: Listed =
-      Listed(id, label, source, kind, Dating.of(startUnknown, lowerInf, upperInf), findings, alone, pinned)
+      Listed(
+        Listed.Id(id.value),
+        Listed.Label(label.value),
+        Listed.Source(source.value),
+        Listed.Kind(kind.value),
+        Dating.of(startUnknown.value, lowerInf.value, upperInf.value),
+        Listed.Findings(findings.value),
+        Listed.Alone(alone.value),
+        Listed.Pinned(pinned.value)
+      )
 
   object Row:
     type Id = Id.T
@@ -111,7 +123,7 @@ private[places] object PointAreaRepo:
       .toList
       .groupMapReduce((src, kind, su, li, ui, _) => (src, kind, Dating.of(su, li, ui)))(_._6)(_ + _)
       .toList
-      .map { case ((src, kind, d), n) => Group(src, kind, d, n) }
+      .map { case ((src, kind, d), n) => Group(Group.Source(src), Group.Kind(kind), d, Group.Places(n)) }
 
   /** Every such place that holds a finding or that evidence names. `alone`: the findings it holds that hold no OTHER
     * place that would survive the removal.
@@ -144,13 +156,13 @@ private[places] object PointAreaRepo:
           ORDER BY a.id""".query[Row].run().toList.map(_.listed)
 
   /** The first `n` such places by id — the sample the listing ends with. */
-  def sampleIn(kinds: List[com.histmersion.domain.catalogue.Place.Kind.Wire], n: com.histmersion.domain.catalogue.places.PointAreaRepo.SampleSize)(using DbCon): List[Listed] =
+  def sampleIn(kinds: List[com.histmersion.domain.catalogue.Place.Kind.Wire], n: com.histmersion.domain.catalogue.places.PointAreas.ReportMaxItems)(using DbCon): List[Listed] =
     sql"""SELECT p.id, p.label, p.import_source, p.kind, coalesce(p.start_unknown, false),
                  coalesce(lower_inf(p.period), true), coalesce(upper_inf(p.period), true), 0, 0, 0
           FROM places p
           WHERE p.import_source = ANY($sources::text[]) AND p.kind = ANY($kinds::text[])
             AND (p.geom IS NULL OR ST_Dimension(p.geom) = 0)
-          ORDER BY p.id LIMIT ${math.max(0, n)}""".query[Row].run().toList.map(_.listed)
+          ORDER BY p.id LIMIT ${math.max(0, n.value)}""".query[Row].run().toList.map(_.listed)
 
   /** The rule's report. */
   def reportIn(rule: Lint.Rule, kinds: List[com.histmersion.domain.catalogue.Place.Kind.Wire], maxItems: com.histmersion.domain.catalogue.places.PointAreas.ReportMaxItems)(using DbCon): Lint.LintRuleReport =
@@ -165,7 +177,7 @@ private[places] object PointAreaRepo:
             AND NOT EXISTS (SELECT 1 FROM attestations t WHERE t.target_type = 'place' AND t.target_id = p.id)
             AND NOT EXISTS (SELECT 1 FROM asset_links t WHERE t.target_type = 'place' AND t.target_id = p.id)
             AND NOT EXISTS (SELECT 1 FROM place_overrides o WHERE o.place_id = p.id)
-          ORDER BY p.id""".query[String].run().toList
+          ORDER BY p.id""".query[com.histmersion.domain.catalogue.Place.Id].run().toList
 
   /** Delete these places and everything that hangs off them, set-wise (one statement per table, so the foreign keys'
     * per-row cascades find nothing left to do): finding matches, names, links, descriptions, types, footprints,
@@ -187,7 +199,7 @@ private[places] object PointAreaRepo:
           .run()
       val _ = sql"DELETE FROM place_aliases WHERE place_id = ANY($ids::text[])".update.run()
       val _ = sql"DELETE FROM place_overrides WHERE place_id = ANY($ids::text[])".update.run()
-      sql"DELETE FROM places WHERE id = ANY($ids::text[])".update.run()
+      com.histmersion.RowCount(sql"DELETE FROM places WHERE id = ANY($ids::text[])".update.run())
 
   /** The ids of `source`'s places the importer no longer keeps: an area kind, only a point, and no evidence naming it
     * ([[GazetteerImport.Session.prune]]).
@@ -199,7 +211,7 @@ private[places] object PointAreaRepo:
             AND NOT EXISTS (SELECT 1 FROM attestations t WHERE t.target_type = 'place' AND t.target_id = p.id)
             AND NOT EXISTS (SELECT 1 FROM asset_links t WHERE t.target_type = 'place' AND t.target_id = p.id)
             AND NOT EXISTS (SELECT 1 FROM place_overrides o WHERE o.place_id = p.id)
-          ORDER BY p.id""".query[String].run().toList
+          ORDER BY p.id""".query[com.histmersion.domain.catalogue.Place.Id].run().toList
 
   /** The name keys by which a removal can change a finding's match, → the citekeys whose findings carry one. A
     * finding's place name matters only when one of its readings ([[Geocode.attempts]], as `PlaceRepo.byResolution`
@@ -208,14 +220,19 @@ private[places] object PointAreaRepo:
     * point region, before "Bohemia"), and chooses the seed place once that is gone. Every other match an imported point
     * has is a finding ON it, which the place's own rows say.
     */
-  private[places] def nameKeysIn()(using DbCon): Map[com.histmersion.domain.catalogue.places.PointAreaRepo.NameKey, Set[com.histmersion.domain.catalogue.Place.Id]] =
+  private[places] def nameKeysIn()(using DbCon): Map[com.histmersion.domain.catalogue.places.PointAreaRepo.NameKey, Set[com.histmersion.domain.library.Citekey]] =
     val findings =
       sql"""SELECT DISTINCT citekey, btrim(region_name) FROM findings WHERE btrim(coalesce(region_name, '')) <> ''"""
-        .query[(String, String)]
+        .query[(com.histmersion.domain.library.Citekey, String)]
         .run()
         .toList
-        .map((ck, name) => ck -> Geocode.attempts(name).flatMap(a => a.key :: a.within.map(Geocode.key).toList).toSet)
-    val keys = findings.flatMap(_._2).distinct
+        .map((ck, name) =>
+          ck -> Geocode
+            .attempts(Geocode.Attempt.Name(name))
+            .flatMap(a => a.key :: a.within.map(w => Geocode.key(w.value)).toList)
+            .toSet
+        )
+    val keys = findings.flatMap(_._2).distinct.map(_.value)
     if keys.isEmpty then Map.empty
     else
       val seedOnly = s"NOT ${PlaceRepo.importedSql("p")} AND ${FindingPlaceRepo.explicitOnlySql("p")}"
@@ -228,8 +245,8 @@ private[places] object PointAreaRepo:
           .run()
           .toSet
       findings
-        .filter(_._2.exists(hits.contains))
-        .flatMap((ck, ks) => ks.map(_ -> ck))
+        .filter(_._2.exists(k => hits.contains(k.value)))
+        .flatMap((ck, ks) => ks.toList.map(k => NameKey(k.value) -> ck))
         .groupMap(_._1)(_._2)
         .view
         .mapValues(_.toSet)
@@ -244,10 +261,10 @@ private[places] object PointAreaRepo:
       ids0: List[com.histmersion.domain.catalogue.Place.Id],
       kinds: List[com.histmersion.domain.catalogue.Place.Kind.Wire],
       toleranceKm: com.histmersion.domain.catalogue.places.PointAreaRepo.Settings.ToleranceKm,
-      named: Map[com.histmersion.domain.catalogue.places.PlaceRepo.Name, Set[com.histmersion.domain.catalogue.places.PlaceRepo.Lang]]
+      named: Map[com.histmersion.domain.catalogue.places.PointAreaRepo.NameKey, Set[com.histmersion.domain.library.Citekey]]
   )(using
       DbCon
-  ): (com.histmersion.RowCount, com.histmersion.RowCount, Set[String]) =
+  ): (com.histmersion.RowCount, com.histmersion.RowCount, Set[com.histmersion.domain.library.Citekey]) =
     val ids = sql"""SELECT p.id FROM places p
                     WHERE p.id = ANY($ids0::text[])
                       AND p.import_source = ANY($sources::text[]) AND p.kind = ANY($kinds::text[])
@@ -255,21 +272,25 @@ private[places] object PointAreaRepo:
                       AND NOT EXISTS (SELECT 1 FROM attestations t WHERE t.target_type = 'place' AND t.target_id = p.id)
                       AND NOT EXISTS (SELECT 1 FROM asset_links t WHERE t.target_type = 'place' AND t.target_id = p.id)
                       AND NOT EXISTS (SELECT 1 FROM place_overrides o WHERE o.place_id = p.id)
-                    FOR UPDATE OF p""".query[String].run().toList
+                    FOR UPDATE OF p""".query[com.histmersion.domain.catalogue.Place.Id].run().toList
     if ids.isEmpty then (com.histmersion.RowCount(0), com.histmersion.RowCount(0), Set.empty)
     else
       val held = sql"""SELECT DISTINCT f.id, f.citekey FROM finding_places fp JOIN findings f ON f.id = fp.finding_id
-                       WHERE fp.place_id = ANY($ids::text[])""".query[(String, String)].run().toList
+                       WHERE fp.place_id = ANY($ids::text[])""".query[(String, com.histmersion.domain.library.Citekey)].run().toList
       val byName =
-        if named.isEmpty then Set.empty[String]
+        if named.isEmpty then Set.empty[com.histmersion.domain.library.Citekey]
         else
           sql"""SELECT histmersion_place_key(label) FROM places WHERE id = ANY($ids::text[])
                   UNION SELECT histmersion_place_key(name) FROM place_names WHERE place_id = ANY($ids::text[])"""
             .query[String]
             .run()
             .toSet
-            .flatMap(k => named.getOrElse(k, Set.empty))
+            .flatMap(k => named.getOrElse(NameKey(k), Set.empty))
       val n = deletePlacesIn(ids)
       val cks = held.map(_._2).toSet ++ byName
-      cks.toList.sorted.foreach(ck => FindingPlaceRepo.materialiseFor(ck, toleranceKm))
-      (n, held.size, cks)
+      cks.toList
+        .sortBy(_.value)
+        .foreach(ck =>
+          FindingPlaceRepo.materialiseFor(ck, FindingPlacement.Implementation.ToleranceKm(toleranceKm.value))
+        )
+      (n, com.histmersion.RowCount(held.size), cks)

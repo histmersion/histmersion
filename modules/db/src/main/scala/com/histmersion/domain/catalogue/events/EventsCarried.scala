@@ -23,14 +23,14 @@ object EventsCarried:
     Bundle.Kind.Event,
     TableName("events"),
     List(rows(41)(EventBundleRepo.eventRenames), rows(46)(EventBundleRepo.eventsIn))
-  )(scope => EventBundleRepo.events(scope).toList)(_.updatedAt, (es, ls) => es.modify(_.events).setTo(ls))
+  )(scope => EventBundleRepo.events(scope).toList)(e => CarriedKind.RecordsClock(e.updatedAt.value), (es, ls) => es.modify(_.events).setTo(ls))
 
   val eventAliases: CarriedKind = CarriedKind.owned[com.histmersion.api.exchange.Bundle.EventAlias](
     Catalogue,
     BundleEntry(com.histmersion.api.exchange.Bundle.Files.EventAliases),
     List(rows(47)(EventBundleRepo.eventAliasesIn))
   )(scope => EventBundleRepo.eventAliases(scope).toList)(
-    a => Some(a.createdAt),
+    a => Some(CarriedKind.OwnedClock(a.createdAt.value)),
     (es, ls) => es.modify(_.eventAliases).setTo(ls)
   )
 
@@ -39,7 +39,7 @@ object EventsCarried:
     BundleEntry(com.histmersion.api.exchange.Bundle.Files.EventCatalogue),
     List(rows(60)(EventBundleRepo.eventCatalogueIn))
   )(scope => EventBundleRepo.eventCatalogue(scope).toList)(
-    c => Some(c.retrievedAt),
+    c => Some(CarriedKind.OwnedClock(c.retrievedAt.value)),
     (es, ls) => es.modify(_.eventCatalogue).setTo(ls)
   )
 
@@ -48,7 +48,7 @@ object EventsCarried:
     BundleEntry(com.histmersion.api.exchange.Bundle.Files.EventCorrections),
     List(rows(63)(EventBundleRepo.correctionsIn))
   )(scope => EventBundleRepo.corrections(scope).toList)(
-    c => Some(c.updatedAt),
+    c => Some(CarriedKind.OwnedClock(c.updatedAt.value)),
     (es, ls) => es.modify(_.corrections).setTo(ls)
   )
 

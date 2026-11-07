@@ -23,8 +23,17 @@ private[evidence] object EventLinkRepo:
       .run()
       .toList
       .map { r =>
-        val ps = Jsonb.read[List[EventPassage]](r.passages).getOrElse(Nil)
-        EventLinkCandidate(com.histmersion.api.catalogue.Event.Id(r.eventId), com.histmersion.api.library.Citekey(r.citekey), r.score, r.status, r.title, r.findings, ps, r.reasons)
+        val ps = Jsonb.read[List[EventPassage]](Jsonb.JsonText(r.passages.value)).getOrElse(Nil)
+        EventLinkCandidate(
+          com.histmersion.api.catalogue.Event.Id(r.eventId.value),
+          com.histmersion.api.library.Citekey(r.citekey.value),
+          EventLinkCandidate.Score(r.score.value),
+          EventLinkCandidate.StatusValue(r.status.value),
+          r.title.map(t => com.histmersion.api.library.Title(t.value)),
+          r.findings.map(f => com.histmersion.api.library.Finding.Id(f.value)),
+          ps,
+          r.reasons.map(x => EventLinkCandidate.Reasons(x.value))
+        )
       }
 
   /** Replace the PROPOSED candidates of one event with `cs`; a source confirmed or rejected before keeps its status
@@ -53,4 +62,4 @@ private[evidence] object EventLinkRepo:
   def eventsToCheck(all: Boolean, limit: com.histmersion.PageSize)(using DbCon): List[com.histmersion.domain.catalogue.events.BEventRow.Id] =
     sql"""SELECT e.id FROM events e
           WHERE ($all OR NOT EXISTS (SELECT 1 FROM event_link_checks k WHERE k.event_id = e.id))
-          ORDER BY e.catalogue IS NULL, e.id LIMIT $limit""".query[String].run().toList
+          ORDER BY e.catalogue IS NULL, e.id LIMIT $limit""".query[com.histmersion.domain.catalogue.events.BEventRow.Id].run().toList

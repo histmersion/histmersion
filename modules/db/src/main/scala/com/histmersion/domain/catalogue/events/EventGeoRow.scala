@@ -18,23 +18,26 @@ final private[events] case class EventGeoRow(
   def toGeo: EventGeo =
     val e = row.toSummary
     EventGeo(
-      com.histmersion.api.catalogue.Event.Id(e.id),
-      e.label,
-      e.kind,
-      e.scale,
-      e.historicity,
+      e.id,
+      EventGeo.Label(e.label.value),
+      EventGeo.Kind(e.kind.value),
+      EventGeo.Scale(e.scale.value),
+      EventGeo.Historicity(e.historicity.value),
       e.timeSpan,
-      com.histmersion.api.catalogue.Latitude(lat),
-      com.histmersion.api.catalogue.Longitude(lon),
-      anchor,
-      (e.placeId).map(com.histmersion.api.catalogue.Place.Id.apply),
-      placeLabel,
-      e.parentId,
+      com.histmersion.api.catalogue.Latitude(lat.value),
+      com.histmersion.api.catalogue.Longitude(lon.value),
+      EventGeo.Anchor(anchor.value),
+      e.placeId,
+      placeLabel.map(l => EventGeo.PlaceLabel(l.value)),
+      e.parentId.map(p => EventGeo.ParentId(p.value)),
       None,
-      e.tier,
-      EventLeads.size(vei, magnitude),
-      e.precision,
-      e.datingNote
+      EventGeo.Tier(e.tier.value),
+      EventLeads.size(
+        vei.map(v => com.histmersion.api.catalogue.LeadFacts.Vei(v.value)),
+        magnitude.map(m => com.histmersion.api.catalogue.LeadFacts.Magnitude(m.value))
+      ),
+      EventGeo.Precision(e.precision.value),
+      e.datingNote.map(EventGeo.Dating(_))
     )
 
 object EventGeoRow:

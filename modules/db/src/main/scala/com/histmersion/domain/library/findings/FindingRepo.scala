@@ -21,4 +21,4 @@ private[findings] object FindingRepo:
     (FilterSql.findingsFeedQuery(filter, scope).frag.query[GeoFeedRow].run().map(_.toHit))
 
   def findingsCount(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): com.histmersion.RowCount =
-    (FilterSql.findingsCountQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))
+    com.histmersion.RowCount(FilterSql.findingsCountQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))

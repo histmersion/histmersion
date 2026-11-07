@@ -27,43 +27,43 @@ final class HostAiHttp extends AiHttp:
       if built.compareAndSet(null, c) then c else built.get
     }
 
-  private def userAgent = HttpPolicy.userAgent(s"Histmersion/${Version.version} (agents)")
+  private def userAgent = HttpPolicy.userAgent(HttpPolicy.UserAgent(s"Histmersion/${Version.version} (agents)"))
 
   def post(
-      url: com.histmersion.pluginhost.HttpTransport.Url,
-      headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.HostAiHttp.PostHeadersPart2],
-      body: com.histmersion.pluginhost.HostAiHttp.RequestBody,
-      timeoutSeconds: com.histmersion.pluginhost.HttpTransport.TimeoutSeconds
-  ): Either[com.histmersion.pluginhost.HostAiHttp.Problem, AiHttp.Response] =
+      url: AiHttp.PostUrl,
+      headers: Map[AiHttp.PostHeadersPart1, AiHttp.PostHeadersPart2],
+      body: AiHttp.PostBody,
+      timeoutSeconds: AiHttp.PostTimeoutSeconds
+  ): Either[AiHttp.PostResultPart1, AiHttp.Response] =
     send(
-      url,
-      headers,
-      timeoutSeconds,
-      _.POST(java.net.http.HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
-    )
+      url.value,
+      headers.map((k, v) => k.value -> v.value),
+      timeoutSeconds.value,
+      _.POST(java.net.http.HttpRequest.BodyPublishers.ofString(body.value, StandardCharsets.UTF_8))
+    ).left.map(m => AiHttp.PostResultPart1(m))
 
-  def get(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.HostAiHttp.GetHeadersPart2], timeoutSeconds: com.histmersion.pluginhost.HttpTransport.TimeoutSeconds): Either[com.histmersion.pluginhost.HostAiHttp.Problem, AiHttp.Response] =
-    send(url, headers, timeoutSeconds, _.GET())
+  def get(url: AiHttp.GetUrl, headers: Map[AiHttp.GetHeadersPart1, AiHttp.GetHeadersPart2], timeoutSeconds: AiHttp.GetTimeoutSeconds): Either[AiHttp.GetResultPart1, AiHttp.Response] =
+    send(url.value, headers.map((k, v) => k.value -> v.value), timeoutSeconds.value, _.GET()).left.map(m => AiHttp.GetResultPart1(m))
 
   private def send(
-      url: com.histmersion.pluginhost.HttpTransport.Url,
-      headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.HostAiHttp.SendHeadersPart2],
-      timeoutSeconds: com.histmersion.pluginhost.HttpTransport.TimeoutSeconds,
+      url: String,
+      headers: Map[String, String],
+      timeoutSeconds: Int,
       method: java.net.http.HttpRequest.Builder => java.net.http.HttpRequest.Builder
-  ): Either[com.histmersion.pluginhost.HostAiHttp.Problem, AiHttp.Response] =
+  ): Either[String, AiHttp.Response] =
     try
       val b = java.net.http.HttpRequest
         .newBuilder(java.net.URI.create(url))
         .timeout(java.time.Duration.ofSeconds(math.max(1, timeoutSeconds).toLong))
       headers.foreach((k, v) => if !k.equalsIgnoreCase("user-agent") then { val _ = b.header(k, v) })
-      val _ = b.header("User-Agent", userAgent)
+      val _ = b.header("User-Agent", userAgent.value)
       val r = client.send(method(b).build(), java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
       Right(
         AiHttp.Response(
-          r.statusCode,
-          r.body,
+          AiHttp.Response.Status(r.statusCode),
+          AiHttp.Response.Body(r.body),
           r.headers.map.asScala.toMap.collect {
-            case (k, v) if !v.isEmpty => k.toLowerCase(java.util.Locale.ROOT) -> v.get(0)
+            case (k, v) if !v.isEmpty => AiHttp.Response.HeadersKey(k.toLowerCase(java.util.Locale.ROOT)) -> AiHttp.Response.HeadersValue(v.get(0))
           }
         )
       )
@@ -71,15 +71,3 @@ final class HostAiHttp extends AiHttp:
       case e: InterruptedException => throw e
       // the message only: never the request, which may carry a key in a header
       case NonFatal(e) => Left(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
-
-object HostAiHttp:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RequestBody = RequestBody.T
-  object RequestBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PostHeadersPart2 = PostHeadersPart2.T
-  object PostHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetHeadersPart2 = GetHeadersPart2.T
-  object GetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SendHeadersPart2 = SendHeadersPart2.T
-  object SendHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

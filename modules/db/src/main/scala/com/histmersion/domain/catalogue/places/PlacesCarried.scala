@@ -13,34 +13,31 @@ import hearth.kindlings.optics.syntax.*
   * their old ids, and the site types refined from outside.
   */
 object PlacesCarried:
-  type Rank = Rank.T
-  object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   private val Catalogue = DataOwner("catalogue")
 
-  private def rows(rank: com.histmersion.domain.catalogue.places.PlacesCarried.Rank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
+  private def rows(rank: ImportRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, rank, write)
 
   val places: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.Place](
     Catalogue,
     Bundle.Kind.Place,
     TableName("places"),
-    List(rows(com.histmersion.domain.catalogue.places.PlacesCarried.Rank(30))(PlaceBundleRepo.placeRenames), rows(com.histmersion.domain.catalogue.places.PlacesCarried.Rank(31))(PlaceBundleRepo.placesIn))
-  )(scope => PlaceBundleRepo.places(scope).toList)(_.updatedAt, (es, ls) => es.modify(_.places).setTo(ls))
+    List(rows(ImportRank(30))(PlaceBundleRepo.placeRenames), rows(ImportRank(31))(PlaceBundleRepo.placesIn))
+  )(scope => PlaceBundleRepo.places(scope).toList)(p => CarriedKind.RecordsClock(p.updatedAt.value), (es, ls) => es.modify(_.places).setTo(ls))
 
   val placeAliases: CarriedKind = CarriedKind.owned[com.histmersion.api.exchange.Bundle.PlaceAlias](
     Catalogue,
     BundleEntry(com.histmersion.api.exchange.Bundle.Files.PlaceAliases),
-    List(rows(com.histmersion.domain.catalogue.places.PlacesCarried.Rank(33))(PlaceBundleRepo.placeAliasesIn))
+    List(rows(ImportRank(33))(PlaceBundleRepo.placeAliasesIn))
   )(scope => PlaceBundleRepo.placeAliases(scope).toList)(
-    a => Some(a.createdAt),
+    a => Some(CarriedKind.OwnedClock(a.createdAt.value)),
     (es, ls) => es.modify(_.placeAliases).setTo(ls)
   )
 
   val siteTypes: CarriedKind = CarriedKind.owned[com.histmersion.api.exchange.Bundle.SiteType](
     Catalogue,
     BundleEntry(com.histmersion.api.exchange.Bundle.Files.PlaceSiteTypes),
-    List(rows(com.histmersion.domain.catalogue.places.PlacesCarried.Rank(64))(PlaceBundleRepo.siteTypesIn))
-  )(scope => PlaceBundleRepo.siteTypes(scope).toList)(_.checkedAt, (es, ls) => es.modify(_.siteTypes).setTo(ls))
+    List(rows(ImportRank(64))(PlaceBundleRepo.siteTypesIn))
+  )(scope => PlaceBundleRepo.siteTypes(scope).toList)(t => t.checkedAt.map(c => CarriedKind.OwnedClock(c.value)), (es, ls) => es.modify(_.siteTypes).setTo(ls))
 
   /** Every kind of the places. */
   val all: List[CarriedKind] = List(places, placeAliases, siteTypes)
@@ -48,4 +45,4 @@ object PlacesCarried:
   /** Where the bundle's place ids point here, for the lines of other kinds that name a place: a place the other side
     * renamed whose line is not written keeps its id here.
     */
-  def placeHere(w: BundleImport.Writer): com.histmersion.domain.catalogue.Place.Id => String = PlaceBundleRepo.placeHere(w)
+  def placeHere(w: BundleImport.Writer): com.histmersion.domain.catalogue.places.BPlaceRow.Id => com.histmersion.domain.catalogue.places.BPlaceRow.Id = PlaceBundleRepo.placeHere(w)

@@ -4,6 +4,7 @@ import com.histmersion.domain.AcquireRecheck
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import java.time.Instant
 
 /** The acquisition list's re-check (migration V104): one row per acquisition item that was checked. Every method runs
@@ -21,7 +22,7 @@ private[acquisition] object AcquireCheckRepo:
   )
 
   private def row(t: (com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, com.histmersion.domain.library.acquisition.AcquireCheckRepo.CheckedAtMs, com.histmersion.domain.library.acquisition.AcquireCheckRow.Generation, com.histmersion.domain.library.acquisition.AcquireCheckRow.Outcome, com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason, com.histmersion.domain.library.acquisition.AcquireCheckRow.Checks)): AcquireCheckRow =
-    AcquireCheckRow(t._1, Instant.ofEpochMilli(t._2), t._3, t._4, t._5, t._6)
+    AcquireCheckRow(t._1, Instant.ofEpochMilli(t._2.value), t._3, t._4, t._5, t._6)
 
   /** The checks of these items (any that has none is absent). */
   def of(items: List[com.histmersion.domain.library.acquisition.AcquireCheckRow.Item])(using DbCon): Map[com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, AcquireCheckRow] =
@@ -29,7 +30,7 @@ private[acquisition] object AcquireCheckRepo:
     else
       val ids = items.distinct.map(_.toString)
       sql"$Select WHERE item_id::text = ANY($ids::text[])"
-        .query[(Int, Long, String, String, String, Int)]
+        .query[(com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, com.histmersion.domain.library.acquisition.AcquireCheckRepo.CheckedAtMs, com.histmersion.domain.library.acquisition.AcquireCheckRow.Generation, com.histmersion.domain.library.acquisition.AcquireCheckRow.Outcome, com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason, com.histmersion.domain.library.acquisition.AcquireCheckRow.Checks)]
         .run()
         .map(row)
         .map(r => r.item -> r)
@@ -38,7 +39,7 @@ private[acquisition] object AcquireCheckRepo:
   /** The checks of every OPEN acquisition item. */
   def open()(using DbCon): Map[com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, AcquireCheckRow] =
     sql"""$Select WHERE item_id IN (SELECT id FROM queue_items WHERE list = 'acquire' AND status = 'open')"""
-      .query[(Int, Long, String, String, String, Int)]
+      .query[(com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, com.histmersion.domain.library.acquisition.AcquireCheckRepo.CheckedAtMs, com.histmersion.domain.library.acquisition.AcquireCheckRow.Generation, com.histmersion.domain.library.acquisition.AcquireCheckRow.Outcome, com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason, com.histmersion.domain.library.acquisition.AcquireCheckRow.Checks)]
       .run()
       .map(row)
       .map(r => r.item -> r)
@@ -60,19 +61,19 @@ private[acquisition] object AcquireCheckRepo:
   def countSince(since: Instant)(using DbCon): Map[com.histmersion.domain.library.acquisition.AcquireCheckRow.Outcome, com.histmersion.RowCount] =
     val ms = since.toEpochMilli.toDouble / 1000
     sql"""SELECT outcome, count(*)::int FROM acquire_checks WHERE checked_at >= to_timestamp($ms::float8)
-          GROUP BY outcome""".query[(String, Int)].run().toMap
+          GROUP BY outcome""".query[(com.histmersion.domain.library.acquisition.AcquireCheckRow.Outcome, com.histmersion.RowCount)].run().toMap
 
   /** The sources holding these DOIs (lower-cased): the citekey, and whether it has its original (a converted body or a
     * stored file). One per DOI — the first citekey.
     */
   def heldByDoi(dois: List[com.histmersion.domain.library.Doi])(using DbCon): Map[com.histmersion.domain.library.Doi, AcquireRecheck.Held] =
-    val ds0 = dois.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
+    val ds0 = dois.map(_.value.trim.toLowerCase).filter(_.nonEmpty).distinct
     if ds0.isEmpty then Map.empty
     else
       sql"""SELECT DISTINCT ON (lower(doi)) lower(doi), citekey,
                              (coalesce(ocr_markdown, '') <> '' OR sha256 IS NOT NULL)
                       FROM sources WHERE lower(doi) = ANY($ds0::text[]) ORDER BY lower(doi), citekey"""
-        .query[(String, String, Boolean)]
+        .query[(com.histmersion.domain.library.Doi, com.histmersion.domain.library.Citekey, Boolean)]
         .run()
-        .map((d, ck, has) => d -> AcquireRecheck.Held(ck, has))
+        .map((d, ck, has) => d -> AcquireRecheck.Held(ck, AcquireRecheck.Held.HasOriginal(has)))
         .toMap

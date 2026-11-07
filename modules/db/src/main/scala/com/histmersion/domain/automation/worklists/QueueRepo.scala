@@ -71,18 +71,18 @@ private[worklists] object QueueRepo:
     * and another watcher's sweep may have added it since).
     */
   def naming(kind: Kind, doi: com.histmersion.domain.library.Doi)(using DbCon): Vector[QueueItem] =
-    val d = doi.trim.toLowerCase
+    val d = doi.value.trim.toLowerCase
     if d.isEmpty then Vector.empty
     else sql"""SELECT $Cols FROM queue_items WHERE list = ${kind.label} AND strpos(lower(text), $d) > 0
-                        ORDER BY id""".query[QueueItem].run().filter(i => Scheduling.dois(i.text).contains(d))
+                        ORDER BY id""".query[QueueItem].run().filter(i => Scheduling.dois(i.text.value).contains(d))
 
   /** Insert one row. `createdAt` (an ISO instant) is honoured when given — an imported LOG entry keeps the date from
     * its heading, which is what orders the exported file.
     */
   def insert(kind: Kind, in: QueueAdd)(using DbCon): QueueItem =
-    val status = in.status.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Open)
-    val goal = in.goal.map(_.trim).filter(_.nonEmpty)
-    val job = in.job.map(_.trim).filter(_.nonEmpty)
+    val status = in.status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Open)
+    val goal = in.goal.map(_.value.trim).filter(_.nonEmpty)
+    val job = in.job.map(_.value.trim).filter(_.nonEmpty)
     val id =
       sql"""INSERT INTO queue_items (list, text, topic, status, reason, created_at, done_at, goal_slug, created_job)
                    VALUES (${kind.label}, ${in.text}, ${in.topic}, $status, ${in.reason},
@@ -106,4 +106,4 @@ private[worklists] object QueueRepo:
 
   /** Every row of `kind` removed; how many. */
   def deleteList(kind: Kind)(using DbCon): com.histmersion.RowCount =
-    sql"DELETE FROM queue_items WHERE list = ${kind.label}".update.run()
+    com.histmersion.RowCount(sql"DELETE FROM queue_items WHERE list = ${kind.label}".update.run())

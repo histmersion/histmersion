@@ -65,3 +65,12 @@ From the core finisher, to compare with 7e197c2b: `MergePlanner` folds, renames 
 - `parseRetractionWatch` no longer normalises DOIs, and a repair agent moved that into `AcquireSuite`. Restore it in main and remove it from the test: a retracted paper must not be missed.
 
 Also check: `ModelChains.headroom` returns `Option[LimitState.FreesAt]` for a token headroom; `EventPrecision`, `Correction.Status`, `HintEffect` constants are plain strings; `AcquisitionControllers:357` has a mangled `Ident.doi(r.doi)`.
+
+## From db and plugin-host, round 1 (to review against master before install)
+
+- Reads through constrained types fail on rows the old code accepted: `.query[Citekey|Place.Id|Slug|Run.Id|Sha256]` in SourceRepo, PlaceRepo, PointAreaRepo, ArticleRepo, JobRepo, SourceDeleteRepo, SourceCheckRepo.stale, AcquireCheckRepo.heldByDoi, UndatedSiteRepo; goals, goal_links, goal_schedules slugs; `applyUnsafe` in SourceRepo.write, FindingHitRow.assignedPlaceIds, JobRepo.insertRun, PlaceRepo.rename; ApprovalRow.jobId as UUID.
+- Dropped or changed: SourceCheckRepo.EdgeRows and SourceBundleRepo.unresolvedEdgesIn drop unknown edge kinds; Edge.Kind read with `getOrElse(References)`; SourceDeleteRepo no longer trims or filters blank sha256; neededBlobs drops malformed shas.
+- SpiValues.latitude/longitude/area lost the range check by taking constrained types, but plugin values are unconstrained: the check must stay where a plugin's value enters the host, and the tests with 91.0 and 400 must keep passing.
+- `math.max(1, limit)` became `limit.value` on PageSize: check nothing builds a PageSize with assume or from 0.
+- AgentRepo reports using `api` types (`RunInfo`, `Goal.Slug`, ...) in rows: G7 review.
+- Concepts split, bridged: Plugin.Info.Id vs util.plugins.Plugin.Id; Goal slug domain vs api; Job.Id / RunInfo.Id / Run.Id; Approval.State.Wire api vs domain; api Year vs DeepTime.SignedYear; HttpAnswer.Code vs HttpPolicy.StatusCode; AcquireConfig.UserAgent vs HttpPolicy.UserAgent; ProviderAsset.Bytes vs NewFigure.Bytes; ReportMaxItems vs Lint.ItemLimit; Place.Entry.SiteType vs SiteTypes.SiteType.Id; PlanQuotaRepo RefreshMode vs PlanQuota.RefreshMode.Wire; Pool.RefusalUntil vs EpochMillis; MediaGeoRow.Uid vs MediaItemRow.Uid.

@@ -12,6 +12,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import scala.util.chaining.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.Param
 import com.histmersion.util.database.Sql
@@ -103,6 +104,15 @@ private[places] object PlaceRepo:
   }
 
   /** Every alternate name of `p`, comma-joined — the `names` column of a [[PlaceSummary]]. */
+  private def raw(text: String): Sql = Sql.raw(Sql.Text(text))
+
+  private def of(text: String, ps: Param*): Sql = Sql.of(Sql.Text(text), ps*)
+
+  private def signed(y: com.histmersion.api.catalogue.Year): com.histmersion.domain.DeepTime.SignedYear = com.histmersion.domain.DeepTime.SignedYear(y.value)
+
+  private def bounds(b: (Option[com.histmersion.api.catalogue.Year], Option[com.histmersion.api.catalogue.Year])): String =
+    RangeSql.bounds(b._1.map(signed), b._2.map(signed))
+
   private val namesCol =
     "coalesce((SELECT string_agg(DISTINCT n.name, ', ' ORDER BY n.name) FROM place_names n" +
       " WHERE n.place_id = p.id), '')"
@@ -138,7 +148,7 @@ private[places] object PlaceRepo:
     * of another place (`place_aliases`: a merged duplicate, a renamed place) — else the next `places seed` would bring
     * back what a person merged or removed.
     */
-  private def suppressed(ids: List[com.histmersion.domain.catalogue.Place.Id])(using DbCon): Set[com.histmersion.domain.catalogue.Place.Id] =
+  private def suppressed(ids: List[String])(using DbCon): Set[String] =
     sql"""SELECT id FROM place_removals WHERE id = ANY($ids::text[])
           UNION
           SELECT alias FROM place_aliases a WHERE a.alias = ANY($ids::text[])
@@ -150,12 +160,12 @@ private[places] object PlaceRepo:
   private def upsertIn(all: List[com.histmersion.api.catalogue.Place.Input], dataset: Dataset)(using
       DbCon
   ): com.histmersion.api.catalogue.Place.ImportResult =
-    val skip = suppressed(all.map(_.place.id.value).distinct).map(com.histmersion.api.catalogue.Place.Id.apply)
-    val batch = if skip.isEmpty then all else all.filterNot(in => skip.contains(in.place.id))
+    val skip = suppressed(all.map(_.place.id.value).distinct)
+    val batch = if skip.isEmpty then all else all.filterNot(in => skip.contains(in.place.id.value))
     val ids = batch.map(_.place.id).distinct
     val _ = batchUpdate(batch) { in =>
       val g = in.place.geometry
-      val p = RangeSql.bounds(in.place.bounds._1, in.place.bounds._2)
+      val p = bounds(in.place.bounds)
       sql"""INSERT INTO places (id, label, kind, geom, period, source, properties, dataset)
             VALUES (${in.place.id}, ${in.place.label}, ${in.place.kind},
                     CASE WHEN $g::text IS NULL THEN NULL
@@ -168,7 +178,7 @@ private[places] object PlaceRepo:
     }
 
     val idList = ids.toList
-    val _ = GazetteerRepo.linkSeedIds(idList.map(_.value))
+    val _ = GazetteerRepo.linkSeedIds(idList.map(i => BPlaceRow.Id(i.value)))
     // only the seed's own names (source ''): what GeoNames, Wikidata or an LPF dataset gave a seed
     // place (V071) is theirs to replace, at their next import
     val _ =
@@ -178,7 +188,7 @@ private[places] object PlaceRepo:
 
     val names = batch.flatMap(in => in.names.map(in.place.id -> _))
     val _ = batchUpdate(names) { (pid, n) =>
-      val p = RangeSql.bounds(n.bounds._1, n.bounds._2)
+      val p = bounds(n.bounds)
       sql"""INSERT INTO place_names (place_id, name, lang, period)
             VALUES ($pid, ${n.name}, ${n.lang}, $p::int8range)
             ON CONFLICT (place_id, name, lang, import_source, import_ref) DO UPDATE SET period = EXCLUDED.period""".update
@@ -191,18 +201,22 @@ private[places] object PlaceRepo:
       .query[String]
       .run()
       .toSet
-    val (ok, dangling) = wanted.partition(r => existing.contains(r.parentId))
+    val (ok, dangling) = wanted.partition(r => existing.contains(r.parentId.value))
     val _ = batchUpdate(ok) { r =>
-      val p = RangeSql.bounds(r.bounds._1, r.bounds._2)
+      val p = bounds(r.bounds)
       sql"""INSERT INTO place_relations (child_id, parent_id, kind, period)
             VALUES (${r.childId}, ${r.parentId}, ${r.kind}, $p::int8range)
             ON CONFLICT (child_id, parent_id, kind) DO UPDATE SET period = EXCLUDED.period""".update
     }
     com.histmersion.api.catalogue.Place.ImportResult(
-      places = ids.size,
-      names = names.size,
-      relations = ok.size,
-      failed = dangling.map(r => s"${r.childId}: no such parent '${r.parentId}'").distinct.take(20)
+      places = com.histmersion.api.catalogue.Place.ImportResult.Places(ids.size),
+      names = com.histmersion.api.catalogue.Place.ImportResult.Names(names.size),
+      relations = com.histmersion.api.catalogue.Place.ImportResult.Relations(ok.size),
+      failed = dangling
+        .map(r => s"${r.childId}: no such parent '${r.parentId}'")
+        .distinct
+        .take(20)
+        .map(com.histmersion.api.catalogue.Place.ImportResult.Failed(_))
     )
 
   // ── reads ────────────────────────────────────────────────────────────────────────────────────
@@ -218,19 +232,19 @@ private[places] object PlaceRepo:
       limit: com.histmersion.domain.catalogue.places.PlaceRepo.Limit,
       modernFrom: com.histmersion.domain.DeepTime.SignedYear = DefaultModernFrom
   )(using DbCon): Vector[com.histmersion.api.catalogue.Place.Hit] =
-    val text = q.map(_.trim).filter(_.nonEmpty)
+    val text = q.map(_.value.trim).filter(_.nonEmpty)
     val cont = text.map(LikePattern.contains).getOrElse("%")
     val pre = text.map(LikePattern.startsWith).getOrElse("%")
     val exact = text.getOrElse("")
     val long = text.filter(_.length >= 3)
     val short = text.filter(_.length < 3).map(Geocode.key)
-    val n = limit.max(1)
+    val n = limit.value.max(1)
     // Before `modern-from` the time rule never shows a present-day GeoNames/Wikidata place — 1.15 M of
     // the 1.28 M places. Said in so many words ([[ShownBeforeModernSql]], implied by [[inTimeSql]]
     // then), it lets every pass read the 132 000 others through their own indexes (V076): at 2500 BCE
     // "Tro" checked 8 500 candidates by primary key, nearly all of them imported, and found its label
     // matches in all 1.28 M labels — 57 ms; through the partial indexes, 34 (2026-10-09).
-    val pm = SqlLiteral(if asOf.exists(_ < modernFrom) then s" AND $ShownBeforeModernSql" else "")
+    val pm = SqlLiteral(if asOf.exists(_.value < modernFrom.value) then s" AND $ShownBeforeModernSql" else "")
     // RANK FIRST, DECORATE AFTER (2026-10-09). The ordering needs only the row itself and its
     // finding count; the alternate-name laterals (every name of the place, and the one that
     // matched) are for the `n` rows shown. Computing them for every candidate first — 23 800 for
@@ -307,7 +321,7 @@ private[places] object PlaceRepo:
             ) nm ON true
             WHERE p.id = ANY($ids::text[])""".query[com.histmersion.api.catalogue.Place.Hit].run()
       val at = rows.map(h => h.id -> h).toMap
-      ranked.flatMap(at.get)
+      ranked.flatMap(id => at.get(com.histmersion.api.catalogue.Place.Id(id)))
 
   /** `GET /api/places/{id}?asOf=` — the row, its geometry as GeoJSON, and the hierarchy AS OF `asOf`. A place with no
     * shape of its own (a continent is a hierarchy node, not a polygon) reports the UNION of its children's shapes,
@@ -339,12 +353,12 @@ private[places] object PlaceRepo:
       val tps = typesIn(id, asOf)
       com.histmersion.api.catalogue.Place.Entry(
         r.toSummary,
-        r.geometry,
+        r.geometry.map(g => Place.Entry.Geometry(g.value)),
         parents(id, asOf).toList,
-        kids(id, asOf, Int.MaxValue, modernFrom).toList,
-        r.findings,
-        asOf,
-        r.contested,
+        kids(id, asOf, Limit(Int.MaxValue), modernFrom).toList,
+        Place.Counts.Findings(r.findings.value),
+        asOf.map(y => com.histmersion.api.catalogue.Year(y.value)),
+        Place.Entry.Contested(r.contested.value),
         fps,
         lks,
         tps,
@@ -352,7 +366,7 @@ private[places] object PlaceRepo:
         descriptions = descriptionsOf(id),
         timeBasis = r.timeBasis,
         locationPrecision = r.precision.transformInto[com.histmersion.api.catalogue.Place.Precision],
-        siteType = siteTypeOf(id),
+        siteType = siteTypeOf(id).map(t => Place.Entry.SiteType(t.value)),
         record = recordOf(id)
       )
     }
@@ -364,12 +378,14 @@ private[places] object PlaceRepo:
     val dateSource =
       sql"SELECT properties->>'date_source' FROM places WHERE id = $id".query[Option[String]].run().headOption.flatten
     def array(key: com.histmersion.domain.catalogue.places.PlaceRepo.ArrayKey) =
-      s"CASE WHEN jsonb_typeof(p.properties->'$key') = 'array' THEN p.properties->'$key' ELSE '[]'::jsonb END"
+      s"CASE WHEN jsonb_typeof(p.properties->'${key.value}') = 'array' THEN p.properties->'${key.value}' ELSE '[]'::jsonb END"
     val periods = Sql
       .of(
-        s"SELECT coalesce(x->>'label', x->>'id') FROM places p, jsonb_array_elements(${array(com.histmersion.domain.catalogue.places.PlaceRepo.ArrayKey("periods"))}) x" +
-          " WHERE p.id = ? AND jsonb_typeof(x) = 'object'",
-        Param.S(id)
+        Sql.Text(
+          s"SELECT coalesce(x->>'label', x->>'id') FROM places p, jsonb_array_elements(${array(ArrayKey("periods"))}) x" +
+            " WHERE p.id = ? AND jsonb_typeof(x) = 'object'"
+        ),
+        Param.S(Param.S.V(id.value))
       )
       .frag
       .query[Option[String]]
@@ -378,9 +394,11 @@ private[places] object PlaceRepo:
       .flatten
     val designations = Sql
       .of(
-        s"SELECT x->>'id', x->>'label', x->>'start', x->>'end' FROM places p, jsonb_array_elements(${array(com.histmersion.domain.catalogue.places.PlaceRepo.ArrayKey("heritage"))}) x" +
-          " WHERE p.id = ? AND jsonb_typeof(x) = 'object' AND x->>'id' IS NOT NULL",
-        Param.S(id)
+        Sql.Text(
+          s"SELECT x->>'id', x->>'label', x->>'start', x->>'end' FROM places p, jsonb_array_elements(${array(ArrayKey("heritage"))}) x" +
+            " WHERE p.id = ? AND jsonb_typeof(x) = 'object' AND x->>'id' IS NOT NULL"
+        ),
+        Param.S(Param.S.V(id.value))
       )
       .frag
       .query[(String, Option[String], Option[String], Option[String])]
@@ -394,13 +412,23 @@ private[places] object PlaceRepo:
       .query[(String, String)]
       .run()
       .toList
-      .map(com.histmersion.api.catalogue.Place.Register.apply)
-    com.histmersion.api.catalogue.Place.Record(dateSource, periods, designations, registers)
+      .map((property, value) =>
+        com.histmersion.api.catalogue.Place.Register(
+          com.histmersion.api.catalogue.Place.Register.Property(property),
+          com.histmersion.api.catalogue.Place.Register.Id(value)
+        )
+      )
+    com.histmersion.api.catalogue.Place.Record(
+      dateSource.map(com.histmersion.api.catalogue.Place.Record.DateSource(_)),
+      periods,
+      designations,
+      registers
+    )
 
   /** What site `id` is (#1449), read as the map's layer reads it ([[SiteTypes.of]]): a stored refinement, else its
     * gazetteer's own fields — so its card shows the icon its marker has.
     */
-  private def siteTypeOf(id: com.histmersion.domain.catalogue.Place.Id)(using DbCon): Option[com.histmersion.domain.catalogue.places.PlaceRepo.SiteType] =
+  private def siteTypeOf(id: com.histmersion.domain.catalogue.Place.Id)(using DbCon): Option[SiteTypes.SiteType.Id] =
     sql"""SELECT kind, site_type, properties->>'feature_types', properties->>'fcode', properties->>'class',
                  properties->>'p31'
           FROM places WHERE id = $id"""
@@ -408,7 +436,15 @@ private[places] object PlaceRepo:
       .run()
       .headOption
       .flatMap((kind, stored, ft, fcode, wd, p31) =>
-        SiteTypes.of(id, kind, stored, ft, fcode, wd, SiteTypes.p31Of(p31))
+        SiteTypes.of(
+          com.histmersion.api.catalogue.Place.Id(id.value),
+          com.histmersion.api.catalogue.Place.Kind.Wire(kind),
+          stored.map(SiteTypes.SiteType.Id(_)),
+          ft.map(SiteTypes.Pleiades.FeatureType(_)),
+          fcode.map(SiteTypes.Geonames.Fcode(_)),
+          wd.map(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class(_)),
+          SiteTypes.p31Of(p31.map(com.histmersion.api.catalogue.CatalogRecord.Wikidata.P31Json(_)))
+        )
       )
 
   /** What place `id` IS, as its sources describe it (V074): English first, then the other languages; within one
@@ -449,7 +485,7 @@ private[places] object PlaceRepo:
           WHERE r.parent_id = $id AND NOT ${SqlLiteral(importedSql("p"))}
             AND ($asOf::bigint IS NULL OR r.period @> $asOf::bigint)
             AND ${SqlLiteral(inTimeSql("p", asOf))}
-          ORDER BY p.label, p.id LIMIT ${limit.max(1)}""").query[com.histmersion.api.catalogue.Place.Summary].run()
+          ORDER BY p.label, p.id LIMIT ${limit.value.max(1)}""").query[com.histmersion.api.catalogue.Place.Summary].run()
 
   /** SQL twin of [[com.histmersion.api.catalogue.RegionNode.rootEligible]]: a place that may head the hierarchy.
     * Region, polity or continent; not a Pleiades `withdrawn` record (marked as a property in part of the export and
@@ -471,12 +507,12 @@ private[places] object PlaceRepo:
       root: Option[com.histmersion.domain.catalogue.Place.Id],
       maxDepth: com.histmersion.domain.catalogue.places.PlaceRepo.Depth,
       limit: com.histmersion.domain.catalogue.places.PlaceRepo.Limit,
-      depthCap: com.histmersion.domain.catalogue.places.PlaceRepo.Depth = Int.MaxValue,
+      depthCap: com.histmersion.domain.catalogue.places.PlaceRepo.Depth = Depth(Int.MaxValue),
       modernFrom: com.histmersion.domain.DeepTime.SignedYear = DefaultModernFrom
   )(using DbCon): Vector[com.histmersion.api.catalogue.Place.TreeRow] =
     // `maxDepth` is a caller's number; `depthCap` is the configured ceiling (`places.tree-depth`).
     // A caller asking for depth 10 000 walked ten thousand levels of a recursive CTE.
-    val depth = math.max(0, math.min(maxDepth, depthCap))
+    val depth = math.max(0, math.min(maxDepth.value, depthCap.value))
     (Sql.raw(com.histmersion.util.database.Sql.RawText("WITH RECURSIVE ")) ++ timeWindowCte(asOf, modernFrom) ++ sql""", edges AS (
             SELECT r.child_id, r.parent_id FROM place_relations r
             WHERE $asOf::bigint IS NULL OR r.period @> $asOf::bigint
@@ -506,7 +542,7 @@ private[places] object PlaceRepo:
                  (SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = t.id),
                  ${SqlLiteral(contestedCol)}
           FROM tree t JOIN places p ON p.id = t.id
-          ORDER BY t.path, t.depth LIMIT ${limit.max(1)}""").query[com.histmersion.api.catalogue.Place.TreeRow].run()
+          ORDER BY t.path, t.depth LIMIT ${limit.value.max(1)}""").query[com.histmersion.api.catalogue.Place.TreeRow].run()
 
   /** The gazetteer places one finding was materialised into. */
   def placesOf(findingId: com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id)(using DbCon): Vector[com.histmersion.api.catalogue.Place.Summary] =
@@ -542,7 +578,7 @@ private[places] object PlaceRepo:
       limit: com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonQueryLimit,
       modernFrom: com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonQueryModernFrom = DefaultModernFrom
   ): Sql =
-    geoJsonTimeQuery(kind, asOf.fold(GeoTime.Always)(GeoTime.At(_)), limit, modernFrom)
+    geoJsonTimeQuery(kind, asOf.fold(GeoTime.Always)(y => GeoTime.At(com.histmersion.api.catalogue.Year(y.value))), limit, modernFrom)
 
   /** [[geoJsonQuery]] for any [[GeoTime]]: across all time, at a year, or over a whole range. `pairsByIndex = false`
     * makes a range of areas pair its shapes the plain way ([[rangeShadowedSql]]) — the reference `PlaceGeoSuite` holds
@@ -556,23 +592,23 @@ private[places] object PlaceRepo:
       pairsByIndex: com.histmersion.domain.catalogue.places.PlaceRepo.PairsByIndex = com.histmersion.domain.catalogue.places.PlaceRepo.PairsByIndex(true)
   ): Sql =
     import Param.*
-    val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
-    val window = time.window
+    val k = kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
+    val window = time.window.map((a, b) => (signed(a), signed(b)))
     val within = time match
       case w: GeoTime.Within => Some(w)
       case _                 => None
     val where = List(
       Some(Sql.raw(com.histmersion.util.database.Sql.RawText("p.geom IS NOT NULL"))),
-      Some(Sql.of(com.histmersion.util.database.Sql.OfText("p.label !~* ?"), S(UninformativeLabel))),
+      Some(Sql.of(com.histmersion.util.database.Sql.OfText("p.label !~* ?"), S(Param.S.V(UninformativeLabel)))),
       // across all time a present-day place is never drawn; at a year, the time rule decides
       // (physical features always, present-day places from `modern-from`, undated ones by findings)
-      Some(Sql.raw(if window.isEmpty then s"NOT $ModernSql" else inWindowSql("p", window, k))),
-      k.map(v => Sql.of(com.histmersion.util.database.Sql.OfText("p.kind = ?"), S(v))),
+      Some(raw(if window.isEmpty then s"NOT $ModernSql" else inWindowSql("p", window, k))),
+      k.map(v => Sql.of(com.histmersion.util.database.Sql.OfText("p.kind = ?"), S(Param.S.V(v)))),
       // an undated import is never on a time-sliced map, findings or not (its open range is unknown)
-      window.map(_ => Sql.raw(s"NOT $UndatedImportSql")),
+      window.map(_ => raw(s"NOT $UndatedImportSql")),
       // nor is a polity known only by a point and no date (a late Roman province Pleiades does not
       // date, `lint --rule place-kind`): a state is not "always"
-      window.map(_ => Sql.raw(UndatedPolityPointSql))
+      window.map(_ => raw(UndatedPolityPointSql))
     ).flatten
     // `live` carries no geometry — copying 138 large polygons into a CTE's tuplestore cost ~2 s;
     // the full shapes are read from `places` only for candidate pairs and for the rows returned.
@@ -587,13 +623,13 @@ private[places] object PlaceRepo:
     // What the ranking and the collapse read of a shape — its area, box and normalised label — is
     // stored with it (V090): computed here, each decompressed the polygon of every row alive, ~70 ms
     // apiece over a whole range.
-    val cols = Sql.raw(
+    val cols = raw(
       "SELECT p.id, p.kind, " +
         s"$sourceTierSql AS tier, p.label_norm AS norm, p.shape_area AS area, " +
         s"p.shape_box AS bb, ${timeBasisSql("p")} AS basis${if within.isDefined then ", p.period AS per" else ""}" +
         " FROM places p WHERE "
     )
-    val rest = Sql(where.map(_.text).mkString(" AND "), where.flatMap(_.params))
+    val rest = Sql(Sql.Text(where.map(_.text.value).mkString(" AND ")), where.flatMap(_.params))
     // At a year both halves are read through a (kind, period) GiST (V076): `places_base_layer_time`
     // (the curated predicate) and `places_dated_import` ([[DatedImportSql]], implied there by "not
     // curated" and "not an undated import" — stated so the planner can use the index). The few
@@ -606,15 +642,15 @@ private[places] object PlaceRepo:
       else
         s" AND NOT $CuratedSql AND $DatedImportSql" +
           " AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id OFFSET 0)"
-    val live = Sql.raw(com.histmersion.util.database.Sql.RawText("WITH ")) ++ windowCte(window, modernFrom) ++ Sql.raw(", live AS (") ++
-      cols ++ rest ++ Sql.raw(s" AND $CuratedSql") ++ Sql.raw(" UNION ALL ") ++
-      cols ++ rest ++ Sql.raw(imported) ++ Sql.raw(")")
+    val live = Sql.raw(com.histmersion.util.database.Sql.RawText("WITH ")) ++ windowCte(window, modernFrom) ++ raw(", live AS (") ++
+      cols ++ rest ++ raw(s" AND $CuratedSql") ++ raw(" UNION ALL ") ++
+      cols ++ rest ++ raw(imported) ++ raw(")")
     // only a time view collapses duplicates: across all time, successive shapes are all real
     val shadowed =
       if window.isEmpty then Sql.raw(com.histmersion.util.database.Sql.RawText(", shadowed AS (SELECT NULL::text AS id WHERE false)"))
       else
         within.fold(
-          Sql.raw(
+          raw(
             // a shape is shadowed only by a LOWER tier: a lone tier (every site is tier 2) has no pairs,
             // and pairing its 6 400 rows with each other first took 3 s a year (2026-10-09)
             ", shadowed AS (SELECT DISTINCT lo.id" +
@@ -636,27 +672,27 @@ private[places] object PlaceRepo:
           // `places_area_time_geom` (V090); a kindless or site layer keeps the plain pairing
           k.filterNot(_ == Place.Kind.Site)
             .filter(_ => pairsByIndex)
-            .fold(Sql.raw(rangeShadowedSql))(_ =>
-              Sql.raw(", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (") ++
-                rangePairsSql(rest, small = 3, partner = "c.tier < 3", smallIsLo = true) ++ Sql.raw(" UNION ALL ") ++
+            .fold(raw(rangeShadowedSql))(_ =>
+              raw(", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (") ++
+                rangePairsSql(rest, small = 3, partner = "c.tier < 3", smallIsLo = true) ++ raw(" UNION ALL ") ++
                 rangePairsSql(rest, small = 1, partner = "c.tier = 2", smallIsLo = false) ++
-                Sql.raw(") pr" + rangeShadowTestSql + ")")
+                raw(") pr" + rangeShadowTestSql + ")")
             )
         )
     // what is drawn: every unshadowed live shape; over a range, one VERSION of each state —
     // [[pickVersionSql]]'s `shown`
     val (shown, drawn) = within.fold((Sql.raw(com.histmersion.util.database.Sql.RawText("")), "live WHERE id NOT IN (SELECT id FROM shadowed)"))(w =>
-      (Sql.raw(pickVersionSql(w)), "shown")
+      (raw(pickVersionSql(w)), "shown")
     )
     // what was there then before what is merely shown then: among equal areas (every point) a dated
     // place outranks one dated by its findings, a physical feature and a present-day one — at 1600 the
     // 4 000 Natural Earth cities would otherwise take the whole site limit by id
-    def rank(l: com.histmersion.domain.catalogue.places.PlaceRepo.RankLevel) =
+    def rank(l: String) =
       s"${l}area DESC, CASE ${l}basis WHEN 'dated' THEN 0 WHEN 'findings' THEN 1 WHEN 'timeless' THEN 2 ELSE 3 END, ${l}id"
     // RANK FIRST, then read the rows shown: the limit is taken over `live` alone, and only those rows
     // are joined back to `places` for their label, dates and shape — not all 14 700 sites alive in
     // 500 CE, one index lookup each, to keep 200 (2026-10-09)
-    live ++ shadowed ++ shown ++ Sql.raw(
+    live ++ shadowed ++ shown ++ raw(
       s" SELECT l.id, p.label, l.kind, $startCol AS ps, ${RangeSql.end("p.period")} AS pe, $datingCol AS dating," +
         " l.basis," +
         " coalesce(p.shape_dim = 2, false) AS has_boundary," +
@@ -668,8 +704,8 @@ private[places] object PlaceRepo:
         " p.properties->>'p31'" +
         s" FROM (SELECT * FROM $drawn ORDER BY ${rank("")}"
     ) ++
-      Sql.of(" LIMIT ?", I(limit.max(1))) ++
-      Sql.raw(s") l JOIN places p ON p.id = l.id ORDER BY ${rank("l.")}")
+      of(" LIMIT ?", I(Param.I.V(limit.value.max(1)))) ++
+      raw(s") l JOIN places p ON p.id = l.id ORDER BY ${rank("l.")}")
 
   /** The test of a candidate pair `pr` (`lid` under `hid`, `same_name`, `small` the smaller area, `lbb` and `hbb` their
     * boxes): the same normalised name, or the shapes' intersection covering more than [[SameStateOverlap]] of the
@@ -679,12 +715,12 @@ private[places] object PlaceRepo:
     * checking that again was half the cost of the test (13 of 25 ms over -3000..2000).
     */
   private[places] val rangeShadowTestSql: String =
-    def overlap(lo: com.histmersion.domain.catalogue.Place.Id, hi: com.histmersion.domain.catalogue.Place.Id) =
+    def overlap(lo: String, hi: String) =
       s"greatest(0, least($hi(pr.lbb), $hi(pr.hbb)) - greatest($lo(pr.lbb), $lo(pr.hbb)))"
     def valid(g: String) = s"CASE WHEN $g.valid THEN $g.geom ELSE ST_MakeValid($g.geom) END"
     " CROSS JOIN LATERAL (SELECT geom, shape_valid AS valid FROM places WHERE id = pr.hid OFFSET 0) gh" +
       " CROSS JOIN LATERAL (SELECT geom, shape_valid AS valid FROM places WHERE id = pr.lid OFFSET 0) gl" +
-      s" WHERE pr.same_name OR (${overlap(com.histmersion.domain.catalogue.Place.Id("ST_XMin"), com.histmersion.domain.catalogue.Place.Id("ST_XMax"))} * ${overlap(com.histmersion.domain.catalogue.Place.Id("ST_YMin"), com.histmersion.domain.catalogue.Place.Id("ST_YMax"))}" +
+      s" WHERE pr.same_name OR (${overlap("ST_XMin", "ST_XMax")} * ${overlap("ST_YMin", "ST_YMax")}" +
       s" > $SameStateOverlap * pr.small AND ST_Intersects(gh.geom, gl.geom)" +
       s" AND ST_Area(ST_Intersection(${valid("gh")}, ${valid("gl")}))" +
       s" > $SameStateOverlap * pr.small)"
@@ -698,12 +734,12 @@ private[places] object PlaceRepo:
     * -3000..2000 (2026-10-16). Each shape is fetched by id for its pair, as at a year.
     */
   private[places] val rangeShadowedSql: String =
-    def pairs(lo: com.histmersion.domain.catalogue.Place.Id, hi: com.histmersion.domain.catalogue.Place.Id) =
+    def pairs(lo: String, hi: String) =
       "SELECT lo.id AS lid, hi.id AS hid, lo.norm = hi.norm AS same_name, least(hi.area, lo.area) AS small," +
         " lo.bb AS lbb, hi.bb AS hbb" +
         s" FROM (SELECT * FROM live WHERE $lo) lo JOIN (SELECT * FROM live WHERE $hi) hi" +
         " ON hi.tier < lo.tier AND hi.kind = lo.kind AND hi.bb && lo.bb AND hi.per && lo.per"
-    ", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (" + pairs(com.histmersion.domain.catalogue.Place.Id("tier = 3"), com.histmersion.domain.catalogue.Place.Id("tier < 3")) + " UNION ALL " +
+    ", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (" + pairs("tier = 3", "tier < 3") + " UNION ALL " +
       pairs("tier = 2", "tier = 1") + ") pr" + rangeShadowTestSql + ")"
 
   /** One half of the range's candidate pairs for a layer of AREAS ([[rangeShadowedSql]] reads the same pairs by
@@ -718,14 +754,14 @@ private[places] object PlaceRepo:
     */
   private[places] def rangePairsSql(rest: Sql, small: Int, partner: String, smallIsLo: Boolean): Sql =
     val (lo, hi) = if smallIsLo then ("s", "c") else ("c", "s")
-    Sql.raw(
+    raw(
       s"SELECT $lo.id AS lid, $hi.id AS hid, s.norm = c.norm AS same_name, least(c.area, s.area) AS small," +
         s" $lo.bb AS lbb, $hi.bb AS hbb FROM (SELECT * FROM live WHERE tier = $small) s CROSS JOIN LATERAL" +
         s" (SELECT * FROM (SELECT p.id, $sourceTierSql AS tier, p.label_norm AS norm, p.shape_area AS area," +
         " p.shape_box AS bb FROM places p WHERE p.kind <> 'site' AND p.kind = s.kind AND p.period && s.per" +
         " AND p.geom && s.bb::geometry AND "
     ) ++ rest ++
-      Sql.raw(
+      raw(
         s" AND ($CuratedSql OR ($DatedImportSql AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)))" +
           s") c WHERE $partner) c"
       )
@@ -743,7 +779,7 @@ private[places] object PlaceRepo:
     */
   private[places] def pickVersionSql(w: GeoTime.Within): String =
     val (lo, hi) = (w.from, w.to)
-    val (edge, anchor) = if w.latest then ("ee", "max") else ("es", "min")
+    val (edge, anchor) = if w.latest.value then ("ee", "max") else ("es", "min")
     ", kept AS (SELECT live.*," +
       s" greatest($lo::bigint, coalesce(${RangeSql.start("per")}, $lo::bigint)) AS es," +
       s" least($hi::bigint, coalesce(${RangeSql.end("per")}, $hi::bigint)) AS ee" +
@@ -764,7 +800,7 @@ private[places] object PlaceRepo:
       limit: com.histmersion.domain.catalogue.places.PlaceRepo.Limit,
       modernFrom: com.histmersion.domain.DeepTime.SignedYear = DefaultModernFrom
   )(using DbCon): com.histmersion.domain.catalogue.places.PlaceRepo.GeoJson =
-    geoJsonAt(kind, asOf.fold(GeoTime.Always)(GeoTime.At(_)), limit, modernFrom)
+    geoJsonAt(kind, asOf.fold(GeoTime.Always)(y => GeoTime.At(com.histmersion.api.catalogue.Year(y.value))), limit, modernFrom)
 
   /** [[geoJson]] for any [[GeoTime]]. Over a range ([[GeoTime.Within]]) every state alive at any time in it is drawn,
     * one version each ([[pickVersionSql]]), after the same cross-tier collapse among the shapes that coexist; the limit
@@ -820,7 +856,15 @@ private[places] object PlaceRepo:
             ),
             i
           ) =>
-        val siteType = SiteTypes.of(id, placeKind, stored, featureTypes, fcode, wdClass, SiteTypes.p31Of(p31))
+        val siteType = SiteTypes.of(
+          com.histmersion.api.catalogue.Place.Id(id),
+          com.histmersion.api.catalogue.Place.Kind.Wire(placeKind),
+          stored.map(SiteTypes.SiteType.Id(_)),
+          featureTypes.map(SiteTypes.Pleiades.FeatureType(_)),
+          fcode.map(SiteTypes.Geonames.Fcode(_)),
+          wdClass.map(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class(_)),
+          SiteTypes.p31Of(p31.map(com.histmersion.api.catalogue.CatalogRecord.Wikidata.P31Json(_)))
+        )
         import io.circe.Json
         val propsObj = Json
           .obj(
@@ -829,15 +873,15 @@ private[places] object PlaceRepo:
             "kind" -> Json.fromString(placeKind),
             // a region or polity drawn from a point has no boundary yet: the map labels it, never a dot
             "hasBoundary" -> Json.fromBoolean(hasBoundary),
-            "dating" -> Json.fromString(dating.wire),
+            "dating" -> Json.fromString(dating.wire.value),
             // why a time view shows it ([[PlaceTimeBasis]]): `findings` is drawn as "dated by its findings"
-            "basis" -> Json.fromString(basis.wire)
+            "basis" -> Json.fromString(basis.wire.value)
           )
           .deepMerge(
             Json.fromFields(
               ps.map(v => "periodStart" -> Json.fromLong(v)).toList ++
                 pe.map(v => "periodEnd" -> Json.fromLong(v)).toList ++
-                siteType.map(t => "siteType" -> Json.fromString(t)).toList
+                siteType.map(t => "siteType" -> Json.fromString(t.value)).toList
             )
           )
         val _ = out
@@ -848,7 +892,7 @@ private[places] object PlaceRepo:
           .append(geojson)
           .append('}')
     }
-    out.append("]}").toString
+    GeoJson(out.append("]}").toString)
 
   /** Build parent-child edges from spatial containment: every point place that falls inside a polygon place gets a
     * `spatial_containment` relation edge. Idempotent (`ON CONFLICT DO NOTHING`). Run after imports to wire up the
@@ -873,7 +917,11 @@ private[places] object PlaceRepo:
             AND ST_Contains(region.geom, site.geom)
             AND site.id != region.id
           ON CONFLICT (child_id, parent_id, kind) DO NOTHING""".update.run()
-    SpatialHierarchyResult(edgesCreated = inserted, polygonPlaces = polygons, pointPlaces = points)
+    SpatialHierarchyResult(
+      edgesCreated = SpatialHierarchyResult.EdgesCreated(inserted),
+      polygonPlaces = SpatialHierarchyResult.PolygonPlaces(polygons),
+      pointPlaces = SpatialHierarchyResult.PointPlaces(points)
+    )
 
   // ── resolving a Filter's `places` values ─────────────────────────────────────────────────────
 
@@ -885,7 +933,7 @@ private[places] object PlaceRepo:
     * many).
     */
   def scopeFor(values: List[com.histmersion.domain.catalogue.places.PlaceRepo.ScopeForValues], period: Option[Period])(using DbCon): PlaceScope =
-    val wanted = values.map(_.trim).filter(_.nonEmpty).distinct
+    val wanted = values.map(_.value.trim).filter(_.nonEmpty).distinct
     if wanted.isEmpty then PlaceScope.empty
     else
       val joined = wanted.toList
@@ -904,7 +952,7 @@ private[places] object PlaceRepo:
         .run()
       val labelOf = rows.toMap
       val known = wanted.filter(v => labelOf.contains(target(v)))
-      val labels = known.map(v => v -> labelOf(target(v))).toMap
+      val labels = known.map(v => PlaceScope.LabelsKey(v) -> PlaceScope.LabelsValue(labelOf(target(v)))).toMap
       if known.isEmpty then PlaceScope.empty
       else
         val lo = period.map(_.start)
@@ -912,7 +960,7 @@ private[places] object PlaceRepo:
         PlaceScope(
           known.map { value =>
             val id = target(value)
-            value -> sql"""WITH RECURSIVE d(id) AS (
+            PlaceScope.ByValueKey(value) -> sql"""WITH RECURSIVE d(id) AS (
                         SELECT $id
                         UNION
                         SELECT r.child_id FROM place_relations r JOIN d ON r.parent_id = d.id
@@ -921,7 +969,7 @@ private[places] object PlaceRepo:
                           AND ($lo::bigint IS NULL
                                OR r.period && int8range($lo::bigint, $hi::bigint, '[]'))
                       )
-                      SELECT d.id FROM d JOIN places p ON p.id = d.id""".query[String].run().toList
+                      SELECT d.id FROM d JOIN places p ON p.id = d.id""".query[String].run().toList.map(PlaceScope.ByValueValue(_))
           }.toMap,
           labels
         )
@@ -976,14 +1024,24 @@ private[places] object PlaceRepo:
     */
   private[places] def renameIn(oldId: com.histmersion.domain.catalogue.Place.Id, newId: com.histmersion.domain.catalogue.Place.Id)(using DbCon): Either[Api.Error, Unit] =
     def exists(i: com.histmersion.domain.catalogue.Place.Id) = sql"SELECT 1 FROM places WHERE id = $i".query[Int].run().nonEmpty
-    val aliasOf = sql"SELECT place_id FROM place_aliases WHERE alias = $newId".query[String].run().headOption
-    if !exists(oldId) then Left(Api.Error(s"No place '$oldId'", Some(Write.CodeNotFound)))
-    else if exists(newId) then Left(Api.Error(s"'$newId' is already the id of another place", Some(Write.CodeInvalid)))
+    val aliasOf = sql"SELECT place_id FROM place_aliases WHERE alias = $newId"
+      .query[com.histmersion.domain.catalogue.Place.Id]
+      .run()
+      .headOption
+    if !exists(oldId) then
+      Left(Api.Error(Api.Error.Message(s"No place '${oldId.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+    else if exists(newId) then
+      Left(
+        Api.Error(
+          Api.Error.Message(s"'${newId.value}' is already the id of another place"),
+          Some(Api.Error.Code(Write.CodeInvalid))
+        )
+      )
     else if aliasOf.exists(_ != oldId) then
       Left(
         Api.Error(
-          s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another",
-          Some(Write.CodeInvalid)
+          Api.Error.Message(s"'${newId.value}' is an old id of '${aliasOf.get.value}' and still resolves to it — pick another"),
+          Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else
@@ -997,12 +1055,15 @@ private[places] object PlaceRepo:
 
   /** [[renameIn]] in a transaction of its own. */
   def rename(oldId: com.histmersion.domain.catalogue.Place.Id, newId: com.histmersion.domain.catalogue.Place.Id)(using DbCon): Either[Api.Error, Unit] =
-    renameIn(oldId.trim, newId.trim)
+    renameIn(
+      com.histmersion.domain.catalogue.Place.Id.applyUnsafe(oldId.value.trim),
+      com.histmersion.domain.catalogue.Place.Id.applyUnsafe(newId.value.trim)
+    )
 
   // ── a person's edits (#987) ─────────────────────────────────────────────────────────────────────
 
   private def labelOf(id: com.histmersion.domain.catalogue.Place.Id)(using DbCon): Option[com.histmersion.domain.catalogue.places.PlaceRepo.Label] =
-    sql"SELECT label FROM places WHERE id = $id".query[String].run().headOption
+    sql"SELECT label FROM places WHERE id = $id".query[String].run().headOption.map(Label(_))
 
   /** Give place `id` the name `name` in `lang`, as a MANUAL name (V068): no import deletes it. A name the place already
     * has from an import becomes manual (so a later seed that drops it keeps it).
@@ -1010,7 +1071,7 @@ private[places] object PlaceRepo:
   def addName(id: com.histmersion.domain.catalogue.Place.Id, name: com.histmersion.domain.catalogue.places.PlaceRepo.Name, lang: com.histmersion.domain.catalogue.places.PlaceRepo.Lang)(using
       DbCon
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.NameChanged] =
-    labelOf(id).toRight(Api.Error(s"No place '$id'", Some(Write.CodeNotFound))).map { label =>
+    labelOf(id).toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))).map { label =>
       val before =
         sql"SELECT manual FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang AND import_source = ''"
           .query[Boolean]
@@ -1035,7 +1096,7 @@ private[places] object PlaceRepo:
   def removeName(id: com.histmersion.domain.catalogue.Place.Id, name: com.histmersion.domain.catalogue.places.PlaceRepo.Name, lang: com.histmersion.domain.catalogue.places.PlaceRepo.Lang)(using
       DbCon
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.NameChanged] =
-    labelOf(id).toRight(Api.Error(s"No place '$id'", Some(Write.CodeNotFound))).flatMap { label =>
+    labelOf(id).toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))).flatMap { label =>
       sql"SELECT bool_or(manual) FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang HAVING count(*) > 0"
         .query[Boolean]
         .run()
@@ -1083,14 +1144,25 @@ private[places] object PlaceRepo:
     val taken = sql"SELECT 1 FROM places WHERE id = $id".query[Int].run().nonEmpty
     val alias = sql"SELECT place_id FROM place_aliases WHERE alias = $id".query[String].run().headOption
     val gone = sql"SELECT 1 FROM place_removals WHERE id = $id".query[Int].run().nonEmpty
-    if taken then Left(Api.Error(s"'$id' is already the id of a place — choose another id", Some(Write.CodeInvalid)))
+    if taken then
+      Left(
+        Api.Error(
+          Api.Error.Message(s"'${id.value}' is already the id of a place — choose another id"),
+          Some(Api.Error.Code(Write.CodeInvalid))
+        )
+      )
     else if gone then
-      Left(Api.Error(s"'$id' is the id of a place that was removed — choose another id", Some(Write.CodeInvalid)))
+      Left(
+        Api.Error(
+          Api.Error.Message(s"'${id.value}' is the id of a place that was removed — choose another id"),
+          Some(Api.Error.Code(Write.CodeInvalid))
+        )
+      )
     else if alias.isDefined then
       Left(
         Api.Error(
-          s"'$id' is an old id of '${alias.get}' and still resolves to it — choose another id",
-          Some(Write.CodeInvalid)
+          Api.Error.Message(s"'${id.value}' is an old id of '${alias.get}' and still resolves to it — choose another id"),
+          Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else
@@ -1099,11 +1171,11 @@ private[places] object PlaceRepo:
         .query[com.histmersion.api.catalogue.Place.Summary]
         .run()
         .headOption
-        .toRight(Api.Error(s"place '$id' was not stored"))
+        .toRight(Api.Error(Api.Error.Message(s"place '${id.value}' was not stored")))
 
   /** How many places the gazetteer holds — 0 on a fresh install (the first-run import, #720). */
   def count()(using DbCon): com.histmersion.RowCount =
-    sql"SELECT count(*)::int FROM places".query[Int].run().head
+    com.histmersion.RowCount(sql"SELECT count(*)::int FROM places".query[Int].run().head)
 
   def upsertFootprint(
       placeId: com.histmersion.domain.catalogue.Place.Id,
@@ -1119,7 +1191,7 @@ private[places] object PlaceRepo:
           VALUES ($placeId, $role,
                   ST_SetSRID(ST_GeomFromGeoJSON($geojson), 4326),
                   $p::int8range, $certainty, $accuracyM, $citekey)
-          RETURNING id""".query[Int].run().head
+          RETURNING id""".query[Int].run().head.pipe(com.histmersion.RowCount(_))
 
   def upsertLink(link: com.histmersion.api.catalogue.Place.Link)(using DbCon): Unit =
     sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)

@@ -48,33 +48,33 @@ object RangeSql:
 
   /** [[overlaps]] with the window bound as two parameters. */
   def overlaps(col: String, p: Period): Sql =
-    Sql.of(overlaps(col, "?::bigint", "?::bigint"), Param.L(p.start), Param.L(p.end))
+    Sql.of(Sql.OfText(overlaps(col, "?::bigint", "?::bigint")), Param.L(Param.L.V(p.start.value)), Param.L(Param.L.V(p.end.value)))
 
   /** The `int8range` literal of optional inclusive bounds — `[-1200,-999)`, `[-1200,)`, `(,-999)`, and `(,)` (every
     * year) when neither is given. Bind it as `${lit}::int8range`.
     */
   def bounds(start: Option[com.histmersion.domain.DeepTime.SignedYear], end: Option[com.histmersion.domain.DeepTime.SignedYear]): String =
-    s"${start.fold("(")(v => s"[$v")},${end.fold(")")(v => s"${v + 1})")}"
+    s"${start.fold("(")(v => s"[${v.value}")},${end.fold(")")(v => s"${v.value + 1})")}"
 
   /** [[bounds]] of an optional closed period: `(,)` when there is none — a place, name or relation without a dating
     * holds at every year.
     */
-  def always(p: Option[Period]): String = bounds(p.map(_.start), p.map(_.end))
+  def always(p: Option[Period]): String = bounds(p.map(x => DeepTime.SignedYear(x.start.value)), p.map(x => DeepTime.SignedYear(x.end.value)))
 
   /** [[bounds]], or `None` (SQL NULL: no period) when neither bound is given. */
   def literal(start: Option[com.histmersion.util.database.RangeSql.LiteralStart], end: Option[com.histmersion.util.database.RangeSql.LiteralEnd]): Option[String] =
     Option.when(start.isDefined || end.isDefined)(bounds(start, end))
 
   /** [[literal]] of an optional closed period. */
-  def literal(p: Option[Period]): Option[String] = p.flatMap(x => literal(Some(x.start), Some(x.end)))
+  def literal(p: Option[Period]): Option[String] = p.flatMap(x => literal(Some(DeepTime.SignedYear(x.start.value)), Some(DeepTime.SignedYear(x.end.value))))
 
   /** The model's period (`values.Period`) as the same literal. */
   def literalOf(p: Option[com.histmersion.Period]): Option[String] =
-    p.flatMap(x => literal(Some(x.start.value.toLong), Some(x.end.value.toLong)))
+    p.flatMap(x => literal(Some(DeepTime.SignedYear(x.start.value.toLong)), Some(DeepTime.SignedYear(x.end.value.toLong))))
 
   /** A closed [[Period]] from two inclusive bounds read back with [[cols]]: `None` unless both are known. */
   def period(start: Option[com.histmersion.domain.DeepTime.SignedYear], end: Option[com.histmersion.domain.DeepTime.SignedYear]): Option[Period] =
-    for a <- start; b <- end yield Period(a, b)
+    for a <- start; b <- end yield Period(com.histmersion.api.catalogue.Year(a.value), com.histmersion.api.catalogue.Year(b.value))
 
   /** A patch's bounds merged with the stored ones: a bound the patch names replaces the stored one, the other stays as
     * it is (#1798: a goal patch that named one bound was silently ignored). `None` when the patch names neither
@@ -89,11 +89,11 @@ object RangeSql:
     Option.when(start.isDefined || end.isDefined) {
       val (s, e) = (start.orElse(stored._1), end.orElse(stored._2))
       (s, e) match
-        case (Some(a), Some(b)) if a > b =>
+        case (Some(a), Some(b)) if a.value > b.value =>
           Left(
             Api.Error(
-              s"$what: the period would start (${YearFmt(a)}) after it ends (${YearFmt(b)})",
-              Some(Write.CodeInvalid)
+              Api.Error.Message(s"$what: the period would start (${YearFmt(com.histmersion.api.catalogue.Year(a.value))}) after it ends (${YearFmt(com.histmersion.api.catalogue.Year(b.value))})"),
+              Some(Api.Error.Code(Write.CodeInvalid))
             )
           )
         case _ => Right((s, e))

@@ -17,6 +17,6 @@ object TombstonesCarried:
       BundleEntry("entities/tombstones.ndjson"),
       List(RowsIn(ImportStage.Rows, ImportRank(0), _.tombstones()))
     )(scope => TombstoneBundleRepo.tombstones(scope).toList)(
-      t => Some(t.deletedAt),
+      t => Some(CarriedKind.OwnedClock(t.deletedAt.value)),
       (es, ls) => es.modify(_.tombstones).setTo(ls)
     )

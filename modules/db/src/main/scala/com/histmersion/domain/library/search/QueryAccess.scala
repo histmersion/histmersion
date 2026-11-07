@@ -16,7 +16,7 @@ object QueryAccess:
     */
 
   def pool(db: DbConfig, q: QueryConfig): HikariDataSource =
-    Db.pooled(db.url, q.user, q.password, math.min(4, math.max(1, db.pool.max)), com.histmersion.util.database.Db.PoolName("histmersion-query"))
+    Db.pooled(Db.JdbcUrl(db.url.value), Db.Login(q.user.value), Db.Password(q.password.value), Db.PoolMax(math.min(4, math.max(1, db.pool.max.value))), Db.PoolName("histmersion-query"))
 
   /** Give the `histmersion_query` role (created by migration V011) its password and its statement timeout, running as
     * the application role.
@@ -40,7 +40,7 @@ object QueryAccess:
       )
       val createDdl =
         try
-          create.setString(1, q.user); create.setString(2, q.user)
+          create.setString(1, q.user.value); create.setString(2, q.user.value)
           val rs = create.executeQuery()
           try if rs.next() then Some(rs.getString(1)) else None
           finally rs.close()
@@ -54,8 +54,8 @@ object QueryAccess:
       // other role names still loads) and a migration already recorded as applied never runs again.
       // `%s` takes the unused second argument so every statement shares one shape.
       val alters = List(
-        ("ALTER ROLE %I LOGIN PASSWORD %L", q.password),
-        (s"ALTER ROLE %I SET statement_timeout = %L", math.max(1, q.timeoutMs).toString),
+        ("ALTER ROLE %I LOGIN PASSWORD %L", q.password.value),
+        (s"ALTER ROLE %I SET statement_timeout = %L", math.max(1, q.timeoutMs.value).toString),
         ("ALTER ROLE %I SET default_transaction_read_only = %L", "on"),
         ("ALTER ROLE %I SET search_path = %L", "public"),
         ("GRANT USAGE ON SCHEMA public TO %I%s", ""),
@@ -67,7 +67,7 @@ object QueryAccess:
         val ps = c.prepareStatement(s"SELECT format('$fmt', ?, ?)")
         val ddl =
           try
-            ps.setString(1, q.user)
+            ps.setString(1, q.user.value)
             ps.setString(2, arg)
             val rs = ps.executeQuery()
             try if rs.next() then rs.getString(1) else ""
@@ -79,7 +79,7 @@ object QueryAccess:
           finally st.close()
       }
       Right(())
-    catch case e: SQLException => Left(Option(e.getMessage).getOrElse(e.getClass.getSimpleName))
+    catch case e: SQLException => Left(Problem(Option(e.getMessage).getOrElse(e.getClass.getSimpleName)))
     finally
       try c.close()
       catch case _: SQLException => ()

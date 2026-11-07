@@ -19,11 +19,7 @@ object FindingPlacement:
     * MUST equal `places.point-tolerance-km` in `reference.conf`; `PlaceRepoSuite` asserts exactly that, so the two
     * cannot drift. Every production write passes the configured value explicitly.
     */
-  type DefaultToleranceKm = DefaultToleranceKmValue
-  type DefaultToleranceKmValue = DefaultToleranceKmValue.T
-  object DefaultToleranceKmValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  val DefaultToleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.DefaultToleranceKm = 10.0
+  val DefaultToleranceKm: Implementation.ToleranceKm = Implementation.ToleranceKm(10.0)
 
   def apply(toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm = DefaultToleranceKm): FindingPlacement = Implementation(toleranceKm)
 
@@ -65,6 +61,6 @@ object FindingPlacement:
     def placeSource(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.RowCount = FindingPlaceRepo.materialiseFor(citekey, toleranceKm)
 
   object Implementation:
-    type ToleranceKm = ToleranceKm.T
-    object ToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ToleranceKm = GeocodeSettings.ToleranceKm
+    val ToleranceKm: GeocodeSettings.ToleranceKm.type = GeocodeSettings.ToleranceKm
 

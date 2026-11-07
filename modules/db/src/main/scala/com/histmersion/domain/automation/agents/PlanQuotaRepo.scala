@@ -24,9 +24,9 @@ object PlanQuotaRepo:
     if rs.nonEmpty then
       val _ =
         rs.foreach { r =>
-          val reset = r.resetsAt.map(_.toDouble / 1000)
-          val seen = r.observedAt.toDouble / 1000
-          val model = r.model.getOrElse("")
+          val reset = r.resetsAt.map(_.value.toDouble / 1000)
+          val seen = r.observedAt.value.toDouble / 1000
+          val model = r.model.map(_.value).getOrElse("")
           sql"""INSERT INTO plan_quota_readings (pool, limit_id, kind, model, used_pct, resets_at, rejected, observed_at, source)
                 VALUES (${pool.wire}, ${r.limit}, ${r.kind}, $model, ${r.usedPct}, to_timestamp($reset::float8), ${r.rejected},
                         to_timestamp($seen::float8), ${r.source.wire})
@@ -44,7 +44,16 @@ object PlanQuotaRepo:
       .run()
       .toList
       .map { (l, k, m, u, r, rej, o, s) =>
-        Reading(l, k, u, r, rej, o, Source.parse(s).getOrElse(Source.Run), Option(m).filter(_.nonEmpty))
+        Reading(
+          Reading.Limit(l),
+          Reading.Kind(k),
+          Reading.UsedPct(u),
+          r.map(Reading.ResetsAt(_)),
+          Reading.Rejected(rej),
+          Reading.ObservedAt(o),
+          Source.parse(Source.Wire(s)).getOrElse(Source.Run),
+          Option(m).filter(_.nonEmpty).map(Reading.Model(_))
+        )
       }
 
   /** What a person set on a pool and what the provider refused. */
@@ -76,7 +85,9 @@ object PlanQuotaRepo:
       .query[(Boolean, Option[String], Option[String], Option[Long], Option[String])]
       .run()
       .headOption
-      .map((h, f, r, u, t) => Pool(h, f, r, u, t))
+      .map((h, f, r, u, t) =>
+        Pool(Pool.Held(h), f.map(Pool.Floors(_)), r.map(Pool.Refusal(_)), u.map(Pool.RefusalUntil(_)), t.map(Pool.PlanType(_)))
+      )
       .getOrElse(NoPool)
 
   def setHold(p: PoolId, held: com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Held)(using DbCon): Unit =
@@ -92,14 +103,18 @@ object PlanQuotaRepo:
 
   /** The provider's own refusal (None lifts it) and its plan type, as last read. */
   def setRefusal(p: PoolId, refusal: Option[com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Refusal], until: Option[com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.RefusalUntil], planType: Option[com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.PlanType])(using DbCon): Unit =
-    val u = until.map(_.toDouble / 1000)
+    val u = until.map(_.value.toDouble / 1000)
     val _ =
       sql"""INSERT INTO plan_pools (pool, refusal, refusal_until, plan_type) VALUES (${p.wire}, $refusal, to_timestamp($u::float8), $planType)
             ON CONFLICT (pool) DO UPDATE SET refusal = EXCLUDED.refusal, refusal_until = EXCLUDED.refusal_until,
               plan_type = COALESCE(EXCLUDED.plan_type, plan_pools.plan_type), updated_at = now()""".update.run()
 
   def fallthrough(using DbCon): Map[com.histmersion.domain.automation.agents.ModelSettingsRepo.ChainRole, Boolean] =
-    sql"SELECT role, fallthrough FROM agent_role_fallthrough".query[(String, Boolean)].run().toMap
+    sql"SELECT role, fallthrough FROM agent_role_fallthrough"
+      .query[(String, Boolean)]
+      .run()
+      .map((role, on) => ModelSettingsRepo.ChainRole(role) -> on)
+      .toMap
 
   def setFallthrough(role: com.histmersion.domain.automation.agents.ModelSettingsRepo.ChainRole, on: Boolean)(using DbCon): Unit =
     val _ =
@@ -112,11 +127,11 @@ object PlanQuotaRepo:
   def logRefresh(p: PoolId, mode: com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshMode, trigger: com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshTrigger, ok: Boolean, detail: com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshDetail)(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO plan_quota_refreshes (pool, mode, trigger, ok, detail)
-            VALUES (${p.wire}, $mode, $trigger, $ok, ${detail.take(1000)})""".update.run()
+            VALUES (${p.wire}, $mode, $trigger, $ok, ${detail.value.take(1000)})""".update.run()
 
   /** How many refreshes `p` took since `sinceMs` (epoch ms), and the newest one. */
   def refreshes(p: PoolId, sinceMs: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis)(using DbCon): (com.histmersion.RowCount, Option[RefreshInfo]) =
-    val since = sinceMs.toDouble / 1000
+    val since = sinceMs.value.toDouble / 1000
     val n = sql"""SELECT count(*)::int FROM plan_quota_refreshes
                   WHERE pool = ${p.wire} AND at >= to_timestamp($since::float8)""".query[Int].run().head
     val last = sql"""SELECT to_char(at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), mode, trigger, ok, detail
@@ -124,5 +139,7 @@ object PlanQuotaRepo:
       .query[(String, String, String, Boolean, String)]
       .run()
       .headOption
-      .map((a, m, t, ok, d) => RefreshInfo(a, m, t, ok, d))
-    (n, last)
+      .map((a, m, t, ok, d) =>
+        RefreshInfo(RefreshInfo.At(a), RefreshInfo.Mode(m), RefreshInfo.Trigger(t), RefreshInfo.Ok(ok), RefreshInfo.Detail(d))
+      )
+    (com.histmersion.RowCount(n), last)

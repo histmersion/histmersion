@@ -22,11 +22,11 @@ object Transactor:
       require(con.connection.getAutoCommit, "Autocommit work cannot borrow an active transaction")
       work(using con)
 
-    def transact[A](work: DbCon ?=> A): A = run(com.histmersion.util.database.Transactor.Session.Commit(true), None)(work)
-    def rollback[A](work: DbCon ?=> A): A = run(com.histmersion.util.database.Transactor.Session.Commit(false), None)(work)
-    def readOnlyRollback[A](timeoutMs: com.histmersion.util.database.Transactor.TimeoutMs)(work: DbCon ?=> A): A = run(com.histmersion.util.database.Transactor.Session.Commit(false), Some(timeoutMs))(work)
+    def transact[A](work: DbCon ?=> A): A = run(true, None)(work)
+    def rollback[A](work: DbCon ?=> A): A = run(false, None)(work)
+    def readOnlyRollback[A](timeoutMs: com.histmersion.util.database.Transactor.TimeoutMs)(work: DbCon ?=> A): A = run(false, Some(timeoutMs))(work)
 
-    private def run[A](commit: com.histmersion.util.database.Transactor.Session.Commit, readOnlyTimeout: Option[com.histmersion.util.database.Transactor.TimeoutMs])(work: DbCon ?=> A): A =
+    private def run[A](commit: Boolean, readOnlyTimeout: Option[com.histmersion.util.database.Transactor.TimeoutMs])(work: DbCon ?=> A): A =
       val jdbc = con.connection
       require(jdbc.getAutoCommit, "A scoped transaction cannot borrow an active transaction")
       val wasReadOnly = jdbc.isReadOnly
@@ -39,7 +39,7 @@ object Transactor:
         readOnlyTimeout.foreach { timeout =>
           scala.util.Using.resource(jdbc.createStatement()) { statement =>
             val _ = statement.execute("SET TRANSACTION READ ONLY")
-            val _ = statement.execute(s"SET LOCAL statement_timeout = ${math.max(1, timeout)}")
+            val _ = statement.execute(s"SET LOCAL statement_timeout = ${math.max(1, timeout.value)}")
           }
         }
         val result = work(using con)
@@ -71,11 +71,6 @@ object Transactor:
         if cleanup != null then
           if primary == null then throw cleanup
           else if primary ne cleanup then primary.addSuppressed(cleanup)
-
-  object Session:
-    type Commit = Commit.T
-    object Commit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
 
   final private class Implementation(dataSource: DataSource) extends Transactor:
     def read[A](work: DbCon ?=> A): A = connectTo(dataSource)(work)

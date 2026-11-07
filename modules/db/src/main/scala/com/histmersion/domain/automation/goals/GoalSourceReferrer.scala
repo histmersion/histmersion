@@ -17,7 +17,7 @@ final class GoalSourceReferrer extends SourceReferrer:
       .headOption
       .getOrElse(0)
     DeleteReport(counts = List(DeletePart.GoalLinks -> links).collect {
-      case (p, rows) if rows > 0 => DeleteCount(p, rows)
+      case (p, rows) if rows > 0 => DeleteCount(p, DeleteCount.Rows(rows))
     })
 
   override def deleting(source: SourceKeys, report: DeleteReport)(using DbCon): Unit =
