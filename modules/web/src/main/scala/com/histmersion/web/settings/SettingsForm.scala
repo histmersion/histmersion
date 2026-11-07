@@ -54,7 +54,7 @@ object SettingsForm:
             items.flatMap(i =>
               p.field(i.key)
                 .map(f =>
-                  SettingControl(f.modify(_.default).setTo(f.default.orElse(i.fallback)), draft, i.name, i.help)
+                  SettingControl(f.modify(_.default).setTo(f.default.orElse(i.fallback.map(v => ConfigEdit.Field.Default(v.value)))), draft, i.name, i.help)
                 )
             )
         },

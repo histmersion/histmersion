@@ -55,6 +55,6 @@ object EventMarkers:
     layer.load(
       ApiClient.tileTemplate(
         query(UiState.toFilter(), tiles, UiState.eventKind.now().map(com.histmersion.api.Api.EventQuery.Kind(_)), UiState.eventTier.now().map(com.histmersion.api.Api.EventQuery.Tier(_)), Undated(UiState.eventsUndated.now()))
-      ).value,
+      ),
       span
     )

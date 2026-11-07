@@ -1,7 +1,7 @@
 package com.histmersion.web.setup
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.Wording
+import com.histmersion.api.{Api, Wording}
 import com.histmersion.web.{ApiClient, Auth, Route, RouteLink, Router, SettingsSection}
 import com.histmersion.web.settings.{Draft, FindersSection, SettingsStore, StartPlace}
 import com.raquo.laminar.api.L.*
@@ -12,7 +12,8 @@ import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import com.histmersion.api.backup.Backup
-import com.histmersion.api.catalogue.MapArea
+import com.histmersion.api.catalogue.{EventImportRequest, MapArea}
+import com.histmersion.api.media.MediaItem
 import com.histmersion.api.instance.{MapStartConfig, UiConfig}
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.basemap.Basemap
@@ -228,16 +229,16 @@ object SetupPage:
 
   private def startDownload(d: SetupDownload): Future[String] = d match
     case SetupDownload.Map(area)  => ApiClient.basemapFetch(Basemap.FetchQuery(bbox = Some(com.histmersion.api.BBox.Text(area.value)))).map(_ => "started")
-    case SetupDownload.Boundaries => ApiClient.initData(fetch = com.histmersion.web.ApiClient.Fetch(true)).map(_ => "started")
+    case SetupDownload.Boundaries => ApiClient.initData(fetch = Api.Overwrite(true)).map(_ => "started")
     case SetupDownload.Events     =>
       ApiClient
         .eventCatalogues()
         .flatMap(cs =>
           Future
-            .sequence(cs.map(_.id).filter(id => Set("gvp", "noaa")(id.value)).map(id => ApiClient.importEvents(ApiClient.Provider(id.value))))
+            .sequence(cs.map(_.id).filter(id => Set("gvp", "noaa")(id.value)).map(id => ApiClient.importEvents(EventImportRequest.Provider(id.value))))
             .map(js => s"${js.size} started")
         )
-    case SetupDownload.Pictures   => ApiClient.importMedia(com.histmersion.web.ApiClient.Provider("wikidata")).map(_ => "started")
+    case SetupDownload.Pictures   => ApiClient.importMedia(MediaItem.Provider("wikidata")).map(_ => "started")
     case SetupDownload.MorePlaces =>
       Future.sequence(List("geonames", "wikidata").map(n => ApiClient.loadPlaces(com.histmersion.api.Api.ExternalPlaces.Source(n)))).map(_ => "started")
 

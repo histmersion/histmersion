@@ -13,6 +13,7 @@ import com.histmersion.api.automation.{
   AgentScheduler,
   AgentSchedulerMarkdown,
   Autopilot,
+  ManagersApi,
   ManagersMarkdown,
   Stalls
 }
@@ -1382,7 +1383,7 @@ object ManagersView:
                         "pause",
                         disabled <-- busy,
                         title := "start no new runs; its runs in flight go on",
-                        onClick --> (_ => write(com.histmersion.web.ManagersView.WriteLabel("pause"))(ApiClient.managerAction(m.id, com.histmersion.web.ApiClient.ManagerAction("pause"))))
+                        onClick --> (_ => write(com.histmersion.web.ManagersView.WriteLabel("pause"))(ApiClient.managerAction(m.id, ManagersApi.ActionPart1Part2("pause"))))
                       ),
                       button(
                         typ := "button",
@@ -1391,7 +1392,7 @@ object ManagersView:
                         disabled <-- busy,
                         title := "also pause its runs in flight",
                         onClick --> (_ =>
-                          write(com.histmersion.web.ManagersView.WriteLabel("pause with its runs"))(ApiClient.managerAction(m.id, com.histmersion.web.ApiClient.ManagerAction("pause"), runs = com.histmersion.web.ApiClient.Runs(true)))
+                          write(com.histmersion.web.ManagersView.WriteLabel("pause with its runs"))(ApiClient.managerAction(m.id, ManagersApi.ActionPart1Part2("pause"), runs = true))
                         )
                       )
                     )
@@ -1404,7 +1405,7 @@ object ManagersView:
                     cls := "btn btn--primary",
                     "resume",
                     disabled <-- busy,
-                    onClick --> (_ => write(com.histmersion.web.ManagersView.WriteLabel("resume"))(ApiClient.managerAction(m.id, com.histmersion.web.ApiClient.ManagerAction("resume"))))
+                    onClick --> (_ => write(com.histmersion.web.ManagersView.WriteLabel("resume"))(ApiClient.managerAction(m.id, ManagersApi.ActionPart1Part2("resume"))))
                   )
                 ),
                 Option.when(!st.contains(State.Stopped))(
@@ -1416,7 +1417,7 @@ object ManagersView:
                     title := "cancel its runs in flight and its open items",
                     onClick --> (_ =>
                       if dom.window.confirm(s"Stop ${m.id}: cancel its runs in flight and its open items?") then
-                        write(com.histmersion.web.ManagersView.WriteLabel("stop"))(ApiClient.managerAction(m.id, com.histmersion.web.ApiClient.ManagerAction("stop")))
+                        write(com.histmersion.web.ManagersView.WriteLabel("stop"))(ApiClient.managerAction(m.id, ManagersApi.ActionPart1Part2("stop")))
                     )
                   )
                 )

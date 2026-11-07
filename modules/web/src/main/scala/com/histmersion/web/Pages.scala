@@ -148,8 +148,8 @@ object Pages:
           if ui.agentsEnabled.value then ApprovalsView.pane
           else agentsOff(com.histmersion.api.UiLabels.Text("Nothing waits for a decision: the research agents are off on this server."))
         case ResearchSection.Goals   => GoalsView.pane
-        case ResearchSection.Backlog => QueueView.pane(Queue.Kind.Tasks, goal.map(g => com.histmersion.api.automation.Goal.Ref(g.value)))
-        case ResearchSection.Acquire => QueueView.pane(Queue.Kind.Acquire, goal.map(g => com.histmersion.api.automation.Goal.Ref(g.value)))
+        case ResearchSection.Backlog => QueueView.pane(Queue.Kind.Tasks, goal)
+        case ResearchSection.Acquire => QueueView.pane(Queue.Kind.Acquire, goal)
         case ResearchSection.Models  =>
           if ui.agentsEnabled.value then ModelsView.pane
           else agentsOff(com.histmersion.api.UiLabels.Text("No AI models are used: the research agents are off on this server."))
@@ -237,7 +237,7 @@ object Pages:
           p(cls := "muted", "Loading…")
         case Some(Right(j)) =>
           Router.retitle(Route.Job(id), com.histmersion.api.UiLabels.Text(Wording.jobKindOf(j.kind)))
-          div(ul(cls := "job-list", JobsView.row(j, mine = false)), jobControls(j), QueueView.ofJob(JobId(j.id.value)))
+          div(ul(cls := "job-list", JobsView.row(j, mine = false)), jobControls(j), QueueView.ofJob(j.id))
       },
       p(RouteLink(Route.Activity(ActivityTab.JobList), "All background jobs"))
     )

@@ -3,7 +3,7 @@ package com.histmersion.web
 import hearth.kindlings.optics.syntax.*
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.{Api, Plural}
+import com.histmersion.api.{Api, Plural, Years}
 import com.histmersion.web.ui.SidebarTab
 import org.scalajs.dom
 
@@ -187,19 +187,19 @@ object App:
     )
 
   private def quickRender(): Unit =
-    val a = UiState.from.now().getOrElse(config.time.defaultFrom.value)
-    val b = UiState.to.now().getOrElse(config.time.defaultTo.value)
+    val a = Years.Astronomical(UiState.from.now().getOrElse(config.time.defaultFrom.value))
+    val b = Years.Astronomical(UiState.to.now().getOrElse(config.time.defaultTo.value))
     quickRenderRange(a, b)
 
-  private def quickRenderRange(a: Long, b: Long): Unit =
+  private def quickRenderRange(a: Years.Astronomical, b: Years.Astronomical): Unit =
     if cachedFindings.nonEmpty then
       val filtered = cachedFindings.filter { pt =>
-        pt.periodStart.forall(_.value <= b) && pt.periodEnd.forall(_.value >= a)
+        pt.periodStart.forall(_.value <= b.value) && pt.periodEnd.forall(_.value >= a.value)
       }
-      MapView.render(filtered, (com.histmersion.api.catalogue.Period.Start(a), com.histmersion.api.catalogue.Period.End(b)))
+      MapView.render(filtered, (a, b))
 
   def quickRenderIfCached(from: com.histmersion.api.Years.Astronomical, to: com.histmersion.api.Years.Astronomical): Unit =
-    quickRenderRange(from.value, to.value)
+    quickRenderRange(from, to)
 
   /** The map drawn for the span `[from, to]` again, from the findings held — after playback, which drew its frames'
     * windows: the findings, the legend's years, the tiled layers and the boundaries all of the whole span, as before it
@@ -208,7 +208,7 @@ object App:
   def restoreSpan(from: com.histmersion.api.Years.Astronomical, to: com.histmersion.api.Years.Astronomical): Unit =
     MapView.render(
       cachedFindings.filter(pt => pt.periodStart.forall(_.value <= to.value) && pt.periodEnd.forall(_.value >= from.value)),
-      (com.histmersion.api.catalogue.Period.Start(from.value), com.histmersion.api.catalogue.Period.End(to.value))
+      (from, to)
     )
 
   private def schedule(): Unit =
@@ -241,7 +241,7 @@ object App:
     // ALL AT ONCE: the map feed, the page of sources and (in view) the feed without the viewport.
     // The sources used to be asked for only once the findings had arrived — a whole round trip and
     // the findings' query added to every list refresh; the list still renders once all are in.
-    val sourceFilter = f.modify(_.limit).setTo(config.pageSize)
+    val sourceFilter = f.modify(_.limit).setTo(Filter.Limit(config.pageSize.value))
     val pointsF = ApiClient.findings(Api.FindingsQuery.of(f))
     val sourcesF = ApiClient.sources(sourceFilter)
     val totalF =
@@ -252,7 +252,7 @@ object App:
       if latest.isCurrent(mine) then
         cachedFindings = points
         cachedNonTimeKey = nonTimeParamsKey()
-        MapView.render(points, (com.histmersion.api.catalogue.Period.Start(a), com.histmersion.api.catalogue.Period.End(b)))
+        MapView.render(points, (Years.Astronomical(a), Years.Astronomical(b)))
     }
 
     // a failed load ends the "loading…" state with what went wrong, instead of leaving it there

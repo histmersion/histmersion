@@ -105,7 +105,7 @@ object MapView:
       lineOpacity = ShapeStyle.LineOpacity(0.8),
       dash = List(com.histmersion.web.map.ShapeStyle.Dash(3), com.histmersion.web.map.ShapeStyle.Dash(2)),
       dashedLineOpacity = Some(ShapeStyle.DashedLineOpacity(0.6)),
-      interactive = true
+      interactive = ShapeStyle.Interactive(true)
     )
   )
   // what each drawn polity is (the shape under the pointer answers as this place) and its point labels
@@ -310,7 +310,7 @@ object MapView:
   /** Pure: the period-span ring width (0–4) of a single finding spanning `spanYears`. */
   private[web] def ringOf(n: DotCluster.Total, spanYears: Option[com.histmersion.api.Years.Astronomical]): com.histmersion.web.MapView.Ring =
     if n.value == 1 && spanYears.exists(_.value > 0) then
-      math.max(1, math.min(4, math.round(math.log10(spanYears.get.value.toDouble + 1) * 1.3).toInt))
+      Ring(math.max(1, math.min(4, math.round(math.log10(spanYears.get.value.toDouble + 1) * 1.3).toInt)))
     else com.histmersion.web.MapView.Ring(0)
 
   /** One finding's popup: the source link (identifier label, preview on hover, window on click), title, period, claim
@@ -322,10 +322,12 @@ object MapView:
       " " + ConfidenceBadge.html(c)
     )
     val period = Fmt.periodStr(pt.periodStart, pt.periodEnd)
-    CardIcons.html(CardIcons.sourceKind(pt.sourceKind.map(k => Source.Kinds.Wire(k.value)).getOrElse(Source.Kinds.Wire(Source.Kinds.Unknown)))) +
-      s"""${SourceLink.html(pt.citekey, pt.doi, SourceLink.idLabel(pt.citekey, pt.doi))} — ${Fmt.esc(pt.title.value)}""" +
-      s"""<br><i>$period</i><br>${Fmt.esc(pt.claim.value)}$conf<br>""" +
-      s"""<a href="${Fmt.esc(SourceLink.href(pt.citekey))}" target="_blank">new tab ↗</a>"""
+    Html(
+      CardIcons.html(CardIcons.sourceKind(pt.sourceKind.map(k => Source.Kinds.Wire(k.value)).getOrElse(Source.Kinds.Wire(Source.Kinds.Unknown)))) +
+        s"""${SourceLink.html(pt.citekey, pt.doi, SourceLink.idLabel(pt.citekey, pt.doi))} — ${Fmt.esc(pt.title.value)}""" +
+        s"""<br><i>$period</i><br>${Fmt.esc(pt.claim.value)}$conf<br>""" +
+        s"""<a href="${Fmt.esc(SourceLink.href(pt.citekey))}" target="_blank">new tab ↗</a>"""
+    )
 
   /** A bubble's marker: its count, colours and outline, what it holds; a click lists them (or zooms in). */
   private def bubbleMarker(ds: Seq[Dot]): DomMarker =
@@ -500,7 +502,7 @@ object MapView:
             Option(target.closest("[data-ck]")).foreach { el =>
               if !e.metaKey && !e.ctrlKey && !e.shiftKey then
                 e.preventDefault()
-                ArticleModal.open(el.getAttribute("data-ck"))
+                ArticleModal.open(com.histmersion.api.library.Citekey(el.getAttribute("data-ck")))
             }
           }
         )
@@ -672,7 +674,7 @@ object MapView:
     * megabytes, and 48 of them were kept.
     */
   private val geoCache =
-    BoundedCache[(String, GeoTime), scala.concurrent.Future[String]](BoundedCache.MaxEntries(Layout.geoCacheSize.value), BoundedCache.MaxWeight(Layout.geoCacheChars.value))
+    BoundedCache[(com.histmersion.api.catalogue.Place.Kind.Wire, GeoTime), scala.concurrent.Future[String]](BoundedCache.MaxEntries(Layout.geoCacheSize.value), BoundedCache.MaxWeight(Layout.geoCacheChars.value))
 
   /** The place-GeoJSON cache's figures, for [[Diagnostics]]. */
   def geoCacheStats: BoundedCache.Stats = BoundedCache.stats(geoCache)
@@ -681,9 +683,9 @@ object MapView:
   private[web] def geoQuery(kind: com.histmersion.api.catalogue.Place.Kind.Wire, time: GeoTime, limit: com.histmersion.api.Paging.Limit): Api.PlacesGeoQuery =
     val q = Api.PlacesGeoQuery(kind = Some(kind), limit = Some(Api.PlacesGeoQuery.Limit(limit.value)))
     time match
-      case GeoTime.At(y)                  => q.modify(_.asOf).setTo(Some(y))
+      case GeoTime.At(y)                  => q.modify(_.asOf).setTo(Some(Api.PlacesGeoQuery.AsOf(y.value)))
       case GeoTime.Within(lo, hi, latest) =>
-        q.modify(_.from).setTo(Some(lo)).modify(_.to).setTo(Some(hi)).modify(_.pick).setTo(Some((if latest then GeoPick.Latest else GeoPick.Earliest).wire))
+        q.modify(_.from).setTo(Some(Api.PlacesGeoQuery.From(lo.value))).modify(_.to).setTo(Some(Api.PlacesGeoQuery.To(hi.value))).modify(_.pick).setTo(Some((if latest.value then GeoPick.Latest else GeoPick.Earliest).wire))
       case GeoTime.Always => q
 
   /** Pure: the time the boundaries layer is drawn for over `span`, as `pick` reads it; playback always draws the
@@ -709,7 +711,7 @@ object MapView:
         geoCache.put(k, f)
         // weighed once it is in: its length in characters (the size of the string kept)
         f.onComplete {
-          case scala.util.Success(s) => if geoCache.peek(k).contains(f) then geoCache.reweigh(k, s.length.toLong)
+          case scala.util.Success(s) => if geoCache.peek(k).contains(f) then geoCache.reweigh(k, BoundedCache.ReweighW(s.length.toLong))
           case scala.util.Failure(_) => if geoCache.peek(k).contains(f) then { val _ = geoCache.remove(k) }
         }
         f
@@ -907,7 +909,7 @@ object MapView:
           com.histmersion.api.catalogue.TilesApi.TileQuery.Y(0),
           tileFilter(tileSpan(span)),
           siteType = UiState.siteType.now().map(TilesApi.TileQuery.SiteType(_)),
-          undated = Option.when(UiState.sitesUndated.now())(true)
+          undated = Option.when(UiState.sitesUndated.now())(TilesApi.TileQuery.Undated(true))
         )
       ),
       span

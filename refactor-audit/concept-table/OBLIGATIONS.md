@@ -209,3 +209,4 @@ The rules let agents put primitives in private helpers, loops, renderers, binary
 - G44: ApiClient `All` and `Runs` became plain Boolean (decision 2026-11-06: Boolean parameters keep their types); TimelineView bucketSizeFor/hoverAt/realign take Double; UploadView.validate returns (Field, String).
 - Years in web: MapView and TimelineView spans are (Years.Astronomical, Years.Astronomical); Year(a.value) bridges astronomical to Year without conversion at Fmt.yr, Period, GeoPick.resolve, UiState.from/to, ResultsPaging.span, PeriodMarks, EventMarkers.load: same numbers as master, but now the types claim a conversion that is not done. Settle in the years item.
 - ApiClient wraps slugs, queue names and ids inside because endpoint types are mislabelled (API-endpoint pass).
+- Api.Merge.Id is used for a bundle, an apply job and the resolutions YAML text (API-endpoint pass). ApiClient queueList/queueForGoal keep `all: Boolean` (G44).

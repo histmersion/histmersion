@@ -2,7 +2,7 @@ package com.histmersion.web
 
 import hearth.kindlings.optics.syntax.*
 
-import com.histmersion.api.YearFmt
+import com.histmersion.api.{Api, YearFmt}
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
@@ -495,11 +495,11 @@ object Preview:
   def fetch(t: Target): Future[Card] = t match
     case Target.Source(ck) =>
       cached(sourceCache, CacheKey(ck.value))(
-        ApiClient.getSource(ApiClient.Citekey(ck.value), body = com.histmersion.web.ApiClient.IncludeBody(false)).map(card)
+        ApiClient.getSource(ck, body = Api.SourceViewQuery.FullText(false)).map(card)
       )
     case Target.Article(slug) =>
       cached(articleCache, CacheKey(slug.value))(
-        ApiClient.getArticle(ApiClient.ArticleSlug(slug.value), brief = com.histmersion.web.ApiClient.Brief(true)).map(card)
+        ApiClient.getArticle(slug, brief = Article.FullText(true)).map(card)
       )
     case Target.Place(id, asOf) =>
       cached(placeCache, CacheKey(s"$id@${asOf.map(_.value.toString).getOrElse("")}"))(
@@ -507,7 +507,7 @@ object Preview:
           .place(
             com.histmersion.api.catalogue.Place.Id(id.value),
             asOf.map(a => com.histmersion.api.Api.AggregateQuery.AsOf(a.value)),
-            counts = com.histmersion.web.ApiClient.Counts(true)
+            counts = Place.Detail(true)
           )
           .map(card)
       )

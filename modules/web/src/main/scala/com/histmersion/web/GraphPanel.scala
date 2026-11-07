@@ -60,7 +60,7 @@ object GraphPanel:
   def element(citekey: com.histmersion.web.GraphPanel.Citekey): HtmlElement =
     val state = Var[Load](Load.Loading)
     val hovered = Var(Option.empty[GraphNode])
-    ApiClient.graph(ApiClient.Citekey(citekey.value), Some(ApiClient.Depth(Depth))).onComplete {
+    ApiClient.graph(citekey, Some(Source.Graph.DepthCount(Depth))).onComplete {
       case scala.util.Success(g) =>
         state.set(Load.Loaded(g))
         g.nodes

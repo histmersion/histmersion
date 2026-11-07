@@ -2,7 +2,7 @@ package com.histmersion.web
 
 import hearth.kindlings.optics.syntax.*
 
-import com.histmersion.api.{ListPatch, Wording, YearFmt, Years}
+import com.histmersion.api.{Api, ListPatch, Wording, YearFmt, Years}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -171,7 +171,7 @@ object SourceEditor:
     val saving = Var(false)
 
     def load(then0: Option[String] = None): Unit =
-      ApiClient.getSource(ApiClient.Citekey(ck.value), body = com.histmersion.web.ApiClient.IncludeBody(false)).onComplete { r =>
+      ApiClient.getSource(ck, body = Api.SourceViewQuery.FullText(false)).onComplete { r =>
         r.fold(
           e => errors.set(List(Field.Form -> s"Could not load $ck: ${e.getMessage}")),
           sw =>
@@ -195,7 +195,7 @@ object SourceEditor:
               errors.set(Nil)
               notice.set(None)
               saving.set(true)
-              ApiClient.patchSource(ApiClient.Citekey(ck.value), p).onComplete { r =>
+              ApiClient.patchSource(ck, p).onComplete { r =>
                 saving.set(false)
                 r.fold(
                   {

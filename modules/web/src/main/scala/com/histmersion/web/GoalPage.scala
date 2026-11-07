@@ -7,7 +7,7 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
-import com.histmersion.api.automation.{Agents, Managers, Queue}
+import com.histmersion.api.automation.{Agents, Managers, ManagersApi, Queue}
 import com.histmersion.api.instance.UiConfig
 
 /** One research goal's page: its question, state and schedule ("checked for new publications 3 days ago · next check
@@ -31,12 +31,8 @@ object GoalPage:
 
   type ScheduleNowMs = _root_.com.histmersion.web.GoalPage.Millis
   val ScheduleNowMs: _root_.com.histmersion.web.GoalPage.Millis.type = _root_.com.histmersion.web.GoalPage.Millis
-  type PaneSlug = _root_.com.histmersion.api.automation.Goal.Slug
-  val PaneSlug: _root_.com.histmersion.api.automation.Goal.Slug.type = _root_.com.histmersion.api.automation.Goal.Slug
   type HeaderNote = HeaderNote.T
   object HeaderNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProducedSlug = _root_.com.histmersion.api.automation.Goal.Slug
-  val ProducedSlug: _root_.com.histmersion.api.automation.Goal.Slug.type = _root_.com.histmersion.api.automation.Goal.Slug
 
   val StepLimit = 12
   val HistoryLimit = 8
@@ -103,7 +99,7 @@ object GoalPage:
 
   private def write(f: () => Unit): Unit = if Auth.writableNow then f() else WindowManager.open(WindowKey.ApiKey)
 
-  def pane(ui: UiConfig, slug: com.histmersion.web.GoalPage.PaneSlug): HtmlElement =
+  def pane(ui: UiConfig, slug: com.histmersion.api.automation.Goal.Slug): HtmlElement =
     val view = Var(Option.empty[Either[String, GoalView]])
     val managers = Var(List.empty[ManagerInfo])
     val items = Var(List.empty[ManagerItem])
@@ -113,15 +109,15 @@ object GoalPage:
     val editing = Var(false)
 
     def load(): Unit =
-      ApiClient.goalView(ApiClient.GoalSlug(slug.value)).onComplete(r => view.set(Some(r.toEither.left.map(_.getMessage))))
-      ApiClient.queueForGoal(ApiClient.QueueName(Queue.Kind.Tasks.label.value), ApiClient.GoalSlug(slug.value)).foreach(l => backlog.set(Some(com.histmersion.api.RowCount(l.items.size))))
-      ApiClient.queueForGoal(ApiClient.QueueName(Queue.Kind.Acquire.label.value), ApiClient.GoalSlug(slug.value)).foreach(l => acquire.set(Some(com.histmersion.api.RowCount(l.items.size))))
+      ApiClient.goalView(slug).onComplete(r => view.set(Some(r.toEither.left.map(_.getMessage))))
+      ApiClient.queueForGoal(Queue.Kind.Tasks.label, slug).foreach(l => backlog.set(Some(com.histmersion.api.RowCount(l.items.size))))
+      ApiClient.queueForGoal(Queue.Kind.Acquire.label, slug).foreach(l => acquire.set(Some(com.histmersion.api.RowCount(l.items.size))))
       if ui.agentsEnabled.value then
         ApiClient.managers.foreach { all =>
           val mine = all.filter(_.goal.contains(slug))
           managers.set(mine)
           scala.concurrent.Future
-            .sequence(mine.map(m => ApiClient.managerItems(ApiClient.ManagerItemsId(m.id.value), None, com.histmersion.api.Offset(0), com.histmersion.api.Paging.Limit(StepLimit))))
+            .sequence(mine.map(m => ApiClient.managerItems(m.id, None, com.histmersion.api.Offset(0), com.histmersion.api.Paging.Limit(StepLimit))))
             .foreach(pages => items.set(pages.flatMap(_.items)))
         }
 
@@ -136,7 +132,7 @@ object GoalPage:
     def pauseOrResume(): Unit = write { () =>
       val resume = paused(managers.now())
       scala.concurrent.Future
-        .sequence(managers.now().map(m => ApiClient.managerAction(ApiClient.ManagerActionId(m.id.value), if resume then com.histmersion.web.ApiClient.ManagerAction("resume") else com.histmersion.web.ApiClient.ManagerAction("pause"))))
+        .sequence(managers.now().map(m => ApiClient.managerAction(m.id, if resume then ManagersApi.ActionPart1Part2("resume") else ManagersApi.ActionPart1Part2("pause"))))
         .onComplete { r =>
           note.set(
             r.failed.toOption
@@ -349,7 +345,7 @@ object GoalPage:
       v: GoalView,
       backlog: Signal[Option[com.histmersion.api.RowCount]],
       acquire: Signal[Option[com.histmersion.api.RowCount]],
-      slug: com.histmersion.web.GoalPage.ProducedSlug
+      slug: com.histmersion.api.automation.Goal.Slug
   ): HtmlElement =
     val articles = v.links.filter(_.kind == LinkKind.Article)
     val sources = v.links.count(_.kind == LinkKind.Source)

@@ -16,7 +16,7 @@ import sttp.model.Method
 import sttp.tapir.{DecodeResult, PublicEndpoint}
 import sttp.tapir.client.sttp4.SttpClientInterpreter
 
-import com.histmersion.api.{personal, Api, OpsApi, Paging}
+import com.histmersion.api.{personal, Api, OpsApi, Paging, Sha256}
 import com.histmersion.api.automation.{
   Activity,
   AgentMode,
@@ -131,7 +131,7 @@ object ApiClient:
     * rights holder's authorisation, and the web UI never sets them off.
     */
   def ingestId(req: Ingest.Request): Future[Ingest.Report] =
-    call(AcquireApi.ingest)(req.modify(_.legalOnly).setTo(true))
+    call(AcquireApi.ingest)(req.modify(_.legalOnly).setTo(Ingest.Request.LegalOnly(true)))
   def neighbors(ck: com.histmersion.api.library.Citekey, kinds: List[com.histmersion.api.library.Edge.Kind.Wire] = Nil): Future[List[NeighborRow]] =
     call(Api.neighbors)((ck, kinds))
   def articles(q: Api.ArticleQuery): Future[Article.List] = call(Api.articles)(q)
@@ -266,14 +266,14 @@ object ApiClient:
   def agentControl(id: Agents.RunInfo.Id, action: com.histmersion.api.Api.JobControl.Action, budgetUsd: Option[Agents.RunRequest.BudgetUsd] = None): Future[Agents.RunInfo] =
     call(AgentsApi.control)((id, Agents.Action(action.value), budgetUsd, None))
   def agentModels: Future[Agents.ModelsInfo] = call(AgentsApi.models)(())
-  def setChain(role: com.histmersion.api.automation.AgentRole.Wire, models: List[ModelChains.ChainSet.Models]): Future[ModelChains.RoleChain] =
-    call(AgentsApi.setChain)((role, ModelChains.ChainSet(models)))
-  def resetChain(role: com.histmersion.api.automation.AgentRole.Wire): Future[ModelChains.RoleChain] = call(AgentsApi.resetChain)(role)
+  def setChain(role: ModelChains.RoleChain.Role, models: List[ModelChains.ChainSet.Models]): Future[ModelChains.RoleChain] =
+    call(AgentsApi.setChain)((com.histmersion.api.automation.AgentRole.Wire(role.value), ModelChains.ChainSet(models)))
+  def resetChain(role: ModelChains.RoleChain.Role): Future[ModelChains.RoleChain] = call(AgentsApi.resetChain)(com.histmersion.api.automation.AgentRole.Wire(role.value))
   def setAllowance(in: ModelChains.AllowanceSet): Future[ModelChains.AllowanceStatus] = call(AgentsApi.setAllowance)(in)
-  def removeAllowance(target: com.histmersion.api.research.ReviewGoal.Slug): Future[Goal.Plans.Removed] = call(AgentsApi.removeAllowance)(target)
+  def removeAllowance(target: ModelChains.AllowanceStatus.Target): Future[Goal.Plans.Removed] = call(AgentsApi.removeAllowance)(com.histmersion.api.research.ReviewGoal.Slug(target.value))
   def agentDoctor(offline: Agents.DoctorReport.Online): Future[Agents.DoctorReport] = call(AgentsApi.doctor)(Some(offline))
   def agentQuota: Future[PlanQuota.QuotaInfo] = call(AgentsApi.quota)(())
-  def setPool(pool: PlanQuota.PoolIdText, in: PlanQuota.PoolSet): Future[PlanQuota.PoolStatus] = call(AgentsApi.setPool)((pool, in))
+  def setPool(pool: PlanQuota.PoolId.Wire, in: PlanQuota.PoolSet): Future[PlanQuota.PoolStatus] = call(AgentsApi.setPool)((PlanQuota.PoolIdText(pool.value), in))
   def refreshQuota(pool: PlanQuota.PoolId.Wire): Future[PlanQuota.QuotaRefreshed] =
     call(AgentsApi.refreshQuota)(PlanQuota.QuotaRefresh(Some(pool)))
   def approvals(
@@ -296,8 +296,8 @@ object ApiClient:
   def putGoal(slug: Goal.Slug, in: Goal.Put): Future[Goal] = call(Api.putGoal)((Goal.Uid(slug.value), in))
   def addGoalLink(slug: Goal.Slug, in: Goal.Plans.LinkAdd): Future[Goal.Plans.GoalLink] =
     call(AgentsApi.addGoalLink)((com.histmersion.api.research.ReviewGoal.Slug(slug.value), in))
-  def removeGoalLink(slug: Goal.Slug, kind: Goal.Plans.LinkKind, ref: com.histmersion.api.library.Citekey): Future[Goal.Plans.Removed] =
-    call(AgentsApi.removeGoalLink)((com.histmersion.api.research.ReviewGoal.Slug(slug.value), kind.wire, ref))
+  def removeGoalLink(slug: Goal.Slug, kind: Goal.Plans.LinkKind, ref: Goal.Plans.GoalLink.Ref): Future[Goal.Plans.Removed] =
+    call(AgentsApi.removeGoalLink)((com.histmersion.api.research.ReviewGoal.Slug(slug.value), kind.wire, com.histmersion.api.library.Citekey(ref.value)))
   def setSchedule(
       slug: Goal.Slug,
       kind: Goal.Plans.ScheduleKind,
@@ -342,12 +342,12 @@ object ApiClient:
   // ── merging another collection's bundle (the /merge review screen) ──────────────────────────────
 
   def mergePlan(req: MergePlan.Request): Future[MergePlan] = call(Api.mergePlan)(req)
-  def mergeSession(bundle: Api.Merge.Id): Future[MergeSession] = call(Api.mergeSession)(bundle)
-  def putMergeSession(bundle: Api.Merge.Id, r: MergeResolutions): Future[MergeSession] =
-    call(Api.putMergeSession)((bundle, r))
+  def mergeSession(bundle: Sha256): Future[MergeSession] = call(Api.mergeSession)(Api.Merge.Id(bundle.value))
+  def putMergeSession(bundle: Sha256, r: MergeResolutions): Future[MergeSession] =
+    call(Api.putMergeSession)((Api.Merge.Id(bundle.value), r))
   def parseResolutions(yaml: Api.Merge.Id): Future[MergeResolutions] = call(Api.parseResolutions)(yaml)
   def mergeApply(req: MergeApplyRequest): Future[MergeApplyJob] = call(Api.mergeApply)(req)
-  def mergeApplyStatus(job: Api.Merge.Id): Future[MergeApplyJob] = call(Api.mergeApplyStatus)(job)
+  def mergeApplyStatus(job: MergeApplyJob.Job): Future[MergeApplyJob] = call(Api.mergeApplyStatus)(Api.Merge.Id(job.value))
 
   /** `POST /api/bundle/upload`, with upload progress — a bundle can be large; through `XMLHttpRequest` for the same
     * reason as [[ingest]].
@@ -415,8 +415,8 @@ object ApiClient:
     call(ManagersApi.action)((id, action, Option.when(runs)(true)))
   def managerItems(id: Managers.ManagerInfo.Id, status: Option[com.histmersion.api.automation.ItemStatus.Wire], offset: com.histmersion.api.Offset, limit: com.histmersion.api.Paging.Limit): Future[Managers.ItemPage] =
     call(ManagersApi.items)((id, status, Some(Managers.ItemPage.Limit(offset.value)), Some(personal.UnreadPage.Offset(limit.value))))
-  def managerPatchItem(id: Managers.ManagerInfo.Id, item: Managers.ManagerItem.Ref, p: Managers.ItemPatch): Future[Managers.ManagerItem] =
-    call(ManagersApi.patchItem)((id, item, p))
+  def managerPatchItem(id: Managers.ManagerInfo.Id, item: Managers.ManagerItem.Id, p: Managers.ItemPatch): Future[Managers.ManagerItem] =
+    call(ManagersApi.patchItem)((id, Managers.ManagerItem.Ref(item.value.toString), p))
   def managerAddHint(id: Managers.ManagerInfo.Id, in: Managers.HintAdd): Future[Managers.ManagerHint] =
     call(ManagersApi.addHint)((id, in))
   def managerRemoveHint(id: Managers.ManagerInfo.Id, hint: Managers.ManagerHint.Id): Future[Goal.Plans.Removed] = call(ManagersApi.removeHint)((id, hint))

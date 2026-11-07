@@ -251,8 +251,8 @@ object UploadView:
 
   private def loadItems(): Unit =
     ApiClient
-      .queueList(Queue.Kind.Acquire.label, com.histmersion.web.ApiClient.All(false))
-      .foreach(l => openItems.set(l.items.filter(_.status == Queue.Open)))
+      .queueList(Queue.Kind.Acquire.label, false)
+      .foreach(l => openItems.set(l.items.filter(_.status == Queue.QueueItem.Status(Queue.Open))))
 
   /** "from the acquisition queue…": type to narrow, pick to fill the form in. */
   private def itemPicker: HtmlElement =
@@ -352,7 +352,7 @@ object UploadView:
             placeholder = com.histmersion.web.ChipInput.Config.Placeholder("add an author…"),
             debounceMs = com.histmersion.web.ChipInput.Config.DebounceMs(150),
             getSuggestions = prefix => ApiClient.facets(com.histmersion.api.Api.Facets.Field("authors"), Some(prefix), Filter()),
-            onChange = vs => draft.update(_.modify(_.authors).setTo(vs))
+            onChange = vs => draft.update(_.modify(_.authors).setTo(vs.map(c => Draft.Authors(c.value))))
           ),
           authors.signal
         )

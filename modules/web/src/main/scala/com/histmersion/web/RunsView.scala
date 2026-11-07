@@ -1,7 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.api.{Paging, Plural, Wording}
-import com.histmersion.api.automation.Agents.{Pipeline, RunDetail, RunInfo, RunState, TargetKind}
+import com.histmersion.api.automation.Agents.{Pipeline, RunDetail, RunInfo, RunRequest, RunState, TargetKind}
 import com.raquo.laminar.api.L.*
 
 import scala.concurrent.Future
@@ -492,7 +492,7 @@ object RunsView:
     val raise = Var("")
     // the poll, the closed-window and stale-answer guards and the error: the list windows' controller
     val run = PolledList.single[RunDetail](
-      fetch = () => ApiClient.agentRun(ApiClient.RunId(id.value)),
+      fetch = () => ApiClient.agentRun(id),
       live = d => live(d.run.status),
       // a run that just settled (or started waiting) may have opened approvals
       after = (before, d) =>
@@ -506,9 +506,9 @@ object RunsView:
       val usd = if a == Action.Resume then budget(Text(raise.now())) else None
       ApiClient
         .agentControl(
-          ApiClient.AgentId(id.value),
+          id,
           com.histmersion.api.Api.JobControl.Action(a.wire.value),
-          usd.map(b => ApiClient.BudgetUsd(b.value))
+          usd.map(b => RunRequest.BudgetUsd(b.value))
         )
         .onComplete { r =>
           busy.set(false)
@@ -525,7 +525,7 @@ object RunsView:
         case None    => p(cls := "muted", "Loading…")
         case Some(d) => runBody(d, busy.signal, raise, act)
       },
-      QueueView.ofJob(Pages.JobId(id.value)),
+      QueueView.ofJob(com.histmersion.api.jobs.JobInfo.Id(id.value)),
       run.item.changes.collect { case Some(d) => d.run.pipeline } --> (pl =>
         WindowManager.retitle(
           WindowKey.Run(WindowKey.Run.Id(id.value)),

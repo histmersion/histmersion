@@ -223,7 +223,7 @@ object TimelinePlayback:
             com.histmersion.api.Years.Astronomical(lo),
             com.histmersion.api.Years.Astronomical(hi)
           ),
-          (com.histmersion.api.catalogue.Period.Start(lo), com.histmersion.api.catalogue.Period.End(hi)),
+          (com.histmersion.api.Years.Astronomical(lo), com.histmersion.api.Years.Astronomical(hi)),
           com.histmersion.api.catalogue.Year(ph.value),
           MapView.YearsPerSecond(yearsPerSecond.value)
         )

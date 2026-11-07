@@ -1,6 +1,7 @@
 package com.histmersion.web.library
 
 import com.histmersion.web.{marks, ApiClient, LibrarySection, Route, Router, UiState}
+import com.histmersion.api.ItemKind
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -36,8 +37,8 @@ object MyLibrary:
   private def refresh(): Unit =
     LibraryLists.everything().foreach(n => everything.set(Some(n)))
     ApiClient
-      .unread(com.histmersion.web.ApiClient.Kind("source"), com.histmersion.api.Paging.Limit(1), com.histmersion.api.Offset(0))
-      .zip(ApiClient.unread(com.histmersion.web.ApiClient.Kind("article"), com.histmersion.api.Paging.Limit(1), com.histmersion.api.Offset(0)))
+      .unread(ItemKind.Source.wire, com.histmersion.api.Paging.Limit(1), com.histmersion.api.Offset(0))
+      .zip(ApiClient.unread(ItemKind.Article.wire, com.histmersion.api.Paging.Limit(1), com.histmersion.api.Offset(0)))
       .foreach((s, a) => unread.set(Some(com.histmersion.api.RowCount(s.total.value + a.total.value))))
 
   /** "My library", for the top of the filter panel. */

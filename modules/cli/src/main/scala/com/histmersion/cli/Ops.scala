@@ -161,7 +161,7 @@ object Ops:
       placed: Option[Int] = None,
       places: Option[List[String]] = None,
       areas: Int = 0
-  ): Either[Cli.Error, List[String]] =
+  ): Either[Cli.Error, List[Lint.LintReport.Fixed]] =
     c.lintFix(rules.map(Lint.Wire(_))) match
       case Left(e)  => Left(e)
       case Right(r) =>
@@ -193,7 +193,7 @@ object Ops:
         else
           if sources > 0 || ar > 0 then Cli.err.print("\r" + " " * 70 + "\r")
           Right(
-            List(s"resolve-edges: $ed edge target(s) rewritten", s"reindex: $s source(s) → $ch chunk(s)") ++
+            (List(s"resolve-edges: $ed edge target(s) rewritten", s"reindex: $s source(s) → $ch chunk(s)") ++
               mv.map(n => s"${Lint.FindingGeocode}: $n finding(s) moved to the place the current geocoder chooses")
                 .toList ++
               pl.map(n => s"${Lint.FindingUnplaced}: $n finding(s) given the point of the place they name").toList ++
@@ -205,7 +205,7 @@ object Ops:
                        s", ${r.pointAreasRemaining} left (named by evidence, or changing — run again)"
                      else "")
                 )
-                .toList
+                .toList).map(Lint.LintReport.Fixed(_))
           )
 
   /** `lint --file x.md`: the server checks the text (it has the renderer); with `--fix` the repaired text is written

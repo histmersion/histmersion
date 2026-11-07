@@ -4,7 +4,7 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 
-import com.histmersion.api.{Plural, RegisteredPlanMatches, YearFmt}
+import com.histmersion.api.{Api, Plural, RegisteredPlanMatches, YearFmt}
 import com.histmersion.web.map.*
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
@@ -338,7 +338,7 @@ object MergeView:
       .text()
       .asInstanceOf[js.Promise[String]]
       .toFuture
-      .flatMap(ApiClient.parseResolutions)
+      .flatMap(yaml => ApiClient.parseResolutions(Api.Merge.Id(yaml)))
       .onComplete(
         _.fold(
           fail(s"the resolution file ${f.name}"),
@@ -756,22 +756,22 @@ object MergeView:
           val geoms = List("left" -> left, "right" -> right).collect { case (who, Some(g)) =>
             val geo = js.JSON.parse(g)
             m.shapes(
-              s"merge-$who",
+              MapSurface.ShapesId(s"merge-$who"),
               ShapeStyle(
-                fillOpacity = 0.15,
-                lineWidth = 2,
-                lineOpacity = 0.9,
-                colour = Some(com.histmersion.web.ui.ThemeTokens(s"--merge-$who")),
-                circleRadius = 7
+                fillOpacity = ShapeStyle.FillOpacity(0.15),
+                lineWidth = ShapeStyle.LineWidth(2.0),
+                lineOpacity = ShapeStyle.LineOpacity(0.9),
+                colour = Some(ShapeStyle.Colour(com.histmersion.web.ui.ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name(s"--merge-$who")).value)),
+                circleRadius = ShapeStyle.CircleRadius(7.0)
               )
-            ).set(List(ShapeFeature(who, geo)))
+            ).set(List(ShapeFeature(ShapeFeature.Id(who), geo)))
             GeoBounds.ofGeometry(geo)
           }.flatten
           geoms.reduceOption(_.extend(_)) match
-            case Some(b) => m.fitBounds(b, 24, 9, animate = false)
+            case Some(b) => m.fitBounds(b, MapSurface.FitBoundsPadding(24), MapSurface.MaxZoom(9.0), animate = MapSurface.FitBoundsAnimate(false))
             case None    =>
               val (at, zoom) = com.histmersion.web.map.MapStart.initial(startView, None)
-              m.setView(at, math.max(1, zoom - 1))
+              m.setView(at, MapSurface.Zoom(math.max(1.0, zoom.value - 1)))
           map = Some(m)
           dom.window.setTimeout(() => map.foreach(_.resize()), 50)
         ,
