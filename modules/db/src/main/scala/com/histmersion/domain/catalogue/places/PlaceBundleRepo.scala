@@ -22,34 +22,8 @@ private[places] object PlaceBundleRepo:
   /** The places of this collection's own (`dataset = 'local'`, V052) in scope — or, with `alsoIds`, any place with one
     * of those ids as well (what a merge compares the bundle's against).
     */
-  type PlacesAlsoIds = PlacesAlsoIds.T
-  object PlacesAlsoIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OwnersResultPart1 = OwnersResultPart1.T
-  object OwnersResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OwnersQ = OwnersQ.T
-  object OwnersQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OwnersLabels = OwnersLabels.T
-  object OwnersLabels extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacesNamedResultPart1 = PlacesNamedResultPart1.T
-  object PlacesNamedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacesNamedIds = PlacesNamedIds.T
-  object PlacesNamedIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OldIdsNamedResultPart1 = OldIdsNamedResultPart1.T
-  object OldIdsNamedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OldIdsNamedIds = OldIdsNamedIds.T
-  object OldIdsNamedIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PresentResult = PresentResult.T
-  object PresentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PresentIds = PresentIds.T
-  object PresentIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchPlacesResultPart2 = MatchPlacesResultPart2.T
-  object MatchPlacesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceHereResultArg1 = PlaceHereResultArg1.T
-  object PlaceHereResultArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceHereResultResult = PlaceHereResultResult.T
-  object PlaceHereResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def places(scope: BundleScope, alsoIds: List[com.histmersion.domain.catalogue.places.PlaceBundleRepo.PlacesAlsoIds] = Nil)(using DbCon): Vector[Bundle.Place] =
+  def places(scope: BundleScope, alsoIds: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id] = Nil)(using DbCon): Vector[Bundle.Place] =
     val own = Sql.raw("p.dataset = 'local' AND ") ++ where(scope, "p.uid", "p.updated_at")
     val sel = if alsoIds.isEmpty then own
     else Sql.raw("((") ++ own ++ Sql.of(") OR p.id = ANY(?::text[]))", Param.A(alsoIds.distinct))
@@ -133,23 +107,23 @@ private[places] object PlaceBundleRepo:
   // ── what a merge plan compares ───────────────────────────────────────────────────────────────
 
   /** Who has each of `labels` here, by the query's (label, uid) rows. */
-  private def owners(q: com.histmersion.domain.catalogue.places.PlaceBundleRepo.OwnersQ, labels: List[com.histmersion.domain.catalogue.places.PlaceBundleRepo.OwnersLabels])(using DbCon): Map[com.histmersion.domain.catalogue.places.PlaceBundleRepo.OwnersResultPart1, UUID] =
+  private def owners(q: String, labels: List[com.histmersion.domain.catalogue.places.BPlaceRow.Label])(using DbCon): Map[com.histmersion.domain.catalogue.places.BPlaceRow.Id, UUID] =
     if labels.isEmpty then Map.empty
     else Sql.of(q, Param.A(labels.distinct)).frag.query[(String, UUID)].run().toMap
 
   /** The places here among `ids` → their uids. */
-  def placesNamed(ids: List[com.histmersion.domain.catalogue.places.PlaceBundleRepo.PlacesNamedIds])(using DbCon): Map[com.histmersion.domain.catalogue.places.PlaceBundleRepo.PlacesNamedResultPart1, UUID] =
+  def placesNamed(ids: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): Map[com.histmersion.domain.catalogue.places.BPlaceRow.Id, UUID] =
     owners("SELECT id, uid FROM places WHERE id = ANY(?::text[])", ids)
 
   /** The old place ids here among `ids` → the uid of the place each names. */
-  def oldIdsNamed(ids: List[com.histmersion.domain.catalogue.places.PlaceBundleRepo.OldIdsNamedIds])(using DbCon): Map[com.histmersion.domain.catalogue.places.PlaceBundleRepo.OldIdsNamedResultPart1, UUID] =
+  def oldIdsNamed(ids: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): Map[com.histmersion.domain.catalogue.places.BPlaceRow.Id, UUID] =
     owners(
       "SELECT x.alias, p.uid FROM place_aliases x JOIN places p ON p.id = x.place_id WHERE x.alias = ANY(?::text[])",
       ids
     )
 
   /** Which of `ids` name a place here. */
-  def present(ids: List[com.histmersion.domain.catalogue.places.PlaceBundleRepo.PresentIds])(using DbCon): Set[com.histmersion.domain.catalogue.places.PlaceBundleRepo.PresentResult] =
+  def present(ids: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): Set[com.histmersion.domain.catalogue.places.BPlaceRow.Id] =
     if ids.isEmpty then Set.empty
     else sql"SELECT id FROM places WHERE id = ANY(${ids.distinct}::text[])".query[String].run().toSet
 
@@ -159,7 +133,7 @@ private[places] object PlaceBundleRepo:
     * geometry match on the label alone. The nearest (most overlapping) place wins; a local place is preferred to a seed
     * one.
     */
-  def matchPlaces(ps: List[Bundle.Place], cfg: MergeSettings)(using DbCon): Map[UUID, com.histmersion.domain.catalogue.places.PlaceBundleRepo.MatchPlacesResultPart2] =
+  def matchPlaces(ps: List[Bundle.Place], cfg: MergeSettings)(using DbCon): Map[UUID, com.histmersion.domain.catalogue.places.BPlaceRow.Id] =
     val norm = PlaceRepo.normLabelSql("p.label")
     ps.flatMap { b =>
       val within = cfg.placeWithinKm * 1000.0
@@ -196,7 +170,7 @@ private[places] object PlaceBundleRepo:
   /** A place the other side renamed whose line is not written here (this collection's version was kept) keeps its id:
     * the bundle's events and child places that name the new id point at it.
     */
-  def placeHere(w: BundleImport.Writer): com.histmersion.domain.catalogue.places.PlaceBundleRepo.PlaceHereResultArg1 => com.histmersion.domain.catalogue.places.PlaceBundleRepo.PlaceHereResultResult =
+  def placeHere(w: BundleImport.Writer): com.histmersion.domain.catalogue.places.BPlaceRow.Id => com.histmersion.domain.catalogue.places.BPlaceRow.Id =
     val ours = w.local.places.map(p => p.uid -> p.id).toMap
     val kept =
       w.es.places.filterNot(p => w.writes(p.uid)).flatMap(p => ours.get(p.uid).filter(_ != p.id).map(p.id -> _)).toMap

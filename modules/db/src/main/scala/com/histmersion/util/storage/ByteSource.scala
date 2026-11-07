@@ -7,7 +7,7 @@ import java.nio.file.{Files, Path}
   * keeps, an upload. The bundle code reads one through this, never a path.
   */
 trait ByteSource:
-  def size: com.histmersion.util.storage.ByteSource.SizeResult
+  def size: com.histmersion.ByteCount
   def open(): InputStream
 
   /** `use` over the bytes, opened and buffered for it and closed after. */
@@ -17,21 +17,15 @@ trait ByteSource:
     finally in.close()
 
 object ByteSource:
-  type FileSizeResult = FileSizeResult.T
-  object FileSizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BytesSizeResult = BytesSizeResult.T
-  object BytesSizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Content = Content.T
+  object Content extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type BytesData = BytesData.T
-  object BytesData extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SizeResult = SizeResult.T
-  object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def file(path: Path): ByteSource = new ByteSource:
-    def size: com.histmersion.util.storage.ByteSource.FileSizeResult = Files.size(path)
+    def size: com.histmersion.ByteCount = Files.size(path)
     def open(): InputStream = Files.newInputStream(path)
 
-  def bytes(data: com.histmersion.util.storage.ByteSource.BytesData): ByteSource = new ByteSource:
-    def size: com.histmersion.util.storage.ByteSource.BytesSizeResult = data.length.toLong
+  def bytes(data: com.histmersion.util.storage.ByteSource.Content): ByteSource = new ByteSource:
+    def size: com.histmersion.ByteCount = data.length.toLong
     def open(): InputStream = ByteArrayInputStream(data)

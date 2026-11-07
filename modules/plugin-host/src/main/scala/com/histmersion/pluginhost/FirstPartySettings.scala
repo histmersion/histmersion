@@ -24,7 +24,7 @@ import scala.util.Try
 final case class FirstPartySettings(plugin: FirstPartySettings.Plugin, paths: List[FirstPartySettings.Paths]):
 
   /** Whether a change of the host key `changed` (not this plugin's own block) concerns this plugin. */
-  def readsHostKey(changed: com.histmersion.pluginhost.FirstPartySettings.ReadsHostKeyChanged): com.histmersion.pluginhost.FirstPartySettings.ReadsHostKeyResult = paths.exists(HotPlan.keyMatches(changed, _))
+  def readsHostKey(changed: com.histmersion.pluginhost.FirstPartySettings.SettingKey): Boolean = paths.exists(HotPlan.keyMatches(changed, _))
 
   /** The settings the host supplies this plugin out of `host` (the `histmersion` tree, other plugins' blocks
     * effective), keys relative to the plugin's block.
@@ -36,27 +36,15 @@ final case class FirstPartySettings(plugin: FirstPartySettings.Plugin, paths: Li
     }
 
 object FirstPartySettings:
-  type ReadsHostKeyResult = ReadsHostKeyResult.T
-  object ReadsHostKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadsHostKeyChanged = ReadsHostKeyChanged.T
-  object ReadsHostKeyChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettingKey = SettingKey.T
+  object SettingKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClientKeys = ClientKeysValue
   type ClientKeysValue = ClientKeysValue.T
   object ClientKeysValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ByIdPart1 = ByIdPart1.T
-  object ByIdPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfPlugin = OfPlugin.T
-  object OfPlugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostKeysResult = HostKeysResult.T
-  object HostKeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RebuildsResult = RebuildsResult.T
-  object RebuildsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RebuildsPlugin = _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin
-  val RebuildsPlugin: _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin.type = _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin
-  type RebuildsChanged = RebuildsChanged.T
-  object RebuildsChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FallbackPlugin = _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin
-  val FallbackPlugin: _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin.type = _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin
+  type RebuildsPlugin = _root_.com.histmersion.util.plugins.Plugin.Id
+  val RebuildsPlugin: _root_.com.histmersion.util.plugins.Plugin.Id.type = _root_.com.histmersion.util.plugins.Plugin.Id
+  type FallbackPlugin = _root_.com.histmersion.util.plugins.Plugin.Id
+  val FallbackPlugin: _root_.com.histmersion.util.plugins.Plugin.Id.type = _root_.com.histmersion.util.plugins.Plugin.Id
 
   type Plugin = Plugin.T
   object Plugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -117,20 +105,20 @@ object FirstPartySettings:
       // the Calibre library's settings are its own block's (the CLI's `cli.calibre.*` are the CLI's)
       List(FirstPartySettings("calibre", Nil))
 
-  private val byId: Map[com.histmersion.pluginhost.FirstPartySettings.ByIdPart1, FirstPartySettings] = all.map(s => s.plugin -> s).toMap
+  private val byId: Map[com.histmersion.util.plugins.Plugin.Id, FirstPartySettings] = all.map(s => s.plugin -> s).toMap
 
-  def of(plugin: com.histmersion.pluginhost.FirstPartySettings.OfPlugin): Option[FirstPartySettings] = byId.get(plugin)
+  def of(plugin: com.histmersion.util.plugins.Plugin.Id): Option[FirstPartySettings] = byId.get(plugin)
 
   /** Every host path some first-party plugin reads, and the client's keys: the keys a plugin generation is built from,
     * besides `histmersion.plugins`.
     */
-  def hostKeys: List[com.histmersion.pluginhost.FirstPartySettings.HostKeysResult] =
+  def hostKeys: List[com.histmersion.pluginhost.FirstPartySettings.SettingKey] =
     (ClientKeys ++ all.flatMap(_.paths)).distinct.filterNot(k => HotPlan.keyMatches(k, PluginHost.Root))
 
   /** Whether a change of the host key `changed` rebuilds `plugin`: one of its paths for a first-party plugin, a client
     * key for any other.
     */
-  def rebuilds(plugin: com.histmersion.pluginhost.FirstPartySettings.RebuildsPlugin, changed: com.histmersion.pluginhost.FirstPartySettings.RebuildsChanged): com.histmersion.pluginhost.FirstPartySettings.RebuildsResult =
+  def rebuilds(plugin: com.histmersion.pluginhost.FirstPartySettings.RebuildsPlugin, changed: com.histmersion.pluginhost.FirstPartySettings.SettingKey): Boolean =
     of(plugin).fold(ClientKeys.exists(HotPlan.keyMatches(changed, _)))(_.readsHostKey(changed))
 
   /** The host settings first-party plugins are supplied from: `merged` (the resolved `histmersion` tree) with each

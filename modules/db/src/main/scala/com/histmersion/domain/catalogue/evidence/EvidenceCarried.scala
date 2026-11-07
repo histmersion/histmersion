@@ -14,15 +14,11 @@ import hearth.kindlings.optics.syntax.*
   * computed.
   */
 object EvidenceCarried:
-  type RowsRank = RowsRank.T
-  object RowsRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AfterBlobsRank = AfterBlobsRank.T
-  object AfterBlobsRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Catalogue = DataOwner("catalogue")
 
-  private def rows(rank: com.histmersion.domain.catalogue.evidence.EvidenceCarried.RowsRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
-  private def afterBlobs(rank: com.histmersion.domain.catalogue.evidence.EvidenceCarried.AfterBlobsRank)(write: BundleImport.Writer => Unit) =
+  private def rows(rank: Int)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
+  private def afterBlobs(rank: Int)(write: BundleImport.Writer => Unit) =
     RowsIn(ImportStage.AfterBlobs, ImportRank(rank), write)
 
   val attestations: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.Attestation](

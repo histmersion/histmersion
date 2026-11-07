@@ -28,7 +28,7 @@ final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Opt
     )
   }
 
-  def get(url: com.histmersion.pluginhost.SttpTransport.GetUrl, headers: Map[com.histmersion.pluginhost.SttpTransport.GetHeadersPart1, com.histmersion.pluginhost.SttpTransport.GetHeadersPart2]): Either[com.histmersion.pluginhost.SttpTransport.GetResultPart1, HttpAnswer] =
+  def get(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.SttpTransport.GetHeadersPart2]): Either[com.histmersion.pluginhost.SttpTransport.Problem, HttpAnswer] =
     val req = basicRequest
       .get(Uri.unsafeParse(url))
       .headers(headers)
@@ -48,16 +48,12 @@ final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Opt
       )
 
 object SttpTransport:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The same request, pinned to HTTP/1.1 (see the backend above). */
   type TimeoutSeconds = TimeoutSeconds.T
   object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type GetResultPart1 = GetResultPart1.T
-  object GetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetUrl = GetUrl.T
-  object GetUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetHeadersPart1 = GetHeadersPart1.T
-  object GetHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GetHeadersPart2 = GetHeadersPart2.T
   object GetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

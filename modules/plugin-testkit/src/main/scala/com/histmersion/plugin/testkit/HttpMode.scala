@@ -37,30 +37,22 @@ enum HttpMode:
   case Stub(answers: Map[HttpMode.Stub.AnswersKey, StubAnswer])
 
   /** Whether requests reach the real network. */
-  def live: com.histmersion.plugin.testkit.HttpMode.LiveResult = this match
+  def live: Boolean = this match
     case Live | Record(_) => true
     case _                => false
 
 object HttpMode:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** `live`, `record` or `replay`: the mode [[fromEnv]] picks. */
   object Stub:
     type AnswersKey = AnswersKey.T
     object AnswersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type LiveResult = LiveResult.T
-  object LiveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromEnvResultPart1 = FromEnvResultPart1.T
-  object FromEnvResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromEnvEnvPart1 = _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart1
-  val FromEnvEnvPart1: _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart1.type = _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart1
-  type FromEnvEnvPart2 = _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart2
-  val FromEnvEnvPart2: _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart2.type = _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart2
-  type ChooseResultPart1 = ChooseResultPart1.T
-  object ChooseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChooseEnvPart1 = ChooseEnvPart1.T
-  object ChooseEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChooseEnvPart2 = ChooseEnvPart2.T
-  object ChooseEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromEnvEnvPart1 = String
+  val FromEnvEnvPart1: String.type = String
+  type FromEnvEnvPart2 = String
+  val FromEnvEnvPart2: String.type = String
 
   val ModeVariable = "HISTMERSION_PLUGIN_HTTP"
 
@@ -87,10 +79,10 @@ object HttpMode:
     *   - otherwise `Left`, the reason to skip the test: there is nothing to replay, and going to the network was not
     *     asked for.
     */
-  def fromEnv(dir: Path, env: Map[com.histmersion.plugin.testkit.HttpMode.FromEnvEnvPart1, com.histmersion.plugin.testkit.HttpMode.FromEnvEnvPart2] = sys.env): Either[com.histmersion.plugin.testkit.HttpMode.FromEnvResultPart1, HttpMode] =
+  def fromEnv(dir: Path, env: Map[com.histmersion.plugin.testkit.HttpMode.FromEnvEnvPart1, com.histmersion.plugin.testkit.HttpMode.FromEnvEnvPart2] = sys.env): Either[com.histmersion.plugin.testkit.HttpMode.Problem, HttpMode] =
     choose(ProjectPaths.resolve(dir, sys.props.get(ProjectProperty)), env)
 
-  private def choose(dir: Path, env: Map[com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart1, com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart2]): Either[com.histmersion.plugin.testkit.HttpMode.ChooseResultPart1, HttpMode] =
+  private def choose(dir: Path, env: Map[String, String]): Either[com.histmersion.plugin.testkit.HttpMode.Problem, HttpMode] =
     env.get(ModeVariable).map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
       case Some("live")                  => Right(Live)
       case Some("record")                => Right(Record(dir))

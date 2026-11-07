@@ -1,0 +1,198 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.automation.managers.SweepAcquireItem.Authors (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Goal (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.IsOa (Boolean)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Item (Int)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Job (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.ManagerId (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Text (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Title (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Topic (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Venue (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Why (String)
+com.histmersion.domain.automation.worklists.BQueueRow.CreatedAt (String)
+com.histmersion.domain.automation.worklists.BQueueRow.DoneAt (String)
+com.histmersion.domain.automation.worklists.BQueueRow.List (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Reason (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Status (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Text (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Topic (String)
+com.histmersion.domain.automation.worklists.BQueueRow.UpdatedAt (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Deaths (Long)
+com.histmersion.domain.catalogue.events.BCatalogueRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Historicity (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Kind (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Label (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Magnitude (Double)
+com.histmersion.domain.catalogue.events.BCatalogueRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.BCatalogueRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Provider (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.ProviderId (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Record (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.RetrievedAt (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Url (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Vei (Int)
+com.histmersion.domain.catalogue.events.BDatingRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.BDatingRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.BDatingRow.Method (String)
+com.histmersion.domain.catalogue.events.BDatingRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.BDatingRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.BDatingRow.Note (String)
+com.histmersion.domain.catalogue.events.BEventEdgeRow.Kind (String)
+com.histmersion.domain.catalogue.events.BEventEdgeRow.Note (String)
+com.histmersion.domain.catalogue.events.BEventRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.BEventRow.Catalogue (String)
+com.histmersion.domain.catalogue.events.BEventRow.Central (Long)
+com.histmersion.domain.catalogue.events.BEventRow.DatingMethod (String)
+com.histmersion.domain.catalogue.events.BEventRow.Description (String)
+com.histmersion.domain.catalogue.events.BEventRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.BEventRow.Geom (String)
+com.histmersion.domain.catalogue.events.BEventRow.Historicity (String)
+com.histmersion.domain.catalogue.events.BEventRow.Id (String)
+com.histmersion.domain.catalogue.events.BEventRow.Kind (String)
+com.histmersion.domain.catalogue.events.BEventRow.Label (String)
+com.histmersion.domain.catalogue.events.BEventRow.Names (String)
+com.histmersion.domain.catalogue.events.BEventRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.BEventRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.BEventRow.PlusMinus (Long)
+com.histmersion.domain.catalogue.events.BEventRow.Scale (String)
+com.histmersion.domain.catalogue.events.BEventRow.UpdatedAt (String)
+com.histmersion.domain.catalogue.events.BEventRow.Wikidata (String)
+com.histmersion.domain.catalogue.events.BParticipantRow.Actor (String)
+com.histmersion.domain.catalogue.events.BParticipantRow.Role (String)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Deaths (Long)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Magnitude (Double)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Provider (String)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.ProviderId (String)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.RetrievedAt (String)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Url (String)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Vei (Int)
+
+## TYPES TO DECIDE
+com.histmersion.domain.automation.managers.SweepAcquireItem.Authors | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.SweepAcquireItem.Goal | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.SweepAcquireItem.IsOa | base Boolean | original | constructor-parameter
+com.histmersion.domain.automation.managers.SweepAcquireItem.Item | base Int | original | constructor-parameter
+com.histmersion.domain.automation.managers.SweepAcquireItem.Job | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.SweepAcquireItem.ManagerId | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.SweepAcquireItem.Text | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.SweepAcquireItem.Title | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.SweepAcquireItem.Topic | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.SweepAcquireItem.Venue | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.SweepAcquireItem.Why | base String | original | constructor-parameter
+com.histmersion.domain.automation.worklists.BQueueRow.CreatedAt | base String | original | constructor-parameter
+com.histmersion.domain.automation.worklists.BQueueRow.DoneAt | base String | original | constructor-parameter
+com.histmersion.domain.automation.worklists.BQueueRow.List | base String | original | constructor-parameter
+com.histmersion.domain.automation.worklists.BQueueRow.Reason | base String | original | constructor-parameter
+com.histmersion.domain.automation.worklists.BQueueRow.Status | base String | original | constructor-parameter
+com.histmersion.domain.automation.worklists.BQueueRow.Text | base String | original | constructor-parameter
+com.histmersion.domain.automation.worklists.BQueueRow.Topic | base String | original | constructor-parameter
+com.histmersion.domain.automation.worklists.BQueueRow.UpdatedAt | base String | original | constructor-parameter
+com.histmersion.domain.automation.worklists.QueueItemMergeRules.LedgerLabel | base String | generated | value
+    override val ledgerLabel: Option[com.histmersion.domain.automation.worklists.QueueItemMergeRules.LedgerLabel] = Some("SELECT left(text, 60) FROM queue_items WHERE uid = l
+com.histmersion.domain.automation.worklists.QueueRepo.ByIdsIds | base Int | generated | method-parameter
+    def byIds(ids: List[com.histmersion.domain.automation.worklists.QueueRepo.ByIdsIds])(using DbCon): Vector[QueueItem] =
+com.histmersion.domain.automation.worklists.QueueRepo.DeleteId | base Int | generated | method-parameter
+    def delete(id: com.histmersion.domain.automation.worklists.QueueRepo.DeleteId)(using DbCon): Unit =
+com.histmersion.domain.automation.worklists.QueueRepo.DeleteListResult | base Int | generated | method-result
+    def deleteList(kind: Kind)(using DbCon): com.histmersion.domain.automation.worklists.QueueRepo.DeleteListResult =
+com.histmersion.domain.automation.worklists.QueueRepo.ForGoalAll | base Boolean | generated | method-parameter
+    def forGoal(kind: Kind, goal: com.histmersion.domain.automation.worklists.QueueRepo.ForGoalGoal, linked: List[com.histmersion.domain.automation.worklists.QueueRepo.ForGoa
+com.histmersion.domain.automation.worklists.QueueRepo.ForGoalGoal | base String | generated | method-parameter
+    def forGoal(kind: Kind, goal: com.histmersion.domain.automation.worklists.QueueRepo.ForGoalGoal, linked: List[com.histmersion.domain.automation.worklists.QueueRepo.ForGoa
+com.histmersion.domain.automation.worklists.QueueRepo.ForGoalLinked | base String | generated | method-parameter
+    def forGoal(kind: Kind, goal: com.histmersion.domain.automation.worklists.QueueRepo.ForGoalGoal, linked: List[com.histmersion.domain.automation.worklists.QueueRepo.ForGoa
+com.histmersion.domain.automation.worklists.QueueRepo.ForJobJob | base String | generated | method-parameter
+    def forJob(kind: Kind, job: com.histmersion.domain.automation.worklists.QueueRepo.ForJobJob)(using DbCon): Vector[QueueItem] =
+com.histmersion.domain.automation.worklists.QueueRepo.GetId | base Int | generated | method-parameter
+    def get(id: com.histmersion.domain.automation.worklists.QueueRepo.GetId)(using DbCon): Option[QueueItem] =
+com.histmersion.domain.automation.worklists.QueueRepo.ListAll | base Boolean | generated | method-parameter
+    def list(kind: Kind, all: com.histmersion.domain.automation.worklists.QueueRepo.ListAll)(using DbCon): Vector[QueueItem] =
+com.histmersion.domain.automation.worklists.WorkListMergeFollowUps.RecordInDump | base String | generated | method-parameter
+com.histmersion.domain.automation.worklists.WorkListMergeFollowUps.RecordInFrom | base String | generated | method-parameter
+com.histmersion.domain.automation.worklists.WorkListMergeFollowUps.RecordInResultPart1 | base String | generated | method-result
+com.histmersion.domain.automation.worklists.WorkListMergeFollowUps.RecordInResultPart2 | base Int | generated | method-result
+com.histmersion.domain.catalogue.events.BCatalogueRow.BeginBy | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BCatalogueRow.Deaths | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BCatalogueRow.EndFrom | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BCatalogueRow.Historicity | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BCatalogueRow.Kind | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BCatalogueRow.Label | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BCatalogueRow.Magnitude | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BCatalogueRow.NotAfter | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BCatalogueRow.NotBefore | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BCatalogueRow.Provider | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BCatalogueRow.ProviderId | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BCatalogueRow.Record | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BCatalogueRow.RetrievedAt | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BCatalogueRow.Url | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BCatalogueRow.Vei | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BDatingRow.BeginBy | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BDatingRow.EndFrom | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BDatingRow.Method | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BDatingRow.NotAfter | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BDatingRow.NotBefore | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BDatingRow.Note | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventEdgeRow.Kind | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventEdgeRow.Note | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.BeginBy | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.Catalogue | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.Central | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.DatingMethod | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.Description | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.EndFrom | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.Geom | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.Historicity | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.Id | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.Kind | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.Label | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.Names | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.NotAfter | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.NotBefore | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.PlusMinus | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.Scale | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.UpdatedAt | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BEventRow.Wikidata | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BParticipantRow.Actor | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.BParticipantRow.Role | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Deaths | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Magnitude | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Provider | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CatalogueRefRow.ProviderId | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CatalogueRefRow.RetrievedAt | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Url | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Vei | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CorrectionRepo.ConflictsInResultPart1 | base String | generated | method-result
+    def conflictsIn()(using DbCon): List[(com.histmersion.domain.catalogue.events.CorrectionRepo.ConflictsInResultPart1, com.histmersion.domain.catalogue.events.CorrectionRep
+com.histmersion.domain.catalogue.events.CorrectionRepo.ConflictsInResultPart2 | base String | generated | method-result
+    def conflictsIn()(using DbCon): List[(com.histmersion.domain.catalogue.events.CorrectionRepo.ConflictsInResultPart1, com.histmersion.domain.catalogue.events.CorrectionRep
+com.histmersion.domain.catalogue.events.CorrectionRepo.ListId | base String | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionRepo.ListId], status: Option[
+com.histmersion.domain.catalogue.events.CorrectionRepo.ListKind | base String | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionRepo.ListId], status: Option[
+com.histmersion.domain.catalogue.events.CorrectionRepo.ListLimit | base Int | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionRepo.ListId], status: Option[
+com.histmersion.domain.catalogue.events.CorrectionRepo.ListOffset | base Int | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionRepo.ListId], status: Option[
+com.histmersion.domain.catalogue.events.CorrectionRepo.ListStatus | base String | generated | method-parameter
+    def list(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionRepo.ListId], status: Option[
+com.histmersion.domain.catalogue.events.CorrectionRepo.OfId | base String | generated | method-parameter
+    def of(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.OfKind, id: com.histmersion.domain.catalogue.events.CorrectionRepo.OfId)(using DbCon): List[Correction
+com.histmersion.domain.catalogue.events.CorrectionRepo.OfKind | base String | generated | method-parameter
+    def of(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.OfKind, id: com.histmersion.domain.catalogue.events.CorrectionRepo.OfId)(using DbCon): List[Correction
+com.histmersion.domain.catalogue.events.CorrectionRepo.ReconcileId | base String | generated | method-parameter
+    def reconcile(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.ReconcileKind, id: com.histmersion.domain.catalogue.events.CorrectionRepo.ReconcileId, now: Map
+com.histmersion.domain.catalogue.events.CorrectionRepo.ReconcileKind | base String | generated | method-parameter
+    def reconcile(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.ReconcileKind, id: com.histmersion.domain.catalogue.events.CorrectionRepo.ReconcileId, now: Map
+com.histmersion.domain.catalogue.events.CorrectionRepo.ReconcileNowPart1 | base String | generated | method-parameter
+    def reconcile(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.ReconcileKind, id: com.histmersion.domain.catalogue.events.CorrectionRepo.ReconcileId, now: Map
+com.histmersion.domain.catalogue.events.CorrectionRepo.ReconcileResultPart1Part1 | base String | generated | method-result
+com.histmersion.domain.catalogue.events.CorrectionRepo.RecordField | base String | generated | method-parameter
+    def record(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.RecordKind, id: com.histmersion.domain.catalogue.events.CorrectionRepo.RecordId, field: com.histme
+com.histmersion.domain.catalogue.events.CorrectionRepo.RecordId | base String | generated | method-parameter
+    def record(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.RecordKind, id: com.histmersion.domain.catalogue.events.CorrectionRepo.RecordId, field: com.histme
+com.histmersion.domain.catalogue.events.CorrectionRepo.RecordKind | base String | generated | method-parameter
+    def record(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.RecordKind, id: com.histmersion.domain.catalogue.events.CorrectionRepo.RecordId, field: com.histme
+com.histmersion.domain.catalogue.events.CorrectionRepo.RecordUpstream | base String | generated | method-parameter
+    def record(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.RecordKind, id: com.histmersion.domain.catalogue.events.CorrectionRepo.RecordId, field: com.histme

@@ -26,7 +26,7 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
 
   override def report(source: SourceKeys)(using DbCon): DeleteReport =
     val ck = source.citekey
-    def n(q: Frag): com.histmersion.domain.media.links.AssetLinkSourceReferrer.ReportNResult = q.query[Int].run().headOption.getOrElse(0)
+    def n(q: Frag): com.histmersion.RowCount = q.query[Int].run().headOption.getOrElse(0)
     DeleteReport(counts =
       List(
         DeletePart.Assets -> n(sql"SELECT count(*)::int FROM assets WHERE citekey = $ck"),
@@ -40,7 +40,7 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
     if links.nonEmpty then sql"DELETE FROM asset_links WHERE id::text = ANY($links::text[])".update.run()
 
   /** Other figures' links to the source or one of its findings. */
-  private def linksTo(source: SourceKeys)(using DbCon): List[com.histmersion.domain.media.links.AssetLinkSourceReferrer.LinksToResult] =
+  private def linksTo(source: SourceKeys)(using DbCon): List[com.histmersion.domain.media.links.AssetLinkRepo.LinkId] =
     val (ck, keys, hash) = (source.citekey, source.keys, source.findingPrefix)
     sql"""SELECT id FROM asset_links WHERE citekey <> $ck
             AND ((target_type = 'source' AND target_id = ANY($keys::text[]))
@@ -50,8 +50,4 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
       .toList
 
 object AssetLinkSourceReferrer:
-  type ReportNResult = ReportNResult.T
-  object ReportNResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type LinksToResult = LinksToResult.T
-  object LinksToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

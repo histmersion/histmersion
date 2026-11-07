@@ -17,6 +17,8 @@ import com.histmersion.api.Api
   * deduplicated by sha256, and the later names are dropped. Every method runs on the connection it is given.
   */
 private[assets] object AssetRepo:
+  type ReplaceExisting = ReplaceExisting.T
+  object ReplaceExisting extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** REPLACE the whole set for one source (what a re-conversion does). Returns how many were kept after sha256
     * deduplication.
@@ -27,33 +29,9 @@ private[assets] object AssetRepo:
     * has is deleted. A bundle then sees "changed" rather than "deleted + new", and a re-OCR no longer throws away
     * hand-made links.
     */
-  type ReadResultPart2 = ReadResultPart2.T
-  object ReadResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ReplaceResult = ReplaceResult.T
-  object ReplaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddResult = AddResult.T
-  object AddResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InsertResult = InsertResult.T
-  object InsertResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InsertReplaceExisting = InsertReplaceExisting.T
-  object InsertReplaceExisting extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadResultPart1 = ReadResultPart1.T
-  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadName = ReadName.T
-  object ReadName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountResult = CountResult.T
-  object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExistsResult = ExistsResult.T
-  object ExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExistsName = ExistsName.T
-  object ExistsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DetailName = DetailName.T
-  object DetailName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchName = PatchName.T
-  object PatchName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def replace(citekey: com.histmersion.domain.library.Citekey, assets: List[NewFigure])(using DbCon): com.histmersion.domain.media.assets.AssetRepo.ReplaceResult =
+  def replace(citekey: com.histmersion.domain.library.Citekey, assets: List[NewFigure])(using DbCon): com.histmersion.RowCount =
     val incoming = NewFigure.dedupe(assets)
     val existing = sql"SELECT name, sha256 FROM assets WHERE citekey = $citekey ORDER BY name"
       .query[(String, String)]
@@ -71,7 +49,7 @@ private[assets] object AssetRepo:
   /** Add to the set, leaving anything already stored under the same name alone (the seed importer's figures, and
     * `POST /api/sources/{ck}/assets`). Returns how many rows were written.
     */
-  def add(citekey: com.histmersion.domain.library.Citekey, assets: List[NewFigure])(using DbCon): com.histmersion.domain.media.assets.AssetRepo.AddResult =
+  def add(citekey: com.histmersion.domain.library.Citekey, assets: List[NewFigure])(using DbCon): com.histmersion.RowCount =
     val n = insert(citekey, NewFigure.dedupe(assets), replaceExisting = false)
     touch(citekey)
     n
@@ -88,7 +66,7 @@ private[assets] object AssetRepo:
     * and it used to say `DO UPDATE`, i.e. the exact opposite: the seed importer's figures overwrote the (better) ones a
     * conversion had produced. For [[replace]] the clause is what updates a kept row in place.
     */
-  private def insert(citekey: com.histmersion.domain.library.Citekey, assets: List[NewFigure], replaceExisting: com.histmersion.domain.media.assets.AssetRepo.InsertReplaceExisting)(using DbCon): com.histmersion.domain.media.assets.AssetRepo.InsertResult =
+  private def insert(citekey: com.histmersion.domain.library.Citekey, assets: List[NewFigure], replaceExisting: com.histmersion.domain.media.assets.AssetRepo.ReplaceExisting)(using DbCon): com.histmersion.RowCount =
     assets.foreach { a =>
       val sha = a.sha256
       if replaceExisting then
@@ -114,20 +92,20 @@ private[assets] object AssetRepo:
       .map(r => AssetInfo(r.name, r.mime, r.bytes, com.histmersion.api.Sha256(r.sha256), r.width, r.height))
 
   /** The bytes to stream, with the mime type to serve them as. */
-  def read(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetRepo.ReadName)(using DbCon): Option[(com.histmersion.domain.media.assets.AssetRepo.ReadResultPart1, com.histmersion.domain.media.assets.AssetRepo.ReadResultPart2)] =
+  def read(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetInfoRow.Name)(using DbCon): Option[(com.histmersion.domain.media.assets.AssetBytesRow.Mime, com.histmersion.domain.media.assets.AssetBytesRow.Bytes)] =
     sql"SELECT mime, bytes FROM assets WHERE citekey = $citekey AND name = $name"
       .query[AssetBytesRow]
       .run()
       .headOption
       .map(r => (r.mime, r.bytes))
 
-  def count(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.domain.media.assets.AssetRepo.CountResult =
+  def count(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.RowCount =
     sql"SELECT count(*) FROM assets WHERE citekey = $citekey".query[Int].run().headOption.getOrElse(0)
 
-  def exists(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetRepo.ExistsName)(using DbCon): com.histmersion.domain.media.assets.AssetRepo.ExistsResult =
+  def exists(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetInfoRow.Name)(using DbCon): Boolean =
     sql"SELECT 1 FROM assets WHERE citekey = $citekey AND name = $name".query[Int].run().nonEmpty
 
-  def detail(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetRepo.DetailName)(using DbCon): Option[AssetDetail] =
+  def detail(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetInfoRow.Name)(using DbCon): Option[AssetDetail] =
     sql"""SELECT name, mime, length(bytes), sha256, width, height,
                  kind, caption, license,
                  ST_Y(geom::geometry), ST_X(geom::geometry),
@@ -157,7 +135,7 @@ private[assets] object AssetRepo:
   /** A figure's description changed: each field given, its point when both coordinates are, a bound of its period given
     * alone replacing that bound ([[RangeSql.merge]]). The figure must exist.
     */
-  def patch(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetRepo.PatchName, p: AssetPatch)(using DbCon): Either[Api.Error, Unit] =
+  def patch(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetInfoRow.Name, p: AssetPatch)(using DbCon): Either[Api.Error, Unit] =
     if !exists(citekey, name) then Left(Api.Error(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
     else
       p.kind.foreach(v => sql"UPDATE assets SET kind = $v WHERE citekey = $citekey AND name = $name".update.run())

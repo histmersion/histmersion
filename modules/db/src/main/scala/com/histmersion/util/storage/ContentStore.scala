@@ -7,44 +7,32 @@ import java.io.InputStream
   */
 trait ContentStore:
   /** The file with this digest, and its extension. */
-  def find(sha256: com.histmersion.util.storage.ContentStore.FindSha256): Option[(ByteSource, com.histmersion.util.storage.ContentStore.FindResultPart2)]
+  def find(sha256: com.histmersion.Sha256): Option[(ByteSource, com.histmersion.util.storage.ContentStore.Ext)]
 
   /** Keep `in` as `<sha256>.<ext>` unless a file with the digest is there already; `Left` with why when it could not be
     * — including content that does not hash to `sha256`.
     */
-  def store(sha256: com.histmersion.util.storage.ContentStore.StoreSha256, ext: com.histmersion.util.storage.ContentStore.StoreExt, in: InputStream): Either[com.histmersion.util.storage.ContentStore.StoreResultPart1, Unit]
+  def store(sha256: com.histmersion.Sha256, ext: com.histmersion.util.storage.ContentStore.Ext, in: InputStream): Either[com.histmersion.util.storage.ContentStore.Problem, Unit]
 
 object ContentStore:
+  type Digest = Digest.T
+  object Digest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Ext = Ext.T
+  object Ext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** A server that stores no originals. */
-  type HexDigest = HexDigest.T
-  object HexDigest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type FindResultPart2 = FindResultPart2.T
-  object FindResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindSha256 = FindSha256.T
-  object FindSha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoreResultPart1 = StoreResultPart1.T
-  object StoreResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoreSha256 = StoreSha256.T
-  object StoreSha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoreExt = StoreExt.T
-  object StoreExt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SafeExtResult = SafeExtResult.T
-  object SafeExtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SafeExtExt = SafeExtExt.T
-  object SafeExtExt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HexResult = HexResult.T
-  object HexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val none: ContentStore = new ContentStore:
-    def find(sha256: com.histmersion.util.storage.ContentStore.FindSha256): Option[(ByteSource, com.histmersion.util.storage.ContentStore.FindResultPart2)] = None
-    def store(sha256: com.histmersion.util.storage.ContentStore.StoreSha256, ext: com.histmersion.util.storage.ContentStore.StoreExt, in: InputStream): Either[com.histmersion.util.storage.ContentStore.StoreResultPart1, Unit] =
+    def find(sha256: com.histmersion.Sha256): Option[(ByteSource, com.histmersion.util.storage.ContentStore.Ext)] = None
+    def store(sha256: com.histmersion.Sha256, ext: com.histmersion.util.storage.ContentStore.Ext, in: InputStream): Either[com.histmersion.util.storage.ContentStore.Problem, Unit] =
       Left("this server stores no originals")
 
   /** An extension safe in a file name: short and alphanumeric, else `bin`. Pure. */
-  def safeExt(ext: com.histmersion.util.storage.ContentStore.SafeExtExt): com.histmersion.util.storage.ContentStore.SafeExtResult =
+  def safeExt(ext: com.histmersion.util.storage.ContentStore.Ext): com.histmersion.util.storage.ContentStore.Ext =
     val e = ext.trim.toLowerCase(java.util.Locale.ROOT)
     if e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit) then e else "bin"
 
   /** The lower-case hex of a digest. Pure. */
-  def hex(digest: com.histmersion.util.storage.ContentStore.HexDigest): com.histmersion.util.storage.ContentStore.HexResult = java.util.HexFormat.of().formatHex(digest)
+  def hex(digest: com.histmersion.util.storage.ContentStore.Digest): com.histmersion.Sha256 = java.util.HexFormat.of().formatHex(digest)

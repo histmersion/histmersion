@@ -20,22 +20,12 @@ import com.histmersion.api.library.SourceColumns.given
   * written with their source (`sources.SourceRepo`): an edge is stored on the source that makes it.
   */
 private[citations] object CitationRepo:
+  type Depth = Depth.T
+  object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Since = Since.T
+  object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type GraphWalkD = GraphWalkD.T
-  object GraphWalkD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GraphWalkFrontier = GraphWalkFrontier.T
-  object GraphWalkFrontier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type NeighborsKinds = NeighborsKinds.T
-  object NeighborsKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GraphMaxDepth = GraphMaxDepth.T
-  object GraphMaxDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContradictionsSince = ContradictionsSince.T
-  object ContradictionsSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContradictionsForCk = ContradictionsForCk.T
-  object ContradictionsForCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContradictionsAllSince = ContradictionsAllSince.T
-  object ContradictionsAllSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private given DbCodec[NeighborTarget] = Vocab.codec(
     s => NeighborTarget.values.find(_.toString.equalsIgnoreCase(s)),
@@ -50,7 +40,7 @@ private[citations] object CitationRepo:
     * (`unresolved_edges`) is an `article` when a compiled article has that slug, else `unresolved`. Incoming edges are
     * always from stored sources. `kinds` narrows by edge kind; empty means all.
     */
-  def neighbors(citekey: com.histmersion.domain.library.Citekey, kinds: List[com.histmersion.domain.library.citations.CitationRepo.NeighborsKinds] = Nil)(using DbCon): Vector[NeighborRow] =
+  def neighbors(citekey: com.histmersion.domain.library.Citekey, kinds: List[com.histmersion.domain.library.Edge.Kind.Wire] = Nil)(using DbCon): Vector[NeighborRow] =
     val all = kinds.isEmpty
     sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title, s.status, 'source' AS target
             FROM edges e JOIN sources s ON s.citekey = e.dst
@@ -70,12 +60,12 @@ private[citations] object CitationRepo:
     * joins two stored sources (V026's foreign keys), and a link is kept only when BOTH ends are nodes of the result —
     * the depth cut-off never leaves a dangling line.
     */
-  def graph(citekey: com.histmersion.domain.library.Citekey, maxDepth: com.histmersion.domain.library.citations.CitationRepo.GraphMaxDepth)(using DbCon): com.histmersion.api.library.Source.Graph =
+  def graph(citekey: com.histmersion.domain.library.Citekey, maxDepth: com.histmersion.domain.library.citations.CitationRepo.Depth)(using DbCon): com.histmersion.api.library.Source.Graph =
     val depth = maxDepth.max(0).min(4)
     @annotation.tailrec
     def walk(
-        d: com.histmersion.domain.library.citations.CitationRepo.GraphWalkD,
-        frontier: List[com.histmersion.domain.library.citations.CitationRepo.GraphWalkFrontier],
+        d: com.histmersion.domain.library.citations.CitationRepo.Depth,
+        frontier: List[com.histmersion.domain.library.Citekey],
         nodes: Vector[GraphNode],
         links: Set[GraphLink]
     ): (Vector[GraphNode], Set[GraphLink]) =
@@ -106,12 +96,12 @@ private[citations] object CitationRepo:
       links.toList.filter(l => ids(l.source) && ids(l.target)).sortBy(l => (l.source, l.target, l.kind))
     )
 
-  def contradictions(citekey: Option[com.histmersion.domain.library.Citekey], since: Option[com.histmersion.domain.library.citations.CitationRepo.ContradictionsSince])(using DbCon): ContradictionsResult =
+  def contradictions(citekey: Option[com.histmersion.domain.library.Citekey], since: Option[com.histmersion.domain.library.citations.CitationRepo.Since])(using DbCon): ContradictionsResult =
     citekey match
       case Some(ck) => contradictionsFor(ck)
       case None     => contradictionsAll(since)
 
-  private def contradictionsFor(ck: com.histmersion.domain.library.citations.CitationRepo.ContradictionsForCk)(using DbCon): ContradictionsResult =
+  private def contradictionsFor(ck: com.histmersion.domain.library.Citekey)(using DbCon): ContradictionsResult =
     val rows = sql"""SELECT s.citekey, s.title, s.year, coalesce(s.status, 'unassessed'),
                             e.direction, e.kind, o.citekey, o.title, o.year, coalesce(o.status, 'unassessed')
                      FROM (
@@ -128,7 +118,7 @@ private[citations] object CitationRepo:
       .run()
     ContradictionsResult(rows.toList, rows.size)
 
-  private def contradictionsAll(since: Option[com.histmersion.domain.library.citations.CitationRepo.ContradictionsAllSince])(using DbCon): ContradictionsResult =
+  private def contradictionsAll(since: Option[com.histmersion.domain.library.citations.CitationRepo.Since])(using DbCon): ContradictionsResult =
     val byEdge =
       since match
         case Some(y) =>

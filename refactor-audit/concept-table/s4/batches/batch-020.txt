@@ -1,0 +1,217 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.media.assets.MediaThumbRow.Credit (String)
+com.histmersion.domain.media.assets.MediaThumbRow.Height (Int)
+com.histmersion.domain.media.assets.MediaThumbRow.License (String)
+com.histmersion.domain.media.assets.MediaThumbRow.LicenseUrl (String)
+com.histmersion.domain.media.assets.MediaThumbRow.Role (String)
+com.histmersion.domain.media.assets.MediaThumbRow.SourceUrl (String)
+com.histmersion.domain.media.assets.MediaThumbRow.Uid (String)
+com.histmersion.domain.media.assets.MediaThumbRow.Width (Int)
+com.histmersion.domain.media.assets.PictureTarget.Wire (String)
+com.histmersion.domain.media.assets.ProviderAsset.Author (String)
+com.histmersion.domain.media.assets.ProviderAsset.Bytes (Array[Byte])
+com.histmersion.domain.media.assets.ProviderAsset.Credit (String)
+com.histmersion.domain.media.assets.ProviderAsset.Height (Int)
+com.histmersion.domain.media.assets.ProviderAsset.Key (String)
+com.histmersion.domain.media.assets.ProviderAsset.Kind (String)
+com.histmersion.domain.media.assets.ProviderAsset.License (String)
+com.histmersion.domain.media.assets.ProviderAsset.LicenseUrl (String)
+com.histmersion.domain.media.assets.ProviderAsset.Mime (String)
+com.histmersion.domain.media.assets.ProviderAsset.Name (String)
+com.histmersion.domain.media.assets.ProviderAsset.OriginalUrl (String)
+com.histmersion.domain.media.assets.ProviderAsset.Provider (String)
+com.histmersion.domain.media.assets.ProviderAsset.SourceUrl (String)
+com.histmersion.domain.media.assets.ProviderAsset.Thumb (Array[Byte])
+com.histmersion.domain.media.assets.ProviderAsset.ThumbHeight (Int)
+com.histmersion.domain.media.assets.ProviderAsset.ThumbMime (String)
+com.histmersion.domain.media.assets.ProviderAsset.ThumbWidth (Int)
+com.histmersion.domain.media.assets.ProviderAsset.Width (Int)
+com.histmersion.domain.media.assets.Rights.Author (String)
+com.histmersion.domain.media.assets.Rights.Credit (String)
+com.histmersion.domain.media.assets.Rights.License (String)
+com.histmersion.domain.media.assets.Rights.LicenseUrl (String)
+com.histmersion.domain.media.assets.SourceFigure.HasThumb (Boolean)
+com.histmersion.domain.media.assets.SourceFigure.Height (Int)
+com.histmersion.domain.media.assets.SourceFigure.Name (String)
+com.histmersion.domain.media.assets.SourceFigure.Uid (String)
+com.histmersion.domain.media.assets.SourceFigure.Width (Int)
+com.histmersion.domain.media.covers.CoverKeys.Isbn (String)
+com.histmersion.domain.media.covers.CoverKeys.Oclc (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.media.assets.MediaRepo.CleanO | base String | generated | method-parameter
+    private def clean(o: Option[com.histmersion.domain.media.assets.MediaRepo.CleanO]): Option[com.histmersion.domain.media.assets.MediaRepo.CleanResult] = o.map(_.trim).filt
+com.histmersion.domain.media.assets.MediaRepo.CleanResult | base String | generated | method-result
+    private def clean(o: Option[com.histmersion.domain.media.assets.MediaRepo.CleanO]): Option[com.histmersion.domain.media.assets.MediaRepo.CleanResult] = o.map(_.trim).filt
+com.histmersion.domain.media.assets.MediaRepo.FileResultPart1 | base String | generated | method-result
+    def file(uid: com.histmersion.domain.media.assets.MediaRepo.FileUid)(using DbCon): Option[(com.histmersion.domain.media.assets.MediaRepo.FileResultPart1, com.histmersion.
+com.histmersion.domain.media.assets.MediaRepo.FileResultPart2 | base Array[Byte] | generated | method-result
+    def file(uid: com.histmersion.domain.media.assets.MediaRepo.FileUid)(using DbCon): Option[(com.histmersion.domain.media.assets.MediaRepo.FileResultPart1, com.histmersion.
+com.histmersion.domain.media.assets.MediaRepo.FileUid | base String | generated | method-parameter
+    def file(uid: com.histmersion.domain.media.assets.MediaRepo.FileUid)(using DbCon): Option[(com.histmersion.domain.media.assets.MediaRepo.FileResultPart1, com.histmersion.
+com.histmersion.domain.media.assets.MediaRepo.GeoLimit | base Int | generated | method-parameter
+    def geo(q: Api.MediaGeoQuery, limit: com.histmersion.domain.media.assets.MediaRepo.GeoLimit)(using DbCon): List[MediaGeoHit] =
+com.histmersion.domain.media.assets.MediaRepo.GeoOfResultPart1 | base String | generated | method-result
+    def geoOf(uids: List[com.histmersion.domain.media.assets.MediaRepo.GeoOfUids])(using DbCon): Map[com.histmersion.domain.media.assets.MediaRepo.GeoOfResultPart1, MediaGeoH
+com.histmersion.domain.media.assets.MediaRepo.GeoOfUids | base String | generated | method-parameter
+    def geoOf(uids: List[com.histmersion.domain.media.assets.MediaRepo.GeoOfUids])(using DbCon): Map[com.histmersion.domain.media.assets.MediaRepo.GeoOfResultPart1, MediaGeoH
+com.histmersion.domain.media.assets.MediaRepo.KmToDegreesKm | base Double | generated | method-parameter
+    def kmToDegrees(km: com.histmersion.domain.media.assets.MediaRepo.KmToDegreesKm): com.histmersion.domain.media.assets.MediaRepo.KmToDegreesResult = (km.max(0) / 111.32)
+com.histmersion.domain.media.assets.MediaRepo.KmToDegreesResult | base Double | generated | method-result
+    def kmToDegrees(km: com.histmersion.domain.media.assets.MediaRepo.KmToDegreesKm): com.histmersion.domain.media.assets.MediaRepo.KmToDegreesResult = (km.max(0) / 111.32)
+com.histmersion.domain.media.assets.MediaRepo.KnownKeys | base String | generated | method-parameter
+    def known(provider: com.histmersion.domain.media.assets.MediaRepo.KnownProvider, keys: List[com.histmersion.domain.media.assets.MediaRepo.KnownKeys])(using DbCon): Map[co
+com.histmersion.domain.media.assets.MediaRepo.KnownProvider | base String | generated | method-parameter
+    def known(provider: com.histmersion.domain.media.assets.MediaRepo.KnownProvider, keys: List[com.histmersion.domain.media.assets.MediaRepo.KnownKeys])(using DbCon): Map[co
+com.histmersion.domain.media.assets.MediaRepo.KnownResultPart1 | base String | generated | method-result
+    def known(provider: com.histmersion.domain.media.assets.MediaRepo.KnownProvider, keys: List[com.histmersion.domain.media.assets.MediaRepo.KnownKeys])(using DbCon): Map[co
+com.histmersion.domain.media.assets.MediaRepo.LicenceGapsResultPart1 | base String | generated | method-result
+    def licenceGaps()(using DbCon): List[(com.histmersion.domain.media.assets.MediaRepo.LicenceGapsResultPart1, com.histmersion.domain.media.assets.MediaRepo.LicenceGapsResul
+com.histmersion.domain.media.assets.MediaRepo.LicenceGapsResultPart2 | base String | generated | method-result
+    def licenceGaps()(using DbCon): List[(com.histmersion.domain.media.assets.MediaRepo.LicenceGapsResultPart1, com.histmersion.domain.media.assets.MediaRepo.LicenceGapsResul
+com.histmersion.domain.media.assets.MediaRepo.LinkBasis | base String | generated | method-parameter
+com.histmersion.domain.media.assets.MediaRepo.LinkItem | base String | generated | method-parameter
+com.histmersion.domain.media.assets.MediaRepo.LinkProperty | base String | generated | method-parameter
+com.histmersion.domain.media.assets.MediaRepo.LinkRank | base Int | generated | method-parameter
+com.histmersion.domain.media.assets.MediaRepo.LinkResult | base Boolean | generated | method-result
+com.histmersion.domain.media.assets.MediaRepo.LinkRole | base String | generated | method-parameter
+com.histmersion.domain.media.assets.MediaRepo.LinkTargetId | base String | generated | method-parameter
+com.histmersion.domain.media.assets.MediaRepo.LinkTargetType | base String | generated | method-parameter
+com.histmersion.domain.media.assets.MediaRepo.LinkUid | base String | generated | method-parameter
+com.histmersion.domain.media.assets.MediaRepo.ListLimit | base Int | generated | method-parameter
+    def list(q: Api.MediaQuery, limit: com.histmersion.domain.media.assets.MediaRepo.ListLimit)(using DbCon): MediaList =
+com.histmersion.domain.media.assets.MediaRepo.PlaceAtTargetPart1 | base String | generated | method-parameter
+    private def placeAt(uid: com.histmersion.domain.media.assets.MediaRepo.PlaceAtUid, target: (com.histmersion.domain.media.assets.MediaRepo.PlaceAtTargetPart1, com.histmers
+com.histmersion.domain.media.assets.MediaRepo.PlaceAtTargetPart2 | base String | generated | method-parameter
+    private def placeAt(uid: com.histmersion.domain.media.assets.MediaRepo.PlaceAtUid, target: (com.histmersion.domain.media.assets.MediaRepo.PlaceAtTargetPart1, com.histmers
+com.histmersion.domain.media.assets.MediaRepo.PlaceAtUid | base String | generated | method-parameter
+    private def placeAt(uid: com.histmersion.domain.media.assets.MediaRepo.PlaceAtUid, target: (com.histmersion.domain.media.assets.MediaRepo.PlaceAtTargetPart1, com.histmers
+com.histmersion.domain.media.assets.MediaRepo.PlaceThumbsInLimit | base Int | generated | method-parameter
+    def placeThumbsIn(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.MediaRepo.PlaceThumbsInSameSiteKm, limit: com.histme
+com.histmersion.domain.media.assets.MediaRepo.PlaceThumbsInSameSiteKm | base Double | generated | method-parameter
+    def placeThumbsIn(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.MediaRepo.PlaceThumbsInSameSiteKm, limit: com.histme
+com.histmersion.domain.media.assets.MediaRepo.RefreshRightsUid | base String | generated | method-parameter
+    def refreshRights(uid: com.histmersion.domain.media.assets.MediaRepo.RefreshRightsUid, r: Rights)(using DbCon): Unit =
+com.histmersion.domain.media.assets.MediaRepo.SaveFirstTargetPart1 | base String | generated | method-parameter
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.MediaRepo.SaveFirstTargetPart1, com.histmersion.domain.media.assets.MediaRepo.SaveFirstTarget
+com.histmersion.domain.media.assets.MediaRepo.SaveFirstTargetPart2 | base String | generated | method-parameter
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.MediaRepo.SaveFirstTargetPart1, com.histmersion.domain.media.assets.MediaRepo.SaveFirstTarget
+com.histmersion.domain.media.assets.MediaRepo.SaveResultPart1 | base String | generated | method-result
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.MediaRepo.SaveFirstTargetPart1, com.histmersion.domain.media.assets.MediaRepo.SaveFirstTarget
+com.histmersion.domain.media.assets.MediaRepo.SaveResultPart2 | base Boolean | generated | method-result
+    def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.MediaRepo.SaveFirstTargetPart1, com.histmersion.domain.media.assets.MediaRepo.SaveFirstTarget
+com.histmersion.domain.media.assets.MediaRepo.SetSourcePictureProperty | base String | generated | method-parameter
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.MediaRepo.SetSourcePictureUid, role: com.histmersion.domain
+com.histmersion.domain.media.assets.MediaRepo.SetSourcePictureRole | base String | generated | method-parameter
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.MediaRepo.SetSourcePictureUid, role: com.histmersion.domain
+com.histmersion.domain.media.assets.MediaRepo.SetSourcePictureUid | base String | generated | method-parameter
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.MediaRepo.SetSourcePictureUid, role: com.histmersion.domain
+com.histmersion.domain.media.assets.MediaRepo.SetThumbBytes | base Array[Byte] | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.MediaRepo.SetThumbUid, bytes: com.histmersion.domain.media.assets.MediaRepo.SetThumbBytes, mime: com.histmersion.dom
+com.histmersion.domain.media.assets.MediaRepo.SetThumbHeight | base Int | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.MediaRepo.SetThumbUid, bytes: com.histmersion.domain.media.assets.MediaRepo.SetThumbBytes, mime: com.histmersion.dom
+com.histmersion.domain.media.assets.MediaRepo.SetThumbMime | base String | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.MediaRepo.SetThumbUid, bytes: com.histmersion.domain.media.assets.MediaRepo.SetThumbBytes, mime: com.histmersion.dom
+com.histmersion.domain.media.assets.MediaRepo.SetThumbUid | base String | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.MediaRepo.SetThumbUid, bytes: com.histmersion.domain.media.assets.MediaRepo.SetThumbBytes, mime: com.histmersion.dom
+com.histmersion.domain.media.assets.MediaRepo.SetThumbWidth | base Int | generated | method-parameter
+    def setThumb(uid: com.histmersion.domain.media.assets.MediaRepo.SetThumbUid, bytes: com.histmersion.domain.media.assets.MediaRepo.SetThumbBytes, mime: com.histmersion.dom
+com.histmersion.domain.media.assets.MediaRepo.ShowUid | base String | generated | method-parameter
+    def show(uid: com.histmersion.domain.media.assets.MediaRepo.ShowUid)(using DbCon): Option[MediaItem] =
+com.histmersion.domain.media.assets.MediaRepo.SourcePictureResultPart1 | base String | generated | method-result
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.MediaRepo.SourcePictureRole)(using DbCon): Option[(com.histme
+com.histmersion.domain.media.assets.MediaRepo.SourcePictureResultPart2 | base String | generated | method-result
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.MediaRepo.SourcePictureRole)(using DbCon): Option[(com.histme
+com.histmersion.domain.media.assets.MediaRepo.SourcePictureRole | base String | generated | method-parameter
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.MediaRepo.SourcePictureRole)(using DbCon): Option[(com.histme
+com.histmersion.domain.media.assets.MediaRepo.TargetsOfResultPart1 | base String | generated | method-result
+    private def targetsOf(uids: List[com.histmersion.domain.media.assets.MediaRepo.TargetsOfUids])(using DbCon): Map[com.histmersion.domain.media.assets.MediaRepo.TargetsOfRe
+com.histmersion.domain.media.assets.MediaRepo.TargetsOfUids | base String | generated | method-parameter
+    private def targetsOf(uids: List[com.histmersion.domain.media.assets.MediaRepo.TargetsOfUids])(using DbCon): Map[com.histmersion.domain.media.assets.MediaRepo.TargetsOfRe
+com.histmersion.domain.media.assets.MediaRepo.ThumbResultPart1 | base String | generated | method-result
+    def thumb(uid: com.histmersion.domain.media.assets.MediaRepo.ThumbUid)(using DbCon): Option[(com.histmersion.domain.media.assets.MediaRepo.ThumbResultPart1, com.histmersi
+com.histmersion.domain.media.assets.MediaRepo.ThumbResultPart2 | base Array[Byte] | generated | method-result
+    def thumb(uid: com.histmersion.domain.media.assets.MediaRepo.ThumbUid)(using DbCon): Option[(com.histmersion.domain.media.assets.MediaRepo.ThumbResultPart1, com.histmersi
+com.histmersion.domain.media.assets.MediaRepo.ThumbUid | base String | generated | method-parameter
+    def thumb(uid: com.histmersion.domain.media.assets.MediaRepo.ThumbUid)(using DbCon): Option[(com.histmersion.domain.media.assets.MediaRepo.ThumbResultPart1, com.histmersi
+com.histmersion.domain.media.assets.MediaRepo.ThumbsInLimit | base Int | generated | method-parameter
+    def thumbsIn(targetType: com.histmersion.domain.media.assets.MediaRepo.ThumbsInTargetType, targetId: com.histmersion.domain.media.assets.MediaRepo.ThumbsInTargetId, limit
+com.histmersion.domain.media.assets.MediaRepo.ThumbsInTargetId | base String | generated | method-parameter
+    def thumbsIn(targetType: com.histmersion.domain.media.assets.MediaRepo.ThumbsInTargetType, targetId: com.histmersion.domain.media.assets.MediaRepo.ThumbsInTargetId, limit
+com.histmersion.domain.media.assets.MediaRepo.ThumbsInTargetType | base String | generated | method-parameter
+    def thumbsIn(targetType: com.histmersion.domain.media.assets.MediaRepo.ThumbsInTargetType, targetId: com.histmersion.domain.media.assets.MediaRepo.ThumbsInTargetId, limit
+com.histmersion.domain.media.assets.MediaRepo.TileCandidatesKind | base String | generated | method-parameter
+com.histmersion.domain.media.assets.MediaRepo.TileCandidatesLicense | base String | generated | method-parameter
+com.histmersion.domain.media.assets.MediaRepo.TileCandidatesProvider | base String | generated | method-parameter
+com.histmersion.domain.media.assets.MediaRepo.TileCandidatesWindowPart1 | base Long | generated | method-parameter
+com.histmersion.domain.media.assets.MediaRepo.TileCandidatesWindowPart2 | base Long | generated | method-parameter
+com.histmersion.domain.media.assets.MediaThumbRow.Credit | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.MediaThumbRow.Height | base Int | original | constructor-parameter
+com.histmersion.domain.media.assets.MediaThumbRow.License | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.MediaThumbRow.LicenseUrl | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.MediaThumbRow.Role | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.MediaThumbRow.SourceUrl | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.MediaThumbRow.Uid | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.MediaThumbRow.Width | base Int | original | constructor-parameter
+com.histmersion.domain.media.assets.PictureTarget.Wire | base String | generated | constructor-parameter
+    enum PictureTarget(val wire: PictureTarget.Wire):
+com.histmersion.domain.media.assets.ProviderAsset.Author | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.Bytes | base Array[Byte] | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.Credit | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.Height | base Int | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.Key | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.Kind | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.KindOfResult | base String | generated | method-result
+    def kindOf(role: com.histmersion.domain.media.assets.ProviderAsset.KindOfRole): com.histmersion.domain.media.assets.ProviderAsset.KindOfResult = role match
+com.histmersion.domain.media.assets.ProviderAsset.KindOfRole | base String | generated | method-parameter
+    def kindOf(role: com.histmersion.domain.media.assets.ProviderAsset.KindOfRole): com.histmersion.domain.media.assets.ProviderAsset.KindOfResult = role match
+com.histmersion.domain.media.assets.ProviderAsset.License | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.LicenseUrl | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.Mime | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.Name | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.OriginalUrl | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.Provider | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.SourceUrl | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.Thumb | base Array[Byte] | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.ThumbHeight | base Int | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.ThumbMime | base String | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.ThumbWidth | base Int | original | constructor-parameter
+com.histmersion.domain.media.assets.ProviderAsset.Width | base Int | original | constructor-parameter
+com.histmersion.domain.media.assets.Rights.Author | base String | original | constructor-parameter
+    final case class Rights(license: Rights.License, licenseUrl: Option[Rights.LicenseUrl], author: Option[Rights.Author], credit: Rights.Credit)
+com.histmersion.domain.media.assets.Rights.Credit | base String | original | constructor-parameter
+    final case class Rights(license: Rights.License, licenseUrl: Option[Rights.LicenseUrl], author: Option[Rights.Author], credit: Rights.Credit)
+com.histmersion.domain.media.assets.Rights.License | base String | original | constructor-parameter
+    final case class Rights(license: Rights.License, licenseUrl: Option[Rights.LicenseUrl], author: Option[Rights.Author], credit: Rights.Credit)
+com.histmersion.domain.media.assets.Rights.LicenseUrl | base String | original | constructor-parameter
+    final case class Rights(license: Rights.License, licenseUrl: Option[Rights.LicenseUrl], author: Option[Rights.Author], credit: Rights.Credit)
+com.histmersion.domain.media.assets.SourceFigure.HasThumb | base Boolean | original | constructor-parameter
+    final case class SourceFigure(uid: SourceFigure.Uid, name: SourceFigure.Name, width: Option[SourceFigure.Width], height: Option[SourceFigure.Height], hasThumb: SourceFigu
+com.histmersion.domain.media.assets.SourceFigure.Height | base Int | original | constructor-parameter
+    final case class SourceFigure(uid: SourceFigure.Uid, name: SourceFigure.Name, width: Option[SourceFigure.Width], height: Option[SourceFigure.Height], hasThumb: SourceFigu
+com.histmersion.domain.media.assets.SourceFigure.Name | base String | original | constructor-parameter
+    final case class SourceFigure(uid: SourceFigure.Uid, name: SourceFigure.Name, width: Option[SourceFigure.Width], height: Option[SourceFigure.Height], hasThumb: SourceFigu
+com.histmersion.domain.media.assets.SourceFigure.Uid | base String | original | constructor-parameter
+    final case class SourceFigure(uid: SourceFigure.Uid, name: SourceFigure.Name, width: Option[SourceFigure.Width], height: Option[SourceFigure.Height], hasThumb: SourceFigu
+com.histmersion.domain.media.assets.SourceFigure.Width | base Int | original | constructor-parameter
+    final case class SourceFigure(uid: SourceFigure.Uid, name: SourceFigure.Name, width: Option[SourceFigure.Width], height: Option[SourceFigure.Height], hasThumb: SourceFigu
+com.histmersion.domain.media.covers.CoverKeys.Isbn | base String | original | constructor-parameter
+    final case class CoverKeys(citekey: com.histmersion.domain.library.Citekey, isbn: Option[CoverKeys.Isbn], oclc: Option[CoverKeys.Oclc])
+com.histmersion.domain.media.covers.CoverKeys.Oclc | base String | original | constructor-parameter
+    final case class CoverKeys(citekey: com.histmersion.domain.library.Citekey, isbn: Option[CoverKeys.Isbn], oclc: Option[CoverKeys.Oclc])
+com.histmersion.domain.media.covers.CoverRepo.CoverCandidatesLimit | base Int | generated | method-parameter
+    def coverCandidates(only: Option[com.histmersion.domain.media.covers.CoverRepo.CoverCandidatesOnly], refresh: com.histmersion.domain.media.covers.CoverRepo.CoverCandidate
+com.histmersion.domain.media.covers.CoverRepo.CoverCandidatesOnly | base String | generated | method-parameter
+    def coverCandidates(only: Option[com.histmersion.domain.media.covers.CoverRepo.CoverCandidatesOnly], refresh: com.histmersion.domain.media.covers.CoverRepo.CoverCandidate
+com.histmersion.domain.media.covers.CoverRepo.CoverCandidatesRefresh | base Boolean | generated | method-parameter
+    def coverCandidates(only: Option[com.histmersion.domain.media.covers.CoverRepo.CoverCandidatesOnly], refresh: com.histmersion.domain.media.covers.CoverRepo.CoverCandidate
+com.histmersion.domain.media.covers.CoverRepo.IllustrationCandidatesLimit | base Int | generated | method-parameter
+    def illustrationCandidates(only: Option[com.histmersion.domain.media.covers.CoverRepo.IllustrationCandidatesOnly], refresh: com.histmersion.domain.media.covers.CoverRepo.
+com.histmersion.domain.media.covers.CoverRepo.IllustrationCandidatesOnly | base String | generated | method-parameter
+    def illustrationCandidates(only: Option[com.histmersion.domain.media.covers.CoverRepo.IllustrationCandidatesOnly], refresh: com.histmersion.domain.media.covers.CoverRepo.
+com.histmersion.domain.media.covers.CoverRepo.IllustrationCandidatesRefresh | base Boolean | generated | method-parameter
+    def illustrationCandidates(only: Option[com.histmersion.domain.media.covers.CoverRepo.IllustrationCandidatesOnly], refresh: com.histmersion.domain.media.covers.CoverRepo.
+com.histmersion.domain.media.covers.CoverRepo.IllustrationCandidatesResult | base String | generated | method-result
+    def illustrationCandidates(only: Option[com.histmersion.domain.media.covers.CoverRepo.IllustrationCandidatesOnly], refresh: com.histmersion.domain.media.covers.CoverRepo.
+com.histmersion.domain.media.figures.FigureRepo.FillLicencesApply | base Boolean | generated | method-parameter
+    def fillLicences(apply: com.histmersion.domain.media.figures.FigureRepo.FillLicencesApply)(using DbCon): FigureLicenceFill =

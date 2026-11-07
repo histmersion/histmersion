@@ -30,185 +30,63 @@ import scala.util.control.NonFatal
   * succeeded.
   */
 object PluginHost:
+  type Built = Built.T
+  object Built extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassName = ClassName.T
+  object ClassName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfigPath = ConfigPath.T
+  object ConfigPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Digest = Digest.T
+  object Digest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Enabled = Enabled.T
+  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnvName = EnvName.T
+  object EnvName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FirstParty = FirstParty.T
+  object FirstParty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogMessage = LogMessage.T
+  object LogMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PassProgress = PassProgress.T
+  object PassProgress extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Provider = Provider.T
+  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Provides = Provides.T
+  object Provides extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Summary = Summary.T
+  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VaultId = VaultId.T
+  object VaultId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Warning = Warning.T
+  object Warning extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type DiscoverLoopResultPart2 = DiscoverLoopResultPart2.T
-  object DiscoverLoopResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DiscoverLoopErrs = DiscoverLoopErrs.T
-  object DiscoverLoopErrs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DiscoverLoopLoadedPart1Part1 = DiscoverLoopLoadedPart1Part1.T
-  object DiscoverLoopLoadedPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveAllOneR = ResolveAllOneR.T
   object ResolveAllOneR extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildStatusEnabled = BuildStatusEnabled.T
-  object BuildStatusEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildStatusError = BuildStatusError.T
-  object BuildStatusError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildStatusProvides = BuildStatusProvides.T
-  object BuildStatusProvides extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildStatusWarns = BuildStatusWarns.T
-  object BuildStatusWarns extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildPreparedPart1 = BuildPreparedPart1.T
-  object BuildPreparedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildPassesResultPart2Part1 = BuildPassesResultPart2Part1.T
-  object BuildPassesResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildPassesDonePart1 = BuildPassesDonePart1.T
-  object BuildPassesDonePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildPassesPassResultPart2Part1 = BuildPassesPassResultPart2Part1.T
-  object BuildPassesPassResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildPassesPassResultPart4 = BuildPassesPassResultPart4.T
-  object BuildPassesPassResultPart4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildPassesPassDsPart1 = BuildPassesPassDsPart1.T
-  object BuildPassesPassDsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildPassesPassProg = BuildPassesPassProg.T
-  object BuildPassesPassProg extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegisterResolvedResultPart1 = RegisterResolvedResultPart1.T
-  object RegisterResolvedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RegisterResolvedResultPart2 = RegisterResolvedResultPart2.T
   object RegisterResolvedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegisterFailE = RegisterFailE.T
-  object RegisterFailE extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type SpiGeneration = SpiGenerationValue
   type SpiGenerationValue = SpiGenerationValue.T
   object SpiGenerationValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DiscoverResultPart2 = DiscoverResultPart2.T
-  object DiscoverResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProviderOfResult = ProviderOfResult.T
-  object ProviderOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ForeignSpiResult = ForeignSpiResult.T
   object ForeignSpiResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RebuildResult = RebuildResult.T
-  object RebuildResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RebuildBuilt = RebuildBuilt.T
-  object RebuildBuilt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MissingClassResult = MissingClassResult.T
-  object MissingClassResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FailureResult = FailureResult.T
-  object FailureResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckResultPart1 = CheckResultPart1.T
-  object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckResultPart2 = CheckResultPart2.T
-  object CheckResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckSpi = CheckSpi.T
   object CheckSpi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderResultPart1 = OrderResultPart1.T
-  object OrderResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderResultPart2 = OrderResultPart2.T
-  object OrderResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderIds = OrderIds.T
-  object OrderIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderConfigured = OrderConfigured.T
-  object OrderConfigured extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DigestResult = DigestResult.T
-  object DigestResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DigestEntriesPart1 = DigestEntriesPart1.T
-  object DigestEntriesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DigestEntriesPart2 = DigestEntriesPart2.T
-  object DigestEntriesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConfiguredOrderResultPart1 = ConfiguredOrderResultPart1.T
-  object ConfiguredOrderResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConfiguredOrderResultPart2 = ConfiguredOrderResultPart2.T
-  object ConfiguredOrderResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnknownBlocksResult = UnknownBlocksResult.T
-  object UnknownBlocksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnknownBlocksIds = UnknownBlocksIds.T
   object UnknownBlocksIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlockResultPart1 = BlockResultPart1.T
-  object BlockResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BlockId = BlockId.T
   object BlockId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnabledResultPart1 = EnabledResultPart1.T
-  object EnabledResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnabledResultPart2 = EnabledResultPart2.T
-  object EnabledResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnabledId = EnabledId.T
-  object EnabledId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TypeCheckResult = TypeCheckResult.T
-  object TypeCheckResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TypeCheckId = TypeCheckId.T
-  object TypeCheckId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LeavesResultPart1 = LeavesResultPart1.T
-  object LeavesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LeavesPrefix = LeavesPrefix.T
-  object LeavesPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribeResult = DescribeResult.T
-  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribeId = DescribeId.T
-  object DescribeId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeResultPart1 = DecodeResultPart1.T
-  object DecodeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaskResult = MaskResult.T
-  object MaskResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaskS = MaskS.T
-  object MaskS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultsResultPart1 = DefaultsResultPart1.T
-  object DefaultsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveResultPart1 = ResolveResultPart1.T
-  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveResultPart2 = ResolveResultPart2.T
   object ResolveResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveVaultsPart1 = ResolveVaultsPart1.T
-  object ResolveVaultsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveAllResultPart1 = ResolveAllResultPart1.T
   object ResolveAllResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveAllResultPart2Part1 = ResolveAllResultPart2Part1.T
-  object ResolveAllResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveAllResultPart2Part2 = ResolveAllResultPart2Part2.T
   object ResolveAllResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveAllName = ResolveAllName.T
-  object ResolveAllName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveAllRefs = ResolveAllRefs.T
   object ResolveAllRefs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidFetcherResult = ValidFetcherResult.T
-  object ValidFetcherResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidFetcherId = ValidFetcherId.T
-  object ValidFetcherId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidCollectionResult = ValidCollectionResult.T
-  object ValidCollectionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidCollectionFirstParty = ValidCollectionFirstParty.T
-  object ValidCollectionFirstParty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidCollectionId = ValidCollectionId.T
-  object ValidCollectionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidCatalogueResult = ValidCatalogueResult.T
-  object ValidCatalogueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidCatalogueFirstParty = ValidCatalogueFirstParty.T
-  object ValidCatalogueFirstParty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidCatalogueId = ValidCatalogueId.T
-  object ValidCatalogueId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidAiProviderResult = ValidAiProviderResult.T
-  object ValidAiProviderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidAiProviderFirstParty = ValidAiProviderFirstParty.T
-  object ValidAiProviderFirstParty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidAiProviderId = ValidAiProviderId.T
-  object ValidAiProviderId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidGazetteerResult = ValidGazetteerResult.T
-  object ValidGazetteerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidGazetteerFirstParty = ValidGazetteerFirstParty.T
-  object ValidGazetteerFirstParty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidGazetteerId = ValidGazetteerId.T
-  object ValidGazetteerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidSourceCollectionResult = ValidSourceCollectionResult.T
-  object ValidSourceCollectionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidSourceCollectionFirstParty = ValidSourceCollectionFirstParty.T
-  object ValidSourceCollectionFirstParty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidSourceCollectionId = ValidSourceCollectionId.T
-  object ValidSourceCollectionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidVaultResult = ValidVaultResult.T
-  object ValidVaultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidVaultId = ValidVaultId.T
-  object ValidVaultId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildDiscoveryErrors = BuildDiscoveryErrors.T
-  object BuildDiscoveryErrors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildCarriedPart1 = BuildCarriedPart1.T
-  object BuildCarriedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildFallbackArg1 = BuildFallbackArg1.T
-  object BuildFallbackArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildFirstPartyArg1 = BuildFirstPartyArg1.T
-  object BuildFirstPartyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildFirstPartyResult = BuildFirstPartyResult.T
-  object BuildFirstPartyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegisterFirstParty = RegisterFirstParty.T
-  object RegisterFirstParty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Root = "histmersion.plugins"
 
@@ -225,17 +103,17 @@ object PluginHost:
   /** Every `Plugin` provider on the class path. A provider that cannot be instantiated is reported, not fatal (the
     * others still load).
     */
-  def discover(loader: ClassLoader): (List[Plugin], List[com.histmersion.pluginhost.PluginHost.DiscoverResultPart2]) =
+  def discover(loader: ClassLoader): (List[Plugin], List[com.histmersion.pluginhost.PluginHost.Problem]) =
     val it = ServiceLoader.load(classOf[Plugin], loader).iterator
     // ServiceLoader's iterator is lazy and may throw per provider: walk it by hand, keeping going
     @annotation.tailrec
-    def loop(acc: List[Plugin], errs: List[com.histmersion.pluginhost.PluginHost.DiscoverLoopErrs]): (List[Plugin], List[com.histmersion.pluginhost.PluginHost.DiscoverLoopResultPart2]) =
+    def loop(acc: List[Plugin], errs: List[com.histmersion.pluginhost.PluginHost.Problem]): (List[Plugin], List[com.histmersion.pluginhost.PluginHost.Problem]) =
       val step =
         try Right(if it.hasNext then Some(it.next()) else None)
         catch
           case e: LinkageError => Left(e)
           case NonFatal(e)     => Left(e)
-      val loaded: Either[(Option[com.histmersion.pluginhost.PluginHost.DiscoverLoopLoadedPart1Part1], Throwable), Option[Plugin]] = step.left.map(e => providerOf(e) -> e).flatMap {
+      val loaded: Either[(Option[com.histmersion.pluginhost.PluginHost.Provider], Throwable), Option[Plugin]] = step.left.map(e => providerOf(e) -> e).flatMap {
         case Some(p) => described(p).left.map(e => Some(p.getClass.getName) -> e).map(Some(_))
         case None    => Right(None)
       }
@@ -249,7 +127,7 @@ object PluginHost:
   private val ProviderClass = "Provider ([\\w.$]+)".r.unanchored
 
   /** The provider class ServiceLoader names in the error it threw for one it could not instantiate. */
-  def providerOf(e: Throwable): Option[com.histmersion.pluginhost.PluginHost.ProviderOfResult] = e match
+  def providerOf(e: Throwable): Option[com.histmersion.pluginhost.PluginHost.Provider] = e match
     case e: java.util.ServiceConfigurationError =>
       Option(e.getMessage).collect { case ProviderClass(c) => c }
     case _ => None
@@ -279,20 +157,20 @@ object PluginHost:
     case e => Option(e.getCause).filter(_ ne e).flatMap(foreignSpi)
 
   /** What to do about a plugin built against another SPI generation. */
-  def rebuild(built: Option[com.histmersion.pluginhost.PluginHost.RebuildBuilt]): com.histmersion.pluginhost.PluginHost.RebuildResult =
+  def rebuild(built: Option[com.histmersion.pluginhost.PluginHost.Built]): com.histmersion.pluginhost.PluginHost.Summary =
     s"it was built against ${built.fold("another plugin SPI")(v => s"plugin SPI $v")}; this Histmersion speaks " +
       s"SPI ${Spi.Version} — rebuild the plugin against SPI ${Spi.Version} (`histmersion plugin repo` has its API)"
 
   /** The class a plugin needs that no jar on the class path has, when that is why `e` was thrown: the library it
     * belongs to was neither shipped with Histmersion nor installed with the plugin.
     */
-  def missingClass(e: Throwable): Option[com.histmersion.pluginhost.PluginHost.MissingClassResult] = e match
+  def missingClass(e: Throwable): Option[com.histmersion.pluginhost.PluginHost.ClassName] = e match
     case e: NoClassDefFoundError   => Some(Option(e.getMessage).getOrElse("?").replace('/', '.'))
     case e: ClassNotFoundException => Some(Option(e.getMessage).getOrElse("?"))
     case e                         => Option(e.getCause).filter(_ ne e).flatMap(missingClass)
 
   /** Why plugin code threw, in words that say what to do when a class is missing. */
-  def failure(e: Throwable): com.histmersion.pluginhost.PluginHost.FailureResult =
+  def failure(e: Throwable): com.histmersion.pluginhost.PluginHost.Problem =
     foreignSpi(e)
       .map(rebuild)
       .getOrElse(
@@ -308,7 +186,7 @@ object PluginHost:
     * is refused: which one the user meant cannot be known), an id that is no config key, or a key the host keeps for
     * itself.
     */
-  def check(infos: List[Plugin.Info], spi: com.histmersion.pluginhost.PluginHost.CheckSpi): Map[com.histmersion.pluginhost.PluginHost.CheckResultPart1, com.histmersion.pluginhost.PluginHost.CheckResultPart2] =
+  def check(infos: List[Plugin.Info], spi: com.histmersion.pluginhost.PluginHost.CheckSpi): Map[com.histmersion.util.plugins.Plugin.Id, String] =
     val dup = infos.groupBy(_.id).collect {
       case (id, is) if is.size > 1 =>
         id -> s"plugin id '$id' is claimed by ${is.size} plugins"
@@ -325,7 +203,7 @@ object PluginHost:
   /** Pure: registration order — the ids named in `histmersion.plugins.order` first, as listed, then the rest by id;
     * with a warning per listed id that is no plugin here.
     */
-  def order(ids: List[com.histmersion.pluginhost.PluginHost.OrderIds], configured: List[com.histmersion.pluginhost.PluginHost.OrderConfigured]): (List[com.histmersion.pluginhost.PluginHost.OrderResultPart1], List[com.histmersion.pluginhost.PluginHost.OrderResultPart2]) =
+  def order(ids: List[com.histmersion.util.plugins.Plugin.Id], configured: List[com.histmersion.util.plugins.Plugin.Id]): (List[com.histmersion.util.plugins.Plugin.Id], List[com.histmersion.pluginhost.PluginHost.Problem]) =
     val listed = configured.distinct
     val unknown =
       listed.filterNot(ids.contains).map(id => s"$Root.$OrderKey names '$id', which is no plugin in this binary")
@@ -335,10 +213,10 @@ object PluginHost:
     * in the image and `histmersion plugin status` recomputes over the plugins directory (docs/research-plugins.md §7.3;
     * the one implementation is files' `PluginKit.digest`).
     */
-  def digest(entries: List[(com.histmersion.pluginhost.PluginHost.DigestEntriesPart1, com.histmersion.pluginhost.PluginHost.DigestEntriesPart2)]): com.histmersion.pluginhost.PluginHost.DigestResult = com.histmersion.util.plugins.PluginKit.digest(entries)
+  def digest(entries: List[(com.histmersion.util.plugins.Plugin.Id, com.histmersion.pluginhost.PluginHost.Digest)]): com.histmersion.pluginhost.PluginHost.Digest = com.histmersion.util.plugins.PluginKit.digest(entries)
 
   /** Pure: `histmersion.plugins.order` of the user's file, or why it cannot be read. */
-  def configuredOrder(user: Config, env: Config): Either[com.histmersion.pluginhost.PluginHost.ConfiguredOrderResultPart1, List[com.histmersion.pluginhost.PluginHost.ConfiguredOrderResultPart2]] =
+  def configuredOrder(user: Config, env: Config): Either[com.histmersion.pluginhost.PluginHost.Problem, List[com.histmersion.util.plugins.Plugin.Id]] =
     val path = s"$Root.$OrderKey"
     Try(user.withFallback(env).resolve()).toEither.left.map(e => s"$path: ${e.getMessage}").flatMap { c =>
       if !c.hasPath(path) then Right(Nil)
@@ -350,7 +228,7 @@ object PluginHost:
   /** Pure: blocks under `histmersion.plugins` no plugin here claims — a typo, or a plugin left out of this binary. A
     * warning, never an error: removing a plugin must not break startup.
     */
-  def unknownBlocks(user: Config, ids: Set[com.histmersion.pluginhost.PluginHost.UnknownBlocksIds]): List[com.histmersion.pluginhost.PluginHost.UnknownBlocksResult] =
+  def unknownBlocks(user: Config, ids: Set[com.histmersion.pluginhost.PluginHost.UnknownBlocksIds]): List[com.histmersion.pluginhost.PluginHost.Problem] =
     if !Try(user.hasPath(Root)).getOrElse(false) then Nil
     else
       Try(user.getConfig(Root).root.keySet.asScala.toList.sorted)
@@ -369,7 +247,7 @@ object PluginHost:
       env: Config,
       id: com.histmersion.pluginhost.PluginHost.BlockId,
       host: Config = ConfigFactory.empty
-  ): Either[com.histmersion.pluginhost.PluginHost.BlockResultPart1, Config] =
+  ): Either[com.histmersion.pluginhost.PluginHost.Problem, Config] =
     val path = s"$Root.$id"
     try
       val own = if user.hasPath(path) then user.getConfig(path) else ConfigFactory.empty
@@ -387,7 +265,7 @@ object PluginHost:
     catch case e: ConfigException => Left(s"$path: ${e.getMessage}")
 
   /** Pure: `enabled` of an effective block — a boolean or a boolean string (env); absent = disabled. */
-  def enabled(block: Config, id: com.histmersion.pluginhost.PluginHost.EnabledId): Either[com.histmersion.pluginhost.PluginHost.EnabledResultPart1, com.histmersion.pluginhost.PluginHost.EnabledResultPart2] =
+  def enabled(block: Config, id: com.histmersion.util.plugins.Plugin.Id): Either[com.histmersion.pluginhost.PluginHost.Problem, Boolean] =
     if !block.hasPath("enabled") then Right(false)
     else
       val v = block.getValue("enabled")
@@ -402,7 +280,7 @@ object PluginHost:
     * arrive as strings); a key whose default is `null` (an optional value) takes any value and is left to the reader.
     * Keys the defaults do not have are reported as unknown.
     */
-  def typeCheck(id: com.histmersion.pluginhost.PluginHost.TypeCheckId, user: Config, defaults: Config): List[com.histmersion.pluginhost.PluginHost.TypeCheckResult] =
+  def typeCheck(id: com.histmersion.util.plugins.Plugin.Id, user: Config, defaults: Config): List[com.histmersion.pluginhost.PluginHost.Problem] =
     import ConfigValueType.*
     val path = s"$Root.$id"
     if !Try(user.hasPath(path)).getOrElse(false) then Nil
@@ -429,7 +307,7 @@ object PluginHost:
       }
 
   /** Every leaf of a HOCON object (lists and nulls are leaves), with its path. */
-  private def leaves(obj: ConfigObject, prefix: List[com.histmersion.pluginhost.PluginHost.LeavesPrefix]): List[(List[com.histmersion.pluginhost.PluginHost.LeavesResultPart1], ConfigValue)] =
+  private def leaves(obj: ConfigObject, prefix: List[com.histmersion.pluginhost.PluginHost.ConfigPath]): List[(List[com.histmersion.pluginhost.PluginHost.ConfigPath], ConfigValue)] =
     obj.keySet.asScala.toList.sorted.flatMap { k =>
       obj.get(k) match
         case o: ConfigObject if !o.isEmpty => leaves(o, prefix :+ k)
@@ -437,14 +315,14 @@ object PluginHost:
     }
 
   /** Pure: a decoding error as `histmersion.plugins.<id>[.<key>]: what`. */
-  def describe(id: com.histmersion.pluginhost.PluginHost.DescribeId, err: ConfigDecodingError): com.histmersion.pluginhost.PluginHost.DescribeResult = err match
+  def describe(id: com.histmersion.util.plugins.Plugin.Id, err: ConfigDecodingError): com.histmersion.pluginhost.PluginHost.Description = err match
     case ConfigDecodingError.Multiple(errs) => errs.toList.map(describe(id, _)).mkString("; ")
     case e                                  => (s"$Root.$id" :: e.path).mkString(".") + s": ${e.message}"
 
   /** Decode a plugin's block with the plugin's own reader — the path-dependent type keeps the decoded value tied to the
     * plugin that will receive it, with no cast.
     */
-  def decode(p: Plugin, conf: Config): Either[com.histmersion.pluginhost.PluginHost.DecodeResultPart1, p.Config] =
+  def decode(p: Plugin, conf: Config): Either[com.histmersion.pluginhost.PluginHost.Problem, p.Config] =
     try p.configReader.from(conf.withoutPath("enabled").root).left.map(describe(p.info.id, _))
     catch
       case e: LinkageError => Left(s"$Root.${p.info.id}: ${failure(e)}")
@@ -476,7 +354,7 @@ object PluginHost:
       PluginSetting(ConfigUtil.joinPath(keys.asJava), shown)
     }
 
-  private def mask(s: com.histmersion.pluginhost.PluginHost.MaskS): com.histmersion.pluginhost.PluginHost.MaskResult =
+  private def mask(s: String): String =
     if s.trim.startsWith(s"${Secret.Ref.ValueScheme}:") then s"${Secret.Ref.ValueScheme}:${Secret.Ref.Mask}" else s
 
   /** The value with every literal `value:` string inside it (a list of secrets, an object) masked. */
@@ -487,7 +365,7 @@ object PluginHost:
     case other                                      => other
 
   /** The plugin's defaults resource, read through ITS class loader; absent = no defaults. */
-  def defaults(p: Plugin): Either[com.histmersion.pluginhost.PluginHost.DefaultsResultPart1, Config] =
+  def defaults(p: Plugin): Either[com.histmersion.pluginhost.PluginHost.Problem, Config] =
     try
       Right(
         ConfigFactory.parseResources(
@@ -503,7 +381,7 @@ object PluginHost:
   /** Resolve one reference: `value:` is the literal, `env:` the variable of `env`, `<vault>:` asks the vault registered
     * under that name. Errors name the reference (never a value).
     */
-  def resolve(ref: Secret.Ref, env: Config, vaults: Map[com.histmersion.pluginhost.PluginHost.ResolveVaultsPart1, Secret.Vault]): Either[com.histmersion.pluginhost.PluginHost.ResolveResultPart1, com.histmersion.pluginhost.PluginHost.ResolveResultPart2] =
+  def resolve(ref: Secret.Ref, env: Config, vaults: Map[com.histmersion.pluginhost.PluginHost.VaultId, Secret.Vault]): Either[com.histmersion.pluginhost.PluginHost.Problem, com.histmersion.pluginhost.PluginHost.ResolveResultPart2] =
     ref match
       case Secret.Ref.Value(v) => Right(v)
       case Secret.Ref.Env(n)   =>
@@ -524,7 +402,7 @@ object PluginHost:
     * that throws (the SPI's default throws whatever one `resolve` throws) is answered one reference at a time instead,
     * so a throw fails only its own reference.
     */
-  def resolveAll(name: com.histmersion.pluginhost.PluginHost.ResolveAllName, refs: List[com.histmersion.pluginhost.PluginHost.ResolveAllRefs], vault: Secret.Vault): Map[com.histmersion.pluginhost.PluginHost.ResolveAllResultPart1, Either[com.histmersion.pluginhost.PluginHost.ResolveAllResultPart2Part1, com.histmersion.pluginhost.PluginHost.ResolveAllResultPart2Part2]] =
+  def resolveAll(name: com.histmersion.pluginhost.PluginHost.VaultId, refs: List[com.histmersion.pluginhost.PluginHost.ResolveAllRefs], vault: Secret.Vault): Map[com.histmersion.pluginhost.PluginHost.ResolveAllResultPart1, Either[com.histmersion.pluginhost.PluginHost.Problem, com.histmersion.pluginhost.PluginHost.ResolveAllResultPart2Part2]] =
     val asked = refs.distinct
     def one(r: com.histmersion.pluginhost.PluginHost.ResolveAllOneR) = resolve(Secret.Ref.Vault(name, r), ConfigFactory.empty, Map(name -> vault))
     try
@@ -546,7 +424,7 @@ object PluginHost:
     */
   final private class GenerationSecrets(env: Config, wanted: Map[GenerationSecrets.WantedKey, List[GenerationSecrets.WantedValue]]):
     private val known = scala.collection.concurrent.TrieMap.empty[Secret.Ref, Either[String, String]]
-    def apply(ref: Secret.Ref, vaults: Map[com.histmersion.pluginhost.PluginHost.GenerationSecrets.ApplyVaultsPart1, Secret.Vault]): Either[com.histmersion.pluginhost.PluginHost.GenerationSecrets.ApplyResultPart1, com.histmersion.pluginhost.PluginHost.GenerationSecrets.ApplyResultPart2] =
+    def apply(ref: Secret.Ref, vaults: Map[com.histmersion.pluginhost.PluginHost.VaultId, Secret.Vault]): Either[com.histmersion.pluginhost.PluginHost.Problem, com.histmersion.pluginhost.PluginHost.GenerationSecrets.ApplyResultPart2] =
       known.getOrElse(
         ref, {
           ref match
@@ -565,12 +443,8 @@ object PluginHost:
     type WantedValue = WantedValue.T
     object WantedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ApplyResultPart1 = ApplyResultPart1.T
-    object ApplyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ApplyResultPart2 = ApplyResultPart2.T
     object ApplyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ApplyVaultsPart1 = ApplyVaultsPart1.T
-    object ApplyVaultsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── a generation ────────────────────────────────────────────────────────────────────────────
 
@@ -597,7 +471,7 @@ object PluginHost:
     // the plugin's additions, in order; a var because the plugin calls `add` from inside `register`
     private var added: ListMap[com.histmersion.pluginhost.PluginHost.Staged.AddedPart1, A] = ListMap.empty
     private var open = true
-    def add(id: com.histmersion.pluginhost.PluginHost.Staged.AddId, a: A): Either[com.histmersion.pluginhost.PluginHost.Staged.AddResultPart1, Unit] =
+    def add(id: com.histmersion.pluginhost.PluginHost.Staged.AddId, a: A): Either[com.histmersion.pluginhost.PluginHost.Problem, Unit] =
       if !open then Left(s"$kind '$id': registration is over (add from inside register)")
       else if committed.contains(id) || added.contains(id) then Left(s"$kind '$id' is already registered")
       else
@@ -620,8 +494,6 @@ object PluginHost:
 
     type AddedPart1 = AddedPart1.T
     object AddedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AddResultPart1 = AddResultPart1.T
-    object AddResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type AddId = AddId.T
     object AddId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CloseResultPart1 = CloseResultPart1.T
@@ -646,9 +518,9 @@ object PluginHost:
     override def processes: Processes = services.processes
     lazy val http: Plugin.Http = services.http()
     val log: Plugin.Log = new Plugin.Log:
-      def info(message: com.histmersion.pluginhost.PluginHost.RegistrationContext.InfoMessage) = services.log(id, false, message)
-      def warn(message: com.histmersion.pluginhost.PluginHost.RegistrationContext.WarnMessage) = services.log(id, true, message)
-    def env(name: com.histmersion.pluginhost.PluginHost.RegistrationContext.EnvName) = Option(services.env.root.get(name)).flatMap(v => Option(v.unwrapped)).map(_.toString)
+      def info(message: com.histmersion.pluginhost.PluginHost.LogMessage) = services.log(id, false, message)
+      def warn(message: com.histmersion.pluginhost.PluginHost.LogMessage) = services.log(id, true, message)
+    def env(name: com.histmersion.pluginhost.PluginHost.EnvName) = Option(services.env.root.get(name)).flatMap(v => Option(v.unwrapped)).map(_.toString)
     def secret(s: Secret) = resolved(s)
     def secretVaults = vaults
     override def quota(upstream: String) = services.quota(upstream)
@@ -668,14 +540,8 @@ object PluginHost:
     type ResolvedResultPart2 = ResolvedResultPart2.T
     object ResolvedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type InfoMessage = InfoMessage.T
-    object InfoMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WarnMessage = WarnMessage.T
-    object WarnMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EnvName = EnvName.T
-    object EnvName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def validFetcher(id: com.histmersion.pluginhost.PluginHost.ValidFetcherId, f: SourceFetcher): Option[com.histmersion.pluginhost.PluginHost.ValidFetcherResult] =
+  private def validFetcher(id: com.histmersion.util.plugins.Plugin.Id, f: SourceFetcher): Option[com.histmersion.pluginhost.PluginHost.Problem] =
     if !id.matches(IdPattern) then Some(s"'$id': a source fetcher id is $IdPattern")
     else if f == null then Some(s"source fetcher '$id' is null")
     else None
@@ -684,7 +550,7 @@ object PluginHost:
     * or an alias of one, or a provider pictures are stored under — its pictures would be mistaken for theirs); its role
     * is one a collection's pictures may play. A first-party plugin's is the one the name is reserved for.
     */
-  private def validCollection(firstParty: com.histmersion.pluginhost.PluginHost.ValidCollectionFirstParty)(id: com.histmersion.pluginhost.PluginHost.ValidCollectionId, c: MediaCollection): Option[com.histmersion.pluginhost.PluginHost.ValidCollectionResult] =
+  private def validCollection(firstParty: com.histmersion.pluginhost.PluginHost.FirstParty)(id: com.histmersion.util.plugins.Plugin.Id, c: MediaCollection): Option[com.histmersion.pluginhost.PluginHost.Problem] =
     if !id.matches(IdPattern) then Some(s"'$id': a media collection id is $IdPattern")
     else if c == null then Some(s"media collection '$id' is null")
     else if firstParty then None
@@ -698,7 +564,7 @@ object PluginHost:
   /** An event catalogue: a kebab-case id; a plugin's may not take a name of the host's own catalogues, unless it is the
     * first-party plugin the name is reserved for.
     */
-  private def validCatalogue(firstParty: com.histmersion.pluginhost.PluginHost.ValidCatalogueFirstParty)(id: com.histmersion.pluginhost.PluginHost.ValidCatalogueId, c: EventCatalogue): Option[com.histmersion.pluginhost.PluginHost.ValidCatalogueResult] =
+  private def validCatalogue(firstParty: com.histmersion.pluginhost.PluginHost.FirstParty)(id: com.histmersion.util.plugins.Plugin.Id, c: EventCatalogue): Option[com.histmersion.pluginhost.PluginHost.Problem] =
     if !id.matches(IdPattern) then Some(s"'$id': an event catalogue id is $IdPattern")
     else if c == null then Some(s"event catalogue '$id' is null")
     else if firstParty || c.isInstanceOf[HostOwned] then None
@@ -709,7 +575,7 @@ object PluginHost:
   /** An AI provider: its name is the provider half of `provider:model`, so kebab-case; a plugin's may not take the name
     * of one of the host's own providers (its models would be mistaken for theirs).
     */
-  private def validAiProvider(firstParty: com.histmersion.pluginhost.PluginHost.ValidAiProviderFirstParty)(id: com.histmersion.pluginhost.PluginHost.ValidAiProviderId, a: AiProvider): Option[com.histmersion.pluginhost.PluginHost.ValidAiProviderResult] =
+  private def validAiProvider(firstParty: com.histmersion.pluginhost.PluginHost.FirstParty)(id: com.histmersion.util.plugins.Plugin.Id, a: AiProvider): Option[com.histmersion.pluginhost.PluginHost.Problem] =
     if !id.matches(IdPattern) then Some(s"'$id': an AI provider name is $IdPattern")
     else if a == null then Some(s"AI provider '$id' is null")
     else if firstParty || a.isInstanceOf[HostOwned] then None
@@ -720,7 +586,7 @@ object PluginHost:
     * datasets `places fetch` and `init.fetch-sources` name), unless it is the first-party plugin the name is reserved
     * for.
     */
-  private def validGazetteer(firstParty: com.histmersion.pluginhost.PluginHost.ValidGazetteerFirstParty)(id: com.histmersion.pluginhost.PluginHost.ValidGazetteerId, g: GazetteerSource): Option[com.histmersion.pluginhost.PluginHost.ValidGazetteerResult] =
+  private def validGazetteer(firstParty: com.histmersion.pluginhost.PluginHost.FirstParty)(id: com.histmersion.util.plugins.Plugin.Id, g: GazetteerSource): Option[com.histmersion.pluginhost.PluginHost.Problem] =
     if !id.matches(IdPattern) then Some(s"'$id': a gazetteer source id is $IdPattern")
     else if g == null then Some(s"gazetteer source '$id' is null")
     else if firstParty then None
@@ -730,7 +596,7 @@ object PluginHost:
   /** A source collection: a kebab-case id; a plugin's may not take the name of one of Histmersion's own collections
     * (its items would be taken for theirs), unless it is the first-party plugin the name is reserved for.
     */
-  private def validSourceCollection(firstParty: com.histmersion.pluginhost.PluginHost.ValidSourceCollectionFirstParty)(id: com.histmersion.pluginhost.PluginHost.ValidSourceCollectionId, c: SourceCollection): Option[com.histmersion.pluginhost.PluginHost.ValidSourceCollectionResult] =
+  private def validSourceCollection(firstParty: com.histmersion.pluginhost.PluginHost.FirstParty)(id: com.histmersion.util.plugins.Plugin.Id, c: SourceCollection): Option[com.histmersion.pluginhost.PluginHost.Problem] =
     if !id.matches(IdPattern) then Some(s"'$id': a source collection id is $IdPattern")
     else if c == null then Some(s"source collection '$id' is null")
     else if firstParty then None
@@ -738,7 +604,7 @@ object PluginHost:
       Some(s"'$id' is the name of one of Histmersion's own source collections")
     else None
 
-  private def validVault(id: com.histmersion.pluginhost.PluginHost.ValidVaultId, v: Secret.Vault): Option[com.histmersion.pluginhost.PluginHost.ValidVaultResult] =
+  private def validVault(id: com.histmersion.pluginhost.PluginHost.VaultId, v: Secret.Vault): Option[com.histmersion.pluginhost.PluginHost.Problem] =
     if Set(Secret.Ref.ValueScheme, Secret.Ref.EnvScheme)(id) then
       Some(s"'$id' is a reserved secret scheme, not a vault name")
     else if !id.matches(IdPattern) then Some(s"'$id': a vault name is $IdPattern")
@@ -756,20 +622,20 @@ object PluginHost:
       user: Config,
       env: Config,
       services: HostServices,
-      discoveryErrors: List[com.histmersion.pluginhost.PluginHost.BuildDiscoveryErrors] = Nil,
+      discoveryErrors: List[com.histmersion.pluginhost.PluginHost.Problem] = Nil,
       /** Plugins whose block did not change since the previous generation (a config reload): their status and
         * contributions are taken over as they are — not decoded, resolved or registered again. A registered one goes
         * into the registries in its place in the order.
         */
-      carried: Map[com.histmersion.pluginhost.PluginHost.BuildCarriedPart1, (PluginStatus, Registries)] = Map.empty,
+      carried: Map[String, (PluginStatus, Registries)] = Map.empty,
       /** The settings the host supplies a first-party plugin, by id: its fallback block from the host's own keys (keys
         * relative to the plugin's block), between the user's block and the plugin's defaults ([[block]]).
         */
-      fallback: com.histmersion.pluginhost.PluginHost.BuildFallbackArg1 => Config = _ => ConfigFactory.empty,
+      fallback: String => Config = _ => ConfigFactory.empty,
       /** The first-party plugins: the ones a reserved name of the host's (a catalogue's, a media provider's, an AI
         * provider's) is kept for.
         */
-      firstParty: com.histmersion.pluginhost.PluginHost.BuildFirstPartyArg1 => com.histmersion.pluginhost.PluginHost.BuildFirstPartyResult = _ => false
+      firstParty: com.histmersion.util.plugins.Plugin.Id => com.histmersion.pluginhost.PluginHost.FirstParty = _ => false
   ): Generation =
     val infos = plugins.map(_.info)
     val refused = check(infos, Spi.Version)
@@ -786,12 +652,12 @@ object PluginHost:
     val byId = accepted.map(p => p.info.id -> p).toMap
     def status(
         p: Plugin,
-        enabled: com.histmersion.pluginhost.PluginHost.BuildStatusEnabled,
+        enabled: com.histmersion.pluginhost.PluginHost.Enabled,
         state: PluginState,
         block: Option[Config] = None,
-        error: Option[com.histmersion.pluginhost.PluginHost.BuildStatusError] = None,
-        provides: List[com.histmersion.pluginhost.PluginHost.BuildStatusProvides] = Nil,
-        warns: List[com.histmersion.pluginhost.PluginHost.BuildStatusWarns] = Nil
+        error: Option[com.histmersion.pluginhost.PluginHost.Problem] = None,
+        provides: List[com.histmersion.pluginhost.PluginHost.Provides] = Nil,
+        warns: List[com.histmersion.pluginhost.PluginHost.Warning] = Nil
     ) =
       PluginStatus(
         p.info.id,
@@ -806,7 +672,7 @@ object PluginHost:
       )
 
     // the config of every accepted plugin, in order
-    val prepared: List[(com.histmersion.pluginhost.PluginHost.BuildPreparedPart1, Either[PluginStatus, Prepared])] = ordered.map { id =>
+    val prepared: List[(com.histmersion.util.plugins.Plugin.Id, Either[PluginStatus, Prepared])] = ordered.map { id =>
       val p = byId(id)
       val r = carried.get(id) match
         case Some((st, _)) if st.state != PluginState.Registered.wire => Left(st)
@@ -850,16 +716,16 @@ object PluginHost:
     def passes(
         waiting: List[Prepared],
         regs: Registries,
-        done: Map[com.histmersion.pluginhost.PluginHost.BuildPassesDonePart1, (PluginStatus, Registries)]
-    ): (Registries, Map[com.histmersion.pluginhost.PluginHost.BuildPassesResultPart2Part1, (PluginStatus, Registries)]) =
+        done: Map[com.histmersion.util.plugins.Plugin.Id, (PluginStatus, Registries)]
+    ): (Registries, Map[com.histmersion.util.plugins.Plugin.Id, (PluginStatus, Registries)]) =
       @annotation.tailrec
       def pass(
           rest: List[Prepared],
           rs: Registries,
-          ds: Map[com.histmersion.pluginhost.PluginHost.BuildPassesPassDsPart1, (PluginStatus, Registries)],
+          ds: Map[String, (PluginStatus, Registries)],
           left: List[Prepared],
-          prog: com.histmersion.pluginhost.PluginHost.BuildPassesPassProg
-      ): (Registries, Map[com.histmersion.pluginhost.PluginHost.BuildPassesPassResultPart2Part1, (PluginStatus, Registries)], List[Prepared], com.histmersion.pluginhost.PluginHost.BuildPassesPassResultPart4) =
+          prog: com.histmersion.pluginhost.PluginHost.PassProgress
+      ): (Registries, Map[String, (PluginStatus, Registries)], List[Prepared], Boolean) =
         rest match
           case Nil        => (rs, ds, left, prog)
           case pr :: tail =>
@@ -926,11 +792,11 @@ object PluginHost:
       regs: Registries,
       services: HostServices,
       secrets: GenerationSecrets,
-      firstParty: com.histmersion.pluginhost.PluginHost.RegisterFirstParty
+      firstParty: com.histmersion.pluginhost.PluginHost.FirstParty
   ): (PluginStatus, Registries) =
     val p = pr.p
     val id = p.info.id
-    def resolved(s: Secret): Either[com.histmersion.pluginhost.PluginHost.RegisterResolvedResultPart1, com.histmersion.pluginhost.PluginHost.RegisterResolvedResultPart2] = secrets(s.ref, regs.secretVaults)
+    def resolved(s: Secret): Either[com.histmersion.pluginhost.PluginHost.Problem, com.histmersion.pluginhost.PluginHost.RegisterResolvedResultPart2] = secrets(s.ref, regs.secretVaults)
     val literal = pr.secrets.exists(_.ref.isInstanceOf[Secret.Ref.Value])
     val warns = if !literal then Nil
     else
@@ -939,7 +805,7 @@ object PluginHost:
           "use env:<NAME> or a vault reference"
       )
     warns.foreach(w => services.log(id, true, w))
-    def fail(e: com.histmersion.pluginhost.PluginHost.RegisterFailE) =
+    def fail(e: com.histmersion.pluginhost.PluginHost.Problem) =
       (
         PluginStatus(
           id,

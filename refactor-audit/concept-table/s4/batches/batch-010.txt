@@ -1,0 +1,213 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.PointAreaKinds (String)
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.Source (String)
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.Version (String)
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WindowYears (Int)
+com.histmersion.domain.catalogue.places.GazetteerRepo.Stored.Id (String)
+com.histmersion.domain.catalogue.places.GazetteerRepo.Stored.ImportRef (String)
+com.histmersion.domain.catalogue.places.GazetteerRepo.Stored.ImportSource (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Citation (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.File (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.ImportedAt (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Key (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Kind (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Licence (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Links (Int)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Names (Int)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Places (Int)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Title (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Url (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Version (String)
+com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin (Int)
+com.histmersion.domain.catalogue.places.GeocodeSettings.RepairKm (Double)
+com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm (Double)
+com.histmersion.domain.catalogue.places.Geocoder.Placed.From (Long)
+com.histmersion.domain.catalogue.places.Geocoder.Placed.Id (String)
+com.histmersion.domain.catalogue.places.Geocoder.Placed.Name (String)
+com.histmersion.domain.catalogue.places.Geocoder.Placed.Region (String)
+com.histmersion.domain.catalogue.places.Geocoder.Placed.To (Long)
+com.histmersion.domain.catalogue.places.Geocoder.Unplaced.From (Long)
+com.histmersion.domain.catalogue.places.Geocoder.Unplaced.Id (String)
+com.histmersion.domain.catalogue.places.Geocoder.Unplaced.Region (String)
+com.histmersion.domain.catalogue.places.Geocoder.Unplaced.To (Long)
+
+## TYPES TO DECIDE
+com.histmersion.domain.catalogue.places.GazetteerRepo.LinkSeedIdsIds | base String | generated | method-parameter
+    def linkSeedIds(ids: List[com.histmersion.domain.catalogue.places.GazetteerRepo.LinkSeedIdsIds])(using DbCon): com.histmersion.domain.catalogue.places.GazetteerRepo.LinkS
+com.histmersion.domain.catalogue.places.GazetteerRepo.LinkSeedIdsResult | base Int | generated | method-result
+    def linkSeedIds(ids: List[com.histmersion.domain.catalogue.places.GazetteerRepo.LinkSeedIdsIds])(using DbCon): com.histmersion.domain.catalogue.places.GazetteerRepo.LinkS
+com.histmersion.domain.catalogue.places.GazetteerRepo.PlaceResultPart2 | base String | generated | method-result
+com.histmersion.domain.catalogue.places.GazetteerRepo.RecordSourceCitation | base String | generated | method-parameter
+com.histmersion.domain.catalogue.places.GazetteerRepo.RecordSourceFile | base String | generated | method-parameter
+com.histmersion.domain.catalogue.places.GazetteerRepo.RecordSourceKey | base String | generated | method-parameter
+com.histmersion.domain.catalogue.places.GazetteerRepo.RecordSourceLicence | base String | generated | method-parameter
+com.histmersion.domain.catalogue.places.GazetteerRepo.RecordSourceTitle | base String | generated | method-parameter
+com.histmersion.domain.catalogue.places.GazetteerRepo.RecordSourceUrl | base String | generated | method-parameter
+com.histmersion.domain.catalogue.places.GazetteerRepo.RecordSourceVersion | base String | generated | method-parameter
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.DeletePruneChunkIds | base String | generated | method-parameter
+    def deletePruneChunk(ids: List[com.histmersion.domain.catalogue.places.GazetteerRepo.Session.DeletePruneChunkIds]): com.histmersion.domain.catalogue.places.GazetteerRepo.
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.DeletePruneChunkResult | base Int | generated | method-result
+    def deletePruneChunk(ids: List[com.histmersion.domain.catalogue.places.GazetteerRepo.Session.DeletePruneChunkIds]): com.histmersion.domain.catalogue.places.GazetteerRepo.
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.NumV | base Long | generated | method-parameter
+    private def num(v: Option[com.histmersion.domain.catalogue.places.GazetteerRepo.Session.NumV]): Json = v.fold(Json.Null)(Json.fromLong)
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.PointAreaKinds | base String | generated | constructor-parameter
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.PruneCandidatesResult | base String | generated | method-result
+    def pruneCandidates: List[com.histmersion.domain.catalogue.places.GazetteerRepo.Session.PruneCandidatesResult] =
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.Source | base String | generated | constructor-parameter
+    def recordSource(
+    final case class Stored(id: Stored.Id, importSource: Option[Stored.ImportSource], importRef: Option[Stored.ImportRef]):
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.TxtV | base String | generated | method-parameter
+    private def txt(v: Option[com.histmersion.domain.catalogue.places.GazetteerRepo.Session.TxtV]): Json = v.fold(Json.Null)(Json.fromString)
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.Version | base String | generated | constructor-parameter
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WindowYears | base Int | generated | constructor-parameter
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDescriptionsResultPart1 | base Int | generated | method-result
+    private def writeDescriptions(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDescriptionsRowsPart2)]): (com.histmersion.domain.
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDescriptionsResultPart2 | base Int | generated | method-result
+    private def writeDescriptions(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDescriptionsRowsPart2)]): (com.histmersion.domain.
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDescriptionsResultPart3 | base Int | generated | method-result
+    private def writeDescriptions(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDescriptionsRowsPart2)]): (com.histmersion.domain.
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDescriptionsRowsPart2 | base String | generated | method-parameter
+    private def writeDescriptions(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDescriptionsRowsPart2)]): (com.histmersion.domain.
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDoomed | base String | generated | value
+    val doomed: Set[com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDoomed] =
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteLinksResultPart1 | base Int | generated | method-result
+    private def writeLinks(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteLinksRowsPart2)]): (com.histmersion.domain.catalogue.plac
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteLinksResultPart2 | base Int | generated | method-result
+    private def writeLinks(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteLinksRowsPart2)]): (com.histmersion.domain.catalogue.plac
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteLinksResultPart3 | base Int | generated | method-result
+    private def writeLinks(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteLinksRowsPart2)]): (com.histmersion.domain.catalogue.plac
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteLinksRowsPart2 | base String | generated | method-parameter
+    private def writeLinks(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteLinksRowsPart2)]): (com.histmersion.domain.catalogue.plac
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteNamesResultPart1 | base Int | generated | method-result
+    private def writeNames(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteNamesRowsPart2)]): (com.histmersion.domain.catalogue.plac
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteNamesResultPart2 | base Int | generated | method-result
+    private def writeNames(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteNamesRowsPart2)]): (com.histmersion.domain.catalogue.plac
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteNamesResultPart3 | base Int | generated | method-result
+    private def writeNames(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteNamesRowsPart2)]): (com.histmersion.domain.catalogue.plac
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteNamesRowsPart2 | base String | generated | method-parameter
+    private def writeNames(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteNamesRowsPart2)]): (com.histmersion.domain.catalogue.plac
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WritePlacesResultPart1 | base Int | generated | method-result
+    private def writePlaces(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WritePlacesRowsPart2)]): (com.histmersion.domain.catalogue.pl
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WritePlacesResultPart2 | base Int | generated | method-result
+    private def writePlaces(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WritePlacesRowsPart2)]): (com.histmersion.domain.catalogue.pl
+com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WritePlacesRowsPart2 | base String | generated | method-parameter
+    private def writePlaces(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WritePlacesRowsPart2)]): (com.histmersion.domain.catalogue.pl
+com.histmersion.domain.catalogue.places.GazetteerRepo.SessionPointAreaKinds | base String | generated | method-parameter
+com.histmersion.domain.catalogue.places.GazetteerRepo.SessionSource | base String | generated | method-parameter
+com.histmersion.domain.catalogue.places.GazetteerRepo.SessionVersion | base String | generated | method-parameter
+com.histmersion.domain.catalogue.places.GazetteerRepo.SessionWindowYears | base Int | generated | method-parameter
+com.histmersion.domain.catalogue.places.GazetteerRepo.Stored.Id | base String | original | constructor-parameter
+    final case class Stored(id: Stored.Id, importSource: Option[Stored.ImportSource], importRef: Option[Stored.ImportRef]):
+    case Create(placeId: com.histmersion.domain.catalogue.Place.Id)
+com.histmersion.domain.catalogue.places.GazetteerRepo.Stored.ImportRef | base String | original | constructor-parameter
+    final case class Stored(id: Stored.Id, importSource: Option[Stored.ImportSource], importRef: Option[Stored.ImportRef]):
+com.histmersion.domain.catalogue.places.GazetteerRepo.Stored.ImportSource | base String | original | constructor-parameter
+    final case class Stored(id: Stored.Id, importSource: Option[Stored.ImportSource], importRef: Option[Stored.ImportRef]):
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Citation | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.File | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.ImportedAt | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Key | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Kind | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Licence | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Links | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Names | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Places | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Title | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Url | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Version | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin | base Int | original | constructor-parameter
+    final case class GeocodeSettings(placeholderMin: GeocodeSettings.PlaceholderMin, repairKm: GeocodeSettings.RepairKm, toleranceKm: GeocodeSettings.ToleranceKm)
+com.histmersion.domain.catalogue.places.GeocodeSettings.RepairKm | base Double | original | constructor-parameter
+    final case class GeocodeSettings(placeholderMin: GeocodeSettings.PlaceholderMin, repairKm: GeocodeSettings.RepairKm, toleranceKm: GeocodeSettings.ToleranceKm)
+com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm | base Double | original | constructor-parameter
+    final case class GeocodeSettings(placeholderMin: GeocodeSettings.PlaceholderMin, repairKm: GeocodeSettings.RepairKm, toleranceKm: GeocodeSettings.ToleranceKm)
+com.histmersion.domain.catalogue.places.Geocoder.ApplyResult | base Int | generated | method-result
+    def apply(ms: List[Move], toleranceKm: com.histmersion.domain.catalogue.places.Geocoder.ApplyToleranceKm)(using DbCon): com.histmersion.domain.catalogue.places.Geocoder.A
+com.histmersion.domain.catalogue.places.Geocoder.ApplyToleranceKm | base Double | generated | method-parameter
+    def apply(ms: List[Move], toleranceKm: com.histmersion.domain.catalogue.places.Geocoder.ApplyToleranceKm)(using DbCon): com.histmersion.domain.catalogue.places.Geocoder.A
+com.histmersion.domain.catalogue.places.Geocoder.AttemptAsked | base String | generated | method-parameter
+    private def attempt(asked: com.histmersion.domain.catalogue.places.Geocoder.AttemptAsked, a: Attempt, hint: KindHint, at: Option[Period], min: com.histmersion.domain.cata
+com.histmersion.domain.catalogue.places.Geocoder.AttemptMin | base Int | generated | method-parameter
+    private def attempt(asked: com.histmersion.domain.catalogue.places.Geocoder.AttemptAsked, a: Attempt, hint: KindHint, at: Option[Period], min: com.histmersion.domain.cata
+com.histmersion.domain.catalogue.places.Geocoder.CandidatesKey | base String | generated | method-parameter
+    def candidates(key: com.histmersion.domain.catalogue.places.Geocoder.CandidatesKey, within: Option[com.histmersion.domain.catalogue.places.Geocoder.CandidatesWithin])(usi
+com.histmersion.domain.catalogue.places.Geocoder.CandidatesWithin | base String | generated | method-parameter
+    def candidates(key: com.histmersion.domain.catalogue.places.Geocoder.CandidatesKey, within: Option[com.histmersion.domain.catalogue.places.Geocoder.CandidatesWithin])(usi
+com.histmersion.domain.catalogue.places.Geocoder.ChosenAsked | base String | generated | method-parameter
+    private def chosen(asked: com.histmersion.domain.catalogue.places.Geocoder.ChosenAsked, a: Attempt, h: KindHint, at: Option[Period], min: com.histmersion.domain.catalogue
+com.histmersion.domain.catalogue.places.Geocoder.ChosenMin | base Int | generated | method-parameter
+    private def chosen(asked: com.histmersion.domain.catalogue.places.Geocoder.ChosenAsked, a: Attempt, h: KindHint, at: Option[Period], min: com.histmersion.domain.catalogue
+com.histmersion.domain.catalogue.places.Geocoder.LegacySql | base String | generated | value
+    val legacySql: com.histmersion.domain.catalogue.places.Geocoder.LegacySql =
+com.histmersion.domain.catalogue.places.Geocoder.PlaceResult | base Int | generated | method-result
+    def place(ps: List[Placement], toleranceKm: com.histmersion.domain.catalogue.places.Geocoder.PlaceToleranceKm)(using DbCon): com.histmersion.domain.catalogue.places.Geoco
+com.histmersion.domain.catalogue.places.Geocoder.PlaceToleranceKm | base Double | generated | method-parameter
+    def place(ps: List[Placement], toleranceKm: com.histmersion.domain.catalogue.places.Geocoder.PlaceToleranceKm)(using DbCon): com.histmersion.domain.catalogue.places.Geoco
+com.histmersion.domain.catalogue.places.Geocoder.Placed.From | base Long | original | constructor-parameter
+    final private case class Unplaced(id: Unplaced.Id, citekey: com.histmersion.domain.library.Citekey, region: Unplaced.Region, from: Option[Unplaced.From], to: Option[Unpla
+com.histmersion.domain.catalogue.places.Geocoder.Placed.Id | base String | original | constructor-parameter
+    final private case class Unplaced(id: Unplaced.Id, citekey: com.histmersion.domain.library.Citekey, region: Unplaced.Region, from: Option[Unplaced.From], to: Option[Unpla
+com.histmersion.domain.catalogue.places.Geocoder.Placed.Name | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.Geocoder.Placed.Region | base String | original | constructor-parameter
+    val h = if a.approx.exists(_.isInstanceOf[Geocode.Approximation.OnlyWithin]) then KindHint.Region else hint
+    final private case class Unplaced(id: Unplaced.Id, citekey: com.histmersion.domain.library.Citekey, region: Unplaced.Region, from: Option[Unplaced.From], to: Option[Unpla
+com.histmersion.domain.catalogue.places.Geocoder.Placed.To | base Long | original | constructor-parameter
+    final private case class Unplaced(id: Unplaced.Id, citekey: com.histmersion.domain.library.Citekey, region: Unplaced.Region, from: Option[Unplaced.From], to: Option[Unpla
+com.histmersion.domain.catalogue.places.Geocoder.ResolveInName | base String | generated | method-parameter
+    def resolveIn(name: com.histmersion.domain.catalogue.places.Geocoder.ResolveInName, hint: KindHint, at: Option[Period], placeholderMin: com.histmersion.domain.catalogue.p
+com.histmersion.domain.catalogue.places.Geocoder.ResolveInPlaceholderMin | base Int | generated | method-parameter
+    def resolveIn(name: com.histmersion.domain.catalogue.places.Geocoder.ResolveInName, hint: KindHint, at: Option[Period], placeholderMin: com.histmersion.domain.catalogue.p
+com.histmersion.domain.catalogue.places.Geocoder.ResolveName | base String | generated | method-parameter
+com.histmersion.domain.catalogue.places.Geocoder.ResolvePlaceholderMin | base Int | generated | method-parameter
+com.histmersion.domain.catalogue.places.Geocoder.TierSql | base String | generated | value
+    private[histmersion] val tierSql: com.histmersion.domain.catalogue.places.Geocoder.TierSql =
+com.histmersion.domain.catalogue.places.Geocoder.Unplaced.From | base Long | original | constructor-parameter
+    final private case class Unplaced(id: Unplaced.Id, citekey: com.histmersion.domain.library.Citekey, region: Unplaced.Region, from: Option[Unplaced.From], to: Option[Unpla
+com.histmersion.domain.catalogue.places.Geocoder.Unplaced.Id | base String | original | constructor-parameter
+    final private case class Unplaced(id: Unplaced.Id, citekey: com.histmersion.domain.library.Citekey, region: Unplaced.Region, from: Option[Unplaced.From], to: Option[Unpla
+com.histmersion.domain.catalogue.places.Geocoder.Unplaced.Region | base String | original | constructor-parameter
+    val h = if a.approx.exists(_.isInstanceOf[Geocode.Approximation.OnlyWithin]) then KindHint.Region else hint
+    final private case class Unplaced(id: Unplaced.Id, citekey: com.histmersion.domain.library.Citekey, region: Unplaced.Region, from: Option[Unplaced.From], to: Option[Unpla
+com.histmersion.domain.catalogue.places.Geocoder.Unplaced.To | base Long | original | constructor-parameter
+    final private case class Unplaced(id: Unplaced.Id, citekey: com.histmersion.domain.library.Citekey, region: Unplaced.Region, from: Option[Unplaced.From], to: Option[Unpla
+com.histmersion.domain.catalogue.places.Geocoder.UnplacedSql | base String | generated | value
+    val unplacedSql: com.histmersion.domain.catalogue.places.Geocoder.UnplacedSql =
+com.histmersion.domain.catalogue.places.LandRepo.ClippedResult | base Int | generated | method-result
+    def clipped()(using DbCon): com.histmersion.domain.catalogue.places.LandRepo.ClippedResult =
+com.histmersion.domain.catalogue.places.LandRepo.PiecesResult | base Int | generated | method-result
+    def pieces()(using DbCon): com.histmersion.domain.catalogue.places.LandRepo.PiecesResult =
+com.histmersion.domain.catalogue.places.LandRepo.PolitiesResult | base String | generated | method-result
+    def polities()(using DbCon): List[com.histmersion.domain.catalogue.places.LandRepo.PolitiesResult] =
+com.histmersion.domain.catalogue.places.LandRepo.ReclipBatch | base String | generated | method-parameter
+    val ReclipBatch = 100
+    def reclip(batch: List[com.histmersion.domain.catalogue.places.LandRepo.ReclipBatch])(using DbCon): Unit =
+com.histmersion.domain.catalogue.places.LandRepo.ReplaceGeometries | base String | generated | method-parameter
+    def replace(geometries: List[com.histmersion.domain.catalogue.places.LandRepo.ReplaceGeometries])(using DbCon): com.histmersion.domain.catalogue.places.LandRepo.ReplaceRe
+com.histmersion.domain.catalogue.places.LandRepo.ReplaceResult | base Int | generated | method-result
+    def replace(geometries: List[com.histmersion.domain.catalogue.places.LandRepo.ReplaceGeometries])(using DbCon): com.histmersion.domain.catalogue.places.LandRepo.ReplaceRe
+com.histmersion.domain.catalogue.places.PlaceBundleRepo.MatchPlacesResultPart2 | base String | generated | method-result
+    def matchPlaces(ps: List[Bundle.Place], cfg: MergeSettings)(using DbCon): Map[UUID, com.histmersion.domain.catalogue.places.PlaceBundleRepo.MatchPlacesResultPart2] =
+com.histmersion.domain.catalogue.places.PlaceBundleRepo.OldIdsNamedIds | base String | generated | method-parameter
+    def oldIdsNamed(ids: List[com.histmersion.domain.catalogue.places.PlaceBundleRepo.OldIdsNamedIds])(using DbCon): Map[com.histmersion.domain.catalogue.places.PlaceBundleRe
+com.histmersion.domain.catalogue.places.PlaceBundleRepo.OldIdsNamedResultPart1 | base String | generated | method-result
+    def oldIdsNamed(ids: List[com.histmersion.domain.catalogue.places.PlaceBundleRepo.OldIdsNamedIds])(using DbCon): Map[com.histmersion.domain.catalogue.places.PlaceBundleRe
+com.histmersion.domain.catalogue.places.PlaceBundleRepo.OwnersLabels | base String | generated | method-parameter
+    private def owners(q: com.histmersion.domain.catalogue.places.PlaceBundleRepo.OwnersQ, labels: List[com.histmersion.domain.catalogue.places.PlaceBundleRepo.OwnersLabels])
+com.histmersion.domain.catalogue.places.PlaceBundleRepo.OwnersQ | base String | generated | method-parameter
+    private def owners(q: com.histmersion.domain.catalogue.places.PlaceBundleRepo.OwnersQ, labels: List[com.histmersion.domain.catalogue.places.PlaceBundleRepo.OwnersLabels])
+com.histmersion.domain.catalogue.places.PlaceBundleRepo.OwnersResultPart1 | base String | generated | method-result
+    private def owners(q: com.histmersion.domain.catalogue.places.PlaceBundleRepo.OwnersQ, labels: List[com.histmersion.domain.catalogue.places.PlaceBundleRepo.OwnersLabels])
+com.histmersion.domain.catalogue.places.PlaceBundleRepo.PlaceHereResultArg1 | base String | generated | method-result
+    def placeHere(w: BundleImport.Writer): com.histmersion.domain.catalogue.places.PlaceBundleRepo.PlaceHereResultArg1 => com.histmersion.domain.catalogue.places.PlaceBundleR
+com.histmersion.domain.catalogue.places.PlaceBundleRepo.PlaceHereResultResult | base String | generated | method-result
+    def placeHere(w: BundleImport.Writer): com.histmersion.domain.catalogue.places.PlaceBundleRepo.PlaceHereResultArg1 => com.histmersion.domain.catalogue.places.PlaceBundleR
+com.histmersion.domain.catalogue.places.PlaceBundleRepo.PlacesAlsoIds | base String | generated | method-parameter
+    def places(scope: BundleScope, alsoIds: List[com.histmersion.domain.catalogue.places.PlaceBundleRepo.PlacesAlsoIds] = Nil)(using DbCon): Vector[Bundle.Place] =
+com.histmersion.domain.catalogue.places.PlaceBundleRepo.PlacesNamedIds | base String | generated | method-parameter
+    def placesNamed(ids: List[com.histmersion.domain.catalogue.places.PlaceBundleRepo.PlacesNamedIds])(using DbCon): Map[com.histmersion.domain.catalogue.places.PlaceBundleRe
+com.histmersion.domain.catalogue.places.PlaceBundleRepo.PlacesNamedResultPart1 | base String | generated | method-result
+    def placesNamed(ids: List[com.histmersion.domain.catalogue.places.PlaceBundleRepo.PlacesNamedIds])(using DbCon): Map[com.histmersion.domain.catalogue.places.PlaceBundleRe
+com.histmersion.domain.catalogue.places.PlaceBundleRepo.PresentIds | base String | generated | method-parameter
+    def present(ids: List[com.histmersion.domain.catalogue.places.PlaceBundleRepo.PresentIds])(using DbCon): Set[com.histmersion.domain.catalogue.places.PlaceBundleRepo.Prese
+com.histmersion.domain.catalogue.places.PlaceBundleRepo.PresentResult | base String | generated | method-result
+    def present(ids: List[com.histmersion.domain.catalogue.places.PlaceBundleRepo.PresentIds])(using DbCon): Set[com.histmersion.domain.catalogue.places.PlaceBundleRepo.Prese

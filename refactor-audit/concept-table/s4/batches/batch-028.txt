@@ -1,0 +1,231 @@
+## CONCEPTS NEARBY
+com.histmersion.pluginhost.FetchChain.AllowUnauthorised (Boolean)
+com.histmersion.pluginhost.FetchChain.Answer.Fetcher (String)
+com.histmersion.pluginhost.FetchChain.Answer.Kind.Label (String)
+com.histmersion.pluginhost.FetchChain.Answer.Why (String)
+com.histmersion.pluginhost.FetchChain.Outcome.FilePart1 (String)
+com.histmersion.pluginhost.FetchChain.Outcome.FoundBy (String)
+com.histmersion.pluginhost.FetchChain.RegisteredArg1 (String)
+com.histmersion.pluginhost.FetchChain.RegisteredResult (Boolean)
+com.histmersion.pluginhost.FetchChain.Step.Id (String)
+com.histmersion.pluginhost.FirstPartySettings.ClientKeysValue (String)
+com.histmersion.pluginhost.FirstPartySettings.Paths (String)
+com.histmersion.pluginhost.FirstPartySettings.Plugin (String)
+com.histmersion.pluginhost.Generation.BlocksKey (String)
+com.histmersion.pluginhost.Generation.ContributionsKey (String)
+com.histmersion.pluginhost.Generation.Rebuilt (String)
+com.histmersion.pluginhost.Generation.SecretValuesKey (String)
+com.histmersion.pluginhost.Generation.SecretValuesValueValue (String)
+com.histmersion.pluginhost.Generation.WithSecrets (String)
+com.histmersion.util.jobs.RunRow.AcquireItem (Int)
+com.histmersion.util.jobs.RunRow.BudgetTokens (Long)
+com.histmersion.util.jobs.RunRow.Citekey (String)
+com.histmersion.util.jobs.RunRow.DryRun (Boolean)
+com.histmersion.util.jobs.RunRow.Goal (String)
+com.histmersion.util.jobs.RunRow.Kind (String)
+com.histmersion.util.jobs.RunRow.ManagerId (String)
+com.histmersion.util.jobs.RunRow.ManagerItem (Long)
+com.histmersion.util.jobs.RunRow.Model (String)
+com.histmersion.util.jobs.RunRow.Origin (String)
+com.histmersion.util.jobs.RunRow.Params (String)
+com.histmersion.util.jobs.RunRow.Parent (String)
+com.histmersion.util.jobs.RunRow.Pipeline (String)
+com.histmersion.util.jobs.RunRow.PipelineVersion (Int)
+com.histmersion.util.jobs.RunRow.Status (String)
+com.histmersion.util.jobs.RunRow.Target (String)
+com.histmersion.util.jobs.RunRow.TargetKind (String)
+
+## TYPES TO DECIDE
+com.histmersion.util.jobs.RunRow.AcquireItem | base Int | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.BudgetTokens | base Long | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.Citekey | base String | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.DryRun | base Boolean | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.Goal | base String | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.Kind | base String | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.ManagerId | base String | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.ManagerItem | base Long | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.Model | base String | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.Origin | base String | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.Params | base String | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.Parent | base String | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.Pipeline | base String | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.PipelineVersion | base Int | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.Status | base String | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.Target | base String | original | constructor-parameter
+com.histmersion.util.jobs.RunRow.TargetKind | base String | original | constructor-parameter
+com.histmersion.util.storage.ByteSource.BytesData | base Array[Byte] | generated | method-parameter
+    def bytes(data: com.histmersion.util.storage.ByteSource.BytesData): ByteSource = new ByteSource:
+com.histmersion.util.storage.ByteSource.BytesSizeResult | base Long | generated | method-result
+    def size: com.histmersion.util.storage.ByteSource.BytesSizeResult = data.length.toLong
+com.histmersion.util.storage.ByteSource.FileSizeResult | base Long | generated | method-result
+    def size: com.histmersion.util.storage.ByteSource.FileSizeResult = Files.size(path)
+com.histmersion.util.storage.ByteSource.SizeResult | base Long | generated | method-result
+    def size: com.histmersion.util.storage.ByteSource.SizeResult
+com.histmersion.util.storage.ContentDirectory.FindResultPart2 | base String | generated | method-result
+    def find(sha256: com.histmersion.util.storage.ContentDirectory.FindSha256): Option[(ByteSource, com.histmersion.util.storage.ContentDirectory.FindResultPart2)] =
+com.histmersion.util.storage.ContentDirectory.FindSha256 | base String | generated | method-parameter
+    def find(sha256: com.histmersion.util.storage.ContentDirectory.FindSha256): Option[(ByteSource, com.histmersion.util.storage.ContentDirectory.FindResultPart2)] =
+com.histmersion.util.storage.ContentDirectory.StoreExt | base String | generated | method-parameter
+    def store(sha256: com.histmersion.util.storage.ContentDirectory.StoreSha256, ext: com.histmersion.util.storage.ContentDirectory.StoreExt, in: InputStream): Either[com.his
+com.histmersion.util.storage.ContentDirectory.StoreResultPart1 | base String | generated | method-result
+    def store(sha256: com.histmersion.util.storage.ContentDirectory.StoreSha256, ext: com.histmersion.util.storage.ContentDirectory.StoreExt, in: InputStream): Either[com.his
+com.histmersion.util.storage.ContentDirectory.StoreSha256 | base String | generated | method-parameter
+    def store(sha256: com.histmersion.util.storage.ContentDirectory.StoreSha256, ext: com.histmersion.util.storage.ContentDirectory.StoreExt, in: InputStream): Either[com.his
+com.histmersion.util.storage.ContentStore.FindResultPart2 | base String | generated | method-result
+    def find(sha256: com.histmersion.util.storage.ContentStore.FindSha256): Option[(ByteSource, com.histmersion.util.storage.ContentStore.FindResultPart2)]
+    def find(sha256: com.histmersion.util.storage.ContentStore.FindSha256): Option[(ByteSource, com.histmersion.util.storage.ContentStore.FindResultPart2)] = None
+com.histmersion.util.storage.ContentStore.FindSha256 | base String | generated | method-parameter
+    def find(sha256: com.histmersion.util.storage.ContentStore.FindSha256): Option[(ByteSource, com.histmersion.util.storage.ContentStore.FindResultPart2)]
+    def find(sha256: com.histmersion.util.storage.ContentStore.FindSha256): Option[(ByteSource, com.histmersion.util.storage.ContentStore.FindResultPart2)] = None
+com.histmersion.util.storage.ContentStore.HexDigest | base Array[Byte] | generated | method-parameter
+    def hex(digest: com.histmersion.util.storage.ContentStore.HexDigest): com.histmersion.util.storage.ContentStore.HexResult = java.util.HexFormat.of().formatHex(digest)
+com.histmersion.util.storage.ContentStore.HexResult | base String | generated | method-result
+    def hex(digest: com.histmersion.util.storage.ContentStore.HexDigest): com.histmersion.util.storage.ContentStore.HexResult = java.util.HexFormat.of().formatHex(digest)
+com.histmersion.util.storage.ContentStore.SafeExtExt | base String | generated | method-parameter
+    def safeExt(ext: com.histmersion.util.storage.ContentStore.SafeExtExt): com.histmersion.util.storage.ContentStore.SafeExtResult =
+com.histmersion.util.storage.ContentStore.SafeExtResult | base String | generated | method-result
+    def safeExt(ext: com.histmersion.util.storage.ContentStore.SafeExtExt): com.histmersion.util.storage.ContentStore.SafeExtResult =
+com.histmersion.util.storage.ContentStore.StoreExt | base String | generated | method-parameter
+    def store(sha256: com.histmersion.util.storage.ContentStore.StoreSha256, ext: com.histmersion.util.storage.ContentStore.StoreExt, in: InputStream): Either[com.histmersion
+    def store(sha256: com.histmersion.util.storage.ContentStore.StoreSha256, ext: com.histmersion.util.storage.ContentStore.StoreExt, in: InputStream): Either[com.histmersion
+com.histmersion.util.storage.ContentStore.StoreResultPart1 | base String | generated | method-result
+    def store(sha256: com.histmersion.util.storage.ContentStore.StoreSha256, ext: com.histmersion.util.storage.ContentStore.StoreExt, in: InputStream): Either[com.histmersion
+    def store(sha256: com.histmersion.util.storage.ContentStore.StoreSha256, ext: com.histmersion.util.storage.ContentStore.StoreExt, in: InputStream): Either[com.histmersion
+com.histmersion.util.storage.ContentStore.StoreSha256 | base String | generated | method-parameter
+    def store(sha256: com.histmersion.util.storage.ContentStore.StoreSha256, ext: com.histmersion.util.storage.ContentStore.StoreExt, in: InputStream): Either[com.histmersion
+    def store(sha256: com.histmersion.util.storage.ContentStore.StoreSha256, ext: com.histmersion.util.storage.ContentStore.StoreExt, in: InputStream): Either[com.histmersion
+com.histmersion.pluginhost.Challenge.IsAnubisBody | base Array[Byte] | generated | alias,method-parameter
+    val IsChallengeBody: _root_.com.histmersion.pluginhost.Challenge.IsAnubisBody.type = _root_.com.histmersion.pluginhost.Challenge.IsAnubisBody
+    private def isAnubis(body: com.histmersion.pluginhost.Challenge.IsAnubisBody): com.histmersion.pluginhost.Challenge.IsAnubisResult =
+com.histmersion.pluginhost.Challenge.IsAnubisResult | base Boolean | generated | method-result
+    private def isAnubis(body: com.histmersion.pluginhost.Challenge.IsAnubisBody): com.histmersion.pluginhost.Challenge.IsAnubisResult =
+com.histmersion.pluginhost.Challenge.IsChallengeCode | base Int | generated | method-parameter
+    def isChallenge(code: com.histmersion.pluginhost.Challenge.IsChallengeCode, headers: Map[com.histmersion.pluginhost.Challenge.IsChallengeHeadersPart1, com.histmersion.plu
+com.histmersion.pluginhost.Challenge.IsChallengeHeadersPart1 | base String | generated | method-parameter
+    def isChallenge(code: com.histmersion.pluginhost.Challenge.IsChallengeCode, headers: Map[com.histmersion.pluginhost.Challenge.IsChallengeHeadersPart1, com.histmersion.plu
+com.histmersion.pluginhost.Challenge.IsChallengeHeadersPart2 | base String | generated | method-parameter
+    def isChallenge(code: com.histmersion.pluginhost.Challenge.IsChallengeCode, headers: Map[com.histmersion.pluginhost.Challenge.IsChallengeHeadersPart1, com.histmersion.plu
+com.histmersion.pluginhost.Challenge.IsChallengeResult | base Boolean | generated | method-result
+    def isChallenge(code: com.histmersion.pluginhost.Challenge.IsChallengeCode, headers: Map[com.histmersion.pluginhost.Challenge.IsChallengeHeadersPart1, com.histmersion.plu
+com.histmersion.pluginhost.DiskLocalFiles.ExistsResult | base Boolean | generated | method-result
+    def exists(path: Path): com.histmersion.pluginhost.DiskLocalFiles.ExistsResult = Files.exists(path)
+com.histmersion.pluginhost.DiskLocalFiles.IsDirectoryResult | base Boolean | generated | method-result
+    def isDirectory(path: Path): com.histmersion.pluginhost.DiskLocalFiles.IsDirectoryResult = Files.isDirectory(path)
+com.histmersion.pluginhost.DiskLocalFiles.IsExecutableResult | base Boolean | generated | method-result
+    def isExecutable(path: Path): com.histmersion.pluginhost.DiskLocalFiles.IsExecutableResult = Files.isExecutable(path)
+com.histmersion.pluginhost.DiskLocalFiles.IsFileResult | base Boolean | generated | method-result
+    def isFile(path: Path): com.histmersion.pluginhost.DiskLocalFiles.IsFileResult = Files.isRegularFile(path)
+com.histmersion.pluginhost.DiskLocalFiles.ReadPrefixLength | base Int | generated | method-parameter
+    def readPrefix(path: Path, length: com.histmersion.pluginhost.DiskLocalFiles.ReadPrefixLength): com.histmersion.pluginhost.DiskLocalFiles.ReadPrefixResult =
+com.histmersion.pluginhost.DiskLocalFiles.ReadPrefixResult | base Array[Byte] | generated | method-result
+    def readPrefix(path: Path, length: com.histmersion.pluginhost.DiskLocalFiles.ReadPrefixLength): com.histmersion.pluginhost.DiskLocalFiles.ReadPrefixResult =
+com.histmersion.pluginhost.DiskLocalFiles.ReadResult | base Array[Byte] | generated | method-result
+    def read(path: Path): com.histmersion.pluginhost.DiskLocalFiles.ReadResult = Files.readAllBytes(path)
+com.histmersion.pluginhost.DiskLocalFiles.StagedBytes | base Array[Byte] | generated | method-parameter
+    def staged[A](name: com.histmersion.pluginhost.DiskLocalFiles.StagedName, bytes: com.histmersion.pluginhost.DiskLocalFiles.StagedBytes)(use: Path => Either[com.histmersio
+com.histmersion.pluginhost.DiskLocalFiles.StagedName | base String | generated | method-parameter
+    def staged[A](name: com.histmersion.pluginhost.DiskLocalFiles.StagedName, bytes: com.histmersion.pluginhost.DiskLocalFiles.StagedBytes)(use: Path => Either[com.histmersio
+com.histmersion.pluginhost.DiskLocalFiles.StagedResultPart1 | base String | generated | method-result
+    def staged[A](name: com.histmersion.pluginhost.DiskLocalFiles.StagedName, bytes: com.histmersion.pluginhost.DiskLocalFiles.StagedBytes)(use: Path => Either[com.histmersio
+com.histmersion.pluginhost.DiskLocalFiles.StagedUseResultPart1 | base String | generated | method-parameter
+    def staged[A](name: com.histmersion.pluginhost.DiskLocalFiles.StagedName, bytes: com.histmersion.pluginhost.DiskLocalFiles.StagedBytes)(use: Path => Either[com.histmersio
+com.histmersion.pluginhost.FetchChain.AllowUnauthorised | base Boolean | generated | constructor-parameter
+com.histmersion.pluginhost.FetchChain.Answer.Fetcher | base String | original | constructor-parameter
+    final case class Answer(fetcher: Answer.Fetcher, kind: Answer.Kind, why: Answer.Why):
+com.histmersion.pluginhost.FetchChain.Answer.Kind.Label | base String | generated | constructor-parameter
+    enum Kind(val label: Kind.Label):
+com.histmersion.pluginhost.FetchChain.Answer.LineResult | base String | generated | method-result
+    def line: com.histmersion.pluginhost.FetchChain.Answer.LineResult = s"$fetcher: ${kind.label} — $why"
+com.histmersion.pluginhost.FetchChain.Answer.Why | base String | original | constructor-parameter
+    final case class Answer(fetcher: Answer.Fetcher, kind: Answer.Kind, why: Answer.Why):
+com.histmersion.pluginhost.FetchChain.ApplyAllowUnauthorised | base Boolean | generated | method-parameter
+com.histmersion.pluginhost.FetchChain.ApplyRegisteredArg1 | base String | generated | method-parameter
+com.histmersion.pluginhost.FetchChain.ApplyRegisteredResult | base Boolean | generated | method-parameter
+com.histmersion.pluginhost.FetchChain.ApplyStepsPart1 | base String | generated | method-parameter
+com.histmersion.pluginhost.FetchChain.AttemptInfoMessage | base String | generated | method-parameter
+    def info(message: com.histmersion.pluginhost.FetchChain.AttemptInfoMessage) = FetchChain.this.log.info(s"acquire: ${s.id}: $message")
+com.histmersion.pluginhost.FetchChain.AttemptMemoKey | base String | generated | method-parameter
+    def memo[A](key: com.histmersion.pluginhost.FetchChain.AttemptMemoKey)(compute: => A): A = shared.get(key)(compute)
+com.histmersion.pluginhost.FetchChain.AttemptWarnMessage | base String | generated | method-parameter
+    def warn(message: com.histmersion.pluginhost.FetchChain.AttemptWarnMessage) = FetchChain.this.log.warn(s"acquire: ${s.id}: $message")
+com.histmersion.pluginhost.FetchChain.DescribeResult | base String | generated | method-result
+    def describe(w: WorkKey): com.histmersion.pluginhost.FetchChain.DescribeResult =
+com.histmersion.pluginhost.FetchChain.FetchArxiv | base String | generated | method-parameter
+    def fetch(doi: Option[com.histmersion.pluginhost.FetchChain.FetchDoi], arxiv: Option[com.histmersion.pluginhost.FetchChain.FetchArxiv]): Either[com.histmersion.pluginhost
+com.histmersion.pluginhost.FetchChain.FetchDoi | base String | generated | method-parameter
+    def fetch(doi: Option[com.histmersion.pluginhost.FetchChain.FetchDoi], arxiv: Option[com.histmersion.pluginhost.FetchChain.FetchArxiv]): Either[com.histmersion.pluginhost
+com.histmersion.pluginhost.FetchChain.FetchResultPart1 | base String | generated | method-result
+    def fetch(doi: Option[com.histmersion.pluginhost.FetchChain.FetchDoi], arxiv: Option[com.histmersion.pluginhost.FetchChain.FetchArxiv]): Either[com.histmersion.pluginhost
+com.histmersion.pluginhost.FetchChain.LooksLikePdfB | base Array[Byte] | generated | method-parameter
+    def looksLikePdf(b: com.histmersion.pluginhost.FetchChain.LooksLikePdfB): com.histmersion.pluginhost.FetchChain.LooksLikePdfResult =
+com.histmersion.pluginhost.FetchChain.LooksLikePdfResult | base Boolean | generated | method-result
+    def looksLikePdf(b: com.histmersion.pluginhost.FetchChain.LooksLikePdfB): com.histmersion.pluginhost.FetchChain.LooksLikePdfResult =
+com.histmersion.pluginhost.FetchChain.Memo.GetKey | base String | generated | method-parameter
+    def get[A](key: com.histmersion.pluginhost.FetchChain.Memo.GetKey)(compute: => A): A =
+com.histmersion.pluginhost.FetchChain.OfAllowUnauthorised | base Boolean | generated | method-parameter
+com.histmersion.pluginhost.FetchChain.OfPlugins | base String | generated | method-parameter
+com.histmersion.pluginhost.FetchChain.OfRegisteredPart1 | base String | generated | method-parameter
+com.histmersion.pluginhost.FetchChain.OfResultPart2 | base String | generated | method-result
+com.histmersion.pluginhost.FetchChain.OrderChain | base String | generated | alias,method-parameter
+    val OfChain: _root_.com.histmersion.pluginhost.FetchChain.OrderChain.type = _root_.com.histmersion.pluginhost.FetchChain.OrderChain
+    def order(registered: List[com.histmersion.pluginhost.FetchChain.OrderRegistered], chain: List[com.histmersion.pluginhost.FetchChain.OrderChain]): (List[com.histmersion.p
+com.histmersion.pluginhost.FetchChain.OrderRegistered | base String | generated | method-parameter
+    def order(registered: List[com.histmersion.pluginhost.FetchChain.OrderRegistered], chain: List[com.histmersion.pluginhost.FetchChain.OrderChain]): (List[com.histmersion.p
+com.histmersion.pluginhost.FetchChain.OrderResultPart1 | base String | generated | method-result
+    def order(registered: List[com.histmersion.pluginhost.FetchChain.OrderRegistered], chain: List[com.histmersion.pluginhost.FetchChain.OrderChain]): (List[com.histmersion.p
+com.histmersion.pluginhost.FetchChain.OrderResultPart2 | base String | generated | method-result
+    def order(registered: List[com.histmersion.pluginhost.FetchChain.OrderRegistered], chain: List[com.histmersion.pluginhost.FetchChain.OrderChain]): (List[com.histmersion.p
+com.histmersion.pluginhost.FetchChain.Outcome.FilePart1 | base String | original | constructor-parameter
+    final case class Outcome(file: Either[Outcome.FilePart1, FetchedFile], answers: List[Answer], foundBy: Option[Outcome.FoundBy] = None)
+com.histmersion.pluginhost.FetchChain.Outcome.FoundBy | base String | original | constructor-parameter
+    final case class Outcome(file: Either[Outcome.FilePart1, FetchedFile], answers: List[Answer], foundBy: Option[Outcome.FoundBy] = None)
+com.histmersion.pluginhost.FetchChain.PlanResultPart1 | base String | generated | method-result
+    def plan: List[(com.histmersion.pluginhost.FetchChain.PlanResultPart1, Access)] = steps.map(s => s.id -> s.fetcher.access)
+com.histmersion.pluginhost.FetchChain.RegisteredArg1 | base String | generated | constructor-parameter
+com.histmersion.pluginhost.FetchChain.RegisteredResult | base Boolean | generated | constructor-parameter
+com.histmersion.pluginhost.FetchChain.RunsAllowUnauthorised | base Boolean | generated | method-parameter
+    def runs(access: Access, legalOnly: com.histmersion.pluginhost.FetchChain.RunsLegalOnly, allowUnauthorised: com.histmersion.pluginhost.FetchChain.RunsAllowUnauthorised): 
+com.histmersion.pluginhost.FetchChain.RunsLegalOnly | base Boolean | generated | method-parameter
+    def runs(access: Access, legalOnly: com.histmersion.pluginhost.FetchChain.RunsLegalOnly, allowUnauthorised: com.histmersion.pluginhost.FetchChain.RunsAllowUnauthorised): 
+com.histmersion.pluginhost.FetchChain.RunsResult | base Boolean | generated | method-result
+    def runs(access: Access, legalOnly: com.histmersion.pluginhost.FetchChain.RunsLegalOnly, allowUnauthorised: com.histmersion.pluginhost.FetchChain.RunsAllowUnauthorised): 
+com.histmersion.pluginhost.FetchChain.Step.Id | base String | original | constructor-parameter
+    override def registered(pluginId: String): Boolean = FetchChain.this.registered(pluginId)
+    final case class Step(id: Step.Id, fetcher: SourceFetcher)
+com.histmersion.pluginhost.FirstPartySettings.ByIdPart1 | base String | generated | value
+    private val byId: Map[com.histmersion.pluginhost.FirstPartySettings.ByIdPart1, FirstPartySettings] = all.map(s => s.plugin -> s).toMap
+com.histmersion.pluginhost.FirstPartySettings.ClientKeysValue | base String | original | alias
+com.histmersion.pluginhost.FirstPartySettings.HostKeysResult | base String | generated | method-result
+    def hostKeys: List[com.histmersion.pluginhost.FirstPartySettings.HostKeysResult] =
+com.histmersion.pluginhost.FirstPartySettings.OfPlugin | base String | generated | alias,method-parameter
+    val RebuildsPlugin: _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin.type = _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin
+    val FallbackPlugin: _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin.type = _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin
+com.histmersion.pluginhost.FirstPartySettings.Paths | base String | original | constructor-parameter
+    final case class FirstPartySettings(plugin: FirstPartySettings.Plugin, paths: List[FirstPartySettings.Paths]):
+com.histmersion.pluginhost.FirstPartySettings.Plugin | base String | original | constructor-parameter,method-parameter
+    final case class FirstPartySettings(plugin: FirstPartySettings.Plugin, paths: List[FirstPartySettings.Paths]):
+    def hostView(merged: Config, user: Config, env: Config, plugins: List[Plugin]): Config =
+com.histmersion.pluginhost.FirstPartySettings.ReadsHostKeyChanged | base String | generated | method-parameter
+    def readsHostKey(changed: com.histmersion.pluginhost.FirstPartySettings.ReadsHostKeyChanged): com.histmersion.pluginhost.FirstPartySettings.ReadsHostKeyResult = paths.exi
+com.histmersion.pluginhost.FirstPartySettings.ReadsHostKeyResult | base Boolean | generated | method-result
+    def readsHostKey(changed: com.histmersion.pluginhost.FirstPartySettings.ReadsHostKeyChanged): com.histmersion.pluginhost.FirstPartySettings.ReadsHostKeyResult = paths.exi
+com.histmersion.pluginhost.FirstPartySettings.RebuildsChanged | base String | generated | method-parameter
+    def rebuilds(plugin: com.histmersion.pluginhost.FirstPartySettings.RebuildsPlugin, changed: com.histmersion.pluginhost.FirstPartySettings.RebuildsChanged): com.histmersio
+com.histmersion.pluginhost.FirstPartySettings.RebuildsResult | base Boolean | generated | method-result
+    def rebuilds(plugin: com.histmersion.pluginhost.FirstPartySettings.RebuildsPlugin, changed: com.histmersion.pluginhost.FirstPartySettings.RebuildsChanged): com.histmersio
+com.histmersion.pluginhost.Generation.BlocksKey | base String | original | constructor-parameter
+com.histmersion.pluginhost.Generation.CarryId | base String | generated | method-parameter
+    def carry(id: com.histmersion.pluginhost.Generation.CarryId): Option[(PluginStatus, Registries)] =
+com.histmersion.pluginhost.Generation.ContributionsKey | base String | original | constructor-parameter
+com.histmersion.pluginhost.Generation.Rebuilt | base String | original | constructor-parameter
+com.histmersion.pluginhost.Generation.RegisteredResult | base String | generated | method-result
+    def registered: Set[com.histmersion.pluginhost.Generation.RegisteredResult] = contributions.keySet
+com.histmersion.pluginhost.Generation.SecretKey | base String | generated | method-parameter
+    def secret(pluginId: com.histmersion.pluginhost.Generation.SecretPluginId, key: com.histmersion.pluginhost.Generation.SecretKey): Option[com.histmersion.pluginhost.Genera
+com.histmersion.pluginhost.Generation.SecretPluginId | base String | generated | method-parameter
+    def secret(pluginId: com.histmersion.pluginhost.Generation.SecretPluginId, key: com.histmersion.pluginhost.Generation.SecretKey): Option[com.histmersion.pluginhost.Genera
+com.histmersion.pluginhost.Generation.SecretResult | base String | generated | method-result
+    def secret(pluginId: com.histmersion.pluginhost.Generation.SecretPluginId, key: com.histmersion.pluginhost.Generation.SecretKey): Option[com.histmersion.pluginhost.Genera
+com.histmersion.pluginhost.Generation.SecretValuesKey | base String | original | constructor-parameter
+com.histmersion.pluginhost.Generation.SecretValuesValueValue | base String | original | constructor-parameter
+com.histmersion.pluginhost.Generation.WithSecrets | base String | original | constructor-parameter

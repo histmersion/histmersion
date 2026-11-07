@@ -22,24 +22,14 @@ private[places] object TreeRepo:
   /** A closed [[Period]] from the two bounds SQL returned (`lower`, `upper - 1`); `None` unless both are present — an
     * int8range with an open end is "always", which is what `None` means here.
     */
-  type PeriodOfStart = PeriodOfStart.T
-  object PeriodOfStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodOfEnd = PeriodOfEnd.T
-  object PeriodOfEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClosureResult = ClosureResult.T
-  object ClosureResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClosureIds = ClosureIds.T
-  object ClosureIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClosureParamsIds = _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds
-  val ClosureParamsIds: _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds.type = _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds
-  type NodesQueryIds = _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds
-  val NodesQueryIds: _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds.type = _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds
-  type RelationsQueryIds = _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds
-  val RelationsQueryIds: _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds.type = _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds
-  type GazetteerPlaceIds = GazetteerPlaceIds.T
-  object GazetteerPlaceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClosureParamsIds = _root_.com.histmersion.domain.catalogue.Place.Id
+  val ClosureParamsIds: _root_.com.histmersion.domain.catalogue.Place.Id.type = _root_.com.histmersion.domain.catalogue.Place.Id
+  type NodesQueryIds = _root_.com.histmersion.domain.catalogue.Place.Id
+  val NodesQueryIds: _root_.com.histmersion.domain.catalogue.Place.Id.type = _root_.com.histmersion.domain.catalogue.Place.Id
+  type RelationsQueryIds = _root_.com.histmersion.domain.catalogue.Place.Id
+  val RelationsQueryIds: _root_.com.histmersion.domain.catalogue.Place.Id.type = _root_.com.histmersion.domain.catalogue.Place.Id
 
-  private def periodOf(start: Option[com.histmersion.domain.catalogue.places.TreeRepo.PeriodOfStart], end: Option[com.histmersion.domain.catalogue.places.TreeRepo.PeriodOfEnd]): Option[Period] =
+  private def periodOf(start: Option[com.histmersion.domain.DeepTime.SignedYear], end: Option[com.histmersion.domain.DeepTime.SignedYear]): Option[Period] =
     (start, end) match
       case (Some(a), Some(b)) => Some(if a <= b then Period(a, b) else Period(b, a))
       case _                  => None
@@ -92,7 +82,7 @@ private[places] object TreeRepo:
     * edges. Deliberately UNFILTERED by `asOf` — `by=time,region` reads the hierarchy at a different year in every time
     * bucket, so the as-of predicate belongs in [[Tree]], applied to the (small) closure, not in this query.
     */
-  private def closure(ids: List[com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds]): com.histmersion.domain.catalogue.places.TreeRepo.ClosureResult =
+  private def closure(ids: List[com.histmersion.domain.catalogue.Place.Id]): String =
     s"""WITH RECURSIVE up(id) AS (
           SELECT p.id FROM places p WHERE p.id = ANY(?::text[])
           UNION
@@ -130,7 +120,7 @@ private[places] object TreeRepo:
   /** The gazetteer slice a tree's rows need: every place they were materialised into (`placeIds`) plus all its
     * ancestors, and the edges between them. Empty when nothing is located — no query is run then.
     */
-  def gazetteer(placeIds: List[com.histmersion.domain.catalogue.places.TreeRepo.GazetteerPlaceIds])(using DbCon): (List[RegionNode], List[Place.Relation]) =
+  def gazetteer(placeIds: List[com.histmersion.domain.catalogue.Place.Id])(using DbCon): (List[RegionNode], List[Place.Relation]) =
     val ids = placeIds.distinct
     if ids.isEmpty then (Nil, Nil)
     else

@@ -19,14 +19,10 @@ import javax.sql.DataSource
   * they write over.
   */
 object MergePlans:
+  type PlanFileText = PlanFileText.T
+  object PlanFileText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `merge plan`: read the bundle, gather this collection's state in one read-only snapshot, plan. */
-  type PlanFileResultPart1 = PlanFileResultPart1.T
-  object PlanFileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanFileChunkChars = PlanFileChunkChars.T
-  object PlanFileChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanChunkChars = PlanChunkChars.T
-  object PlanChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def planFile(
       ds: DataSource,
@@ -34,10 +30,10 @@ object MergePlans:
       resolutions: MergeResolutions,
       cfg: MergeSettings,
       files: ContentStore,
-      chunkChars: com.histmersion.util.data.exchange.MergePlans.PlanFileChunkChars,
+      chunkChars: com.histmersion.util.data.exchange.ImportOptions.ChunkChars,
       kinds: CarriedKinds,
       rules: MergeRuleSet
-  ): Either[com.histmersion.util.data.exchange.MergePlans.PlanFileResultPart1, MergePlan] =
+  ): Either[com.histmersion.util.data.exchange.MergePlans.PlanFileText, MergePlan] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
       case None    => Left(("not a readable bundle" :: loaded.problems).mkString("; "))
@@ -57,7 +53,7 @@ object MergePlans:
       resolutions: MergeResolutions,
       cfg: MergeSettings,
       files: ContentStore,
-      chunkChars: com.histmersion.util.data.exchange.MergePlans.PlanChunkChars,
+      chunkChars: com.histmersion.util.data.exchange.ImportOptions.ChunkChars,
       kinds: CarriedKinds,
       rules: MergeRuleSet
   )(using DbCon): (MergePlanner.Input, MergePlanner.Result) =

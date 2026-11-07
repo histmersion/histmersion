@@ -27,174 +27,16 @@ import com.histmersion.api.Api
   * caller opened.
   */
 private[sources] object SourceRepo:
+  type BodyChars = BodyChars.T
+  object BodyChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Count = Count.T
+  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type RenameInTakenCk = RenameInTakenCk.T
-  object RenameInTakenCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type NamingResult = NamingResult.T
-  object NamingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NamingName = NamingName.T
-  object NamingName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NamingLimit = NamingLimit.T
-  object NamingLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceFindingsInResult = PlaceFindingsInResult.T
-  object PlaceFindingsInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceFindingsInToleranceKm = PlaceFindingsInToleranceKm.T
-  object PlaceFindingsInToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountsResultPart1 = CountsResultPart1.T
-  object CountsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountsResultPart2 = CountsResultPart2.T
-  object CountsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutInResult = PutInResult.T
-  object PutInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutInChunkChars = PutInChunkChars.T
-  object PutInChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutInToleranceKm = PutInToleranceKm.T
-  object PutInToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchInResultPart2 = PatchInResultPart2.T
-  object PatchInResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchInRequested = PatchInRequested.T
-  object PatchInRequested extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchInChunkChars = PatchInChunkChars.T
-  object PatchInChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchInToleranceKm = PatchInToleranceKm.T
-  object PatchInToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteChunkChars = WriteChunkChars.T
-  object WriteChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteToleranceKm = WriteToleranceKm.T
-  object WriteToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InsertEdgesResult = InsertEdgesResult.T
-  object InsertEdgesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TokenResult = TokenResult.T
-  object TokenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitekeysResult = CitekeysResult.T
-  object CitekeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdatedAtMillisResultPart1 = UpdatedAtMillisResultPart1.T
-  object UpdatedAtMillisResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdatedAtMillisResultPart2 = UpdatedAtMillisResultPart2.T
-  object UpdatedAtMillisResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceChunksResult = ReplaceChunksResult.T
-  object ReplaceChunksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceChunksMarkdown = ReplaceChunksMarkdown.T
-  object ReplaceChunksMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceChunksChunkChars = ReplaceChunksChunkChars.T
-  object ReplaceChunksChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodiesAfterResultPart1 = BodiesAfterResultPart1.T
-  object BodiesAfterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodiesAfterResultPart2 = BodiesAfterResultPart2.T
-  object BodiesAfterResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodiesAfterAfter = BodiesAfterAfter.T
-  object BodiesAfterAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RechunkResult = RechunkResult.T
-  object RechunkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RechunkChunkChars = RechunkChunkChars.T
-  object RechunkChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveEdgesResult = ResolveEdgesResult.T
-  object ResolveEdgesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveAliasesResultPart1 = ResolveAliasesResultPart1.T
-  object ResolveAliasesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveAliasesResultPart2 = ResolveAliasesResultPart2.T
-  object ResolveAliasesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveAliasesTargets = ResolveAliasesTargets.T
-  object ResolveAliasesTargets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CanonicalResult = CanonicalResult.T
-  object CanonicalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CanonicalId = CanonicalId.T
-  object CanonicalId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CanonicalAllResultPart1 = CanonicalAllResultPart1.T
-  object CanonicalAllResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CanonicalAllResultPart2 = CanonicalAllResultPart2.T
-  object CanonicalAllResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CanonicalAllIds = CanonicalAllIds.T
-  object CanonicalAllIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AliasOfResult = AliasOfResult.T
-  object AliasOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AliasOfCk = AliasOfCk.T
-  object AliasOfCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AliasTargetResult = AliasTargetResult.T
-  object AliasTargetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AliasTargetCk = AliasTargetCk.T
-  object AliasTargetCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AliasesOfResult = AliasesOfResult.T
-  object AliasesOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AliasesOfCk = AliasesOfCk.T
-  object AliasesOfCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CalibreIdResult = CalibreIdResult.T
-  object CalibreIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CalibreIdCk = CalibreIdCk.T
-  object CalibreIdCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameOldCk = RenameOldCk.T
-  object RenameOldCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RenameNewRaw = RenameNewRaw.T
   object RenameNewRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameInOldCk = RenameInOldCk.T
-  object RenameInOldCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameInNewCk = RenameInNewCk.T
-  object RenameInNewCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameNowOldCk = RenameNowOldCk.T
-  object RenameNowOldCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameNowNewCk = RenameNowNewCk.T
-  object RenameNowNewCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PromoteAsResult = PromoteAsResult.T
-  object PromoteAsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PromoteAsDst = PromoteAsDst.T
-  object PromoteAsDst extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PromoteAsCk = PromoteAsCk.T
-  object PromoteAsCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetargetSourceTextResultPart1 = RetargetSourceTextResultPart1.T
-  object RetargetSourceTextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetargetSourceTextResultPart2 = RetargetSourceTextResultPart2.T
-  object RetargetSourceTextResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetargetSourceTextNeedle = RetargetSourceTextNeedle.T
-  object RetargetSourceTextNeedle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetargetSourceTextToArg1 = RetargetSourceTextToArg1.T
-  object RetargetSourceTextToArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetargetSourceTextToResult = RetargetSourceTextToResult.T
-  object RetargetSourceTextToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefsCitekeys = RefsCitekeys.T
-  object RefsCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitekeyOfSha256Result = CitekeyOfSha256Result.T
-  object CitekeyOfSha256Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitekeyOfSha256Sha = CitekeyOfSha256Sha.T
-  object CitekeyOfSha256Sha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetSha256Sha = SetSha256Sha.T
-  object SetSha256Sha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Sha256OfResult = Sha256OfResult.T
-  object Sha256OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Sha256sResultPart1 = Sha256sResultPart1.T
-  object Sha256sResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Sha256sResultPart2 = Sha256sResultPart2.T
-  object Sha256sResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Sha256sCitekeys = Sha256sCitekeys.T
-  object Sha256sCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DoiIndexResultPart1 = DoiIndexResultPart1.T
-  object DoiIndexResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DoiIndexResultPart2 = DoiIndexResultPart2.T
-  object DoiIndexResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitekeyOfDoiResult = CitekeyOfDoiResult.T
-  object CitekeyOfDoiResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExistsResult = ExistsResult.T
-  object ExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LicenceOfResult = LicenceOfResult.T
-  object LicenceOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordLicenceResult = RecordLicenceResult.T
-  object RecordLicenceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordLicenceLicence = RecordLicenceLicence.T
-  object RecordLicenceLicence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CalibreGapsLimit = CalibreGapsLimit.T
-  object CalibreGapsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetCalibreIdResult = SetCalibreIdResult.T
-  object SetCalibreIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetCalibreIdCalibreId = SetCalibreIdCalibreId.T
-  object SetCalibreIdCalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyTextResult = BodyTextResult.T
-  object BodyTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyUnderHeadingResult = BodyUnderHeadingResult.T
-  object BodyUnderHeadingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyUnderHeadingHeading = BodyUnderHeadingHeading.T
-  object BodyUnderHeadingHeading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   import com.histmersion.api.library.SourceColumns.given
 
@@ -204,7 +46,7 @@ private[sources] object SourceRepo:
   private given DbCodec[Source.Ref] = DbCodec.derived
 
   /** The sources whose chunks contain `name` as a phrase (the FTS index), most chunks first, at most `limit`. */
-  def naming(name: com.histmersion.domain.library.sources.SourceRepo.NamingName, limit: com.histmersion.domain.library.sources.SourceRepo.NamingLimit)(using DbCon): List[com.histmersion.domain.library.sources.SourceRepo.NamingResult] =
+  def naming(name: com.histmersion.domain.library.sources.SourceRepo.Name, limit: com.histmersion.domain.library.acquisition.CandidateRepo.Limit)(using DbCon): List[com.histmersion.domain.library.Citekey] =
     sql"""SELECT citekey FROM source_chunks WHERE tsv @@ phraseto_tsquery('english', $name)
             GROUP BY citekey ORDER BY count(*) DESC, citekey LIMIT $limit""".query[String].run().toList
 
@@ -212,25 +54,25 @@ private[sources] object SourceRepo:
   /** The findings of `citekey` placed again (`finding_places`), inside the caller's transaction: what a write that
     * touched the source's findings leaves to do.
     */
-  private[histmersion] def placeFindingsIn(citekey: com.histmersion.domain.library.Citekey, toleranceKm: com.histmersion.domain.library.sources.SourceRepo.PlaceFindingsInToleranceKm)(using DbCon): com.histmersion.domain.library.sources.SourceRepo.PlaceFindingsInResult =
+  private[histmersion] def placeFindingsIn(citekey: com.histmersion.domain.library.Citekey, toleranceKm: com.histmersion.domain.catalogue.places.PointAreaRepo.Settings.ToleranceKm)(using DbCon): com.histmersion.RowCount =
     FindingPlacement(toleranceKm).placeSource(citekey)
 
   /** How many sources and findings are stored (what About counts). */
-  def counts()(using DbCon): (com.histmersion.domain.library.sources.SourceRepo.CountsResultPart1, com.histmersion.domain.library.sources.SourceRepo.CountsResultPart2) =
+  def counts()(using DbCon): (com.histmersion.domain.library.sources.SourceRepo.Count, com.histmersion.domain.library.sources.SourceRepo.Count) =
     (
       sql"SELECT count(*)::int FROM sources".query[Int].run().head.toLong,
       sql"SELECT count(*)::int FROM findings".query[Int].run().head.toLong
     )
 
   /** [[put]] inside the caller's transaction. */
-  def putIn(s: Source, chunkChars: com.histmersion.domain.library.sources.SourceRepo.PutInChunkChars, toleranceKm: com.histmersion.domain.library.sources.SourceRepo.PutInToleranceKm)(using DbCon): com.histmersion.domain.library.sources.SourceRepo.PutInResult =
+  def putIn(s: Source, chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars, toleranceKm: com.histmersion.domain.catalogue.places.PointAreaRepo.Settings.ToleranceKm)(using DbCon): com.histmersion.domain.library.Citekey =
     write(s, chunkChars, toleranceKm)
     token(s.citekey.value).getOrElse("")
 
   /** [[patch]] inside the caller's transaction. */
-  def patchIn(requested: com.histmersion.domain.library.sources.SourceRepo.PatchInRequested, p: Source.Patch, chunkChars: com.histmersion.domain.library.sources.SourceRepo.PatchInChunkChars, toleranceKm: com.histmersion.domain.library.sources.SourceRepo.PatchInToleranceKm)(using
+  def patchIn(requested: com.histmersion.domain.library.Citekey, p: Source.Patch, chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars, toleranceKm: com.histmersion.domain.catalogue.places.PointAreaRepo.Settings.ToleranceKm)(using
       DbCon
-  ): Either[Api.Error, com.histmersion.domain.library.sources.SourceRepo.PatchInResultPart2] =
+  ): Either[Api.Error, String] =
     // an OLD citekey (V027) patches the source it was renamed to — see [[canonical]]
     val citekey = canonical(requested).getOrElse(requested)
     // FOR UPDATE, not a plain read: `ifUpdatedAt` is a compare-and-swap, and two patches that both
@@ -256,7 +98,7 @@ private[sources] object SourceRepo:
     val _ = sql"SELECT citekey FROM sources WHERE citekey = $citekey FOR UPDATE".query[String].run()
 
   /** The write itself, inside the caller's transaction. */
-  private def write(s: Source, chunkChars: com.histmersion.domain.library.sources.SourceRepo.WriteChunkChars, toleranceKm: com.histmersion.domain.library.sources.SourceRepo.WriteToleranceKm)(using DbCon): Unit =
+  private def write(s: Source, chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars, toleranceKm: com.histmersion.domain.catalogue.places.PointAreaRepo.Settings.ToleranceKm)(using DbCon): Unit =
     // Creating a source under an OLD citekey would make the alias and a new row answer to the same
     // name. The handlers refuse it with a readable 400 first; this is the net under every other
     // writer (a seed of a stale `<old>.md`, an ingest job queued before the rename).
@@ -324,7 +166,7 @@ private[sources] object SourceRepo:
     * finds its source. The routing lives HERE only; every writer (`put`/`patch`, `refs --apply`, `followups --apply`)
     * comes through it. Returns how many rows were new.
     */
-  private[histmersion] def insertEdges(edges: List[Edge])(using DbCon): com.histmersion.domain.library.sources.SourceRepo.InsertEdgesResult =
+  private[histmersion] def insertEdges(edges: List[Edge])(using DbCon): com.histmersion.RowCount =
     val es = edges.distinct
     if es.isEmpty then 0
     else
@@ -348,7 +190,7 @@ private[sources] object SourceRepo:
   /** The opaque last-write token: `updated_at` rendered UTC-normalised so it is stable to compare and safe to echo back
     * through JSON, whatever the session's TimeZone setting.
     */
-  private def token(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.TokenResult] =
+  private def token(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[String] =
     sql"""SELECT to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
           FROM sources WHERE citekey = $citekey""".query[String].run().headOption
 
@@ -413,10 +255,10 @@ private[sources] object SourceRepo:
       )
     }
 
-  def citekeys()(using DbCon): Vector[com.histmersion.domain.library.sources.SourceRepo.CitekeysResult] =
+  def citekeys()(using DbCon): Vector[com.histmersion.domain.library.Citekey] =
     sql"""SELECT citekey FROM sources ORDER BY citekey COLLATE "C"""".query[String].run()
 
-  def updatedAtMillis()(using DbCon): Map[com.histmersion.domain.library.sources.SourceRepo.UpdatedAtMillisResultPart1, com.histmersion.domain.library.sources.SourceRepo.UpdatedAtMillisResultPart2] =
+  def updatedAtMillis()(using DbCon): Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.sources.CitekeyMillis.Millis] =
     sql"SELECT citekey, (extract(epoch from updated_at) * 1000)::bigint FROM sources"
       .query[CitekeyMillis]
       .run()
@@ -427,7 +269,7 @@ private[sources] object SourceRepo:
     * chunks, and one round trip per chunk makes a full reindex take minutes (long enough for the server's request
     * timeout to cut it off).
     */
-  private[histmersion] def replaceChunks(citekey: com.histmersion.domain.library.Citekey, markdown: Option[com.histmersion.domain.library.sources.SourceRepo.ReplaceChunksMarkdown], chunkChars: com.histmersion.domain.library.sources.SourceRepo.ReplaceChunksChunkChars)(using DbCon): com.histmersion.domain.library.sources.SourceRepo.ReplaceChunksResult =
+  private[histmersion] def replaceChunks(citekey: com.histmersion.domain.library.Citekey, markdown: Option[com.histmersion.domain.library.sources.FullSourceRow.OcrMarkdown], chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars)(using DbCon): com.histmersion.RowCount =
     sql"DELETE FROM source_chunks WHERE citekey = $citekey".update.run()
     val chunks = markdown.map(Chunker.chunk(_, chunkChars)).getOrElse(Nil)
     if chunks.nonEmpty then
@@ -436,17 +278,17 @@ private[sources] object SourceRepo:
     chunks.size
 
   /** The sources after `after`, in citekey order, each with its body's length: what a re-chunk of the corpus walks. */
-  def bodiesAfter(after: Option[com.histmersion.domain.library.sources.SourceRepo.BodiesAfterAfter])(using DbCon): Vector[(com.histmersion.domain.library.sources.SourceRepo.BodiesAfterResultPart1, com.histmersion.domain.library.sources.SourceRepo.BodiesAfterResultPart2)] =
+  def bodiesAfter(after: Option[com.histmersion.domain.library.Citekey])(using DbCon): Vector[(com.histmersion.domain.library.Citekey, com.histmersion.domain.library.sources.SourceRepo.BodyChars)] =
     sql"""SELECT citekey, coalesce(length(ocr_markdown), 0)
           FROM sources WHERE $after IS NULL OR citekey > $after
           ORDER BY citekey""".query[(String, Int)].run()
 
   /** One source's full-text chunks rebuilt from its stored body; how many chunks it now has. */
-  def rechunk(citekey: com.histmersion.domain.library.Citekey, chunkChars: com.histmersion.domain.library.sources.SourceRepo.RechunkChunkChars)(using DbCon): com.histmersion.domain.library.sources.SourceRepo.RechunkResult =
+  def rechunk(citekey: com.histmersion.domain.library.Citekey, chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars)(using DbCon): com.histmersion.RowCount =
     val md = sql"SELECT ocr_markdown FROM sources WHERE citekey = $citekey".query[Option[String]].run()
     replaceChunks(citekey, md.headOption.flatten, chunkChars)
 
-  def resolveEdges()(using DbCon): com.histmersion.domain.library.sources.SourceRepo.ResolveEdgesResult =
+  def resolveEdges()(using DbCon): com.histmersion.RowCount =
     val parked = sql"SELECT src, dst, kind FROM unresolved_edges".query[EdgeRow].run().toList
     val aliases = resolveAliases(parked.map(_.dst))
     val moves = parked.flatMap(e => aliases.get(e.dst.trim.toLowerCase).filter(_ != e.src).map(e -> _))
@@ -465,7 +307,7 @@ private[sources] object SourceRepo:
     * `lint --rule unresolved-short-citekeys` is where a human picks one. One query for the whole body, whatever its
     * number of links.
     */
-  def resolveAliases(targets: List[com.histmersion.domain.library.sources.SourceRepo.ResolveAliasesTargets])(using DbCon): Map[com.histmersion.domain.library.sources.SourceRepo.ResolveAliasesResultPart1, com.histmersion.domain.library.sources.SourceRepo.ResolveAliasesResultPart2] =
+  def resolveAliases(targets: List[com.histmersion.domain.library.Citekey])(using DbCon): Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey] =
     val wanted = targets.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Map.empty
     else
@@ -494,11 +336,11 @@ private[sources] object SourceRepo:
     * `SourcesControllers.canonical`, and [[patch]]), so an old id keeps working everywhere at once. Exact only: the
     * short-form prefix rule belongs to wikilinks ([[resolveAliases]]), not to ids in URLs.
     */
-  def canonical(id: com.histmersion.domain.library.sources.SourceRepo.CanonicalId)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.CanonicalResult] =
+  def canonical(id: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.library.Citekey] =
     canonicalAll(List(id)).get(id)
 
   /** [[canonical]] for many ids in one query; an id that names nothing is absent. */
-  private[histmersion] def canonicalAll(ids: List[com.histmersion.domain.library.sources.SourceRepo.CanonicalAllIds])(using DbCon): Map[com.histmersion.domain.library.sources.SourceRepo.CanonicalAllResultPart1, com.histmersion.domain.library.sources.SourceRepo.CanonicalAllResultPart2] =
+  private[histmersion] def canonicalAll(ids: List[com.histmersion.domain.library.Citekey])(using DbCon): Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey] =
     if ids.isEmpty then Map.empty
     else
       sql"""SELECT citekey, citekey, 0 FROM sources WHERE citekey = ANY($ids::text[])
@@ -511,17 +353,17 @@ private[sources] object SourceRepo:
         .map((id, rows) => id -> rows.minBy(_._3)._2)
 
   /** The source `ck` was renamed to, when `ck` is an old citekey. */
-  def aliasOf(ck: com.histmersion.domain.library.sources.SourceRepo.AliasOfCk)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.AliasOfResult] = aliasTarget(ck)
+  def aliasOf(ck: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.library.Citekey] = aliasTarget(ck)
 
-  private def aliasTarget(ck: com.histmersion.domain.library.sources.SourceRepo.AliasTargetCk)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.AliasTargetResult] =
+  private def aliasTarget(ck: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.library.Citekey] =
     sql"SELECT citekey FROM source_aliases WHERE alias = $ck".query[String].run().headOption
 
   /** The OLD citekeys that now name `ck` (V027) — an edge written on `ck` may give one as its `src`. */
-  def aliasesOf(ck: com.histmersion.domain.library.sources.SourceRepo.AliasesOfCk)(using DbCon): Set[com.histmersion.domain.library.sources.SourceRepo.AliasesOfResult] =
+  def aliasesOf(ck: com.histmersion.domain.library.Citekey)(using DbCon): Set[com.histmersion.domain.library.Citekey] =
     (sql"SELECT alias FROM source_aliases WHERE citekey = $ck".query[String].run().toSet)
 
   /** The Calibre book id recorded for a source, if any. */
-  def calibreId(ck: com.histmersion.domain.library.sources.SourceRepo.CalibreIdCk)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.CalibreIdResult] =
+  def calibreId(ck: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.library.sources.FullSourceRow.CalibreId] =
     (sql"SELECT calibre_id FROM sources WHERE citekey = $ck".query[Option[String]].run().headOption.flatten)
 
   /** Every old citekey and the source it names now, by alias. */
@@ -552,7 +394,7 @@ private[sources] object SourceRepo:
     *   - Parked edges that named `new` (or a short form now unique to it) become real edges.
     *   - `old` becomes an alias of `new`, so it keeps resolving.
     */
-  def rename(oldCk: com.histmersion.domain.library.sources.SourceRepo.RenameOldCk, newRaw: com.histmersion.domain.library.sources.SourceRepo.RenameNewRaw, referrers: SourceReferrers)(using DbCon): Either[Api.Error, Rename.Counts] =
+  def rename(oldCk: com.histmersion.domain.library.Citekey, newRaw: com.histmersion.domain.library.sources.SourceRepo.RenameNewRaw, referrers: SourceReferrers)(using DbCon): Either[Api.Error, Rename.Counts] =
     Citekeys
       .renameTo(oldCk, newRaw)
       .left
@@ -562,11 +404,11 @@ private[sources] object SourceRepo:
   /** [[rename]] inside the caller's transaction, `newCk` already validated — also what a bundle import does when a
     * source was renamed on the other side (`BundleImport`).
     */
-  private[histmersion] def renameIn(oldCk: com.histmersion.domain.library.sources.SourceRepo.RenameInOldCk, newCk: com.histmersion.domain.library.sources.SourceRepo.RenameInNewCk, referrers: SourceReferrers)(using
+  private[histmersion] def renameIn(oldCk: com.histmersion.domain.library.Citekey, newCk: com.histmersion.domain.library.Citekey, referrers: SourceReferrers)(using
       DbCon
   ): Either[Api.Error, Rename.Counts] =
     lockRow(oldCk)
-    def taken(ck: com.histmersion.domain.library.sources.SourceRepo.RenameInTakenCk) = sql"SELECT citekey FROM sources WHERE citekey = $ck".query[String].run().nonEmpty
+    def taken(ck: com.histmersion.domain.library.Citekey) = sql"SELECT citekey FROM sources WHERE citekey = $ck".query[String].run().nonEmpty
     val findingIdsTaken =
       sql"SELECT id FROM findings WHERE left(id, ${newCk.length + 1}) = ${newCk + "#"} LIMIT 1"
         .query[String]
@@ -605,7 +447,7 @@ private[sources] object SourceRepo:
                   .run()
               Right(renameNow(oldCk, newCk, referrers))
 
-  private def renameNow(oldCk: com.histmersion.domain.library.sources.SourceRepo.RenameNowOldCk, newCk: com.histmersion.domain.library.sources.SourceRepo.RenameNowNewCk, referrers: SourceReferrers)(using DbCon): Rename.Counts =
+  private def renameNow(oldCk: com.histmersion.domain.library.Citekey, newCk: com.histmersion.domain.library.Citekey, referrers: SourceReferrers)(using DbCon): Rename.Counts =
     // the short forms that pointed at the old key — decided BEFORE it moves
     val forms = Rename.shortForms(oldCk)
     val shorts = resolveAliases(forms).collect { case (f, ck) if ck == oldCk => f }.toSet
@@ -648,7 +490,7 @@ private[sources] object SourceRepo:
     )
 
   /** Promote the parked edges whose target is `dst` as edges to `ck` (never a self-edge). */
-  private def promoteAs(dst: com.histmersion.domain.library.sources.SourceRepo.PromoteAsDst, ck: com.histmersion.domain.library.sources.SourceRepo.PromoteAsCk)(using DbCon): com.histmersion.domain.library.sources.SourceRepo.PromoteAsResult =
+  private def promoteAs(dst: com.histmersion.domain.library.Citekey, ck: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.RowCount =
     val n = sql"""INSERT INTO edges (src, dst, kind)
                   SELECT src, $ck, kind FROM unresolved_edges WHERE dst = $dst AND src <> $ck
                   ON CONFLICT DO NOTHING""".update.run()
@@ -658,7 +500,7 @@ private[sources] object SourceRepo:
   /** Rewrite links in every source's notes and summary; returns (citekey, links moved) per source that changed. A plain
     * UPDATE, not [[write]]: nothing but the text changes, so the findings, chunks and edges need no rewrite.
     */
-  private def retargetSourceText(needle: com.histmersion.domain.library.sources.SourceRepo.RetargetSourceTextNeedle, to: com.histmersion.domain.library.sources.SourceRepo.RetargetSourceTextToArg1 => Option[com.histmersion.domain.library.sources.SourceRepo.RetargetSourceTextToResult])(using DbCon): List[(com.histmersion.domain.library.sources.SourceRepo.RetargetSourceTextResultPart1, com.histmersion.domain.library.sources.SourceRepo.RetargetSourceTextResultPart2)] =
+  private def retargetSourceText(needle: com.histmersion.domain.library.Citekey, to: com.histmersion.domain.library.Citekey => Option[com.histmersion.domain.library.Citekey])(using DbCon): List[(com.histmersion.domain.library.Citekey, com.histmersion.RowCount)] =
     sql"""SELECT citekey, notes, summary FROM sources
           WHERE strpos(lower(coalesce(notes, '') || ' ' || coalesce(summary, '')), $needle) > 0
           ORDER BY citekey"""
@@ -680,7 +522,7 @@ private[sources] object SourceRepo:
   /** The citation-link view of the given stored sources (unknown citekeys are simply absent) — what a page needs to
     * render a reference with its DOI, byline and status. One query, in citekey order.
     */
-  def refs(citekeys: List[com.histmersion.domain.library.sources.SourceRepo.RefsCitekeys])(using DbCon): List[Source.Ref] =
+  def refs(citekeys: List[com.histmersion.domain.library.Citekey])(using DbCon): List[Source.Ref] =
     val wanted = citekeys.distinct
     if wanted.isEmpty then Nil
     else sql"""SELECT citekey, doi, authors, year, title, status FROM sources
@@ -713,7 +555,7 @@ private[sources] object SourceRepo:
 
   /** Full body text: chunks concatenated in ord order, or raw ocr_markdown when unchunked. */
   /** A source's converted text as stored — where its figures are linked from. */
-  def markdown(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.domain.library.sources.SourceRepo.MarkdownResult =
+  def markdown(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.domain.library.sources.FullSourceRow.OcrMarkdown =
     sql"SELECT coalesce(ocr_markdown, '') FROM sources WHERE citekey = $citekey"
       .query[String]
       .run()
@@ -722,18 +564,18 @@ private[sources] object SourceRepo:
 
   // ── the uploaded ORIGINAL's digest, on `sources.sha256` (V001 already has the column) ─────────
 
-  def citekeyOfSha256(sha: com.histmersion.domain.library.sources.SourceRepo.CitekeyOfSha256Sha)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.CitekeyOfSha256Result] =
+  def citekeyOfSha256(sha: com.histmersion.Sha256)(using DbCon): Option[com.histmersion.domain.library.Citekey] =
     sql"SELECT citekey FROM sources WHERE sha256 = $sha ORDER BY citekey LIMIT 1".query[String].run().headOption
 
-  def setSha256(citekey: com.histmersion.domain.library.Citekey, sha: com.histmersion.domain.library.sources.SourceRepo.SetSha256Sha)(using DbCon): Unit =
+  def setSha256(citekey: com.histmersion.domain.library.Citekey, sha: com.histmersion.Sha256)(using DbCon): Unit =
     val _ = sql"UPDATE sources SET sha256 = $sha WHERE citekey = $citekey".update.run()
 
-  def sha256Of(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.Sha256OfResult] =
+  def sha256Of(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.Sha256] =
     sql"SELECT sha256 FROM sources WHERE citekey = $citekey".query[Option[String]].run().headOption.flatten
 
   /** The content hash (`sources.sha256`, the stored original's name) of each of `citekeys` that has one, in one query.
     */
-  def sha256s(citekeys: List[com.histmersion.domain.library.sources.SourceRepo.Sha256sCitekeys])(using DbCon): Map[com.histmersion.domain.library.sources.SourceRepo.Sha256sResultPart1, com.histmersion.domain.library.sources.SourceRepo.Sha256sResultPart2] =
+  def sha256s(citekeys: List[com.histmersion.domain.library.Citekey])(using DbCon): Map[com.histmersion.domain.library.Citekey, com.histmersion.Sha256] =
     if citekeys.isEmpty then Map.empty
     else
       sql"""SELECT citekey, sha256 FROM sources WHERE citekey = ANY($citekeys::text[]) AND sha256 IS NOT NULL"""
@@ -744,7 +586,7 @@ private[sources] object SourceRepo:
   // ── the identifiers acquisition resolves a work's references and its own copy by ────────────
 
   /** `lower(doi) -> citekey` for the whole corpus, in one query. */
-  def doiIndex()(using DbCon): Map[com.histmersion.domain.library.sources.SourceRepo.DoiIndexResultPart1, com.histmersion.domain.library.sources.SourceRepo.DoiIndexResultPart2] =
+  def doiIndex()(using DbCon): Map[com.histmersion.domain.library.Doi, com.histmersion.domain.library.Citekey] =
     sql"SELECT lower(doi), citekey FROM sources WHERE doi IS NOT NULL AND doi <> ''"
       .query[DoiKey]
       .run()
@@ -754,22 +596,22 @@ private[sources] object SourceRepo:
   final private case class DoiKey(doi: com.histmersion.domain.library.Doi, citekey: com.histmersion.domain.library.Citekey) derives DbCodec
 
   /** The citekey of the source holding `doi` (the first by citekey), if one does. */
-  def citekeyOfDoi(doi: com.histmersion.domain.library.Doi)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.CitekeyOfDoiResult] =
+  def citekeyOfDoi(doi: com.histmersion.domain.library.Doi)(using DbCon): Option[com.histmersion.domain.library.Citekey] =
     val d = doi.trim.toLowerCase
     sql"SELECT citekey FROM sources WHERE lower(doi) = $d ORDER BY citekey LIMIT 1".query[String].run().headOption
 
-  def exists(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.domain.library.sources.SourceRepo.ExistsResult =
+  def exists(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Boolean =
     sql"SELECT count(*)::int FROM sources WHERE citekey = $citekey".query[Int].run().headOption.exists(_ > 0)
 
   // ── the licence a source is published under, as stored (classified on read by the service) ──
 
-  def licenceOf(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.LicenceOfResult] =
+  def licenceOf(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.Licence.Id] =
     sql"SELECT license FROM sources WHERE citekey = $citekey".query[Option[String]].run().headOption.flatten
 
   /** The licence a fetched copy came with, recorded as the source's when it has none — one set by hand or an earlier
     * copy is kept. `true` when it was written.
     */
-  def recordLicence(citekey: com.histmersion.domain.library.Citekey, licence: com.histmersion.domain.library.sources.SourceRepo.RecordLicenceLicence)(using DbCon): com.histmersion.domain.library.sources.SourceRepo.RecordLicenceResult =
+  def recordLicence(citekey: com.histmersion.domain.library.Citekey, licence: com.histmersion.domain.Licence.Id)(using DbCon): Boolean =
     sql"""UPDATE sources SET license = $licence, updated_at = now()
           WHERE citekey = $citekey AND (license IS NULL OR btrim(license) = '')""".update.run() > 0
 
@@ -792,8 +634,8 @@ private[sources] object SourceRepo:
       CalibreGap(citekey, title, authors, doi, year, venue, summary, topics, provenance, calibreId, isbn)
 
   object GapRow:
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = com.histmersion.domain.Title
+    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
     type Authors = Authors.T
     object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Venue = Venue.T
@@ -812,7 +654,7 @@ private[sources] object SourceRepo:
   /** Sources that are NOT in Calibre yet: provenance is something other than `calibre` (or missing) and no `calibre_id`
     * has been written back, in citekey order, at most `limit`.
     */
-  def calibreGaps(limit: Option[com.histmersion.domain.library.sources.SourceRepo.CalibreGapsLimit])(using DbCon): List[CalibreGap] =
+  def calibreGaps(limit: Option[com.histmersion.domain.library.acquisition.CandidateRepo.Limit])(using DbCon): List[CalibreGap] =
     val cap = limit.filter(_ > 0).getOrElse(Int.MaxValue)
     sql"""SELECT citekey, title, authors, doi, year, venue, summary, topics, source, NULLIF(calibre_id, ''),
             (SELECT min(i.value) FROM source_identifiers i WHERE i.source_uid = sources.uid AND i.scheme = 'isbn')
@@ -831,10 +673,10 @@ private[sources] object SourceRepo:
           FROM sources WHERE citekey = $citekey""".query[GapRow].run().headOption.map(_.gap)
 
   /** Write the Calibre id back after a push; how many sources it named (0 or 1). */
-  def setCalibreId(citekey: com.histmersion.domain.library.Citekey, calibreId: com.histmersion.domain.library.sources.SourceRepo.SetCalibreIdCalibreId)(using DbCon): com.histmersion.domain.library.sources.SourceRepo.SetCalibreIdResult =
+  def setCalibreId(citekey: com.histmersion.domain.library.Citekey, calibreId: com.histmersion.domain.library.sources.FullSourceRow.CalibreId)(using DbCon): com.histmersion.RowCount =
     sql"UPDATE sources SET calibre_id = $calibreId, updated_at = now() WHERE citekey = $citekey".update.run()
 
-  def bodyText(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.domain.library.sources.SourceRepo.BodyTextResult =
+  def bodyText(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.domain.library.sources.FullSourceRow.OcrMarkdown =
     val chunks = sql"""SELECT body FROM source_chunks
                          WHERE citekey = $citekey ORDER BY ord""".query[String].run()
     if chunks.nonEmpty then chunks.mkString("\n\n")
@@ -867,7 +709,7 @@ private[sources] object SourceRepo:
         .toList
 
   /** Body text under a specific heading: chunks whose heading matches case-insensitively (prefix). */
-  def bodyUnderHeading(citekey: com.histmersion.domain.library.Citekey, heading: com.histmersion.domain.library.sources.SourceRepo.BodyUnderHeadingHeading)(using DbCon): com.histmersion.domain.library.sources.SourceRepo.BodyUnderHeadingResult =
+  def bodyUnderHeading(citekey: com.histmersion.domain.library.Citekey, heading: com.histmersion.domain.library.search.FilterSql.SnippetRow.Heading)(using DbCon): com.histmersion.domain.library.sources.FullSourceRow.OcrMarkdown =
     val lower = heading.trim.toLowerCase
     sql"""SELECT body FROM source_chunks
             WHERE citekey = $citekey AND lower(heading) LIKE ${lower + "%"}

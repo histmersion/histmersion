@@ -12,5 +12,5 @@ enum BlobSink:
 
 object BlobSink:
   object Streamed:
-    type StoreResult = StoreResult.T
-    object StoreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StoreResult = com.histmersion.Sha256
+    val StoreResult: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256

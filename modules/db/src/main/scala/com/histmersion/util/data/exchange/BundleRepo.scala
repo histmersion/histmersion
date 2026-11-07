@@ -20,26 +20,18 @@ given DbCodec[InstanceInfo] = DbCodec.derived
   * reference data and the schema version. The owners read their own lines (`<Kind>BundleRepo`).
   */
 object BundleRepo:
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── this instance ──────────────────────────────────────────────────────────────────────────
 
-  type ReferenceDigestResultPart1 = ReferenceDigestResultPart1.T
-  object ReferenceDigestResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReferenceDigestResultPart2 = ReferenceDigestResultPart2.T
-  object ReferenceDigestResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReferenceDigestTable = ReferenceDigestTable.T
-  object ReferenceDigestTable extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SetLabelLabel = SetLabelLabel.T
-  object SetLabelLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SchemaVersionResult = SchemaVersionResult.T
-  object SchemaVersionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def instance(using DbCon): InstanceInfo =
     Sql.raw(s"SELECT id, label, ${ts("created_at")} FROM instance").frag.query[InstanceInfo].run().head
 
   /** Name this instance; a blank label clears it. */
-  def setLabel(label: Option[com.histmersion.util.data.exchange.BundleRepo.SetLabelLabel])(using DbCon): InstanceInfo =
+  def setLabel(label: Option[com.histmersion.util.data.exchange.BundleRepo.Label])(using DbCon): InstanceInfo =
     val l = label.map(_.trim).filter(_.nonEmpty)
     sql"UPDATE instance SET label = $l".update.run()
     instance
@@ -49,7 +41,7 @@ object BundleRepo:
   /** The gazetteer and the named periods, fingerprinted: not carried, compared ([[BundleReference]]). */
   private[histmersion] def reference(using DbCon): com.histmersion.api.exchange.Bundle.Reference =
     // the SEED rows only: a place or period of this collection's own travels in the bundle itself
-    def digest(table: com.histmersion.util.data.exchange.BundleRepo.ReferenceDigestTable): (com.histmersion.util.data.exchange.BundleRepo.ReferenceDigestResultPart1, com.histmersion.util.data.exchange.BundleRepo.ReferenceDigestResultPart2) =
+    def digest(table: com.histmersion.util.data.TableName): (com.histmersion.RowCount, com.histmersion.Sha256) =
       Sql
         .raw(s"""SELECT count(*)::int, coalesce(md5(string_agg(id, ',' ORDER BY id COLLATE "C")), '')
                   FROM $table WHERE dataset = 'seed'""")
@@ -64,6 +56,6 @@ object BundleRepo:
   // ── the schema ─────────────────────────────────────────────────────────────────────────────
 
   /** The Flyway version of this database, read in the caller's transaction ("33"). */
-  private[histmersion] def schemaVersion(using DbCon): Option[com.histmersion.util.data.exchange.BundleRepo.SchemaVersionResult] =
+  private[histmersion] def schemaVersion(using DbCon): Option[String] =
     sql"""SELECT version FROM flyway_schema_history WHERE success AND version IS NOT NULL
           ORDER BY installed_rank DESC LIMIT 1""".query[String].run().headOption

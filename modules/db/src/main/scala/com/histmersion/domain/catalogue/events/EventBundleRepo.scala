@@ -17,28 +17,6 @@ import com.histmersion.api.exchange.Bundle
   */
 private[events] object EventBundleRepo:
 
-  type OwnersResultPart1 = OwnersResultPart1.T
-  object OwnersResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OwnersQ = OwnersQ.T
-  object OwnersQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OwnersLabels = OwnersLabels.T
-  object OwnersLabels extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventsNamedResultPart1 = EventsNamedResultPart1.T
-  object EventsNamedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventsNamedIds = EventsNamedIds.T
-  object EventsNamedIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OldIdsNamedResultPart1 = OldIdsNamedResultPart1.T
-  object OldIdsNamedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OldIdsNamedIds = OldIdsNamedIds.T
-  object OldIdsNamedIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventIdOfResult = EventIdOfResult.T
-  object EventIdOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventExistsResult = EventExistsResult.T
-  object EventExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventExistsId = EventExistsId.T
-  object EventExistsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventIdsOfResultResult = EventIdsOfResultResult.T
-  object EventIdsOfResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   given given_DbCodec_BundleCorrection: DbCodec[Bundle.Correction] = DbCodec.derived
 
@@ -169,16 +147,16 @@ private[events] object EventBundleRepo:
   // ── what a merge plan compares ───────────────────────────────────────────────────────────────
 
   /** Who has each of `labels` here, by the query's (label, uid) rows. */
-  private def owners(q: com.histmersion.domain.catalogue.events.EventBundleRepo.OwnersQ, labels: List[com.histmersion.domain.catalogue.events.EventBundleRepo.OwnersLabels])(using DbCon): Map[com.histmersion.domain.catalogue.events.EventBundleRepo.OwnersResultPart1, UUID] =
+  private def owners(q: String, labels: List[com.histmersion.domain.catalogue.events.BEventRow.Label])(using DbCon): Map[com.histmersion.domain.catalogue.events.BEventRow.Id, UUID] =
     if labels.isEmpty then Map.empty
     else Sql.of(q, Param.A(labels.distinct)).frag.query[(String, UUID)].run().toMap
 
   /** The events here among `ids` → their uids. */
-  def eventsNamed(ids: List[com.histmersion.domain.catalogue.events.EventBundleRepo.EventsNamedIds])(using DbCon): Map[com.histmersion.domain.catalogue.events.EventBundleRepo.EventsNamedResultPart1, UUID] =
+  def eventsNamed(ids: List[com.histmersion.domain.catalogue.events.BEventRow.Id])(using DbCon): Map[com.histmersion.domain.catalogue.events.BEventRow.Id, UUID] =
     owners("SELECT id, uid FROM events WHERE id = ANY(?::text[])", ids)
 
   /** The old event ids here among `ids` → the uid of the event each names. */
-  def oldIdsNamed(ids: List[com.histmersion.domain.catalogue.events.EventBundleRepo.OldIdsNamedIds])(using DbCon): Map[com.histmersion.domain.catalogue.events.EventBundleRepo.OldIdsNamedResultPart1, UUID] =
+  def oldIdsNamed(ids: List[com.histmersion.domain.catalogue.events.BEventRow.Id])(using DbCon): Map[com.histmersion.domain.catalogue.events.BEventRow.Id, UUID] =
     owners(
       "SELECT x.alias, e.uid FROM event_aliases x JOIN events e ON e.id = x.event_id WHERE x.alias = ANY(?::text[])",
       ids
@@ -187,14 +165,14 @@ private[events] object EventBundleRepo:
   // ── in ───────────────────────────────────────────────────────────────────────────────────────
 
   /** The id an event has here now, when its uid names one. */
-  private def eventIdOf(u: UUID)(using DbCon): Option[com.histmersion.domain.catalogue.events.EventBundleRepo.EventIdOfResult] =
+  private def eventIdOf(u: UUID)(using DbCon): Option[com.histmersion.domain.catalogue.events.BEventRow.Id] =
     sql"SELECT id FROM events WHERE uid = $u".query[String].run().headOption
 
-  private def eventExists(id: com.histmersion.domain.catalogue.events.EventBundleRepo.EventExistsId)(using DbCon): com.histmersion.domain.catalogue.events.EventBundleRepo.EventExistsResult =
+  private def eventExists(id: com.histmersion.domain.catalogue.events.BEventRow.Id)(using DbCon): Boolean =
     sql"SELECT 1 FROM events WHERE id = $id".query[Int].run().nonEmpty
 
   /** Each event of the event-catalogue sets looked up once, in one step. */
-  private def eventIdsOf()(using DbCon): UUID => Option[com.histmersion.domain.catalogue.events.EventBundleRepo.EventIdsOfResultResult] =
+  private def eventIdsOf()(using DbCon): UUID => Option[com.histmersion.domain.catalogue.events.BEventRow.Id] =
     val ids = scala.collection.mutable.Map.empty[UUID, Option[String]]
     u => ids.getOrElseUpdate(u, eventIdOf(u))
 

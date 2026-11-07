@@ -21,167 +21,23 @@ import com.histmersion.api.automation.Goal
   * sums over the steps, never a second copy.
   */
 object AgentRepo:
+  type ActiveOnly = ActiveOnly.T
+  object ActiveOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CloseReason = CloseReason.T
+  object CloseReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutputChars = OutputChars.T
+  object OutputChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageCursor = PageCursor.T
+  object PageCursor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `jobs.params`: `{}` (and anything a later version wrote that this one cannot read) is every option's default
     * ([[Jsonb]]).
     */
-  type RunFacetsFromExcept = RunFacetsFromExcept.T
-  object RunFacetsFromExcept extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunFacetsUsedExcept = RunFacetsUsedExcept.T
-  object RunFacetsUsedExcept extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalPageCursorResultPart1 = ApprovalPageCursorResultPart1.T
-  object ApprovalPageCursorResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalPageCursorC = ApprovalPageCursorC.T
-  object ApprovalPageCursorC extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalFacetsFromExcept = ApprovalFacetsFromExcept.T
-  object ApprovalFacetsFromExcept extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type GetId = GetId.T
-  object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListStatus = ListStatus.T
-  object ListStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListLimit = ListLimit.T
-  object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListGoal = ListGoal.T
-  object ListGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageResultPart1 = PageResultPart1.T
-  object PageResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageResultPart2Part2 = PageResultPart2Part2.T
-  object PageResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageStatus = PageStatus.T
-  object PageStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageLimit = PageLimit.T
-  object PageLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageGoal = PageGoal.T
-  object PageGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageBefore = PageBefore.T
-  object PageBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageUpTo = PageUpTo.T
-  object PageUpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UsedModelVs = UsedModelVs.T
-  object UsedModelVs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UsedModelExprArg1 = UsedModelExprArg1.T
-  object UsedModelExprArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UsedModelExprResult = UsedModelExprResult.T
-  object UsedModelExprResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProviderResult = ProviderResult.T
-  object ProviderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProviderCol = ProviderCol.T
-  object ProviderCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunFacetsResultPart1Part1 = RunFacetsResultPart1Part1.T
-  object RunFacetsResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunFacetsResultPart1Part2 = RunFacetsResultPart1Part2.T
-  object RunFacetsResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunFacetsResultPart2Part1 = RunFacetsResultPart2Part1.T
-  object RunFacetsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunFacetsResultPart2Part2Part1 = RunFacetsResultPart2Part2Part1.T
-  object RunFacetsResultPart2Part2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunFacetsResultPart2Part2Part2 = RunFacetsResultPart2Part2Part2.T
-  object RunFacetsResultPart2Part2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateCountsResultPart1 = StateCountsResultPart1.T
-  object StateCountsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateCountsResultPart2 = StateCountsResultPart2.T
-  object StateCountsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateCountsGoal = StateCountsGoal.T
-  object StateCountsGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunStatusStatus = RunStatusStatus.T
-  object RunStatusStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunGoalGoal = RunGoalGoal.T
-  object RunGoalGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ForTargetTarget = ForTargetTarget.T
-  object ForTargetTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ForManagerManagerId = ForManagerManagerId.T
-  object ForManagerManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ForManagerActive = ForManagerActive.T
-  object ForManagerActive extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ForManagerLimit = ForManagerLimit.T
-  object ForManagerLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnsettledOnTarget = UnsettledOnTarget.T
-  object UnsettledOnTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckpointResultPart1 = CheckpointResultPart1.T
-  object CheckpointResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckpointResultPart2 = CheckpointResultPart2.T
-  object CheckpointResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckpointSeq = CheckpointSeq.T
-  object CheckpointSeq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttemptsResult = AttemptsResult.T
-  object AttemptsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttemptsSeq = AttemptsSeq.T
-  object AttemptsSeq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepsOutputChars = StepsOutputChars.T
-  object StepsOutputChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PruneMessagesResult = PruneMessagesResult.T
-  object PruneMessagesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PruneMessagesDays = PruneMessagesDays.T
-  object PruneMessagesDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PayloadResult = PayloadResult.T
-  object PayloadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PayloadId = PayloadId.T
-  object PayloadId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalId = ApprovalId.T
-  object ApprovalId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalsLimit = ApprovalsLimit.T
-  object ApprovalsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalPageResultPart1 = ApprovalPageResultPart1.T
-  object ApprovalPageResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalPageResultPart2Part2 = ApprovalPageResultPart2Part2.T
-  object ApprovalPageResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalPageLimit = ApprovalPageLimit.T
-  object ApprovalPageLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalPageBefore = ApprovalPageBefore.T
-  object ApprovalPageBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalPageUpTo = ApprovalPageUpTo.T
-  object ApprovalPageUpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalFacetsResultPart1Part1 = ApprovalFacetsResultPart1Part1.T
-  object ApprovalFacetsResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalFacetsResultPart1Part2 = ApprovalFacetsResultPart1Part2.T
-  object ApprovalFacetsResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalFacetsResultPart2Part1 = ApprovalFacetsResultPart2Part1.T
-  object ApprovalFacetsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalFacetsResultPart2Part2Part1 = ApprovalFacetsResultPart2Part2Part1.T
-  object ApprovalFacetsResultPart2Part2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalFacetsResultPart2Part2Part2 = ApprovalFacetsResultPart2Part2Part2.T
-  object ApprovalFacetsResultPart2Part2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalCountsResultPart1 = ApprovalCountsResultPart1.T
-  object ApprovalCountsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalCountsResultPart2 = ApprovalCountsResultPart2.T
-  object ApprovalCountsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenForStepSeq = OpenForStepSeq.T
-  object OpenForStepSeq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenForStepSubject = OpenForStepSubject.T
-  object OpenForStepSubject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenForStepPayload = OpenForStepPayload.T
-  object OpenForStepPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OpenForStepResult = OpenForStepResult.T
   object OpenForStepResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenSubjectSubject = OpenSubjectSubject.T
-  object OpenSubjectSubject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenSubjectPayload = OpenSubjectPayload.T
-  object OpenSubjectPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OpenSubjectResult = OpenSubjectResult.T
   object OpenSubjectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenOfKindsLimit = OpenOfKindsLimit.T
-  object OpenOfKindsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenCountResult = OpenCountResult.T
-  object OpenCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenBySubjectResultPart1 = OpenBySubjectResultPart1.T
-  object OpenBySubjectResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenBySubjectResultPart2 = OpenBySubjectResultPart2.T
-  object OpenBySubjectResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ForStepSeq = ForStepSeq.T
-  object ForStepSeq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CloseForRunResult = CloseForRunResult.T
-  object CloseForRunResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CloseForRunWhy = CloseForRunWhy.T
-  object CloseForRunWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideResult = DecideResult.T
-  object DecideResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideId = DecideId.T
-  object DecideId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideNote = DecideNote.T
-  object DecideNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SettleId = SettleId.T
-  object SettleId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SettleResult = SettleResult.T
   object SettleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -384,10 +240,10 @@ object AgentRepo:
       r.heartbeatAt
     )
 
-  def get(id: com.histmersion.domain.automation.agents.AgentRepo.GetId)(using DbCon): Option[RunInfo] =
+  def get(id: com.histmersion.domain.automation.agents.AgentRepo.RunRow.Id)(using DbCon): Option[RunInfo] =
     (runSelect ++ Sql.of(" AND j.id = ?", Param.S(id))).frag.query[RunRow].run().headOption.map(toInfo)
 
-  def list(status: Option[com.histmersion.domain.automation.agents.AgentRepo.ListStatus], limit: com.histmersion.domain.automation.agents.AgentRepo.ListLimit, goal: Option[com.histmersion.domain.automation.agents.AgentRepo.ListGoal] = None)(using DbCon): Vector[RunInfo] =
+  def list(status: Option[com.histmersion.domain.automation.Run.State.Wire], limit: com.histmersion.PageSize, goal: Option[com.histmersion.domain.automation.Goal.Slug] = None)(using DbCon): Vector[RunInfo] =
     (runSelect ++ runStatus(status) ++ runGoal(goal) ++ Keyset.orderBy("j.") ++ Sql.of(
       " LIMIT ?",
       Param.I(math.max(1, limit))
@@ -397,12 +253,12 @@ object AgentRepo:
     * `upTo` are run ids. Left: a cursor that names no job.
     */
   def page(
-      status: Option[com.histmersion.domain.automation.agents.AgentRepo.PageStatus],
-      limit: com.histmersion.domain.automation.agents.AgentRepo.PageLimit,
-      goal: Option[com.histmersion.domain.automation.agents.AgentRepo.PageGoal] = None,
-      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageBefore] = None,
-      upTo: Option[com.histmersion.domain.automation.agents.AgentRepo.PageUpTo] = None
-  )(using DbCon): Either[com.histmersion.domain.automation.agents.AgentRepo.PageResultPart1, (Vector[RunInfo], com.histmersion.domain.automation.agents.AgentRepo.PageResultPart2Part2)] =
+      status: Option[com.histmersion.domain.automation.Run.State.Wire],
+      limit: com.histmersion.PageSize,
+      goal: Option[com.histmersion.domain.automation.Goal.Slug] = None,
+      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor] = None,
+      upTo: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor] = None
+  )(using DbCon): Either[com.histmersion.domain.automation.agents.AgentRepo.PageCursor, (Vector[RunInfo], Boolean)] =
     page(
       RunQuery(
         status = status.map(_.trim.toLowerCase).filter(_.nonEmpty).toList,
@@ -419,7 +275,7 @@ object AgentRepo:
   /** ` AND (j.model is one of them OR a step of the run used one of them)` — `expr` maps a model to what is matched
     * (itself, or its provider).
     */
-  private def usedModel(vs: List[com.histmersion.domain.automation.agents.AgentRepo.UsedModelVs], expr: com.histmersion.domain.automation.agents.AgentRepo.UsedModelExprArg1 => com.histmersion.domain.automation.agents.AgentRepo.UsedModelExprResult): Sql =
+  private def usedModel(vs: List[String], expr: String => String): Sql =
     if vs.isEmpty then Sql.empty
     else
       Sql.of(
@@ -429,7 +285,7 @@ object AgentRepo:
         Param.A(vs)
       )
 
-  private def provider(col: com.histmersion.domain.automation.agents.AgentRepo.ProviderCol): com.histmersion.domain.automation.agents.AgentRepo.ProviderResult = s"split_part($col, ':', 1)"
+  private def provider(col: String): String = s"split_part($col, ':', 1)"
 
   private def runConds(q: RunQuery): ListSql.Conds = ListSql.Conds(
     List(
@@ -448,10 +304,10 @@ object AgentRepo:
   /** One page of the runs that match `q`, newest first. Left: a cursor that names no job. */
   def page(
       q: RunQuery,
-      limit: com.histmersion.domain.automation.agents.AgentRepo.PageLimit,
-      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageBefore],
-      upTo: Option[com.histmersion.domain.automation.agents.AgentRepo.PageUpTo]
-  )(using DbCon): Either[com.histmersion.domain.automation.agents.AgentRepo.PageResultPart1, (Vector[RunInfo], com.histmersion.domain.automation.agents.AgentRepo.PageResultPart2Part2)] =
+      limit: com.histmersion.PageSize,
+      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor],
+      upTo: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor]
+  )(using DbCon): Either[com.histmersion.domain.automation.agents.AgentRepo.PageCursor, (Vector[RunInfo], Boolean)] =
     (before.toList ++ upTo.toList).find(c => !Keyset.existsOn("jobs", Param.S(c))) match
       case Some(c) => Left(s"No agent run '$c' to page from")
       case None    =>
@@ -471,10 +327,10 @@ object AgentRepo:
     * facets — each under every filter but its own. A run's models are the one it was started with and every one its
     * steps reported; the provider is a model's `provider:` part.
     */
-  def runFacets(q: RunQuery)(using DbCon): (List[(com.histmersion.domain.automation.agents.AgentRepo.RunFacetsResultPart1Part1, com.histmersion.domain.automation.agents.AgentRepo.RunFacetsResultPart1Part2)], List[(com.histmersion.domain.automation.agents.AgentRepo.RunFacetsResultPart2Part1, List[(com.histmersion.domain.automation.agents.AgentRepo.RunFacetsResultPart2Part2Part1, com.histmersion.domain.automation.agents.AgentRepo.RunFacetsResultPart2Part2Part2)])]) =
+  def runFacets(q: RunQuery)(using DbCon): (List[(com.histmersion.domain.automation.Run.State.Wire, com.histmersion.RowCount)], List[(com.histmersion.domain.automation.Pipeline.Wire, List[(com.histmersion.domain.automation.agents.AgentRepo.RunRow.Model, com.histmersion.RowCount)])]) =
     val c = runConds(q)
-    def from(except: com.histmersion.domain.automation.agents.AgentRepo.RunFacetsFromExcept) = Sql.raw(" FROM jobs j") ++ Sql.raw(runsOnly) ++ c.except(except)
-    def used(except: com.histmersion.domain.automation.agents.AgentRepo.RunFacetsUsedExcept): Sql =
+    def from(except: String) = Sql.raw(" FROM jobs j") ++ Sql.raw(runsOnly) ++ c.except(except)
+    def used(except: String): Sql =
       Sql.raw(
         " FROM (SELECT DISTINCT j.id, x.m FROM jobs j CROSS JOIN LATERAL (SELECT j.model AS m UNION " +
           "SELECT s.model FROM agent_steps s WHERE s.job_id = j.id) x"
@@ -492,17 +348,17 @@ object AgentRepo:
     )
 
   /** How many runs are in each state — of one goal, when given. */
-  def stateCounts(goal: Option[com.histmersion.domain.automation.agents.AgentRepo.StateCountsGoal] = None)(using DbCon): List[(com.histmersion.domain.automation.agents.AgentRepo.StateCountsResultPart1, com.histmersion.domain.automation.agents.AgentRepo.StateCountsResultPart2)] =
+  def stateCounts(goal: Option[com.histmersion.domain.automation.Goal.Slug] = None)(using DbCon): List[(com.histmersion.domain.automation.Approval.State.Wire, com.histmersion.RowCount)] =
     Keyset.countsOn(Sql.raw(" FROM jobs j") ++ Sql.raw(runsOnly) ++ runGoal(goal), "j.status")
 
-  private def runStatus(status: Option[com.histmersion.domain.automation.agents.AgentRepo.RunStatusStatus]): Sql =
+  private def runStatus(status: Option[com.histmersion.domain.automation.Run.State.Wire]): Sql =
     status.map(_.trim.toLowerCase).filter(_.nonEmpty).fold(Sql.empty)(s => Sql.of(" AND j.status = ?", Param.S(s)))
 
-  private def runGoal(goal: Option[com.histmersion.domain.automation.agents.AgentRepo.RunGoalGoal]): Sql =
+  private def runGoal(goal: Option[com.histmersion.domain.automation.Goal.Slug]): Sql =
     goal.map(_.trim).filter(_.nonEmpty).fold(Sql.empty)(g => Sql.of(" AND j.goal_slug = ?", Param.S(g)))
 
   /** Every run of `p` on `target`, newest first (what auto-enrich asks before queueing another). */
-  def forTarget(p: Pipeline, target: com.histmersion.domain.automation.agents.AgentRepo.ForTargetTarget)(using DbCon): Vector[RunInfo] =
+  def forTarget(p: Pipeline, target: com.histmersion.domain.automation.agents.AgentRepo.RunRow.Target)(using DbCon): Vector[RunInfo] =
     (runSelect ++ Sql.of(
       " AND j.pipeline = ? AND j.target_id = ? ORDER BY j.created_at DESC, j.id",
       Param.S(p.wire),
@@ -512,7 +368,7 @@ object AgentRepo:
   /** The runs a manager dispatched, newest first (`active` = only those not settled yet: queued, running, paused or
     * waiting).
     */
-  def forManager(managerId: com.histmersion.domain.automation.agents.AgentRepo.ForManagerManagerId, active: com.histmersion.domain.automation.agents.AgentRepo.ForManagerActive = false, limit: com.histmersion.domain.automation.agents.AgentRepo.ForManagerLimit = 200)(using DbCon): Vector[RunInfo] =
+  def forManager(managerId: com.histmersion.domain.automation.agents.AgentRepo.RunRow.ManagerId, active: com.histmersion.domain.automation.agents.AgentRepo.ActiveOnly = false, limit: com.histmersion.PageSize = 200)(using DbCon): Vector[RunInfo] =
     val open = if active then Sql.of(" AND j.status IN ('queued', 'running', 'paused', 'waiting')") else Sql.empty
     (runSelect ++ Sql.of(" AND j.manager_id = ?", Param.S(managerId)) ++ open ++
       Sql.of(" ORDER BY j.created_at DESC, j.id DESC LIMIT ?", Param.I(math.max(1, limit)))).frag
@@ -523,7 +379,7 @@ object AgentRepo:
   /** Every run on an article or source `target` that has not settled (any pipeline, any origin): a manager does not
     * start a second writer on it.
     */
-  def unsettledOn(target: com.histmersion.domain.automation.agents.AgentRepo.UnsettledOnTarget)(using DbCon): Vector[RunInfo] =
+  def unsettledOn(target: com.histmersion.domain.automation.agents.AgentRepo.RunRow.Target)(using DbCon): Vector[RunInfo] =
     (runSelect ++ Sql.of(
       " AND j.target_id = ? AND j.status IN ('queued', 'running', 'paused', 'waiting')",
       Param.S(target)
@@ -532,7 +388,7 @@ object AgentRepo:
   // ── steps: checkpoints and attempts ────────────────────────────────────────────────────────────
 
   /** The checkpoint of step `seq`: its name and recorded output, if an attempt finished. */
-  def checkpoint(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.AgentRepo.CheckpointSeq)(using DbCon): Option[(com.histmersion.domain.automation.agents.AgentRepo.CheckpointResultPart1, com.histmersion.domain.automation.agents.AgentRepo.CheckpointResultPart2)] =
+  def checkpoint(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.AgentRepo.StepRow.Seq)(using DbCon): Option[(com.histmersion.domain.automation.agents.AgentRepo.StepRow.Output, com.histmersion.domain.automation.agents.AgentRepo.RunRow.Progress)] =
     sql"""SELECT name, output::text FROM agent_steps
           WHERE job_id = $jobId AND seq = $seq AND status = ${StepStatus.Done.wire}
           ORDER BY attempt DESC LIMIT 1"""
@@ -544,7 +400,7 @@ object AgentRepo:
   /** How many attempts step `seq` already has (failed ones included) — a resumed step continues the count rather than
     * restarting it, so `max-retries` holds across a restart.
     */
-  def attempts(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.AgentRepo.AttemptsSeq)(using DbCon): com.histmersion.domain.automation.agents.AgentRepo.AttemptsResult =
+  def attempts(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.AgentRepo.StepRow.Seq)(using DbCon): com.histmersion.RowCount =
 
     sql"SELECT coalesce(max(attempt), 0) FROM agent_steps WHERE job_id = $jobId AND seq = $seq"
       .query[Int]
@@ -642,7 +498,7 @@ object AgentRepo:
     }
     sql"UPDATE jobs SET updated_at = now() WHERE id = $jobId".update.run()
 
-  def steps(jobId: com.histmersion.util.jobs.Job.Id, outputChars: com.histmersion.domain.automation.agents.AgentRepo.StepsOutputChars)(using DbCon): List[StepInfo] =
+  def steps(jobId: com.histmersion.util.jobs.Job.Id, outputChars: com.histmersion.domain.automation.agents.AgentRepo.OutputChars)(using DbCon): List[StepInfo] =
     sql"""SELECT seq, name, kind, attempt, status, model, prompt_hash, tokens_in, tokens_out, tokens_cache_read,
                  tokens_cache_write, cost_usd, error, left(output::text, $outputChars),
                  to_char(started_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}),
@@ -699,7 +555,7 @@ object AgentRepo:
   /** Delete traced messages older than `days` (0 or less = keep everything). The steps — checkpoints, tokens, cost —
     * are never pruned: a resume and the budget sums need them. Returns how many rows went.
     */
-  def pruneMessages(days: com.histmersion.domain.automation.agents.AgentRepo.PruneMessagesDays)(using DbCon): com.histmersion.domain.automation.agents.AgentRepo.PruneMessagesResult =
+  def pruneMessages(days: com.histmersion.domain.CodexRetention.KeepDays)(using DbCon): com.histmersion.RowCount =
     if days <= 0 then 0
     else sql"""DELETE FROM agent_messages WHERE created_at < now() - make_interval(days => $days)""".update.run()
 
@@ -803,13 +659,13 @@ object AgentRepo:
 
 
   /** The payload an approval was recorded with, as stored. */
-  def payload(id: com.histmersion.domain.automation.agents.AgentRepo.PayloadId)(using DbCon): Option[com.histmersion.domain.automation.agents.AgentRepo.PayloadResult] =
+  def payload(id: com.histmersion.domain.automation.agents.AgentRepo.ApprovalRow.Id)(using DbCon): Option[com.histmersion.domain.automation.agents.AgentRepo.ApprovalRow.Proposal] =
     sql"SELECT proposal::text FROM approvals WHERE id = $id".query[String].run().headOption
 
 
 
 
-  def approval(id: com.histmersion.domain.automation.agents.AgentRepo.ApprovalId)(using DbCon): Option[ApprovalInfo] =
+  def approval(id: com.histmersion.domain.automation.agents.AgentRepo.ApprovalRow.Id)(using DbCon): Option[ApprovalInfo] =
 
     (approvalSelect ++ Sql.of(" WHERE id = ?", Param.L(id))).frag
       .query[ApprovalRow]
@@ -818,7 +674,7 @@ object AgentRepo:
       .map(info)
 
   /** Newest first; `state` narrows (none = every state). */
-  def approvals(state: Option[ApprovalState], limit: com.histmersion.domain.automation.agents.AgentRepo.ApprovalsLimit)(using DbCon): List[ApprovalInfo] =
+  def approvals(state: Option[ApprovalState], limit: com.histmersion.PageSize)(using DbCon): List[ApprovalInfo] =
     val where = state.fold(Sql.empty)(s => Sql.of(" WHERE state = ?", Param.S(s.wire)))
     (approvalSelect ++ where ++ Sql.of(
       " ORDER BY created_at DESC, id DESC LIMIT ?",
@@ -830,10 +686,10 @@ object AgentRepo:
     */
   def approvalPage(
       state: Option[ApprovalState],
-      limit: com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageLimit,
-      before: Option[com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageBefore] = None,
-      upTo: Option[com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageUpTo] = None
-  )(using DbCon): Either[com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageResultPart1, (List[ApprovalInfo], com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageResultPart2Part2)] =
+      limit: com.histmersion.PageSize,
+      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor] = None,
+      upTo: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor] = None
+  )(using DbCon): Either[com.histmersion.domain.automation.agents.AgentRepo.PageCursor, (List[ApprovalInfo], Boolean)] =
     approvalPage(ApprovalQuery(state), limit, before, upTo)
 
   private def approvalConds(q: ApprovalQuery): ListSql.Conds =
@@ -870,11 +726,11 @@ object AgentRepo:
   /** One page of the approvals that match `q`, newest first ([[com.histmersion.api.Paging]]). */
   def approvalPage(
       q: ApprovalQuery,
-      limit: com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageLimit,
-      before: Option[com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageBefore],
-      upTo: Option[com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageUpTo]
-  )(using DbCon): Either[com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageResultPart1, (List[ApprovalInfo], com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageResultPart2Part2)] =
-    def cursor(c: com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageCursorC): Either[com.histmersion.domain.automation.agents.AgentRepo.ApprovalPageCursorResultPart1, Param] =
+      limit: com.histmersion.PageSize,
+      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor],
+      upTo: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor]
+  )(using DbCon): Either[com.histmersion.domain.automation.agents.AgentRepo.PageCursor, (List[ApprovalInfo], Boolean)] =
+    def cursor(c: com.histmersion.domain.automation.agents.AgentRepo.PageCursor): Either[com.histmersion.domain.automation.agents.AgentRepo.PageCursor, Param] =
       c.trim.toLongOption
         .map(Param.L(_))
         .filter(Keyset.existsOn("approvals", _))
@@ -891,9 +747,9 @@ object AgentRepo:
   /** The counts that go with a filtered page: per state (under every filter but the state) and the `kind` and
     * `decidedBy` facets (each under every filter but its own).
     */
-  def approvalFacets(q: ApprovalQuery)(using DbCon): (List[(com.histmersion.domain.automation.agents.AgentRepo.ApprovalFacetsResultPart1Part1, com.histmersion.domain.automation.agents.AgentRepo.ApprovalFacetsResultPart1Part2)], List[(com.histmersion.domain.automation.agents.AgentRepo.ApprovalFacetsResultPart2Part1, List[(com.histmersion.domain.automation.agents.AgentRepo.ApprovalFacetsResultPart2Part2Part1, com.histmersion.domain.automation.agents.AgentRepo.ApprovalFacetsResultPart2Part2Part2)])]) =
+  def approvalFacets(q: ApprovalQuery)(using DbCon): (List[(com.histmersion.domain.automation.Approval.Kind.Wire, com.histmersion.RowCount)], List[(com.histmersion.domain.automation.Approval.State.Wire, List[(com.histmersion.domain.automation.agents.AgentRepo.ApprovalRow.Subject, com.histmersion.RowCount)])]) =
     val c = approvalConds(q)
-    def from(except: com.histmersion.domain.automation.agents.AgentRepo.ApprovalFacetsFromExcept) = Sql.raw(" FROM approvals WHERE true") ++ c.except(except)
+    def from(except: String) = Sql.raw(" FROM approvals WHERE true") ++ c.except(except)
     (
       Keyset.countsOn(from("state"), "state"),
       List(
@@ -903,17 +759,17 @@ object AgentRepo:
     )
 
   /** How many approvals are in each state. */
-  def approvalCounts()(using DbCon): List[(com.histmersion.domain.automation.agents.AgentRepo.ApprovalCountsResultPart1, com.histmersion.domain.automation.agents.AgentRepo.ApprovalCountsResultPart2)] = Keyset.countsOn(Sql.raw(" FROM approvals"), "state")
+  def approvalCounts()(using DbCon): List[(com.histmersion.domain.automation.Approval.Kind.Wire, com.histmersion.RowCount)] = Keyset.countsOn(Sql.raw(" FROM approvals"), "state")
 
   /** The approval step `seq` of run `jobId` waits on, opened if it is not there yet (a resumed run finds the one it
     * opened before, never a second). `state` = approved with a `result` records one applied at once (an `auto` mode).
     */
   def openForStep(
       jobId: com.histmersion.util.jobs.Job.Id,
-      seq: com.histmersion.domain.automation.agents.AgentRepo.OpenForStepSeq,
+      seq: com.histmersion.domain.automation.agents.AgentRepo.StepRow.Seq,
       kind: ApprovalKind,
-      subject: com.histmersion.domain.automation.agents.AgentRepo.OpenForStepSubject,
-      payload: com.histmersion.domain.automation.agents.AgentRepo.OpenForStepPayload,
+      subject: com.histmersion.domain.automation.agents.AgentRepo.ApprovalRow.Subject,
+      payload: com.histmersion.domain.automation.agents.AgentRepo.ApprovalRow.Proposal,
       state: ApprovalState,
       result: Option[com.histmersion.domain.automation.agents.AgentRepo.OpenForStepResult],
       now: java.time.Instant
@@ -931,8 +787,8 @@ object AgentRepo:
   def openSubject(
       jobId: Option[com.histmersion.util.jobs.Job.Id],
       kind: ApprovalKind,
-      subject: com.histmersion.domain.automation.agents.AgentRepo.OpenSubjectSubject,
-      payload: com.histmersion.domain.automation.agents.AgentRepo.OpenSubjectPayload,
+      subject: com.histmersion.domain.automation.agents.AgentRepo.ApprovalRow.Subject,
+      payload: com.histmersion.domain.automation.agents.AgentRepo.ApprovalRow.Proposal,
       state: ApprovalState,
       result: Option[com.histmersion.domain.automation.agents.AgentRepo.OpenSubjectResult],
       now: java.time.Instant
@@ -962,7 +818,7 @@ object AgentRepo:
     )).frag.query[ApprovalRow].run().toList.map(info)
 
   /** The OPEN approvals of the given kinds, oldest first (what the supervisor's checks look at). */
-  def openOfKinds(kinds: List[ApprovalKind], limit: com.histmersion.domain.automation.agents.AgentRepo.OpenOfKindsLimit)(using DbCon): List[ApprovalInfo] =
+  def openOfKinds(kinds: List[ApprovalKind], limit: com.histmersion.PageSize)(using DbCon): List[ApprovalInfo] =
     (approvalSelect ++ Sql.of(
       " WHERE state = 'open' AND kind = ANY(?::text[]) ORDER BY id LIMIT ?",
       Param.A(kinds.map(_.wire)),
@@ -979,19 +835,19 @@ object AgentRepo:
       .map((i, k, s, c) => ApprovalDigest.Open(i, k, s, c))
 
   /** How many approvals of `kind` are open (the backlog a scaled daily cap reads). */
-  def openCount(kind: ApprovalKind)(using DbCon): com.histmersion.domain.automation.agents.AgentRepo.OpenCountResult =
+  def openCount(kind: ApprovalKind)(using DbCon): com.histmersion.RowCount =
 
     sql"SELECT count(*)::int FROM approvals WHERE state = 'open' AND kind = ${kind.wire}".query[Int].run().head
 
   /** Open approvals per subject (a goal or an article slug). */
-  def openBySubject()(using DbCon): Map[com.histmersion.domain.automation.agents.AgentRepo.OpenBySubjectResultPart1, com.histmersion.domain.automation.agents.AgentRepo.OpenBySubjectResultPart2] =
+  def openBySubject()(using DbCon): Map[com.histmersion.domain.automation.agents.AgentRepo.ApprovalRow.Subject, com.histmersion.RowCount] =
     sql"""SELECT subject, count(*)::int FROM approvals WHERE state = 'open' AND subject IS NOT NULL GROUP BY subject"""
       .query[(String, Int)]
       .run()
       .toMap
 
   /** The approval step `seq` of run `jobId` opened, if it did. */
-  def forStep(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.AgentRepo.ForStepSeq)(using DbCon): Option[ApprovalInfo] =
+  def forStep(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.AgentRepo.StepRow.Seq)(using DbCon): Option[ApprovalInfo] =
 
     (approvalSelect ++ Sql.of(" WHERE job_id = ? AND seq = ?", Param.S(jobId), Param.I(seq))).frag
       .query[ApprovalRow]
@@ -1000,16 +856,16 @@ object AgentRepo:
       .map(info)
 
   /** A cancelled run's open approvals: rejected, so nobody decides for a run that is gone. */
-  def closeForRun(jobId: com.histmersion.util.jobs.Job.Id, why: com.histmersion.domain.automation.agents.AgentRepo.CloseForRunWhy)(using DbCon): com.histmersion.domain.automation.agents.AgentRepo.CloseForRunResult =
+  def closeForRun(jobId: com.histmersion.util.jobs.Job.Id, why: com.histmersion.domain.automation.agents.AgentRepo.CloseReason)(using DbCon): com.histmersion.RowCount =
     sql"""UPDATE approvals SET state = ${ApprovalState.Rejected.wire}, result = $why, decided_at = now()
           WHERE job_id = $jobId AND seq IS NOT NULL AND state = ${ApprovalState.Open.wire}""".update.run()
 
   /** Compare-and-set an OPEN approval to its decision. `false` when it had already been decided. */
-  def decide(id: com.histmersion.domain.automation.agents.AgentRepo.DecideId, to: ApprovalState, note: Option[com.histmersion.domain.automation.agents.AgentRepo.DecideNote], result: Option[String])(using DbCon): com.histmersion.domain.automation.agents.AgentRepo.DecideResult =
+  def decide(id: com.histmersion.domain.automation.agents.AgentRepo.ApprovalRow.Id, to: ApprovalState, note: Option[com.histmersion.domain.automation.agents.AgentRepo.ApprovalRow.Note], result: Option[String])(using DbCon): Boolean =
     sql"""UPDATE approvals SET state = ${to.wire}, note = $note, result = $result, decided_at = now()
           WHERE id = $id AND state = ${ApprovalState.Open.wire}""".update.run() > 0
 
   /** After [[decide]]: the final state and what applying the decision did. */
-  def settle(id: com.histmersion.domain.automation.agents.AgentRepo.SettleId, to: ApprovalState, result: com.histmersion.domain.automation.agents.AgentRepo.SettleResult)(using DbCon): Unit =
+  def settle(id: com.histmersion.domain.automation.agents.AgentRepo.ApprovalRow.Id, to: ApprovalState, result: com.histmersion.domain.automation.agents.AgentRepo.SettleResult)(using DbCon): Unit =
     val _ =
       sql"UPDATE approvals SET state = ${to.wire}, result = $result WHERE id = $id".update.run()

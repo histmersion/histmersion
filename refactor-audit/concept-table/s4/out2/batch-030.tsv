@@ -1,0 +1,17 @@
+com.histmersion.pluginhost.PluginGazetteers.AllFResultPart1	new:com.histmersion.pluginhost.PluginGazetteers.Problem
+com.histmersion.pluginhost.PluginGazetteers.AllLoopResultPart1	new:com.histmersion.pluginhost.PluginGazetteers.Problem
+com.histmersion.pluginhost.PluginGazetteers.AllResultPart1	new:com.histmersion.pluginhost.PluginGazetteers.Problem
+com.histmersion.pluginhost.PluginGazetteers.GuardResultPart1	new:com.histmersion.pluginhost.PluginGazetteers.Problem
+com.histmersion.pluginhost.PluginGazetteers.InputCredit	com.histmersion.domain.Attribution.Credit
+com.histmersion.pluginhost.PluginGazetteers.InputNamedWhy	new:com.histmersion.pluginhost.PluginGazetteers.Reason
+com.histmersion.pluginhost.PluginGazetteers.InputResultPart1	new:com.histmersion.pluginhost.PluginGazetteers.Problem
+com.histmersion.pluginhost.PluginGazetteers.JsonResultPart1	new:com.histmersion.pluginhost.PluginGazetteers.Problem
+com.histmersion.pluginhost.PluginGazetteers.JsonResultPart2	new:com.histmersion.pluginhost.PluginGazetteers.JsonText
+com.histmersion.pluginhost.PluginGazetteers.JsonText	new:com.histmersion.pluginhost.PluginGazetteers.JsonText
+com.histmersion.pluginhost.PluginGazetteers.JsonWhat	new:com.histmersion.pluginhost.PluginGazetteers.FieldName
+com.histmersion.pluginhost.PluginGazetteers.NameResultPart1	new:com.histmersion.pluginhost.PluginGazetteers.Problem
+com.histmersion.pluginhost.PluginGazetteers.PlacesResultPart1	new:com.histmersion.pluginhost.PluginGazetteers.Problem
+com.histmersion.pluginhost.PluginGazetteers.PlacesResultPart2Part2	new:com.histmersion.pluginhost.PluginGazetteers.Warning
+com.histmersion.pluginhost.PluginGazetteers.RelationResultPart1	new:com.histmersion.pluginhost.PluginGazetteers.Problem
+com.histmersion.pluginhost.PluginGazetteers.SpanResultPart1	native
+com.histmersion.pluginhost.PluginGazetteers.UserAgentValue	com.histmersion.pluginhost.PluginGazetteers.UserAgentValue

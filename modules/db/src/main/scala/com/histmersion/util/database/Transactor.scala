@@ -7,12 +7,12 @@ trait Transactor:
   def read[A](work: DbCon ?=> A): A
   def transact[A](work: DbCon ?=> A): A
   def autocommit[A](work: DbCon ?=> A): A = read(Transactor.onConnection.autocommit(work))
-  def readOnlyRollback[A](timeoutMs: com.histmersion.util.database.Transactor.ReadOnlyRollbackTimeoutMs)(work: DbCon ?=> A): A =
+  def readOnlyRollback[A](timeoutMs: com.histmersion.util.database.Transactor.TimeoutMs)(work: DbCon ?=> A): A =
     read(Transactor.onConnection.readOnlyRollback(timeoutMs)(work))
 
 object Transactor:
-  type ReadOnlyRollbackTimeoutMs = ReadOnlyRollbackTimeoutMs.T
-  object ReadOnlyRollbackTimeoutMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeoutMs = TimeoutMs.T
+  object TimeoutMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(dataSource: DataSource): Transactor = Implementation(dataSource)
   def onConnection(using con: DbCon): Session = new Session(con)
@@ -24,9 +24,9 @@ object Transactor:
 
     def transact[A](work: DbCon ?=> A): A = run(true, None)(work)
     def rollback[A](work: DbCon ?=> A): A = run(false, None)(work)
-    def readOnlyRollback[A](timeoutMs: com.histmersion.util.database.Transactor.Session.ReadOnlyRollbackTimeoutMs)(work: DbCon ?=> A): A = run(false, Some(timeoutMs))(work)
+    def readOnlyRollback[A](timeoutMs: com.histmersion.util.database.Transactor.TimeoutMs)(work: DbCon ?=> A): A = run(false, Some(timeoutMs))(work)
 
-    private def run[A](commit: com.histmersion.util.database.Transactor.Session.RunCommit, readOnlyTimeout: Option[com.histmersion.util.database.Transactor.Session.RunReadOnlyTimeout])(work: DbCon ?=> A): A =
+    private def run[A](commit: com.histmersion.util.database.Transactor.Session.Commit, readOnlyTimeout: Option[com.histmersion.util.database.Transactor.TimeoutMs])(work: DbCon ?=> A): A =
       val jdbc = con.connection
       require(jdbc.getAutoCommit, "A scoped transaction cannot borrow an active transaction")
       val wasReadOnly = jdbc.isReadOnly
@@ -53,7 +53,7 @@ object Transactor:
           throw error
       finally
         var cleanup: Throwable = null
-        def attempt(action: => Unit): com.histmersion.util.database.Transactor.Session.RunAttemptResult =
+        def attempt(action: => Unit): Boolean =
           try
             action
             true
@@ -73,15 +73,9 @@ object Transactor:
           else if primary ne cleanup then primary.addSuppressed(cleanup)
 
   object Session:
-    type RunAttemptResult = RunAttemptResult.T
-    object RunAttemptResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Commit = Commit.T
+    object Commit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ReadOnlyRollbackTimeoutMs = ReadOnlyRollbackTimeoutMs.T
-    object ReadOnlyRollbackTimeoutMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunCommit = RunCommit.T
-    object RunCommit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RunReadOnlyTimeout = RunReadOnlyTimeout.T
-    object RunReadOnlyTimeout extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final private class Implementation(dataSource: DataSource) extends Transactor:
     def read[A](work: DbCon ?=> A): A = connectTo(dataSource)(work)

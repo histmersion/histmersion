@@ -30,44 +30,18 @@ import com.histmersion.api.Api
   * screen's draft is `merge_sessions` (V051). Stateless, like every repo.
   */
 object MergeRepo:
+  type BundleName = BundleName.T
+  object BundleName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecisionKey = DecisionKey.T
+  object DecisionKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Importing = Importing.T
+  object Importing extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeIdOrPrefix = MergeIdOrPrefix.T
+  object MergeIdOrPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UidText = UidText.T
+  object UidText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type LedgerAsUidS = LedgerAsUidS.T
-  object LedgerAsUidS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ListLimit = ListLimit.T
-  object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindIdOrPrefix = FindIdOrPrefix.T
-  object FindIdOrPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DetailIdOrPrefix = DetailIdOrPrefix.T
-  object DetailIdOrPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LedgerUid = LedgerUid.T
-  object LedgerUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LedgerMerge = LedgerMerge.T
-  object LedgerMerge extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LedgerLimit = LedgerLimit.T
-  object LedgerLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SessionBundle = SessionBundle.T
-  object SessionBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutSessionBundle = PutSessionBundle.T
-  object PutSessionBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DropSessionBundle = DropSessionBundle.T
-  object DropSessionBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImportingOn = ImportingOn.T
-  object ImportingOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordBundleSha = RecordBundleSha.T
-  object RecordBundleSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordOwnBundle = RecordOwnBundle.T
-  object RecordOwnBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordChanged = RecordChanged.T
-  object RecordChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordAppliedPart1 = RecordAppliedPart1.T
-  object RecordAppliedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordAppliedPart2 = RecordAppliedPart2.T
-  object RecordAppliedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordAppliedPart3 = RecordAppliedPart3.T
-  object RecordAppliedPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RememberDecisionsPart1 = RememberDecisionsPart1.T
-  object RememberDecisionsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val ts = BundleSql.ts
 
@@ -90,7 +64,7 @@ object MergeRepo:
     )
 
   /** The merges, newest first. */
-  def list(limit: com.histmersion.util.data.exchange.MergeRepo.ListLimit)(using DbCon): List[MergeInfo] =
+  def list(limit: com.histmersion.PageSize)(using DbCon): List[MergeInfo] =
     Sql
       .of(
         s"SELECT $mergeCols FROM merges m ORDER BY m.applied_at DESC, m.id DESC LIMIT ?",
@@ -103,7 +77,7 @@ object MergeRepo:
       .map(info)
 
   /** One merge by its id or an unambiguous prefix of it: `Left` when none, or several, match. */
-  def find(idOrPrefix: com.histmersion.util.data.exchange.MergeRepo.FindIdOrPrefix)(using DbCon): Either[Api.Error, MergeRow] =
+  def find(idOrPrefix: com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix)(using DbCon): Either[Api.Error, MergeRow] =
     val p = idOrPrefix.trim.toLowerCase(java.util.Locale.ROOT)
     if p.isEmpty || !p.forall(c => c.isDigit || (c >= 'a' && c <= 'f') || c == '-') then
       Left(
@@ -131,7 +105,7 @@ object MergeRepo:
   /** One merge with its report (an apply's or an import's, as written), its resolutions and the decisions it left to
     * remember.
     */
-  def detail(idOrPrefix: com.histmersion.util.data.exchange.MergeRepo.DetailIdOrPrefix)(using DbCon): Either[Api.Error, MergeDetail] =
+  def detail(idOrPrefix: com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix)(using DbCon): Either[Api.Error, MergeDetail] =
     find(idOrPrefix).map { r =>
       val (report, resolutions) = sql"SELECT report::text, resolutions::text FROM merges WHERE id = ${r.id}"
         .query[(String, Option[String])]
@@ -153,13 +127,13 @@ object MergeRepo:
   /** The ledger rows of one record (a uid — the bundle's or the one here — or a citekey), of one merge, or the latest
     * `limit`; and the redirects that name the record.
     */
-  def ledger(uid: Option[com.histmersion.util.data.exchange.MergeRepo.LedgerUid], merge: Option[com.histmersion.util.data.exchange.MergeRepo.LedgerMerge], limit: com.histmersion.util.data.exchange.MergeRepo.LedgerLimit, rules: MergeRuleSet)(using
+  def ledger(uid: Option[com.histmersion.util.data.exchange.MergeRepo.UidText], merge: Option[com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix], limit: com.histmersion.PageSize, rules: MergeRuleSet)(using
       DbCon
   ): Either[Api.Error, MergeLedger] =
     val label = rules.ledgerLabelSql
     val select = s"""SELECT l.foreign_uid, l.kind, l.merge_id, l.foreign_rev, l.local_uid, $label, l.local_rev_after,
                             l.decision, ${ts("l.recorded_at")} FROM merge_ledger l"""
-    def asUid(s: com.histmersion.util.data.exchange.MergeRepo.LedgerAsUidS): Option[UUID] = scala.util.Try(UUID.fromString(s.trim)).toOption
+    def asUid(s: com.histmersion.util.data.exchange.MergeRepo.UidText): Option[UUID] = scala.util.Try(UUID.fromString(s.trim)).toOption
     val target: Either[Api.Error, Option[UUID]] = uid.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(u) =>
@@ -224,7 +198,7 @@ object MergeRepo:
 
   // ── the review screen's draft (V051) ──────────────────────────────────────────────────────────
 
-  def session(bundle: com.histmersion.util.data.exchange.MergeRepo.SessionBundle)(using DbCon): MergeSession =
+  def session(bundle: com.histmersion.util.data.exchange.MergeRepo.BundleName)(using DbCon): MergeSession =
     Sql
       .of(s"SELECT resolutions::text, ${ts("updated_at")} FROM merge_sessions WHERE bundle = ?", Param.S(bundle))
       .frag
@@ -234,13 +208,13 @@ object MergeRepo:
       .flatMap((r, at) => Jsonb.read[MergeResolutions](r).map(MergeSession(bundle, _, Some(at))))
       .getOrElse(MergeSession(bundle))
 
-  def putSession(bundle: com.histmersion.util.data.exchange.MergeRepo.PutSessionBundle, r: MergeResolutions)(using DbCon): MergeSession =
+  def putSession(bundle: com.histmersion.util.data.exchange.MergeRepo.BundleName, r: MergeResolutions)(using DbCon): MergeSession =
     val json = Jsonb.write(r)
     sql"""INSERT INTO merge_sessions (bundle, resolutions, updated_at) VALUES ($bundle, $json::jsonb, now())
           ON CONFLICT (bundle) DO UPDATE SET resolutions = EXCLUDED.resolutions, updated_at = now()""".update.run()
     session(bundle)
 
-  def dropSession(bundle: com.histmersion.util.data.exchange.MergeRepo.DropSessionBundle)(using DbCon): Unit =
+  def dropSession(bundle: com.histmersion.util.data.exchange.MergeRepo.BundleName)(using DbCon): Unit =
     val _ = (sql"DELETE FROM merge_sessions WHERE bundle = $bundle".update.run())
 
   // ── what an import and a merge write (in the caller's transaction) ─────────────────────────────
@@ -250,7 +224,7 @@ object MergeRepo:
     val _ = sql"SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtext('histmersion.bundle-import'))) l".query[Int].run()
 
   /** While on, rows keep the clocks the bundle gives them: the change-clock triggers stand aside. */
-  def importing(on: com.histmersion.util.data.exchange.MergeRepo.ImportingOn)(using DbCon): Unit =
+  def importing(on: com.histmersion.util.data.exchange.MergeRepo.Importing)(using DbCon): Unit =
     val _ = sql"SELECT set_config('histmersion.importing', ${if on then "on" else "off"}, true)".query[String].run()
 
   /** Record what was merged — only what changed in the ledger, and a `merges` row only when the import changed anything
@@ -259,12 +233,12 @@ object MergeRepo:
     */
   def record(
       m: com.histmersion.api.exchange.Bundle.Manifest,
-      bundleSha: com.histmersion.util.data.exchange.MergeRepo.RecordBundleSha,
-      ownBundle: com.histmersion.util.data.exchange.MergeRepo.RecordOwnBundle,
+      bundleSha: com.histmersion.Sha256,
+      ownBundle: com.histmersion.util.data.exchange.BundlePlan.EntityOwnBundle,
       decided: List[MergePlanner.Row],
       report: io.circe.Json,
-      changed: com.histmersion.util.data.exchange.MergeRepo.RecordChanged,
-      applied: Option[(com.histmersion.util.data.exchange.MergeRepo.RecordAppliedPart1, com.histmersion.util.data.exchange.MergeRepo.RecordAppliedPart2, com.histmersion.util.data.exchange.MergeRepo.RecordAppliedPart3)] = None
+      changed: com.histmersion.RowCount,
+      applied: Option[(com.histmersion.util.data.exchange.MergeRow.AppliedAt, com.histmersion.util.data.exchange.MergeRow.Backup, com.histmersion.util.data.exchange.MergeRow.FromLabel)] = None
   )(using DbCon): Option[UUID] =
     val existing = sql"""SELECT foreign_uid, foreign_rev, local_rev_after FROM merge_ledger
                          WHERE foreign_uid = ANY(${decided.map(_.foreignUid.toString)}::uuid[])"""
@@ -323,7 +297,7 @@ object MergeRepo:
     }
 
   /** The decisions a merge leaves to remember, by issue id. */
-  def remember(decisions: List[(com.histmersion.util.data.exchange.MergeRepo.RememberDecisionsPart1, MergeDecision)], mergeId: UUID)(using DbCon): Unit =
+  def remember(decisions: List[(com.histmersion.util.data.exchange.MergeRepo.DecisionKey, MergeDecision)], mergeId: UUID)(using DbCon): Unit =
     decisions.foreach { (id, d) =>
       sql"""INSERT INTO merge_decisions (issue_id, decision, merge_id) VALUES ($id, ${d.wire}, $mergeId)
             ON CONFLICT (issue_id) DO UPDATE SET decision = EXCLUDED.decision, merge_id = EXCLUDED.merge_id,

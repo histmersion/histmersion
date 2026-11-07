@@ -18,11 +18,7 @@ private[assets] object AssetBundleRepo:
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
-  type WriteBytes = WriteBytes.T
-  object WriteBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type NamesHereResultPart1Part2 = NamesHereResultPart1Part2.T
-  object NamesHereResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def assets(scope: BundleScope)(using DbCon): Vector[AssetBundleRow] =
     (Sql.raw(s"""SELECT x.uid, x.origin, s.uid, x.name, x.mime, x.sha256, length(x.bytes)::bigint,
@@ -67,7 +63,7 @@ private[assets] object AssetBundleRepo:
     w.es.assets.filter(a => w.writes(a.uid) && localSha.get(a.uid).contains(a.sha256)).foreach(write(w, _, None))
 
   /** One asset written: with its bytes when they came in the bundle, else its metadata over the row here. */
-  def write(w: BundleImport.Writer, a: Bundle.Asset, bytes: Option[com.histmersion.domain.media.assets.AssetBundleRepo.WriteBytes]): Unit =
+  def write(w: BundleImport.Writer, a: Bundle.Asset, bytes: Option[com.histmersion.domain.media.assets.AssetBytesRow.Bytes]): Unit =
     given DbCon = w.transaction
     w.touchSource(a.sourceUid)
     val ck = w.citekeyOf(a.sourceUid)
@@ -95,7 +91,7 @@ private[assets] object AssetBundleRepo:
   // ── a merge ──────────────────────────────────────────────────────────────────────────────────
 
   /** (source uid, asset name) → asset uid here, for the sources of `assets`. */
-  def namesHere(sourceUids: List[UUID])(using DbCon): Map[(UUID, com.histmersion.domain.media.assets.AssetBundleRepo.NamesHereResultPart1Part2), UUID] =
+  def namesHere(sourceUids: List[UUID])(using DbCon): Map[(UUID, com.histmersion.domain.media.assets.AssetBundleRow.Name), UUID] =
     if sourceUids.isEmpty then Map.empty
     else
       sql"""SELECT s.uid, x.name, x.uid FROM assets x JOIN sources s ON s.citekey = x.citekey

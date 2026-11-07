@@ -1,0 +1,209 @@
+## CONCEPTS NEARBY
+com.histmersion.pluginhost.HostCollection.Name (String)
+com.histmersion.pluginhost.HostServices.LogArg1 (String)
+com.histmersion.pluginhost.HostServices.LogArg2 (Boolean)
+com.histmersion.pluginhost.HostServices.LogArg3 (String)
+com.histmersion.pluginhost.HostServices.QuotaArg1 (String)
+com.histmersion.pluginhost.HttpAnswer.Body (Array[Byte])
+com.histmersion.pluginhost.HttpAnswer.Code (Int)
+com.histmersion.pluginhost.HttpAnswer.HeadersKey (String)
+com.histmersion.pluginhost.HttpAnswer.HeadersValue (String)
+com.histmersion.pluginhost.JavaHttpTransport.ConnectSeconds (Int)
+com.histmersion.pluginhost.Kept.Warnings (String)
+
+## TYPES TO DECIDE
+com.histmersion.pluginhost.HostAiHttp.GetHeadersPart1 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.HostAiHttp.GetUrl, headers: Map[com.histmersion.pluginhost.HostAiHttp.GetHeadersPart1, com.histmersion.pluginhost.HostAiHttp.GetHe
+com.histmersion.pluginhost.HostAiHttp.GetHeadersPart2 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.HostAiHttp.GetUrl, headers: Map[com.histmersion.pluginhost.HostAiHttp.GetHeadersPart1, com.histmersion.pluginhost.HostAiHttp.GetHe
+com.histmersion.pluginhost.HostAiHttp.GetResultPart1 | base String | generated | method-result
+    def get(url: com.histmersion.pluginhost.HostAiHttp.GetUrl, headers: Map[com.histmersion.pluginhost.HostAiHttp.GetHeadersPart1, com.histmersion.pluginhost.HostAiHttp.GetHe
+com.histmersion.pluginhost.HostAiHttp.GetTimeoutSeconds | base Int | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.HostAiHttp.GetUrl, headers: Map[com.histmersion.pluginhost.HostAiHttp.GetHeadersPart1, com.histmersion.pluginhost.HostAiHttp.GetHe
+com.histmersion.pluginhost.HostAiHttp.GetUrl | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.HostAiHttp.GetUrl, headers: Map[com.histmersion.pluginhost.HostAiHttp.GetHeadersPart1, com.histmersion.pluginhost.HostAiHttp.GetHe
+com.histmersion.pluginhost.HostAiHttp.PostBody | base String | generated | method-parameter
+com.histmersion.pluginhost.HostAiHttp.PostHeadersPart1 | base String | generated | method-parameter
+com.histmersion.pluginhost.HostAiHttp.PostHeadersPart2 | base String | generated | method-parameter
+com.histmersion.pluginhost.HostAiHttp.PostResultPart1 | base String | generated | method-result
+com.histmersion.pluginhost.HostAiHttp.PostTimeoutSeconds | base Int | generated | method-parameter
+com.histmersion.pluginhost.HostAiHttp.PostUrl | base String | generated | method-parameter
+com.histmersion.pluginhost.HostAiHttp.SendHeadersPart1 | base String | generated | method-parameter
+com.histmersion.pluginhost.HostAiHttp.SendHeadersPart2 | base String | generated | method-parameter
+com.histmersion.pluginhost.HostAiHttp.SendResultPart1 | base String | generated | method-result
+com.histmersion.pluginhost.HostAiHttp.SendTimeoutSeconds | base Int | generated | method-parameter
+com.histmersion.pluginhost.HostAiHttp.SendUrl | base String | generated | method-parameter
+com.histmersion.pluginhost.HostCollection.AddResultPart1 | base String | generated | method-result
+    def add(metadata: CollectionMetadata, file: FetchedFile): Either[com.histmersion.pluginhost.HostCollection.AddResultPart1, CollectionId] =
+com.histmersion.pluginhost.HostCollection.AdmitsResultPart1 | base String | generated | method-result
+    def admits(item: CollectionItem): Either[com.histmersion.pluginhost.HostCollection.AdmitsResultPart1, Unit] = guarded(collection.admits(item))
+com.histmersion.pluginhost.HostCollection.AuditResultPart1 | base String | generated | method-result
+    def audit(records: List[CollectionRecord]): Either[com.histmersion.pluginhost.HostCollection.AuditResultPart1, List[CollectionFinding]] =
+com.histmersion.pluginhost.HostCollection.CanResult | base Boolean | generated | method-result
+    def can(capability: CollectionCapability): com.histmersion.pluginhost.HostCollection.CanResult = capabilities.contains(capability)
+com.histmersion.pluginhost.HostCollection.CoverResultPart1 | base String | generated | method-result
+    def cover(item: CollectionItem): Either[com.histmersion.pluginhost.HostCollection.CoverResultPart1, Option[FetchedFile]] = guarded(collection.cover(item))
+com.histmersion.pluginhost.HostCollection.DescriptionResult | base String | generated | method-result
+    def description: com.histmersion.pluginhost.HostCollection.DescriptionResult = guardedValue(collection.description, "")
+com.histmersion.pluginhost.HostCollection.FileFormat | base String | generated | method-parameter
+    def file(item: CollectionItem, format: Option[com.histmersion.pluginhost.HostCollection.FileFormat]): Either[com.histmersion.pluginhost.HostCollection.FileResultPart1, Co
+com.histmersion.pluginhost.HostCollection.FileResultPart1 | base String | generated | method-result
+    def file(item: CollectionItem, format: Option[com.histmersion.pluginhost.HostCollection.FileFormat]): Either[com.histmersion.pluginhost.HostCollection.FileResultPart1, Co
+com.histmersion.pluginhost.HostCollection.GuardedResultPart1 | base String | generated | method-result
+    private def guarded[A](call: => Either[String, A]): Either[com.histmersion.pluginhost.HostCollection.GuardedResultPart1, A] =
+com.histmersion.pluginhost.HostCollection.ItemResultPart1 | base String | generated | method-result
+    def item(id: CollectionId): Either[com.histmersion.pluginhost.HostCollection.ItemResultPart1, Option[CollectionItem]] = guarded(collection.item(id))
+com.histmersion.pluginhost.HostCollection.Name | base String | generated | constructor-parameter
+    final class HostCollection(val name: HostCollection.Name, collection: SourceCollection):
+com.histmersion.pluginhost.HostCollection.OriginalResultPart1 | base String | generated | method-result
+    def original(item: CollectionItem, file: CollectionFile): Either[com.histmersion.pluginhost.HostCollection.OriginalResultPart1, FetchedFile] =
+com.histmersion.pluginhost.HostCollection.ReachResultPart1 | base String | generated | method-result
+    def reach: Either[com.histmersion.pluginhost.HostCollection.ReachResultPart1, Unit] = guarded(collection.reach)
+com.histmersion.pluginhost.HostCollection.ReadOnlyResult | base String | generated | method-result
+    def readOnly: com.histmersion.pluginhost.HostCollection.ReadOnlyResult = s"$title is read-only here: ${guardedValue(collection.readOnlyReason, "it is read-only")}"
+com.histmersion.pluginhost.HostCollection.ReplaceKey | base String | generated | method-parameter
+    def replace(id: CollectionId, key: com.histmersion.pluginhost.HostCollection.ReplaceKey, file: FetchedFile): Either[com.histmersion.pluginhost.HostCollection.ReplaceResul
+com.histmersion.pluginhost.HostCollection.ReplaceResultPart1 | base String | generated | method-result
+    def replace(id: CollectionId, key: com.histmersion.pluginhost.HostCollection.ReplaceKey, file: FetchedFile): Either[com.histmersion.pluginhost.HostCollection.ReplaceResul
+com.histmersion.pluginhost.HostCollection.ReplaceResultPart2 | base String | generated | method-result
+    def replace(id: CollectionId, key: com.histmersion.pluginhost.HostCollection.ReplaceKey, file: FetchedFile): Either[com.histmersion.pluginhost.HostCollection.ReplaceResul
+com.histmersion.pluginhost.HostCollection.SearchResultPart1 | base String | generated | method-result
+    def search(query: CollectionQuery): Either[com.histmersion.pluginhost.HostCollection.SearchResultPart1, List[CollectionItem]] = guarded(collection.search(query))
+com.histmersion.pluginhost.HostCollection.SetFieldsPart1 | base String | generated | method-parameter
+    def set(id: CollectionId, fields: List[(com.histmersion.pluginhost.HostCollection.SetFieldsPart1, com.histmersion.pluginhost.HostCollection.SetFieldsPart2)]): Either[com.
+com.histmersion.pluginhost.HostCollection.SetFieldsPart2 | base String | generated | method-parameter
+    def set(id: CollectionId, fields: List[(com.histmersion.pluginhost.HostCollection.SetFieldsPart1, com.histmersion.pluginhost.HostCollection.SetFieldsPart2)]): Either[com.
+com.histmersion.pluginhost.HostCollection.SetResultPart1 | base String | generated | method-result
+    def set(id: CollectionId, fields: List[(com.histmersion.pluginhost.HostCollection.SetFieldsPart1, com.histmersion.pluginhost.HostCollection.SetFieldsPart2)]): Either[com.
+com.histmersion.pluginhost.HostCollection.TitleResult | base String | generated | method-result
+    def title: com.histmersion.pluginhost.HostCollection.TitleResult = guardedValue(collection.title, name)
+com.histmersion.pluginhost.HostCollection.UpdateAllApply | base Boolean | generated | method-parameter
+    def updateAll(links: List[CollectionLink], apply: com.histmersion.pluginhost.HostCollection.UpdateAllApply): Either[com.histmersion.pluginhost.HostCollection.UpdateAllRes
+com.histmersion.pluginhost.HostCollection.UpdateAllResultPart1 | base String | generated | method-result
+    def updateAll(links: List[CollectionLink], apply: com.histmersion.pluginhost.HostCollection.UpdateAllApply): Either[com.histmersion.pluginhost.HostCollection.UpdateAllRes
+com.histmersion.pluginhost.HostCollection.UpdateResultPart1 | base String | generated | method-result
+    def update(id: CollectionId, metadata: CollectionMetadata): Either[com.histmersion.pluginhost.HostCollection.UpdateResultPart1, List[CollectionChange]] =
+com.histmersion.pluginhost.HostCollection.WritingResultPart1 | base String | generated | method-result
+    private def writing[A](capability: CollectionCapability)(call: => Either[String, A]): Either[com.histmersion.pluginhost.HostCollection.WritingResultPart1, A] =
+com.histmersion.pluginhost.HostLicences.ReadFirstStatements | base String | generated | method-parameter
+    def readFirst(statements: List[com.histmersion.pluginhost.HostLicences.ReadFirstStatements]): com.histmersion.plugin.Licence.Read =
+com.histmersion.pluginhost.HostLicences.ReadNameName | base String | generated | method-parameter
+    def readName(name: com.histmersion.pluginhost.HostLicences.ReadNameName): com.histmersion.plugin.Licence.Read = read(Licence.classify(Option(name).getOrElse("")))
+com.histmersion.pluginhost.HostLicences.ReadUrlUrl | base String | generated | method-parameter
+    def readUrl(url: com.histmersion.pluginhost.HostLicences.ReadUrlUrl): com.histmersion.plugin.Licence.Read = read(Licence.ofUrl(url))
+com.histmersion.pluginhost.HostLog.InfoLine | base String | generated | method-parameter
+    def info(line: com.histmersion.pluginhost.HostLog.InfoLine): Unit
+    def info(line: com.histmersion.pluginhost.HostLog.InfoLine): Unit = _root_.scribe.info(line)
+com.histmersion.pluginhost.HostLog.PluginInfoMessage | base String | generated | method-parameter
+    def info(message: com.histmersion.pluginhost.HostLog.PluginInfoMessage): Unit = self.info(message)
+com.histmersion.pluginhost.HostLog.PluginWarnMessage | base String | generated | method-parameter
+    def warn(message: com.histmersion.pluginhost.HostLog.PluginWarnMessage): Unit = self.warn(message)
+com.histmersion.pluginhost.HostLog.WarnLine | base String | generated | method-parameter
+    def warn(line: com.histmersion.pluginhost.HostLog.WarnLine): Unit
+    def warn(line: com.histmersion.pluginhost.HostLog.WarnLine): Unit = _root_.scribe.warn(line)
+com.histmersion.pluginhost.HostServices.LogArg1 | base String | generated | constructor-parameter
+com.histmersion.pluginhost.HostServices.LogArg2 | base Boolean | generated | constructor-parameter
+com.histmersion.pluginhost.HostServices.LogArg3 | base String | generated | constructor-parameter
+com.histmersion.pluginhost.HostServices.QuotaArg1 | base String | generated | constructor-parameter
+com.histmersion.pluginhost.HttpAnswer.Body | base Array[Byte] | original | constructor-parameter
+    final case class HttpAnswer(code: HttpAnswer.Code, headers: Map[HttpAnswer.HeadersKey, HttpAnswer.HeadersValue], body: HttpAnswer.Body):
+com.histmersion.pluginhost.HttpAnswer.Code | base Int | original | constructor-parameter
+    final case class HttpAnswer(code: HttpAnswer.Code, headers: Map[HttpAnswer.HeadersKey, HttpAnswer.HeadersValue], body: HttpAnswer.Body):
+com.histmersion.pluginhost.HttpAnswer.HeaderName | base String | generated | method-parameter
+    def header(name: com.histmersion.pluginhost.HttpAnswer.HeaderName): Option[com.histmersion.pluginhost.HttpAnswer.HeaderResult] = headers.get(name.toLowerCase(Locale.ROOT)
+com.histmersion.pluginhost.HttpAnswer.HeaderResult | base String | generated | method-result
+    def header(name: com.histmersion.pluginhost.HttpAnswer.HeaderName): Option[com.histmersion.pluginhost.HttpAnswer.HeaderResult] = headers.get(name.toLowerCase(Locale.ROOT)
+com.histmersion.pluginhost.HttpAnswer.HeadersKey | base String | original | constructor-parameter
+    final case class HttpAnswer(code: HttpAnswer.Code, headers: Map[HttpAnswer.HeadersKey, HttpAnswer.HeadersValue], body: HttpAnswer.Body):
+com.histmersion.pluginhost.HttpAnswer.HeadersValue | base String | original | constructor-parameter
+    final case class HttpAnswer(code: HttpAnswer.Code, headers: Map[HttpAnswer.HeadersKey, HttpAnswer.HeadersValue], body: HttpAnswer.Body):
+com.histmersion.pluginhost.HttpAnswer.TextResult | base String | generated | method-result
+    def text: com.histmersion.pluginhost.HttpAnswer.TextResult = new String(body, UTF_8)
+com.histmersion.pluginhost.HttpTransport.GetHeadersPart1 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.HttpTransport.GetUrl, headers: Map[com.histmersion.pluginhost.HttpTransport.GetHeadersPart1, com.histmersion.pluginhost.HttpTransp
+com.histmersion.pluginhost.HttpTransport.GetHeadersPart2 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.HttpTransport.GetUrl, headers: Map[com.histmersion.pluginhost.HttpTransport.GetHeadersPart1, com.histmersion.pluginhost.HttpTransp
+com.histmersion.pluginhost.HttpTransport.GetResultPart1 | base String | generated | method-result
+    def get(url: com.histmersion.pluginhost.HttpTransport.GetUrl, headers: Map[com.histmersion.pluginhost.HttpTransport.GetHeadersPart1, com.histmersion.pluginhost.HttpTransp
+com.histmersion.pluginhost.HttpTransport.GetUrl | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.HttpTransport.GetUrl, headers: Map[com.histmersion.pluginhost.HttpTransport.GetHeadersPart1, com.histmersion.pluginhost.HttpTransp
+com.histmersion.pluginhost.JavaHttpTransport.ConnectSeconds | base Int | generated | constructor-parameter
+    final class JavaHttpTransport(timeoutSeconds: => Int, connectSeconds: Option[JavaHttpTransport.ConnectSeconds] = None)
+com.histmersion.pluginhost.JavaHttpTransport.GetHeadersPart1 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.JavaHttpTransport.GetUrl, headers: Map[com.histmersion.pluginhost.JavaHttpTransport.GetHeadersPart1, com.histmersion.pluginhost.Ja
+com.histmersion.pluginhost.JavaHttpTransport.GetHeadersPart2 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.JavaHttpTransport.GetUrl, headers: Map[com.histmersion.pluginhost.JavaHttpTransport.GetHeadersPart1, com.histmersion.pluginhost.Ja
+com.histmersion.pluginhost.JavaHttpTransport.GetResultPart1 | base String | generated | method-result
+    def get(url: com.histmersion.pluginhost.JavaHttpTransport.GetUrl, headers: Map[com.histmersion.pluginhost.JavaHttpTransport.GetHeadersPart1, com.histmersion.pluginhost.Ja
+com.histmersion.pluginhost.JavaHttpTransport.GetUrl | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.JavaHttpTransport.GetUrl, headers: Map[com.histmersion.pluginhost.JavaHttpTransport.GetHeadersPart1, com.histmersion.pluginhost.Ja
+com.histmersion.pluginhost.Kept.Warnings | base String | original | constructor-parameter
+    final case class Kept[A](record: A, warnings: List[Kept.Warnings])
+com.histmersion.pluginhost.OaFetcher.FetchArxiv | base String | generated | method-parameter
+    def fetch(doi: Option[com.histmersion.pluginhost.OaFetcher.FetchDoi], arxiv: Option[com.histmersion.pluginhost.OaFetcher.FetchArxiv]): Either[com.histmersion.pluginhost.O
+com.histmersion.pluginhost.OaFetcher.FetchDoi | base String | generated | method-parameter
+    def fetch(doi: Option[com.histmersion.pluginhost.OaFetcher.FetchDoi], arxiv: Option[com.histmersion.pluginhost.OaFetcher.FetchArxiv]): Either[com.histmersion.pluginhost.O
+com.histmersion.pluginhost.OaFetcher.FetchLegalArxiv | base String | generated | method-parameter
+    def fetchLegal(doi: Option[com.histmersion.pluginhost.OaFetcher.FetchLegalDoi], arxiv: Option[com.histmersion.pluginhost.OaFetcher.FetchLegalArxiv]): Either[com.histmersi
+com.histmersion.pluginhost.OaFetcher.FetchLegalDoi | base String | generated | method-parameter
+    def fetchLegal(doi: Option[com.histmersion.pluginhost.OaFetcher.FetchLegalDoi], arxiv: Option[com.histmersion.pluginhost.OaFetcher.FetchLegalArxiv]): Either[com.histmersi
+com.histmersion.pluginhost.OaFetcher.FetchLegalResultPart1 | base String | generated | method-result
+    def fetchLegal(doi: Option[com.histmersion.pluginhost.OaFetcher.FetchLegalDoi], arxiv: Option[com.histmersion.pluginhost.OaFetcher.FetchLegalArxiv]): Either[com.histmersi
+com.histmersion.pluginhost.OaFetcher.FetchResultPart1 | base String | generated | method-result
+    def fetch(doi: Option[com.histmersion.pluginhost.OaFetcher.FetchDoi], arxiv: Option[com.histmersion.pluginhost.OaFetcher.FetchArxiv]): Either[com.histmersion.pluginhost.O
+com.histmersion.pluginhost.OaFetcher.FetchWorkExplainedLegalOnly | base Boolean | generated | method-parameter
+    def fetchWorkExplained(work: WorkKey, legalOnly: com.histmersion.pluginhost.OaFetcher.FetchWorkExplainedLegalOnly): FetchChain.Outcome =
+com.histmersion.pluginhost.OaFetcher.FetchWorkLegalOnly | base Boolean | generated | method-parameter
+    def fetchWork(work: WorkKey, legalOnly: com.histmersion.pluginhost.OaFetcher.FetchWorkLegalOnly): Either[com.histmersion.pluginhost.OaFetcher.FetchWorkResultPart1, Fetche
+com.histmersion.pluginhost.OaFetcher.FetchWorkResultPart1 | base String | generated | method-result
+    def fetchWork(work: WorkKey, legalOnly: com.histmersion.pluginhost.OaFetcher.FetchWorkLegalOnly): Either[com.histmersion.pluginhost.OaFetcher.FetchWorkResultPart1, Fetche
+com.histmersion.pluginhost.OutboundTls.CertificatesPem | base String | generated | method-parameter
+    def certificates(pem: com.histmersion.pluginhost.OutboundTls.CertificatesPem): List[X509Certificate] =
+com.histmersion.pluginhost.OutboundTls.ConfigureOsName | base String | generated | method-parameter
+com.histmersion.pluginhost.OutboundTls.ConfigureResultPart2 | base String | generated | method-result
+com.histmersion.pluginhost.OutboundTls.DescribeResult | base String | generated | method-result
+    private def describe(t: HttpPolicy.Trust): com.histmersion.pluginhost.OutboundTls.DescribeResult = t match
+com.histmersion.pluginhost.OutboundTls.RootsResultPart1 | base String | generated | method-result
+    def roots(t: HttpPolicy.Trust, run: Run = run, read: Read = read): Either[com.histmersion.pluginhost.OutboundTls.RootsResultPart1, List[X509Certificate]] = t match
+com.histmersion.pluginhost.PluginAi.CheckModel | base String | generated | method-parameter
+    def check(provider: AiProvider, model: com.histmersion.pluginhost.PluginAi.CheckModel): Either[com.histmersion.pluginhost.PluginAi.CheckResultPart1, Unit] =
+com.histmersion.pluginhost.PluginAi.CheckResultPart1 | base String | generated | method-result
+    def check(provider: AiProvider, model: com.histmersion.pluginhost.PluginAi.CheckModel): Either[com.histmersion.pluginhost.PluginAi.CheckResultPart1, Unit] =
+com.histmersion.pluginhost.PluginEvents.CheckedLeftWhy | base String | generated | method-parameter
+    def left(why: com.histmersion.pluginhost.PluginEvents.CheckedLeftWhy) = s"$id: catalogue '$provider': $why, left out"
+com.histmersion.pluginhost.PluginEvents.CheckedProvider | base String | generated | method-parameter
+    private def checked(provider: com.histmersion.pluginhost.PluginEvents.CheckedProvider, e: CatalogueEvent): Either[com.histmersion.pluginhost.PluginEvents.CheckedResultPar
+com.histmersion.pluginhost.PluginEvents.CheckedResultPart1 | base String | generated | method-result
+    private def checked(provider: com.histmersion.pluginhost.PluginEvents.CheckedProvider, e: CatalogueEvent): Either[com.histmersion.pluginhost.PluginEvents.CheckedResultPar
+com.histmersion.pluginhost.PluginEvents.CheckedStatedFResultPart1 | base String | generated | method-parameter
+    def stated[A, B](a: Option[A])(f: A => Either[com.histmersion.pluginhost.PluginEvents.CheckedStatedFResultPart1, B]): Either[com.histmersion.pluginhost.PluginEvents.Check
+com.histmersion.pluginhost.PluginEvents.CheckedStatedResultPart1 | base String | generated | method-result
+    def stated[A, B](a: Option[A])(f: A => Either[com.histmersion.pluginhost.PluginEvents.CheckedStatedFResultPart1, B]): Either[com.histmersion.pluginhost.PluginEvents.Check
+com.histmersion.pluginhost.PluginEvents.GuardResultPart1 | base String | generated | method-result
+    def guard[A](a: => Either[String, A]): Either[com.histmersion.pluginhost.PluginEvents.GuardResultPart1, A] =
+com.histmersion.pluginhost.PluginEvents.HttpGetHeadersPart1 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.PluginEvents.HttpGetUrl, headers: Map[com.histmersion.pluginhost.PluginEvents.HttpGetHeadersPart1, com.histmersion.pluginhost.Plug
+com.histmersion.pluginhost.PluginEvents.HttpGetHeadersPart2 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.PluginEvents.HttpGetUrl, headers: Map[com.histmersion.pluginhost.PluginEvents.HttpGetHeadersPart1, com.histmersion.pluginhost.Plug
+com.histmersion.pluginhost.PluginEvents.HttpGetUrl | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.PluginEvents.HttpGetUrl, headers: Map[com.histmersion.pluginhost.PluginEvents.HttpGetHeadersPart1, com.histmersion.pluginhost.Plug
+com.histmersion.pluginhost.PluginEvents.LimitsPresent | base Long | generated | method-parameter
+    def limits(catalogue: Option[EventCatalogue], present: com.histmersion.pluginhost.PluginEvents.LimitsPresent): CatalogDating.Limits =
+com.histmersion.pluginhost.PluginEvents.PoliteIntervalMs | base Int | generated | method-parameter
+com.histmersion.pluginhost.PluginEvents.PoliteSleepArg1 | base Long | generated | method-parameter
+com.histmersion.pluginhost.PluginEvents.QueryFrom | base Long | generated | method-parameter
+    def query(from: Option[com.histmersion.pluginhost.PluginEvents.QueryFrom], to: com.histmersion.pluginhost.PluginEvents.QueryTo, area: Option[BBox]): CatalogueQuery =
+com.histmersion.pluginhost.PluginEvents.QueryTo | base Long | generated | method-parameter
+    def query(from: Option[com.histmersion.pluginhost.PluginEvents.QueryFrom], to: com.histmersion.pluginhost.PluginEvents.QueryTo, area: Option[BBox]): CatalogueQuery =
+com.histmersion.pluginhost.PluginEvents.ReadPartDoneArg1 | base String | generated | method-parameter
+com.histmersion.pluginhost.PluginEvents.ReadPartDoneResult | base Boolean | generated | method-parameter
+com.histmersion.pluginhost.PluginEvents.ReadPartEachArg1 | base String | generated | method-parameter
+com.histmersion.pluginhost.PluginEvents.ReadPartEachArg2Part1 | base String | generated | method-parameter
+com.histmersion.pluginhost.PluginEvents.ReadPartFirst | base String | generated | method-parameter
+com.histmersion.pluginhost.PluginEvents.ReadPartFromPart | base String | generated | method-parameter
+    def from(part: Option[com.histmersion.pluginhost.PluginEvents.ReadPartFromPart]): Unit = part match
+com.histmersion.pluginhost.PluginEvents.RecordProvider | base String | generated | alias,method-parameter
+    val RereadProvider: _root_.com.histmersion.pluginhost.PluginEvents.RecordProvider.type = _root_.com.histmersion.pluginhost.PluginEvents.RecordProvider
+    def record(provider: com.histmersion.pluginhost.PluginEvents.RecordProvider, e: CatalogueEvent): Either[com.histmersion.pluginhost.PluginEvents.RecordResultPart1, Kept[Ca
+com.histmersion.pluginhost.PluginEvents.RecordResultPart1 | base String | generated | method-result
+    def record(provider: com.histmersion.pluginhost.PluginEvents.RecordProvider, e: CatalogueEvent): Either[com.histmersion.pluginhost.PluginEvents.RecordResultPart1, Kept[Ca

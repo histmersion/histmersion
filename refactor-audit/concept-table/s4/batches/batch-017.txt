@@ -1,0 +1,215 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.library.sources.BSourceRow.AddedDate (String)
+com.histmersion.domain.library.sources.BSourceRow.Authors (String)
+com.histmersion.domain.library.sources.BSourceRow.BodyBytes (Long)
+com.histmersion.domain.library.sources.BSourceRow.BodySha (String)
+com.histmersion.domain.library.sources.BSourceRow.CitedBy (Int)
+com.histmersion.domain.library.sources.BSourceRow.Influential (Int)
+com.histmersion.domain.library.sources.BSourceRow.Isbns (String)
+com.histmersion.domain.library.sources.BSourceRow.Notes (String)
+com.histmersion.domain.library.sources.BSourceRow.OriginalSha (String)
+com.histmersion.domain.library.sources.BSourceRow.PHi (Long)
+com.histmersion.domain.library.sources.BSourceRow.PLo (Long)
+com.histmersion.domain.library.sources.BSourceRow.PNull (Boolean)
+com.histmersion.domain.library.sources.BSourceRow.Provenance (String)
+com.histmersion.domain.library.sources.BSourceRow.Regions (String)
+com.histmersion.domain.library.sources.BSourceRow.Summary (String)
+com.histmersion.domain.library.sources.BSourceRow.Tags (String)
+com.histmersion.domain.library.sources.BSourceRow.Title (String)
+com.histmersion.domain.library.sources.BSourceRow.Topics (String)
+com.histmersion.domain.library.sources.BSourceRow.UpdatedAt (String)
+com.histmersion.domain.library.sources.BSourceRow.Venue (String)
+com.histmersion.domain.library.sources.CitekeyMillis.Millis (Long)
+com.histmersion.domain.library.sources.EdgeRow.Dst (String)
+com.histmersion.domain.library.sources.EdgeRow.Kind (String)
+com.histmersion.domain.library.sources.EdgeRow.Src (String)
+com.histmersion.domain.library.sources.FindingIdRow.Claim (String)
+com.histmersion.domain.library.sources.FindingIdRow.Id (String)
+com.histmersion.domain.library.sources.FindingIdRow.PeriodName (String)
+com.histmersion.domain.library.sources.FindingIdRow.RegionName (String)
+com.histmersion.domain.library.sources.FindingIdRow.Significance (String)
+com.histmersion.domain.library.sources.FindingIdRow.Tags (String)
+com.histmersion.domain.library.sources.FullSourceRow.Authors (String)
+com.histmersion.domain.library.sources.FullSourceRow.CalibreId (String)
+com.histmersion.domain.library.sources.FullSourceRow.CitedByCount (Int)
+com.histmersion.domain.library.sources.FullSourceRow.InfluentialCitations (Int)
+com.histmersion.domain.library.sources.FullSourceRow.Notes (String)
+com.histmersion.domain.library.sources.FullSourceRow.OcrMarkdown (String)
+com.histmersion.domain.library.sources.FullSourceRow.Provenance (String)
+com.histmersion.domain.library.sources.FullSourceRow.Regions (String)
+com.histmersion.domain.library.sources.FullSourceRow.Summary (String)
+com.histmersion.domain.library.sources.FullSourceRow.Tags (String)
+com.histmersion.domain.library.sources.FullSourceRow.Title (String)
+com.histmersion.domain.library.sources.FullSourceRow.Topics (String)
+com.histmersion.domain.library.sources.FullSourceRow.UpdatedAt (String)
+com.histmersion.domain.library.sources.FullSourceRow.Venue (String)
+com.histmersion.domain.library.sources.SourceCheckRepo.Context.Suggestions (Int)
+com.histmersion.domain.library.sources.SourceDeletePlan.Keys (String)
+com.histmersion.domain.library.sources.SourceDeletePlan.ShaShared (Boolean)
+com.histmersion.domain.library.sources.SourceDeleteRepo.Row.CalibreId (String)
+com.histmersion.domain.library.sources.SourceDeleteRepo.Row.Title (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.library.sources.BSourceRow.AddedDate | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.Authors | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.BodyBytes | base Long | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.BodySha | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.CitedBy | base Int | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.Influential | base Int | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.Isbns | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.Notes | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.OriginalSha | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.PHi | base Long | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.PLo | base Long | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.PNull | base Boolean | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.Provenance | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.Regions | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.Summary | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.Tags | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.Title | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.Topics | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.UpdatedAt | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.BSourceRow.Venue | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.CitekeyMillis.Millis | base Long | original | constructor-parameter
+    final private[sources] case class CitekeyMillis(citekey: com.histmersion.domain.library.Citekey, millis: CitekeyMillis.Millis) derives DbCodec
+com.histmersion.domain.library.sources.CitekeyResolver.CanonicalIds | base String | generated | method-parameter
+    def canonical(ids: List[com.histmersion.domain.library.sources.CitekeyResolver.CanonicalIds])(using DbCon): Map[com.histmersion.domain.library.sources.CitekeyResolver.Can
+    def canonical(ids: List[com.histmersion.domain.library.sources.CitekeyResolver.CanonicalIds])(using DbCon): Map[com.histmersion.domain.library.sources.CitekeyResolver.Can
+com.histmersion.domain.library.sources.CitekeyResolver.CanonicalResultPart1 | base String | generated | method-result
+    def canonical(ids: List[com.histmersion.domain.library.sources.CitekeyResolver.CanonicalIds])(using DbCon): Map[com.histmersion.domain.library.sources.CitekeyResolver.Can
+    def canonical(ids: List[com.histmersion.domain.library.sources.CitekeyResolver.CanonicalIds])(using DbCon): Map[com.histmersion.domain.library.sources.CitekeyResolver.Can
+com.histmersion.domain.library.sources.CitekeyResolver.CanonicalResultPart2 | base String | generated | method-result
+    def canonical(ids: List[com.histmersion.domain.library.sources.CitekeyResolver.CanonicalIds])(using DbCon): Map[com.histmersion.domain.library.sources.CitekeyResolver.Can
+    def canonical(ids: List[com.histmersion.domain.library.sources.CitekeyResolver.CanonicalIds])(using DbCon): Map[com.histmersion.domain.library.sources.CitekeyResolver.Can
+com.histmersion.domain.library.sources.EdgeRow.Dst | base String | original | constructor-parameter
+    final private[library] case class EdgeRow(src: EdgeRow.Src, dst: EdgeRow.Dst, kind: EdgeRow.Kind) derives DbCodec
+com.histmersion.domain.library.sources.EdgeRow.Kind | base String | original | constructor-parameter
+    final private[library] case class EdgeRow(src: EdgeRow.Src, dst: EdgeRow.Dst, kind: EdgeRow.Kind) derives DbCodec
+com.histmersion.domain.library.sources.EdgeRow.Src | base String | original | constructor-parameter
+    final private[library] case class EdgeRow(src: EdgeRow.Src, dst: EdgeRow.Dst, kind: EdgeRow.Kind) derives DbCodec
+com.histmersion.domain.library.sources.FindingIdRow.Claim | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FindingIdRow.Id | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FindingIdRow.PeriodName | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FindingIdRow.RegionName | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FindingIdRow.Significance | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FindingIdRow.Tags | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FindingMergeRules.LedgerLabel | base String | generated | value
+    override val ledgerLabel: Option[com.histmersion.domain.library.sources.FindingMergeRules.LedgerLabel] = Some("SELECT id FROM findings WHERE uid = l.local_uid")
+com.histmersion.domain.library.sources.FullSourceRow.Authors | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FullSourceRow.CalibreId | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FullSourceRow.CitedByCount | base Int | original | constructor-parameter
+com.histmersion.domain.library.sources.FullSourceRow.InfluentialCitations | base Int | original | constructor-parameter
+com.histmersion.domain.library.sources.FullSourceRow.Notes | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FullSourceRow.OcrMarkdown | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FullSourceRow.Provenance | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FullSourceRow.Regions | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FullSourceRow.Summary | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FullSourceRow.Tags | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FullSourceRow.Title | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FullSourceRow.Topics | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FullSourceRow.UpdatedAt | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.FullSourceRow.Venue | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.SourceBundleRepo.BlobInSha | base String | generated | method-parameter
+    def blobIn(use: BlobUse, sha: com.histmersion.domain.library.sources.SourceBundleRepo.BlobInSha, w: BundleImport.Writer, files: ContentStore): Option[BlobSink] =
+com.histmersion.domain.library.sources.SourceCheckRepo.ArraysResultPart1 | base String | generated | method-result
+    private def arrays(sql: com.histmersion.domain.library.sources.SourceCheckRepo.ArraysSql)(using DbCon): List[(com.histmersion.domain.library.sources.SourceCheckRepo.Array
+com.histmersion.domain.library.sources.SourceCheckRepo.ArraysResultPart2 | base String | generated | method-result
+    private def arrays(sql: com.histmersion.domain.library.sources.SourceCheckRepo.ArraysSql)(using DbCon): List[(com.histmersion.domain.library.sources.SourceCheckRepo.Array
+com.histmersion.domain.library.sources.SourceCheckRepo.ArraysSql | base String | generated | method-parameter
+    private def arrays(sql: com.histmersion.domain.library.sources.SourceCheckRepo.ArraysSql)(using DbCon): List[(com.histmersion.domain.library.sources.SourceCheckRepo.Array
+com.histmersion.domain.library.sources.SourceCheckRepo.Context.Suggestions | base Int | original | constructor-parameter
+    final case class Context(suggestions: Context.Suggestions, format: FormatChecker, geocode: GeocodeSettings)
+com.histmersion.domain.library.sources.SourceCheckRepo.PairsResultPart1 | base String | generated | method-result
+    private def pairs(sql: com.histmersion.domain.library.sources.SourceCheckRepo.PairsSql)(using DbCon): List[(com.histmersion.domain.library.sources.SourceCheckRepo.PairsRe
+com.histmersion.domain.library.sources.SourceCheckRepo.PairsResultPart2 | base String | generated | method-result
+    private def pairs(sql: com.histmersion.domain.library.sources.SourceCheckRepo.PairsSql)(using DbCon): List[(com.histmersion.domain.library.sources.SourceCheckRepo.PairsRe
+com.histmersion.domain.library.sources.SourceCheckRepo.PairsSql | base String | generated | method-parameter
+    private def pairs(sql: com.histmersion.domain.library.sources.SourceCheckRepo.PairsSql)(using DbCon): List[(com.histmersion.domain.library.sources.SourceCheckRepo.PairsRe
+com.histmersion.domain.library.sources.SourceCheckRepo.ProjectionsPart1 | base String | generated | value
+    val projections: Map[com.histmersion.domain.library.sources.SourceCheckRepo.ProjectionsPart1, com.histmersion.domain.library.sources.SourceCheckRepo.ProjectionsPart2] = M
+com.histmersion.domain.library.sources.SourceCheckRepo.ProjectionsPart2 | base String | generated | value
+    val projections: Map[com.histmersion.domain.library.sources.SourceCheckRepo.ProjectionsPart1, com.histmersion.domain.library.sources.SourceCheckRepo.ProjectionsPart2] = M
+com.histmersion.domain.library.sources.SourceCheckRepo.ReportMaxItems | base Int | generated | method-parameter
+    def report(r: Rule, c: Context, maxItems: com.histmersion.domain.library.sources.SourceCheckRepo.ReportMaxItems)(using run: CheckRun)(using DbCon): LintRuleReport =
+com.histmersion.domain.library.sources.SourceCheckRepo.SqlOfResult | base String | generated | method-result
+    def sqlOf(rule: com.histmersion.domain.library.sources.SourceCheckRepo.SqlOfRule): List[com.histmersion.domain.library.sources.SourceCheckRepo.SqlOfResult] = rule match
+com.histmersion.domain.library.sources.SourceCheckRepo.SqlOfRule | base String | generated | method-parameter
+    def sqlOf(rule: com.histmersion.domain.library.sources.SourceCheckRepo.SqlOfRule): List[com.histmersion.domain.library.sources.SourceCheckRepo.SqlOfResult] = rule match
+com.histmersion.domain.library.sources.SourceCheckRepo.StaleResultPart1 | base String | generated | method-result
+    def stale()(using DbCon): Vector[(com.histmersion.domain.library.sources.SourceCheckRepo.StaleResultPart1, com.histmersion.domain.library.sources.SourceCheckRepo.StaleRes
+com.histmersion.domain.library.sources.SourceCheckRepo.StaleResultPart2 | base Int | generated | method-result
+    def stale()(using DbCon): Vector[(com.histmersion.domain.library.sources.SourceCheckRepo.StaleResultPart1, com.histmersion.domain.library.sources.SourceCheckRepo.StaleRes
+com.histmersion.domain.library.sources.SourceCheckRepo.StoredCitekeyResultArg1 | base String | generated | method-result
+    def storedCitekey(using run: CheckRun)(using DbCon): com.histmersion.domain.library.sources.SourceCheckRepo.StoredCitekeyResultArg1 => com.histmersion.domain.library.sour
+com.histmersion.domain.library.sources.SourceCheckRepo.StoredCitekeyResultResult | base Boolean | generated | method-result
+    def storedCitekey(using run: CheckRun)(using DbCon): com.histmersion.domain.library.sources.SourceCheckRepo.StoredCitekeyResultArg1 => com.histmersion.domain.library.sour
+com.histmersion.domain.library.sources.SourceCheckRepo.TriplesResultPart1 | base String | generated | method-result
+    private def triples(sql: com.histmersion.domain.library.sources.SourceCheckRepo.TriplesSql)(using DbCon): List[(com.histmersion.domain.library.sources.SourceCheckRepo.Tri
+com.histmersion.domain.library.sources.SourceCheckRepo.TriplesResultPart2 | base String | generated | method-result
+    private def triples(sql: com.histmersion.domain.library.sources.SourceCheckRepo.TriplesSql)(using DbCon): List[(com.histmersion.domain.library.sources.SourceCheckRepo.Tri
+com.histmersion.domain.library.sources.SourceCheckRepo.TriplesResultPart3 | base String | generated | method-result
+    private def triples(sql: com.histmersion.domain.library.sources.SourceCheckRepo.TriplesSql)(using DbCon): List[(com.histmersion.domain.library.sources.SourceCheckRepo.Tri
+com.histmersion.domain.library.sources.SourceCheckRepo.TriplesSql | base String | generated | method-parameter
+    private def triples(sql: com.histmersion.domain.library.sources.SourceCheckRepo.TriplesSql)(using DbCon): List[(com.histmersion.domain.library.sources.SourceCheckRepo.Tri
+com.histmersion.domain.library.sources.SourceDeletePlan.Keys | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.SourceDeletePlan.ShaShared | base Boolean | original | constructor-parameter
+com.histmersion.domain.library.sources.SourceDeleteRepo.ApplyInFilesResult | base String | generated | method-parameter
+    def applyIn(requested: com.histmersion.domain.library.sources.SourceDeleteRepo.ApplyInRequested, logTopic: com.histmersion.domain.library.sources.SourceDeleteRepo.ApplyIn
+com.histmersion.domain.library.sources.SourceDeleteRepo.ApplyInLogTopic | base String | generated | method-parameter
+    def applyIn(requested: com.histmersion.domain.library.sources.SourceDeleteRepo.ApplyInRequested, logTopic: com.histmersion.domain.library.sources.SourceDeleteRepo.ApplyIn
+com.histmersion.domain.library.sources.SourceDeleteRepo.ApplyInRequested | base String | generated | method-parameter
+    def applyIn(requested: com.histmersion.domain.library.sources.SourceDeleteRepo.ApplyInRequested, logTopic: com.histmersion.domain.library.sources.SourceDeleteRepo.ApplyIn
+com.histmersion.domain.library.sources.SourceDeleteRepo.CountsAliases | base Int | generated | method-parameter
+    private def counts(ck: com.histmersion.domain.library.sources.SourceDeleteRepo.CountsCk, aliases: com.histmersion.domain.library.sources.SourceDeleteRepo.CountsAliases, e
+com.histmersion.domain.library.sources.SourceDeleteRepo.CountsCk | base String | generated | method-parameter
+    private def counts(ck: com.histmersion.domain.library.sources.SourceDeleteRepo.CountsCk, aliases: com.histmersion.domain.library.sources.SourceDeleteRepo.CountsAliases, e
+com.histmersion.domain.library.sources.SourceDeleteRepo.CountsEdgesIn | base Int | generated | method-parameter
+    private def counts(ck: com.histmersion.domain.library.sources.SourceDeleteRepo.CountsCk, aliases: com.histmersion.domain.library.sources.SourceDeleteRepo.CountsAliases, e
+com.histmersion.domain.library.sources.SourceDeleteRepo.KeysOfCk | base String | generated | method-parameter
+    private def keysOf(ck: com.histmersion.domain.library.sources.SourceDeleteRepo.KeysOfCk, keys: List[com.histmersion.domain.library.sources.SourceDeleteRepo.KeysOfKeys])(u
+com.histmersion.domain.library.sources.SourceDeleteRepo.NResult | base Int | generated | method-result
+    private def n(q: Frag)(using DbCon): com.histmersion.domain.library.sources.SourceDeleteRepo.NResult = q.query[Int].run().headOption.getOrElse(0)
+com.histmersion.domain.library.sources.SourceDeleteRepo.PlanInRequested | base String | generated | method-parameter
+    def planIn(requested: com.histmersion.domain.library.sources.SourceDeleteRepo.PlanInRequested, referrers: SourceReferrers)(using DbCon): Either[Api.Error, SourceDeletePla
+com.histmersion.domain.library.sources.SourceDeleteRepo.Row.CalibreId | base String | original | constructor-parameter
+    final private case class Row(citekey: com.histmersion.domain.library.Citekey, title: Row.Title, calibreId: Option[Row.CalibreId], sha256: Option[com.histmersion.Sha256])
+com.histmersion.domain.library.sources.SourceDeleteRepo.Row.Title | base String | original | constructor-parameter
+    final private case class Row(citekey: com.histmersion.domain.library.Citekey, title: Row.Title, calibreId: Option[Row.CalibreId], sha256: Option[com.histmersion.Sha256])
+com.histmersion.domain.library.sources.SourceMergeRules.LedgerLabel | base String | generated | value
+    override val ledgerLabel: Option[com.histmersion.domain.library.sources.SourceMergeRules.LedgerLabel] = Some("SELECT citekey FROM sources WHERE uid = l.local_uid")
+com.histmersion.domain.library.sources.SourceMergeRules.Referable | base Boolean | generated | value
+    override val referable: com.histmersion.domain.library.sources.SourceMergeRules.Referable = true
+com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopOut | base String | generated | method-parameter
+    def loop(rest: List[(com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopRestPart1, com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopRestPart2)],
+com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopRestPart1 | base String | generated | method-parameter
+    def loop(rest: List[(com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopRestPart1, com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopRestPart2)],
+com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopRestPart2 | base Int | generated | method-parameter
+    def loop(rest: List[(com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopRestPart1, com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopRestPart2)],
+com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopResult | base String | generated | method-result
+    def loop(rest: List[(com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopRestPart1, com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopRestPart2)],
+com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopSpent | base Long | generated | method-parameter
+    def loop(rest: List[(com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopRestPart1, com.histmersion.domain.library.sources.SourceRepairs.BudgetLoopRestPart2)],
+com.histmersion.domain.library.sources.SourceRepairs.BudgetMaxChars | base Long | generated | method-parameter
+    def budget(pending: Vector[(com.histmersion.domain.library.sources.SourceRepairs.BudgetPendingPart1, com.histmersion.domain.library.sources.SourceRepairs.BudgetPendingPar
+com.histmersion.domain.library.sources.SourceRepairs.BudgetPendingPart1 | base String | generated | method-parameter
+    def budget(pending: Vector[(com.histmersion.domain.library.sources.SourceRepairs.BudgetPendingPart1, com.histmersion.domain.library.sources.SourceRepairs.BudgetPendingPar
+com.histmersion.domain.library.sources.SourceRepairs.BudgetPendingPart2 | base Int | generated | method-parameter
+    def budget(pending: Vector[(com.histmersion.domain.library.sources.SourceRepairs.BudgetPendingPart1, com.histmersion.domain.library.sources.SourceRepairs.BudgetPendingPar
+com.histmersion.domain.library.sources.SourceRepairs.BudgetResult | base String | generated | method-result
+    def budget(pending: Vector[(com.histmersion.domain.library.sources.SourceRepairs.BudgetPendingPart1, com.histmersion.domain.library.sources.SourceRepairs.BudgetPendingPar
+com.histmersion.domain.library.sources.SourceRepairs.ReindexAllChunkChars | base Int | generated | method-parameter
+    def reindexAll(chunkChars: com.histmersion.domain.library.sources.SourceRepairs.ReindexAllChunkChars): ReindexResult =
+com.histmersion.domain.library.sources.SourceRepairs.ReindexAllGoAfter | base String | generated | method-parameter
+    def go(after: Option[com.histmersion.domain.library.sources.SourceRepairs.ReindexAllGoAfter], sources: com.histmersion.domain.library.sources.SourceRepairs.ReindexAllGoSo
+com.histmersion.domain.library.sources.SourceRepairs.ReindexAllGoChunks | base Int | generated | method-parameter
+    def go(after: Option[com.histmersion.domain.library.sources.SourceRepairs.ReindexAllGoAfter], sources: com.histmersion.domain.library.sources.SourceRepairs.ReindexAllGoSo
+com.histmersion.domain.library.sources.SourceRepairs.ReindexAllGoSources | base Int | generated | method-parameter
+    def go(after: Option[com.histmersion.domain.library.sources.SourceRepairs.ReindexAllGoAfter], sources: com.histmersion.domain.library.sources.SourceRepairs.ReindexAllGoSo
+com.histmersion.domain.library.sources.SourceRepairs.ReindexChunksAfter | base String | generated | method-parameter
+com.histmersion.domain.library.sources.SourceRepairs.ReindexChunksChunkChars | base Int | generated | method-parameter
+com.histmersion.domain.library.sources.SourceRepairs.ReindexChunksMaxChars | base Long | generated | method-parameter
+com.histmersion.domain.library.sources.SourceRepairs.ReindexChunksMaxSources | base Int | generated | method-parameter
+com.histmersion.domain.library.sources.SourceRepairs.ReindexStaleChunkChars | base Int | generated | method-parameter
+    def reindexStale(chunkChars: com.histmersion.domain.library.sources.SourceRepairs.ReindexStaleChunkChars, maxChars: com.histmersion.domain.library.sources.SourceRepairs.R
+com.histmersion.domain.library.sources.SourceRepairs.ReindexStaleMaxChars | base Long | generated | method-parameter
+    def reindexStale(chunkChars: com.histmersion.domain.library.sources.SourceRepairs.ReindexStaleChunkChars, maxChars: com.histmersion.domain.library.sources.SourceRepairs.R

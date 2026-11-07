@@ -1,0 +1,77 @@
+## CONCEPTS NEARBY
+com.histmersion.plugin.testkit.internal.RecordedExchange.Body (String)
+com.histmersion.plugin.testkit.internal.RecordedExchange.Error (String)
+com.histmersion.plugin.testkit.internal.RecordedExchange.HeadersPart1 (String)
+com.histmersion.plugin.testkit.internal.RecordedExchange.HeadersPart2 (String)
+com.histmersion.plugin.testkit.internal.RecordedExchange.KeptHeadersValue (String)
+com.histmersion.plugin.testkit.internal.RecordedExchange.Method (String)
+com.histmersion.plugin.testkit.internal.RecordedExchange.Status (Int)
+com.histmersion.plugin.testkit.internal.RecordedExchange.Url (String)
+com.histmersion.plugin.testkit.internal.Scrubber.Secrets (String)
+
+## TYPES TO DECIDE
+com.histmersion.plugin.testkit.internal.RecordedExchange.Body | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.internal.RecordedExchange.Error | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.internal.RecordedExchange.ExtensionContentType | base String | generated | method-parameter
+    def extension(contentType: Option[com.histmersion.plugin.testkit.internal.RecordedExchange.ExtensionContentType]): com.histmersion.plugin.testkit.internal.RecordedExchang
+com.histmersion.plugin.testkit.internal.RecordedExchange.ExtensionResult | base String | generated | method-result
+    def extension(contentType: Option[com.histmersion.plugin.testkit.internal.RecordedExchange.ExtensionContentType]): com.histmersion.plugin.testkit.internal.RecordedExchang
+com.histmersion.plugin.testkit.internal.RecordedExchange.HeadersPart1 | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.internal.RecordedExchange.HeadersPart2 | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.internal.RecordedExchange.HostOfResult | base String | generated | method-result
+    def hostOf(url: com.histmersion.plugin.testkit.internal.RecordedExchange.HostOfUrl): com.histmersion.plugin.testkit.internal.RecordedExchange.HostOfResult =
+com.histmersion.plugin.testkit.internal.RecordedExchange.HostOfUrl | base String | generated | method-parameter
+    def hostOf(url: com.histmersion.plugin.testkit.internal.RecordedExchange.HostOfUrl): com.histmersion.plugin.testkit.internal.RecordedExchange.HostOfResult =
+com.histmersion.plugin.testkit.internal.RecordedExchange.IsTextContentType | base String | generated | method-parameter
+    def isText(contentType: Option[com.histmersion.plugin.testkit.internal.RecordedExchange.IsTextContentType]): com.histmersion.plugin.testkit.internal.RecordedExchange.IsTe
+com.histmersion.plugin.testkit.internal.RecordedExchange.IsTextResult | base Boolean | generated | method-result
+    def isText(contentType: Option[com.histmersion.plugin.testkit.internal.RecordedExchange.IsTextContentType]): com.histmersion.plugin.testkit.internal.RecordedExchange.IsTe
+com.histmersion.plugin.testkit.internal.RecordedExchange.KeptHeadersValue | base String | original | alias
+com.histmersion.plugin.testkit.internal.RecordedExchange.Method | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.internal.RecordedExchange.ParseFieldK | base String | generated | method-parameter
+    def field(k: com.histmersion.plugin.testkit.internal.RecordedExchange.ParseFieldK) = pairs.collectFirst { case (`k`, v) => v }
+com.histmersion.plugin.testkit.internal.RecordedExchange.ParseResultPart1 | base String | generated | method-result
+    def parse(text: com.histmersion.plugin.testkit.internal.RecordedExchange.ParseText): Either[com.histmersion.plugin.testkit.internal.RecordedExchange.ParseResultPart1, Rec
+com.histmersion.plugin.testkit.internal.RecordedExchange.ParseText | base String | generated | method-parameter
+    def parse(text: com.histmersion.plugin.testkit.internal.RecordedExchange.ParseText): Either[com.histmersion.plugin.testkit.internal.RecordedExchange.ParseResultPart1, Rec
+com.histmersion.plugin.testkit.internal.RecordedExchange.RenderResult | base String | generated | method-result
+    def render(e: RecordedExchange): com.histmersion.plugin.testkit.internal.RecordedExchange.RenderResult =
+com.histmersion.plugin.testkit.internal.RecordedExchange.Status | base Int | original | constructor-parameter
+com.histmersion.plugin.testkit.internal.RecordedExchange.Url | base String | original | alias,constructor-parameter
+    val RecordUrl: _root_.com.histmersion.plugin.testkit.internal.RecordedExchange.Url.type = _root_.com.histmersion.plugin.testkit.internal.RecordedExchange.Url
+com.histmersion.plugin.testkit.internal.Scrubber.ApplyResult | base String | generated | method-result
+    def apply(text: com.histmersion.plugin.testkit.internal.Scrubber.ApplyText): com.histmersion.plugin.testkit.internal.Scrubber.ApplyResult = values.foldLeft(text)((t, v) =
+com.histmersion.plugin.testkit.internal.Scrubber.ApplyText | base String | generated | method-parameter
+    def apply(text: com.histmersion.plugin.testkit.internal.Scrubber.ApplyText): com.histmersion.plugin.testkit.internal.Scrubber.ApplyResult = values.foldLeft(text)((t, v) =
+com.histmersion.plugin.testkit.internal.Scrubber.BytesBody | base Array[Byte] | generated | method-parameter
+    def bytes(body: com.histmersion.plugin.testkit.internal.Scrubber.BytesBody): com.histmersion.plugin.testkit.internal.Scrubber.BytesResult =
+com.histmersion.plugin.testkit.internal.Scrubber.BytesResult | base Array[Byte] | generated | method-result
+    def bytes(body: com.histmersion.plugin.testkit.internal.Scrubber.BytesBody): com.histmersion.plugin.testkit.internal.Scrubber.BytesResult =
+com.histmersion.plugin.testkit.internal.Scrubber.Secrets | base String | generated | constructor-parameter
+    final private[testkit] class Scrubber(secrets: Set[Scrubber.Secrets]):
+com.histmersion.plugin.testkit.internal.Wire.LoadResultPart1Part1 | base String | generated | method-result
+    def load(dir: Path): Map[(com.histmersion.plugin.testkit.internal.Wire.LoadResultPart1Part1, com.histmersion.plugin.testkit.internal.Wire.LoadResultPart1Part2), Vector[Re
+com.histmersion.plugin.testkit.internal.Wire.LoadResultPart1Part2 | base String | generated | method-result
+    def load(dir: Path): Map[(com.histmersion.plugin.testkit.internal.Wire.LoadResultPart1Part1, com.histmersion.plugin.testkit.internal.Wire.LoadResultPart1Part2), Vector[Re
+com.histmersion.plugin.testkit.internal.Wire.RecordAnswerPart1 | base String | generated | method-parameter
+    private def record(dir: Path, url: com.histmersion.plugin.testkit.internal.Wire.RecordUrl, answer: Either[com.histmersion.plugin.testkit.internal.Wire.RecordAnswerPart1, 
+com.histmersion.plugin.testkit.internal.Wire.RecordedPart1Part1 | base String | generated | value
+    private lazy val recorded: Map[(com.histmersion.plugin.testkit.internal.Wire.RecordedPart1Part1, com.histmersion.plugin.testkit.internal.Wire.RecordedPart1Part2), Vector[
+com.histmersion.plugin.testkit.internal.Wire.RecordedPart1Part2 | base String | generated | value
+    private lazy val recorded: Map[(com.histmersion.plugin.testkit.internal.Wire.RecordedPart1Part1, com.histmersion.plugin.testkit.internal.Wire.RecordedPart1Part2), Vector[
+com.histmersion.plugin.testkit.internal.Wire.ReplayResultPart1 | base String | generated | method-result
+    private def replay(dir: Path, url: com.histmersion.plugin.testkit.internal.Wire.ReplayUrl): Either[com.histmersion.plugin.testkit.internal.Wire.ReplayResultPart1, HttpAns
+com.histmersion.plugin.testkit.internal.Wire.ReplayUrl | base String | generated | method-parameter
+    private def replay(dir: Path, url: com.histmersion.plugin.testkit.internal.Wire.ReplayUrl): Either[com.histmersion.plugin.testkit.internal.Wire.ReplayResultPart1, HttpAns
+com.histmersion.plugin.testkit.internal.Wire.RequestsResult | base String | generated | method-result
+    def requests: List[com.histmersion.plugin.testkit.internal.Wire.RequestsResult] = synchronized(asked.result())
+com.histmersion.plugin.testkit.internal.Wire.TransportGetHeadersPart1 | base String | generated | method-parameter
+    def get(url: com.histmersion.plugin.testkit.internal.Wire.TransportGetUrl, headers: Map[com.histmersion.plugin.testkit.internal.Wire.TransportGetHeadersPart1, com.histmer
+com.histmersion.plugin.testkit.internal.Wire.TransportGetHeadersPart2 | base String | generated | method-parameter
+    def get(url: com.histmersion.plugin.testkit.internal.Wire.TransportGetUrl, headers: Map[com.histmersion.plugin.testkit.internal.Wire.TransportGetHeadersPart1, com.histmer
+com.histmersion.plugin.testkit.internal.Wire.TransportGetResultPart1 | base String | generated | method-result
+    def get(url: com.histmersion.plugin.testkit.internal.Wire.TransportGetUrl, headers: Map[com.histmersion.plugin.testkit.internal.Wire.TransportGetHeadersPart1, com.histmer
+com.histmersion.plugin.testkit.internal.Wire.TransportGetUrl | base String | generated | method-parameter
+    def get(url: com.histmersion.plugin.testkit.internal.Wire.TransportGetUrl, headers: Map[com.histmersion.plugin.testkit.internal.Wire.TransportGetHeadersPart1, com.histmer
+com.histmersion.plugin.testkit.internal.Wire.UnrecordedResult | base String | generated | method-result
+    def unrecorded: List[com.histmersion.plugin.testkit.internal.Wire.UnrecordedResult] = synchronized(missing.result())

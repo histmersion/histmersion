@@ -31,16 +31,16 @@ final case class Generation(
     secretValues: Map[Generation.SecretValuesKey, Map[Secret.Ref, Generation.SecretValuesValueValue]] = Map.empty
 ):
   /** A plugin's status and contributions, to carry into the next generation unchanged. */
-  def carry(id: com.histmersion.pluginhost.Generation.CarryId): Option[(PluginStatus, Registries)] =
+  def carry(id: com.histmersion.util.plugins.Plugin.Id): Option[(PluginStatus, Registries)] =
     report.plugins.find(_.id == id).map(st => st -> contributions.getOrElse(id, Registries.empty))
 
   /** The plugins registered in this generation (afresh or carried over). */
-  def registered: Set[com.histmersion.pluginhost.Generation.RegisteredResult] = contributions.keySet
+  def registered: Set[com.histmersion.util.plugins.Plugin.Id] = contributions.keySet
 
   /** The value of the secret the setting `key` of the registered plugin `pluginId` refers to, as this generation
     * resolved it for that plugin; `None` when the setting holds no secret reference (or the plugin is not registered).
     */
-  def secret(pluginId: com.histmersion.pluginhost.Generation.SecretPluginId, key: com.histmersion.pluginhost.Generation.SecretKey): Option[com.histmersion.pluginhost.Generation.SecretResult] =
+  def secret(pluginId: com.histmersion.util.plugins.Plugin.Id, key: com.histmersion.pluginhost.Generation.SecretKey): Option[com.histmersion.pluginhost.Generation.SecretResult] =
     for
       block <- blocks.get(pluginId)
       text <- Try(block.getString(key)).toOption
@@ -49,14 +49,8 @@ final case class Generation(
     yield value
 
 object Generation:
-  type CarryId = CarryId.T
-  object CarryId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegisteredResult = RegisteredResult.T
-  object RegisteredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SecretResult = SecretResult.T
   object SecretResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SecretPluginId = SecretPluginId.T
-  object SecretPluginId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SecretKey = SecretKey.T
   object SecretKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

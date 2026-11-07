@@ -1,0 +1,441 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.Author (String)
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.CreatedAt (String)
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.Id (Long)
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.ItemId (Long)
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.ManagerId (String)
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.Proposal (Long)
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.RetiredAt (String)
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.Standing (Boolean)
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.Text (String)
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.Uses (Int)
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Attempts (Int)
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.CreatedAt (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.EvaluatedRun (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Failures (Int)
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Id (Long)
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Kind (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.ManagerId (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.NotBefore (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Origin (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Outcome (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Priority (Int)
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Status (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Target (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.UpdatedAt (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.CreatedAt (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.Cron (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.Goal (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.Id (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.Kind (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.NextTickAt (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.PauseRuns (Boolean)
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.State (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.StatusNote (String)
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.UpdatedAt (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.automation.managers.ManagerRepo.AddHintAuthor | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.AddHintItemId | base Long | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.AddHintManagerId | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.AddHintStanding | base Boolean | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.AddHintText | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ArticleFacetsResultPart1 | base String | generated | method-result
+    def articleFacets(slug: com.histmersion.domain.automation.managers.ManagerRepo.ArticleFacetsSlug)(using DbCon): (List[com.histmersion.domain.automation.managers.ManagerRe
+com.histmersion.domain.automation.managers.ManagerRepo.ArticleFacetsResultPart2 | base String | generated | method-result
+    def articleFacets(slug: com.histmersion.domain.automation.managers.ManagerRepo.ArticleFacetsSlug)(using DbCon): (List[com.histmersion.domain.automation.managers.ManagerRe
+com.histmersion.domain.automation.managers.ManagerRepo.ArticleFacetsSlug | base String | generated | method-parameter
+    def articleFacets(slug: com.histmersion.domain.automation.managers.ManagerRepo.ArticleFacetsSlug)(using DbCon): (List[com.histmersion.domain.automation.managers.ManagerRe
+com.histmersion.domain.automation.managers.ManagerRepo.AtCol | base String | generated | method-parameter
+    private def at(col: com.histmersion.domain.automation.managers.ManagerRepo.AtCol) = s"to_char($col AT TIME ZONE 'UTC', $ts)"
+com.histmersion.domain.automation.managers.ManagerRepo.BacklogCountsResultPart1 | base String | generated | method-result
+    def backlogCounts()(using DbCon): Map[com.histmersion.domain.automation.managers.ManagerRepo.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.Manager
+com.histmersion.domain.automation.managers.ManagerRepo.BacklogCountsResultPart2Part1 | base Int | generated | method-result
+    def backlogCounts()(using DbCon): Map[com.histmersion.domain.automation.managers.ManagerRepo.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.Manager
+com.histmersion.domain.automation.managers.ManagerRepo.BacklogCountsResultPart2Part2 | base Int | generated | method-result
+    def backlogCounts()(using DbCon): Map[com.histmersion.domain.automation.managers.ManagerRepo.BacklogCountsResultPart1, (com.histmersion.domain.automation.managers.Manager
+com.histmersion.domain.automation.managers.ManagerRepo.BacklogRetryInFailures | base Int | generated | method-parameter
+    def backlogRetryIn(itemId: com.histmersion.domain.automation.managers.ManagerRepo.BacklogRetryInItemId, failures: com.histmersion.domain.automation.managers.ManagerRepo.B
+com.histmersion.domain.automation.managers.ManagerRepo.BacklogRetryInItemId | base Long | generated | method-parameter
+    def backlogRetryIn(itemId: com.histmersion.domain.automation.managers.ManagerRepo.BacklogRetryInItemId, failures: com.histmersion.domain.automation.managers.ManagerRepo.B
+com.histmersion.domain.automation.managers.ManagerRepo.BacklogRetryInOutcome | base String | generated | method-parameter
+    def backlogRetryIn(itemId: com.histmersion.domain.automation.managers.ManagerRepo.BacklogRetryInItemId, failures: com.histmersion.domain.automation.managers.ManagerRepo.B
+com.histmersion.domain.automation.managers.ManagerRepo.BacklogRetryInResult | base Boolean | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.CancelOpenManagerId | base String | generated | method-parameter
+    def cancelOpen(managerId: com.histmersion.domain.automation.managers.ManagerRepo.CancelOpenManagerId, why: com.histmersion.domain.automation.managers.ManagerRepo.CancelOp
+com.histmersion.domain.automation.managers.ManagerRepo.CancelOpenResult | base Int | generated | method-result
+    def cancelOpen(managerId: com.histmersion.domain.automation.managers.ManagerRepo.CancelOpenManagerId, why: com.histmersion.domain.automation.managers.ManagerRepo.CancelOp
+com.histmersion.domain.automation.managers.ManagerRepo.CancelOpenWhy | base String | generated | method-parameter
+    def cancelOpen(managerId: com.histmersion.domain.automation.managers.ManagerRepo.CancelOpenManagerId, why: com.histmersion.domain.automation.managers.ManagerRepo.CancelOp
+com.histmersion.domain.automation.managers.ManagerRepo.CitekeyOfDoiResult | base String | generated | method-result
+    def citekeyOfDoi(doi: com.histmersion.domain.library.Doi)(using DbCon): Option[com.histmersion.domain.automation.managers.ManagerRepo.CitekeyOfDoiResult] =
+com.histmersion.domain.automation.managers.ManagerRepo.CountEventsAllKind | base String | generated | method-parameter
+    def countEventsAll(kind: com.histmersion.domain.automation.managers.ManagerRepo.CountEventsAllKind, since: java.time.Instant)(using DbCon): com.histmersion.domain.automat
+com.histmersion.domain.automation.managers.ManagerRepo.CountEventsAllResult | base Int | generated | method-result
+    def countEventsAll(kind: com.histmersion.domain.automation.managers.ManagerRepo.CountEventsAllKind, since: java.time.Instant)(using DbCon): com.histmersion.domain.automat
+com.histmersion.domain.automation.managers.ManagerRepo.CountEventsByInKind | base String | generated | method-parameter
+    def countEventsByIn(kind: com.histmersion.domain.automation.managers.ManagerRepo.CountEventsByInKind, since: java.time.Instant)(using DbCon): Map[com.histmersion.domain.a
+com.histmersion.domain.automation.managers.ManagerRepo.CountEventsByInResultPart1 | base String | generated | method-result
+    def countEventsByIn(kind: com.histmersion.domain.automation.managers.ManagerRepo.CountEventsByInKind, since: java.time.Instant)(using DbCon): Map[com.histmersion.domain.a
+com.histmersion.domain.automation.managers.ManagerRepo.CountEventsByInResultPart2 | base Int | generated | method-result
+    def countEventsByIn(kind: com.histmersion.domain.automation.managers.ManagerRepo.CountEventsByInKind, since: java.time.Instant)(using DbCon): Map[com.histmersion.domain.a
+com.histmersion.domain.automation.managers.ManagerRepo.CountEventsKind | base String | generated | method-parameter
+    def countEvents(managerId: com.histmersion.domain.automation.managers.ManagerRepo.CountEventsManagerId, kind: com.histmersion.domain.automation.managers.ManagerRepo.Count
+com.histmersion.domain.automation.managers.ManagerRepo.CountEventsManagerId | base String | generated | method-parameter
+    def countEvents(managerId: com.histmersion.domain.automation.managers.ManagerRepo.CountEventsManagerId, kind: com.histmersion.domain.automation.managers.ManagerRepo.Count
+com.histmersion.domain.automation.managers.ManagerRepo.CountEventsResult | base Int | generated | method-result
+    def countEvents(managerId: com.histmersion.domain.automation.managers.ManagerRepo.CountEventsManagerId, kind: com.histmersion.domain.automation.managers.ManagerRepo.Count
+com.histmersion.domain.automation.managers.ManagerRepo.CountsId | base String | generated | method-parameter
+    def counts(id: com.histmersion.domain.automation.managers.ManagerRepo.CountsId)(using DbCon): ItemCounts =
+com.histmersion.domain.automation.managers.ManagerRepo.CreateCron | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.CreateGoal | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.CreateId | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.CreateInCron | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.CreateInGoal | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.CreateInId | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.CreateInResult | base Boolean | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.CreateResult | base Boolean | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.DeleteId | base String | generated | method-parameter
+    def delete(id: com.histmersion.domain.automation.managers.ManagerRepo.DeleteId)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.DeleteResult =
+com.histmersion.domain.automation.managers.ManagerRepo.DeleteResult | base Boolean | generated | method-result
+    def delete(id: com.histmersion.domain.automation.managers.ManagerRepo.DeleteId)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.DeleteResult =
+com.histmersion.domain.automation.managers.ManagerRepo.DispatchInItemId | base Long | generated | method-parameter
+    def dispatchIn(itemId: com.histmersion.domain.automation.managers.ManagerRepo.DispatchInItemId, run: com.histmersion.domain.automation.managers.ManagerRepo.DispatchInRun,
+com.histmersion.domain.automation.managers.ManagerRepo.DispatchInResult | base Boolean | generated | method-result
+    def dispatchIn(itemId: com.histmersion.domain.automation.managers.ManagerRepo.DispatchInItemId, run: com.histmersion.domain.automation.managers.ManagerRepo.DispatchInRun,
+com.histmersion.domain.automation.managers.ManagerRepo.DispatchInRun | base String | generated | method-parameter
+    def dispatchIn(itemId: com.histmersion.domain.automation.managers.ManagerRepo.DispatchInItemId, run: com.histmersion.domain.automation.managers.ManagerRepo.DispatchInRun,
+com.histmersion.domain.automation.managers.ManagerRepo.EvaluatedFailures | base Int | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.EvaluatedItemId | base Long | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.EvaluatedOutcome | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.EvaluatedResult | base Boolean | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.EvaluatedRun | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.EventInItemId | base Long | generated | method-parameter
+    def eventIn(managerId: com.histmersion.domain.automation.managers.ManagerRepo.EventInManagerId, itemId: Option[com.histmersion.domain.automation.managers.ManagerRepo.Even
+com.histmersion.domain.automation.managers.ManagerRepo.EventInKind | base String | generated | method-parameter
+    def eventIn(managerId: com.histmersion.domain.automation.managers.ManagerRepo.EventInManagerId, itemId: Option[com.histmersion.domain.automation.managers.ManagerRepo.Even
+com.histmersion.domain.automation.managers.ManagerRepo.EventInManagerId | base String | generated | method-parameter
+    def eventIn(managerId: com.histmersion.domain.automation.managers.ManagerRepo.EventInManagerId, itemId: Option[com.histmersion.domain.automation.managers.ManagerRepo.Even
+com.histmersion.domain.automation.managers.ManagerRepo.EventInText | base String | generated | method-parameter
+    def eventIn(managerId: com.histmersion.domain.automation.managers.ManagerRepo.EventInManagerId, itemId: Option[com.histmersion.domain.automation.managers.ManagerRepo.Even
+com.histmersion.domain.automation.managers.ManagerRepo.EventItemId | base Long | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.EventKind | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.EventManagerId | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.EventText | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.EventsBefore | base Long | generated | method-parameter
+    def events(managerId: com.histmersion.domain.automation.managers.ManagerRepo.EventsManagerId, before: Option[com.histmersion.domain.automation.managers.ManagerRepo.Events
+com.histmersion.domain.automation.managers.ManagerRepo.EventsLimit | base Int | generated | method-parameter
+    def events(managerId: com.histmersion.domain.automation.managers.ManagerRepo.EventsManagerId, before: Option[com.histmersion.domain.automation.managers.ManagerRepo.Events
+com.histmersion.domain.automation.managers.ManagerRepo.EventsManagerId | base String | generated | method-parameter
+    def events(managerId: com.histmersion.domain.automation.managers.ManagerRepo.EventsManagerId, before: Option[com.histmersion.domain.automation.managers.ManagerRepo.Events
+com.histmersion.domain.automation.managers.ManagerRepo.ExtendCandidatesGoal | base String | generated | method-parameter
+    def extendCandidates(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ExtendCandidatesManagerId, tags: List[com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerRepo.ExtendCandidatesLimit | base Int | generated | method-parameter
+    def extendCandidates(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ExtendCandidatesManagerId, tags: List[com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerRepo.ExtendCandidatesManagerId | base String | generated | method-parameter
+    def extendCandidates(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ExtendCandidatesManagerId, tags: List[com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerRepo.ExtendCandidatesResultPart1 | base String | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.ExtendCandidatesResultPart2 | base String | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.ExtendCandidatesTags | base String | generated | method-parameter
+    def extendCandidates(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ExtendCandidatesManagerId, tags: List[com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerRepo.FocusHeldCountResult | base Int | generated | method-result
+    def focusHeldCount()(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.FocusHeldCountResult =
+com.histmersion.domain.automation.managers.ManagerRepo.FocusHoldItemId | base Long | generated | method-parameter
+    def focusHold(itemId: com.histmersion.domain.automation.managers.ManagerRepo.FocusHoldItemId, h: Hold)(using DbCon): com.histmersion.domain.automation.managers.ManagerRep
+com.histmersion.domain.automation.managers.ManagerRepo.FocusHoldResult | base Boolean | generated | method-result
+    def focusHold(itemId: com.histmersion.domain.automation.managers.ManagerRepo.FocusHoldItemId, h: Hold)(using DbCon): com.histmersion.domain.automation.managers.ManagerRep
+com.histmersion.domain.automation.managers.ManagerRepo.FocusReleaseAllResult | base Int | generated | method-result
+    def focusReleaseAll()(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.FocusReleaseAllResult =
+com.histmersion.domain.automation.managers.ManagerRepo.FocusReleaseIds | base Long | generated | method-parameter
+    def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerRepo.FocusReleaseIds])(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.F
+com.histmersion.domain.automation.managers.ManagerRepo.FocusReleaseResult | base Int | generated | method-result
+    def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerRepo.FocusReleaseIds])(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.F
+com.histmersion.domain.automation.managers.ManagerRepo.ForPersonResult | base Int | generated | method-result
+    def forPerson()(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.ForPersonResult =
+com.histmersion.domain.automation.managers.ManagerRepo.GetId | base String | generated | method-parameter
+    def get(id: com.histmersion.domain.automation.managers.ManagerRepo.GetId)(using DbCon): Option[ManagerInfo] =
+com.histmersion.domain.automation.managers.ManagerRepo.HasItemKind | base String | generated | method-parameter
+    def hasItem(managerId: com.histmersion.domain.automation.managers.ManagerRepo.HasItemManagerId, kind: com.histmersion.domain.automation.managers.ManagerRepo.HasItemKind, 
+com.histmersion.domain.automation.managers.ManagerRepo.HasItemManagerId | base String | generated | method-parameter
+    def hasItem(managerId: com.histmersion.domain.automation.managers.ManagerRepo.HasItemManagerId, kind: com.histmersion.domain.automation.managers.ManagerRepo.HasItemKind, 
+com.histmersion.domain.automation.managers.ManagerRepo.HasItemResult | base Boolean | generated | method-result
+    def hasItem(managerId: com.histmersion.domain.automation.managers.ManagerRepo.HasItemManagerId, kind: com.histmersion.domain.automation.managers.ManagerRepo.HasItemKind, 
+com.histmersion.domain.automation.managers.ManagerRepo.HasItemTarget | base String | generated | method-parameter
+    def hasItem(managerId: com.histmersion.domain.automation.managers.ManagerRepo.HasItemManagerId, kind: com.histmersion.domain.automation.managers.ManagerRepo.HasItemKind, 
+com.histmersion.domain.automation.managers.ManagerRepo.HintId | base Long | generated | method-parameter
+    def hint(id: com.histmersion.domain.automation.managers.ManagerRepo.HintId)(using DbCon): Option[ManagerHint] =
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.Author | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.CreatedAt | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.Id | base Long | original | constructor-parameter
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ItemForManagerId, kind: com.histmersion.domain.automation.managers.ManagerRepo.ItemForKind, 
+    def itemPage(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ItemPageManagerId, status: Option[ItemStatus], offset: com.histmersion.domain.automation.ma
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.ItemId | base Long | original | constructor-parameter
+    def item(id: com.histmersion.domain.automation.managers.ManagerRepo.ItemId)(using DbCon): Option[ManagerItem] =
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.ManagerId | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.Proposal | base Long | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.RetiredAt | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.Standing | base Boolean | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.Text | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.HintRow.Uses | base Int | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.HintsLive | base Boolean | generated | method-parameter
+    def hints(managerId: com.histmersion.domain.automation.managers.ManagerRepo.HintsManagerId, live: com.histmersion.domain.automation.managers.ManagerRepo.HintsLive)(using 
+com.histmersion.domain.automation.managers.ManagerRepo.HintsManagerId | base String | generated | method-parameter
+    def hints(managerId: com.histmersion.domain.automation.managers.ManagerRepo.HintsManagerId, live: com.histmersion.domain.automation.managers.ManagerRepo.HintsLive)(using 
+com.histmersion.domain.automation.managers.ManagerRepo.HoldItemId | base Long | generated | method-parameter
+    def hold(itemId: com.histmersion.domain.automation.managers.ManagerRepo.HoldItemId, h: Hold)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.HoldResu
+com.histmersion.domain.automation.managers.ManagerRepo.HoldResult | base Boolean | generated | method-result
+    def hold(itemId: com.histmersion.domain.automation.managers.ManagerRepo.HoldItemId, h: Hold)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.HoldResu
+com.histmersion.domain.automation.managers.ManagerRepo.InFlightId | base String | generated | method-parameter
+    def inFlight(id: com.histmersion.domain.automation.managers.ManagerRepo.InFlightId)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.InFlightResult =
+com.histmersion.domain.automation.managers.ManagerRepo.InFlightResult | base Int | generated | method-result
+    def inFlight(id: com.histmersion.domain.automation.managers.ManagerRepo.InFlightId)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.InFlightResult =
+com.histmersion.domain.automation.managers.ManagerRepo.ItemForKind | base String | generated | method-parameter
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ItemForManagerId, kind: com.histmersion.domain.automation.managers.ManagerRepo.ItemForKind, 
+com.histmersion.domain.automation.managers.ManagerRepo.ItemForManagerId | base String | generated | method-parameter
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ItemForManagerId, kind: com.histmersion.domain.automation.managers.ManagerRepo.ItemForKind, 
+com.histmersion.domain.automation.managers.ManagerRepo.ItemForTarget | base String | generated | method-parameter
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ItemForManagerId, kind: com.histmersion.domain.automation.managers.ManagerRepo.ItemForKind, 
+com.histmersion.domain.automation.managers.ManagerRepo.ItemId | base Long | generated | method-parameter
+    def item(id: com.histmersion.domain.automation.managers.ManagerRepo.ItemId)(using DbCon): Option[ManagerItem] =
+com.histmersion.domain.automation.managers.ManagerRepo.ItemPageLimit | base Int | generated | method-parameter
+    def itemPage(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ItemPageManagerId, status: Option[ItemStatus], offset: com.histmersion.domain.automation.ma
+com.histmersion.domain.automation.managers.ManagerRepo.ItemPageManagerId | base String | generated | method-parameter
+    def itemPage(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ItemPageManagerId, status: Option[ItemStatus], offset: com.histmersion.domain.automation.ma
+com.histmersion.domain.automation.managers.ManagerRepo.ItemPageOffset | base Int | generated | method-parameter
+    def itemPage(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ItemPageManagerId, status: Option[ItemStatus], offset: com.histmersion.domain.automation.ma
+com.histmersion.domain.automation.managers.ManagerRepo.ItemPageResultPart2 | base Int | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Attempts | base Int | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.CreatedAt | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.EvaluatedRun | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Failures | base Int | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Id | base Long | original | constructor-parameter
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ItemForManagerId, kind: com.histmersion.domain.automation.managers.ManagerRepo.ItemForKind, 
+    def itemPage(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ItemPageManagerId, status: Option[ItemStatus], offset: com.histmersion.domain.automation.ma
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Kind | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.ManagerId | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.NotBefore | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Origin | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Outcome | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Priority | base Int | original | constructor-parameter
+    def setPriority(itemId: com.histmersion.domain.automation.managers.ManagerRepo.SetPriorityItemId, priority: com.histmersion.domain.automation.managers.ManagerRepo.SetPrio
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Status | base String | original | constructor-parameter
+    def withStatus(managerId: com.histmersion.domain.automation.managers.ManagerRepo.WithStatusManagerId, status: ItemStatus)(using DbCon): List[ManagerItem] =
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Target | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.UpdatedAt | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.LastEventManagerId | base String | generated | method-parameter
+    def lastEvent(managerId: com.histmersion.domain.automation.managers.ManagerRepo.LastEventManagerId)(using DbCon): Option[ManagerEvent] = events(managerId, None, 1).headOp
+com.histmersion.domain.automation.managers.ManagerRepo.LastEventOfKind | base String | generated | method-parameter
+    def lastEventOf(managerId: com.histmersion.domain.automation.managers.ManagerRepo.LastEventOfManagerId, kind: com.histmersion.domain.automation.managers.ManagerRepo.LastE
+com.histmersion.domain.automation.managers.ManagerRepo.LastEventOfManagerId | base String | generated | method-parameter
+    def lastEventOf(managerId: com.histmersion.domain.automation.managers.ManagerRepo.LastEventOfManagerId, kind: com.histmersion.domain.automation.managers.ManagerRepo.LastE
+com.histmersion.domain.automation.managers.ManagerRepo.LastProgressResultPart1 | base String | generated | method-result
+    def lastProgress()(using DbCon): Map[com.histmersion.domain.automation.managers.ManagerRepo.LastProgressResultPart1, com.histmersion.domain.automation.managers.ManagerRep
+com.histmersion.domain.automation.managers.ManagerRepo.LastProgressResultPart2 | base String | generated | method-result
+    def lastProgress()(using DbCon): Map[com.histmersion.domain.automation.managers.ManagerRepo.LastProgressResultPart1, com.histmersion.domain.automation.managers.ManagerRep
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.CreatedAt | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.Cron | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.Goal | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.Id | base String | original | constructor-parameter
+    def itemFor(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ItemForManagerId, kind: com.histmersion.domain.automation.managers.ManagerRepo.ItemForKind, 
+    def itemPage(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ItemPageManagerId, status: Option[ItemStatus], offset: com.histmersion.domain.automation.ma
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.Kind | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.NextTickAt | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.PauseRuns | base Boolean | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.State | base String | original | constructor-parameter
+    def setState(id: com.histmersion.domain.automation.managers.ManagerRepo.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.ManagerRepo.SetSta
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.StatusNote | base String | original | constructor-parameter
+    def setStatusNote(id: com.histmersion.domain.automation.managers.ManagerRepo.SetStatusNoteId, note: com.histmersion.domain.automation.managers.ManagerRepo.SetStatusNoteNo
+com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.UpdatedAt | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.OccupyingOnT | base String | generated | method-parameter
+    private def occupyingOn(t: com.histmersion.domain.automation.managers.ManagerRepo.OccupyingOnT): Sql =
+com.histmersion.domain.automation.managers.ManagerRepo.OccupyingRunsResultPart1 | base String | generated | method-result
+    def occupyingRuns()(using DbCon): List[(com.histmersion.domain.automation.managers.ManagerRepo.OccupyingRunsResultPart1, Option[com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerRepo.OccupyingRunsResultPart2 | base String | generated | method-result
+    def occupyingRuns()(using DbCon): List[(com.histmersion.domain.automation.managers.ManagerRepo.OccupyingRunsResultPart1, Option[com.histmersion.domain.automation.managers
+com.histmersion.domain.automation.managers.ManagerRepo.OpenAcquireCountResult | base Int | generated | method-result
+    def openAcquireCount(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.OpenAcquireCountResult =
+com.histmersion.domain.automation.managers.ManagerRepo.OpenForTarget | base String | generated | method-parameter
+    def openFor(target: com.histmersion.domain.automation.managers.ManagerRepo.OpenForTarget)(using DbCon): List[ManagerItem] =
+com.histmersion.domain.automation.managers.ManagerRepo.OpenKeysManagerId | base String | generated | method-parameter
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerRepo.OpenKeysManagerId)(using DbCon): List[(com.histmersion.domain.automation.managers.ManagerRe
+com.histmersion.domain.automation.managers.ManagerRepo.OpenKeysResultPart1 | base String | generated | method-result
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerRepo.OpenKeysManagerId)(using DbCon): List[(com.histmersion.domain.automation.managers.ManagerRe
+com.histmersion.domain.automation.managers.ManagerRepo.OpenKeysResultPart2 | base String | generated | method-result
+    def openKeys(managerId: com.histmersion.domain.automation.managers.ManagerRepo.OpenKeysManagerId)(using DbCon): List[(com.histmersion.domain.automation.managers.ManagerRe
+com.histmersion.domain.automation.managers.ManagerRepo.OpenMajorArticlesGoal | base String | generated | method-parameter
+    def openMajorArticles(managerId: com.histmersion.domain.automation.managers.ManagerRepo.OpenMajorArticlesManagerId, kind: com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerRepo.OpenMajorArticlesKind | base String | generated | method-parameter
+    def openMajorArticles(managerId: com.histmersion.domain.automation.managers.ManagerRepo.OpenMajorArticlesManagerId, kind: com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerRepo.OpenMajorArticlesLimit | base Int | generated | method-parameter
+    def openMajorArticles(managerId: com.histmersion.domain.automation.managers.ManagerRepo.OpenMajorArticlesManagerId, kind: com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerRepo.OpenMajorArticlesManagerId | base String | generated | method-parameter
+    def openMajorArticles(managerId: com.histmersion.domain.automation.managers.ManagerRepo.OpenMajorArticlesManagerId, kind: com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerRepo.OpenMajorArticlesResultPart1 | base String | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.OpenMajorArticlesResultPart2 | base Int | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.OpenMajorArticlesTags | base String | generated | method-parameter
+    def openMajorArticles(managerId: com.histmersion.domain.automation.managers.ManagerRepo.OpenMajorArticlesManagerId, kind: com.histmersion.domain.automation.managers.Manag
+com.histmersion.domain.automation.managers.ManagerRepo.OpenOfFocusHeld | base Boolean | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.OpenOfKinds | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.OpenOfManagerId | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.OpenOfResult | base Int | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.OpenOfStatuses | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.OpenOnManagerId | base String | generated | method-parameter
+    def openOn(managerId: com.histmersion.domain.automation.managers.ManagerRepo.OpenOnManagerId, target: com.histmersion.domain.automation.managers.ManagerRepo.OpenOnTarget)
+com.histmersion.domain.automation.managers.ManagerRepo.OpenOnResult | base Boolean | generated | method-result
+    def openOn(managerId: com.histmersion.domain.automation.managers.ManagerRepo.OpenOnManagerId, target: com.histmersion.domain.automation.managers.ManagerRepo.OpenOnTarget)
+com.histmersion.domain.automation.managers.ManagerRepo.OpenOnTarget | base String | generated | method-parameter
+    def openOn(managerId: com.histmersion.domain.automation.managers.ManagerRepo.OpenOnManagerId, target: com.histmersion.domain.automation.managers.ManagerRepo.OpenOnTarget)
+com.histmersion.domain.automation.managers.ManagerRepo.PaceResultPart1 | base String | generated | method-result
+    def pace(since: java.time.Instant)(using DbCon): Map[com.histmersion.domain.automation.managers.ManagerRepo.PaceResultPart1, (com.histmersion.domain.automation.managers.M
+com.histmersion.domain.automation.managers.ManagerRepo.PaceResultPart2Part1 | base Int | generated | method-result
+    def pace(since: java.time.Instant)(using DbCon): Map[com.histmersion.domain.automation.managers.ManagerRepo.PaceResultPart1, (com.histmersion.domain.automation.managers.M
+com.histmersion.domain.automation.managers.ManagerRepo.PaceResultPart2Part2 | base Int | generated | method-result
+    def pace(since: java.time.Instant)(using DbCon): Map[com.histmersion.domain.automation.managers.ManagerRepo.PaceResultPart1, (com.histmersion.domain.automation.managers.M
+com.histmersion.domain.automation.managers.ManagerRepo.PaceResultPart2Part3 | base String | generated | method-result
+    def pace(since: java.time.Instant)(using DbCon): Map[com.histmersion.domain.automation.managers.ManagerRepo.PaceResultPart1, (com.histmersion.domain.automation.managers.M
+com.histmersion.domain.automation.managers.ManagerRepo.PendingManagerId | base String | generated | method-parameter
+    def pending(managerId: com.histmersion.domain.automation.managers.ManagerRepo.PendingManagerId)(using DbCon): List[ManagerItem] =
+com.histmersion.domain.automation.managers.ManagerRepo.PersonHeldByGoalResultPart1 | base String | generated | method-result
+    def personHeldByGoal()(using DbCon): Map[com.histmersion.domain.automation.managers.ManagerRepo.PersonHeldByGoalResultPart1, com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerRepo.PersonHeldByGoalResultPart2 | base Int | generated | method-result
+    def personHeldByGoal()(using DbCon): Map[com.histmersion.domain.automation.managers.ManagerRepo.PersonHeldByGoalResultPart1, com.histmersion.domain.automation.managers.Ma
+com.histmersion.domain.automation.managers.ManagerRepo.PruneEventsDays | base Int | generated | method-parameter
+    def pruneEvents(days: com.histmersion.domain.automation.managers.ManagerRepo.PruneEventsDays)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.PruneEv
+com.histmersion.domain.automation.managers.ManagerRepo.PruneEventsResult | base Int | generated | method-result
+    def pruneEvents(days: com.histmersion.domain.automation.managers.ManagerRepo.PruneEventsDays)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.PruneEv
+com.histmersion.domain.automation.managers.ManagerRepo.RecentKindsN | base Int | generated | method-parameter
+    def recentKinds(n: com.histmersion.domain.automation.managers.ManagerRepo.RecentKindsN)(using DbCon): List[com.histmersion.domain.automation.managers.ManagerRepo.RecentKi
+com.histmersion.domain.automation.managers.ManagerRepo.RecentKindsResult | base String | generated | method-result
+    def recentKinds(n: com.histmersion.domain.automation.managers.ManagerRepo.RecentKindsN)(using DbCon): List[com.histmersion.domain.automation.managers.ManagerRepo.RecentKi
+com.histmersion.domain.automation.managers.ManagerRepo.ReleaseItemId | base Long | generated | method-parameter
+    def release(itemId: com.histmersion.domain.automation.managers.ManagerRepo.ReleaseItemId)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.ReleaseResu
+com.histmersion.domain.automation.managers.ManagerRepo.ReleaseResult | base Boolean | generated | method-result
+    def release(itemId: com.histmersion.domain.automation.managers.ManagerRepo.ReleaseItemId)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.ReleaseResu
+com.histmersion.domain.automation.managers.ManagerRepo.ReopenItemId | base Long | generated | method-parameter
+    def reopen(itemId: com.histmersion.domain.automation.managers.ManagerRepo.ReopenItemId)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.ReopenResult 
+com.histmersion.domain.automation.managers.ManagerRepo.ReopenResult | base Boolean | generated | method-result
+    def reopen(itemId: com.histmersion.domain.automation.managers.ManagerRepo.ReopenItemId)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.ReopenResult 
+com.histmersion.domain.automation.managers.ManagerRepo.RequeueItemId | base Long | generated | method-parameter
+    def requeue(itemId: com.histmersion.domain.automation.managers.ManagerRepo.RequeueItemId, outcome: com.histmersion.domain.automation.managers.ManagerRepo.RequeueOutcome)(
+com.histmersion.domain.automation.managers.ManagerRepo.RequeueOutcome | base String | generated | method-parameter
+    def requeue(itemId: com.histmersion.domain.automation.managers.ManagerRepo.RequeueItemId, outcome: com.histmersion.domain.automation.managers.ManagerRepo.RequeueOutcome)(
+com.histmersion.domain.automation.managers.ManagerRepo.RequeueResult | base Boolean | generated | method-result
+    def requeue(itemId: com.histmersion.domain.automation.managers.ManagerRepo.RequeueItemId, outcome: com.histmersion.domain.automation.managers.ManagerRepo.RequeueOutcome)(
+com.histmersion.domain.automation.managers.ManagerRepo.RestaleItemId | base Long | generated | method-parameter
+    def restale(itemId: com.histmersion.domain.automation.managers.ManagerRepo.RestaleItemId, priority: com.histmersion.domain.automation.managers.ManagerRepo.RestalePriority
+com.histmersion.domain.automation.managers.ManagerRepo.RestalePriority | base Int | generated | method-parameter
+    def restale(itemId: com.histmersion.domain.automation.managers.ManagerRepo.RestaleItemId, priority: com.histmersion.domain.automation.managers.ManagerRepo.RestalePriority
+com.histmersion.domain.automation.managers.ManagerRepo.RestaleResult | base Boolean | generated | method-result
+    def restale(itemId: com.histmersion.domain.automation.managers.ManagerRepo.RestaleItemId, priority: com.histmersion.domain.automation.managers.ManagerRepo.RestalePriority
+com.histmersion.domain.automation.managers.ManagerRepo.RestaleWhy | base String | generated | method-parameter
+    def restale(itemId: com.histmersion.domain.automation.managers.ManagerRepo.RestaleItemId, priority: com.histmersion.domain.automation.managers.ManagerRepo.RestalePriority
+com.histmersion.domain.automation.managers.ManagerRepo.RetireHintId | base Long | generated | method-parameter
+    def retireHint(managerId: com.histmersion.domain.automation.managers.ManagerRepo.RetireHintManagerId, id: com.histmersion.domain.automation.managers.ManagerRepo.RetireHin
+com.histmersion.domain.automation.managers.ManagerRepo.RetireHintManagerId | base String | generated | method-parameter
+    def retireHint(managerId: com.histmersion.domain.automation.managers.ManagerRepo.RetireHintManagerId, id: com.histmersion.domain.automation.managers.ManagerRepo.RetireHin
+com.histmersion.domain.automation.managers.ManagerRepo.RetireHintResult | base Boolean | generated | method-result
+    def retireHint(managerId: com.histmersion.domain.automation.managers.ManagerRepo.RetireHintManagerId, id: com.histmersion.domain.automation.managers.ManagerRepo.RetireHin
+com.histmersion.domain.automation.managers.ManagerRepo.RunningByGoalResultPart1 | base String | generated | method-result
+    def runningByGoal()(using DbCon): Map[com.histmersion.domain.automation.managers.ManagerRepo.RunningByGoalResultPart1, com.histmersion.domain.automation.managers.ManagerR
+com.histmersion.domain.automation.managers.ManagerRepo.RunningByGoalResultPart2 | base Int | generated | method-result
+    def runningByGoal()(using DbCon): Map[com.histmersion.domain.automation.managers.ManagerRepo.RunningByGoalResultPart1, com.histmersion.domain.automation.managers.ManagerR
+com.histmersion.domain.automation.managers.ManagerRepo.RunningId | base String | generated | method-parameter
+    def running(id: com.histmersion.domain.automation.managers.ManagerRepo.RunningId)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.RunningResult =
+com.histmersion.domain.automation.managers.ManagerRepo.RunningResult | base Int | generated | method-result
+    def running(id: com.histmersion.domain.automation.managers.ManagerRepo.RunningId)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.RunningResult =
+com.histmersion.domain.automation.managers.ManagerRepo.SetConfigCron | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.SetConfigId | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.SetConfigInCron | base String | generated | method-parameter
+    def setConfigIn(id: com.histmersion.domain.automation.managers.ManagerRepo.SetConfigInId, config: ManagerConfig, cron: Option[com.histmersion.domain.automation.managers.M
+com.histmersion.domain.automation.managers.ManagerRepo.SetConfigInId | base String | generated | method-parameter
+    def setConfigIn(id: com.histmersion.domain.automation.managers.ManagerRepo.SetConfigInId, config: ManagerConfig, cron: Option[com.histmersion.domain.automation.managers.M
+com.histmersion.domain.automation.managers.ManagerRepo.SetConfigInResult | base Boolean | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.SetConfigResult | base Boolean | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.SetHintEffectId | base Long | generated | method-parameter
+    def setHintEffect(id: com.histmersion.domain.automation.managers.ManagerRepo.SetHintEffectId, effect: Option[HintEffect])(using DbCon): com.histmersion.domain.automation.
+com.histmersion.domain.automation.managers.ManagerRepo.SetHintEffectResult | base Boolean | generated | method-result
+    def setHintEffect(id: com.histmersion.domain.automation.managers.ManagerRepo.SetHintEffectId, effect: Option[HintEffect])(using DbCon): com.histmersion.domain.automation.
+com.histmersion.domain.automation.managers.ManagerRepo.SetItemStateInItemId | base Long | generated | method-parameter
+    def setItemStateIn(itemId: com.histmersion.domain.automation.managers.ManagerRepo.SetItemStateInItemId, state: ItemState, from: List[ItemStatus])(using DbCon): com.histme
+com.histmersion.domain.automation.managers.ManagerRepo.SetItemStateInResult | base Boolean | generated | method-result
+    def setItemStateIn(itemId: com.histmersion.domain.automation.managers.ManagerRepo.SetItemStateInItemId, state: ItemState, from: List[ItemStatus])(using DbCon): com.histme
+com.histmersion.domain.automation.managers.ManagerRepo.SetNextTickId | base String | generated | method-parameter
+    def setNextTick(id: com.histmersion.domain.automation.managers.ManagerRepo.SetNextTickId, next: Option[java.time.Instant])(using DbCon): com.histmersion.domain.automation
+com.histmersion.domain.automation.managers.ManagerRepo.SetNextTickResult | base Boolean | generated | method-result
+    def setNextTick(id: com.histmersion.domain.automation.managers.ManagerRepo.SetNextTickId, next: Option[java.time.Instant])(using DbCon): com.histmersion.domain.automation
+com.histmersion.domain.automation.managers.ManagerRepo.SetPriorityItemId | base Long | generated | method-parameter
+    def setPriority(itemId: com.histmersion.domain.automation.managers.ManagerRepo.SetPriorityItemId, priority: com.histmersion.domain.automation.managers.ManagerRepo.SetPrio
+com.histmersion.domain.automation.managers.ManagerRepo.SetPriorityPriority | base Int | generated | method-parameter
+    def setPriority(itemId: com.histmersion.domain.automation.managers.ManagerRepo.SetPriorityItemId, priority: com.histmersion.domain.automation.managers.ManagerRepo.SetPrio
+com.histmersion.domain.automation.managers.ManagerRepo.SetPriorityResult | base Boolean | generated | method-result
+    def setPriority(itemId: com.histmersion.domain.automation.managers.ManagerRepo.SetPriorityItemId, priority: com.histmersion.domain.automation.managers.ManagerRepo.SetPrio
+com.histmersion.domain.automation.managers.ManagerRepo.SetStateId | base String | generated | method-parameter
+    def setState(id: com.histmersion.domain.automation.managers.ManagerRepo.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.ManagerRepo.SetSta
+com.histmersion.domain.automation.managers.ManagerRepo.SetStatePauseRuns | base Boolean | generated | method-parameter
+    def setState(id: com.histmersion.domain.automation.managers.ManagerRepo.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.ManagerRepo.SetSta
+com.histmersion.domain.automation.managers.ManagerRepo.SetStateResult | base Boolean | generated | method-result
+    def setState(id: com.histmersion.domain.automation.managers.ManagerRepo.SetStateId, state: State, pauseRuns: com.histmersion.domain.automation.managers.ManagerRepo.SetSta
+com.histmersion.domain.automation.managers.ManagerRepo.SetStatusNoteId | base String | generated | method-parameter
+    def setStatusNote(id: com.histmersion.domain.automation.managers.ManagerRepo.SetStatusNoteId, note: com.histmersion.domain.automation.managers.ManagerRepo.SetStatusNoteNo
+com.histmersion.domain.automation.managers.ManagerRepo.SetStatusNoteNote | base String | generated | method-parameter
+    def setStatusNote(id: com.histmersion.domain.automation.managers.ManagerRepo.SetStatusNoteId, note: com.histmersion.domain.automation.managers.ManagerRepo.SetStatusNoteNo
+com.histmersion.domain.automation.managers.ManagerRepo.SetStatusNoteResult | base Boolean | generated | method-result
+    def setStatusNote(id: com.histmersion.domain.automation.managers.ManagerRepo.SetStatusNoteId, note: com.histmersion.domain.automation.managers.ManagerRepo.SetStatusNoteNo
+com.histmersion.domain.automation.managers.ManagerRepo.SettleItemId | base Long | generated | method-parameter
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerRepo.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.managers.ManagerRep
+com.histmersion.domain.automation.managers.ManagerRepo.SettleOutcome | base String | generated | method-parameter
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerRepo.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.managers.ManagerRep
+com.histmersion.domain.automation.managers.ManagerRepo.SettleResult | base Boolean | generated | method-result
+    def settle(itemId: com.histmersion.domain.automation.managers.ManagerRepo.SettleItemId, status: ItemStatus, outcome: com.histmersion.domain.automation.managers.ManagerRep
+com.histmersion.domain.automation.managers.ManagerRepo.SourceExistsRef | base String | generated | method-parameter
+    def sourceExists(ref: com.histmersion.domain.automation.managers.ManagerRepo.SourceExistsRef)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.SourceE
+com.histmersion.domain.automation.managers.ManagerRepo.SourceExistsResult | base Boolean | generated | method-result
+    def sourceExists(ref: com.histmersion.domain.automation.managers.ManagerRepo.SourceExistsRef)(using DbCon): com.histmersion.domain.automation.managers.ManagerRepo.SourceE
+com.histmersion.domain.automation.managers.ManagerRepo.SpendTodayId | base String | generated | method-parameter
+    def spendToday(id: com.histmersion.domain.automation.managers.ManagerRepo.SpendTodayId)(using DbCon): (BigDecimal, com.histmersion.domain.automation.managers.ManagerRepo.
+com.histmersion.domain.automation.managers.ManagerRepo.SpendTodayResultPart2 | base Long | generated | method-result
+    def spendToday(id: com.histmersion.domain.automation.managers.ManagerRepo.SpendTodayId)(using DbCon): (BigDecimal, com.histmersion.domain.automation.managers.ManagerRepo.
+com.histmersion.domain.automation.managers.ManagerRepo.StaleCandidatesGoal | base String | generated | method-parameter
+    def staleCandidates(managerId: com.histmersion.domain.automation.managers.ManagerRepo.StaleCandidatesManagerId, kind: com.histmersion.domain.automation.managers.ManagerRe
+com.histmersion.domain.automation.managers.ManagerRepo.StaleCandidatesKind | base String | generated | method-parameter
+    def staleCandidates(managerId: com.histmersion.domain.automation.managers.ManagerRepo.StaleCandidatesManagerId, kind: com.histmersion.domain.automation.managers.ManagerRe
+com.histmersion.domain.automation.managers.ManagerRepo.StaleCandidatesLimit | base Int | generated | method-parameter
+    def staleCandidates(managerId: com.histmersion.domain.automation.managers.ManagerRepo.StaleCandidatesManagerId, kind: com.histmersion.domain.automation.managers.ManagerRe
+com.histmersion.domain.automation.managers.ManagerRepo.StaleCandidatesManagerId | base String | generated | method-parameter
+    def staleCandidates(managerId: com.histmersion.domain.automation.managers.ManagerRepo.StaleCandidatesManagerId, kind: com.histmersion.domain.automation.managers.ManagerRe
+com.histmersion.domain.automation.managers.ManagerRepo.StaleCandidatesResultPart1 | base String | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.StaleCandidatesResultPart2 | base String | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.StaleCandidatesResultPart3 | base Int | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.StaleCandidatesResultPart4 | base Long | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.StaleCandidatesTags | base String | generated | method-parameter
+    def staleCandidates(managerId: com.histmersion.domain.automation.managers.ManagerRepo.StaleCandidatesManagerId, kind: com.histmersion.domain.automation.managers.ManagerRe
+com.histmersion.domain.automation.managers.ManagerRepo.SweepOutcomesResultPart1 | base String | generated | method-result
+    def sweepOutcomes()(using DbCon): Map[com.histmersion.domain.automation.managers.ManagerRepo.SweepOutcomesResultPart1, com.histmersion.domain.automation.managers.ManagerR
+com.histmersion.domain.automation.managers.ManagerRepo.SweepOutcomesResultPart2 | base String | generated | method-result
+    def sweepOutcomes()(using DbCon): Map[com.histmersion.domain.automation.managers.ManagerRepo.SweepOutcomesResultPart1, com.histmersion.domain.automation.managers.ManagerR
+com.histmersion.domain.automation.managers.ManagerRepo.ToEvaluateManagerId | base String | generated | method-parameter
+    def toEvaluate(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ToEvaluateManagerId)(using DbCon): List[(ManagerItem, Option[(com.histmersion.domain.auto
+com.histmersion.domain.automation.managers.ManagerRepo.ToEvaluateResultPart2Part1 | base String | generated | method-result
+    def toEvaluate(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ToEvaluateManagerId)(using DbCon): List[(ManagerItem, Option[(com.histmersion.domain.auto
+com.histmersion.domain.automation.managers.ManagerRepo.ToEvaluateResultPart2Part2 | base String | generated | method-result
+    def toEvaluate(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ToEvaluateManagerId)(using DbCon): List[(ManagerItem, Option[(com.histmersion.domain.auto
+com.histmersion.domain.automation.managers.ManagerRepo.UnreviewedArticlesGoal | base String | generated | method-parameter
+    def unreviewedArticles(managerId: com.histmersion.domain.automation.managers.ManagerRepo.UnreviewedArticlesManagerId, kind: com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerRepo.UnreviewedArticlesKind | base String | generated | method-parameter
+    def unreviewedArticles(managerId: com.histmersion.domain.automation.managers.ManagerRepo.UnreviewedArticlesManagerId, kind: com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerRepo.UnreviewedArticlesLimit | base Int | generated | method-parameter
+    def unreviewedArticles(managerId: com.histmersion.domain.automation.managers.ManagerRepo.UnreviewedArticlesManagerId, kind: com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerRepo.UnreviewedArticlesManagerId | base String | generated | method-parameter
+    def unreviewedArticles(managerId: com.histmersion.domain.automation.managers.ManagerRepo.UnreviewedArticlesManagerId, kind: com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerRepo.UnreviewedArticlesResult | base String | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.UnreviewedArticlesTags | base String | generated | method-parameter
+    def unreviewedArticles(managerId: com.histmersion.domain.automation.managers.ManagerRepo.UnreviewedArticlesManagerId, kind: com.histmersion.domain.automation.managers.Man
+com.histmersion.domain.automation.managers.ManagerRepo.UpsertKind | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.UpsertManagerId | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.UpsertPriority | base Int | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.UpsertReopen | base Boolean | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.UpsertResultPart1 | base Long | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.UpsertResultPart2 | base Boolean | generated | method-result
+com.histmersion.domain.automation.managers.ManagerRepo.UpsertTarget | base String | generated | method-parameter
+com.histmersion.domain.automation.managers.ManagerRepo.WithStatusManagerId | base String | generated | method-parameter
+    def withStatus(managerId: com.histmersion.domain.automation.managers.ManagerRepo.WithStatusManagerId, status: ItemStatus)(using DbCon): List[ManagerItem] =

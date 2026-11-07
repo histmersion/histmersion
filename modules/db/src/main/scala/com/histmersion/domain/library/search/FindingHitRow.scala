@@ -23,11 +23,9 @@ final private[search] case class FindingHitRow(
 ) derives DbCodec:
   def toMatch: Finding.Match =
     Finding.Match(id, claim, regionName, lon, lat, periodStart, periodEnd, periodName, tags, Nil, places)
-  def assignedPlaceIds: List[com.histmersion.domain.library.search.FindingHitRow.AssignedPlaceIdsResult] = placeIds
+  def assignedPlaceIds: List[com.histmersion.domain.catalogue.Place.Id] = placeIds
 
 object FindingHitRow:
-  type AssignedPlaceIdsResult = AssignedPlaceIdsResult.T
-  object AssignedPlaceIdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

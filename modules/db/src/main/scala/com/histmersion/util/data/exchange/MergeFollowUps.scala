@@ -14,19 +14,17 @@ trait MergeFollowUps:
     */
   def recordIn(
       m: com.histmersion.api.exchange.Bundle.Manifest,
-      from: com.histmersion.util.data.exchange.MergeFollowUps.RecordInFrom,
+      from: com.histmersion.util.data.exchange.MergeFollowUps.FromRecordRef,
       mergeId: UUID,
       ap: MergePlanner.Apply,
       counts: List[com.histmersion.api.exchange.Bundle.KindCounts],
-      dump: com.histmersion.util.data.exchange.MergeFollowUps.RecordInDump
-  )(using DbCon): (List[com.histmersion.util.data.exchange.MergeFollowUps.RecordInResultPart1], com.histmersion.util.data.exchange.MergeFollowUps.RecordInResultPart2)
+      dump: com.histmersion.util.data.exchange.MergeFollowUps.DumpRecordRef
+  )(using DbCon): (List[com.histmersion.util.data.exchange.MergeFollowUps.Problem], com.histmersion.RowCount)
 
 object MergeFollowUps:
-  type RecordInResultPart1 = RecordInResultPart1.T
-  object RecordInResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordInResultPart2 = RecordInResultPart2.T
-  object RecordInResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordInFrom = RecordInFrom.T
-  object RecordInFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordInDump = RecordInDump.T
-  object RecordInDump extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DumpRecordRef = DumpRecordRef.T
+  object DumpRecordRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromRecordRef = FromRecordRef.T
+  object FromRecordRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

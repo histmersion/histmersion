@@ -1,0 +1,212 @@
+## CONCEPTS NEARBY
+com.histmersion.pluginhost.PolicyHttp.MaxRetryAfterSeconds (Int)
+com.histmersion.pluginhost.PolicyHttp.SleepArg1 (Long)
+com.histmersion.pluginhost.PolicyHttp.Tries (Int)
+com.histmersion.pluginhost.PolicyHttp.UserAgent (String)
+com.histmersion.pluginhost.Polite.ClockResult (Long)
+com.histmersion.pluginhost.Polite.RefusalBackoffMs (Long)
+com.histmersion.pluginhost.Polite.SleepArg1 (Long)
+com.histmersion.pluginhost.Registries.AiProvidersKey (String)
+com.histmersion.pluginhost.Registries.EventCataloguesKey (String)
+com.histmersion.pluginhost.Registries.GazetteerSourcesKey (String)
+com.histmersion.pluginhost.Registries.MediaCollectionsKey (String)
+com.histmersion.pluginhost.Registries.SecretVaultsKey (String)
+com.histmersion.pluginhost.Registries.SourceCollectionsKey (String)
+com.histmersion.pluginhost.Registries.SourceFetchersKey (String)
+com.histmersion.pluginhost.SttpTransport.TimeoutSeconds (Int)
+
+## TYPES TO DECIDE
+com.histmersion.pluginhost.PluginMedia.GuardResultPart1 | base String | generated | method-result
+    def guard[A](a: => Either[String, A]): Either[com.histmersion.pluginhost.PluginMedia.GuardResultPart1, A] =
+com.histmersion.pluginhost.PluginMedia.HttpGetHeadersPart1 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.PluginMedia.HttpGetUrl, headers: Map[com.histmersion.pluginhost.PluginMedia.HttpGetHeadersPart1, com.histmersion.pluginhost.Plugin
+com.histmersion.pluginhost.PluginMedia.HttpGetHeadersPart2 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.PluginMedia.HttpGetUrl, headers: Map[com.histmersion.pluginhost.PluginMedia.HttpGetHeadersPart1, com.histmersion.pluginhost.Plugin
+com.histmersion.pluginhost.PluginMedia.HttpGetUrl | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.PluginMedia.HttpGetUrl, headers: Map[com.histmersion.pluginhost.PluginMedia.HttpGetHeadersPart1, com.histmersion.pluginhost.Plugin
+com.histmersion.pluginhost.PluginMedia.PoliteSleepArg1 | base Long | generated | method-parameter
+com.histmersion.pluginhost.PluginMedia.RefusalProvider | base String | generated | method-parameter
+    def refusal(rec: MediaRecord, allow: LicencePolicy, provider: com.histmersion.pluginhost.PluginMedia.RefusalProvider): Option[com.histmersion.pluginhost.PluginMedia.Refus
+com.histmersion.pluginhost.PluginMedia.RefusalResult | base String | generated | method-result
+    def refusal(rec: MediaRecord, allow: LicencePolicy, provider: com.histmersion.pluginhost.PluginMedia.RefusalProvider): Option[com.histmersion.pluginhost.PluginMedia.Refus
+com.histmersion.pluginhost.PluginMedia.RightsResultPart1 | base String | generated | method-result
+    def rights(r: com.histmersion.plugin.MediaRights): Either[com.histmersion.pluginhost.PluginMedia.RightsResultPart1, Attribution] =
+com.histmersion.pluginhost.PolicyHttp.AcquisitionSleepArg1 | base Long | generated | method-parameter
+com.histmersion.pluginhost.PolicyHttp.BytesAgainMs | base Long | generated | method-parameter
+    def again(n: com.histmersion.pluginhost.PolicyHttp.BytesAgainN, ms: com.histmersion.pluginhost.PolicyHttp.BytesAgainMs, why: com.histmersion.pluginhost.PolicyHttp.BytesAg
+com.histmersion.pluginhost.PolicyHttp.BytesAgainN | base Int | generated | method-parameter
+    def again(n: com.histmersion.pluginhost.PolicyHttp.BytesAgainN, ms: com.histmersion.pluginhost.PolicyHttp.BytesAgainMs, why: com.histmersion.pluginhost.PolicyHttp.BytesAg
+com.histmersion.pluginhost.PolicyHttp.BytesAgainResultPart1 | base String | generated | method-result
+    def again(n: com.histmersion.pluginhost.PolicyHttp.BytesAgainN, ms: com.histmersion.pluginhost.PolicyHttp.BytesAgainMs, why: com.histmersion.pluginhost.PolicyHttp.BytesAg
+com.histmersion.pluginhost.PolicyHttp.BytesAgainResultPart2 | base Array[Byte] | generated | method-result
+    def again(n: com.histmersion.pluginhost.PolicyHttp.BytesAgainN, ms: com.histmersion.pluginhost.PolicyHttp.BytesAgainMs, why: com.histmersion.pluginhost.PolicyHttp.BytesAg
+com.histmersion.pluginhost.PolicyHttp.BytesAgainWhy | base String | generated | method-parameter
+    def again(n: com.histmersion.pluginhost.PolicyHttp.BytesAgainN, ms: com.histmersion.pluginhost.PolicyHttp.BytesAgainMs, why: com.histmersion.pluginhost.PolicyHttp.BytesAg
+com.histmersion.pluginhost.PolicyHttp.BytesAttemptN | base Int | generated | method-parameter
+    def attempt(n: com.histmersion.pluginhost.PolicyHttp.BytesAttemptN): Either[com.histmersion.pluginhost.PolicyHttp.BytesAttemptResultPart1, com.histmersion.pluginhost.Poli
+com.histmersion.pluginhost.PolicyHttp.BytesAttemptResultPart1 | base String | generated | method-result
+    def attempt(n: com.histmersion.pluginhost.PolicyHttp.BytesAttemptN): Either[com.histmersion.pluginhost.PolicyHttp.BytesAttemptResultPart1, com.histmersion.pluginhost.Poli
+com.histmersion.pluginhost.PolicyHttp.BytesAttemptResultPart2 | base Array[Byte] | generated | method-result
+    def attempt(n: com.histmersion.pluginhost.PolicyHttp.BytesAttemptN): Either[com.histmersion.pluginhost.PolicyHttp.BytesAttemptResultPart1, com.histmersion.pluginhost.Poli
+com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart1 | base String | generated | method-parameter
+    def bytes(url: com.histmersion.pluginhost.PolicyHttp.BytesUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart1, com.histmersion.pluginhost.PolicyHttp
+com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart2 | base String | generated | method-parameter
+    def bytes(url: com.histmersion.pluginhost.PolicyHttp.BytesUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart1, com.histmersion.pluginhost.PolicyHttp
+com.histmersion.pluginhost.PolicyHttp.BytesResultPart1 | base String | generated | method-result
+    def bytes(url: com.histmersion.pluginhost.PolicyHttp.BytesUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart1, com.histmersion.pluginhost.PolicyHttp
+com.histmersion.pluginhost.PolicyHttp.BytesResultPart2 | base Array[Byte] | generated | method-result
+    def bytes(url: com.histmersion.pluginhost.PolicyHttp.BytesUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart1, com.histmersion.pluginhost.PolicyHttp
+com.histmersion.pluginhost.PolicyHttp.BytesUrl | base String | generated | method-parameter
+    def bytes(url: com.histmersion.pluginhost.PolicyHttp.BytesUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart1, com.histmersion.pluginhost.PolicyHttp
+com.histmersion.pluginhost.PolicyHttp.MaxRetryAfterSeconds | base Int | generated | constructor-parameter
+com.histmersion.pluginhost.PolicyHttp.OnceHeadersPart1 | base String | generated | method-parameter
+    def once(url: com.histmersion.pluginhost.PolicyHttp.OnceUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.OnceHeadersPart1, com.histmersion.pluginhost.PolicyHttp.On
+com.histmersion.pluginhost.PolicyHttp.OnceHeadersPart2 | base String | generated | method-parameter
+    def once(url: com.histmersion.pluginhost.PolicyHttp.OnceUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.OnceHeadersPart1, com.histmersion.pluginhost.PolicyHttp.On
+com.histmersion.pluginhost.PolicyHttp.OnceResultPart1 | base String | generated | method-result
+    def once(url: com.histmersion.pluginhost.PolicyHttp.OnceUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.OnceHeadersPart1, com.histmersion.pluginhost.PolicyHttp.On
+com.histmersion.pluginhost.PolicyHttp.OnceUrl | base String | generated | method-parameter
+    def once(url: com.histmersion.pluginhost.PolicyHttp.OnceUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.OnceHeadersPart1, com.histmersion.pluginhost.PolicyHttp.On
+com.histmersion.pluginhost.PolicyHttp.PluginGetHeadersPart1 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.PolicyHttp.PluginGetUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.PluginGetHeadersPart1, com.histmersion.pluginhost.Poli
+com.histmersion.pluginhost.PolicyHttp.PluginGetHeadersPart2 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.PolicyHttp.PluginGetUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.PluginGetHeadersPart1, com.histmersion.pluginhost.Poli
+com.histmersion.pluginhost.PolicyHttp.PluginGetUrl | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.PolicyHttp.PluginGetUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.PluginGetHeadersPart1, com.histmersion.pluginhost.Poli
+com.histmersion.pluginhost.PolicyHttp.SleepArg1 | base Long | generated | constructor-parameter
+com.histmersion.pluginhost.PolicyHttp.Tries | base Int | generated | constructor-parameter
+com.histmersion.pluginhost.PolicyHttp.UserAgent | base String | generated | constructor-parameter
+    val ua = headers.collectFirst { case (k, v) if k.equalsIgnoreCase(PolicyHttp.UserAgent) => v }
+    val sent = headers.filterNot(_._1.equalsIgnoreCase(PolicyHttp.UserAgent)) +
+com.histmersion.pluginhost.Polite.ClockResult | base Long | generated | constructor-parameter
+com.histmersion.pluginhost.Polite.FileFallbackMime | base String | generated | method-parameter
+    def file(url: com.histmersion.pluginhost.Polite.FileUrl, fallbackMime: com.histmersion.pluginhost.Polite.FileFallbackMime): Either[com.histmersion.pluginhost.Polite.FileR
+com.histmersion.pluginhost.Polite.FileResultPart1 | base String | generated | method-result
+    def file(url: com.histmersion.pluginhost.Polite.FileUrl, fallbackMime: com.histmersion.pluginhost.Polite.FileFallbackMime): Either[com.histmersion.pluginhost.Polite.FileR
+com.histmersion.pluginhost.Polite.FileResultPart2Part1 | base Array[Byte] | generated | method-result
+    def file(url: com.histmersion.pluginhost.Polite.FileUrl, fallbackMime: com.histmersion.pluginhost.Polite.FileFallbackMime): Either[com.histmersion.pluginhost.Polite.FileR
+com.histmersion.pluginhost.Polite.FileResultPart2Part2 | base String | generated | method-result
+    def file(url: com.histmersion.pluginhost.Polite.FileUrl, fallbackMime: com.histmersion.pluginhost.Polite.FileFallbackMime): Either[com.histmersion.pluginhost.Polite.FileR
+com.histmersion.pluginhost.Polite.FileUrl | base String | generated | method-parameter
+    def file(url: com.histmersion.pluginhost.Polite.FileUrl, fallbackMime: com.histmersion.pluginhost.Polite.FileFallbackMime): Either[com.histmersion.pluginhost.Polite.FileR
+com.histmersion.pluginhost.Polite.GetAttemptN | base Int | generated | method-parameter
+    def attempt(n: com.histmersion.pluginhost.Polite.GetAttemptN, refusals: com.histmersion.pluginhost.Polite.GetAttemptRefusals): Either[com.histmersion.pluginhost.Polite.Ge
+com.histmersion.pluginhost.Polite.GetAttemptRefusals | base Int | generated | method-parameter
+    def attempt(n: com.histmersion.pluginhost.Polite.GetAttemptN, refusals: com.histmersion.pluginhost.Polite.GetAttemptRefusals): Either[com.histmersion.pluginhost.Polite.Ge
+com.histmersion.pluginhost.Polite.GetAttemptResultPart1 | base String | generated | method-result
+    def attempt(n: com.histmersion.pluginhost.Polite.GetAttemptN, refusals: com.histmersion.pluginhost.Polite.GetAttemptRefusals): Either[com.histmersion.pluginhost.Polite.Ge
+com.histmersion.pluginhost.Polite.GetHeadersPart1 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.Polite.GetUrl, headers: Map[com.histmersion.pluginhost.Polite.GetHeadersPart1, com.histmersion.pluginhost.Polite.GetHeadersPart2] 
+com.histmersion.pluginhost.Polite.GetHeadersPart2 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.Polite.GetUrl, headers: Map[com.histmersion.pluginhost.Polite.GetHeadersPart1, com.histmersion.pluginhost.Polite.GetHeadersPart2] 
+com.histmersion.pluginhost.Polite.GetResultPart1 | base String | generated | method-result
+    def get(url: com.histmersion.pluginhost.Polite.GetUrl, headers: Map[com.histmersion.pluginhost.Polite.GetHeadersPart1, com.histmersion.pluginhost.Polite.GetHeadersPart2] 
+com.histmersion.pluginhost.Polite.GetUrl | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.Polite.GetUrl, headers: Map[com.histmersion.pluginhost.Polite.GetHeadersPart1, com.histmersion.pluginhost.Polite.GetHeadersPart2] 
+com.histmersion.pluginhost.Polite.HostResult | base String | generated | method-result
+    private def host(url: com.histmersion.pluginhost.Polite.HostUrl): com.histmersion.pluginhost.Polite.HostResult =
+com.histmersion.pluginhost.Polite.HostUrl | base String | generated | method-parameter
+    private def host(url: com.histmersion.pluginhost.Polite.HostUrl): com.histmersion.pluginhost.Polite.HostResult =
+com.histmersion.pluginhost.Polite.IntervalMsH | base String | generated | method-parameter
+    def intervalMs(h: com.histmersion.pluginhost.Polite.IntervalMsH): com.histmersion.pluginhost.Polite.IntervalMsResult = cfg.requestIntervalMs.toLong * slowdown.getOrElse(h
+com.histmersion.pluginhost.Polite.IntervalMsResult | base Long | generated | method-result
+    def intervalMs(h: com.histmersion.pluginhost.Polite.IntervalMsH): com.histmersion.pluginhost.Polite.IntervalMsResult = cfg.requestIntervalMs.toLong * slowdown.getOrElse(h
+com.histmersion.pluginhost.Polite.JsonHeadersPart1 | base String | generated | method-parameter
+    def json(url: com.histmersion.pluginhost.Polite.JsonUrl, headers: Map[com.histmersion.pluginhost.Polite.JsonHeadersPart1, com.histmersion.pluginhost.Polite.JsonHeadersPar
+com.histmersion.pluginhost.Polite.JsonHeadersPart2 | base String | generated | method-parameter
+    def json(url: com.histmersion.pluginhost.Polite.JsonUrl, headers: Map[com.histmersion.pluginhost.Polite.JsonHeadersPart1, com.histmersion.pluginhost.Polite.JsonHeadersPar
+com.histmersion.pluginhost.Polite.JsonResultPart1 | base String | generated | method-result
+    def json(url: com.histmersion.pluginhost.Polite.JsonUrl, headers: Map[com.histmersion.pluginhost.Polite.JsonHeadersPart1, com.histmersion.pluginhost.Polite.JsonHeadersPar
+com.histmersion.pluginhost.Polite.JsonUrl | base String | generated | method-parameter
+    def json(url: com.histmersion.pluginhost.Polite.JsonUrl, headers: Map[com.histmersion.pluginhost.Polite.JsonHeadersPart1, com.histmersion.pluginhost.Polite.JsonHeadersPar
+com.histmersion.pluginhost.Polite.PaceH | base String | generated | method-parameter
+    private def pace(h: com.histmersion.pluginhost.Polite.PaceH): Unit =
+com.histmersion.pluginhost.Polite.RefusalBackoffMs | base Long | generated | constructor-parameter
+com.histmersion.pluginhost.Polite.RequestsResult | base Int | generated | method-result
+    def requests: com.histmersion.pluginhost.Polite.RequestsResult = count
+com.histmersion.pluginhost.Polite.SleepArg1 | base Long | generated | constructor-parameter
+com.histmersion.pluginhost.Politeness.DecideAttempt | base Int | generated | method-parameter
+    def decide(a: HttpAnswer, attempt: com.histmersion.pluginhost.Politeness.DecideAttempt, maxRetries: com.histmersion.pluginhost.Politeness.DecideMaxRetries, maxRetryAfterS
+com.histmersion.pluginhost.Politeness.DecideMaxRetries | base Int | generated | method-parameter
+    def decide(a: HttpAnswer, attempt: com.histmersion.pluginhost.Politeness.DecideAttempt, maxRetries: com.histmersion.pluginhost.Politeness.DecideMaxRetries, maxRetryAfterS
+com.histmersion.pluginhost.Politeness.DecideMaxRetryAfterSeconds | base Int | generated | method-parameter
+    def decide(a: HttpAnswer, attempt: com.histmersion.pluginhost.Politeness.DecideAttempt, maxRetries: com.histmersion.pluginhost.Politeness.DecideMaxRetries, maxRetryAfterS
+com.histmersion.pluginhost.Politeness.IsMaxlagResult | base Boolean | generated | method-result
+    def isMaxlag(a: HttpAnswer): com.histmersion.pluginhost.Politeness.IsMaxlagResult =
+com.histmersion.pluginhost.Politeness.RetryAfterMsResult | base Long | generated | method-result
+    def retryAfterMs(v: Option[com.histmersion.pluginhost.Politeness.RetryAfterMsV], now: Instant): Option[com.histmersion.pluginhost.Politeness.RetryAfterMsResult] = HttpPol
+com.histmersion.pluginhost.Politeness.RetryAfterMsV | base String | generated | method-parameter
+    def retryAfterMs(v: Option[com.histmersion.pluginhost.Politeness.RetryAfterMsV], now: Instant): Option[com.histmersion.pluginhost.Politeness.RetryAfterMsResult] = HttpPol
+com.histmersion.pluginhost.Registries.AiProvidersKey | base String | original | constructor-parameter
+com.histmersion.pluginhost.Registries.EventCataloguesKey | base String | original | constructor-parameter
+com.histmersion.pluginhost.Registries.GazetteerSourcesKey | base String | original | constructor-parameter
+com.histmersion.pluginhost.Registries.MediaCollectionsKey | base String | original | constructor-parameter
+com.histmersion.pluginhost.Registries.ProvidesResult | base String | generated | method-result
+    def provides: List[com.histmersion.pluginhost.Registries.ProvidesResult] =
+com.histmersion.pluginhost.Registries.SecretVaultsKey | base String | original | constructor-parameter
+com.histmersion.pluginhost.Registries.SourceCollectionsKey | base String | original | constructor-parameter
+com.histmersion.pluginhost.Registries.SourceFetchersKey | base String | original | constructor-parameter
+com.histmersion.pluginhost.ReservedNames.AiProviders | base String | generated | value
+    val aiProviders: Set[com.histmersion.pluginhost.ReservedNames.AiProviders] = Agents.ProviderKind.values.map(_.wire).toSet
+com.histmersion.pluginhost.ReservedNames.EventCatalogues | base String | generated | value
+    val eventCatalogues: Set[com.histmersion.pluginhost.ReservedNames.EventCatalogues] = CatalogProvider.all.toSet ++ Set("smithsonian", "volcano", "ncei", "wd")
+com.histmersion.pluginhost.ReservedNames.FirstPartyPlugins | base String | generated | value
+    val firstPartyPlugins: Set[com.histmersion.pluginhost.ReservedNames.FirstPartyPlugins] = Set(
+com.histmersion.pluginhost.ReservedNames.GazetteerSources | base String | generated | value
+    val gazetteerSources: Set[com.histmersion.pluginhost.ReservedNames.GazetteerSources] =
+com.histmersion.pluginhost.ReservedNames.MediaCollections | base String | generated | value
+    val mediaCollections: Set[com.histmersion.pluginhost.ReservedNames.MediaCollections] =
+com.histmersion.pluginhost.ReservedNames.SourceCollections | base String | generated | value
+    val sourceCollections: Set[com.histmersion.pluginhost.ReservedNames.SourceCollections] = Set("calibre", "archive-org")
+com.histmersion.pluginhost.SpiValues.AreaMaxLat | base Double | generated | method-parameter
+com.histmersion.pluginhost.SpiValues.AreaMaxLon | base Double | generated | method-parameter
+com.histmersion.pluginhost.SpiValues.AreaMinLat | base Double | generated | method-parameter
+com.histmersion.pluginhost.SpiValues.AreaMinLon | base Double | generated | method-parameter
+com.histmersion.pluginhost.SpiValues.DoiD | base String | generated | method-parameter
+    def doi(d: com.histmersion.pluginhost.SpiValues.DoiD): Option[spi.Doi] = com.histmersion.domain.library.Doi.option(d.trim).map(ok => spi.Doi(ok.value))
+com.histmersion.pluginhost.SpiValues.DoiOfResultPart1 | base String | generated | method-result
+    def doiOf(d: spi.Doi): Either[com.histmersion.pluginhost.SpiValues.DoiOfResultPart1, com.histmersion.domain.library.Doi] =
+com.histmersion.pluginhost.SpiValues.KeptFResultPart1 | base String | generated | method-parameter
+    def kept[A, B](a: Option[A])(f: A => Either[com.histmersion.pluginhost.SpiValues.KeptFResultPart1, B]): (Option[B], Option[com.histmersion.pluginhost.SpiValues.KeptResult
+com.histmersion.pluginhost.SpiValues.KeptResultPart2 | base String | generated | method-result
+    def kept[A, B](a: Option[A])(f: A => Either[com.histmersion.pluginhost.SpiValues.KeptFResultPart1, B]): (Option[B], Option[com.histmersion.pluginhost.SpiValues.KeptResult
+com.histmersion.pluginhost.SpiValues.LatitudeL | base Double | generated | method-parameter
+    def latitude(l: com.histmersion.pluginhost.SpiValues.LatitudeL): Option[spi.Latitude] = com.histmersion.Latitude.option(l).map(ok => spi.Latitude(ok.value))
+com.histmersion.pluginhost.SpiValues.LatitudeOfResultPart1 | base String | generated | method-result
+    def latitudeOf(l: spi.Latitude): Either[com.histmersion.pluginhost.SpiValues.LatitudeOfResultPart1, com.histmersion.Latitude] =
+com.histmersion.pluginhost.SpiValues.LicenceOfResult | base String | generated | method-result
+    def licenceOf(l: spi.Licence): com.histmersion.pluginhost.SpiValues.LicenceOfResult = l.value
+com.histmersion.pluginhost.SpiValues.LongitudeL | base Double | generated | method-parameter
+    def longitude(l: com.histmersion.pluginhost.SpiValues.LongitudeL): Option[spi.Longitude] =
+com.histmersion.pluginhost.SpiValues.LongitudeOfResultPart1 | base String | generated | method-result
+    def longitudeOf(l: spi.Longitude): Either[com.histmersion.pluginhost.SpiValues.LongitudeOfResultPart1, com.histmersion.Longitude] =
+com.histmersion.pluginhost.SpiValues.OptionalFResultPart1 | base String | generated | method-parameter
+    def optional[A, B](a: Option[A])(f: A => Either[com.histmersion.pluginhost.SpiValues.OptionalFResultPart1, B]): Either[com.histmersion.pluginhost.SpiValues.OptionalResult
+com.histmersion.pluginhost.SpiValues.OptionalResultPart1 | base String | generated | method-result
+    def optional[A, B](a: Option[A])(f: A => Either[com.histmersion.pluginhost.SpiValues.OptionalFResultPart1, B]): Either[com.histmersion.pluginhost.SpiValues.OptionalResult
+com.histmersion.pluginhost.SpiValues.PeriodA | base Long | generated | method-parameter
+    def period(a: com.histmersion.pluginhost.SpiValues.PeriodA, b: com.histmersion.pluginhost.SpiValues.PeriodB): Option[spi.Period] =
+com.histmersion.pluginhost.SpiValues.PeriodB | base Long | generated | method-parameter
+    def period(a: com.histmersion.pluginhost.SpiValues.PeriodA, b: com.histmersion.pluginhost.SpiValues.PeriodB): Option[spi.Period] =
+com.histmersion.pluginhost.SpiValues.PeriodOfResultPart1 | base String | generated | method-result
+    def periodOf(p: spi.Period): Either[com.histmersion.pluginhost.SpiValues.PeriodOfResultPart1, com.histmersion.Period] =
+com.histmersion.pluginhost.SpiValues.WikidataOfResultPart1 | base String | generated | method-result
+    def wikidataOf(q: spi.WikidataId): Either[com.histmersion.pluginhost.SpiValues.WikidataOfResultPart1, com.histmersion.domain.catalogue.places.Wikidata.Id] =
+com.histmersion.pluginhost.SpiValues.WikidataQ | base String | generated | method-parameter
+    def wikidata(q: com.histmersion.pluginhost.SpiValues.WikidataQ): Option[spi.WikidataId] =
+com.histmersion.pluginhost.SpiValues.YearBoundY | base Long | generated | method-parameter
+    def yearBound(y: com.histmersion.pluginhost.SpiValues.YearBoundY): spi.Year = spi.Year(y.max(Int.MinValue).min(Int.MaxValue).toInt)
+com.histmersion.pluginhost.SpiValues.YearOfResultPart1 | base String | generated | method-result
+    def yearOf(y: spi.Year): Either[com.histmersion.pluginhost.SpiValues.YearOfResultPart1, com.histmersion.Year] =
+com.histmersion.pluginhost.SpiValues.YearY | base Long | generated | method-parameter
+    def year(y: com.histmersion.pluginhost.SpiValues.YearY): Option[spi.Year] = Option.when(y.isValidInt)(spi.Year(y.toInt))
+com.histmersion.pluginhost.SttpTransport.GetHeadersPart1 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.SttpTransport.GetUrl, headers: Map[com.histmersion.pluginhost.SttpTransport.GetHeadersPart1, com.histmersion.pluginhost.SttpTransp
+com.histmersion.pluginhost.SttpTransport.GetHeadersPart2 | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.SttpTransport.GetUrl, headers: Map[com.histmersion.pluginhost.SttpTransport.GetHeadersPart1, com.histmersion.pluginhost.SttpTransp
+com.histmersion.pluginhost.SttpTransport.GetResultPart1 | base String | generated | method-result
+    def get(url: com.histmersion.pluginhost.SttpTransport.GetUrl, headers: Map[com.histmersion.pluginhost.SttpTransport.GetHeadersPart1, com.histmersion.pluginhost.SttpTransp
+com.histmersion.pluginhost.SttpTransport.GetUrl | base String | generated | method-parameter
+    def get(url: com.histmersion.pluginhost.SttpTransport.GetUrl, headers: Map[com.histmersion.pluginhost.SttpTransport.GetHeadersPart1, com.histmersion.pluginhost.SttpTransp
+com.histmersion.pluginhost.SttpTransport.TimeoutSeconds | base Int | generated | constructor-parameter
+    final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Option[javax.net.ssl.SSLContext] = None) extends HttpTransport:

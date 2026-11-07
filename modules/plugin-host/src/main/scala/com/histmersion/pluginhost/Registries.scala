@@ -17,7 +17,7 @@ final case class Registries(
     gazetteerSources: ListMap[Registries.GazetteerSourcesKey, GazetteerSource] = ListMap.empty,
     sourceCollections: ListMap[Registries.SourceCollectionsKey, SourceCollection] = ListMap.empty
 ):
-  def provides: List[com.histmersion.pluginhost.Registries.ProvidesResult] =
+  def provides: List[com.histmersion.pluginhost.Registries.RegistryKey] =
     secretVaults.keys.toList.map(k => s"${Registries.SecretVault}:$k") ++
       sourceFetchers.keys.toList.map(k => s"${Registries.SourceFetcher}:$k") ++
       mediaCollections.keys.toList.map(k => s"${Registries.MediaCollection}:$k") ++
@@ -39,8 +39,8 @@ final case class Registries(
     )
 
 object Registries:
-  type ProvidesResult = ProvidesResult.T
-  object ProvidesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegistryKey = RegistryKey.T
+  object RegistryKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type SecretVaultsKey = SecretVaultsKey.T
   object SecretVaultsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

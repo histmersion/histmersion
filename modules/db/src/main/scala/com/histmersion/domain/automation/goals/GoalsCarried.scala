@@ -15,12 +15,10 @@ import hearth.kindlings.optics.syntax.*
   * the goals before their old slugs.
   */
 object GoalsCarried:
-  type RowsRank = RowsRank.T
-  object RowsRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Automation = DataOwner("automation")
 
-  private def rows(rank: com.histmersion.domain.automation.goals.GoalsCarried.RowsRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
+  private def rows(rank: Int)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
 
   val goals: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.Goal](
     Automation,

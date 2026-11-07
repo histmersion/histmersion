@@ -21,21 +21,15 @@ import com.histmersion.api.exchange.Bundle
   */
 object BundleExport:
 
-  type WriteBlobsPart1 = WriteBlobsPart1.T
-  object WriteBlobsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type WriteResultPart1 = WriteResultPart1.T
-  object WriteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteSince = WriteSince.T
-  object WriteSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def write(
       ds: DataSource,
       out: OutputStream,
-      since: Option[com.histmersion.util.data.exchange.BundleExport.WriteSince],
+      since: Option[com.histmersion.util.data.exchange.BundleScope.Since.At],
       files: ContentStore,
       kinds: CarriedKinds
-  ): Either[com.histmersion.util.data.exchange.BundleExport.WriteResultPart1, Bundle.Manifest] =
+  ): Either[String, Bundle.Manifest] =
     transact(ds):
       sql"SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY".update.run()
       val scope = since.fold(BundleScope.All)(BundleScope.Since(_))
@@ -44,7 +38,7 @@ object BundleExport:
       val carried = kinds.inBundleOrder.map(k => k.entry.value -> k.out(scope, files))
 
       // the first use of a digest is the one read
-      val blobs: Map[com.histmersion.util.data.exchange.BundleExport.WriteBlobsPart1, BlobOut] =
+      val blobs: Map[com.histmersion.Sha256, BlobOut] =
         carried.flatMap(_._2.blobs).foldLeft(Map.empty[String, BlobOut]) { (m, b) =>
           if m.contains(b.sha256) then m else m + (b.sha256 -> b)
         }

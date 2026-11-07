@@ -1,0 +1,63 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Contested (Boolean)
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Findings (Int)
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Geometry (String)
+com.histmersion.domain.catalogue.places.PlaceDetailRow.HasBoundary (Boolean)
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Id (String)
+com.histmersion.domain.catalogue.places.PlaceDetailRow.ImportSource (String)
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Kind (String)
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Label (String)
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Names (String)
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Source (String)
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.Row.End (Long)
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.Row.HasShape (Boolean)
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.Row.Kind (String)
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.Row.Label (String)
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.Row.Start (Long)
+
+## TYPES TO DECIDE
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Contested | base Boolean | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Findings | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Geometry | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceDetailRow.HasBoundary | base Boolean | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Id | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceDetailRow.ImportSource | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Kind | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Label | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Names | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Source | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceMergeRules.LedgerLabel | base String | generated | value
+    override val ledgerLabel: Option[com.histmersion.domain.catalogue.places.PlaceMergeRules.LedgerLabel] = Some("SELECT id FROM places WHERE uid = l.local_uid")
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.LabelOfId | base String | generated | method-parameter
+    private def labelOf(id: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.LabelOfId)(using DbCon): Option[com.histmersion.domain.catalogue.places.PlaceOverrideRep
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.LabelOfResult | base String | generated | method-result
+    private def labelOf(id: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.LabelOfId)(using DbCon): Option[com.histmersion.domain.catalogue.places.PlaceOverrideRep
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.LinkedId | base String | generated | method-parameter
+    private def linked(id: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.LinkedId)(using DbCon): List[com.histmersion.domain.catalogue.places.PlaceOverrideRepo.Li
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.LinkedResult | base String | generated | method-result
+    private def linked(id: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.LinkedId)(using DbCon): List[com.histmersion.domain.catalogue.places.PlaceOverrideRepo.Li
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.ListId | base String | generated | method-parameter
+    def list(id: Option[com.histmersion.domain.catalogue.places.PlaceOverrideRepo.ListId])(using DbCon): List[Place.Override] =
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.MergeFrom | base String | generated | method-parameter
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.MergeInto, toleranceK
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.MergeInto | base String | generated | method-parameter
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.MergeInto, toleranceK
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.MergeToleranceKm | base Double | generated | method-parameter
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.MergeInto, toleranceK
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.RemoveId | base String | generated | method-parameter
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceOverrideRepo.RemoveReason])
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.RemoveReason | base String | generated | method-parameter
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceOverrideRepo.RemoveReason])
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.Row.End | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.Row.HasShape | base Boolean | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.Row.Kind | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.Row.Label | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.Row.Start | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.RowOfId | base String | generated | method-parameter
+    private def rowOf(id: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.RowOfId)(using DbCon): Option[Row] =
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.SetId | base String | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.SetToleranceKm | base Double | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.StillLocatedIds | base String | generated | method-parameter
+    private def stillLocated(ids: List[com.histmersion.domain.catalogue.places.PlaceOverrideRepo.StillLocatedIds])(using DbCon): com.histmersion.domain.catalogue.places.Place
+com.histmersion.domain.catalogue.places.PlaceOverrideRepo.StillLocatedResult | base Int | generated | method-result
+    private def stillLocated(ids: List[com.histmersion.domain.catalogue.places.PlaceOverrideRepo.StillLocatedIds])(using DbCon): com.histmersion.domain.catalogue.places.Place

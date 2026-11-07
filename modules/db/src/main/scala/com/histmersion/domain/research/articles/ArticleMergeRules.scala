@@ -10,13 +10,9 @@ import com.histmersion.util.data.exchange.{MergeRules, PlanRules}
   * merge writes links the bundle's sources by the citekeys they have here.
   */
 object ArticleMergeRules extends MergeRules:
-  type LedgerLabel = LedgerLabel.T
-  object LedgerLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Referable = Referable.T
-  object Referable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val owner: DataOwner = DataOwner("research")
   val kind: Bundle.Kind = Bundle.Kind.Article
-  override val ledgerLabel: Option[com.histmersion.domain.research.articles.ArticleMergeRules.LedgerLabel] = Some("SELECT slug FROM articles WHERE uid = l.local_uid")
-  override val referable: com.histmersion.domain.research.articles.ArticleMergeRules.Referable = true
+  override val ledgerLabel: Option[String] = Some("SELECT slug FROM articles WHERE uid = l.local_uid")
+  override val referable: Boolean = true
   override val planning: Option[PlanRules] = Some(ResearchPlan)

@@ -1,0 +1,72 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.automation.goals.GoalRow.Notes (String)
+com.histmersion.domain.automation.goals.GoalRow.ParentSlug (String)
+com.histmersion.domain.automation.goals.GoalRow.Regions (String)
+com.histmersion.domain.automation.goals.GoalRow.Slug (String)
+com.histmersion.domain.automation.goals.GoalRow.Status (String)
+com.histmersion.domain.automation.goals.GoalRow.Tags (String)
+com.histmersion.domain.automation.goals.GoalRow.Title (String)
+com.histmersion.domain.automation.goals.GoalRow.UpdatedAt (String)
+com.histmersion.domain.automation.managers.ManagerLight.Cron (String)
+com.histmersion.domain.automation.managers.ManagerLight.Goal (String)
+com.histmersion.domain.automation.managers.ManagerLight.Id (String)
+com.histmersion.domain.automation.managers.ManagerLight.Kind (String)
+com.histmersion.domain.automation.managers.ManagerLight.PlanItem (Boolean)
+com.histmersion.domain.automation.managers.ManagerLight.State (String)
+com.histmersion.domain.automation.managers.ManagerLight.StatusNote (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.automation.goals.GoalRepo.ChildrenSlug | base String | generated | method-parameter
+    def children(slug: com.histmersion.domain.automation.goals.GoalRepo.ChildrenSlug)(using DbCon): List[Goal] =
+com.histmersion.domain.automation.goals.GoalRepo.DeleteInResult | base Boolean | generated | method-result
+    def deleteIn(slug: com.histmersion.domain.automation.goals.GoalRepo.DeleteInSlug)(using DbCon): com.histmersion.domain.automation.goals.GoalRepo.DeleteInResult =
+com.histmersion.domain.automation.goals.GoalRepo.DeleteInSlug | base String | generated | method-parameter
+    def deleteIn(slug: com.histmersion.domain.automation.goals.GoalRepo.DeleteInSlug)(using DbCon): com.histmersion.domain.automation.goals.GoalRepo.DeleteInResult =
+com.histmersion.domain.automation.goals.GoalRepo.ExistsResult | base Boolean | generated | method-result
+    def exists(slug: com.histmersion.domain.automation.goals.GoalRepo.ExistsSlug)(using DbCon): com.histmersion.domain.automation.goals.GoalRepo.ExistsResult =
+com.histmersion.domain.automation.goals.GoalRepo.ExistsSlug | base String | generated | method-parameter
+    def exists(slug: com.histmersion.domain.automation.goals.GoalRepo.ExistsSlug)(using DbCon): com.histmersion.domain.automation.goals.GoalRepo.ExistsResult =
+com.histmersion.domain.automation.goals.GoalRepo.GetSlug | base String | generated | method-parameter
+    def get(slug: com.histmersion.domain.automation.goals.GoalRepo.GetSlug)(using DbCon): Option[Goal] =
+com.histmersion.domain.automation.goals.GoalRepo.ListInLimit | base Int | generated | method-parameter
+    def listIn(status: Option[com.histmersion.domain.automation.goals.GoalRepo.ListInStatus], limit: com.histmersion.domain.automation.goals.GoalRepo.ListInLimit, offset: com
+com.histmersion.domain.automation.goals.GoalRepo.ListInOffset | base Int | generated | method-parameter
+    def listIn(status: Option[com.histmersion.domain.automation.goals.GoalRepo.ListInStatus], limit: com.histmersion.domain.automation.goals.GoalRepo.ListInLimit, offset: com
+com.histmersion.domain.automation.goals.GoalRepo.ListInStatus | base String | generated | method-parameter
+    def listIn(status: Option[com.histmersion.domain.automation.goals.GoalRepo.ListInStatus], limit: com.histmersion.domain.automation.goals.GoalRepo.ListInLimit, offset: com
+com.histmersion.domain.automation.goals.GoalRepo.PatchInSlug | base String | generated | method-parameter
+    def patchIn(slug: com.histmersion.domain.automation.goals.GoalRepo.PatchInSlug, p: Goal.Patch)(using DbCon): Either[Api.Error, Unit] =
+com.histmersion.domain.automation.goals.GoalRepo.PutInPeriod | base String | generated | method-parameter
+    private def putIn(slug: com.histmersion.domain.automation.goals.GoalRepo.PutInSlug, in: Goal.Put, period: Option[com.histmersion.domain.automation.goals.GoalRepo.PutInPer
+com.histmersion.domain.automation.goals.GoalRepo.PutInSlug | base String | generated | method-parameter
+    private def putIn(slug: com.histmersion.domain.automation.goals.GoalRepo.PutInSlug, in: Goal.Put, period: Option[com.histmersion.domain.automation.goals.GoalRepo.PutInPer
+com.histmersion.domain.automation.goals.GoalRepo.PutSlug | base String | generated | method-parameter
+    def put(slug: com.histmersion.domain.automation.goals.GoalRepo.PutSlug, in: Goal.Put)(using DbCon): Either[Api.Error, Unit] =
+com.histmersion.domain.automation.goals.GoalRepo.RenameInExistsS | base String | generated | method-parameter
+    def exists(s: com.histmersion.domain.automation.goals.GoalRepo.RenameInExistsS) = sql"SELECT 1 FROM goals WHERE slug = $s".query[Int].run().nonEmpty
+com.histmersion.domain.automation.goals.GoalRepo.RenameInNewSlug | base String | generated | method-parameter
+    private[histmersion] def renameIn(oldSlug: com.histmersion.domain.automation.goals.GoalRepo.RenameInOldSlug, newSlug: com.histmersion.domain.automation.goals.GoalRepo.Ren
+com.histmersion.domain.automation.goals.GoalRepo.RenameInOldSlug | base String | generated | method-parameter
+    private[histmersion] def renameIn(oldSlug: com.histmersion.domain.automation.goals.GoalRepo.RenameInOldSlug, newSlug: com.histmersion.domain.automation.goals.GoalRepo.Ren
+com.histmersion.domain.automation.goals.GoalRepo.RenamedToResult | base String | generated | method-result
+    def renamedTo(slug: com.histmersion.domain.automation.goals.GoalRepo.RenamedToSlug)(using DbCon): Option[com.histmersion.domain.automation.goals.GoalRepo.RenamedToResult]
+com.histmersion.domain.automation.goals.GoalRepo.RenamedToSlug | base String | generated | method-parameter
+    def renamedTo(slug: com.histmersion.domain.automation.goals.GoalRepo.RenamedToSlug)(using DbCon): Option[com.histmersion.domain.automation.goals.GoalRepo.RenamedToResult]
+com.histmersion.domain.automation.goals.GoalRow.Notes | base String | original | constructor-parameter
+com.histmersion.domain.automation.goals.GoalRow.ParentSlug | base String | original | constructor-parameter
+com.histmersion.domain.automation.goals.GoalRow.Regions | base String | original | constructor-parameter
+com.histmersion.domain.automation.goals.GoalRow.Slug | base String | original | constructor-parameter
+    def toDto: Goal = Goal(slug, title, status, notes, tags, regions, periodStart, periodEnd, parentSlug, updatedAt)
+com.histmersion.domain.automation.goals.GoalRow.Status | base String | original | constructor-parameter
+com.histmersion.domain.automation.goals.GoalRow.Tags | base String | original | constructor-parameter
+com.histmersion.domain.automation.goals.GoalRow.Title | base String | original | constructor-parameter
+com.histmersion.domain.automation.goals.GoalRow.UpdatedAt | base String | original | constructor-parameter
+com.histmersion.domain.automation.goals.GoalsCarried.RowsRank | base Int | generated | method-parameter
+    private def rows(rank: com.histmersion.domain.automation.goals.GoalsCarried.RowsRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), wri
+com.histmersion.domain.automation.managers.ManagerLight.Cron | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerLight.Goal | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerLight.Id | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerLight.Kind | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerLight.PlanItem | base Boolean | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerLight.State | base String | original | constructor-parameter
+com.histmersion.domain.automation.managers.ManagerLight.StatusNote | base String | original | constructor-parameter

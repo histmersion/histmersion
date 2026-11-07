@@ -3,6 +3,12 @@ package com.histmersion.util.data.exchange
 import com.histmersion.{Period, WireEnumValues}
 
 object Bundle:
+  type RangeIsNull = RangeIsNull.T
+  object RangeIsNull extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RangeLower = RangeLower.T
+  object RangeLower extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RangeUpper = RangeUpper.T
+  object RangeUpper extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The kinds of entity a bundle carries one line per uid of — and what a tombstone says was deleted. Wire names are
     * kebab-case (`article-version`), as the V031 trigger writes them.

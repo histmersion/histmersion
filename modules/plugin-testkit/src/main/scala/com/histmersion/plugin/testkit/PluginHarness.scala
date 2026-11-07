@@ -75,7 +75,7 @@ final class PluginHarness private (
 ):
 
   private val hostLog: HostLog = lines.host
-  private def sleep: com.histmersion.plugin.testkit.PluginHarness.SleepResultArg1 => Unit = if mode.live then ms => Thread.sleep(ms) else _ => ()
+  private def sleep: com.histmersion.plugin.testkit.PluginHarness.SleepMs => Unit = if mode.live then ms => Thread.sleep(ms) else _ => ()
 
   /** What the plugin registered. */
   val contributions: Contributions =
@@ -90,19 +90,19 @@ final class PluginHarness private (
   /** The gazetteer sources the plugin registered, each under the name `places fetch` takes (`gazetteer-source:<name>`
     * in the server's list).
     */
-  def gazetteerSources: List[com.histmersion.plugin.testkit.PluginHarness.GazetteerSourcesResult] = registries.gazetteerSources.keys.toList
+  def gazetteerSources: List[com.histmersion.plugin.testkit.PluginHarness.GazetteerName] = registries.gazetteerSources.keys.toList
 
   /** Every line logged since the plugin was loaded. */
   def log: List[LogLine] = lines.all
 
   /** Every request made since the plugin was loaded, `GET <url>`, with secrets shown as `{secret}`. */
-  def requests: List[com.histmersion.plugin.testkit.PluginHarness.RequestsResult] = wire.requests
+  def requests: List[com.histmersion.plugin.testkit.PluginHarness.Request] = wire.requests
 
   /** The plugin's `HttpMode`. */
   def http: HttpMode = mode
 
   /** Runs `body`, then fails the test if it asked a replay for something not recorded. */
-  private def run[A](body: => A): (A, List[LogLine], List[com.histmersion.plugin.testkit.PluginHarness.RunResultPart3]) =
+  private def run[A](body: => A): (A, List[LogLine], List[com.histmersion.plugin.testkit.PluginHarness.Problem]) =
     val (logFrom, askedFrom) = (lines.all.size, wire.requests.size)
     val result = body
     wire.check()
@@ -113,9 +113,9 @@ final class PluginHarness private (
     * recorded and replayed with the rest. The contact e-mail of the user's config is never sent from a test (nor
     * recorded): the lookups are anonymous.
     */
-  def workFromDoi(doi: com.histmersion.plugin.testkit.PluginHarness.WorkFromDoiDoi): Either[com.histmersion.plugin.testkit.PluginHarness.WorkFromDoiResultPart1, WorkKey] =
+  def workFromDoi(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, WorkKey] =
     val clean = doi.trim.toLowerCase(java.util.Locale.ROOT).replaceFirst("^(https?://)?(dx\\.)?doi\\.org/", "")
-    def json(url: com.histmersion.plugin.testkit.PluginHarness.WorkFromDoiJsonUrl) = acquisition
+    def json(url: com.histmersion.plugin.testkit.PluginHarness.Url) = acquisition
       .bytes(url)
       .flatMap(b =>
         io.circe.parser.parse(new String(b, UTF_8)).left.map(e => s"$url returned unparseable JSON: ${e.getMessage}")
@@ -138,8 +138,8 @@ final class PluginHarness private (
   def fetch(
       work: WorkKey,
       saveTo: Option[Path] = None,
-      legalOnly: com.histmersion.plugin.testkit.PluginHarness.FetchLegalOnly = false,
-      allowUnauthorised: com.histmersion.plugin.testkit.PluginHarness.FetchAllowUnauthorised = false
+      legalOnly: com.histmersion.plugin.testkit.PluginHarness.LegalOnly = false,
+      allowUnauthorised: com.histmersion.plugin.testkit.PluginHarness.AllowUnauthorised = false
   ): FetchReport =
     val (outcome, logged, asked) = run {
       val (chain, notes) = FetchChain.of(registries.sourceFetchers, Nil, allowUnauthorised, hostLog, Set(id))
@@ -166,7 +166,7 @@ final class PluginHarness private (
     * would keep completed (`complete`) and judged again. Tying a record to a place on the map is the server's and needs
     * the map: not run here.
     */
-  def searchMedia(collection: com.histmersion.plugin.testkit.PluginHarness.SearchMediaCollection, place: MediaPlace): MediaReport =
+  def searchMedia(collection: com.histmersion.plugin.testkit.PluginHarness.CollectionName, place: MediaPlace): MediaReport =
     registries.mediaCollections.get(collection) match
       case None      => MediaReport(Nil, Some(s"the plugin registered no media collection '$collection'"), Nil, Nil)
       case Some(col) =>
@@ -187,7 +187,7 @@ final class PluginHarness private (
         MediaReport(verdicts, failure, logged, asked)
 
   private def judge(name: com.histmersion.plugin.testkit.PluginHarness.JudgeName, col: MediaCollection, http: Plugin.Http, allow: LicencePolicy)(
-      answered: Either[com.histmersion.plugin.testkit.PluginHarness.JudgeAnsweredPart1, MediaItem]
+      answered: Either[String, MediaItem]
   ): MediaVerdict =
     answered match
       case Left(why)   => MediaVerdict(why, None, None, Some(why))
@@ -210,7 +210,7 @@ final class PluginHarness private (
     * catalogue's polite client, each record checked and dated as the server stores it (a part is read once per run; the
     * server also skips parts an earlier import read).
     */
-  def readCatalogue(catalogue: com.histmersion.plugin.testkit.PluginHarness.ReadCatalogueCatalogue, query: CatalogueQuery): CatalogueReport =
+  def readCatalogue(catalogue: com.histmersion.plugin.testkit.PluginHarness.CatalogueName, query: CatalogueQuery): CatalogueReport =
     registries.eventCatalogues.get(catalogue) match
       case None =>
         CatalogueReport(
@@ -285,7 +285,7 @@ final class PluginHarness private (
     * gazetteer client (its User-Agent and `places.fetch-*` timeouts), each place checked and converted as the server
     * stores it — without the store.
     */
-  def readGazetteer(name: com.histmersion.plugin.testkit.PluginHarness.ReadGazetteerName): GazetteerReport =
+  def readGazetteer(name: com.histmersion.plugin.testkit.PluginHarness.GazetteerName): GazetteerReport =
     registries.gazetteerSources.get(name) match
       case None      => GazetteerReport(Nil, Nil, Some(s"the plugin registered no gazetteer source '$name'"), Nil, Nil)
       case Some(src) =>
@@ -312,7 +312,7 @@ final class PluginHarness private (
     * [[PluginHarness.liveAiHttp]] (the server's own client) to reach the real provider. (The server also refuses a
     * provider that spends the person's own plan while it listens beyond loopback; a test is on loopback.)
     */
-  def aiTurn(provider: com.histmersion.plugin.testkit.PluginHarness.AiTurnProvider, request: AiTurn.Request, http: AiHttp = ScriptedAiHttp()): AiReport =
+  def aiTurn(provider: com.histmersion.plugin.testkit.PluginHarness.Provider, request: AiTurn.Request, http: AiHttp = ScriptedAiHttp()): AiReport =
     registries.aiProviders.get(provider) match
       case None    => AiReport(Left(s"the plugin registered no AI provider '$provider'"), None, Nil)
       case Some(p) =>
@@ -325,112 +325,66 @@ final class PluginHarness private (
   /** `<vault>:<ref>` resolved by the plugin's secret vault `vault`, as the server resolves a secret reference in any
     * plugin's config.
     */
-  def resolveSecret(vault: com.histmersion.plugin.testkit.PluginHarness.ResolveSecretVault, ref: com.histmersion.plugin.testkit.PluginHarness.ResolveSecretRef): Either[com.histmersion.plugin.testkit.PluginHarness.ResolveSecretResultPart1, com.histmersion.plugin.testkit.PluginHarness.ResolveSecretResultPart2] =
+  def resolveSecret(vault: com.histmersion.plugin.testkit.PluginHarness.VaultId, ref: com.histmersion.plugin.testkit.PluginHarness.SecretKey): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, com.histmersion.plugin.testkit.PluginHarness.ResolveSecretResultPart2] =
     PluginHost.resolve(Secret.Ref.Vault(vault, ref), env, registries.secretVaults)
 
 object PluginHarness:
+  type AllowUnauthorised = AllowUnauthorised.T
+  object AllowUnauthorised extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CatalogueName = CatalogueName.T
+  object CatalogueName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollectionName = CollectionName.T
+  object CollectionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfigText = ConfigText.T
+  object ConfigText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Defaults = Defaults.T
+  object Defaults extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetcherName = FetcherName.T
+  object FetcherName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GazetteerName = GazetteerName.T
+  object GazetteerName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LegalOnly = LegalOnly.T
+  object LegalOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Provider = Provider.T
+  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Request = Request.T
+  object Request extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SecretKey = SecretKey.T
+  object SecretKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SleepMs = SleepMs.T
+  object SleepMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Url = Url.T
+  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VaultId = VaultId.T
+  object VaultId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithVaults = WithVaults.T
+  object WithVaults extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The id of the stand-in vault plugin that serves a test's `secrets` (never one of the plugin's). */
-  type WorkFromDoiJsonUrl = WorkFromDoiJsonUrl.T
-  object WorkFromDoiJsonUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegisterSleepArg1 = RegisterSleepArg1.T
-  object RegisterSleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Warnings = Warnings.T
   object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SleepResultArg1 = SleepResultArg1.T
-  object SleepResultArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GazetteerSourcesResult = GazetteerSourcesResult.T
-  object GazetteerSourcesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RequestsResult = RequestsResult.T
-  object RequestsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunResultPart3 = RunResultPart3.T
-  object RunResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WorkFromDoiResultPart1 = WorkFromDoiResultPart1.T
-  object WorkFromDoiResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WorkFromDoiDoi = WorkFromDoiDoi.T
-  object WorkFromDoiDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchLegalOnly = FetchLegalOnly.T
-  object FetchLegalOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchAllowUnauthorised = FetchAllowUnauthorised.T
-  object FetchAllowUnauthorised extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchMediaCollection = SearchMediaCollection.T
-  object SearchMediaCollection extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type JudgeName = JudgeName.T
   object JudgeName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JudgeAnsweredPart1 = JudgeAnsweredPart1.T
-  object JudgeAnsweredPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadCatalogueCatalogue = ReadCatalogueCatalogue.T
-  object ReadCatalogueCatalogue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadGazetteerName = ReadGazetteerName.T
-  object ReadGazetteerName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AiTurnProvider = AiTurnProvider.T
-  object AiTurnProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveSecretResultPart1 = ResolveSecretResultPart1.T
-  object ResolveSecretResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveSecretResultPart2 = ResolveSecretResultPart2.T
   object ResolveSecretResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveSecretVault = ResolveSecretVault.T
-  object ResolveSecretVault extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveSecretRef = ResolveSecretRef.T
-  object ResolveSecretRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadResultPart1 = LoadResultPart1.T
-  object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadId = _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId
-  val LoadId: _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId.type = _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId
-  type LoadSecretsPart1 = _root_.com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart1
-  val LoadSecretsPart1: _root_.com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart1.type = _root_.com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart1
+  type LoadId = _root_.com.histmersion.util.plugins.Plugin.Id
+  val LoadId: _root_.com.histmersion.util.plugins.Plugin.Id.type = _root_.com.histmersion.util.plugins.Plugin.Id
+  type LoadSecretsPart1 = _root_.com.histmersion.plugin.testkit.PluginHarness.SecretKey
+  val LoadSecretsPart1: _root_.com.histmersion.plugin.testkit.PluginHarness.SecretKey.type = _root_.com.histmersion.plugin.testkit.PluginHarness.SecretKey
   type LoadSecretsPart2 = _root_.com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart2
   val LoadSecretsPart2: _root_.com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart2.type = _root_.com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart2
-  type LoadEnvPart1 = LoadEnvPart1.T
-  object LoadEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadEnvPart2 = LoadEnvPart2.T
-  object LoadEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConfigTextResultPart1 = ConfigTextResultPart1.T
-  object ConfigTextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConfigTextResultPart2 = ConfigTextResultPart2.T
-  object ConfigTextResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DiscoverResultPart1 = DiscoverResultPart1.T
-  object DiscoverResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DiscoverId = DiscoverId.T
-  object DiscoverId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultsOfResultPart1 = DefaultsOfResultPart1.T
-  object DefaultsOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultsOfResultPart2 = DefaultsOfResultPart2.T
-  object DefaultsOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TestVaultsResultPart1 = TestVaultsResultPart1.T
-  object TestVaultsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TestVaultsSecretsPart1 = TestVaultsSecretsPart1.T
-  object TestVaultsSecretsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TestVaultsSecretsPart2 = TestVaultsSecretsPart2.T
   object TestVaultsSecretsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UserConfigResultPart1 = UserConfigResultPart1.T
-  object UserConfigResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UserConfigId = _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId
-  val UserConfigId: _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId.type = _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId
-  type UserConfigText = UserConfigText.T
-  object UserConfigText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UserConfigWithVaults = UserConfigWithVaults.T
-  object UserConfigWithVaults extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostConfigResultPart1 = HostConfigResultPart1.T
-  object HostConfigResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReferencedValuesResult = ReferencedValuesResult.T
-  object ReferencedValuesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReferencedValuesText = ReferencedValuesText.T
-  object ReferencedValuesText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReferencedValuesEnvPart1 = ReferencedValuesEnvPart1.T
-  object ReferencedValuesEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReferencedValuesEnvPart2 = ReferencedValuesEnvPart2.T
-  object ReferencedValuesEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegisterResultPart1 = RegisterResultPart1.T
-  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegisterId = _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId
-  val RegisterId: _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId.type = _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId
-  type SaveFetcher = SaveFetcher.T
-  object SaveFetcher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UserConfigId = _root_.com.histmersion.util.plugins.Plugin.Id
+  val UserConfigId: _root_.com.histmersion.util.plugins.Plugin.Id.type = _root_.com.histmersion.util.plugins.Plugin.Id
+  type RegisterId = _root_.com.histmersion.util.plugins.Plugin.Id
+  val RegisterId: _root_.com.histmersion.util.plugins.Plugin.Id.type = _root_.com.histmersion.util.plugins.Plugin.Id
 
   val TestVaultsId = "testkit-vaults"
 
@@ -464,9 +418,9 @@ object PluginHarness:
       config: String | Path = "",
       http: HttpMode = HttpMode.Offline,
       secrets: Map[com.histmersion.plugin.testkit.PluginHarness.LoadSecretsPart1, com.histmersion.plugin.testkit.PluginHarness.LoadSecretsPart2] = Map.empty,
-      env: Map[com.histmersion.plugin.testkit.PluginHarness.LoadEnvPart1, com.histmersion.plugin.testkit.PluginHarness.LoadEnvPart2] = sys.env,
+      env: Map[String, String] = sys.env,
       histmersionConf: Option[Path] = None
-  ): Either[com.histmersion.plugin.testkit.PluginHarness.LoadResultPart1, PluginHarness] =
+  ): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, PluginHarness] =
     val loader = Option(Thread.currentThread.getContextClassLoader).getOrElse(getClass.getClassLoader)
     val envSecrets = secrets.collect { case (k, v) if k.startsWith(s"${Secret.Ref.EnvScheme}:") => k.drop(4).trim -> v }
     val environment = env ++ envSecrets
@@ -490,13 +444,13 @@ object PluginHarness:
       )
     yield harness
 
-  private def configText(config: String | Path): Either[com.histmersion.plugin.testkit.PluginHarness.ConfigTextResultPart1, com.histmersion.plugin.testkit.PluginHarness.ConfigTextResultPart2] = config match
+  private def configText(config: String | Path): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, com.histmersion.plugin.testkit.PluginHarness.ConfigText] = config match
     case p: Path =>
       if Files.isRegularFile(p) then Right(Files.readString(p, UTF_8)) else Left(s"no config file $p")
     case s: String => Right(s)
 
   /** The plugin with this id among the providers ServiceLoader finds, or what is missing. */
-  private def discover(loader: ClassLoader, id: com.histmersion.plugin.testkit.PluginHarness.DiscoverId): Either[com.histmersion.plugin.testkit.PluginHarness.DiscoverResultPart1, Plugin] =
+  private def discover(loader: ClassLoader, id: com.histmersion.util.plugins.Plugin.Id): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, Plugin] =
     val services = s"META-INF/services/${classOf[Plugin].getName}"
     if !loader.getResources(services).hasMoreElements then
       Left(
@@ -515,7 +469,7 @@ object PluginHarness:
           Left(s"plugin id '$id' is claimed by ${many.size} plugins: ${many.map(_.getClass.getName).mkString(", ")}")
 
   /** The plugin's defaults, which must exist: without them the server knows none of its settings. */
-  private def defaultsOf(p: Plugin): Either[com.histmersion.plugin.testkit.PluginHarness.DefaultsOfResultPart1, com.histmersion.plugin.testkit.PluginHarness.DefaultsOfResultPart2] =
+  private def defaultsOf(p: Plugin): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, com.histmersion.plugin.testkit.PluginHarness.Defaults] =
     val loader = Option(p.getClass.getClassLoader).getOrElse(getClass.getClassLoader)
     Option(loader.getResource(p.defaultsResource)) match
       case None =>
@@ -535,7 +489,7 @@ object PluginHarness:
           )
 
   /** The stand-in vaults that serve the test's `<vault>:<ref>` secrets, if it has any. */
-  private def testVaults(secrets: Map[com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart1, com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart2]): Either[com.histmersion.plugin.testkit.PluginHarness.TestVaultsResultPart1, Option[Plugin]] =
+  private def testVaults(secrets: Map[com.histmersion.plugin.testkit.PluginHarness.SecretKey, com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart2]): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, Option[Plugin]] =
     val refs = secrets.toList
       .filterNot(_._1.startsWith(s"${Secret.Ref.EnvScheme}:"))
       .map((k, v) => Secret.Ref.parse(k).map(_ -> v))
@@ -550,7 +504,7 @@ object PluginHarness:
           .toMap
         Right(Option.when(byVault.nonEmpty)(TestVaults(TestVaultsId, byVault)))
 
-  private def userConfig(id: com.histmersion.plugin.testkit.PluginHarness.UserConfigId, text: com.histmersion.plugin.testkit.PluginHarness.UserConfigText, withVaults: com.histmersion.plugin.testkit.PluginHarness.UserConfigWithVaults): Either[com.histmersion.plugin.testkit.PluginHarness.UserConfigResultPart1, Config] =
+  private def userConfig(id: com.histmersion.plugin.testkit.PluginHarness.UserConfigId, text: com.histmersion.plugin.testkit.PluginHarness.ConfigText, withVaults: com.histmersion.plugin.testkit.PluginHarness.WithVaults): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, Config] =
     val path = s"${PluginHost.Root}.$id"
     scala.util
       .Try(ConfigFactory.parseString(text))
@@ -578,7 +532,7 @@ object PluginHarness:
   /** The server's settings: its defaults and the environment's overrides (or a `histmersion.conf`), with the contact
     * e-mail left out so that no request of a test carries it — the settings a first-party plugin is supplied from too.
     */
-  private def hostConfig(env: Config, file: Option[Path]): Either[com.histmersion.plugin.testkit.PluginHarness.HostConfigResultPart1, LoadedConfig] =
+  private def hostConfig(env: Config, file: Option[Path]): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, LoadedConfig] =
     AppConfig
       .loadWithUserFile(env, file)
       .map(l =>
@@ -591,7 +545,7 @@ object PluginHarness:
   private val ContactPath = "histmersion.acquire.contact-email"
 
   /** The values of the `env:` and `value:` secret references a config text names. */
-  private def referencedValues(text: com.histmersion.plugin.testkit.PluginHarness.ReferencedValuesText, env: Map[com.histmersion.plugin.testkit.PluginHarness.ReferencedValuesEnvPart1, com.histmersion.plugin.testkit.PluginHarness.ReferencedValuesEnvPart2]): Set[com.histmersion.plugin.testkit.PluginHarness.ReferencedValuesResult] =
+  private def referencedValues(text: String, env: Map[String, String]): Set[String] =
     val named = "env:([A-Za-z_][A-Za-z0-9_]*)".r.findAllMatchIn(text).flatMap(m => env.get(m.group(1))).toSet
     val literal = "value:([^\"\\s,}\\]]+)".r.findAllMatchIn(text).map(_.group(1)).toSet
     named ++ literal
@@ -605,11 +559,11 @@ object PluginHarness:
       loaded: LoadedConfig,
       mode: HttpMode,
       scrub: Scrubber
-  ): Either[com.histmersion.plugin.testkit.PluginHarness.RegisterResultPart1, PluginHarness] =
+  ): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, PluginHarness] =
     val host = loaded.config
     val lines = Lines()
     val wire = Wire(mode, scrub)
-    val sleep: com.histmersion.plugin.testkit.PluginHarness.RegisterSleepArg1 => Unit = if mode.live then ms => Thread.sleep(ms) else _ => ()
+    val sleep: com.histmersion.plugin.testkit.PluginHarness.SleepMs => Unit = if mode.live then ms => Thread.sleep(ms) else _ => ()
     val acquisition =
       PolicyHttp.acquisition(host, wire.transport(PolicyHttp.acquisitionTransport(host)), sleep, lines.host)
     val services = HostServices(() => acquisition.plugin, env, lines.plugin, files = new com.histmersion.pluginhost.DiskLocalFiles, processes = new com.histmersion.pluginhost.SystemProcesses)
@@ -648,7 +602,7 @@ object PluginHarness:
         Left(st.error.getOrElse(st.state) + failedVaults.flatMap(_.error).fold("")(e => s" (the test's secrets: $e)"))
 
   /** Where a found copy is written: `<dir>/<fetcher>-<identifier>.<extension>`. */
-  private def save(dir: Path, fetcher: com.histmersion.plugin.testkit.PluginHarness.SaveFetcher, work: WorkKey, file: FetchedFile): Path =
+  private def save(dir: Path, fetcher: com.histmersion.plugin.testkit.PluginHarness.FetcherName, work: WorkKey, file: FetchedFile): Path =
     val ident =
       List(work.doi.map(_.value), work.isbn, work.arxiv, work.pmcid, work.pmid, work.archive).flatten.headOption
         .getOrElse("work")

@@ -1,0 +1,225 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.library.sources.SourceRepo.GapRow.Authors (String)
+com.histmersion.domain.library.sources.SourceRepo.GapRow.CalibreId (String)
+com.histmersion.domain.library.sources.SourceRepo.GapRow.Isbn (String)
+com.histmersion.domain.library.sources.SourceRepo.GapRow.Provenance (String)
+com.histmersion.domain.library.sources.SourceRepo.GapRow.Summary (String)
+com.histmersion.domain.library.sources.SourceRepo.GapRow.Title (String)
+com.histmersion.domain.library.sources.SourceRepo.GapRow.Topics (String)
+com.histmersion.domain.library.sources.SourceRepo.GapRow.Venue (String)
+com.histmersion.domain.library.sources.referrers.DeleteReport.Coverage (String)
+com.histmersion.domain.library.sources.referrers.DeleteReport.Mentions (Int)
+com.histmersion.domain.library.sources.referrers.RenamedReferences.TextsPart1 (String)
+com.histmersion.domain.library.sources.referrers.RenamedReferences.TextsPart2 (Int)
+com.histmersion.domain.library.sources.referrers.SourceKeys.Keys (String)
+com.histmersion.domain.library.sources.referrers.SourceKeys.ResolveArg1 (String)
+com.histmersion.domain.library.sources.referrers.SourceKeys.ResolveResultKey (String)
+com.histmersion.domain.library.sources.referrers.SourceKeys.ResolveResultValue (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.library.sources.SourceRepo.AliasOfCk | base String | generated | method-parameter
+    def aliasOf(ck: com.histmersion.domain.library.sources.SourceRepo.AliasOfCk)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.AliasOfResult] = alias
+com.histmersion.domain.library.sources.SourceRepo.AliasOfResult | base String | generated | method-result
+    def aliasOf(ck: com.histmersion.domain.library.sources.SourceRepo.AliasOfCk)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.AliasOfResult] = alias
+com.histmersion.domain.library.sources.SourceRepo.AliasTargetCk | base String | generated | method-parameter
+    private def aliasTarget(ck: com.histmersion.domain.library.sources.SourceRepo.AliasTargetCk)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.AliasT
+com.histmersion.domain.library.sources.SourceRepo.AliasTargetResult | base String | generated | method-result
+    private def aliasTarget(ck: com.histmersion.domain.library.sources.SourceRepo.AliasTargetCk)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.AliasT
+com.histmersion.domain.library.sources.SourceRepo.AliasesOfCk | base String | generated | method-parameter
+    def aliasesOf(ck: com.histmersion.domain.library.sources.SourceRepo.AliasesOfCk)(using DbCon): Set[com.histmersion.domain.library.sources.SourceRepo.AliasesOfResult] =
+com.histmersion.domain.library.sources.SourceRepo.AliasesOfResult | base String | generated | method-result
+    def aliasesOf(ck: com.histmersion.domain.library.sources.SourceRepo.AliasesOfCk)(using DbCon): Set[com.histmersion.domain.library.sources.SourceRepo.AliasesOfResult] =
+com.histmersion.domain.library.sources.SourceRepo.BodiesAfterAfter | base String | generated | method-parameter
+    def bodiesAfter(after: Option[com.histmersion.domain.library.sources.SourceRepo.BodiesAfterAfter])(using DbCon): Vector[(com.histmersion.domain.library.sources.SourceRepo
+com.histmersion.domain.library.sources.SourceRepo.BodiesAfterResultPart1 | base String | generated | method-result
+    def bodiesAfter(after: Option[com.histmersion.domain.library.sources.SourceRepo.BodiesAfterAfter])(using DbCon): Vector[(com.histmersion.domain.library.sources.SourceRepo
+com.histmersion.domain.library.sources.SourceRepo.BodiesAfterResultPart2 | base Int | generated | method-result
+    def bodiesAfter(after: Option[com.histmersion.domain.library.sources.SourceRepo.BodiesAfterAfter])(using DbCon): Vector[(com.histmersion.domain.library.sources.SourceRepo
+com.histmersion.domain.library.sources.SourceRepo.BodyTextResult | base String | generated | method-result
+    def bodyText(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.domain.library.sources.SourceRepo.BodyTextResult =
+com.histmersion.domain.library.sources.SourceRepo.BodyUnderHeadingHeading | base String | generated | method-parameter
+    def bodyUnderHeading(citekey: com.histmersion.domain.library.Citekey, heading: com.histmersion.domain.library.sources.SourceRepo.BodyUnderHeadingHeading)(using DbCon): co
+com.histmersion.domain.library.sources.SourceRepo.BodyUnderHeadingResult | base String | generated | method-result
+    def bodyUnderHeading(citekey: com.histmersion.domain.library.Citekey, heading: com.histmersion.domain.library.sources.SourceRepo.BodyUnderHeadingHeading)(using DbCon): co
+com.histmersion.domain.library.sources.SourceRepo.CalibreGapsLimit | base Int | generated | method-parameter
+    def calibreGaps(limit: Option[com.histmersion.domain.library.sources.SourceRepo.CalibreGapsLimit])(using DbCon): List[CalibreGap] =
+com.histmersion.domain.library.sources.SourceRepo.CalibreIdCk | base String | generated | method-parameter
+    def calibreId(ck: com.histmersion.domain.library.sources.SourceRepo.CalibreIdCk)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.CalibreIdResult] =
+com.histmersion.domain.library.sources.SourceRepo.CalibreIdResult | base String | generated | method-result
+    def calibreId(ck: com.histmersion.domain.library.sources.SourceRepo.CalibreIdCk)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.CalibreIdResult] =
+com.histmersion.domain.library.sources.SourceRepo.CanonicalAllIds | base String | generated | method-parameter
+    private[histmersion] def canonicalAll(ids: List[com.histmersion.domain.library.sources.SourceRepo.CanonicalAllIds])(using DbCon): Map[com.histmersion.domain.library.sourc
+com.histmersion.domain.library.sources.SourceRepo.CanonicalAllResultPart1 | base String | generated | method-result
+    private[histmersion] def canonicalAll(ids: List[com.histmersion.domain.library.sources.SourceRepo.CanonicalAllIds])(using DbCon): Map[com.histmersion.domain.library.sourc
+com.histmersion.domain.library.sources.SourceRepo.CanonicalAllResultPart2 | base String | generated | method-result
+    private[histmersion] def canonicalAll(ids: List[com.histmersion.domain.library.sources.SourceRepo.CanonicalAllIds])(using DbCon): Map[com.histmersion.domain.library.sourc
+com.histmersion.domain.library.sources.SourceRepo.CanonicalId | base String | generated | method-parameter
+    def canonical(id: com.histmersion.domain.library.sources.SourceRepo.CanonicalId)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.CanonicalResult] =
+com.histmersion.domain.library.sources.SourceRepo.CanonicalResult | base String | generated | method-result
+    def canonical(id: com.histmersion.domain.library.sources.SourceRepo.CanonicalId)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.CanonicalResult] =
+com.histmersion.domain.library.sources.SourceRepo.CitekeyOfDoiResult | base String | generated | method-result
+    def citekeyOfDoi(doi: com.histmersion.domain.library.Doi)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.CitekeyOfDoiResult] =
+com.histmersion.domain.library.sources.SourceRepo.CitekeyOfSha256Result | base String | generated | method-result
+    def citekeyOfSha256(sha: com.histmersion.domain.library.sources.SourceRepo.CitekeyOfSha256Sha)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.Cite
+com.histmersion.domain.library.sources.SourceRepo.CitekeyOfSha256Sha | base String | generated | method-parameter
+    def citekeyOfSha256(sha: com.histmersion.domain.library.sources.SourceRepo.CitekeyOfSha256Sha)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.Cite
+com.histmersion.domain.library.sources.SourceRepo.CitekeysResult | base String | generated | method-result
+    def citekeys()(using DbCon): Vector[com.histmersion.domain.library.sources.SourceRepo.CitekeysResult] =
+com.histmersion.domain.library.sources.SourceRepo.CountsResultPart1 | base Long | generated | method-result
+    def counts()(using DbCon): (com.histmersion.domain.library.sources.SourceRepo.CountsResultPart1, com.histmersion.domain.library.sources.SourceRepo.CountsResultPart2) =
+com.histmersion.domain.library.sources.SourceRepo.CountsResultPart2 | base Long | generated | method-result
+    def counts()(using DbCon): (com.histmersion.domain.library.sources.SourceRepo.CountsResultPart1, com.histmersion.domain.library.sources.SourceRepo.CountsResultPart2) =
+com.histmersion.domain.library.sources.SourceRepo.DoiIndexResultPart1 | base String | generated | method-result
+    def doiIndex()(using DbCon): Map[com.histmersion.domain.library.sources.SourceRepo.DoiIndexResultPart1, com.histmersion.domain.library.sources.SourceRepo.DoiIndexResultPa
+com.histmersion.domain.library.sources.SourceRepo.DoiIndexResultPart2 | base String | generated | method-result
+    def doiIndex()(using DbCon): Map[com.histmersion.domain.library.sources.SourceRepo.DoiIndexResultPart1, com.histmersion.domain.library.sources.SourceRepo.DoiIndexResultPa
+com.histmersion.domain.library.sources.SourceRepo.ExistsResult | base Boolean | generated | method-result
+    def exists(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.domain.library.sources.SourceRepo.ExistsResult =
+com.histmersion.domain.library.sources.SourceRepo.GapRow.Authors | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.SourceRepo.GapRow.CalibreId | base String | original | constructor-parameter
+    def setCalibreId(citekey: com.histmersion.domain.library.Citekey, calibreId: com.histmersion.domain.library.sources.SourceRepo.SetCalibreIdCalibreId)(using DbCon): com.hi
+com.histmersion.domain.library.sources.SourceRepo.GapRow.Isbn | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.SourceRepo.GapRow.Provenance | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.SourceRepo.GapRow.Summary | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.SourceRepo.GapRow.Title | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.SourceRepo.GapRow.Topics | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.SourceRepo.GapRow.Venue | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.SourceRepo.InsertEdgesResult | base Int | generated | method-result
+    private[histmersion] def insertEdges(edges: List[Edge])(using DbCon): com.histmersion.domain.library.sources.SourceRepo.InsertEdgesResult =
+com.histmersion.domain.library.sources.SourceRepo.LicenceOfResult | base String | generated | method-result
+    def licenceOf(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.LicenceOfResult] =
+com.histmersion.domain.library.sources.SourceRepo.MarkdownResult | base String | generated | method-result
+    def markdown(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.domain.library.sources.SourceRepo.MarkdownResult =
+com.histmersion.domain.library.sources.SourceRepo.NamingLimit | base Int | generated | method-parameter
+    def naming(name: com.histmersion.domain.library.sources.SourceRepo.NamingName, limit: com.histmersion.domain.library.sources.SourceRepo.NamingLimit)(using DbCon): List[co
+com.histmersion.domain.library.sources.SourceRepo.NamingName | base String | generated | method-parameter
+    def naming(name: com.histmersion.domain.library.sources.SourceRepo.NamingName, limit: com.histmersion.domain.library.sources.SourceRepo.NamingLimit)(using DbCon): List[co
+com.histmersion.domain.library.sources.SourceRepo.NamingResult | base String | generated | method-result
+    def naming(name: com.histmersion.domain.library.sources.SourceRepo.NamingName, limit: com.histmersion.domain.library.sources.SourceRepo.NamingLimit)(using DbCon): List[co
+com.histmersion.domain.library.sources.SourceRepo.PatchInChunkChars | base Int | generated | method-parameter
+    def patchIn(requested: com.histmersion.domain.library.sources.SourceRepo.PatchInRequested, p: Source.Patch, chunkChars: com.histmersion.domain.library.sources.SourceRepo.
+com.histmersion.domain.library.sources.SourceRepo.PatchInRequested | base String | generated | method-parameter
+    def patchIn(requested: com.histmersion.domain.library.sources.SourceRepo.PatchInRequested, p: Source.Patch, chunkChars: com.histmersion.domain.library.sources.SourceRepo.
+com.histmersion.domain.library.sources.SourceRepo.PatchInResultPart2 | base String | generated | method-result
+com.histmersion.domain.library.sources.SourceRepo.PatchInToleranceKm | base Double | generated | method-parameter
+    def patchIn(requested: com.histmersion.domain.library.sources.SourceRepo.PatchInRequested, p: Source.Patch, chunkChars: com.histmersion.domain.library.sources.SourceRepo.
+com.histmersion.domain.library.sources.SourceRepo.PlaceFindingsInResult | base Int | generated | method-result
+    private[histmersion] def placeFindingsIn(citekey: com.histmersion.domain.library.Citekey, toleranceKm: com.histmersion.domain.library.sources.SourceRepo.PlaceFindingsInTo
+com.histmersion.domain.library.sources.SourceRepo.PlaceFindingsInToleranceKm | base Double | generated | method-parameter
+    private[histmersion] def placeFindingsIn(citekey: com.histmersion.domain.library.Citekey, toleranceKm: com.histmersion.domain.library.sources.SourceRepo.PlaceFindingsInTo
+com.histmersion.domain.library.sources.SourceRepo.PromoteAsCk | base String | generated | method-parameter
+    private def promoteAs(dst: com.histmersion.domain.library.sources.SourceRepo.PromoteAsDst, ck: com.histmersion.domain.library.sources.SourceRepo.PromoteAsCk)(using DbCon)
+com.histmersion.domain.library.sources.SourceRepo.PromoteAsDst | base String | generated | method-parameter
+    private def promoteAs(dst: com.histmersion.domain.library.sources.SourceRepo.PromoteAsDst, ck: com.histmersion.domain.library.sources.SourceRepo.PromoteAsCk)(using DbCon)
+com.histmersion.domain.library.sources.SourceRepo.PromoteAsResult | base Int | generated | method-result
+    private def promoteAs(dst: com.histmersion.domain.library.sources.SourceRepo.PromoteAsDst, ck: com.histmersion.domain.library.sources.SourceRepo.PromoteAsCk)(using DbCon)
+com.histmersion.domain.library.sources.SourceRepo.PutInChunkChars | base Int | generated | method-parameter
+    def putIn(s: Source, chunkChars: com.histmersion.domain.library.sources.SourceRepo.PutInChunkChars, toleranceKm: com.histmersion.domain.library.sources.SourceRepo.PutInTo
+com.histmersion.domain.library.sources.SourceRepo.PutInResult | base String | generated | method-result
+    def putIn(s: Source, chunkChars: com.histmersion.domain.library.sources.SourceRepo.PutInChunkChars, toleranceKm: com.histmersion.domain.library.sources.SourceRepo.PutInTo
+com.histmersion.domain.library.sources.SourceRepo.PutInToleranceKm | base Double | generated | method-parameter
+    def putIn(s: Source, chunkChars: com.histmersion.domain.library.sources.SourceRepo.PutInChunkChars, toleranceKm: com.histmersion.domain.library.sources.SourceRepo.PutInTo
+com.histmersion.domain.library.sources.SourceRepo.RechunkChunkChars | base Int | generated | method-parameter
+    def rechunk(citekey: com.histmersion.domain.library.Citekey, chunkChars: com.histmersion.domain.library.sources.SourceRepo.RechunkChunkChars)(using DbCon): com.histmersio
+com.histmersion.domain.library.sources.SourceRepo.RechunkResult | base Int | generated | method-result
+    def rechunk(citekey: com.histmersion.domain.library.Citekey, chunkChars: com.histmersion.domain.library.sources.SourceRepo.RechunkChunkChars)(using DbCon): com.histmersio
+com.histmersion.domain.library.sources.SourceRepo.RecordLicenceLicence | base String | generated | method-parameter
+    def recordLicence(citekey: com.histmersion.domain.library.Citekey, licence: com.histmersion.domain.library.sources.SourceRepo.RecordLicenceLicence)(using DbCon): com.hist
+com.histmersion.domain.library.sources.SourceRepo.RecordLicenceResult | base Boolean | generated | method-result
+    def recordLicence(citekey: com.histmersion.domain.library.Citekey, licence: com.histmersion.domain.library.sources.SourceRepo.RecordLicenceLicence)(using DbCon): com.hist
+com.histmersion.domain.library.sources.SourceRepo.RefsCitekeys | base String | generated | method-parameter
+    def refs(citekeys: List[com.histmersion.domain.library.sources.SourceRepo.RefsCitekeys])(using DbCon): List[Source.Ref] =
+com.histmersion.domain.library.sources.SourceRepo.RenameInNewCk | base String | generated | method-parameter
+    private[histmersion] def renameIn(oldCk: com.histmersion.domain.library.sources.SourceRepo.RenameInOldCk, newCk: com.histmersion.domain.library.sources.SourceRepo.RenameI
+com.histmersion.domain.library.sources.SourceRepo.RenameInOldCk | base String | generated | method-parameter
+    private[histmersion] def renameIn(oldCk: com.histmersion.domain.library.sources.SourceRepo.RenameInOldCk, newCk: com.histmersion.domain.library.sources.SourceRepo.RenameI
+com.histmersion.domain.library.sources.SourceRepo.RenameInTakenCk | base String | generated | method-parameter
+    def taken(ck: com.histmersion.domain.library.sources.SourceRepo.RenameInTakenCk) = sql"SELECT citekey FROM sources WHERE citekey = $ck".query[String].run().nonEmpty
+com.histmersion.domain.library.sources.SourceRepo.RenameNewRaw | base String | generated | method-parameter
+    def rename(oldCk: com.histmersion.domain.library.sources.SourceRepo.RenameOldCk, newRaw: com.histmersion.domain.library.sources.SourceRepo.RenameNewRaw, referrers: Source
+com.histmersion.domain.library.sources.SourceRepo.RenameNowNewCk | base String | generated | method-parameter
+    private def renameNow(oldCk: com.histmersion.domain.library.sources.SourceRepo.RenameNowOldCk, newCk: com.histmersion.domain.library.sources.SourceRepo.RenameNowNewCk, re
+com.histmersion.domain.library.sources.SourceRepo.RenameNowOldCk | base String | generated | method-parameter
+    private def renameNow(oldCk: com.histmersion.domain.library.sources.SourceRepo.RenameNowOldCk, newCk: com.histmersion.domain.library.sources.SourceRepo.RenameNowNewCk, re
+com.histmersion.domain.library.sources.SourceRepo.RenameOldCk | base String | generated | method-parameter
+    def rename(oldCk: com.histmersion.domain.library.sources.SourceRepo.RenameOldCk, newRaw: com.histmersion.domain.library.sources.SourceRepo.RenameNewRaw, referrers: Source
+com.histmersion.domain.library.sources.SourceRepo.ReplaceChunksChunkChars | base Int | generated | method-parameter
+    private[histmersion] def replaceChunks(citekey: com.histmersion.domain.library.Citekey, markdown: Option[com.histmersion.domain.library.sources.SourceRepo.ReplaceChunksMa
+com.histmersion.domain.library.sources.SourceRepo.ReplaceChunksMarkdown | base String | generated | method-parameter
+    private[histmersion] def replaceChunks(citekey: com.histmersion.domain.library.Citekey, markdown: Option[com.histmersion.domain.library.sources.SourceRepo.ReplaceChunksMa
+com.histmersion.domain.library.sources.SourceRepo.ReplaceChunksResult | base Int | generated | method-result
+    private[histmersion] def replaceChunks(citekey: com.histmersion.domain.library.Citekey, markdown: Option[com.histmersion.domain.library.sources.SourceRepo.ReplaceChunksMa
+com.histmersion.domain.library.sources.SourceRepo.ResolveAliasesResultPart1 | base String | generated | method-result
+    def resolveAliases(targets: List[com.histmersion.domain.library.sources.SourceRepo.ResolveAliasesTargets])(using DbCon): Map[com.histmersion.domain.library.sources.Source
+com.histmersion.domain.library.sources.SourceRepo.ResolveAliasesResultPart2 | base String | generated | method-result
+    def resolveAliases(targets: List[com.histmersion.domain.library.sources.SourceRepo.ResolveAliasesTargets])(using DbCon): Map[com.histmersion.domain.library.sources.Source
+com.histmersion.domain.library.sources.SourceRepo.ResolveAliasesTargets | base String | generated | method-parameter
+    def resolveAliases(targets: List[com.histmersion.domain.library.sources.SourceRepo.ResolveAliasesTargets])(using DbCon): Map[com.histmersion.domain.library.sources.Source
+com.histmersion.domain.library.sources.SourceRepo.ResolveEdgesResult | base Int | generated | method-result
+    def resolveEdges()(using DbCon): com.histmersion.domain.library.sources.SourceRepo.ResolveEdgesResult =
+com.histmersion.domain.library.sources.SourceRepo.RetargetSourceTextNeedle | base String | generated | method-parameter
+    private def retargetSourceText(needle: com.histmersion.domain.library.sources.SourceRepo.RetargetSourceTextNeedle, to: com.histmersion.domain.library.sources.SourceRepo.R
+com.histmersion.domain.library.sources.SourceRepo.RetargetSourceTextResultPart1 | base String | generated | method-result
+    private def retargetSourceText(needle: com.histmersion.domain.library.sources.SourceRepo.RetargetSourceTextNeedle, to: com.histmersion.domain.library.sources.SourceRepo.R
+com.histmersion.domain.library.sources.SourceRepo.RetargetSourceTextResultPart2 | base Int | generated | method-result
+    private def retargetSourceText(needle: com.histmersion.domain.library.sources.SourceRepo.RetargetSourceTextNeedle, to: com.histmersion.domain.library.sources.SourceRepo.R
+com.histmersion.domain.library.sources.SourceRepo.RetargetSourceTextToArg1 | base String | generated | method-parameter
+    private def retargetSourceText(needle: com.histmersion.domain.library.sources.SourceRepo.RetargetSourceTextNeedle, to: com.histmersion.domain.library.sources.SourceRepo.R
+com.histmersion.domain.library.sources.SourceRepo.RetargetSourceTextToResult | base String | generated | method-parameter
+    private def retargetSourceText(needle: com.histmersion.domain.library.sources.SourceRepo.RetargetSourceTextNeedle, to: com.histmersion.domain.library.sources.SourceRepo.R
+com.histmersion.domain.library.sources.SourceRepo.SetCalibreIdCalibreId | base String | generated | method-parameter
+    def setCalibreId(citekey: com.histmersion.domain.library.Citekey, calibreId: com.histmersion.domain.library.sources.SourceRepo.SetCalibreIdCalibreId)(using DbCon): com.hi
+com.histmersion.domain.library.sources.SourceRepo.SetCalibreIdResult | base Int | generated | method-result
+    def setCalibreId(citekey: com.histmersion.domain.library.Citekey, calibreId: com.histmersion.domain.library.sources.SourceRepo.SetCalibreIdCalibreId)(using DbCon): com.hi
+com.histmersion.domain.library.sources.SourceRepo.SetSha256Sha | base String | generated | method-parameter
+    def setSha256(citekey: com.histmersion.domain.library.Citekey, sha: com.histmersion.domain.library.sources.SourceRepo.SetSha256Sha)(using DbCon): Unit =
+com.histmersion.domain.library.sources.SourceRepo.Sha256OfResult | base String | generated | method-result
+    def sha256Of(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.Sha256OfResult] =
+com.histmersion.domain.library.sources.SourceRepo.Sha256sCitekeys | base String | generated | method-parameter
+    def sha256s(citekeys: List[com.histmersion.domain.library.sources.SourceRepo.Sha256sCitekeys])(using DbCon): Map[com.histmersion.domain.library.sources.SourceRepo.Sha256s
+com.histmersion.domain.library.sources.SourceRepo.Sha256sResultPart1 | base String | generated | method-result
+    def sha256s(citekeys: List[com.histmersion.domain.library.sources.SourceRepo.Sha256sCitekeys])(using DbCon): Map[com.histmersion.domain.library.sources.SourceRepo.Sha256s
+com.histmersion.domain.library.sources.SourceRepo.Sha256sResultPart2 | base String | generated | method-result
+    def sha256s(citekeys: List[com.histmersion.domain.library.sources.SourceRepo.Sha256sCitekeys])(using DbCon): Map[com.histmersion.domain.library.sources.SourceRepo.Sha256s
+com.histmersion.domain.library.sources.SourceRepo.TokenResult | base String | generated | method-result
+    private def token(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.library.sources.SourceRepo.TokenResult] =
+com.histmersion.domain.library.sources.SourceRepo.UpdatedAtMillisResultPart1 | base String | generated | method-result
+    def updatedAtMillis()(using DbCon): Map[com.histmersion.domain.library.sources.SourceRepo.UpdatedAtMillisResultPart1, com.histmersion.domain.library.sources.SourceRepo.Up
+com.histmersion.domain.library.sources.SourceRepo.UpdatedAtMillisResultPart2 | base Long | generated | method-result
+    def updatedAtMillis()(using DbCon): Map[com.histmersion.domain.library.sources.SourceRepo.UpdatedAtMillisResultPart1, com.histmersion.domain.library.sources.SourceRepo.Up
+com.histmersion.domain.library.sources.SourceRepo.WriteChunkChars | base Int | generated | method-parameter
+    private def write(s: Source, chunkChars: com.histmersion.domain.library.sources.SourceRepo.WriteChunkChars, toleranceKm: com.histmersion.domain.library.sources.SourceRepo
+com.histmersion.domain.library.sources.SourceRepo.WriteToleranceKm | base Double | generated | method-parameter
+    private def write(s: Source, chunkChars: com.histmersion.domain.library.sources.SourceRepo.WriteChunkChars, toleranceKm: com.histmersion.domain.library.sources.SourceRepo
+com.histmersion.domain.library.sources.SourcesCarried.RowsRank | base Int | generated | method-parameter
+    private def rows(rank: com.histmersion.domain.library.sources.SourcesCarried.RowsRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), wr
+com.histmersion.domain.library.sources.SourcesCarried.SetStem | base String | generated | method-parameter
+    private def set(stem: com.histmersion.domain.library.sources.SourcesCarried.SetStem): BundleEntry = BundleEntry(s"entities/$stem.ndjson")
+com.histmersion.domain.library.sources.referrers.DeleteReport.Coverage | base String | original | constructor-parameter
+com.histmersion.domain.library.sources.referrers.DeleteReport.Mentions | base Int | original | constructor-parameter
+com.histmersion.domain.library.sources.referrers.RenamedReferences.TextsPart1 | base String | original | constructor-parameter
+    final case class RenamedReferences(columns: List[Rename.Count] = Nil, texts: List[(RenamedReferences.TextsPart1, RenamedReferences.TextsPart2)] = Nil)
+com.histmersion.domain.library.sources.referrers.RenamedReferences.TextsPart2 | base Int | original | constructor-parameter
+    final case class RenamedReferences(columns: List[Rename.Count] = Nil, texts: List[(RenamedReferences.TextsPart1, RenamedReferences.TextsPart2)] = Nil)
+com.histmersion.domain.library.sources.referrers.SourceKeys.CitedInResult | base Boolean | generated | method-result
+    def citedIn(texts: List[com.histmersion.domain.library.sources.referrers.SourceKeys.CitedInTexts]): com.histmersion.domain.library.sources.referrers.SourceKeys.CitedInRes
+com.histmersion.domain.library.sources.referrers.SourceKeys.CitedInTexts | base String | generated | method-parameter
+    def citedIn(texts: List[com.histmersion.domain.library.sources.referrers.SourceKeys.CitedInTexts]): com.histmersion.domain.library.sources.referrers.SourceKeys.CitedInRes
+com.histmersion.domain.library.sources.referrers.SourceKeys.FindingPrefixResult | base String | generated | method-result
+    def findingPrefix: com.histmersion.domain.library.sources.referrers.SourceKeys.FindingPrefixResult = citekey + "#"
+com.histmersion.domain.library.sources.referrers.SourceKeys.Keys | base String | original | alias,constructor-parameter
+    final case class SourceKeys(citekey: com.histmersion.domain.library.Citekey, keys: List[SourceKeys.Keys], resolve: List[SourceKeys.ResolveArg1] => Map[SourceKeys.ResolveR
+com.histmersion.domain.library.sources.referrers.SourceKeys.LinkedInResult | base Boolean | generated | method-result
+    def linkedIn(text: com.histmersion.domain.library.sources.referrers.SourceKeys.LinkedInText): com.histmersion.domain.library.sources.referrers.SourceKeys.LinkedInResult =
+com.histmersion.domain.library.sources.referrers.SourceKeys.LinkedInText | base String | generated | method-parameter
+    def linkedIn(text: com.histmersion.domain.library.sources.referrers.SourceKeys.LinkedInText): com.histmersion.domain.library.sources.referrers.SourceKeys.LinkedInResult =
+com.histmersion.domain.library.sources.referrers.SourceKeys.ResolveArg1 | base String | generated | constructor-parameter
+    final case class SourceKeys(citekey: com.histmersion.domain.library.Citekey, keys: List[SourceKeys.Keys], resolve: List[SourceKeys.ResolveArg1] => Map[SourceKeys.ResolveR
+com.histmersion.domain.library.sources.referrers.SourceKeys.ResolveResultKey | base String | generated | constructor-parameter
+    final case class SourceKeys(citekey: com.histmersion.domain.library.Citekey, keys: List[SourceKeys.Keys], resolve: List[SourceKeys.ResolveArg1] => Map[SourceKeys.ResolveR
+com.histmersion.domain.library.sources.referrers.SourceKeys.ResolveResultValue | base String | generated | constructor-parameter
+    final case class SourceKeys(citekey: com.histmersion.domain.library.Citekey, keys: List[SourceKeys.Keys], resolve: List[SourceKeys.ResolveArg1] => Map[SourceKeys.ResolveR
+com.histmersion.domain.library.sources.referrers.SourceKeys.TokenInResult | base Boolean | generated | method-result
+    def tokenIn(text: com.histmersion.domain.library.sources.referrers.SourceKeys.TokenInText): com.histmersion.domain.library.sources.referrers.SourceKeys.TokenInResult = Re
+com.histmersion.domain.library.sources.referrers.SourceKeys.TokenInText | base String | generated | method-parameter
+    def tokenIn(text: com.histmersion.domain.library.sources.referrers.SourceKeys.TokenInText): com.histmersion.domain.library.sources.referrers.SourceKeys.TokenInResult = Re

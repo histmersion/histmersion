@@ -22,28 +22,20 @@ final private[testkit] case class RecordedExchange(
 )
 
 private[testkit] object RecordedExchange:
-  type ParseFieldK = ParseFieldK.T
-  object ParseFieldK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Extension = Extension.T
+  object Extension extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FieldName = FieldName.T
+  object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Host = Host.T
+  object Host extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type KeptHeaders = KeptHeadersValue
   type KeptHeadersValue = KeptHeadersValue.T
   object KeptHeadersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderResult = RenderResult.T
-  object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseText = ParseText.T
-  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExtensionResult = ExtensionResult.T
-  object ExtensionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExtensionContentType = ExtensionContentType.T
-  object ExtensionContentType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsTextResult = IsTextResult.T
-  object IsTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsTextContentType = IsTextContentType.T
-  object IsTextContentType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostOfResult = HostOfResult.T
-  object HostOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HostOfUrl = HostOfUrl.T
   object HostOfUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -80,14 +72,14 @@ private[testkit] object RecordedExchange:
   )
 
   /** Pure: the exchange as its file holds it. */
-  def render(e: RecordedExchange): com.histmersion.plugin.testkit.internal.RecordedExchange.RenderResult =
+  def render(e: RecordedExchange): com.histmersion.plugin.testkit.internal.RecordedExchange.Text =
     (List(s"${e.method} ${e.url}") ++ e.status.map(s => s"status: $s") ++ e.headers.map((k, v) => s"$k: $v") ++
       e.body.map(b => s"body: $b") ++ e.error.map(m => s"error: $m")).mkString("", "\n", "\n")
 
   /** Pure: the exchange from its file. Blank lines and lines starting with `#` (a note on how the body was trimmed) are
     * skipped.
     */
-  def parse(text: com.histmersion.plugin.testkit.internal.RecordedExchange.ParseText): Either[com.histmersion.plugin.testkit.internal.RecordedExchange.ParseResultPart1, RecordedExchange] =
+  def parse(text: com.histmersion.plugin.testkit.internal.RecordedExchange.Text): Either[com.histmersion.plugin.testkit.internal.RecordedExchange.Problem, RecordedExchange] =
     val lines = text.linesIterator.map(_.trim).filter(l => l.nonEmpty && !l.startsWith("#")).toList
     lines match
       case Nil               => Left("empty")
@@ -96,7 +88,7 @@ private[testkit] object RecordedExchange:
           case Array(method, url) =>
             val pairs =
               fields.map(_.split(":", 2)).collect { case Array(k, v) => k.trim.toLowerCase(Locale.ROOT) -> v.trim }
-            def field(k: com.histmersion.plugin.testkit.internal.RecordedExchange.ParseFieldK) = pairs.collectFirst { case (`k`, v) => v }
+            def field(k: com.histmersion.plugin.testkit.internal.RecordedExchange.FieldName) = pairs.collectFirst { case (`k`, v) => v }
             val status = field("status").map(s => s.toIntOption.toRight(s"status '$s' is not a number"))
             status match
               case Some(Left(e)) => Left(e)
@@ -117,7 +109,7 @@ private[testkit] object RecordedExchange:
           case _ => Left(s"'$request' is not '<METHOD> <URL>'")
 
   /** Pure: the extension a body file gets from its content type. */
-  def extension(contentType: Option[com.histmersion.plugin.testkit.internal.RecordedExchange.ExtensionContentType]): com.histmersion.plugin.testkit.internal.RecordedExchange.ExtensionResult =
+  def extension(contentType: Option[com.histmersion.plugin.testkit.StubAnswer.ContentType]): com.histmersion.plugin.testkit.internal.RecordedExchange.Extension =
     val t = contentType.getOrElse("").toLowerCase(Locale.ROOT)
     if t.contains("json") then "json"
     else if t.contains("html") then "html"
@@ -129,13 +121,13 @@ private[testkit] object RecordedExchange:
     else "bin"
 
   /** Pure: whether a body of this type is text, so a secret in it can be replaced. */
-  def isText(contentType: Option[com.histmersion.plugin.testkit.internal.RecordedExchange.IsTextContentType]): com.histmersion.plugin.testkit.internal.RecordedExchange.IsTextResult =
+  def isText(contentType: Option[com.histmersion.plugin.testkit.StubAnswer.ContentType]): Boolean =
     contentType
       .map(_.toLowerCase(Locale.ROOT))
       .exists(t => t.startsWith("text/") || t.contains("json") || t.contains("xml") || t.contains("javascript"))
 
   /** Pure: the host part of a URL, as a file name may hold it. */
-  def hostOf(url: com.histmersion.plugin.testkit.internal.RecordedExchange.HostOfUrl): com.histmersion.plugin.testkit.internal.RecordedExchange.HostOfResult =
+  def hostOf(url: com.histmersion.plugin.testkit.internal.RecordedExchange.HostOfUrl): com.histmersion.plugin.testkit.internal.RecordedExchange.Host =
     "(?i)^[a-z][a-z0-9+.-]*://([^/?#:]+)".r
       .findFirstMatchIn(url)
       .map(_.group(1).toLowerCase(Locale.ROOT))
@@ -147,8 +139,8 @@ private[testkit] object RecordedExchange:
   */
 final private[testkit] class Scrubber(secrets: Set[Scrubber.Secrets]):
   private val values = secrets.filter(_.length >= 4).toList.sortBy(-_.length)
-  def apply(text: com.histmersion.plugin.testkit.internal.Scrubber.ApplyText): com.histmersion.plugin.testkit.internal.Scrubber.ApplyResult = values.foldLeft(text)((t, v) => t.replace(v, Scrubber.Placeholder))
-  def bytes(body: com.histmersion.plugin.testkit.internal.Scrubber.BytesBody): com.histmersion.plugin.testkit.internal.Scrubber.BytesResult =
+  def apply(text: com.histmersion.plugin.testkit.internal.Scrubber.Text): com.histmersion.plugin.testkit.internal.Scrubber.Text = values.foldLeft(text)((t, v) => t.replace(v, Scrubber.Placeholder))
+  def bytes(body: com.histmersion.plugin.testkit.internal.Scrubber.Bytes): com.histmersion.plugin.testkit.internal.Scrubber.Bytes =
     if values.isEmpty then body
     else
       val text = new String(body, UTF_8)
@@ -156,18 +148,14 @@ final private[testkit] class Scrubber(secrets: Set[Scrubber.Secrets]):
       if clean == text then body else clean.getBytes(UTF_8)
 
 private[testkit] object Scrubber:
-  type BytesResult = BytesResult.T
-  object BytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BytesBody = BytesBody.T
-  object BytesBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Bytes = Bytes.T
+  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Secrets = Secrets.T
   object Secrets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ApplyResult = ApplyResult.T
-  object ApplyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyText = ApplyText.T
-  object ApplyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Placeholder = "{secret}"
 
@@ -181,12 +169,12 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
   // the next recording's number, and whether this harness has emptied the directory yet
   private var written = 0
   private var cleared = false
-  private lazy val recorded: Map[(com.histmersion.plugin.testkit.internal.Wire.RecordedPart1Part1, com.histmersion.plugin.testkit.internal.Wire.RecordedPart1Part2), Vector[RecordedExchange]] = mode match
+  private lazy val recorded: Map[(com.histmersion.plugin.testkit.internal.Wire.RecordedPart1Part1, com.histmersion.plugin.testkit.internal.Wire.RequestKey), Vector[RecordedExchange]] = mode match
     case HttpMode.Replay(dir) => Wire.load(dir)
     case _                    => Map.empty
   private val served = scala.collection.mutable.Map.empty[(String, String), Int]
 
-  def requests: List[com.histmersion.plugin.testkit.internal.Wire.RequestsResult] = synchronized(asked.result())
+  def requests: List[com.histmersion.plugin.testkit.internal.Wire.Request] = synchronized(asked.result())
   def unrecorded: List[com.histmersion.plugin.testkit.internal.Wire.UnrecordedResult] = synchronized(missing.result())
 
   /** Fails the test when a replayed request had no recording. */
@@ -200,7 +188,7 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
   /** The transport of one channel: `live` is built only when a request goes to the network. */
   def transport(live: => HttpTransport): HttpTransport = new HttpTransport:
     private lazy val network = live
-    def get(url: com.histmersion.plugin.testkit.internal.Wire.TransportGetUrl, headers: Map[com.histmersion.plugin.testkit.internal.Wire.TransportGetHeadersPart1, com.histmersion.plugin.testkit.internal.Wire.TransportGetHeadersPart2]): Either[com.histmersion.plugin.testkit.internal.Wire.TransportGetResultPart1, HttpAnswer] =
+    def get(url: com.histmersion.plugin.testkit.internal.Wire.TransportGetUrl, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.plugin.testkit.internal.Wire.TransportGetHeadersPart2]): Either[com.histmersion.plugin.testkit.internal.Wire.Problem, HttpAnswer] =
       val shown = scrub(url)
       synchronized(asked += s"GET $shown")
       mode match
@@ -219,7 +207,7 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
               )
           )
 
-  private def record(dir: Path, url: com.histmersion.plugin.testkit.internal.Wire.RecordUrl, answer: Either[com.histmersion.plugin.testkit.internal.Wire.RecordAnswerPart1, HttpAnswer]): Unit = synchronized {
+  private def record(dir: Path, url: com.histmersion.plugin.testkit.internal.Wire.RecordUrl, answer: Either[com.histmersion.plugin.testkit.internal.Wire.Problem, HttpAnswer]): Unit = synchronized {
     if !cleared then
       Wire.clear(dir)
       cleared = true
@@ -238,7 +226,7 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
     Files.writeString(dir.resolve(base + RecordedExchange.Suffix), RecordedExchange.render(exchange), UTF_8)
   }
 
-  private def replay(dir: Path, url: com.histmersion.plugin.testkit.internal.Wire.ReplayUrl): Either[com.histmersion.plugin.testkit.internal.Wire.ReplayResultPart1, HttpAnswer] = synchronized {
+  private def replay(dir: Path, url: com.histmersion.plugin.testkit.internal.Wire.ReplayUrl): Either[com.histmersion.plugin.testkit.internal.Wire.Problem, HttpAnswer] = synchronized {
     recorded.get(("GET", url)) match
       case None =>
         missing += url
@@ -255,40 +243,32 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
   }
 
 private[testkit] object Wire:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Request = Request.T
+  object Request extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequestKey = RequestKey.T
+  object RequestKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** Every exchange recorded in `dir`, by method and URL, in the order they were recorded. A file that does not parse
     * fails the test, naming it.
     */
-  type TransportGetResultPart1 = TransportGetResultPart1.T
-  object TransportGetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TransportGetUrl = TransportGetUrl.T
   object TransportGetUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TransportGetHeadersPart1 = TransportGetHeadersPart1.T
-  object TransportGetHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TransportGetHeadersPart2 = TransportGetHeadersPart2.T
   object TransportGetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type RecordedPart1Part1 = RecordedPart1Part1.T
   object RecordedPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordedPart1Part2 = RecordedPart1Part2.T
-  object RecordedPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RequestsResult = RequestsResult.T
-  object RequestsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnrecordedResult = UnrecordedResult.T
   object UnrecordedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecordUrl = _root_.com.histmersion.plugin.testkit.internal.RecordedExchange.Url
   val RecordUrl: _root_.com.histmersion.plugin.testkit.internal.RecordedExchange.Url.type = _root_.com.histmersion.plugin.testkit.internal.RecordedExchange.Url
-  type RecordAnswerPart1 = RecordAnswerPart1.T
-  object RecordAnswerPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplayResultPart1 = ReplayResultPart1.T
-  object ReplayResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReplayUrl = ReplayUrl.T
   object ReplayUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadResultPart1Part1 = LoadResultPart1Part1.T
   object LoadResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadResultPart1Part2 = LoadResultPart1Part2.T
-  object LoadResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def load(dir: Path): Map[(com.histmersion.plugin.testkit.internal.Wire.LoadResultPart1Part1, com.histmersion.plugin.testkit.internal.Wire.LoadResultPart1Part2), Vector[RecordedExchange]] =
+  def load(dir: Path): Map[(com.histmersion.plugin.testkit.internal.Wire.LoadResultPart1Part1, com.histmersion.plugin.testkit.internal.Wire.RequestKey), Vector[RecordedExchange]] =
     if !Files.isDirectory(dir) then Map.empty
     else
       val files = Files.list(dir)

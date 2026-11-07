@@ -9,21 +9,21 @@ final private[testkit] class TestVaults(id: TestVaults.Id, values: Map[TestVault
   val info = Plugin.Info(id, "0", Spi.Version)
   override given configReader: ConfigReader[Unit] = new ConfigReader[Unit]:
     def from(v: org.ekrich.config.ConfigValue) = Right(())
-  def register(config: Unit, ctx: Plugin.Context): Either[com.histmersion.plugin.testkit.internal.TestVaults.RegisterResultPart1, Unit] =
+  def register(config: Unit, ctx: Plugin.Context): Either[com.histmersion.plugin.testkit.internal.TestVaults.Problem, Unit] =
     values.toList.foldLeft[Either[String, Unit]](Right(())) { case (acc, (vault, refs)) =>
       acc.flatMap(_ =>
         ctx.secretVaults.add(
           vault,
           new Secret.Vault:
             val name = vault
-            def resolve(ref: com.histmersion.plugin.testkit.internal.TestVaults.RegisterResolveRef) = refs.get(ref).toRight(s"the test gives no secret $vault:$ref")
+            def resolve(ref: com.histmersion.plugin.testkit.PluginHarness.SecretKey) = refs.get(ref).toRight(s"the test gives no secret $vault:$ref")
         )
       )
     }
 
 object TestVaults:
-  type RegisterResolveRef = RegisterResolveRef.T
-  object RegisterResolveRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -34,5 +34,3 @@ object TestVaults:
   type ValuesValueValue = ValuesValueValue.T
   object ValuesValueValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type RegisterResultPart1 = RegisterResultPart1.T
-  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

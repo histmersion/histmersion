@@ -10,18 +10,6 @@ import scala.jdk.CollectionConverters.*
   */
 object Politeness:
 
-  type IsMaxlagResult = IsMaxlagResult.T
-  object IsMaxlagResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideAttempt = DecideAttempt.T
-  object DecideAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideMaxRetries = DecideMaxRetries.T
-  object DecideMaxRetries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideMaxRetryAfterSeconds = DecideMaxRetryAfterSeconds.T
-  object DecideMaxRetryAfterSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetryAfterMsResult = RetryAfterMsResult.T
-  object RetryAfterMsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetryAfterMsV = RetryAfterMsV.T
-  object RetryAfterMsV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Step = HttpPolicy.Step
   val Step = HttpPolicy.Step
@@ -29,12 +17,12 @@ object Politeness:
   /** Does the answer say "slow down"? A 429, a 503/502/504, or MediaWiki's maxlag refusal — which comes back as HTTP
     * 200 with a `MediaWiki-API-Error: maxlag` header and `error.code = maxlag`.
     */
-  def isMaxlag(a: HttpAnswer): com.histmersion.pluginhost.Politeness.IsMaxlagResult =
+  def isMaxlag(a: HttpAnswer): Boolean =
     a.header("mediawiki-api-error").exists(_.trim.equalsIgnoreCase("maxlag")) ||
       (a.body.length < 4096 && a.text.contains("\"code\":\"maxlag\""))
 
   /** Pure: the next step after the `attempt`-th answer (0-based) — [[HttpPolicy.decide]]. */
-  def decide(a: HttpAnswer, attempt: com.histmersion.pluginhost.Politeness.DecideAttempt, maxRetries: com.histmersion.pluginhost.Politeness.DecideMaxRetries, maxRetryAfterSeconds: com.histmersion.pluginhost.Politeness.DecideMaxRetryAfterSeconds, now: Instant): Step =
+  def decide(a: HttpAnswer, attempt: com.histmersion.domain.HttpPolicy.Attempt, maxRetries: com.histmersion.domain.HttpPolicy.MaxRetries, maxRetryAfterSeconds: com.histmersion.domain.HttpPolicy.MaxRetryAfterSeconds, now: Instant): Step =
     HttpPolicy.decide(
       a.code,
       a.header("retry-after"),
@@ -46,4 +34,4 @@ object Politeness:
     )
 
   /** Pure: a Retry-After value as milliseconds from `now` — [[HttpPolicy.retryAfterMs]]. */
-  def retryAfterMs(v: Option[com.histmersion.pluginhost.Politeness.RetryAfterMsV], now: Instant): Option[com.histmersion.pluginhost.Politeness.RetryAfterMsResult] = HttpPolicy.retryAfterMs(v, now)
+  def retryAfterMs(v: Option[com.histmersion.domain.HttpPolicy.RetryAfter], now: Instant): Option[com.histmersion.domain.HttpPolicy.Step.Wait.Ms] = HttpPolicy.retryAfterMs(v, now)
