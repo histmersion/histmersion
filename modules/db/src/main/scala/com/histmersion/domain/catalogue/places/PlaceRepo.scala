@@ -1086,7 +1086,7 @@ private[places] object PlaceRepo:
         label,
         name,
         lang,
-        added = true,
+        added = com.histmersion.api.catalogue.Place.NameChanged.Added(true),
         changed = !before.contains(true),
         wasImported = before.contains(false)
       )
@@ -1125,7 +1125,7 @@ private[places] object PlaceRepo:
           val _ =
             sql"DELETE FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang AND manual".update
               .run()
-          Right(com.histmersion.api.catalogue.Place.NameChanged(id, label, name, lang, added = false, changed = true))
+          Right(com.histmersion.api.catalogue.Place.NameChanged(id, label, name, lang, added = com.histmersion.api.catalogue.Place.NameChanged.Added(false), changed = com.histmersion.api.catalogue.Place.NameChanged.Changed(true)))
     }
 
   /** The names people added, by place then name; `id` narrows to one place. */
