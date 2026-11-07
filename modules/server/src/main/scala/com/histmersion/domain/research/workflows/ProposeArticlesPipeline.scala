@@ -21,7 +21,6 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.agents.ApprovalService
 import com.histmersion.domain.automation.approvals.ApprovalQuery
-import com.histmersion.domain.automation.managers.{ManagerContext, ManagerLight}
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.research.articles.ArticlesControllers
 import com.histmersion.api.library.Facet
@@ -129,8 +128,8 @@ final class ProposeArticlesPipeline(
       val planned = area
         .flatMap(a =>
           managers.items(
-            ManagerLight.Id(Managers.seedId(com.histmersion.api.automation.Goal.Ref(a.value)).value),
-            ManagerContext.Limit(1000)
+            Managers.seedId(com.histmersion.api.automation.Goal.Ref(a.value)),
+            com.histmersion.PageSize(1000)
           )
         )
         .filter(i =>

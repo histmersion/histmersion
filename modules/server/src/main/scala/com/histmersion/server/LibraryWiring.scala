@@ -19,7 +19,9 @@ import com.histmersion.domain.library.sources.{
   SourceService,
   SourceSettings
 }
+import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.media.assets.AssetsControllers
+import com.histmersion.util.identity.AliasTable
 
 /** The library's services and controllers, built over one server's `deps`: the figures are media's, the gazetteer the
   * catalogue's, the formatting check and the "Mentioned in articles" part research's, the stored originals the
@@ -30,7 +32,7 @@ final class LibraryWiring(
     figures: AssetsControllers,
     places: PlaceService,
     formatting: SourceFormatting,
-    mentions: LibraryWiring.MentionsArg1 => LibraryWiring.MentionsResult,
+    mentions: com.histmersion.domain.library.Citekey => SourcesControllers.Markdown,
     originals: SourceOriginals
 ):
   private val cfg: () => AppConfig = () => deps.cfg
@@ -48,7 +50,8 @@ final class LibraryWiring(
     formatting,
     originals,
     mentions,
-    (k, id) => Deps.aliasTables.current(deps.ds, k, id),
+    (k, id) =>
+      Citekey.either(Deps.aliasTables.current(deps.ds, k, AliasTable.Id(id.value)).value).getOrElse(id),
     cfg,
     deps.maintenance,
     deps.clock
@@ -70,9 +73,8 @@ final class LibraryWiring(
 object LibraryWiring:
 
   /** What a source's write follows, read from the settings at each write (a reload changes them). */
-  type MentionsArg1 = MentionsArg1.T
-  object MentionsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MentionsResult = MentionsResult.T
-  object MentionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def settings(cfg: AppConfig): SourceSettings = SourceSettings(cfg.limits.chunkChars, cfg.places.pointToleranceKm)
+  def settings(cfg: AppConfig): SourceSettings = SourceSettings(
+    SourceSettings.ChunkChars(cfg.limits.chunkChars.value),
+    SourceSettings.ToleranceKm(cfg.places.pointToleranceKm.value)
+  )

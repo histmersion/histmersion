@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.util.jobs.BackgroundJob
 
-import com.histmersion.api.jobs.{JobDetail, JobInfo}
+import com.histmersion.api.jobs.{JobDetail, JobInfo, JobKinds}
 import com.histmersion.api.instance.Version
 import com.histmersion.config.{BasemapConfig, SeaFloorSource}
 import com.histmersion.domain.HttpPolicy
@@ -15,6 +15,7 @@ import com.histmersion.util.basemap.{
   RetryWait,
   SeaFloorGrid
 }
+import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.storage.Store
 
 import java.net.http.HttpClient
@@ -25,36 +26,11 @@ import com.histmersion.api.Api
   * job, the sea floor the settings choose, and the providers' client under the product's outbound-HTTP policy.
   */
 object BasemapWiring:
-  type Attempt = Attempt.T
-  object Attempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BusyCode = BusyCode.T
-  object BusyCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobAbout = JobAbout.T
-  object JobAbout extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobWhat = JobWhat.T
-  object JobWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Operation = Operation.T
-  object Operation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartBody = StartBody.T
-  object StartBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** The base map of `deps`, reading its providers over the network. */
-
-  type BackoffMsResult = BackoffMsResult.T
-  object BackoffMsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SlowDownCode = SlowDownCode.T
-  object SlowDownCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SlowDownRetryAfter = SlowDownRetryAfter.T
-  object SlowDownRetryAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SlowDownMaxRetries = SlowDownMaxRetries.T
-  object SlowDownMaxRetries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SlowDownMaxRetryAfterSeconds = SlowDownMaxRetryAfterSeconds.T
-  object SlowDownMaxRetryAfterSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def service(deps: Deps): BasemapService = service(deps, () => http(deps.cfg.basemap)(using deps.clock))
 
   /** The base map of `deps`; `http` and `freeSpace` are the seams a test substitutes for the network and the disk. */
-  def service(deps: Deps, http: () => RangeHttp, freeSpace: Store => com.histmersion.ByteCount = _.usableSpace.value): BasemapService =
+  def service(deps: Deps, http: () => RangeHttp, freeSpace: Store => com.histmersion.ByteCount = _.usableSpace): BasemapService =
     BasemapService(
       () => deps.cfg.basemap,
       deps.storage,
@@ -75,9 +51,9 @@ object BasemapWiring:
         .version(HttpClient.Version.HTTP_1_1)
         .connectTimeout(Duration.ofSeconds(30))
         .build(),
-      cfg.timeoutSeconds,
-      cfg.retries,
-      HttpPolicy.userAgent(s"Histmersion/${Version.version} (terrain base map)"),
+      JavaRangeHttp.TimeoutSeconds(cfg.timeoutSeconds.value),
+      JavaRangeHttp.Retries(cfg.retries.value),
+      JavaRangeHttp.UserAgent(HttpPolicy.userAgent(HttpPolicy.UserAgent(s"Histmersion/${Version.version} (terrain base map)")).value),
       Retries
     )(using clock)
 
@@ -88,18 +64,25 @@ object BasemapWiring:
 
   /** [[HttpPolicy]]: 1, 2, 4 … s after a dropped connection; a slow-down answer after its `Retry-After`. */
   val Retries: RetryPolicy = new RetryPolicy:
-    def backoffMs(attempt: com.histmersion.server.BasemapWiring.Attempt): com.histmersion.server.BasemapWiring.BackoffMsResult = HttpPolicy.backoffMs(attempt)
+    def backoffMs(attempt: Int): RetryWait.Ms = RetryWait.Ms(HttpPolicy.backoffMs(HttpPolicy.Attempt(attempt)).value)
 
     def slowDown(
-        code: com.histmersion.server.BasemapWiring.SlowDownCode,
-        retryAfter: Option[com.histmersion.server.BasemapWiring.SlowDownRetryAfter],
-        attempt: com.histmersion.server.BasemapWiring.Attempt,
-        maxRetries: com.histmersion.server.BasemapWiring.SlowDownMaxRetries,
-        maxRetryAfterSeconds: com.histmersion.server.BasemapWiring.SlowDownMaxRetryAfterSeconds,
+        code: RangeHttp.StatusCode,
+        retryAfter: Option[RetryPolicy.RetryAfterHeader],
+        attempt: Int,
+        maxRetries: RetryPolicy.MaxRetries,
+        maxRetryAfterSeconds: RetryPolicy.RetryAfterCap,
         now: Instant
     ): Option[RetryWait] =
-      HttpPolicy.decide(code, retryAfter, attempt, maxRetries, maxRetryAfterSeconds, now) match
-        case HttpPolicy.Step.Wait(ms, why) => Some(RetryWait(ms, why))
+      HttpPolicy.decide(
+        HttpPolicy.StatusCode(code.value),
+        retryAfter.map(h => HttpPolicy.RetryAfter(h.value)),
+        HttpPolicy.Attempt(attempt),
+        HttpPolicy.MaxRetries(maxRetries.value),
+        HttpPolicy.MaxRetryAfterSeconds(maxRetryAfterSeconds.value),
+        now
+      ) match
+        case HttpPolicy.Step.Wait(ms, why) => Some(RetryWait(RetryWait.Ms(ms.value), RetryWait.Why(why.value)))
         case _                             => None
 
   /** The fetch as one of the server's background jobs: behind its write guard, pinned to the caller's generation, and
@@ -108,22 +91,36 @@ object BasemapWiring:
   def jobs(deps: Deps): BasemapJobs = new BasemapJobs:
     private val slot = BackgroundJob.Slot()
 
-    def running: Option[com.histmersion.util.jobs.Job.Id] = slot.current
+    def running: Option[BasemapJobs.Description] = slot.current.map(w => BasemapJobs.Description(w.value))
 
-    def guarded[A](op: com.histmersion.server.BasemapWiring.Operation)(body: => Either[Api.Error, A]): Either[Api.Error, A] = deps.maintenance.guard(op)(body)
+    def guarded[A](op: BasemapJobs.Operation)(body: => Either[Api.Error, A]): Either[Api.Error, A] =
+      deps.maintenance.guard(WriteGate.OperationName(op.value))(body)
 
-    def busy(what: com.histmersion.server.BasemapWiring.JobWhat, busyCode: Option[com.histmersion.server.BasemapWiring.BusyCode]): Api.Error = BackgroundJob.busy(what, slot.current, busyCode)
+    def busy(what: BasemapJobs.Target, busyCode: Option[BasemapJobs.Reason]): Api.Error =
+      BackgroundJob.busy(BackgroundJob.Work(what.value), slot.current, busyCode.map(c => Api.Error.Code(c.value)))
 
-    def start(kind: com.histmersion.util.jobs.Job.Kind, about: com.histmersion.server.BasemapWiring.JobAbout, what: com.histmersion.server.BasemapWiring.JobWhat, busyCode: Option[com.histmersion.server.BasemapWiring.BusyCode])(
-        body: (com.histmersion.server.BasemapWiring.StartBody => Unit) => Either[com.histmersion.server.BasemapWiring.StartBody, com.histmersion.server.BasemapWiring.StartBody]
+    def start(
+        kind: com.histmersion.util.jobs.Job.Kind,
+        about: BasemapJobs.Description,
+        what: BasemapJobs.Target,
+        busyCode: Option[BasemapJobs.Reason]
+    )(
+        body: (BasemapJobs.Target => Unit) => Either[BasemapJobs.Problem, BasemapJobs.Description]
     ): Either[Api.Error, JobInfo] =
       BackgroundJob.start(
         deps.ds,
         kind,
-        Some(JobDetail.Purpose(Some(about))),
+        Some(JobDetail.Purpose(Some(JobKinds.Subject(about.value)))),
         slot,
-        what,
-        busyCode,
+        BackgroundJob.Work(what.value),
+        busyCode.map(c => Api.Error.Code(c.value)),
         deps.pins,
         Some(deps.jobStops)
-      )((_, note) => BackgroundJob.Outcome.of(body(note)))
+      )((_, note) =>
+        BackgroundJob.Outcome.of(
+          body(t => note(JobInfo.Progress(t.value)))
+            .left
+            .map(p => BackgroundJob.Outcome.Error(p.value))
+            .map(d => BackgroundJob.Outcome.Summary(d.value))
+        )
+      )

@@ -29,8 +29,8 @@ object LlmClient:
       c: LlmCall[Out]
   ): Agent[Identity, String, Out] =
     b.systemPrompt(c.system.value)
-      .maxIterations(math.max(1, c.maxIterations))
-      .maxTokens(math.max(1, c.maxTokens))
+      .maxIterations(math.max(1, c.maxIterations.value))
+      .maxTokens(math.max(1, c.maxTokens.value))
       .tools(c.tools)
       .interceptors(c.interceptors)
       .responseSchema(c.schema)
@@ -53,7 +53,7 @@ object LlmClient:
     (cfg, ref) =>
       BuiltinAi.lookup(ref.provider, providers()).left.map(why => ModelPicker.Problem(s"${ref.wire}: $why")).flatMap {
         case _: HostAiProvider => host(rt)(cfg, ref)
-        case p                 => PluginAiClient.client(ref, p, http, rt.loopback)
+        case p                 => PluginAiClient.client(ref, p, http, PluginAiClient.Loopback(rt.loopback)).left.map(e => ModelPicker.Problem(e.value))
       }
 
   /** The host's own providers: the command-line runtimes on `rt`. */

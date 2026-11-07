@@ -9,4 +9,4 @@ object MarkdownHtml:
 
   private val renderer = HtmlRenderer.builder(MarkdownFlavor.options).build()
 
-  def render(md: com.histmersion.server.FullText.Shown.Markdown): com.histmersion.server.HtmlRender.Html = renderer.render(MarkdownFlavor.parser.parse(md))
+  def render(md: com.histmersion.server.FullText.Shown.Markdown): com.histmersion.server.HtmlRender.Html = HtmlRender.Html(renderer.render(MarkdownFlavor.parser.parse(md.value)))

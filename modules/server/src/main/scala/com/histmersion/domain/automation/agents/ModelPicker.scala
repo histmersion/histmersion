@@ -482,7 +482,7 @@ object ModelPicker:
     val held = models.flatMap(_._3).distinct
     val heldText =
       held.map(p => s"the ${p.title} is held (release it with `histmersion agent quota release ${p.wire}`)")
-    val earliest = models.collect { case (m, Some(t), _) => (m, t) }.minByOption(_._2.value)
+    val earliest = models.collect { case (m, Some(t), _) => (m, t) }.minByOption[Long](_._2.value)
     val when = earliest match
       case Some((m, t)) =>
         (s"next reset at ${Instant.ofEpochMilli(t.value)} (${m.wire}), when the run resumes by itself" :: heldText)

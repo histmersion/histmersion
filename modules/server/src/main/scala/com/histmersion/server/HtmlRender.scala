@@ -6,7 +6,6 @@ import com.histmersion.api.{HtmlAtoms, Wording, YearFmt}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Confidence
-import com.histmersion.api.library.Label
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
 import com.histmersion.api.research.Article
@@ -31,10 +30,11 @@ object HtmlRender:
   type Text = Text.T
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SourceRefLabel = _root_.com.histmersion.server.HtmlRender.Label
-  val SourceRefLabel: _root_.com.histmersion.server.HtmlRender.Label.type = _root_.com.histmersion.server.HtmlRender.Label
+  private def escText(s: String): String = HtmlAtoms.esc(s)
 
-  def esc(s: com.histmersion.server.HtmlRender.Text): com.histmersion.server.HtmlRender.Html = HtmlAtoms.esc(s)
+  private def display(s: String): String = com.histmersion.api.library.Label.display(com.histmersion.api.library.Label.Text(s)).value
+
+  def esc(s: Text): Html = Html(escText(s.value))
 
   // ── references ───────────────────────────────────────────────────────────────────────────────
 
@@ -42,74 +42,90 @@ object HtmlRender:
     * hover handler previews anything carrying `data-ck`, and its click handler opens `/source/…` in a window — so every
     * source link on every page gets both for free.
     */
-  def sourceLink(citekey: com.histmersion.domain.library.Citekey, doi: Option[com.histmersion.domain.library.Doi], label: com.histmersion.server.HtmlRender.Label): com.histmersion.server.HtmlRender.Html =
-    HtmlAtoms.sourceLink(citekey, doi, label)
+  def sourceLink(citekey: com.histmersion.domain.library.Citekey, doi: Option[com.histmersion.domain.library.Doi], label: Label): Html =
+    Html(
+      HtmlAtoms.sourceLink(
+        com.histmersion.api.library.Citekey(citekey.value),
+        doi.map(d => com.histmersion.api.library.Doi(d.value)),
+        label.value
+      )
+    )
 
   /** A source reference labelled with its IDENTIFIER — the DOI when it has one, else the citekey. */
-  def sourceRef(r: com.histmersion.api.library.Source.Ref): com.histmersion.server.HtmlRender.Html = sourceLink(r.citekey, r.doi, r.idLabel)
+  def sourceRef(r: com.histmersion.api.library.Source.Ref): Html = Html(HtmlAtoms.sourceLink(r.citekey, r.doi, r.idLabel.value))
 
-  def sourceRef(r: com.histmersion.api.library.Source.Ref, label: com.histmersion.server.HtmlRender.SourceRefLabel): com.histmersion.server.HtmlRender.Html = sourceLink(r.citekey, r.doi, label)
+  def sourceRef(r: com.histmersion.api.library.Source.Ref, label: Label): Html = Html(HtmlAtoms.sourceLink(r.citekey, r.doi, label.value))
 
   /** Where a READABLE label is wanted (prose, lists): "Cline 2014", or the title when the source has no authors — never
     * a bare year.
     */
-  def readable(r: com.histmersion.api.library.Source.Ref): com.histmersion.server.HtmlRender.Html =
-    if r.authors.exists(_.trim.nonEmpty) then r.shortCite else r.title
+  def readable(r: com.histmersion.api.library.Source.Ref): Html =
+    if r.authors.exists(_.value.trim.nonEmpty) then Html(r.shortCite.value) else Html(r.title.value)
 
   /** THE article anchor: `<a class="art-ref" data-slug href="/article/slug">label</a>`. */
-  def articleRef(r: Article.Ref): com.histmersion.server.HtmlRender.Html = articleRef(r, r.title)
+  def articleRef(r: Article.Ref): Html = articleRef(r, Label(r.title.value))
 
-  def articleRef(r: Article.Ref, label: com.histmersion.server.HtmlRender.Label): com.histmersion.server.HtmlRender.Html = HtmlAtoms.articleLink(r.slug, label)
+  def articleRef(r: Article.Ref, label: Label): Html =
+    Html(HtmlAtoms.articleLink(com.histmersion.api.research.ReviewGoal.Slug(r.slug.value), label.value))
 
   /** A link nothing in the corpus answers to: text, marked, never a link to a 404. */
-  def dangling(label: com.histmersion.server.HtmlRender.Label): com.histmersion.server.HtmlRender.Html =
-    s"""<span class="dangling" title="unresolved link">${esc(label)}</span>"""
+  def dangling(label: Label): Html =
+    Html(s"""<span class="dangling" title="unresolved link">${escText(label.value)}</span>""")
 
   /** The identifier line of a source: its DOI as a resolver link, else our own citekey. */
-  def identifier(r: com.histmersion.api.library.Source.Ref): com.histmersion.server.HtmlRender.Html = identifier(r.citekey, r.doi)
+  def identifier(r: com.histmersion.api.library.Source.Ref): Html = Html(identifierText(r.citekey.value, r.doi.map(_.value)))
 
-  def identifier(citekey: com.histmersion.domain.library.Citekey, doi: Option[com.histmersion.domain.library.Doi]): com.histmersion.server.HtmlRender.Html = doi.filter(_.nonEmpty) match
-    case Some(d) => s"""<a class="doi" href="https://doi.org/${esc(d)}" rel="noopener">${esc(d)}</a>"""
-    case None    => s"""<code class="citekey">${esc(citekey)}</code>"""
+  def identifier(citekey: com.histmersion.domain.library.Citekey, doi: Option[com.histmersion.domain.library.Doi]): Html =
+    Html(identifierText(citekey.value, doi.map(_.value)))
+
+  private def identifierText(citekey: String, doi: Option[String]): String = doi.filter(_.nonEmpty) match
+    case Some(d) => s"""<a class="doi" href="https://doi.org/${escText(d)}" rel="noopener">${escText(d)}</a>"""
+    case None    => s"""<code class="citekey">${escText(citekey)}</code>"""
 
   // ── chips and badges ─────────────────────────────────────────────────────────────────────────
 
   /** A filter chip: readable label ([[Label.display]] — never an underscore), the raw value in the link, so clicking it
     * filters the web UI by exactly the stored value.
     */
-  def chip(field: ChipField, value: com.histmersion.server.HtmlRender.Label): com.histmersion.server.HtmlRender.Html =
-    s"""<a class="chip chip-${field.hashKey}" data-field="${field.hashKey}" data-value="${esc(value)}"""" +
-      s""" href="/#${field.hashKey}=${esc(HtmlAtoms.segment(value))}">${esc(Label.display(value))}</a>"""
+  def chip(field: ChipField, value: Label): Html =
+    Html(
+      s"""<a class="chip chip-${field.hashKey}" data-field="${field.hashKey}" data-value="${escText(value.value)}"""" +
+        s""" href="/#${field.hashKey}=${escText(HtmlAtoms.segment(value.value))}">${escText(display(value.value))}</a>"""
+    )
 
-  def chips(field: ChipField, values: List[com.histmersion.server.HtmlRender.Label]): com.histmersion.server.HtmlRender.Html =
-    values.map(_.trim).filter(_.nonEmpty).distinct.map(chip(field, _)).mkString(" ")
+  def chips(field: ChipField, values: List[Label]): Html =
+    Html(values.map(_.value.trim).filter(_.nonEmpty).distinct.map(v => chip(field, Label(v)).value).mkString(" "))
 
   /** A source's standing: the one status code — its mark (colour and shape, the stylesheet's `st-<status>`) and its
     * word.
     */
-  def statusBadge(status: Source.Status): com.histmersion.server.HtmlRender.Html =
-    s"""<span class="status-badge st-${status.wire}" title="Status: ${Wording.status(
-        status.transformInto[com.histmersion.api.library.Source.Status]
-      )} (${status.wire})">${Wording.status(status.transformInto[com.histmersion.api.library.Source.Status])}</span>"""
+  def statusBadge(status: Source.Status): Html =
+    Html(
+      s"""<span class="status-badge st-${status.wire}" title="Status: ${Wording.status(
+          status.transformInto[com.histmersion.api.library.Source.Status]
+        )} (${status.wire})">${Wording.status(status.transformInto[com.histmersion.api.library.Source.Status])}</span>"""
+    )
 
   /** Icon + colour, the same palette as the map's dots ([[ConfidenceStyle]]). */
-  def confidenceBadge(c: Confidence): com.histmersion.server.HtmlRender.Html =
-    HtmlAtoms.confidenceBadge(c.transformInto[com.histmersion.api.library.Confidence])
+  def confidenceBadge(c: Confidence): Html =
+    Html(HtmlAtoms.confidenceBadge(c.transformInto[com.histmersion.api.library.Confidence]))
 
   // ── findings ─────────────────────────────────────────────────────────────────────────────────
 
-  def finding(f: Finding.Row): com.histmersion.server.HtmlRender.Html =
-    val where = (f.regionName.map(_.trim).filter(_.nonEmpty).map(Label.display), f.lat, f.lon) match
+  def finding(f: Finding.Row): Html =
+    val where = (f.regionName.map(_.value.trim).filter(_.nonEmpty).map(display), f.lat, f.lon) match
       // Locale.ROOT: JDK 25's CLDR renders `35,60` under a comma-decimal default locale
       case (r, Some(la), Some(lo)) =>
-        r.fold("")(_ + " ") + String.format(java.util.Locale.ROOT, "(%.2f, %.2f)", la, lo)
+        r.fold("")(_ + " ") + String.format(java.util.Locale.ROOT, "(%.2f, %.2f)", la.value, lo.value)
       case (r, _, _) => r.getOrElse("")
     val period = YearFmt.period(f.periodStart, f.periodEnd)
     val meta = List(
-      f.confidence.map(confidenceBadge).getOrElse(""),
-      esc(where),
-      esc(f.periodName.filter(n => n.nonEmpty && period.nonEmpty).fold(period)(n => s"$period (${Label.display(n)})")),
-      f.significance.filter(_.nonEmpty).fold("")(s => s"""<span class="significance">${esc(Label.display(s))}</span>""")
+      f.confidence.map(c => confidenceBadge(c).value).getOrElse(""),
+      escText(where),
+      escText(f.periodName.map(_.value).filter(n => n.nonEmpty && period.nonEmpty).fold(period)(n => s"$period (${display(n)})")),
+      f.significance.map(_.value).filter(_.nonEmpty).fold("")(s => s"""<span class="significance">${escText(display(s))}</span>""")
     ).filter(_.nonEmpty)
-    s"""<li class="finding"><div class="claim">${esc(f.claim)}</div>""" +
-      (if meta.isEmpty then "" else s"""<div class="finding-meta">${meta.mkString(" · ")}</div>""") + "</li>"
+    Html(
+      s"""<li class="finding"><div class="claim">${escText(f.claim.value)}</div>""" +
+        (if meta.isEmpty then "" else s"""<div class="finding-meta">${meta.mkString(" · ")}</div>""") + "</li>"
+    )

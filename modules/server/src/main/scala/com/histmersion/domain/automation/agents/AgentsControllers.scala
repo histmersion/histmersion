@@ -242,11 +242,11 @@ final class AgentsControllers(
 
   // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
 
-  private def covers(p: PlanQuota.PoolId): List[String] = p match
-    case PlanQuota.PoolId.ClaudePlan  => List(s"${ProviderKind.ClaudeCode.wire}:*")
+  private def covers(p: PlanQuota.PoolId): List[PlanPools.ModelName] = p match
+    case PlanQuota.PoolId.ClaudePlan  => List(PlanPools.ModelName(s"${ProviderKind.ClaudeCode.wire}:*"))
     case PlanQuota.PoolId.ChatgptPlan =>
-      s"${ProviderKind.Codex.wire}:*" :: Option
-        .when(cfg.providers.opencode.chatgptLogin.value)(s"${ProviderKind.Opencode.wire}:openai/*")
+      PlanPools.ModelName(s"${ProviderKind.Codex.wire}:*") :: Option
+        .when(cfg.providers.opencode.chatgptLogin.value)(PlanPools.ModelName(s"${ProviderKind.Opencode.wire}:openai/*"))
         .toList
 
   /** `GET /api/agents/quota` — readable with agents off. Nothing is spent: the ChatGPT pool is read from the app-server
@@ -255,7 +255,7 @@ final class AgentsControllers(
   def quota: PlanQuota.QuotaInfo =
     val now = PlanQuotaRepo.EpochMillis(clock.millis())
     PlanQuota.QuotaInfo(
-      pools.statuses(covers, now),
+      pools.statuses(covers, PlanPools.Instant(now.value)),
       picker.allowanceStatuses(now),
       Role.values.toList.filter(picker.fallthrough).map(r => PlanQuota.QuotaInfo.Fallthrough(r.wire.value)),
       PlanQuota.QuotaInfo.Now(java.time.Instant.ofEpochMilli(now.value).toString),
@@ -292,8 +292,8 @@ final class AgentsControllers(
             .map(e => Api.Error(Api.Error.Message(e.value)))
             .map(fs => Some(Some(fs.text)))
         case None => Right(None)
-      _ = in.hold.foreach(pools.hold(p, _))
-      _ = f.foreach(pools.setFloors(p, _))
+      _ = in.hold.foreach(h => pools.hold(p, PlanPools.Held(h.value)))
+      _ = f.foreach(x => pools.setFloors(p, x.map(w => PlanPools.FloorsSpec(w.value))))
       st <- pools
         .statuses(covers)
         .find(_.pool == p.wire)
@@ -409,7 +409,7 @@ final class AgentsControllers(
     knownProviders.map(id => ProviderKind.Plugin.Name(id.value))
 
   /** The model chains and allowances in effect, and the choice before every LLM call. */
-  val picker: ModelPicker = ModelPicker(ds, cfg, resolve, pools, () => knownProviders)(using clock)
+  val picker: ModelPicker = ModelPicker(ds, cfg, resolve, pools, () => knownPluginNames)(using clock)
 
   /** A role's chain can run at all: at least one of its models is on a plan or priced, and buildable (allowances are
     * not looked at — a run whose models are all spent queues and pauses until a window frees).
@@ -565,8 +565,8 @@ final class AgentsControllers(
       AgentDoctor(
         site.config,
         picker,
-        resolve,
-        registry = Some(site.aiProviders()),
+        resolve(_).left.map(p => AgentDoctor.Problem(p.value)),
+        registry = Some(site.aiProviders().map((k, v) => AgentDoctor.RegistryKey(k.value) -> v)),
         aiHttp = aiHttp,
         paths = site.userPaths
       )
@@ -631,7 +631,7 @@ final class AgentsControllers(
           BigDecimal(pr.usd.value),
           pr.tokens,
           tweak(pr.params),
-          req.acquireItem.map(i => QueueItemId(i.value)),
+          req.acquireItem.map(i => com.histmersion.domain.automation.managers.SweepAcquireItem.Item(i.value)),
           pr.goal,
           parent.map(p => DomainRun.Id.assume(p.id.value)),
           origin,
@@ -688,7 +688,7 @@ final class AgentsControllers(
         case (acc, (role, ref)) =>
           acc.flatMap(_ => runnable(role, Some(ref)).left.map(e => Api.Error(Api.Error.Message(e.value))))
       }
-      _ <- host.runOptions(p, req, target, roundsCap)
+      _ <- host.runOptions(p, req, com.histmersion.domain.automation.managers.ManagerContext.ItemTarget(target.value), com.histmersion.domain.automation.workflows.AutomationHost.RunOptionsRoundsCap(roundsCap.value))
       goal <- goalOf(p, target, req.goal.orElse(parent.flatMap(_.goal)).map(_.value))
       usd <- positive(
         PositiveAmount(
@@ -773,7 +773,8 @@ final class AgentsControllers(
   /** The target as the pipeline names it (its workflow's domain resolves it), or a manager. */
   private def targetOf(p: Pipeline, raw: AgentsControllers.Target): Either[Api.Error, AgentsControllers.Target] =
     host
-      .runTarget(p, raw)
+      .runTarget(p, com.histmersion.domain.automation.workflows.AutomationHost.RunTargetRaw(raw.value))
+      .map(_.map(t => AgentsControllers.Target(t.value)))
       .getOrElse(
         managerStore
           .get(Managers.ManagerInfo.Id(raw.value.trim))
@@ -818,7 +819,7 @@ final class AgentsControllers(
             Api.Error.Message(s"unknown status '$st' (one of: ${RunState.values.map(_.wire).mkString(", ")})")
           )
         )
-      case st => Right(runs.list(st, site.config.limits.page(limit, searchPage), goal).toList)
+      case st => Right(runs.list(st, RunQuery.Limit(site.config.limits.page(limit, searchPage).value), goal).toList)
 
   /** `GET /api/agents/runs` — one page, newest first ([[Paging]]), with the per-state counts of the runs (of `goal`,
     * when given).
@@ -854,7 +855,7 @@ final class AgentsControllers(
       page <- runs
         .page(
           q,
-          site.config.limits.page(limit, searchPage),
+          RunQuery.Limit(site.config.limits.page(limit, searchPage).value),
           cursor(before).map(c => AgentRepo.PageCursor(c.value)),
           cursor(upTo).map(c => RunQuery.UpTo(c.value))
         )
@@ -887,7 +888,7 @@ final class AgentsControllers(
     runs
       .get(id)
       .toRight(notFound(s"No agent run '$id'"))
-      .map(r => RunDetail(r, runs.steps(id, cfg.trace.maxToolResultChars), runs.messages(id)))
+      .map(r => RunDetail(r, runs.steps(com.histmersion.util.jobs.Job.Id.assume(id.value), AgentRepo.OutputChars(cfg.trace.maxToolResultChars.value)), runs.messages(com.histmersion.util.jobs.Job.Id.assume(id.value))))
 
   /** `GET /api/agents/compare?id=…` (#992) — runs of one pipeline on one target side by side, from their recorded steps
     * (full outputs, not the display cut). How each configured model is paid for is named from the server's prices and
@@ -900,13 +901,13 @@ final class AgentsControllers(
           runs
             .get(id)
             .toRight(notFound(s"No agent run '$id'"))
-            .map(r => rs :+ RunDetail(r, runs.steps(id, Int.MaxValue), Nil))
+            .map(r => rs :+ RunDetail(r, runs.steps(com.histmersion.util.jobs.Job.Id.assume(id.value), AgentRepo.OutputChars(Int.MaxValue)), Nil))
         )
       }
       compared = runs.map(CompareRunsViews.run)
       // what the runs' workflow produced is compared as its owner says
       outputs = compared.headOption
-        .flatMap(r => workflows.parse(r.run.pipeline))
+        .flatMap(r => workflows.parse(r.run.pipeline.value))
         .fold(OutputComparison.none)(_.outputs)
       cmp <- CompareRuns.compare(compared, billingOf, outputs).left.map(p => Api.Error(Api.Error.Message(p.value)))
     yield CompareRunsViews.comparison(cmp)
@@ -942,7 +943,7 @@ final class AgentsControllers(
     * proposed).
     */
   def approvalsList(state: Option[ApprovalQuery.State], limit: Option[PageSize]): Either[Api.Error, List[ApprovalInfo]] =
-    approvals.list(state, limit, site.config.limits.page(limit, searchPage))
+    approvals.list(state, limit.map(l => ApprovalQuery.Limit(l.value)), ApprovalQuery.Limit(site.config.limits.page(limit, searchPage).value))
 
   /** One page of [[approvalsList]] ([[Paging]]), with the per-state counts of every approval. */
   def approvalsPage(
@@ -969,7 +970,7 @@ final class AgentsControllers(
   ): Either[Api.Error, (List[ApprovalInfo], Paging.Page)] =
     approvals.page(
       f,
-      site.config.limits.page(limit, searchPage),
+      ApprovalQuery.Limit(site.config.limits.page(limit, searchPage).value),
       cursor(before).map(c => ApprovalQuery.Cursor(c.value)),
       cursor(upTo).map(c => ApprovalQuery.UpTo(c.value))
     )
@@ -980,7 +981,7 @@ final class AgentsControllers(
   def decide(id: DomainApproval.Id, decision: DomainApproval.Outcome, req: DecisionRequest): Either[Api.Error, ApprovalInfo] =
     approvals.decide(id, decision, req.note.map(n => DomainApproval.Note(n.value))).map { a =>
       // a blocking approval: the run waiting on it goes back to the queue (it applies the decision)
-      if a.approvalKind.exists(_.blocking) then a.runId.foreach(r => engine.wake(r))
+      if a.approvalKind.exists(_.blocking.value) then a.runId.foreach(r => engine.wake(DomainRun.Id.assume(r.value)))
       // an approved plan of articles: its seeding manager gets one compile item per article (the item
       // held for it is settled by the next tick, which the nudge brings forward)
       if a.approvalKind.contains(ApprovalKind.ArticlePlan) then { val _ = managers.applyPlan(a) }
@@ -1009,24 +1010,24 @@ final class AgentsControllers(
     for
       _ <- host.goal(slug)
       r <- in.kind match
-        case LinkKind.Source    => host.linkRef(LinkKind.Source, ref).map(x => BGoalLinkRow.Ref(x.value))
-        case LinkKind.Article   => host.linkRef(LinkKind.Article, ref).map(x => BGoalLinkRow.Ref(x.value))
+        case LinkKind.Source    => host.linkRef(LinkKind.Source, com.histmersion.domain.automation.workflows.AutomationHost.LinkRefRaw(ref)).map(x => GoalLink.Ref(x.value))
+        case LinkKind.Article   => host.linkRef(LinkKind.Article, com.histmersion.domain.automation.workflows.AutomationHost.LinkRefRaw(ref)).map(x => GoalLink.Ref(x.value))
         case LinkKind.QueueItem =>
           ref.toIntOption
             .flatMap(i => site.queues.get(QueueItemId(i)))
-            .map(i => BGoalLinkRow.Ref(i.id.toString))
+            .map(i => GoalLink.Ref(i.id.toString))
             .toRight(notFound(s"No queue item '$ref'"))
         case LinkKind.Query =>
           Either.cond(
             ref.nonEmpty && ref.length <= cfg.plan.queryChars.value,
-            BGoalLinkRow.Ref(ref),
+            GoalLink.Ref(ref),
             Api.Error(Api.Error.Message(s"a query is 1 to ${cfg.plan.queryChars} characters"))
           )
       _ = goals.link(
         slug,
         in.kind.transformInto[DomainGoal.LinkKind],
         r,
-        in.note.map(_.value.trim).filter(_.nonEmpty).map(BGoalLinkRow.Note(_))
+        in.note.map(_.value.trim).filter(_.nonEmpty).map(GoalLink.Note(_))
       )
       l <- goals
         .links(slug)
@@ -1047,7 +1048,7 @@ final class AgentsControllers(
           )
         )
     yield Removed(
-      Removed.Value(goals.unlink(slug, k.transformInto[DomainGoal.LinkKind], BGoalLinkRow.Ref(ref.value.trim)))
+      Removed.Value(goals.unlink(slug, k.transformInto[DomainGoal.LinkKind], GoalLink.Ref(ref.value.trim)))
     )
 
   private def scheduleKind(kind: ScheduleKind.Wire): Either[Api.Error, ScheduleKind] =
@@ -1100,7 +1101,7 @@ final class AgentsControllers(
         .left
         .map(_ => notFound(s"No source '${req.citekey}'"))
       src <- host.probeSubject(ck)
-      picked <- picker.pick(Role.Probe, req.model).left.map {
+      picked <- picker.pick(Role.Probe, req.model.map(m => ModelName(m.value))).left.map {
         case PickFailure.Unavailable(m)     => Api.Error(Api.Error.Message(m.value))
         case PickFailure.Exhausted(m, _, _) => Api.Error(Api.Error.Message(m.value))
       }
@@ -1150,7 +1151,7 @@ final class AgentsControllers(
           val problems =
             res.finalAnswer.fold(
               f => List(Engine.answerProblem(f, res.finishReason).value),
-              _.problems(src.year).map(_.value)
+              _.problems(src.year.map(y => ProbeAnswer.RecordYear(y.value.toInt))).map(_.value)
             )
           val toolCalls = calls ++ res.toolCalls.toList.map(c => s"${c.toolName} ${c.input}")
           if problems.nonEmpty && attempt < maxAttempts then
@@ -1167,7 +1168,7 @@ final class AgentsControllers(
                 answer = answer,
                 rawAnswer = ProbeResult.RawAnswer(LlmClient.rawAnswer(res.finalAnswer).take(2000)),
                 matchesRecord = ProbeResult.MatchesRecord(
-                  problems.isEmpty && answer.exists(a => host.sameTitle(a.title, src.title) && a.year == src.year)
+                  problems.isEmpty && answer.exists(a => host.sameTitle(com.histmersion.domain.automation.workflows.AutomationHost.SameTitleAnswered(a.title.value), com.histmersion.domain.automation.workflows.AutomationHost.SameTitleRecord(src.title.value)) && a.year == src.year)
                 ),
                 toolCalls = toolCalls.map(ProbeResult.ToolCalls(_)),
                 iterations = ProbeResult.Iterations(res.iterations),

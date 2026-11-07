@@ -163,8 +163,8 @@ final class ArticlesControllers(
           .ofArticle(MarkdownLint.Scan.Text(text.value), None, ck => links(WikiLinks.Occurrence.Target(ck.value)))
           .filter(_.severity == FormatSeverity.Error)
           .map { i =>
-            s"${i.rule.wire} — ${i.message}" + (if i.excerpt.isEmpty then ""
-                                                else s" · `${i.excerpt.replace("`", "'")}`")
+            s"${i.rule.wire} — ${i.message}" + (if i.excerpt.value.isEmpty then ""
+                                                else s" · `${i.excerpt.value.replace("`", "'")}`")
           }
           .distinct,
       generated
@@ -558,7 +558,7 @@ final class ArticlesControllers(
   def articleNote(slug: com.histmersion.domain.research.Slug): Either[Api.Error, com.histmersion.domain.research.Article.Note] =
     store
       .load(currentSlug(slug))
-      .map(a => ArticleNote.render(a, coverageOf(a).map(c => Article.Coverage.exported(c).value)))
+      .map(a => com.histmersion.domain.research.Article.Note(ArticleNote.render(a, coverageOf(a).map(c => Article.Coverage.exported(c).value))))
       .toRight(notFound(slug))
 
   /** The edit history of one article. 404 when the slug itself is unknown (so "no versions yet" and "no such article"

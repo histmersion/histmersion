@@ -8,8 +8,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.QueueAdd
-import com.histmersion.domain.automation.managers.ManagerLight
-import com.histmersion.domain.automation.managers.ManagerService
 import com.histmersion.domain.automation.goals.FocusService
 import com.histmersion.domain.library.acquisition.CandidateService
 
@@ -41,7 +39,7 @@ final class SeedService(
   def due(
       goals: List[FocusService.Goal],
       sources: Map[com.histmersion.domain.automation.Goal.Slug, com.histmersion.RowCount],
-      watchers: Set[ManagerLight.Id],
+      watchers: Set[ManagerInfo.Id],
       lastSweep: com.histmersion.domain.automation.Goal.Slug => Option[Instant],
       now: Instant
   ): List[com.histmersion.domain.automation.Goal.Slug] =
@@ -59,8 +57,8 @@ final class SeedService(
       .map(_._2)
 
   /** The id of a goal's watcher manager. */
-  private def watcherOf(goal: com.histmersion.domain.automation.Goal.Slug): ManagerLight.Id =
-    ManagerLight.Id(watchId(com.histmersion.api.automation.Goal.Ref(goal.value)).value)
+  private def watcherOf(goal: com.histmersion.domain.automation.Goal.Slug): ManagerInfo.Id =
+    watchId(com.histmersion.api.automation.Goal.Ref(goal.value))
 
   /** When each goal was last seeded here (in memory: the candidate watches' own `last_run` covers restarts). */
   private val seeded = java.util.concurrent.ConcurrentHashMap[String, Instant]()
@@ -74,7 +72,7 @@ final class SeedService(
         agents.managerStore
           .light()
           .filter(m => m.kind.value == Kind.Watch.wire.value && m.state.value == State.Active.wire.value)
-          .map(_.id)
+          .map(m => ManagerInfo.Id(m.id.value))
           .toSet
       val goals = due(
         agents.focusStore.goals(),
@@ -125,5 +123,5 @@ final class SeedService(
         val _ = acquisition().markCandidates(oa.map(_.id), Candidates.State.Queued.wire)
         val line = s"$goal: ${sw.found} found, ${sw.added} new candidate(s), " +
           s"${Plural.count(Plural.CountN(queued.toLong), com.histmersion.api.Plural.CountSingular("legal open-access work"))} queued for ingest (the plan is not needed for this)"
-        agents.managerStore.event(watcherOf(goal), None, None, ManagerService.EventKind(Feed.Swept), ManagerService.EventText(s"seed before the plan — $line".take(2000)))
+        agents.managerStore.event(watcherOf(goal), None, None, ManagerEvent.Kind(Feed.Swept), ManagerEvent.Text(s"seed before the plan — $line".take(2000)))
         Some(line)

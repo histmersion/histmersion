@@ -11,9 +11,9 @@ import java.nio.file.{Files, Path}
 final case class GazetteerPaths(extracts: Path, lpf: Path, manifest: Path, legacy: Option[Path] = None):
 
   /** The manifest's text, or why there is none. */
-  def manifestText(): Either[com.histmersion.server.GazetteerPaths.Problem, com.histmersion.server.GazetteerPaths.ManifestText] =
-    if !Files.isRegularFile(manifest) then Left(s"no gazetteer manifest at $manifest (set places.sources.manifest)")
-    else Right(Files.readString(manifest))
+  def manifestText(): Either[GazetteerPaths.Problem, GazetteerPaths.ManifestText] =
+    if !Files.isRegularFile(manifest) then Left(GazetteerPaths.Problem(s"no gazetteer manifest at $manifest (set places.sources.manifest)"))
+    else Right(GazetteerPaths.ManifestText(Files.readString(manifest)))
 
 object GazetteerPaths:
   type ConfiguredPath = ConfiguredPath.T
@@ -22,31 +22,31 @@ object GazetteerPaths:
   object EnvName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EnvText = EnvText.T
   object EnvText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ManifestText = ManifestText.T
-  object ManifestText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OsName = OsName.T
   object OsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManifestText = ManifestText.T
+  object ManifestText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The paths in the process environment `env` (the entry point read it once) of the operating system `osName`. */
 
 
-  def of(cfg: AppConfig, env: com.histmersion.server.GazetteerPaths.EnvName => Option[com.histmersion.server.GazetteerPaths.EnvText], osName: com.histmersion.server.GazetteerPaths.OsName): GazetteerPaths =
+  def of(cfg: AppConfig, env: UserPaths.Lookup, osName: UserPaths.OsName): GazetteerPaths =
     val data = UserPaths
       .dataDir(cfg.runtime.dataDir, env, osName)
-      .getOrElse(Path.of(cfg.init.dataDir))
+      .getOrElse(Path.of(cfg.init.dataDir.value))
       .resolve("gazetteer")
     val cache = UserPaths.cacheDir(env).map(_.resolve("gazetteer")).getOrElse(data)
-    def or(configured: com.histmersion.server.GazetteerPaths.ConfiguredPath, fallback: Path): Path =
+    def or(configured: String, fallback: Path): Path =
       Option(configured)
         .map(_.trim)
         .filter(_.nonEmpty)
         .map(p => Path.of(com.histmersion.domain.automation.agents.AgentTrees.expandIn(p, env)))
         .getOrElse(fallback)
-    val extracts = or(cfg.places.sources.dir, cache)
+    val extracts = or(cfg.places.sources.dir.value, cache)
     GazetteerPaths(
       extracts,
-      or(cfg.places.sources.lpfDir, data.resolve("lpf")),
-      Path.of(cfg.init.dataDir).resolve(cfg.places.sources.manifest),
+      or(cfg.places.sources.lpfDir.value, data.resolve("lpf")),
+      Path.of(cfg.init.dataDir.value).resolve(cfg.places.sources.manifest.value),
       Option.when(data != extracts)(data)
     )

@@ -97,7 +97,7 @@ object FocusService:
         )
         .groupBy(i => goalOf(i.managerId.value))
         .view
-        .mapValues(_.maxBy(i => (i.updatedAt, i.id.value)))
+        .mapValues(_.maxBy[(java.time.Instant, Long)](i => (i.updatedAt, i.id.value)))
         .collect {
           case (g, i) if i.status.value == "stopped" || i.status.value == "failed" =>
             com.histmersion.domain.automation.Goal.Slug.assume(g) ->

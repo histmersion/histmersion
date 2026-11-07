@@ -23,7 +23,7 @@ object ActivityService:
     def page(q: ActivityQuery, now: Instant): Activity.Page =
       connect(ds):
         val (entries, next) = ActivityRepo.page(q)
-        Activity.Page(entries, next, ActivityRepo.counts(now.minus(ProblemsWindow)))
+        Activity.Page(entries, next.map(w => Activity.Page.Next(w.value)), ActivityRepo.counts(now.minus(ProblemsWindow)))
 
   /** The same list over entries held in memory (tests): written with [[add]], as the store's tables write them.
     */

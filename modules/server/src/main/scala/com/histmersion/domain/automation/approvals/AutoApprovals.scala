@@ -83,7 +83,7 @@ final class AutoApprovals(
               .headOption
           )
       )
-    val ordered = open.sortBy { c =>
+    val ordered = open.sortBy[(Int, String, Long)] { c =>
       val g = goalOf(c.approval)
       (
         g.fold(0)(x => -(x.priority.value + (if x.pinned.value then SchedulerPolicy.PinBoost else 0))),

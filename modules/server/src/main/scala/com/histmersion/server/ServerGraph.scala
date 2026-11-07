@@ -38,7 +38,7 @@ final class ServerGraph private (
     val graph: Hot.Graph[HotConfig],
     source: Option[ConfigSource],
     val pool: Hot[DataSource],
-    val migrations: Hot[ServerGraph.Migrations],
+    val migrations: Hot[com.histmersion.util.database.Migrate.Version],
     val queryPool: Hot[ReadOnlyPool],
     val plugins: Hot[Generation],
     val core: com.histmersion.domain.library.acquisition.CoreBudget
@@ -79,31 +79,58 @@ final class ServerGraph private (
   def reload(): ReloadReport = reloadLock.synchronized {
     val running = graph.latest
     val gen = graph.latestGeneration
-    val file = running.loaded.file.path.map(_.toString)
+    val generation = ReloadReport.Generation(gen.value)
+    val file = running.loaded.file.path.map(p => ReloadReport.File(p.toString))
     source match
-      case None      => Deps.NoReload().copy(generation = gen)
+      case None      => Deps.NoReload().modify(_.generation).setTo(generation)
       case Some(src) =>
         val report = (try src.read()
-        catch case NonFatal(e) => Left(s"reading the config failed: ${e.getMessage}")) match
-          case Left(e)     => ReloadReport(published = com.histmersion.api.settings.ReloadReport.Published(false), gen, errors = List(e), file = file)
+        catch case NonFatal(e) => Left(ConfigSource.Problem(s"reading the config failed: ${e.getMessage}"))) match
+          case Left(e)     => ReloadReport(published = ReloadReport.Published(false), generation, errors = List(ReloadReport.Errors(e.value)), file = file)
           case Right(next) =>
             val changed = ConfigReload.changed(running.loaded.merged, next.merged)
             val (applied, restart) = ConfigReload.split(changed)
-            val warnings = next.file.warnings
-            val base = ReloadReport(published = com.histmersion.api.settings.ReloadReport.Published(false), gen, restartOnly = restart, warnings = warnings, file = file)
+            val warnings = next.file.warnings.map(w => ReloadReport.Warnings(w.value))
+            val base = ReloadReport(
+              published = ReloadReport.Published(false),
+              generation,
+              restartOnly = restart.map(k => ReloadReport.RestartOnly(k.value)),
+              warnings = warnings,
+              file = file
+            )
             if applied.isEmpty then base
             else
               val eff = ConfigReload.effective(running.loaded.merged, next.merged, changed)
               AppConfig.fromMerged(eff).map(src.adjust) match
-                case Left(e)    => base.modify(_.errors).setTo(List(s"the config does not decode: $e"))
+                case Left(e)    => base.modify(_.errors).setTo(List(ReloadReport.Errors(s"the config does not decode: $e")))
                 case Right(app) =>
                   val hc = HotConfig(app, next.modify(_.config).setTo(app).modify(_.merged).setTo(eff))
-                  graph.reload(hc, applied, drain = math.max(0, app.config.drainSeconds).seconds) match
-                    case Left(e)  => base.modify(_.errors).setTo(List(e))
+                  graph.reload(
+                    hc,
+                    applied.map(k => Hot.Graph.Def.Name(k.value)),
+                    drain = math.max(0, app.config.drainSeconds.value).seconds
+                  ) match
+                    case Left(e)  => base.modify(_.errors).setTo(List(ReloadReport.Errors(e.value)))
                     case Right(o) =>
-                      base.modify(
-                        _.published).setTo(true).modify(_.generation).setTo(o.generation).modify(_.applied).setTo(applied).modify(_.rebuilt).setTo(o.rebuilt).modify(_.plugins).setTo(if o.rebuilt.contains(ServerGraph.Plugins) then plugins.latest.rebuilt else Nil).modify(_.draining).setTo(o.draining).modify(_.warnings).setTo(warnings ++ o.warnings
-                      )
+                      base
+                        .modify(_.published)
+                        .setTo(ReloadReport.Published(true))
+                        .modify(_.generation)
+                        .setTo(ReloadReport.Generation(o.generation.value))
+                        .modify(_.applied)
+                        .setTo(applied.map(k => ReloadReport.Applied(k.value)))
+                        .modify(_.rebuilt)
+                        .setTo(o.rebuilt.map(r => ReloadReport.Rebuilt(r.value)))
+                        .modify(_.plugins)
+                        .setTo(
+                          if o.rebuilt.exists(_.value == ServerGraph.Plugins) then
+                            plugins.latest.rebuilt.map(i => ReloadReport.Plugins(i.value))
+                          else Nil
+                        )
+                        .modify(_.draining)
+                        .setTo(o.draining.map(d => ReloadReport.Draining(d.value)))
+                        .modify(_.warnings)
+                        .setTo(warnings ++ o.warnings.map(w => ReloadReport.Warnings(w.value)))
         ServerGraph.log(report)
         report
   }
@@ -113,28 +140,29 @@ final class ServerGraph private (
     * watch.
     */
   private[server] def addWatch(): Either[com.histmersion.server.ServerGraph.Problem, Hot[Boolean]] =
-    graph.node[Boolean](ServerGraph.Watch, keys = List("histmersion.config")) { ctx =>
-      val c = ctx.config.app.config
-      val target = ctx.config.loaded.file.path.filter(_ => source.isDefined)
-      target match
-        case Some(f) if c.watch =>
-          forkDiscard(
-            ServerGraph.watch(
-              f,
-              math.max(50, c.watchDebounceMs).toLong,
-              () => {
-                // a reload rebuilds this very node (when `config.*` changed) and closes this scope: never run
-                // it on the watcher's own fork
-                val _ = Thread.ofVirtual().name("histmersion-config-reload").start { () =>
-                  val _ = reload()
+    graph
+      .node[Boolean](Hot.Graph.Def.Name(ServerGraph.Watch), keys = List(Hot.Graph.Def.Keys("histmersion.config"))) { ctx =>
+        val c = ctx.config.app.config
+        val target = ctx.config.loaded.file.path.filter(_ => source.isDefined)
+        target match
+          case Some(f) if c.watch.value =>
+            forkDiscard(
+              ServerGraph.watch(
+                f,
+                math.max(50, c.watchDebounceMs.value).toLong,
+                () => {
+                  // a reload rebuilds this very node (when `config.*` changed) and closes this scope: never run
+                  // it on the watcher's own fork
+                  val _ = Thread.ofVirtual().name("histmersion-config-reload").start { () =>
+                    val _ = reload()
+                  }
                 }
-              }
+              )
             )
-          )
-          scribe.info(s"config: watching $f for changes")
-          Right(true)
-        case _ => Right(false)
-    }
+            scribe.info(s"config: watching $f for changes")
+            Right(true)
+          case _ => Right(false)
+      }.left.map(p => ServerGraph.Problem(p.value))
 
   /** Close every component — the server's end. */
   def close(): Unit = graph.close()
@@ -142,12 +170,6 @@ final class ServerGraph private (
 object ServerGraph:
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type Migrations = Migrations.T
-  object Migrations extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type WatchDebounceMs = WatchDebounceMs.T
-  object WatchDebounceMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Pool = "pool"
   val Migrations = "migrations"
@@ -172,41 +194,48 @@ object ServerGraph:
     val built =
       for
         pool <- graph
-          .node[DataSource](Pool, keys = List("histmersion.db"), idle = ds => Db.activeConnections(ds) == 0) { ctx =>
+          .node[DataSource](
+            Hot.Graph.Def.Name(Pool),
+            keys = List(Hot.Graph.Def.Keys("histmersion.db")),
+            idle = ds => Hot.Graph.Def.Idle(Db.activeConnections(ds).value == 0)
+          ) { ctx =>
             val db = ctx.config.app.db
             for
-              _ <- prepare(ctx.config.app)
+              _ <- prepare(ctx.config.app).left.map(e => Hot.Graph.Problem(e.value))
               p = useInScope(Db.pool(db))(_.close())
-              _ <- Db.canConnect(p).left.map(e => s"cannot connect to ${redact(db.url)}: $e")
+              _ <- Db.canConnect(p).left.map(e => Hot.Graph.Problem(s"cannot connect to ${redact(db.url.value)}: $e"))
             yield p
           }
-        mig <- graph.node[String](Migrations, deps = List(pool)) { ctx =>
+        mig <- graph.node[com.histmersion.util.database.Migrate.Version](Hot.Graph.Def.Name(Migrations), deps = List(pool)) { ctx =>
           val p = ctx(pool)
           try
             val v = Migrate.run(p)
             Db.ensureDatabaseSettings(p) // survives a restore that dropped them (see Db.databaseSettings)
             Db.evict(p) // sessions opened before this miss database-level settings
-            scribe.info(s"schema version $v (${redact(ctx.config.app.db.url)})")
+            scribe.info(s"schema version $v (${redact(ctx.config.app.db.url.value)})")
             forkDiscard(analyze(p))
             Right(v)
-          catch case NonFatal(e) => Left(s"migrating ${redact(ctx.config.app.db.url)} failed: ${e.getMessage}")
+          catch case NonFatal(e) => Left(Hot.Graph.Problem(s"migrating ${redact(ctx.config.app.db.url.value)} failed: ${e.getMessage}"))
         }
         q <- graph.node[ReadOnlyPool](
-          QueryPool,
+          Hot.Graph.Def.Name(QueryPool),
           deps = List(pool, mig),
-          keys = List("histmersion.query", "histmersion.db"),
-          idle = r => r.own.forall(Db.activeConnections(_) == 0)
+          keys = List(Hot.Graph.Def.Keys("histmersion.query"), Hot.Graph.Def.Keys("histmersion.db")),
+          idle = r => Hot.Graph.Def.Idle(r.own.forall(Db.activeConnections(_).value == 0))
         ) { ctx =>
           Right(readOnly(ctx.config.app, ctx(pool)))
         }
-        plug <- graph.node[Generation](Plugins, keys = com.histmersion.util.plugins.Plugins.Keys) { ctx =>
+        plug <- graph.node[Generation](
+          Hot.Graph.Def.Name(Plugins),
+          keys = com.histmersion.util.plugins.Plugins.Keys.map(k => Hot.Graph.Def.Keys(k.value))
+        ) { ctx =>
           Right(ctx.previous match
             case None => plugins.getOrElse(ServerPlugins.load(ctx.config.loaded, core = core))
-            case prev => ServerPlugins.load(ctx.config.loaded, prev, ctx.changed, core))
+            case prev => ServerPlugins.load(ctx.config.loaded, prev, ctx.changed.map(n => ConfigReload.ChangedKey(n.value)), core))
         }
       yield ServerGraph(graph, source, pool, mig, q, plug, core)
     built.left.foreach(_ => graph.close())
-    built
+    built.left.map(p => Problem(p.value))
 
   /** The read-only role (migration V011) given its password and statement timeout from config here (a migration must
     * not carry a secret; see `reference.conf`), and its own small pool.
@@ -244,12 +273,12 @@ object ServerGraph:
       case NonFatal(e)             => scribe.warn(s"startup ANALYZE failed: ${e.getMessage}")
 
   /** A JDBC URL for the log: no query string (where a password could be). */
-  def redact(url: com.histmersion.server.HttpDownload.Url): com.histmersion.server.HttpDownload.Url = url.takeWhile(_ != '?')
+  def redact(url: String): String = url.takeWhile(_ != '?')
 
   private def log(r: ReloadReport): Unit =
     if r.errors.nonEmpty then
       scribe.warn(s"config reload failed, generation ${r.generation} stays: ${r.errors.mkString("; ")}")
-    else if r.published then
+    else if r.published.value then
       scribe.info(
         s"config reloaded: generation ${r.generation}; applied ${r.applied.mkString(", ")}" +
           (if r.rebuilt.isEmpty then "" else s"; rebuilt ${r.rebuilt.mkString(", ")}") +
@@ -263,7 +292,7 @@ object ServerGraph:
   /** Watch `file`'s directory and call `changed` once the file has been quiet for `debounceMs` after a change. Returns
     * when interrupted (the watch node's scope closing).
     */
-  private def watch(file: Path, debounceMs: com.histmersion.server.ServerGraph.WatchDebounceMs, changed: () => Unit): Unit =
+  private def watch(file: Path, debounceMs: Long, changed: () => Unit): Unit =
     val dir = Option(file.getParent).getOrElse(Path.of("."))
     val ws = FileSystems.getDefault.newWatchService()
     try

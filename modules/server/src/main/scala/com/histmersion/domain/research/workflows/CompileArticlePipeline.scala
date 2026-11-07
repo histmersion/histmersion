@@ -224,7 +224,9 @@ final class CompileArticlePipeline(
                   MaxClaims(research.compile.maxClaims.value),
                   CompileArticle.Last(last.value)
                 )
-                .map(Checked(_, _))
+                .left
+                .map(_.map(p => com.histmersion.domain.automation.agents.RunCtx.Problem(p.value)))
+                .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.value))))
             }
             .map(sofar :+ _)
         }
@@ -282,7 +284,9 @@ final class CompileArticlePipeline(
         val title = Option.when(s.mode == DraftMode.Extend)(s.title).orElse(ctx.run.params.title.map(t => Title(t.value)))
         CompileArticle
           .checkDraft(a, s.slug, s.mode, s.kind, title, s.body, ev, found.filter, corpus, CompileArticle.Last(last.value))
-          .map(Checked(_, _))
+          .left
+          .map(_.map(p => com.histmersion.domain.automation.agents.RunCtx.Problem(p.value)))
+          .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.value))))
       }
     }
 
@@ -374,8 +378,8 @@ final class CompileArticlePipeline(
             io.scalaland.chimney.Transformer
               .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
               .transform(LinkKind.Article),
-            com.histmersion.domain.automation.goals.BGoalLinkRow.Ref(d.slug.value),
-            Some(com.histmersion.domain.automation.goals.BGoalLinkRow.Note("compiled by an agent run"))
+            com.histmersion.api.automation.Goal.Plans.GoalLink.Ref(d.slug.value),
+            Some(com.histmersion.api.automation.Goal.Plans.GoalLink.Note("compiled by an agent run"))
           )
         )
     log(

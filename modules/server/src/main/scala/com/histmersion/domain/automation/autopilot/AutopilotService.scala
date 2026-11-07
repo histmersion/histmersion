@@ -86,7 +86,7 @@ final class AutopilotService(
   def ingestedToday(now: Instant): AutopilotPolicy.IngestedToday =
     AutopilotPolicy.IngestedToday(
       agents.managerStore.countEventsAll(ManagerEvent.Kind(Feed.Ingested), ManagerPolicy.dayStart(now)).value +
-        agents.workflows.managerKinds.map(_.ingestedToday(now)).sum
+        agents.workflows.managerKinds.map(_.ingestedToday(now).value).sum
     )
 
   /** Make sure of the goals' managers at the next tick (a plan created sub-goals). */
@@ -311,7 +311,7 @@ final class AutopilotService(
     */
   def advance(now: Instant): List[String] =
     val goals = agents.goals.all()
-    val parentOf = goals.map(g => g.slug.value -> g.parentSlug.map(_.value)).toMap
+    val parentOf: Map[String, Option[String]] = goals.map(g => (g.slug.value: String) -> g.parentSlug.map(p => p.value: String)).toMap
     val managers = agents.managerStore.light()
     val articles = agents.workflows.linked().map((k, v) => k.value -> v.map(_.value))
     val passed = agents.workflows.finished().map(_.value)
@@ -380,7 +380,7 @@ final class AutopilotService(
   def nextArticles(now: Instant): List[String] =
     if acfg.nextArticleHours.value <= 0 then Nil
     else
-      val seeds = agents.managerStore.light().filter(_.kind.value == Kind.Seed.wire.value).flatMap(m => m.goal.map(_.value -> m)).toMap
+      val seeds = agents.managerStore.light().filter(_.kind.value == Kind.Seed.wire.value).flatMap(m => m.goal.map(g => (g.value: String) -> m)).toMap
       agents.focus.facts().filter(f => f.articles.value > 0 && seeds.contains(f.slug.value)).flatMap { f =>
         val sid = seedId(Goal.Ref(f.slug.value))
         val item = agents.managerStore.itemFor(sid, ManagerItem.Kind(ProposeArticles), itemOf(f.slug))

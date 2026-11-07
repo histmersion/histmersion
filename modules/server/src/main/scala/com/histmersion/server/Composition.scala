@@ -15,7 +15,7 @@ import com.histmersion.pluginhost.{upstreamSettings, FetchChain, Generation, Hos
 import sttp.tapir.server.netty.sync.{NettySyncServer, NettySyncServerOptions}
 import sttp.tapir.server.netty.NettyConfig
 import scala.concurrent.duration.*
-import com.histmersion.config.{AppConfig, LoadedConfig, UserConfigFile}
+import com.histmersion.config.{AppConfig, InitConfig, LoadedConfig, UserConfigFile}
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.domain.library.acquisition.*
 import com.histmersion.server.hot.Hot
@@ -26,6 +26,9 @@ import com.histmersion.api.media.{MediaCoversRequest, SourceCoverParams}
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
 import com.histmersion.server.hot.Pin
+import com.histmersion.domain.automation.workflows.ToolName
+import com.histmersion.util.plugins.Plugin
+import scala.collection.immutable.ListMap
 
 /** The server's wiring: the hot component graph (pools, migrations, plugins) → ServerWiring → HTTP (REST + pages +
   * static) and MCP endpoints → bind. The entry point ([[histmersionServer]]) loads the config and calls it; a test
@@ -36,27 +39,11 @@ object Composition:
   object Host extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Port = Port.T
   object Port extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Build a configured (not yet started) server. `port = 0` → ephemeral port (tests use
     * `supervised { server(...).start() }`; `main` binds it in its own scope). Its components — the pools above all —
     * belong to the enclosing Ox scope and close with it.
     */
-  type CollectionsControllersGapsLimit = CollectionsControllersGapsLimit.T
-  object CollectionsControllersGapsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CollectionsControllersQueueItemId = CollectionsControllersQueueItemId.T
-  object CollectionsControllersQueueItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CollectionsControllersIngestBytes = CollectionsControllersIngestBytes.T
-  object CollectionsControllersIngestBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CollectionsControllersPutCoverBytes = CollectionsControllersPutCoverBytes.T
-  object CollectionsControllersPutCoverBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type ServerAutoInit = ServerAutoInit.T
-  object ServerAutoInit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildAutoInit = BuildAutoInit.T
-  object BuildAutoInit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def server(cfg: AppConfig, host: com.histmersion.server.Composition.Host, port: com.histmersion.server.Composition.Port)(using Ox): NettySyncServer =
     build(HotConfig.fixed(cfg), None, host, port, None)
 
@@ -69,7 +56,7 @@ object Composition:
       host: com.histmersion.server.Composition.Host,
       port: com.histmersion.server.Composition.Port,
       converter: ConverterClient,
-      autoInit: com.histmersion.server.Composition.ServerAutoInit = com.histmersion.server.Composition.ServerAutoInit(false),
+      autoInit: InitConfig.Auto = InitConfig.Auto(false),
       onWiring: ServerWiring => Unit = _ => (),
       configFile: ConfigFileInfo = ConfigFileInfo(),
       plugins: Generation = ServerPlugins.offline,
@@ -98,7 +85,11 @@ object Composition:
           cfg,
           LoadedConfig(
             cfg,
-            UserConfigFile(configFile.path.map(java.nio.file.Path.of(_)), configFile.loaded, configFile.unknownKeys)
+            UserConfigFile(
+              configFile.path.map(p => java.nio.file.Path.of(p.value)),
+              UserConfigFile.Loaded(configFile.loaded.value),
+              configFile.unknownKeys.map(k => UserConfigFile.UnknownKeys(k.value))
+            )
           )
         )
 
@@ -126,7 +117,7 @@ object Composition:
       host: com.histmersion.server.Composition.Host,
       port: com.histmersion.server.Composition.Port,
       converter: Option[ConverterClient],
-      autoInit: com.histmersion.server.Composition.BuildAutoInit = com.histmersion.server.Composition.BuildAutoInit(false),
+      autoInit: InitConfig.Auto = InitConfig.Auto(false),
       onWiring: ServerWiring => Unit = _ => (),
       plugins: Generation = ServerPlugins.offline,
       core: Option[CoreBudget] = None,
@@ -134,7 +125,7 @@ object Composition:
       system: SystemContext = SystemContext.isolated
   )(using Ox): NettySyncServer =
     val selectedCore = core.getOrElse(CoreBudget(() => system.clock.instant()))
-    val sg = ServerGraph.start(hc, source, Some(plugins), selectedCore).fold(e => throw IllegalStateException(e), identity)
+    val sg = ServerGraph.start(hc, source, Some(plugins), selectedCore).fold(e => throw IllegalStateException(s"$e"), identity)
     releaseAfterScope(sg.close())
     // the CORE budget, built before the database (the first plugin generation spends from it), kept in it
     // from here on: a restart does not hand the day's tokens out again
@@ -155,7 +146,7 @@ object Composition:
       .attach(com.histmersion.domain.library.workflows.AgentUpstream.of(acq.controllers))
     val collections = collectionsControllers(sg, deps, h, acq.controllers)
     val mcp = McpTools(h, acq.controllers, collections)
-    h.agents.attachTools(mcp.toolNames) // what the generated definitions' placeholders may name
+    h.agents.attachTools(mcp.toolNames.flatMap(n => ToolName.option(n))) // what the generated definitions' placeholders may name
     val paused = h.agents.start()
     if paused > 0 then
       scribe.info(s"$paused interrupted agent run(s) paused; resume them with histmersion agent resume")
@@ -163,20 +154,20 @@ object Composition:
     releaseAfterScope { h.agents.stop(); h.ingest.queue.stop() }
     // a swapped database: the agent lease re-acquired on it (and given up on the old one when that
     // generation closes), its interrupted jobs and runs reconciled as at a start
-    leases(sg, h).left.foreach(e => throw IllegalStateException(e))
-    sg.addWatch().left.foreach(e => throw IllegalStateException(e))
+    leases(sg, h).left.foreach(e => throw IllegalStateException(s"$e"))
+    sg.addWatch().left.foreach(e => throw IllegalStateException(s"$e"))
     // first run (#720): the bundled gazetteer / period presets into empty tables — a background job,
     // started AFTER the reconciliation above so it is not failed as "interrupted". Only `main` asks:
     // a test server must never seed its database behind the test's back
-    if autoInit then
+    if autoInit.value then
       try { val _ = h.bootstrap.autoStart() }
       catch
         case e: Exception => scribe.warn(s"first-run import not started: ${e.getMessage}")
     // every request pinned to the generation current when it arrived (hot.PinRequests)
     val options = NettySyncServerOptions.customiseInterceptors.prependInterceptor(Pin.Requests(sg.graph)).options
     val srv = NettySyncServer(options)
-      .host(host)
-      .port(port)
+      .host(host.value)
+      .port(port.value)
       .modifyConfig(
         _.requestTimeout(cfg.server.requestTimeoutSeconds.seconds)
       ) // netty default 20 s is shorter than a pg_dump
@@ -191,7 +182,7 @@ object Composition:
         com.histmersion.domain.automation.agents.AgentsTools.agentEndpoints(h.agents)
       ) // one per agent definition, behind run tokens
       .addEndpoints(HttpApi(deps, h, acq.controllers, collections).endpoints)
-    if cfg.auth.apiKey.nonEmpty then
+    if cfg.auth.apiKey.value.nonEmpty then
       scribe.info("API key authentication enabled — write methods require Authorization: Bearer <key>")
     srv.modifyConfig { nc =>
       nc.initPipeline { inner => (pipeline, tapirHandler) =>
@@ -222,10 +213,10 @@ object Composition:
     * (and released on the old one when its generation closes); once published, the new database's interrupted jobs are
     * failed and its runs reconciled, as a start does.
     */
-  private def leases(sg: ServerGraph, h: ServerWiring): Either[com.histmersion.server.Composition.Problem, Hot[Boolean]] =
+  private def leases(sg: ServerGraph, h: ServerWiring): Either[Hot.Graph.Problem, Hot[Boolean]] =
     val lease = h.agents.lease
     sg.graph.node[Boolean](
-      ServerGraph.Leases,
+      Hot.Graph.Def.Name(ServerGraph.Leases),
       deps = List(sg.migrations, sg.pool),
       onPublish = held => {
         val failed = h.ingest.queue.start()
@@ -249,13 +240,13 @@ object Composition:
   private def acquisition(sg: ServerGraph, deps: Deps, h: ServerWiring): AcquisitionWiring =
     val clients = sg.graph
       .node[AcquireClients](
-        ServerGraph.Acquisition,
+        Hot.Graph.Def.Name(ServerGraph.Acquisition),
         deps = List(sg.plugins),
         keys = List(com.histmersion.server.hot.Hot.Graph.Def.Keys("histmersion.acquire"), com.histmersion.server.hot.Hot.Graph.Def.Keys("histmersion.media.max-retry-after-seconds"))
       ) { ctx =>
         Right(acquireClients(ctx.config.app, ctx(sg.plugins), sg.core)(using deps.clock))
       }
-      .fold(e => throw IllegalStateException(e), identity)
+      .fold(e => throw IllegalStateException(s"$e"), identity)
     AcquisitionWiring(deps, h.library.sourceStore, h.ingest, clients)
 
   /** The library's source collections (the Calibre library, archive.org): the service over the plugin generation's
@@ -275,23 +266,33 @@ object Composition:
       def patch(citekey: com.histmersion.domain.library.Citekey, patch: Source.Patch) = h.library.sources.patch(citekey, patch)
       def pushMeta(citekey: com.histmersion.domain.library.Citekey) = h.calibreGaps.pushMeta(citekey)
       def pushed(req: CalibrePushRequest) = h.calibreGaps.pushed(req)
-      def gaps(limit: Option[com.histmersion.server.Composition.CollectionsControllersGapsLimit]) = h.calibreGaps.gaps(limit)
+      def gaps(limit: Option[CollectionLibrary.Limit]) = h.calibreGaps.gaps(limit.map(l => CalibreGapControllers.Limit(l.value)))
       def original(citekey: com.histmersion.domain.library.Citekey) =
         h.ingest.controllers.original(citekey).flatMap { (file, disposition) =>
           scala.util
             .Try(file.bytes())
             .toEither
             .left
-            .map(e => Api.Error(s"cannot read the original of '$citekey': ${e.getMessage}"))
-            .map(StoredOriginal(_, disposition))
+            .map(e => Api.Error(Api.Error.Message(s"cannot read the original of '$citekey': ${e.getMessage}")))
+            .map(b => StoredOriginal(StoredOriginal.Bytes(b.value), StoredOriginal.Disposition(disposition.value)))
         }
-      def queueItem(id: com.histmersion.server.Composition.CollectionsControllersQueueItemId) = h.workListView.list(Queue.Kind.Acquire.label, all = com.histmersion.server.views.WorkListView.IncludeAll(true)).map(_.items.find(_.id == id))
-      def ingest(params: Ingest.Params, bytes: com.histmersion.server.Composition.CollectionsControllersIngestBytes) =
+      def queueItem(id: CollectionLibrary.QueueItemId) =
+        h.workListView
+          .list(
+            com.histmersion.server.views.WorkListView.QueueName(Queue.Kind.Acquire.label.value),
+            all = com.histmersion.server.views.WorkListView.IncludeAll(true)
+          )
+          .map(_.items.find(_.id.value == id.value))
+      def ingest(params: Ingest.Params, bytes: CollectionLibrary.Bytes) =
         h.ingest.controllers.ingest(
           params,
-          com.histmersion.domain.library.ingest.Upload.inline(params.filename.getOrElse("original"), bytes)
+          com.histmersion.domain.library.ingest.Upload.inline(
+            com.histmersion.domain.library.ingest.Upload.InlineName(params.filename.map(_.value).getOrElse("original")),
+            com.histmersion.domain.library.ingest.Upload.Bytes(bytes.value)
+          )
         )
-      def putCover(params: SourceCoverParams, bytes: com.histmersion.server.Composition.CollectionsControllersPutCoverBytes) = h.media.covers.putCover(params, bytes)
+      def putCover(params: SourceCoverParams, bytes: CollectionLibrary.Bytes) =
+        h.media.covers.putCover(params, com.histmersion.domain.media.assets.AssetService.Bytes(bytes.value))
       def openLibraryCover(req: MediaCoversRequest) = h.media.covers.covers(req)
       def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest) =
         acq.archiveImport(item, file, req)
@@ -300,7 +301,7 @@ object Composition:
         deps.transactor,
         library,
         () => sg.plugins.peek.registries.sourceCollections,
-        deps.cfg.acquire.defaults.archiveRows.value
+        CollectionsService.Limit(deps.cfg.acquire.defaults.archiveRows.value)
       ),
       deps.maintenance
     )
@@ -314,17 +315,19 @@ object Composition:
     // the one outbound policy's Retry-After cap is the media one (`media.max-retry-after-seconds`)
     // `acquire.tls` (#1568): more roots than the JDK's, only when asked for
     val tls = OutboundTls.configure(cfg.tls)
-    tls.foreach((_, line) => scribe.info(line))
-    val http = SttpHttp(cfg, maxRetryAfterSeconds = app.media.maxRetryAfterSeconds, tls = tls.map(_._1), clock = () => clock.instant())
+    tls.foreach((_, line) => scribe.info(line.value))
+    val http = SttpHttp(cfg, maxRetryAfterSeconds = com.histmersion.domain.HttpPolicy.MaxRetryAfterSeconds(app.media.maxRetryAfterSeconds.value), tls = tls.map(_._1), clock = () => clock.instant())
     val openalex =
       OpenAlexDiscovery(
         com.histmersion.upstreams.openalex
           .OpenAlexCrossref(cfg.upstreamSettings, HttpPlugin(http), HostLog.scribe.plugin)
       )
     val (chain, notes) = FetchChain.of(
-      plugins.registries.sourceFetchers,
-      cfg.chainIds,
-      cfg.allowUnauthorised,
+      ListMap.from(
+        plugins.registries.sourceFetchers.toList.flatMap((k, f) => Plugin.Id.option(k.value).map(_ -> f))
+      ),
+      cfg.chainIds.flatMap(c => Plugin.Id.option(c.value)),
+      FetchChain.AllowUnauthorised(cfg.allowUnauthorised.value),
       plugins = plugins.registered
     )
     notes.foreach(n => scribe.info(n))
@@ -332,7 +335,7 @@ object Composition:
       case Nil  => "acquire: no source fetcher is registered — every fetch is a miss"
       case plan => s"acquire: chain ${plan.map(_._1).mkString(" → ")}")
     // CORE's search with the key the oa-core plugin resolved (its secret reference), on the same budget
-    val coreKey = com.histmersion.util.plugins.Plugins.coreKey(plugins, cfg.core.key)
+    val coreKey = com.histmersion.util.plugins.Plugins.coreKey(plugins, cfg.core.key.map(k => com.histmersion.util.plugins.Plugins.CoreKey(k.value)))
     val (indexes, alerts) = Indexes.of(cfg, http, coreKey, core)
     val generation = FetcherGeneration.of(chain.plan, plugins.report.plugins, cfg.contact.isDefined, coreKey.isDefined)
     AcquireClients(

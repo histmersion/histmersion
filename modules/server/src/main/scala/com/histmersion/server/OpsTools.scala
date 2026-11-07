@@ -22,10 +22,6 @@ import com.histmersion.api.library.Acquire
   * so the MCP output and the CLI output are the same bytes.
   */
 object OpsTools:
-  type RunQueueRenderList = RunQueueRenderList.T
-  object RunQueueRenderList extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
   import com.histmersion.util.mcp.ToolInputs.given
 
   def apply(h: ServerWiring) =
@@ -51,19 +47,36 @@ object OpsTools:
         .handle { in =>
           val subject = (in.article.map(_.trim).filter(_.nonEmpty), in.source.map(_.trim).filter(_.nonEmpty), in.text)
           subject match
-            case (Some(slug), _, _) =>
-              (if in.fix then h.research.articles.fix(slug) else h.research.articles.lint(slug))
-                .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
-            case (_, Some(ck), _) =>
-              (if in.fix then h.library.sources.fix(ck) else h.library.sources.lint(ck))
-                .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
+            case (Some(raw), _, _) =>
+              com.histmersion.domain.research.Slug
+                .parse(raw)
+                .fold(
+                  p => ToolResult.text(McpOut.refusal(p.value)),
+                  slug =>
+                    (if in.fix then h.research.articles.fix(slug) else h.research.articles.lint(slug))
+                      .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
+                )
+            case (_, Some(raw), _) =>
+              com.histmersion.domain.library.Citekey
+                .parse(raw)
+                .fold(
+                  p => ToolResult.text(McpOut.refusal(p.value)),
+                  ck =>
+                    (if in.fix then h.library.sources.fix(ck) else h.library.sources.lint(ck))
+                      .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
+                )
             case (_, _, Some(text)) =>
-              val r = h.formats.check(FormatCheck(text, in.field.getOrElse(FormatField.Body), in.fix))
+              val r = h.formats.check(
+                FormatCheck(FormatCheck.Text(text), in.field.getOrElse(FormatField.Body), FormatCheck.Fix(in.fix))
+              )
               ToolResult.text(
                 FormatMarkdown.report(r) + r.text.fold("")(t => s"\n\n### Repaired text\n\n````markdown\n$t\n````")
               )
             case _ =>
-              h.checks.lintWithFix(in.rules, in.fix) match
+              h.checks.lintWithFix(
+                in.rules.map(com.histmersion.util.data.checks.CheckRule.Name(_)),
+                com.histmersion.util.data.checks.CheckControllers.ApplyFix(in.fix)
+              ) match
                 case Right(rep) => ToolResult.text(Lint.markdown(rep))
                 case Left(e)    => McpOut.error(e)
         }
@@ -103,9 +116,12 @@ object OpsTools:
     List(lint, queue) ++ com.histmersion.domain.library.search.QueryTools(h.library.query) ++ List(backups)
 
   /** `action` dispatch, kept out of the tool body so the failure modes read as one list. */
-  private def runQueue(h: ServerWiring, in: QueueInput): com.histmersion.server.FullText.Shown.Markdown =
-    def render(list: com.histmersion.server.OpsTools.RunQueueRenderList) =
-      h.workListView.list(list, in.all) match
+  private def runQueue(h: ServerWiring, in: QueueInput): String =
+    def render(list: String) =
+      h.workListView.list(
+        com.histmersion.server.views.WorkListView.QueueName(list),
+        com.histmersion.server.views.WorkListView.IncludeAll(in.all)
+      ) match
         case Right(l) =>
           l.markdown.getOrElse(s"_unknown list ${l.list}_")
         case Left(e) => McpOut.refusal(e)
@@ -116,47 +132,54 @@ object OpsTools:
       case "add" =>
         (in.list, in.text.map(_.trim).filter(_.nonEmpty)) match
           case (Some(list), Some(text)) =>
-            h.workLists.add(list, QueueAdd(text, in.topic, reason = in.reason)) match
+            h.workLists.add(
+              Queue.Kind.Label(list),
+              QueueAdd(
+                Queue.QueueItem.Text(text),
+                in.topic.map(Queue.QueueItem.Topic(_)),
+                reason = in.reason.map(Queue.QueueItem.Reason(_))
+              )
+            ) match
               case Right(i) => s"added **#${i.id}** to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}: ${i.text}"
               case Left(e)  => McpOut.refusal(e)
-          case _ => com.histmersion.server.FullText.Shown.Markdown("_add needs both `list` and `text`_")
+          case _ => "_add needs both `list` and `text`_"
       case "done" =>
         in.id match
           case Some(id) =>
-            h.workLists.patch(id, QueuePatch(status = Some(Queue.Done))) match
+            h.workLists.patch(
+              com.histmersion.domain.automation.worklists.QueueItemId(id),
+              QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done)))
+            ) match
               case Right(i) => s"done **#${i.id}**: ${i.text}"
               case Left(e)  => McpOut.refusal(e)
-          case None => com.histmersion.server.FullText.Shown.Markdown("_done needs an `id` (run action=list to see them)_")
+          case None => "_done needs an `id` (run action=list to see them)_"
       case "recheck" =>
         com.histmersion.server.agents.EngineContributions
           .work(h.agents)
           .acquireRecheck
-          .run(Acquire.Checks.RecheckRequest(in.dryRun, in.limit, in.id, Some(com.histmersion.api.library.Acquire.Checks.RecheckRequest.By("mcp")), in.all))
+          .run(
+            Acquire.Checks.RecheckRequest(
+              Acquire.Checks.RecheckRequest.DryRun(in.dryRun),
+              in.limit.map(Acquire.Checks.RecheckRequest.Limit(_)),
+              in.id.map(Acquire.Checks.RecheckRequest.Id(_)),
+              Some(Acquire.Checks.RecheckRequest.By("mcp")),
+              Acquire.Checks.RecheckRequest.All(in.all)
+            )
+          )
           .fold(McpOut.refusal, AcquireChecksMarkdown.result)
       case other =>
         s"_unknown action '$other' — use list, add, done or recheck_"
 
   // Inputs last, per the file convention: circe Codec + tapir Schema both derived by Kindlings.
   final case class LintInput(
-      rules: List[LintInput.Rules] = Nil,
-      fix: LintInput.Fix = com.histmersion.server.OpsTools.LintInput.Fix(false),
-      article: Option[LintInput.Article] = None,
-      source: Option[LintInput.Source] = None,
-      text: Option[LintInput.Text] = None,
+      rules: List[String] = Nil,
+      fix: Boolean = false,
+      article: Option[String] = None,
+      source: Option[String] = None,
+      text: Option[String] = None,
       field: Option[FormatField] = None
   ) derives KindlingsCodecAsObject
   object LintInput:
-    type Rules = Rules.T
-    object Rules extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Fix = Fix.T
-    object Fix extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Article = com.histmersion.domain.research.Slug
-    val Article: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
-    type Source = com.histmersion.domain.library.Citekey
-    val Source: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
-    type Text = com.histmersion.server.MarkdownLint.Scan.Text
-    val Text: _root_.com.histmersion.server.MarkdownLint.Scan.Text.type = _root_.com.histmersion.server.MarkdownLint.Scan.Text
-
     given Schema[LintInput] = KindlingsSchema
       .derived[LintInput]
       .schema
@@ -172,36 +195,17 @@ object OpsTools:
       .modify(_.field)(_.description("What `text` is: body (an article body, the default), summary or notes"))
 
   final case class QueueInput(
-      action: QueueInput.Action,
-      list: Option[QueueInput.List] = None,
-      text: Option[QueueInput.Text] = None,
-      topic: Option[QueueInput.Topic] = None,
-      reason: Option[QueueInput.Reason] = None,
-      id: Option[QueueInput.Id] = None,
-      all: QueueInput.All = com.histmersion.server.OpsTools.QueueInput.All(false),
-      dryRun: QueueInput.DryRun = com.histmersion.server.OpsTools.QueueInput.DryRun(false),
-      limit: Option[QueueInput.Limit] = None
+      action: String,
+      list: Option[String] = None,
+      text: Option[String] = None,
+      topic: Option[String] = None,
+      reason: Option[String] = None,
+      id: Option[Int] = None,
+      all: Boolean = false,
+      dryRun: Boolean = false,
+      limit: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object QueueInput:
-    type Action = Action.T
-    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type List = List.T
-    object List extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Topic = Topic.T
-    object Topic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Reason = Reason.T
-    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type All = All.T
-    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DryRun = DryRun.T
-    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = com.histmersion.PageSize
-    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
-
     given Schema[QueueInput] = KindlingsSchema
       .derived[QueueInput]
       .schema

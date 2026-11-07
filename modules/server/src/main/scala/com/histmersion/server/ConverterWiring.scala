@@ -20,13 +20,13 @@ object ConverterWiring:
 
   def settings(c: ConverterConfig): ConverterSettings =
     ConverterSettings(
-      ConverterUrl(c.url),
-      Seconds(c.timeoutSeconds),
-      Dpi(c.dpi),
-      Pixels(c.maxImagePx),
-      Seconds(c.secondsPerPage),
-      Seconds(c.secondsPerPageQuality),
-      Seconds(c.secondsPerScannedPage)
+      ConverterUrl(c.url.value),
+      Seconds(c.timeoutSeconds.value),
+      Dpi(c.dpi.value),
+      Pixels(c.maxImagePx.value),
+      Seconds(c.secondsPerPage.value),
+      Seconds(c.secondsPerPageQuality.value),
+      Seconds(c.secondsPerScannedPage.value)
     )
 
   /** HTTP/1.1 explicitly: java.net.http defaults to HTTP/2 and offers an h2c upgrade (`Connection: Upgrade,

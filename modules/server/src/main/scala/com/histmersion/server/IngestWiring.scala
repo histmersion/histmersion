@@ -16,7 +16,7 @@ final class IngestWiring(
     converter: ConverterClient,
     sources: SourceService,
     figures: AssetService,
-    afterStore: IngestWiring.AfterStoreArg1 => Option[IngestWiring.AfterStoreResult]
+    afterStore: com.histmersion.domain.library.Citekey => Option[IngestQueue.Note]
 ):
   private def originals: Store = deps.storage.store(Location.IngestOriginals)
 
@@ -54,8 +54,3 @@ final class IngestWiring(
 
   val seed: SeedImport = SeedImport(sources, figures.addFigures)
 
-object IngestWiring:
-  type AfterStoreArg1 = AfterStoreArg1.T
-  object AfterStoreArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AfterStoreResult = AfterStoreResult.T
-  object AfterStoreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

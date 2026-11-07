@@ -31,6 +31,9 @@ import javax.sql.DataSource
 import com.histmersion.api.automation.{Agents, Queue}
 import com.histmersion.api.Api
 import com.histmersion.api.automation.Goal
+import com.histmersion.domain.automation.managers.ManagerContext.TickLine
+import com.histmersion.domain.automation.{Approval as DomainApproval, Goal as DomainGoal, Pipeline as DomainPipeline, Run as DomainRun}
+import scala.collection.mutable.Builder
 
 /** The process managers' supervisor (docs/research-process-managers.md §3): a daemon thread that ticks every
   * `agents.managers.tick-seconds`, and at once when a manager's run settles ([[Engine.onSettled]] → [[nudge]]). One
@@ -66,7 +69,6 @@ import com.histmersion.api.automation.Goal
   * and the run is submitted only after the commit (a crash in between leaves a queued run, which the engine's restart
   * re-enqueues).
   */
-
 final class ManagerSupervisor(
     ds: DataSource,
     config: => AgentsConfig,
@@ -79,6 +81,8 @@ final class ManagerSupervisor(
   private def mcfg = cfg.managers
   private def managerDefaults = ManagerDefaultsViews.defaults(cfg.managers)
 
+  private given Zero[List[TickLine]] = Zero(Nil)
+
   /** The ticking thread; a `var` because it starts after construction and stops in tests. */
   @volatile private var thread: Option[Thread] = None
   @volatile private var stopping = false
@@ -87,22 +91,33 @@ final class ManagerSupervisor(
   /** A run of a manager settled: tick soon (coalesced). */
   def nudge(): Unit = { val _ = nudges.offer("settled") }
 
+  /** An event of a manager's feed, its text as assembled. */
+  private def recordEvent(id: ManagerInfo.Id, item: Option[ManagerItem.Id], run: Option[DomainRun.Id], feed: String, text: String): Unit =
+    agents.managerStore.event(id, item, run, ManagerEvent.Kind(feed), ManagerEvent.Text(text))
+
+  /** A run id read back from the database. */
+  private def runIdOf(r: RunInfo.Id): DomainRun.Id = DomainRun.Id.assume(r.value)
+
+  private def itemKindOf(i: ManagerItem): ManagerContext.ItemKind = ManagerContext.ItemKind(i.kind.value)
+  private def itemTargetOf(i: ManagerItem): ManagerContext.ItemTarget = i.target.transformInto[ManagerContext.ItemTarget]
+
   /** The library-wide managers exist — `review` and `enrich` — created PAUSED, so deploying never starts spending until
     * a person resumes them. Idempotent.
     */
   def ensureDefaults(): Unit =
-    val _ = ensure(Kind.Review, ReviewId, None)
-    val _ = ensure(Kind.Enrich, EnrichId, None)
+    val _ = ensure(Kind.Review, ManagerLight.Id(ReviewId), None)
+    val _ = ensure(Kind.Enrich, ManagerLight.Id(EnrichId), None)
 
   /** Manager `id` of kind `k` exists (created PAUSED when it did not — active while the autopilot is on, which runs
     * every manager); true = it was created now.
     */
-  def ensure(k: Kind, id: com.histmersion.domain.automation.managers.ManagerLight.Id, goal: Option[com.histmersion.domain.automation.Goal.Slug]): Boolean =
+  def ensure(k: Kind, id: ManagerLight.Id, goal: Option[DomainGoal.Slug]): Boolean =
     val auto = agents.autopilot.on
-    val made = agents.managerStore.create(id, k, goal, if auto then State.Active else State.Paused, ManagerConfig())
+    val infoId = id.transformInto[ManagerInfo.Id]
+    val made = agents.managerStore.create(infoId, k, goal, if auto then State.Active else State.Paused, ManagerConfig())
     if made then
-      agents.managerStore.event(
-        id,
+      recordEvent(
+        infoId,
         None,
         None,
         if auto then Feed.Autopilot else Feed.Paused,
@@ -112,7 +127,7 @@ final class ManagerSupervisor(
     made
 
   def start(): Unit =
-    if cfg.enabled && mcfg.enabled && thread.isEmpty then
+    if cfg.enabled.value && mcfg.enabled.value && thread.isEmpty then
       stopping = false
       val t = Thread.ofPlatform().daemon(true).name("histmersion-agent-managers").unstarted(() => loop())
       thread = Some(t)
@@ -134,7 +149,7 @@ final class ManagerSupervisor(
         catch
           case e: InterruptedException => throw e
           case e: Exception            => scribe.warn(s"agent managers tick failed: ${e.getMessage}", e)
-        val _ = nudges.poll(math.max(1, mcfg.tickSeconds).toLong, TimeUnit.SECONDS)
+        val _ = nudges.poll(math.max(1, mcfg.tickSeconds.value).toLong, TimeUnit.SECONDS)
         nudges.clear()
     catch case _: InterruptedException => ()
 
@@ -143,27 +158,28 @@ final class ManagerSupervisor(
 
   /** The kinds the supervisor runs, by kind; and the kind that drives each item kind. */
   private val byKind: Map[Kind, ManagerKindDefinition] = kinds.map(k => k.kind -> k).toMap
-  private val byItem: Map[com.histmersion.domain.automation.managers.ManagerSupervisor.ByItemPart1, ManagerKindDefinition] = kinds.flatMap(k => k.items.map(_ -> k)).toMap
+  private val byItem: Map[ManagerContext.ItemKind, ManagerKindDefinition] = kinds.flatMap(k => k.items.map(_ -> k)).toMap
 
   /** One pass at `now`. Returns what was done, one line each (for a test or a log). Never throws for one item's or one
     * manager's sake.
     */
 
-  def tick(now: Instant): List[com.histmersion.domain.automation.managers.ManagerSupervisor.TickResult] = synchronized {
-    if !cfg.enabled || !mcfg.enabled then Nil
+  def tick(now: Instant): List[TickLine] = synchronized {
+    if !cfg.enabled.value || !mcfg.enabled.value then Nil
     else
-      val out = List.newBuilder[String]
+      val out = List.newBuilder[TickLine]
       out ++= migrateSchedules(now)
       // the autopilot first (its new managers are dispatched in this tick), then the approvals its checks
       // decide (a decided plan settles its held item below)
-      out ++= guarded(com.histmersion.domain.automation.managers.ManagerLight.Id("autopilot"), out)(agents.autopilot.tick(now))
+      out ++= guarded(ManagerLight.Id("autopilot"), out)(agents.autopilot.tick(now)).map(TickLine(_))
       // draining: no approval decided by code (a decision wakes a waiting run: new work)
-      if !agents.drain.draining then out ++= guarded(com.histmersion.domain.automation.managers.ManagerLight.Id("auto-approvals"), out)(agents.autoApprovals.sweep(now))
-      out ++= guarded(com.histmersion.domain.automation.managers.ManagerLight.Id("digest"), out)(agents.digest.tick(now))
+      if !agents.drain.draining then out ++= guarded(ManagerLight.Id("auto-approvals"), out)(agents.autoApprovals.sweep(now)).map(TickLine(_))
+      out ++= guarded(ManagerLight.Id("digest"), out)(agents.digest.tick(now)).map(TickLine(_))
       val managers = agents.managerStore.list().filter(m => State.parse(m.state).exists(_ != State.Stopped))
       managers.foreach { m =>
-        guarded(m.id, out)(evaluate(m, now, out))
-        guarded(m.id, out)(releaseHolds(m, now, out))
+        val mid = m.id.transformInto[ManagerLight.Id]
+        guarded(mid, out)(evaluate(m, now, out))
+        guarded(mid, out)(releaseHolds(m, now, out))
       }
       // each kind's housework (the watch kind's seeding, ingest backlog and acquisition re-check), before any
       // sweep is dispatched (a sweep gets what it leaves)
@@ -176,22 +192,23 @@ final class ManagerSupervisor(
             Kind.parse(m.kind).exists(byKind.contains)
         )
       live.foreach { m =>
-        val fired = guarded(m.id, out)(fireCron(m, now, out))
-        guarded(m.id, out)(byKind.get(kindOf(m)).foreach(_.refill(this, m, now, fired, out)))
+        val mid = m.id.transformInto[ManagerLight.Id]
+        val fired = guarded(mid, out)(fireCron(m, now, out))
+        guarded(mid, out)(byKind.get(kindOf(m)).foreach(_.refill(this, m, now, ManagerKindDefinition.RefillForce(fired), out)))
       }
       // the autopilot's focus: which goals are active; the others' model-using items are held (after the
       // refill and the crons, so what they just queued waits too)
-      out ++= guarded(com.histmersion.domain.automation.managers.ManagerLight.Id("focus"), out)(agents.focus.tick(now))
+      out ++= guarded(ManagerLight.Id("focus"), out)(agents.focus.tick(now)).map(TickLine(_))
       dispatchAll(live, now, out)
-      out ++= guarded(com.histmersion.domain.automation.managers.ManagerLight.Id("plan-refresh"), out)(agents.scheduler.refreshPlans(now))
-      out ++= guarded(com.histmersion.domain.automation.managers.ManagerLight.Id("drain"), out)(agents.drain.tick(now))
+      out ++= guarded(ManagerLight.Id("plan-refresh"), out)(agents.scheduler.refreshPlans(now)).map(TickLine(_))
+      out ++= guarded(ManagerLight.Id("drain"), out)(agents.drain.tick(now)).map(TickLine(_))
       if now.toEpochMilli - lastPrune.get() > 3600000L then
         lastPrune.set(now.toEpochMilli)
-        val _ = Transactor(ds).transact(ManagerRepo.pruneEvents(mcfg.keepEventsDays))
+        val _ = Transactor(ds).transact(ManagerRepo.pruneEvents(CodexRetention.KeepDays(mcfg.keepEventsDays.value)))
       out.result()
   }
 
-  private def guarded[A](id: com.histmersion.domain.automation.managers.ManagerLight.Id, out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.GuardedOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.GuardedOutPart2]])(f: => A)(using
+  private def guarded[A](id: ManagerLight.Id, out: Builder[TickLine, List[TickLine]])(f: => A)(using
       z: Zero[A]
   ): A =
     try f
@@ -199,7 +216,7 @@ final class ManagerSupervisor(
       case e: InterruptedException => throw e
       case e: Exception            =>
         scribe.warn(s"manager $id: ${e.getClass.getSimpleName}: ${e.getMessage}", e)
-        out += s"$id: error ${e.getMessage}"
+        out += TickLine(s"$id: error ${e.getMessage}")
         z.value
 
   private def kindOf(m: ManagerInfo): Kind = Kind.parse(m.kind).getOrElse(Kind.Review)
@@ -215,55 +232,56 @@ final class ManagerSupervisor(
 
   // ── 1. evaluate ────────────────────────────────────────────────────────────────────────────────
 
-  private def evaluate(m: ManagerInfo, now: Instant, out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.EvaluateOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.EvaluateOutPart2]]): Unit =
+  private def evaluate(m: ManagerInfo, now: Instant, out: Builder[TickLine, List[TickLine]]): Unit =
     val s = settings(m)
     Transactor(ds).read(ManagerRepo.toEvaluate(m.id)).foreach {
       case (item, None) =>
         // its run row is gone (deleted by hand): the item goes back to the queue
-        if Transactor(ds).transact(ManagerRepo.requeue(item.id, com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Outcome("its run disappeared; queued again"))) then
-          agents.managerStore.event(
+        if Transactor(ds).transact(ManagerRepo.requeue(item.id, ManagerRepo.ItemRow.Outcome("its run disappeared; queued again"))) then
+          recordEvent(
             m.id,
             Some(item.id),
-            item.runId,
+            item.runId.map(runIdOf),
             Feed.Evaluated,
             s"${item.target}: its run disappeared; pending again"
           )
       case (item, Some((status, error))) =>
-        val st = RunState.parse(status).getOrElse(RunState.Failed)
-        byItem.get(item.kind) match
-          case Some(k) => k.evaluate(this, m, s, item, st, error, now, out)
-          case None    => evaluateStep(m, s, item, st, error, now, out, Unknown)
+        val st = RunState.parse(com.histmersion.api.automation.Run.State.Wire(status.value)).getOrElse(RunState.Failed)
+        val problem = error.map(e => ManagerPolicy.Problem(e.value))
+        byItem.get(itemKindOf(item)) match
+          case Some(k) => k.evaluate(this, m, s, item, st, problem, now, out)
+          case None    => evaluateStep(m, s, item, st, problem, now, out, Unknown)
     }
 
   def retry(
       m: ManagerInfo,
       item: ManagerItem,
-      run: com.histmersion.domain.automation.Run.Id,
+      run: DomainRun.Id,
       notBefore: Instant,
-      failures: com.histmersion.domain.automation.managers.ManagerContext.FailureCount,
-      note: com.histmersion.domain.automation.managers.ManagerSupervisor.RetryNote,
-      out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.RetryOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.RetryOutPart2]]
+      failures: ManagerContext.FailureCount,
+      note: ManagerContext.RetryNote,
+      out: Builder[TickLine, List[TickLine]]
   ): Unit =
     if Transactor(ds).transact(
         ManagerRepo.evaluated(
           item.id,
-          Some(run),
+          Some(run.transformInto[RunInfo.Id]),
           ItemStatus.Pending,
           Some(notBefore),
-          Some(failures),
+          Some(failures.transformInto[ManagerItem.Failures]),
           item.state,
-          Some(s"$note; retry after $notBefore")
+          Some(ManagerItem.Outcome(s"$note; retry after $notBefore"))
         )
       )
     then
-      agents.managerStore.event(
+      recordEvent(
         m.id,
         Some(item.id),
         Some(run),
         Feed.Evaluated,
         s"${item.target}: $note; retry after $notBefore"
       )
-      out += s"${item.target}: retry"
+      out += TickLine(s"${item.target}: retry")
 
   /** A one-run item (infer-filter, extend, enrich, propose, compile) after its run settled. */
   def evaluateStep(
@@ -271,17 +289,18 @@ final class ManagerSupervisor(
       s: ReviewSettings,
       item: ManagerItem,
       st: RunState,
-      error: Option[com.histmersion.domain.automation.managers.ManagerSupervisor.EvaluateStepError],
+      error: Option[ManagerContext.EvaluateStepError],
       now: Instant,
-      out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.EvaluateStepOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.EvaluateStepOutPart2]],
+      out: Builder[TickLine, List[TickLine]],
       kind: ManagerKindDefinition
   ): Unit =
-    val run = item.runId.get
+    val runInfoId = item.runId.get
+    val run = runIdOf(runInfoId)
     ManagerPolicy.evaluateStep(
       s,
-      item.kind,
-      item.target,
-      item.failures,
+      ManagerPolicy.StepLabel(item.kind.value),
+      itemTargetOf(item),
+      item.failures.transformInto[Next.Retry.Failures],
       item.state,
       run,
       st.transformInto[com.histmersion.domain.automation.Run.State],
@@ -291,26 +310,26 @@ final class ManagerSupervisor(
     ) match
       case Next.Done(outcome, state) =>
         if Transactor(ds).transact(
-            ManagerRepo.evaluated(item.id, Some(run), ItemStatus.Done, None, None, state, Some(outcome))
+            ManagerRepo.evaluated(item.id, Some(runInfoId), ItemStatus.Done, None, None, state, Some(ManagerItem.Outcome(outcome.value)))
           )
         then
-          agents.managerStore.event(
+          recordEvent(
             m.id,
             Some(item.id),
             Some(run),
             Feed.Evaluated,
             s"${item.target} (${item.kind}): $outcome"
           )
-          out += s"${item.target}: done"
+          out += TickLine(s"${item.target}: done")
           kind.afterDone(this, m, item, Some(run), out)
       case Next.Wait(approval, note) =>
-        val hold = Hold(reason = note, untilApproval = Some(approval))
+        val hold = Hold(reason = Hold.Reason(note.value), untilApproval = Some(Hold.UntilApproval(approval.value)))
         if Transactor(ds).transact(
-            ManagerRepo.evaluated(item.id, Some(run), ItemStatus.Held, None, None, item.state, Some(note), Some(hold))
+            ManagerRepo.evaluated(item.id, Some(runInfoId), ItemStatus.Held, None, None, item.state, Some(ManagerItem.Outcome(note.value)), Some(hold))
           )
         then
-          agents.managerStore.event(m.id, Some(item.id), Some(run), Feed.Held, s"${item.target} (${item.kind}): $note")
-          out += s"${item.target}: waits for approval $approval"
+          recordEvent(m.id, Some(item.id), Some(run), Feed.Held, s"${item.target} (${item.kind}): $note")
+          out += TickLine(s"${item.target}: waits for approval $approval")
       case Next.Retry(notBefore, failures, note) => retry(m, item, run, notBefore, failures, note, out)
       case Next.Stop(outcome, task, state)       =>
         val failed = st == RunState.Failed
@@ -318,109 +337,121 @@ final class ManagerSupervisor(
           workLists
             .add(
               Queue.Kind.Tasks.label,
-              QueueAdd(t, topic = Some("agent manager"), goal = m.goal, job = Some(run))
+              QueueAdd(
+                Queue.QueueItem.Text(t.value),
+                topic = Some(Queue.QueueItem.Topic("agent manager")),
+                goal = m.goal,
+                job = Some(run.transformInto[com.histmersion.api.SpatialHierarchyResult.Job.Id])
+              )
             )
             .toOption
             .map(_.id)
         )
-        val text = outcome + filed.fold("")(id => s" (task #$id)")
+        val text = outcome.value + filed.fold("")(id => s" (task #$id)")
         if Transactor(ds).transact(
             ManagerRepo.evaluated(
               item.id,
-              Some(run),
+              Some(runInfoId),
               if failed then ItemStatus.Failed else ItemStatus.Stopped,
               None,
-              Option.when(failed)(item.failures + 1),
+              Option.when(failed)(ManagerItem.Failures(item.failures.value + 1)),
               state,
-              Some(text)
+              Some(ManagerItem.Outcome(text))
             )
           )
         then
-          agents.managerStore.event(
+          recordEvent(
             m.id,
             Some(item.id),
             Some(run),
             Feed.Stopped,
             s"${item.target} (${item.kind}): $text"
           )
-          out += s"${item.target}: stopped"
+          out += TickLine(s"${item.target}: stopped")
       case Next.Again(notBefore, state, note) =>
         if Transactor(ds).transact(
-            ManagerRepo.evaluated(item.id, Some(run), ItemStatus.Pending, notBefore, None, state, Some(note))
+            ManagerRepo.evaluated(item.id, Some(runInfoId), ItemStatus.Pending, notBefore, None, state, Some(ManagerItem.Outcome(note.value)))
           )
-        then agents.managerStore.event(m.id, Some(item.id), Some(run), Feed.Evaluated, s"${item.target}: $note")
+        then recordEvent(m.id, Some(item.id), Some(run), Feed.Evaluated, s"${item.target}: $note")
+
+  /** How a decided approval ended, as the outcome text (None: still open). */
+  private def decidedAs(a: ApprovalInfo): Option[String] =
+    ManagerPolicy
+      .decided(a.state.transformInto[DomainApproval.State.Wire], a.result.map(r => DomainApproval.Outcome(r.value)))
+      .map(_.value)
 
   /** The approval of `kind` a run opened: none (nothing passed its checks), open (the item waits for it), or decided
     * already (approved automatically, say).
     */
-  def approvalFacts(run: com.histmersion.domain.automation.Run.Id, kind: com.histmersion.domain.automation.Approval.Kind, none: com.histmersion.domain.automation.managers.ManagerSupervisor.ApprovalFactsNone): StepFacts =
+  def approvalFacts(run: DomainRun.Id, kind: DomainApproval.Kind, none: ManagerPolicy.ItemOutcome): StepFacts =
     agents.approvalStore
-      .approvalsOf(run, Some(kind.transformInto[com.histmersion.api.automation.Approval.Kind]))
+      .approvalsOf(run.transformInto[com.histmersion.util.jobs.Job.Id], Some(kind.transformInto[com.histmersion.api.automation.Approval.Kind]))
       .lastOption match
       case None                                          => StepFacts.Finished(none)
       case Some(a) if a.state == ApprovalState.Open.wire =>
-        StepFacts.Waiting(a.id, s"approval #${a.id} waits for a person")
+        StepFacts.Waiting(ManagerPolicy.ApprovalId(a.id.value), ManagerPolicy.ItemNote(s"approval #${a.id} waits for a person"))
       case Some(a) =>
-        StepFacts.Finished(s"approval #${a.id} " + ManagerPolicy.decided(a.state, a.result).getOrElse(a.state))
+        StepFacts.Finished(ManagerPolicy.ItemOutcome(s"approval #${a.id} " + decidedAs(a).getOrElse(a.state.value)))
 
   /** A review item for `slug` in review manager `id`, from a chain (priority 2): added, or a settled one re-opened.
     */
   def chainReview(
-      id: com.histmersion.domain.automation.managers.ManagerLight.Id,
-      slug: com.histmersion.domain.automation.Goal.Slug,
-      why: com.histmersion.domain.automation.managers.ManagerSupervisor.ChainReviewWhy,
-      out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.ChainReviewOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.ChainReviewOutPart2]]
+      id: ManagerLight.Id,
+      slug: com.histmersion.domain.research.Slug,
+      why: ManagerContext.ChainReviewWhy,
+      out: Builder[TickLine, List[TickLine]]
   ): Unit =
+    val infoId = id.transformInto[ManagerInfo.Id]
     val (itemId, isNew) =
       agents.managerStore.upsert(
-        id,
-        ArticleReview,
-        slug,
+        infoId,
+        ManagerItem.Kind(ArticleReview),
+        ManagerItem.Target(slug.value),
         ItemOrigin.Chain,
-        ManagerSupervisor.ChainPriority,
-        reopen = com.histmersion.domain.automation.managers.ManagerService.UpsertReopen(true)
+        ManagerItem.Priority(ManagerSupervisor.ChainPriority),
+        reopen = true
       )
-    agents.managerStore.event(
-      id,
+    recordEvent(
+      infoId,
       Some(itemId),
       None,
       Feed.Evaluated,
       s"$slug ${if isNew then "queued" else "queued again"} for review ($why, priority ${ManagerSupervisor.ChainPriority})"
     )
-    out += s"$slug: review chained"
+    out += TickLine(s"$slug: review chained")
 
   /** An approved `article-plan`: one compile item per article in its goal's seeding manager (created paused if it does
     * not exist), in the plan's order. Idempotent: an article planned before keeps its item. Returns how many were
     * added.
     */
-  def applyPlan(a: ApprovalInfo, out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.ApplyPlanOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.ApplyPlanOutPart2]] = List.newBuilder[String]): com.histmersion.domain.automation.managers.ManagerSupervisor.ApplyPlanResult =
+  def applyPlan(a: ApprovalInfo, out: Builder[TickLine, List[TickLine]] = List.newBuilder[TickLine]): com.histmersion.RowCount =
     (a.subject, a.articles) match
       case (Some(goal), Some(plan)) if a.state == ApprovalState.Approved.wire =>
-        val id = seedId(goal)
-        val _ = ensure(Kind.Seed, id, Some(goal))
+        val id = seedId(Goal.Ref(goal.value))
+        val _ = ensure(Kind.Seed, id.transformInto[ManagerLight.Id], Some(DomainGoal.Slug.assume(goal.value)))
         val added = plan.articles.count { p =>
-          val spec = ArticleSpec(p.title, p.kind, p.filter, p.why)
+          val spec = ArticleSpec(p.title, p.kind, p.filter, p.why.transformInto[ArticleSpec.Why])
           agents.managerStore
-            .upsert(id, ArticleCompile, p.slug, ItemOrigin.Chain, com.histmersion.domain.automation.managers.ManagerContext.Priority(0), reopen = com.histmersion.domain.automation.managers.ManagerService.UpsertReopen(false), ItemState(spec = Some(spec)))
+            .upsert(id, ManagerItem.Kind(ArticleCompile), ManagerItem.Target(p.slug.value), ItemOrigin.Chain, ManagerItem.Priority(0), reopen = false, ItemState(spec = Some(spec)))
             ._2
         }
         if added > 0 then
-          agents.managerStore.event(
+          recordEvent(
             id,
             None,
             None,
             Feed.Evaluated,
-            s"plan #${a.id} approved: ${Plural.count(added, com.histmersion.api.Plural.CountSingular("article"))} to compile (${plan.articles.map(_.slug).mkString(", ")})"
+            s"plan #${a.id} approved: ${Plural.count(Plural.CountN(added.toLong), Plural.CountSingular("article"))} to compile (${plan.articles.map(_.slug).mkString(", ")})"
               .take(2000)
           )
-          out += s"$id: $added to compile"
+          out += TickLine(s"$id: $added to compile")
           nudge()
-        added
-      case _ => com.histmersion.domain.automation.managers.ManagerSupervisor.ApplyPlanResult(0)
+        com.histmersion.RowCount(added)
+      case _ => com.histmersion.RowCount(0)
 
   // ── 2. holds ───────────────────────────────────────────────────────────────────────────────────
 
-  private def releaseHolds(m: ManagerInfo, now: Instant, out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.ReleaseHoldsOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.ReleaseHoldsOutPart2]]): Unit =
+  private def releaseHolds(m: ManagerInfo, now: Instant, out: Builder[TickLine, List[TickLine]]): Unit =
     connect(ds)(ManagerRepo.withStatus(m.id, ItemStatus.Held)).foreach { i =>
       i.hold.flatMap(_.untilApproval) match
         case Some(aid) => settleOnApproval(m, i, aid, out)
@@ -432,7 +463,7 @@ final class ManagerSupervisor(
               ManagerRepo.release(i.id)
             )
           then
-            agents.managerStore.event(
+            recordEvent(
               m.id,
               Some(i.id),
               None,
@@ -442,7 +473,7 @@ final class ManagerSupervisor(
                   .flatMap(h => h.untilSource.map(s => s"$s exists").orElse(h.until.map(u => s"$u passed")))
                   .getOrElse("") + ")"
             )
-            out += s"${i.target}: released"
+            out += TickLine(s"${i.target}: released")
     }
 
   /** An item held for approval `aid`: once a person decided it, the item is settled with the decision (approved: done —
@@ -451,31 +482,32 @@ final class ManagerSupervisor(
   private def settleOnApproval(
       m: ManagerInfo,
       i: ManagerItem,
-      aid: com.histmersion.domain.automation.managers.ManagerSupervisor.SettleOnApprovalAid,
-      out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.SettleOnApprovalOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.SettleOnApprovalOutPart2]]
+      aid: Hold.UntilApproval,
+      out: Builder[TickLine, List[TickLine]]
   ): Unit =
-    agents.approvalStore.approval(aid) match
+    agents.approvalStore.approval(DomainApproval.Id(aid.value)) match
       case None =>
-        if transact(ds)(ManagerRepo.settle(i.id, ItemStatus.Stopped, s"approval #$aid is gone", List(ItemStatus.Held)))
-        then agents.managerStore.event(m.id, Some(i.id), None, Feed.Stopped, s"${i.target}: approval #$aid is gone")
+        if transact(ds)(ManagerRepo.settle(i.id, ItemStatus.Stopped, ManagerItem.Outcome(s"approval #$aid is gone"), List(ItemStatus.Held)))
+        then recordEvent(m.id, Some(i.id), None, Feed.Stopped, s"${i.target}: approval #$aid is gone")
       case Some(a) =>
-        ManagerPolicy.decided(a.state, a.result).foreach { decided =>
+        decidedAs(a).foreach { decided =>
           val ok = a.state == ApprovalState.Approved.wire
           val outcome = s"approval #$aid $decided"
           if transact(ds)(
               ManagerRepo
-                .settle(i.id, if ok then ItemStatus.Done else ItemStatus.Stopped, outcome, List(ItemStatus.Held))
+                .settle(i.id, if ok then ItemStatus.Done else ItemStatus.Stopped, ManagerItem.Outcome(outcome), List(ItemStatus.Held))
             )
           then
-            agents.managerStore.event(
+            val run = i.runId.map(runIdOf)
+            recordEvent(
               m.id,
               Some(i.id),
-              i.runId,
+              run,
               Feed.Evaluated,
               s"${i.target} (${i.kind}): $outcome".take(2000)
             )
-            out += s"${i.target}: approval decided"
-            if ok then byItem.get(i.kind).foreach(_.afterDone(this, m, i, i.runId, out))
+            out += TickLine(s"${i.target}: approval decided")
+            if ok then byItem.get(itemKindOf(i)).foreach(_.afterDone(this, m, i, run, out))
         }
 
   // ── 0. schedules → watchers ────────────────────────────────────────────────────────────────────
@@ -487,34 +519,38 @@ final class ManagerSupervisor(
     * every start and every tick (a bundle import still writes rows), it finds nothing once they are moved. Returns one
     * line per goal migrated.
     */
-  def migrateSchedules(now: Instant): List[com.histmersion.domain.automation.managers.ManagerSupervisor.MigrateSchedulesResult] =
+  def migrateSchedules(now: Instant): List[TickLine] =
     agents.goals.scheduleGoals().flatMap { g =>
-      val id = watchId(g)
+      val id = watchId(Goal.Ref(g.value))
+      val apiGoal = g.transformInto[Goal.Slug]
       try
         val moved = transact(ds) {
           val rows = agents.goals.takeSchedulesIn(g)
           Option.when(rows.nonEmpty) {
             val existing = agents.managerStore.get(id)
             val plan = WatchSchedules.migrate(
-              existing.map(m => WatchSchedules.Existing(m.config, m.cron, m.nextTickAt)),
+              existing.map(m =>
+                WatchSchedules.Existing(m.config, m.cron.map(c => Cron.Text(c.value)), m.nextTickAt.map(t => ManagerPolicy.InstantText(t.value)))
+              ),
               rows,
               now
             )
             val next = plan.nextTick.flatMap(ManagerPolicy.parseInstant)
+            val cron = plan.cron.map(c => ManagerInfo.Cron(c.value))
             existing match
-              case None    => ManagerRepo.createIn(id, Kind.Watch, Some(g), State.Paused, plan.config, plan.cron, next)
-              case Some(_) => ManagerRepo.setConfigIn(id, plan.config, plan.cron, next)
-            val text = s"${Plural.count(rows.size, com.histmersion.api.Plural.CountSingular("goal schedule"))} moved into this watcher" +
+              case None    => ManagerRepo.createIn(id, Kind.Watch, Some(apiGoal), State.Paused, plan.config, cron, next)
+              case Some(_) => ManagerRepo.setConfigIn(id, plan.config, cron, next)
+            val text = s"${Plural.count(Plural.CountN(rows.size.toLong), Plural.CountSingular("goal schedule"))} moved into this watcher" +
               (if existing.isEmpty then " (created paused: resume it for them to fire)" else "") +
               (if plan.notes.isEmpty then "" else s": ${plan.notes.mkString("; ")}")
-            ManagerRepo.eventIn(id, None, None, Feed.Migrated, text)
+            ManagerRepo.eventIn(id, None, None, ManagerEvent.Kind(Feed.Migrated), ManagerEvent.Text(text))
             text
           }
         }
         moved.toList.map { text =>
-          val _ = workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(s"goal $g: $text (watcher $id)".take(1000), goal = Some(g)))
+          val _ = workLists.add(Queue.Kind.Log.label, QueueAdd(Queue.QueueItem.Text(s"goal $g: $text (watcher $id)".take(1000)), goal = Some(apiGoal)))
           scribe.info(s"goal $g: $text")
-          s"$id: migrated"
+          TickLine(s"$id: migrated")
         }
       catch
         case e: InterruptedException => throw e
@@ -530,11 +566,11 @@ final class ManagerSupervisor(
     * manager's next proposal — and move on to its next firing; never scheduled yet → record its first firing. A firing
     * missed while paused fires once. True = it fired.
     */
-  private def fireCron(m: ManagerInfo, now: Instant, out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.FireCronOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.FireCronOutPart2]]): Boolean =
-    if !cfg.scheduler.enabled then false
+  private def fireCron(m: ManagerInfo, now: Instant, out: Builder[TickLine, List[TickLine]]): Boolean =
+    if !cfg.scheduler.enabled.value then false
     else
-      val cron = m.cron.flatMap(c => Cron.parse(c).toOption)
-      ManagerPolicy.cronStep(cron, m.nextTickAt.flatMap(ManagerPolicy.parseInstant), now) match
+      val cron = m.cron.flatMap(c => Cron.parse(Cron.Text(c.value)).toOption)
+      ManagerPolicy.cronStep(cron, m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value))), now) match
         case ManagerPolicy.CronStep.Idle           => false
         case ManagerPolicy.CronStep.Schedule(next) =>
           val _ = Transactor(ds).transact(ManagerRepo.setNextTick(m.id, next))
@@ -542,17 +578,17 @@ final class ManagerSupervisor(
         case ManagerPolicy.CronStep.Fire(next) =>
           val _ = Transactor(ds).transact(ManagerRepo.setNextTick(m.id, next))
           val what = byKind.get(kindOf(m)).fold(Nil)(_.fire(this, m, now))
-          agents.managerStore.event(
+          recordEvent(
             m.id,
             None,
             None,
             Feed.Cron,
-            s"cron `${m.cron.getOrElse("")}` fired" +
+            s"cron `${m.cron.fold("")(_.value)}` fired" +
               (if what.isEmpty then "" else s": ${what.mkString(", ")}") + next.fold("; it fires no more")(t =>
                 s"; next $t"
               )
           )
-          out += s"${m.id}: cron fired"
+          out += TickLine(s"${m.id}: cron fired")
           true
 
   // ── 4. dispatch ────────────────────────────────────────────────────────────────────────────────
@@ -566,50 +602,53 @@ final class ManagerSupervisor(
   private def dispatchAll(
       ms: List[ManagerInfo],
       now: Instant,
-      out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.DispatchAllOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.DispatchAllOutPart2]]
+      out: Builder[TickLine, List[TickLine]]
   ): Unit =
     val byId = ms.map(m => m.id -> m).toMap
     val decision = agents.scheduler.pass(ms, now, agents.drain.block) { (m, item) =>
-      if blocks(item.kind, agents.runs.unsettledOn(item.target)) then Left(com.histmersion.domain.automation.scheduler.SchedulerService.("another run is writing its target"))
+      if blocks(itemKindOf(item), unsettledOn(itemTargetOf(item))) then Left("another run is writing its target")
       else
-        guardedOpt(m.id, out)(dispatch(m, settings(m), item, now, out)) match
+        guardedOpt(m.id.transformInto[ManagerLight.Id], out)(dispatch(m, settings(m), item, now, out)) match
           case Some(_) => Right(())
           case None    =>
             if agents.managerStore.item(item.id).exists(_.status == ItemStatus.Pending.wire) then
               Left("it could not start now (its manager's events say why)")
-            else Left(com.histmersion.domain.automation.scheduler.SchedulerService.("settled without a run"))
+            else Left("settled without a run")
     }
     ms.foreach { m =>
       val waits =
-        decision.waiting.filter(_._1.c.managerId == m.id).map(_._2).filterNot(_.why == "settled without a run")
+        decision.waiting
+          .filter(_._1.c.managerId.value == m.id.value)
+          .map(_._2)
+          .filterNot(_.why == SchedulerPolicy.Wait.Why("settled without a run"))
       val blocked = waits
-        .find(w => w.code == SchedulerPolicy.Code.Blocked && w.why.startsWith("budget"))
-        .map(_.why)
-        .orElse(waits.find(_.code == "budget").map(_.why))
+        .find(w => w.code == SchedulerPolicy.Code.Blocked && w.why.value.startsWith("budget"))
+        .map(_.why.value)
+        .orElse(waits.find(_.code == SchedulerPolicy.Wait.Code("budget")).map(_.why.value))
       val starved = waits
-        .find(w => w.code == SchedulerPolicy.Code.Blocked && w.why.startsWith("starved: "))
-        .map(_.why.stripPrefix("starved: "))
+        .find(w => w.code == SchedulerPolicy.Code.Blocked && w.why.value.startsWith("starved: "))
+        .map(_.why.value.stripPrefix("starved: "))
       val full = waits.exists(w =>
         List(SchedulerPolicy.Code.Capacity, SchedulerPolicy.Code.Pool, SchedulerPolicy.Code.Manager).contains(w.code)
       )
-      val pending = math.max(0, connect(ds)(ManagerRepo.counts(m.id)).pending)
+      val pending = math.max(0, connect(ds)(ManagerRepo.counts(m.id)).pending.value)
       val base = ManagerPolicy.statusNote(
         com.histmersion.domain.automation.Manager.State.Active,
-        starved,
+        starved.map(ManagerPolicy.StatusNote(_)),
         if full then com.histmersion.domain.ManagerPolicy.Capacity(0) else com.histmersion.domain.ManagerPolicy.Capacity(1),
-        pending,
-        waits.size,
-        agents.managerStore.running(m.id),
-        blocked
+        ManagerPolicy.PendingCount(pending),
+        ManagerPolicy.DueCount(waits.size),
+        ManagerPolicy.InFlightCount(agents.managerStore.running(m.id).value),
+        blocked.map(ManagerPolicy.BlockReason(_))
       )
       val note = waits.headOption.filter(_ => blocked.isEmpty && starved.isEmpty) match
-        case Some(w) => s"$base; the scheduler: ${w.code} — ${w.why.take(200)}"
-        case None    => base
-      Transactor(ds).transact(ManagerRepo.setStatusNote(m.id, note))
+        case Some(w) => s"$base; the scheduler: ${w.code} — ${w.why.value.take(200)}"
+        case None    => base.value
+      Transactor(ds).transact(ManagerRepo.setStatusNote(m.id, ManagerInfo.StatusNote(note)))
       // a starved (or budget-blocked) manager says so once per change, not every tick
       blocked.orElse(starved.map(x => s"starved: $x")).foreach { b =>
-        if !agents.managerStore.lastEventOf(m.id, Feed.Starved).exists(_.text == b) then
-          agents.managerStore.event(m.id, None, None, Feed.Starved, b)
+        if !agents.managerStore.lastEventOf(m.id, ManagerEvent.Kind(Feed.Starved)).exists(_.text.value == b) then
+          recordEvent(m.id, None, None, Feed.Starved, b)
       }
     }
     // paused/stopped managers show it too
@@ -621,21 +660,23 @@ final class ManagerSupervisor(
             ManagerRepo
               .setStatusNote(
                 m.id,
-                ManagerPolicy.statusNote(
-                  st.transformInto[com.histmersion.domain.automation.Manager.State],
-                  None,
-                  com.histmersion.domain.ManagerPolicy.Capacity(0),
-                  m.counts.pending,
-                  com.histmersion.domain.ManagerPolicy.DueCount(0),
-                  m.inFlight,
-                  None
-                )
+                ManagerPolicy
+                  .statusNote(
+                    st.transformInto[com.histmersion.domain.automation.Manager.State],
+                    None,
+                    com.histmersion.domain.ManagerPolicy.Capacity(0),
+                    ManagerPolicy.PendingCount(m.counts.pending.value),
+                    com.histmersion.domain.ManagerPolicy.DueCount(0),
+                    ManagerPolicy.InFlightCount(m.inFlight.value),
+                    None
+                  )
+                  .transformInto[ManagerInfo.StatusNote]
               )
           )
         )
     }
 
-  private def guardedOpt[A](id: com.histmersion.domain.automation.managers.ManagerLight.Id, out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.GuardedOptOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.GuardedOptOutPart2]])(
+  private def guardedOpt[A](id: ManagerLight.Id, out: Builder[TickLine, List[TickLine]])(
       f: => Option[A]
   ): Option[A] =
     try f
@@ -643,15 +684,15 @@ final class ManagerSupervisor(
       case e: InterruptedException => throw e
       case e: Exception            =>
         scribe.warn(s"manager $id: dispatch failed: ${e.getMessage}", e)
-        out += s"$id: dispatch error ${e.getMessage}"
+        out += TickLine(s"$id: dispatch error ${e.getMessage}")
         None
 
   final private class Lost extends RuntimeException("the item moved on")
 
   /** Settle a pending item without a run (its target is gone, or its work is done already). */
-  def settleNow(m: ManagerInfo, item: ManagerItem, status: ItemStatus, why: com.histmersion.domain.automation.managers.ManagerSupervisor.SettleNowWhy): Option[com.histmersion.domain.automation.managers.ManagerSupervisor.SettleNowResult] =
-    if transact(ds)(ManagerRepo.settle(item.id, status, why, List(ItemStatus.Pending))) then
-      agents.managerStore.event(
+  def settleNow(m: ManagerInfo, item: ManagerItem, status: ItemStatus, why: ManagerContext.SettleNowWhy): Option[ManagerLight.Id] =
+    if transact(ds)(ManagerRepo.settle(item.id, status, ManagerItem.Outcome(why.value), List(ItemStatus.Pending))) then
+      recordEvent(
         m.id,
         Some(item.id),
         None,
@@ -666,14 +707,14 @@ final class ManagerSupervisor(
       s: ReviewSettings,
       item: ManagerItem,
       now: Instant,
-      out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.DispatchOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.DispatchOutPart2]]
-  ): Option[com.histmersion.domain.automation.managers.ManagerSupervisor.DispatchResult] =
-    if blocks(item.kind, agents.runs.unsettledOn(item.target)) then None // another run writes it: wait
+      out: Builder[TickLine, List[TickLine]]
+  ): Option[ManagerLight.Id] =
+    if blocks(itemKindOf(item), unsettledOn(itemTargetOf(item))) then None // another run writes it: wait
     else
-      byItem.get(item.kind) match
+      byItem.get(itemKindOf(item)) match
         case Some(k) => k.dispatch(this, m, s, item, now, out)
         case None    =>
-          settleNow(m, item, ItemStatus.Cancelled, s"'${item.kind}' items are not driven by a ${m.kind} manager")
+          settleNow(m, item, ItemStatus.Cancelled, ManagerPolicy.ItemOutcome(s"'${item.kind}' items are not driven by a ${m.kind} manager"))
 
   /** Create, mark and submit one run: ONE transaction (the run row, the item's compare-and-set, the hints it reached,
     * the event), the submit after the commit. The manager's model overrides go to the roles the pipeline uses; `tweak`
@@ -685,10 +726,10 @@ final class ManagerSupervisor(
       req0: RunRequest,
       tweak: RunParams => RunParams,
       state: ItemState,
-      what: com.histmersion.domain.automation.managers.ManagerSupervisor.StartWhat,
-      out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.StartOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.StartOutPart2]]
-  ): Option[com.histmersion.domain.automation.managers.ManagerSupervisor.StartResult] =
-    val roles = pipelineOf(item.kind).roles
+      what: ManagerContext.StartWhat,
+      out: Builder[TickLine, List[TickLine]]
+  ): Option[ManagerLight.Id] =
+    val roles = pipelineOf(itemKindOf(item)).roles
     val req =
       req0
         .modify(_.modelFor)
@@ -696,12 +737,12 @@ final class ManagerSupervisor(
     agents.prepare(req, None) match
       case Left(e) =>
         val note = s"not started: ${e.message}".take(500)
-        if !agents.managerStore.lastEventOf(m.id, Feed.Starved).exists(_.text == note) then
-          agents.managerStore.event(m.id, Some(item.id), None, Feed.Starved, note)
+        if !agents.managerStore.lastEventOf(m.id, ManagerEvent.Kind(Feed.Starved)).exists(_.text.value == note) then
+          recordEvent(m.id, Some(item.id), None, Feed.Starved, note)
         None
       case Right(pr) =>
-        val hints = ManagerPolicy.notesFor(Transactor(ds).read(ManagerRepo.hints(m.id, live = true)), item.id)
-        val notes = hints.map(_.text.trim)
+        val hints = ManagerPolicy.notesFor(Transactor(ds).read(ManagerRepo.hints(m.id, live = true)), ManagerPolicy.ItemId(item.id.value))
+        val notes = hints.map(h => RunParams.Notes(h.text.value.trim))
         val params = tweak(pr.params).copy(notes = Option.when(notes.nonEmpty)(notes))
         val id =
           try
@@ -711,7 +752,7 @@ final class ManagerSupervisor(
                   pr.pipeline,
                   pr.target,
                   pr.model,
-                  BigDecimal(pr.usd),
+                  BigDecimal(pr.usd.value),
                   pr.tokens,
                   params,
                   None,
@@ -719,8 +760,8 @@ final class ManagerSupervisor(
                   None,
                   Origin.Manager,
                   pr.dryRun,
-                  Some(m.id),
-                  Some(item.id)
+                  Some(m.id.transformInto[ManagerLight.Id]),
+                  Some(item.id.transformInto[com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Id])
                 )
               )
               if !ManagerRepo.dispatchIn(item.id, id, state) then throw Lost()
@@ -728,19 +769,21 @@ final class ManagerSupervisor(
               ManagerRepo.eventIn(
                 m.id,
                 Some(item.id),
-                Some(id),
-                Feed.Started,
-                s"${item.target}: run ${item.attempts + 1} ($what)" + (if notes.nonEmpty then
-                                                                         s" with ${Plural.count(notes.size, "note")}"
-                                                                       else "")
+                Some(id.transformInto[RunInfo.Id]),
+                ManagerEvent.Kind(Feed.Started),
+                ManagerEvent.Text(
+                  s"${item.target}: run ${item.attempts.value + 1} ($what)" + (if notes.nonEmpty then
+                                                                                  s" with ${Plural.count(Plural.CountN(notes.size.toLong), Plural.CountSingular("note"))}"
+                                                                                else "")
+                )
               )
               id
             })
           catch case _: Lost => None
         id.map { runId =>
           agents.engine.submit(runId)
-          out += s"${item.target}: started ${runId.take(8)}"
-          m.id
+          out += TickLine(s"${item.target}: started ${runId.value.take(8)}")
+          m.id.transformInto[ManagerLight.Id]
         }
 
   // ── the item kinds' pipelines ──────────────────────────────────────────────────────────────────
@@ -748,7 +791,7 @@ final class ManagerSupervisor(
   /** The pipeline an item kind runs, as the kind that drives it says (an item kind none drives: as the first registered
     * kind says).
     */
-  def pipelineOf(itemKind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind): Pipeline =
+  def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline =
     byItem
       .get(itemKind)
       .orElse(kinds.headOption)
@@ -756,105 +799,148 @@ final class ManagerSupervisor(
       .pipelineOf(itemKind)
 
   /** [[ManagerPolicy.blocks]] over the unsettled runs on an item's target. */
-  def blocks(kind: com.histmersion.domain.automation.Approval.Kind.Wire, unsettled: Seq[Agents.RunInfo]): Boolean =
-    ManagerPolicy.blocks(kind, pipelineOf(kind).wire, unsettled.map(_.pipeline))
+  def blocks(kind: ManagerContext.ItemKind, unsettled: Seq[Agents.RunInfo]): Boolean =
+    ManagerPolicy.blocks(
+      kind,
+      pipelineOf(kind).wire.transformInto[DomainPipeline.Wire],
+      unsettled.map(r => DomainPipeline.Wire(r.pipeline.value))
+    )
 
   /** The roles a manager of kind `k` runs (what its `models` setting may name). */
-  def roles(k: Kind): List[Role] = itemKinds(k).filterNot(_ == OaIngest).map(pipelineOf).flatMap(_.roles).distinct
+  def roles(k: Kind): List[Role] =
+    itemKinds(k).filterNot(_.value == OaIngest).map(i => pipelineOf(ManagerContext.ItemKind(i.value))).flatMap(_.roles).distinct
 
   // ── what a kind is given (ManagerContext) ─────────────────────────────────────────────────────
 
   /** An item of a kind no registered kind drives: settled as a finished one-run item. */
   private val Unknown: ManagerKindDefinition = new ManagerKindDefinition:
     val kind: Kind = Kind.Review
-    override def items: List[String] = Nil
-    def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.automation.managers.ManagerSupervisor.FireResult] = Nil
-    def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts = StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("enriched"))
+    override def items: List[ManagerContext.ItemKind] = Nil
+    def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase] = Nil
+    def facts(c: ManagerContext, item: ManagerItem, run: DomainRun.Id): StepFacts = StepFacts.Finished(ManagerPolicy.ItemOutcome("enriched"))
     def dispatch(
         c: ManagerContext,
         m: ManagerInfo,
         s: ReviewSettings,
         item: ManagerItem,
         now: Instant,
-        out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.DispatchOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.DispatchOutPart2]]
-    ): Option[com.histmersion.domain.automation.managers.ManagerSupervisor.DispatchResult] = None
-    def target(m: ManagerInfo, itemKind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind, raw: com.histmersion.domain.automation.managers.ManagerSupervisor.TargetRaw): Either[Api.Error, com.histmersion.domain.automation.managers.ManagerSupervisor.TargetResultPart2] =
-      Left(Api.Error(s"unknown item kind '$itemKind'"))
-    def pipelineOf(itemKind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind): Pipeline = ManagerSupervisor.this.pipelineOf(itemKind)
+        out: Builder[TickLine, List[TickLine]]
+    ): Option[ManagerLight.Id] = None
+    def target(m: ManagerInfo, itemKind: ManagerContext.ItemKind, raw: Managers.ManagerItem.Target): Either[Api.Error, ManagerContext.ItemTarget] =
+      Left(Api.Error(Api.Error.Message(s"unknown item kind '$itemKind'")))
+    def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline = ManagerSupervisor.this.pipelineOf(itemKind)
     def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig = ManagerConfig()
 
-  def event(id: com.histmersion.domain.automation.managers.ManagerLight.Id, item: Option[com.histmersion.domain.automation.managers.ManagerContext.ItemId], run: Option[com.histmersion.domain.automation.Run.Id], feed: com.histmersion.domain.automation.managers.ManagerSupervisor.EventFeed, text: com.histmersion.domain.automation.managers.ManagerSupervisor.EventText): Unit =
-    agents.managerStore.event(id, item, run, feed, text)
-  def lastEventOf(id: com.histmersion.domain.automation.managers.ManagerLight.Id, feed: com.histmersion.domain.automation.managers.ManagerSupervisor.LastEventOfFeed): Option[ManagerEvent] = agents.managerStore.lastEventOf(id, feed)
-  def countEvents(id: com.histmersion.domain.automation.managers.ManagerLight.Id, feed: com.histmersion.domain.automation.managers.ManagerSupervisor.CountEventsFeed, since: Instant): com.histmersion.domain.automation.managers.ManagerSupervisor.CountEventsResult =
-    Transactor(ds).read(ManagerRepo.countEvents(id, feed, since))
+  def event(id: ManagerLight.Id, item: Option[ManagerContext.ItemId], run: Option[DomainRun.Id], feed: ManagerContext.EventFeed, text: ManagerContext.EventText): Unit =
+    recordEvent(id.transformInto[ManagerInfo.Id], item.map(i => ManagerItem.Id(i.value)), run, feed.value, text.value)
+  def lastEventOf(id: ManagerLight.Id, feed: ManagerContext.EventFeed): Option[ManagerEvent] =
+    agents.managerStore.lastEventOf(id.transformInto[ManagerInfo.Id], ManagerEvent.Kind(feed.value))
+  def countEvents(id: ManagerLight.Id, feed: ManagerContext.EventFeed, since: Instant): com.histmersion.RowCount =
+    Transactor(ds).read(ManagerRepo.countEvents(id.transformInto[ManagerInfo.Id], ManagerEvent.Kind(feed.value), since))
   def upsert(
-      id: com.histmersion.domain.automation.managers.ManagerLight.Id,
-      kind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind,
-      target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget,
+      id: ManagerLight.Id,
+      kind: ManagerContext.ItemKind,
+      target: ManagerContext.ItemTarget,
       origin: ItemOrigin,
-      priority: com.histmersion.domain.automation.managers.ManagerContext.Priority,
-      reopen: com.histmersion.domain.automation.managers.ManagerSupervisor.UpsertReopen,
+      priority: ManagerContext.Priority,
+      reopen: ManagerContext.UpsertReopen,
       state: ItemState = ItemState()
-  ): (com.histmersion.domain.automation.managers.ManagerSupervisor.UpsertResultPart1, Boolean) = agents.managerStore.upsert(id, kind, target, origin, priority, reopen, state)
-  def item(itemId: com.histmersion.domain.automation.managers.ManagerContext.ItemId): Option[ManagerItem] = agents.managerStore.item(itemId)
-  def itemFor(id: com.histmersion.domain.automation.managers.ManagerLight.Id, kind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind, target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget): Option[ManagerItem] =
-    agents.managerStore.itemFor(id, kind, target)
-  def hasItem(id: com.histmersion.domain.automation.managers.ManagerLight.Id, kind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind, target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget): Boolean =
-    Transactor(ds).read(ManagerRepo.hasItem(id, kind, target))
-  def restale(itemId: com.histmersion.domain.automation.managers.ManagerContext.ItemId, priority: com.histmersion.domain.automation.managers.ManagerContext.Priority, why: com.histmersion.domain.automation.managers.ManagerRepo.RestaleReason): Boolean =
-    Transactor(ds).transact(ManagerRepo.restale(itemId, priority, why))
-  def pending(id: com.histmersion.domain.automation.managers.ManagerLight.Id): com.histmersion.domain.automation.managers.ManagerSupervisor.PendingResult = connect(ds)(ManagerRepo.counts(id)).pending
-  def openKeys(id: com.histmersion.domain.automation.managers.ManagerLight.Id): List[(com.histmersion.domain.automation.managers.ManagerSupervisor.OpenKeysResultPart1, com.histmersion.domain.automation.managers.ManagerSupervisor.OpenKeysResultPart2)] = agents.managerStore.openKeys(id)
+  ): (ManagerContext.ItemId, Boolean) =
+    val (itemId, isNew) = agents.managerStore.upsert(
+      id.transformInto[ManagerInfo.Id],
+      ManagerItem.Kind(kind.value),
+      target.transformInto[ManagerItem.Target],
+      origin,
+      priority.transformInto[ManagerItem.Priority],
+      reopen.value,
+      state
+    )
+    (ManagerContext.ItemId(itemId.value), isNew)
+  def item(itemId: ManagerContext.ItemId): Option[ManagerItem] = agents.managerStore.item(ManagerItem.Id(itemId.value))
+  def itemFor(id: ManagerLight.Id, kind: ManagerContext.ItemKind, target: ManagerContext.ItemTarget): Option[ManagerItem] =
+    agents.managerStore.itemFor(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(kind.value), target.transformInto[ManagerItem.Target])
+  def hasItem(id: ManagerLight.Id, kind: ManagerContext.ItemKind, target: ManagerContext.ItemTarget): Boolean =
+    Transactor(ds).read(ManagerRepo.hasItem(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(kind.value), target.transformInto[ManagerItem.Target]))
+  def restale(itemId: ManagerContext.ItemId, priority: ManagerContext.Priority, why: ManagerRepo.RestaleReason): Boolean =
+    Transactor(ds).transact(ManagerRepo.restale(ManagerItem.Id(itemId.value), priority.transformInto[ManagerItem.Priority], why))
+  def pending(id: ManagerLight.Id): com.histmersion.RowCount =
+    com.histmersion.RowCount(connect(ds)(ManagerRepo.counts(id.transformInto[ManagerInfo.Id])).pending.value)
+  def openKeys(id: ManagerLight.Id): List[(ManagerContext.ItemKind, ManagerContext.ItemTarget)] =
+    agents.managerStore.openKeys(id.transformInto[ManagerInfo.Id]).map((k, t) => (ManagerContext.ItemKind(k.value), t.transformInto[ManagerContext.ItemTarget]))
   def evaluated(
-      itemId: com.histmersion.domain.automation.managers.ManagerContext.ItemId,
-      run: Option[com.histmersion.domain.automation.Run.Id],
+      itemId: ManagerContext.ItemId,
+      run: Option[DomainRun.Id],
       status: ItemStatus,
       notBefore: Option[Instant],
-      failures: Option[com.histmersion.domain.automation.managers.ManagerContext.FailureCount],
+      failures: Option[ManagerContext.FailureCount],
       state: ItemState,
-      outcome: Option[com.histmersion.domain.automation.managers.ManagerSupervisor.EvaluatedOutcome]
-  ): Boolean = Transactor(ds).transact(ManagerRepo.evaluated(itemId, run, status, notBefore, failures, state, outcome))
-  def hints(id: com.histmersion.domain.automation.managers.ManagerLight.Id): List[ManagerHint] = Transactor(ds).read(ManagerRepo.hints(id, live = true))
-  def state(id: com.histmersion.domain.automation.managers.ManagerLight.Id): Option[com.histmersion.domain.automation.managers.ManagerSupervisor.StateResult] = agents.managerStore.get(id).map(_.state)
-  def openMajorArticles(id: com.histmersion.domain.automation.managers.ManagerLight.Id, tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags], goal: Option[com.histmersion.domain.automation.Goal.Slug], limit: com.histmersion.domain.automation.managers.ManagerContext.Limit): List[(com.histmersion.domain.automation.managers.ManagerSupervisor.OpenMajorArticlesResultPart1, com.histmersion.domain.automation.managers.ManagerSupervisor.OpenMajorArticlesResultPart2)] =
-    Transactor(ds).read(ManagerRepo.openMajorArticles(id, ArticleReview, tags, goal, limit))
-  def unreviewedArticles(id: com.histmersion.domain.automation.managers.ManagerLight.Id, tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags], goal: Option[com.histmersion.domain.automation.Goal.Slug], limit: com.histmersion.domain.automation.managers.ManagerContext.Limit): List[com.histmersion.domain.automation.managers.ManagerSupervisor.UnreviewedArticlesResult] =
-    Transactor(ds).read(ManagerRepo.unreviewedArticles(id, ArticleReview, tags, goal, limit))
+      outcome: Option[ManagerContext.EvaluatedOutcome]
+  ): Boolean =
+    Transactor(ds).transact(
+      ManagerRepo.evaluated(
+        ManagerItem.Id(itemId.value),
+        run.map(_.transformInto[RunInfo.Id]),
+        status,
+        notBefore,
+        failures.map(_.transformInto[ManagerItem.Failures]),
+        state,
+        outcome.map(o => ManagerItem.Outcome(o.value))
+      )
+    )
+  def hints(id: ManagerLight.Id): List[ManagerHint] = Transactor(ds).read(ManagerRepo.hints(id.transformInto[ManagerInfo.Id], live = true))
+  def state(id: ManagerLight.Id): Option[ManagerLight.State] =
+    agents.managerStore.get(id.transformInto[ManagerInfo.Id]).map(m => ManagerLight.State(m.state.value))
+  def openMajorArticles(id: ManagerLight.Id, tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags], goal: Option[DomainGoal.Slug], limit: ManagerContext.Limit): List[(com.histmersion.domain.research.Slug, com.histmersion.RowCount)] =
+    Transactor(ds).read(
+      ManagerRepo.openMajorArticles(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(ArticleReview), tags.map(t => EnrichSource.Tag(t.value)), goal, com.histmersion.PageSize.assume(limit.value))
+    )
+  def unreviewedArticles(id: ManagerLight.Id, tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags], goal: Option[DomainGoal.Slug], limit: ManagerContext.Limit): List[com.histmersion.domain.research.Slug] =
+    Transactor(ds).read(
+      ManagerRepo.unreviewedArticles(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(ArticleReview), tags.map(t => EnrichSource.Tag(t.value)), goal, com.histmersion.PageSize.assume(limit.value))
+    )
   def staleCandidates(
-      id: com.histmersion.domain.automation.managers.ManagerLight.Id,
+      id: ManagerLight.Id,
       tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags],
-      goal: Option[com.histmersion.domain.automation.Goal.Slug],
-      limit: com.histmersion.domain.automation.managers.ManagerContext.Limit
-  ): List[(com.histmersion.domain.automation.managers.ManagerSupervisor.StaleCandidatesResultPart1, com.histmersion.domain.automation.managers.ManagerSupervisor.StaleCandidatesResultPart2, Option[com.histmersion.domain.automation.managers.ManagerSupervisor.StaleCandidatesResultPart3], Option[com.histmersion.domain.automation.managers.ManagerSupervisor.StaleCandidatesResultPart4])] =
-    Transactor(ds).read(ManagerRepo.staleCandidates(id, ArticleReview, tags, goal, limit))
+      goal: Option[DomainGoal.Slug],
+      limit: ManagerContext.Limit
+  ): List[(com.histmersion.domain.research.Slug, ManagerRepo.ProgressText, Option[ItemState.FilterHits], Option[ManagerContext.ItemId])] =
+    Transactor(ds)
+      .read(
+        ManagerRepo.staleCandidates(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(ArticleReview), tags.map(t => EnrichSource.Tag(t.value)), goal, com.histmersion.PageSize.assume(limit.value))
+      )
+      .map((slug, progress, hits, itemId) => (slug, progress, hits, itemId.map(i => ManagerContext.ItemId(i.value))))
   def extendCandidates(
-      id: com.histmersion.domain.automation.managers.ManagerLight.Id,
+      id: ManagerLight.Id,
       tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags],
-      goal: Option[com.histmersion.domain.automation.Goal.Slug],
-      limit: com.histmersion.domain.automation.managers.ManagerContext.Limit
-  ): List[(com.histmersion.domain.automation.managers.ManagerSupervisor.ExtendCandidatesResultPart1, Option[com.histmersion.domain.automation.managers.ManagerSupervisor.ExtendCandidatesResultPart2])] =
-    Transactor(ds).read(ManagerRepo.extendCandidates(id, tags, goal, limit))
-  def articleFacets(slug: com.histmersion.domain.research.Slug): (List[com.histmersion.domain.automation.managers.ManagerSupervisor.ArticleFacetsResultPart1], List[com.histmersion.domain.automation.managers.ManagerSupervisor.ArticleFacetsResultPart2]) = Transactor(ds).read(ManagerRepo.articleFacets(slug))
+      goal: Option[DomainGoal.Slug],
+      limit: ManagerContext.Limit
+  ): List[(com.histmersion.domain.research.Slug, Option[ManagerRepo.ProgressText])] =
+    Transactor(ds).read(
+      ManagerRepo.extendCandidates(id.transformInto[ManagerInfo.Id], tags.map(t => EnrichSource.Tag(t.value)), goal, com.histmersion.PageSize.assume(limit.value))
+    )
+  def articleFacets(slug: com.histmersion.domain.research.Slug): (List[EnrichSource.Tag], List[DomainGoal.Slug]) =
+    Transactor(ds).read(ManagerRepo.articleFacets(slug))
 
-  def progress(run: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.automation.managers.ManagerSupervisor.ProgressResult = agents.runs.get(run).flatMap(_.progress).filter(_.nonEmpty).getOrElse("")
-  def stepOutput(run: com.histmersion.domain.automation.Run.Id, step: com.histmersion.domain.automation.managers.ManagerSupervisor.StepOutputStep): Option[com.histmersion.domain.automation.managers.ManagerSupervisor.StepOutputResult] =
+  def progress(run: DomainRun.Id): com.histmersion.util.jobs.JobRow.Progress =
+    com.histmersion.util.jobs.JobRow.Progress(agents.runs.get(run).flatMap(_.progress).map(_.value).filter(_.nonEmpty).getOrElse(""))
+  def stepOutput(run: DomainRun.Id, step: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name): Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output] =
     agents.runs
-      .steps(run, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000))
-      .filter(s => s.name == step && s.status == StepStatus.Done.wire)
+      .steps(run.transformInto[com.histmersion.util.jobs.Job.Id], com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000))
+      .filter(s => s.name.value == step.value && s.status == StepStatus.Done.wire)
       .lastOption
       .flatMap(_.output)
-  def approvalsOf(run: com.histmersion.domain.automation.Run.Id, kind: com.histmersion.domain.automation.Approval.Kind): List[ApprovalInfo] =
-    agents.approvalStore.approvalsOf(run, Some(kind.transformInto[com.histmersion.api.automation.Approval.Kind]))
-  def unsettledOn(target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget): Seq[RunInfo] = agents.runs.unsettledOn(target)
-  def runsFor(p: Pipeline, target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget): Seq[RunInfo] = agents.runs.forTarget(p, target)
-  def slugExists(slug: com.histmersion.domain.automation.Goal.Slug): Boolean = agents.host.articleExists(slug)
-  def parentOf(slug: com.histmersion.domain.automation.Goal.Slug): Option[com.histmersion.domain.automation.Goal.Slug] = agents.goals.get(slug).flatMap(_.parentSlug)
-  def linkGoal(goal: com.histmersion.domain.automation.Goal.Slug, kind: Goal.Plans.LinkKind, ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref, note: Option[com.histmersion.domain.automation.goals.BGoalLinkRow.Note]): Unit =
-    val _ = agents.goals.link(goal, kind.transformInto[com.histmersion.domain.automation.Goal.LinkKind], ref, note)
-  def goalLinks(goal: com.histmersion.domain.automation.Goal.Slug, kind: Goal.Plans.LinkKind): List[com.histmersion.domain.automation.managers.ManagerSupervisor.GoalLinksResult] =
-    agents.goals.links(goal).filter(_.kind == kind).map(_.ref)
-  def sharedIngestLeft(now: Instant): Option[com.histmersion.domain.automation.managers.ManagerSupervisor.SharedIngestLeftResult] = agents.autopilot.sharedIngestLeft(now)
+      .map(o => com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output(o.value))
+  def approvalsOf(run: DomainRun.Id, kind: DomainApproval.Kind): List[ApprovalInfo] =
+    agents.approvalStore.approvalsOf(run.transformInto[com.histmersion.util.jobs.Job.Id], Some(kind.transformInto[com.histmersion.api.automation.Approval.Kind]))
+  def unsettledOn(target: ManagerContext.ItemTarget): Seq[RunInfo] = agents.runs.unsettledOn(target.transformInto[AgentsControllers.Target])
+  def runsFor(p: Pipeline, target: ManagerContext.ItemTarget): Seq[RunInfo] = agents.runs.forTarget(p, target.transformInto[AgentsControllers.Target])
+  def slugExists(slug: com.histmersion.domain.research.Slug): Boolean = agents.host.articleExists(slug)
+  def parentOf(slug: DomainGoal.Slug): Option[DomainGoal.Slug] = agents.goals.get(slug).flatMap(_.parentSlug.map(g => DomainGoal.Slug.assume(g.value)))
+  def linkGoal(goal: DomainGoal.Slug, kind: Goal.Plans.LinkKind, ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref, note: Option[com.histmersion.domain.automation.goals.BGoalLinkRow.Note]): Unit =
+    val _ = agents.goals.link(goal, kind.transformInto[com.histmersion.domain.automation.Goal.LinkKind], ref.transformInto[Goal.Plans.GoalLink.Ref], note.map(_.transformInto[Goal.Plans.GoalLink.Note]))
+  def goalLinks(goal: DomainGoal.Slug, kind: Goal.Plans.LinkKind): List[com.histmersion.domain.automation.goals.BGoalLinkRow.Ref] =
+    agents.goals.links(goal).filter(_.kind == kind).map(_.ref.transformInto[com.histmersion.domain.automation.goals.BGoalLinkRow.Ref])
+  def sharedIngestLeft(now: Instant): Option[com.histmersion.RowCount] = agents.autopilot.sharedIngestLeft(now).map(l => com.histmersion.RowCount(l.value))
   def autopilotSoon(): Unit = agents.autopilot.soon()
 
   // ── a run settled ──────────────────────────────────────────────────────────────────────────────
@@ -862,159 +948,13 @@ final class ManagerSupervisor(
   /** [[Engine.onSettled]]: a manager's run settled — an event (a stall named as one), and a tick soon. */
   def settled(r: RunInfo): Unit =
     r.managerId.foreach { mid =>
-      val stalled = r.error.exists(_.startsWith(PauseReason.Stalled.wire + ":"))
-      val text = s"${r.target}: run ${r.status}" + r.error.filter(_.nonEmpty).fold("")(e => s" — ${e.take(300)}")
-      agents.managerStore.event(mid, r.managerItem, Some(r.id), if stalled then Feed.Stall else Feed.Settled, text)
+      val stalled = r.error.exists(_.value.startsWith(PauseReason.Stalled.wire.value + ":"))
+      val text = s"${r.target}: run ${r.status}" + r.error.filter(_.value.nonEmpty).fold("")(e => s" — ${e.value.take(300)}")
+      recordEvent(mid, r.managerItem, Some(runIdOf(r.id)), if stalled then Feed.Stall else Feed.Settled, text)
       nudge()
     }
 
 object ManagerSupervisor:
-
-  /** The priority a prioritise hint gives when it names none (a person's enqueue is 10). */
-  type ByItemPart1 = ByItemPart1.T
-  object ByItemPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TickResult = TickResult.T
-  object TickResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardedOutPart1 = GuardedOutPart1.T
-  object GuardedOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardedOutPart2 = GuardedOutPart2.T
-  object GuardedOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvaluateOutPart1 = EvaluateOutPart1.T
-  object EvaluateOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvaluateOutPart2 = EvaluateOutPart2.T
-  object EvaluateOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetryNote = RetryNote.T
-  object RetryNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetryOutPart1 = RetryOutPart1.T
-  object RetryOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetryOutPart2 = RetryOutPart2.T
-  object RetryOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvaluateStepError = EvaluateStepError.T
-  object EvaluateStepError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvaluateStepOutPart1 = EvaluateStepOutPart1.T
-  object EvaluateStepOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvaluateStepOutPart2 = EvaluateStepOutPart2.T
-  object EvaluateStepOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalFactsNone = ApprovalFactsNone.T
-  object ApprovalFactsNone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChainReviewWhy = ChainReviewWhy.T
-  object ChainReviewWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChainReviewOutPart1 = ChainReviewOutPart1.T
-  object ChainReviewOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChainReviewOutPart2 = ChainReviewOutPart2.T
-  object ChainReviewOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyPlanResult = ApplyPlanResult.T
-  object ApplyPlanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyPlanOutPart1 = ApplyPlanOutPart1.T
-  object ApplyPlanOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyPlanOutPart2 = ApplyPlanOutPart2.T
-  object ApplyPlanOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReleaseHoldsOutPart1 = ReleaseHoldsOutPart1.T
-  object ReleaseHoldsOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReleaseHoldsOutPart2 = ReleaseHoldsOutPart2.T
-  object ReleaseHoldsOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SettleOnApprovalAid = SettleOnApprovalAid.T
-  object SettleOnApprovalAid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SettleOnApprovalOutPart1 = SettleOnApprovalOutPart1.T
-  object SettleOnApprovalOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SettleOnApprovalOutPart2 = SettleOnApprovalOutPart2.T
-  object SettleOnApprovalOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MigrateSchedulesResult = MigrateSchedulesResult.T
-  object MigrateSchedulesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FireCronOutPart1 = FireCronOutPart1.T
-  object FireCronOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FireCronOutPart2 = FireCronOutPart2.T
-  object FireCronOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DispatchAllOutPart1 = DispatchAllOutPart1.T
-  object DispatchAllOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DispatchAllOutPart2 = DispatchAllOutPart2.T
-  object DispatchAllOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardedOptOutPart1 = GuardedOptOutPart1.T
-  object GuardedOptOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardedOptOutPart2 = GuardedOptOutPart2.T
-  object GuardedOptOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SettleNowResult = SettleNowResult.T
-  object SettleNowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SettleNowWhy = SettleNowWhy.T
-  object SettleNowWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DispatchResult = DispatchResult.T
-  object DispatchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DispatchOutPart1 = DispatchOutPart1.T
-  object DispatchOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DispatchOutPart2 = DispatchOutPart2.T
-  object DispatchOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartResult = StartResult.T
-  object StartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartWhat = StartWhat.T
-  object StartWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartOutPart1 = StartOutPart1.T
-  object StartOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartOutPart2 = StartOutPart2.T
-  object StartOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FireResult = FireResult.T
-  object FireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetResultPart2 = TargetResultPart2.T
-  object TargetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetRaw = TargetRaw.T
-  object TargetRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventFeed = EventFeed.T
-  object EventFeed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventText = EventText.T
-  object EventText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LastEventOfFeed = LastEventOfFeed.T
-  object LastEventOfFeed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountEventsResult = CountEventsResult.T
-  object CountEventsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountEventsFeed = CountEventsFeed.T
-  object CountEventsFeed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpsertResultPart1 = UpsertResultPart1.T
-  object UpsertResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpsertReopen = UpsertReopen.T
-  object UpsertReopen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PendingResult = PendingResult.T
-  object PendingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenKeysResultPart1 = OpenKeysResultPart1.T
-  object OpenKeysResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenKeysResultPart2 = OpenKeysResultPart2.T
-  object OpenKeysResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvaluatedOutcome = EvaluatedOutcome.T
-  object EvaluatedOutcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateResult = StateResult.T
-  object StateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenMajorArticlesResultPart1 = OpenMajorArticlesResultPart1.T
-  object OpenMajorArticlesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenMajorArticlesResultPart2 = OpenMajorArticlesResultPart2.T
-  object OpenMajorArticlesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnreviewedArticlesResult = UnreviewedArticlesResult.T
-  object UnreviewedArticlesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StaleCandidatesResultPart1 = StaleCandidatesResultPart1.T
-  object StaleCandidatesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StaleCandidatesResultPart2 = StaleCandidatesResultPart2.T
-  object StaleCandidatesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StaleCandidatesResultPart3 = StaleCandidatesResultPart3.T
-  object StaleCandidatesResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StaleCandidatesResultPart4 = StaleCandidatesResultPart4.T
-  object StaleCandidatesResultPart4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExtendCandidatesResultPart1 = ExtendCandidatesResultPart1.T
-  object ExtendCandidatesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExtendCandidatesResultPart2 = ExtendCandidatesResultPart2.T
-  object ExtendCandidatesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleFacetsResultPart1 = ArticleFacetsResultPart1.T
-  object ArticleFacetsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleFacetsResultPart2 = ArticleFacetsResultPart2.T
-  object ArticleFacetsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProgressResult = ProgressResult.T
-  object ProgressResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepOutputResult = StepOutputResult.T
-  object StepOutputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepOutputStep = StepOutputStep.T
-  object StepOutputStep extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalLinksResult = GoalLinksResult.T
-  object GoalLinksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SharedIngestLeftResult = SharedIngestLeftResult.T
-  object SharedIngestLeftResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PurposeResult = PurposeResult.T
-  object PurposeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val HintPriority = 5
 
@@ -1028,8 +968,8 @@ object ManagerSupervisor:
   val StaleLookahead = 5
 
   /** What a manager of kind `k` does, for its created-paused event. */
-  def purpose(k: Kind): com.histmersion.domain.automation.managers.ManagerSupervisor.PurposeResult = k match
-    case Kind.Review => com.histmersion.domain.automation.managers.ManagerSupervisor.PurposeResult("reviewing")
-    case Kind.Enrich => com.histmersion.domain.automation.managers.ManagerSupervisor.PurposeResult("enriching")
-    case Kind.Seed   => com.histmersion.domain.automation.managers.ManagerSupervisor.PurposeResult("planning and compiling articles")
-    case Kind.Watch  => com.histmersion.domain.automation.managers.ManagerSupervisor.PurposeResult("watching")
+  def purpose(k: Kind): String = k match
+    case Kind.Review => "reviewing"
+    case Kind.Enrich => "enriching"
+    case Kind.Seed   => "planning and compiling articles"
+    case Kind.Watch  => "watching"

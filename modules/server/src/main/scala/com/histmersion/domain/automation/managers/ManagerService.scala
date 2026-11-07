@@ -295,8 +295,8 @@ object ManagerService:
     def get(id: ManagerInfo.Id): Option[ManagerInfo] =
       manager(id.value).map { m =>
         val day = now.atZone(ZoneOffset.UTC).toLocalDate.atStartOfDay(ZoneOffset.UTC).toInstant
-        val mine = runs.filter(_.row.managerId.exists(_.value == id.value)).map(_.id.value).toSet
-        val today = state.get.steps.filter(s => mine(s.jobId.value) && !s.finishedAt.isBefore(day)).map(_.step)
+        val mine = runs.filter(_.row.managerId.exists(_.value == id.value)).map(r => r.id.value: String).toSet
+        val today = state.get.steps.filter(s => mine(s.jobId.value: String) && !s.finishedAt.isBefore(day)).map(_.step)
         ManagerInfo(
           ManagerInfo.Id(m.id.value),
           ManagerInfo.Kind(m.kind.wire.value),
@@ -324,7 +324,7 @@ object ManagerService:
                 Set("queued", "running", "paused", "waiting")(r.row.status.value)
             )
           ),
-          events.filter(_.managerId.value == id.value).maxByOption(_.id.value).map(viewEvent),
+          events.filter(_.managerId.value == id.value).maxByOption[Long](_.id.value).map(viewEvent),
           ManagerInfo.SpentTodayUsd(today.map(_.costUsd).sum.toDouble),
           ManagerInfo.TokensToday(today.map(s => s.usage.input.value + s.usage.output.value).sum)
         )
@@ -334,7 +334,7 @@ object ManagerService:
     def pending(managerId: ManagerInfo.Id): List[ManagerItem] =
       items
         .filter(i => i.managerId.value == managerId.value && i.status.value == "pending")
-        .sortBy(i => (-i.priority.value, i.id.value))
+        .sortBy[(Int, Long)](i => (-i.priority.value, i.id.value))
         .toList
         .map(viewItem)
     private def urgency(status: String): Int = status match
@@ -345,7 +345,7 @@ object ManagerService:
     def items(managerId: ManagerInfo.Id, limit: com.histmersion.PageSize): List[ManagerItem] =
       items
         .filter(_.managerId.value == managerId.value)
-        .sortBy(i =>
+        .sortBy[(Int, Int, Long, Long, Long)](i =>
           (
             urgency(i.status.value),
             -i.priority.value,
@@ -538,7 +538,7 @@ object ManagerService:
     def lastEventOf(managerId: ManagerInfo.Id, kind: ManagerEvent.Kind): Option[ManagerEvent] =
       events
         .filter(e => e.managerId.value == managerId.value && e.kind.value == kind.value)
-        .maxByOption(_.id.value)
+        .maxByOption[Long](_.id.value)
         .map(viewEvent)
     def countEventsAll(kind: ManagerEvent.Kind, since: Instant): com.histmersion.RowCount =
       com.histmersion.RowCount(events.count(e => e.kind.value == kind.value && !e.at.isBefore(since)))
@@ -562,12 +562,12 @@ object ManagerService:
         .toSet
       items
         .filter(i => i.kind.value == OaIngest && i.status.value == "pending" && active(i.managerId.value))
-        .sortBy(i => (-i.priority.value, i.id.value))
+        .sortBy[(Int, Long)](i => (-i.priority.value, i.id.value))
         .toList
         .map(viewItem)
-    def backlogOpen(): List[ManagerItem] = items.filter(backlog).sortBy(_.id.value).toList.map(viewItem)
+    def backlogOpen(): List[ManagerItem] = items.filter(backlog).sortBy[Long](_.id.value).toList.map(viewItem)
     def backlogOpenFor(doi: com.histmersion.domain.library.Doi): Option[ManagerItem] =
-      items.filter(i => backlog(i) && i.target.value == doi.value).minByOption(_.id.value).map(viewItem)
+      items.filter(i => backlog(i) && i.target.value == doi.value).minByOption[Long](_.id.value).map(viewItem)
     def backlogRetry(itemId: ManagerItem.Id, failures: ManagerItem.Failures, notBefore: Instant, outcome: ManagerItem.Outcome): Boolean =
       val at = now
       changeItems(i => i.id.value == itemId.value && i.status.value == "pending")(
@@ -708,7 +708,7 @@ object ManagerService:
       counted(items.filter(personHeld).flatMap(goalOf)).map((g, n) => Goal.Slug.assume(g) -> com.histmersion.RowCount(n))
     def recentKinds(n: com.histmersion.PageSize): List[ManagerItem.Kind] =
       runs
-        .sortBy(r => (r.createdAt, r.created.value))
+        .sortBy[(java.time.Instant, Long)](r => (r.createdAt, r.created.value))
         .reverse
         .flatMap(r =>
           r.row.managerItem

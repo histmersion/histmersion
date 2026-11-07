@@ -119,7 +119,7 @@ trait SourceService:
   def recordLicence(citekey: com.histmersion.domain.library.Citekey, licence: Licence.Id, caller: Caller): Boolean
 
   /** The sources not in Calibre yet, in citekey order, at most `limit` (none: all). */
-  def calibreGaps(limit: Option[SourceRepo.Limit]): List[CalibreGap]
+  def calibreGaps(limit: Option[com.histmersion.PageSize]): List[CalibreGap]
 
   /** What a push of the source into Calibre names it by. */
   def calibrePushMeta(citekey: com.histmersion.domain.library.Citekey): Option[CalibreGap]
@@ -198,7 +198,7 @@ object SourceService:
     def recordLicence(citekey: com.histmersion.domain.library.Citekey, licence: Licence.Id, caller: Caller): Boolean =
       val v = licence.value.trim
       v.nonEmpty && db.transact(SourceRepo.recordLicence(citekey, Licence.Id(v)))
-    def calibreGaps(limit: Option[SourceRepo.Limit]): List[CalibreGap] = db.read(SourceRepo.calibreGaps(limit))
+    def calibreGaps(limit: Option[com.histmersion.PageSize]): List[CalibreGap] = db.read(SourceRepo.calibreGaps(limit.map(l => SourceRepo.Limit.assume(l.value))))
     def calibrePushMeta(citekey: com.histmersion.domain.library.Citekey): Option[CalibreGap] = db.read(SourceRepo.calibrePushMeta(citekey))
     def setCalibreId(citekey: com.histmersion.domain.library.Citekey, calibreId: com.histmersion.domain.library.sources.FullSourceRow.CalibreId, caller: Caller): Either[Api.Error, Unit] =
       db.transact:
@@ -742,7 +742,7 @@ object SourceService:
         s.calibreId.filter(_.value.nonEmpty)
       )
 
-    def calibreGaps(limit: Option[SourceRepo.Limit]): List[CalibreGap] =
+    def calibreGaps(limit: Option[com.histmersion.PageSize]): List[CalibreGap] =
       state.get.sources.toList
         .sortBy[String](_._1.value)
         .map(_._2)

@@ -53,13 +53,13 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
   /** The definitions, loaded and checked; `known` are the MCP tool names placeholders may use. */
   def load(known: Set[com.histmersion.domain.automation.workflows.ToolName]): Either[com.histmersion.domain.automation.agents.AgentTrees.Problem, AgentGenerator.Defs] =
     for
-      as <- defs.agents
-      fs <- defs.fragments
-      ss <- defs.skills
+      as <- defs.agents.left.map(AgentTrees.Problem(_))
+      fs <- defs.fragments.left.map(AgentTrees.Problem(_))
+      ss <- defs.skills.left.map(AgentTrees.Problem(_))
       d = AgentGenerator.Defs(as, fs, ss)
       _ <- AgentGenerator.check(d, known.map(t => t.value: String)) match
         case Nil  => Right(())
-        case errs => Left(errs.mkString("; "))
+        case errs => Left(AgentTrees.Problem(errs.mkString("; ")))
     yield d
 
   /** Generate the trees of `runtimes` (all three by default) into `out` (default [[root]]). */
@@ -71,7 +71,7 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
     for
       dir <- out
         .orElse(root)
-        .toRight("no runtimes directory: set agents.runtimes.dir (HISTMERSION_AGENTS_RUNTIMES_DIR)")
+        .toRight(AgentTrees.Problem("no runtimes directory: set agents.runtimes.dir (HISTMERSION_AGENTS_RUNTIMES_DIR)"))
       d <- load(known)
       sha = AgentTrees.sha(d)
       tree = AgentGenerator.tree(d, settings(AgentTrees.SettingsVersion(s"${AgentGenerator.PluginVersion}+${sha.value.take(12)}")), runtimes)
@@ -148,4 +148,4 @@ object AgentTrees:
     * (for one of these runtimes) and this tree does not have is removed.
     */
   def write(store: com.histmersion.util.storage.Store, tree: Map[String, String], runtimes: List[String], sha: com.histmersion.Sha256)(using java.time.Clock): Either[com.histmersion.domain.automation.agents.AgentTrees.Problem, GenerateResult] =
-    AgentTreeWriter.write(store, tree, runtimes, sha)
+    AgentTreeWriter.write(store, tree, runtimes, sha).left.map(Problem(_))

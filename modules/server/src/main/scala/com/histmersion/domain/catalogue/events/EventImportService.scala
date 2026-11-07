@@ -64,7 +64,7 @@ object EventImportService:
             e.timeSpan,
             pt.map(_._1),
             pt.map(_._2),
-            e.wikidata.map(w => CatalogRecord.Wikidata(w.value)),
+            e.wikidata.map(w => com.histmersion.api.catalogue.EventEntry.Wikidata(w.value)),
             s.catalogueRecords.filter(_._1.value == e.id.value).map(_._2.key).toSet,
             StoredEvent.Catalogue(e.catalogue.isDefined),
             StoredEvent.Label(e.label.value)

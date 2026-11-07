@@ -352,7 +352,7 @@ object AgentGenerator:
       )
     ) ++
       skills(d, "plugin/skills", ToolStyle.Bare, keepAllowedTools = false) ++
-      s.mcpUrl.map(u => "plugin/.mcp.json" -> mcpJson(u))
+      s.mcpUrl.map(u => "plugin/.mcp.json" -> mcpJson(u.value))
     (home ++ plugin).map((k, v) => s"codex/$k" -> v)
 
   // ── opencode ───────────────────────────────────────────────────────────────────────────────────

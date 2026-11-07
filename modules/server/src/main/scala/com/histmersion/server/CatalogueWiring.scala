@@ -33,7 +33,11 @@ import com.histmersion.domain.catalogue.places.{
   SiteTypeService
 }
 import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport, PluginGazetteers}
+import com.histmersion.domain.DeepTime
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.util.identity.AliasTable
 import com.histmersion.util.storage.Location
+import com.histmersion.PageSize
 
 /** The catalogue's places, events, their catalogues and their links to the corpus, and the refinement of site types,
   * built over one server's `deps`: `http` fetches the event catalogues and Wikidata, `presentYear` is the year datings
@@ -42,21 +46,35 @@ import com.histmersion.util.storage.Location
 final class CatalogueWiring(
     deps: Deps,
     http: HttpTransport,
-    presentYear: () => CatalogueWiring.PresentYearResult,
+    presentYear: () => DeepTime.SignedYear,
     resolve: Filter => Filter,
     scope: Filter => PlaceScope
 ):
-  def this(deps: Deps, http: HttpTransport, presentYear: () => Long) =
+  def this(deps: Deps, http: HttpTransport, presentYear: () => DeepTime.SignedYear) =
     this(
       deps,
       http,
       presentYear,
-      f => f.modify(_.limit).setTo(deps.cfg.limits.page(Some(f.limit), deps.cfg.limits.search)).modify(_.offset).setTo(f.offset.max(0)),
+      f =>
+        f.modify(_.limit)
+          .setTo(
+            Filter.Limit(
+              deps.cfg.limits
+                .page(PageSize.option(f.limit.value), PageSize.applyUnsafe(math.max(1, deps.cfg.limits.search.value)))
+                .value
+            )
+          )
+          .modify(_.offset)
+          .setTo(Filter.Offset(f.offset.value.max(0))),
       _ => PlaceScope.empty
     )
   def this(deps: Deps, http: HttpTransport) =
-    this(deps, http, () => java.time.Year.now(deps.clock.withZone(java.time.ZoneOffset.UTC)).getValue.toLong)
-  def this(deps: Deps) = this(deps, JavaHttpTransport(deps.cfg.events.timeoutSeconds))
+    this(
+      deps,
+      http,
+      () => DeepTime.SignedYear(java.time.Year.now(deps.clock.withZone(java.time.ZoneOffset.UTC)).getValue.toLong)
+    )
+  def this(deps: Deps) = this(deps, JavaHttpTransport(HttpTransport.TimeoutSeconds(deps.cfg.events.timeoutSeconds.value)))
 
   /** One catalogue run at a time; an event catalogue's import may be paused and cancelled. */
   val jobs: CatalogueJobs =
@@ -67,7 +85,8 @@ final class CatalogueWiring(
   lazy val eventImporter: EventImports =
     EventImports(
       EventImportService(deps.transactor),
-      () => deps.plugins.registries.eventCatalogues,
+      () =>
+        deps.plugins.registries.eventCatalogues.map((k, c) => com.histmersion.api.catalogue.CatalogRecord.Provider(k.value) -> c),
       () => deps.cfg,
       http,
       presentYear,
@@ -113,7 +132,10 @@ final class CatalogueWiring(
       PlaceMap(deps.transactor),
       placeGeometry,
       Geocoding(deps.transactor),
-      (k, id) => Deps.aliasTables.current(deps.ds, k, id),
+      (k, id) =>
+        Place.Id
+          .either(Deps.aliasTables.current(deps.ds, k, AliasTable.Id(id.value)).value)
+          .getOrElse(Place.Id.assume(id.value)),
       () => deps.cfg,
       (limit, default) => deps.cfg.limits.page(limit, default),
       deps.maintenance
@@ -129,23 +151,14 @@ final class CatalogueWiring(
     )
 
 object CatalogueWiring:
-  type GazetteerText = GazetteerText.T
-  object GazetteerText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** How the gazetteer comes in, over `deps`' stores and plugins: `download` fetches a pinned extract into its file,
     * `text` a url's text (the land).
     */
-  type PresentYearResult = PresentYearResult.T
-  object PresentYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
   def gazetteer(
       deps: Deps,
       places: PlaceService,
       download: GazetteerLoad.Download,
-      text: com.histmersion.server.CatalogueWiring.GazetteerText => Either[com.histmersion.server.CatalogueWiring.Problem, com.histmersion.server.CatalogueWiring.GazetteerText]
+      text: HttpDownload.Url => Either[HttpDownload.Problem, HttpDownload.Text]
   ): GazetteerImports =
     GazetteerImports(
       deps.transactor,

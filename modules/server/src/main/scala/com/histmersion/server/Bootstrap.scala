@@ -13,6 +13,7 @@ import com.histmersion.domain.catalogue.places.{
   NaturalEarthLand,
   PlaceService
 }
+import com.histmersion.util.jobs.Job
 import com.histmersion.util.storage.Location
 
 import java.nio.file.{Files, Path}
@@ -36,7 +37,7 @@ import com.histmersion.api.catalogue.Period
   */
 final class Bootstrap(
     deps: Deps,
-    download: Bootstrap.DownloadArg1 => Either[Bootstrap.DownloadResultPart1, Bootstrap.DownloadResultPart2] = HttpDownload().text,
+    download: HttpDownload.Url => Either[HttpDownload.Problem, HttpDownload.Text] = HttpDownload().text,
     gazetteerDownload: GazetteerLoad.Download = HttpDownload().file
 ):
 
@@ -49,8 +50,8 @@ final class Bootstrap(
     */
   private val slot = BackgroundJob.Slot()
 
-  private def dataDir: Path = Path.of(cfg.init.dataDir)
-  private def periodsSeed: Path = dataDir.resolve(cfg.periods.seedFile)
+  private def dataDir: Path = Path.of(cfg.init.dataDir.value)
+  private def periodsSeed: Path = dataDir.resolve(cfg.periods.seedFile.value)
 
   // ── periods ──────────────────────────────────────────────────────────────────────────────────
 
@@ -59,15 +60,23 @@ final class Bootstrap(
   val periodImports: PeriodImports =
     PeriodImports(
       periods,
-      () => PeriodSources(cfg.periods.periodoUrl, cfg.periods.collections),
+      () =>
+        PeriodSources(
+          PeriodSources.PeriodoUrl(cfg.periods.periodoUrl.value),
+          cfg.periods.collections.map(c => PeriodSources.Collections(c.value))
+        ),
       () => bundledSeed,
-      download
+      url =>
+        download(HttpDownload.Url(url.value)).left
+          .map(p => PeriodImports.Problem(p.value))
+          .map(t => PeriodImports.Document(t.value))
     )
 
   /** The bundled seed's text. */
-  private def bundledSeed: Either[com.histmersion.server.Bootstrap.Problem, com.histmersion.server.Bootstrap.Summary] =
-    if !Files.isRegularFile(periodsSeed) then Left(s"no period seed at $periodsSeed (set init.data-dir)")
-    else Right(Files.readString(periodsSeed))
+  private def bundledSeed: Either[PeriodImports.Problem, PeriodImports.Document] =
+    if !Files.isRegularFile(periodsSeed) then
+      Left(PeriodImports.Problem(s"no period seed at $periodsSeed (set init.data-dir)"))
+    else Right(PeriodImports.Document(Files.readString(periodsSeed)))
 
   // ── the gazetteer ───────────────────────────────────────────────────────────────────────────────
 
@@ -83,7 +92,7 @@ final class Bootstrap(
     * seed is newer than the one applied — or nothing.
     */
   def autoStart(): Option[JobInfo] =
-    val p = plan(fetch = com.histmersion.server.Bootstrap.PlanFetch(false), onlyEmpty = com.histmersion.server.Bootstrap.PlanOnlyEmpty(true))
+    val p = plan(fetch = false, onlyEmpty = true)
     if p.isEmpty then None
     else
       scribe.info(
@@ -94,8 +103,8 @@ final class Bootstrap(
   /** `POST /api/init` — the bundled gazetteer and period presets (re-imported: every write is an upsert) and, with
     * `fetch`, the network sources in `init.fetch-sources`.
     */
-  def init(fetch: com.histmersion.server.Bootstrap.InitFetch): Either[Api.Error, JobInfo] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("init"))(start(plan(fetch, onlyEmpty = com.histmersion.server.Bootstrap.PlanOnlyEmpty(false))))
+  def init(fetch: Boolean): Either[Api.Error, JobInfo] =
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("init"))(start(plan(fetch, onlyEmpty = false)))
 
   // ── the external gazetteer sources (#1064) ─────────────────────────────────────────────────────
 
@@ -106,26 +115,26 @@ final class Bootstrap(
   /** `POST /api/places/load?source=&apply=` — one external source as an init job: a dry run that reports what it would
     * do (the default), or the import itself.
     */
-  def loadGazetteer(source: com.histmersion.server.Bootstrap.Name, apply: com.histmersion.server.Bootstrap.LoadGazetteerApply): Either[Api.Error, JobInfo] =
+  def loadGazetteer(source: Gazetteer.Kind.Wire, apply: GazetteerLoad.LoadApply): Either[Api.Error, JobInfo] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("places/load")):
       Gazetteer.Kind
         .parse(source)
         .toRight(
           Api.Error(
-            s"unknown gazetteer source '$source' (available: ${GazetteerLoad.names.mkString(", ")})",
-            Some(Write.CodeInvalid)
+            Api.Error.Message(s"unknown gazetteer source '$source' (available: ${GazetteerLoad.names.mkString(", ")})"),
+            Some(Api.Error.Code(Write.CodeInvalid))
           )
         )
-        .flatMap(k => start(InitPlan(fetch = List(k.wire), check = !apply)))
+        .flatMap(k => start(InitPlan(fetch = List(InitPlan.Fetch(k.wire.value)), check = InitPlan.Check(!apply.value))))
 
   /** What an init job will import: everything bundled, or (on a first start) only what is empty, plus the network
     * sources when asked. Decided up front and stored on the job (#770).
     */
-  private[server] def plan(fetch: com.histmersion.server.Bootstrap.PlanFetch, onlyEmpty: com.histmersion.server.Bootstrap.PlanOnlyEmpty): InitPlan =
+  private[server] def plan(fetch: Boolean, onlyEmpty: Boolean): InitPlan =
     InitPlan(
-      gazetteer = !onlyEmpty || places.count() == 0,
-      periodPresets = !onlyEmpty || periods.count() == 0 || periodImports.seedOutdated,
-      fetch = if fetch then cfg.init.sources else Nil
+      gazetteer = InitPlan.Gazetteer(!onlyEmpty || places.count().value == 0),
+      periodPresets = InitPlan.PeriodPresets(!onlyEmpty || periods.count().value == 0 || periodImports.seedOutdated),
+      fetch = if fetch then cfg.init.sources.map(s => InitPlan.Fetch(s.value)) else Nil
     )
 
   private def start(p: InitPlan): Either[Api.Error, JobInfo] =
@@ -137,36 +146,40 @@ final class Bootstrap(
       com.histmersion.util.jobs.BackgroundJob.Work("an init job"),
       pins = deps.pins,
       stops = Some(deps.jobStops)
-    )((job, note) => run(job.id, p, note))
+    )((job, note) => run(Job.Id.assume(job.id.value), p, note))
 
-  private def run(id: com.histmersion.util.jobs.Job.Id, p: InitPlan, note: com.histmersion.server.Bootstrap.Note => Unit): BackgroundJob.Outcome =
+  private def run(id: Job.Id, p: InitPlan, note: JobInfo.Progress => Unit): BackgroundJob.Outcome =
     // the definitions a period import left out go on the job (#771), not just into the log
     def withSkipped(r: Period.ImportResult): Period.ImportResult =
-      if r.skippedCount > 0 then
+      if r.skippedCount.value > 0 then
         BackgroundJob.amendDetail(ds, id) { found =>
           val d = if found == JobDetail.empty then InitPlan.Detail(Some(p)) else found
           d.change(SkippedPeriod.Skipped)(s => (s ++ r.skipped).take(Bootstrap.SkippedListed))
-            .change(SkippedPeriod.SkippedCount)(_ + r.skippedCount)
+            .change(SkippedPeriod.SkippedCount)(c => Period.ImportResult.SkippedCount(c.value + r.skippedCount.value))
         }
       r
-    val steps: List[(com.histmersion.server.Bootstrap.StepName, () => Either[com.histmersion.server.Bootstrap.Problem, com.histmersion.server.Bootstrap.Summary])] =
+    val steps: List[(String, () => Either[String, String])] =
       List(
-        Option.when(p.gazetteer)("gazetteer" -> (() => seedPlaces(note))),
-        Option.when(p.periodPresets)(
+        Option.when(p.gazetteer.value)("gazetteer" -> (() => seedPlaces(note))),
+        Option.when(p.periodPresets.value)(
           "period presets" -> (() =>
             periodImports
-              .applySeed(replace = com.histmersion.domain.catalogue.periods.PeriodImports.Replace(false))
+              .applySeed(replace = PeriodImports.Replace(false))
               .map(withSkipped)
-              .map(r => s"${Plural.count(r.periods, com.histmersion.api.Plural.CountSingular("period"))}, ${Plural.count(r.presets, com.histmersion.api.Plural.CountSingular("preset"))}" + skippedNote(r))
+              .map(r =>
+                s"${Plural.count(Plural.Count(r.periods.value.toLong), Plural.CountSingular("period"))}, ${Plural.count(Plural.Count(r.presets.value.toLong), Plural.CountSingular("preset"))}" + skippedNote(r)
+              )
+              .left
+              .map(_.value)
           )
         )
       ).flatten ++ p.fetch.map(s =>
-        s"${if p.check then "dry run of" else "fetch"} $s" -> (() => fetchSource(s, withSkipped, p.check, note))
+        s"${if p.check.value then "dry run of" else "fetch"} $s" -> (() => fetchSource(s.value, withSkipped, p.check.value, note))
       )
     val results = steps.map { (name, step) =>
       if maintenance.active then name -> Left("a restore started; skipped")
       else
-        note(name)
+        note(JobInfo.Progress(name))
         scribe.info(s"[init] $name…")
         val r = try step()
         catch case e: Exception => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
@@ -175,90 +188,75 @@ final class Bootstrap(
     }
     val failed = results.collect { case (n, Left(e)) => s"$n: $e" }
     val done = results.collect { case (n, Right(s)) => s"$n: $s" }
-    val summary = if done.isEmpty then Some("nothing to do") else Some(done.mkString("; "))
-    BackgroundJob.Outcome(summary, Option.when(failed.nonEmpty)(failed.mkString("; ")))
+    val summary = if done.isEmpty then "nothing to do" else done.mkString("; ")
+    BackgroundJob.Outcome(
+      Some(BackgroundJob.Outcome.Summary(summary)),
+      Option.when(failed.nonEmpty)(BackgroundJob.Outcome.Error(failed.mkString("; ")))
+    )
 
   /** The bundled gazetteer, the way `histmersion places seed` imports it. */
-  private def seedPlaces(note: com.histmersion.server.Bootstrap.Note => Unit): Either[com.histmersion.server.Bootstrap.Problem, com.histmersion.server.Bootstrap.Summary] =
-    gazetteerImports.seed(deps.storage.store(Location.GazetteerSeed), note)
+  private def seedPlaces(note: JobInfo.Progress => Unit): Either[String, String] =
+    gazetteerImports.seed(deps.storage.store(Location.GazetteerSeed), note).left.map(_.value).map(_.value)
 
-  private def skippedNote(r: Period.ImportResult): com.histmersion.server.Bootstrap.Note =
-    if r.skippedCount == 0 then com.histmersion.server.Bootstrap.Note("") else s", ${r.skippedCount} skipped"
+  private def skippedNote(r: Period.ImportResult): String =
+    if r.skippedCount.value == 0 then "" else s", ${r.skippedCount} skipped"
 
   private def fetchSource(
-      name: com.histmersion.server.Bootstrap.Name,
+      name: String,
       periods: Period.ImportResult => Period.ImportResult,
-      check: com.histmersion.server.Bootstrap.FetchSourceCheck = com.histmersion.server.Bootstrap.FetchSourceCheck(false),
-      note: com.histmersion.server.Bootstrap.Note => Unit = _ => ()
-  ): Either[com.histmersion.server.Bootstrap.Problem, com.histmersion.server.Bootstrap.Summary] =
-    val gazetteer = Gazetteer.Kind.parse(name)
+      check: Boolean = false,
+      note: JobInfo.Progress => Unit = _ => ()
+  ): Either[String, String] =
+    val gazetteer = Gazetteer.Kind.parse(Gazetteer.Kind.Wire(name))
     if check && gazetteer.isEmpty then Left(s"'$name' has no dry run (only ${GazetteerLoad.names.mkString(", ")})")
     else
       gazetteer match
         case Some(k) =>
-          gazetteerImports.load(k, apply = !check, note).map(_.map(_.describe).mkString("; "))
+          gazetteerImports
+            .load(k, apply = GazetteerLoad.LoadApply(!check), note)
+            .left
+            .map(_.value)
+            .map(_.map(_.describe).mkString("; "))
         case None => fetchNetwork(name, periods)
 
-  private def fetchNetwork(name: com.histmersion.server.Bootstrap.Name, periods: Period.ImportResult => Period.ImportResult): Either[com.histmersion.server.Bootstrap.Problem, com.histmersion.server.Bootstrap.Summary] =
+  private def fetchNetwork(name: String, periods: Period.ImportResult => Period.ImportResult): Either[String, String] =
     name.trim.toLowerCase match
       case PeriodOFetch.name =>
-        periodImports.fetch(Nil).map(periods).map(r => Plural.count(r.periods, com.histmersion.api.Plural.CountSingular("period")) + skippedNote(r))
+        periodImports
+          .fetch(Nil)
+          .left
+          .map(_.value)
+          .map(periods)
+          .map(r => s"${Plural.count(Plural.Count(r.periods.value.toLong), Plural.CountSingular("period"))}${skippedNote(r)}")
       case NaturalEarthLand.name =>
-        gazetteerImports.land(dryRun = com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun(false)).map(r => s"${r.places} polit(y/ies) clipped")
+        gazetteerImports
+          .land(dryRun = com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun(false))
+          .left
+          .map(_.value)
+          .map(r => s"${r.places} polit(y/ies) clipped")
       case other =>
         val available = Bootstrap.sources ++ gazetteerImports.thirdParty
         gazetteerImports
-          .source(other, s"unknown source '$other' (available: ${available.mkString(", ")})")
-          .flatMap(src => gazetteerImports.fetch(src, dryRun = false))
+          .source(
+            BuiltinGazetteers.Entry.Name(other),
+            GazetteerImports.Problem(s"unknown source '$other' (available: ${available.mkString(", ")})")
+          )
+          .flatMap(src => gazetteerImports.fetch(src, dryRun = com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun(false)))
+          .left
+          .map(_.value)
           .map(r => s"${r.places} place(s)")
 
 object Bootstrap:
-  type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodSeedText = PeriodSeedText.T
-  object PeriodSeedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepName = StepName.T
-  object StepName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Summary = Summary.T
-  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The `jobs.kind` of an init job — what `histmersion jobs` lists. */
-
-  type DownloadArg1 = com.histmersion.server.HttpDownload.Url
-  val DownloadArg1: _root_.com.histmersion.server.HttpDownload.Url.type = _root_.com.histmersion.server.HttpDownload.Url
-  type DownloadResultPart1 = com.histmersion.server.Bootstrap.Problem
-  val DownloadResultPart1: _root_.com.histmersion.server.Bootstrap.Problem.type = _root_.com.histmersion.server.Bootstrap.Problem
-  type DownloadResultPart2 = com.histmersion.server.Bootstrap.Summary
-  val DownloadResultPart2: _root_.com.histmersion.server.Bootstrap.Summary.type = _root_.com.histmersion.server.Bootstrap.Summary
-
-  type InitFetch = InitFetch.T
-  object InitFetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadGazetteerApply = LoadGazetteerApply.T
-  object LoadGazetteerApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanFetch = PlanFetch.T
-  object PlanFetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanOnlyEmpty = PlanOnlyEmpty.T
-  object PlanOnlyEmpty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchSourceCheck = FetchSourceCheck.T
-  object FetchSourceCheck extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodSeed = PeriodSeedValue
-  type PeriodSeedValue = com.histmersion.server.Bootstrap.PeriodSeedText
-  val PeriodSeedValue: _root_.com.histmersion.server.Bootstrap.PeriodSeedText.type = _root_.com.histmersion.server.Bootstrap.PeriodSeedText
-  type SkippedListed = SkippedListedValue
-  type SkippedListedValue = SkippedListedValue.T
-  object SkippedListedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  val JobKind = InitPlan.JobKind
+  val JobKind: Job.Kind = Job.Kind.assume(InitPlan.JobKind)
 
   /** The `seed_versions` name of the bundled period seed. */
-  val PeriodSeed: com.histmersion.server.Bootstrap.PeriodSeed = PeriodImports.SeedName
+  val PeriodSeed: String = PeriodImports.SeedName
 
   /** How many skipped period definitions an import result or a job names one by one (all are counted). */
-  val SkippedListed: com.histmersion.server.Bootstrap.SkippedListed = PeriodImports.SkippedListed
+  val SkippedListed: Int = PeriodImports.SkippedListed
 
   /** Every name `init.fetch-sources` may hold (and the sources a plugin registers). */
-  def sources: List[com.histmersion.server.Bootstrap.Name] =
-    BuiltinGazetteers.names ++ List(NaturalEarthLand.name, PeriodOFetch.name) ++ GazetteerLoad.names
+  def sources: List[BuiltinGazetteers.Entry.Name] =
+    BuiltinGazetteers.names ++ List(NaturalEarthLand.name, PeriodOFetch.name).map(BuiltinGazetteers.Entry.Name(_)) ++
+      GazetteerLoad.names.map(n => BuiltinGazetteers.Entry.Name(n.value))

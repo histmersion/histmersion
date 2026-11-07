@@ -38,33 +38,34 @@ import com.histmersion.util.console.Console
   val (loadedConfig, generation) = AppConfig.loadWithUserFile() match
     case Right(l) =>
       l.file.path.foreach(p =>
-        if l.file.loaded then scribe.info(s"config file $p read")
+        if l.file.loaded.value then scribe.info(s"config file $p read")
         else scribe.info(s"no config file at $p (defaults and environment only)")
       )
-      l.file.warnings.foreach(w => scribe.warn(w))
+      l.file.warnings.foreach(w => scribe.warn(w.value))
       // the plugins, also on the main thread and before anything is opened: each block layered over
       // the plugin's defaults, type-checked, decoded, its secrets resolved, registered (staged). A
       // plugin that fails contributes nothing and the server still starts; --self-check says so.
       (l, ServerPlugins.load(l, core = core))
     case Left(err) =>
-      scribe.error(err)
+      scribe.error(s"$err")
       sys.exit(3)
   val loaded = loadedConfig.config
   // the environment the settings were read with, and the paths and the clock: the only reads of them
   val environment = Environment.of(loadedConfig.env)
   val system =
-    SystemContext(startupClock, environment, UserPaths(environment, System.getProperty("os.name", "")))
+    SystemContext(startupClock, environment, UserPaths(environment, UserPaths.OsName(System.getProperty("os.name", ""))))
   mode match
     case ServerMode.SelfCheck =>
       val zones = TimeZoneCheck.jdk()
-      console.out.println(PluginsMarkdown.selfCheck(loadedConfig.file.info, generation.report, List(zones)))
+      console.out.println(PluginsMarkdown.selfCheck(loadedConfig.file.info, generation.report, List((zones._1, zones._2.value))))
       sys.exit(if generation.report.ok && zones._1 then 0 else 2)
     case _ => ()
-  val reread = () => AppConfig.loadWithUserFile(loadedConfig.env, loadedConfig.file.path)
+  val reread = () =>
+    AppConfig.loadWithUserFile(loadedConfig.env, loadedConfig.file.path).left.map(p => ConfigSource.Problem(p.value))
   // the native bundle: run the bundled Postgres + converter as children and point the config at them;
   // a reloaded config is pointed at them the same way (the children themselves are restart-only)
-  val explicit = environment.nonBlank(com.histmersion.config.Environment.VariablesKey("HISTMERSION_RUNTIME")).map(_.toLowerCase)
-  val bundled = loaded.runtime.enabled || (explicit.isEmpty && Supervisor.bundled(Supervisor.currentExecutable))
+  val explicit = environment.nonBlank(com.histmersion.config.Environment.VariablesKey("HISTMERSION_RUNTIME")).map(_.value.toLowerCase)
+  val bundled = loaded.runtime.enabled.value || (explicit.isEmpty && Supervisor.bundled(Supervisor.currentExecutable))
   val (cfg, source) =
     if !bundled then (loaded, ConfigSource(reread))
     else
@@ -76,15 +77,15 @@ import com.histmersion.util.console.Console
   // a LaunchAgent (launchd names its job in XPC_SERVICE_NAME) or a systemd unit (INVOCATION_ID) starts the
   // server again when it exits with an error: there, Settings can restart it by ending it with that code
   val underService =
-    environment.get(com.histmersion.config.Environment.VariablesKey("XPC_SERVICE_NAME")).exists(_.contains("histmersion")) || environment
+    environment.get(com.histmersion.config.Environment.VariablesKey("XPC_SERVICE_NAME")).exists(_.value.contains("histmersion")) || environment
       .get(com.histmersion.config.Environment.VariablesKey("INVOCATION_ID"))
       .isDefined
   val restart = Option.when(underService) { () =>
     val code = cfg.server.restartExitCode
     val _ = Thread.ofVirtual().start { () =>
       Thread.sleep(500) // the answer goes out first
-      scribe.info(s"restarting: exit $code, for the service to start the server again")
-      sys.exit(code)
+      scribe.info(s"restarting: exit ${code.value}, for the service to start the server again")
+      sys.exit(code.value)
     }
   }
   supervised {
@@ -93,8 +94,8 @@ import com.histmersion.util.console.Console
         Composition.build(
           Composition.hotConfig(cfg, loadedConfig.file.info, Some(loadedConfig)),
           Some(source),
-          cfg.server.host,
-          cfg.server.port,
+          Composition.Host(cfg.server.host.value),
+          Composition.Port(cfg.server.port.value),
           None,
           autoInit = cfg.init.auto,
           plugins = generation,

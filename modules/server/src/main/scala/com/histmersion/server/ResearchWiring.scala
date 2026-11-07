@@ -18,8 +18,8 @@ import com.histmersion.api.Api
 final class ResearchWiring(
     deps: Deps,
     library: LibraryWiring,
-    articleLeads: (ResearchWiring.ArticleLeadsArg1, List[ResearchWiring.ArticleLeadsArg2], Option[Period]) => List[ArticleEventLead],
-    note: ResearchWiring.NoteArg1 => Either[Api.Error, ResearchWiring.NoteResultPart2]
+    articleLeads: (ArticleEventLead.Body, List[com.histmersion.domain.library.Citekey], Option[Period]) => List[ArticleEventLead],
+    note: com.histmersion.domain.research.Slug => Either[Api.Error, com.histmersion.domain.research.Article.Note]
 ):
 
   /** The articles as research stores them. */
@@ -46,13 +46,3 @@ final class ResearchWiring(
 
   /** The `/source/{citekey}` and `/article/{slug}` pages. */
   val pages: PageBuilder = PageBuilder(library.sources, library.sourceStore, library.citations, articles)
-
-object ResearchWiring:
-  type ArticleLeadsArg1 = com.histmersion.domain.research.Slug
-  val ArticleLeadsArg1: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
-  type ArticleLeadsArg2 = com.histmersion.domain.research.Article.Lead
-  val ArticleLeadsArg2: _root_.com.histmersion.domain.research.Article.Lead.type = _root_.com.histmersion.domain.research.Article.Lead
-  type NoteArg1 = com.histmersion.domain.research.Slug
-  val NoteArg1: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
-  type NoteResultPart2 = com.histmersion.domain.research.Article.Note
-  val NoteResultPart2: _root_.com.histmersion.domain.research.Article.Note.type = _root_.com.histmersion.domain.research.Article.Note

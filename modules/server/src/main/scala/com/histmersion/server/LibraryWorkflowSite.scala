@@ -36,7 +36,7 @@ final class LibraryWorkflowSite(h: ServerWiring, deps: Deps) extends LibrarySite
     h.research.articles.get(slug).map(v => h.research.articles.citedSources(v.article.body))
 
   def citedSources(slug: com.histmersion.domain.research.Slug): List[com.histmersion.domain.library.Citekey] =
-    h.research.articles.get(slug).toOption.toList.flatMap(_.sourcesCited.filter(_.title.isDefined).map(_.citekey))
+    h.research.articles.get(slug).toOption.toList.flatMap(_.sourcesCited.filter(_.title.isDefined).flatMap(c => com.histmersion.domain.library.Citekey.option(c.citekey.value)))
 
   def articleExists(slug: com.histmersion.domain.research.Slug): Boolean = h.research.articleStore.exists(slug)
 

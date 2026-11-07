@@ -11,6 +11,7 @@ import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.api.aliases.AliasKind
 import com.histmersion.util.data.mirror.Mirror
 
+import com.histmersion.PageSize
 import com.histmersion.domain.*
 import java.time.Instant
 import com.histmersion.api.automation.AgentLeaseInfo
@@ -58,7 +59,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   val queues: com.histmersion.domain.automation.worklists.QueueService = deps.queues
 
   /** The first acquisition item (any status) whose text names `doi`. */
-  def acquisitionItemNaming(doi: com.histmersion.domain.library.Doi): Option[com.histmersion.server.ServerWiring.AcquisitionItemNamingResult] =
+  def acquisitionItemNaming(doi: com.histmersion.domain.library.Doi): Option[com.histmersion.api.automation.Queue.QueueItem.Id] =
     queues.naming(com.histmersion.api.automation.Queue.Kind.Acquire, doi).headOption.map(_.id)
 
   /** Media's pictures, their links, the imports from outside providers (#1446), the sources' covers and illustrations.
@@ -76,10 +77,10 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       // a stored conversion: the source's illustration (and Open Library cover) first, then enrichment
       Option(
         List(
-          media.covers.afterIngest(ck),
-          com.histmersion.server.agents.EngineContributions.enrich(agents).autoEnrich(ck)
+          media.covers.afterIngest(ck).map(_.value),
+          com.histmersion.server.agents.EngineContributions.enrich(agents).autoEnrich(ck).map(_.value)
         ).flatten
-      ).filter(_.nonEmpty).map(_.mkString(" · "))
+      ).filter(_.nonEmpty).map(notes => com.histmersion.domain.library.ingest.IngestQueue.Note(notes.mkString(" · ")))
   )
 
   /** Named periods' write path and the first-run `init` job (#719, #720) — same arrangement. */
@@ -106,7 +107,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     }
     val applyJobs = MergeApplyJobs(
       com.histmersion.util.jobs.MergeApplyRuns(deps.ds),
-      deps.cfg.merge.applyWaitSeconds,
+      deps.cfg.merge.applyWaitSeconds.value,
       deps.pins
     )
     BundleControllers(
@@ -120,7 +121,10 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
           MergeRuleSet(Deps.data.mergeRules),
           com.histmersion.domain.automation.worklists.WorkListMergeFollowUps,
           applyJobs,
-          () => backups.create(Instant.now(deps.clock)).map(_.file)
+          () =>
+            backups
+              .create(Instant.now(deps.clock))
+              .map(r => com.histmersion.util.data.exchange.BundleImporter.BackupFile(r.file.value))
         )
       ),
       deps.maintenance
@@ -145,11 +149,18 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** Pause, resume and cancel a job: a long background job cooperatively, an agent run by its own control. */
   lazy val jobControl: com.histmersion.util.jobs.JobControlControllers =
     import com.histmersion.util.jobs.{JobAction, JobControlControllers, JobControlService}
-    def run(id: com.histmersion.util.jobs.Job.Id, a: JobAction): Either[Api.Error, Unit] = (a match
-      case JobAction.Pause  => agents.engine.pause(id)
-      case JobAction.Resume => agents.engine.resume(id, None, None)
-      case JobAction.Cancel => agents.engine.cancel(id)
-    ).map(_ => ())
+    def run(id: com.histmersion.util.jobs.Job.Id, a: JobAction): Either[Api.Error, Unit] =
+      com.histmersion.domain.automation.Run.Id
+        .either(id.value)
+        .left
+        .map(_ => Api.Error(Api.Error.Message(s"'${id.value}' is not an agent run")))
+        .flatMap(run =>
+          (a match
+            case JobAction.Pause  => agents.engine.pause(run)
+            case JobAction.Resume => agents.engine.resume(run, None, None)
+            case JobAction.Cancel => agents.engine.cancel(run)
+          ).map(_ => ())
+        )
     JobControlControllers(JobControlService(ds, deps.jobStops, run))
 
   /** Every domain's records as others point at them: what the person's marks show of what they point at. */
@@ -199,7 +210,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       () => deps.reloader(),
       () =>
         deps.plugins.report.plugins.flatMap(p =>
-          s"histmersion.plugins.${p.id}.enabled" :: p.settings.map(st => s"histmersion.plugins.${p.id}.${st.key}")
+          (s"histmersion.plugins.${p.id}.enabled" :: p.settings.map(st => s"histmersion.plugins.${p.id}.${st.key}"))
+            .map(SettingsService.ConfigPath(_))
         )
     )
 
@@ -232,7 +244,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     * an old one resolves to where it went. Every read AND every write resolves here first, so a put, patch, delete or
     * rename naming an old id goes to the current record.
     */
-  def current(k: AliasKind, id: com.histmersion.server.ServerWiring.CurrentId): com.histmersion.server.ServerWiring.CurrentResult = Deps.aliasTables.current(ds, k, id)
+  def current(k: AliasKind, id: com.histmersion.util.identity.AliasTable.Id): com.histmersion.util.identity.AliasTable.Id = Deps.aliasTables.current(ds, k, id)
 
   /** The Markdown mirror over the registered kinds, each note rendered by its owner. */
   lazy val mirror = Mirror(
@@ -247,7 +259,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     * asking about a source wants what the corpus has WRITTEN about it in the same answer, not after a second round
     * trip.
     */
-  private def mentionedIn(citekey: com.histmersion.domain.library.Citekey): com.histmersion.server.HtmlRender.Html = research.articles.mentionedIn(citekey)
+  private def mentionedIn(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourcesControllers.Markdown =
+    com.histmersion.domain.library.sources.SourcesControllers.Markdown(research.articles.mentionedIn(citekey))
 
   // ── events (plan §1.2) ──────────────────────────────────────────────────────────────────────
 
@@ -255,8 +268,10 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   val catalogue: CatalogueWiring =
     CatalogueWiring(
       deps,
-      com.histmersion.pluginhost.JavaHttpTransport(cfg.events.timeoutSeconds),
-      () => java.time.Year.now(deps.clock.withZone(java.time.ZoneOffset.UTC)).getValue.toLong,
+      com.histmersion.pluginhost.JavaHttpTransport(
+        com.histmersion.pluginhost.HttpTransport.TimeoutSeconds(cfg.events.timeoutSeconds.value)
+      ),
+      () => DeepTime.SignedYear(java.time.Year.now(deps.clock.withZone(java.time.ZoneOffset.UTC)).getValue.toLong),
       resolve,
       scopeOf
     )
@@ -319,12 +334,23 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       eventStore,
       com.histmersion.server.views.EventCardView.cited(
         eventLinks.context,
-        (citekeys, limit) => research.articles.store.citing(citekeys, limit)
+        (citekeys, limit) =>
+          research.articles.store.citing(
+            citekeys,
+            com.histmersion.domain.research.articles.ArticleRepo.Limit(limit.value)
+          )
       ),
-      current,
+      (k, id) =>
+        com.histmersion.domain.catalogue.Event.Id
+          .either(current(k, com.histmersion.util.identity.AliasTable.Id(id.value)).value)
+          .getOrElse(id),
       resolve,
       scopeOf,
-      () => (cfg.ui.events.mapLimit, cfg.ui.events.outlineToleranceDeg),
+      () =>
+        (
+          PageSize.applyUnsafe(math.max(1, cfg.ui.events.mapLimit.value)),
+          com.histmersion.domain.catalogue.events.EventRepo.GeoTolerance(cfg.ui.events.outlineToleranceDeg.value)
+        ),
       maintenance
     )
 
@@ -335,8 +361,11 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     com.histmersion.domain.catalogue.evidence.AttestationsControllers(
       com.histmersion.domain.catalogue.evidence.AttestationService(deps.transactor),
       deps.passages,
-      current,
-      limit => cfg.limits.page(limit, cfg.limits.search),
+      (k, id) =>
+        com.histmersion.domain.catalogue.evidence.AttestationsControllers.Alias(
+          current(k, com.histmersion.util.identity.AliasTable.Id(id.value)).value
+        ),
+      limit => cfg.limits.page(limit, PageSize.applyUnsafe(math.max(1, cfg.limits.search.value))),
       maintenance
     )
 
@@ -351,7 +380,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** A place NAME → its gazetteer point (#981), for a finding about a place of kind `hint` dated `at`. `None` =
     * unknown.
     */
-  def geocode(name: com.histmersion.server.LibraryWorkflowSite.PlaceName, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
+  def geocode(name: Geocode.Attempt.Name, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
     places.geocode(name, hint, at)
 
   /** The map's sites, events and pictures as vector tiles (`GET /api/tiles/…`). */
@@ -359,11 +388,11 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     com.histmersion.domain.catalogue.maptiles.MapTileService(
       deps.transactor,
       () => cfg.ui.mapTiles,
-      () => cfg.places.modernFrom,
+      () => DeepTime.SignedYear(cfg.places.modernFrom.value),
       f => scopeOf(f),
       com.histmersion.domain.catalogue.maptiles.UndatedSites(
         deps.transactor,
-        () => cfg.ui.mapTiles.undatedKeptZoom,
+        () => com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom(cfg.ui.mapTiles.undatedKeptZoom.value),
         run => { val _ = Thread.ofVirtual().name("histmersion-undated-sites").start(() => run()) }
       ),
       eventStore,
@@ -385,7 +414,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     * as `/api/sources`, `/api/findings`, `/api/articles` and `/api/events`.
     */
   private def placeCounts(id: com.histmersion.domain.catalogue.Place.Id): Place.Counts =
-    val f = Filter(places = List(id))
+    val f = Filter(places = List(Filter.Places(id.value)))
     library.search.selectionCounts(f)
 
   // ── the goals and the agents' state (plan §1.5) ────────────────────────────────────────────
@@ -395,8 +424,16 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     com.histmersion.domain.automation.goals.GoalsControllers(
       com.histmersion.domain.automation.goals.GoalService(deps.transactor),
       deps.queues,
-      current(com.histmersion.api.aliases.AliasKinds.GoalRecords, _),
-      limit => cfg.limits.page(limit, cfg.limits.search),
+      slug =>
+        com.histmersion.domain.automation.Goal.Slug
+          .either(
+            current(
+              com.histmersion.api.aliases.AliasKinds.GoalRecords,
+              com.histmersion.util.identity.AliasTable.Id(slug.value)
+            ).value
+          )
+          .getOrElse(slug),
+      limit => cfg.limits.page(limit, PageSize.applyUnsafe(math.max(1, cfg.limits.search.value))),
       maintenance
     )
 
@@ -427,8 +464,24 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       ds,
       isCitekey =>
         (text, field, article) =>
-          MarkdownLint.issues(text, field, MarkdownLint.Context(article = article, isCitekey = Some(isCitekey))),
-      (slug, body, token) => research.articles.writeRepairedBody(slug, body, token),
+          MarkdownLint.issues(
+            MarkdownLint.Scan.Text(text),
+            field,
+            MarkdownLint.Context(
+              article = MarkdownLint.Context.Article(article),
+              isCitekey = Some(t => isCitekey(t.value))
+            )
+          ),
+      (record, text, token) =>
+        com.histmersion.domain.research.Slug
+          .either(record.value)
+          .exists(slug =>
+            research.articles.writeRepairedBody(
+              slug,
+              com.histmersion.api.research.Article.Body(text.value),
+              token.map(t => com.histmersion.domain.research.articles.BArticleRow.UpdatedAt(t.value))
+            )
+          ),
       maintenance
     )(using deps.timer)
 
@@ -459,7 +512,14 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       backups,
       seenMarks,
       basemap,
-      () => agents.lease.status.map((o, u, expired, mine) => AgentLeaseInfo(o, u, expired, mine)),
+      () => agents.lease.status.map((o, u, expired, mine) =>
+          AgentLeaseInfo(
+            AgentLeaseInfo.Owner(o.value),
+            AgentLeaseInfo.Until(u.value),
+            AgentLeaseInfo.Expired(expired),
+            AgentLeaseInfo.ThisServer(mine)
+          )
+        ),
       upstreamQuotas,
       now => Some(com.histmersion.server.agents.EngineContributions.work(agents).acquireRecheck.status(now)),
       () => settings.setupDue
@@ -495,13 +555,9 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       deps,
       library,
       (body, citekeys, period) => eventLinks.articleLeads(body, citekeys, period),
-      slug => mirror.note(com.histmersion.domain.research.ResearchData.ArticleNotes, slug)
+      slug =>
+        mirror.note(
+          com.histmersion.domain.research.ResearchData.ArticleNotes,
+          com.histmersion.util.data.mirror.MirrorPlacement.RecordId(slug.value)
+        )
     )
-
-object ServerWiring:
-  type AcquisitionItemNamingResult = AcquisitionItemNamingResult.T
-  object AcquisitionItemNamingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CurrentResult = CurrentResult.T
-  object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CurrentId = CurrentId.T
-  object CurrentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
