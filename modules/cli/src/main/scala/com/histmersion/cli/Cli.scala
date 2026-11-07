@@ -760,7 +760,7 @@ object Cli:
       case Right((server, tok, run)) =>
         val url = server.getOrElse(Settings.app.cli.serverUrl.value)
         val token = tok.orElse(Option(System.getenv("HISTMERSION_TOKEN")).filter(_.nonEmpty))
-        run(Client(Client.ServerUrl(url), token.map(Client.Token(_)))) match
+        run(new Client(Client.ServerUrl(url), token.map(Client.Token(_)))) match
           case Right(())                               => ()
           case Left(e) if WorkingDir.denied(e.message.value) => Cli.err.println(WorkingDir.message); sys.exit(3)
           case Left(e)                                 => Cli.err.println(s"error: ${e.message}"); sys.exit(e.exitCode.value)

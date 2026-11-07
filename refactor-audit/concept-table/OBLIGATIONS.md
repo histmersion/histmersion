@@ -210,3 +210,7 @@ The rules let agents put primitives in private helpers, loops, renderers, binary
 - Years in web: MapView and TimelineView spans are (Years.Astronomical, Years.Astronomical); Year(a.value) bridges astronomical to Year without conversion at Fmt.yr, Period, GeoPick.resolve, UiState.from/to, ResultsPaging.span, PeriodMarks, EventMarkers.load: same numbers as master, but now the types claim a conversion that is not done. Settle in the years item.
 - ApiClient wraps slugs, queue names and ids inside because endpoint types are mislabelled (API-endpoint pass).
 - Api.Merge.Id is used for a bundle, an apply job and the resolutions YAML text (API-endpoint pass). ApiClient queueList/queueForGoal keep `all: Boolean` (G44).
+
+## Tool bug found: apply.py "move onto the real owner" matched by short name across modules
+
+The client table's new concepts were placed on same-named owners in other modules (domain.research.Article, Goal, Manager, Edge, Job, plugin.FetchedFile, server.Static, util.storage.Store ...), shadowing and unused: undone. Stage 4 reported 1 such move: check it. Fix apply.py to stay within the module set before reuse.
