@@ -1,8 +1,10 @@
 package com.histmersion.web.library
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 class TableKeysSuite extends munit.FunSuite:
 
-  private val rows = List("a", "b", "c")
+  private val rows = List("a", "b", "c").map(com.histmersion.api.personal.ItemKey(_))
 
   test("↓ and ↑ move the choice by one row, held at the ends"):
     assertEquals(TableKeys.step(rows, Some(com.histmersion.api.personal.ItemKey("a")), 1), Some("b"))

@@ -33,7 +33,7 @@ class ModelsViewSuite extends munit.FunSuite:
   test("the used share of a limit, clamped; a chained model's state"):
     val l = LimitStatus(com.histmersion.api.automation.ModelChains.LimitStatus.Limit("1k tokens/1h"), Measure.Tokens, com.histmersion.api.automation.ModelChains.LimitStatus.Window("1h"), com.histmersion.api.automation.ModelChains.LimitStatus.Amount(1000), com.histmersion.api.automation.ModelChains.LimitStatus.Used(250), com.histmersion.api.automation.ModelChains.LimitStatus.Remaining(750), com.histmersion.api.automation.ModelChains.LimitStatus.Reserve(0), usable = com.histmersion.api.automation.ModelChains.LimitStatus.Usable(true))
     assertEquals(ModelsView.usedPct(l), 25)
-    assertEquals(ModelsView.usedPct(l.modify(_.used).setTo((5000: _root_.scala.Double))), 100)
+    assertEquals(ModelsView.usedPct(l.modify(_.used).setTo(LimitStatus.Used(5000.0))), 100)
     assertEquals(ModelsView.entryState(ChainEntry(com.histmersion.api.automation.ModelChains.ChainEntry.Model("local:a"), ready = com.histmersion.api.automation.ModelChains.ChainEntry.Ready(true), usable = com.histmersion.api.automation.ModelChains.ChainEntry.Usable(true))), "is-usable")
     assertEquals(ModelsView.entryState(ChainEntry(com.histmersion.api.automation.ModelChains.ChainEntry.Model("local:a"), ready = com.histmersion.api.automation.ModelChains.ChainEntry.Ready(true), usable = com.histmersion.api.automation.ModelChains.ChainEntry.Usable(false))), "is-paused")
     assertEquals(ModelsView.entryState(ChainEntry(com.histmersion.api.automation.ModelChains.ChainEntry.Model("local:a"), ready = com.histmersion.api.automation.ModelChains.ChainEntry.Ready(false), usable = com.histmersion.api.automation.ModelChains.ChainEntry.Usable(false))), "is-unready")
@@ -49,18 +49,18 @@ class ModelsViewSuite extends munit.FunSuite:
       com.histmersion.api.automation.Agents.RunInfo.Target("a2020_b"),
       com.histmersion.api.automation.Agents.RunInfo.Status("paused"),
       error = Some(com.histmersion.api.automation.Agents.RunInfo.Error("allowance: all models …")),
-      resumeAt = Some("2026-10-05T14:00:00Z")
+      resumeAt = Some(RunInfo.ResumeAt("2026-10-05T14:00:00Z"))
     )
     assertEquals(RunsView.pausedFor(r), Some("allowance"))
-    assert(RunsView.pausedText(r, com.histmersion.api.automation.Agents.PauseReason.Wire("allowance")).contains("resumes by itself at 2026-10-05T14:00:00Z"))
-    assert(RunsView.pausedText(r, com.histmersion.api.automation.Agents.PauseReason.Wire("budget")).contains("Raise the budget"))
+    assert(RunsView.pausedText(r, com.histmersion.api.automation.Agents.PauseReason.Wire("allowance")).value.contains("resumes by itself at 2026-10-05T14:00:00Z"))
+    assert(RunsView.pausedText(r, com.histmersion.api.automation.Agents.PauseReason.Wire("budget")).value.contains("Raise the budget"))
 
   test("a plan window's bar: the used share and where the floor sits; a reading's age in words"):
     val w = com.histmersion.api.automation.PlanQuota.WindowStatus(
       com.histmersion.api.automation.PlanQuota.WindowStatus.Limit("claude"),
       com.histmersion.api.automation.PlanQuota.WindowStatus.Kind("five_hour"),
-      62.4,
-      37.6,
+      com.histmersion.api.automation.PlanQuota.WindowStatus.UsedPct(62.4),
+      com.histmersion.api.automation.PlanQuota.WindowStatus.LeftPct(37.6),
       com.histmersion.api.automation.PlanQuota.WindowStatus.Floor(25),
       usable = com.histmersion.api.automation.PlanQuota.WindowStatus.Usable(true),
       stale = com.histmersion.api.automation.PlanQuota.WindowStatus.Stale(false),
@@ -70,7 +70,7 @@ class ModelsViewSuite extends munit.FunSuite:
       com.histmersion.api.automation.PlanQuota.WindowStatus.Source("run")
     )
     assertEquals(ModelsView.windowBar(w), (62, 75))
-    assertEquals(ModelsView.windowBar(w.modify(_.usedPct).setTo((130: _root_.scala.Double))), (100, 75))
+    assertEquals(ModelsView.windowBar(w.modify(_.usedPct).setTo(com.histmersion.api.automation.PlanQuota.WindowStatus.UsedPct(130.0))), (100, 75))
     assertEquals(ModelsView.ageText(90), "90 s ago")
     assertEquals(ModelsView.ageText(600), "10 min ago")
     assertEquals(ModelsView.ageText(7200), "2 h ago")
@@ -82,7 +82,7 @@ class ModelsViewSuite extends munit.FunSuite:
       com.histmersion.api.automation.Agents.RunInfo.Target("x"),
       com.histmersion.api.automation.Agents.RunInfo.Status("paused"),
       error = Some(com.histmersion.api.automation.Agents.RunInfo.Error("plan-quota: …")),
-      resumeAt = Some("2026-10-05T21:40:00Z")
+      resumeAt = Some(RunInfo.ResumeAt("2026-10-05T21:40:00Z"))
     )
     assertEquals(RunsView.pausedFor(r), Some("plan-quota"))
-    assert(RunsView.pausedText(r, com.histmersion.api.automation.Agents.PauseReason.Wire("plan-quota")).contains("resumes by itself at 2026-10-05T21:40:00Z"))
+    assert(RunsView.pausedText(r, com.histmersion.api.automation.Agents.PauseReason.Wire("plan-quota")).value.contains("resumes by itself at 2026-10-05T21:40:00Z"))

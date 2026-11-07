@@ -33,7 +33,7 @@ class RenameCmdSuite extends munit.FunSuite:
     assert(parse("page2024_history").isLeft)
     assert(parse().isLeft)
 
-  test("citekey validity is decided by the server") { List("page2024_history", "Page 1959", "page-1959").foreach(to => assertEquals(parse("page2024_history", to), Right(RenameCmd.Args(com.histmersion.api.library.Citekey("page2024_history"), to, json = com.histmersion.cli.Cli.JsonOutput(false))))) }
+  test("citekey validity is decided by the server") { List("page2024_history", "Page 1959", "page-1959").foreach(to => assertEquals(parse("page2024_history", to), Right(RenameCmd.Args(com.histmersion.api.library.Citekey("page2024_history"), com.histmersion.api.library.Citekey(to), json = com.histmersion.cli.Cli.JsonOutput(false))))) }
 
   test("the subcommand is registered under `rename`"):
     val top = Command("histmersion", "test")(RenameCmd.command)

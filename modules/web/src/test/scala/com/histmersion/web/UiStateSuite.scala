@@ -47,9 +47,9 @@ class UiStateSuite extends munit.FunSuite:
     assertEquals(UiState.q.now(), Some("collapse"))
     assertEquals(UiState.inView.now(), true)
     assertEquals(UiState.open.now(), List(WindowKey.Source(com.histmersion.web.WindowKey.Source.Citekey("a2020_b")), WindowKey.Jobs))
-    assert(h.contains("open=source%3Aa2020_b") && h.contains("open=jobs"), h)
+    assert(h.value.contains("open=source%3Aa2020_b") && h.value.contains("open=jobs"), h)
     // layers are a local preference, never in a shared link
-    assert(!h.contains("layers"), h)
+    assert(!h.value.contains("layers"), h)
   }
 
   test("search editing preserves spaces between keystrokes; requests normalize the draft") {
@@ -57,7 +57,7 @@ class UiStateSuite extends munit.FunSuite:
     UiState.setSearch(com.histmersion.api.Api.Search.Text("Bronze "))
     assertEquals(UiState.q.now(), Some("Bronze "))
     assertEquals(UiState.toFilter().q, Some("Bronze"))
-    UiState.setSearch(UiState.q.now().get + "Age")
+    UiState.setSearch(com.histmersion.api.Api.Search.Text(UiState.q.now().get + "Age"))
     assertEquals(UiState.q.now(), Some("Bronze Age"))
     assertEquals(UiState.toFilter().q, Some("Bronze Age"))
     UiState.setSearch(com.histmersion.api.Api.Search.Text("   "))
@@ -156,7 +156,7 @@ class UiStateSuite extends munit.FunSuite:
     UiState.restoreLocal()
     assertEquals(UiState.sources.now(), true)
     // a local preference, never in a shared link
-    assert(!UiState.hashString.contains("sources"), UiState.hashString)
+    assert(!UiState.hashString.value.contains("sources"), UiState.hashString)
   }
 
   test("the pre-UiState layer memory is migrated once and removed") {
@@ -178,14 +178,14 @@ class UiStateSuite extends munit.FunSuite:
   test("title: in the hash, round-trips, reaches the filter, and \"clear all\" clears it (not a chip)") {
     UiState.set(UiState.title := Some("kadesh"), UiState.tags := List("bronze"))()
     val h = UiState.hashString
-    assert(h.contains("title=kadesh"), h)
+    assert(h.value.contains("title=kadesh"), h)
     UiState.loadHash(com.histmersion.web.UiState.UrlHash(""))
     assertEquals(UiState.title.now(), None)
     UiState.loadHash(h)
     assertEquals(UiState.title.now(), Some("kadesh"))
     assertEquals(UiState.toFilter().title, Some("kadesh"))
     assertEquals(UiState.toFilter(except = Set(com.histmersion.web.UiState.ToFilterExcept("title"))).title, None)
-    assert(!UiState.activeChips().exists(_.key == "title"), UiState.activeChips().toString)
+    assert(!UiState.activeChips().exists(_.key.value == "title"), UiState.activeChips().toString)
     UiState.clearFilters()
     assertEquals(UiState.title.now(), None)
   }
@@ -194,7 +194,7 @@ class UiStateSuite extends munit.FunSuite:
     UiState.loadHash(com.histmersion.web.UiState.UrlHash("#aq=troy&tag=bronze"))
     assertEquals(UiState.tags.now(), List("bronze"))
     assertEquals(UiState.title.now(), None)
-    assert(!UiState.hashString.contains("aq="), UiState.hashString)
+    assert(!UiState.hashString.value.contains("aq="), UiState.hashString)
   }
 
   test("the Articles and Events tabs ask for the GLOBAL filter, title included") {

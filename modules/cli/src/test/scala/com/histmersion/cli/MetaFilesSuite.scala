@@ -11,7 +11,7 @@ import java.nio.file.{Files, Path}
   */
 class MetaFilesSuite extends munit.FunSuite:
 
-  private def withServer[A](body: (String, () => List[String]) => A): A =
+  private def withServer[A](body: (Client.ServerUrl, () => List[String]) => A): A =
     val seen = java.util.concurrent.ConcurrentLinkedQueue[String]()
     val srv = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0)
     srv.createContext(
@@ -33,7 +33,7 @@ class MetaFilesSuite extends munit.FunSuite:
         ex.close()
     )
     srv.start()
-    try body(s"http://127.0.0.1:${srv.getAddress.getPort}", () => seen.toArray.toList.map(_.toString))
+    try body(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}"), () => seen.toArray.toList.map(_.toString))
     finally srv.stop(0)
 
   private def tempDir(): Path = Files.createTempDirectory("zz-meta")
@@ -60,7 +60,7 @@ class MetaFilesSuite extends munit.FunSuite:
         ex.close()
     )
     srv.start()
-    try assert(Ops.writeMeta(Client(s"http://127.0.0.1:${srv.getAddress.getPort}"), tempDir()).isLeft)
+    try assert(Ops.writeMeta(Client(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}")), tempDir()).isLeft)
     finally srv.stop(0)
 
   test("readMeta imports the three queue files and never sends GOALS.md"):

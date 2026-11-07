@@ -6,21 +6,22 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.library.GeoHit
 import com.histmersion.api.library.Confidence
+import com.histmersion.api.catalogue.{Latitude, Longitude, MapTilesUiConfig, Year}
 
 class MapViewSuite extends munit.FunSuite:
 
   override def beforeAll(): Unit = TestTokens.install()
 
-  private def hit(start: Long, end: Long, conf: Confidence = Confidence.High): GeoHit =
-    GeoHit(com.histmersion.api.library.Citekey("test"), com.histmersion.api.library.GeoHit.Title("Test"), com.histmersion.api.library.GeoHit.Claim("claim"), None, Some(30.0), Some(37.0), Some(start), Some(end), Some(conf))
+  private def hit(start: Year, end: Year, conf: Confidence = Confidence.High): GeoHit =
+    GeoHit(com.histmersion.api.library.Citekey("test"), com.histmersion.api.library.GeoHit.Title("Test"), com.histmersion.api.library.GeoHit.Claim("claim"), None, Some(Longitude(30.0)), Some(Latitude(37.0)), Some(start), Some(end), Some(conf))
 
   private def undatedHit: GeoHit =
-    GeoHit(com.histmersion.api.library.Citekey("test"), com.histmersion.api.library.GeoHit.Title("Test"), com.histmersion.api.library.GeoHit.Claim("claim"), None, Some(30.0), Some(37.0), None, None, None)
+    GeoHit(com.histmersion.api.library.Citekey("test"), com.histmersion.api.library.GeoHit.Title("Test"), com.histmersion.api.library.GeoHit.Claim("claim"), None, Some(Longitude(30.0)), Some(Latitude(37.0)), None, None, None)
 
   // ── midOf ─────────────────────────────────────────────────────────────────────
 
   test("midOf computes midpoint of a dated finding") {
-    assertEquals(MapView.midOf(hit(-3000, -2000)), Some(-2500.0))
+    assertEquals(MapView.midOf(hit(Year(-3000), Year(-2000))), Some(-2500.0))
   }
 
   test("midOf returns None for undated finding") {
@@ -28,20 +29,20 @@ class MapViewSuite extends munit.FunSuite:
   }
 
   test("midOf handles single-year findings") {
-    assertEquals(MapView.midOf(hit(-776, -776)), Some(-776.0))
+    assertEquals(MapView.midOf(hit(Year(-776), Year(-776))), Some(-776.0))
   }
 
   // ── avgMid ────────────────────────────────────────────────────────────────────
 
   test("avgMid averages midpoints of dated findings") {
-    val items = List(hit(-3000, -2000), hit(-1000, -500))
+    val items = List(hit(Year(-3000), Year(-2000)), hit(Year(-1000), Year(-500)))
     val avg = MapView.avgMid(items)
     assert(avg.isDefined)
-    assertEqualsDouble(avg.get, (-2500.0 + -750.0) / 2, 0.01)
+    assertEqualsDouble(avg.get.value, (-2500.0 + -750.0) / 2, 0.01)
   }
 
   test("avgMid skips undated findings") {
-    val items = List(hit(-3000, -2000), undatedHit)
+    val items = List(hit(Year(-3000), Year(-2000)), undatedHit)
     assertEquals(MapView.avgMid(items), Some(-2500.0))
   }
 
@@ -52,12 +53,12 @@ class MapViewSuite extends munit.FunSuite:
   // ── midRange ──────────────────────────────────────────────────────────────────
 
   test("midRange returns min/max midpoints") {
-    val items = List(hit(-3000, -2000), hit(-1000, -500), hit(-2000, -1500))
+    val items = List(hit(Year(-3000), Year(-2000)), hit(Year(-1000), Year(-500)), hit(Year(-2000), Year(-1500)))
     val range = MapView.midRange(items)
     assert(range.isDefined)
     val (lo, hi) = range.get
-    assertEqualsDouble(lo, -2500.0, 0.01) // earliest midpoint
-    assertEqualsDouble(hi, -750.0, 0.01) // latest midpoint
+    assertEqualsDouble(lo.value, -2500.0, 0.01) // earliest midpoint
+    assertEqualsDouble(hi.value, -750.0, 0.01) // latest midpoint
   }
 
   test("midRange returns None for empty input") {
@@ -71,104 +72,104 @@ class MapViewSuite extends munit.FunSuite:
   // ── colorFor ──────────────────────────────────────────────────────────────────
 
   test("colorFor at span start returns first viridis color") {
-    val c = MapView.colorFor(Some(-3500.0), (com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
-    assertEquals(c, Fmt.color(0.0))
+    val c = MapView.colorFor(Some(MapView.Mid(-3500.0)), (com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
+    assertEquals(c, Fmt.color(Fmt.RampPosition(0.0)))
   }
 
   test("colorFor at span end returns last viridis color") {
-    val c = MapView.colorFor(Some(-500.0), (com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
-    assertEquals(c, Fmt.color(1.0))
+    val c = MapView.colorFor(Some(MapView.Mid(-500.0)), (com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
+    assertEquals(c, Fmt.color(Fmt.RampPosition(1.0)))
   }
 
   test("colorFor at span midpoint returns middle viridis color") {
-    val c = MapView.colorFor(Some(-2000.0), (com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
-    assertEquals(c, Fmt.color(0.5))
+    val c = MapView.colorFor(Some(MapView.Mid(-2000.0)), (com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
+    assertEquals(c, Fmt.color(Fmt.RampPosition(0.5)))
   }
 
   test("colorFor with None mid returns first viridis stop") {
     val c = MapView.colorFor(None, (com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
-    assertEquals(c, Fmt.color(0.0))
+    assertEquals(c, Fmt.color(Fmt.RampPosition(0.0)))
   }
 
   test("colorFor desaturates for low confidence") {
-    val highC = MapView.colorFor(Some(-2000.0), (com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
-    val lowC = MapView.colorFor(Some(-2000.0), (com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.Low))
+    val highC = MapView.colorFor(Some(MapView.Mid(-2000.0)), (com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
+    val lowC = MapView.colorFor(Some(MapView.Mid(-2000.0)),(com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.Low))
     assert(highC != lowC, "low confidence should desaturate")
   }
 
   test("colorFor uses viewport span, not global span") {
-    val wide = MapView.colorFor(Some(-2000.0), (com.histmersion.api.Years.Astronomical(-12000L), com.histmersion.api.Years.Astronomical(2026L)), Certainty.Stated(Confidence.High))
-    val narrow = MapView.colorFor(Some(-2000.0), (com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
+    val wide = MapView.colorFor(Some(MapView.Mid(-2000.0)), (com.histmersion.api.Years.Astronomical(-12000L), com.histmersion.api.Years.Astronomical(2026L)), Certainty.Stated(Confidence.High))
+    val narrow = MapView.colorFor(Some(MapView.Mid(-2000.0)),(com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
     assert(wide != narrow, "different spans should produce different colors for the same year")
   }
 
   // ── gradientBg ────────────────────────────────────────────────────────────────
 
   test("gradientBg returns flat color for single item") {
-    val items = List(hit(-3000, -2000))
+    val items = List(hit(Year(-3000), Year(-2000)))
     val bg = MapView.gradientBg(items, (com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
-    assert(bg.startsWith("rgb("), s"single item should be flat: $bg")
-    assert(!bg.contains("gradient"), s"single item should not have gradient: $bg")
+    assert(bg.value.startsWith("rgb("), s"single item should be flat: $bg")
+    assert(!bg.value.contains("gradient"), s"single item should not have gradient: $bg")
   }
 
   test("gradientBg returns gradient for items spanning a range") {
-    val items = List(hit(-3000, -2000), hit(-1000, -500))
+    val items = List(hit(Year(-3000), Year(-2000)), hit(Year(-1000), Year(-500)))
     val bg = MapView.gradientBg(items, (com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
-    assert(bg.contains("linear-gradient"), s"expected gradient but got: $bg")
-    assert(bg.contains("135deg"), s"expected 135deg angle: $bg")
+    assert(bg.value.contains("linear-gradient"), s"expected gradient but got: $bg")
+    assert(bg.value.contains("135deg"), s"expected 135deg angle: $bg")
     // a VALUE for the marker's --dot-bg, not a declaration
-    assert(bg.startsWith("linear-gradient("), bg)
+    assert(bg.value.startsWith("linear-gradient("), bg.value)
   }
 
   test("gradientBg returns flat color for undated items") {
     val items = List(undatedHit, undatedHit)
     val bg = MapView.gradientBg(items, (com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
-    assert(bg.startsWith("rgb("), s"undated should be flat: $bg")
+    assert(bg.value.startsWith("rgb("), s"undated should be flat: $bg")
   }
 
   test("gradientBg returns flat color when all items have same midpoint") {
-    val items = List(hit(-2000, -1000), hit(-2000, -1000))
+    val items = List(hit(Year(-2000), Year(-1000)), hit(Year(-2000), Year(-1000)))
     val bg = MapView.gradientBg(items, (com.histmersion.api.Years.Astronomical(-3500L), com.histmersion.api.Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
-    assert(!bg.contains("gradient"), s"same midpoints should be flat: $bg")
+    assert(!bg.value.contains("gradient"), s"same midpoints should be flat: $bg")
   }
 
   // ── the popup uses the shared atoms ────────────────────────────────────────────────────────────
 
   test("the finding popup links the source by DOI (else citekey) and shows a confidence badge") {
-    val withDoi = hit(-1200, -1190, Confidence.Medium).modify(_.doi).setTo(Some("10.1/x"))
+    val withDoi = hit(Year(-1200), Year(-1190), Confidence.Medium).modify(_.doi).setTo(Some(com.histmersion.api.library.Doi("10.1/x")))
     val html = MapView.popupHtml(withDoi)
-    assert(html.contains(com.histmersion.api.HtmlAtoms.sourceLink(com.histmersion.api.library.Citekey("test"), Some(com.histmersion.api.library.Doi("10.1/x")), "10.1/x")), html)
-    assert(html.contains("conf-badge conf-medium"), html)
-    assert(!html.contains("(medium)"), "the bare parenthesised word is gone: " + html)
-    assert(MapView.popupHtml(hit(-1200, -1190)).contains(">test</a>"))
+    assert(html.value.contains(com.histmersion.api.HtmlAtoms.sourceLink(com.histmersion.api.library.Citekey("test"), Some(com.histmersion.api.library.Doi("10.1/x")), "10.1/x")), html.value)
+    assert(html.value.contains("conf-badge conf-medium"), html.value)
+    assert(!html.value.contains("(medium)"), "the bare parenthesised word is gone: " + html.value)
+    assert(MapView.popupHtml(hit(Year(-1200), Year(-1190))).value.contains(">test</a>"))
   }
 
   // ── a dot's hover: the source's card, never a bare citekey ──────────────────────────────────────
 
   test("a single finding's dot has no native tooltip; its hover is its source's card") {
-    val one = List(hit(-3000, -2000).modify(_.citekey).setTo("mathieson2018_genomic").modify(_.title).setTo("The genomic history"))
+    val one = List(hit(Year(-3000), Year(-2000)).modify(_.citekey).setTo(com.histmersion.api.library.Citekey("mathieson2018_genomic")).modify(_.title).setTo(GeoHit.Title("The genomic history")))
     assertEquals(MapView.markerTitle(one), None)
     assertEquals(MapView.hoverSource(one), Some("mathieson2018_genomic"))
   }
 
   test("coincident findings keep a readable native tooltip and no single source's card") {
-    val three = List(hit(-3000, -2000), hit(-1500, -1400).modify(_.citekey).setTo("b"), hit(-1200, -1100).modify(_.citekey).setTo("c"))
+    val three = List(hit(Year(-3000), Year(-2000)), hit(Year(-1500), Year(-1400)).modify(_.citekey).setTo(com.histmersion.api.library.Citekey("b")), hit(Year(-1200), Year(-1100)).modify(_.citekey).setTo(com.histmersion.api.library.Citekey("c")))
     assertEquals(MapView.markerTitle(three), Some("3 findings here"))
     assertEquals(MapView.hoverSource(three), None)
-    assert(!MapView.markerTitle(three).exists(_.contains("test")), "no citekey in it")
+    assert(!MapView.markerTitle(three).exists(_.value.contains("test")), "no citekey in it")
     assertEquals(MapView.markerTitle(Nil), None)
     assertEquals(MapView.hoverSource(Nil), None)
   }
 
   test("a single dot is named by its source's title and period; DOI, else citekey, only when untitled") {
-    val pt = hit(-1200, -1190).modify(_.citekey).setTo("zz2026_x").modify(_.title).setTo("Zz title")
-    assertEquals(MapView.markerLabel(pt), s"Zz title (${Fmt.periodStr(-1200L, -1190L)})")
+    val pt = hit(Year(-1200), Year(-1190)).modify(_.citekey).setTo(com.histmersion.api.library.Citekey("zz2026_x")).modify(_.title).setTo(GeoHit.Title("Zz title"))
+    assertEquals(MapView.markerLabel(pt), s"Zz title (${Fmt.periodStr(Year(-1200L), Year(-1190L))})")
     assertEquals(MapView.markerLabel(undatedHit.copy(title = com.histmersion.api.library.GeoHit.Title("Zz"))), "Zz")
     assertEquals(
-      MapView.markerLabel(pt.modify(_.title).setTo(" ").modify(_.doi).setTo(Some("10.1/x"))),
-      s"10.1/x (${Fmt.periodStr(-1200L, -1190L)})"
+      MapView.markerLabel(pt.modify(_.title).setTo(GeoHit.Title(" ")).modify(_.doi).setTo(Some(com.histmersion.api.library.Doi("10.1/x")))),
+      s"10.1/x (${Fmt.periodStr(Year(-1200L), Year(-1190L))})"
     )
-    assertEquals(MapView.markerLabel(pt.modify(_.title).setTo("")).startsWith("zz2026_x"), true)
+    assertEquals(MapView.markerLabel(pt.modify(_.title).setTo(GeoHit.Title(""))).value.startsWith("zz2026_x"), true)
   }
 
   // markerDiff (#887) is gone: the findings are a PointLayer like every kind, diffed by FadingLayer.plan
@@ -201,14 +202,14 @@ class MapViewSuite extends munit.FunSuite:
     import com.histmersion.web.ui.Layout
     assertEquals(MapView.overlayLimit(GeoTime.Within(com.histmersion.api.catalogue.Year(-3000), com.histmersion.api.catalogue.Year(2000), latest = com.histmersion.api.catalogue.GeoTime.Within.Latest(false))), Layout.overlayRangeFetchLimit)
     assertEquals(MapView.overlayLimit(GeoTime.At(com.histmersion.api.catalogue.Year(1500))), Layout.overlayFetchLimit)
-    assert(Layout.overlayRangeFetchLimit > Layout.overlayFetchLimit)
+    assert(Layout.overlayRangeFetchLimit.value > Layout.overlayFetchLimit.value)
 
   test("the tiled layers are asked for the span itself; in playback for its window widened to whole buckets"):
-    assertEquals(MapView.tileSpanOf((com.histmersion.api.Years.Astronomical(-1500L), com.histmersion.api.Years.Astronomical(-1600L)), playback = com.histmersion.web.MapView.Playback(false), 0.0, 1.0), (-1600L, -1500L))
+    assertEquals(MapView.tileSpanOf((com.histmersion.api.Years.Astronomical(-1500L), com.histmersion.api.Years.Astronomical(-1600L)), playback = com.histmersion.web.MapView.Playback(false), MapView.YearsPerSecond(0.0), MapTilesUiConfig.PlaybackBucketSeconds(1.0)), (-1600L, -1500L))
     // 166 years a second, a bucket of one second: 200-year buckets
-    assertEquals(MapView.tileSpanOf((com.histmersion.api.Years.Astronomical(-1650L), com.histmersion.api.Years.Astronomical(-1550L)), playback = com.histmersion.web.MapView.Playback(true), 166.0, 1.0), (-1800L, -1401L))
+    assertEquals(MapView.tileSpanOf((com.histmersion.api.Years.Astronomical(-1650L), com.histmersion.api.Years.Astronomical(-1550L)), playback = com.histmersion.web.MapView.Playback(true), MapView.YearsPerSecond(166.0), MapTilesUiConfig.PlaybackBucketSeconds(1.0)),(-1800L, -1401L))
     // the next frames stay in the same buckets: the same tiles
-    assertEquals(MapView.tileSpanOf((com.histmersion.api.Years.Astronomical(-1640L), com.histmersion.api.Years.Astronomical(-1540L)), playback = com.histmersion.web.MapView.Playback(true), 166.0, 1.0), (-1800L, -1401L))
+    assertEquals(MapView.tileSpanOf((com.histmersion.api.Years.Astronomical(-1640L), com.histmersion.api.Years.Astronomical(-1540L)), playback = com.histmersion.web.MapView.Playback(true), MapView.YearsPerSecond(166.0), MapTilesUiConfig.PlaybackBucketSeconds(1.0)),(-1800L, -1401L))
     assertEquals(MapView.tileFilter((com.histmersion.api.Years.Astronomical(-10L), com.histmersion.api.Years.Astronomical(20L))).period, Some(com.histmersion.api.catalogue.Period(com.histmersion.api.catalogue.Year(-10L), com.histmersion.api.catalogue.Year(20L))))
 
   test("the query carries a snapshot as asOf and a whole range as from/to/pick"):

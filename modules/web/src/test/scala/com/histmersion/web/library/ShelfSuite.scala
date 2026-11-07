@@ -32,7 +32,7 @@ class ShelfSuite extends munit.FunSuite:
       )
     val r = ShelfRow.of(b, _ => false, _ => "now")
     assertEquals((r.name, r.kind, r.line, r.unread), ("mine", "Source", "Zz title", true))
-    assertEquals(ShelfRow.of(b, _ == "source:zz", _ => "now").unread, false)
+    assertEquals(ShelfRow.of(b, _.value == "source:zz", _ => "now").unread, false)
     val p = Bookmark(
       bid,
       Target(ItemKind.Period, from = Some(Year(-1200)), to = Some(Year(-1150))),

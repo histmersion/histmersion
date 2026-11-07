@@ -2,7 +2,7 @@ package com.histmersion.cli
 
 import com.histmersion.api.ListPatch
 import com.histmersion.config.*
-import com.histmersion.api.library.{EdgesPatch, MetadataPatch}
+import com.histmersion.api.library.{EdgesPatch, FindingsPatch, MetadataPatch}
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
 import com.histmersion.api.catalogue.Period
@@ -20,14 +20,14 @@ class PatchesSuite extends munit.FunSuite:
       tagsReplace: Option[String] = None,
       topics: Option[String] = None,
       regions: Option[String] = None,
-      summary: Option[String] = None,
+      summary: Option[Source.Summary] = None,
       status: Option[Source.Status] = None,
-      title: Option[String] = None,
+      title: Option[com.histmersion.api.library.Title] = None,
       period: Option[String] = None,
       addFindings: List[String] = Nil,
       removeFindings: List[String] = Nil,
-      ifUpdatedAt: Option[String] = None,
-      bodyFile: Option[String] = None,
+      ifUpdatedAt: Option[Source.UpdatedAt] = None,
+      bodyFile: Option[Patches.BodyFile] = None,
       addEdges: List[String] = Nil,
       removeEdges: List[String] = Nil
   ) = Patches.build(
@@ -62,29 +62,38 @@ class PatchesSuite extends munit.FunSuite:
 
   test("--topics / --regions replace the whole list"):
     val p = build(topics = Some("a,b"), regions = Some("Anatolia")).toOption.get
-    assertEquals(p.topics, Some(List("a", "b")))
-    assertEquals(p.regions, Some(List("Anatolia")))
+    assertEquals(p.topics, Some(List(Source.Topics("a"), Source.Topics("b"))))
+    assertEquals(p.regions, Some(List(Source.Regions("Anatolia"))))
 
   test("--status and --title fold into one metadata part"):
-    val p = build(status = Some(Source.Status.Superseded), title = Some("New")).toOption.get
-    assertEquals(p.metadata, Some(MetadataPatch(title = (Some("New")).map(com.histmersion.api.library.Title.apply), status = Some(Source.Status.Superseded))))
+    val p = build(status = Some(Source.Status.Superseded), title = Some(com.histmersion.api.library.Title("New"))).toOption.get
+    assertEquals(p.metadata, Some(MetadataPatch(title = Some(com.histmersion.api.library.Title("New")), status = Some(Source.Status.Superseded))))
 
   test("--add-finding parses JSON; --remove-finding collects ids"):
     val p = build(
       addFindings = List("""{"claim":"c","lon":1.0,"lat":2.0}"""),
       removeFindings = List("x#0", "x#1")
     ).toOption.get
-    assertEquals(p.findings.get.add, List(Finding.Input(com.histmersion.api.library.Finding.Claim("c"), lon = Some(1.0), lat = Some(2.0))))
-    assertEquals(p.findings.get.remove, List("x#0", "x#1"))
+    assertEquals(
+      p.findings.get.add,
+      List(
+        Finding.Input(
+          com.histmersion.api.library.Finding.Claim("c"),
+          lon = Some(com.histmersion.api.catalogue.Longitude(1.0)),
+          lat = Some(com.histmersion.api.catalogue.Latitude(2.0))
+        )
+      )
+    )
+    assertEquals(p.findings.get.remove, List(FindingsPatch.Remove("x#0"), FindingsPatch.Remove("x#1")))
 
   test("--add-finding with bad JSON is a usage error, not a crash"):
     val e = build(addFindings = List("{nope")).swap.toOption.get
-    assertEquals(e.exitCode, 1)
-    assert(e.message.contains("--add-finding"), e.message)
+    assertEquals(e.exitCode, ExitCode.Usage)
+    assert(e.message.value.contains("--add-finding"), e.message)
 
   test("--period takes signed years, BCE negative; a malformed one is a usage error"):
     assertEquals(build(period = Some("-3300,-2600")).toOption.get.period, Some(Period.Input(com.histmersion.api.catalogue.Year(-3300), com.histmersion.api.catalogue.Year(-2600))))
-    assertEquals(build(period = Some("3300 BCE")).swap.toOption.get.exitCode, 1)
+    assertEquals(build(period = Some("3300 BCE")).swap.toOption.get.exitCode, ExitCode.Usage)
 
   test("--json carries the parts that have no flag, e.g. edges"):
     val p = build(json = Some("""{"edges":{"add":[{"src":"a","dst":"b","kind":"refutes"}]}}""")).toOption.get
@@ -117,8 +126,8 @@ class PatchesSuite extends munit.FunSuite:
 
   test("--add-edge with an unknown kind or no target is a usage error"):
     val bad = build(addEdges = List("disagrees:x")).swap.toOption.get
-    assertEquals(bad.exitCode, 1)
-    assert(bad.message.contains("unknown edge kind 'disagrees'"), bad.message)
+    assertEquals(bad.exitCode, ExitCode.Usage)
+    assert(bad.message.value.contains("unknown edge kind 'disagrees'"), bad.message)
     assert(build(addEdges = List("refutes")).isLeft)
     assert(build(removeEdges = List("refutes:")).isLeft)
 
@@ -126,16 +135,16 @@ class PatchesSuite extends munit.FunSuite:
     val p = build(
       json = Some("""{"summary":"from json","topics":["t"],"tags":{"add":["from-json"]}}"""),
       tagsAdd = Some("from-flag"),
-      summary = Some("from flag")
+      summary = Some(Source.Summary("from flag"))
     ).toOption.get
-    assertEquals(p.summary, Some("from flag"))
+    assertEquals(p.summary, Some(Source.Summary("from flag")))
     assertEquals(p.tags, Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("from-flag")))))
-    assertEquals(p.topics, Some(List("t")))
+    assertEquals(p.topics, Some(List(Source.Topics("t"))))
 
   test("--if-updated-at is carried through as the precondition"):
     assertEquals(
-      build(ifUpdatedAt = Some("2026-08-25T10:00:00.000000Z")).toOption.get.ifUpdatedAt,
-      Some("2026-08-25T10:00:00.000000Z")
+      build(ifUpdatedAt = Some(Source.UpdatedAt("2026-08-25T10:00:00.000000Z"))).toOption.get.ifUpdatedAt,
+      Some(Source.UpdatedAt("2026-08-25T10:00:00.000000Z"))
     )
 
   test("--tags-replace with --tags-remove keeps both parts"):
@@ -147,7 +156,10 @@ class PatchesSuite extends munit.FunSuite:
     val f = java.nio.file.Files.createTempFile("body", ".md")
     try
       java.nio.file.Files.writeString(f, "# Chapter\n\ntext")
-      assertEquals(build(bodyFile = Some(f.toString)).map(_.body), Right(Some("# Chapter\n\ntext")))
-      assert(build(bodyFile = Some(f.toString + ".nope")).isLeft)
+      assertEquals(
+        build(bodyFile = Some(Patches.BodyFile(f.toString))).map(_.body),
+        Right(Some(Source.OcrMarkdown("# Chapter\n\ntext")))
+      )
+      assert(build(bodyFile = Some(Patches.BodyFile(f.toString + ".nope"))).isLeft)
       assertEquals(build().map(_.body), Right(None), "absent flag → body untouched")
     finally java.nio.file.Files.deleteIfExists(f)

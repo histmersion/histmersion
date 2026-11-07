@@ -19,18 +19,19 @@ class PolledListSuite extends munit.FunSuite:
 
   private given ExecutionContext = ExecutionContext.parasitic
 
-  private def job(id: String, state: JobState = JobState.Done) = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id(id), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), state.wire)
-  private def page(total: Int, next: Option[String], counts: (String, Int)*) = Paging.Page(total, next, counts.toList)
+  private def job(id: com.histmersion.api.SpatialHierarchyResult.Job.Id, state: JobState = JobState.Done) = JobInfo(id, com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), state.wire)
+  private def jobId(id: String) = com.histmersion.api.SpatialHierarchyResult.Job.Id(id)
+  private def page(total: Paging.Page.Total, next: Option[Paging.Page.Next], counts: (Paging.Page.CountState, Paging.Count)*) = Paging.Page(total, next, counts.toList)
 
   /** A fake server: each request waits for the test to answer it; a fake clock holds the next poll. */
   final private class Fixture(liveRows: Boolean):
-    val asked = mutable.ListBuffer.empty[(Option[String], Option[String], Promise[(List[JobInfo], Paging.Page)])]
-    val timers = mutable.ListBuffer.empty[(Int, () => Unit)]
+    val asked = mutable.ListBuffer.empty[(Option[Paging.Cursor], Option[Paging.Cursor], Promise[(List[JobInfo], Paging.Page)])]
+    val timers = mutable.ListBuffer.empty[(Poll.Revision, () => Unit)]
     val list = PolledList[JobInfo](
       fetch = (upTo, before) => { val p = Promise[(List[JobInfo], Paging.Page)](); asked += ((upTo, before, p)); p.future },
-      id = _.id.value,
+      id = j => PolledList.ItemId(j.id.value),
       live = (_, _) => liveRows,
-      later = (ms, f) => { timers += ((ms, f)); timers.size },
+      later = (ms, f) => { timers += ((ms, f)); PolledList.TimerId(timers.size) },
       cancel = _ => ()
     )
     def answer(i: Int, rows: List[JobInfo], pg: Paging.Page): Unit = asked(i)._3.success((rows, pg))
@@ -40,35 +41,35 @@ class PolledListSuite extends munit.FunSuite:
     val f = Fixture(liveRows = true)
     f.list.open()
     assertEquals(f.asked.map(a => (a._1, a._2)).toList, List((None, None)))
-    f.answer(0, List(job("b"), job("a")), page(2, None))
+    f.answer(0, List(job(jobId("b")), job(jobId("a"))), page(Paging.Page.Total(2), None))
     assertEquals(f.list.listing.now().rows.map(_.id), List("b", "a").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
-    assert(f.list.loaded.now())
+    assert(f.list.loaded.now().value)
     assertEquals(f.timers.map(_._1).toList, List(Poll.FirstMs))
 
   test("nothing live (approvals): no poll is scheduled"):
     val f = Fixture(liveRows = false)
     f.list.open()
-    f.answer(0, List(job("a")), page(1, None))
+    f.answer(0, List(job(jobId("a"))), page(Paging.Page.Total(1), None))
     assert(f.timers.isEmpty)
 
   test("a poll after Show older asks down to the last row shown and keeps the older pages"):
     val f = Fixture(liveRows = true)
     f.list.open()
-    f.answer(0, List(job("c"), job("b")), page(4, Some("b")))
+    f.answer(0, List(job(jobId("c")), job(jobId("b"))), page(Paging.Page.Total(4), Some(Paging.Page.Next("b"))))
     f.list.showOlder()
     assertEquals((f.asked(1)._1, f.asked(1)._2), (None, Some("b")))
-    f.answer(1, List(job("a")), page(4, None))
+    f.answer(1, List(job(jobId("a"))), page(Paging.Page.Total(4), None))
     assertEquals(f.list.listing.now().rows.map(_.id), List("c", "b", "a").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
     f.list.refresh()
     assertEquals(f.asked(2)._1, Some("a"), "the poll reaches the last row shown")
-    f.answer(2, List(job("d"), job("c"), job("b"), job("a")), page(4, None))
+    f.answer(2, List(job(jobId("d")), job(jobId("c")), job(jobId("b")), job(jobId("a"))), page(Paging.Page.Total(4), None))
     assertEquals(f.list.listing.now().rows.map(_.id), List("d", "c", "b", "a").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
 
   test("the last row shown is gone: the poll starts over from the newest page"):
     val f = Fixture(liveRows = true)
     f.list.open()
-    f.answer(0, List(job("c"), job("b")), page(4, Some("b")))
-    f.list.showOlder(); f.answer(1, List(job("a")), page(4, None))
+    f.answer(0, List(job(jobId("c")), job(jobId("b"))), page(Paging.Page.Total(4), Some(Paging.Page.Next("b"))))
+    f.list.showOlder(); f.answer(1, List(job(jobId("a"))), page(Paging.Page.Total(4), None))
     f.list.refresh()
     f.fail(2, "no row 'a'")
     assertEquals((f.asked(3)._1, f.asked(3)._2), (None, None))
@@ -85,39 +86,39 @@ class PolledListSuite extends munit.FunSuite:
     val f = Fixture(liveRows = true)
     f.list.open()
     f.list.close()
-    f.answer(0, List(job("late")), page(1, None))
+    f.answer(0, List(job(jobId("late"))), page(Paging.Page.Total(1), None))
     assert(f.list.listing.now().rows.isEmpty && f.timers.isEmpty)
     f.list.open()
     f.list.restart()
-    f.answer(2, List(job("new")), page(1, None))
-    f.answer(1, List(job("old")), page(1, None))
+    f.answer(2, List(job(jobId("new"))), page(Paging.Page.Total(1), None))
+    f.answer(1, List(job(jobId("old"))), page(Paging.Page.Total(1), None))
     assertEquals(f.list.listing.now().rows.map(_.id), List("new").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
 
   /** One polled item (the agent run's window), on the same fake server and clock. */
   final private class Single:
     val asked = mutable.ListBuffer.empty[Promise[JobInfo]]
-    val timers = mutable.ListBuffer.empty[(Int, () => Unit)]
-    val settled = mutable.ListBuffer.empty[(Option[String], String)]
+    val timers = mutable.ListBuffer.empty[(Poll.Revision, () => Unit)]
+    val settled = mutable.ListBuffer.empty[(Option[JobInfo.Status], JobInfo.Status)]
     val one = PolledList.single[JobInfo](
       fetch = () => { val p = Promise[JobInfo](); asked += p; p.future },
       live = j => !j.state.isTerminal,
       after = (before, now) => settled += ((before.map(_.status), now.status)),
-      later = (ms, f) => { timers += ((ms, f)); timers.size },
+      later = (ms, f) => { timers += ((ms, f)); PolledList.TimerId(timers.size) },
       cancel = _ => ()
     )
 
   test("single (#1946): the item, polled while live, then backing off; none once it settles"):
     val f = Single()
     f.one.open()
-    f.asked(0).success(job("r", JobState.Running))
+    f.asked(0).success(job(jobId("r"), JobState.Running))
     assertEquals(f.one.listing.now().rows.map(_.status), List(JobState.Running.wire))
     assertEquals(f.timers.map(_._1).toList, List(Poll.FirstMs))
     assert(f.settled.isEmpty, "the first load is not a poll")
     f.timers.last._2()
-    f.asked(1).success(job("r", JobState.Running))
+    f.asked(1).success(job(jobId("r"), JobState.Running))
     assertEquals(f.timers.map(_._1).toList, List(Poll.FirstMs, 1600), "unchanged: slower")
     f.timers.last._2()
-    f.asked(2).success(job("r", JobState.Done))
+    f.asked(2).success(job(jobId("r"), JobState.Done))
     assertEquals(f.timers.size, 2, "settled: no further poll")
     assertEquals(f.settled.toList.last, (Some(JobState.Running.wire), JobState.Done.wire))
     assertEquals(f.one.listing.now().hasOlder, false)
@@ -126,14 +127,14 @@ class PolledListSuite extends munit.FunSuite:
     val f = Single()
     f.one.open()
     f.one.close()
-    f.asked(0).success(job("late", JobState.Running))
+    f.asked(0).success(job(jobId("late"), JobState.Running))
     assert(f.one.listing.now().rows.isEmpty && f.timers.isEmpty)
     f.one.open()
     f.asked(1).failure(RuntimeException("HTTP 404"))
     assertEquals(f.one.failure.now(), Some("HTTP 404"))
     assertEquals(f.timers.map(_._1).toList, List(Poll.MaxMs))
     f.one.refresh(changed = com.histmersion.web.Poll.DataChanged(true)) // a control button was pressed
-    f.asked(2).success(job("r", JobState.Running))
+    f.asked(2).success(job(jobId("r"), JobState.Running))
     assertEquals(f.one.failure.now(), None)
     assertEquals(f.timers.last._1, Poll.FirstMs)
 

@@ -1,7 +1,5 @@
 package com.histmersion.cli
 
-import com.histmersion.testsupport.ComparedByValue.given
-
 import com.histmersion.api.catalogue.EventPatch
 import com.monovore.decline.Command
 
@@ -26,12 +24,12 @@ class EventsCmdSuite extends munit.FunSuite:
   test("--lat/--lon is the event's own point, longitude first; a negative is written --lon=-1.5"):
     assertEquals(
       parse("x", "--lat", "36.5", "--lon=-1.5").map(_._2.map(_.geometry)),
-      Right(Right(Some("""{"type":"Point","coordinates":[-1.5,36.5]}""")))
+      Right(Right(Some(EventPatch.Geometry("""{"type":"Point","coordinates":[-1.5,36.5]}"""))))
     )
 
   test("nothing to change, a scale that is none, or half a point is refused before any request"):
     def refused(args: String*) = parse(args*) match
-      case Right((_, Left(e))) => e.message
+      case Right((_, Left(e))) => e.message.value
       case other               => fail(s"not refused: $other")
     assert(refused("x").contains("nothing to change"))
     assert(refused("x", "--scale", "global").contains("local, regional or auto"))

@@ -1,7 +1,5 @@
 package com.histmersion.cli
 
-import com.histmersion.testsupport.ComparedByValue.given
-
 import com.monovore.decline.Command
 import com.histmersion.config.*
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, FormatReport, FormatRule, FormatSeverity}
@@ -36,13 +34,22 @@ class FormatCmdSuite extends munit.FunSuite:
     assert(!parses(PlacesCmd.command, "places", "rename", "zz_old", "zz_old"))
 
   test("a note file's own frontmatter is split off; a body is all body"):
-    val note = "---\ntype: concept\nslug: x\n---\n\n# X\n\nText.\n"
-    assertEquals(FileFormat.splitFrontmatter(note), ("---\ntype: concept\nslug: x\n---\n", "\n# X\n\nText.\n"))
+    val note = FileFormat.Text("---\ntype: concept\nslug: x\n---\n\n# X\n\nText.\n")
+    assertEquals(
+      FileFormat.splitFrontmatter(note),
+      (FileFormat.Frontmatter("---\ntype: concept\nslug: x\n---\n"), FileFormat.Body("\n# X\n\nText.\n"))
+    )
     val (h, b) = FileFormat.splitFrontmatter(note)
-    assertEquals(h + b, note)
-    assertEquals(FileFormat.splitFrontmatter(com.histmersion.cli.FileFormat.Text("# X\n\nText.\n")), ("", "# X\n\nText.\n"))
+    assertEquals(h.value + b.value, note.value)
+    assertEquals(
+      FileFormat.splitFrontmatter(FileFormat.Text("# X\n\nText.\n")),
+      (FileFormat.Frontmatter(""), FileFormat.Body("# X\n\nText.\n"))
+    )
     // an opening `---` with no closing one is not a frontmatter block
-    assertEquals(FileFormat.splitFrontmatter(com.histmersion.cli.FileFormat.Text("---\nnot closed\n")), ("", "---\nnot closed\n"))
+    assertEquals(
+      FileFormat.splitFrontmatter(FileFormat.Text("---\nnot closed\n")),
+      (FileFormat.Frontmatter(""), FileFormat.Body("---\nnot closed\n"))
+    )
 
   test("the Markdown rendering of a report: counts, one line per problem, the fix"):
     val i = FormatIssue(

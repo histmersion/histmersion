@@ -1,7 +1,5 @@
 package com.histmersion.web
 
-import com.histmersion.testsupport.ComparedByValue.given
-
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Promise}
 
@@ -58,31 +56,31 @@ class FilterTabSuite extends munit.FunSuite:
   test("TabState: loading keeps the rows shown, a failure ends loading with the error"):
     val s = TabState.first(TabPage(rows, com.histmersion.api.RowCount(412)), com.histmersion.web.ResultsPaging.PageNumber(25))
     val l = TabState.loading(s)
-    assert(l.loading && l.rows == rows && l.shown.value == 25)
+    assert(l.loading.value && l.rows == rows && l.shown.value == 25)
     val f = TabState.failed(l, com.histmersion.web.TabState.Problem("HTTP 500"))
-    assert(!f.loading && f.error.contains("HTTP 500") && f.rows == rows)
+    assert(!f.loading.value && f.error.map(_.value).contains("HTTP 500") && f.rows == rows)
     assertEquals(TabState.loading(f).error, None, "a new request clears the old error")
 
   test("TabState: show more reveals the loaded rows first, then asks for the next page past them"):
     val s = TabState.first(TabPage(rows, com.histmersion.api.RowCount(412)), com.histmersion.web.ResultsPaging.PageNumber(25))
-    assertEquals(s.moreLabel(com.histmersion.web.ResultsPaging.PageNumber(25)), Some("show 25 more (387 left)"))
+    assertEquals(s.moreLabel(com.histmersion.web.ResultsPaging.PageNumber(25)).map(_.value), Some("show 25 more (387 left)"))
     assertEquals(TabState.more(s, com.histmersion.web.ResultsPaging.PageNumber(25)).map((_.shown.value: Int)), Right(50))
     val atEnd = s.copy(shown = com.histmersion.api.RowCount(200))
-    assertEquals(TabState.more(atEnd, com.histmersion.web.ResultsPaging.PageNumber(25)), Left(200), "rows past the first fetch are fetched, no longer unreachable")
+    assertEquals(TabState.more(atEnd, com.histmersion.web.ResultsPaging.PageNumber(25)).left.map(_.value), Left(200), "rows past the first fetch are fetched, no longer unreachable")
     val next = TabState.appended(TabState.loading(atEnd), TabPage((201 to 400).toList, com.histmersion.api.RowCount(412)), com.histmersion.web.ResultsPaging.PageNumber(25))
-    assertEquals((next.rows.size, next.shown.value, next.loading), (400, 225, false))
+    assertEquals((next.rows.size, next.shown.value: Int, next.loading.value), (400, 225, false))
 
   test("TabState: the last rows; nothing more once every row is shown"):
     val s = TabState.first(TabPage((1 to 10).toList, com.histmersion.api.RowCount(10)), com.histmersion.web.ResultsPaging.PageNumber(25))
     assertEquals(s.shown.value, 10)
     assertEquals(s.moreLabel(com.histmersion.web.ResultsPaging.PageNumber(25)), None)
     val few = TabState.first(TabPage((1 to 30).toList, com.histmersion.api.RowCount(30)), com.histmersion.web.ResultsPaging.PageNumber(25))
-    assertEquals(few.moreLabel(com.histmersion.web.ResultsPaging.PageNumber(25)), Some("show 5 more (5 left)"))
+    assertEquals(few.moreLabel(com.histmersion.web.ResultsPaging.PageNumber(25)).map(_.value), Some("show 5 more (5 left)"))
     assertEquals(TabState.more(few, com.histmersion.web.ResultsPaging.PageNumber(25)).map((_.shown.value: Int)), Right(30))
 
   test("TabState: the count line — loading before the first answer, then the sidebar's one form with the extras"):
-    assertEquals(TabState[Int]().countLine(com.histmersion.api.Plural.Noun.Singular("article"), com.histmersion.api.Plural.Noun.Plural("articles")), "loading…")
+    assertEquals(TabState[Int]().countLine(com.histmersion.api.Plural.Noun.Singular("article"), com.histmersion.api.Plural.Noun.Plural("articles")).value, "loading…")
     val s = TabState.first(TabPage(rows, com.histmersion.api.RowCount(412), List(com.histmersion.web.TabPage.Extras("200 concepts"), com.histmersion.web.TabPage.Extras("? → ?"))), com.histmersion.web.ResultsPaging.PageNumber(25))
-    assertEquals(s.countLine(com.histmersion.api.Plural.Noun.Singular("article"), com.histmersion.api.Plural.Noun.Plural("articles")), "showing 1–25 of 412 articles · 200 concepts · ? → ?")
-    assertEquals(TabState.first(TabPage(List(1), com.histmersion.api.RowCount(1)), com.histmersion.web.ResultsPaging.PageNumber(25)).countLine(com.histmersion.api.Plural.Noun.Singular("article"), com.histmersion.api.Plural.Noun.Plural("articles")), "1 article")
-    assertEquals(TabState.first(TabPage(Nil, com.histmersion.api.RowCount(0)), com.histmersion.web.ResultsPaging.PageNumber(25)).countLine(com.histmersion.api.Plural.Noun.Singular("event"), com.histmersion.api.Plural.Noun.Plural("events")), "no events")
+    assertEquals(s.countLine(com.histmersion.api.Plural.Noun.Singular("article"), com.histmersion.api.Plural.Noun.Plural("articles")).value, "showing 1–25 of 412 articles · 200 concepts · ? → ?")
+    assertEquals(TabState.first(TabPage(List(1), com.histmersion.api.RowCount(1)), com.histmersion.web.ResultsPaging.PageNumber(25)).countLine(com.histmersion.api.Plural.Noun.Singular("article"), com.histmersion.api.Plural.Noun.Plural("articles")).value, "1 article")
+    assertEquals(TabState.first(TabPage(Nil, com.histmersion.api.RowCount(0)), com.histmersion.web.ResultsPaging.PageNumber(25)).countLine(com.histmersion.api.Plural.Noun.Singular("event"), com.histmersion.api.Plural.Noun.Plural("events")).value, "no events")

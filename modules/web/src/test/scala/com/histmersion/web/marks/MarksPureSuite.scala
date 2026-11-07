@@ -7,7 +7,7 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.personal.*
 import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 import com.histmersion.web.Store
-import com.histmersion.web.map.LatLon
+import com.histmersion.web.map.{LatLon, MapSurface}
 import com.histmersion.api.ItemKind
 
 class MarksPureSuite extends munit.FunSuite:
@@ -38,7 +38,7 @@ class MarksPureSuite extends munit.FunSuite:
   test("a point from the map: on the world's first copy, its zoom rounded"):
     assertEquals(MapMenu.wrap(com.histmersion.web.map.LatLon.Lon(190)), -170.0)
     assertEquals(MapMenu.wrap(com.histmersion.web.map.LatLon.Lon(-185)), 175.0)
-    val p = MapMenu.point(LatLon(37.123, 382.75), 6.04, Some((com.histmersion.api.catalogue.Year(-1300L), com.histmersion.api.catalogue.Year(-1100L))))
+    val p = MapMenu.point(LatLon(LatLon.Lat(37.123), LatLon.Lon(382.75)), MapSurface.Zoom(6.04),Some((com.histmersion.api.catalogue.Year(-1300L), com.histmersion.api.catalogue.Year(-1100L))))
     assertEquals(
       (
         p.lat.map(_.value.toDouble),
@@ -78,11 +78,11 @@ class MarksPureSuite extends munit.FunSuite:
 
   test("when, as a person says it"):
     val now = 1_000_000_000_000.0
-    assertEquals(Ago(now - 5_000, now, com.histmersion.web.marks.Ago.IsoDate("")), "just now")
-    assertEquals(Ago(now - 3 * 60_000, now, com.histmersion.web.marks.Ago.IsoDate("")), "3 minutes ago")
-    assertEquals(Ago(now - 3_600_000, now, com.histmersion.web.marks.Ago.IsoDate("")), "1 hour ago")
-    assertEquals(Ago(now - 3 * 86_400_000, now, com.histmersion.web.marks.Ago.IsoDate("")), "3 days ago")
-    assertEquals(Ago(now - 30 * 86_400_000.0, now, com.histmersion.web.marks.Ago.IsoDate("2026-09-30T12:00:00Z")), "2026-09-30")
+    assertEquals(Ago(Ago.Millis(now - 5_000), Ago.Millis(now), com.histmersion.web.marks.Ago.IsoDate("")), "just now")
+    assertEquals(Ago(Ago.Millis(now - 3 * 60_000), Ago.Millis(now), com.histmersion.web.marks.Ago.IsoDate("")), "3 minutes ago")
+    assertEquals(Ago(Ago.Millis(now - 3_600_000), Ago.Millis(now), com.histmersion.web.marks.Ago.IsoDate("")), "1 hour ago")
+    assertEquals(Ago(Ago.Millis(now - 3 * 86_400_000), Ago.Millis(now), com.histmersion.web.marks.Ago.IsoDate("")), "3 days ago")
+    assertEquals(Ago(Ago.Millis(now - 30 * 86_400_000.0), Ago.Millis(now), com.histmersion.web.marks.Ago.IsoDate("2026-09-30T12:00:00Z")), "2026-09-30")
 
   test("the notes a map layer draws: those left at a point"):
     val id = Note.Id("0190f3c2-1111-7000-8000-000000000002")

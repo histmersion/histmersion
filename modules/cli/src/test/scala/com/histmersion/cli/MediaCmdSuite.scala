@@ -32,10 +32,10 @@ class MediaCmdSuite extends munit.FunSuite:
     )
   )
   private val done =
-    running.modify(_.status).setTo("done").modify(_.progress).setTo(Some("300 place(s)/event(s) asked in 6 batch(es) · 284 stored"))
+    running.modify(_.status).setTo(JobInfo.Status("done")).modify(_.progress).setTo(Some(JobInfo.Progress("300 place(s)/event(s) asked in 6 batch(es) · 284 stored")))
 
   /** Answers the job start with `queued`, then each poll of the job with the next of `polls`. */
-  private def withServer[A](polls: List[JobInfo])(body: (String, ConcurrentLinkedQueue[String]) => A): A =
+  private def withServer[A](polls: List[JobInfo])(body: (Client.ServerUrl, ConcurrentLinkedQueue[String]) => A): A =
     val seen = ConcurrentLinkedQueue[String]()
     val next = polls.iterator
     // `var`: the answer repeated once the list runs out
@@ -49,7 +49,7 @@ class MediaCmdSuite extends munit.FunSuite:
         seen.add(s"${ex.getRequestMethod} $path $req".trim)
         val (code, json) =
           if ex.getRequestMethod == "POST" && path == "/api/media/import/job" then
-            (202, running.modify(_.status).setTo("queued").modify(_.progress).setTo(None).asJson.noSpaces)
+            (202, running.modify(_.status).setTo(JobInfo.Status("queued")).modify(_.progress).setTo(None).asJson.noSpaces)
           else if path == s"/api/jobs/${running.id}" then
             synchronized { if next.hasNext then last = next.next() }
             (200, last.asJson.noSpaces)
@@ -61,13 +61,13 @@ class MediaCmdSuite extends munit.FunSuite:
         ex.close()
     )
     srv.start()
-    try body(s"http://127.0.0.1:${srv.getAddress.getPort}", seen)
+    try body(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}"), seen)
     finally srv.stop(0)
 
   private val cmd = Command("histmersion", "test")(MediaCmd.command)
 
   /** Run the command line against `url`; its result, stdout and stderr. */
-  private def run(url: String, args: String*): (Either[Cli.Error, Unit], String, String) =
+  private def run(url: Client.ServerUrl, args: String*): (Either[Cli.Error, Unit], String, String) =
     val f = cmd.parse(args.toList, Map.empty).fold(h => fail(h.toString), identity)
     val (out, err) = (ByteArrayOutputStream(), ByteArrayOutputStream())
     val r = Console.withOut(out)(Console.withErr(err)(f(Client(url))))
@@ -98,8 +98,8 @@ class MediaCmdSuite extends munit.FunSuite:
     }
 
   test("a job that fails exits 2 with its reason"):
-    withServer(List(running.modify(_.status).setTo("failed").modify(_.error).setTo(Some("interrupted")))) { (url, _) =>
+    withServer(List(running.modify(_.status).setTo(JobInfo.Status("failed")).modify(_.error).setTo(Some(JobInfo.Error("interrupted"))))) { (url, _) =>
       val (r, _, _) = run(url, "media", "import", "wikidata")
       assertEquals(r.left.map(_.exitCode), Left(ExitCode.Refused))
-      assert(r.left.exists(_.message.contains("interrupted")), r.toString)
+      assert(r.left.exists(_.message.value.contains("interrupted")), r.toString)
     }

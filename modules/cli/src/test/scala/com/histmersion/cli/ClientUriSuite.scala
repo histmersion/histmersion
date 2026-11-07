@@ -86,7 +86,7 @@ class ClientUriSuite extends munit.FunSuite:
       minLat = Some(com.histmersion.api.catalogue.Latitude(-60)),
       maxLon = Some(com.histmersion.api.catalogue.Longitude(-170)),
       maxLat = Some(com.histmersion.api.catalogue.Latitude(60)),
-      limit = Some(500)
+      limit = Some(Filter.Limit(500))
     )
     val u = uriOf(Api.findings)(Api.FindingsQuery(f, Some(com.histmersion.api.Api.FindingsQuery.Region("Anatolia"))))
     assert(u.startsWith("http://example.invalid/api/findings?"), u)

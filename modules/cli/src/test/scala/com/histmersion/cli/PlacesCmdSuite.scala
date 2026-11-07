@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.api.catalogue.Place
 
 import java.nio.file.{Files, Path}
 
@@ -23,12 +23,12 @@ class PlacesCmdSuite extends munit.FunSuite:
     val root = tree()
     assertEquals(
       PlacesCmd.seedFiles(root).map((f, k) => (root.relativize(f).toString, k)),
-      List(
+      List[(String, Option[Place.KindValue])](
         "01-natural-earth.json" -> None,
         "03-pleiades.json" -> None,
-        "polities/eba.geojson" -> Some("polity"),
-        "polities/lba.geojson" -> Some("polity"),
-        "polities/macro_regions.geojson" -> Some("polity")
+        "polities/eba.geojson" -> Some(Place.KindValue("polity")),
+        "polities/lba.geojson" -> Some(Place.KindValue("polity")),
+        "polities/macro_regions.geojson" -> Some(Place.KindValue("polity"))
       )
     )
 
@@ -41,7 +41,12 @@ class PlacesCmdSuite extends munit.FunSuite:
       }
     assertEquals(
       PlacesCmd.seedFiles(root).map((f, k) => (f.getParent.getFileName.toString, k)).toMap,
-      Map("polities" -> Some("polity"), "sites" -> Some("site"), "regions" -> Some("region"), "misc" -> None)
+      Map[String, Option[Place.KindValue]](
+        "polities" -> Some(Place.KindValue("polity")),
+        "sites" -> Some(Place.KindValue("site")),
+        "regions" -> Some(Place.KindValue("region")),
+        "misc" -> None
+      )
     )
 
   test("an empty directory yields nothing (the caller turns that into a usage error)"):
@@ -114,7 +119,7 @@ class PlacesCmdSuite extends munit.FunSuite:
     val _ = Files.createDirectories(cwd.resolve("db/places"))
     assertEquals(PlacesCmd.resolveSeedDir(com.histmersion.config.PlacesConfig.SeedDir("db/places"), cwd, None)._1, cwd.resolve("db/places"))
     val abs = cwd.resolve("elsewhere").toAbsolutePath
-    assertEquals(PlacesCmd.resolveSeedDir(abs.toString, Path.of("/"), None), (abs, List(abs)))
+    assertEquals(PlacesCmd.resolveSeedDir(com.histmersion.config.PlacesConfig.SeedDir(abs.toString), Path.of("/"), None), (abs, List(abs)))
 
   test("#6560: nothing found — the first candidate, and every one tried for the message"):
     val cwd = Files.createTempDirectory("histmersion-empty")

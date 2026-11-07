@@ -3,19 +3,20 @@ package com.histmersion.web
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.library.GeoHit
-import com.histmersion.web.map.ClusterMotion
+import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
+import com.histmersion.web.map.{ClusterMotion, ScreenPt}
 
 class PlaybackFramesSuite extends munit.FunSuite:
 
-  private def hit(start: Long, end: Long, claim: String = "c"): GeoHit =
-    GeoHit(com.histmersion.api.library.Citekey("zz"), com.histmersion.api.library.GeoHit.Title("Zz"), claim, None, Some(30.0), Some(37.0), Some(start), Some(end), None)
+  private def hit(start: Year, end: Year, claim: GeoHit.Claim = GeoHit.Claim("c")): GeoHit =
+    GeoHit(com.histmersion.api.library.Citekey("zz"), com.histmersion.api.library.GeoHit.Title("Zz"), claim, None, Some(Longitude(30.0)), Some(Latitude(37.0)), Some(start), Some(end), None)
 
   // ── PlaybackFeed ─────────────────────────────────────────────────────────────
 
   test("a stretch covers seconds of playback, and at least four windows") {
-    assertEquals(PlaybackFeed.chunkYears(com.histmersion.web.PlaybackFeed.WindowHalfYears(50), 67.0, 4.0), 400L)
-    assertEquals(PlaybackFeed.chunkYears(com.histmersion.web.PlaybackFeed.WindowHalfYears(50), 200.0, 4.0), 800L)
-    assertEquals(PlaybackFeed.chunkYears(com.histmersion.web.PlaybackFeed.WindowHalfYears(0), 0.0, 4.0), 8L)
+    assertEquals(PlaybackFeed.chunkYears(com.histmersion.web.PlaybackFeed.WindowHalfYears(50), PlaybackBuckets.YearsPerSecond(67.0), PlaybackBuckets.Seconds(4.0)), 400L)
+    assertEquals(PlaybackFeed.chunkYears(com.histmersion.web.PlaybackFeed.WindowHalfYears(50), PlaybackBuckets.YearsPerSecond(200.0), PlaybackBuckets.Seconds(4.0)), 800L)
+    assertEquals(PlaybackFeed.chunkYears(com.histmersion.web.PlaybackFeed.WindowHalfYears(0), PlaybackBuckets.YearsPerSecond(0.0), PlaybackBuckets.Seconds(4.0)), 8L)
   }
 
   test("the first stretch starts at the window, the next one is asked half a stretch before it is needed") {
@@ -30,19 +31,19 @@ class PlaybackFramesSuite extends munit.FunSuite:
   }
 
   test("a full answer covers only up to the year before its latest start; a short one all it was asked") {
-    val got = Seq(hit(-3000, -2900), hit(-2800, -2700), hit(-2600, -2500))
+    val got = Seq(hit(Year(-3000), Year(-2900)), hit(Year(-2800), Year(-2700)), hit(Year(-2600), Year(-2500)))
     assertEquals(PlaybackFeed.covered((com.histmersion.api.Years.Astronomical(-3050), com.histmersion.api.Years.Astronomical(-2550)), got, com.histmersion.api.Paging.Limit(10)), -2550L)
     assertEquals(PlaybackFeed.covered((com.histmersion.api.Years.Astronomical(-3050), com.histmersion.api.Years.Astronomical(-2550)), got, com.histmersion.api.Paging.Limit(3)), -2601L)
     // never before what was asked
-    assertEquals(PlaybackFeed.covered((com.histmersion.api.Years.Astronomical(-2600), com.histmersion.api.Years.Astronomical(-2550)), Seq(hit(-2600, -2500)), com.histmersion.api.Paging.Limit(1)), -2601L)
+    assertEquals(PlaybackFeed.covered((com.histmersion.api.Years.Astronomical(-2600), com.histmersion.api.Years.Astronomical(-2550)), Seq(hit(Year(-2600), Year(-2500))), com.histmersion.api.Paging.Limit(1)), -2601L)
   }
 
   test("a window holds what overlaps it; undated findings never") {
     val pts = Seq(
-      hit(-3000, -2900, "a"),
-      hit(-2950, -2950, "b"),
-      hit(-2800, -2700, "c"),
-      GeoHit(com.histmersion.api.library.Citekey("zz"), com.histmersion.api.library.GeoHit.Title("Zz"), com.histmersion.api.library.GeoHit.Claim("u"), None, Some(30.0), Some(37.0), None, None, None)
+      hit(Year(-3000), Year(-2900), GeoHit.Claim("a")),
+      hit(Year(-2950), Year(-2950), GeoHit.Claim("b")),
+      hit(Year(-2800), Year(-2700), GeoHit.Claim("c")),
+      GeoHit(com.histmersion.api.library.Citekey("zz"), com.histmersion.api.library.GeoHit.Title("Zz"), com.histmersion.api.library.GeoHit.Claim("u"), None, Some(Longitude(30.0)), Some(Latitude(37.0)), None, None, None)
     )
     assertEquals(PlaybackFeed.inWindow(pts, com.histmersion.api.Years.Astronomical(-2960), com.histmersion.api.Years.Astronomical(-2900)).map(_.claim), List("a", "b"))
     assertEquals(PlaybackFeed.inWindow(pts, com.histmersion.api.Years.Astronomical(-2899), com.histmersion.api.Years.Astronomical(-2801)).map(_.claim), Nil)
@@ -57,12 +58,12 @@ class PlaybackFramesSuite extends munit.FunSuite:
     assertEquals(PlaybackAreas.alpha(com.histmersion.web.PlaybackAreas.FractionalYear(-1390), com.histmersion.web.PlaybackAreas.FractionalYear(-1600), com.histmersion.web.PlaybackAreas.FractionalYear(-1400), com.histmersion.web.PlaybackAreas.FadeYears(20)), 0.5)
     assertEquals(PlaybackAreas.alpha(com.histmersion.web.PlaybackAreas.FractionalYear(-1700), com.histmersion.web.PlaybackAreas.FractionalYear(-1600), com.histmersion.web.PlaybackAreas.FractionalYear(-1400), com.histmersion.web.PlaybackAreas.FadeYears(20)), 0.0)
     assertEquals(PlaybackAreas.alpha(com.histmersion.web.PlaybackAreas.FractionalYear(-1601), com.histmersion.web.PlaybackAreas.FractionalYear(-1600), com.histmersion.web.PlaybackAreas.FractionalYear(-1400), com.histmersion.web.PlaybackAreas.FadeYears(0)), 0.0)
-    assertEquals(PlaybackAreas.step(0.512), 0.5)
-    assertEquals(PlaybackAreas.step(0.53), 0.55)
+    assertEquals(PlaybackAreas.step(PlaybackAreas.Opacity(0.512)), 0.5)
+    assertEquals(PlaybackAreas.step(PlaybackAreas.Opacity(0.53)), 0.55)
   }
 
   test("a state's key names its place and its years; it lives a fade past its end") {
-    assertEquals(PlaybackAreas.key(com.histmersion.web.PlaybackAreas.AreaKey("hittite"), Some(-1650.0), Some(-1180.0)), "hittite@-1650..-1180")
+    assertEquals(PlaybackAreas.key(com.histmersion.web.PlaybackAreas.AreaKey("hittite"), Some(PlaybackAreas.FractionalYear(-1650.0)), Some(PlaybackAreas.FractionalYear(-1180.0))), "hittite@-1650..-1180")
     assertEquals(PlaybackAreas.key(com.histmersion.web.PlaybackAreas.AreaKey("x"), None, None), "x@..")
     assert(PlaybackAreas.live(com.histmersion.web.PlaybackAreas.FractionalYear(-1170), com.histmersion.web.PlaybackAreas.FractionalYear(-1180), com.histmersion.web.PlaybackAreas.FadeYears(20)))
     assert(!PlaybackAreas.live(com.histmersion.web.PlaybackAreas.FractionalYear(-1150), com.histmersion.web.PlaybackAreas.FractionalYear(-1180), com.histmersion.web.PlaybackAreas.FadeYears(20)))
@@ -71,8 +72,8 @@ class PlaybackFramesSuite extends munit.FunSuite:
   // ── ClusterMotion ────────────────────────────────────────────────────────────
 
   test("a marker made of one former place comes out of it; one of several (a merge) stays") {
-    assertEquals(ClusterMotion.origin(Seq((10.0, 20.0), (10.0, 20.0))), Some((10.0, 20.0)))
-    assertEquals(ClusterMotion.origin(Seq((10.0, 20.0), (30.0, 20.0))), None)
+    assertEquals(ClusterMotion.origin(Seq((ScreenPt.X(10.0), ScreenPt.Y(20.0)), (ScreenPt.X(10.0), ScreenPt.Y(20.0)))), Some((10.0, 20.0)))
+    assertEquals(ClusterMotion.origin(Seq((ScreenPt.X(10.0), ScreenPt.Y(20.0)), (ScreenPt.X(30.0), ScreenPt.Y(20.0)))), None)
     assertEquals(ClusterMotion.origin(Nil), None)
   }
 

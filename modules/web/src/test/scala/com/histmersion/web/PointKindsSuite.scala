@@ -20,7 +20,7 @@ class PointKindsSuite extends munit.FunSuite:
 
   override def beforeAll(): Unit = TestTokens.install()
 
-  private val span = (-1700L, -1200L)
+  private val span = (com.histmersion.api.Years.Astronomical(-1700L), com.histmersion.api.Years.Astronomical(-1200L))
 
   /** One sample of each kind, of a KNOWN type, and one of an unknown type where a kind has types. */
   final private case class Sample[A](kind: PointKind[A], known: A, unknown: Option[A])
@@ -30,8 +30,8 @@ class PointKindsSuite extends munit.FunSuite:
     com.histmersion.api.library.GeoHit.Title("Zz paper"),
     com.histmersion.api.library.GeoHit.Claim("a claim"),
     None,
-    Some(31.0),
-    Some(37.0),
+    Some(com.histmersion.api.catalogue.Longitude(31.0)),
+    Some(com.histmersion.api.catalogue.Latitude(37.0)),
     Some(com.histmersion.api.catalogue.Year(-1300L)),
     Some(com.histmersion.api.catalogue.Year(-1250L)),
     Some(Confidence.High),
@@ -40,12 +40,12 @@ class PointKindsSuite extends munit.FunSuite:
   private val site = SitePoint(
     Some(com.histmersion.web.SitePoint.Id("zz_fort")),
     com.histmersion.web.SitePoint.Label("Zz fort"),
-    Place.Kind.Site,
+    SitePoint.Kind(Place.Kind.Site),
     Some(com.histmersion.web.SitePoint.SiteType("fortification")),
     None,
-    37.5,
-    32.0,
-    Some((-1400.0, -1300.0))
+    com.histmersion.web.map.LatLon.Lat(37.5),
+    com.histmersion.web.map.LatLon.Lon(32.0),
+    Some((PlaybackAreas.FractionalYear(-1400.0), PlaybackAreas.FractionalYear(-1300.0)))
   )
   private val event = EventGeo(
     com.histmersion.api.catalogue.Event.Id("zz_b"),
@@ -58,13 +58,13 @@ class PointKindsSuite extends munit.FunSuite:
     com.histmersion.api.catalogue.Longitude(32),
     com.histmersion.api.catalogue.EventGeo.Anchor("event")
   )
-  private val picture = MediaGeoHit(None, com.histmersion.api.exchange.Bundle.Asset.FileName("zz.jpg"), Some(com.histmersion.api.media.MediaItem.Kind("photo")), 37.0, 22.0, Some(com.histmersion.api.catalogue.Year(-1500L)), Some(com.histmersion.api.catalogue.Year(-1400L)), None, com.histmersion.api.media.MediaItem.Uid("u1"))
+  private val picture = MediaGeoHit(None, com.histmersion.api.exchange.Bundle.Asset.FileName("zz.jpg"), Some(com.histmersion.api.media.MediaItem.Kind("photo")), com.histmersion.api.catalogue.Latitude(37.0), com.histmersion.api.catalogue.Longitude(22.0), Some(com.histmersion.api.catalogue.Year(-1500L)), Some(com.histmersion.api.catalogue.Year(-1400L)), None, com.histmersion.api.media.MediaItem.Uid("u1"))
 
   private val samples: List[Sample[?]] = List(
     Sample(
       PointKinds.Findings,
-      Spot(37.0, 31.0, List(finding)),
-      Some(Spot(37.0, 31.0, List(finding.modify(_.sourceKind).setTo(None))))
+      Spot(com.histmersion.api.catalogue.Latitude(37.0), com.histmersion.api.catalogue.Longitude(31.0), List(finding)),
+      Some(Spot(com.histmersion.api.catalogue.Latitude(37.0), com.histmersion.api.catalogue.Longitude(31.0), List(finding.modify(_.sourceKind).setTo(None))))
     ),
     Sample(PointKinds.Sites, site, Some(site.modify(_.siteType).setTo(None))),
     Sample(PointKinds.Events, event, None),
@@ -85,9 +85,9 @@ class PointKindsSuite extends munit.FunSuite:
 
   test("an unknown type is its kind's shape with the exclamation mark, never a bare dot"):
     samples.foreach { case Sample(k, _, u) =>
-      u.foreach(a => assert(k.inner(a) == Glyphs.badge(CardIcons.Unknown), s"${k.dot}: ${k.inner(a)}"))
+      u.foreach(a => assert(k.inner(a) == Glyphs.badge(Glyphs.BadgeName(CardIcons.Unknown)).value, s"${k.dot}: ${k.inner(a)}"))
     }
-    samples.foreach { case Sample(k, a, _) => assert(k.inner(a) != Glyphs.badge(CardIcons.Unknown), s"${k.dot} known") }
+    samples.foreach { case Sample(k, a, _) => assert(k.inner(a) != Glyphs.badge(Glyphs.BadgeName(CardIcons.Unknown)).value, s"${k.dot} known") }
 
   test("the colour lives in --c alone: a span change re-colours in place, it never re-draws"):
     samples.foreach { case Sample(k, a, _) =>
@@ -99,9 +99,9 @@ class PointKindsSuite extends munit.FunSuite:
   test("the accessible name says what it is and what activating it does; no internal ids"):
     samples.foreach { case Sample(k, a, _) =>
       val l = PointMarker.ariaLabel(k, a)
-      assert(l.endsWith(s" — ${k.action(a)}") && k.label(a).nonEmpty, s"${k.dot}: $l")
+      assert(l.value.endsWith(s" — ${k.action(a).value}") && k.label(a).value.nonEmpty, s"${k.dot}: ${l.value}")
     }
-    assert(!PointMarker.ariaLabel(PointKinds.Findings, samples.head.known.asInstanceOf[Spot]).contains("zz2020_x"))
+    assert(!PointMarker.ariaLabel(PointKinds.Findings, samples.head.known.asInstanceOf[Spot]).value.contains("zz2020_x"))
 
   test("what a bubble counts: one per point, a findings' point by its findings; every row but a finding's has an icon"):
     samples.foreach { case Sample(k, a, _) =>
@@ -110,9 +110,9 @@ class PointKindsSuite extends munit.FunSuite:
       assertEquals(m.n, 1)
       assert(m.mids.nonEmpty, s"${k.dot} is dated")
       if k.dot == DotKind.Finding then assertEquals(m.findings.size, 1)
-      else assert(m.entry.exists(e => e.kind == k.dot && Glyphs.inner.contains(e.icon)), s"${k.dot}: ${m.entry}")
+      else assert(m.entry.exists(e => e.kind == k.dot && Glyphs.svg(Glyphs.Name(e.icon.value)).value.nonEmpty),s"${k.dot}: ${m.entry}")
     }
-    val two = Spot(com.histmersion.api.catalogue.Latitude(1), com.histmersion.api.catalogue.Longitude(2), List(finding, finding.modify(_.citekey).setTo("zz2021_y")))
+    val two = Spot(com.histmersion.api.catalogue.Latitude(1), com.histmersion.api.catalogue.Longitude(2), List(finding, finding.modify(_.citekey).setTo(com.histmersion.api.library.Citekey("zz2021_y"))))
     assertEquals(PointKinds.Findings.member(two).n, 2)
     assertEquals(PointKinds.Findings.inner(two), """<span class="hd-find-count">2</span>""")
     assertEquals(PointKinds.Findings.title(two), Some("2 findings here"))
@@ -124,7 +124,7 @@ class PointKindsSuite extends munit.FunSuite:
     assertEquals(PointKinds.Events.target(event, None), Some(Preview.Target.Event(com.histmersion.web.Preview.Target.Event.Id("zz_b"))))
     assertEquals(PointKinds.Media.target(picture, None), None)
     assertEquals(
-      PointKinds.Media.target(picture.modify(_.citekey).setTo(Some("zz2019")), None),
+      PointKinds.Media.target(picture.modify(_.citekey).setTo(Some(com.histmersion.api.library.Citekey("zz2019"))), None),
       Some(Preview.Target.Source(com.histmersion.web.Preview.Target.Source.Citekey("zz2019")))
     )
 
@@ -135,12 +135,12 @@ class PointKindsSuite extends munit.FunSuite:
 
   test("equal optical size: the diamond's box is the largest, the photo landscape"):
     val (fw, _) = PointKinds.Findings.box
-    assert(fw > PointKinds.Sites.box._1 && fw > PointKinds.Events.box._1)
+    assert(fw.value > PointKinds.Sites.box._1.value && fw.value > PointKinds.Events.box._1.value)
     val (pw, ph) = PointKinds.Media.box
-    assert(pw > ph)
+    assert(pw.value > ph.value)
 
   test("findings at one point are one point; the spots keep their order"):
-    val a = finding.modify(_.lat).setTo((Some(1): _root_.scala.Option[_root_.scala.Double])).modify(_.lon).setTo((Some(2): _root_.scala.Option[_root_.scala.Double]))
-    val b = finding.modify(_.citekey).setTo("b").modify(_.lat).setTo((Some(3): _root_.scala.Option[_root_.scala.Double])).modify(_.lon).setTo((Some(4): _root_.scala.Option[_root_.scala.Double]))
-    val spots = Spot.of(List(a, b, a.modify(_.citekey).setTo("c"), finding.modify(_.lat).setTo((None: _root_.scala.Option[_root_.scala.Double]))))
+    val a = finding.modify(_.lat).setTo(Some(com.histmersion.api.catalogue.Latitude(1))).modify(_.lon).setTo(Some(com.histmersion.api.catalogue.Longitude(2)))
+    val b = finding.modify(_.citekey).setTo(com.histmersion.api.library.Citekey("b")).modify(_.lat).setTo(Some(com.histmersion.api.catalogue.Latitude(3))).modify(_.lon).setTo(Some(com.histmersion.api.catalogue.Longitude(4)))
+    val spots = Spot.of(List(a, b, a.modify(_.citekey).setTo(com.histmersion.api.library.Citekey("c")), finding.modify(_.lat).setTo(None)))
     assertEquals(spots.map(s => (s.lat, s.lon, s.items.size)), List((1.0, 2.0, 2), (3.0, 4.0, 1)))

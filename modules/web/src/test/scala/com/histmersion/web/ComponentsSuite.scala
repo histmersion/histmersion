@@ -1,13 +1,11 @@
 package com.histmersion.web
 
-import com.histmersion.testsupport.ComparedByValue.given
-
 class ComponentsSuite extends munit.FunSuite:
 
   test("a source link is labelled by DOI when present, else by citekey") {
-    assertEquals(SourceLink.idLabel(com.histmersion.api.library.Citekey("a2020_b"), Some(com.histmersion.api.library.Doi("10.1/x"))), "10.1/x")
-    assertEquals(SourceLink.idLabel(com.histmersion.api.library.Citekey("a2020_b"), Some(com.histmersion.api.library.Doi("  "))), "a2020_b")
-    assertEquals(SourceLink.idLabel(com.histmersion.api.library.Citekey("a2020_b"), None), "a2020_b")
+    assertEquals(SourceLink.idLabel(com.histmersion.api.library.Citekey("a2020_b"), Some(com.histmersion.api.library.Doi("10.1/x"))).value, "10.1/x")
+    assertEquals(SourceLink.idLabel(com.histmersion.api.library.Citekey("a2020_b"), Some(com.histmersion.api.library.Doi("  "))).value, "a2020_b")
+    assertEquals(SourceLink.idLabel(com.histmersion.api.library.Citekey("a2020_b"), None).value, "a2020_b")
     assertEquals(SourceLink.href(com.histmersion.api.library.Citekey("a b")), "/source/a%20b")
   }
 

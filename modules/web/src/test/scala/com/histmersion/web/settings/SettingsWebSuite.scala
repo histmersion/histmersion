@@ -4,6 +4,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
 
+import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.instance.MapStartConfig
 import com.histmersion.api.plugins.PluginStatus
@@ -16,7 +17,7 @@ class SettingsWebSuite extends munit.FunSuite:
     assertEquals(Draft.plain(Some(com.histmersion.web.settings.Draft.Text("5"))), "5")
     assertEquals(Draft.plain(Some(com.histmersion.web.settings.Draft.Text("[a,b]"))), "[a,b]")
     assertEquals(Draft.plain(None), "")
-    assert(Draft.isOn(com.histmersion.web.settings.Draft.Text("true")) && Draft.isOn(com.histmersion.web.settings.Draft.Text(" Yes ")) && !Draft.isOn("false") && !Draft.isOn(""))
+    assert(Draft.isOn(com.histmersion.web.settings.Draft.Text("true")) && Draft.isOn(com.histmersion.web.settings.Draft.Text(" Yes ")) && !Draft.isOn(com.histmersion.web.settings.Draft.Text("false")) && !Draft.isOn(com.histmersion.web.settings.Draft.Text("")))
 
   test("a setting's name is its last word, as words"):
     assertEquals(SettingControl.nameOf(com.histmersion.api.settings.ConfigEdit.Field.Key("histmersion.acquire.contact-email")), "Contact email")
@@ -26,7 +27,7 @@ class SettingsWebSuite extends munit.FunSuite:
     assertEquals(SettingControl.defaultText(com.histmersion.api.settings.ConfigEdit.Field.Kind("number"), com.histmersion.web.settings.Draft.Text("5")), "Default: 5.")
 
   test("the disk's share: what Histmersion takes, against the free space left"):
-    assertEquals(DataSection.share(com.histmersion.api.ByteCount(0), 1com.histmersion.api.ByteCount(0)0), 0)
+    assertEquals(DataSection.share(com.histmersion.api.ByteCount(0), com.histmersion.api.ByteCount(100)), 0)
     assertEquals(DataSection.share(com.histmersion.api.ByteCount(25), com.histmersion.api.ByteCount(100)), 25)
     assertEquals(DataSection.share(com.histmersion.api.ByteCount(10), com.histmersion.api.ByteCount(0)), 100)
     assertEquals(DataSection.share(com.histmersion.api.ByteCount(500), com.histmersion.api.ByteCount(100)), 100)
@@ -52,6 +53,7 @@ class SettingsWebSuite extends munit.FunSuite:
     assert(
       KeysSection
         .state(ConfigEdit.Credential(com.histmersion.api.settings.ConfigEdit.Credential.Rule("reference"), com.histmersion.api.settings.ConfigEdit.Credential.Form("value"), Some(com.histmersion.api.settings.ConfigEdit.Credential.Shown("value:***"))))
+        .value
         .contains("written in the settings file")
     )
 
@@ -66,9 +68,9 @@ class SettingsWebSuite extends munit.FunSuite:
 
   test("where the map opens: the zoom that shows a place whole, and what is written"):
     assertEquals(StartPlace.zoomFor(GeoBounds(com.histmersion.web.map.GeoBounds.South(36), com.histmersion.web.map.GeoBounds.West(26), com.histmersion.web.map.GeoBounds.North(42), com.histmersion.web.map.GeoBounds.East(45))), 5.0)
-    assertEquals(StartPlace.zoomFor(GeoBounds(37.6, 22.7, 37.6, 22.7)), 9.0)
-    assert(StartPlace.zoomFor(GeoBounds(com.histmersion.web.map.GeoBounds.South(-60), com.histmersion.web.map.GeoBounds.West(-180), com.histmersion.web.map.GeoBounds.North(80), com.histmersion.web.map.GeoBounds.East(180))) >= 2.0)
-    val c = MapStartConfig(com.histmersion.api.instance.MapStartMode.Wire("place"), 39.123456, 35.5, com.histmersion.api.instance.MapStartConfig.Zoom(5), com.histmersion.api.instance.MapStartConfig.Label("Anatolia"))
+    assertEquals(StartPlace.zoomFor(GeoBounds(GeoBounds.South(37.6), GeoBounds.West(22.7), GeoBounds.North(37.6), GeoBounds.East(22.7))), 9.0)
+    assert(StartPlace.zoomFor(GeoBounds(com.histmersion.web.map.GeoBounds.South(-60), com.histmersion.web.map.GeoBounds.West(-180), com.histmersion.web.map.GeoBounds.North(80), com.histmersion.web.map.GeoBounds.East(180))).value >= 2.0)
+    val c = MapStartConfig(com.histmersion.api.instance.MapStartMode.Wire("place"), Latitude(39.123456), Longitude(35.5), com.histmersion.api.instance.MapStartConfig.Zoom(5), com.histmersion.api.instance.MapStartConfig.Label("Anatolia"))
     assertEquals(
       StartPlace.changes(c).toMap,
       Map(
@@ -79,8 +81,8 @@ class SettingsWebSuite extends munit.FunSuite:
         "ui.map-start.label" -> "Anatolia"
       )
     )
-    assert(StartPlace.describe(c).contains("Anatolia"))
-    assert(StartPlace.describe(c.modify(_.mode).setTo("last")).startsWith("The first time"))
+    assert(StartPlace.describe(c).value.contains("Anatolia"))
+    assert(StartPlace.describe(c.modify(_.mode).setTo(com.histmersion.api.instance.MapStartMode.Wire("last"))).value.startsWith("The first time"))
 
   test("a plugin's state in words"):
     assertEquals(PluginsSection.state(PluginStatus(com.histmersion.api.plugins.PluginStatus.Id("x"), com.histmersion.api.plugins.PluginStatus.Version("1"), com.histmersion.api.plugins.PluginStatus.SpiVersion(2), enabled = com.histmersion.api.plugins.PluginStatus.Enabled(true), state = com.histmersion.api.plugins.PluginStatus.State("registered"))), "Working")
@@ -88,6 +90,7 @@ class SettingsWebSuite extends munit.FunSuite:
     assert(
       PluginsSection
         .state(PluginStatus(com.histmersion.api.plugins.PluginStatus.Id("x"), com.histmersion.api.plugins.PluginStatus.Version("1"), com.histmersion.api.plugins.PluginStatus.SpiVersion(2), enabled = com.histmersion.api.plugins.PluginStatus.Enabled(true), state = com.histmersion.api.plugins.PluginStatus.State("failed"), error = Some(com.histmersion.api.plugins.PluginDescription.Error("no key"))))
+        .value
         .contains("no key")
     )
 
@@ -107,4 +110,4 @@ class SettingsWebSuite extends munit.FunSuite:
     )
 
   test("each section's lead"):
-    assert(SettingsPages.lead(com.histmersion.web.SettingsSection.Keys).exists(_.contains("Never the key itself")))
+    assert(SettingsPages.lead(com.histmersion.web.SettingsSection.Keys).exists(_.value.contains("Never the key itself")))

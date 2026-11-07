@@ -1,7 +1,5 @@
 package com.histmersion.cli
 
-import com.histmersion.testsupport.ComparedByValue.given
-
 import com.histmersion.api.library.RepairAcquire
 import com.monovore.decline.Command
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
@@ -55,7 +53,7 @@ class ManagerCmdSuite extends munit.FunSuite:
       ManagerCmd.focusRequest(List("pin", "bronze-age")),
       Right(Some(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("pin"), Some(com.histmersion.api.automation.Goal.Slug("bronze-age")), by = Some(com.histmersion.api.automation.Autopilot.FocusSet.By("cli")))))
     )
-    assertEquals(ManagerCmd.focusRequest(List("unpin", "x")).map(_.map(_.action)), Right(Some("unpin")))
+    assertEquals(ManagerCmd.focusRequest(List("unpin", "x")).map(_.map(_.action)), Right(Some(FocusSet.Action("unpin"))))
     assertEquals(
       ManagerCmd.focusRequest(List("priority", "x", "4")),
       Right(Some(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("priority"), Some(com.histmersion.api.automation.Goal.Slug("x")), Some(com.histmersion.api.automation.Autopilot.FocusSet.Value(4)), Some(com.histmersion.api.automation.Autopilot.FocusSet.By("cli")))))
@@ -74,7 +72,7 @@ class ManagerCmdSuite extends munit.FunSuite:
     assert(cmd.parse(List("autopilot"), Map.empty).isRight)
     val extra = cmd.parse(List("autopilot", "on", "x"), Map.empty).fold(h => fail(h.toString), identity)
     assert(
-      extra(Client("http://127.0.0.1:1")).left.exists(_.exitCode == ExitCode.Usage),
+      extra(Client(Client.ServerUrl("http://127.0.0.1:1"))).left.exists(_.exitCode == ExitCode.Usage),
       "on takes no further argument"
     )
 
@@ -86,7 +84,7 @@ class ManagerCmdSuite extends munit.FunSuite:
       dryRun = com.histmersion.api.library.RepairAcquire.RepairResult.DryRun(true),
       moved = com.histmersion.api.library.RepairAcquire.RepairResult.Moved(1),
       untouched = com.histmersion.api.library.RepairAcquire.RepairResult.Untouched(3),
-      rows = List(RepairAcquire.RepairRow(com.histmersion.api.library.RepairAcquire.RepairRow.Item(7), com.histmersion.api.library.Doi("10.1/x"), List(com.histmersion.api.library.RepairAcquire.RepairRow.Goals("g")), com.histmersion.api.library.RepairAcquire.RepairRow.Watcher("watch:g"), RepairAcquire.Move, com.histmersion.api.library.RepairAcquire.RepairRow.Detail("legal open access"))),
+      rows = List(RepairAcquire.RepairRow(com.histmersion.api.library.RepairAcquire.RepairRow.Item(7), com.histmersion.api.library.Doi("10.1/x"), List(com.histmersion.api.library.RepairAcquire.RepairRow.Goals("g")), com.histmersion.api.library.RepairAcquire.RepairRow.Watcher("watch:g"), RepairAcquire.RepairRow.Action(RepairAcquire.Move), com.histmersion.api.library.RepairAcquire.RepairRow.Detail("legal open access"))),
       backlog = com.histmersion.api.automation.Managers.ManagerInfo.Backlog(1),
       backlogDays = Some(com.histmersion.api.automation.Managers.ManagerInfo.BacklogDays(1))
     )
@@ -109,7 +107,7 @@ class ManagerCmdSuite extends munit.FunSuite:
       val f =
         cmd.parse(List("autopilot", "repair-acquire", "--dry-run"), Map.empty).fold(h => fail(h.toString), identity)
       val out = ByteArrayOutputStream()
-      val r = Console.withOut(out)(f(Client(s"http://127.0.0.1:${srv.getAddress.getPort}")))
+      val r = Console.withOut(out)(f(Client(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}"))))
       assertEquals(r, Right(()))
       assert(
         seen.peek().startsWith("POST /api/agents/autopilot/repair-acquire") && seen.peek().contains("\"dryRun\":true"),
@@ -118,5 +116,5 @@ class ManagerCmdSuite extends munit.FunSuite:
       val text = out.toString(UTF_8)
       assert(text.contains("would move 1 legal open-access work") && text.contains("#7 https://doi.org/10.1/x"), text)
       val bad = cmd.parse(List("autopilot", "repair"), Map.empty).fold(h => fail(h.toString), identity)
-      assert(bad(Client("http://127.0.0.1:1")).left.exists(_.message.contains("repair-acquire")))
+      assert(bad(Client(Client.ServerUrl("http://127.0.0.1:1"))).left.exists(_.message.value.contains("repair-acquire")))
     finally srv.stop(0)
