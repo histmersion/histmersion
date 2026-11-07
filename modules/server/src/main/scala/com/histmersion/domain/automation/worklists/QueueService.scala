@@ -54,20 +54,22 @@ object QueueService:
             ))
       .toList
 
-    def get(id: QueueItemId): Option[QueueItem] = db.read(QueueRepo.get(id))
-    def byIds(ids: List[QueueItemId]): List[QueueItem] = db.read(QueueRepo.byIds(ids)).toList
+    def get(id: QueueItemId): Option[QueueItem] = db.read(QueueRepo.get(QueueRepo.QueueItemId(id.value)))
+    def byIds(ids: List[QueueItemId]): List[QueueItem] = db.read(QueueRepo.byIds(ids.map(i => QueueRepo.QueueItemId(i.value)))).toList
     def naming(list: Kind, doi: com.histmersion.domain.library.Doi): List[QueueItem] = db.read(QueueRepo.naming(list, doi)).toList
     def add(list: Kind, item: QueueAdd): QueueItem = db.transact(QueueRepo.insert(list, item))
 
     def patch(id: QueueItemId, p: QueuePatch): Either[QueueError, QueueItem] = db.transact:
-      QueueRepo.get(id).toRight(QueueError.NotFound(id)).map { cur =>
+      val rid = QueueRepo.QueueItemId(id.value)
+      QueueRepo.get(rid).toRight(QueueError.NotFound(id)).map { cur =>
         QueueRepo.update(Queue.applyPatch(cur, p))
-        QueueRepo.get(id).get
+        QueueRepo.get(rid).get
       }
 
     def delete(id: QueueItemId): Either[QueueError, QueueItem] = db.transact:
-      QueueRepo.get(id).toRight(QueueError.NotFound(id)).map { item =>
-        QueueRepo.delete(id)
+      val rid = QueueRepo.QueueItemId(id.value)
+      QueueRepo.get(rid).toRight(QueueError.NotFound(id)).map { item =>
+        QueueRepo.delete(rid)
         item
       }
 

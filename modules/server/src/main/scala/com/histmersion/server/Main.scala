@@ -94,8 +94,8 @@ import com.histmersion.util.console.Console
         Composition.build(
           Composition.hotConfig(cfg, loadedConfig.file.info, Some(loadedConfig)),
           Some(source),
-          Composition.Host(cfg.server.host.value),
-          Composition.Port(cfg.server.port.value),
+          cfg.server.host,
+          cfg.server.port,
           None,
           autoInit = cfg.init.auto,
           plugins = generation,

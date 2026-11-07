@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.domain.automation.agents.{AgentGenerator, FirstCallProbe, LlmCall, LlmClient, ModelLimitReached}
+import com.histmersion.domain.automation.agents.{AgentDef, AgentGenerator, FirstCallProbe, LlmCall, LlmClient, ModelLimitReached, ToolUse}
 
 import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.api.automation.Agents.ModelRef
@@ -40,7 +40,7 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
 
   def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
     CliProcess.withDir(com.histmersion.server.agents.CliProcess.WithDirPrefix("histmersion-claude-")) { dir =>
-      val grant = Option.when(call.tools.nonEmpty)(rt.grant(call, call.agent, cfg.timeoutSeconds)).flatten
+      val grant = Option.when(call.tools.nonEmpty)(rt.grant(call, call.agent, CliProcess.RunTimeoutSeconds(cfg.timeoutSeconds.value))).flatten
       try
         val mcp = grant.map(g =>
           CliProcess.privateFile(dir.resolve("mcp.json"), ClaudeCode.mcpConfig(rt.agentMcpUrl, Some(g.token)).noSpaces)
@@ -49,11 +49,11 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
         val plugin = for
           a <- call.agent
           p <- rt.trees.claudePlugin.filter(d => Files.isRegularFile(d.resolve("agents").resolve(s"${a.name}.md")))
-          s <- rt.trees.claudeRole(a.name).filter(Files.isRegularFile(_))
-        yield ClaudeCode.Launch.Agent(p.toString, a.name, s.toString)
+          s <- rt.trees.claudeRole(a.name.value).filter(Files.isRegularFile(_))
+        yield ClaudeCode.Launch.Agent(ClaudeCode.Launch.Agent.PluginDir(p.toString), ClaudeCode.Launch.Agent.Name(a.name.value), ClaudeCode.Launch.Agent.Settings(s.toString))
         val launch = plugin.getOrElse(
           ClaudeCode.Launch.SystemPrompt(
-            Files.writeString(dir.resolve("system.md"), call.system, StandardCharsets.UTF_8).toString
+            ClaudeCode.Launch.SystemPrompt.File(Files.writeString(dir.resolve("system.md"), call.system.value, StandardCharsets.UTF_8).toString)
           )
         )
         val web = call.agent.map(a => AgentGenerator.claudeWebTools(a.web)).getOrElse(Nil)
@@ -62,11 +62,11 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
         val argv = ClaudeCode.argv(
           cfg,
           model.model,
-          call.maxIterations,
+          AgentDef.MaxTurns(call.maxIterations.value),
           ClaudeCode.schemaJson(call.schema),
           launch,
-          mcp.map(_.toString),
-          call.tools.map(_.name),
+          mcp,
+          call.tools.map(t => ToolUse.Tool.assume(t.name)),
           rt.definitions.tools.map(_.value),
           web
         )
@@ -74,20 +74,20 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
         // the LLM-slot semaphore and the latency the trace shows: the interceptors see the whole process
         // as one call. Carried out of the interceptor chain in a reference (its return type is sttp-ai's).
         val out = java.util.concurrent.atomic.AtomicReference[Option[ClaudeCode.Outcome]](None)
-        val stopped = java.util.concurrent.atomic.AtomicReference[Option[String]](None)
+        val stopped = java.util.concurrent.atomic.AtomicReference[Option[CliProcess.Run.Stopped]](None)
         val ctx = LlmCallContext(
-          ConversationHistory.withInitialPrompt(call.user),
+          ConversationHistory.withInitialPrompt(call.user.value),
           call.tools.nonEmpty,
-          IterationInfo(1, math.max(1, call.maxIterations))
+          IterationInfo(1, math.max(1, call.maxIterations.value))
         )
         val _ = AgentInterceptor.compose(call.interceptors).aroundLlmCall(ctx) {
           val r = CliProcess.run(
             argv,
             work,
             env => ClaudeCode.environment(cfg, call.maxTokens, grant.map(_.token), rt.quotaUrl, env)(using rt.jvmHome),
-            call.user,
-            cfg.timeoutSeconds,
-            "install Claude Code or set agents.providers.claude-code.command (HISTMERSION_AGENTS_CLAUDE_COMMAND) to its absolute path",
+            CliProcess.RunStdin(call.user.value),
+            CliProcess.RunTimeoutSeconds(cfg.timeoutSeconds.value),
+            CliProcess.RunHint("install Claude Code or set agents.providers.claude-code.command (HISTMERSION_AGENTS_CLAUDE_COMMAND) to its absolute path"),
             onLine = l => pool.flatMap(p => ClaudeCode.watch(l, p))
           )
           stopped.set(r.stopped)
@@ -98,26 +98,27 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
           if o.result.isEmpty && r.stopped.isEmpty then
             throw java.io.IOException(
               s"claude -p exited ${r.exit} without a result" +
-                (if r.stderr.nonEmpty then s": ${r.stderr.takeRight(600)}" else "")
+                (if r.stderr.value.nonEmpty then s": ${r.stderr.value.takeRight(600)}" else "")
             )
-          AgentResponse(o.result.fold("")(_.text), Nil, StopReason.EndTurn, Some(o.usage), o.modelId)
+          AgentResponse(o.result.fold("")(_.text.value), Nil, StopReason.EndTurn, Some(o.usage), o.modelId.map(_.value))
         }
         val o = out.get().getOrElse(throw IllegalStateException("claude-code: no outcome"))
         // every reading of the run is in the pool (also the ones the watch already recorded: newest wins)
         pool.foreach(p => p.record(com.histmersion.api.automation.PlanQuota.PoolId.ClaudePlan, o.readings))
         val guard = stopped
           .get()
+          .map(_.value)
           .orElse(o.result.filter(ClaudeCode.abortedByGuard).map(_ => "the quota-guard mod ended the turn"))
         guard match
           case Some(why) =>
             val until = pool
-              .flatMap(_.blocked(com.histmersion.api.automation.PlanQuota.PoolId.ClaudePlan, Some(model.model)))
+              .flatMap(_.blocked(com.histmersion.api.automation.PlanQuota.PoolId.ClaudePlan, Some(com.histmersion.domain.automation.agents.AgentsControllers.ModelName(model.model.value))))
               .flatMap(_._2)
-              .map(java.time.Instant.ofEpochMilli)
-            throw ModelLimitReached(model, until, s"claude -p stopped by the quota guard: $why")
+              .map(i => java.time.Instant.ofEpochMilli(i.value))
+            throw ModelLimitReached(model, until, ModelLimitReached.Message(s"claude -p stopped by the quota guard: $why"))
           case None =>
             ClaudeCode.result(o, call.user, call.schema) match
               case Right(r)  => r
-              case Left(lim) => throw ModelLimitReached(model, lim.until, lim.message)
+              case Left(lim) => throw ModelLimitReached(model, lim.until, ModelLimitReached.Message(lim.message.value))
       finally grant.foreach(g => rt.tokens.revoke(g.token))
     }

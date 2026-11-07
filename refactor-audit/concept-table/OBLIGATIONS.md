@@ -155,3 +155,9 @@ Master's `[a-z][a-z0-9]*_.+` refuses the seed's own bare ids (`anatolia`, `aegea
 - New refusals or changes: OpsRoutes.queueList 400 on a malformed goal or job filter (master: empty); McpTools rename_label malformed `from` refuses (master: not found); job_status, activity, merges: non-positive limit means default (master: passed through); events mapLimit clamped to at least 1; SeedNoteFiles.figures negative maxBytes gives none.
 - MarkdownLint rebuilt from 7e197c2b on plain String internally. Workflows.parse takes String. ApprovalService rewritten: compare carefully.
 - Bridges: Queue.Wire vs Queue.Kind.Label; Queue.RenderResult vs Queue.Export; AliasTable.Id to Event.Id, Goal.Slug, Alias via `.either(...).getOrElse(id)` (an invalid id stays); QueueScope.ForJob.Job, ForGoal.Goal vs Job.Id, Goal.Slug; db QueueRepo.QueueItemId alias.
+
+## From server, wave 7
+
+- ServerAutomationHost.runTarget, linkRef, runOptions refuse with the parser's message instead of the old not-found wording; articleStore.exists false for an unparseable slug. Unchecked bridges from config and env values: ServerConfig.Host from HISTMERSION_BIND, ListName in OpsRoutes, OpsTools, ManagerSupervisor.
+- Visibility: ArticleService.citing takes private ArticleRepo.Limit; EventsControllers.mapView requires private EventRepo.GeoTolerance: public concepts needed.
+- Hot reload's `changed` typed Def.Name holds config keys. RelinkPlugins.check had (problems, notes) swapped: fixed. PluginKit.KitFile.Sha256 (constrained) vs api.Sha256.

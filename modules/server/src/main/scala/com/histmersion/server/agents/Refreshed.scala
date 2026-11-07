@@ -7,7 +7,7 @@ import scala.jdk.CollectionConverters.*
 
 /** What one refresh did: how (`probe`, `app-server`), whether a reading came back, and what. */
 final case class Refreshed(mode: Refreshed.Mode, ok: Refreshed.Ok, detail: Refreshed.Detail):
-  def text: com.histmersion.server.agents.Refreshed.Text = s"$mode: $detail"
+  def text: com.histmersion.server.agents.Refreshed.Text = Text(s"$mode: $detail")
 
 object Refreshed:
   type Text = Text.T

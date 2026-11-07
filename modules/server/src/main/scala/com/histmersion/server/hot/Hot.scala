@@ -4,7 +4,7 @@ import hearth.kindlings.optics.syntax.*
 import ox.{supervised, Ox}
 
 import scala.concurrent.duration.*
-import com.histmersion.config.{HotNode, HotPlan}
+import com.histmersion.config.{ConfigReload, HotNode, HotPlan}
 import com.histmersion.util.jobs.{Carried, Pinning}
 import java.io.PrintWriter
 import java.sql.Connection
@@ -54,27 +54,19 @@ object Hot:
   final class DataSource[A](pool: Hot[A])(of: A => javax.sql.DataSource) extends javax.sql.DataSource:
     private def now: javax.sql.DataSource = of(pool.peek)
     def getConnection(): Connection = pool.use(a => of(a).getConnection())
-    def getConnection(username: com.histmersion.server.hot.Hot.DataSource.Username, password: com.histmersion.server.hot.Hot.DataSource.Password): Connection =
+    def getConnection(username: String, password: String): Connection =
       pool.use(a => of(a).getConnection(username, password))
 
     def getLogWriter: PrintWriter = now.getLogWriter
     def setLogWriter(out: PrintWriter): Unit = now.setLogWriter(out)
-    def setLoginTimeout(seconds: com.histmersion.server.hot.Hot.DataSource.LoginTimeoutSeconds): Unit = now.setLoginTimeout(seconds)
-    def getLoginTimeout: com.histmersion.server.hot.Hot.DataSource.LoginTimeoutSeconds = now.getLoginTimeout
+    def setLoginTimeout(seconds: Int): Unit = now.setLoginTimeout(seconds)
+    def getLoginTimeout: Int = now.getLoginTimeout
     def getParentLogger: Logger = now.getParentLogger
     def unwrap[T](iface: Class[T]): T =
       if iface.isInstance(this) then iface.cast(this) else now.unwrap(iface)
     def isWrapperFor(iface: Class[?]): Boolean = iface.isInstance(this) || now.isWrapperFor(iface)
 
     override def toString = s"HotDataSource(${pool.name})"
-
-  object DataSource:
-    type LoginTimeoutSeconds = LoginTimeoutSeconds.T
-    object LoginTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Password = Password.T
-    object Password extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Username = Username.T
-    object Username extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The hot component graph (docs/research-plugins.md §3.6): Ox has no `Hotswap`, so this is one.
     *
@@ -97,7 +89,7 @@ object Hot:
     import Graph.*
 
     private val defs = AtomicReference(Vector.empty[Def[C]])
-    private val current = AtomicReference[Snap[C]](Snap(com.histmersion.server.hot.Hot.Graph.Snap.Generation(0L), initial, Map.empty))
+    private val current = AtomicReference[Snap[C]](Snap(Generation(0L), initial, Map.empty))
     private val pinnedTL = ThreadLocal[Snap[C] | Null]()
 
     /** Node registration and reloads, one at a time. */
@@ -110,7 +102,7 @@ object Hot:
     // ── reading ────────────────────────────────────────────────────────────────────────────────────
 
     /** The generation the calling thread sees: its pin's, else the current one (not pinned). */
-    def generation: com.histmersion.server.hot.Hot.Graph.Instance.Generation = seen.generation
+    def generation: Generation = seen.generation
 
     /** The config the calling thread sees: its pin's, else the current one. Read it once per unit of work that needs
       * one consistent config; a pinned request sees one config throughout.
@@ -149,7 +141,7 @@ object Hot:
     def latest: C = current.get().config
 
     /** The latest published generation's number. */
-    def latestGeneration: com.histmersion.server.hot.Hot.Graph.Instance.Generation = current.get().generation
+    def latestGeneration: Generation = current.get().generation
 
     def pinned[A](f: => A): A =
       if pinnedTL.get() != null then f
@@ -190,21 +182,21 @@ object Hot:
         name: com.histmersion.server.hot.Hot.Graph.Def.Name,
         deps: List[Hot[?]] = Nil,
         keys: List[com.histmersion.server.hot.Hot.Graph.Def.Keys] = Nil,
-        idle: A => com.histmersion.server.hot.Hot.Graph.Def.Idle = (_: A) => com.histmersion.server.hot.Hot.Graph.Def.Idle(true),
+        idle: A => Boolean = (_: A) => true,
         onPublish: A => Unit = (_: A) => ()
     )(build: BuildCtx[C, A] => Ox ?=> Either[com.histmersion.server.hot.Hot.Graph.Problem, A]): Either[com.histmersion.server.hot.Hot.Graph.Problem, Hot[A]] =
       locked {
         val d = Def[C](
           name,
-          deps.map(_.name),
+          deps.map(h => HotNode.Deps(h.name.value)),
           keys,
           ctx => build(ctx.asInstanceOf[BuildCtx[C, A]]), // the ctx a Def is built with carries its own A
           v => idle(v.asInstanceOf[A]),
           v => onPublish(v.asInstanceOf[A])
         )
         for
-          _ <- if closed.get() then Left("hot graph: closed") else Right(())
-          _ <- HotPlan.order((defs.get() :+ d).map(_.spec).toList)
+          _ <- if closed.get() then Left(Problem("hot graph: closed")) else Right(())
+          _ <- HotPlan.order((defs.get() :+ d).map(_.spec).toList).left.map(p => Problem(p.value))
           s = current.get()
           i <- instantiate(d, BuildCtx[C, Any](s.config, None, None, Nil, n => s.nodes(n).value), s.generation)
         yield
@@ -216,7 +208,7 @@ object Hot:
           Handle[A](name)
       }
 
-    final private class Handle[A](val name: Handle.Name) extends Hot[A]:
+    final private class Handle[A](val name: Def.Name) extends Hot[A]:
       def use[B](f: A => B): B =
         val s = pinnedTL.get()
         if s != null && s.nodes.contains(name) then f(s.nodes(name).value.asInstanceOf[A])
@@ -230,10 +222,6 @@ object Hot:
       def latest: A = current.get().nodes(name).value.asInstanceOf[A]
       override def toString = s"Hot($name)"
 
-    object Handle:
-      type Name = Name.T
-      object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     // ── reload ─────────────────────────────────────────────────────────────────────────────────────
 
     /** Switch to `next`: rebuild what `changed` (plus `forced`) concerns and everything depending on it, publish a new
@@ -244,7 +232,7 @@ object Hot:
     def reload(
         next: C,
         changed: List[com.histmersion.server.hot.Hot.Graph.Def.Name],
-        forced: Set[com.histmersion.server.hot.Hot.Graph.Reason] = Set.empty,
+        forced: Set[com.histmersion.server.hot.Hot.Graph.Def.Name] = Set.empty,
         drain: FiniteDuration = 10.seconds
     ): Either[com.histmersion.server.hot.Hot.Graph.Problem, Outcome] =
       locked {
@@ -252,10 +240,14 @@ object Hot:
         else
           val s = current.get()
           val specs = defs.get()
-          HotPlan.plan(specs.map(_.spec).toList, changed, forced).flatMap { plan =>
+          HotPlan
+            .plan(specs.map(_.spec).toList, changed.map(n => ConfigReload.ChangedKey(n.value)), forced)
+            .left
+            .map(p => Problem(p.value))
+            .flatMap { plan =>
             val byName = specs.map(d => d.name -> d).toMap
-            val gen = s.generation + 1
-            val built = scala.collection.mutable.LinkedHashMap.empty[String, Instance]
+            val gen = Generation(s.generation.value + 1)
+            val built = scala.collection.mutable.LinkedHashMap.empty[Def.Name, Instance]
             val failure = plan.iterator
               .map { name =>
                 val d = byName(name)
@@ -271,14 +263,14 @@ object Hot:
                       .map(_.value)
                       .getOrElse(throw IllegalStateException(s"hot graph: $name depends on $n, which has no value"))
                 )
-                instantiate(d, ctx, gen).map(i => built.update(name, i)).left.map(e => s"$name: $e")
+                instantiate(d, ctx, gen).map(i => built.update(name, i)).left.map(e => Problem(s"$name: $e"))
               }
               .collectFirst { case Left(e) => e }
             failure match
               case Some(e) =>
                 // nobody has seen these: close them now, dependents first
                 built.values.toList.reverse.foreach(_.close(log))
-                log.warn(s"config reload: nothing changed — $e")
+                log.warn(Log.Message(s"config reload: nothing changed — $e"))
                 Left(e)
               case None =>
                 val published = Snap(gen, next, s.nodes ++ built)
@@ -291,10 +283,10 @@ object Hot:
                   try
                     within(onNew)(plan.flatMap { name =>
                       try { byName(name).onPublish(built(name).value); None }
-                      catch case NonFatal(e) => Some(s"$name: after the swap: ${e.getMessage}")
+                      catch case NonFatal(e) => Some(Outcome.Warnings(s"$name: after the swap: ${e.getMessage}"))
                     })
                   finally onNew.release()
-                notes.foreach(log.warn)
+                notes.foreach(w => log.warn(Log.Message(w.value)))
                 Right(Outcome(gen, plan, retire(retired.reverse, drain), notes))
           }
       }
@@ -325,8 +317,10 @@ object Hot:
         val busy = old.filterNot(i => i.isClosed || i.freeBut(if own(i) then com.histmersion.server.hot.Hot.Graph.Instance.PinCount(1) else com.histmersion.server.hot.Hot.Graph.Instance.PinCount(0)))
         busy.foreach(i =>
           log.warn(
-            s"config reload: ${i.describe} is still in use after ${bound.toSeconds} s — " +
-              "it closes when its last user lets go"
+            Log.Message(
+              s"config reload: ${i.describe} is still in use after ${bound.toSeconds} s — " +
+                "it closes when its last user lets go"
+            )
           )
         )
         busy.map(_.describe)
@@ -334,7 +328,7 @@ object Hot:
     /** What is still draining from earlier generations. */
     def stillDraining: List[com.histmersion.server.hot.Hot.Graph.Instance.Description] =
       import scala.jdk.CollectionConverters.*
-      draining.keySet.asScala.toList.map(_.describe).sorted
+      draining.keySet.asScala.toList.map(_.describe).sortBy(_.value)
 
     /** Close every component (dependents first) — the server's shutdown, a test's end. In-use ones are waited for up to
       * `bound`, then closed anyway (the process is ending).
@@ -350,7 +344,7 @@ object Hot:
             draining.keySet.asScala.toList
           }).distinct.foreach { i =>
             while !i.free && System.nanoTime() < deadline do Thread.sleep(DrainPollMs)
-            if !i.free then log.warn(s"shutdown: closing ${i.describe} while still in use")
+            if !i.free then log.warn(Log.Message(s"shutdown: closing ${i.describe} while still in use"))
             i.close(log)
           }
       }
@@ -363,8 +357,8 @@ object Hot:
     /** Build one node's value in a scope of its own, on a thread of its own that holds the scope open until the value
       * is retired.
       */
-    private def instantiate(d: Def[C], ctx: BuildCtx[C, Any], gen: com.histmersion.server.hot.Hot.Graph.Instance.Generation): Either[com.histmersion.server.hot.Hot.Graph.Problem, Instance] =
-      val built = CompletableFuture[Either[String, Any]]()
+    private def instantiate(d: Def[C], ctx: BuildCtx[C, Any], gen: Generation): Either[com.histmersion.server.hot.Hot.Graph.Problem, Instance] =
+      val built = CompletableFuture[Either[Problem, Any]]()
       val release = CountDownLatch(1)
       val ended = CountDownLatch(1)
       val _ = Thread.ofVirtual().name(s"histmersion-hot-${d.name}-$gen").start { () =>
@@ -372,15 +366,15 @@ object Hot:
           supervised {
             val r =
               try d.build(ctx)
-              catch case NonFatal(e) => Left(Option(e.getMessage).getOrElse(e.getClass.getSimpleName))
+              catch case NonFatal(e) => Left(Problem(Option(e.getMessage).getOrElse(e.getClass.getSimpleName)))
             built.complete(r)
             // a failed build ends its scope now, releasing whatever it had acquired
             if r.isRight then release.await()
           }
         catch
           case NonFatal(e) =>
-            if !built.complete(Left(s"its scope failed: ${e.getMessage}")) then
-              log.warn(s"${d.name} (generation $gen): closing its scope failed: ${e.getMessage}")
+            if !built.complete(Left(Problem(s"its scope failed: ${e.getMessage}"))) then
+              log.warn(Log.Message(s"${d.name} (generation $gen): closing its scope failed: ${e.getMessage}"))
         finally ended.countDown()
       }
       built.get() match
@@ -392,8 +386,9 @@ object Hot:
   object Graph:
     type Problem = Problem.T
     object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Reason = Reason.T
-    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Generation = Generation.T
+    object Generation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     /** How often a drain looks at its components' users. */
 
     private[hot] val DrainPollMs = 20L
@@ -406,57 +401,40 @@ object Hot:
       object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
       val scribe: Log = new Log:
-        def info(m: com.histmersion.server.hot.Hot.Graph.Log.Message) = _root_.scribe.info(m)
-        def warn(m: com.histmersion.server.hot.Hot.Graph.Log.Message) = _root_.scribe.warn(m)
+        def info(m: com.histmersion.server.hot.Hot.Graph.Log.Message) = _root_.scribe.info(m.value)
+        def warn(m: com.histmersion.server.hot.Hot.Graph.Log.Message) = _root_.scribe.warn(m.value)
 
     /** What a reload did: the generation published, the nodes rebuilt (in build order), the retired components still in
       * use when it stopped waiting, and the `onPublish` failures.
       */
-    final case class Outcome(generation: Outcome.Generation, rebuilt: List[Outcome.Rebuilt], draining: List[Outcome.Draining], warnings: List[Outcome.Warnings])
+    final case class Outcome(generation: Generation, rebuilt: List[Def.Name], draining: List[Instance.Description], warnings: List[Outcome.Warnings])
 
     object Outcome:
-      type Generation = Generation.T
-      object Generation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Rebuilt = Rebuilt.T
-      object Rebuilt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Draining = Draining.T
-      object Draining extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Warnings = Warnings.T
       object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     final private[hot] case class Def[C](
         name: Def.Name,
-        deps: List[Def.Deps],
+        deps: List[HotNode.Deps],
         keys: List[Def.Keys],
-        build: BuildCtx[C, Any] => Ox ?=> Either[Def.BuildResultResultPart1, Any],
-        idle: Any => Def.IdleResult,
+        build: BuildCtx[C, Any] => Ox ?=> Either[Problem, Any],
+        idle: Any => Boolean,
         onPublish: Any => Unit
     ):
       def spec: HotNode = HotNode(name, deps, keys)
 
     object Def:
-      type Idle = Idle.T
-      object Idle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Problem = Problem.T
-      object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type BuildResultResultPart1 = com.histmersion.server.hot.Hot.Graph.Def.Problem
-      val BuildResultResultPart1: _root_.com.histmersion.server.hot.Hot.Graph.Def.Problem.type = _root_.com.histmersion.server.hot.Hot.Graph.Def.Problem
-      type IdleResult = com.histmersion.server.hot.Hot.Graph.Def.Idle
-      val IdleResult: _root_.com.histmersion.server.hot.Hot.Graph.Def.Idle.type = _root_.com.histmersion.server.hot.Hot.Graph.Def.Idle
-
-      type Name = Name.T
-      object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Deps = Deps.T
-      object Deps extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Keys = Keys.T
-      object Keys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Name = HotNode.Name
+      val Name: HotNode.Name.type = HotNode.Name
+      type Keys = HotNode.Keys
+      val Keys: HotNode.Keys.type = HotNode.Keys
 
     /** One built value, the users pinning it and the scope holding it open. */
     final private[hot] class Instance(
-        val name: Instance.Name,
-        val generation: Instance.Generation,
+        val name: Def.Name,
+        val generation: Generation,
         val value: Any,
-        idle: () => Instance.IdleResult,
+        idle: () => Boolean,
         release: CountDownLatch,
         ended: CountDownLatch
     ):
@@ -469,38 +447,23 @@ object Hot:
       def free: Boolean = users.get() == 0 && idleNow
 
       /** Free but for `own` pins the asking thread holds itself. */
-      def freeBut(own: com.histmersion.server.hot.Hot.Graph.Instance.PinCount): Boolean = users.get() <= own && idleNow
-      def describe: com.histmersion.server.hot.Hot.Graph.Instance.Description = s"$name (generation $generation, ${users.get()} pinned)"
+      def freeBut(own: com.histmersion.server.hot.Hot.Graph.Instance.PinCount): Boolean = users.get() <= own.value && idleNow
+      def describe: com.histmersion.server.hot.Hot.Graph.Instance.Description = Instance.Description(s"$name (generation $generation, ${users.get()} pinned)")
       def close(log: Log): Unit =
         if closedFlag.compareAndSet(false, true) then
           release.countDown()
           if !ended.await(CloseWaitSeconds, TimeUnit.SECONDS) then
-            log.warn(s"$name (generation $generation): its scope did not close within $CloseWaitSeconds s")
+            log.warn(Log.Message(s"$name (generation $generation): its scope did not close within $CloseWaitSeconds s"))
 
     object Instance:
       type Description = Description.T
       object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Idle = Idle.T
-      object Idle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type PinCount = PinCount.T
       object PinCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Name = Name.T
-      object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Generation = Generation.T
-      object Generation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type IdleResult = com.histmersion.server.hot.Hot.Graph.Instance.Idle
-      val IdleResult: _root_.com.histmersion.server.hot.Hot.Graph.Instance.Idle.type = _root_.com.histmersion.server.hot.Hot.Graph.Instance.Idle
-
 
     private val CloseWaitSeconds = 60L
 
     /** One generation: its number, its config and the instance of every node. */
-    final private[hot] case class Snap[C](generation: Snap.Generation, config: C, nodes: Map[Snap.NodesKey, Instance]):
+    final private[hot] case class Snap[C](generation: Generation, config: C, nodes: Map[Def.Name, Instance]):
       def acquire(): Unit = nodes.values.foreach(_.users.incrementAndGet())
       def release(): Unit = nodes.values.foreach(_.users.decrementAndGet())
-
-    object Snap:
-      type Generation = Generation.T
-      object Generation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type NodesKey = NodesKey.T
-      object NodesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -12,11 +12,25 @@ import com.histmersion.server.MarkdownLint
 final class FormatView(articles: => ArticlesControllers, sources: => SourcesControllers):
   def check(in: FormatCheck): FormatReport =
     val (text, done) =
-      if in.fix then MarkdownLint.fix(in.text, in.field, MarkdownLint.Context(article = in.field == FormatField.Body))
-      else (in.text, Nil)
+      if in.fix.value then
+        MarkdownLint.fix(
+          MarkdownLint.Scan.Text(in.text.value),
+          in.field,
+          MarkdownLint.Context(article = MarkdownLint.Context.Article(in.field == FormatField.Body))
+        )
+      else (MarkdownLint.Scan.Text(in.text.value), Nil)
     val issues = in.field match
-      case FormatField.Body    => articles.formatting(text, None)
+      case FormatField.Body    => articles.formatting(com.histmersion.api.research.Article.Body(text.value), None)
       case FormatField.Summary =>
-        MarkdownLint.ofSource(Some(text), None, articles.pageLinks(MarkdownLint.lookups(List(text))))
-      case FormatField.Notes => sources.formatIssues(None, Some(text))
-    FormatReport(com.histmersion.api.checks.FormatReport.Subject("text"), issues, done, Option.when(in.fix)(text))
+        MarkdownLint.ofSource(
+          Some(com.histmersion.domain.library.Source.Summary(text.value)),
+          None,
+          articles.pageLinks(MarkdownLint.lookups(List(text)))
+        )
+      case FormatField.Notes => sources.formatIssues(None, Some(com.histmersion.api.library.Source.Notes(text.value)))
+    FormatReport(
+      com.histmersion.api.checks.FormatReport.Subject("text"),
+      issues,
+      done.map(r => FormatReport.Fixed(r.value)),
+      Option.when(in.fix.value)(FormatReport.Text(text.value))
+    )

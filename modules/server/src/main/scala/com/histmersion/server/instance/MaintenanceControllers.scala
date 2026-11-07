@@ -4,7 +4,7 @@ import com.histmersion.api.Write
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.library.search.QueryAccess
 import com.histmersion.server.Deps
-import com.histmersion.util.data.backup.{BackupJobs, BackupService}
+import com.histmersion.util.data.backup.{BackupJobs, BackupService, PreparedBackup}
 import com.histmersion.util.data.maintenance.{CacheEvent, CacheName, MaintenanceSite, MaintenanceSlice}
 import com.histmersion.util.data.maintenance.VacuumJobs
 
@@ -31,8 +31,8 @@ final class MaintenanceControllers(
   private val ds = deps.ds
   private def cfg = deps.cfg
   private val maintenance = deps.maintenance
-  private val backupJobs = BackupJobs(backups, deps.cfg.backups.requestWaitSeconds, deps.pins)
-  private val vacuumJobs = VacuumJobs(ds, deps.maintenance, Deps.data, () => cfg.maintenance.tables, deps.pins)
+  private val backupJobs = BackupJobs(backups, deps.cfg.backups.requestWaitSeconds.value, deps.pins)
+  private val vacuumJobs = VacuumJobs(ds, deps.maintenance, Deps.data, () => cfg.maintenance.tables.map(t => Vacuum.Table(t.value)), deps.pins)
 
   /** `pg_dump -Fc` of the server's own database into `backups.dir`, as a job (see [[BackupJobs]]): the answer is the
     * finished backup, or `running` when it outlasts the request.
@@ -52,7 +52,13 @@ final class MaintenanceControllers(
         .task(MaintenanceTask.Name("reindex"))
         .toRight(Api.Error(com.histmersion.api.Api.Error.Message("no reindex is registered")))
         .map(
-          _.run(MaintenanceSlice(after.map(_.trim).filter(_.nonEmpty), limit.filter(_ > 0)), MaintenanceSite(ds, cfg))
+          _.run(
+            MaintenanceSlice(
+              after.map(_.value.trim).filter(_.nonEmpty).map(MaintenanceSlice.After(_)),
+              limit.filter(_.value > 0).map(l => MaintenanceSlice.Limit(l.value))
+            ),
+            MaintenanceSite(ds, cfg)
+          )
         )
 
   /** Why a scheduled backup or repair must not start now (the autopilot's housekeeping): a restore holds the
@@ -66,12 +72,15 @@ final class MaintenanceControllers(
     else None
 
   def backupStatus: Either[Api.Error, Backup.Status] =
-    backupJobs.status.toRight(Api.Error("no backup has run since the server started", Some(Write.CodeNotFound)))
+    backupJobs.status.toRight(Api.Error(
+        Api.Error.Message("no backup has run since the server started"),
+        Some(Api.Error.Code(Write.CodeNotFound))
+      ))
 
   def backupList: Either[Api.Error, List[Backup.Info]] = backups.list
 
   /** The archive itself, for `GET /api/backups/{file}` — validated against the listing first. */
-  def backupFile(file: com.histmersion.server.instance.MaintenanceControllers.BackupFileName): Either[Api.Error, java.io.File] = backups.archive(file)
+  def backupFile(file: com.histmersion.server.instance.MaintenanceControllers.BackupFileName): Either[Api.Error, java.io.File] = backups.archive(PreparedBackup.File(file.value))
 
   /** Restore under the maintenance lock: every other write is answered 503 until it returns. Refuses a database that
     * still holds sources unless `force` (`pg_restore --clean` DROPS them), and re-validates the schema with Flyway
@@ -80,13 +89,13 @@ final class MaintenanceControllers(
   def restore(req: RestoreRequest): Either[Api.Error, RestoreResult] =
     if backupJobs.running then
       Left(
-        Api.Error(com.histmersion.api.Api.Error.Message("a backup is still running — wait for `histmersion backup` to finish"), Some(Backup.CodeMaintenance))
+        Api.Error(com.histmersion.api.Api.Error.Message("a backup is still running — wait for `histmersion backup` to finish"), Some(Api.Error.Code(Backup.CodeMaintenance)))
       )
     else if vacuumJobs.isRunning then
       Left(
         Api.Error(
           com.histmersion.api.Api.Error.Message("a vacuum is still running — wait for its job (`histmersion jobs`) to finish"),
-          Some(Backup.CodeMaintenance)
+          Some(Api.Error.Code(Backup.CodeMaintenance))
         )
       )
     else
@@ -100,7 +109,7 @@ final class MaintenanceControllers(
   private def restoreNow(req: RestoreRequest): Either[Api.Error, RestoreResult] =
     val before = backups.guardedRows
     for
-      archive <- backups.resolve(req.file)
+      archive <- backups.resolve(PreparedBackup.File(req.file.value))
       _ <- if req.force || before == 0 then Right(()) else Left(backups.refusal(before))
       r <- backups.restore(archive)
       // Every pooled connection now holds a session cache describing types the restore dropped;
@@ -113,7 +122,7 @@ final class MaintenanceControllers(
         .Try(Migrate.run(ds))
         .toEither
         .left
-        .map(e => Api.Error(s"restored ${req.file}, but migrating it failed: ${e.getMessage}"))
+        .map(e => Api.Error(Api.Error.Message(s"restored ${req.file}, but migrating it failed: ${e.getMessage}")))
       _ = Db.ensureDatabaseSettings(ds)
       role = QueryAccess
         .provision(ds, cfg.query)
@@ -124,7 +133,7 @@ final class MaintenanceControllers(
       _ = { Db.evict(ds); Db.evict(deps.queryDs) }
       // the restored versions of what the map's tiles read may be ones the kept tiles were cut under
       _ = clearOnRestore()
-      v <- Migrate.validate(ds).left.map(m => Api.Error(s"restored ${req.file}, but the schema does not validate: $m"))
+      v <- Migrate.validate(ds).left.map(m => Api.Error(Api.Error.Message(s"restored ${req.file}, but the schema does not validate: $m")))
     yield RestoreResult(req.file, v, before, backups.guardedRows, r._1, r._2 ++ role)
 
   /** The registered caches a restore makes stale, cleared: what this server holds of each. */

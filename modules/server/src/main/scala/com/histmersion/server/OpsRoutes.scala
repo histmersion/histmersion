@@ -38,6 +38,6 @@ object OpsRoutes:
         r <- w.workListView.list(WorkListView.QueueName(list.value), WorkListView.IncludeAll(all), g, j)
       yield r
     ),
-    OpsApi.queueAdd.serverLogic[Identity]((list, in) => w.workLists.add(Queue.Kind.Label(list.value), in)),
+    OpsApi.queueAdd.serverLogic[Identity]((list, in) => w.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName(list.value), in)),
     OpsApi.goalsExport.serverLogicSuccess[Identity](_ => com.histmersion.api.automation.Goal.Export(w.goals.exportText()))
   )

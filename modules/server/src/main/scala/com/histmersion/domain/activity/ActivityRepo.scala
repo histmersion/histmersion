@@ -68,7 +68,7 @@ private[activity] object ActivityRepo:
       q.since.fold(Sql.empty)(s => Sql.of(com.histmersion.util.database.Sql.Text(" AND t >= ?::timestamptz"), Param.S(Param.S.V(s.toString)))) ++
       q.before.fold(Sql.empty)(c =>
         Sql.of(
-          """ AND (t < ?::timestamptz OR (t = ?::timestamptz AND (kind || ':' || rid) COLLATE "C" < ?))""",
+          Sql.Text(""" AND (t < ?::timestamptz OR (t = ?::timestamptz AND (kind || ':' || rid) COLLATE "C" < ?))"""),
           Param.S(Param.S.V(c.at.toString)),
           Param.S(Param.S.V(c.at.toString)),
           Param.S(Param.S.V(c.key.value))
@@ -78,7 +78,7 @@ private[activity] object ActivityRepo:
   /** One page of `q`, with the next page's cursor. */
   def page(q: ActivityQuery)(using DbCon): (List[Entry], Option[ActivityCursor.Wire]) =
     val sql = Sql.raw(Sql.Text(s"$Projection FROM $Merged")) ++ where(q) ++
-      Sql.of(""" ORDER BY t DESC, (kind || ':' || rid) COLLATE "C" DESC LIMIT ?""", Param.I(Param.I.V(q.limit.value + 1)))
+      Sql.of(Sql.Text(""" ORDER BY t DESC, (kind || ':' || rid) COLLATE "C" DESC LIMIT ?"""), Param.I(Param.I.V(q.limit.value + 1)))
     val rows = sql.frag.query[ActivityRow].run().toList.map(_.entry)
     val (kept, rest) = rows.splitAt(q.limit.value)
     (kept, Option.when(rest.nonEmpty)(kept.lastOption).flatten.map(ActivityRules.cursorOf(_).wire))

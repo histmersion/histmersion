@@ -21,7 +21,7 @@ import sttp.tapir.server.interceptor.{EndpointInterceptor, RequestHandler, Reque
 /** A pin on one generation: while it is held, none of that generation's components is closed. */
 final class Pin private[hot] (private[hot] val snap: Hot.Graph.Snap[?]):
   private val released = AtomicBoolean(false)
-  def generation: com.histmersion.server.hot.Hot.Graph.Instance.Generation = snap.generation
+  def generation: Hot.Graph.Generation = snap.generation
   def release(): Unit = if released.compareAndSet(false, true) then snap.release()
 
 object Pin:

@@ -33,7 +33,8 @@ final class ServerEngineSite(deps: Deps, w: ServerWiring, digestOn: Option[java.
   def pause: com.histmersion.util.time.Pause = deps.pause
   override def userPaths: com.histmersion.config.UserPaths = deps.userPaths
   def digestClock: Option[java.time.Clock] = digestOn
-  def aiProviders: () => ListMap[com.histmersion.domain.automation.ProviderKind.Wire, AiProvider] = () => deps.plugins.registries.aiProviders
+  def aiProviders: () => ListMap[com.histmersion.domain.automation.ProviderKind.Wire, AiProvider] = () =>
+    deps.plugins.registries.aiProviders.map((k, p) => com.histmersion.domain.automation.ProviderKind.Wire(k.value) -> p)
   def roster: AgentRoster = EngineContributions.roster
   def contributions(a: AgentsControllers): Contributions = EngineContributions.of(deps, w, a)
   def approvalEffects: ApprovalEffects = ApprovalEffects.of(

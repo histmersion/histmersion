@@ -21,20 +21,19 @@ final class PipelineWorkflow(
     definitions: AgentDefinitions,
     impl: PipelineDef
 ) extends WorkflowDefinition:
-  val id: WorkflowId = WorkflowId.applyUnsafe(pipeline.wire)
-  def version: com.histmersion.domain.automation.Pipeline.Version = pipeline.version
+  val id: WorkflowId = WorkflowId.applyUnsafe(pipeline.wire.value)
+  def version: com.histmersion.domain.automation.Pipeline.Version = com.histmersion.domain.automation.Pipeline.Version(pipeline.version.value)
   def target: TargetKind = io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.TargetKind, TargetKind].transform(pipeline.targetKind)
   def roles: List[AgentRole] = io.scalaland.chimney.Transformer.derive[List[com.histmersion.api.automation.AgentRole], List[AgentRole]].transform(pipeline.roles)
-  def describe: com.histmersion.domain.automation.Pipeline.Describe = pipeline.describe
+  def describe: WorkflowDefinition.DescribeResult = WorkflowDefinition.DescribeResult(pipeline.describe.value)
 
   def allowedTools(role: AgentRole): Set[ToolName] =
     agents.flatMap(a => definitions.agent(a).toOption).filter(_.role == io.scalaland.chimney.Transformer.derive[AgentRole, com.histmersion.api.automation.AgentRole].transform(role)).flatMap(_.tools).toSet
 
-  def run(run: RunCtx): Either[Halt, com.histmersion.server.agents.PipelineWorkflow.Outcome] = impl.run(run)
+  def run(run: RunCtx): Either[Halt, WorkflowDefinition.RunResultPart2] =
+    impl.run(run).map(summary => WorkflowDefinition.RunResultPart2(summary.value))
 
 object PipelineWorkflow:
-  type Outcome = Outcome.T
-  object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The step agents each pipeline's steps run as. */
 
   def agentsOf(p: Pipeline): List[StepAgent] = p match

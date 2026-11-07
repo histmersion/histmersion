@@ -53,7 +53,7 @@ final class ManagersControllers(
   /** The runs manager `id` dispatched, newest first (`status` narrows) — `run_status`'s manager filter. */
   def runs(id: ManagerLight.Id, status: Option[com.histmersion.domain.automation.Run.State.Wire], limit: Option[com.histmersion.PageSize]): List[RunInfo] =
     val st = status.map(_.value.trim).filter(_.nonEmpty)
-    agents.runs.forManager(ManagerLight.Id(id.value.trim), limit = limits.page(limit, com.histmersion.PageSize(50))).toList.filter(r => st.forall(_ == r.status.value))
+    agents.runs.forManager(ManagerLight.Id(id.value.trim), limit = com.histmersion.domain.automation.agents.RunQuery.Limit(limits.page(limit, com.histmersion.PageSize(50)).value)).toList.filter(r => st.forall(_ == r.status.value))
 
   private def error(message: String): Api.Error = Api.Error(Api.Error.Message(message))
   private def notFound(what: String) = Api.Error(Api.Error.Message(what), Some(Api.Error.Code(Write.CodeNotFound)))
@@ -265,7 +265,7 @@ final class ManagersControllers(
             )
             .flatMap(_ =>
               ModelChains
-                .parseChain(o.model, agents.knownProviders)
+                .parseChain(ModelChains.Chain.Spec(o.model.value), agents.knownProviders.map(i => com.histmersion.api.automation.ProviderKind.Plugin.Name(i.value)))
                 .left
                 .map(e => error(s"models ${o.role}: $e"))
                 .map(_ => ())
@@ -553,7 +553,7 @@ final class ManagersControllers(
         error("`suggest` asks a model for the action: give no effect with it")
       )
       // a suggestion needs a run that can start: checked before the hint is recorded
-      _ <- if suggest then agents.prepare(RunRequest(Pipeline.HintEffect.wire, m.id), None).map(_ => ()) else Right(())
+      _ <- if suggest then agents.prepare(RunRequest(RunRequest.Pipeline(Pipeline.HintEffect.wire.value), RunRequest.Target(m.id.value)), None).map(_ => ()) else Right(())
       author = ManagerHint.Author(in.author.map(_.value.trim).filter(_.nonEmpty).getOrElse("person"))
       hint = Transactor(ds).transact(
         ManagerRepo.addHint(
@@ -572,7 +572,7 @@ final class ManagersControllers(
         if suggest then
           agents
             .startRunWith(
-              RunRequest(Pipeline.HintEffect.wire, m.id),
+              RunRequest(RunRequest.Pipeline(Pipeline.HintEffect.wire.value), RunRequest.Target(m.id.value)),
               Origin.Person,
               None,
               _.modify(_.hint).setTo(Some(RunParams.Hint(hint.id.value)))
@@ -900,11 +900,11 @@ final class ManagersControllers(
       .toRight(error(s"unknown mode '${in.mode}' — one of: ${AgentMode.values.map(_.wire).mkString(", ")}"))
       .map { to =>
         val now = agents.autopilot.status()
-        val by = in.by.map(_.trim).filter(_.nonEmpty).orElse(Some("person"))
-        AgentMode.steps(now.on, now.drain.isDefined, to).foldLeft(now) { (_, step) =>
+        val by = in.by.map(_.value.trim).filter(_.nonEmpty).orElse(Some("person"))
+        AgentMode.steps(AgentMode.Step.Autopilot.On(now.on.value), AgentMode.Step.Drain.On(now.drain.isDefined), to).foldLeft(now) { (_, step) =>
           step match
-            case AgentMode.Step.Autopilot(on) => agents.autopilot.set(Autopilot.AutopilotSet(on, by))
-            case AgentMode.Step.Drain(on)     => agents.drain.set(Autopilot.DrainSet(on, by))
+            case AgentMode.Step.Autopilot(on) => agents.autopilot.set(Autopilot.AutopilotSet(Autopilot.AutopilotSet.On(on.value), by.map(Autopilot.AutopilotSet.By(_))))
+            case AgentMode.Step.Drain(on)     => agents.drain.set(Autopilot.DrainSet(Autopilot.DrainSet.On(on.value), by.map(Autopilot.DrainSet.By(_))))
         }
       }
 

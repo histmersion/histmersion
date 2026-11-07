@@ -130,8 +130,8 @@ final class McpTools(
                     IngestMarkdown.jobs(
                       js.toVector,
                       page,
-                      f.qualifier,
-                      Paging.olderLine(page, c => s"call `job_status` again with the same filters and `before: \"$c\"`")
+                      f.qualifier.map(q => com.histmersion.api.library.Ingest.JobStatus(q.value)),
+                      Paging.olderLine(page, c => Paging.OlderLine.Text(s"call `job_status` again with the same filters and `before: \"$c\"`"))
                     )
                 )
             )
@@ -238,7 +238,7 @@ final class McpTools(
                           value.map(com.histmersion.api.settings.ConfigEdit.Change.Value(_))
                         )
                       ),
-                      literalConsent = in.literalConsent.getOrElse(false)
+                      literalConsent = com.histmersion.api.settings.ConfigEdit.Write.LiteralConsent(in.literalConsent.getOrElse(false))
                     )
                   )
                   .fold(McpOut.error, w => ToolResult.text(ConfigEditMarkdown.written(w)))
@@ -339,7 +339,7 @@ final class McpTools(
             ToolResult.text(
               Aliases.note(AliasKinds.GoalRecords, Aliases.Id(in.slug), Aliases.Id(g.slug.value))(
                 Aliases.Note(GoalsMarkdown.goal(g))
-              )
+              ).value
             )
           case Left(e) => McpOut.error(e)
       }
@@ -369,7 +369,7 @@ final class McpTools(
             ToolResult.text(
               Aliases.note(AliasKinds.GoalRecords, Aliases.Id(in.slug), Aliases.Id(g.slug.value))(
                 Aliases.Note(GoalsMarkdown.goal(g))
-              )
+              ).value
             )
           case Left(e) => McpOut.error(e)
       }
@@ -553,7 +553,7 @@ final class McpTools(
                 .work(h.agents)
                 .oaBacklog
                 .repair(RepairAcquire.RepairRequest(RepairAcquire.RepairRequest.DryRun(dry.value), Some(com.histmersion.api.automation.Activity.Actor("mcp"))))
-            )
+            ).value
           ),
         st => h.autopilot.page(st).markdown
       )

@@ -23,24 +23,12 @@ object CliProcess:
   /** What a run printed; `stopped` = `onLine` asked for it to end (the quota guard), with why. */
   type CannotStartHint = CannotStartHint.T
   object CannotStartHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GroupPrefix = GroupPrefix.T
-  object GroupPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolvePath = ResolvePath.T
-  object ResolvePath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SignalGroupPgid = SignalGroupPgid.T
-  object SignalGroupPgid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SignalGroupSig = SignalGroupSig.T
-  object SignalGroupSig extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunStdin = RunStdin.T
   object RunStdin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunTimeoutSeconds = RunTimeoutSeconds.T
   object RunTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunHint = _root_.com.histmersion.server.agents.CliProcess.CannotStartHint
   val RunHint: _root_.com.histmersion.server.agents.CliProcess.CannotStartHint.type = _root_.com.histmersion.server.agents.CliProcess.CannotStartHint
-  type RunOnLineArg1 = RunOnLineArg1.T
-  object RunOnLineArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunOnLineResult = RunOnLineResult.T
-  object RunOnLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WithDirPrefix = WithDirPrefix.T
   object WithDirPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PrivateFileText = PrivateFileText.T
@@ -59,7 +47,7 @@ object CliProcess:
     object Stopped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Raised when the executable cannot be started at all. */
-  def cannotStart(command: com.histmersion.server.Supervisor.Command, e: java.io.IOException, hint: com.histmersion.server.agents.CliProcess.CannotStartHint): java.io.IOException =
+  def cannotStart(command: com.histmersion.server.agents.ClaudeCode.Argument, e: java.io.IOException, hint: com.histmersion.server.agents.CliProcess.CannotStartHint): java.io.IOException =
     java.io.IOException(s"cannot run '$command' (${e.getMessage}) — $hint")
 
   /** What the engine watches of a step's processes (the stall watchdog): every process a step starts is registered
@@ -90,7 +78,7 @@ object CliProcess:
   private val PollMillis = 250L
 
   /** The prefix that starts a command as the leader of a new process group, if this platform has one. */
-  private lazy val groupPrefix: List[com.histmersion.server.agents.CliProcess.GroupPrefix] =
+  private lazy val groupPrefix: List[String] =
     val setsid = List("/usr/bin/setsid", "/bin/setsid").find(f => Files.isExecutable(Path.of(f)))
     setsid
       .map(List(_))
@@ -102,17 +90,17 @@ object CliProcess:
       .getOrElse(Nil)
 
   /** `command` resolved the way `execvp` would against `path` (None: not found, or not executable). */
-  private[agents] def resolve(command: com.histmersion.server.Supervisor.Command, path: Option[com.histmersion.server.agents.CliProcess.ResolvePath], dir: Path): Option[Path] =
-    if command.contains('/') then Option(dir.resolve(command)).filter(Files.isExecutable)
+  private[agents] def resolve(command: com.histmersion.server.agents.ClaudeCode.Argument, path: Option[String], dir: Path): Option[Path] =
+    if command.value.contains('/') then Option(dir.resolve(command.value)).filter(Files.isExecutable)
     else
       path.toList
         .flatMap(_.split(java.io.File.pathSeparator).toList)
         .filter(_.nonEmpty)
-        .map(d => Path.of(d).resolve(command))
+        .map(d => Path.of(d).resolve(command.value))
         .find(f => Files.isRegularFile(f) && Files.isExecutable(f))
 
   /** One live CLI: the process, whether it leads its own group, and every descendant seen so far. */
-  final private class ProcessTree(val p: Process, val grouped: ProcessTree.Grouped):
+  final private class ProcessTree(val p: Process, val grouped: Boolean):
     val seen: java.util.Set[ProcessHandle] = java.util.concurrent.ConcurrentHashMap.newKeySet[ProcessHandle]()
 
     /** Remember the descendants it has now. macOS's process-table read (`sysctl KERN_PROC`) fails now and then while
@@ -131,21 +119,17 @@ object CliProcess:
       all.foreach { d =>
         val _ = d.destroy()
       }
-      if grouped then signalGroup(p.pid, com.histmersion.server.agents.CliProcess.SignalGroupSig("TERM"))
+      if grouped then signalGroup(p.pid, "TERM")
       p.destroy()
       if !p.waitFor(5, TimeUnit.SECONDS) then { val _ = p.destroyForcibly() }
       // re-check: a descendant that ignored the TERM, or one started in the meantime
       look()
-      if grouped then signalGroup(p.pid, com.histmersion.server.agents.CliProcess.SignalGroupSig("KILL"))
+      if grouped then signalGroup(p.pid, "KILL")
       seen.asScala.filter(_.isAlive).foreach { d =>
         val _ = d.destroyForcibly()
       }
 
-  object ProcessTree:
-    type Grouped = Grouped.T
-    object Grouped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  private def signalGroup(pgid: com.histmersion.server.agents.CliProcess.SignalGroupPgid, sig: com.histmersion.server.agents.CliProcess.SignalGroupSig): Unit =
+  private def signalGroup(pgid: Long, sig: String): Unit =
     try
       val k = ProcessBuilder("/bin/kill", s"-$sig", "--", s"-$pgid").redirectErrorStream(true).start()
       k.getInputStream.readAllBytes()
@@ -157,33 +141,33 @@ object CliProcess:
   def run(
       argv: List[com.histmersion.server.agents.ClaudeCode.Argument],
       dir: Path,
-      env: java.util.Map[com.histmersion.server.GazetteerPaths.EnvName, com.histmersion.server.GazetteerPaths.EnvText] => Unit,
+      env: java.util.Map[String, String] => Unit,
       stdin: com.histmersion.server.agents.CliProcess.RunStdin,
       timeoutSeconds: com.histmersion.server.agents.CliProcess.RunTimeoutSeconds,
       hint: com.histmersion.server.agents.CliProcess.RunHint,
-      onLine: com.histmersion.server.agents.CliProcess.RunOnLineArg1 => Option[com.histmersion.server.agents.CliProcess.RunOnLineResult] = _ => None
+      onLine: Run.Lines => Option[Run.Stopped] = _ => None
   ): Run =
     val pb = ProcessBuilder().directory(dir.toFile)
     env(pb.environment())
     // in a process group of its own only when the executable resolves: a missing one must still fail
     // at start ("cannot run …"), not as the wrapper's exit status
     val grouped = groupPrefix.nonEmpty && resolve(argv.head, Option(pb.environment().get("PATH")), dir).isDefined
-    pb.command((if grouped then groupPrefix ++ argv else argv).asJava)
+    pb.command((if grouped then groupPrefix ++ argv.map(_.value) else argv.map(_.value)).asJava)
     val p = try pb.start()
     catch case e: java.io.IOException => throw cannotStart(argv.head, e, hint)
     val tree = ProcessTree(p, grouped)
     val h = current
     h.foreach(_.register(p))
-    val stdout = ConcurrentLinkedQueue[String]()
+    val stdout = ConcurrentLinkedQueue[Run.Lines]()
     val stderr = StringBuilder()
-    val stopped = java.util.concurrent.atomic.AtomicReference[Option[String]](None) // set once by the reader thread
+    val stopped = java.util.concurrent.atomic.AtomicReference[Option[Run.Stopped]](None) // set once by the reader thread
     val tOut = Thread.ofVirtual().start { () =>
       try
         p.inputReader(StandardCharsets.UTF_8).lines().forEach { l =>
-          val _ = stdout.add(l)
+          val _ = stdout.add(Run.Lines(l))
           h.foreach(_.beat())
           if stopped.get().isEmpty then
-            onLine(l).foreach { why =>
+            onLine(Run.Lines(l)).foreach { why =>
               stopped.set(Some(why))
               tree.kill()
             }
@@ -199,14 +183,14 @@ object CliProcess:
     // its own thread: a CLI that does not read its stdin must not hold the timeout off (#1650)
     val tIn = Thread.ofVirtual().start { () =>
       val w = p.outputWriter(StandardCharsets.UTF_8)
-      try w.write(stdin)
+      try w.write(stdin.value)
       catch case _: java.io.IOException => () // the CLI may close its stdin early (a stopped run)
       finally
         try w.close()
         catch case _: java.io.IOException => ()
     }
     try
-      val deadline = System.nanoTime() + math.max(1, timeoutSeconds).toLong * 1000000000L
+      val deadline = System.nanoTime() + math.max(1, timeoutSeconds.value).toLong * 1000000000L
       var exited = false // the wait loop's flag; local to this call
       while !exited do
         tree.look()
@@ -214,7 +198,7 @@ object CliProcess:
         if left <= 0 then
           tree.kill()
           throw java.util.concurrent.TimeoutException(
-            s"${Path.of(argv.head).getFileName} did not finish within $timeoutSeconds s"
+            s"${Path.of(argv.head.value).getFileName} did not finish within $timeoutSeconds s"
           )
         exited = p.waitFor(math.min(PollMillis * 1000000L, left), TimeUnit.NANOSECONDS)
       // the CLI is gone; whatever still holds its pipes (a grandchild) has DrainMillis, then is killed
@@ -230,8 +214,8 @@ object CliProcess:
       val err = stderr.synchronized(stderr.toString).trim
       Run(
         stdout.asScala.toList,
-        p.exitValue(),
-        (err + held.fold("")(m => if err.isEmpty then m else s"\n$m")).trim,
+        Run.Exit(p.exitValue()),
+        Run.Stderr((err + held.fold("")(m => if err.isEmpty then m else s"\n$m")).trim),
         stopped.get()
       )
     catch
@@ -241,15 +225,15 @@ object CliProcess:
     finally
       if p.isAlive || tree.seen.asScala.exists(_.isAlive) then tree.kill()
       // a member of its group nobody saw (started and orphaned between two looks) goes too
-      else if grouped then signalGroup(p.pid, com.histmersion.server.agents.CliProcess.SignalGroupSig("KILL"))
+      else if grouped then signalGroup(p.pid, "KILL")
       h.foreach(_.unregister(p))
 
   /** Kill `p` and every descendant it has now (the descendants first, then the parent, then a check). */
-  def kill(p: Process): Unit = ProcessTree(p, grouped = com.histmersion.server.agents.CliProcess.ProcessTree.Grouped(false)).kill()
+  def kill(p: Process): Unit = ProcessTree(p, grouped = false).kill()
 
   /** A scratch working directory, removed with everything in it afterwards. */
   def withDir[A](prefix: com.histmersion.server.agents.CliProcess.WithDirPrefix)(f: Path => A): A =
-    val dir = Files.createTempDirectory(prefix)
+    val dir = Files.createTempDirectory(prefix.value)
     try f(dir)
     finally
       val files = Files.walk(dir)
@@ -261,7 +245,7 @@ object CliProcess:
 
   /** An owner-only file (it may carry a run token). */
   def privateFile(f: Path, text: com.histmersion.server.agents.CliProcess.PrivateFileText): Path =
-    Files.writeString(f, text, StandardCharsets.UTF_8)
+    Files.writeString(f, text.value, StandardCharsets.UTF_8)
     try {
       val _ = Files.setPosixFilePermissions(f, java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"))
     } catch case _: UnsupportedOperationException => ()

@@ -21,12 +21,12 @@ final class RefreshGate:
     val lock = locks.computeIfAbsent(p, _ => ReentrantLock())
     lock.lockInterruptibly()
     try
-      val r = body(Option(last.get(p)).map(_.longValue))
+      val r = body(Option(last.get(p)).map(l => RefreshGate.Instant(l.longValue)))
       if r.isRight then { val _ = last.put(p, at) }
       r
     finally lock.unlock()
 
-  def lastAttempt(p: PoolId): Option[com.histmersion.server.agents.RefreshGate.Instant] = Option(last.get(p)).map(_.longValue)
+  def lastAttempt(p: PoolId): Option[com.histmersion.server.agents.RefreshGate.Instant] = Option(last.get(p)).map(l => RefreshGate.Instant(l.longValue))
 
 object RefreshGate:
   type Instant = Instant.T

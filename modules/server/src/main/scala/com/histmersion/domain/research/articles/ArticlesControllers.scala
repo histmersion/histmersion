@@ -166,7 +166,8 @@ final class ArticlesControllers(
             s"${i.rule.wire} — ${i.message}" + (if i.excerpt.value.isEmpty then ""
                                                 else s" · `${i.excerpt.value.replace("`", "'")}`")
           }
-          .distinct,
+          .distinct
+          .map(ReviewArticle.BodyCorpus.FormatError(_)),
       generated
     )
 
