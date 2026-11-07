@@ -18,7 +18,7 @@ class PluginResolverSuite extends munit.FunSuite:
     def errorLine(value: => String): Unit = stderr(value)
     def errorLine(): Unit = stderr("")
     def errorFlush(): Unit = ()
-    def readLine(): _root_.com.histmersion.util.console.Console.ReadLineResult = throw new UnsupportedOperationException("input not used")
+    def readLine(): _root_.com.histmersion.util.console.Console.Line = throw new UnsupportedOperationException("input not used")
   }
 
   private val fixtures: Path =
@@ -125,7 +125,7 @@ class PluginResolverSuite extends munit.FunSuite:
       .fold(e => fail((e).value), identity)
     assertEquals(((DependencyResolver.resolve(again.copy(cache = Some(s.cache)))(using consoleFor(_ => (), _ => ()))).value: Int), 0)
     assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(fixtures.toUri.toString))
-    val other = RepositoryUrl.fromArgument(_root_.com.histmersion.pluginresolver.RepositoryUrl.FromArgumentRaw(s.kit.resolve("other-repo").toString)).fold(e => fail((e).value), identity)
+    val other = RepositoryUrl.fromArgument(_root_.com.histmersion.pluginresolver.Resolver.Argument(s.kit.resolve("other-repo").toString)).fold(e => fail((e).value), identity)
     assertEquals(
       ((DependencyResolver.resolve(again.copy(cache = Some(s.cache), repositories = List(other)))(using consoleFor(_ => (), _ => ()))).value: Int),
       0

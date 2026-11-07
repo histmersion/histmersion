@@ -14,39 +14,17 @@ import com.histmersion.plugin.AiTool
 final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
 
   /** The turn the answer says, or the failure's description. */
-  def turn: Either[com.histmersion.plugins.ai.ChatAnswer.TurnResultPart1, AiTurn] =
-    if (status).value / 100 != 2 then Left(_root_.com.histmersion.plugins.ai.ChatAnswer.TurnResultPart1((ChatAnswer.errorMessage(_root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageStatus((status).value), _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageBody((body).value))).value))
-    else decode((body).value)(using ChatAnswer.response).left.map((refactorCallback => _root_.com.histmersion.plugins.ai.ChatAnswer.TurnResultPart1(refactorCallback.getMessage)))
+  def turn: Either[com.histmersion.plugins.ai.ChatAnswer.Problem, AiTurn] =
+    if (status).value / 100 != 2 then Left(_root_.com.histmersion.plugins.ai.ChatAnswer.Problem((ChatAnswer.errorMessage(_root_.com.histmersion.plugins.ai.ChatAnswer.Status((status).value), _root_.com.histmersion.plugins.ai.ChatAnswer.Body((body).value))).value))
+    else decode((body).value)(using ChatAnswer.response).left.map((refactorCallback => _root_.com.histmersion.plugins.ai.ChatAnswer.Problem(refactorCallback.getMessage)))
 
 object ChatAnswer:
+  type FinishReason = FinishReason.T
+  object FinishReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The most of an unreadable error answer's body its description keeps. */
-  type TurnResultPart1 = TurnResultPart1.T
-  object TurnResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ErrorMessageResult = ErrorMessageResult.T
-  object ErrorMessageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ErrorMessageStatus = ErrorMessageStatus.T
-  object ErrorMessageStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ErrorMessageBody = ErrorMessageBody.T
-  object ErrorMessageBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Error = Error.T
-  object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FunctionPart1 = FunctionPart1.T
-  object FunctionPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FunctionPart2 = FunctionPart2.T
-  object FunctionPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToolCallPart1 = ToolCallPart1.T
-  object ToolCallPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToolCallPart2Part1 = ToolCallPart2Part1.T
-  object ToolCallPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToolCallPart2Part2 = ToolCallPart2Part2.T
-  object ToolCallPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MessagePart1 = MessagePart1.T
-  object MessagePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChoicePart1 = ChoicePart1.T
-  object ChoicePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChoicePart3 = ChoicePart3.T
-  object ChoicePart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Status = Status.T
   object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -58,24 +36,24 @@ object ChatAnswer:
   /** An error status's description: the `error.message`; for an error without one, the status and the body; for an
     * answer of another shape, its body's start.
     */
-  def errorMessage(status: com.histmersion.plugins.ai.ChatAnswer.ErrorMessageStatus, body: com.histmersion.plugins.ai.ChatAnswer.ErrorMessageBody): com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult =
+  def errorMessage(status: com.histmersion.plugins.ai.ChatAnswer.Status, body: com.histmersion.plugins.ai.ChatAnswer.Body): com.histmersion.plugins.ai.ChatAnswer.Problem =
     val fallback = (body).value.take(MaxRawErrorBody)
     parse((body).value).toOption.flatMap(_.asObject).flatMap(_("error")) match
       case Some(node) =>
         node.as(using error) match
-          case Right(Some(message)) => _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult((message).value)
-          case Right(None)          => _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult(s"statusCode: $status, response: $body")
-          case Left(_)              => _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult(fallback)
-      case None => _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult(fallback)
+          case Right(Some(message)) => _root_.com.histmersion.plugins.ai.ChatAnswer.Problem((message).value)
+          case Right(None)          => _root_.com.histmersion.plugins.ai.ChatAnswer.Problem(s"statusCode: $status, response: $body")
+          case Left(_)              => _root_.com.histmersion.plugins.ai.ChatAnswer.Problem(fallback)
+      case None => _root_.com.histmersion.plugins.ai.ChatAnswer.Problem(fallback)
 
-  private val error: Decoder[Option[com.histmersion.plugins.ai.ChatAnswer.Error]] = Decoder.instance { c =>
+  private val error: Decoder[Option[com.histmersion.plugins.ai.ChatAnswer.Problem]] = Decoder.instance { c =>
     for
       _ <- objectAt(c)
       m <- c.downField("message").as[Option[String]]
       _ <- c.downField("type").as[Option[String]]
       _ <- c.downField("param").as[Option[String]]
       _ <- c.downField("code").as[Option[String]]
-    yield (m).map(refactorValue => _root_.com.histmersion.plugins.ai.ChatAnswer.Error(refactorValue))
+    yield (m).map(refactorValue => _root_.com.histmersion.plugins.ai.ChatAnswer.Problem(refactorValue))
   }
 
   private def objectAt(c: HCursor): Either[DecodingFailure, Unit] =
@@ -116,18 +94,18 @@ object ChatAnswer:
     yield ()
   }
 
-  private val function: Decoder[(com.histmersion.plugins.ai.ChatAnswer.FunctionPart1, Option[com.histmersion.plugins.ai.ChatAnswer.FunctionPart2])] = product { c =>
+  private val function: Decoder[(com.histmersion.plugin.AiTool.Call.Tool, Option[com.histmersion.plugin.AiTool.Call.Input])] = product { c =>
     for
       args <- c.downField("arguments").as[String]
       name <- c.downField("name").as[Option[String]]
-    yield (_root_.com.histmersion.plugins.ai.ChatAnswer.FunctionPart1(args), (name).map(refactorValue2 => _root_.com.histmersion.plugins.ai.ChatAnswer.FunctionPart2(refactorValue2)))
+    yield (_root_.com.histmersion.plugin.AiTool.Call.Tool(args), (name).map(refactorValue2 => _root_.com.histmersion.plugin.AiTool.Call.Input(refactorValue2)))
   }
 
-  private val toolCall: Decoder[(Option[com.histmersion.plugins.ai.ChatAnswer.ToolCallPart1], (com.histmersion.plugins.ai.ChatAnswer.ToolCallPart2Part1, Option[com.histmersion.plugins.ai.ChatAnswer.ToolCallPart2Part2]))] = Decoder.instance { c =>
+  private val toolCall: Decoder[(Option[com.histmersion.plugin.AiTool.Call.Id], (com.histmersion.plugin.AiTool.Call.Tool, Option[com.histmersion.plugin.AiTool.Call.Input]))] = Decoder.instance { c =>
     for
       id <- c.downField("id").as[Option[String]]
       f <- c.downField("function").as(using function)
-    yield ((id).map(refactorValue3 => _root_.com.histmersion.plugins.ai.ChatAnswer.ToolCallPart1(refactorValue3)), { val refactorTuple = f; (_root_.com.histmersion.plugins.ai.ChatAnswer.ToolCallPart2Part1((refactorTuple._1).value), (refactorTuple._2).map(refactorValue4 => _root_.com.histmersion.plugins.ai.ChatAnswer.ToolCallPart2Part2((refactorValue4).value))) })
+    yield ((id).map(refactorValue3 => _root_.com.histmersion.plugin.AiTool.Call.Id(refactorValue3)), { val refactorTuple = f; (_root_.com.histmersion.plugin.AiTool.Call.Tool((refactorTuple._1).value), (refactorTuple._2).map(refactorValue4 => _root_.com.histmersion.plugin.AiTool.Call.Input((refactorValue4).value))) })
   }
 
   private val audio: Decoder[Unit] = product { c =>
@@ -139,7 +117,7 @@ object ChatAnswer:
     yield ()
   }
 
-  private val message: Decoder[(com.histmersion.plugins.ai.ChatAnswer.MessagePart1, List[AiTool.Call])] = product { c =>
+  private val message: Decoder[(com.histmersion.plugin.AiMessage.Assistant.Text, List[AiTool.Call])] = product { c =>
     given Decoder[(Option[String], (String, Option[String]))] = toolCall
     for
       content <- orDefault(c.downField("content"), "")
@@ -149,20 +127,20 @@ object ChatAnswer:
       _ <- c.downField("function_call").as(using Decoder.decodeOption(using function))
       _ <- c.downField("audio").as(using Decoder.decodeOption(using audio))
     yield (
-      _root_.com.histmersion.plugins.ai.ChatAnswer.MessagePart1(content),
+      _root_.com.histmersion.plugin.AiMessage.Assistant.Text(content),
       calls.toList.zipWithIndex.map { case ((id, (args, name)), i) =>
         AiTool.Call(_root_.com.histmersion.plugin.AiTool.Call.Id(id.getOrElse(s"call_$i")), _root_.com.histmersion.plugin.AiTool.Call.Tool(name.getOrElse("unknown")), _root_.com.histmersion.plugin.AiTool.Call.Input(args))
       }
     )
   }
 
-  private val choice: Decoder[(com.histmersion.plugins.ai.ChatAnswer.ChoicePart1, List[AiTool.Call], com.histmersion.plugins.ai.ChatAnswer.ChoicePart3)] = product { c =>
+  private val choice: Decoder[(com.histmersion.plugin.AiTurn.Text, List[AiTool.Call], com.histmersion.plugins.ai.ChatAnswer.FinishReason)] = product { c =>
     for
       m <- c.downField("message").as(using message)
       finish <- c.downField("finish_reason").as[String]
       _ <- c.downField("index").as[Int]
       _ <- c.downField("logprobs").as(using Decoder.decodeOption(using logprobs))
-    yield (_root_.com.histmersion.plugins.ai.ChatAnswer.ChoicePart1((m._1).value), m._2, _root_.com.histmersion.plugins.ai.ChatAnswer.ChoicePart3(finish))
+    yield (_root_.com.histmersion.plugin.AiTurn.Text((m._1).value), m._2, _root_.com.histmersion.plugins.ai.ChatAnswer.FinishReason(finish))
   }
 
   private val usage: Decoder[AiUsage] = product { c =>

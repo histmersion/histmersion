@@ -30,20 +30,20 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
   private def downloads = Downloads(http)
   private lazy val openalexClient = OpenAlexCrossref(cfg, http, log)
 
-  private def records(ctx: Fetch.Context, doi: com.histmersion.plugins.fetchers.OpenAccess.RecordsDoi): OaRecords =
+  private def records(ctx: Fetch.Context, doi: com.histmersion.plugins.fetchers.OaRecords.Doi): OaRecords =
     ctx.memo(s"oa:records:$doi")(OaRecords(doi, cfg, http, openalexClient, ctx.log))
 
   /** Unpaywall's record of `doi`, asked with `email` at most once per fetch. Unpaywall answers 422 to a request without
     * an e-mail, so without one it is not asked. The `unpaywall` step and the landing step share it when they use the
     * same contact.
     */
-  private def unpaywallRecord(ctx: Fetch.Context, doi: com.histmersion.plugins.fetchers.OpenAccess.UnpaywallRecordDoi, email: Option[com.histmersion.plugins.fetchers.OpenAccess.UnpaywallRecordEmail]): Option[Json] =
+  private def unpaywallRecord(ctx: Fetch.Context, doi: com.histmersion.plugins.fetchers.OaRecords.Doi, email: Option[com.histmersion.plugins.fetchers.UnpaywallConfig.ContactEmail]): Option[Json] =
     email.flatMap(e =>
       ctx.memo(s"oa:unpaywall:$e:$doi")(http.json(Url(cfg.unpaywall.url, s"/$doi", "email" -> e)).toOption)
     )
 
   /** `unpaywall`, asking with `email` (the plugin's `contact-email`, else Histmersion's). */
-  def unpaywall(email: Option[com.histmersion.plugins.fetchers.OpenAccess.UnpaywallEmail]): SourceFetcher =
+  def unpaywall(email: Option[com.histmersion.plugins.fetchers.UnpaywallConfig.ContactEmail]): SourceFetcher =
     ByDoi("unpaywall", (ctx, d) => unpaywallPdf(ctx, unpaywallRecord(ctx, d, email)))
 
   /** `core`, with CORE's API key; without one it is never asked (a miss). Asked through the server's CORE budget
@@ -59,7 +59,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
   /** `landing`: the indexes' records only of the index plugins registered, Unpaywall's with the very contact (so the
     * very memo key) `oa-unpaywall` asks with — one request per upstream per work.
     */
-  def landing(unpaywallEmail: Option[com.histmersion.plugins.fetchers.OpenAccess.LandingUnpaywallEmail]): SourceFetcher = ByDoi(
+  def landing(unpaywallEmail: Option[com.histmersion.plugins.fetchers.UnpaywallConfig.ContactEmail]): SourceFetcher = ByDoi(
     "landing",
     (ctx, d) =>
       landingPdf(
@@ -77,7 +77,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
       .flatMap(u => downloads.pdf(ctx.log, "unpaywall", u))
       .headOption
 
-  private def corePdf(ctx: Fetch.Context, doi: com.histmersion.plugins.fetchers.OpenAccess.CorePdfDoi, key: Option[com.histmersion.plugins.fetchers.OpenAccess.CorePdfKey], quota: UpstreamQuota): Fetch =
+  private def corePdf(ctx: Fetch.Context, doi: com.histmersion.plugins.fetchers.OaRecords.Doi, key: Option[com.histmersion.plugins.fetchers.OpenAccess.CorePdfKey], quota: UpstreamQuota): Fetch =
     key.fold[Fetch](Fetch.Miss("core needs CORE's API key (plugins.oa-core.api-key or acquire.core.api-key)")) { key =>
       CoreApi(cfg.core, http, quota).searchWorks(key, s"""doi:"$doi"""", 1, OpenAccess.Lookup) match
         case Left(skip @ CoreFailure.Skipped(_)) => Fetch.Miss(skip.message)
@@ -158,7 +158,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
       ctx: Fetch.Context,
       c: RepositoryLanding.Candidate,
       rules: RepositoryLanding.Rules
-  ): com.histmersion.plugins.fetchers.OpenAccess.PublisherPageResult =
+  ): Boolean =
     val no = !RepositoryLanding.oaPublisherPage(c, rules) &&
       (c.publisher || RepositoryLanding.host(c.url).exists(rules.denied))
     if no then ctx.log.info(s"landing: ${c.url} is a publisher's page — not read")
@@ -216,26 +216,12 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
 
 object OpenAccess:
   /** The plugins whose upstreams the landing step reads on their behalf. */
-  type RecordsDoi = RecordsDoi.T
-  object RecordsDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnpaywallRecordDoi = UnpaywallRecordDoi.T
-  object UnpaywallRecordDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnpaywallRecordEmail = UnpaywallRecordEmail.T
-  object UnpaywallRecordEmail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnpaywallEmail = UnpaywallEmail.T
-  object UnpaywallEmail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CoreKey = CoreKey.T
   object CoreKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LandingUnpaywallEmail = LandingUnpaywallEmail.T
-  object LandingUnpaywallEmail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CorePdfDoi = CorePdfDoi.T
-  object CorePdfDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CorePdfKey = CorePdfKey.T
   object CorePdfKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LandingPdfOpenalex = LandingPdfOpenalex.T
   object LandingPdfOpenalex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PublisherPageResult = PublisherPageResult.T
-  object PublisherPageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ZenodoId = ZenodoId.T
   object ZenodoId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

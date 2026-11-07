@@ -10,8 +10,8 @@ import scala.jdk.CollectionConverters.*
   * `repositories` the repositories they were resolved from.
   */
 object LibDirectory:
-  type StoredRepositoriesResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Error
-  val StoredRepositoriesResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Error.type = _root_.com.histmersion.pluginresolver.Resolver.Error
+  type StoredRepositoriesResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Problem
+  val StoredRepositoriesResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Problem.type = _root_.com.histmersion.pluginresolver.Resolver.Problem
   type WriteInputsPart1 = _root_.com.histmersion.pluginresolver.Resolver.FileName
   val WriteInputsPart1: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
   type WriteInputsPart2 = _root_.com.histmersion.pluginresolver.Resolver.Sha256
@@ -28,7 +28,7 @@ object LibDirectory:
     if !Files.isRegularFile(f) then Right(Nil)
     else
       traverse(Files.readAllLines(f, UTF_8).asScala.toList.map(_.trim).filter(_.nonEmpty))(r =>
-        RepositoryUrl.either(r).left.map(e => _root_.com.histmersion.pluginresolver.Resolver.Error(s"$f: '$r': $e"))
+        RepositoryUrl.either(r).left.map(e => _root_.com.histmersion.pluginresolver.Resolver.Problem(s"$f: '$r': $e"))
       )
 
   /** Replace what `lib/` holds with `deps`: a jar already there with the same content is kept, every other jar removed.

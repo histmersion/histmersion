@@ -8,38 +8,22 @@ import org.ekrich.config.{ConfigValue, ConfigValueType}
   * [[KeePassXcVault]] runs the tools. Slots and serials are not secrets.
   */
 object YubiKey:
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One `<slot>[:<serial>]`: the challenge-response slot (1 or 2) and, optionally, which key. */
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseText = ParseText.T
-  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseAllResultPart1 = ParseAllResultPart1.T
-  object ParseAllResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseAllEntries = ParseAllEntries.T
-  object ParseAllEntries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SerialsResult = SerialsResult.T
-  object SerialsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SerialsOut = SerialsOut.T
   object SerialsOut extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanConnected = PlanConnected.T
-  object PlanConnected extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FailureErr = FailureErr.T
-  object FailureErr extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FailureEntry = FailureEntry.T
-  object FailureEntry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProblemResult = ProblemResult.T
-  object ProblemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProblemErr = ProblemErr.T
-  object ProblemErr extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Slot(slot: Slot.Value, serial: Option[Slot.Serial]):
     /** The form `keepassxc-cli -y` takes, and the one the settings and the errors show. */
-    def shown: com.histmersion.plugins.vaults.YubiKey.Slot.ShownResult = _root_.com.histmersion.plugins.vaults.YubiKey.Slot.ShownResult(serial.fold(slot.toString)(s => s"$slot:$s"))
+    def shown: com.histmersion.plugins.vaults.YubiKey.Label = _root_.com.histmersion.plugins.vaults.YubiKey.Label(serial.fold(slot.toString)(s => s"$slot:$s"))
 
   object Slot:
-    type ShownResult = ShownResult.T
-    object ShownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Value = Value.T
     object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -47,34 +31,34 @@ object YubiKey:
     object Serial extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: `"2"` or `"2:12345678"`. */
-  def parse(text: com.histmersion.plugins.vaults.YubiKey.ParseText): Either[com.histmersion.plugins.vaults.YubiKey.ParseResultPart1, Slot] =
+  def parse(text: com.histmersion.plugins.vaults.YubiKey.Text): Either[com.histmersion.plugins.vaults.YubiKey.Problem, Slot] =
     val t = (text).value.trim
     def bad =
       s"yubikey '$t' is not <slot>[:<serial>] — the slot is 1 or 2, the serial the key's number (`ykman list --serials`)"
     t.split(":", -1).toList match
-      case List(s)    => s.toIntOption.filter(Set(1, 2)).map(Slot(_root_.com.histmersion.plugins.vaults.YubiKey.Slot.Value(_), None)).toRight(_root_.com.histmersion.plugins.vaults.YubiKey.ParseResultPart1(bad))
+      case List(s)    => s.toIntOption.filter(Set(1, 2)).map(Slot(_root_.com.histmersion.plugins.vaults.YubiKey.Slot.Value(_), None)).toRight(_root_.com.histmersion.plugins.vaults.YubiKey.Problem(bad))
       case List(s, n) =>
         (for
           slot <- s.toIntOption.filter(Set(1, 2)).toRight(bad)
           serial <- Option.when(n.nonEmpty && n.forall(_.isDigit))(n).flatMap(_.toLongOption).toRight(bad)
-        yield Slot(_root_.com.histmersion.plugins.vaults.YubiKey.Slot.Value(slot), Some(_root_.com.histmersion.plugins.vaults.YubiKey.Slot.Serial(serial)))).left.map(refactorError2 => _root_.com.histmersion.plugins.vaults.YubiKey.ParseResultPart1(refactorError2))
-      case _ => Left(_root_.com.histmersion.plugins.vaults.YubiKey.ParseResultPart1(bad))
+        yield Slot(_root_.com.histmersion.plugins.vaults.YubiKey.Slot.Value(slot), Some(_root_.com.histmersion.plugins.vaults.YubiKey.Slot.Serial(serial)))).left.map(refactorError2 => _root_.com.histmersion.plugins.vaults.YubiKey.Problem(refactorError2))
+      case _ => Left(_root_.com.histmersion.plugins.vaults.YubiKey.Problem(bad))
 
   /** Pure: every entry of the setting, in order, without repeats; the first malformed one fails it all. */
-  def parseAll(entries: List[com.histmersion.plugins.vaults.YubiKey.ParseAllEntries]): Either[com.histmersion.plugins.vaults.YubiKey.ParseAllResultPart1, List[Slot]] =
+  def parseAll(entries: List[com.histmersion.plugins.vaults.YubiKey.Setting.Entries]): Either[com.histmersion.plugins.vaults.YubiKey.Problem, List[Slot]] =
     (entries.map((_).value.trim).filter(_.nonEmpty).foldLeft[Either[String, List[Slot]]](Right(Nil)) { (acc, e) =>
-      acc.flatMap(ok => (parse(_root_.com.histmersion.plugins.vaults.YubiKey.ParseText(e)).map(s => if ok.contains(s) then ok else ok :+ s)).left.map(refactorError => (refactorError).value))
-    }).left.map(refactorError3 => _root_.com.histmersion.plugins.vaults.YubiKey.ParseAllResultPart1(refactorError3))
+      acc.flatMap(ok => (parse(_root_.com.histmersion.plugins.vaults.YubiKey.Text(e)).map(s => if ok.contains(s) then ok else ok :+ s)).left.map(refactorError => (refactorError).value))
+    }).left.map(refactorError3 => _root_.com.histmersion.plugins.vaults.YubiKey.Problem(refactorError3))
 
   /** Pure: the serials `ykman list --serials` printed, one per line (anything else is ignored). */
-  def serials(out: com.histmersion.plugins.vaults.YubiKey.SerialsOut): Set[com.histmersion.plugins.vaults.YubiKey.SerialsResult] =
-    ((out).value.linesIterator.map(_.trim).filter(l => l.nonEmpty && l.forall(_.isDigit)).flatMap(_.toLongOption).toSet).map(refactorValue => _root_.com.histmersion.plugins.vaults.YubiKey.SerialsResult(refactorValue))
+  def serials(out: com.histmersion.plugins.vaults.YubiKey.SerialsOut): Set[com.histmersion.plugins.vaults.YubiKey.Slot.Serial] =
+    ((out).value.linesIterator.map(_.trim).filter(l => l.nonEmpty && l.forall(_.isDigit)).flatMap(_.toLongOption).toSet).map(refactorValue => _root_.com.histmersion.plugins.vaults.YubiKey.Slot.Serial(refactorValue))
 
   /** Pure: which entries to try and which are absent. `connected = None` (no way to tell): all of them, in order.
     * Otherwise an entry with a serial only when that key is connected, one without when any key is. `first` (the entry
     * that last opened the database) goes to the front: its touch is the one most likely wanted.
     */
-  def plan(entries: List[Slot], connected: Option[Set[com.histmersion.plugins.vaults.YubiKey.PlanConnected]], first: Option[Slot] = None): (List[Slot], List[Slot]) =
+  def plan(entries: List[Slot], connected: Option[Set[com.histmersion.plugins.vaults.YubiKey.Slot.Serial]], first: Option[Slot] = None): (List[Slot], List[Slot]) =
     val (tryThese, absent) = connected match
       case None      => (entries, Nil)
       case Some(set) => entries.partition(e => e.serial.fold(set.nonEmpty)(set.contains))
@@ -101,7 +85,7 @@ object YubiKey:
     * once: another key cannot fix a wrong password, and with the same secret programmed into every listed key a wrong
     * key is the same answer. Unknown messages stop too, so a failure is never retried blindly.
     */
-  def failure(err: com.histmersion.plugins.vaults.YubiKey.FailureErr, entry: com.histmersion.plugins.vaults.YubiKey.FailureEntry): Failure =
+  def failure(err: com.histmersion.plugins.vaults.YubiKey.Problem, entry: com.histmersion.plugins.vaults.YubiKey.Setting.Entries): Failure =
     def has(s: String*) = s.exists((err).value.contains)
     if has("invalid credentials", "wrong key", "unable to unlock") then
       Failure.Stop(_root_.com.histmersion.plugins.vaults.YubiKey.Failure.Stop.Why("invalid credentials (the password, key file or YubiKey is wrong)"))
@@ -132,9 +116,9 @@ object YubiKey:
   /** Pure: KeePassXC's own message for an error text — the first stderr line that is not its prompt ("Please present or
     * touch your YubiKey", "Enter password to unlock").
     */
-  def problem(err: com.histmersion.plugins.vaults.YubiKey.ProblemErr): com.histmersion.plugins.vaults.YubiKey.ProblemResult =
+  def problem(err: com.histmersion.plugins.vaults.YubiKey.Problem): com.histmersion.plugins.vaults.YubiKey.Problem =
     Subprocess.problem(
-      _root_.com.histmersion.plugins.vaults.Subprocess.ProblemErr((err).value.linesIterator
+      _root_.com.histmersion.plugins.vaults.Subprocess.Problem((err).value.linesIterator
         .filterNot { l =>
           val low = l.toLowerCase(java.util.Locale.ROOT)
           low.contains("touch your yubikey") || low.contains("enter password")

@@ -11,39 +11,23 @@ import com.histmersion.plugin.AiTurn
   * schema as `output_config`. Unset fields are left out; the tools' schemas are sent exactly as given.
   */
 final case class AnthropicRequest(json: Json):
-  def body: com.histmersion.plugins.ai.AnthropicRequest.BodyResult = _root_.com.histmersion.plugins.ai.AnthropicRequest.BodyResult(json.noSpaces)
+  def body: com.histmersion.plugin.AiHttp.PostBody = _root_.com.histmersion.plugin.AiHttp.PostBody(json.noSpaces)
 
 object AnthropicRequest:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Role = Role.T
+  object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The output cap when the step names none. */
-  type MessagesGoResultPart1 = MessagesGoResultPart1.T
-  object MessagesGoResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type BodyResult = BodyResult.T
-  object BodyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfResultPart1 = OfResultPart1.T
-  object OfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextT = TextT.T
-  object TextT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MessageRole = MessageRole.T
-  object MessageRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MessagesResultPart1 = MessagesResultPart1.T
-  object MessagesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToolUsesResultPart1 = ToolUsesResultPart1.T
-  object ToolUsesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToolUsesCallsPart1 = ToolUsesCallsPart1.T
-  object ToolUsesCallsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToolUsesCallsPart2 = ToolUsesCallsPart2.T
-  object ToolUsesCallsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToolUsesCallsPart3 = ToolUsesCallsPart3.T
-  object ToolUsesCallsPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val DefaultMaxTokens = 4096
 
   /** The request for `r`, or why it cannot be built (a tool call whose input is not a JSON object), described as the
     * exception that says so.
     */
-  def of(r: AiTurn.Request): Either[com.histmersion.plugins.ai.AnthropicRequest.OfResultPart1, AnthropicRequest] =
+  def of(r: AiTurn.Request): Either[com.histmersion.plugins.ai.AnthropicRequest.Problem, AnthropicRequest] =
     messages(r.messages).map { msgs =>
       val tools = Option.when(r.tools.nonEmpty)(
         Json.fromValues(r.tools.map { t =>
@@ -72,37 +56,37 @@ object AnthropicRequest:
       AnthropicRequest(Json.fromFields(fields))
     }
 
-  private def text(t: com.histmersion.plugins.ai.AnthropicRequest.TextT): Json = Json.obj("text" -> Json.fromString((t).value), "type" -> Json.fromString("text"))
+  private def text(t: com.histmersion.plugin.AiMessage.User.Text): Json = Json.obj("text" -> Json.fromString((t).value), "type" -> Json.fromString("text"))
 
-  private def message(role: com.histmersion.plugins.ai.AnthropicRequest.MessageRole, content: List[Json]): Json =
+  private def message(role: com.histmersion.plugins.ai.AnthropicRequest.Role, content: List[Json]): Json =
     Json.obj("role" -> Json.fromString((role).value), "content" -> Json.fromValues(content))
 
-  private def messages(ms: List[AiMessage]): Either[com.histmersion.plugins.ai.AnthropicRequest.MessagesResultPart1, List[Json]] =
+  private def messages(ms: List[AiMessage]): Either[com.histmersion.plugins.ai.AnthropicRequest.Problem, List[Json]] =
     @annotation.tailrec
-    def go(rest: List[AiMessage], acc: List[Json]): Either[com.histmersion.plugins.ai.AnthropicRequest.MessagesGoResultPart1, List[Json]] = rest match
+    def go(rest: List[AiMessage], acc: List[Json]): Either[com.histmersion.plugins.ai.AnthropicRequest.Problem, List[Json]] = rest match
       case Nil                                      => Right(acc.reverse)
-      case AiMessage.User(t) :: tail                => go(tail, message(_root_.com.histmersion.plugins.ai.AnthropicRequest.MessageRole("user"), List(text(t))) :: acc)
+      case AiMessage.User(t) :: tail                => go(tail, message(_root_.com.histmersion.plugins.ai.AnthropicRequest.Role("user"), List(text(t))) :: acc)
       case AiMessage.ToolResult(id, _, out) :: tail =>
         val block = Json.obj(
           "tool_use_id" -> Json.fromString(id),
           "content" -> Json.fromString(out),
           "type" -> Json.fromString("tool_result")
         )
-        go(tail, message(_root_.com.histmersion.plugins.ai.AnthropicRequest.MessageRole("user"), List(block)) :: acc)
+        go(tail, message(_root_.com.histmersion.plugins.ai.AnthropicRequest.Role("user"), List(block)) :: acc)
       case AiMessage.Assistant(t, calls) :: tail =>
         toolUses(calls.map(c => (c.id, c.tool, c.input)), Nil) match
           case Left(why)   => Left(why)
           case Right(uses) =>
-            go(tail, message(_root_.com.histmersion.plugins.ai.AnthropicRequest.MessageRole("assistant"), (if t.nonEmpty then List(text(t)) else Nil) ++ uses) :: acc)
+            go(tail, message(_root_.com.histmersion.plugins.ai.AnthropicRequest.Role("assistant"), (if t.nonEmpty then List(text(t)) else Nil) ++ uses) :: acc)
     go(ms, Nil).map(dropNulls)
 
   @annotation.tailrec
-  private def toolUses(calls: List[(com.histmersion.plugins.ai.AnthropicRequest.ToolUsesCallsPart1, com.histmersion.plugins.ai.AnthropicRequest.ToolUsesCallsPart2, com.histmersion.plugins.ai.AnthropicRequest.ToolUsesCallsPart3)], acc: List[Json]): Either[com.histmersion.plugins.ai.AnthropicRequest.ToolUsesResultPart1, List[Json]] =
+  private def toolUses(calls: List[(com.histmersion.plugin.AiTool.Call.Id, com.histmersion.plugin.AiTool.Call.Tool, com.histmersion.plugin.AiTool.Call.Input)], acc: List[Json]): Either[com.histmersion.plugins.ai.AnthropicRequest.Problem, List[Json]] =
     calls match
       case Nil                       => Right(acc.reverse)
       case (id, name, input) :: tail =>
         parse((input).value).flatMap(_.as[Map[String, Json]]) match
-          case Left(e)  => Left(_root_.com.histmersion.plugins.ai.AnthropicRequest.ToolUsesResultPart1(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
+          case Left(e)  => Left(_root_.com.histmersion.plugins.ai.AnthropicRequest.Problem(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
           case Right(m) =>
             val use = Json.obj(
               "id" -> Json.fromString((id).value),

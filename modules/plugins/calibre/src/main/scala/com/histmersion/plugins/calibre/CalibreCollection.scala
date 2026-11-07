@@ -26,19 +26,19 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
 
   override def reach: Either[String, Unit] = CalibreCollection.reach(Path.of(library.library))
 
-  def search(query: CollectionQuery): Either[com.histmersion.plugins.calibre.CalibreCollection.SearchResultPart1, List[CollectionItem]] =
+  def search(query: CollectionQuery): Either[com.histmersion.plugins.calibre.CalibreCollection.Problem, List[CollectionItem]] =
     (query.text match
       case Some(text) => calibre.search(text, query.limit.getOrElse(CalibreCollection.SearchLimit))
       case None       => query.limit.fold(calibre.all())(calibre.all(_))
     ).map(_.map(CalibreCollection.item))
 
-  def item(id: CollectionId): Either[com.histmersion.plugins.calibre.CalibreCollection.ItemResultPart1, Option[CollectionItem]] =
-    id.value.trim.toIntOption.fold(Right(None))(calibre.byId(_root_.com.histmersion.plugins.calibre.Calibre.ByIdId(_)).map(_.map(CalibreCollection.item)))
+  def item(id: CollectionId): Either[com.histmersion.plugins.calibre.CalibreCollection.Problem, Option[CollectionItem]] =
+    id.value.trim.toIntOption.fold(Right(None))(calibre.byId(_root_.com.histmersion.plugins.calibre.Calibre.Book.Id(_)).map(_.map(CalibreCollection.item)))
 
   override def admits(item: CollectionItem): Either[String, Unit] =
     Calibre.guard(item.title.getOrElse(""), item.authors).left.map(e => s"Calibre id ${item.id.value} has $e")
 
-  def file(item: CollectionItem, format: Option[com.histmersion.plugins.calibre.CalibreCollection.FileFormat]): Either[com.histmersion.plugins.calibre.CalibreCollection.FileResultPart1, CollectionFile] =
+  def file(item: CollectionItem, format: Option[com.histmersion.plugin.CollectionFile.Format]): Either[com.histmersion.plugins.calibre.CalibreCollection.Problem, CollectionFile] =
     CalibreCollection
       .book(item)
       .pick(format)
@@ -48,7 +48,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
           "KFX/MOBI must be converted in Calibre first"
       )
 
-  def original(item: CollectionItem, file: CollectionFile): Either[com.histmersion.plugins.calibre.CalibreCollection.OriginalResultPart1, FetchedFile] =
+  def original(item: CollectionItem, file: CollectionFile): Either[com.histmersion.plugins.calibre.CalibreCollection.Problem, FetchedFile] =
     CalibreCollection
       .read(file.name)
       .map(bytes => FetchedFile("calibre", Some(file.name), bytes, CalibreCollection.extension(file.name)))
@@ -67,7 +67,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
       .map(id => CollectionId(id.toString))
 
   override def replace(id: CollectionId, key: String, file: FetchedFile): Either[String, String] =
-    CalibreCollection.number(id).flatMap(n => CalibreCollection.staged(_root_.com.histmersion.plugins.calibre.CalibreCollection.StagedName(key), file)(p => calibre.replaceFormat(n, p)))
+    CalibreCollection.number(id).flatMap(n => CalibreCollection.staged(_root_.com.histmersion.plugin.LocalFiles.StagedName(key), file)(p => calibre.replaceFormat(n, p)))
 
   override def update(id: CollectionId, metadata: CollectionMetadata): Either[String, List[CollectionChange]] =
     CalibreCollection
@@ -82,7 +82,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
     calibre.updateAll(linked, _root_.com.histmersion.plugins.calibre.Calibre.UpdateAllApply(apply)).map(_.map(CalibreCollection.entry))
 
   override def set(id: CollectionId, fields: List[(String, String)]): Either[String, Unit] =
-    CalibreCollection.number(id).flatMap(calibre.set(_, (fields).map(refactorValue => { val refactorTuple = refactorValue; (_root_.com.histmersion.plugins.calibre.Calibre.SetFieldsPart1(refactorTuple._1), _root_.com.histmersion.plugins.calibre.Calibre.SetFieldsPart2(refactorTuple._2)) })))
+    CalibreCollection.number(id).flatMap(calibre.set(_, (fields).map(refactorValue => { val refactorTuple = refactorValue; (_root_.com.histmersion.plugins.calibre.Calibre.Field.Name(refactorTuple._1), _root_.com.histmersion.plugins.calibre.Calibre.SetFieldsPart2(refactorTuple._2)) })))
 
   override def audit(records: List[CollectionRecord]): Either[String, List[CollectionFinding]] =
     val recs = records.flatMap(r =>
@@ -93,6 +93,12 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
     }
 
 object CalibreCollection:
+  type Count = Count.T
+  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Path = Path.T
+  object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The most books a search answers when the host does not say. */
   type ReadResultPart2 = ReadResultPart2.T
   object ReadResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -104,39 +110,9 @@ object CalibreCollection:
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Description = Description.T
   object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchResultPart1 = SearchResultPart1.T
-  object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemResultPart1 = ItemResultPart1.T
-  object ItemResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FileResultPart1 = FileResultPart1.T
-  object FileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FileFormat = FileFormat.T
-  object FileFormat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OriginalResultPart1 = OriginalResultPart1.T
-  object OriginalResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchLimit = SearchLimitValue
   type SearchLimitValue = SearchLimitValue.T
   object SearchLimitValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumberResultPart1 = NumberResultPart1.T
-  object NumberResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumberResultPart2 = NumberResultPart2.T
-  object NumberResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExtensionResult = ExtensionResult.T
-  object ExtensionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExtensionName = ExtensionName.T
-  object ExtensionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadResultPart1 = ReadResultPart1.T
-  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadPath = ReadPath.T
-  object ReadPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StagedResultPart1 = StagedResultPart1.T
-  object StagedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StagedName = StagedName.T
-  object StagedName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StagedFResultPart1 = StagedFResultPart1.T
-  object StagedFResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReachResultPart1 = ReachResultPart1.T
-  object ReachResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val SearchLimit: com.histmersion.plugins.calibre.CalibreCollection.SearchLimit = _root_.com.histmersion.plugins.calibre.CalibreCollection.SearchLimitValue(20)
 
@@ -204,26 +180,26 @@ object CalibreCollection:
       f.fixable
     )
 
-  def number(id: CollectionId): Either[com.histmersion.plugins.calibre.CalibreCollection.NumberResultPart1, com.histmersion.plugins.calibre.CalibreCollection.NumberResultPart2] =
-    ((id.value.trim.toIntOption.toRight(s"'${id.value}' is not a Calibre id")).left.map(refactorError => _root_.com.histmersion.plugins.calibre.CalibreCollection.NumberResultPart1(refactorError))).map(refactorValue24 => _root_.com.histmersion.plugins.calibre.CalibreCollection.NumberResultPart2(refactorValue24))
+  def number(id: CollectionId): Either[com.histmersion.plugins.calibre.CalibreCollection.Problem, com.histmersion.plugins.calibre.CalibreCollection.Count] =
+    ((id.value.trim.toIntOption.toRight(s"'${id.value}' is not a Calibre id")).left.map(refactorError => _root_.com.histmersion.plugins.calibre.CalibreCollection.Problem(refactorError))).map(refactorValue24 => _root_.com.histmersion.plugins.calibre.CalibreCollection.Count(refactorValue24))
 
-  def extension(name: com.histmersion.plugins.calibre.CalibreCollection.ExtensionName): com.histmersion.plugins.calibre.CalibreCollection.ExtensionResult = _root_.com.histmersion.plugins.calibre.CalibreCollection.ExtensionResult((name).value.reverse.takeWhile(_ != '.').reverse.toLowerCase(java.util.Locale.ROOT))
+  def extension(name: com.histmersion.plugin.CollectionFile.Name): com.histmersion.plugin.CollectionFile.Format = _root_.com.histmersion.plugin.CollectionFile.Format((name).value.reverse.takeWhile(_ != '.').reverse.toLowerCase(java.util.Locale.ROOT))
 
-  def read(path: com.histmersion.plugins.calibre.CalibreCollection.ReadPath)(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.calibre.CalibreCollection.ReadResultPart1, com.histmersion.plugins.calibre.CalibreCollection.ReadResultPart2] =
+  def read(path: com.histmersion.plugins.calibre.CalibreCollection.Path)(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.calibre.CalibreCollection.Problem, com.histmersion.plugins.calibre.CalibreCollection.ReadResultPart2] =
     Try(files.read(Path.of((path).value))).toEither.left.map(e => s"cannot read $path (${e.getMessage})")
 
   /** `file` written as `<a temporary directory>/<name>.<extension>` (the extension is what tells Calibre the format),
     * `f` run on it, and the directory deleted whatever happens.
     */
-  def staged[A](name: com.histmersion.plugins.calibre.CalibreCollection.StagedName, file: FetchedFile)(f: Path => Either[com.histmersion.plugins.calibre.CalibreCollection.StagedFResultPart1, A])(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.calibre.CalibreCollection.StagedResultPart1, A] =
+  def staged[A](name: com.histmersion.plugin.LocalFiles.StagedName, file: FetchedFile)(f: Path => Either[com.histmersion.plugins.calibre.CalibreCollection.Problem, A])(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.calibre.CalibreCollection.Problem, A] =
     files.staged(_root_.com.histmersion.plugin.LocalFiles.StagedName(s"$name.${file.extension}"), file.bytes)(f)
 
   /** Whether the server can read the library at `dir`, and when it cannot, what it needs. */
-  def reach(dir: Path)(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.calibre.CalibreCollection.ReachResultPart1, Unit] =
+  def reach(dir: Path)(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.calibre.CalibreCollection.Problem, Unit] =
     val db = dir.resolve("metadata.db")
     if !((files.isDirectory(dir)) == _root_.com.histmersion.plugin.LocalFiles.IsDirectoryResult(true)) && !((files.exists(db)) == _root_.com.histmersion.plugin.LocalFiles.ExistsResult(true)) then
       Left(
-        _root_.com.histmersion.plugins.calibre.CalibreCollection.ReachResultPart1(s"there is no Calibre library at $dir — set histmersion.plugins.calibre.library-path to the folder that " +
+        _root_.com.histmersion.plugins.calibre.CalibreCollection.Problem(s"there is no Calibre library at $dir — set histmersion.plugins.calibre.library-path to the folder that " +
           "holds metadata.db (a server in a container needs that folder mounted)")
       )
     else
@@ -237,4 +213,4 @@ object CalibreCollection:
               "and Folders) for the server's binary, granted in System Settings → Privacy & Security; a server in a " +
               "container needs the library mounted"
         }
-        .map(_ => ())).left.map(refactorError4 => _root_.com.histmersion.plugins.calibre.CalibreCollection.ReachResultPart1(refactorError4))
+        .map(_ => ())).left.map(refactorError4 => _root_.com.histmersion.plugins.calibre.CalibreCollection.Problem(refactorError4))

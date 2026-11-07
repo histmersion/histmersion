@@ -9,9 +9,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   */
 final case class LandingConfig(acquire: UpstreamSettings, plugins: LandingPeers = LandingPeers()) derives ConfigReader:
   /** The contact Unpaywall is asked with on `oa-unpaywall`'s behalf: its own, else Histmersion's. */
-  def unpaywallEmail: Option[com.histmersion.plugins.fetchers.LandingConfig.UnpaywallEmailResult] =
+  def unpaywallEmail: Option[com.histmersion.plugins.fetchers.UnpaywallConfig.ContactEmail] =
     UnpaywallConfig.own(plugins.oaUnpaywall.contactEmail).orElse(acquire.contact)
 
 object LandingConfig:
-  type UnpaywallEmailResult = UnpaywallEmailResult.T
-  object UnpaywallEmailResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

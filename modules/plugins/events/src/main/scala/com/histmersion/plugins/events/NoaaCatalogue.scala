@@ -22,9 +22,9 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
   override def requestIntervalMs: Int = cfg.requestIntervalMs
   override def everyPartEachImport: Boolean = true
 
-  def parts(query: CatalogueQuery): List[com.histmersion.plugins.events.NoaaCatalogue.PartsResult] = cfg.datasetList.map(ds => s"$ds:1")
+  def parts(query: CatalogueQuery): List[com.histmersion.plugins.events.NoaaCatalogue.Part] = cfg.datasetList.map(ds => s"$ds:1")
 
-  def read(part: com.histmersion.plugins.events.NoaaCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[com.histmersion.plugins.events.NoaaCatalogue.ReadResultPart1, CataloguePage] =
+  def read(part: com.histmersion.plugins.events.NoaaCatalogue.Part, query: CatalogueQuery, http: Plugin.Http): Either[com.histmersion.plugins.events.NoaaCatalogue.Problem, CataloguePage] =
     part match
       case NoaaCatalogue.Page(dataset, page) =>
         val p = page.toInt
@@ -42,53 +42,33 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
       .map(n => n.copy(names = (stored.names ++ n.names).distinct.filterNot(_ == n.label)))
 
 object NoaaCatalogue:
-  type PartsResult = PartsResult.T
-  object PartsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadResultPart1 = ReadResultPart1.T
-  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadPart = ReadPart.T
-  object ReadPart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Count = Count.T
+  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Dataset = Dataset.T
+  object Dataset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Part = Part.T
+  object Part extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Path = Path.T
+  object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProviderId = ProviderId.T
+  object ProviderId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Year = Year.T
+  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Datasets = DatasetsValue
   type DatasetsValue = DatasetsValue.T
   object DatasetsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PathResult = PathResult.T
-  object PathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PathDs = PathDs.T
-  object PathDs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlResult = UrlResult.T
-  object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlBase = UrlBase.T
-  object UrlBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlDataset = UrlDataset.T
-  object UrlDataset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlFrom = UrlFrom.T
-  object UrlFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlTo = UrlTo.T
-  object UrlTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UrlPage = UrlPage.T
   object UrlPage extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlPerPage = UrlPerPage.T
-  object UrlPerPage extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseResultPart2Part2 = ParseResultPart2Part2.T
-  object ParseResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseDataset = _root_.com.histmersion.plugins.events.NoaaCatalogue.RecordDataset
-  val ParseDataset: _root_.com.histmersion.plugins.events.NoaaCatalogue.RecordDataset.type = _root_.com.histmersion.plugins.events.NoaaCatalogue.RecordDataset
-  type DatasetOfResult = DatasetOfResult.T
-  object DatasetOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DatasetOfProviderId = DatasetOfProviderId.T
-  object DatasetOfProviderId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TitleCaseResult = TitleCaseResult.T
-  object TitleCaseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TitleCaseS = TitleCaseS.T
-  object TitleCaseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordDataset = RecordDataset.T
-  object RecordDataset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SingularResult = SingularResult.T
-  object SingularResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SingularDs = SingularDs.T
-  object SingularDs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseDataset = _root_.com.histmersion.plugins.events.NoaaCatalogue.Dataset
+  val ParseDataset: _root_.com.histmersion.plugins.events.NoaaCatalogue.Dataset.type = _root_.com.histmersion.plugins.events.NoaaCatalogue.Dataset
 
   val Earthquakes = "earthquakes"
   val Volcanoes = "volcanoes"
@@ -97,17 +77,17 @@ object NoaaCatalogue:
 
   private val Page = "([a-z]+):(\\d+)".r
 
-  private def path(ds: com.histmersion.plugins.events.NoaaCatalogue.PathDs): com.histmersion.plugins.events.NoaaCatalogue.PathResult = if ds == Tsunamis then "tsunamis/events" else ds
+  private def path(ds: com.histmersion.plugins.events.NoaaCatalogue.Dataset): com.histmersion.plugins.events.NoaaCatalogue.Path = if ds == Tsunamis then "tsunamis/events" else ds
 
   /** Pure: one page of a dataset's events up to `to` (and from `from`). */
-  def url(base: com.histmersion.plugins.events.NoaaCatalogue.UrlBase, dataset: com.histmersion.plugins.events.NoaaCatalogue.UrlDataset, from: Option[com.histmersion.plugins.events.NoaaCatalogue.UrlFrom], to: com.histmersion.plugins.events.NoaaCatalogue.UrlTo, page: com.histmersion.plugins.events.NoaaCatalogue.UrlPage, perPage: com.histmersion.plugins.events.NoaaCatalogue.UrlPerPage): com.histmersion.plugins.events.NoaaCatalogue.UrlResult =
+  def url(base: com.histmersion.plugin.Plugin.Http.GetUrl, dataset: com.histmersion.plugins.events.NoaaCatalogue.Dataset, from: Option[com.histmersion.plugins.events.NoaaCatalogue.Year], to: com.histmersion.plugins.events.NoaaCatalogue.Year, page: com.histmersion.plugins.events.NoaaCatalogue.UrlPage, perPage: com.histmersion.plugins.events.NoaaSettings.PageSize): com.histmersion.plugin.Plugin.Http.GetUrl =
     s"${base.stripSuffix("/")}/${path(dataset)}?maxYear=$to${from.fold("")(f => s"&minYear=$f")}" +
       s"&itemsPerPage=$perPage&page=$page"
 
   /** Pure: one page's events and the number of pages. Tsunamis NOAA marks erroneous (validity −1) or a mere seiche (0)
     * are dropped; very doubtful (1) and questionable (2) ones are `contested`.
     */
-  def parse(dataset: com.histmersion.plugins.events.NoaaCatalogue.ParseDataset, json: Json): Either[com.histmersion.plugins.events.NoaaCatalogue.ParseResultPart1, (List[CatalogueEvent], com.histmersion.plugins.events.NoaaCatalogue.ParseResultPart2Part2)] =
+  def parse(dataset: com.histmersion.plugins.events.NoaaCatalogue.ParseDataset, json: Json): Either[com.histmersion.plugins.events.NoaaCatalogue.Problem, (List[CatalogueEvent], com.histmersion.plugins.events.NoaaCatalogue.Count)] =
     val c = json.hcursor
     c.downField("items").focus.flatMap(_.asArray) match
       case None        => Left("no items in the answer")
@@ -115,7 +95,7 @@ object NoaaCatalogue:
         Right((items.toList.flatMap(i => record(dataset, i.hcursor)), c.get[Int]("totalPages").getOrElse(1)))
 
   /** Pure: the dataset a NOAA record's id names (`volcano:1351` → volcanoes). */
-  def datasetOf(providerId: com.histmersion.plugins.events.NoaaCatalogue.DatasetOfProviderId): Option[com.histmersion.plugins.events.NoaaCatalogue.DatasetOfResult] =
+  def datasetOf(providerId: com.histmersion.plugins.events.NoaaCatalogue.ProviderId): Option[com.histmersion.plugins.events.NoaaCatalogue.Dataset] =
     providerId.takeWhile(_ != ':') match
       case "earthquake" => Some(Earthquakes)
       case "volcano"    => Some(Volcanoes)
@@ -123,14 +103,14 @@ object NoaaCatalogue:
       case _            => None
 
   /** Pure: "SYRIA:  UGARIT" → "Syria: Ugarit" — NOAA's upper-case place names in title case. */
-  def titleCase(s: com.histmersion.plugins.events.NoaaCatalogue.TitleCaseS): com.histmersion.plugins.events.NoaaCatalogue.TitleCaseResult =
+  def titleCase(s: com.histmersion.plugins.events.NoaaCatalogue.Text): com.histmersion.plugins.events.NoaaCatalogue.Title =
     "(^|[\\s(/,-])(\\p{L})".r.replaceAllIn(
       s.trim.replaceAll("\\s+", " ").toLowerCase(Locale.ROOT),
       m => java.util.regex.Matcher.quoteReplacement(m.group(1) + m.group(2).toUpperCase(Locale.ROOT))
     )
 
   /** Pure: one item of a dataset's answer as an event. */
-  def record(dataset: com.histmersion.plugins.events.NoaaCatalogue.RecordDataset, i: ACursor): Option[CatalogueEvent] =
+  def record(dataset: com.histmersion.plugins.events.NoaaCatalogue.Dataset, i: ACursor): Option[CatalogueEvent] =
     import JsonFields.*
     val kind = dataset match
       case Earthquakes => "earthquake"
@@ -180,7 +160,7 @@ object NoaaCatalogue:
         raw = i.focus.map(_.noSpaces)
       )
 
-  private def singular(ds: com.histmersion.plugins.events.NoaaCatalogue.SingularDs): com.histmersion.plugins.events.NoaaCatalogue.SingularResult = ds match
+  private def singular(ds: com.histmersion.plugins.events.NoaaCatalogue.Dataset): com.histmersion.plugins.events.NoaaCatalogue.Name = ds match
     case Earthquakes => "earthquake"
     case Volcanoes   => "volcano"
     case _           => "tsunami"

@@ -30,7 +30,7 @@ abstract class KeyedCollection(
   val role = MediaCollection.Object
 
   /** What `histmersion media providers` says of it: its description, and that it is not asked without a key. */
-  protected def described(text: com.histmersion.plugins.media.KeyedCollection.DescribedText): com.histmersion.plugins.media.KeyedCollection.DescribedResult = text + (if key.isEmpty then " — NO KEY SET: not asked" else "")
+  protected def described(text: com.histmersion.plugins.media.KeyedCollection.Text): com.histmersion.plugins.media.KeyedCollection.DescribedResult = text + (if key.isEmpty then " — NO KEY SET: not asked" else "")
 
   override def check: Either[String, Unit] =
     if !conf.enabled then Left(s"$title is switched off ($settings.enabled = false)")
@@ -43,15 +43,21 @@ abstract class KeyedCollection(
         .map(_ => ())
 
   /** The key, for a request: a collection without one is never asked ([[check]]). */
-  protected def apiKey: com.histmersion.plugins.media.KeyedCollection.ApiKeyResult = key.getOrElse("")
+  protected def apiKey: com.histmersion.plugins.media.KeyedCollection.Key = key.getOrElse("")
 
   /** Pure: an HTTP 401/403 of a key-gated API named as a refused key, with the setting to check. */
-  protected def explain(e: com.histmersion.plugins.media.KeyedCollection.ExplainE): com.histmersion.plugins.media.KeyedCollection.ExplainResult =
+  protected def explain(e: com.histmersion.plugins.media.KeyedCollection.Problem): com.histmersion.plugins.media.KeyedCollection.Explanation =
     if e.contains("HTTP 401") || e.contains("HTTP 403") then
       s"$e — the API key was refused (check histmersion.plugins.$plugin.api-key)"
     else e
 
 object KeyedCollection:
+  type Explanation = Explanation.T
+  object Explanation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Plugin = Plugin.T
   object Plugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Key = Key.T
@@ -63,11 +69,3 @@ object KeyedCollection:
 
   type DescribedResult = DescribedResult.T
   object DescribedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribedText = DescribedText.T
-  object DescribedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApiKeyResult = ApiKeyResult.T
-  object ApiKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExplainResult = ExplainResult.T
-  object ExplainResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExplainE = ExplainE.T
-  object ExplainE extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

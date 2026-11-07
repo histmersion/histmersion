@@ -1,0 +1,129 @@
+## CONCEPTS NEARBY
+com.histmersion.plugins.media.ArtInstituteCollection.FieldsValue (String)
+com.histmersion.plugins.media.ArtInstituteCollection.ThumbPx (Int)
+com.histmersion.plugins.media.ClevelandCollection.FieldsValue (String)
+com.histmersion.plugins.media.CollectionSettings.ApiUrl (String)
+com.histmersion.plugins.media.CollectionSettings.Candidates (Int)
+com.histmersion.plugins.media.CollectionSettings.DisplayPx (Int)
+com.histmersion.plugins.media.CollectionSettings.Enabled (Boolean)
+com.histmersion.plugins.media.CollectionSettings.ExcludeDataProviders (String)
+com.histmersion.plugins.media.CollectionSettings.ExcludeProviders (String)
+com.histmersion.plugins.media.CollectionSettings.ExcludeTypes (String)
+com.histmersion.plugins.media.CollectionSettings.ImageUrl (String)
+com.histmersion.plugins.media.CollectionSettings.MaxYear (Int)
+com.histmersion.plugins.media.CollectionSettings.PerPlace (Int)
+com.histmersion.plugins.media.CollectionSettings.RefusalBackoffSeconds (String)
+com.histmersion.plugins.media.CollectionSettings.RequestIntervalMs (Int)
+
+## TYPES TO DECIDE
+com.histmersion.plugins.gazetteers.DownloadedGazetteer.DownloadResultPart1 | base String | generated | method-result
+    def download(http: Plugin.Http): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.DownloadResultPart1, com.histmersion.plugins.gazetteers.DownloadedGazetteer
+com.histmersion.plugins.gazetteers.DownloadedGazetteer.DownloadResultPart2 | base String | generated | method-result
+    def download(http: Plugin.Http): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.DownloadResultPart1, com.histmersion.plugins.gazetteers.DownloadedGazetteer
+com.histmersion.plugins.gazetteers.DownloadedGazetteer.FetchResultPart1 | base String | generated | method-result
+    def fetch(http: Plugin.Http): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.FetchResultPart1, List[GazetteerPlace]] = download(http).flatMap(read)
+com.histmersion.plugins.gazetteers.DownloadedGazetteer.ReadResultPart1 | base String | generated | method-result
+    def read(text: com.histmersion.plugins.gazetteers.DownloadedGazetteer.ReadText): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.ReadResultPart1, List[Gazet
+com.histmersion.plugins.gazetteers.DownloadedGazetteer.ReadText | base String | generated | method-parameter
+    def read(text: com.histmersion.plugins.gazetteers.DownloadedGazetteer.ReadText): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.ReadResultPart1, List[Gazet
+com.histmersion.plugins.gazetteers.DownloadedGazetteer.SlugifyName | base String | generated | method-parameter
+    protected def slugify(name: com.histmersion.plugins.gazetteers.DownloadedGazetteer.SlugifyName): com.histmersion.plugins.gazetteers.DownloadedGazetteer.SlugifyResult =
+com.histmersion.plugins.gazetteers.DownloadedGazetteer.SlugifyResult | base String | generated | method-result
+    protected def slugify(name: com.histmersion.plugins.gazetteers.DownloadedGazetteer.SlugifyName): com.histmersion.plugins.gazetteers.DownloadedGazetteer.SlugifyResult =
+com.histmersion.plugins.gazetteers.DownloadedGazetteer.SpanA | base Long | generated | method-parameter
+    protected def span(a: com.histmersion.plugins.gazetteers.DownloadedGazetteer.SpanA, b: com.histmersion.plugins.gazetteers.DownloadedGazetteer.SpanB): Option[Period] =
+com.histmersion.plugins.gazetteers.DownloadedGazetteer.SpanB | base Long | generated | method-parameter
+    protected def span(a: com.histmersion.plugins.gazetteers.DownloadedGazetteer.SpanA, b: com.histmersion.plugins.gazetteers.DownloadedGazetteer.SpanB): Option[Period] =
+com.histmersion.plugins.gazetteers.DownloadedGazetteer.StrResult | base String | generated | method-result
+    protected def str(o: JsonObject, keys: String*): Option[com.histmersion.plugins.gazetteers.DownloadedGazetteer.StrResult] =
+com.histmersion.plugins.gazetteers.DownloadedGazetteer.UnzipData | base Array[Byte] | generated | method-parameter
+    def unzip(data: com.histmersion.plugins.gazetteers.DownloadedGazetteer.UnzipData): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.UnzipResultPart1, com.his
+com.histmersion.plugins.gazetteers.DownloadedGazetteer.UnzipResultPart1 | base String | generated | method-result
+    def unzip(data: com.histmersion.plugins.gazetteers.DownloadedGazetteer.UnzipData): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.UnzipResultPart1, com.his
+com.histmersion.plugins.gazetteers.DownloadedGazetteer.UnzipResultPart2 | base String | generated | method-result
+    def unzip(data: com.histmersion.plugins.gazetteers.DownloadedGazetteer.UnzipData): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.UnzipResultPart1, com.his
+com.histmersion.plugins.gazetteers.DownloadedGazetteer.UrlResult | base String | generated | method-result
+    def url: com.histmersion.plugins.gazetteers.DownloadedGazetteer.UrlResult
+com.histmersion.plugins.gazetteers.GazetteerPlugin.RegisterResultPart1 | base String | generated | method-result
+    def register(c: GazetteerSettings, ctx: Plugin.Context): Either[com.histmersion.plugins.gazetteers.GazetteerPlugin.RegisterResultPart1, Unit] =
+com.histmersion.plugins.media.AicPlugin.RegisterResultPart1 | base String | generated | method-result
+    def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.AicPlugin.RegisterResultPart1, Unit] =
+com.histmersion.plugins.media.ArtInstituteCollection.FieldsValue | base String | original | alias
+com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif | base String | generated | alias,method-parameter
+    val RecordsIiif: _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif.type = _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif
+    val RecordIiif: _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif.type = _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif
+com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlImageId | base String | generated | method-parameter
+    def imageUrl(iiif: com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif, imageId: com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlImageId, width
+com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlResult | base String | generated | method-result
+    def imageUrl(iiif: com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif, imageId: com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlImageId, width
+com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlWidth | base Int | generated | method-parameter
+    def imageUrl(iiif: com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif, imageId: com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlImageId, width
+com.histmersion.plugins.media.ArtInstituteCollection.RecordDisplayPx | base Int | generated | alias,method-parameter
+    val RecordsDisplayPx: _root_.com.histmersion.plugins.media.ArtInstituteCollection.RecordDisplayPx.type = _root_.com.histmersion.plugins.media.ArtInstituteCollection.Recor
+    def record(json: Json, iiif: com.histmersion.plugins.media.ArtInstituteCollection.RecordIiif, displayPx: com.histmersion.plugins.media.ArtInstituteCollection.RecordDispla
+com.histmersion.plugins.media.ArtInstituteCollection.RecordResultPart1 | base String | generated | method-result
+    def record(json: Json, iiif: com.histmersion.plugins.media.ArtInstituteCollection.RecordIiif, displayPx: com.histmersion.plugins.media.ArtInstituteCollection.RecordDispla
+com.histmersion.plugins.media.ArtInstituteCollection.RecordThumbPx | base Int | generated | alias,method-parameter
+    val RecordsThumbPx: _root_.com.histmersion.plugins.media.ArtInstituteCollection.RecordThumbPx.type = _root_.com.histmersion.plugins.media.ArtInstituteCollection.RecordThu
+    def record(json: Json, iiif: com.histmersion.plugins.media.ArtInstituteCollection.RecordIiif, displayPx: com.histmersion.plugins.media.ArtInstituteCollection.RecordDispla
+com.histmersion.plugins.media.ArtInstituteCollection.RecordsResultPart1 | base String | generated | method-result
+    def records(json: Json, iiif: com.histmersion.plugins.media.ArtInstituteCollection.RecordsIiif, displayPx: com.histmersion.plugins.media.ArtInstituteCollection.RecordsDis
+com.histmersion.plugins.media.ArtInstituteCollection.RecordsResultPart2Part1 | base String | generated | method-result
+    def records(json: Json, iiif: com.histmersion.plugins.media.ArtInstituteCollection.RecordsIiif, displayPx: com.histmersion.plugins.media.ArtInstituteCollection.RecordsDis
+com.histmersion.plugins.media.ArtInstituteCollection.SearchResultPart1 | base String | generated | method-result
+    def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.ArtInstituteCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media
+com.histmersion.plugins.media.ArtInstituteCollection.SearchResultPart2Part1 | base String | generated | method-result
+    def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.ArtInstituteCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media
+com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlApi | base String | generated | method-parameter
+    def searchUrl(api: com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlApi, name: com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlName, limit: com
+com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlLimit | base Int | generated | method-parameter
+    def searchUrl(api: com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlApi, name: com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlName, limit: com
+com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlName | base String | generated | method-parameter
+    def searchUrl(api: com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlApi, name: com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlName, limit: com
+com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlResult | base String | generated | method-result
+    def searchUrl(api: com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlApi, name: com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlName, limit: com
+com.histmersion.plugins.media.ArtInstituteCollection.ThumbPx | base Int | generated | constructor-parameter
+    final class ArtInstituteCollection(conf: CollectionSettings, thumbPx: ArtInstituteCollection.ThumbPx)
+com.histmersion.plugins.media.ClevelandCollection.FieldsValue | base String | original | alias
+com.histmersion.plugins.media.ClevelandCollection.RecordResultPart1 | base String | generated | method-result
+    def record(json: Json): Either[com.histmersion.plugins.media.ClevelandCollection.RecordResultPart1, MediaItem] =
+com.histmersion.plugins.media.ClevelandCollection.RecordUrlSize | base String | generated | method-parameter
+    def url(size: com.histmersion.plugins.media.ClevelandCollection.RecordUrlSize) = img.downField(size).downField("url").focus.flatMap(_.asString)
+com.histmersion.plugins.media.ClevelandCollection.RecordsResultPart1 | base String | generated | method-result
+    def records(json: Json): Either[com.histmersion.plugins.media.ClevelandCollection.RecordsResultPart1, List[Either[com.histmersion.plugins.media.ClevelandCollection.Record
+com.histmersion.plugins.media.ClevelandCollection.RecordsResultPart2Part1 | base String | generated | method-result
+    def records(json: Json): Either[com.histmersion.plugins.media.ClevelandCollection.RecordsResultPart1, List[Either[com.histmersion.plugins.media.ClevelandCollection.Record
+com.histmersion.plugins.media.ClevelandCollection.SearchResultPart1 | base String | generated | method-result
+    def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.ClevelandCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.Cl
+com.histmersion.plugins.media.ClevelandCollection.SearchResultPart2Part1 | base String | generated | method-result
+    def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.ClevelandCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.Cl
+com.histmersion.plugins.media.ClevelandCollection.SearchUrlApi | base String | generated | method-parameter
+    def searchUrl(api: com.histmersion.plugins.media.ClevelandCollection.SearchUrlApi, name: com.histmersion.plugins.media.ClevelandCollection.SearchUrlName, limit: com.histm
+com.histmersion.plugins.media.ClevelandCollection.SearchUrlLimit | base Int | generated | method-parameter
+    def searchUrl(api: com.histmersion.plugins.media.ClevelandCollection.SearchUrlApi, name: com.histmersion.plugins.media.ClevelandCollection.SearchUrlName, limit: com.histm
+com.histmersion.plugins.media.ClevelandCollection.SearchUrlName | base String | generated | method-parameter
+    def searchUrl(api: com.histmersion.plugins.media.ClevelandCollection.SearchUrlApi, name: com.histmersion.plugins.media.ClevelandCollection.SearchUrlName, limit: com.histm
+com.histmersion.plugins.media.ClevelandCollection.SearchUrlResult | base String | generated | method-result
+    def searchUrl(api: com.histmersion.plugins.media.ClevelandCollection.SearchUrlApi, name: com.histmersion.plugins.media.ClevelandCollection.SearchUrlName, limit: com.histm
+com.histmersion.plugins.media.ClevelandPlugin.RegisterResultPart1 | base String | generated | method-result
+    def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.ClevelandPlugin.RegisterResultPart1, Unit] =
+com.histmersion.plugins.media.CollectionSettings.ApiUrl | base String | original | constructor-parameter
+com.histmersion.plugins.media.CollectionSettings.Candidates | base Int | original | constructor-parameter
+com.histmersion.plugins.media.CollectionSettings.DisplayPx | base Int | original | constructor-parameter
+com.histmersion.plugins.media.CollectionSettings.Enabled | base Boolean | original | constructor-parameter
+com.histmersion.plugins.media.CollectionSettings.ExcludeDataProviders | base String | original | constructor-parameter
+com.histmersion.plugins.media.CollectionSettings.ExcludeProviders | base String | original | constructor-parameter
+com.histmersion.plugins.media.CollectionSettings.ExcludeTypes | base String | original | constructor-parameter
+com.histmersion.plugins.media.CollectionSettings.ImageUrl | base String | original | constructor-parameter
+com.histmersion.plugins.media.CollectionSettings.ItemsList | base String | generated | method-parameter
+    def items(list: com.histmersion.plugins.media.CollectionSettings.ItemsList): List[com.histmersion.plugins.media.CollectionSettings.ItemsResult] = Option(list).toList.flat
+com.histmersion.plugins.media.CollectionSettings.ItemsResult | base String | generated | method-result
+    def items(list: com.histmersion.plugins.media.CollectionSettings.ItemsList): List[com.histmersion.plugins.media.CollectionSettings.ItemsResult] = Option(list).toList.flat
+com.histmersion.plugins.media.CollectionSettings.LatestYearResult | base Int | generated | method-result
+    def latestYear: Option[com.histmersion.plugins.media.CollectionSettings.LatestYearResult] = Option.when(maxYear != 0)(maxYear)
+com.histmersion.plugins.media.CollectionSettings.MaxYear | base Int | original | constructor-parameter
+com.histmersion.plugins.media.CollectionSettings.PerPlace | base Int | original | constructor-parameter
+com.histmersion.plugins.media.CollectionSettings.RefusalBackoffMsResult | base Long | generated | method-result
+    def refusalBackoffMs: List[com.histmersion.plugins.media.CollectionSettings.RefusalBackoffMsResult] =
+com.histmersion.plugins.media.CollectionSettings.RefusalBackoffSeconds | base String | original | constructor-parameter
+com.histmersion.plugins.media.CollectionSettings.RequestIntervalMs | base Int | original | constructor-parameter

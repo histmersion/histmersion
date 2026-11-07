@@ -15,7 +15,7 @@ final class MetCollection(conf: CollectionSettings)
   override val description = "The Metropolitan Museum of Art (CC0, isPublicDomain)" + MetCollection.Museum
   val role = MediaCollection.Object
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.MetCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.MetCollection.SearchResultPart2Part1, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.MetCollection.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
     http
       .askJson(MetCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(MetCollection.ids)
@@ -30,51 +30,31 @@ final class MetCollection(conf: CollectionSettings)
       )
 
 object MetCollection:
+  type ObjectId = ObjectId.T
+  object ObjectId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Year = Year.T
+  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** What every museum's description adds: what it takes and how a dry run shows it. */
-  type SearchResultPart1 = SearchResultPart1.T
-  object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchResultPart2Part1 = SearchResultPart2Part1.T
-  object SearchResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlResult = SearchUrlResult.T
-  object SearchUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlApi = SearchUrlApi.T
-  object SearchUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlName = SearchUrlName.T
-  object SearchUrlName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchUrlLimit = SearchUrlLimit.T
   object SearchUrlLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ObjectUrlResult = ObjectUrlResult.T
-  object ObjectUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ObjectUrlApi = ObjectUrlApi.T
-  object ObjectUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ObjectUrlId = ObjectUrlId.T
-  object ObjectUrlId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IdsResultPart1 = IdsResultPart1.T
-  object IdsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IdsResultPart2 = IdsResultPart2.T
-  object IdsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearResult = YearResult.T
-  object YearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearAstronomical = YearAstronomical.T
-  object YearAstronomical extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GeographyFields = GeographyFieldsValue
   type GeographyFieldsValue = GeographyFieldsValue.T
   object GeographyFieldsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordResultPart1 = RecordResultPart1.T
-  object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Museum = " — Open Access objects only (as the record itself says), tied to a place on the map " +
     "when the object's most specific place field names it (and no other) and its dates overlap the place's; " +
     "--dry-run lists the matches with their reasons"
 
   /** Pure: the search for objects with images from a place: `q` and `geoLocation` both the name. */
-  def searchUrl(api: com.histmersion.plugins.media.MetCollection.SearchUrlApi, name: com.histmersion.plugins.media.MetCollection.SearchUrlName, limit: com.histmersion.plugins.media.MetCollection.SearchUrlLimit): com.histmersion.plugins.media.MetCollection.SearchUrlResult =
+  def searchUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, name: com.histmersion.plugin.CollectionQuery.Text, limit: com.histmersion.plugins.media.MetCollection.SearchUrlLimit): com.histmersion.plugin.Plugin.Http.GetUrl =
     s"${api.stripSuffix("/")}/v1.1/search?hasImages=true&geoLocation=${name.enc}&q=${name.enc}&limit=${limit.max(1)}"
 
-  def objectUrl(api: com.histmersion.plugins.media.MetCollection.ObjectUrlApi, id: com.histmersion.plugins.media.MetCollection.ObjectUrlId): com.histmersion.plugins.media.MetCollection.ObjectUrlResult = s"${api.stripSuffix("/")}/v1/objects/$id"
+  def objectUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, id: com.histmersion.plugins.media.MetCollection.ObjectId): com.histmersion.plugin.Plugin.Http.GetUrl = s"${api.stripSuffix("/")}/v1/objects/$id"
 
   /** Pure: the object ids of a search answer (`objectIDs` may be `null` when nothing matched). */
-  def ids(json: Json): Either[com.histmersion.plugins.media.MetCollection.IdsResultPart1, List[com.histmersion.plugins.media.MetCollection.IdsResultPart2]] =
+  def ids(json: Json): Either[com.histmersion.plugins.media.MetCollection.Problem, List[com.histmersion.plugins.media.MetCollection.ObjectId]] =
     val c = json.hcursor
     c.str("message")
       .filter(_ => c.downField("objectIDs").focus.isEmpty)
@@ -84,14 +64,14 @@ object MetCollection:
       )
 
   /** Pure: astronomical year → the corpus' signed year (0 → 1 BCE = -1, -1399 → -1400). */
-  def year(astronomical: com.histmersion.plugins.media.MetCollection.YearAstronomical): com.histmersion.plugins.media.MetCollection.YearResult = if astronomical <= 0 then astronomical - 1 else astronomical
+  def year(astronomical: com.histmersion.plugins.media.MetCollection.Year): com.histmersion.plugins.media.MetCollection.Year = if astronomical <= 0 then astronomical - 1 else astronomical
 
   /** The geography fields, most specific first. */
   val GeographyFields: List[com.histmersion.plugins.media.MetCollection.GeographyFields] =
     List("excavation", "locus", "locale", "city", "county", "state", "subregion", "region", "river", "country")
 
   /** Pure: one object. Not public domain → its rights are a `Left`. */
-  def record(json: Json): Either[com.histmersion.plugins.media.MetCollection.RecordResultPart1, MediaItem] =
+  def record(json: Json): Either[com.histmersion.plugins.media.MetCollection.Problem, MediaItem] =
     val c = json.hcursor
     c.long("objectID").toRight(c.str("message").getOrElse("no objectID")).map { id =>
       val title = c.str("title").orElse(c.str("objectName")).getOrElse(s"Object $id")

@@ -17,6 +17,8 @@ final case class WikidataSettings(
   def eventRoles: List[(com.histmersion.plugins.media.WikidataSettings.EventRolesResultPart1, com.histmersion.plugins.media.WikidataSettings.EventRolesResultPart2)] = WikidataSettings.roles(eventProperties)
 
 object WikidataSettings:
+  type Spec = Spec.T
+  object Spec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The roles a picture of a place or an event may play. */
   type PlaceRolesResultPart1 = PlaceRolesResultPart1.T
   object PlaceRolesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -33,8 +35,6 @@ object WikidataSettings:
   object RolesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RolesResultPart2 = RolesResultPart2.T
   object RolesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RolesSpec = RolesSpec.T
-  object RolesSpec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type ApiUrl = ApiUrl.T
   object ApiUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -58,7 +58,7 @@ object WikidataSettings:
   /** Pure: `P18:image,P242:locator-map` as (property, role), in order, one per property; an entry that is not a
     * property and a picture role is dropped.
     */
-  def roles(spec: com.histmersion.plugins.media.WikidataSettings.RolesSpec): List[(com.histmersion.plugins.media.WikidataSettings.RolesResultPart1, com.histmersion.plugins.media.WikidataSettings.RolesResultPart2)] =
+  def roles(spec: com.histmersion.plugins.media.WikidataSettings.Spec): List[(com.histmersion.plugins.media.WikidataSettings.RolesResultPart1, com.histmersion.plugins.media.WikidataSettings.RolesResultPart2)] =
     CollectionSettings
       .items(spec)
       .flatMap { e =>

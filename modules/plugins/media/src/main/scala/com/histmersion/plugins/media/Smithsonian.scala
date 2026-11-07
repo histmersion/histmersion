@@ -16,70 +16,48 @@ import java.util.Locale
   * date (never an accession or collection date), read by [[FreeTextDates]]. Pure.
   */
 object Smithsonian:
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Unit = Unit.T
+  object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The header the key travels in (api.data.gov's documented alternative to the `api_key` parameter). */
-  type RecordRightsPart1 = RecordRightsPart1.T
-  object RecordRightsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordResourceLabel = RecordResourceLabel.T
-  object RecordResourceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type QueryResult = QueryResult.T
-  object QueryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryName = QueryName.T
-  object QueryName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryExcludedUnits = QueryExcludedUnits.T
-  object QueryExcludedUnits extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlResult = SearchUrlResult.T
-  object SearchUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlApi = SearchUrlApi.T
-  object SearchUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlName = _root_.com.histmersion.plugins.media.Smithsonian.QueryName
-  val SearchUrlName: _root_.com.histmersion.plugins.media.Smithsonian.QueryName.type = _root_.com.histmersion.plugins.media.Smithsonian.QueryName
+  type SearchUrlName = _root_.com.histmersion.plugin.CollectionQuery.Text
+  val SearchUrlName: _root_.com.histmersion.plugin.CollectionQuery.Text.type = _root_.com.histmersion.plugin.CollectionQuery.Text
   type SearchUrlRows = SearchUrlRows.T
   object SearchUrlRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlExcludedUnits = _root_.com.histmersion.plugins.media.Smithsonian.QueryExcludedUnits
-  val SearchUrlExcludedUnits: _root_.com.histmersion.plugins.media.Smithsonian.QueryExcludedUnits.type = _root_.com.histmersion.plugins.media.Smithsonian.QueryExcludedUnits
-  type UnitOfResult = UnitOfResult.T
-  object UnitOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlExcludedUnits = _root_.com.histmersion.plugins.media.Smithsonian.Unit
+  val SearchUrlExcludedUnits: _root_.com.histmersion.plugins.media.Smithsonian.Unit.type = _root_.com.histmersion.plugins.media.Smithsonian.Unit
   type DateLabels = DateLabelsValue
   type DateLabelsValue = DateLabelsValue.T
   object DateLabelsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MakerLabels = MakerLabelsValue
   type MakerLabelsValue = MakerLabelsValue.T
   object MakerLabelsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsResultPart1 = RecordsResultPart1.T
-  object RecordsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsResultPart2Part1 = RecordsResultPart2Part1.T
-  object RecordsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsExcludedUnits = _root_.com.histmersion.plugins.media.Smithsonian.RecordExcludedUnits
-  val RecordsExcludedUnits: _root_.com.histmersion.plugins.media.Smithsonian.RecordExcludedUnits.type = _root_.com.histmersion.plugins.media.Smithsonian.RecordExcludedUnits
-  type LabelledResultPart1 = LabelledResultPart1.T
-  object LabelledResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelledResultPart2 = LabelledResultPart2.T
-  object LabelledResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelledField = LabelledField.T
-  object LabelledField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordResultPart1 = RecordResultPart1.T
-  object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordExcludedUnits = RecordExcludedUnits.T
-  object RecordExcludedUnits extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsExcludedUnits = _root_.com.histmersion.plugins.media.Smithsonian.Unit
+  val RecordsExcludedUnits: _root_.com.histmersion.plugins.media.Smithsonian.Unit.type = _root_.com.histmersion.plugins.media.Smithsonian.Unit
 
   val KeyHeader = "X-Api-Key"
 
   /** Pure: the query — the place's name as a phrase, objects with images only, none of the excluded units (`unit_code`,
     * a fielded term the API's `terms` endpoint lists).
     */
-  def query(name: com.histmersion.plugins.media.Smithsonian.QueryName, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.QueryExcludedUnits] = Nil): com.histmersion.plugins.media.Smithsonian.QueryResult =
+  def query(name: com.histmersion.plugin.CollectionQuery.Text, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.Unit] = Nil): com.histmersion.plugin.CollectionQuery.Text =
     val units = excludedUnits.map(_.replaceAll("[^A-Za-z0-9_]", "")).filter(_.nonEmpty)
     s"\"${name.replace("\"", " ").trim}\" AND online_media_type:Images" +
       (if units.isEmpty then "" else units.mkString(" AND NOT unit_code:(", " OR ", ")"))
 
-  def searchUrl(api: com.histmersion.plugins.media.Smithsonian.SearchUrlApi, name: com.histmersion.plugins.media.Smithsonian.SearchUrlName, rows: com.histmersion.plugins.media.Smithsonian.SearchUrlRows, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.SearchUrlExcludedUnits] = Nil): com.histmersion.plugins.media.Smithsonian.SearchUrlResult =
+  def searchUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, name: com.histmersion.plugins.media.Smithsonian.SearchUrlName, rows: com.histmersion.plugins.media.Smithsonian.SearchUrlRows, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.SearchUrlExcludedUnits] = Nil): com.histmersion.plugin.Plugin.Http.GetUrl =
     s"${api.stripSuffix("/")}/search?q=${query(name, excludedUnits).enc}&rows=${rows.max(1).min(1000)}" +
       "&type=edanmdm&row_group=objects"
 
   /** Pure: the unit a row comes from — `descriptiveNonRepeating.unit_code`, else the row's `unitCode`. */
-  def unitOf(json: Json): Option[com.histmersion.plugins.media.Smithsonian.UnitOfResult] =
+  def unitOf(json: Json): Option[com.histmersion.plugins.media.Smithsonian.Unit] =
     val c = json.hcursor
     c.downField("content").downField("descriptiveNonRepeating").str("unit_code").orElse(c.str("unitCode"))
 
@@ -105,7 +83,7 @@ object Smithsonian:
   /** Pure: the rows of a search answer; an error answer (api.data.gov's `{error: {code, message}}`, or EDAN's
     * `{response: {error}}`) is a `Left`.
     */
-  def records(json: Json, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.RecordsExcludedUnits] = Nil): Either[com.histmersion.plugins.media.Smithsonian.RecordsResultPart1, List[Either[com.histmersion.plugins.media.Smithsonian.RecordsResultPart2Part1, MediaItem]]] =
+  def records(json: Json, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.RecordsExcludedUnits] = Nil): Either[com.histmersion.plugins.media.Smithsonian.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
     val c = json.hcursor
     val resp = c.downField("response")
     resp.downField("rows").focus.flatMap(_.asArray) match
@@ -117,7 +95,7 @@ object Smithsonian:
           case "" => resp.str("error").orElse(c.str("message")).getOrElse("no rows in the answer")
           case e  => e)
 
-  private def labelled(c: ACursor, field: com.histmersion.plugins.media.Smithsonian.LabelledField): List[(com.histmersion.plugins.media.Smithsonian.LabelledResultPart1, com.histmersion.plugins.media.Smithsonian.LabelledResultPart2)] =
+  private def labelled(c: ACursor, field: com.histmersion.plugins.media.Smithsonian.Label): List[(com.histmersion.plugins.media.Smithsonian.Label, com.histmersion.plugins.media.Smithsonian.Text)] =
     c.downField(field).focus.flatMap(_.asArray).toList.flatten.flatMap { e =>
       val h = e.hcursor
       h.str("content").map(v => h.str("label").getOrElse("").toLowerCase(Locale.ROOT) -> v)
@@ -126,7 +104,7 @@ object Smithsonian:
   /** Pure: one row of a search answer; a row of an excluded unit (a natural-history department's specimen) is withheld
     * with that reason, whatever its licence.
     */
-  def record(json: Json, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.RecordExcludedUnits] = Nil): Either[com.histmersion.plugins.media.Smithsonian.RecordResultPart1, MediaItem] =
+  def record(json: Json, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.Unit] = Nil): Either[com.histmersion.plugins.media.Smithsonian.Problem, MediaItem] =
     val c = json.hcursor
     val cont = c.downField("content")
     val dnr = cont.downField("descriptiveNonRepeating")
@@ -159,13 +137,13 @@ object Smithsonian:
           .map(_.hcursor)
           .filter(m => m.str("type").forall(_.equalsIgnoreCase("Images")))
         val cc0 = media.find(m => m.downField("usage").str("access").exists(_.equalsIgnoreCase("CC0")))
-        val rights: Either[com.histmersion.plugins.media.Smithsonian.RecordRightsPart1, MediaRights] = cc0 match
+        val rights: Either[com.histmersion.plugins.media.Smithsonian.Problem, MediaRights] = cc0 match
           case Some(_)               => Right(MediaRights.cc0(maker, credit))
           case None if media.isEmpty => Left("no image on the record")
           case None                  =>
             val stated = media.flatMap(m => m.downField("usage").str("access")).distinct
             Left(s"no CC0 image (usage.access ${if stated.isEmpty then "missing" else stated.mkString(", ")})")
-        def resource(m: ACursor, label: com.histmersion.plugins.media.Smithsonian.RecordResourceLabel) =
+        def resource(m: ACursor, label: com.histmersion.plugins.media.Smithsonian.Label) =
           m.downField("resources")
             .focus
             .flatMap(_.asArray)

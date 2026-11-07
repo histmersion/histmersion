@@ -18,11 +18,11 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
   def home = "https://www.wikidata.org"
   override def requestIntervalMs: Int = cfg.requestIntervalMs
 
-  private def classes: List[(com.histmersion.plugins.events.WikidataCatalogue.ClassesResultPart1, com.histmersion.plugins.events.WikidataCatalogue.ClassesResultPart2)] = WikidataClasses.parse(cfg.classes)
+  private def classes: List[(com.histmersion.plugin.WikidataId, com.histmersion.plugins.events.WikidataCatalogue.ClassLabel)] = WikidataClasses.parse(cfg.classes)
 
-  def parts(query: CatalogueQuery): List[com.histmersion.plugins.events.WikidataCatalogue.PartsResult] = classes.map((qid, _) => s"class:$qid")
+  def parts(query: CatalogueQuery): List[com.histmersion.plugins.events.WikidataCatalogue.Part] = classes.map((qid, _) => s"class:$qid")
 
-  def read(part: com.histmersion.plugins.events.WikidataCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[com.histmersion.plugins.events.WikidataCatalogue.ReadResultPart1, CataloguePage] =
+  def read(part: com.histmersion.plugins.events.WikidataCatalogue.Part, query: CatalogueQuery, http: Plugin.Http): Either[com.histmersion.plugins.events.WikidataCatalogue.Problem, CataloguePage] =
     classes.find((qid, _) => part == s"class:$qid") match
       case None              => Left(s"'$part' is no class of the configured events.wikidata.classes")
       case Some((qid, kind)) =>
@@ -44,59 +44,29 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
       .map(n => n.copy(names = (stored.names ++ n.names).distinct.filterNot(_ == n.label)))
 
 object WikidataCatalogue:
+  type ClassLabel = ClassLabel.T
+  object ClassLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Part = Part.T
+  object Part extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Query = Query.T
+  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Wkt = Wkt.T
+  object Wkt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Year = Year.T
+  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** Items that are only told of, never shown to have happened: a mythical event, a legendary battle, a narrative event
     * (2026-10-14, checked against their labels).
     */
-  type ParseFirstK = ParseFirstK.T
-  object ParseFirstK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseBoundDateKey = ParseBoundDateKey.T
-  object ParseBoundDateKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseBoundPrecKey = ParseBoundPrecKey.T
-  object ParseBoundPrecKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ClassesResultPart1 = ClassesResultPart1.T
-  object ClassesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClassesResultPart2 = ClassesResultPart2.T
-  object ClassesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PartsResult = PartsResult.T
-  object PartsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadResultPart1 = ReadResultPart1.T
-  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadPart = ReadPart.T
-  object ReadPart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Legendary = LegendaryValue
   type LegendaryValue = LegendaryValue.T
   object LegendaryValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SparqlResult = SparqlResult.T
-  object SparqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SparqlQid = SparqlQid.T
-  object SparqlQid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SparqlFrom = SparqlFrom.T
-  object SparqlFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SparqlTo = SparqlTo.T
-  object SparqlTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SparqlLang = SparqlLang.T
-  object SparqlLang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SparqlUrlResult = SparqlUrlResult.T
-  object SparqlUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SparqlUrlEndpoint = SparqlUrlEndpoint.T
-  object SparqlUrlEndpoint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SparqlUrlQuery = SparqlUrlQuery.T
-  object SparqlUrlQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BindingResult = BindingResult.T
   object BindingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BindingK = BindingK.T
-  object BindingK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointResultPart1 = PointResultPart1.T
-  object PointResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointResultPart2 = PointResultPart2.T
-  object PointResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointWkt = PointWkt.T
-  object PointWkt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseKind = ParseKind.T
-  object ParseKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Mythical = "Q24336466"
   val Legendary: Set[com.histmersion.plugins.events.WikidataCatalogue.Legendary] = Set("Q26913948", "Q122397289")
@@ -105,7 +75,7 @@ object WikidataCatalogue:
     * `to`, with their precision, their own coordinates or their location's, whether they are legendary or mythical, and
     * the deaths.
     */
-  def sparql(qid: com.histmersion.plugins.events.WikidataCatalogue.SparqlQid, from: Option[com.histmersion.plugins.events.WikidataCatalogue.SparqlFrom], to: com.histmersion.plugins.events.WikidataCatalogue.SparqlTo, lang: com.histmersion.plugins.events.WikidataCatalogue.SparqlLang): com.histmersion.plugins.events.WikidataCatalogue.SparqlResult =
+  def sparql(qid: com.histmersion.plugin.WikidataId, from: Option[com.histmersion.plugins.events.WikidataCatalogue.Year], to: com.histmersion.plugins.events.WikidataCatalogue.Year, lang: com.histmersion.plugins.events.WikidataSettings.Languages): com.histmersion.plugins.events.WikidataCatalogue.Query =
     // the query service compares astronomical years; `to`/`from` are historical
     val toA = CatalogDating.toAstronomical(to)
     val fromF = from.fold("")(f => s" && YEAR(?t) >= ${CatalogDating.toAstronomical(f)}")
@@ -125,14 +95,14 @@ object WikidataCatalogue:
        |  SERVICE wikibase:label { bd:serviceParam wikibase:language "$lang". }
        |}""".stripMargin
 
-  def sparqlUrl(endpoint: com.histmersion.plugins.events.WikidataCatalogue.SparqlUrlEndpoint, query: com.histmersion.plugins.events.WikidataCatalogue.SparqlUrlQuery): com.histmersion.plugins.events.WikidataCatalogue.SparqlUrlResult =
+  def sparqlUrl(endpoint: com.histmersion.plugins.events.WikidataSettings.SparqlUrl, query: com.histmersion.plugins.events.WikidataCatalogue.Query): com.histmersion.plugin.Plugin.Http.GetUrl =
     s"$endpoint?format=json&query=${URLEncoder.encode(query, UTF_8)}"
 
-  private def binding(b: ACursor, k: com.histmersion.plugins.events.WikidataCatalogue.BindingK): Option[com.histmersion.plugins.events.WikidataCatalogue.BindingResult] =
+  private def binding(b: ACursor, k: com.histmersion.plugins.events.WikidataCatalogue.Key): Option[com.histmersion.plugins.events.WikidataCatalogue.BindingResult] =
     b.downField(k).get[String]("value").toOption.map(_.trim).filter(_.nonEmpty)
 
   /** Pure: `Point(4.5 47.53)` → (lat 47.53, lon 4.5). */
-  def point(wkt: com.histmersion.plugins.events.WikidataCatalogue.PointWkt): Option[(com.histmersion.plugins.events.WikidataCatalogue.PointResultPart1, com.histmersion.plugins.events.WikidataCatalogue.PointResultPart2)] =
+  def point(wkt: com.histmersion.plugins.events.WikidataCatalogue.Wkt): Option[(com.histmersion.plugin.Latitude, com.histmersion.plugin.Longitude)] =
     "Point\\(\\s*([-0-9.eE]+)\\s+([-0-9.eE]+)\\s*\\)".r.findFirstMatchIn(wkt).flatMap { m =>
       for lon <- m.group(1).toDoubleOption; lat <- m.group(2).toDoubleOption yield (lat, lon)
     }
@@ -141,7 +111,7 @@ object WikidataCatalogue:
     * location's; the most precise dating; the most deaths). Items with no label of their own (the label service then
     * answers the id) keep it.
     */
-  def parse(json: Json, kind: com.histmersion.plugins.events.WikidataCatalogue.ParseKind): Either[com.histmersion.plugins.events.WikidataCatalogue.ParseResultPart1, List[CatalogueEvent]] =
+  def parse(json: Json, kind: com.histmersion.plugin.CatalogueEvent.Kind): Either[com.histmersion.plugins.events.WikidataCatalogue.Problem, List[CatalogueEvent]] =
     json.hcursor.downField("results").downField("bindings").focus.flatMap(_.asArray) match
       case None       => Left("no results in the answer")
       case Some(rows) =>
@@ -149,8 +119,8 @@ object WikidataCatalogue:
         Right(bs.groupBy(b => binding(b, "item").getOrElse("")).toList.filter(_._1.nonEmpty).sortBy(_._1).flatMap {
           (uri, rs) =>
             val qid = uri.reverse.takeWhile(_ != '/').reverse
-            def first(k: com.histmersion.plugins.events.WikidataCatalogue.ParseFirstK) = rs.flatMap(binding(_, k)).headOption
-            def bound(dateKey: com.histmersion.plugins.events.WikidataCatalogue.ParseBoundDateKey, precKey: com.histmersion.plugins.events.WikidataCatalogue.ParseBoundPrecKey): Option[CatalogDating.Bound] =
+            def first(k: com.histmersion.plugins.events.WikidataCatalogue.Key) = rs.flatMap(binding(_, k)).headOption
+            def bound(dateKey: com.histmersion.plugins.events.WikidataCatalogue.Key, precKey: com.histmersion.plugins.events.WikidataCatalogue.Key): Option[CatalogDating.Bound] =
               rs.flatMap(r =>
                 binding(r, dateKey)
                   .flatMap(CatalogDating.isoYear)

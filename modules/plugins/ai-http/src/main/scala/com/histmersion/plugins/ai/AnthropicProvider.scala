@@ -12,8 +12,8 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
   override def capabilities: AiCapabilities =
     AiCapabilities(tools = _root_.com.histmersion.plugin.AiCapabilities.Tools(true), structuredOutput = _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput(true), iterationMarkers = _root_.com.histmersion.plugin.AiCapabilities.IterationMarkers(true), verbatimFailures = _root_.com.histmersion.plugin.AiCapabilities.VerbatimFailures(true))
 
-  private def base: Either[com.histmersion.plugins.ai.AnthropicProvider.BaseResultPart1, BaseUrl] =
-    BaseUrl.parse(settings.baseUrl, _root_.com.histmersion.plugins.ai.BaseUrl.ParseSetting("agents.providers.anthropic.base-url"))
+  private def base: Either[com.histmersion.plugins.ai.AnthropicProvider.Problem, BaseUrl] =
+    BaseUrl.parse(settings.baseUrl, _root_.com.histmersion.plugins.ai.BaseUrl.Setting("agents.providers.anthropic.base-url"))
 
   override def check(model: String): Either[String, Unit] =
     base.flatMap(_ =>
@@ -45,33 +45,23 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
     sent.left.map(AiFailure.Error(_))
 
 object AnthropicProvider:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The API version every request names. */
   type TitleResult = TitleResult.T
   object TitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BaseResultPart1 = BaseResultPart1.T
-  object BaseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeadersResultPart1 = HeadersResultPart1.T
-  object HeadersResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeadersResultPart2 = HeadersResultPart2.T
   object HeadersResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeadersKey = HeadersKey.T
-  object HeadersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WithoutStructuredOutput = WithoutStructuredOutputValue
   type WithoutStructuredOutputValue = WithoutStructuredOutputValue.T
   object WithoutStructuredOutputValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StructuredOutputResult = StructuredOutputResult.T
-  object StructuredOutputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StructuredOutputModel = StructuredOutputModel.T
-  object StructuredOutputModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NoStructuredOutputResult = NoStructuredOutputResult.T
   object NoStructuredOutputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoStructuredOutputModel = NoStructuredOutputModel.T
-  object NoStructuredOutputModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Version = "2023-06-01"
 
-  def headers(key: com.histmersion.plugins.ai.AnthropicProvider.HeadersKey): Map[com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1, com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2] =
-    Map({ val refactorTuple = "x-api-key" -> key; (_root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1(refactorTuple._1), _root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2((refactorTuple._2).value)) }, { val refactorTuple2 = "anthropic-version" -> Version; (_root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1(refactorTuple2._1), _root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2(refactorTuple2._2)) }, { val refactorTuple3 = "content-type" -> "application/json"; (_root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1(refactorTuple3._1), _root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2(refactorTuple3._2)) })
+  def headers(key: com.histmersion.plugins.ai.ProviderSettings.ApiKey): Map[com.histmersion.plugin.AiHttp.Response.HeadersKey, com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2] =
+    Map({ val refactorTuple = "x-api-key" -> key; (_root_.com.histmersion.plugin.AiHttp.Response.HeadersKey(refactorTuple._1), _root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2((refactorTuple._2).value)) }, { val refactorTuple2 = "anthropic-version" -> Version; (_root_.com.histmersion.plugin.AiHttp.Response.HeadersKey(refactorTuple2._1), _root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2(refactorTuple2._2)) }, { val refactorTuple3 = "content-type" -> "application/json"; (_root_.com.histmersion.plugin.AiHttp.Response.HeadersKey(refactorTuple3._1), _root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2(refactorTuple3._2)) })
 
   /** The models known NOT to give structured output (older than Claude 4.1); any other model is taken to. */
   val WithoutStructuredOutput: Set[com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutput] = Set(
@@ -86,8 +76,8 @@ object AnthropicProvider:
     _root_.com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutputValue("claude-opus-4-20250514")
   )
 
-  def structuredOutput(model: com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputModel): com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputResult = _root_.com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputResult(!WithoutStructuredOutput(_root_.com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutputValue((model).value)))
+  def structuredOutput(model: com.histmersion.plugin.AiTurn.Request.Model): Boolean = (!WithoutStructuredOutput(_root_.com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutputValue((model).value)))
 
-  def noStructuredOutput(model: com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputModel): com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputResult =
+  def noStructuredOutput(model: com.histmersion.plugin.AiTurn.Request.Model): com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputResult =
     _root_.com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputResult(s"UnsupportedModelForStructuredOutputException: Model '$model' does not support structured output. " +
       "Structured output is only supported by Claude 4.1+ models (e.g., claude-sonnet-4-5, claude-opus-4-1-20250805).")

@@ -25,8 +25,8 @@ import com.histmersion.util.console.Console
 
 object DependencyResolver:
 
-  type ParseLoopResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Error
-  val ParseLoopResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Error.type = _root_.com.histmersion.pluginresolver.Resolver.Error
+  type ParseLoopResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Problem
+  val ParseLoopResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Problem.type = _root_.com.histmersion.pluginresolver.Resolver.Problem
   type ParseLoopRest = _root_.com.histmersion.pluginresolver.Resolver.Argument
   val ParseLoopRest: _root_.com.histmersion.pluginresolver.Resolver.Argument.type = _root_.com.histmersion.pluginresolver.Resolver.Argument
 
@@ -38,8 +38,8 @@ object DependencyResolver:
   val RunResult: _root_.com.histmersion.pluginresolver.Resolver.ExitCode.type = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
   type RunArgs = _root_.com.histmersion.pluginresolver.Resolver.Argument
   val RunArgs: _root_.com.histmersion.pluginresolver.Resolver.Argument.type = _root_.com.histmersion.pluginresolver.Resolver.Argument
-  type ParseResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Error
-  val ParseResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Error.type = _root_.com.histmersion.pluginresolver.Resolver.Error
+  type ParseResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Problem
+  val ParseResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Problem.type = _root_.com.histmersion.pluginresolver.Resolver.Problem
   type ParseArgs = _root_.com.histmersion.pluginresolver.Resolver.Argument
   val ParseArgs: _root_.com.histmersion.pluginresolver.Resolver.Argument.type = _root_.com.histmersion.pluginresolver.Resolver.Argument
   type ResolveResult = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
@@ -48,8 +48,8 @@ object DependencyResolver:
   val ResolveRootsResultPart1: _root_.com.histmersion.pluginresolver.Resolver.ExitCode.type = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
   type ResolveSomeResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
   val ResolveSomeResultPart1: _root_.com.histmersion.pluginresolver.Resolver.ExitCode.type = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
-  type ServerModulesResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Error
-  val ServerModulesResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Error.type = _root_.com.histmersion.pluginresolver.Resolver.Error
+  type ServerModulesResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Problem
+  val ServerModulesResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Problem.type = _root_.com.histmersion.pluginresolver.Resolver.Problem
   type InputsResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.FileName
   val InputsResultPart1: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
   type InputsResultPart2 = _root_.com.histmersion.pluginresolver.Resolver.Sha256
@@ -79,22 +79,22 @@ object DependencyResolver:
       case refactorPattern3 :: d :: t if (refactorPattern3.value == "--lib")              => loop(t, acc.copy(lib = Path.of((d).value)))
       case refactorPattern4 :: d :: t if (refactorPattern4.value == "--histmersion-repo") => loop(t, acc.copy(histmersionRepo = Some(Path.of((d).value))))
       case refactorPattern5 :: r :: t if (refactorPattern5.value == "--repo")             =>
-        RepositoryUrl.fromArgument(_root_.com.histmersion.pluginresolver.RepositoryUrl.FromArgumentRaw((r).value)) match
+        RepositoryUrl.fromArgument(_root_.com.histmersion.pluginresolver.Resolver.Argument((r).value)) match
           case Right(url) => loop(t, acc.copy(repositories = acc.repositories :+ url))
-          case Left(e)    => Left(_root_.com.histmersion.pluginresolver.Resolver.Error(s"--repo '$r': $e"))
+          case Left(e)    => Left(_root_.com.histmersion.pluginresolver.Resolver.Problem(s"--repo '$r': $e"))
       case refactorPattern6 :: t if (refactorPattern6.value == "--check")                     => loop(t, acc.copy(check = _root_.com.histmersion.pluginresolver.ResolveRequest.Check(true)))
       case flag :: _ if (flag).value.startsWith("--") => Left(_root_.com.histmersion.pluginresolver.DependencyResolver.ParseLoopResultPart1(s"unknown option $flag"))
       case jars                               => Right(acc.copy(jars = jars.map((refactorValue4 => Path.of(refactorValue4.value)))))
     val empty = Path.of("")
     loop(args, ResolveRequest(empty, empty, None, Nil, _root_.com.histmersion.pluginresolver.ResolveRequest.Check(false), Nil))
-      .filterOrElse(r => r.kit != empty && r.lib != empty, _root_.com.histmersion.pluginresolver.Resolver.Error("--kit and --lib are required"))
+      .filterOrElse(r => r.kit != empty && r.lib != empty, _root_.com.histmersion.pluginresolver.Resolver.Problem("--kit and --lib are required"))
 
   def resolve(r: ResolveRequest)(using console: Console): com.histmersion.pluginresolver.DependencyResolver.ResolveResult =
     val outcome = for
       server <- serverModules(r.kit)
       stored <- LibDirectory.storedRepositories(r.lib)
       missing = r.jars.filterNot(Files.isRegularFile(_))
-      _ <- Either.cond(missing.isEmpty, (), _root_.com.histmersion.pluginresolver.Resolver.Error(s"no such plugin jar: ${missing.mkString(", ")}"))
+      _ <- Either.cond(missing.isEmpty, (), _root_.com.histmersion.pluginresolver.Resolver.Problem(s"no such plugin jar: ${missing.mkString(", ")}"))
     yield (server, stored)
     outcome match
       case Left(e)                 => console.errorLine((e).value); _root_.com.histmersion.pluginresolver.DependencyResolver.ResolveResult(3)
@@ -134,7 +134,7 @@ object DependencyResolver:
       coursier
         .resolve(List(c), server.excluded)
         .left
-        .map(e => _root_.com.histmersion.pluginresolver.Resolver.Error(s"${plugin.fileName}: $e"))
+        .map(e => _root_.com.histmersion.pluginresolver.Resolver.Problem(s"${plugin.fileName}: $e"))
         .map(m => plugin.fileName -> m.map(_._1))
     }
     alone match
@@ -160,7 +160,7 @@ object DependencyResolver:
       Left(_root_.com.histmersion.pluginresolver.DependencyResolver.ServerModulesResultPart1(s"no module list in the kit ($modules): this kit predates plugin dependencies"))
     else
       def lines(p: Path) = if Files.isRegularFile(p) then Files.readAllLines(p, UTF_8).asScala.toList else Nil
-      ServerModules.parse((lines(modules)).map(refactorValue => _root_.com.histmersion.pluginresolver.Resolver.ManifestLine(refactorValue)), (lines(excludes)).map(refactorValue2 => _root_.com.histmersion.pluginresolver.Resolver.ManifestLine(refactorValue2))).left.map(e => _root_.com.histmersion.pluginresolver.Resolver.Error(s"$modules: $e"))
+      ServerModules.parse((lines(modules)).map(refactorValue => _root_.com.histmersion.pluginresolver.Resolver.ManifestLine(refactorValue)), (lines(excludes)).map(refactorValue2 => _root_.com.histmersion.pluginresolver.Resolver.ManifestLine(refactorValue2))).left.map(e => _root_.com.histmersion.pluginresolver.Resolver.Problem(s"$modules: $e"))
 
   /** Every plugin jar and the POM beside it, as `lib/inputs` lists them. */
   private def inputs(jars: List[Path]): List[(com.histmersion.pluginresolver.DependencyResolver.InputsResultPart1, com.histmersion.pluginresolver.DependencyResolver.InputsResultPart2)] =

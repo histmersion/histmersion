@@ -22,7 +22,7 @@ final class ChatCompletionsProvider(
   override def capabilities: AiCapabilities =
     AiCapabilities(tools = _root_.com.histmersion.plugin.AiCapabilities.Tools(true), structuredOutput = _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput(true), iterationMarkers = _root_.com.histmersion.plugin.AiCapabilities.IterationMarkers(true), verbatimFailures = _root_.com.histmersion.plugin.AiCapabilities.VerbatimFailures(true))
 
-  private def base: Either[com.histmersion.plugins.ai.ChatCompletionsProvider.BaseResultPart1, BaseUrl] = BaseUrl.parse(settings.baseUrl, _root_.com.histmersion.plugins.ai.BaseUrl.ParseSetting(s"agents.providers.$name.base-url"))
+  private def base: Either[com.histmersion.plugins.ai.ChatCompletionsProvider.Problem, BaseUrl] = BaseUrl.parse(settings.baseUrl, _root_.com.histmersion.plugins.ai.BaseUrl.Setting(s"agents.providers.$name.base-url"))
 
   override def check(model: String): Either[String, Unit] =
     base.flatMap(_ =>
@@ -32,14 +32,14 @@ final class ChatCompletionsProvider(
         case _ => Right(())
     )
 
-  private def key: com.histmersion.plugins.ai.ChatCompletionsProvider.KeyResult = if settings.apiKey.isEmpty then _root_.com.histmersion.plugins.ai.ChatCompletionsProvider.KeyResult("none") else settings.apiKey
+  private def key: com.histmersion.plugins.ai.ProviderSettings.ApiKey = if settings.apiKey.isEmpty then _root_.com.histmersion.plugins.ai.ProviderSettings.ApiKey("none") else settings.apiKey
 
   def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     val sent = for
       url <- base.map(_.endpoint("chat", "completions"))
       body = ChatRequest.of(request, settings.strictTools).body
       answer <- http
-        .post(url, ChatCompletionsProvider.headers(_root_.com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersKey((key).value)), body, math.max(1, settings.timeoutSeconds))
+        .post(url, ChatCompletionsProvider.headers(_root_.com.histmersion.plugins.ai.ProviderSettings.ApiKey((key).value)), body, math.max(1, settings.timeoutSeconds))
         .left
         .map(e => SendFailure(e).describe("POST", url))
       turn <- ChatAnswer(answer.status, answer.body).turn.left.map(why => s"RuntimeException: OpenAI API error: $why")
@@ -47,6 +47,8 @@ final class ChatCompletionsProvider(
     sent.left.map(AiFailure.Error(_))
 
 object ChatCompletionsProvider:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -57,19 +59,11 @@ object ChatCompletionsProvider:
   type KeyedPart2 = KeyedPart2.T
   object KeyedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type BaseResultPart1 = BaseResultPart1.T
-  object BaseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeyResult = KeyResult.T
-  object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeadersResultPart1 = HeadersResultPart1.T
-  object HeadersResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeadersResultPart2 = HeadersResultPart2.T
   object HeadersResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeadersKey = HeadersKey.T
-  object HeadersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def headers(key: com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersKey): Map[com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart1, com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart2] =
-    Map({ val refactorTuple = "Authorization" -> s"Bearer $key"; (_root_.com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart1(refactorTuple._1), _root_.com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart2(refactorTuple._2)) }, { val refactorTuple2 = "Content-Type" -> "application/json"; (_root_.com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart1(refactorTuple2._1), _root_.com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart2(refactorTuple2._2)) })
+  def headers(key: com.histmersion.plugins.ai.ProviderSettings.ApiKey): Map[com.histmersion.plugin.AiHttp.Response.HeadersKey, com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart2] =
+    Map({ val refactorTuple = "Authorization" -> s"Bearer $key"; (_root_.com.histmersion.plugin.AiHttp.Response.HeadersKey(refactorTuple._1), _root_.com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart2(refactorTuple._2)) }, { val refactorTuple2 = "Content-Type" -> "application/json"; (_root_.com.histmersion.plugin.AiHttp.Response.HeadersKey(refactorTuple2._1), _root_.com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart2(refactorTuple2._2)) })
 
   /** The OpenAI API, keyed by `OPENAI_API_KEY`. */
   def openAi(settings: ProviderSettings): ChatCompletionsProvider =

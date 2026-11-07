@@ -9,11 +9,11 @@ import com.histmersion.plugin.{Plugin, Spi}
 trait GazetteerPlugin(id: String, name: String, source: DownloadedGazetteer) extends Plugin:
   type Config = GazetteerSettings
   val info: Plugin.Info = Plugin.Info(id, GazetteerPlugin.Version, Spi.Version)
-  def register(c: GazetteerSettings, ctx: Plugin.Context): Either[com.histmersion.plugins.gazetteers.GazetteerPlugin.RegisterResultPart1, Unit] =
+  def register(c: GazetteerSettings, ctx: Plugin.Context): Either[com.histmersion.plugins.gazetteers.GazetteerPlugin.Problem, Unit] =
     ctx.gazetteerSources.add(name, source)
 
 object GazetteerPlugin:
-  type RegisterResultPart1 = RegisterResultPart1.T
-  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Version = "0.1.0"

@@ -1,0 +1,15 @@
+com.histmersion.plugins.ai.AnthropicAnswer.Block.Text.Value	String
+com.histmersion.plugins.ai.AnthropicAnswer.Body	String
+com.histmersion.plugins.ai.AnthropicAnswer.Status	Int
+com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutputValue	String
+com.histmersion.plugins.ai.ChatAnswer.Body	String
+com.histmersion.plugins.ai.ChatAnswer.Status	Int
+com.histmersion.plugins.ai.ChatCompletionsProvider.KeyedPart1	String
+com.histmersion.plugins.ai.ChatCompletionsProvider.KeyedPart2	String
+com.histmersion.plugins.ai.ChatCompletionsProvider.Name	String
+com.histmersion.plugins.ai.ChatCompletionsProvider.Title	String
+com.histmersion.plugins.ai.ProviderSettings.ApiKey	String
+com.histmersion.plugins.ai.ProviderSettings.BaseUrl	String
+com.histmersion.plugins.ai.ProviderSettings.StrictTools	Boolean
+com.histmersion.plugins.ai.ProviderSettings.TimeoutSeconds	Int
+com.histmersion.plugins.ai.SendFailure.Reported	String

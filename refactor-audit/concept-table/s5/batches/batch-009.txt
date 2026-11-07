@@ -1,0 +1,88 @@
+## CONCEPTS NEARBY
+com.histmersion.plugins.media.Smithsonian.DateLabelsValue (String)
+com.histmersion.plugins.media.Smithsonian.MakerLabelsValue (String)
+com.histmersion.plugins.media.SmithsonianCollection.Key (String)
+com.histmersion.plugins.media.WikidataPictures.Asked.Qid (String)
+com.histmersion.plugins.media.WikidataPictures.Asked.RolesPart1 (String)
+com.histmersion.plugins.media.WikidataPictures.Asked.RolesPart2 (String)
+com.histmersion.plugins.media.WikidataSettings.ApiUrl (String)
+com.histmersion.plugins.media.WikidataSettings.Batch (Int)
+com.histmersion.plugins.media.WikidataSettings.EventProperties (String)
+com.histmersion.plugins.media.WikidataSettings.Maxlag (Int)
+com.histmersion.plugins.media.WikidataSettings.PictureRolesValue (String)
+com.histmersion.plugins.media.WikidataSettings.PlaceProperties (String)
+
+## TYPES TO DECIDE
+com.histmersion.plugins.media.Smithsonian.DateLabelsValue | base String | original | alias
+com.histmersion.plugins.media.Smithsonian.LabelledField | base String | generated | method-parameter
+    private def labelled(c: ACursor, field: com.histmersion.plugins.media.Smithsonian.LabelledField): List[(com.histmersion.plugins.media.Smithsonian.LabelledResultPart1, com
+com.histmersion.plugins.media.Smithsonian.LabelledResultPart1 | base String | generated | method-result
+    private def labelled(c: ACursor, field: com.histmersion.plugins.media.Smithsonian.LabelledField): List[(com.histmersion.plugins.media.Smithsonian.LabelledResultPart1, com
+com.histmersion.plugins.media.Smithsonian.LabelledResultPart2 | base String | generated | method-result
+    private def labelled(c: ACursor, field: com.histmersion.plugins.media.Smithsonian.LabelledField): List[(com.histmersion.plugins.media.Smithsonian.LabelledResultPart1, com
+com.histmersion.plugins.media.Smithsonian.MakerLabelsValue | base String | original | alias
+com.histmersion.plugins.media.Smithsonian.QueryExcludedUnits | base String | generated | alias,method-parameter
+    val SearchUrlExcludedUnits: _root_.com.histmersion.plugins.media.Smithsonian.QueryExcludedUnits.type = _root_.com.histmersion.plugins.media.Smithsonian.QueryExcludedUnits
+    def query(name: com.histmersion.plugins.media.Smithsonian.QueryName, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.QueryExcludedUnits] = Nil): com.histmer
+com.histmersion.plugins.media.Smithsonian.QueryName | base String | generated | alias,method-parameter
+    val SearchUrlName: _root_.com.histmersion.plugins.media.Smithsonian.QueryName.type = _root_.com.histmersion.plugins.media.Smithsonian.QueryName
+    def query(name: com.histmersion.plugins.media.Smithsonian.QueryName, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.QueryExcludedUnits] = Nil): com.histmer
+com.histmersion.plugins.media.Smithsonian.QueryResult | base String | generated | method-result
+    def query(name: com.histmersion.plugins.media.Smithsonian.QueryName, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.QueryExcludedUnits] = Nil): com.histmer
+com.histmersion.plugins.media.Smithsonian.RecordExcludedUnits | base String | generated | alias,method-parameter
+    val RecordsExcludedUnits: _root_.com.histmersion.plugins.media.Smithsonian.RecordExcludedUnits.type = _root_.com.histmersion.plugins.media.Smithsonian.RecordExcludedUnits
+    def record(json: Json, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.RecordExcludedUnits] = Nil): Either[com.histmersion.plugins.media.Smithsonian.RecordR
+com.histmersion.plugins.media.Smithsonian.RecordResourceLabel | base String | generated | method-parameter
+    def resource(m: ACursor, label: com.histmersion.plugins.media.Smithsonian.RecordResourceLabel) =
+com.histmersion.plugins.media.Smithsonian.RecordResultPart1 | base String | generated | method-result
+    def record(json: Json, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.RecordExcludedUnits] = Nil): Either[com.histmersion.plugins.media.Smithsonian.RecordR
+com.histmersion.plugins.media.Smithsonian.RecordRightsPart1 | base String | generated | value
+    val rights: Either[com.histmersion.plugins.media.Smithsonian.RecordRightsPart1, MediaRights] = cc0 match
+com.histmersion.plugins.media.Smithsonian.RecordsResultPart1 | base String | generated | method-result
+    def records(json: Json, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.RecordsExcludedUnits] = Nil): Either[com.histmersion.plugins.media.Smithsonian.Recor
+com.histmersion.plugins.media.Smithsonian.RecordsResultPart2Part1 | base String | generated | method-result
+    def records(json: Json, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.RecordsExcludedUnits] = Nil): Either[com.histmersion.plugins.media.Smithsonian.Recor
+com.histmersion.plugins.media.Smithsonian.SearchUrlApi | base String | generated | method-parameter
+    def searchUrl(api: com.histmersion.plugins.media.Smithsonian.SearchUrlApi, name: com.histmersion.plugins.media.Smithsonian.SearchUrlName, rows: com.histmersion.plugins.me
+com.histmersion.plugins.media.Smithsonian.SearchUrlResult | base String | generated | method-result
+    def searchUrl(api: com.histmersion.plugins.media.Smithsonian.SearchUrlApi, name: com.histmersion.plugins.media.Smithsonian.SearchUrlName, rows: com.histmersion.plugins.me
+com.histmersion.plugins.media.Smithsonian.SearchUrlRows | base Int | generated | method-parameter
+    def searchUrl(api: com.histmersion.plugins.media.Smithsonian.SearchUrlApi, name: com.histmersion.plugins.media.Smithsonian.SearchUrlName, rows: com.histmersion.plugins.me
+com.histmersion.plugins.media.Smithsonian.UnitOfResult | base String | generated | method-result
+    def unitOf(json: Json): Option[com.histmersion.plugins.media.Smithsonian.UnitOfResult] =
+com.histmersion.plugins.media.SmithsonianCollection.Key | base String | generated | constructor-parameter
+    final class SmithsonianCollection(conf: CollectionSettings, key: Option[SmithsonianCollection.Key])
+com.histmersion.plugins.media.SmithsonianCollection.SearchResultPart1 | base String | generated | method-result
+    def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.SmithsonianCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.
+com.histmersion.plugins.media.SmithsonianCollection.SearchResultPart2Part1 | base String | generated | method-result
+    def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.SmithsonianCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.
+com.histmersion.plugins.media.SmithsonianPlugin.CollectionKey | base String | generated | method-parameter
+    protected def collection(c: KeyedPlugin.Config, key: Option[com.histmersion.plugins.media.SmithsonianPlugin.CollectionKey], ctx: Plugin.Context) =
+com.histmersion.plugins.media.WikidataPictures.Asked.Qid | base String | original | constructor-parameter
+    final private case class Asked(target: MediaTarget.Id, qid: Asked.Qid, roles: List[(Asked.RolesPart1, Asked.RolesPart2)])
+com.histmersion.plugins.media.WikidataPictures.Asked.RolesPart1 | base String | original | constructor-parameter
+    final private case class Asked(target: MediaTarget.Id, qid: Asked.Qid, roles: List[(Asked.RolesPart1, Asked.RolesPart2)])
+com.histmersion.plugins.media.WikidataPictures.Asked.RolesPart2 | base String | original | constructor-parameter
+    final private case class Asked(target: MediaTarget.Id, qid: Asked.Qid, roles: List[(Asked.RolesPart1, Asked.RolesPart2)])
+com.histmersion.plugins.media.WikidataPlugin.RegisterResultPart1 | base String | generated | method-result
+    def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.WikidataPlugin.RegisterResultPart1, Unit] =
+com.histmersion.plugins.media.WikidataSettings.ApiUrl | base String | original | constructor-parameter
+com.histmersion.plugins.media.WikidataSettings.Batch | base Int | original | constructor-parameter
+com.histmersion.plugins.media.WikidataSettings.EventProperties | base String | original | constructor-parameter
+com.histmersion.plugins.media.WikidataSettings.EventRolesResultPart1 | base String | generated | method-result
+    def eventRoles: List[(com.histmersion.plugins.media.WikidataSettings.EventRolesResultPart1, com.histmersion.plugins.media.WikidataSettings.EventRolesResultPart2)] = Wikid
+com.histmersion.plugins.media.WikidataSettings.EventRolesResultPart2 | base String | generated | method-result
+    def eventRoles: List[(com.histmersion.plugins.media.WikidataSettings.EventRolesResultPart1, com.histmersion.plugins.media.WikidataSettings.EventRolesResultPart2)] = Wikid
+com.histmersion.plugins.media.WikidataSettings.Maxlag | base Int | original | constructor-parameter
+com.histmersion.plugins.media.WikidataSettings.PictureRolesValue | base String | original | alias
+com.histmersion.plugins.media.WikidataSettings.PlaceProperties | base String | original | constructor-parameter
+com.histmersion.plugins.media.WikidataSettings.PlaceRolesResultPart1 | base String | generated | method-result
+    def placeRoles: List[(com.histmersion.plugins.media.WikidataSettings.PlaceRolesResultPart1, com.histmersion.plugins.media.WikidataSettings.PlaceRolesResultPart2)] = Wikid
+com.histmersion.plugins.media.WikidataSettings.PlaceRolesResultPart2 | base String | generated | method-result
+    def placeRoles: List[(com.histmersion.plugins.media.WikidataSettings.PlaceRolesResultPart1, com.histmersion.plugins.media.WikidataSettings.PlaceRolesResultPart2)] = Wikid
+com.histmersion.plugins.media.WikidataSettings.RolesResultPart1 | base String | generated | method-result
+    def roles(spec: com.histmersion.plugins.media.WikidataSettings.RolesSpec): List[(com.histmersion.plugins.media.WikidataSettings.RolesResultPart1, com.histmersion.plugins.
+com.histmersion.plugins.media.WikidataSettings.RolesResultPart2 | base String | generated | method-result
+    def roles(spec: com.histmersion.plugins.media.WikidataSettings.RolesSpec): List[(com.histmersion.plugins.media.WikidataSettings.RolesResultPart1, com.histmersion.plugins.
+com.histmersion.plugins.media.WikidataSettings.RolesSpec | base String | generated | method-parameter
+    def roles(spec: com.histmersion.plugins.media.WikidataSettings.RolesSpec): List[(com.histmersion.plugins.media.WikidataSettings.RolesResultPart1, com.histmersion.plugins.
