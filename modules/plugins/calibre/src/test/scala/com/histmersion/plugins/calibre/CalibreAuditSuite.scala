@@ -1,5 +1,7 @@
 package com.histmersion.plugins.calibre
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** The audit compares loosely where Calibre legitimately differs (subtitles, accents, "Last, First") and strictly where
   * it matters (no author in common, scraped junk, a missing entry).
   */
@@ -27,10 +29,10 @@ class CalibreAuditSuite extends munit.FunSuite:
   test("a bracketed role or life span is not a surname"):
     assert(
       Calibre.Audit.authorsMatch(
-        List("Ken Dowden (ed.)", "Niall Livingstone (ed.)"),
-        List("Ken Dowden; Niall Livingstone")
+        List(com.histmersion.plugins.calibre.AuditRecord.Authors("Ken Dowden (ed.)"), com.histmersion.plugins.calibre.AuditRecord.Authors("Niall Livingstone (ed.)")),
+        List(com.histmersion.plugins.calibre.Calibre.Author("Ken Dowden; Niall Livingstone"))
       ) ||
-        Calibre.Audit.authorsMatch(List("Ken Dowden (ed.)"), List("Ken Dowden"))
+        Calibre.Audit.authorsMatch(List(com.histmersion.plugins.calibre.AuditRecord.Authors("Ken Dowden (ed.)")), List(com.histmersion.plugins.calibre.Calibre.Author("Ken Dowden")))
     )
     assertEquals(Calibre.Audit.surname("Gimbutienė, Marija (1921-1994)"), "gimbutiene")
     assertEquals(Calibre.Audit.surname("Cynthia W. Shelmerdine (ed.)"), "shelmerdine")
