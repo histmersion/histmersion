@@ -39,7 +39,7 @@ final class CurrencyCheckPipeline(
   val pipeline: Pipeline = Pipeline.CurrencyCheck
   import CurrencyCheckPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, PipelineDef.RunResultPart2] =
+  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
     val goal = goalOf(ctx)
     for
       targets <- ctx.code[List[Target]](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(Right(load(goal)))
@@ -55,7 +55,7 @@ final class CurrencyCheckPipeline(
             s"${followed.queued} paper(s) queued for acquisition (agent run ${ctx.run.id.value.take(8)})"
         )
       )
-    yield PipelineDef.RunResultPart2(line)
+    yield PipelineDef.Summary(line)
 
   private def load(goal: com.histmersion.domain.automation.Goal.Slug): List[Target] =
     goalSources(goal, GoalSweep.Limit(cfg.scheduler.currencySources.value))

@@ -4,7 +4,7 @@ import com.histmersion.util.storage.{Location, Resources, Store, Stores}
 import java.nio.file.Path
 
 final class Prompts(overrideDir: Prompts.OverrideDir)(using stores: Stores, resources: Resources):
-  private[agents] def bundledText(rel: com.histmersion.util.storage.SafePath.Candidate): Either[com.histmersion.domain.automation.agents.Prompts.Problem, String] = resources.text(Resources.ResourceName(s"agents/${rel.value}")).left.map(p => Problem(p.value)).map(_.value)
+  private[agents] def bundledText(rel: com.histmersion.util.storage.SafePath.Candidate): Either[com.histmersion.domain.automation.agents.Prompts.Problem, String] = resources.text(Resources.ResourceName(s"agents/${rel.value}")).left.map(p => Prompts.Problem(p.value)).map(_.value)
   private val dir: Option[Path] =
     Option(overrideDir.value).map(_.trim).filter(_.nonEmpty).map(d => Path.of(d).toAbsolutePath.normalize())
 
@@ -17,8 +17,8 @@ final class Prompts(overrideDir: Prompts.OverrideDir)(using stores: Stores, reso
     }
     local.filter((store, key) => store.isFile(key)) match
       case Some((store, key)) =>
-        try store.get(key).toRight(Problem(s"prompt override ${store.where(key)} cannot be read: file disappeared")).map(_.text().value)
-        catch case e: java.io.IOException => Left(Problem(s"prompt override ${store.where(key)} cannot be read: ${e.getMessage}"))
+        try store.get(key).toRight(Prompts.Problem(s"prompt override ${store.where(key)} cannot be read: file disappeared")).map(_.text().value)
+        catch case e: java.io.IOException => Left(Prompts.Problem(s"prompt override ${store.where(key)} cannot be read: ${e.getMessage}"))
       case None => bundledText(rel)
 
 object Prompts:

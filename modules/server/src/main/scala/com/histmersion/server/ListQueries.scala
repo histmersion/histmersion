@@ -13,50 +13,55 @@ import com.histmersion.api.Api
   * read once, here, against `now`. Free vocabularies (job kinds, managers, models) pass as they are. Pure.
   */
 object ListQueries:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  private def bad(m: String): Api.Error = Api.Error(Api.Error.Message(m))
 
-  private def bad(m: com.histmersion.server.ListQueries.Problem): Api.Error = Api.Error(m)
+  private def known(what: String, vs: List[String], allowed: Seq[String]): Either[Api.Error, List[String]] =
+    ListFilters
+      .known(ListFilters.FacetName(what), vs.map(ListFilters.Term(_)), allowed.map(ListFilters.Term(_)))
+      .left
+      .map(p => bad(p.value))
+      .map(_.map(_.value))
 
   /** No `state` = the open ones (what the list always showed); `all` = every state. */
   def approvals(f: ApprovalFilter): Either[Api.Error, com.histmersion.domain.automation.approvals.ApprovalQuery] =
     val n = f.normalized
     for
       state <- n.state match
-        case None        => Right(Some(ApprovalState.Open))
-        case Some("all") => Right(None)
-        case Some(s)     =>
+        case None                        => Right(Some(ApprovalState.Open))
+        case Some(s) if s.value == "all" => Right(None)
+        case Some(s)                     =>
           ApprovalState
             .parse(s)
             .map(Some(_))
-            .toRight(bad(s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire) :+ "all").mkString(", ")})"))
-      kinds <- ListFilters.known(com.histmersion.api.automation.ListFilters.FacetName("kind"), n.kind, ApprovalKind.values.map(_.wire).toSeq).left.map(bad)
-      by <- ListFilters.known("decidedBy", n.decidedBy, DecidedBy.values.map(_.wire).toSeq).left.map(bad)
+            .toRight(bad(s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire.value) :+ "all").mkString(", ")})"))
+      kinds <- known("kind", n.kind.map(_.value), ApprovalKind.values.map(_.wire.value).toSeq)
+      by <- known("decidedBy", n.decidedBy.map(_.value), DecidedBy.values.map(_.wire.value).toSeq)
     yield com.histmersion.domain.automation.approvals.ApprovalQuery(
       state,
-      kinds.flatMap(ApprovalKind.parse),
-      n.subject,
-      n.goal,
-      by.flatMap(DecidedBy.parse)
+      kinds.flatMap(k => ApprovalKind.parse(ApprovalKind.Wire(k))),
+      n.subject.map(s => com.histmersion.domain.automation.approvals.ApprovalQuery.Subject(s.value)),
+      n.goal.map(g => com.histmersion.domain.automation.approvals.ApprovalQuery.Goal(g.value)),
+      by.flatMap(b => DecidedBy.parse(DecidedBy.Wire(b)))
     )
 
   def runs(f: RunFilter, now: Instant): Either[Api.Error, com.histmersion.domain.automation.agents.RunQuery] =
+    import com.histmersion.domain.automation.agents.RunQuery
     val n = f.normalized
     for
-      st <- ListFilters.known(com.histmersion.api.automation.ListFilters.FacetName("status"), n.status, RunState.values.map(_.wire).toSeq).left.map(bad)
-      ps <- ListFilters.known("pipeline", n.pipeline, Pipeline.values.map(_.wire).toSeq).left.map(bad)
-      os <- ListFilters.known("origin", n.origin, Origin.values.map(_.wire).toSeq).left.map(bad)
-      tr <- ListFilters.range(n.since, n.until, now).left.map(bad)
-    yield com.histmersion.domain.automation.agents.RunQuery(
-      st,
-      ps,
-      n.manager,
-      n.goal,
-      n.model,
-      n.provider,
-      os,
+      st <- known("status", n.status.map(_.value), RunState.values.map(_.wire.value).toSeq)
+      ps <- known("pipeline", n.pipeline.map(_.value), Pipeline.values.map(_.wire.value).toSeq)
+      os <- known("origin", n.origin.map(_.value), Origin.values.map(_.wire.value).toSeq)
+      tr <- ListFilters.range(n.since.map(v => ListFilters.TimeBound(v.value)), n.until.map(v => ListFilters.TimeBound(v.value)), now).left.map(p => bad(p.value))
+    yield RunQuery(
+      st.map(RunQuery.Status(_)),
+      ps.map(RunQuery.Pipelines(_)),
+      n.manager.map(m => RunQuery.Managers(m.value)),
+      n.goal.map(g => RunQuery.Goal(g.value)),
+      n.model.map(m => RunQuery.Models(m.value)),
+      n.provider.map(p => RunQuery.Providers(p.value)),
+      os.map(RunQuery.Origins(_)),
       tr._1,
       tr._2,
-      n.subject
+      n.subject.map(s => RunQuery.Q(s.value))
     )

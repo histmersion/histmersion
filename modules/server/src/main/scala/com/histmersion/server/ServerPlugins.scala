@@ -18,15 +18,10 @@ object ServerPlugins:
   /** The generation for `loaded`; on a config reload, `previous` and the keys that `changed` ([[Plugins.load]]). `core`
     * is the server's CORE budget, which every generation lends and the new-source search spends from too.
     */
-  type LoadChanged = LoadChanged.T
-  object LoadChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfflineWithCarriedPart1 = OfflineWithCarriedPart1.T
-  object OfflineWithCarriedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def load(
       loaded: LoadedConfig,
       previous: Option[Generation] = None,
-      changed: List[com.histmersion.server.ServerPlugins.LoadChanged] = Nil,
+      changed: List[com.histmersion.config.ConfigReload.ChangedKey] = Nil,
       core: CoreBudget,
       transport: AppConfig => HttpTransport = PolicyHttp.acquisitionTransport
   ): Generation =
@@ -51,7 +46,7 @@ object ServerPlugins:
       extra: List[Plugin],
       user: org.ekrich.config.Config,
       env: org.ekrich.config.Config = ConfigFactory.empty,
-      carried: Map[com.histmersion.server.ServerPlugins.OfflineWithCarriedPart1, (PluginStatus, Registries)] = Map.empty
+      carried: Map[Plugin.Info.Id, (PluginStatus, Registries)] = Map.empty
   ): Generation =
     Plugins.offlineWith(providers, extra, user, env, carried)
 

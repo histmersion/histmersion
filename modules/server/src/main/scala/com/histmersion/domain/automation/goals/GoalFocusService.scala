@@ -299,7 +299,7 @@ final class GoalFocusService(
     */
   def goalPlanBlock(goal: Goal.Slug, proposed: AutopilotPolicy.Proposed): Option[AutopilotPolicy.Description] =
     val goals = agents.focusStore.goals()
-    val kids = goals.filter(_.parent.isDefined).groupMap(_.parent.get.value)(identity)
+    val kids = goals.filter(_.parent.isDefined).groupMap(g => g.parent.get.value: String)(identity)
     def open(s: String, seen: Set[String]): Int =
       kids
         .getOrElse(s, Nil)

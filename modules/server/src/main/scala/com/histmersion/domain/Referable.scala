@@ -64,7 +64,7 @@ object Referable:
         .get(key)
         .map(rec => ItemRef(kind, key, rec.uid))
         .orElse(r.aliases.get(key).flatMap(r.live.get).map(rec => ItemRef(kind, key, rec.uid)))
-        .toRight(s"no ${kind.value} '${key.value}'")
+        .toRight(Problem(s"no ${kind.value} '${key.value}'"))
 
     def describe(refs: Set[ItemRef]): Map[ItemRef, Described] =
       val r = records.get

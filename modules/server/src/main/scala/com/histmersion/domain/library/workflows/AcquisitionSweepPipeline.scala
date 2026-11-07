@@ -6,10 +6,7 @@ import com.histmersion.domain.automation.agents.Halt
 import com.histmersion.domain.automation.agents.Prompt
 import com.histmersion.domain.automation.agents.RunCtx
 import com.histmersion.domain.automation.agents.StepAgent
-import com.histmersion.domain.automation.goals.BGoalLinkRow
-import com.histmersion.domain.automation.managers.ManagerContext
-import com.histmersion.domain.automation.managers.ManagerLight
-import com.histmersion.domain.automation.managers.ManagerService
+import com.histmersion.api.automation.Goal.Plans.GoalLink
 import com.histmersion.domain.automation.workflows.PipelineDef
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
@@ -59,7 +56,7 @@ final class AcquisitionSweepPipeline(
   protected def goals: com.histmersion.domain.automation.goals.GoalService = agents.goals
   import AcquisitionSweepPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, PipelineDef.RunResultPart2] =
+  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
     val goal = goalOf(ctx)
     for
       found <- ctx.code[Found](StepRecord.Name("discover"))(discover(ctx, goal))
@@ -96,7 +93,7 @@ final class AcquisitionSweepPipeline(
               if backed then withBacklog(ctx, goal, found, picks, allowed)
               else withoutBacklog(ctx, goal, found, picks, allowed)
           yield line
-    yield PipelineDef.RunResultPart2(line)
+    yield PipelineDef.Summary(line)
 
   /** The steps after the ranking as they always were: the open-access picks within the allowance ingested, every other
     * pick queued for acquisition.
@@ -300,16 +297,16 @@ final class AcquisitionSweepPipeline(
         goals.link(
           goal,
           com.histmersion.domain.automation.Goal.LinkKind.Source,
-          BGoalLinkRow.Ref(r.citekey.value),
-          Some(BGoalLinkRow.Note(s"ingested by a watcher sweep: ${p.why}".take(500)))
+          GoalLink.Ref(r.citekey.value),
+          Some(GoalLink.Note(s"ingested by a watcher sweep: ${p.why}".take(500)))
         )
       ctx.run.managerId.foreach(mid =>
         agents.managerStore.event(
-          ManagerLight.Id(mid.value),
-          ctx.run.managerItem.map(i => ManagerContext.ItemId(i.value)),
+          mid,
+          ctx.run.managerItem,
           Some(com.histmersion.domain.automation.Run.Id(ctx.run.id.value)),
-          ManagerService.EventKind(Managers.Feed.Ingested),
-          ManagerService.EventText(
+          Managers.ManagerEvent.Kind(Managers.Feed.Ingested),
+          Managers.ManagerEvent.Text(
             s"[[${r.citekey}]] ingested (legal open access, ${r.pdf.fold("no file")(_.source.value)}): ${p.candidate.title} — https://doi.org/$doi"
           )
         )
@@ -335,9 +332,7 @@ final class AcquisitionSweepPipeline(
     * acquisition list and every watcher's backlog).
     */
   private def park(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug, picks: List[Picked]): Parked =
-    val mid = ManagerLight.Id(
-      ctx.run.managerId.getOrElse(Managers.watchId(com.histmersion.api.automation.Goal.Ref(goal.value))).value
-    )
+    val mid = ctx.run.managerId.getOrElse(Managers.watchId(com.histmersion.api.automation.Goal.Ref(goal.value)))
     val placed = picks.map { p =>
       val c = p.candidate
       val w = Managers.OaWork(
@@ -385,7 +380,7 @@ object AcquisitionSweepPipeline:
 
   /** What an acquisition sweep picked (its `rank` step's checked answer). */
   def picked(c: com.histmersion.domain.automation.managers.ManagerContext, run: com.histmersion.domain.automation.Run.Id): List[Picked] =
-    c.stepOutput(run, com.histmersion.domain.automation.managers.ManagerContext.StepOutputStep("rank")).flatMap(o => io.circe.parser.decode[List[Picked]](o.value).toOption).getOrElse(Nil)
+    c.stepOutput(run, StepRecord.Name("rank")).flatMap(o => io.circe.parser.decode[List[Picked]](o.value).toOption).getOrElse(Nil)
 
   /** `stored`: the candidates' ids in the store (#3761), by DOI — none when the live search found them. */
   final case class Found(

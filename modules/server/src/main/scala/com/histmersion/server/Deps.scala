@@ -93,7 +93,11 @@ final class Deps(
   def loaded: LoadedConfig = loadedNow.fold(
     LoadedConfig(
       cfg,
-      UserConfigFile(configFile.path.map(java.nio.file.Path.of(_)), configFile.loaded, configFile.unknownKeys)
+      UserConfigFile(
+        configFile.path.map(p => java.nio.file.Path.of(p.value)),
+        UserConfigFile.Loaded(configFile.loaded.value),
+        configFile.unknownKeys.map(k => UserConfigFile.UnknownKeys(k.value))
+      )
     )
   )(_())
 

@@ -19,11 +19,11 @@ import java.nio.charset.StandardCharsets
   * shared.
   */
 final class AuthHandler(
-    apiKey: () => AuthHandler.ApiKeyResult,
+    apiKey: () => com.histmersion.config.AuthConfig.ApiKey,
     tokens: com.histmersion.domain.automation.agents.RunTokens
 ) extends ChannelInboundHandlerAdapter:
   /** The key is read per request (a config reload may set, change or clear it); none = no gate. */
-  private def expected: Option[com.histmersion.server.AuthHandler.AuthHeader] = Option(apiKey()).filter(_.nonEmpty).map(k => s"Bearer $k")
+  private def expected: Option[String] = Option(apiKey().value).filter(_.nonEmpty).map(k => s"Bearer $k")
   private val body401 = """{"message":"unauthorized"}""".getBytes(StandardCharsets.UTF_8)
   // `var`: this connection is between a refused request's head and its last chunk
   private var discarding = false
@@ -62,12 +62,8 @@ final class AuthHandler(
     (path == RunTokens.QuotaPath && tokens.bearer(req.headers().get(HttpHeaderNames.AUTHORIZATION)).isDefined)
 
 object AuthHandler:
-  type AuthHeader = AuthHeader.T
-  object AuthHeader extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RequestPath = RequestPath.T
   object RequestPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApiKeyResult = com.histmersion.server.AuthHandler.AuthHeader
-  val ApiKeyResult: _root_.com.histmersion.server.AuthHandler.AuthHeader.type = _root_.com.histmersion.server.AuthHandler.AuthHeader
 
 
   def isWrite(m: HttpMethod): Boolean =
@@ -78,12 +74,12 @@ object AuthHandler:
     * must still be able to clear what they have read.
     */
   def open(req: HttpRequest): Boolean =
-    req.method() == HttpMethod.POST && isOpenPath(req.uri().takeWhile(_ != '?'))
+    req.method() == HttpMethod.POST && isOpenPath(RequestPath(req.uri().takeWhile(_ != '?')))
 
   /** Pure: is this path one the gate lets by without a key? Exactly one segment after the prefix. */
-  def isOpenPath(path: com.histmersion.server.AuthHandler.RequestPath): Boolean =
-    path.startsWith(com.histmersion.api.instance.UiApi.SeenPathPrefix) &&
+  def isOpenPath(path: RequestPath): Boolean =
+    path.value.startsWith(com.histmersion.api.instance.UiApi.SeenPathPrefix) &&
       {
-        val rest = path.drop(com.histmersion.api.instance.UiApi.SeenPathPrefix.length);
+        val rest = path.value.drop(com.histmersion.api.instance.UiApi.SeenPathPrefix.length);
         rest.nonEmpty && !rest.contains('/')
       }

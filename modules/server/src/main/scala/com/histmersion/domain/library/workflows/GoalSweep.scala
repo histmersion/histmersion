@@ -12,7 +12,7 @@ import io.circe.syntax.*
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.automation.Queue
-import com.histmersion.domain.automation.goals.BGoalLinkRow
+import com.histmersion.api.automation.Goal.Plans.GoalLink
 
 /** What both goal sweeps share: the goal's sources, the DOIs already in the acquisition queue, and adding an item there
   * at most once.
@@ -57,7 +57,7 @@ private[workflows] trait GoalSweep:
         ctx.write(
           s"link queue item $id to goal $goal",
           io.circe.Json.obj("goal" -> goal.asJson, "item" -> id.asJson, "doi" -> doi.asJson)
-        ) { val _ = goals.link(goal, com.histmersion.domain.automation.Goal.LinkKind.QueueItem, BGoalLinkRow.Ref(id.value.toString), Some(BGoalLinkRow.Note(doi.value))) }(())
+        ) { val _ = goals.link(goal, com.histmersion.domain.automation.Goal.LinkKind.QueueItem, GoalLink.Ref(id.value.toString), Some(GoalLink.Note(doi.value))) }(())
         Right(false)
       case None =>
         val item = QueueAdd(
@@ -68,7 +68,7 @@ private[workflows] trait GoalSweep:
         )
         ctx.write(s"acquire item for $doi, linked to goal $goal", item.asJson)(
           site.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("acquire"), item).left.map(_.message.value).map { added =>
-            val _ = goals.link(goal, com.histmersion.domain.automation.Goal.LinkKind.QueueItem, BGoalLinkRow.Ref(added.id.value.toString), Some(BGoalLinkRow.Note(doi.value)))
+            val _ = goals.link(goal, com.histmersion.domain.automation.Goal.LinkKind.QueueItem, GoalLink.Ref(added.id.value.toString), Some(GoalLink.Note(doi.value)))
             true
           }
         )(Right(true))

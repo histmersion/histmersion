@@ -862,8 +862,7 @@ final class ReviewArticlePipeline(
     */
   private def critiqueWork(s: Snapshot, m: Merged, l: Ledger): String =
     val (hits, resolved) = site.articles.pairing(apiBody(s.body))
-    val resolve = (key: CritiquePairing.Mention.Key) =>
-      resolved(Citekey.assume(key.value)).map(c => com.histmersion.api.library.Citekey(c.value))
+    val resolve = resolved
     val units = Critiques.units(s.body)
     def near(f: Finding) =
       Option(

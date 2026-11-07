@@ -32,6 +32,8 @@ import com.histmersion.api.automation.{
 }
 import com.histmersion.api.Api
 import com.histmersion.api.automation.Goal
+import com.histmersion.domain.automation.approvals.ApprovalQuery
+import com.histmersion.domain.automation.{Goal as DomainGoal, Run as DomainRun}
 
 /** The ONE implementation of the process-manager operations (docs/research-process-managers.md §5): REST
   * ([[AgentsRoutes]]), the MCP tool `manager` ([[AgentsTools]]) and the CLI (over REST) call these. Reading and
@@ -49,12 +51,21 @@ final class ManagersControllers(
   private def mcfg = cfg.managers
 
   /** The runs manager `id` dispatched, newest first (`status` narrows) — `run_status`'s manager filter. */
-  def runs(id: com.histmersion.domain.automation.managers.ManagerLight.Id, status: Option[com.histmersion.domain.automation.Run.State.Wire], limit: Option[com.histmersion.domain.automation.managers.ManagerContext.Limit]): List[RunInfo] =
-    val st = status.map(_.trim).filter(_.nonEmpty)
-    agents.runs.forManager(id.trim, limit = limits.page(limit, com.histmersion.PageSize(50))).toList.filter(r => st.forall(_ == r.status))
+  def runs(id: ManagerLight.Id, status: Option[com.histmersion.domain.automation.Run.State.Wire], limit: Option[com.histmersion.PageSize]): List[RunInfo] =
+    val st = status.map(_.value.trim).filter(_.nonEmpty)
+    agents.runs.forManager(ManagerLight.Id(id.value.trim), limit = limits.page(limit, com.histmersion.PageSize(50))).toList.filter(r => st.forall(_ == r.status.value))
 
-  private def notFound(what: com.histmersion.domain.automation.managers.ManagersControllers.NotFoundWhat) = Api.Error(what, Some(Write.CodeNotFound))
-  private def conflict(m: com.histmersion.domain.automation.managers.ManagersControllers.ConflictM) = Api.Error(m, Some(AgentsApi.CodeConflict))
+  private def error(message: String): Api.Error = Api.Error(Api.Error.Message(message))
+  private def notFound(what: String) = Api.Error(Api.Error.Message(what), Some(Api.Error.Code(Write.CodeNotFound)))
+  private def conflict(m: String) = Api.Error(Api.Error.Message(m), Some(Api.Error.Code(AgentsApi.CodeConflict)))
+
+  /** A run id read back from the database. */
+  private def runIdOf(r: RunInfo.Id): DomainRun.Id = DomainRun.Id.assume(r.value)
+
+  private def lightId(m: ManagerInfo): ManagerLight.Id = m.id.transformInto[ManagerLight.Id]
+
+  private def record(id: ManagerInfo.Id, item: Option[ManagerItem.Id], run: Option[DomainRun.Id], feed: String, text: String): Unit =
+    agents.managerStore.event(id, item, run, ManagerEvent.Kind(feed), ManagerEvent.Text(text))
 
   private def kindOf(m: ManagerInfo): Kind = Kind.parse(m.kind).getOrElse(Kind.Review)
 
@@ -64,9 +75,9 @@ final class ManagersControllers(
   private def kinds: List[ManagerKindDefinition] = agents.workflows.managerKinds
 
   /** Every manager's backlog, by id, as its kind's domain counts it (one reading for every manager listed). */
-  private def backlogs(): Map[com.histmersion.domain.automation.managers.ManagersControllers.BacklogsResultPart1, (com.histmersion.domain.automation.managers.ManagersControllers.BacklogsResultPart2Part1, Option[com.histmersion.domain.automation.managers.ManagersControllers.BacklogsResultPart2Part2])] = kinds.foldLeft(Map.empty)(_ ++ _.backlog())
+  private def backlogs(): Map[ManagerLight.Id, (IngestBacklog.Lane.Backlog, Option[IngestBacklog.DaysToDrain])] = kinds.foldLeft(Map.empty)(_ ++ _.backlog())
 
-  private def withEffective(m: ManagerInfo, backlog: => Map[String, (Int, Option[Int])]): ManagerInfo =
+  private def withEffective(m: ManagerInfo, backlog: => Map[ManagerLight.Id, (IngestBacklog.Lane.Backlog, Option[IngestBacklog.DaysToDrain])]): ManagerInfo =
     val e = m
       .modify(_.effective)
       .setTo(
@@ -76,11 +87,14 @@ final class ManagersControllers(
           .merge(m.config)
       )
     if kindOf(m) != Kind.Watch then e
-    else backlog.get(m.id).fold(e)((n, days) => e.copy(backlog = n, backlogDays = days))
+    else
+      backlog
+        .get(lightId(m))
+        .fold(e)((n, days) => e.copy(backlog = ManagerInfo.Backlog(n.value), backlogDays = days.map(d => ManagerInfo.BacklogDays(d.value))))
 
-  private def manager(id: com.histmersion.domain.automation.managers.ManagerLight.Id): Either[Api.Error, ManagerInfo] =
+  private def manager(id: ManagerLight.Id): Either[Api.Error, ManagerInfo] =
     agents.managerStore
-      .get(id.trim)
+      .get(ManagerInfo.Id(id.value.trim))
       .map(m => withEffective(m, backlogs()))
       .toRight(notFound(s"No manager '$id'"))
 
@@ -88,7 +102,7 @@ final class ManagersControllers(
     lazy val snap = backlogs()
     agents.managerStore.list().map(withEffective(_, snap))
 
-  def get(id: com.histmersion.domain.automation.managers.ManagerLight.Id): Either[Api.Error, ManagerDetail] =
+  def get(id: ManagerLight.Id): Either[Api.Error, ManagerDetail] =
     manager(id).map { m =>
       ManagerDetail(
         m,
@@ -99,7 +113,7 @@ final class ManagersControllers(
     }
 
   private def withRuns(is: List[ManagerItem]): List[ManagerItem] =
-    is.map(i => i.modify(_.run).setTo(i.runId.flatMap(agents.runs.get(_))))
+    is.map(i => i.modify(_.run).setTo(i.runId.flatMap(r => agents.runs.get(runIdOf(r)))))
 
   /** `POST /api/agents/managers` — `review` (id `review`) and `enrich` (id `enrich`) are library-wide; `seed` needs its
     * research area (`goal`; id `seed:<goal>`) and starts with the item that proposes its first articles; `watch` needs
@@ -113,21 +127,22 @@ final class ManagersControllers(
   ): Either[Api.Error, ManagerInfo] =
     // created paused unless asked otherwise — or, when nothing is asked, while the autopilot runs the goals
     val state =
-      if in.paused.contains(false) || (in.paused.isEmpty && agents.autopilot.on) then State.Active else State.Paused
-    val goal = in.goal.map(_.trim).filter(_.nonEmpty)
-    def make(k: Kind, id: com.histmersion.domain.automation.managers.ManagerLight.Id, g: Option[com.histmersion.domain.automation.Goal.Slug], cron: Option[com.histmersion.domain.automation.managers.ManagerLight.Cron] = None): Either[Api.Error, ManagerInfo] =
+      if in.paused.exists(!_.value) || (in.paused.isEmpty && agents.autopilot.on) then State.Active else State.Paused
+    val goal = in.goal.map(_.value.trim).filter(_.nonEmpty)
+    def make(k: Kind, id: ManagerLight.Id, g: Option[DomainGoal.Slug], cron: Option[ManagerLight.Cron] = None): Either[Api.Error, ManagerInfo] =
       for
         _ <- validate(k, in.config)
         c <- cron
-          .filter(_.trim.nonEmpty)
+          .filter(_.value.trim.nonEmpty)
           .fold[Either[Api.Error, Option[Cron]]](Right(None))(t => checkCron(k, t, now).map(Some(_)))
+        infoId = id.transformInto[ManagerInfo.Id]
         _ <- Either.cond(
-          agents.managerStore.create(id, k, g, state, in.config, c.map(_.text), c.flatMap(_.next(now))),
+          agents.managerStore.create(infoId, k, g, state, in.config, c.map(x => ManagerInfo.Cron(x.text.value)), c.flatMap(_.next(now))),
           (),
           conflict(s"the manager '$id' exists already")
         )
-        _ = agents.managerStore.event(
-          id,
+        _ = record(
+          infoId,
           None,
           None,
           Feed.Paused,
@@ -142,34 +157,42 @@ final class ManagersControllers(
       yield m
     Kind.parse(in.kind) match
       case None =>
-        Left(Api.Error(s"unknown manager kind '${in.kind}' (one of: ${Kind.values.map(_.wire).mkString(", ")})"))
+        Left(error(s"unknown manager kind '${in.kind}' (one of: ${Kind.values.map(_.wire).mkString(", ")})"))
       case Some(Kind.Review) if goal.isDefined =>
-        Left(Api.Error("the review manager is library-wide: give no goal (narrow it with config includeGoal)"))
-      case Some(Kind.Review)                   => make(Kind.Review, ReviewId, None)
+        Left(error("the review manager is library-wide: give no goal (narrow it with config includeGoal)"))
+      case Some(Kind.Review)                   => make(Kind.Review, ManagerLight.Id(ReviewId), None)
       case Some(Kind.Enrich) if goal.isDefined => Left(Api.Error(com.histmersion.api.Api.Error.Message("the enrich manager is library-wide: give no goal")))
-      case Some(Kind.Enrich)                   => make(Kind.Enrich, EnrichId, None)
+      case Some(Kind.Enrich)                   => make(Kind.Enrich, ManagerLight.Id(EnrichId), None)
       case Some(Kind.Seed)                     =>
         for
           g <- goal.toRight(Api.Error(com.histmersion.api.Api.Error.Message("a seeding manager is for one research area: give its goal")))
-          gl <- host.goal(g)
-          m <- make(Kind.Seed, seedId(gl.slug), Some(gl.slug))
-          _ <- addItem(m.id, EnqueueRequest(ProposeArticles, gl.slug))
-          out <- manager(m.id)
+          slug <- DomainGoal.Slug.option(g).toRight(notFound(s"No goal '$g'"))
+          gl <- host.goal(slug)
+          m <- make(Kind.Seed, seedId(Goal.Ref(gl.slug.value)).transformInto[ManagerLight.Id], Some(slug))
+          _ <- addItem(lightId(m), EnqueueRequest(EnqueueRequest.Kind(ProposeArticles), EnqueueRequest.Target(gl.slug.value)))
+          out <- manager(lightId(m))
         yield out
       case Some(Kind.Watch) =>
         for
           g <- goal.toRight(Api.Error(com.histmersion.api.Api.Error.Message("a watcher is for one research area: give its goal")))
-          gl <- host.goal(g)
+          slug <- DomainGoal.Slug.option(g).toRight(notFound(s"No goal '$g'"))
+          gl <- host.goal(slug)
           m <- make(
             Kind.Watch,
-            watchId(gl.slug),
-            Some(gl.slug),
-            in.cron.orElse(kinds.find(_.kind == Kind.Watch).flatMap(_.cron))
+            watchId(Goal.Ref(gl.slug.value)).transformInto[ManagerLight.Id],
+            Some(slug),
+            in.cron.map(c => ManagerLight.Cron(c.value)).orElse(kinds.find(_.kind == Kind.Watch).flatMap(_.cron))
           )
           _ = Sweep
             .of(in.config)
-            .foreach(sw => addItem(m.id, EnqueueRequest(sw.itemKind, gl.slug, Some(0)), ItemOrigin.Selection))
-          out <- manager(m.id)
+            .foreach(sw =>
+              addItem(
+                lightId(m),
+                EnqueueRequest(EnqueueRequest.Kind(sw.itemKind.value), EnqueueRequest.Target(gl.slug.value), Some(EnqueueRequest.Priority(0))),
+                ItemOrigin.Selection
+              )
+            )
+          out <- manager(lightId(m))
         yield out
 
   /** `PUT /api/agents/managers/{id}` — the config is replaced as given (an absent key = the default); `cron` set (five
@@ -177,7 +200,7 @@ final class ManagersControllers(
     * with "" — its next firing is computed now.
     */
   def update(
-      id: com.histmersion.domain.automation.managers.ManagerLight.Id,
+      id: ManagerLight.Id,
       in: ManagerUpdate,
       now: java.time.Instant = java.time.Instant.now(agents.clock)
   ): Either[Api.Error, ManagerInfo] =
@@ -185,16 +208,16 @@ final class ManagersControllers(
       m <- manager(id)
       c = in.config.getOrElse(m.config)
       _ <- validate(kindOf(m), c)
-      cron <- in.cron.map(_.trim) match
+      cron <- in.cron.map(_.value.trim) match
         case Some("") => Right(None)
-        case Some(t)  => checkCron(kindOf(m), t, now).map(Some(_))
-        case None     => Right(m.cron.flatMap(t => Cron.parse(t).toOption))
+        case Some(t)  => checkCron(kindOf(m), ManagerLight.Cron(t), now).map(Some(_))
+        case None     => Right(m.cron.flatMap(t => Cron.parse(Cron.Text(t.value)).toOption))
       next = cron.flatMap(x =>
         if in.cron.isDefined || m.nextTickAt.isEmpty then x.next(now)
-        else m.nextTickAt.flatMap(ManagerPolicy.parseInstant)
+        else m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
       )
-      _ = agents.managerStore.setConfig(m.id, c, cron.map(_.text), next)
-      _ = agents.managerStore.event(
+      _ = agents.managerStore.setConfig(m.id, c, cron.map(x => ManagerInfo.Cron(x.text.value)), next)
+      _ = record(
         m.id,
         None,
         None,
@@ -204,16 +227,20 @@ final class ManagersControllers(
              cron.fold("; no cron")(x => s"; cron `${x.text}`, next ${next.fold("never")(_.toString)}")
            else "")
       )
-      out <- manager(m.id)
+      out <- manager(lightId(m))
     yield
       supervisor.nudge()
       out
 
   /** A cron a person sets on a manager of kind `k`: the enrich manager has none (ingests feed it). */
-  private def checkCron(k: Kind, text: com.histmersion.domain.automation.managers.ManagerLight.Cron, now: java.time.Instant): Either[Api.Error, Cron] =
+  private def checkCron(k: Kind, text: ManagerLight.Cron, now: java.time.Instant): Either[Api.Error, Cron] =
     if k == Kind.Enrich then
       Left(Api.Error(com.histmersion.api.Api.Error.Message("the enrich manager has no cron: the ingests and the Enrich buttons feed it")))
-    else ManagerPolicy.checkCron(text, now, cfg.scheduler.minIntervalMinutes).left.map(Api.Error(_))
+    else
+      ManagerPolicy
+        .checkCron(Cron.Text(text.value), now, cfg.scheduler.minIntervalMinutes.transformInto[ManagerPolicy.MinIntervalMinutes])
+        .left
+        .map(p => error(p.value))
 
   /** The rounds within the cap, every model override for a role the manager's pipelines use. */
   private def validate(k: Kind, c: ManagerConfig): Either[Api.Error, Unit] =
@@ -222,9 +249,9 @@ final class ManagersControllers(
       .getOrElse(Nil)
       .foldLeft[Either[Api.Error, Unit]](
         Either.cond(
-          c.rounds.forall(r => r >= 2 && r <= agents.roundsCap),
+          c.rounds.forall(r => r.value >= 2 && r.value <= agents.roundsCap.value),
           (),
-          Api.Error(s"rounds must be between 2 and ${agents.roundsCap} (agents.review.rounds-cap)")
+          error(s"rounds must be between 2 and ${agents.roundsCap} (agents.review.rounds-cap)")
         )
       ) { (acc, o) =>
         acc.flatMap(_ =>
@@ -232,7 +259,7 @@ final class ManagersControllers(
             .parse(o.role)
             .filter(roles.contains)
             .toRight(
-              Api.Error(
+              error(
                 s"models: '${o.role}' is not a role a ${k.wire} manager runs (${roles.map(_.wire).mkString(", ")})"
               )
             )
@@ -240,100 +267,100 @@ final class ManagersControllers(
               ModelChains
                 .parseChain(o.model, agents.knownProviders)
                 .left
-                .map(e => Api.Error(s"models ${o.role}: $e"))
+                .map(e => error(s"models ${o.role}: $e"))
                 .map(_ => ())
             )
         )
       }
 
-  def delete(id: com.histmersion.domain.automation.managers.ManagerLight.Id): Either[Api.Error, Removed] =
+  def delete(id: ManagerLight.Id): Either[Api.Error, Removed] =
     manager(id).map { m =>
-      inFlight(m.id).foreach(r => agents.engine.cancel(r.id))
-      Removed(Transactor(ds).transact(ManagerRepo.delete(m.id)))
+      inFlight(lightId(m)).foreach(r => agents.engine.cancel(runIdOf(r.id)))
+      Removed(Removed.Value(Transactor(ds).transact(ManagerRepo.delete(m.id))))
     }
 
-  private def inFlight(id: com.histmersion.domain.automation.managers.ManagerLight.Id): List[RunInfo] = agents.runs.forManager(id, active = com.histmersion.domain.automation.agents.RunService.Active(true)).toList
+  private def inFlight(id: ManagerLight.Id): List[RunInfo] = agents.runs.forManager(id, active = com.histmersion.domain.automation.agents.RunService.Active(true)).toList
 
   /** `POST /api/agents/managers/{id}/{pause|resume|stop}[?runs=true]`. Pause = no new runs (with `runs`, its in-flight
     * runs are paused too, cooperatively); resume reverses both (only the runs paused on request); stop cancels its
     * in-flight runs and its open items.
     */
-  def action(id: com.histmersion.domain.automation.managers.ManagerLight.Id, action: com.histmersion.domain.automation.managers.ManagersControllers.ActionAction, runs: Option[com.histmersion.domain.automation.managers.ManagersControllers.ActionRuns]): Either[Api.Error, ManagerInfo] =
+  def action(id: ManagerLight.Id, action: ManagersControllers.Action, runs: Option[ManagerInfo.PauseRuns]): Either[Api.Error, ManagerInfo] =
     manager(id).flatMap { m =>
-      val withRuns = runs.contains(true)
-      action.trim.toLowerCase match
+      val withRuns = runs.exists(_.value)
+      action.value.trim.toLowerCase match
         case "pause" =>
-          agents.managerStore.setState(m.id, State.Paused, withRuns)
+          agents.managerStore.setState(m.id, State.Paused, ManagerInfo.PauseRuns(withRuns))
           val paused = if withRuns then
-            inFlight(m.id)
-              .filter(r => r.status == RunState.Running.wire || r.status == RunState.Queued.wire)
-              .count(r => agents.engine.pause(r.id).isRight)
+            inFlight(lightId(m))
+              .filter(r => r.status.value == RunState.Running.wire.value || r.status.value == RunState.Queued.wire.value)
+              .count(r => agents.engine.pause(runIdOf(r.id)).isRight)
           else 0
-          agents.managerStore.event(
+          record(
             m.id,
             None,
             None,
             Feed.Paused,
-            "paused by a person" + (if withRuns then s", with ${Plural.count(paused, com.histmersion.api.Plural.CountSingular("run"))} in flight"
+            "paused by a person" + (if withRuns then s", with ${Plural.count(Plural.CountN(paused.toLong), Plural.CountSingular("run"))} in flight"
                                     else "; its runs in flight go on")
           )
-          manager(m.id)
+          manager(lightId(m))
         case "resume" =>
-          agents.managerStore.setState(m.id, State.Active, pauseRuns = com.histmersion.domain.automation.managers.ManagerService.SetStatePauseRuns(false))
-          val resumed = if m.pauseRuns && cfg.enabled then
-            inFlight(m.id)
-              .filter(r => r.status == RunState.Paused.wire && r.error.exists(_.startsWith(PauseReason.Requested.wire)))
-              .count(r => agents.engine.resume(r.id, None, None).isRight)
+          agents.managerStore.setState(m.id, State.Active, ManagerInfo.PauseRuns(false))
+          val resumed = if m.pauseRuns.value && cfg.enabled.value then
+            inFlight(lightId(m))
+              .filter(r => r.status.value == RunState.Paused.wire.value && r.error.exists(_.value.startsWith(PauseReason.Requested.wire.value)))
+              .count(r => agents.engine.resume(runIdOf(r.id), None, None).isRight)
           else 0
-          agents.managerStore.event(
+          record(
             m.id,
             None,
             None,
             Feed.Paused,
-            "resumed by a person" + (if resumed > 0 then s", with ${Plural.count(resumed, com.histmersion.api.Plural.CountSingular("run"))} it had paused"
+            "resumed by a person" + (if resumed > 0 then s", with ${Plural.count(Plural.CountN(resumed.toLong), Plural.CountSingular("run"))} it had paused"
                                      else "")
           )
           supervisor.nudge()
-          manager(m.id)
+          manager(lightId(m))
         case "stop" =>
-          agents.managerStore.setState(m.id, State.Stopped, pauseRuns = com.histmersion.domain.automation.managers.ManagerService.SetStatePauseRuns(false))
-          val cancelled = inFlight(m.id).count(r => agents.engine.cancel(r.id).isRight)
+          agents.managerStore.setState(m.id, State.Stopped, ManagerInfo.PauseRuns(false))
+          val cancelled = inFlight(lightId(m)).count(r => agents.engine.cancel(runIdOf(r.id)).isRight)
           val items = Transactor(ds).transact(ManagerRepo.cancelOpen(m.id, com.histmersion.domain.automation.managers.ManagerRepo.CancelReason("the manager was stopped")))
-          agents.managerStore.event(
+          record(
             m.id,
             None,
             None,
             Feed.Stopped,
-            s"stopped by a person: ${Plural.count(cancelled, com.histmersion.api.Plural.CountSingular("run"))} cancelled, ${Plural.count(items, com.histmersion.api.Plural.CountSingular("item"))} cancelled"
+            s"stopped by a person: ${Plural.count(Plural.CountN(cancelled.toLong), Plural.CountSingular("run"))} cancelled, ${Plural.count(Plural.CountN(items.value.toLong), Plural.CountSingular("item"))} cancelled"
           )
-          manager(m.id)
-        case other => Left(Api.Error(s"unknown action '$other' (one of: ${Actions.mkString(", ")})"))
+          manager(lightId(m))
+        case other => Left(error(s"unknown action '$other' (one of: ${Actions.mkString(", ")})"))
     }
 
   // ── items ──────────────────────────────────────────────────────────────────────────────────────
 
-  def items(id: com.histmersion.domain.automation.managers.ManagerLight.Id, status: Option[com.histmersion.domain.automation.ItemStatus.Wire], offset: Option[com.histmersion.Offset], limit: Option[com.histmersion.PageSize]): Either[Api.Error, ItemPage] =
+  def items(id: ManagerLight.Id, status: Option[com.histmersion.domain.automation.ItemStatus.Wire], offset: Option[com.histmersion.Offset], limit: Option[com.histmersion.PageSize]): Either[Api.Error, ItemPage] =
     for
       m <- manager(id)
-      st <- status.map(_.trim).filter(_.nonEmpty) match
+      st <- status.map(_.value.trim).filter(_.nonEmpty) match
         case Some(s) =>
           ItemStatus
-            .parse(s)
+            .parse(com.histmersion.api.automation.ItemStatus.Wire(s))
             .map(Some(_))
-            .toRight(Api.Error(s"unknown item status '$s' (one of: ${ItemStatus.values.map(_.wire).mkString(", ")})"))
+            .toRight(error(s"unknown item status '$s' (one of: ${ItemStatus.values.map(_.wire).mkString(", ")})"))
         case None => Right(None)
     yield
-      val (off, lim) = (math.max(0, offset.getOrElse(0)), limits.page(limit, 25))
+      val (off, lim) = (offset.getOrElse(com.histmersion.Offset(0)), limits.page(limit, com.histmersion.PageSize(25)))
       val (rows, total) = Transactor(ds).read(ManagerRepo.itemPage(m.id, st, off, lim))
-      ItemPage(withRuns(rows), total, off, lim)
+      ItemPage(withRuns(rows), ItemPage.Total(total.value), ItemPage.Offset(off.value), ItemPage.Limit(lim.value))
 
   /** The item an id or a target names, in manager `m` (its default item kind first, then the others). */
-  private def itemOf(m: ManagerInfo, ref: com.histmersion.domain.automation.managers.ManagersControllers.ItemRef): Either[Api.Error, ManagerItem] =
-    val r = ref.trim
+  private def itemOf(m: ManagerInfo, ref: ManagerItem.Ref): Either[Api.Error, ManagerItem] =
+    val r = ref.value.trim
     r.toLongOption
-      .flatMap(agents.managerStore.item(_))
+      .flatMap(n => agents.managerStore.item(ManagerItem.Id(n)))
       .filter(_.managerId == m.id)
-      .orElse(itemKinds(kindOf(m)).iterator.map(k => agents.managerStore.itemFor(m.id, k, r)).collectFirst {
+      .orElse(itemKinds(kindOf(m)).iterator.map(k => agents.managerStore.itemFor(m.id, k, ManagerItem.Target(r))).collectFirst {
         case Some(i) =>
           i
       })
@@ -342,33 +369,34 @@ final class ManagersControllers(
   /** A target as an item of `kind` names it: an article's slug, a source's citekey, the goal (a seeding manager's own).
     * A compile item is never added by hand: it comes from an approved plan.
     */
-  private def targetOf(m: ManagerInfo, kind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind, raw: com.histmersion.domain.automation.managers.ManagersControllers.TargetOfRaw): Either[Api.Error, com.histmersion.domain.automation.managers.ManagersControllers.TargetOfResultPart2] =
+  private def targetOf(m: ManagerInfo, kind: ManagerContext.ItemKind, raw: ManagerItem.Target): Either[Api.Error, ManagerContext.ItemTarget] =
     kinds.find(_.items.contains(kind)) match
       case Some(k) => k.target(m, kind, raw)
-      case None    => Left(Api.Error(s"unknown item kind '$kind'"))
+      case None    => Left(error(s"unknown item kind '$kind'"))
 
   /** Add (or bring back) a target: `in.kind` names the item kind (`review`, `extend`, `filter`, `enrich`, `propose`, or
     * the kind itself; blank = the manager's default). An article's review whose article records no filter brings an
     * infer-filter item with it (the review manager's `inferFilter`).
     */
-  def addItem(id: com.histmersion.domain.automation.managers.ManagerLight.Id, in: EnqueueRequest, origin: ItemOrigin = ItemOrigin.Person): Either[Api.Error, ManagerItem] =
+  def addItem(id: ManagerLight.Id, in: EnqueueRequest, origin: ItemOrigin = ItemOrigin.Person): Either[Api.Error, ManagerItem] =
     for
       m <- manager(id)
-      kind <- itemKindOf(kindOf(m), in.kind).toRight(
-        Api.Error(s"manager ${m.id} drives ${itemKinds(kindOf(m)).mkString(", ")} items, not '${in.kind}'")
+      kind <- itemKindOf(kindOf(m), com.histmersion.api.ItemKind.Word(in.kind.value)).toRight(
+        error(s"manager ${m.id} drives ${itemKinds(kindOf(m)).mkString(", ")} items, not '${in.kind}'")
       )
-      target <- targetOf(m, kind, in.target)
-      prio = in.priority.getOrElse(ManagerSupervisor.PersonPriority)
-      (itemId, isNew) = agents.managerStore.upsert(m.id, kind, target, origin, prio, reopen = true)
-      label = if kind == itemKinds(kindOf(m)).head then target else s"$target ($kind)"
-      _ = agents.managerStore.event(
+      itemKind = ManagerContext.ItemKind(kind.value)
+      target <- targetOf(m, itemKind, ManagerItem.Target(in.target.value))
+      prio = in.priority.fold(ManagerSupervisor.PersonPriority)(_.value)
+      (itemId, isNew) = agents.managerStore.upsert(m.id, kind, target.transformInto[ManagerItem.Target], origin, ManagerItem.Priority(prio), reopen = true)
+      label = if kind == itemKinds(kindOf(m)).head then target.value else s"$target ($kind)"
+      _ = record(
         m.id,
         Some(itemId),
         None,
         Feed.Evaluated,
         s"$label ${if isNew then "enqueued" else "enqueued again"} by a ${origin.wire} (priority $prio)"
       )
-      _ = kinds.find(_.items.contains(kind)).foreach(_.added(supervisor, m, kind, target, prio))
+      _ = kinds.find(_.items.contains(itemKind)).foreach(_.added(supervisor, m, itemKind, target, ManagerContext.Priority(prio)))
       item <- agents.managerStore.item(itemId).toRight(notFound(s"item $itemId vanished"))
     yield
       supervisor.nudge()
@@ -382,54 +410,62 @@ final class ManagersControllers(
     EnqueueKind.parse(in.kind) match
       case None =>
         Left(
-          Api.Error(s"nothing manages '${in.kind}' items (one of: ${EnqueueKind.values.map(_.wire).mkString(", ")})")
+          error(s"nothing manages '${in.kind}' items (one of: ${EnqueueKind.values.map(_.wire).mkString(", ")})")
         )
       case Some(EnqueueKind.Review) =>
         supervisor.ensureDefaults()
-        addItem(ReviewId, in.modify(_.kind).setTo(ArticleReview)).map(i => EnqueueResult(ReviewId, List(i)))
+        addItem(ManagerLight.Id(ReviewId), in.modify(_.kind).setTo(EnqueueRequest.Kind(ArticleReview))).map(i => EnqueueResult(ManagerInfo.Id(ReviewId), List(i)))
       case Some(EnqueueKind.Extend) =>
         supervisor.ensureDefaults()
-        addItem(ReviewId, in.modify(_.kind).setTo(ArticleExtend)).map(i => EnqueueResult(ReviewId, List(i)))
+        addItem(ManagerLight.Id(ReviewId), in.modify(_.kind).setTo(EnqueueRequest.Kind(ArticleExtend))).map(i => EnqueueResult(ManagerInfo.Id(ReviewId), List(i)))
       case Some(EnqueueKind.Seed) =>
-        host.goal(in.target.trim).flatMap { g =>
-          val id = seedId(g.slug)
-          val _ = supervisor.ensure(Kind.Seed, id, Some(g.slug))
-          addItem(id, in.modify(_.kind).setTo(ProposeArticles).modify(_.target).setTo(g.slug)).map(i => EnqueueResult(id, List(i)))
-        }
+        val text = in.target.value.trim
+        for
+          slug <- DomainGoal.Slug.option(text).toRight(notFound(s"No goal '$text'"))
+          g <- host.goal(slug)
+          id = seedId(Goal.Ref(g.slug.value))
+          _ = supervisor.ensure(Kind.Seed, id.transformInto[ManagerLight.Id], Some(slug))
+          out <- addItem(
+            id.transformInto[ManagerLight.Id],
+            in.modify(_.kind).setTo(EnqueueRequest.Kind(ProposeArticles)).modify(_.target).setTo(EnqueueRequest.Target(g.slug.value))
+          ).map(i => EnqueueResult(id, List(i)))
+        yield out
       case Some(EnqueueKind.Enrich) =>
         supervisor.ensureDefaults()
         kinds
           .find(_.kind == Kind.Enrich)
-          .fold(Right((List(in.target.trim), Nil)))(_.expand(supervisor, in.target.trim))
+          .fold(Right((List(ManagerContext.ItemTarget(in.target.value.trim)), Nil)))(_.expand(supervisor, ManagerItem.Target(in.target.value.trim)))
           .map { (cks, skipped) =>
-            val items = cks.flatMap(ck => addItem(EnrichId, EnqueueRequest(SourceEnrich, ck, in.priority)).toOption)
-            EnqueueResult(EnrichId, items, skipped)
+            val items = cks.flatMap(ck =>
+              addItem(ManagerLight.Id(EnrichId), EnqueueRequest(EnqueueRequest.Kind(SourceEnrich), EnqueueRequest.Target(ck.value), in.priority)).toOption
+            )
+            EnqueueResult(ManagerInfo.Id(EnrichId), items, skipped.map(s => EnqueueResult.Skipped(s.value)))
           }
 
-  def patchItem(id: com.histmersion.domain.automation.managers.ManagerLight.Id, ref: com.histmersion.domain.automation.managers.ManagersControllers.ItemRef, in: ItemPatch): Either[Api.Error, ManagerItem] =
+  def patchItem(id: ManagerLight.Id, ref: ManagerItem.Ref, in: ItemPatch): Either[Api.Error, ManagerItem] =
     for
       m <- manager(id)
       i <- itemOf(m, ref)
-      _ <- in.action.trim.toLowerCase match
+      _ <- in.action.value.trim.toLowerCase match
         case "hold" =>
           val h = Hold(
-            in.until.map(_.trim).filter(_.nonEmpty),
-            in.untilSource.map(_.trim).filter(_.nonEmpty),
-            in.reason.getOrElse("held by a person")
+            in.until.map(_.value.trim).filter(_.nonEmpty).map(Hold.Until(_)),
+            in.untilSource.map(_.value.trim).filter(_.nonEmpty).map(Hold.UntilSource(_)),
+            Hold.Reason(in.reason.fold("held by a person")(_.value))
           )
           for
             _ <- h.until.fold[Either[Api.Error, Unit]](Right(()))(u =>
               ManagerPolicy
-                .parseInstant(u)
+                .parseInstant(ManagerPolicy.InstantText(u.value))
                 .map(_ => ())
-                .toRight(Api.Error(s"'$u' is not a date (2026-11-01) or an instant"))
+                .toRight(error(s"'$u' is not a date (2026-11-01) or an instant"))
             )
             _ <- Either.cond(
               transact(ds)(ManagerRepo.hold(i.id, h)),
               (),
               conflict(s"item #${i.id} is ${i.status}; only a pending or held item can be held")
             )
-          yield agents.managerStore.event(
+          yield record(
             m.id,
             Some(i.id),
             None,
@@ -438,7 +474,7 @@ final class ManagersControllers(
               h.until.fold("")(u => s" until $u") + h.untilSource.fold("")(s => s" until $s exists") + s" — ${h.reason}"
           )
         case "release" if i.hold.exists(_.focus.isDefined) && agents.focus.inForce =>
-          val g = i.hold.flatMap(_.focus).getOrElse("")
+          val g = i.hold.flatMap(_.focus).fold("")(_.value)
           Left(
             conflict(
               s"item #${i.id} is held by the autopilot's focus: goal $g is not one of the active goals. Pin " +
@@ -449,27 +485,27 @@ final class ManagersControllers(
           Either
             .cond(transact(ds)(ManagerRepo.release(i.id)), (), conflict(s"item #${i.id} is ${i.status}, not held"))
             .map(_ =>
-              agents.managerStore.event(m.id, Some(i.id), None, Feed.Held, s"${i.target}: released by a person")
+              record(m.id, Some(i.id), None, Feed.Held, s"${i.target}: released by a person")
             )
         case "priority" =>
           in.priority.toRight(Api.Error(com.histmersion.api.Api.Error.Message("give `priority`"))).map { p =>
-            Transactor(ds).transact(ManagerRepo.setPriority(i.id, p))
-            agents.managerStore.event(m.id, Some(i.id), None, Feed.Hint, s"${i.target}: priority $p")
+            Transactor(ds).transact(ManagerRepo.setPriority(i.id, p.transformInto[ManagerItem.Priority]))
+            record(m.id, Some(i.id), None, Feed.Hint, s"${i.target}: priority $p")
           }
         case "skip" =>
           // an active item's run is cancelled first; the item is then stopped as skipped
-          i.runId.filter(_ => i.status == ItemStatus.Active.wire).foreach(r => agents.engine.cancel(r))
-          val why = in.reason.filter(_.trim.nonEmpty).fold("skipped by a person")(r => s"skipped by a person: $r")
+          i.runId.filter(_ => i.status == ItemStatus.Active.wire).foreach(r => agents.engine.cancel(runIdOf(r)))
+          val why = in.reason.filter(_.value.trim.nonEmpty).fold("skipped by a person")(r => s"skipped by a person: $r")
           Either
             .cond(
               transact(ds)(
                 ManagerRepo
-                  .settle(i.id, ItemStatus.Stopped, why, List(ItemStatus.Pending, ItemStatus.Held, ItemStatus.Active))
+                  .settle(i.id, ItemStatus.Stopped, ManagerItem.Outcome(why), List(ItemStatus.Pending, ItemStatus.Held, ItemStatus.Active))
               ),
               (),
               conflict(s"item #${i.id} is ${i.status} already")
             )
-            .map(_ => agents.managerStore.event(m.id, Some(i.id), i.runId, Feed.Stopped, s"${i.target}: $why"))
+            .map(_ => record(m.id, Some(i.id), i.runId.map(runIdOf), Feed.Stopped, s"${i.target}: $why"))
         case "reopen" =>
           Either
             .cond(
@@ -478,9 +514,9 @@ final class ManagersControllers(
               conflict(s"item #${i.id} is ${i.status}; only a settled item can be re-opened")
             )
             .map(_ =>
-              agents.managerStore.event(m.id, Some(i.id), None, Feed.Evaluated, s"${i.target}: re-opened by a person")
+              record(m.id, Some(i.id), None, Feed.Evaluated, s"${i.target}: re-opened by a person")
             )
-        case other => Left(Api.Error(s"unknown item action '$other' (one of: ${ItemPatch.Actions.mkString(", ")})"))
+        case other => Left(error(s"unknown item action '$other' (one of: ${ItemPatch.Actions.mkString(", ")})"))
       out <- agents.managerStore.item(i.id).toRight(notFound(s"item ${i.id} vanished"))
     yield
       supervisor.nudge()
@@ -488,7 +524,7 @@ final class ManagersControllers(
 
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 
-  def hints(id: com.histmersion.domain.automation.managers.ManagerLight.Id, all: com.histmersion.domain.automation.managers.ManagersControllers.HintsAll): Either[Api.Error, List[ManagerHint]] =
+  def hints(id: ManagerLight.Id, all: Boolean): Either[Api.Error, List[ManagerHint]] =
     manager(id).map(m => Transactor(ds).read(ManagerRepo.hints(m.id, live = !all)))
 
   /** A hint: its text reaches the next runs' fixer and skeptic as the person's notes (a once-hint the next run only).
@@ -498,35 +534,35 @@ final class ManagersControllers(
     * ([[applyProposal]]). `suggest` asks the server's planner model to read the text and propose the action (a
     * `hint-effect` run, started for the person; its proposal waits for approval the same way).
     */
-  def addHint(id: com.histmersion.domain.automation.managers.ManagerLight.Id, in: HintAdd): Either[Api.Error, ManagerHint] =
-    val propose = in.propose.contains(true)
-    val suggest = in.suggest.contains(true)
+  def addHint(id: ManagerLight.Id, in: HintAdd): Either[Api.Error, ManagerHint] =
+    val propose = in.propose.exists(_.value)
+    val suggest = in.suggest.exists(_.value)
     for
       m <- manager(id)
-      text <- Option(in.text.trim).filter(_.nonEmpty).toRight(Api.Error("a hint needs text"))
+      text <- Option(in.text.value.trim).filter(_.nonEmpty).map(ManagerHint.Text(_)).toRight(error("a hint needs text"))
       item <- in.item
-        .map(_.trim)
+        .map(_.value.trim)
         .filter(_.nonEmpty)
-        .fold[Either[Api.Error, Option[ManagerItem]]](Right(None))(r => itemOf(m, r).map(Some(_)))
+        .fold[Either[Api.Error, Option[ManagerItem]]](Right(None))(r => itemOf(m, ManagerItem.Ref(r)).map(Some(_)))
       eff <- in.effect.fold[Either[Api.Error, Option[HintEffect]]](Right(None))(e =>
         checkEffect(m, e, item, propose).map(Some(_))
       )
       _ <- Either.cond(
         !(suggest && eff.isDefined),
         (),
-        Api.Error("`suggest` asks a model for the action: give no effect with it")
+        error("`suggest` asks a model for the action: give no effect with it")
       )
       // a suggestion needs a run that can start: checked before the hint is recorded
       _ <- if suggest then agents.prepare(RunRequest(Pipeline.HintEffect.wire, m.id), None).map(_ => ()) else Right(())
-      author = in.author.map(_.trim).filter(_.nonEmpty).getOrElse("person")
+      author = ManagerHint.Author(in.author.map(_.value.trim).filter(_.nonEmpty).getOrElse("person"))
       hint = Transactor(ds).transact(
         ManagerRepo.addHint(
           m.id,
-          item.map(_.id),
+          item.map(i => ManagerHint.ItemId(i.id.value)),
           text,
           if propose then None else eff,
           author,
-          standing = !in.once.contains(true)
+          standing = ManagerHint.Standing(!in.once.exists(_.value))
         )
       )
       applied = eff.fold("")(e =>
@@ -539,16 +575,16 @@ final class ManagersControllers(
               RunRequest(Pipeline.HintEffect.wire, m.id),
               Origin.Person,
               None,
-              _.modify(_.hint).setTo(Some(hint.id))
+              _.modify(_.hint).setTo(Some(RunParams.Hint(hint.id.value)))
             )
-            .map(r => s" — a model reads it for an action (run ${r.id.take(8)}); a person approves what it proposes")
+            .map(r => s" — a model reads it for an action (run ${r.id.value.take(8)}); a person approves what it proposes")
         else Right("")
-      _ = agents.managerStore.event(
+      _ = record(
         m.id,
         item.map(_.id),
         None,
         Feed.Hint,
-        s"hint #${hint.id} (${if hint.standing then "standing" else "once"}${item.fold("")(i => s", ${i.target}")}): ${text.take(300)}$applied$asked"
+        s"hint #${hint.id} (${if hint.standing.value then "standing" else "once"}${item.fold("")(i => s", ${i.target}")}): ${text.value.take(300)}$applied$asked"
       )
       out <- Transactor(ds).read(ManagerRepo.hint(hint.id)).toRight(notFound(s"hint ${hint.id} vanished"))
     yield
@@ -563,13 +599,13 @@ final class ManagersControllers(
       m: ManagerInfo,
       e: HintEffect,
       item: Option[ManagerItem],
-      proposal: com.histmersion.domain.automation.managers.ManagersControllers.CheckEffectProposal
+      proposal: Boolean
   ): Either[Api.Error, HintEffect] =
-    val a = e.action.trim.toLowerCase
+    val a = e.action.value.trim.toLowerCase
     val allowed = if proposal then HintEffect.Proposable else HintEffect.Actions
     if !allowed.contains(a) then
       Left(
-        Api.Error(
+        error(
           s"unknown hint action '${e.action}' (one of: ${allowed.mkString(", ")})" +
             (if !proposal && a == HintEffect.Config then " — change the settings with the manager's config instead"
              else "")
@@ -579,23 +615,31 @@ final class ManagersControllers(
       e.config
         .filter(c => ManagersMarkdown.configLine(c) != "the defaults")
         .toRight(Api.Error(com.histmersion.api.Api.Error.Message("a config action names the settings it changes")))
-        .flatMap(c => validate(kindOf(m), m.config.merge(c)).map(_ => e.modify(_.action).setTo(a)))
+        .flatMap(c => validate(kindOf(m), m.config.merge(c)).map(_ => e.modify(_.action).setTo(HintEffect.Action(a))))
     else if e.targets.isEmpty && e.tag.isEmpty && e.topic.isEmpty && e.goal.isEmpty && item.isEmpty then
-      Left(Api.Error("a structured hint names its targets, a tag, a topic or a goal (or is about one item)"))
+      Left(error("a structured hint names its targets, a tag, a topic or a goal (or is about one item)"))
     else if a == HintEffect.HoldAction && e.until.isEmpty && e.untilSource.isEmpty then
       Left(Api.Error(com.histmersion.api.Api.Error.Message("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)")))
-    else if e.until.exists(u => ManagerPolicy.parseInstant(u).isEmpty) then
-      Left(Api.Error(s"'${e.until.getOrElse("")}' is not a date (2026-11-01) or an instant"))
-    else Right(e.modify(_.action).setTo(a).modify(_.targets).setTo((e.targets ++ item.map(_.target).toList).distinct))
+    else if e.until.exists(u => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(u.value)).isEmpty) then
+      Left(error(s"'${e.until.fold("")(_.value)}' is not a date (2026-11-01) or an instant"))
+    else
+      Right(
+        e.modify(_.action)
+          .setTo(HintEffect.Action(a))
+          .modify(_.targets)
+          .setTo((e.targets ++ item.map(i => HintEffect.Targets(i.target.value)).toList).distinct)
+      )
 
   /** A model's effect, recorded for a person: an open `hint-effect` approval about the manager. */
-  private def proposeEffect(m: ManagerInfo, hintId: com.histmersion.domain.automation.managers.ManagersControllers.HintId, text: com.histmersion.domain.automation.managers.ManagersControllers.EffectText, e: HintEffect, by: com.histmersion.domain.automation.managers.ManagersControllers.ProposeEffectBy): com.histmersion.domain.automation.managers.ManagersControllers.ProposeEffectResult =
+  private def proposeEffect(m: ManagerInfo, hintId: ManagerHint.Id, text: ManagerHint.Text, e: HintEffect, by: ManagerHint.Author): String =
     import io.circe.syntax.*
     val a = agents.approvalStore.openSubject(
       None,
       ApprovalKind.HintEffect,
-      m.id,
-      HintProposal(m.id, hintId, text, e, by).asJson.noSpaces
+      ApprovalQuery.Subject(m.id.value),
+      ApprovalService.Payload(
+        HintProposal(m.id, HintProposal.Hint(hintId.value), HintProposal.Text(text.value), e, HintProposal.By(by.value)).asJson.noSpaces
+      )
     )
     s" — proposed ${ManagersMarkdown.effect(e)}: approval #${a.id} waits for a person"
 
@@ -603,25 +647,25 @@ final class ManagersControllers(
     * applied — items prioritised, held or skipped, or the settings changed — and recorded on the hint. Left = why it
     * could not be (the approval is then marked failed with it).
     */
-  def applyProposal(p: HintProposal): Either[com.histmersion.domain.automation.managers.ManagersControllers.ApplyProposalResultPart1, com.histmersion.domain.automation.managers.ManagersControllers.ApplyProposalResultPart2] =
+  def applyProposal(p: HintProposal): Either[String, String] =
     for
-      m <- manager(p.managerId).left.map(_.message)
+      m <- manager(p.managerId.transformInto[ManagerLight.Id]).left.map(_.message.value)
       ht <- Transactor(ds)
-        .read(ManagerRepo.hint(p.hint))
+        .read(ManagerRepo.hint(ManagerHint.Id(p.hint.value)))
         .filter(_.managerId == m.id)
         .toRight(s"hint #${p.hint} of ${m.id} is gone")
       _ <- Either.cond(ht.retiredAt.isEmpty, (), s"hint #${ht.id} was retired meanwhile")
-      e <- checkEffect(m, p.effect, ht.itemId.flatMap(agents.managerStore.item(_)), proposal = true).left.map(_.message)
-      w <- e.action match
+      e <- checkEffect(m, p.effect, ht.itemId.flatMap(i => agents.managerStore.item(ManagerItem.Id(i.value))), proposal = true).left.map(_.message.value)
+      w <- e.action.value match
         case HintEffect.Config =>
           val c = m.config.merge(e.config.getOrElse(ManagerConfig()))
-          val _ = agents.managerStore.setConfig(m.id, c, m.cron, m.nextTickAt.flatMap(ManagerPolicy.parseInstant))
+          val _ = agents.managerStore.setConfig(m.id, c, m.cron, m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value))))
           Right(s" — settings now: ${ManagersControllers.describe(c)}")
         case _ => Right(applyEffect(m, ht.id, ht.text, e))
       _ = Transactor(ds).transact(ManagerRepo.setHintEffect(ht.id, Some(e)))
-      _ = agents.managerStore.event(
+      _ = record(
         m.id,
-        ht.itemId,
+        ht.itemId.map(i => ManagerItem.Id(i.value)),
         None,
         Feed.Hint,
         s"hint #${ht.id}: the proposed ${ManagersMarkdown.effect(e)} approved by a person$w".take(2000)
@@ -630,33 +674,46 @@ final class ManagersControllers(
       supervisor.nudge()
       s"${m.id} hint #${ht.id}: ${ManagersMarkdown.effect(e)}$w"
 
-  private def applyEffect(m: ManagerInfo, hintId: com.histmersion.domain.automation.managers.ManagersControllers.HintId, text: com.histmersion.domain.automation.managers.ManagersControllers.EffectText, e: HintEffect): com.histmersion.domain.automation.managers.ManagersControllers.ApplyEffectResult =
+  private def applyEffect(m: ManagerInfo, hintId: ManagerHint.Id, text: ManagerHint.Text, e: HintEffect): String =
     // the named targets become items of the manager's default kind (a target that exists); the matched
     // ones are the open items
-    val kind = itemKinds(kindOf(m)).headOption.getOrElse(ArticleReview)
-    val named = e.targets.flatMap(t => targetOf(m, kind, t).toOption).distinct
+    val kind = itemKinds(kindOf(m)).headOption.getOrElse(ManagerItem.Kind(ArticleReview))
+    val named = e.targets.flatMap(t => targetOf(m, ManagerContext.ItemKind(kind.value), ManagerItem.Target(t.value)).toOption.map(_.transformInto[ManagerItem.Target])).distinct
     val open = connect(ds)(ManagerRepo.withStatus(m.id, ItemStatus.Pending)) ++ connect(ds)(
       ManagerRepo.withStatus(m.id, ItemStatus.Held)
     )
     val matched = open.filter { i =>
       named.contains(i.target) || ((e.tag.isDefined || e.topic.isDefined || e.goal.isDefined) && {
-        val (tags, goals) = Transactor(ds).read(ManagerRepo.articleFacets(i.target))
-        ManagerPolicy.matches(e.modify(_.targets).setTo(Nil), i.target, tags, Nil, goals)
+        val (tags, goals) = com.histmersion.domain.research.Slug
+          .option(i.target.value)
+          .fold((Nil, Nil))(slug => Transactor(ds).read(ManagerRepo.articleFacets(slug)))
+        ManagerPolicy.matches(
+          e.modify(_.targets).setTo(Nil),
+          i.target.transformInto[ManagerPolicy.Candidate.Target],
+          tags.map(t => ManagerPolicy.Tag(t.value)),
+          Nil,
+          goals
+        )
       })
     }
-    val n = e.action match
+    val n = e.action.value match
       case HintEffect.Prioritise =>
-        val p = e.priority.getOrElse(ManagerSupervisor.HintPriority)
+        val p = e.priority.fold(ManagerSupervisor.HintPriority)(_.value)
         val added = named.filterNot(t => open.exists(_.target == t)).count { t =>
-          agents.managerStore.upsert(m.id, kind, t, ItemOrigin.Hint, p, reopen = com.histmersion.domain.automation.managers.ManagerService.UpsertReopen(true))
+          agents.managerStore.upsert(m.id, kind, t, ItemOrigin.Hint, ManagerItem.Priority(p), reopen = true)
           true
         }
-        matched.foreach(i => Transactor(ds).transact(ManagerRepo.setPriority(i.id, math.max(i.priority, p))))
+        matched.foreach(i => Transactor(ds).transact(ManagerRepo.setPriority(i.id, ManagerItem.Priority(math.max(i.priority.value, p)))))
         matched.size + added
       case HintEffect.HoldAction =>
-        val hold = Hold(e.until, e.untilSource, s"hint #$hintId: ${text.take(200)}", Some(hintId))
+        val hold = Hold(
+          e.until.map(u => Hold.Until(u.value)),
+          e.untilSource.map(u => Hold.UntilSource(u.value)),
+          Hold.Reason(s"hint #$hintId: ${text.value.take(200)}"),
+          Some(Hold.Hint(hintId.value))
+        )
         val added = named.filterNot(t => open.exists(_.target == t)).flatMap { t =>
-          val (id, _) = agents.managerStore.upsert(m.id, kind, t, ItemOrigin.Hint, com.histmersion.domain.automation.managers.ManagerContext.Priority(0), reopen = com.histmersion.domain.automation.managers.ManagerService.UpsertReopen(true))
+          val (id, _) = agents.managerStore.upsert(m.id, kind, t, ItemOrigin.Hint, ManagerItem.Priority(0), reopen = true)
           agents.managerStore.item(id).filter(_.status == ItemStatus.Pending.wire)
         }
         (matched ++ added).count(i => transact(ds)(ManagerRepo.hold(i.id, hold)))
@@ -666,19 +723,19 @@ final class ManagersControllers(
             ManagerRepo.settle(
               i.id,
               ItemStatus.Stopped,
-              s"skipped (hint #$hintId)",
+              ManagerItem.Outcome(s"skipped (hint #$hintId)"),
               List(ItemStatus.Pending, ItemStatus.Held)
             )
           )
         )
       case _ => 0
-    s" — ${e.action}: ${Plural.count(n, com.histmersion.api.Plural.CountSingular("item"))}"
+    s" — ${e.action}: ${Plural.count(Plural.CountN(n.toLong), Plural.CountSingular("item"))}"
 
-  def deleteHint(id: com.histmersion.domain.automation.managers.ManagerLight.Id, hint: com.histmersion.domain.automation.managers.ManagersControllers.HintId): Either[Api.Error, Removed] =
+  def deleteHint(id: ManagerLight.Id, hint: ManagerHint.Id): Either[Api.Error, Removed] =
     manager(id).map { m =>
       val gone = Transactor(ds).transact(ManagerRepo.retireHint(m.id, hint))
-      if gone then agents.managerStore.event(m.id, None, None, Feed.Hint, s"hint #$hint retired by a person")
-      Removed(gone)
+      if gone then record(m.id, None, None, Feed.Hint, s"hint #$hint retired by a person")
+      Removed(Removed.Value(gone))
     }
 
   // ── goal schedules: a watcher's sweeps (phase 3) ───────────────────────────────────────────────
@@ -686,10 +743,10 @@ final class ManagersControllers(
   /** A goal's schedules (every goal's: None) as the goal surfaces show them — its watcher's sweeps
     * ([[WatchSchedules.view]]), and any `goal_schedules` row the managers have not moved yet.
     */
-  def goalSchedules(goal: Option[com.histmersion.domain.automation.Goal.Slug]): List[Goal.Plans.GoalSchedule] =
+  def goalSchedules(goal: Option[DomainGoal.Slug]): List[Goal.Plans.GoalSchedule] =
     agents.managerStore
       .list()
-      .filter(m => m.kind == Kind.Watch.wire && goal.forall(g => m.goal.contains(g)))
+      .filter(m => m.kind == Kind.Watch.wire && goal.forall(g => m.goal.exists(_.value == g.value)))
       .flatMap(m =>
         WatchSchedules.view(m, Transactor(ds).read(ManagerRepo.itemPage(m.id, None, com.histmersion.Offset(0), com.histmersion.PageSize(20)))._1)
       ) ++ agents.goals.schedules(goal)
@@ -701,21 +758,25 @@ final class ManagersControllers(
     * cap.
     */
   def setSchedule(
-      goal: com.histmersion.domain.automation.Goal.Slug,
+      goal: DomainGoal.Slug,
       kind: Goal.Plans.ScheduleKind,
       in: Goal.Plans.ScheduleSet,
       now: java.time.Instant
   ): Either[Api.Error, Goal.Plans.GoalSchedule] =
-    val id = watchId(goal)
+    val id = watchId(Goal.Ref(goal.value))
     val sw = WatchSchedules.sweepOf(kind)
+    val budget = in.budgetUsd.map(b => ManagerConfig.BudgetUsd(b.value))
     for
-      cron <- ManagerPolicy.checkCron(in.cron, now, cfg.scheduler.minIntervalMinutes).left.map(Api.Error(_))
+      cron <- ManagerPolicy
+        .checkCron(Cron.Text(in.cron.value), now, cfg.scheduler.minIntervalMinutes.transformInto[ManagerPolicy.MinIntervalMinutes])
+        .left
+        .map(p => error(p.value))
       _ = agents.managerStore.get(id) match
         case None =>
-          val c = ManagerConfig(sweeps = Some(if in.enabled then List(sw.wire) else Nil), budgetUsd = in.budgetUsd)
+          val c = ManagerConfig(sweeps = Some(if in.enabled.value then List(sw.wire) else Nil), budgetUsd = budget)
           val _ =
-            agents.managerStore.create(id, Kind.Watch, Some(goal), State.Paused, c, Some(cron.text), cron.next(now))
-          agents.managerStore.event(
+            agents.managerStore.create(id, Kind.Watch, Some(goal), State.Paused, c, Some(ManagerInfo.Cron(cron.text.value)), cron.next(now))
+          record(
             id,
             None,
             None,
@@ -725,20 +786,20 @@ final class ManagersControllers(
           )
         case Some(m) =>
           val cur = Sweep.of(m.config)
-          val sweeps = Sweep.values.toList.filter(x => if x == sw then in.enabled else cur.contains(x))
-          val c = m.config.modify(_.sweeps).setTo(Some(sweeps.map(_.wire))).modify(_.budgetUsd).setTo(in.budgetUsd.orElse(m.config.budgetUsd))
-          val next = if m.cron.contains(cron.text) && m.nextTickAt.isDefined then
-            m.nextTickAt.flatMap(ManagerPolicy.parseInstant)
+          val sweeps = Sweep.values.toList.filter(x => if x == sw then in.enabled.value else cur.contains(x))
+          val c = m.config.modify(_.sweeps).setTo(Some(sweeps.map(_.wire))).modify(_.budgetUsd).setTo(budget.orElse(m.config.budgetUsd))
+          val next = if m.cron.exists(_.value == cron.text.value) && m.nextTickAt.isDefined then
+            m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
           else cron.next(now)
-          val _ = agents.managerStore.setConfig(id, c, Some(cron.text), next)
-          if !in.enabled then cancelSweep(m, sw, "its schedule was turned off")
-          agents.managerStore.event(
+          val _ = agents.managerStore.setConfig(id, c, Some(ManagerInfo.Cron(cron.text.value)), next)
+          if !in.enabled.value then cancelSweep(m, sw, ManagerRepo.CancelReason("its schedule was turned off"))
+          record(
             id,
             None,
             None,
             Feed.Hint,
             s"the goal's ${kind.wire} schedule set: cron `${cron.text}`, " +
-              s"${if in.enabled then "on" else "off"}; sweeps ${
+              s"${if in.enabled.value then "on" else "off"}; sweeps ${
                   if sweeps.isEmpty then "none" else sweeps.map(_.wire).mkString(", ")
                 }"
           )
@@ -746,30 +807,38 @@ final class ManagersControllers(
         goal,
         kind.transformInto[com.histmersion.domain.automation.ScheduleKind]
       ) // a row the managers had not moved yet is replaced
-      m <- manager(id)
+      m <- manager(id.transformInto[ManagerLight.Id])
     yield
       supervisor.nudge()
       WatchSchedules
-        .view(m, Transactor(ds).read(ManagerRepo.itemPage(id, None, 0, 20))._1)
+        .view(m, Transactor(ds).read(ManagerRepo.itemPage(id, None, com.histmersion.Offset(0), com.histmersion.PageSize(20)))._1)
         .find(_.kind == kind)
-        .getOrElse(Goal.Plans.GoalSchedule(goal, kind, cron.text, enabled = false, in.budgetUsd))
+        .getOrElse(
+          Goal.Plans.GoalSchedule(
+            goal.transformInto[Goal.Slug],
+            kind,
+            Goal.Plans.GoalSchedule.Cron(cron.text.value),
+            Goal.Plans.GoalSchedule.Enabled(false),
+            in.budgetUsd.map(_.transformInto[Goal.Plans.GoalSchedule.BudgetUsd])
+          )
+        )
 
   /** `DELETE /api/goals/{slug}/schedules/{kind}` — the sweep leaves the watcher (its open item is cancelled); the
     * watcher itself stays.
     */
-  def removeSchedule(goal: com.histmersion.domain.automation.Goal.Slug, kind: Goal.Plans.ScheduleKind): Goal.Plans.Removed =
+  def removeSchedule(goal: DomainGoal.Slug, kind: Goal.Plans.ScheduleKind): Goal.Plans.Removed =
     val legacy = agents.goals.removeSchedule(goal, kind.transformInto[com.histmersion.domain.automation.ScheduleKind])
     val sw = WatchSchedules.sweepOf(kind)
-    val fromWatcher = agents.managerStore.get(watchId(goal)).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
+    val fromWatcher = agents.managerStore.get(watchId(Goal.Ref(goal.value))).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
       val rest = Sweep.of(m.config).filterNot(_ == sw)
       val _ = agents.managerStore.setConfig(
         m.id,
         m.config.modify(_.sweeps).setTo(Some(rest.map(_.wire))),
         m.cron,
-        m.nextTickAt.flatMap(ManagerPolicy.parseInstant)
+        m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
       )
-      cancelSweep(m, sw, "its schedule was removed")
-      agents.managerStore.event(
+      cancelSweep(m, sw, ManagerRepo.CancelReason("its schedule was removed"))
+      record(
         m.id,
         None,
         None,
@@ -779,13 +848,13 @@ final class ManagersControllers(
       )
       true
     }
-    Goal.Plans.Removed(legacy || fromWatcher)
+    Goal.Plans.Removed(Goal.Plans.Removed.Value(legacy || fromWatcher))
 
   /** A sweep the watcher no longer runs: its pending or held item is cancelled (a running one finishes). */
-  private def cancelSweep(m: ManagerInfo, sw: Sweep, why: com.histmersion.domain.automation.managers.ManagerRepo.CancelReason): Unit =
-    m.goal.flatMap(g => agents.managerStore.itemFor(m.id, sw.itemKind, g)).foreach { i =>
-      if transact(ds)(ManagerRepo.settle(i.id, ItemStatus.Cancelled, why, List(ItemStatus.Pending, ItemStatus.Held)))
-      then agents.managerStore.event(m.id, Some(i.id), None, Feed.Stopped, s"${i.target} (${i.kind}): $why")
+  private def cancelSweep(m: ManagerInfo, sw: Sweep, why: ManagerRepo.CancelReason): Unit =
+    m.goal.flatMap(g => agents.managerStore.itemFor(m.id, ManagerItem.Kind(sw.itemKind.value), ManagerItem.Target(g.value))).foreach { i =>
+      if transact(ds)(ManagerRepo.settle(i.id, ItemStatus.Cancelled, ManagerItem.Outcome(why.value), List(ItemStatus.Pending, ItemStatus.Held)))
+      then record(m.id, Some(i.id), None, Feed.Stopped, s"${i.target} (${i.kind}): $why")
     }
 
   // ── the autopilot ──────────────────────────────────────────────────────────────────────────────
@@ -797,7 +866,7 @@ final class ManagersControllers(
   def focus: Autopilot.FocusInfo = agents.focus.info()
 
   /** `GET /api/agents/scheduler[?limit=]` — readable with agents off (a dry pass). */
-  def scheduler(limit: Option[com.histmersion.domain.automation.managers.ManagerContext.Limit]): AgentScheduler.SchedulerStatus = agents.scheduler.status(limit)
+  def scheduler(limit: Option[com.histmersion.PageSize]): AgentScheduler.SchedulerStatus = agents.scheduler.status(limit)
 
   /** `POST /api/agents/scheduler {strategy}` — switch the strategy live. */
   def setScheduler(in: AgentScheduler.SchedulerSet): Either[Api.Error, AgentScheduler.SchedulerStatus] =
@@ -807,7 +876,7 @@ final class ManagersControllers(
   def drain(in: Autopilot.DrainSet): Either[Api.Error, Autopilot.EngineStatus] = Right(agents.drain.set(in))
 
   /** `GET /api/agents/stalls[?days=]` — readable with agents off. */
-  def stalls(days: Option[com.histmersion.domain.automation.managers.ManagersControllers.StallsDays]): Stalls.StallReport = agents.scheduler.stalls(days)
+  def stalls(days: Option[AgentAutopilotConfig.StallDays]): Stalls.StallReport = agents.scheduler.stalls(days)
 
   /** `GET /api/agents/approvals/digest`. */
   def digest: ApprovalDigest.Digest = agents.digest.digest()
@@ -817,7 +886,7 @@ final class ManagersControllers(
     agents.digest.decideAll(in)
 
   /** `GET /api/agents/scheduler/why/{item}`. */
-  def schedulerWhy(item: com.histmersion.domain.automation.managers.ManagersControllers.SchedulerWhyItem): Either[Api.Error, AgentScheduler.WhyInfo] = agents.scheduler.why(item)
+  def schedulerWhy(item: ManagerItem.Ref): Either[Api.Error, AgentScheduler.WhyInfo] = agents.scheduler.why(item)
 
   /** `POST /api/agents/autopilot/focus {action, goal?, value?}` — pin, unpin, priority, max. */
   def setFocus(in: Autopilot.FocusSet): Either[Api.Error, Autopilot.FocusInfo] = agents.focus.set(in)
@@ -828,7 +897,7 @@ final class ManagersControllers(
   def setMode(in: AgentMode.ModeSet): Either[Api.Error, Autopilot.EngineStatus] =
     AgentMode
       .parse(in.mode)
-      .toRight(Api.Error(s"unknown mode '${in.mode}' — one of: ${AgentMode.values.map(_.wire).mkString(", ")}"))
+      .toRight(error(s"unknown mode '${in.mode}' — one of: ${AgentMode.values.map(_.wire).mkString(", ")}"))
       .map { to =>
         val now = agents.autopilot.status()
         val by = in.by.map(_.trim).filter(_.nonEmpty).orElse(Some("person"))
@@ -845,58 +914,17 @@ final class ManagersControllers(
 
   // ── events ─────────────────────────────────────────────────────────────────────────────────────
 
-  def events(id: com.histmersion.domain.automation.managers.ManagerLight.Id, before: Option[com.histmersion.domain.automation.managers.ManagerRepo.EventCursor], limit: Option[com.histmersion.domain.automation.managers.ManagerContext.Limit]): Either[Api.Error, EventPage] =
+  def events(id: ManagerLight.Id, before: Option[ManagerRepo.EventCursor], limit: Option[com.histmersion.PageSize]): Either[Api.Error, EventPage] =
     manager(id).map { m =>
       val lim = limits.page(limit, com.histmersion.PageSize(50))
       val es = connect(ds)(ManagerRepo.events(m.id, before, lim))
-      EventPage(es, Option.when(es.size == lim)(es.last.id))
+      EventPage(es, Option.when(es.size == lim.value)(EventPage.Before(es.last.id.value)))
     }
 
 object ManagersControllers:
-  type EffectText = EffectText.T
-  object EffectText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HintId = HintId.T
-  object HintId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemRef = ItemRef.T
-  object ItemRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type NotFoundWhat = NotFoundWhat.T
-  object NotFoundWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConflictM = ConflictM.T
-  object ConflictM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BacklogsResultPart1 = BacklogsResultPart1.T
-  object BacklogsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BacklogsResultPart2Part1 = BacklogsResultPart2Part1.T
-  object BacklogsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BacklogsResultPart2Part2 = BacklogsResultPart2Part2.T
-  object BacklogsResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ActionAction = ActionAction.T
-  object ActionAction extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ActionRuns = ActionRuns.T
-  object ActionRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetOfResultPart2 = TargetOfResultPart2.T
-  object TargetOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetOfRaw = TargetOfRaw.T
-  object TargetOfRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HintsAll = HintsAll.T
-  object HintsAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckEffectProposal = CheckEffectProposal.T
-  object CheckEffectProposal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProposeEffectResult = ProposeEffectResult.T
-  object ProposeEffectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProposeEffectBy = ProposeEffectBy.T
-  object ProposeEffectBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyProposalResultPart1 = ApplyProposalResultPart1.T
-  object ApplyProposalResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyProposalResultPart2 = ApplyProposalResultPart2.T
-  object ApplyProposalResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyEffectResult = ApplyEffectResult.T
-  object ApplyEffectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StallsDays = StallsDays.T
-  object StallsDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SchedulerWhyItem = SchedulerWhyItem.T
-  object SchedulerWhyItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribeResult = DescribeResult.T
-  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  /** What a person does to a manager: `pause`, `resume` or `stop`. */
+  type Action = Action.T
+  object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def describe(c: ManagerConfig): com.histmersion.domain.automation.managers.ManagersControllers.DescribeResult = ManagersMarkdown.configLine(c)
+  def describe(c: ManagerConfig): String = ManagersMarkdown.configLine(c)

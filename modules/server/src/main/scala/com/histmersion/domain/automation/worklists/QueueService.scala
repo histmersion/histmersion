@@ -2,7 +2,10 @@ package com.histmersion.domain.automation.worklists
 
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueItem, QueuePatch}
+import com.histmersion.api.automation.Goal.Plans.GoalLink
+import com.histmersion.domain.automation.Goal
 import com.histmersion.util.database.Transactor
+import com.histmersion.util.jobs.Job
 
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
@@ -34,8 +37,6 @@ trait QueueService:
   def replace(list: Kind, items: List[QueueAdd], mode: ImportMode): ImportCounts
 
 object QueueService:
-  type ByIdsWanted = ByIdsWanted.T
-  object ByIdsWanted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   def apply(db: Transactor): QueueService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends QueueService:
@@ -43,33 +44,39 @@ object QueueService:
       .read(scope match
         case QueueScope.Open                            => QueueRepo.list(list, all = false)
         case QueueScope.All                             => QueueRepo.list(list, all = true)
-        case QueueScope.ForJob(job)                     => QueueRepo.forJob(list, job)
-        case QueueScope.ForGoal(goal, linked, withDone) => QueueRepo.forGoal(list, goal, linked.toList, withDone))
+        case QueueScope.ForJob(job) =>
+          Job.Id.option(job.value).fold(Vector.empty[QueueItem])(QueueRepo.forJob(list, _))
+        case QueueScope.ForGoal(goal, linked, withDone) =>
+          Goal.Slug
+            .option(goal.value)
+            .fold(Vector.empty[QueueItem])(g =>
+              QueueRepo.forGoal(list, g, linked.toList.map(l => GoalLink.Ref(l.value)), withDone.value)
+            ))
       .toList
 
-    def get(id: QueueItemId): Option[QueueItem] = db.read(QueueRepo.get(id.value))
-    def byIds(ids: List[QueueItemId]): List[QueueItem] = db.read(QueueRepo.byIds(ids.map(_.value))).toList
+    def get(id: QueueItemId): Option[QueueItem] = db.read(QueueRepo.get(id))
+    def byIds(ids: List[QueueItemId]): List[QueueItem] = db.read(QueueRepo.byIds(ids)).toList
     def naming(list: Kind, doi: com.histmersion.domain.library.Doi): List[QueueItem] = db.read(QueueRepo.naming(list, doi)).toList
     def add(list: Kind, item: QueueAdd): QueueItem = db.transact(QueueRepo.insert(list, item))
 
     def patch(id: QueueItemId, p: QueuePatch): Either[QueueError, QueueItem] = db.transact:
-      QueueRepo.get(id.value).toRight(QueueError.NotFound(id)).map { cur =>
+      QueueRepo.get(id).toRight(QueueError.NotFound(id)).map { cur =>
         QueueRepo.update(Queue.applyPatch(cur, p))
-        QueueRepo.get(id.value).get
+        QueueRepo.get(id).get
       }
 
     def delete(id: QueueItemId): Either[QueueError, QueueItem] = db.transact:
-      QueueRepo.get(id.value).toRight(QueueError.NotFound(id)).map { item =>
-        QueueRepo.delete(id.value)
+      QueueRepo.get(id).toRight(QueueError.NotFound(id)).map { item =>
+        QueueRepo.delete(id)
         item
       }
 
     def replace(list: Kind, items: List[QueueAdd], mode: ImportMode): ImportCounts = db.transact:
-      val removed = if mode == ImportMode.Replace then QueueRepo.deleteList(list) else 0
+      val removed: Int = if mode == ImportMode.Replace then QueueRepo.deleteList(list).value else 0
       items.foreach { i =>
         val _ = QueueRepo.insert(list, i)
       }
-      ImportCounts(items.size, removed)
+      ImportCounts(ImportCounts.Written(items.size), ImportCounts.Removed(removed))
 
   /** The work lists in memory; `clock` stands in for the database's `now()` (an item's made and done times). */
   final class InMemory(state: AtomicReference[WorkListState], clock: Clock) extends QueueService:
@@ -79,8 +86,8 @@ object QueueService:
     def get(id: QueueItemId): Option[QueueItem] = state.get.get(id)
 
     def byIds(ids: List[QueueItemId]): List[QueueItem] =
-      val wanted: Set[com.histmersion.domain.automation.worklists.QueueService.ByIdsWanted] = ids.map(i => i.value: Int).toSet
-      state.get.items.filter(i => wanted(i.id)).toList
+      val wanted = ids.map(_.value: Int).toSet
+      state.get.items.filter(i => wanted(i.id.value)).toList
 
     def naming(list: Kind, doi: com.histmersion.domain.library.Doi): List[QueueItem] = state.get.naming(list, doi).toList
     def add(list: Kind, item: QueueAdd): QueueItem = state.updateAndGet(_.added(list, item, now)).items.last
@@ -99,5 +106,8 @@ object QueueService:
         val start = if mode == ImportMode.Replace then s.emptied(list) else s
         start.addedAll(list, items, at)
       }
-      ImportCounts(items.size, if mode == ImportMode.Replace then before.listed(list, QueueScope.All).size else com.histmersion.domain.automation.worklists.ImportCounts.Removed(0))
+      ImportCounts(
+        ImportCounts.Written(items.size),
+        ImportCounts.Removed(if mode == ImportMode.Replace then before.listed(list, QueueScope.All).size else 0)
+      )
 

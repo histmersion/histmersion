@@ -236,7 +236,7 @@ final class PlanGoalPipeline(
       .toOption
       .toList
       .flatMap(queues.list(_, QueueScope.All))
-      .flatMap(i => Scheduling.dois(i.text.value).map(d => d.value -> i.id))
+      .flatMap(i => Scheduling.dois(i.text.value).map(d => (d.value: String) -> i.id))
       .toMap
     val (inCorpus, outside) = plan.works.partition(w => w.inCorpus.value && w.citekey.isDefined)
     inCorpus.foreach(w =>

@@ -293,7 +293,7 @@ object RunService:
           val bounded =
             all.filter(r => b.forall(c => ordering.lt(key(r), key(c))) && u.forall(c => ordering.gteq(key(r), key(c))))
           val n = math.max(1, limit.value)
-          val (shown, more) = Paging.cut(bounded.take(n + 1).toVector, n)
+          val (shown, more) = Paging.cut(bounded.take(n + 1).toVector, Paging.Limit(n))
           val older =
             if more || u.isEmpty then more
             else shown.lastOption.exists(last => all.exists(r => ordering.lt(key(r), key(last))))
@@ -334,7 +334,7 @@ object RunService:
     def checkpoint(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq): Option[(com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name, com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output)] =
       stepsOf(jobId)
         .filter(s => s.step.seq == seq && s.step.status == StepStatus.Done)
-        .sortBy(_.step.attempt.value)
+        .sortBy[Int](_.step.attempt.value)
         .lastOption
         .map(s => (s.step.name, s.step.output.getOrElse(AgentRepo.StepRecord.Output("null"))))
     def attempts(jobId: com.histmersion.util.jobs.Job.Id, seq: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq): com.histmersion.domain.automation.agents.RunService.Count =
@@ -359,7 +359,7 @@ object RunService:
       )
       jobs.stamped(Run.Id.assume(jobId.value))
     def steps(jobId: com.histmersion.util.jobs.Job.Id, outputChars: com.histmersion.domain.automation.agents.AgentRepo.OutputChars): List[StepInfo] =
-      stepsOf(jobId).sortBy(s => (s.step.seq.value, s.step.attempt.value)).toList.map { s =>
+      stepsOf(jobId).sortBy[(Int, Int)](s => (s.step.seq.value, s.step.attempt.value)).toList.map { s =>
         val r = s.step
         StepInfo(
           StepInfo.Seq(r.seq.value),
@@ -384,7 +384,7 @@ object RunService:
     def messages(jobId: com.histmersion.util.jobs.Job.Id): List[MessageInfo] =
       state.get.messages
         .filter(_.jobId == jobId)
-        .sortBy(m => (m.seq.value, m.attempt.value, m.message.n.value))
+        .sortBy[(Int, Int, Int)](m => (m.seq.value, m.attempt.value, m.message.n.value))
         .toList
         .map(m =>
           MessageInfo(

@@ -126,9 +126,9 @@ object AgentsTools:
                       AgentsMarkdown.runs(
                         rs,
                         page,
-                        f.qualifier,
+                        f.qualifier.map(q => Agents.RunInfo.Status(q.value)),
                         Paging
-                          .olderLine(page, c => s"call `run_status` again with the same filters and `before: \"$c\"`")
+                          .olderLine(page, c => Paging.OlderLine.Text(s"call `run_status` again with the same filters and `before: \"$c\"`"))
                       )
                   )
               )
@@ -160,9 +160,9 @@ object AgentsTools:
                     AgentsMarkdown.approvals(
                       as,
                       page,
-                      f.qualifier,
+                      f.qualifier.map(q => com.histmersion.api.automation.Approval.State.Wire(q.value)),
                       Paging
-                        .olderLine(page, c => s"call `list_approvals` again with the same filters and `before: \"$c\"`")
+                        .olderLine(page, c => Paging.OlderLine.Text(s"call `list_approvals` again with the same filters and `before: \"$c\"`"))
                     )
                 )
             )
@@ -419,7 +419,7 @@ object AgentsTools:
                         Managers.EnqueueRequest.Target(t),
                         in.priority.map(Managers.EnqueueRequest.Priority(_))
                       ))
-                      .map(i => Managers.EnqueueResult(id, List(i)))
+                      .map(i => Managers.EnqueueResult(Managers.ManagerInfo.Id(id.value), List(i)))
                   else m.enqueue(Managers.EnqueueRequest(
                       Managers.EnqueueRequest.Kind(in.kind.getOrElse("review")),
                       Managers.EnqueueRequest.Target(t),

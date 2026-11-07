@@ -35,6 +35,15 @@ final class McpTools(
 ):
   import McpTools.*
 
+  private def refusedValue(what: String, raw: String, code: String): Api.Error =
+    Api.Error(Api.Error.Message(s"invalid $what '$raw'"), Some(Api.Error.Code(code)))
+
+  private def invalidValue(what: String, raw: String): Api.Error =
+    refusedValue(what, raw, com.histmersion.api.Write.CodeInvalid)
+
+  private def noSuchJob(raw: String): Api.Error =
+    Api.Error(Api.Error.Message(s"No job '$raw'"), Some(Api.Error.Code(com.histmersion.api.Write.CodeNotFound)))
+
   private val ping =
     tool("ping")
       .description("Liveness check for the Histmersion MCP server")
@@ -60,19 +69,25 @@ final class McpTools(
       )
       .input[IngestInput]
       .handle { in =>
-        h.ingest.controllers.fromTool(
-          in.citekey,
-          in.path,
-          in.base64,
-          in.filename,
-          in.quality,
-          in.force,
-          in.title,
-          in.authors,
-          in.year,
-          in.doi,
-          in.acquireItem
-        ) match
+        com.histmersion.domain.library.Citekey
+          .parse(in.citekey)
+          .left
+          .map(p => Api.Error(Api.Error.Message(p.value), Some(Api.Error.Code(com.histmersion.api.Write.CodeInvalid))))
+          .flatMap(ck =>
+            h.ingest.controllers.fromTool(
+              ck,
+              in.path.map(com.histmersion.domain.library.ingest.ToolFiles.Path(_)),
+              in.base64.map(com.histmersion.domain.library.ingest.IngestControllers.Base64(_)),
+              in.filename.map(com.histmersion.api.library.Ingest.Params.Filename(_)),
+              com.histmersion.api.library.Ingest.Params.Quality(in.quality),
+              com.histmersion.api.library.Ingest.Params.Force(in.force),
+              in.title.map(com.histmersion.domain.Title(_)),
+              in.authors.map(com.histmersion.domain.library.ingest.IngestMeta.Authors(_)),
+              in.year.map(com.histmersion.Year(_)),
+              in.doi.flatMap(com.histmersion.domain.library.Doi.normalize),
+              in.acquireItem.map(com.histmersion.domain.library.acquisition.AcquireCheckRow.Item(_))
+            )
+          ) match
           case Right(a) =>
             ToolResult.text(s"queued job `${a.jobId}` for **${a.citekey}** — poll `job_status` with that id")
           case Left(e) => McpOut.error(e)
@@ -91,14 +106,24 @@ final class McpTools(
       .handle { in =>
         in.id.map(_.trim).filter(_.nonEmpty) match
           case Some(id) =>
-            h.jobs.job(id) match
+            com.histmersion.util.jobs.Job.Id
+              .either(id)
+              .left
+              .map(_ => noSuchJob(id))
+              .flatMap(h.jobs.job) match
               case Right(j) => ToolResult.text(IngestMarkdown.job(j))
               case Left(e)  => McpOut.error(e)
           case None =>
             val f = in.filter
             ToolResult.text(
               h.jobList
-                .page(f, java.time.Instant.now(h.clock), in.limit, in.before, None)
+                .page(
+                  f,
+                  java.time.Instant.now(h.clock),
+                  in.limit.flatMap(com.histmersion.PageSize.option(_)),
+                  in.before.map(com.histmersion.server.views.JobListView.Cursor(_)),
+                  None
+                )
                 .fold(
                   McpOut.refusal,
                   (js, page) =>
@@ -123,7 +148,12 @@ final class McpTools(
       )
       .input[JobControlInput]
       .handle(in =>
-        h.jobControl.control(in.id, in.action).fold(McpOut.error, j => ToolResult.text(IngestMarkdown.job(j)))
+        com.histmersion.util.jobs.Job.Id
+          .either(in.id.trim)
+          .left
+          .map(_ => noSuchJob(in.id))
+          .flatMap(h.jobControl.control(_, com.histmersion.util.jobs.JobAction.Wire(in.action)))
+          .fold(McpOut.error, j => ToolResult.text(IngestMarkdown.job(j)))
       )
 
   private val activityTool =
@@ -138,7 +168,13 @@ final class McpTools(
       .input[ActivityInput]
       .handle { in =>
         h.activity
-          .page(in.show, in.since, in.goal, in.limit, in.before)
+          .page(
+            in.show.map(com.histmersion.api.automation.Activity.Show.Wire(_)),
+            in.since.map(ListFilters.TimeBound(_)),
+            in.goal.map(com.histmersion.domain.activity.ActivityQuery.Goal(_)),
+            in.limit.map(com.histmersion.domain.activity.ActivityQuery.Limit(_)),
+            in.before.map(com.histmersion.domain.activity.ActivityCursor.Wire(_))
+          )
           .fold(
             McpOut.error,
             p =>
@@ -172,29 +208,42 @@ final class McpTools(
       )
       .input[ConfigInput]
       .handle { in =>
-        def page(f: com.histmersion.api.settings.ConfigEdit.Page => com.histmersion.server.McpTools.PageFResult, prefix: Option[com.histmersion.server.McpTools.ConfigInput.Prefix]) =
-          h.settings.page(prefix).fold(McpOut.error, p => ToolResult.text(f(p)))
+        def page(f: com.histmersion.api.settings.ConfigEdit.Page => String, prefix: Option[String]) =
+          h.settings
+            .page(prefix.map(com.histmersion.util.settings.SettingsService.ConfigPath(_)))
+            .fold(McpOut.error, p => ToolResult.text(f(p)))
         in.action.trim.toLowerCase(java.util.Locale.ROOT) match
           case "reload" => ToolResult.text(ReloadMarkdown.report(h.instance.configReload()))
           case "get"    =>
             in.key.map(_.trim).filter(_.nonEmpty) match
-              case Some(k) => page(p => p.field(k).fold(s"No setting called $k.")(ConfigEditMarkdown.field), Some(k))
+              case Some(k) =>
+                page(
+                  p =>
+                    p.field(com.histmersion.api.settings.ConfigEdit.Field.Key(k))
+                      .fold(s"No setting called $k.")(ConfigEditMarkdown.field),
+                  Some(k)
+                )
               case None    => page(ConfigEditMarkdown.page, in.prefix)
           case "set" | "unset" =>
             in.key.map(_.trim).filter(_.nonEmpty) match
-              case None    => McpOut.error(Api.Error(s"`${in.action}` needs a `key`"))
+              case None    => McpOut.error(Api.Error(Api.Error.Message(s"`${in.action}` needs a `key`")))
               case Some(k) =>
                 val value = if in.action.trim.equalsIgnoreCase("unset") then None else Some(in.value.getOrElse(""))
                 h.settings
                   .write(
                     com.histmersion.api.settings.ConfigEdit.Write(
-                      List(com.histmersion.api.settings.ConfigEdit.Change(k, value)),
+                      List(
+                        com.histmersion.api.settings.ConfigEdit.Change(
+                          com.histmersion.api.settings.ConfigEdit.Field.Key(k),
+                          value.map(com.histmersion.api.settings.ConfigEdit.Change.Value(_))
+                        )
+                      ),
                       literalConsent = in.literalConsent.getOrElse(false)
                     )
                   )
                   .fold(McpOut.error, w => ToolResult.text(ConfigEditMarkdown.written(w)))
           case "restart" => h.settings.restart().fold(McpOut.error, r => ToolResult.text(ConfigEditMarkdown.restart(r)))
-          case other => McpOut.error(Api.Error(s"unknown action '$other' (one of: get, set, unset, reload, restart)"))
+          case other => McpOut.error(Api.Error(Api.Error.Message(s"unknown action '$other' (one of: get, set, unset, reload, restart)")))
       }
 
   private val backup =
@@ -245,11 +294,19 @@ final class McpTools(
       .handle { in =>
         in.slug.map(_.trim).filter(_.nonEmpty) match
           case Some(slug) =>
-            h.agents.goalView(slug) match
+            com.histmersion.domain.automation.Goal.Slug
+              .either(slug)
+              .left
+              .map(_ => refusedValue("goal", slug, com.histmersion.api.Write.CodeNotFound))
+              .flatMap(h.agents.goalView) match
               case Right(v) => ToolResult.text(AgentsMarkdown.goalView(v))
               case Left(e)  => McpOut.error(e)
           case None =>
-            val q = Api.GoalQuery(in.status, in.limit, in.offset)
+            val q = Api.GoalQuery(
+              in.status.map(Api.GoalQuery.Status(_)),
+              in.limit.map(Api.GoalQuery.Limit(_)),
+              in.offset.map(Api.GoalQuery.Offset(_))
+            )
             ToolResult.text(GoalsMarkdown.goalList(h.goals.list(q)))
       }
 
@@ -263,10 +320,27 @@ final class McpTools(
       .input[GoalPutInput]
       .handle { in =>
         val put =
-          Goal.Put(in.title, in.status, in.notes, in.tags, in.regions, in.periodStart, in.periodEnd, in.parentSlug)
-        h.goals.put(in.slug, put) match
+          Goal.Put(
+            Goal.Title(in.title),
+            Goal.StatusValue(in.status),
+            in.notes.map(Goal.Notes(_)),
+            in.tags.map(Goal.Tags(_)),
+            in.regions.map(Goal.Regions(_)),
+            in.periodStart.map(com.histmersion.api.catalogue.Year(_)),
+            in.periodEnd.map(com.histmersion.api.catalogue.Year(_)),
+            in.parentSlug.map(Goal.Slug(_))
+          )
+        com.histmersion.domain.automation.Goal.Slug
+          .either(in.slug)
+          .left
+          .map(_ => invalidValue("goal slug", in.slug))
+          .flatMap(h.goals.put(_, put)) match
           case Right(g) =>
-            ToolResult.text(Aliases.note(AliasKinds.GoalRecords, in.slug, g.slug)(GoalsMarkdown.goal(g)))
+            ToolResult.text(
+              Aliases.note(AliasKinds.GoalRecords, Aliases.Id(in.slug), Aliases.Id(g.slug.value))(
+                Aliases.Note(GoalsMarkdown.goal(g))
+              )
+            )
           case Left(e) => McpOut.error(e)
       }
 
@@ -276,19 +350,27 @@ final class McpTools(
       .input[GoalPatchInput]
       .handle { in =>
         val p = Goal.Patch(
-          in.title,
-          in.status,
-          in.notes,
-          in.tags,
-          in.regions,
-          in.periodStart,
-          in.periodEnd,
-          in.parentSlug,
-          in.budgetUsd
+          in.title.map(Goal.Title(_)),
+          in.status.map(Goal.StatusValue(_)),
+          in.notes.map(Goal.Notes(_)),
+          in.tags.map(_.map(Goal.Tags(_))),
+          in.regions.map(_.map(Goal.Regions(_))),
+          in.periodStart.map(com.histmersion.api.catalogue.Year(_)),
+          in.periodEnd.map(com.histmersion.api.catalogue.Year(_)),
+          in.parentSlug.map(Goal.Slug(_)),
+          in.budgetUsd.map(Goal.Patch.BudgetUsd(_))
         )
-        h.goals.patch(in.slug, p) match
+        com.histmersion.domain.automation.Goal.Slug
+          .either(in.slug)
+          .left
+          .map(_ => invalidValue("goal slug", in.slug))
+          .flatMap(h.goals.patch(_, p)) match
           case Right(g) =>
-            ToolResult.text(Aliases.note(AliasKinds.GoalRecords, in.slug, g.slug)(GoalsMarkdown.goal(g)))
+            ToolResult.text(
+              Aliases.note(AliasKinds.GoalRecords, Aliases.Id(in.slug), Aliases.Id(g.slug.value))(
+                Aliases.Note(GoalsMarkdown.goal(g))
+              )
+            )
           case Left(e) => McpOut.error(e)
       }
 
@@ -304,11 +386,14 @@ final class McpTools(
           case Some(key) =>
             in.value.map(_.trim).filter(_.nonEmpty) match
               case Some(v) =>
-                h.agentState.set(key, AgentStatePut(v)) match
+                h.agentState.set(
+                  com.histmersion.domain.automation.agents.AgentStateRecord.Key(key),
+                  AgentStatePut(AgentStatePut.Value(v))
+                ) match
                   case Right(e) => ToolResult.text(AgentStateMarkdown.agentState(e))
                   case Left(e)  => McpOut.error(e)
               case None =>
-                h.agentState.get(key) match
+                h.agentState.get(com.histmersion.domain.automation.agents.AgentStateRecord.Key(key)) match
                   case Right(e) => ToolResult.text(AgentStateMarkdown.agentState(e))
                   case Left(e)  => McpOut.error(e)
           case None =>
@@ -320,7 +405,7 @@ final class McpTools(
       .description("Delete an agent state key.")
       .input[DeleteAgentStateInput]
       .handle { in =>
-        h.agentState.delete(in.key) match
+        h.agentState.delete(com.histmersion.domain.automation.agents.AgentStateRecord.Key(in.key)) match
           case Right(d) => ToolResult.text(s"Deleted agent state key '${d.key}'.")
           case Left(e)  => McpOut.error(e)
       }
@@ -346,10 +431,10 @@ final class McpTools(
           case Some(Left(e)) => ToolResult.text(s"_editions '$e' is not merge or separate_")
           case other         =>
             val res = MergeResolutions(
-              in.resolve.toList.sortBy(_._1).map((k, v) => MergeResolution(k, v)),
+              in.resolve.toList.sortBy(_._1).map((k, v) => MergeResolution(MergeResolution.Issue(k), MergeResolution.Decision(v))),
               MergePolicy(other.flatMap(_.toOption))
             )
-            h.bundles.plan(MergePlan.Request(in.bundle, res)) match
+            h.bundles.plan(MergePlan.Request(MergePlan.Request.Bundle(in.bundle), res)) match
               case Right(p) => ToolResult.text(MergeMarkdown.plan(p, in.all))
               case Left(e)  => McpOut.error(e)
       }
@@ -370,14 +455,18 @@ final class McpTools(
       .handle { in =>
         MergesAction.parse(in.action) match
           case None => ToolResult.text(s"_action '${in.action.getOrElse("")}' is not list, show or ledger_")
-          case Some(MergesAction.List) => ToolResult.text(MergeMarkdown.merges(h.bundles.merges(in.limit)))
+          case Some(MergesAction.List) => ToolResult.text(MergeMarkdown.merges(h.bundles.merges(in.limit.map(Api.Merge.Limit(_)))))
           case Some(MergesAction.Show) =>
             in.id.fold(ToolResult.text("_show needs `id` (a merge id from `list`)_"))(id =>
-              h.bundles.mergeDetail(id).fold(McpOut.error, d => ToolResult.text(MergeMarkdown.detail(d)))
+              h.bundles.mergeDetail(com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix(id)).fold(McpOut.error, d => ToolResult.text(MergeMarkdown.detail(d)))
             )
           case Some(MergesAction.Ledger) =>
             h.bundles
-              .mergeLedger(in.uid, in.id, in.limit)
+              .mergeLedger(
+                in.uid.map(com.histmersion.util.data.exchange.MergeRepo.UidText(_)),
+                in.id.map(com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix(_)),
+                in.limit.map(Api.Merge.Limit(_))
+              )
               .fold(McpOut.error, l => ToolResult.text(MergeMarkdown.ledger(l)))
       }
 
@@ -395,12 +484,20 @@ final class McpTools(
       )
       .input[RenameLabelInput]
       .handle { in =>
-        val req = LabelRename(in.to)
+        val req = LabelRename(LabelRename.To(in.to))
+        def renamed[A](parsed: Either[String, A], what: String)(rename: A => Either[Api.Error, com.histmersion.api.aliases.LabelRenamed]) =
+          Right(parsed.left.map(_ => invalidValue(what, in.from)).flatMap(rename))
         val r = in.kind.trim.toLowerCase(java.util.Locale.ROOT) match
-          case "article" => Right(h.research.articles.rename(in.from, req))
-          case "event"   => Right(h.events.renamed(in.from, req))
-          case "goal"    => Right(h.goals.rename(in.from, req))
-          case "place"   => Right(h.places.renamed(in.from, req))
+          case "article" =>
+            renamed(com.histmersion.domain.research.Slug.parse(in.from).left.map(_.value), "slug")(
+              h.research.articles.rename(_, req)
+            )
+          case "event" =>
+            renamed(com.histmersion.domain.catalogue.Event.Id.either(in.from.trim), "event id")(h.events.renamed(_, req))
+          case "goal" =>
+            renamed(com.histmersion.domain.automation.Goal.Slug.either(in.from.trim), "goal slug")(h.goals.rename(_, req))
+          case "place" =>
+            renamed(com.histmersion.domain.catalogue.Place.Id.either(in.from.trim), "place id")(h.places.renamed(_, req))
           case other     => Left(s"_kind '$other' is not article, event, goal or place_")
         r.fold(ToolResult.text, _.fold(McpOut.error, x => ToolResult.text(MergeMarkdown.renamed(x))))
       }
@@ -415,7 +512,7 @@ final class McpTools(
       h.library.sources,
       h.library.findings,
       h.library.citations,
-      ck => h.mirror.note(com.histmersion.domain.library.LibraryData.SourceNotes, ck)
+      ck => h.mirror.note(com.histmersion.domain.library.LibraryData.SourceNotes, com.histmersion.util.data.mirror.MirrorPlacement.RecordId(ck.value))
     ) ++ List(
       backup,
       configTool,
@@ -455,7 +552,7 @@ final class McpTools(
               com.histmersion.server.agents.EngineContributions
                 .work(h.agents)
                 .oaBacklog
-                .repair(RepairAcquire.RepairRequest(dry, Some(com.histmersion.api.automation.Activity.Actor("mcp"))))
+                .repair(RepairAcquire.RepairRequest(RepairAcquire.RepairRequest.DryRun(dry.value), Some(com.histmersion.api.automation.Activity.Actor("mcp"))))
             )
           ),
         st => h.autopilot.page(st).markdown
@@ -468,44 +565,23 @@ final class McpTools(
   val endpoint = server.endpoint(List("mcp"))
 
   /** Every tool `/mcp` advertises — what a `{{tool:<name>}}` placeholder in a definition may name. */
-  def toolNames: Set[com.histmersion.server.McpTools.ToolNamesResult] = server.tools.map(_.name).toSet
+  def toolNames: Set[String] = server.tools.map(_.name).toSet
 
 object McpTools:
-  type AgentStateKey = AgentStateKey.T
-  object AgentStateKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeBound = TimeBound.T
-  object TimeBound extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageFResult = PageFResult.T
-  object PageFResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToolNamesResult = ToolNamesResult.T
-  object ToolNamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   export com.histmersion.util.mcp.ToolInputs.given
 
   // Circe Codec + tapir Schema both derived from each input by Kindlings → matching by construction.
   final case class PingInput() derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
-
   /** The `config` tool's input: what to do with the server's configuration. */
   final case class ConfigInput(
-      action: ConfigInput.Action,
-      key: Option[ConfigInput.Key] = None,
-      value: Option[ConfigInput.Value] = None,
-      prefix: Option[ConfigInput.Prefix] = None,
-      literalConsent: Option[ConfigInput.LiteralConsent] = None
+      action: String,
+      key: Option[String] = None,
+      value: Option[String] = None,
+      prefix: Option[String] = None,
+      literalConsent: Option[Boolean] = None
   ) derives KindlingsCodecAsObject
   object ConfigInput:
-    type Action = Action.T
-    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Key = Key.T
-    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Prefix = Prefix.T
-    object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LiteralConsent = LiteralConsent.T
-    object LiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     given Schema[ConfigInput] = KindlingsSchema
       .derived[ConfigInput]
       .schema
@@ -521,45 +597,20 @@ object McpTools:
 
   // ── ingest / jobs / assets (plan §1.8). Declared LAST, for the same reason `PlacesInput` was. ──
   final case class IngestInput(
-      citekey: IngestInput.Citekey,
-      path: Option[IngestInput.Path] = None,
-      base64: Option[IngestInput.Base64] = None,
-      filename: Option[IngestInput.Filename] = None,
-      quality: IngestInput.Quality = com.histmersion.server.McpTools.IngestInput.Quality(false),
-      force: IngestInput.Force = com.histmersion.server.McpTools.IngestInput.Force(false),
-      title: Option[IngestInput.Title] = None,
-      authors: List[IngestInput.Authors] = Nil,
-      year: Option[IngestInput.Year] = None,
-      doi: Option[IngestInput.Doi] = None,
-      provenance: Option[IngestInput.Provenance] = None,
-      acquireItem: Option[IngestInput.AcquireItem] = None
+      citekey: String,
+      path: Option[String] = None,
+      base64: Option[String] = None,
+      filename: Option[String] = None,
+      quality: Boolean = false,
+      force: Boolean = false,
+      title: Option[String] = None,
+      authors: List[String] = Nil,
+      year: Option[Int] = None,
+      doi: Option[String] = None,
+      provenance: Option[String] = None,
+      acquireItem: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object IngestInput:
-    type Citekey = com.histmersion.domain.library.Citekey
-    val Citekey: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
-    type Path = Path.T
-    object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Base64 = Base64.T
-    object Base64 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Filename = Filename.T
-    object Filename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Quality = Quality.T
-    object Quality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Force = Force.T
-    object Force extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = com.histmersion.domain.Title
-    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
-    type Authors = Authors.T
-    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Year = com.histmersion.Year
-    val Year: _root_.com.histmersion.Year.type = _root_.com.histmersion.Year
-    type Doi = com.histmersion.domain.library.Doi
-    val Doi: _root_.com.histmersion.domain.library.Doi.type = _root_.com.histmersion.domain.library.Doi
-    type Provenance = Provenance.T
-    object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AcquireItem = AcquireItem.T
-    object AcquireItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     given Schema[IngestInput] = KindlingsSchema
       .derived[IngestInput]
       .schema
@@ -575,66 +626,36 @@ object McpTools:
         _.description("Id of the acquisition-queue item this document fulfils; ticked off when the OCR job succeeds")
       )
 
-  final case class JobControlInput(id: JobControlInput.Id, action: JobControlInput.Action) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
-
-  object JobControlInput:
-    type Id = com.histmersion.util.jobs.Job.Id
-    val Id: _root_.com.histmersion.util.jobs.Job.Id.type = _root_.com.histmersion.util.jobs.Job.Id
-    type Action = Action.T
-    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
+  final case class JobControlInput(id: String, action: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   final case class ActivityInput(
-      show: Option[ActivityInput.Show] = None,
-      since: Option[ActivityInput.Since] = None,
-      goal: Option[ActivityInput.Goal] = None,
-      limit: Option[ActivityInput.Limit] = None,
-      before: Option[ActivityInput.Before] = None
+      show: Option[String] = None,
+      since: Option[String] = None,
+      goal: Option[String] = None,
+      limit: Option[Int] = None,
+      before: Option[String] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
-  object ActivityInput:
-    type Show = Show.T
-    object Show extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Since = com.histmersion.server.McpTools.TimeBound
-    val Since: _root_.com.histmersion.server.McpTools.TimeBound.type = _root_.com.histmersion.server.McpTools.TimeBound
-    type Goal = com.histmersion.domain.automation.Goal.Slug
-    val Goal: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
-    type Limit = com.histmersion.PageSize
-    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
-    type Before = com.histmersion.server.McpTools.TimeBound
-    val Before: _root_.com.histmersion.server.McpTools.TimeBound.type = _root_.com.histmersion.server.McpTools.TimeBound
-
-
   final case class JobStatusInput(
-      id: Option[JobStatusInput.Id] = None,
-      status: Option[JobStatusInput.Status] = None,
-      limit: Option[JobStatusInput.Limit] = None,
-      before: Option[JobStatusInput.Before] = None,
-      kind: List[JobStatusInput.Kind] = Nil,
-      since: Option[JobStatusInput.Since] = None,
-      until: Option[JobStatusInput.Until] = None,
-      subject: Option[JobStatusInput.Subject] = None
+      id: Option[String] = None,
+      status: Option[String] = None,
+      limit: Option[Int] = None,
+      before: Option[String] = None,
+      kind: List[String] = Nil,
+      since: Option[String] = None,
+      until: Option[String] = None,
+      subject: Option[String] = None
   ) derives KindlingsCodecAsObject:
-    def filter: ListFilters.JobFilter = ListFilters.JobFilter(status.toList, kind, since, until, subject)
+    def filter: ListFilters.JobFilter =
+      ListFilters.JobFilter(
+        status.toList.map(ListFilters.JobFilter.Status(_)),
+        kind.map(ListFilters.JobFilter.Kind(_)),
+        since.map(ListFilters.JobFilter.Since(_)),
+        until.map(ListFilters.JobFilter.Until(_)),
+        subject.map(ListFilters.JobFilter.Subject(_))
+      )
   object JobStatusInput:
-    type Id = com.histmersion.util.jobs.Job.Id
-    val Id: _root_.com.histmersion.util.jobs.Job.Id.type = _root_.com.histmersion.util.jobs.Job.Id
-    type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = com.histmersion.PageSize
-    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
-    type Before = com.histmersion.server.McpTools.TimeBound
-    val Before: _root_.com.histmersion.server.McpTools.TimeBound.type = _root_.com.histmersion.server.McpTools.TimeBound
-    type Kind = com.histmersion.util.jobs.Job.Kind
-    val Kind: _root_.com.histmersion.util.jobs.Job.Kind.type = _root_.com.histmersion.util.jobs.Job.Kind
-    type Since = com.histmersion.server.McpTools.TimeBound
-    val Since: _root_.com.histmersion.server.McpTools.TimeBound.type = _root_.com.histmersion.server.McpTools.TimeBound
-    type Until = com.histmersion.server.McpTools.TimeBound
-    val Until: _root_.com.histmersion.server.McpTools.TimeBound.type = _root_.com.histmersion.server.McpTools.TimeBound
-    type Subject = Subject.T
-    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     given Schema[JobStatusInput] = KindlingsSchema
       .derived[JobStatusInput]
       .schema
@@ -653,21 +674,12 @@ object McpTools:
       .modify(_.before)(_.description("Listing: the next older page — the id of the last job shown"))
 
   final case class GoalsInput(
-      slug: Option[GoalsInput.Slug] = None,
-      status: Option[GoalsInput.Status] = None,
-      limit: Option[GoalsInput.Limit] = None,
-      offset: Option[GoalsInput.Offset] = None
+      slug: Option[String] = None,
+      status: Option[String] = None,
+      limit: Option[Int] = None,
+      offset: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object GoalsInput:
-    type Slug = com.histmersion.domain.automation.Goal.Slug
-    val Slug: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
-    type Status = com.histmersion.domain.automation.Goal.Status.Wire
-    val Status: _root_.com.histmersion.domain.automation.Goal.Status.Wire.type = _root_.com.histmersion.domain.automation.Goal.Status.Wire
-    type Limit = com.histmersion.PageSize
-    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
-    type Offset = com.histmersion.Offset
-    val Offset: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
-
     given Schema[GoalsInput] = KindlingsSchema
       .derived[GoalsInput]
       .schema
@@ -675,36 +687,17 @@ object McpTools:
       .modify(_.status)(_.description("Filter: planned|seeding|compiled|reviewed|done"))
 
   final case class GoalPutInput(
-      slug: GoalPutInput.Slug,
-      title: GoalPutInput.Title,
-      status: GoalPutInput.Status = com.histmersion.server.McpTools.GoalPutInput.Status("planned"),
-      notes: Option[GoalPutInput.Notes] = None,
-      tags: List[GoalPutInput.Tags] = Nil,
-      regions: List[GoalPutInput.Regions] = Nil,
-      periodStart: Option[GoalPutInput.PeriodStart] = None,
-      periodEnd: Option[GoalPutInput.PeriodEnd] = None,
-      parentSlug: Option[GoalPutInput.ParentSlug] = None
+      slug: String,
+      title: String,
+      status: String = "planned",
+      notes: Option[String] = None,
+      tags: List[String] = Nil,
+      regions: List[String] = Nil,
+      periodStart: Option[Long] = None,
+      periodEnd: Option[Long] = None,
+      parentSlug: Option[String] = None
   )
   object GoalPutInput:
-    type Slug = com.histmersion.domain.automation.Goal.Slug
-    val Slug: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
-    type Title = com.histmersion.domain.Title
-    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
-    type Status = com.histmersion.domain.automation.Goal.Status.Wire
-    val Status: _root_.com.histmersion.domain.automation.Goal.Status.Wire.type = _root_.com.histmersion.domain.automation.Goal.Status.Wire
-    type Notes = Notes.T
-    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Regions = Regions.T
-    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PeriodStart = PeriodStart.T
-    object PeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PeriodEnd = PeriodEnd.T
-    object PeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParentSlug = com.histmersion.domain.automation.Goal.Slug
-    val ParentSlug: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
-
     given Schema[GoalPutInput] = KindlingsSchema
       .derived[GoalPutInput]
       .schema
@@ -715,39 +708,18 @@ object McpTools:
     given Codec.AsObject[GoalPutInput] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPutInput]) // #813
 
   final case class GoalPatchInput(
-      slug: GoalPatchInput.Slug,
-      title: Option[GoalPatchInput.Title] = None,
-      status: Option[GoalPatchInput.Status] = None,
-      notes: Option[GoalPatchInput.Notes] = None,
-      tags: Option[List[GoalPatchInput.Tags]] = None,
-      regions: Option[List[GoalPatchInput.Regions]] = None,
-      periodStart: Option[GoalPatchInput.PeriodStart] = None,
-      periodEnd: Option[GoalPatchInput.PeriodEnd] = None,
-      parentSlug: Option[GoalPatchInput.ParentSlug] = None,
-      budgetUsd: Option[GoalPatchInput.BudgetUsd] = None
+      slug: String,
+      title: Option[String] = None,
+      status: Option[String] = None,
+      notes: Option[String] = None,
+      tags: Option[List[String]] = None,
+      regions: Option[List[String]] = None,
+      periodStart: Option[Long] = None,
+      periodEnd: Option[Long] = None,
+      parentSlug: Option[String] = None,
+      budgetUsd: Option[Double] = None
   )
   object GoalPatchInput:
-    type Slug = com.histmersion.domain.automation.Goal.Slug
-    val Slug: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
-    type Title = com.histmersion.domain.Title
-    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
-    type Status = com.histmersion.domain.automation.Goal.Status.Wire
-    val Status: _root_.com.histmersion.domain.automation.Goal.Status.Wire.type = _root_.com.histmersion.domain.automation.Goal.Status.Wire
-    type Notes = Notes.T
-    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Regions = Regions.T
-    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PeriodStart = PeriodStart.T
-    object PeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PeriodEnd = PeriodEnd.T
-    object PeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParentSlug = com.histmersion.domain.automation.Goal.Slug
-    val ParentSlug: _root_.com.histmersion.domain.automation.Goal.Slug.type = _root_.com.histmersion.domain.automation.Goal.Slug
-    type BudgetUsd = BudgetUsd.T
-    object BudgetUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     given Schema[GoalPatchInput] = KindlingsSchema
       .derived[GoalPatchInput]
       .schema
@@ -762,26 +734,18 @@ object McpTools:
     given Codec.AsObject[GoalPatchInput] = StrictJson.codec(KindlingsCodecAsObject.derived[GoalPatchInput]) // #813
 
   final case class AgentStateInput(
-      key: Option[AgentStateInput.Key] = None,
-      value: Option[AgentStateInput.Value] = None
+      key: Option[String] = None,
+      value: Option[String] = None
   ) derives KindlingsCodecAsObject
   object AgentStateInput:
-    type Key = com.histmersion.server.McpTools.AgentStateKey
-    val Key: _root_.com.histmersion.server.McpTools.AgentStateKey.type = _root_.com.histmersion.server.McpTools.AgentStateKey
-    type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     given Schema[AgentStateInput] = KindlingsSchema
       .derived[AgentStateInput]
       .schema
       .modify(_.key)(_.description("State key to get or set (omit for listing all keys)"))
       .modify(_.value)(_.description("JSON string value to set (omit to just read the key)"))
 
-  final case class DeleteAgentStateInput(key: DeleteAgentStateInput.Key) derives KindlingsCodecAsObject
+  final case class DeleteAgentStateInput(key: String) derives KindlingsCodecAsObject
   object DeleteAgentStateInput:
-    type Key = com.histmersion.server.McpTools.AgentStateKey
-    val Key: _root_.com.histmersion.server.McpTools.AgentStateKey.type = _root_.com.histmersion.server.McpTools.AgentStateKey
-
     given Schema[DeleteAgentStateInput] = KindlingsSchema
       .derived[DeleteAgentStateInput]
       .schema
@@ -789,23 +753,12 @@ object McpTools:
 
   /** Input of the `merge_plan` tool (docs/research-merge-import.md §6, M3). */
   final case class MergePlanInput(
-      bundle: MergePlanInput.Bundle,
-      resolve: Map[MergePlanInput.ResolveKey, MergePlanInput.ResolveValue] = Map.empty,
-      editions: Option[MergePlanInput.Editions] = None,
-      all: MergePlanInput.All = com.histmersion.server.McpTools.MergePlanInput.All(false)
+      bundle: String,
+      resolve: Map[String, String] = Map.empty,
+      editions: Option[String] = None,
+      all: Boolean = false
   )
   object MergePlanInput:
-    type Bundle = Bundle.T
-    object Bundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveKey = ResolveKey.T
-    object ResolveKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveValue = ResolveValue.T
-    object ResolveValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Editions = Editions.T
-    object Editions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type All = All.T
-    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     given Schema[MergePlanInput] = KindlingsSchema
       .derived[MergePlanInput]
       .schema
@@ -821,31 +774,19 @@ object McpTools:
   enum MergesAction:
     case List, Show, Ledger
   object MergesAction:
-    type ParseRaw = ParseRaw.T
-    object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-    def parse(raw: Option[com.histmersion.server.McpTools.MergesAction.ParseRaw]): Option[MergesAction] =
+    def parse(raw: Option[String]): Option[MergesAction] =
       raw.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
         case None    => Some(List)
         case Some(a) => values.find(_.toString.equalsIgnoreCase(a))
 
   /** Input of the `merges` tool (docs/research-merge-import.md §6.1, M7). */
   final case class MergesInput(
-      action: Option[MergesInput.Action] = None,
-      id: Option[MergesInput.Id] = None,
-      uid: Option[MergesInput.Uid] = None,
-      limit: Option[MergesInput.Limit] = None
+      action: Option[String] = None,
+      id: Option[String] = None,
+      uid: Option[String] = None,
+      limit: Option[Int] = None
   )
   object MergesInput:
-    type Action = Action.T
-    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Uid = Uid.T
-    object Uid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = com.histmersion.PageSize
-    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
-
     given Schema[MergesInput] = KindlingsSchema
       .derived[MergesInput]
       .schema
@@ -856,15 +797,8 @@ object McpTools:
     given Codec.AsObject[MergesInput] = StrictJson.codec(KindlingsCodecAsObject.derived[MergesInput])
 
   /** Input of the `rename_label` tool (V042, V053, V055). */
-  final case class RenameLabelInput(kind: RenameLabelInput.Kind, from: RenameLabelInput.From, to: RenameLabelInput.To)
+  final case class RenameLabelInput(kind: String, from: String, to: String)
   object RenameLabelInput:
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type From = From.T
-    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type To = To.T
-    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     given Schema[RenameLabelInput] = KindlingsSchema
       .derived[RenameLabelInput]
       .schema

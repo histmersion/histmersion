@@ -295,7 +295,10 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
           case None    => c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy("the goal no longer exists"))
           case Some(g) =>
             // sub-goals only above the depth limit (a goal there gets queries and works, no children)
-            val depth = AutopilotPolicy.depth(com.histmersion.domain.automation.Goal.Slug.assume(g.slug.value), c.parentOf)
+            val depth = AutopilotPolicy.depth(
+              com.histmersion.domain.research.Slug.assume(g.slug.value),
+              s => c.parentOf(com.histmersion.domain.automation.Goal.Slug.assume(s.value)).map(p => com.histmersion.domain.research.Slug.assume(p.value))
+            )
             val leaf = depth.value >= c.cfg.approvals.auto.maxGoalDepth.value
             c.start(
               m,

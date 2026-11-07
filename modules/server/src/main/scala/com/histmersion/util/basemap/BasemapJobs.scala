@@ -21,7 +21,7 @@ trait BasemapJobs:
     * it failed; `Left` — [[busy]] — while another runs.
     */
   def start(kind: com.histmersion.util.jobs.Job.Kind, about: com.histmersion.util.basemap.BasemapJobs.Description, what: com.histmersion.util.basemap.BasemapJobs.Target, busyCode: Option[com.histmersion.util.basemap.BasemapJobs.Reason])(
-      body: (com.histmersion.util.basemap.BasemapJobs.Target => Unit) => Either[com.histmersion.util.basemap.BasemapJobs.Problem, com.histmersion.util.jobs.Job.Id]
+      body: (com.histmersion.util.basemap.BasemapJobs.Target => Unit) => Either[com.histmersion.util.basemap.BasemapJobs.Problem, com.histmersion.util.basemap.BasemapJobs.Description]
   ): Either[Api.Error, JobInfo]
 
 object BasemapJobs:

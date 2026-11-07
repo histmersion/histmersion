@@ -15,7 +15,7 @@ import com.histmersion.util.ocr.ConverterClient
   */
 final class MediaWiring(deps: Deps, http: HttpTransport, converter: ConverterClient):
   def this(deps: Deps, converter: ConverterClient) =
-    this(deps, JavaHttpTransport(deps.cfg.media.timeoutSeconds), converter)
+    this(deps, JavaHttpTransport(com.histmersion.pluginhost.HttpTransport.TimeoutSeconds(deps.cfg.media.timeoutSeconds.value)), converter)
   def this(deps: Deps, http: HttpTransport) = this(deps, http, MediaWiring.NoThumbnails)
   def this(deps: Deps) = this(deps, MediaWiring.NoThumbnails)
 
@@ -34,7 +34,7 @@ final class MediaWiring(deps: Deps, http: HttpTransport, converter: ConverterCli
 
   val assets: AssetsControllers = AssetsControllers(assetStore, sources, () => deps.cfg, deps.maintenance)
 
-  val iiif: IiifControllers = IiifControllers(assetStore, () => deps.cfg.server.publicUrl.stripSuffix("/"))
+  val iiif: IiifControllers = IiifControllers(assetStore, () => com.histmersion.domain.media.assets.IiifControllers.BaseUrl(deps.cfg.server.publicUrl.value.stripSuffix("/")))
 
   val links: AssetLinksControllers =
     AssetLinksControllers(
