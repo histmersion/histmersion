@@ -20,10 +20,8 @@ object FigureService:
       if apply then db.transact(FigureRepo.fillLicences(apply = true))
       else db.read(FigureRepo.fillLicences(apply = false))
 
-  object Implementation:
 
   /** Media's rows alone, in memory: no source is held, so no figure has a source licence to take. */
   final class InMemory extends FigureService:
     def fillLicences(apply: com.histmersion.domain.media.figures.FigureService.Apply): FigureLicenceFill = FigureLicenceFill(0, 0, apply, Nil)
 
-  object InMemory:

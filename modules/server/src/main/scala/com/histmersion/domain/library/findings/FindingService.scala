@@ -20,4 +20,3 @@ object FindingService:
     def feed(filter: Filter, scope: PlaceScope): List[GeoHit] = db.read(FindingRepo.findingsFor(filter, scope)).toList
     def count(filter: Filter, scope: PlaceScope): com.histmersion.RowCount = db.read(FindingRepo.findingsCount(filter, scope))
 
-  object Implementation:

@@ -172,7 +172,6 @@ object Store:
           .map(e => s"cannot store it in ${store.where()}: ${e.getMessage}")
           .flatten
 
-  object Contents:
 
   /** Why a store operation did not happen. `message` is what callers show; it names the path where the operation
     * failed, as the file system said.

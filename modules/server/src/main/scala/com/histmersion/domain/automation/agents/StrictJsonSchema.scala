@@ -37,9 +37,7 @@ object StrictJsonSchema:
   type StringFormatsValue = StringFormatsValue.T
   object StringFormatsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ConvertSeen = String
-  val ConvertSeen: String.type = String
   type ConvertObjectDefsPart1 = String
-  val ConvertObjectDefsPart1: String.type = String
 
   val Keywords: Set[com.histmersion.domain.automation.agents.StrictJsonSchema.Keywords] = Set(
     "type",

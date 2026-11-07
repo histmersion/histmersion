@@ -178,5 +178,4 @@ final class StorageFigures(registry: DataContributions):
     )
     StorageReports.withHints(report)
 
-object StorageFigures:
 

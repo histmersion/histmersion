@@ -68,4 +68,3 @@ final class BackupJobs(
         case Right(r) => Backup.Status.done(r)
         case Left(e)  => Backup.Status.failed(j.file, elapsed, e.message)
 
-object BackupJobs:

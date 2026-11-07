@@ -51,7 +51,6 @@ object JobRecords:
     ): Option[JobState] = Transactor(ds()).transact(JobRepo.transition(id, from, to, progress, error))
     def progress(id: com.histmersion.util.jobs.Job.Id, text: com.histmersion.util.jobs.JobRepo.ProgressText): Unit = Transactor(ds()).transact(JobRepo.progress(id, text))
 
-  object Implementation:
 
   /** The jobs in memory, as the table holds them; `clock` stands in for the database's `now()`. */
   final class InMemory(state: AtomicReference[Map[InMemory.StateKey, JobInfo]], clock: Clock) extends JobRecords:

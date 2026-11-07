@@ -18,4 +18,3 @@ enum ToolStyle:
     case Opencode => s"${AgentDefinitions.McpServer}_$name"
     case Bare     => name
 
-object ToolStyle:

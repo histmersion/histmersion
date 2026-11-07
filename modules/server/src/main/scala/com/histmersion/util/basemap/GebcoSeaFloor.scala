@@ -215,7 +215,6 @@ object GebcoSeaFloor:
         val v = buf.getShort(((row - run.firstRow) * part.grid.rowBytes + col * 2L).toInt)
         Option.when(!part.grid.noData.contains(v))(v)
 
-  object Rows:
 
 
   /** The elevation under pixel (`px`, `py`) of tile (`z`, `x`, `y`): the mean of the grid's samples under four points

@@ -5,4 +5,3 @@ trait ArticleCitations:
   /** The citekeys of the stored sources article `slug` cites, in its order. */
   def cited(slug: com.histmersion.domain.research.Slug): List[com.histmersion.domain.library.Citekey]
 
-object ArticleCitations:

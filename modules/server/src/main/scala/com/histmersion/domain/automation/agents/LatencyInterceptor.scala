@@ -36,4 +36,3 @@ final private[automation] class LatencyInterceptor(slots: Semaphore, beat: () =>
       slots.release()
       beat()
 
-object LatencyInterceptor:

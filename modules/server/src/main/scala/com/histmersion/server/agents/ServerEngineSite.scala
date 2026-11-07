@@ -43,4 +43,3 @@ final class ServerEngineSite(deps: Deps, w: ServerWiring, digestOn: Option[java.
   def host(a: AgentsControllers): AutomationHost =
     ServerAutomationHost(w, () => EngineContributions.work(a).acquisition)
 
-object ServerEngineSite:

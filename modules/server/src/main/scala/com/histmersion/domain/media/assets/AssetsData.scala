@@ -20,4 +20,3 @@ object AssetsData:
     def report(context: CheckContext, maxItems: com.histmersion.domain.media.assets.AssetsData.ReportMaxItems)(using CheckRun)(using DbCon): LintRuleReport =
       Lint.report(rule, MediaRepo.licenceGaps().map((id, detail) => LintItem(id, detail)), maxItems)
 
-  object Licences:

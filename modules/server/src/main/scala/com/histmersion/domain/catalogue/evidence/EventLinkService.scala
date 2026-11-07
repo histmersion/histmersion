@@ -49,7 +49,6 @@ object EventLinkService:
     def isChecked(id: com.histmersion.domain.catalogue.Event.Id): Boolean = db.read(EventLinkRepo.isChecked(id))
     def eventsToCheck(all: com.histmersion.domain.catalogue.evidence.EventLinkService.CheckAll, limit: com.histmersion.PageSize): List[com.histmersion.domain.catalogue.Event.Id] = db.read(EventLinkRepo.eventsToCheck(all, limit))
 
-  object Implementation:
 
   /** The same rules over the shared in-memory state; `title` names a source by its citekey (the library's), `None` for
     * one that is gone.

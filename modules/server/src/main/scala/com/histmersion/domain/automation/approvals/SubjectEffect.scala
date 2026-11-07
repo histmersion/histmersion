@@ -10,4 +10,3 @@ trait SubjectEffect:
   def kind: Approval.Kind
   def apply(a: ApprovalInfo): Either[com.histmersion.domain.automation.approvals.ApprovalEffects.Problem, String]
 
-object SubjectEffect:

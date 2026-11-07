@@ -69,7 +69,6 @@ object MediaImporter:
     def run(targets: List[Target], dryRun: com.histmersion.domain.media.imports.MediaImporter.DryRun, refresh: com.histmersion.domain.media.imports.MediaImporter.Refresh): MediaImportReport
     def requests: com.histmersion.domain.media.imports.MediaImporter.RequestCount
 
-  object Run:
 
   /** What a collection that asks about `asks` is said to ask about: "places", "events", "places and events". */
   def over(asks: Set[MediaTarget]): com.histmersion.domain.media.imports.MediaImporter.OverText =

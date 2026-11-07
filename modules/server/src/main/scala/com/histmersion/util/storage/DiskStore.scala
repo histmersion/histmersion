@@ -249,7 +249,6 @@ private[storage] object DiskStore:
         c.map(FileChannel.MapMode.READ_ONLY, 0, c.size())
       )
 
-  object FileBlob:
 
 
   /** Positional reads on one channel, opened again when an interrupt closed it. */
@@ -350,6 +349,5 @@ private[storage] object DiskStore:
 
     private[util] def onDisk: Either[Store.Error, Path] = Right(file)
 
-  object FileReservation:
 
 

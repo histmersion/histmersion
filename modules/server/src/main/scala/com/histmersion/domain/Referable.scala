@@ -70,7 +70,6 @@ object Referable:
       val r = records.get
       refs.flatMap(ref => r.describe(ref).map(ref -> _)).toMap
 
-  object InMemory:
 
   /** One record: its uid (where its kind has uids) and its title. */
   final case class Record(uid: Option[ItemUid], title: Title)

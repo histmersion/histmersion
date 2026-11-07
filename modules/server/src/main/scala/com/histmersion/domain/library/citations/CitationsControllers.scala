@@ -29,4 +29,3 @@ final class CitationsControllers(citations: CitationService, sources: SourceServ
     maintenance.guard("edges/resolve"):
       Right(EdgesResolved(sources.resolveEdges(Caller.Local)))
 
-object CitationsControllers:

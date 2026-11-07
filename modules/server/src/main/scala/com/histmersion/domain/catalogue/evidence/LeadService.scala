@@ -62,7 +62,6 @@ object LeadService:
     ): List[(com.histmersion.domain.catalogue.evidence.LeadRow.Id, com.histmersion.domain.catalogue.evidence.LeadRow.Kind, com.histmersion.domain.catalogue.evidence.LeadRow.Label, TimeSpan, List[com.histmersion.domain.catalogue.evidence.LeadRow.Tier], Option[com.histmersion.domain.catalogue.evidence.LeadRow.Attesting], Option[com.histmersion.domain.catalogue.evidence.LeadRow.Magnitude], com.histmersion.domain.catalogue.evidence.LeadRow.FindingsNear, com.histmersion.domain.catalogue.evidence.CandidateRow.Title)] =
       db.read(LeadRepo.articleCandidates(citekeys, period, km, minVei, minMagnitude, limit))
 
-  object Implementation:
 
   /** The same rules over the shared in-memory state, which holds the catalogue's rows alone — no finding is stored, so
     * none is near an event and no article region holds one; `source` gives a source's title and year by its citekey

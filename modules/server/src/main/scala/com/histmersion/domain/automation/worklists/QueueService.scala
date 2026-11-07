@@ -101,4 +101,3 @@ object QueueService:
       }
       ImportCounts(items.size, if mode == ImportMode.Replace then before.listed(list, QueueScope.All).size else 0)
 
-  object InMemory:

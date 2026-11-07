@@ -56,7 +56,6 @@ object AttestationService:
           Right(AttestationRepo.get(id).get)
     def delete(id: com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.Id): Boolean = db.transact(AttestationRepo.delete(id))
 
-  object Implementation:
 
   /** The same rules over the shared in-memory state; ids are given in order, as the database's sequence gives them. */
   final class InMemory(state: AtomicReference[CatalogueState]) extends AttestationService:
@@ -135,5 +134,4 @@ object AttestationService:
       val _ = state.updateAndGet(_.modify(_.attestations).using(_.filterNot(_.id == id)))
       had
 
-  object InMemory:
 

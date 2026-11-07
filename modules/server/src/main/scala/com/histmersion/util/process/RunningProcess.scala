@@ -26,4 +26,3 @@ trait RunningProcess:
   /** End it now. */
   def destroyForcibly(): Unit
 
-object RunningProcess:

@@ -308,7 +308,6 @@ object BackupService:
 
     def refusal(rows: com.histmersion.RowCount): Api.Error = refusalOver(registry, rows)
 
-  object Implementation:
 
   /** Dumps that are files of `store` holding `dumped` (no `pg_dump` runs), restores that change nothing, and guarded
     * rows that are `rows` (a test sets them). It lists, names, prunes and refuses as the database implementation does.

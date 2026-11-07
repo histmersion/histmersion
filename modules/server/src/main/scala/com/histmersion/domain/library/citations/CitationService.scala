@@ -63,7 +63,6 @@ object CitationService:
     def contradictions(citekey: Option[com.histmersion.domain.library.Citekey], since: Option[com.histmersion.domain.library.citations.CitationService.Since]): ContradictionsResult =
       db.read(CitationRepo.contradictions(citekey, since))
 
-  object Implementation:
 
   /** The graph over the sources the library holds in memory, as a database holding only the library's rows answers: no
     * article is stored, so a parked edge's target is unresolved.
@@ -150,5 +149,4 @@ object CitationService:
           val all = byEdge ++ byStatus
           ContradictionsResult(all, all.size)
 
-  object InMemory:
 

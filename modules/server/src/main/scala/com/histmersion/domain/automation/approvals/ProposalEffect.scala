@@ -6,4 +6,3 @@ package com.histmersion.domain.automation.approvals
 trait ProposalEffect:
   def proposal(payload: com.histmersion.domain.automation.approvals.ApprovalEffects.Payload): Option[() => Either[com.histmersion.domain.automation.approvals.ApprovalEffects.Problem, String]]
 
-object ProposalEffect:

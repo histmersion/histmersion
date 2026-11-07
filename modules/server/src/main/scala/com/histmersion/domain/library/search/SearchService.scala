@@ -38,4 +38,3 @@ object SearchService:
     def treeRows(unit: com.histmersion.domain.library.search.SearchService.Unit, filter: Filter, scope: PlaceScope): List[Tree.TreeRow] =
       db.read(AggregateRepo.treeRows(unit, filter, scope)).toList
 
-  object Implementation:

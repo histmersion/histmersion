@@ -34,7 +34,6 @@ object Mirror:
     def records: Records
     def note(id: com.histmersion.util.data.mirror.MirrorPlacement.RecordId): Either[Api.Error, com.histmersion.util.data.mirror.Frontmatter.NoteBody]
 
-  object Note:
 
   /** The kind of record a mirror contribution writes notes of (`sources`, `articles`, …). */
   type Records = Records.T

@@ -26,4 +26,3 @@ final class ResearchWorkflowSite(h: ServerWiring, deps: Deps) extends ResearchSi
   def labels: LabelsControllers = h.library.labels
   def goal(slug: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Goal] = h.goals.get(slug)
 
-object ResearchWorkflowSite:

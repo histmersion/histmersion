@@ -109,4 +109,3 @@ final class ApprovalDigestService(
         agents.managers.nudge()
         BulkResult(d.wire, dryRun = false, ms.size, ok, bad, left)
 
-object ApprovalDigestService:

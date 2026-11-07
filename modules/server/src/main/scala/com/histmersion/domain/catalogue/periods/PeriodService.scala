@@ -65,7 +65,6 @@ object PeriodService:
     def seedVersion(name: com.histmersion.domain.catalogue.periods.PeriodService.SeedName): Option[com.histmersion.domain.catalogue.periods.PeriodService.SeedVersion] = db.read(PeriodRepo.seedVersion(name))
     def setSeedVersion(name: com.histmersion.domain.catalogue.periods.PeriodService.SeedName, version: com.histmersion.domain.catalogue.periods.PeriodService.SeedVersion): Unit = db.transact(PeriodRepo.setSeedVersion(name, version))
 
-  object Implementation:
 
   /** The same rules over the shared in-memory state: a part whose parent is unknown is refused as the foreign key
     * refuses it, and the whole write with it.
@@ -135,5 +134,4 @@ object PeriodService:
     def setSeedVersion(name: com.histmersion.domain.catalogue.periods.PeriodService.SeedName, version: com.histmersion.domain.catalogue.periods.PeriodService.SeedVersion): Unit =
       val _ = state.updateAndGet(_.modify(_.seedVersions).using(_.updated(name, version)))
 
-  object InMemory:
 
