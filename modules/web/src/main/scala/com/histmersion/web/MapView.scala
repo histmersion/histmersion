@@ -111,7 +111,7 @@ object MapView:
       fillOpacity = ShapeStyle.FillOpacity(0.1),
       lineWidth = ShapeStyle.LineWidth(1.5),
       lineOpacity = ShapeStyle.LineOpacity(0.8),
-      dash = List(3, 2),
+      dash = List(com.histmersion.web.map.ShapeStyle.Dash(3), com.histmersion.web.map.ShapeStyle.Dash(2)),
       dashedLineOpacity = Some(0.6),
       interactive = true
     )

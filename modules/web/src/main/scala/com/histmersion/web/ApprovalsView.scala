@@ -324,7 +324,7 @@ object ApprovalsView:
           aria.pressed <-- UiState.approvalState.signal.map(v => (shownState(v.map(Approval.State.Wire(_))) == s).toString),
           span(stateLabel(s)),
           child.text <-- list.listing.signal.map { l =>
-            val n = count(l, s); if n.value > 0 then s" ${Paging.grouped(Paging.GroupSize(n.value.toLong))}" else ""
+            val n = count(l, s); if n > 0 then s" ${Paging.grouped(Paging.GroupSize(n.toLong))}" else ""
           },
           onClick --> (_ => UiState.set(UiState.approvalState := stateValue(s))())
         )

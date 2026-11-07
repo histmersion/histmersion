@@ -44,7 +44,7 @@ object ResultsPanel:
 
   def setActiveTab(t: SidebarTab): Unit =
     selected.set(None)
-    UiState.set(UiState.tab := Some(t.key.value))(push = true)
+    UiState.set(UiState.tab := Some(t.key.value))(push = com.histmersion.web.UiState.SetPush(true))
 
   private val sorts = List("relevance", "cited", "period", "year", "title")
 
