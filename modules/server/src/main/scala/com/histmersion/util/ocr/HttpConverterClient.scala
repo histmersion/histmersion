@@ -18,16 +18,16 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
   private val ConversionTimeoutHint =
     "raise converter.seconds-per-page or converter.timeout-seconds for documents like this one"
 
-  def health: Either[com.histmersion.util.ocr.HttpConverterClient.Problem, com.histmersion.util.ocr.ConverterClient.HealthSummary] =
+  def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] =
     send(
       HttpRequest.newBuilder(URI.create(s"$base/health")).timeout(Duration.ofSeconds(5)).GET().build(),
       timeoutHint = None
-    ).map(_ => "ok")
+    ).map(_ => ConverterClient.HealthSummary("ok")).left.map(ConverterClient.Problem(_))
 
   /** The document's page count from the sidecar's `/inspect` — cheap, no conversion. `None` when it cannot tell (an
     * older sidecar, an unreadable file): the conversion then gets the plain timeout and reports the real error itself.
     */
-  def pages(file: Blob, filename: com.histmersion.util.ocr.ConverterClient.Filename): Option[ConverterClient.PageCount] =
+  def pages(file: Blob, filename: ConverterClient.Filename): Option[ConverterClient.PageCount] =
     val boundary = "histmersion-" + java.util.UUID.randomUUID().toString.replace("-", "")
     (for
       body <- multipart(boundary, file, filename, quality = false)
@@ -41,13 +41,16 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
       )
       json <- io.circe.parser.parse(text).left.map(_.getMessage)
       n <- json.hcursor.get[Int]("pages").left.map(_ => "no page count")
-    yield ConverterClient.PageCount(n, json.hcursor.get[Int]("scanned").getOrElse(0))).toOption
+    yield ConverterClient.PageCount(
+      ConverterClient.PageCount.Pages(n),
+      ConverterClient.PageCount.Scanned(json.hcursor.get[Int]("scanned").getOrElse(0))
+    )).toOption
 
-  def convert(file: Blob, filename: com.histmersion.util.ocr.ConverterClient.Filename, quality: com.histmersion.util.ocr.ConverterClient.HighQuality): Either[com.histmersion.util.ocr.HttpConverterClient.Problem, ConvertedDoc] =
+  def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality): Either[ConverterClient.Problem, ConvertedDoc] =
     val boundary = "histmersion-" + java.util.UUID.randomUUID().toString.replace("-", "")
     val allowed = ConverterClient.timeoutFor(cfg, pages(file, filename), quality)
-    for
-      body <- multipart(boundary, file, filename, quality)
+    (for
+      body <- multipart(boundary, file, filename, quality.value)
       req = HttpRequest
         .newBuilder(URI.create(s"$base/convert"))
         .timeout(allowed)
@@ -59,19 +62,23 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
         .decode[ConvertedDoc](text)
         .left
         .map(e => s"converter at $base returned unreadable JSON: ${e.getMessage}")
-    yield doc
+    yield doc).left.map(ConverterClient.Problem(_))
 
-  override def thumbnail(bytes: Array[Byte], filename: String, maxPx: Int): Either[String, ConverterClient.Thumb] =
+  override def thumbnail(
+      bytes: ConverterClient.DocumentBytes,
+      filename: ConverterClient.Filename,
+      maxPx: Pixels
+  ): Either[ConverterClient.Problem, ConverterClient.Thumb] =
     val boundary = "histmersion-" + java.util.UUID.randomUUID().toString.replace("-", "")
     def ascii(s: String) = s.getBytes("UTF-8")
     val body = java.io.ByteArrayOutputStream()
     body.write(
       ascii(
         s"--$boundary\r\nContent-Disposition: form-data; name=\"file\"; " +
-          s"filename=\"${AssetLinks.safeName(filename)}\"\r\nContent-Type: application/octet-stream\r\n\r\n"
+          s"filename=\"${AssetLinks.safeName(filename.value)}\"\r\nContent-Type: application/octet-stream\r\n\r\n"
       )
     )
-    body.write(bytes)
+    body.write(bytes.value)
     body.write(ascii(s"\r\n--$boundary\r\nContent-Disposition: form-data; name=\"max_px\"\r\n\r\n$maxPx\r\n"))
     body.write(ascii(s"--$boundary--\r\n"))
     val req = HttpRequest
@@ -80,26 +87,26 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
       .header("Content-Type", s"multipart/form-data; boundary=$boundary")
       .POST(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray))
       .build()
-    for
+    (for
       text <- send(req, timeoutHint = None)
       json <- io.circe.parser.parse(text).left.map(e => s"converter at $base returned unreadable JSON: ${e.getMessage}")
       c = json.hcursor
       b64 <- c.get[String]("base64").left.map(_ => s"converter at $base returned no thumbnail")
       raw <- scala.util.Try(java.util.Base64.getDecoder.decode(b64)).toEither.left.map(_.getMessage)
     yield ConverterClient.Thumb(
-      raw,
-      c.get[String]("mime").getOrElse("image/jpeg"),
-      c.get[Int]("width").getOrElse(0),
-      c.get[Int]("height").getOrElse(0)
-    )
+      ConverterClient.Thumb.Bytes(raw),
+      ConverterClient.Thumb.Mime(c.get[String]("mime").getOrElse("image/jpeg")),
+      ConverterClient.Thumb.Width(c.get[Int]("width").getOrElse(0)),
+      ConverterClient.Thumb.Height(c.get[Int]("height").getOrElse(0))
+    )).left.map(ConverterClient.Problem(_))
 
   /** `timeoutHint` is what to do about a timeout. Only a CONVERSION timing out is about the per-page budget; the health
     * probe timing out is not (#692), so it carries none.
     */
   private def send(
       req: HttpRequest,
-      timeoutHint: Option[com.histmersion.util.ocr.HttpConverterClient.TimeoutHint] = Some(ConversionTimeoutHint)
-  ): Either[com.histmersion.util.ocr.HttpConverterClient.Problem, com.histmersion.util.ocr.HttpConverterClient.ResponseText] =
+      timeoutHint: Option[String] = Some(ConversionTimeoutHint)
+  ): Either[String, String] =
     scala.util
       .Try(http.send(req, HttpResponse.BodyHandlers.ofString()))
       .toEither
@@ -122,17 +129,17 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
     * the accepted upload limit is exactly 256 MB).
     */
   private def multipart(
-      boundary: com.histmersion.util.ocr.HttpConverterClient.Boundary,
+      boundary: String,
       file: Blob,
-      filename: com.histmersion.util.ocr.ConverterClient.Filename,
-      quality: com.histmersion.util.ocr.ConverterClient.HighQuality
-  ): Either[com.histmersion.util.ocr.HttpConverterClient.Problem, HttpRequest.BodyPublisher] =
+      filename: ConverterClient.Filename,
+      quality: Boolean
+  ): Either[String, HttpRequest.BodyPublisher] =
     def ascii(s: String) = s.getBytes("UTF-8")
-    def field(name: com.histmersion.util.ocr.HttpConverterClient.FieldName, value: com.histmersion.util.ocr.HttpConverterClient.MultipartFieldValue) =
+    def field(name: String, value: String) =
       ascii(s"--$boundary\r\nContent-Disposition: form-data; name=\"$name\"\r\n\r\n$value\r\n")
     val head = ascii(
       s"--$boundary\r\nContent-Disposition: form-data; name=\"file\"; " +
-        s"filename=\"${AssetLinks.safeName(filename)}\"\r\nContent-Type: application/octet-stream\r\n\r\n"
+        s"filename=\"${AssetLinks.safeName(filename.value)}\"\r\nContent-Type: application/octet-stream\r\n\r\n"
     )
     val tail = java.io.ByteArrayOutputStream()
     tail.write(ascii("\r\n"))
@@ -157,18 +164,3 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
           HttpRequest.BodyPublishers.ofByteArray(tail.toByteArray)
         )
       )
-
-object HttpConverterClient:
-  type Boundary = Boundary.T
-  object Boundary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FieldName = FieldName.T
-  object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResponseText = ResponseText.T
-  object ResponseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeoutHint = TimeoutHint.T
-  object TimeoutHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MultipartFieldValue = MultipartFieldValue.T
-  object MultipartFieldValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-

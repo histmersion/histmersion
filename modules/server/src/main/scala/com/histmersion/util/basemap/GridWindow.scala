@@ -4,7 +4,7 @@ import io.github.iltotore.iron.*
 
 /** The rows `first` … `last` of a grid and the columns `firstCol` … `lastCol` (inclusive). */
 final case class GridWindow(first: GridWindow.First, last: GridWindow.Last, firstCol: GridWindow.FirstCol, lastCol: GridWindow.LastCol):
-  def rows: com.histmersion.RowCount = last - first + 1
+  def rows: com.histmersion.RowCount = com.histmersion.RowCount(last.value - first.value + 1)
 
 object GridWindow:
 

@@ -39,4 +39,4 @@ object Readable:
         .filterNot((uid, item) => keys(item.key) || uid.exists(uids))
         .map(_._2)
         .sortBy(i => (i.title.value.toLowerCase, i.key.value: String))
-      UnreadItems(left.slice(from.value, from.value + size.value), left.size)
+      UnreadItems(left.slice(from.value, from.value + size.value), UnreadItems.Total(left.size))

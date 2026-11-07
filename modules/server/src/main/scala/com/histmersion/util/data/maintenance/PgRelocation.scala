@@ -2,7 +2,7 @@ package com.histmersion.util.data.maintenance
 
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput}
-import com.histmersion.util.storage.Store
+import com.histmersion.util.storage.{ByteSource, Store}
 
 /** Makes the bundled PostgreSQL work from wherever the bundle was put.
   *
@@ -51,32 +51,35 @@ object PgRelocation:
     * replaced outright. Returns the new bytes and how many strings did not fit.
     */
   def patch(bytes: com.histmersion.util.data.maintenance.PgRelocation.FileBytes, from: com.histmersion.util.data.maintenance.PgRelocation.PatchFrom, to: com.histmersion.util.data.maintenance.PgRelocation.PatchTo): (com.histmersion.util.data.maintenance.PgRelocation.FileBytes, com.histmersion.util.data.maintenance.PgRelocation.PatchCount) =
-    if !bytes.contains(0.toByte) then
-      (String(bytes, UTF_8).replace(String(from, UTF_8), String(to, UTF_8)).getBytes(UTF_8), 0)
+    val b = bytes.value
+    val f = from.value
+    val t = to.value
+    if !b.contains(0.toByte) then
+      (FileBytes(String(b, UTF_8).replace(String(f, UTF_8), String(t, UTF_8)).getBytes(UTF_8)), PatchCount(0))
     else
-      val d = bytes.clone()
+      val d = b.clone()
       var tooLong = 0
-      var i = indexOf(d, from, 0)
+      var i = indexOf(d, f, 0)
       while i >= 0 do
         val start = lastNul(d, i) + 1
         val end = { val e = d.indexOf(0.toByte, i); if e < 0 then d.length else e }
         var pad = end
         while pad < d.length && d(pad) == 0 do pad += 1
-        val s = replaceAll(d.slice(start, end), from, to)
+        val s = replaceAll(d.slice(start, end), f, t)
         if s.length <= pad - start - 1 then // at least one terminating NUL stays
           System.arraycopy(s, 0, d, start, s.length)
           java.util.Arrays.fill(d, start + s.length, pad, 0.toByte)
         else tooLong += 1
-        i = indexOf(d, from, end)
-      (d, tooLong)
+        i = indexOf(d, f, end)
+      (FileBytes(d), PatchCount(tooLong))
 
   /** Relocate the PostgreSQL in `pg` if its marker names another place. `None` when there is nothing to do: no marker
     * (a pixi environment used in place) or already at home. The re-signing runs through `processes`.
     */
   def relocate(pg: Store, macOS: com.histmersion.util.data.maintenance.PgRelocation.MacOsMode, processes: Processes): Option[Result] =
     val marker = Store.Key.applyUnsafe(Marker)
-    val here = pg.onDisk(Store.Key.Root).fold(e => throw IllegalStateException(e.message), _.toRealPath().toString)
-    val recorded = if pg.isFile(marker) then pg.get(marker).map(_.text().trim).filter(_.nonEmpty) else None
+    val here = pg.onDisk(Store.Key.Root).fold(e => throw IllegalStateException(e.message.value), _.toRealPath().toString)
+    val recorded = if pg.isFile(marker) then pg.get(marker).map(_.text().value.trim).filter(_.nonEmpty) else None
     recorded.filter(_ != here).map { from =>
       val (fb, tb) = (from.getBytes(UTF_8), here.getBytes(UTF_8))
       var files, signed, tooLong = 0
@@ -84,36 +87,39 @@ object PgRelocation:
         .map(_.key)
         .filter(k => k != marker && !pg.isLink(k))
         .foreach { k =>
-          val bytes = pg.get(k).fold(Array.emptyByteArray)(_.bytes())
+          val bytes = pg.get(k).fold(Array.emptyByteArray)(_.bytes().value)
           if indexOf(bytes, fb, 0) >= 0 then
-            val (out, skipped) = patch(bytes, fb, tb)
-            pg.write(k, out).left.foreach(e => throw java.io.IOException(e.message)) // in place: keeps the permissions
+            val (out, skipped) = patch(FileBytes(bytes), PatchFrom(fb), PatchTo(tb))
+            pg.write(k, ByteSource.Content(out.value)).left.foreach(e => throw java.io.IOException(e.message.value)) // in place: keeps the permissions
             files += 1
-            tooLong += skipped
-            if macOS && isMachO(out) then
-              val file = pg.onDisk(k).fold(e => throw java.io.IOException(e.message), _.toString)
+            tooLong += skipped.value
+            if macOS.value && isMachO(out.value) then
+              val file = pg.onDisk(k).fold(e => throw java.io.IOException(e.message.value), _.toString)
               val rc = processes
                 .start(
-                  ProcessLaunch(List("codesign", "--force", "--sign", "-", file), output = ProcessOutput.Discarded)
+                  ProcessLaunch(
+                    List("codesign", "--force", "--sign", "-", file).map(ProcessLaunch.Command(_)),
+                    output = ProcessOutput.Discarded
+                  )
                 )
-                .fold(e => throw java.io.IOException(e), _.waitFor())
-              if rc != 0 then throw IllegalStateException(s"codesign failed on $file (exit $rc)")
+                .fold(e => throw java.io.IOException(e.value), _.waitFor())
+              if rc.value != 0 then throw IllegalStateException(s"codesign failed on $file (exit $rc)")
               signed += 1
         }
-      pg.write(marker, here.getBytes(UTF_8)).left.foreach(e => throw java.io.IOException(e.message))
-      Result(files, signed, tooLong)
+      pg.write(marker, ByteSource.Content(here.getBytes(UTF_8))).left.foreach(e => throw java.io.IOException(e.message.value))
+      Result(Result.Files(files), Result.Signed(signed), Result.TooLong(tooLong))
     }
 
   private val MachO = List(Array(0xcf, 0xfa, 0xed, 0xfe), Array(0xca, 0xfe, 0xba, 0xbe)).map(_.map(_.toByte))
 
-  private def isMachO(b: com.histmersion.util.data.maintenance.PgRelocation.FileBytes): Boolean = b.length >= 4 && MachO.exists(m => b.take(4).sameElements(m))
+  private def isMachO(b: Array[Byte]): Boolean = b.length >= 4 && MachO.exists(m => b.take(4).sameElements(m))
 
-  private def lastNul(d: com.histmersion.util.data.maintenance.PgRelocation.FileBytes, before: Int): Int =
+  private def lastNul(d: Array[Byte], before: Int): Int =
     var j = before - 1
     while j >= 0 && d(j) != 0 do j -= 1
     j
 
-  private def indexOf(d: com.histmersion.util.data.maintenance.PgRelocation.FileBytes, p: com.histmersion.util.data.maintenance.PgRelocation.BytePattern, from: Int): Int =
+  private def indexOf(d: Array[Byte], p: Array[Byte], from: Int): Int =
     if p.isEmpty then -1
     else
       var i = math.max(0, from)
@@ -124,7 +130,7 @@ object PgRelocation:
         i += 1
       found
 
-  private def replaceAll(s: com.histmersion.util.data.maintenance.PgRelocation.FileBytes, from: com.histmersion.util.data.maintenance.PgRelocation.BytePattern, to: com.histmersion.util.data.maintenance.PgRelocation.Replacement): com.histmersion.util.data.maintenance.PgRelocation.FileBytes =
+  private def replaceAll(s: Array[Byte], from: Array[Byte], to: Array[Byte]): Array[Byte] =
     val out = java.io.ByteArrayOutputStream(s.length + 64)
     var i = 0
     var j = indexOf(s, from, 0)

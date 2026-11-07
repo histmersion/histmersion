@@ -9,25 +9,22 @@ import com.histmersion.api.Api
   * the agent reads why and tries again, as it always has.
   */
 object McpOut:
-  type Markdown = Markdown.T
-  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Message = Message.T
-  object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Markdown = String
 
   /** A refusal's text: the reason in italics. Pure. */
 
-  def refusal(message: com.histmersion.util.mcp.McpOut.Message): com.histmersion.util.mcp.McpOut.Markdown = s"_${message}_"
+  def refusal(message: String): Markdown = s"_${message}_"
 
   /** [[refusal]] of a handler's error. */
-  def refusal(e: Api.Error): com.histmersion.util.mcp.McpOut.Markdown = refusal(e.message)
+  def refusal(e: Api.Error): Markdown = refusal(e.message.value)
 
   /** A handler's answer: its Markdown, or the refusal. Pure. */
-  def markdown[A](r: Either[Api.Error, A])(md: A => com.histmersion.util.mcp.McpOut.Markdown): com.histmersion.util.mcp.McpOut.Markdown = r.fold(refusal, md)
+  def markdown[A](r: Either[Api.Error, A])(md: A => Markdown): Markdown = r.fold(e => refusal(e), md)
 
-  def text(md: com.histmersion.util.mcp.McpOut.Markdown): ToolResult[NoStructuredOutput] = ToolResult.text(md)
+  def text(md: Markdown): ToolResult[NoStructuredOutput] = ToolResult.text(md)
 
   /** A handler's error as the tool's answer. */
   def error(e: Api.Error): ToolResult[NoStructuredOutput] = ToolResult.text(refusal(e))
 
   /** A handler's answer as the tool's answer. */
-  def of[A](r: Either[Api.Error, A])(md: A => com.histmersion.util.mcp.McpOut.Markdown): ToolResult[NoStructuredOutput] = ToolResult.text(markdown(r)(md))
+  def of[A](r: Either[Api.Error, A])(md: A => Markdown): ToolResult[NoStructuredOutput] = ToolResult.text(markdown(r)(md))

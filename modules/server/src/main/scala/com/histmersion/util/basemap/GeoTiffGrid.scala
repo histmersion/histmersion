@@ -1,7 +1,7 @@
 package com.histmersion.util.basemap
 
 import com.histmersion.api.BBox
-import com.histmersion.ByteOffset
+import com.histmersion.{ByteCount, ByteOffset}
 import io.github.iltotore.iron.*
 
 import java.nio.{ByteBuffer, ByteOrder}
@@ -21,79 +21,55 @@ final case class GeoTiffGrid(
     noData: Option[GeoTiffGrid.NoData]
 ):
 
-  def rowBytes: com.histmersion.ByteCount = width.value * 2L
-  def east: com.histmersion.util.basemap.GeoTiffGrid.EastResult = west.value + width.value * stepX.value
-  def south: com.histmersion.util.basemap.GeoTiffGrid.SouthResult = north.value - height.value * stepY.value
+  def rowBytes: ByteCount = ByteCount.applyUnsafe(width.value * 2L)
+  def east: Degrees = Degrees(west.value + width.value * stepX.value)
+  def south: Degrees = Degrees(north.value - height.value * stepY.value)
 
   /** The pixels whose area meets `b` (half-open on the east and south edges, so a grid that only touches the box is not
     * read); None when none does.
     */
   def window(b: BBox): Option[GridWindow] =
-    val c0 = math.floor((b.minLon - west.value) / stepX.value).toInt.max(0)
-    val c1 = (math.ceil((b.maxLon - west.value) / stepX.value).toInt - 1).min(width.value - 1)
-    val r0 = math.floor((north.value - b.maxLat) / stepY.value).toInt.max(0)
-    val r1 = (math.ceil((north.value - b.minLat) / stepY.value).toInt - 1).min(height.value - 1)
-    Option.when(c0 <= c1 && r0 <= r1)(GridWindow(r0, r1, c0, c1))
+    val c0 = math.floor((b.minLon.value - west.value) / stepX.value).toInt.max(0)
+    val c1 = (math.ceil((b.maxLon.value - west.value) / stepX.value).toInt - 1).min(width.value - 1)
+    val r0 = math.floor((north.value - b.maxLat.value) / stepY.value).toInt.max(0)
+    val r1 = (math.ceil((north.value - b.minLat.value) / stepY.value).toInt - 1).min(height.value - 1)
+    Option.when(c0 <= c1 && r0 <= r1)(
+      GridWindow(GridWindow.First(r0), GridWindow.Last(r1), GridWindow.FirstCol(c0), GridWindow.LastCol(c1))
+    )
 
   /** The window's rows as range requests of whole rows, each at most `maxBytes` (and at least one row): rows that
     * follow each other in the file share a request.
     */
-  def runs(w: GridWindow, maxBytes: com.histmersion.util.basemap.GeoTiffGrid.MaxRunBytes): List[RowRun] =
-    val perRun = math.max(1L, maxBytes / rowBytes).toInt
+  def runs(w: GridWindow, maxBytes: ByteCount): List[RowRun] =
+    val rowLength = rowBytes.value
+    val perRun = math.max(1L, maxBytes.value / rowLength).toInt
+    val last = w.last.value
     val out = List.newBuilder[RowRun]
-    var start = w.first // the first row of the run being built
-    var r = w.first + 1
-    while r <= w.last + 1 do
-      val contiguous = r <= w.last && rowOffsets(r).value == rowOffsets(r - 1).value + rowBytes
+    var start = w.first.value // the first row of the run being built
+    var r = w.first.value + 1
+    while r <= last + 1 do
+      val contiguous = r <= last && rowOffsets(r).value == rowOffsets(r - 1).value + rowLength
       if !contiguous || r - start >= perRun then
-        out += RowRun(start, r - start, rowOffsets(start), (r - start) * rowBytes)
+        out += RowRun(RowRun.FirstRow(start), RowRun.Rows(r - start), rowOffsets(start), RowRun.Length((r - start) * rowLength))
         start = r
       r += 1
     out.result()
 
   /** The pixel whose area holds (`lon`, `lat`), fractional: its column and row, centres at `.5`. */
-  def pixelAt(lon: com.histmersion.util.basemap.GeoTiffGrid.PixelAtLon, lat: com.histmersion.util.basemap.GeoTiffGrid.PixelAtLat): (com.histmersion.util.basemap.GeoTiffGrid.PixelX, com.histmersion.util.basemap.GeoTiffGrid.PixelY) =
-    ((lon - west.value) / stepX.value, (north.value - lat) / stepY.value)
+  def pixelAt(lon: Degrees, lat: Degrees): (GeoTiffGrid.PixelX, GeoTiffGrid.PixelY) =
+    (GeoTiffGrid.PixelX((lon.value - west.value) / stepX.value), GeoTiffGrid.PixelY((north.value - lat.value) / stepY.value))
 
 object GeoTiffGrid:
-  type ByteLength = ByteLength.T
-  object ByteLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Bytes = Bytes.T
-  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeoKey = GeoKey.T
-  object GeoKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Height = Height.T
-  object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxRunBytes = MaxRunBytes.T
-  object MaxRunBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PixelX = PixelX.T
   object PixelX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PixelY = PixelY.T
   object PixelY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RasterType = RasterType.T
-  object RasterType extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RowsPerStrip = RowsPerStrip.T
-  object RowsPerStrip extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StripCount = StripCount.T
-  object StripCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  // TIFF and GeoTIFF tag numbers (TIFF 6.0; OGC GeoTIFF 1.1; GDAL's no-data tag)
-
-
-  type EastResult = EastResult.T
-  object EastResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SouthResult = SouthResult.T
-  object SouthResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PixelAtLon = PixelAtLon.T
-  object PixelAtLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PixelAtLat = PixelAtLat.T
-  object PixelAtLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
+  type Problem = RangeHttp.Problem
+  val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type NoData = NoData.T
   object NoData extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Short, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  // TIFF and GeoTIFF tag numbers (TIFF 6.0; OGC GeoTIFF 1.1; GDAL's no-data tag)
   private val ImageWidth = 256; private val ImageLength = 257; private val BitsPerSample = 258
   private val Compression = 259; private val StripOffsets = 273; private val SamplesPerPixel = 277
   private val RowsPerStrip = 278; private val PlanarConfiguration = 284; private val TileWidth = 322
@@ -106,72 +82,47 @@ object GeoTiffGrid:
   private val TypeSize =
     Map(1 -> 1, 2 -> 1, 3 -> 2, 4 -> 4, 5 -> 8, 6 -> 1, 7 -> 1, 8 -> 2, 9 -> 4, 10 -> 8, 11 -> 4, 12 -> 8)
 
-  final private case class Entry(tag: Entry.Tag, kind: Entry.Kind, count: Entry.Count, at: Entry.At, inline: Entry.Inline)
+  final private case class Entry(tag: Int, kind: Int, count: Long, at: Long, inline: Array[Byte])
 
-  object Entry:
-    type Inline = Inline.T
-    object Inline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-    type Tag = Tag.T
-    object Tag extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Count = Count.T
-    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type At = At.T
-    object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  private def le(b: com.histmersion.util.basemap.GeoTiffGrid.Bytes) = ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN)
+  private def le(b: Array[Byte]) = ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN)
 
   /** One image file directory: its entries, and their values read from the file as asked. */
-  final private class Directory(entries: Map[Directory.EntriesKey, Entry], bytesAt: (Directory.BytesAtArg1, Directory.BytesAtArg2) => Either[Directory.BytesAtResultPart1, Array[Byte]]):
-    def has(tag: com.histmersion.util.basemap.GeoTiffGrid.Entry.Tag): Boolean = entries.contains(tag)
-    private def raw(tag: com.histmersion.util.basemap.GeoTiffGrid.Entry.Tag): Either[com.histmersion.util.basemap.GeoTiffGrid.Directory.Problem, Option[(Entry, com.histmersion.util.basemap.GeoTiffGrid.Entry.Inline)]] = entries.get(tag) match
+  final private class Directory(entries: Map[Int, Entry], bytesAt: (Long, Int) => Either[String, Array[Byte]]):
+    def has(tag: Int): Boolean = entries.contains(tag)
+    private def raw(tag: Int): Either[String, Option[(Entry, Array[Byte])]] = entries.get(tag) match
       case None    => Right(None)
       case Some(e) =>
         val size = TypeSize.getOrElse(e.kind, 1) * e.count
         (if size <= 4 then Right(e.inline) else bytesAt(e.at, size.toInt)).map(b => Some(e -> b))
-    def ints(tag: com.histmersion.util.basemap.GeoTiffGrid.Entry.Tag): Either[com.histmersion.util.basemap.GeoTiffGrid.Directory.Problem, Option[Vector[com.histmersion.util.basemap.GeoTiffGrid.Directory.IntTagData]]] = raw(tag).map(_.map { (e, b) =>
+    def ints(tag: Int): Either[String, Option[Vector[Long]]] = raw(tag).map(_.map { (e, b) =>
       val buf = le(b)
       (0 until e.count.toInt).toVector.map(i =>
         if e.kind == 3 then (buf.getShort(i * 2) & 0xffff).toLong else buf.getInt(i * 4).toLong & 0xffffffffL
       )
     })
-    def doubles(tag: com.histmersion.util.basemap.GeoTiffGrid.Entry.Tag): Either[com.histmersion.util.basemap.GeoTiffGrid.Directory.Problem, Option[Vector[com.histmersion.util.basemap.GeoTiffGrid.Directory.DoubleTagData]]] =
+    def doubles(tag: Int): Either[String, Option[Vector[Double]]] =
       raw(tag).map(_.map((e, b) => (0 until e.count.toInt).toVector.map(i => le(b).getDouble(i * 8))))
-    def text(tag: com.histmersion.util.basemap.GeoTiffGrid.Entry.Tag): Either[com.histmersion.util.basemap.GeoTiffGrid.Directory.Problem, Option[com.histmersion.util.basemap.GeoTiffGrid.Directory.TextTagData]] =
+    def text(tag: Int): Either[String, Option[String]] =
       raw(tag).map(_.map((_, b) => new String(b, "US-ASCII").takeWhile(_ != '\u0000').trim))
-    def one(tag: com.histmersion.util.basemap.GeoTiffGrid.Entry.Tag, default: Option[com.histmersion.util.basemap.GeoTiffGrid.Directory.IntTagData] = None): Either[com.histmersion.util.basemap.GeoTiffGrid.Directory.Problem, com.histmersion.util.basemap.GeoTiffGrid.Directory.IntTagData] =
+    def one(tag: Int, default: Option[Long] = None): Either[String, Long] =
       ints(tag).flatMap(_.flatMap(_.headOption).orElse(default).toRight(s"no tag $tag"))
-
-  object Directory:
-    type ByteLength = ByteLength.T
-    object ByteLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DoubleTagData = DoubleTagData.T
-    object DoubleTagData extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type IntTagData = IntTagData.T
-    object IntTagData extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Problem = Problem.T
-    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TextTagData = TextTagData.T
-    object TextTagData extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-    type EntriesKey = com.histmersion.util.basemap.GeoTiffGrid.Entry.Tag
-    val EntriesKey: _root_.com.histmersion.util.basemap.GeoTiffGrid.Entry.Tag.type = _root_.com.histmersion.util.basemap.GeoTiffGrid.Entry.Tag
-    type BytesAtArg1 = com.histmersion.ByteOffset
-    val BytesAtArg1: _root_.com.histmersion.ByteOffset.type = _root_.com.histmersion.ByteOffset
-    type BytesAtArg2 = com.histmersion.util.basemap.GeoTiffGrid.Directory.ByteLength
-    val BytesAtArg2: _root_.com.histmersion.util.basemap.GeoTiffGrid.Directory.ByteLength.type = _root_.com.histmersion.util.basemap.GeoTiffGrid.Directory.ByteLength
-    type BytesAtResultPart1 = com.histmersion.util.basemap.GeoTiffGrid.Directory.Problem
-    val BytesAtResultPart1: _root_.com.histmersion.util.basemap.GeoTiffGrid.Directory.Problem.type = _root_.com.histmersion.util.basemap.GeoTiffGrid.Directory.Problem
-
 
   /** Read the grid from the start of its file (`head`), asking `read(offset, length)` for whatever lies beyond it (the
     * strip offsets of a large grid). A little-endian classic TIFF holding one band of uncompressed signed 16-bit
     * samples in strips — GEBCO's GeoTIFFs — and nothing else: anything else is refused with what it is.
     */
-  def parse(head: com.histmersion.util.basemap.GeoTiffGrid.Bytes, read: (com.histmersion.ByteOffset, com.histmersion.util.basemap.GeoTiffGrid.ByteLength) => Either[com.histmersion.util.basemap.GeoTiffGrid.Problem, com.histmersion.util.basemap.GeoTiffGrid.Bytes]): Either[com.histmersion.util.basemap.GeoTiffGrid.Problem, GeoTiffGrid] =
-    def bytesAt(offset: com.histmersion.ByteOffset, length: com.histmersion.util.basemap.GeoTiffGrid.ByteLength): Either[com.histmersion.util.basemap.GeoTiffGrid.Problem, com.histmersion.util.basemap.GeoTiffGrid.Bytes] =
+  def parse(
+      head: RangeHttp.ResponseBytes,
+      read: (ByteOffset, ByteCount) => Either[RangeHttp.Problem, RangeHttp.ResponseBytes]
+  ): Either[Problem, GeoTiffGrid] =
+    parseBytes(
+      head.value,
+      (offset, length) =>
+        read(ByteOffset.applyUnsafe(offset), ByteCount.applyUnsafe(length.toLong)).map(_.value).left.map(_.value)
+    ).left.map(Problem(_))
+
+  private def parseBytes(head: Array[Byte], read: (Long, Int) => Either[String, Array[Byte]]): Either[String, GeoTiffGrid] =
+    def bytesAt(offset: Long, length: Int): Either[String, Array[Byte]] =
       if offset + length <= head.length then
         Right(java.util.Arrays.copyOfRange(head, offset.toInt, offset.toInt + length))
       else read(offset, length)
@@ -198,7 +149,7 @@ object GeoTiffGrid:
       grid <- gridOf(Directory(entries, bytesAt))
     yield grid
 
-  private def gridOf(d: Directory): Either[com.histmersion.util.basemap.GeoTiffGrid.Problem, GeoTiffGrid] =
+  private def gridOf(d: Directory): Either[String, GeoTiffGrid] =
     for
       width <- d.one(ImageWidth)
       height <- d.one(ImageLength)
@@ -217,7 +168,7 @@ object GeoTiffGrid:
       scale <- d.doubles(ModelPixelScale).flatMap(_.filter(_.size >= 2).toRight("no pixel scale (not a GeoTIFF)"))
       tie <- d.doubles(ModelTiepoint).flatMap(_.filter(_.size >= 6).toRight("no tie point (not a GeoTIFF)"))
       keys <- d.ints(GeoKeyDirectory).map(_.getOrElse(Vector.empty))
-      noData <- d.text(GdalNoData).map(_.flatMap(_.toDoubleOption).map(_.toShort))
+      noData <- d.text(GdalNoData).map(_.flatMap(_.toDoubleOption).map(v => NoData(v.toShort)))
       stepX <- Degrees.PerPixel.either(scale(0))
       stepY <- Degrees.PerPixel.either(scale(1))
       w <- PixelCount.either(width.toInt)
@@ -231,11 +182,11 @@ object GeoTiffGrid:
 
   /** Where each row begins: its strip's offset, plus the rows before it in that strip. */
   private def rowOffsets(
-      strips: Vector[com.histmersion.util.basemap.GeoTiffGrid.StripCount],
-      perStrip: com.histmersion.util.basemap.GeoTiffGrid.RowsPerStrip,
-      height: com.histmersion.util.basemap.GeoTiffGrid.Height,
-      rowBytes: com.histmersion.ByteCount
-  ): Either[com.histmersion.util.basemap.GeoTiffGrid.Problem, Vector[ByteOffset]] =
+      strips: Vector[Long],
+      perStrip: Long,
+      height: Long,
+      rowBytes: Long
+  ): Either[String, Vector[ByteOffset]] =
     val b = Vector.newBuilder[ByteOffset]
     (0L until height)
       .foldLeft[Either[String, Unit]](Right(())) { (acc, r) =>
@@ -250,5 +201,5 @@ object GeoTiffGrid:
       .map(_ => b.result())
 
   /** The GeoKey directory's `GTRasterTypeGeoKey`: 1 = a pixel is an area, 2 = a point. */
-  private def rasterType(keys: Vector[com.histmersion.util.basemap.GeoTiffGrid.GeoKey]): Option[com.histmersion.util.basemap.GeoTiffGrid.RasterType] =
+  private def rasterType(keys: Vector[Long]): Option[Long] =
     keys.drop(4).grouped(4).collectFirst { case Vector(id, 0L, 1L, v) if id == RasterTypeGeoKey => v }

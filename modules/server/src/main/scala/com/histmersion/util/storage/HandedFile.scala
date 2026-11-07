@@ -15,5 +15,5 @@ object HandedFile:
     type Size = Size.T
     object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def snapshot(file: HandedFile): Snapshot = Snapshot(file.getName, file.length(), source(file))
+  def snapshot(file: HandedFile): Snapshot = Snapshot(Snapshot.Name(file.getName), Snapshot.Size(file.length()), source(file))
   def source(file: HandedFile): ByteSource = ByteSource.file(file.toPath)

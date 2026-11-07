@@ -1,5 +1,6 @@
 package com.histmersion.domain.personal
 
+import com.histmersion.api.Paging
 import com.histmersion.api.personal.PersonalApi
 import com.histmersion.domain.Caller
 import sttp.shared.Identity
@@ -12,17 +13,17 @@ object PersonalRoutes:
   def apply(personal: PersonalControllers): List[ServerEndpoint[Any, Identity]] =
     val me = Caller.Local
     List(
-      PersonalApi.bookmarks.serverLogic[Identity]((kind, q, limit) => personal.listBookmarks(me, kind, q, limit)),
+      PersonalApi.bookmarks.serverLogic[Identity]((kind, q, limit) => personal.listBookmarks(me, kind, q, limit.map(Paging.Limit(_)))),
       PersonalApi.addBookmark.serverLogic[Identity](in => personal.addBookmark(me, in)),
       PersonalApi.editBookmark.serverLogic[Identity]((id, in) => personal.editBookmark(me, id, in)),
       PersonalApi.removeBookmark.serverLogic[Identity](id => personal.removeBookmark(me, id)),
-      PersonalApi.notes.serverLogic[Identity]((kind, id, q, limit) => personal.listNotes(me, kind, id, q, limit)),
+      PersonalApi.notes.serverLogic[Identity]((kind, id, q, limit) => personal.listNotes(me, kind, id, q, limit.map(Paging.Limit(_)))),
       PersonalApi.note.serverLogic[Identity](id => personal.note(me, id)),
       PersonalApi.addNote.serverLogic[Identity](in => personal.addNote(me, in)),
       PersonalApi.editNote.serverLogic[Identity]((id, in) => personal.editNote(me, id, in)),
       PersonalApi.removeNote.serverLogic[Identity](id => personal.removeNote(me, id)),
-      PersonalApi.unread.serverLogic[Identity]((kind, limit, offset) => personal.unread(me, kind, limit, offset)),
+      PersonalApi.unread.serverLogic[Identity]((kind, limit, offset) => personal.unread(me, kind, limit.map(Paging.Limit(_)), offset)),
       PersonalApi.opened.serverLogic[Identity](in => personal.opened(me, in)),
-      PersonalApi.reading.serverLogic[Identity]((kind, show, limit) => personal.readMarks(me, kind, show, limit)),
+      PersonalApi.reading.serverLogic[Identity]((kind, show, limit) => personal.readMarks(me, kind, show, limit.map(Paging.Limit(_)))),
       PersonalApi.setRead.serverLogic[Identity](in => personal.setRead(me, in))
     )

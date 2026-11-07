@@ -13,10 +13,10 @@ final case class ReadMark(item: MarkTarget.Item, title: Title, readAt: Option[Ma
     WireReadMark(
       item.kind,
       WireKey(item.ref.key.value),
-      title.value,
-      readAt.isDefined,
-      readAt.map(_.iso),
-      openedAt.map(_.iso)
+      WireReadMark.Title(title.value),
+      WireReadMark.Read(readAt.isDefined),
+      readAt.map(t => WireReadMark.ReadAt(t.iso.value)),
+      openedAt.map(t => WireReadMark.OpenedAt(t.iso.value))
     )
 
 object ReadMark:

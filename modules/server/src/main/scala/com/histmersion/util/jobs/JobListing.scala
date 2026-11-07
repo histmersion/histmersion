@@ -3,7 +3,9 @@ package com.histmersion.util.jobs
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.api.{Paging, Write}
-import com.histmersion.api.jobs.JobInfo
+import com.histmersion.PageSize
+import com.histmersion.api.jobs.{JobInfo, JobState}
+import com.histmersion.api.library.{Facet, Filter}
 import com.histmersion.config.AppConfig
 
 import javax.sql.DataSource
@@ -14,39 +16,50 @@ import com.histmersion.api.Api
   */
 final class JobListing(ds: DataSource, cfg: () => AppConfig):
 
-  def job(id: com.histmersion.util.jobs.Job.Id): Either[Api.Error, JobInfo] =
-    Transactor(ds).read(JobRepo.get(id)).toRight(Api.Error(s"No job '$id'", Some(Write.CodeNotFound)))
+  private def searchPage(c: AppConfig): PageSize = PageSize.applyUnsafe(math.max(1, c.limits.search.value))
 
-  def jobs(status: Option[com.histmersion.util.jobs.JobRow.Status], limit: Option[com.histmersion.PageSize]): List[JobInfo] =
+  def job(id: Job.Id): Either[Api.Error, JobInfo] =
+    Transactor(ds)
+      .read(JobRepo.get(id))
+      .toRight(Api.Error(Api.Error.Message(s"No job '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
+
+  def jobs(status: Option[JobState.Wire], limit: Option[PageSize]): List[JobInfo] =
     val c = cfg()
-    Transactor(ds).read(JobRepo.list(status, c.limits.page(limit, c.limits.search))).toList
+    Transactor(ds).read(JobRepo.list(status, c.limits.page(limit, searchPage(c)))).toList
 
   /** One page under `q`: `before` = only jobs older than that one, `upTo` = only jobs down to it; at most `facetMax`
     * kinds counted.
     */
   def page(
       q: JobQuery,
-      limit: Option[com.histmersion.PageSize],
-      before: Option[com.histmersion.util.jobs.JobRepo.PageCursor],
-      upTo: Option[com.histmersion.util.jobs.JobRepo.PageCursor],
-      facetMax: com.histmersion.util.jobs.JobListing.FacetLimit
+      limit: Option[PageSize],
+      before: Option[Paging.Cursor],
+      upTo: Option[Paging.Cursor],
+      facetMax: PageSize
   ): Either[Api.Error, (List[JobInfo], Paging.Page)] =
     val c = cfg()
     Transactor(ds)
-      .read(JobRepo.page(q, c.limits.page(limit, c.limits.search), clean(before), clean(upTo)))
+      .read(JobRepo.page(q, c.limits.page(limit, searchPage(c)), clean(before), clean(upTo)))
       .left
-      .map(Api.Error(_, Some(Write.CodeNotFound)))
+      .map(p => Api.Error(Api.Error.Message(p.value), Some(Api.Error.Code(Write.CodeNotFound))))
       .map { (rows, more) =>
         val (counts, facets) = Transactor(ds).read(JobRepo.facets(q, facetMax))
-        (rows.toList, Paging.Page.filtered(counts, q.status, Option.when(more)(rows.last.id), facets))
+        (
+          rows.toList,
+          Paging.Page.filtered(
+            counts.map((state, n) => (Paging.Page.CountState(state.value), Paging.Count(n.value))),
+            q.status.map(st => Paging.Page.CountState(st.value)),
+            Option.when(more)(Filter.Last(rows.last.id.value)),
+            facets.map((name, values) =>
+              (Facet.Name(name), values.map((v, n) => (Facet.Value(v), Facet.Count(n.value))))
+            )
+          )
+        )
       }
 
   /** The newest job of `kind`. */
-  def newest(kind: com.histmersion.util.jobs.Job.Kind): Option[JobInfo] =
-    Transactor(ds).read(JobRepo.page(JobQuery(kinds = List(kind)), 1, None, None)).toOption.flatMap(_._1.headOption)
+  def newest(kind: Job.Kind): Option[JobInfo] =
+    Transactor(ds).read(JobRepo.page(JobQuery(kinds = List(JobQuery.Kinds(kind.value))), PageSize(1), None, None)).toOption.flatMap(_._1.headOption)
 
-  private def clean(cursor: Option[com.histmersion.util.jobs.JobRepo.PageCursor]): Option[com.histmersion.util.jobs.JobRepo.PageCursor] = cursor.map(_.trim).filter(_.nonEmpty)
-
-object JobListing:
-  type FacetLimit = FacetLimit.T
-  object FacetLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  private def clean(cursor: Option[Paging.Cursor]): Option[JobRepo.PageCursor] =
+    cursor.map(_.value.trim).filter(_.nonEmpty).map(JobRepo.PageCursor(_))

@@ -1,7 +1,8 @@
 package com.histmersion.util.basemap
 
+import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.config.BasemapOnDemandConfig
-import com.histmersion.util.storage.Store
+import com.histmersion.util.storage.{ByteSource, Store}
 
 import io.circe.Json
 
@@ -31,78 +32,80 @@ final class OnDemandTiles(
     cfg: () => BasemapOnDemandConfig,
     source: OnDemandTiles.Source,
     http: () => RangeHttp,
-    now: () => OnDemandTiles.NowResult = () => System.currentTimeMillis(),
-    sleep: OnDemandTiles.SleepArg1 => Unit = ms => Thread.sleep(ms),
-    ext: OnDemandTiles.Ext = "webp",
-    transform: Array[Byte] => Either[OnDemandTiles.TransformResultPart1, Option[Array[Byte]]] = b => Right(Some(b))
+    now: () => OnDemandTiles.Instant = () => OnDemandTiles.Instant(System.currentTimeMillis()),
+    sleep: BasemapFetch.Pace.GapMs => Unit = ms => Thread.sleep(ms.value),
+    ext: DiskLru.Ext = DiskLru.Ext("webp"),
+    transform: PmTiles.TileBytes => Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]] = b => Right(Some(b))
 )(using clock: java.time.Clock):
 
-  private def url(): com.histmersion.util.basemap.BasemapFetch.Source.Url = source match
+  private def planetUrl(): RangeHttp.Url = source match
     case OnDemandTiles.Source.Planet(u)   => u()
-    case OnDemandTiles.Source.Template(u) => u()
+    case OnDemandTiles.Source.Template(u) => RangeHttp.Url(u().value)
 
-  val cache: DiskLru = DiskLru(store.sub(OnDemandTiles.Tiles), () => (cfg().cacheGb * 1e9).toLong, ext)(using clock)
+  val cache: DiskLru =
+    DiskLru(store.sub(OnDemandTiles.Tiles), () => DiskLru.MaxBytes((cfg().cacheGb.value * 1e9).toLong), ext)(using clock)
   private val remoteFiles = store.sub(OnDemandTiles.Remote)
 
-  private def done(written: Either[Store.Error, ?]): Unit = written.left.foreach(e => throw IOException(e.message))
+  private def done(written: Either[Store.Error, ?]): Unit =
+    written.left.foreach(e => throw IOException(e.message.value))
 
   /** What the planet file is: its header and root, the leaves read, its size and ETag. */
-  final private case class Remote(url: Remote.Url, header: PmTiles.Header, root: Vector[PmTiles.Entry], file: RemoteFile)
-
-  object Remote:
-    type Url = Url.T
-    object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final private case class Remote(url: RangeHttp.Url, header: PmTiles.Header, root: Vector[PmTiles.Entry], file: RemoteFile)
 
   // the open remote description (re-read when the file changes) and when requests may start again; under the lock
   @volatile private var remote: Option[Remote] = None
   @volatile private var offlineUntil = 0L
   private var nextStart = 0L
   private val leaves = ConcurrentHashMap[Long, Vector[PmTiles.Entry]]()
-  private val inflight = ConcurrentHashMap[String, CompletableFuture[Either[String, Option[Array[Byte]]]]]()
-  private lazy val gate = Semaphore(cfg().concurrency.max(1), true)
+  private val inflight =
+    ConcurrentHashMap[String, CompletableFuture[Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]]]]()
+  private lazy val gate = Semaphore(cfg().concurrency.value.max(1), true)
 
   def status: Basemap.OnDemand =
     val c = cfg()
     Basemap.OnDemand(
-      c.enabled,
-      c.maxZoom,
-      store.where(),
-      cache.entries,
-      cache.bytes,
-      (c.cacheGb * 1e9).toLong,
-      Option.when(offlineUntil > now())(java.time.Instant.ofEpochMilli(offlineUntil).toString)
+      Basemap.OnDemand.Enabled(c.enabled.value),
+      Basemap.OnDemand.MaxZoom(c.maxZoom.value),
+      Basemap.OnDemand.Dir(store.where().value),
+      Basemap.OnDemand.Tiles(cache.entries.value),
+      com.histmersion.api.ByteCount(cache.bytes.value),
+      Basemap.OnDemand.MaxBytes((c.cacheGb.value * 1e9).toLong),
+      Option.when(offlineUntil > now().value)(
+        Basemap.OnDemand.OfflineUntil(java.time.Instant.ofEpochMilli(offlineUntil).toString)
+      )
     )
 
   /** Whether `z` is one this serves (deeper than the extract's `extractMax`, to the configured depth). */
-  def serves(z: com.histmersion.util.basemap.OnDemandTiles.Zoom, extractMax: com.histmersion.util.basemap.BasemapFetch.Plan.MaxZoom): Boolean = cfg().enabled && z > extractMax && z <= cfg().maxZoom
+  def serves(z: PmTiles.Zoom, extractMax: BasemapFetch.Plan.MaxZoom): Boolean =
+    cfg().enabled.value && z.value > extractMax.value && z.value <= cfg().maxZoom.value
 
   /** Whether it serves tile `z` at all (on, and not deeper than its configured depth) — outside the extract. */
-  def servesAt(z: com.histmersion.util.basemap.OnDemandTiles.Zoom): Boolean = cfg().enabled && z >= 0 && z <= cfg().maxZoom
+  def servesAt(z: PmTiles.Zoom): Boolean = cfg().enabled.value && z.value >= 0 && z.value <= cfg().maxZoom.value
 
   /** One request to the provider: within the concurrency and the rate. */
-  private def request[A](f: => Either[String, A]): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, A] =
-    if !gate.tryAcquire(60, TimeUnit.SECONDS) then Left("too many tile requests waiting")
+  private def request[A](f: => Either[OnDemandTiles.Problem, A]): Either[OnDemandTiles.Problem, A] =
+    if !gate.tryAcquire(60, TimeUnit.SECONDS) then Left(OnDemandTiles.Problem("too many tile requests waiting"))
     else
       try
         val wait = synchronized {
-          val t = now()
+          val t: Long = now().value
           val start = math.max(t, nextStart)
-          nextStart = start + (1000.0 / cfg().requestsPerSecond.max(0.1)).toLong
+          nextStart = start + (1000.0 / cfg().requestsPerSecond.value.max(0.1)).toLong
           start - t
         }
-        if wait > 0 then sleep(wait)
+        if wait > 0 then sleep(BasemapFetch.Pace.GapMs(wait))
         f
       finally gate.release()
 
   private def remoteJson(r: Remote) = Json.obj(
-    "url" -> Json.fromString(r.url),
-    "size" -> Json.fromLong(r.file.size),
-    "etag" -> r.file.etag.fold(Json.Null)(Json.fromString)
+    "url" -> Json.fromString(r.url.value),
+    "size" -> Json.fromLong(r.file.size.value),
+    "etag" -> r.file.etag.fold(Json.Null)(e => Json.fromString(e.value))
   )
 
   /** The planet's description: in memory, else from `remote/` (when it names the same URL), else read. */
-  private def described(): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Remote] =
-    val u = url()
+  private def described(): Either[OnDemandTiles.Problem, Remote] =
+    val u = planetUrl()
     remote
       .filter(_.url == u)
       .map(Right(_))
@@ -111,8 +114,8 @@ final class OnDemandTiles(
           val fromDisk = scala.util
             .Try {
               val j =
-                io.circe.parser.parse(remoteFiles.get(OnDemandTiles.RemoteJson).get.text()).toOption.get.hcursor
-              val head = remoteFiles.get(OnDemandTiles.Head).get.bytes()
+                io.circe.parser.parse(remoteFiles.get(OnDemandTiles.RemoteJson).get.text().value).toOption.get.hcursor
+              val head = remoteFiles.get(OnDemandTiles.Head).get.bytes().value
               (
                 j.get[String]("url").toOption.get,
                 j.get[Long]("size").toOption.get,
@@ -121,28 +124,43 @@ final class OnDemandTiles(
               )
             }
             .toOption
-            .filter(_._1 == u)
-          val head: Either[com.histmersion.util.basemap.OnDemandTiles.Problem, (com.histmersion.util.basemap.OnDemandTiles.HeaderBytes, RemoteFile)] = fromDisk match
-            case Some((_, size, etag, h)) => Right((h, RemoteFile(size, etag)))
+            .filter(_._1 == u.value)
+          val head: Either[OnDemandTiles.Problem, (Array[Byte], RemoteFile)] = fromDisk match
+            case Some((_, size, etag, h)) => Right((h, RemoteFile(RemoteFile.Size(size), etag.map(RemoteFile.Etag(_)))))
             case None                     =>
               val _ = remoteFiles.deleteTree(Store.Key.Root)
               leaves.clear()
-              request(http().bytes(u, 0, PmTiles.RootBytes)).map { (b, f) =>
-                done(remoteFiles.write(OnDemandTiles.Head, b))
-                (b, f)
+              request(http().bytes(u, ByteOffset.applyUnsafe(0L), ByteCount.applyUnsafe(PmTiles.RootBytes.toLong))).map {
+                (b, f) =>
+                  done(remoteFiles.write(OnDemandTiles.Head, ByteSource.Content(b.value)))
+                  (b.value, f)
               }
           for
             hf <- head
             (b, f) = hf
-            h <- PmTiles.parseHeader(b)
-            _ <- Either.cond(h.rootOffset + h.rootLength <= b.length, (), "root directory outside the first 16 KiB")
+            h <- PmTiles.parseHeader(PmTiles.HeaderBytes(b))
+            _ <- Either.cond(
+              h.rootOffset.value + h.rootLength.value <= b.length,
+              (),
+              OnDemandTiles.Problem("root directory outside the first 16 KiB")
+            )
             root <- PmTiles
-              .decompress(b.slice(h.rootOffset.toInt, (h.rootOffset + h.rootLength).toInt), h.internalCompression)
+              .decompress(
+                PmTiles.CompressedBytes(
+                  b.slice(h.rootOffset.value.toInt, (h.rootOffset.value + h.rootLength.value).toInt)
+                ),
+                h.internalCompression
+              )
               .flatMap(PmTiles.decodeDirectory)
           yield
             val r = Remote(u, h, root, f)
             if fromDisk.isEmpty then
-              done(remoteFiles.write(OnDemandTiles.RemoteJson, remoteJson(r).noSpaces.getBytes(UTF_8)))
+              done(
+                remoteFiles.write(
+                  OnDemandTiles.RemoteJson,
+                  ByteSource.Content(remoteJson(r).noSpaces.getBytes(UTF_8))
+                )
+              )
             remote = Some(r)
             r
         }
@@ -155,51 +173,78 @@ final class OnDemandTiles(
     val _ = remoteFiles.deleteTree(Store.Key.Root)
   }
 
-  private def leaf(r: Remote, e: PmTiles.Entry): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Vector[PmTiles.Entry]] =
-    Option(leaves.get(e.offset)).map(Right(_)).getOrElse {
-      val f = Store.Key.applyUnsafe(s"leaf-${e.offset}-${e.length}.bin")
-      val raw = remoteFiles.get(f).filter(_.size.value == e.length) match
-        case Some(kept) => Right(kept.bytes())
+  private def leaf(r: Remote, e: PmTiles.Entry): Either[OnDemandTiles.Problem, Vector[PmTiles.Entry]] =
+    Option(leaves.get(e.offset.value)).map(Right(_)).getOrElse {
+      val f = Store.Key.applyUnsafe(s"leaf-${e.offset.value}-${e.length.value}.bin")
+      val raw: Either[OnDemandTiles.Problem, Array[Byte]] = remoteFiles.get(f).filter(_.size.value == e.length.value) match
+        case Some(kept) => Right(kept.bytes().value)
         case None       =>
-          request(http().bytes(r.url, r.header.leafOffset + e.offset, e.length)).flatMap { (b, got) =>
-            if got.etag != r.file.etag || got.size != r.file.size then Left(OnDemandTiles.Changed)
-            else
-              done(remoteFiles.write(f, b))
-              Right(b)
+          PmTiles.range(r.header.leafOffset, e).flatMap { (at, n) =>
+            request(http().bytes(r.url, at, n)).flatMap { (b, got) =>
+              if got.etag != r.file.etag || got.size != r.file.size then Left(OnDemandTiles.Changed)
+              else
+                done(remoteFiles.write(f, ByteSource.Content(b.value)))
+                Right(b.value)
+            }
           }
-      raw.flatMap(b => PmTiles.decompress(b, r.header.internalCompression)).flatMap(PmTiles.decodeDirectory).map { d =>
-        if leaves.size > 512 then leaves.clear()
-        leaves.put(e.offset, d)
-        d
-      }
+      raw
+        .flatMap(b => PmTiles.decompress(PmTiles.CompressedBytes(b), r.header.internalCompression))
+        .flatMap(PmTiles.decodeDirectory)
+        .map { d =>
+          if leaves.size > 512 then leaves.clear()
+          leaves.put(e.offset.value, d)
+          d
+        }
     }
 
   /** The planet's entry for a tile, through its leaf directories. */
-  private def entry(r: Remote, z: com.histmersion.util.basemap.OnDemandTiles.Zoom, x: com.histmersion.util.basemap.OnDemandTiles.EntryX, y: com.histmersion.util.basemap.OnDemandTiles.EntryY): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Option[PmTiles.Entry]] =
+  private def entry(
+      r: Remote,
+      z: PmTiles.Zoom,
+      x: PmTiles.TileColumn,
+      y: PmTiles.TileRow
+  ): Either[OnDemandTiles.Problem, Option[PmTiles.Entry]] =
     val id = PmTiles.tileId(z, x, y)
-    def walk(d: Vector[PmTiles.Entry], depth: com.histmersion.util.basemap.OnDemandTiles.Depth): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Option[PmTiles.Entry]] =
+    def walk(d: Vector[PmTiles.Entry], depth: Int): Either[OnDemandTiles.Problem, Option[PmTiles.Entry]] =
       PmTiles.find(d, id) match
         case None                  => Right(None)
         case Some(e) if !e.isLeaf  => Right(Some(e))
-        case Some(_) if depth >= 3 => Left("PMTiles directories nested too deep")
+        case Some(_) if depth >= 3 => Left(OnDemandTiles.Problem("PMTiles directories nested too deep"))
         case Some(e)               => leaf(r, e).flatMap(walk(_, depth + 1))
-    if z < r.header.minZoom || z > r.header.maxZoom then Right(None) else walk(r.root, 0)
+    if z.value < r.header.minZoom.value || z.value > r.header.maxZoom.value then Right(None) else walk(r.root, 0)
 
-  private def read(z: com.histmersion.util.basemap.OnDemandTiles.Zoom, x: com.histmersion.util.basemap.OnDemandTiles.ReadX, y: com.histmersion.util.basemap.OnDemandTiles.ReadY): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Option[com.histmersion.util.basemap.OnDemandTiles.TileBytes]] =
-    val raw = source match
+  private def read(
+      z: PmTiles.Zoom,
+      x: PmTiles.TileColumn,
+      y: PmTiles.TileRow
+  ): Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]] =
+    val raw: Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]] = source match
       case OnDemandTiles.Source.Planet(_)   => readPlanet(z, x, y)
       case OnDemandTiles.Source.Template(u) =>
-        request(http().file(u().replace("{z}", z.toString).replace("{x}", x.toString).replace("{y}", y.toString)))
-    raw.flatMap(_.fold(Right(None))(transform))
+        request(
+          http().file(
+            RangeHttp.Url(
+              u().value.replace("{z}", z.value.toString).replace("{x}", x.value.toString).replace("{y}", y.value.toString)
+            )
+          )
+        ).map(_.map(b => PmTiles.TileBytes(b.value)))
+    raw.flatMap(_.fold[Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]]](Right(None))(transform))
 
-  private def readPlanet(z: com.histmersion.util.basemap.OnDemandTiles.Zoom, x: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetX, y: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetY): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Option[com.histmersion.util.basemap.OnDemandTiles.TileBytes]] =
-    def once(): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Option[com.histmersion.util.basemap.OnDemandTiles.TileBytes]] =
+  private def readPlanet(
+      z: PmTiles.Zoom,
+      x: PmTiles.TileColumn,
+      y: PmTiles.TileRow
+  ): Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]] =
+    def once(): Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]] =
       for
         r <- described()
         e <- entry(r, z, x, y)
-        b <- e.fold(Right(None)) { e =>
-          request(http().bytes(r.url, r.header.dataOffset + e.offset, e.length)).flatMap { (b, got) =>
-            if got.etag != r.file.etag || got.size != r.file.size then Left(OnDemandTiles.Changed) else Right(Some(b))
+        b <- e.fold[Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]]](Right(None)) { e =>
+          PmTiles.range(r.header.dataOffset, e).flatMap { (at, n) =>
+            request(http().bytes(r.url, at, n)).flatMap { (b, got) =>
+              if got.etag != r.file.etag || got.size != r.file.size then Left(OnDemandTiles.Changed)
+              else Right(Some(PmTiles.TileBytes(b.value)))
+            }
           }
         }
       yield b
@@ -210,82 +255,54 @@ final class OnDemandTiles(
   /** The tile `z/x/y`: from the cache, else from the provider (then cached). `Right(None)`: there is none (outside the
     * configured zooms, or the provider has none); `Left`: it could not be read now.
     */
-  def tile(z: com.histmersion.util.basemap.OnDemandTiles.Zoom, x: com.histmersion.util.basemap.OnDemandTiles.TileX, y: com.histmersion.util.basemap.OnDemandTiles.TileY): Either[com.histmersion.util.basemap.OnDemandTiles.Problem, Option[com.histmersion.util.basemap.OnDemandTiles.TileBytes]] =
+  def tile(
+      z: PmTiles.Zoom,
+      x: PmTiles.TileColumn,
+      y: PmTiles.TileRow
+  ): Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]] =
     val c = cfg()
-    if !c.enabled || z > c.maxZoom || x < 0 || y < 0 || x >= (1L << z) || y >= (1L << z) then Right(None)
+    val zoom: Int = z.value
+    if !c.enabled.value || zoom > c.maxZoom.value || x.value < 0 || y.value < 0 || x.value >= (1L << zoom) || y.value >= (1L << zoom)
+    then Right(None)
     else
-      val key = s"$z/$x/$y"
+      val key = DiskLru.Key(s"${z.value}/${x.value}/${y.value}")
       cache.get(key) match
-        case Some(hit)                    => Right(hit)
-        case None if offlineUntil > now() => Left("the provider was unreachable a moment ago; not asked again yet")
-        case None                         =>
-          val mine = CompletableFuture[Either[String, Option[Array[Byte]]]]()
-          Option(inflight.putIfAbsent(key, mine)) match
+        case Some(hit)                            => Right(hit.map(b => PmTiles.TileBytes(b.value)))
+        case None if offlineUntil > now().value =>
+          Left(OnDemandTiles.Problem("the provider was unreachable a moment ago; not asked again yet"))
+        case None =>
+          val mine = CompletableFuture[Either[OnDemandTiles.Problem, Option[PmTiles.TileBytes]]]()
+          Option(inflight.putIfAbsent(key.value, mine)) match
             case Some(other) =>
               scala.util
                 .Try(other.get(120, TimeUnit.SECONDS))
                 .toEither
                 .left
-                .map(e => s"tile $key: ${e.getMessage}")
+                .map(e => OnDemandTiles.Problem(s"tile ${key.value}: ${e.getMessage}"))
                 .flatten
             case None =>
               try
                 val r = read(z, x, y)
                 r match
-                  case Right(b) => cache.put(key, b)
+                  case Right(b) => cache.put(key, b.map(t => DiskLru.Bytes(t.value)))
                   case Left(e)  =>
-                    offlineUntil = now() + c.retryAfterSeconds * 1000L
-                    scribe.warn(s"basemap: on-demand tile $key (${store.where()}) not read: $e")
+                    offlineUntil = now().value + c.retryAfterSeconds.value * 1000L
+                    scribe.warn(s"basemap: on-demand tile ${key.value} (${store.where().value}) not read: ${e.value}")
                 mine.complete(r)
                 r
               catch
                 case e: Throwable =>
-                  mine.complete(Left(s"tile $key: ${e.getClass.getSimpleName}"))
+                  mine.complete(Left(OnDemandTiles.Problem(s"tile ${key.value}: ${e.getClass.getSimpleName}")))
                   throw e
-              finally { val _ = inflight.remove(key, mine) }
+              finally { val _ = inflight.remove(key.value, mine) }
 
 object OnDemandTiles:
-  type Depth = Depth.T
-  object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeaderBytes = HeaderBytes.T
-  object HeaderBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Instant = Instant.T
   object Instant extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileBytes = TileBytes.T
-  object TileBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = RangeHttp.Problem
+  val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type UrlTemplate = UrlTemplate.T
   object UrlTemplate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Zoom = Zoom.T
-  object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-  type NowResult = com.histmersion.util.basemap.OnDemandTiles.Instant
-  val NowResult: _root_.com.histmersion.util.basemap.OnDemandTiles.Instant.type = _root_.com.histmersion.util.basemap.OnDemandTiles.Instant
-  type SleepArg1 = com.histmersion.util.basemap.BasemapFetch.Pace.GapMs
-  val SleepArg1: _root_.com.histmersion.util.basemap.BasemapFetch.Pace.GapMs.type = _root_.com.histmersion.util.basemap.BasemapFetch.Pace.GapMs
-  type Ext = Ext.T
-  object Ext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TransformResultPart1 = com.histmersion.util.basemap.OnDemandTiles.Problem
-  val TransformResultPart1: _root_.com.histmersion.util.basemap.OnDemandTiles.Problem.type = _root_.com.histmersion.util.basemap.OnDemandTiles.Problem
-
-  type EntryX = EntryX.T
-  object EntryX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EntryY = EntryY.T
-  object EntryY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadX = ReadX.T
-  object ReadX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadY = ReadY.T
-  object ReadY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadPlanetX = ReadPlanetX.T
-  object ReadPlanetX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadPlanetY = ReadPlanetY.T
-  object ReadPlanetY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileX = TileX.T
-  object TileX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileY = TileY.T
-  object TileY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Tiles = Store.Key.applyUnsafe("tiles")
   private val Remote = Store.Key.applyUnsafe("remote")
@@ -293,19 +310,11 @@ object OnDemandTiles:
   private val Head = Store.Key.applyUnsafe("head.bin")
 
   /** The provider's file changed under a read (another ETag or size). */
-  val Changed = "the provider's file changed"
+  val Changed: Problem = Problem("the provider's file changed")
 
   /** Where tiles are read from: a PMTiles planet archive (range requests), or a tile URL with `{z}/{x}/{y}` (one GET a
     * tile; a 404 is "none").
     */
   enum Source:
-    case Planet(url: () => Source.Planet.UrlResult)
-    case Template(url: () => Source.Template.UrlResult)
-
-  object Source:
-    object Planet:
-      type UrlResult = com.histmersion.util.basemap.BasemapFetch.Source.Url
-      val UrlResult: _root_.com.histmersion.util.basemap.BasemapFetch.Source.Url.type = _root_.com.histmersion.util.basemap.BasemapFetch.Source.Url
-    object Template:
-      type UrlResult = com.histmersion.util.basemap.OnDemandTiles.UrlTemplate
-      val UrlResult: _root_.com.histmersion.util.basemap.OnDemandTiles.UrlTemplate.type = _root_.com.histmersion.util.basemap.OnDemandTiles.UrlTemplate
+    case Planet(url: () => RangeHttp.Url)
+    case Template(url: () => UrlTemplate)

@@ -12,46 +12,56 @@ final class SettingsControllers(
     settings: SettingsService,
     restarts: RestartService,
     reload: () => ReloadReport,
-    knownKeys: () => List[SettingsControllers.KnownKeysResult] = () => Nil
+    knownKeys: () => List[SettingsService.ConfigPath] = () => Nil
 ):
 
-  def page(prefix: Option[com.histmersion.util.settings.SettingsService.ConfigPath]): Either[Api.Error, ConfigEdit.Page] =
+  def page(prefix: Option[SettingsService.ConfigPath]): Either[Api.Error, ConfigEdit.Page] =
     for
       p <- prefix
-        .map(_.trim)
+        .map(_.value.trim)
         .filter(_.nonEmpty)
-        .fold(Right(None))(SettingKey.parse(_).map(Some(_)))
+        .fold[Either[SettingKey.Problem, Option[SettingKey]]](Right(None))(raw =>
+          SettingKey.parse(SettingKey.ParseRaw(raw)).map(Some(_))
+        )
         .left
-        .map(Api.Error(_))
-      snap <- settings.read(p, knownKeys().flatMap(k => SettingKey.parse(k).toOption)).left.map(SettingsViews.error)
+        .map(why => Api.Error(Api.Error.Message(why.value)))
+      snap <- settings
+        .read(p, knownKeys().flatMap(k => SettingKey.parse(SettingKey.ParseRaw(k.value)).toOption))
+        .left
+        .map(SettingsViews.error)
     yield SettingsViews.page(snap, restarts.available)
 
   /** The changes, each value read as its setting's kind; then the reload, when asked for and something changed. */
   def write(w: ConfigEdit.Write): Either[Api.Error, ConfigEdit.Written] =
     for
-      edits <- SettingEdit.parseAll(w.changes.map(c => c.key -> c.value), settings.schema).left.map(SettingsViews.error)
+      edits <- SettingEdit.parseAll(
+        w.changes.map(c => SettingKey.ParseRaw(c.key.value) -> c.value.map(v => SettingValue.Typed(v.value))),
+        settings.schema
+      ).left.map(SettingsViews.error)
       version <- w.version
-        .map(_.trim)
+        .map(_.value.trim)
         .filter(_.nonEmpty)
-        .fold(Right(None))(v =>
-          FileVersion.either(v).map(Some(_)).left.map(_ => Api.Error(s"'$v' is not a settings file's version"))
+        .fold[Either[Api.Error, Option[FileVersion]]](Right(None))(v =>
+          FileVersion
+            .either(v)
+            .map(Some(_))
+            .left
+            .map(_ => Api.Error(Api.Error.Message(s"'$v' is not a settings file's version")))
         )
-      outcome <- settings.write(edits, version, w.literalConsent).left.map(SettingsViews.error)
+      outcome <- settings
+        .write(edits, version, SettingPolicy.LiteralConsent(w.literalConsent.value))
+        .left
+        .map(SettingsViews.error)
     yield
-      val reloaded = Option.when(w.reload && outcome.wrote)(reload())
+      val reloaded = Option.when(w.reload.value && outcome.wrote)(reload())
       SettingsViews.written(outcome, reloaded, restarts.available)
 
   def restart(): Either[Api.Error, ConfigEdit.Restart] =
     restarts
       .restart()
       .fold(
-        why => Left(Api.Error(why, Some(ConfigEdit.CodeUnavailable))),
-        msg => Right(ConfigEdit.Restart(accepted = true, msg))
+        why => Left(Api.Error(Api.Error.Message(why.value), Some(Api.Error.Code(ConfigEdit.CodeUnavailable)))),
+        msg => Right(ConfigEdit.Restart(accepted = ConfigEdit.Restart.Accepted(true), ConfigEdit.Restart.Message(msg.value)))
       )
 
   def setupDue: Boolean = settings.setupDue
-
-object SettingsControllers:
-  type KnownKeysResult = com.histmersion.util.settings.SettingsService.ConfigPath
-  val KnownKeysResult: _root_.com.histmersion.util.settings.SettingsService.ConfigPath.type = _root_.com.histmersion.util.settings.SettingsService.ConfigPath
-

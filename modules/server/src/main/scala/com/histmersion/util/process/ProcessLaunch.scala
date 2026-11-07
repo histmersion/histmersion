@@ -10,7 +10,7 @@ final case class ProcessLaunch(
     workingStore: Option[Store] = None,
     environment: Map[ProcessLaunch.EnvironmentKey, ProcessLaunch.EnvironmentValue] = Map.empty,
     output: ProcessOutput = ProcessOutput.Piped,
-    mergeErrors: ProcessLaunch.MergeErrors = true
+    mergeErrors: ProcessLaunch.MergeErrors = ProcessLaunch.MergeErrors(true)
 )
 
 object ProcessLaunch:

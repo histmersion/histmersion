@@ -72,7 +72,7 @@ trait Store:
   def copy(
       from: com.histmersion.util.storage.Store.Key,
       to: com.histmersion.util.storage.Store.Key,
-      keepAttributes: com.histmersion.util.storage.Store.KeepPermissions = false
+      keepAttributes: com.histmersion.util.storage.Store.KeepPermissions = com.histmersion.util.storage.Store.KeepPermissions(false)
   ): Either[com.histmersion.util.storage.Store.Error, Unit]
 
   /** `prefix` made a directory, with its parents. */
@@ -139,9 +139,9 @@ object Store:
     def find(sha256: com.histmersion.Sha256): Option[(ByteSource, com.histmersion.util.storage.ContentStore.Ext)] =
       store
         .list()
-        .find(s => s.isFile && s.key.name.startsWith(sha256 + "."))
+        .find(s => s.isFile && s.key.name.value.startsWith(sha256.value + "."))
         .flatMap(s => store.get(s.key))
-        .map(b => b.asSource -> b.key.name.drop(sha256.length + 1))
+        .map(b => b.asSource -> ContentStore.Ext(b.key.name.value.drop(sha256.value.length + 1)))
 
     /** Written beside its name, hashed, and moved into place only when the content IS `sha256`: the store is
       * content-addressed, and whoever reads it trusts the name.
@@ -153,23 +153,23 @@ object Store:
       else
         scala.util
           .Try {
-            Key.of(s"$sha256.${ContentStore.safeExt(ext)}").flatMap { key =>
-              store.reserve(key, TempName.Unique).left.map(_.message).flatMap { r =>
+            Key.of(s"$sha256.${ContentStore.safeExt(ext)}").left.map(p => ContentStore.Problem(p.value)).flatMap { key =>
+              store.reserve(key, TempName.Unique).left.map(e => ContentStore.Problem(e.message.value)).flatMap { r =>
                 try
                   val md = MessageDigest.getInstance("SHA-256")
                   val out = DigestOutputStream(r.output(), md)
                   try { val _ = in.transferTo(out) }
                   finally out.close()
-                  val actual = ContentStore.hex(md.digest())
-                  if actual != sha256 then Left(s"its content hashes to $actual")
-                  else r.commit().left.map(_.message).map(_ => ())
+                  val actual = ContentStore.hex(ContentStore.Digest(md.digest()))
+                  if actual != sha256 then Left(ContentStore.Problem(s"its content hashes to $actual"))
+                  else r.commit().left.map(e => ContentStore.Problem(e.message.value)).map(_ => ())
                 finally r.close()
               }
             }
           }
           .toEither
           .left
-          .map(e => s"cannot store it in ${store.where()}: ${e.getMessage}")
+          .map(e => ContentStore.Problem(s"cannot store it in ${store.where()}: ${e.getMessage}"))
           .flatten
 
 
@@ -177,12 +177,12 @@ object Store:
     * failed, as the file system said.
     */
   enum Error(val message: Error.Message):
-    case NotFound(where: Error.NotFound.Where) extends Error(s"$where: no such file")
-    case NotAFile(where: Error.NotAFile.Where) extends Error(s"$where is not a file")
-    case Failed(reason: Error.Failed.Reason) extends Error(reason)
+    case NotFound(where: Error.NotFound.Where) extends Error(Error.Message(s"$where: no such file"))
+    case NotAFile(where: Error.NotAFile.Where) extends Error(Error.Message(s"$where is not a file"))
+    case Failed(reason: Error.Failed.Reason) extends Error(Error.Message(reason.value))
 
     /** An in-memory store has no file to hand to another program. */
-    case NotOnDisk(where: Error.NotOnDisk.Where) extends Error(s"$where is not on disk")
+    case NotOnDisk(where: Error.NotOnDisk.Where) extends Error(Error.Message(s"$where is not on disk"))
 
   object Error:
     type Reason = Reason.T
@@ -222,26 +222,26 @@ object Store:
     val Root: Key = applyUnsafe("")
 
     /** A name made of one segment or several, each checked. */
-    def of(segments: String*): Either[com.histmersion.util.storage.Store.Key.Problem, Key] = either(segments.filter(_.nonEmpty).mkString("/"))
+    def of(segments: String*): Either[com.histmersion.util.storage.Store.Key.Problem, Key] = either(segments.filter(_.nonEmpty).mkString("/")).left.map(Problem(_))
 
     extension (key: Key)
       def isRoot: Boolean = key.value.isEmpty
 
       /** `key/child`; `child` may itself hold several segments. */
-      def /(child: String): Either[String, Key] = of(key.value, child)
+      def /(child: String): Either[Key.Problem, Key] = of(key.value, child)
 
       /** `key/child` for a child the caller built from checked parts. */
-      def child(name: com.histmersion.util.storage.Store.EntryName): Key = (key / name).fold(e => throw IllegalArgumentException(e), identity)
+      def child(name: com.histmersion.util.storage.Store.EntryName): Key = (key / name.value).fold(e => throw IllegalArgumentException(e.value), identity)
 
-      def segments: List[com.histmersion.util.storage.Store.Key.Segment] = if key.isRoot then Nil else key.value.split('/').toList
+      def segments: List[com.histmersion.util.storage.Store.Key.Segment] = if key.isRoot then Nil else key.value.split('/').toList.map(Segment(_))
 
       /** The last segment. */
-      def name: com.histmersion.util.storage.Store.EntryName = segments.lastOption.getOrElse("")
+      def name: com.histmersion.util.storage.Store.EntryName = com.histmersion.util.storage.Store.EntryName(segments.lastOption.fold("")(_.value))
 
       def parent: Key = applyUnsafe(segments.dropRight(1).mkString("/"))
 
       /** The key `name` with `suffix` added to its last segment. */
-      def withSuffix(suffix: com.histmersion.util.storage.TempName.Suffixed.Suffix): Key = parent.child(name + suffix)
+      def withSuffix(suffix: com.histmersion.util.storage.TempName.Suffixed.Suffix): Key = parent.child(com.histmersion.util.storage.Store.EntryName(name.value + suffix.value))
 
       /** Is `key` this key or below it? */
       def within(prefix: Key): Boolean =
@@ -258,8 +258,8 @@ object Store:
       bytes: ByteCount,
       files: Measure.Files,
       exists: Measure.Exists,
-      partial: Measure.Partial = false,
-      unreadable: Measure.Unreadable = 0
+      partial: Measure.Partial = Measure.Partial(false),
+      unreadable: Measure.Unreadable = Measure.Unreadable(0)
   )
 
   object Measure:
@@ -272,7 +272,7 @@ object Store:
     type Unreadable = Unreadable.T
     object Unreadable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val absent: Measure = Measure(ByteCount.zero, 0L, exists = false)
+    val absent: Measure = Measure(ByteCount.zero, Files(0L), exists = Exists(false))
 
   /** The disk a store is (or would be) on: its name, its size and the space this process may still use. */
   final case class Volume(id: Volume.Id, total: ByteCount, usable: ByteCount)

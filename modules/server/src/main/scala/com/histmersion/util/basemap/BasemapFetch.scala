@@ -7,9 +7,10 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.histmersion.util.storage.{RandomReader, Store}
-import com.histmersion.ByteOffset
+import com.histmersion.{ByteCount, ByteOffset}
+import com.histmersion.api.catalogue.{Latitude, Longitude}
+import com.histmersion.util.storage.ByteSource
 import io.circe.Json
-import io.circe.syntax.*
 
 import java.io.IOException
 import java.nio.charset.StandardCharsets.UTF_8
@@ -36,12 +37,10 @@ import com.histmersion.api.library.Source
 object BasemapFetch:
   type Attribution = Attribution.T
   object Attribution extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Chunk = Chunk.T
-  object Chunk extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChunkCount = ChunkCount.T
   object ChunkCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Dropped = Dropped.T
-  object Dropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Dropped = Basemap.LayerInfo.Dropped
+  val Dropped: Basemap.LayerInfo.Dropped.type = Basemap.LayerInfo.Dropped
   type FetchedAt = FetchedAt.T
   object FetchedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FilterSpec = FilterSpec.T
@@ -50,26 +49,21 @@ object BasemapFetch:
   object Filtered extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Note = Note.T
   object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatusCode = StatusCode.T
-  object StatusCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Zoom = Zoom.T
-  object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = RangeHttp.Problem
+  val Problem: RangeHttp.Problem.type = RangeHttp.Problem
+  type TileCount = TileCount.T
+  object TileCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ZoomSummary = ZoomSummary.T
   object ZoomSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What a fetch of one layer reads: `url`, the build it names (for the record), and the size the provider publishes
     * for it, when it does.
     */
-
-
-
   final case class Source(url: Source.Url, label: Source.Label, expectedSize: Option[Source.ExpectedSize] = None)
 
   object Source:
-    type Url = Url.T
-    object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Url = RangeHttp.Url
+    val Url: RangeHttp.Url.type = RangeHttp.Url
     type Label = Label.T
     object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ExpectedSize = ExpectedSize.T
@@ -79,12 +73,12 @@ object BasemapFetch:
   final case class Wanted(id: Wanted.Id, offset: Wanted.Offset, length: Wanted.Length)
 
   object Wanted:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = PmTiles.Entry.TileId
+    val Id: PmTiles.Entry.TileId.type = PmTiles.Entry.TileId
     type Offset = com.histmersion.ByteOffset
     val Offset: _root_.com.histmersion.ByteOffset.type = _root_.com.histmersion.ByteOffset
-    type Length = Length.T
-    object Length extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Length = PmTiles.Entry.Length
+    val Length: PmTiles.Entry.Length.type = PmTiles.Entry.Length
 
   final case class Plan(
       source: Source,
@@ -94,26 +88,19 @@ object BasemapFetch:
       /** Sorted by tile id. */
       tiles: Vector[Wanted],
       /** The merged range requests, as (offset, length) in the remote tile data section, by offset. */
-      requests: Vector[(Plan.RequestsPart1, Plan.RequestsPart2)],
+      requests: Vector[(ByteOffset, ByteCount)],
       /** The distinct contents' bytes (what the requests carry, without the gaps they read over). */
-      contentBytes: Plan.ContentBytes,
+      contentBytes: ByteCount,
       /** Requests the plan itself made (header, metadata, directories). */
       directoryRequests: Plan.DirectoryRequests,
       bbox: BBox,
       maxZoom: Plan.MaxZoom,
       /** The shallowest zoom planned (a focus region starts below the extract's depth). */
-      minZoom: Plan.MinZoom = 0
+      minZoom: Plan.MinZoom = Plan.MinZoom(0)
   ):
-    def requestBytes: com.histmersion.ByteCount = requests.map(_._2).sum
+    def requestBytes: ByteCount = ByteCount.applyUnsafe(requests.map(_._2.value).sum)
 
   object Plan:
-
-    type RequestsPart1 = com.histmersion.ByteOffset
-    val RequestsPart1: _root_.com.histmersion.ByteOffset.type = _root_.com.histmersion.ByteOffset
-    type RequestsPart2 = com.histmersion.ByteCount
-    val RequestsPart2: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
-    type ContentBytes = ContentBytes.T
-    object ContentBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DirectoryRequests = DirectoryRequests.T
     object DirectoryRequests extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MaxZoom = MaxZoom.T
@@ -126,19 +113,14 @@ object BasemapFetch:
     */
   final case class Pace(
       gapMs: Pace.GapMs,
-      maxRequestBytes: Pace.MaxRequestBytes,
+      maxRequestBytes: ByteCount,
       overfetch: Pace.Overfetch,
-      sleep: Pace.SleepArg1 => Unit = ms => Thread.sleep(ms)
+      sleep: Pace.GapMs => Unit = ms => Thread.sleep(ms.value)
   )
 
   object Pace:
-    type SleepArg1 = com.histmersion.util.basemap.BasemapFetch.Pace.GapMs
-    val SleepArg1: _root_.com.histmersion.util.basemap.BasemapFetch.Pace.GapMs.type = _root_.com.histmersion.util.basemap.BasemapFetch.Pace.GapMs
-
     type GapMs = GapMs.T
     object GapMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MaxRequestBytes = MaxRequestBytes.T
-    object MaxRequestBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Overfetch = Overfetch.T
     object Overfetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -147,29 +129,35 @@ object BasemapFetch:
   /** What a plan downloads at each zoom: its tiles and their distinct bytes, shallowest first — a download ahead's size
     * estimate per zoom (#3760). Pure.
     */
-  def perZoom(p: Plan): List[(com.histmersion.util.basemap.BasemapFetch.Zoom, com.histmersion.util.basemap.BasemapFetch.Plan.DirectoryRequests, com.histmersion.util.basemap.BasemapFetch.Plan.ContentBytes)] =
-    p.tiles.groupBy(t => PmTiles.zxy(t.id)._1).toList.sortBy(_._1).map { (z, ts) =>
-      (z, ts.size, ts.map(t => (t.offset, t.length)).distinct.map(_._2.toLong).sum)
+  def perZoom(p: Plan): List[(PmTiles.Zoom, TileCount, ByteCount)] =
+    p.tiles.groupBy(t => PmTiles.zxy(t.id)._1).toList.sortBy(_._1.value).map { (z, ts) =>
+      (
+        z,
+        TileCount(ts.size.toLong),
+        ByteCount.applyUnsafe(ts.map(t => (t.offset, t.length)).distinct.map(_._2.value.toLong).sum)
+      )
     }
 
   /** [[perZoom]] in a line: `zoom 0: 1 tile, 12 KB · …`, the deepest zooms' running total last. Pure. */
-  def perZoomLine(rows: List[(com.histmersion.util.basemap.BasemapFetch.Zoom, com.histmersion.util.basemap.BasemapFetch.Plan.DirectoryRequests, com.histmersion.util.basemap.BasemapFetch.Plan.ContentBytes)]): com.histmersion.util.basemap.BasemapFetch.ZoomSummary =
-    rows
-      .map((z, n, b) =>
-        s"zoom $z: ${com.histmersion.api.Plural.count(n, "tile")}, ${com.histmersion.api.backup.Backup.humanBytes(b)}"
-      )
-      .mkString(" · ")
+  def perZoomLine(rows: List[(PmTiles.Zoom, TileCount, ByteCount)]): ZoomSummary =
+    ZoomSummary(
+      rows
+        .map((z, n, b) =>
+          s"zoom ${z.value}: ${com.histmersion.api.Plural.count(com.histmersion.api.Plural.CountN(n.value), com.histmersion.api.Plural.CountSingular("tile"))}, ${Backup.humanBytes(com.histmersion.api.ByteCount(b.value))}"
+        )
+        .mkString(" · ")
+    )
 
   /** Every tile id of zooms `minZoom`…`maxZoom` over `b`, sorted. Pure. */
-  def wantedIds(b: BBox, minZoom: com.histmersion.util.basemap.BasemapFetch.Plan.MinZoom, maxZoom: com.histmersion.util.basemap.BasemapFetch.Plan.MaxZoom): Array[Long] =
+  def wantedIds(b: BBox, minZoom: Plan.MinZoom, maxZoom: Plan.MaxZoom): Array[Long] =
     val out = mutable.ArrayBuilder.make[Long]
-    for z <- minZoom to maxZoom do
-      val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, z)
-      var x = x0 // nested loops over one zoom's rectangle
-      while x <= x1 do
-        var y = y0
-        while y <= y1 do
-          out += PmTiles.tileId(z, x, y)
+    for z <- minZoom.value to maxZoom.value do
+      val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, Basemap.Zoom(z))
+      var x = x0.value // nested loops over one zoom's rectangle
+      while x <= x1.value do
+        var y = y0.value
+        while y <= y1.value do
+          out += PmTiles.tileId(PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y)).value
           y += 1
         x += 1
     val a = out.result()
@@ -180,16 +168,18 @@ object BasemapFetch:
     * request when the gap before it is at most `overfetch` of the request so far (or 64 KiB) and the request stays
     * within `maxBytes`. Pure.
     */
-  def coalesce(contents: Seq[(com.histmersion.ByteOffset, com.histmersion.ByteCount)], maxBytes: com.histmersion.util.basemap.BasemapFetch.Pace.MaxRequestBytes, overfetch: com.histmersion.util.basemap.BasemapFetch.Pace.Overfetch): Vector[(com.histmersion.ByteOffset, com.histmersion.ByteCount)] =
+  def coalesce(contents: Seq[(ByteOffset, ByteCount)], maxBytes: ByteCount, overfetch: Pace.Overfetch): Vector[(ByteOffset, ByteCount)] =
     val out = Vector.newBuilder[(Long, Long)]
     var start = -1L // the request being built: [start, end)
     var end = -1L
-    contents.foreach { (o, l) =>
+    contents.foreach { (offset, length) =>
+      val o = offset.value
+      val l = length.value
       val gap = o - end
       if start >= 0 && gap >= 0 && gap <= math.max(
           64L * 1024,
-          (overfetch * (end - start)).toLong
-        ) && o + l - start <= maxBytes
+          (overfetch.value * (end - start)).toLong
+        ) && o + l - start <= maxBytes.value
       then end = math.max(end, o + l)
       else
         if start >= 0 then out += ((start, end - start))
@@ -197,11 +187,16 @@ object BasemapFetch:
         end = o + l
     }
     if start >= 0 then out += ((start, end - start))
-    out.result()
+    out.result().map((o, l) => (ByteOffset.applyUnsafe(o), ByteCount.applyUnsafe(l)))
 
   /** The extract's bounds: the region clipped to the source's own. Pure. */
   def clip(b: BBox, h: PmTiles.Header): BBox =
-    BBox(b.minLon.max(h.minLon), b.minLat.max(h.minLat), b.maxLon.min(h.maxLon), b.maxLat.min(h.maxLat))
+    BBox(
+      Longitude(b.minLon.value.max(h.minLon.value)),
+      Latitude(b.minLat.value.max(h.minLat.value)),
+      Longitude(b.maxLon.value.min(h.maxLon.value)),
+      Latitude(b.maxLat.value.min(h.maxLat.value))
+    )
 
   // ── 1. the plan ────────────────────────────────────────────────────────────────────────────────
 
@@ -209,46 +204,61 @@ object BasemapFetch:
       http: RangeHttp,
       source: Source,
       bbox: BBox,
-      maxZoom: com.histmersion.util.basemap.BasemapFetch.Plan.MaxZoom,
+      maxZoom: Plan.MaxZoom,
       pace: Pace,
-      note: com.histmersion.util.basemap.BasemapFetch.Note => Unit,
-      minZoom: Option[com.histmersion.util.basemap.BasemapFetch.Plan.MinZoom] = None
-  ): Either[com.histmersion.util.basemap.BasemapFetch.Problem, Plan] =
+      note: Note => Unit,
+      minZoom: Option[Plan.MinZoom] = None
+  ): Either[Problem, Plan] =
     var requests = 0 // directory requests made, each after a pause
-    def get(offset: com.histmersion.ByteOffset, length: com.histmersion.ByteCount): Either[com.histmersion.util.basemap.BasemapFetch.Problem, (com.histmersion.util.basemap.BasemapFetch.Chunk, RemoteFile)] =
+    def get(offset: ByteOffset, length: ByteCount): Either[Problem, (RangeHttp.ResponseBytes, RemoteFile)] =
       if requests > 0 then pace.sleep(pace.gapMs)
       if Thread.interrupted() then throw InterruptedException()
       requests += 1
       http.bytes(source.url, offset, length)
     for
-      first <- get(0, PmTiles.RootBytes)
+      first <- get(ByteOffset.applyUnsafe(0L), ByteCount.applyUnsafe(PmTiles.RootBytes.toLong))
       (head, remote) = first
       _ <- source.expectedSize
-        .filter(_ != remote.size)
-        .map(s => Left(s"${source.url} is ${remote.size} bytes, but the provider lists $s for ${source.label}"))
+        .filter(s => s.value != remote.size.value)
+        .map(s => Left(Problem(s"${source.url} is ${remote.size} bytes, but the provider lists $s for ${source.label}")))
         .getOrElse(Right(()))
-      h <- PmTiles.parseHeader(head)
-      _ <- Either.cond(h.rootOffset + h.rootLength <= head.length, (), "root directory outside the first 16 KiB")
+      h <- PmTiles.parseHeader(PmTiles.HeaderBytes(head.value))
+      _ <- Either.cond(
+        h.rootOffset.value + h.rootLength.value <= head.value.length,
+        (),
+        Problem("root directory outside the first 16 KiB")
+      )
       root <- PmTiles
-        .decompress(head.slice(h.rootOffset.toInt, (h.rootOffset + h.rootLength).toInt), h.internalCompression)
+        .decompress(
+          PmTiles.CompressedBytes(
+            head.value.slice(h.rootOffset.value.toInt, (h.rootOffset.value + h.rootLength.value).toInt)
+          ),
+          h.internalCompression
+        )
         .flatMap(PmTiles.decodeDirectory)
       meta <-
-        if h.metadataLength <= 0 then Right(Json.obj())
+        if h.metadataLength.value <= 0 then Right(Json.obj())
         else
           get(h.metadataOffset, h.metadataLength)
-            .flatMap((b, _) => PmTiles.decompress(b, h.internalCompression))
+            .flatMap((b, _) => PmTiles.decompress(PmTiles.CompressedBytes(b.value), h.internalCompression))
             .flatMap(b =>
-              io.circe.parser.parse(String(b, "UTF-8")).left.map(e => s"metadata is not JSON: ${e.getMessage}")
+              io.circe.parser
+                .parse(String(b.value, "UTF-8"))
+                .left
+                .map(e => Problem(s"metadata is not JSON: ${e.getMessage}"))
             )
       region = clip(bbox, h)
-      top = math.min(maxZoom, h.maxZoom)
-      low = minZoom.fold(h.minZoom)(_.max(h.minZoom)).min(top)
-      ids = wantedIds(region, low, top)
-      _ = note(s"reading the directories of ${ids.length} tiles (zoom $low–$top)")
+      top = math.min(maxZoom.value, h.maxZoom.value)
+      low = minZoom.fold(h.minZoom.value)(_.value.max(h.minZoom.value)).min(top)
+      ids = wantedIds(region, Plan.MinZoom(low), Plan.MaxZoom(top))
+      _ = note(Note(s"reading the directories of ${ids.length} tiles (zoom $low–$top)"))
       tiles <- resolve(root, ids, h, pace, get, 0)
     yield
-      val sorted = tiles.sortBy(_.id)
-      val contents = sorted.map(t => (t.offset, t.length.toLong)).distinct.sortBy(_._1)
+      val sorted = tiles.sortBy(_.id.value)
+      val contents = sorted
+        .map(t => (t.offset, ByteCount.applyUnsafe(t.length.value.toLong)))
+        .distinct
+        .sortBy(_._1.value)
       Plan(
         source,
         h,
@@ -256,11 +266,11 @@ object BasemapFetch:
         remote,
         sorted,
         coalesce(contents, pace.maxRequestBytes, pace.overfetch),
-        contents.map(_._2).sum,
-        requests,
+        ByteCount.applyUnsafe(contents.map(_._2.value).sum),
+        Plan.DirectoryRequests(requests),
         region,
-        top,
-        low
+        Plan.MaxZoom(top),
+        Plan.MinZoom(low)
       )
 
   /** The stored tiles of `ids` (sorted) under one directory: its runs, and the leaf directories it points to — fetched
@@ -271,33 +281,38 @@ object BasemapFetch:
       ids: Array[Long],
       h: PmTiles.Header,
       pace: Pace,
-      get: (com.histmersion.ByteOffset, com.histmersion.ByteCount) => Either[com.histmersion.util.basemap.BasemapFetch.Problem, (com.histmersion.util.basemap.BasemapFetch.Chunk, RemoteFile)],
-      depth: com.histmersion.util.basemap.BasemapFetch.Zoom
-  ): Either[com.histmersion.util.basemap.BasemapFetch.Problem, Vector[Wanted]] =
+      get: (ByteOffset, ByteCount) => Either[Problem, (RangeHttp.ResponseBytes, RemoteFile)],
+      depth: Int
+  ): Either[Problem, Vector[Wanted]] =
     val found = Vector.newBuilder[Wanted]
     val leaves = mutable.LinkedHashMap.empty[PmTiles.Entry, mutable.ArrayBuilder[Long]]
     ids.foreach { id =>
-      PmTiles.find(dir, id).foreach { e =>
+      PmTiles.find(dir, PmTiles.Entry.TileId(id)).foreach { e =>
         if e.isLeaf then leaves.getOrElseUpdate(e, mutable.ArrayBuilder.make[Long]) += id
-        else found += Wanted(id, e.offset, e.length)
+        else found += Wanted(PmTiles.Entry.TileId(id), e.offset, e.length)
       }
     }
     if leaves.isEmpty then Right(found.result())
-    else if depth >= 3 then Left("PMTiles directories nested too deep")
+    else if depth >= 3 then Left(Problem("PMTiles directories nested too deep"))
     else
-      val byOffset = leaves.keys.toVector.sortBy(_.offset)
-      val ranges = coalesce(byOffset.map(e => (e.offset, e.length.toLong)), 8L * 1024 * 1024, pace.overfetch)
-      ranges.foldLeft[Either[String, Vector[Wanted]]](Right(found.result())) { (acc, range) =>
+      val byOffset = leaves.keys.toVector.sortBy(_.offset.value)
+      val ranges = coalesce(
+        byOffset.map(e => (e.offset, ByteCount.applyUnsafe(e.length.value.toLong))),
+        ByteCount.applyUnsafe(8L * 1024 * 1024),
+        pace.overfetch
+      )
+      ranges.foldLeft[Either[Problem, Vector[Wanted]]](Right(found.result())) { (acc, range) =>
         acc.flatMap { sofar =>
           val (start, len) = range
-          get(h.leafOffset + start, len).flatMap { (bytes, _) =>
+          get(ByteOffset.applyUnsafe(h.leafOffset.value + start.value), len).flatMap { (bytes, _) =>
             byOffset
-              .filter(e => e.offset >= start && e.offset + e.length <= start + len)
-              .foldLeft[Either[String, Vector[Wanted]]](Right(sofar)) { (acc2, e) =>
+              .filter(e => e.offset.value >= start.value && e.offset.value + e.length.value <= start.value + len.value)
+              .foldLeft[Either[Problem, Vector[Wanted]]](Right(sofar)) { (acc2, e) =>
                 acc2.flatMap { got =>
-                  val slice = bytes.slice((e.offset - start).toInt, (e.offset - start + e.length).toInt)
+                  val from = (e.offset.value - start.value).toInt
+                  val slice = bytes.value.slice(from, from + e.length.value)
                   PmTiles
-                    .decompress(slice, h.internalCompression)
+                    .decompress(PmTiles.CompressedBytes(slice), h.internalCompression)
                     .flatMap(PmTiles.decodeDirectory)
                     .flatMap(sub => resolve(sub, leaves(e).result(), h, pace, get, depth + 1))
                     .map(got ++ _)
@@ -310,11 +325,11 @@ object BasemapFetch:
   // ── 2. the download ────────────────────────────────────────────────────────────────────────────
 
   /** The file request `r` is kept in, in the work store. */
-  def chunkKey(r: (com.histmersion.util.basemap.BasemapFetch.Wanted.Id, com.histmersion.ByteOffset)): Store.Key = Store.Key.applyUnsafe(s"${r._1}-${r._2}.bin")
+  def chunkKey(r: (ByteOffset, ByteCount)): Store.Key = Store.Key.applyUnsafe(s"${r._1}-${r._2}.bin")
 
   /** The requests not downloaded yet. */
-  def pending(p: Plan, work: Store): Vector[(com.histmersion.ByteOffset, com.histmersion.ByteCount)] =
-    p.requests.filterNot(r => work.stat(chunkKey(r)).exists(s => s.isFile && s.size.value == r._2))
+  def pending(p: Plan, work: Store): Vector[(ByteOffset, ByteCount)] =
+    p.requests.filterNot(r => work.stat(chunkKey(r)).exists(s => s.isFile && s.size.value == r._2.value))
 
   /** Download every pending request into `work`; `room(bytes)` is asked before each one and stops the fetch (with its
     * reason) when the disk would get too full.
@@ -324,37 +339,45 @@ object BasemapFetch:
       p: Plan,
       work: Store,
       pace: Pace,
-      note: com.histmersion.util.basemap.BasemapFetch.Note => Unit,
-      room: com.histmersion.ByteCount => Either[com.histmersion.util.basemap.BasemapFetch.Problem, Unit]
-  ): Either[com.histmersion.util.basemap.BasemapFetch.Problem, com.histmersion.util.basemap.BasemapFetch.StatusCode] =
+      note: Note => Unit,
+      room: ByteCount => Either[Problem, Unit]
+  ): Either[Problem, ChunkCount] =
     val todo = pending(p, work)
-    val total = p.requestBytes
-    var done = total - todo.map(_._2).sum // bytes on disk, for the progress line
-    todo.zipWithIndex.foldLeft[Either[String, Int]](Right(0)) { case (acc, (r, i)) =>
-      acc.flatMap { n =>
-        room(r._2).flatMap { _ =>
-          if i > 0 || p.directoryRequests > 0 then pace.sleep(pace.gapMs)
-          if Thread.interrupted() then throw InterruptedException()
-          Using.resource(work.reserve(chunkKey(r)).fold(e => throw IOException(e.message), identity)) { part =>
-            http.download(p.source.url, p.header.dataOffset + r._1, r._2, part).flatMap { got =>
-              if got.size != p.remote.size || got.etag != p.remote.etag then
-                part.discard()
-                Left(
-                  s"${p.source.url} changed during the download (size or ETag differ) — run the fetch again for the new build"
-                )
-              else
-                part.commit().left.map(_.message).map { _ =>
-                  done += r._2
-                  note(
-                    s"downloaded ${Backup.humanBytes(done)} of ${Backup.humanBytes(total)} (${p.requests.size - todo.size + i + 1}/${p.requests.size} requests)"
-                  )
-                  n + 1
+    val total = p.requestBytes.value
+    var done = total - todo.map(_._2.value).sum // bytes on disk, for the progress line
+    todo.zipWithIndex
+      .foldLeft[Either[Problem, Int]](Right(0)) { case (acc, (r, i)) =>
+        acc.flatMap { n =>
+          room(r._2).flatMap { _ =>
+            if i > 0 || p.directoryRequests.value > 0 then pace.sleep(pace.gapMs)
+            if Thread.interrupted() then throw InterruptedException()
+            Using.resource(work.reserve(chunkKey(r)).fold(e => throw IOException(e.message.value), identity)) { part =>
+              http
+                .download(p.source.url, ByteOffset.applyUnsafe(p.header.dataOffset.value + r._1.value), r._2, part)
+                .flatMap { got =>
+                  if got.size != p.remote.size || got.etag != p.remote.etag then
+                    part.discard()
+                    Left(
+                      Problem(
+                        s"${p.source.url} changed during the download (size or ETag differ) — run the fetch again for the new build"
+                      )
+                    )
+                  else
+                    part.commit().left.map(e => Problem(e.message.value)).map { _ =>
+                      done += r._2.value
+                      note(
+                        Note(
+                          s"downloaded ${Backup.humanBytes(com.histmersion.api.ByteCount(done))} of ${Backup.humanBytes(com.histmersion.api.ByteCount(total))} (${p.requests.size - todo.size + i + 1}/${p.requests.size} requests)"
+                        )
+                      )
+                      n + 1
+                    }
                 }
             }
           }
         }
       }
-    }
+      .map(ChunkCount(_))
 
   // ── 3. the local archive ───────────────────────────────────────────────────────────────────────
 
@@ -367,36 +390,39 @@ object BasemapFetch:
       work: Store,
       out: Store,
       key: Store.Key,
-      transform: com.histmersion.util.basemap.BasemapFetch.Chunk => Either[com.histmersion.util.basemap.BasemapFetch.Problem, Option[com.histmersion.util.basemap.BasemapFetch.Chunk]],
+      transform: PmTiles.TileBytes => Either[Problem, Option[PmTiles.TileBytes]],
       header: PmTiles.Header,
       metadata: Json,
-      note: com.histmersion.util.basemap.BasemapFetch.Note => Unit
-  ): Either[com.histmersion.util.basemap.BasemapFetch.Problem, (com.histmersion.ByteCount, com.histmersion.ByteCount)] =
-    val starts = p.requests.map(_._1).toArray
+      note: Note => Unit
+  ): Either[Problem, (ByteCount, TileCount)] =
+    val starts = p.requests.map(_._1.value).toArray
     val readers = mutable.HashMap.empty[Int, RandomReader]
-    def read(offset: com.histmersion.ByteOffset, length: com.histmersion.util.basemap.BasemapFetch.Wanted.Length): com.histmersion.util.basemap.BasemapFetch.Chunk =
-      val i = { val k = java.util.Arrays.binarySearch(starts, offset); if k >= 0 then k else -k - 2 }
+    def read(offset: ByteOffset, length: Wanted.Length): PmTiles.TileBytes =
+      val i = { val k = java.util.Arrays.binarySearch(starts, offset.value); if k >= 0 then k else -k - 2 }
       val r = p.requests(i)
       val reader = readers.getOrElseUpdate(
         i,
         work.get(chunkKey(r)).getOrElse(throw IOException(s"${work.where(chunkKey(r))}: no such file")).reader()
       )
-      reader.read(ByteOffset.applyUnsafe(offset - r._1), length)
+      PmTiles.TileBytes(
+        reader.read(ByteOffset.applyUnsafe(offset.value - r._1.value), PmTiles.ByteLength(length.value)).value
+      )
     val writer = PmTilesWriter(out, key)
     // the transformed bytes of a content seen before (ocean tiles repeat thousands of times); only
     // small ones are kept, a large one is simply read and transformed again
-    val small = mutable.HashMap.empty[Long, Option[Array[Byte]]]
+    val small = mutable.HashMap.empty[Long, Option[PmTiles.TileBytes]]
     try
-      val result = p.tiles.zipWithIndex.foldLeft[Either[String, Long]](Right(0L)) { case (acc, (t, i)) =>
+      val result = p.tiles.zipWithIndex.foldLeft[Either[Problem, Long]](Right(0L)) { case (acc, (t, i)) =>
         acc.flatMap { n =>
           if i % 20000 == 0 then
             if Thread.interrupted() then throw InterruptedException()
-            note(s"writing ${p.tiles.size} tiles: ${i * 100 / p.tiles.size.max(1)} %")
-          val bytes = small.get(t.offset).map(Right(_)).getOrElse {
-            val r = transform(read(t.offset, t.length))
-            r.foreach(b => if t.length <= 8192 then small(t.offset) = b)
-            r
-          }
+            note(Note(s"writing ${p.tiles.size} tiles: ${i * 100 / p.tiles.size.max(1)} %"))
+          val bytes: Either[Problem, Option[PmTiles.TileBytes]] = small.get(t.offset.value) match
+            case Some(kept) => Right(kept)
+            case None       =>
+              val r = transform(read(t.offset, t.length))
+              r.foreach(b => if t.length.value <= 8192 then small(t.offset.value) = b)
+              r
           bytes.map {
             case Some(b) => writer.add(t.id, b); n + 1
             case None    => n
@@ -408,7 +434,7 @@ object BasemapFetch:
           writer.abort()
           Left(e)
         case Right(n) =>
-          Right((writer.finish(header, metadata), n))
+          Right((writer.finish(header, metadata), TileCount(n)))
     catch
       case e: Throwable =>
         writer.abort()
@@ -420,9 +446,25 @@ object BasemapFetch:
     */
   def localHeader(p: Plan): PmTiles.Header =
     val b = p.bbox
-    p.header.modify(
-      _.minZoom).setTo(p.minZoom).modify(_.maxZoom).setTo(p.maxZoom).modify(_.minLon).setTo(b.minLon).modify(_.minLat).setTo(b.minLat).modify(_.maxLon).setTo(b.maxLon).modify(_.maxLat).setTo(b.maxLat).modify(_.centerZoom).setTo(math.max(p.minZoom, math.min(p.maxZoom, 5))).modify(_.centerLon).setTo((b.minLon + b.maxLon) / 2).modify(_.centerLat).setTo((b.minLat + b.maxLat) / 2
-    )
+    p.header
+      .modify(_.minZoom)
+      .setTo(PmTiles.Zoom(p.minZoom.value))
+      .modify(_.maxZoom)
+      .setTo(PmTiles.Zoom(p.maxZoom.value))
+      .modify(_.minLon)
+      .setTo(PmTiles.Header.MinLon(b.minLon.value))
+      .modify(_.minLat)
+      .setTo(PmTiles.Header.MinLat(b.minLat.value))
+      .modify(_.maxLon)
+      .setTo(PmTiles.Header.MaxLon(b.maxLon.value))
+      .modify(_.maxLat)
+      .setTo(PmTiles.Header.MaxLat(b.maxLat.value))
+      .modify(_.centerZoom)
+      .setTo(PmTiles.Zoom(math.max(p.minZoom.value, math.min(p.maxZoom.value, 5))))
+      .modify(_.centerLon)
+      .setTo(PmTiles.Header.CenterLon((b.minLon.value + b.maxLon.value) / 2))
+      .modify(_.centerLat)
+      .setTo(PmTiles.Header.CenterLat((b.minLat.value + b.maxLat.value) / 2))
 
   /** The local archive's metadata: the source's, its `vector_layers` without the `dropped` ones, its attribution
     * replaced by `attribution`, and where and when it came from — and, for the vector layer, what it kept (`filter`:
@@ -430,64 +472,73 @@ object BasemapFetch:
     */
   def localMetadata(
       p: Plan,
-      dropped: Set[com.histmersion.util.basemap.BasemapFetch.Dropped],
-      attribution: com.histmersion.util.basemap.BasemapFetch.Attribution,
-      fetchedAt: com.histmersion.util.basemap.BasemapFetch.FetchedAt,
+      dropped: Set[Dropped],
+      attribution: Attribution,
+      fetchedAt: FetchedAt,
       layer: Basemap.Layer,
-      filter: Option[(com.histmersion.util.basemap.BasemapFetch.Filtered, com.histmersion.util.basemap.BasemapFetch.FilterSpec)] = None
+      filter: Option[(Filtered, FilterSpec)] = None
   ): Json =
     val src = p.metadata.asObject.getOrElse(io.circe.JsonObject.empty)
     val layers = src("vector_layers").flatMap(_.asArray) match
       case Some(ls) if dropped.nonEmpty =>
         src.add(
           "vector_layers",
-          Json.fromValues(ls.filterNot(l => l.hcursor.get[String]("id").toOption.exists(dropped)))
+          Json.fromValues(
+            ls.filterNot(l => l.hcursor.get[String]("id").toOption.exists(id => dropped.exists(_.value == id)))
+          )
         )
       case _ => src
     val b = p.bbox
     Json.fromJsonObject(
       layers
-        .add("attribution", attribution.asJson)
+        .add("attribution", Json.fromString(attribution.value))
         .add(
           "histmersion",
           Json
             .obj(
-              "layer" -> layer.wire.asJson,
-              "source" -> p.source.url.asJson,
-              "build" -> p.source.label.asJson,
-              "etag" -> p.remote.etag.asJson,
-              "bbox" -> s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}".asJson,
-              "maxZoom" -> p.maxZoom.asJson,
-              "fetchedAt" -> fetchedAt.asJson
+              "layer" -> Json.fromString(layer.wire.value),
+              "source" -> Json.fromString(p.source.url.value),
+              "build" -> Json.fromString(p.source.label.value),
+              "etag" -> p.remote.etag.fold(Json.Null)(e => Json.fromString(e.value)),
+              "bbox" -> Json.fromString(
+                s"${b.minLon.value},${b.minLat.value},${b.maxLon.value},${b.maxLat.value}"
+              ),
+              "maxZoom" -> Json.fromInt(p.maxZoom.value),
+              "fetchedAt" -> Json.fromString(fetchedAt.value)
             )
             .deepMerge(
               filter.fold(Json.obj())((all, drop) =>
-                Json.obj("keepAll" -> all.asJson, "drop" -> (if all then "" else drop).asJson)
+                Json.obj(
+                  "keepAll" -> Json.fromBoolean(all.value),
+                  "drop" -> Json.fromString(if all.value then "" else drop.value)
+                )
               )
             )
         )
     )
 
   /** The resume record of a work directory: a fetch continues only the download it describes. */
-  def stateOf(p: Plan, extra: com.histmersion.util.basemap.BasemapFetch.Note): Json = Json.obj(
-    "url" -> p.source.url.asJson,
-    "size" -> p.remote.size.asJson,
-    "etag" -> p.remote.etag.asJson,
-    "bbox" -> s"${p.bbox.minLon},${p.bbox.minLat},${p.bbox.maxLon},${p.bbox.maxLat}".asJson,
-    "maxZoom" -> p.maxZoom.asJson,
-    "extra" -> extra.asJson
+  def stateOf(p: Plan, extra: Note): Json = Json.obj(
+    "url" -> Json.fromString(p.source.url.value),
+    "size" -> Json.fromLong(p.remote.size.value),
+    "etag" -> p.remote.etag.fold(Json.Null)(e => Json.fromString(e.value)),
+    "bbox" -> Json.fromString(
+      s"${p.bbox.minLon.value},${p.bbox.minLat.value},${p.bbox.maxLon.value},${p.bbox.maxLat.value}"
+    ),
+    "maxZoom" -> Json.fromInt(p.maxZoom.value),
+    "extra" -> Json.fromString(extra.value)
   )
 
   /** Make `work` hold only the parts of THIS plan: a work store left by another download (another build, region or
     * depth) is emptied first. Answers how many parts are already there.
     */
-  def prepare(work: Store, state: Json): com.histmersion.util.basemap.BasemapFetch.ChunkCount =
+  def prepare(work: Store, state: Json): ChunkCount =
     val file = Store.Key.applyUnsafe("state.json")
     if work.isDirectory(Store.Key.Root) && !work
         .get(file)
-        .flatMap(f => io.circe.parser.parse(f.text()).toOption)
+        .flatMap(f => io.circe.parser.parse(f.text().value).toOption)
         .contains(state)
     then work.list().foreach(f => work.delete(f.key))
-    work.makeDirectory().left.foreach(e => throw IOException(e.message))
-    work.write(file, state.noSpaces.getBytes(UTF_8)).left.foreach(e => throw IOException(e.message))
-    work.list().count(_.key.name.endsWith(".bin"))
+    work.makeDirectory().left.foreach(e => throw IOException(e.message.value))
+    work.write(file, ByteSource.Content(state.noSpaces.getBytes(UTF_8))).left.foreach(e => throw IOException(e.message.value))
+    ChunkCount(work.list().count(_.key.name.value.endsWith(".bin")))

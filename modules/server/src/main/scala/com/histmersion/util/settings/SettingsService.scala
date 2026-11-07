@@ -1,6 +1,6 @@
 package com.histmersion.util.settings
 
-import com.histmersion.config.{AppConfig, LoadedConfig}
+import com.histmersion.config.{AppConfig, ConfigLayers, LoadedConfig, SetupConfig}
 import com.histmersion.config.edit.*
 import org.ekrich.config.{Config, ConfigFactory, ConfigParseOptions, ConfigSyntax}
 
@@ -19,7 +19,7 @@ trait SettingsService:
   def write(
       edits: List[SettingEdit],
       expected: Option[FileVersion],
-      literalConsent: com.histmersion.util.settings.SettingsService.WriteLiteralConsent
+      literalConsent: SettingPolicy.LiteralConsent
   ): Either[SettingError, WriteOutcome]
 
   /** The first-run setup has been neither finished nor skipped, and the file sets nothing of its own. */
@@ -28,48 +28,42 @@ trait SettingsService:
 object SettingsService:
   type ConfigPath = ConfigPath.T
   object ConfigPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The settings file of `loaded` — the one the server read, `file` (`None`: it read none) — with the environment it
     * read it with.
     */
-  type WriteLiteralConsent = WriteLiteralConsent.T
-  object WriteLiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SnapshotCompleted = SnapshotCompleted.T
-  object SnapshotCompleted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SnapshotFile = _root_.com.histmersion.util.settings.SettingsSnapshot.File
-  val SnapshotFile: _root_.com.histmersion.util.settings.SettingsSnapshot.File.type = _root_.com.histmersion.util.settings.SettingsSnapshot.File
 
   def apply(loaded: () => LoadedConfig, file: () => Option[SettingsFile]): SettingsService =
     Implementation(loaded, file, ConfigSchema.reference)
 
   private def noFile = SettingError.NoFile(
-    "This server was started without a settings file, so Settings cannot change anything. " +
-      "Set HISTMERSION_CONFIG to the file to use and start it again."
+    SettingError.NoFile.Why(
+      "This server was started without a settings file, so Settings cannot change anything. " +
+        "Set HISTMERSION_CONFIG to the file to use and start it again."
+    )
   )
 
   /** The snapshot of a file read as `state`, its settings loaded into `loaded` (or why they would not load). */
   private[settings] def snapshot(
       schema: ConfigSchema,
       state: ConfigFileState,
-      loaded: Either[com.histmersion.util.settings.SettingsService.Problem, LoadedConfig],
+      loaded: Either[ConfigLayers.Problem, LoadedConfig],
       env: Config,
       prefix: Option[SettingKey],
-      completed: com.histmersion.util.settings.SettingsService.SnapshotCompleted,
-      file: Option[com.histmersion.util.settings.SettingsService.SnapshotFile],
+      completed: SetupConfig.Completed,
+      file: Option[SettingsSnapshot.File],
       extra: List[SettingKey]
   ): SettingsSnapshot =
     val merged =
       loaded.fold(_ => AppConfig.loadWithUserText(env, "").fold(_ => ConfigFactory.empty, _.merged), _.merged)
-    val problems = loaded.fold(List(_), l => l.file.warnings)
+    val problems = loaded.fold(p => List(p.value), l => l.file.warnings.map(_.value)).map(SettingsSnapshot.Problems(_))
     SettingsSnapshot(
       file,
-      state.text.isDefined,
+      SettingsSnapshot.Exists(state.text.isDefined),
       state.version,
       SettingsReader.read(schema, state, merged, env, prefix, extra),
       problems,
-      setupDue = !completed && !ConfigSchema.setsAnything(state.parsed)
+      setupDue = SettingsSnapshot.SetupDue(!completed.value && !ConfigSchema.setsAnything(state.parsed))
     )
 
   final private class Implementation(
@@ -95,7 +89,7 @@ object SettingsService:
               l.env,
               prefix,
               now.fold(_ => l.config.setup.completed, _.config.setup.completed),
-              Some(w.file.shown),
+              Some(SettingsSnapshot.File(w.file.shown.value)),
               extra
             )
           }
@@ -104,57 +98,62 @@ object SettingsService:
     def write(
         edits: List[SettingEdit],
         expected: Option[FileVersion],
-        literalConsent: com.histmersion.util.settings.SettingsService.Implementation.WriteLiteralConsent
+        literalConsent: SettingPolicy.LiteralConsent
     ): Either[SettingError, WriteOutcome] =
       writer.toRight(noFile).flatMap(_.write(edits, expected, literalConsent))
 
     def setupDue: Boolean =
-      !loaded().config.setup.completed && writer
+      !loaded().config.setup.completed.value && writer
         .flatMap(_.read().toOption)
         .exists(s => !ConfigSchema.setsAnything(s.parsed))
-
-  object Implementation:
-    type WriteLiteralConsent = WriteLiteralConsent.T
-    object WriteLiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The same settings over a file's text held in memory (`None`: no file yet), changed by the same rules — the schema,
     * the text edit that keeps the rest of the file, the read-back and the load — but never written to disk; a file it
     * names in an include is not read.
     */
   final class InMemory(
-      text: AtomicReference[Option[InMemory.Text]],
+      text: AtomicReference[Option[ConfigFileState.Text]],
       env: Config = ConfigFactory.empty,
       val schema: ConfigSchema = ConfigSchema.reference
   ) extends SettingsService:
-    val path: com.histmersion.util.settings.SettingsSnapshot.File = SettingsService.InMemory.FileName
+    val path: SettingsSnapshot.File = SettingsSnapshot.File(SettingsService.InMemory.FileName)
 
-    def current: Option[com.histmersion.util.settings.SettingsService.InMemory.Text] = text.get
+    def current: Option[ConfigFileState.Text] = text.get
 
     private def state: Either[SettingError, ConfigFileState] =
       text.get match
         case None    => Right(ConfigFileState(None, FileVersion.Missing, ConfigFactory.empty, here))
         case Some(t) =>
           try Right(ConfigFileState(Some(t), FileVersion.of(Some(t)), parse(t), here))
-          catch case e: org.ekrich.config.ConfigException => Left(SettingError.Unreadable(e.getMessage))
+          catch case e: org.ekrich.config.ConfigException => Left(SettingError.Unreadable(SettingError.Unreadable.Why(e.getMessage)))
 
-    private def parse(t: com.histmersion.util.settings.SettingsService.InMemory.Text): Config =
+    private def parse(t: ConfigFileState.Text): Config =
       ConfigFactory.parseString(
-        t,
-        ConfigParseOptions.defaults.setOriginDescription(path).setSyntax(ConfigSyntax.CONF)
+        t.value,
+        ConfigParseOptions.defaults.setOriginDescription(path.value).setSyntax(ConfigSyntax.CONF)
       )
 
-    private def here(o: org.ekrich.config.ConfigOrigin): Boolean = o.description.startsWith(path)
+    private def here(o: org.ekrich.config.ConfigOrigin): Boolean = o.description.startsWith(path.value)
 
     def read(prefix: Option[SettingKey], extra: List[SettingKey]): Either[SettingError, SettingsSnapshot] =
       state.map { s =>
-        val loaded = AppConfig.loadWithUserText(env, s.text.getOrElse(""))
-        snapshot(schema, s, loaded, env, prefix, loaded.fold(_ => false, _.config.setup.completed), Some(path), extra)
+        val loaded = AppConfig.loadWithUserText(env, s.text.fold("")(_.value))
+        snapshot(
+          schema,
+          s,
+          loaded,
+          env,
+          prefix,
+          loaded.fold(_ => SetupConfig.Completed(false), _.config.setup.completed),
+          Some(path),
+          extra
+        )
       }
 
     def write(
         edits: List[SettingEdit],
         expected: Option[FileVersion],
-        literalConsent: com.histmersion.util.settings.SettingsService.InMemory.WriteLiteralConsent
+        literalConsent: SettingPolicy.LiteralConsent
     ): Either[SettingError, WriteOutcome] =
       synchronized {
         for
@@ -170,11 +169,11 @@ object SettingsService:
                   (try Right(parse(edited.text))
                   catch
                     case e: org.ekrich.config.ConfigException =>
-                      Left(SettingError.Invalid(e.getMessage))
+                      Left(SettingError.Invalid(SettingError.Invalid.Why(e.getMessage)))
                   )
                 _ <- ConfigTextEdit.verify(parsed, here, edited, ConfigTextEdit.intended(edits))
-                _ <- AppConfig.loadWithUserText(env, edited.text).left.map(SettingError.Invalid(_))
-              yield text.set(Some(edited.text))
+                _ <- AppConfig.loadWithUserText(env, edited.text).left.map(e => SettingError.Invalid(SettingError.Invalid.Why(e.value)))
+              yield text.set(Some(ConfigFileState.Text(edited.text)))
         yield
           if edited.changed.isEmpty then WriteOutcome.of(path, schema, env, current.version, edited, None, notes)
           else
@@ -182,7 +181,7 @@ object SettingsService:
               path,
               schema,
               env,
-              FileVersion.of(Some(edited.text)),
+              FileVersion.of(Some(ConfigFileState.Text(edited.text))),
               edited,
               current.text.map(_ => s"$path.bak"),
               notes,
@@ -190,14 +189,8 @@ object SettingsService:
             )
       }
 
-    def setupDue: Boolean = read(None).fold(_ => false, _.setupDue)
+    def setupDue: Boolean = read(None).fold(_ => false, _.setupDue.value)
 
   object InMemory:
     /** The name the file held in memory goes by. */
-    type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-    type WriteLiteralConsent = WriteLiteralConsent.T
-    object WriteLiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     val FileName = "histmersion.conf"

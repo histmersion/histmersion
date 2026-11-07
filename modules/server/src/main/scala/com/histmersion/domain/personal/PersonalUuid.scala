@@ -7,4 +7,4 @@ object PersonalUuid:
 
   private val Shape = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}".r
 
-  def matches(s: com.histmersion.domain.personal.PersonalUuid.Text): Boolean = Shape.matches(s)
+  def matches(s: com.histmersion.domain.personal.PersonalUuid.Text): Boolean = Shape.matches(s.value)

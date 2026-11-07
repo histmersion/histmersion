@@ -1,7 +1,8 @@
 package com.histmersion.util.settings
 
 import com.histmersion.config.AppConfig
-import com.histmersion.config.edit.{ConfigFileState, FileVersion, SettingError, SettingsFile}
+import com.histmersion.config.ConfigLayers
+import com.histmersion.config.edit.{ConfigFileState, FileVersion, SettingError, SettingsFile, WriteOutcome}
 import com.histmersion.util.storage.{Store, TempName}
 import org.ekrich.config.{Config, ConfigFactory}
 
@@ -13,7 +14,7 @@ import scala.util.Using
   * read its settings from. Its text and its includes are read as a load reads them, which needs the file on disk; a
   * store in memory has none to give, and every read and change of it is refused.
   */
-final class StoredSettingsFile(store: Store, key: Store.Key, val shown: StoredSettingsFile.Shown) extends SettingsFile:
+final class StoredSettingsFile(store: Store, key: Store.Key, val shown: SettingsFile.Shown) extends SettingsFile:
 
   def read(): Either[SettingError, ConfigFileState] =
     if !store.exists(key) then
@@ -27,62 +28,56 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: StoredSe
       )
     else
       store.get(key) match
-        case None       => Left(SettingError.NoFile(s"$shown is not a file"))
+        case None       => Left(SettingError.NoFile(SettingError.NoFile.Why(s"$shown is not a file")))
         case Some(blob) =>
           try
-            val text = blob.text()
+            val text = ConfigFileState.Text(blob.text().value)
             for
               file <- store.onDisk(key).left.map(io)
               parsed <- parsed(AppConfig.parseUserFile(file), file.toString)
             yield ConfigFileState(Some(text), FileVersion.of(Some(text)), parsed, AppConfig.writtenIn(file))
-          catch case e: IOException => Left(SettingError.Io(e.getMessage))
+          catch case e: IOException => Left(SettingError.Io(SettingError.Io.Why(e.getMessage)))
 
-  def replace(text: com.histmersion.util.storage.Blob.Text, existed: com.histmersion.util.settings.StoredSettingsFile.TargetExisted)(
+  def replace(text: ConfigFileState.Text, existed: SettingsFile.Existed)(
       check: SettingsFile.Staged => Either[SettingError, Unit]
-  ): Either[SettingError, Option[com.histmersion.util.settings.StoredSettingsFile.Summary]] =
+  ): Either[SettingError, Option[WriteOutcome.Backup]] =
     try
-      store.reserve(key, TempName.Unique, throughLink = true).left.map(io).flatMap { reservation =>
+      store.reserve(key, TempName.Unique, throughLink = Store.ThroughLink(true)).left.map(io).flatMap { reservation =>
         Using.resource(reservation) { r =>
-          Using.resource(r.output())(_.write(text.getBytes(UTF_8)))
+          Using.resource(r.output())(_.write(text.value.getBytes(UTF_8)))
           for
             temp <- r.onDisk.left.map(io)
             _ <- check(
               SettingsFile.Staged(
                 parsed(AppConfig.parseUserFile(temp), temp.toString),
                 AppConfig.writtenIn(temp),
-                env => AppConfig.loadWithUserFile(env, Some(temp)).left.map(_.replace(temp.toString, shown))
+                env =>
+                  AppConfig
+                    .loadWithUserFile(env, Some(temp))
+                    .left
+                    .map(p => SettingError.Problem(p.value.replace(temp.toString, shown.value)))
               )
             )
             bak <- backup(existed)
-            _ <- r.commit(keepPermissions = existed).left.map(io)
+            _ <- r.commit(keepPermissions = Store.KeepPermissions(existed.value)).left.map(io)
           yield bak
         }
       }
-    catch case e: IOException => Left(SettingError.Io(e.getMessage))
+    catch case e: IOException => Left(SettingError.Io(SettingError.Io.Why(e.getMessage)))
 
-  private def backup(existed: com.histmersion.util.settings.StoredSettingsFile.BackupExisted): Either[SettingError, Option[com.histmersion.util.settings.StoredSettingsFile.BackupFile]] =
-    if !existed then Right(None)
-    else store.copy(key, key.withSuffix(".bak"), keepAttributes = true).left.map(io).map(_ => Some(s"$shown.bak"))
+  private def backup(existed: SettingsFile.Existed): Either[SettingError, Option[WriteOutcome.Backup]] =
+    if !existed.value then Right(None)
+    else
+      store
+        .copy(key, key.withSuffix(TempName.Suffixed.Suffix(".bak")), keepAttributes = Store.KeepPermissions(true))
+        .left
+        .map(io)
+        .map(_ => Some(WriteOutcome.Backup(s"$shown.bak")))
 
   /** A parse of the file at `where`, its messages naming the settings file. */
-  private def parsed(parse: Either[com.histmersion.util.settings.StoredSettingsFile.Problem, Option[Config]], where: com.histmersion.util.storage.Blob.Location): Either[SettingError, Config] =
+  private def parsed(parse: Either[ConfigLayers.Problem, Option[Config]], where: String): Either[SettingError, Config] =
     parse.left
-      .map(m => SettingError.Unreadable(m.replace(where, shown)))
-      .flatMap(_.toRight(SettingError.Unreadable(s"$shown: no such file")))
+      .map(m => SettingError.Unreadable(SettingError.Unreadable.Why(m.value.replace(where, shown.value))))
+      .flatMap(_.toRight(SettingError.Unreadable(SettingError.Unreadable.Why(s"$shown: no such file"))))
 
-  private def io(e: Store.Error): SettingError = SettingError.Io(e.message)
-
-object StoredSettingsFile:
-  type BackupFile = BackupFile.T
-  object BackupFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Summary = Summary.T
-  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetExisted = TargetExisted.T
-  object TargetExisted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Shown = Shown.T
-  object Shown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type BackupExisted = BackupExisted.T
-  object BackupExisted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  private def io(e: Store.Error): SettingError = SettingError.Io(SettingError.Io.Why(e.message.value))

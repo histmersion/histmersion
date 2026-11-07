@@ -35,41 +35,41 @@ object Processes:
         out <- log(launch)
         started <-
           try
-            val pb = ProcessBuilder(launch.command.asJava).redirectErrorStream(launch.mergeErrors)
+            val pb = ProcessBuilder(launch.command.map(_.value).asJava).redirectErrorStream(launch.mergeErrors.value)
             dir.foreach(d => pb.directory(d))
             out.foreach(o => pb.redirectOutput(o))
             val env = pb.environment()
-            launch.environment.foreach((k, v) => env.put(k, v))
+            launch.environment.foreach((k, v) => env.put(k.value, v.value))
             Right(OsProcess(pb.start()))
-          catch case e: IOException => Left(e.getMessage)
+          catch case e: IOException => Left(Problem(e.getMessage))
       yield started
 
     private def directory(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, Option[HandedFile]] = launch.workingStore match
       case None    => Right(None)
-      case Some(s) => s.onDiskFile(Store.Key.Root).left.map(_.message).map(Some(_))
+      case Some(s) => s.onDiskFile(Store.Key.Root).left.map(e => Problem(e.message.value)).map(Some(_))
 
     private def log(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, Option[ProcessBuilder.Redirect]] = launch.output match
       case ProcessOutput.Piped            => Right(None)
       case ProcessOutput.Discarded        => Right(Some(ProcessBuilder.Redirect.DISCARD))
       case ProcessOutput.AppendTo(s, key) =>
-        s.onDiskFile(key).left.map(_.message).map(f => Some(ProcessBuilder.Redirect.appendTo(f)))
+        s.onDiskFile(key).left.map(e => Problem(e.message.value)).map(f => Some(ProcessBuilder.Redirect.appendTo(f)))
       case ProcessOutput.WriteTo(s, key) =>
-        s.onDiskFile(key).left.map(_.message).map(f => Some(ProcessBuilder.Redirect.to(f)))
+        s.onDiskFile(key).left.map(e => Problem(e.message.value)).map(f => Some(ProcessBuilder.Redirect.to(f)))
 
     def run(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, ProcessResult] =
       start(launch).map { p =>
         val lines = scala.io.Source.fromInputStream(p.output).getLines().toList
-        ProcessResult(p.waitFor(), lines)
+        ProcessResult(p.waitFor(), lines.map(ProcessResult.Lines(_)))
       }
 
 
   final private class OsProcess(p: Process) extends RunningProcess:
-    def pid: com.histmersion.util.process.Processes.Pid = p.pid
+    def pid: com.histmersion.util.process.Processes.Pid = Pid(p.pid)
     def isAlive: Boolean = p.isAlive
     def output: InputStream = p.getInputStream
     def input: OutputStream = p.getOutputStream
-    def waitFor(): com.histmersion.util.process.ProcessResult.ExitCode = p.waitFor()
-    def waitFor(timeout: com.histmersion.util.process.Processes.WaitTimeout, unit: TimeUnit): Boolean = p.waitFor(timeout, unit)
+    def waitFor(): com.histmersion.util.process.ProcessResult.ExitCode = ProcessResult.ExitCode(p.waitFor())
+    def waitFor(timeout: com.histmersion.util.process.Processes.WaitTimeout, unit: TimeUnit): Boolean = p.waitFor(timeout.value, unit)
     def destroy(): Unit = p.destroy()
     def destroyForcibly(): Unit =
       val _ = p.destroyForcibly()
@@ -86,9 +86,9 @@ object Processes:
       launched.updateAndGet(launch :: _)
       val r = answer(launch)
       Right(new RunningProcess:
-        def pid: com.histmersion.util.process.Processes.Pid = 0L
+        def pid: com.histmersion.util.process.Processes.Pid = Pid(0L)
         def isAlive: Boolean = false
-        val output: InputStream = ByteArrayInputStream(r.lines.map(_ + "\n").mkString.getBytes("UTF-8"))
+        val output: InputStream = ByteArrayInputStream(r.lines.map(_.value + "\n").mkString.getBytes("UTF-8"))
         val input: OutputStream = ByteArrayOutputStream()
         def waitFor(): com.histmersion.util.process.ProcessResult.ExitCode = r.exitCode
         def waitFor(timeout: com.histmersion.util.process.Processes.WaitTimeout, unit: TimeUnit): Boolean = true
@@ -96,6 +96,6 @@ object Processes:
         def destroyForcibly(): Unit = ())
 
     def run(launch: ProcessLaunch): Either[com.histmersion.util.process.Processes.Problem, ProcessResult] =
-      start(launch).map(p => ProcessResult(p.waitFor(), scala.io.Source.fromInputStream(p.output).getLines().toList))
+      start(launch).map(p => ProcessResult(p.waitFor(), scala.io.Source.fromInputStream(p.output).getLines().toList.map(ProcessResult.Lines(_))))
 
 

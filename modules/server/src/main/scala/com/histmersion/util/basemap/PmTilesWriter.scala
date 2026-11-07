@@ -1,7 +1,7 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.util.storage.{Reservation, Store}
-import com.histmersion.ByteOffset
+import com.histmersion.util.storage.{ByteSource, Reservation, Store}
+import com.histmersion.{ByteCount, ByteOffset}
 import hearth.kindlings.optics.syntax.*
 import io.circe.Json
 
@@ -25,30 +25,31 @@ final class PmTilesWriter(out: Reservation):
   // `var`s and mutable collections: the writer's running state, never visible outside it
   private var dataLength = 0L
   private val entries = mutable.ArrayBuffer.empty[PmTiles.Entry]
-  private val seen = mutable.HashMap.empty[String, (Long, Int)]
+  private val seen = mutable.HashMap.empty[String, (ByteOffset, PmTiles.Entry.Length)]
   private var lastId = -1L
   private var addressed = 0L
 
-  def tileCount: com.histmersion.util.basemap.PmTiles.Header.AddressedTiles = addressed
+  def tileCount: PmTiles.Header.AddressedTiles = PmTiles.Header.AddressedTiles(addressed)
 
   /** Add tile `id` (strictly greater than the last one added) with its stored bytes. */
-  def add(id: com.histmersion.util.basemap.PmTiles.Entry.TileId, bytes: com.histmersion.util.basemap.PmTiles.TileBytes): Unit =
-    require(id > lastId, s"tiles must be added in ascending id order ($id after $lastId)")
-    lastId = id
+  def add(id: PmTiles.Entry.TileId, bytes: PmTiles.TileBytes): Unit =
+    val raw: Array[Byte] = bytes.value
+    require(id.value > lastId, s"tiles must be added in ascending id order (${id.value} after $lastId)")
+    lastId = id.value
     addressed += 1
-    val key = MessageDigest.getInstance("SHA-1").digest(bytes).map(b => f"$b%02x").mkString
+    val key = MessageDigest.getInstance("SHA-1").digest(raw).map(b => f"$b%02x").mkString
     val (offset, length) = seen.getOrElseUpdate(
       key, {
-        data.write(bytes)
+        data.write(raw)
         val at = dataLength
-        dataLength += bytes.length
-        (at, bytes.length)
+        dataLength += raw.length
+        (ByteOffset.applyUnsafe(at), PmTiles.Entry.Length(raw.length))
       }
     )
     entries.lastOption match
-      case Some(e) if e.offset == offset && e.length == length && e.tileId + e.runLength == id =>
-        entries(entries.size - 1) = e.modify(_.runLength).using(_ + 1)
-      case _ => entries += PmTiles.Entry(id, offset, length, 1)
+      case Some(e) if e.offset == offset && e.length == length && e.tileId.value + e.runLength.value == id.value =>
+        entries(entries.size - 1) = e.modify(_.runLength).using(r => PmTiles.Entry.RunLength(r.value + 1))
+      case _ => entries += PmTiles.Entry(id, offset, length, PmTiles.Entry.RunLength(1))
 
   /** Complete the archive and return its size. `template` supplies the tile type, compression, zooms, bounds and
     * centre; the offsets and counts are this writer's.
@@ -56,18 +57,22 @@ final class PmTilesWriter(out: Reservation):
   def finish(template: PmTiles.Header, metadata: Json): com.histmersion.ByteCount =
     val ic = PmTiles.Compression.Gzip
     val (root, leaves) = PmTilesWriter.directories(entries.toVector, ic)
-    val meta = PmTiles.compress(metadata.noSpaces.getBytes("UTF-8"), ic)
+    val meta = PmTiles.compress(PmTiles.PlainBytes(metadata.noSpaces.getBytes("UTF-8")), ic)
+    val rootBytes: Array[Byte] = root.value
+    val leafBytes: Array[Byte] = leaves.value
+    val metaBytes: Array[Byte] = meta.value
     val dataOffset = PmTiles.RootBytes.toLong
     val metaOffset = dataOffset + dataLength
-    val leafOffset = metaOffset + meta.length
-    data.write(meta)
-    data.write(leaves)
+    val leafOffset = metaOffset + metaBytes.length
+    data.write(metaBytes)
+    data.write(leafBytes)
     data.close()
     val header = template.modify(
-      _.rootOffset).setTo(PmTiles.HeaderBytes.toLong).modify(_.rootLength).setTo(root.length.toLong).modify(_.metadataOffset).setTo(metaOffset).modify(_.metadataLength).setTo(meta.length.toLong).modify(_.leafOffset).setTo(leafOffset).modify(_.leafLength).setTo(leaves.length.toLong).modify(_.dataOffset).setTo(dataOffset).modify(_.dataLength).setTo(dataLength).modify(_.addressedTiles).setTo(addressed).modify(_.tileEntries).setTo(entries.size.toLong).modify(_.tileContents).setTo(seen.size.toLong).modify(_.clustered).setTo(true).modify(_.internalCompression).setTo(ic
+      _.rootOffset).setTo(ByteOffset.applyUnsafe(PmTiles.HeaderLength.toLong)).modify(_.rootLength).setTo(ByteCount.applyUnsafe(rootBytes.length.toLong)).modify(_.metadataOffset).setTo(ByteOffset.applyUnsafe(metaOffset)).modify(_.metadataLength).setTo(ByteCount.applyUnsafe(metaBytes.length.toLong)).modify(_.leafOffset).setTo(ByteOffset.applyUnsafe(leafOffset)).modify(_.leafLength).setTo(ByteCount.applyUnsafe(leafBytes.length.toLong)).modify(_.dataOffset).setTo(ByteOffset.applyUnsafe(dataOffset)).modify(_.dataLength).setTo(ByteCount.applyUnsafe(dataLength)).modify(_.addressedTiles).setTo(PmTiles.Header.AddressedTiles(addressed)).modify(_.tileEntries).setTo(PmTiles.Header.TileEntries(entries.size.toLong)).modify(_.tileContents).setTo(PmTiles.Header.TileContents(seen.size.toLong)).modify(_.clustered).setTo(PmTiles.Header.Clustered(true)).modify(_.internalCompression).setTo(ic
     )
-    out.writeAt(ByteOffset.applyUnsafe(0L), PmTiles.encodeHeader(header) ++ root)
-    out.commit().fold(e => throw IOException(e.message), _.size.value)
+    val headerBytes: Array[Byte] = PmTiles.encodeHeader(header).value
+    out.writeAt(ByteOffset.applyUnsafe(0L), ByteSource.Content(headerBytes ++ rootBytes))
+    out.commit().fold(e => throw IOException(e.message.value), _.size)
 
   /** Give up: remove what was written. */
   def abort(): Unit =
@@ -79,32 +84,35 @@ object PmTilesWriter:
   object EntriesPerLeaf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A writer of the archive `key` of `store`, written beside it until [[PmTilesWriter.finish]]. */
-
-
-
   def apply(store: Store, key: Store.Key): PmTilesWriter =
-    new PmTilesWriter(store.reserve(key).fold(e => throw IOException(e.message), identity))
+    new PmTilesWriter(store.reserve(key).fold(e => throw IOException(e.message.value), identity))
 
   /** The root directory and the leaf section for `entries`: one root when it fits in the first 16 KiB, else leaves of 4
     * 096 entries (doubled until their index fits). Pure.
     */
-  def directories(entries: Vector[PmTiles.Entry], c: PmTiles.Compression): (com.histmersion.util.basemap.PmTiles.DirectoryBytes, com.histmersion.util.basemap.PmTiles.DirectoryBytes) =
+  def directories(entries: Vector[PmTiles.Entry], c: PmTiles.Compression): (PmTiles.CompressedBytes, PmTiles.CompressedBytes) =
     val whole = PmTiles.compress(PmTiles.encodeDirectory(entries), c)
-    if whole.length <= PmTiles.RootBytes - PmTiles.HeaderBytes then (whole, Array.emptyByteArray)
+    if whole.value.length <= PmTiles.RootBytes - PmTiles.HeaderLength then
+      (whole, PmTiles.CompressedBytes(Array.emptyByteArray))
     else
       @annotation.tailrec
-      def tryLeaves(size: com.histmersion.util.basemap.PmTilesWriter.EntriesPerLeaf): (com.histmersion.util.basemap.PmTiles.DirectoryBytes, com.histmersion.util.basemap.PmTiles.DirectoryBytes) =
+      def tryLeaves(size: EntriesPerLeaf): (PmTiles.CompressedBytes, PmTiles.CompressedBytes) =
         val out = java.io.ByteArrayOutputStream()
         val index = entries
-          .grouped(size)
+          .grouped(size.value)
           .map { chunk =>
-            val b = PmTiles.compress(PmTiles.encodeDirectory(chunk), c)
+            val b: Array[Byte] = PmTiles.compress(PmTiles.encodeDirectory(chunk), c).value
             val at = out.size().toLong
             out.write(b)
-            PmTiles.Entry(chunk.head.tileId, at, b.length, 0)
+            PmTiles.Entry(
+              chunk.head.tileId,
+              ByteOffset.applyUnsafe(at),
+              PmTiles.Entry.Length(b.length),
+              PmTiles.Entry.RunLength(0)
+            )
           }
           .toVector
         val root = PmTiles.compress(PmTiles.encodeDirectory(index), c)
-        if root.length <= PmTiles.RootBytes - PmTiles.HeaderBytes then (root, out.toByteArray)
-        else tryLeaves(size * 2)
-      tryLeaves(4096)
+        if root.value.length <= PmTiles.RootBytes - PmTiles.HeaderLength then (root, PmTiles.CompressedBytes(out.toByteArray))
+        else tryLeaves(EntriesPerLeaf(size.value * 2))
+      tryLeaves(EntriesPerLeaf(4096))

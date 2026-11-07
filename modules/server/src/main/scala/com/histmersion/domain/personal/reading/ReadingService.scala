@@ -130,7 +130,7 @@ object ReadingService:
         at: MarkTime
     ): ReadMark =
       upsert(user, kind, key, title, at)(m =>
-        m.modify(_.readAt).setTo(if read then m.readAt.orElse(Some(at)) else None)
+        m.modify(_.readAt).setTo(if read.value then m.readAt.orElse(Some(at)) else None)
       )
 
     def opened(user: UserId, kind: ItemKind, key: ItemKey, title: Option[TargetLabel], at: MarkTime): ReadMark =

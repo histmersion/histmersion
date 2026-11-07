@@ -7,36 +7,19 @@ import com.histmersion.api.BBox
   */
 final case class GebcoPlan(
     bbox: BBox,
-    maxZoom: GebcoPlan.MaxZoom,
+    maxZoom: PmTiles.Zoom,
     parts: List[GebcoPart],
-    tiles: Vector[(GebcoPlan.TilesPart1, (GebcoPlan.TilesPart2Part1, GebcoPlan.TilesPart2Part2, GebcoPlan.TilesPart2Part3))],
-    edge: Set[(GebcoPlan.EdgePart1, GebcoPlan.EdgePart2, GebcoPlan.EdgePart3)]
+    tiles: Vector[(GebcoPlan.TileKey, (GebcoPlan.Zoom, GebcoPlan.TileX, GebcoPlan.TileY))],
+    edge: Set[(GebcoPlan.Zoom, GebcoPlan.TileX, GebcoPlan.TileY)]
 ):
-  def readBytes: com.histmersion.ByteCount = parts.map(_.bytes).sum
+  def readBytes: com.histmersion.ByteCount = com.histmersion.ByteCount.applyUnsafe(parts.map(_.bytes.value).sum)
 
 object GebcoPlan:
-  type TileKey = TileKey.T
-  object TileKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileX = TileX.T
-  object TileX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileY = TileY.T
-  object TileY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Zoom = Zoom.T
-  object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type MaxZoom = MaxZoom.T
-  object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesPart1 = com.histmersion.util.basemap.GebcoPlan.TileKey
-  val TilesPart1: _root_.com.histmersion.util.basemap.GebcoPlan.TileKey.type = _root_.com.histmersion.util.basemap.GebcoPlan.TileKey
-  type TilesPart2Part1 = com.histmersion.util.basemap.GebcoPlan.Zoom
-  val TilesPart2Part1: _root_.com.histmersion.util.basemap.GebcoPlan.Zoom.type = _root_.com.histmersion.util.basemap.GebcoPlan.Zoom
-  type TilesPart2Part2 = com.histmersion.util.basemap.GebcoPlan.TileX
-  val TilesPart2Part2: _root_.com.histmersion.util.basemap.GebcoPlan.TileX.type = _root_.com.histmersion.util.basemap.GebcoPlan.TileX
-  type TilesPart2Part3 = com.histmersion.util.basemap.GebcoPlan.TileY
-  val TilesPart2Part3: _root_.com.histmersion.util.basemap.GebcoPlan.TileY.type = _root_.com.histmersion.util.basemap.GebcoPlan.TileY
-  type EdgePart1 = com.histmersion.util.basemap.GebcoPlan.Zoom
-  val EdgePart1: _root_.com.histmersion.util.basemap.GebcoPlan.Zoom.type = _root_.com.histmersion.util.basemap.GebcoPlan.Zoom
-  type EdgePart2 = com.histmersion.util.basemap.GebcoPlan.TileX
-  val EdgePart2: _root_.com.histmersion.util.basemap.GebcoPlan.TileX.type = _root_.com.histmersion.util.basemap.GebcoPlan.TileX
-  type EdgePart3 = com.histmersion.util.basemap.GebcoPlan.TileY
-  val EdgePart3: _root_.com.histmersion.util.basemap.GebcoPlan.TileY.type = _root_.com.histmersion.util.basemap.GebcoPlan.TileY
+  type TileKey = PmTiles.Entry.TileId
+  val TileKey: PmTiles.Entry.TileId.type = PmTiles.Entry.TileId
+  type TileX = PmTiles.TileColumn
+  val TileX: PmTiles.TileColumn.type = PmTiles.TileColumn
+  type TileY = PmTiles.TileRow
+  val TileY: PmTiles.TileRow.type = PmTiles.TileRow
+  type Zoom = PmTiles.Zoom
+  val Zoom: PmTiles.Zoom.type = PmTiles.Zoom

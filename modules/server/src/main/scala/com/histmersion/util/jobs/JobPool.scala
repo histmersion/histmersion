@@ -24,24 +24,21 @@ import java.util.concurrent.LinkedBlockingQueue
 final class JobPool(
     ds: DataSource,
     parallelism: JobPool.Parallelism,
-    run: JobPool.RunArg1 => Unit,
+    run: Job.Id => Unit,
     pins: com.histmersion.util.jobs.Pinning = com.histmersion.util.jobs.Pinning.none
 ):
 
   /** A job id and the generation it was submitted on: it runs there — on the database its row is in, even after a
     * config reload swapped the database (docs/research-plugins.md §3.6).
     */
-  final private case class Queued(id: Queued.Id, work: com.histmersion.util.jobs.Carried[Unit])
+  final private case class Queued(id: Job.Id, work: com.histmersion.util.jobs.Carried[Unit])
 
-  object Queued:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private val queue = LinkedBlockingQueue[Queued]()
 
   /** The jobs this pool holds — queued in memory or running: a reconciliation never fails them (a config reload that
     * swapped back to their database runs one, §3.6).
     */
-  private val held = java.util.concurrent.ConcurrentHashMap.newKeySet[String]()
+  private val held = java.util.concurrent.ConcurrentHashMap.newKeySet[Job.Id]()
 
   /** The thread hosting the Ox scope. A `var` because the pool is started by the composition root AFTER construction
     * (no side effects in initialisers) and stopped by tests.
@@ -67,7 +64,7 @@ final class JobPool(
   /** Reconcile interrupted jobs, then start `parallelism` workers. Returns how many rows the restart had to fail.
     * Idempotent: calling it twice does not start a second pool.
     */
-  def start(): com.histmersion.util.jobs.JobPool.StartedCount =
+  def start(): com.histmersion.RowCount =
     import scala.jdk.CollectionConverters.*
     val interrupted = Transactor(ds).transact(JobRepo.failInterrupted(held.asScala.toList))
     if scope.isEmpty then
@@ -79,7 +76,7 @@ final class JobPool(
   /** Hand a job id to the pool. The queue is unbounded on purpose: admission control is the `jobs` table (a duplicate
     * upload is refused before it ever gets here), and dropping an accepted job would strand a row in `queued` forever.
     */
-  def submit(jobId: com.histmersion.util.jobs.Job.Id): Unit =
+  def submit(jobId: Job.Id): Unit =
     val _ = held.add(jobId)
     queue.put(
       Queued(
@@ -90,7 +87,7 @@ final class JobPool(
     )
 
   /** One job, its unexpected failure recorded — both on the job's own generation. */
-  private def runOne(id: com.histmersion.util.jobs.Job.Id): Unit =
+  private def runOne(id: Job.Id): Unit =
     try run(id)
     catch
       case e: InterruptedException => throw e
@@ -102,7 +99,7 @@ final class JobPool(
             id,
             JobState.Running,
             JobState.Failed,
-            error = Some(s"${e.getClass.getSimpleName}: ${e.getMessage}")
+            error = Some(JobRow.Error(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
           )
         )
 
@@ -113,12 +110,12 @@ final class JobPool(
     scope.foreach(_.interrupt())
     scope = None
 
-  def queued: com.histmersion.util.jobs.JobPool.QueueDepth = queue.size
+  def queued: com.histmersion.util.jobs.JobPool.QueueDepth = JobPool.QueueDepth(queue.size)
 
   private def pool(): Unit =
     try
       ox.supervised {
-        (1 to math.max(1, parallelism)).foreach { _ =>
+        (1 to math.max(1, parallelism.value)).foreach { _ =>
           val _ = ox.forkUser(worker())
         }
         ()
@@ -142,10 +139,5 @@ final class JobPool(
 object JobPool:
   type QueueDepth = QueueDepth.T
   object QueueDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartedCount = StartedCount.T
-  object StartedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Parallelism = Parallelism.T
   object Parallelism extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunArg1 = com.histmersion.util.jobs.Job.Id
-  val RunArg1: _root_.com.histmersion.util.jobs.Job.Id.type = _root_.com.histmersion.util.jobs.Job.Id
-

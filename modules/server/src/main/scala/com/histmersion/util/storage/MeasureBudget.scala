@@ -8,14 +8,14 @@ import java.util.concurrent.atomic.AtomicLong
 final class MeasureBudget(
     val maxEntries: MeasureBudget.MaxEntries,
     val deadlineNanos: MeasureBudget.DeadlineNanos,
-    val clock: () => MeasureBudget.ClockResult = () => System.nanoTime()
+    val clock: () => Long = () => System.nanoTime()
 ):
   private val used = AtomicLong(0L)
 
   /** Count one entry; false once either cap is reached. */
-  def take(): Boolean = used.incrementAndGet() <= maxEntries && clock() < deadlineNanos
-  def spent: com.histmersion.util.storage.MeasureBudget.EntriesUsed = used.get
-  def exhausted: Boolean = used.get >= maxEntries || clock() >= deadlineNanos
+  def take(): Boolean = used.incrementAndGet() <= maxEntries.value && clock() < deadlineNanos.value
+  def spent: com.histmersion.util.storage.MeasureBudget.EntriesUsed = MeasureBudget.EntriesUsed(used.get)
+  def exhausted: Boolean = used.get >= maxEntries.value || clock() >= deadlineNanos.value
 
 object MeasureBudget:
   type EntriesUsed = EntriesUsed.T
@@ -26,11 +26,9 @@ object MeasureBudget:
   object MaxEntries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DeadlineNanos = DeadlineNanos.T
   object DeadlineNanos extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClockResult = ClockResult.T
-  object ClockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   def of(maxEntries: com.histmersion.util.storage.MeasureBudget.MaxEntries, maxMillis: com.histmersion.util.storage.MeasureBudget.MaxMillis): MeasureBudget =
-    MeasureBudget(maxEntries, System.nanoTime() + maxMillis * 1_000_000L)
+    MeasureBudget(maxEntries, DeadlineNanos(System.nanoTime() + maxMillis.value * 1_000_000L))
 
-  def unlimited: MeasureBudget = MeasureBudget(Long.MaxValue, Long.MaxValue)
+  def unlimited: MeasureBudget = MeasureBudget(MaxEntries(Long.MaxValue), DeadlineNanos(Long.MaxValue))

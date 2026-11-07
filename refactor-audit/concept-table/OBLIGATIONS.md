@@ -99,3 +99,11 @@ Also check: `ModelChains.headroom` returns `Option[LimitState.FreesAt]` for a to
 - New silent class: a row class deriving DbCodec with an enum field and no vocabulary given uses Magnum's enum codec and misreads stored spellings. Audited for status, confidence, edge kind, precision, dating, time basis, neighbour target in db main; audit again in server.
 - Strict Doi reads that throw on stored URL-form DOIs: SourceRepo.doiIndex, DoiKey, AcquireCheckRepo. The other sources.doi reads were loosened. Decide for all: lenient read or a data repair.
 - Loosened to local unconstrained types: JobRow.sha256, AgentRepo.ApprovalJobId, FootprintRow's free-text citekey column (misnamed), BVersionRow.versionOf. Concept review.
+
+## From server, wave 1
+
+- New Left/None where old code accepted: PmTiles.parseHeader and decodeDirectory on negative offset or length; RangeHttp.contentRange on overflowing digits gives None instead of throwing.
+- Plugins.pluginId: key under histmersion.plugins.<x> with an invalid <x> is now None, treated as a host key (a reload then restarts differently): compare with master.
+- BundleControllers.applyUploaded now refuses a malformed plan hash with 400; merges and mergeLedger: a non-positive limit falls back to the default: compare with master. `id.trim` dropped on Job.Id.
+- BundleImporter.apply's backup callback has Either sides swapped (BackupFile on the left, error on the right).
+- BackupService.restore returned elapsed ms as ByteCount, now RestoreDuration: check `Report` text.

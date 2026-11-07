@@ -34,7 +34,7 @@ trait Blob:
   final def asSource: ByteSource =
     val blob = this
     new ByteSource:
-      def size: com.histmersion.ByteCount = blob.size.value
+      def size: com.histmersion.ByteCount = blob.size
       def open(): InputStream = blob.open()
 
 object Blob:

@@ -7,8 +7,8 @@ import java.util.concurrent.ConcurrentHashMap
   * on (the startup reconciliation fails those as interrupted).
   */
 final class JobStops:
-  private val requested = ConcurrentHashMap[String, JobStop]()
-  private val resumers = ConcurrentHashMap[String, () => Either[String, Unit]]()
+  private val requested = ConcurrentHashMap[Job.Id, JobStop]()
+  private val resumers = ConcurrentHashMap[Job.Id, () => Either[JobStops.Problem, Unit]]()
 
   /** Ask job `id` to stop at its next part boundary. */
   def request(id: com.histmersion.util.jobs.Job.Id, stop: JobStop): Unit = { val _ = requested.put(id, stop) }
@@ -27,7 +27,7 @@ final class JobStops:
 
   /** Resume paused job `id` (its way to go on is used once). */
   def resume(id: com.histmersion.util.jobs.Job.Id): Either[com.histmersion.util.jobs.JobStops.Problem, Unit] =
-    Option(resumers.remove(id)).toRight(s"job $id cannot be resumed by this server").flatMap(_())
+    Option(resumers.remove(id)).toRight(JobStops.Problem(s"job $id cannot be resumed by this server")).flatMap(_())
 
   /** Paused job `id` was cancelled: it will not go on. */
   def forget(id: com.histmersion.util.jobs.Job.Id): Unit =

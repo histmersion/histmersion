@@ -17,8 +17,6 @@ final case class PersonalState(
 )
 
 object PersonalState:
-  type NewestFirstId = NewestFirstId.T
-  object NewestFirstId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class StoredBookmark(
@@ -54,5 +52,5 @@ object PersonalState:
   )
 
   /** Newest first by `at`, then by id from the highest — the order the tables' `ORDER BY … DESC, id DESC` keep. */
-  private[personal] def newestFirst[A](as: Seq[A])(at: A => MarkTime, id: A => com.histmersion.domain.personal.PersonalState.NewestFirstId): List[A] =
+  private[personal] def newestFirst[A](as: Seq[A])(at: A => MarkTime, id: A => String): List[A] =
     as.sortWith((a, b) => at(a).value.isAfter(at(b).value) || (at(a) == at(b) && id(a) > id(b))).toList

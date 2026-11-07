@@ -6,7 +6,7 @@ import com.histmersion.{Latitude, Longitude, Year}
 
 /** A target as the tables' columns hold it. */
 final private[personal] case class TargetColumns(
-    kind: TargetColumns.Kind,
+    kind: com.histmersion.api.ItemKind.Wire,
     key: Option[ItemKey],
     uid: Option[ItemUid],
     lat: Option[Latitude],
@@ -18,9 +18,6 @@ final private[personal] case class TargetColumns(
 )
 
 private[personal] object TargetColumns:
-  type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def of(t: MarkTarget): TargetColumns = t match
     case MarkTarget.Item(r) =>
       TargetColumns(t.kind.wire, Some(r.key), r.uid, None, None, None, None, None, None)

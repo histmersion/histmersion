@@ -57,9 +57,9 @@ enum MarkTarget:
     case Item(r) =>
       val d = described.get(r)
       val now = d.fold(r)(x => r.copy(key = x.key))
-      val live = d.flatMap(_.title).flatMap(t => TargetLabel.tidy(t.value))
+      val live = d.flatMap(_.title).flatMap(t => TargetLabel.tidy(TargetLabel.Label(t.value)))
       (Item(now), Title(live.orElse(stored).fold(now.key.value)(_.value)))
-    case other => (other, Title(stored.fold(other.kind.label)(_.value)))
+    case other => (other, Title(stored.fold(other.kind.label.value)(_.value)))
 
   def wire: Target = this match
     case Item(r)                         => Target(kind, Some(WireKey(r.key.value)))
@@ -90,25 +90,23 @@ enum MarkTarget:
       )
 
 object MarkTarget:
-  type TargetKind = TargetKind.T
-  object TargetKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ZoomTarget = ZoomTarget.T
-  object ZoomTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ZoomProblem = ZoomProblem.T
+  object ZoomProblem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The deepest zoom the map has; a target's zoom is between 0 and this. */
 
   val MaxZoom = 24.0
 
   /** The target, when its zoom (if any) is one the map has. */
-  def zoomChecked(t: Target): Either[com.histmersion.domain.personal.MarkTarget.ZoomTarget, Target] =
+  def zoomChecked(t: Target): Either[com.histmersion.domain.personal.MarkTarget.ZoomProblem, Target] =
     t.zoom.map(_.value).filterNot(z => z >= 0.0 && z <= MaxZoom) match
-      case Some(z) => Left(s"zoom $z: between 0 and ${MaxZoom.toInt}")
+      case Some(z) => Left(ZoomProblem(s"zoom $z: between 0 and ${MaxZoom.toInt}"))
       case None    => Right(t)
 
   /** The kind of record an item kind of the wire names. */
-  def itemKind(k: MarkKind): ItemKind = ItemKind.applyUnsafe(k.wire)
+  def itemKind(k: MarkKind): ItemKind = ItemKind.applyUnsafe(k.wire.value)
 
-  def markKind(k: ItemKind): Option[MarkKind] = MarkKind.values.find(m => m.isItem && m.wire == k.value)
+  def markKind(k: ItemKind): Option[MarkKind] = MarkKind.values.find(m => m.isItem && m.wire.value == k.value)
 
   /** A target the wire sent, once [[Target.check]] passed it: an item's uid is not known yet. */
   def fromWire(t: Target): Option[MarkTarget] =
@@ -130,7 +128,7 @@ object MarkTarget:
 
   /** A stored row's target; none when the row does not make one (a kind this version does not know). */
   def ofColumns(
-      kind: com.histmersion.domain.personal.MarkTarget.TargetKind,
+      kind: MarkKind.Wire,
       key: Option[ItemKey],
       uid: Option[ItemUid],
       lat: Option[Latitude],

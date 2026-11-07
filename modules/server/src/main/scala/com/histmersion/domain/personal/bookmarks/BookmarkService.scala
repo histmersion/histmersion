@@ -84,7 +84,7 @@ object BookmarkService:
         at: MarkTime
     ): Option[Bookmark] =
       db.transact(
-        if BookmarkRepo.relabel(user, id, label, at) == 0 then None
+        if BookmarkRepo.relabel(user, id, label, at).value == 0 then None
         else BookmarkRepo.live(user, id).flatMap(_.stored(user))
       ).map(s => shown(List(s), items).head)
 

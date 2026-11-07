@@ -19,28 +19,30 @@ import com.histmersion.api.maintenance.Storage
   */
 final class StorageCache(
     prepare: () => () => Storage.Report,
-    ttlMillis: () => StorageCache.TtlMillisResult,
-    clock: () => StorageCache.ClockResult = () => System.currentTimeMillis(),
+    ttlMillis: () => StorageCache.TimeToLive,
+    clock: () => StorageCache.Instant = () => StorageCache.Instant(System.currentTimeMillis()),
     spawn: (() => Unit) => Unit = r => { val _ = Thread.ofVirtual().name("histmersion-storage").start(() => r()) }
 ):
 
   private val last = AtomicReference[Option[(Long, Storage.Report)]](None)
   private val running = AtomicReference[Option[CompletableFuture[Storage.Report]]](None)
 
-  def get(waitMillis: com.histmersion.util.data.diagnostics.StorageCache.WaitMillis): Storage.Report =
+  def get(waitMillis: StorageCache.WaitMillis): Storage.Report =
     last.get match
-      case Some((at, r)) if clock() - at < ttlMillis() => r
+      case Some((at, r)) if clock().value - at < ttlMillis().value => r
       case Some((_, r))                                =>
         val _ = kick()
-        r.modify(_.measuring).setTo(true)
+        r.modify(_.measuring).setTo(Storage.Report.Measuring(true))
       case None =>
         val f = kick()
-        try f.get(math.max(0L, waitMillis), TimeUnit.MILLISECONDS)
+        try f.get(math.max(0L, waitMillis.value: Long), TimeUnit.MILLISECONDS)
         catch
-          case _: TimeoutException   => Storage.Report(measuring = true)
+          case _: TimeoutException   => Storage.Report(measuring = Storage.Report.Measuring(true))
           case e: ExecutionException =>
-            Storage.Report(problems = List(s"storage: ${Option(e.getCause).getOrElse(e).getMessage}"))
-          case _: InterruptedException => Storage.Report(measuring = true)
+            Storage.Report(problems =
+              List(Storage.Report.Problems(s"storage: ${Option(e.getCause).getOrElse(e).getMessage}"))
+            )
+          case _: InterruptedException => Storage.Report(measuring = Storage.Report.Measuring(true))
 
   /** The measurement under way, or a new one. */
   private def kick(): CompletableFuture[Storage.Report] =
@@ -55,7 +57,7 @@ final class StorageCache(
           spawn { () =>
             try
               val r = work.get()
-              last.set(Some((clock(), r)))
+              last.set(Some((clock().value, r)))
               f.complete(r)
             catch
               case e: Throwable =>
@@ -71,8 +73,6 @@ object StorageCache:
   object TimeToLive extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WaitMillis = WaitMillis.T
   object WaitMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TtlMillisResult = com.histmersion.util.data.diagnostics.StorageCache.TimeToLive
-  val TtlMillisResult: _root_.com.histmersion.util.data.diagnostics.StorageCache.TimeToLive.type = _root_.com.histmersion.util.data.diagnostics.StorageCache.TimeToLive
-  type ClockResult = ClockResult.T
-  object ClockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Instant = Instant.T
+  object Instant extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
