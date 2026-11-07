@@ -12,8 +12,4 @@ final case class MapEvent(point: Option[ScreenPt] = None, at: Option[LatLon] = N
   def overMarker: Boolean = native.flatMap(e => Option(e.target)).exists { t =>
     t.isInstanceOf[dom.Element] && t.asInstanceOf[dom.Element].closest(".hd-marker, .hd-popup, .hd-map-control") != null
   }
-  def clientXY: Option[(com.histmersion.web.map.MapEvent.ClientCoordinate, com.histmersion.web.map.MapEvent.ClientCoordinate)] = native.collect { case e: dom.MouseEvent => (e.clientX, e.clientY) }
-
-object MapEvent:
-  type ClientCoordinate = ClientCoordinate.T
-  object ClientCoordinate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  def clientXY: Option[(Double, Double)] = native.collect { case e: dom.MouseEvent => (e.clientX, e.clientY) }

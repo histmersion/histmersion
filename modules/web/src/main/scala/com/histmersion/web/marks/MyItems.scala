@@ -12,35 +12,22 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   * why ([[problem]]).
   */
 object MyItems:
-  type MarkKey = MarkKey.T
-  object MarkKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Loaded = Loaded.T
   object Loaded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddLabel = AddLabel.T
-  object AddLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameLabel = RenameLabel.T
-  object RenameLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddNoteText = AddNoteText.T
-  object AddNoteText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditNoteText = EditNoteText.T
-  object EditNoteText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetReadRead = SetReadRead.T
-  object SetReadRead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val bookmarks: Var[List[Bookmark]] = Var(Nil)
   val notes: Var[List[Note]] = Var(Nil)
 
   /** By [[Target.identity]]. */
-  val marks: Var[Map[com.histmersion.web.marks.MyItems.MarkKey, ReadMark]] = Var(Map.empty)
+  val marks: Var[Map[Target.Identity, ReadMark]] = Var(Map.empty)
 
   /** The last change that did not go through, and why. */
   val problem: Var[Option[com.histmersion.web.marks.MyItems.Problem]] = Var(None)
   val loaded: Var[com.histmersion.web.marks.MyItems.Loaded] = Var(com.histmersion.web.marks.MyItems.Loaded(false))
 
-  private def markKey(m: ReadMark): com.histmersion.web.marks.MyItems.MarkKey = s"${m.kind.wire}:${m.id.value}"
+  private def markKey(m: ReadMark): Target.Identity = Target.Identity(s"${m.kind.wire}:${m.id.value}")
 
   def load(): Unit =
     ApiClient.bookmarks().zip(ApiClient.notes()).zip(ApiClient.readMarks()).foreach { case ((bs, ns), ms) =>
@@ -52,8 +39,8 @@ object MyItems:
 
   private def refused(e: Throwable): Unit =
     problem.set(Some(e match
-      case f: ApiFailure => f.getMessage
-      case other         => Option(other.getMessage).getOrElse("the server could not be reached")))
+      case f: ApiFailure => Problem(f.getMessage)
+      case other         => Problem(Option(other.getMessage).getOrElse("the server could not be reached"))))
 
   private def tracked[A](f: Future[A])(ok: A => Unit): Future[A] =
     problem.set(None)
@@ -62,22 +49,22 @@ object MyItems:
 
   // ── bookmarks ───────────────────────────────────────────────────────────────────────────────────
 
-  def bookmarkOf(identity: com.histmersion.web.marks.ItemRef.Identity): Signal[Option[Bookmark]] =
+  def bookmarkOf(identity: Target.Identity): Signal[Option[Bookmark]] =
     bookmarks.signal.map(_.find(_.target.identity.contains(identity)))
 
   def bookmarked(ref: ItemRef): Signal[Boolean] =
     ref.identity.fold(Val(false): Signal[Boolean])(i => bookmarkOf(i).map(_.isDefined))
 
-  def add(target: Target, label: Option[com.histmersion.web.marks.MyItems.AddLabel], title: com.histmersion.api.library.Title): Future[Bookmark] =
-    tracked(ApiClient.addBookmark(Bookmark.New(target, label.map(Bookmark.Label(_)), Some(title)))) { b =>
+  def add(target: Target, label: Option[Bookmark.Label], title: com.histmersion.api.library.Title): Future[Bookmark] =
+    tracked(ApiClient.addBookmark(Bookmark.New(target, label, Some(title)))) { b =>
       bookmarks.update(bs => b :: bs.filterNot(_.id == b.id))
     }
 
   def remove(b: Bookmark): Future[Bookmark] =
-    tracked(ApiClient.removeBookmark(b.id.value))(_ => bookmarks.update(_.filterNot(_.id == b.id)))
+    tracked(ApiClient.removeBookmark(ApiClient.BookmarkId(b.id.value)))(_ => bookmarks.update(_.filterNot(_.id == b.id)))
 
-  def rename(b: Bookmark, label: Option[com.histmersion.web.marks.MyItems.RenameLabel]): Future[Bookmark] =
-    tracked(ApiClient.editBookmark(b.id.value, Bookmark.Edit(label.map(Bookmark.Label(_)))))(n =>
+  def rename(b: Bookmark, label: Option[Bookmark.Label]): Future[Bookmark] =
+    tracked(ApiClient.editBookmark(ApiClient.BookmarkId(b.id.value), Bookmark.Edit(label)))(n =>
       bookmarks.update(_.map(x => if x.id == n.id then n else x))
     )
 
@@ -89,29 +76,29 @@ object MyItems:
 
   // ── notes ───────────────────────────────────────────────────────────────────────────────────────
 
-  def notesOn(identity: com.histmersion.web.marks.ItemRef.Identity): Signal[List[Note]] = notes.signal.map(_.filter(_.target.identity.contains(identity)))
+  def notesOn(identity: Target.Identity): Signal[List[Note]] = notes.signal.map(_.filter(_.target.identity.contains(identity)))
 
-  def addNote(target: Target, text: com.histmersion.web.marks.MyItems.AddNoteText, title: com.histmersion.api.library.Title): Future[Note] =
-    tracked(ApiClient.addNote(Note.New(target, Note.Text(text), Some(title))))(n => notes.update(n :: _))
+  def addNote(target: Target, text: Note.Text, title: com.histmersion.api.library.Title): Future[Note] =
+    tracked(ApiClient.addNote(Note.New(target, text, Some(title))))(n => notes.update(n :: _))
 
-  def editNote(n: Note, text: com.histmersion.web.marks.MyItems.EditNoteText): Future[Note] =
-    tracked(ApiClient.editNote(n.id.value, Note.Edit(Note.Text(text), Some(n.updatedAt))))(m =>
+  def editNote(n: Note, text: Note.Text): Future[Note] =
+    tracked(ApiClient.editNote(ApiClient.NoteId(n.id.value), Note.Edit(text, Some(n.updatedAt))))(m =>
       notes.update(ns => m :: ns.filterNot(_.id == m.id))
     )
 
   def removeNote(n: Note): Future[Note] =
-    tracked(ApiClient.removeNote(n.id.value))(_ => notes.update(_.filterNot(_.id == n.id)))
+    tracked(ApiClient.removeNote(ApiClient.NoteId(n.id.value)))(_ => notes.update(_.filterNot(_.id == n.id)))
 
   // ── read marks ──────────────────────────────────────────────────────────────────────────────────
 
   def isRead(ref: ItemRef): Signal[Boolean] =
     ref.identity.fold(Val(false): Signal[Boolean])(i => marks.signal.map(_.get(i).exists(_.read)))
 
-  def readNow(identity: com.histmersion.web.marks.ItemRef.Identity): Boolean = marks.now().get(identity).exists(_.read)
+  def readNow(identity: Target.Identity): Boolean = marks.now().get(identity).exists(_.read)
 
-  def setRead(ref: ItemRef, read: com.histmersion.web.marks.MyItems.SetReadRead): Unit =
+  def setRead(ref: ItemRef, read: ReadMark.Read): Unit =
     ref.target.itemKey.foreach { key =>
-      tracked(ApiClient.setRead(ReadMark.Set(ref.kind, ItemKey(key), read, Some(ref.title))))(m =>
+      tracked(ApiClient.setRead(ReadMark.Set(ref.kind, key, read, Some(ref.title))))(m =>
         marks.update(_ + (markKey(m) -> m))
       ): Unit
     }
@@ -123,6 +110,6 @@ object MyItems:
     if ref.readable && Auth.writableNow then
       ref.target.itemKey.foreach { key =>
         ApiClient
-          .opened(ReadOpened(ref.kind, ItemKey(key), Some(ref.title)))
+          .opened(ReadOpened(ref.kind, key, Some(ref.title)))
           .foreach(m => marks.update(_ + (markKey(m) -> m)))
       }

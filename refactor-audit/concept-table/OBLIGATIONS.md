@@ -191,3 +191,11 @@ Reported by client and server agents; each is wrapped `X(v.value)` at the call s
 - Astronomical vs historical years in web: TimelinePlayback wraps raw astronomical years as `Year(ph.value)` and Period.Start without conversion; PlaybackFeed, PlaybackBuckets.widen keep raw arithmetic. If astronomical year 0 is 1 BCE and catalogue.Year has no year 0, every BCE year shown or sent is off by one. Compare each conversion with 7e197c2b and with Years.parseIso's fromAstronomical; give the web one year type per meaning (Years.Astronomical for arithmetic, catalogue.Year only at display/API).
 - MergeView: MergeResolution.Decision is typed Kind.Wire but should hold the full decision wire.
 - Preview.creditLine had licence and URL swapped: fixed.
+
+## From client wave 4
+
+- Years: web passes the same raw numbers master did (UiState toFilter wraps Option[Long] as catalogue.Year, PeriodMarks, SavedViews, MapMenu, TimelinePlayback), so behaviour matches master; whether master's mix of astronomical and historical is right stays the open question above.
+- Found and fixed silently-false: CitationCounts.answering compared Edge.Kind and Direction with strings.
+- SavedViews.current uses Latitude.option/Longitude.option on unconstrained api types, which always succeed (class 5). DataSection.disk used/free went Long to ByteCount.
+- ApiClient (web) still has positional types and mangled calls: managerItems swaps limit and offset, parseResolutions uses Merge.Id(yaml.value), managerAction uses ActionPart1Part2.
+- Bridges: api.Geo.Latitude vs api.catalogue.Latitude; ShapesId/ShapeSetId/NoMap.Shapes.Id/ShapeHit.Set/Id; ShapeStyle.Colour vs ShapeFeature.Colour; MapEngine.MaxZoom/PixelRatio/Problem vs MapSurface.MaxZoom/NoMapSurface.Why; ApiClient.Citekey vs api.library.Citekey.

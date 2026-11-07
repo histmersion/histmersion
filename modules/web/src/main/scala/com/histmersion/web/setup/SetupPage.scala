@@ -24,25 +24,9 @@ import com.histmersion.api.basemap.Basemap
   * again.
   */
 object SetupPage:
-  type BodyText = BodyText.T
-  object BodyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Checked = Checked.T
-  object Checked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Message = Message.T
-  object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** This tab left the setup without saving: it is not shown again until the tab is closed. */
-  type ChoicesOfTextK = ChoicesOfTextK.T
-  object ChoicesOfTextK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ElementFinishDownload = ElementFinishDownload.T
-  object ElementFinishDownload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type CheckText = CheckText.T
-  object CheckText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckDetail = CheckDetail.T
-  object CheckDetail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckOn = CheckOn.T
-  object CheckOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val LeftKey = "histmersion.setupLeft"
 
@@ -54,28 +38,32 @@ object SetupPage:
 
   /** The choices the settings say now. Pure. */
   def choicesOf(p: ConfigEdit.Page, ui: UiConfig): SetupChoices =
-    def text(k: com.histmersion.web.setup.SetupPage.ChoicesOfTextK) = p.field(k).flatMap(_.effective).map(v => Draft.plain(Some(v)))
+    def text(k: String): Option[String] =
+      p.field(ConfigEdit.Field.Key(k)).flatMap(_.effective).map(v => Draft.plain(Some(Draft.Text(v.value))).value)
     SetupChoices(
-      email = text(com.histmersion.web.setup.SetupPage.ChoicesOfTextK("acquire.contact-email")).getOrElse(""),
-      finders = FindersSection.finders(ui).map(f => f.id -> f.enabled).toMap,
-      area = text(com.histmersion.web.setup.SetupPage.ChoicesOfTextK("basemap.bbox")).orElse(Some("world")),
+      email = SetupChoices.Email(text("acquire.contact-email").getOrElse("")),
+      finders = FindersSection
+        .finders(ui)
+        .map(f => SetupChoices.FindersKey(f.id.value) -> SetupChoices.FindersValue(f.enabled.value))
+        .toMap,
+      area = text("basemap.bbox").orElse(Some("world")).map(SetupChoices.Area(_)),
       start = ui.mapStart,
-      agents = text(com.histmersion.web.setup.SetupPage.ChoicesOfTextK("agents.enabled")).exists(Draft.isOn),
-      calibre = text(com.histmersion.web.setup.SetupPage.ChoicesOfTextK("cli.calibre.library-dir")).getOrElse("")
+      agents = SetupChoices.Agents(text("agents.enabled").exists(a => Draft.isOn(Draft.Text(a)))),
+      calibre = SetupChoices.Calibre(text("cli.calibre.library-dir").getOrElse(""))
     )
 
   /** The areas offered (`basemap.setup-areas`). */
   def areasOf(p: ConfigEdit.Page): List[MapArea] =
     p.field(com.histmersion.api.settings.ConfigEdit.Field.Key("basemap.setup-areas")).flatMap(_.effective).toList.flatMap { json =>
-      scala.util.Try(js.JSON.parse(json).asInstanceOf[js.Array[String]].toList).getOrElse(Nil).flatMap(MapArea.parse)
+      scala.util.Try(js.JSON.parse(json.value).asInstanceOf[js.Array[String]].toList).getOrElse(Nil).flatMap(MapArea.parse)
     }
 
   def element(ui: UiConfig): HtmlElement =
     val step = Var(SetupStep.Welcome)
-    val page = Var(Option.empty[Either[String, ConfigEdit.Page]])
+    val page = Var(Option.empty[Either[SettingsStore.Problem, ConfigEdit.Page]])
     val before = Var(SetupChoices())
     val choices = Var(SetupChoices())
-    val free = Var(Option.empty[Long])
+    val free = Var(Option.empty[com.histmersion.api.ByteCount])
     val problem = Var(Option.empty[String])
     val working = Var(false)
     val finished = Var(Option.empty[List[(String, Either[String, String])]])
@@ -91,29 +79,29 @@ object SetupPage:
           before.set(c); choices.set(c); start.set(c.start)
         }
       }
-      ApiClient.about().foreach(a => free.set(a.storage.volumes.map(_.freeBytes.value.toLong).minOption))
+      ApiClient.about().foreach(a => free.set(a.storage.volumes.map(_.freeBytes.value.toLong).minOption.map(com.histmersion.api.ByteCount(_))))
 
     /** Write the choices (and the mark that the setup is done); then, unless skipping, start the downloads. */
-    def finish(download: com.histmersion.web.setup.SetupPage.ElementFinishDownload): Unit =
+    def finish(download: Boolean): Unit =
       val c = choices.now()
       SetupPlan.email(c.email) match
-        case Left(why) => problem.set(Some(why)); step.set(SetupStep.Papers)
+        case Left(why) => problem.set(Some(why.value)); step.set(SetupStep.Papers)
         case Right(_)  =>
           problem.set(None)
           working.set(true)
           val changes = SetupPlan.changes(c, before.now()).map((k, v) => ConfigEdit.Change(k, v))
           ApiClient
-            .writeSettings(ConfigEdit.Write(changes, version = page.now().flatMap(_.toOption).map(_.version)))
+            .writeSettings(ConfigEdit.Write(changes, version = page.now().flatMap(_.toOption).map(p => ConfigEdit.Write.Version(p.version.value))))
             .onComplete { r =>
               r.toEither.left.map(SettingsStore.message) match
-                case Left(why) => working.set(false); problem.set(Some(why))
+                case Left(why) => working.set(false); problem.set(Some(why.value))
                 case Right(_)  =>
                   val wanted = if download then SetupPlan.downloads(c) else Nil
                   Future
                     .sequence(
                       wanted.map(d =>
                         startDownload(d)
-                          .transform(t => scala.util.Success(d.label -> t.toEither.left.map(SettingsStore.message)))
+                          .transform(t => scala.util.Success(d.label.value -> t.toEither.left.map(e => SettingsStore.message(e).value)))
                       )
                     )
                     .foreach { results =>
@@ -145,8 +133,8 @@ object SetupPage:
                   aria.hidden := true,
                   child.text <-- step.signal.map(x => if x.ordinal > s.ordinal then "✓" else s.number.toString)
                 ),
-                span(cls := "setup-label", s.label),
-                Option.when(s.optional)(span(cls := "setup-optional", " optional"))
+                span(cls := "setup-label", s.label.value),
+                Option.when(s.optional.value)(span(cls := "setup-optional", " optional"))
               )
             }
           ),
@@ -172,16 +160,16 @@ object SetupPage:
           ),
           child <-- page.signal.combineWith(step.signal, finished.signal).map {
             case (None, _, _)              => p(cls := "muted", "Loading…")
-            case (Some(Left(m)), _, _)     => com.histmersion.web.ErrorLine.text(s"Could not read the settings: $m")
+            case (Some(Left(m)), _, _)     => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(s"Could not read the settings: $m"))
             case (Some(Right(p)), s, done) =>
               div(
                 cls := "setup-body",
                 div(cls := "muted setup-count", s"Step ${s.number} of ${SetupStep.values.length}"),
-                h1(cls := "setup-title", if s == SetupStep.Welcome then "Welcome to Histmersion" else s.label),
+                h1(cls := "setup-title", if s == SetupStep.Welcome then "Welcome to Histmersion" else s.label.value),
                 body(s, p, choices, start, free.signal, done, ui)
               )
           },
-          child.maybe <-- problem.signal.map(_.map(com.histmersion.web.ErrorLine.text)),
+          child.maybe <-- problem.signal.map(_.map(m => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(m)))),
           div(
             cls := "setup-bar",
             button(
@@ -200,7 +188,7 @@ object SetupPage:
                   "Skip the rest, use the defaults",
                   title := "Saves what you chose so far; downloads nothing",
                   disabled <-- working.signal.combineWith(Auth.writable).map((b, w) => b || !w),
-                  onClick --> (_ => finish(download = com.histmersion.web.setup.SetupPage.ElementFinishDownload(false)))
+                  onClick --> (_ => finish(download = false))
                 )
             },
             child <-- step.signal.combineWith(finished.signal).map {
@@ -217,7 +205,7 @@ object SetupPage:
                   cls := "btn btn--primary setup-continue setup-finish",
                   child.text <-- working.signal.map(w => if w then "Saving…" else "Finish and start the downloads"),
                   disabled <-- working.signal.combineWith(Auth.writable).map((b, w) => b || !w),
-                  onClick --> (_ => finish(download = com.histmersion.web.setup.SetupPage.ElementFinishDownload(true)))
+                  onClick --> (_ => finish(download = true))
                 )
               case (s, None) =>
                 button(
@@ -228,7 +216,7 @@ object SetupPage:
                     if s == SetupStep.Papers then
                       SetupPlan
                         .email(choices.now().email)
-                        .fold(why => problem.set(Some(why)), _ => { problem.set(None); step.set(s.next.getOrElse(s)) })
+                        .fold(why => problem.set(Some(why.value)), _ => { problem.set(None); step.set(s.next.getOrElse(s)) })
                     else step.set(s.next.getOrElse(s))
                   }
                 )
@@ -238,26 +226,26 @@ object SetupPage:
       )
     )
 
-  private def startDownload(d: SetupDownload): Future[com.histmersion.web.setup.SetupPage.Message] = d match
-    case SetupDownload.Map(area)  => ApiClient.basemapFetch(Basemap.FetchQuery(bbox = Some(area))).map(_ => "started")
-    case SetupDownload.Boundaries => ApiClient.initData(fetch = com.histmersion.web.ApiClient.Fetch(true)).map(_ => com.histmersion.web.setup.SetupPage.Message("started"))
+  private def startDownload(d: SetupDownload): Future[String] = d match
+    case SetupDownload.Map(area)  => ApiClient.basemapFetch(Basemap.FetchQuery(bbox = Some(com.histmersion.api.BBox.Text(area.value)))).map(_ => "started")
+    case SetupDownload.Boundaries => ApiClient.initData(fetch = com.histmersion.web.ApiClient.Fetch(true)).map(_ => "started")
     case SetupDownload.Events     =>
       ApiClient
         .eventCatalogues()
         .flatMap(cs =>
           Future
-            .sequence(cs.map(_.id).filter(Set("gvp", "noaa")).map(ApiClient.importEvents))
+            .sequence(cs.map(_.id).filter(id => Set("gvp", "noaa")(id.value)).map(id => ApiClient.importEvents(ApiClient.Provider(id.value))))
             .map(js => s"${js.size} started")
         )
-    case SetupDownload.Pictures   => ApiClient.importMedia(com.histmersion.web.ApiClient.Provider("wikidata")).map(_ => com.histmersion.web.setup.SetupPage.Message("started"))
+    case SetupDownload.Pictures   => ApiClient.importMedia(com.histmersion.web.ApiClient.Provider("wikidata")).map(_ => "started")
     case SetupDownload.MorePlaces =>
-      Future.sequence(List("geonames", "wikidata").map(ApiClient.loadPlaces)).map(_ => "started")
+      Future.sequence(List("geonames", "wikidata").map(n => ApiClient.loadPlaces(com.histmersion.api.Api.ExternalPlaces.Source(n)))).map(_ => "started")
 
   private def check(
-      text: com.histmersion.web.setup.SetupPage.CheckText,
-      detail: com.histmersion.web.setup.SetupPage.CheckDetail,
-      on: Signal[com.histmersion.web.setup.SetupPage.CheckOn],
-      set: com.histmersion.web.setup.SetupPage.Checked => Unit,
+      text: String,
+      detail: String,
+      on: Signal[Boolean],
+      set: Boolean => Unit,
       mods: Modifier[HtmlElement]*
   ): HtmlElement =
     label(
@@ -273,7 +261,7 @@ object SetupPage:
       choices: Var[SetupChoices],
       start: Var[MapStartConfig],
       free: Signal[Option[com.histmersion.api.ByteCount]],
-      done: Option[List[(com.histmersion.web.setup.SetupPage.BodyText, Either[com.histmersion.web.setup.SetupPage.BodyText, com.histmersion.web.setup.SetupPage.BodyText])]],
+      done: Option[List[(String, Either[String, String])]],
       ui: UiConfig
   ): HtmlElement =
     s match
@@ -304,8 +292,8 @@ object SetupPage:
               cls := "field setup-email",
               placeholder := "you@example.org",
               controlled(
-                value <-- choices.signal.map(_.email),
-                onInput.mapToValue --> (v => choices.update(_.modify(_.email).setTo(v)))
+                value <-- choices.signal.map(_.email.value),
+                onInput.mapToValue --> (v => choices.update(_.modify(_.email).setTo(SetupChoices.Email(v))))
               )
             )
           ),
@@ -316,10 +304,15 @@ object SetupPage:
               .finders(ui)
               .map(f =>
                 check(
-                  Wording.plugin(f.id),
-                  com.histmersion.web.setup.SetupPage.CheckDetail(""),
-                  choices.signal.map(_.finders.getOrElse(f.id, f.enabled)),
-                  b => choices.update(c => c.modify(_.finders).using(_ + (f.id -> b)))
+                  Wording.plugin(Wording.PluginId(f.id.value)),
+                  "",
+                  choices.signal.map(
+                    _.finders.getOrElse(SetupChoices.FindersKey(f.id.value), SetupChoices.FindersValue(f.enabled.value)).value
+                  ),
+                  b =>
+                    choices.update(c =>
+                      c.modify(_.finders).using(_ + (SetupChoices.FindersKey(f.id.value) -> SetupChoices.FindersValue(b)))
+                    )
                 )
               )
           )
@@ -335,7 +328,7 @@ object SetupPage:
           fieldSet(
             cls := "setup-group",
             legend("Which area?"),
-            (areas.map(a => Some(a.bbox) -> (a.label, a.approxGb)) :+ (None -> ("No map download", 0.0))).map {
+            (areas.map(a => Option(SetupChoices.Area(a.bbox.value)) -> (a.label.value, a.approxGb)) :+ (Option.empty[SetupChoices.Area] -> ("No map download", MapArea.ApproxGb(0.0)))).map {
               (box, info) =>
                 label(
                   cls := "setup-opt setup-area",
@@ -353,7 +346,7 @@ object SetupPage:
                     span(
                       cls := "muted",
                       if box.isEmpty then "Coastlines only. You can download later."
-                      else if box.contains("world") then
+                      else if box.exists(_.value == "world") then
                         "Recommended. Sites and events from every continent appear on the map."
                       else "Smaller. Elsewhere the map shows coastlines only."
                     )
@@ -373,28 +366,28 @@ object SetupPage:
             cls := "setup-group",
             legend("What to download"),
             check(
-              SetupDownload.Boundaries.label,
-              com.histmersion.web.setup.SetupPage.CheckDetail("Borders of states through time, and the periods of the timeline."),
-              choices.signal.map(_.boundaries),
-              b => choices.update(_.modify(_.boundaries).setTo(b))
+              SetupDownload.Boundaries.label.value,
+              "Borders of states through time, and the periods of the timeline.",
+              choices.signal.map(_.boundaries.value),
+              b => choices.update(_.modify(_.boundaries).setTo(SetupChoices.Boundaries(b)))
             ),
             check(
-              SetupDownload.Events.label,
+              SetupDownload.Events.label.value,
               "From the Smithsonian's Global Volcanism Program and NOAA's catalogues.",
-              choices.signal.map(_.events),
-              b => choices.update(_.modify(_.events).setTo(b))
+              choices.signal.map(_.events.value),
+              b => choices.update(_.modify(_.events).setTo(SetupChoices.Events(b)))
             ),
             check(
-              SetupDownload.Pictures.label,
-              com.histmersion.web.setup.SetupPage.CheckDetail("Pictures of the places on the map, each with its licence."),
-              choices.signal.map(_.pictures),
-              b => choices.update(_.modify(_.pictures).setTo(b))
+              SetupDownload.Pictures.label.value,
+              "Pictures of the places on the map, each with its licence.",
+              choices.signal.map(_.pictures.value),
+              b => choices.update(_.modify(_.pictures).setTo(SetupChoices.Pictures(b)))
             ),
             check(
-              SetupDownload.MorePlaces.label,
-              com.histmersion.web.setup.SetupPage.CheckDetail("Several gigabytes; more modern places to search for."),
-              choices.signal.map(_.morePlaces),
-              b => choices.update(_.modify(_.morePlaces).setTo(b))
+              SetupDownload.MorePlaces.label.value,
+              "Several gigabytes; more modern places to search for.",
+              choices.signal.map(_.morePlaces.value),
+              b => choices.update(_.modify(_.morePlaces).setTo(SetupChoices.MorePlaces(b)))
             )
           )
         )
@@ -406,10 +399,10 @@ object SetupPage:
               "else works without them. Which model and which key they use is chosen later, in Settings › AI agents."
           ),
           check(
-            com.histmersion.web.setup.SetupPage.CheckText("Run research agents on this server"),
-            com.histmersion.web.setup.SetupPage.CheckDetail("They start when the server is next restarted."),
-            choices.signal.map(_.agents),
-            b => choices.update(_.modify(_.agents).setTo(b))
+            "Run research agents on this server",
+            "They start when the server is next restarted.",
+            choices.signal.map(_.agents.value),
+            b => choices.update(_.modify(_.agents).setTo(SetupChoices.Agents(b)))
           )
         )
       case SetupStep.Calibre =>
@@ -428,8 +421,8 @@ object SetupPage:
               cls := "field setup-calibre",
               placeholder := "~/Calibre Library",
               controlled(
-                value <-- choices.signal.map(_.calibre),
-                onInput.mapToValue --> (v => choices.update(_.modify(_.calibre).setTo(v)))
+                value <-- choices.signal.map(_.calibre.value),
+                onInput.mapToValue --> (v => choices.update(_.modify(_.calibre).setTo(SetupChoices.Calibre(v))))
               )
             )
           )
@@ -464,7 +457,7 @@ object SetupPage:
                 ul(
                   cls := "setup-summary",
                   ds.map(d =>
-                    li(d.label + (d match
+                    li(d.label.value + (d match
                       case SetupDownload.Map(_) => s" (about ${MapArea.size(SetupPlan.mapGb(c, areasOf(page)))})"
                       case _                    => ""))
                   ) ++

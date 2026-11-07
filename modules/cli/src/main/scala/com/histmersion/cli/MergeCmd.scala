@@ -206,8 +206,10 @@ object MergeCmd:
         _ <- Either.cond(
           yes || plan.changes.value == 0 ||
             Cli.confirm(
-              s"Merge ${MergeMarkdown.who(plan.from)} into this collection (plan $hash, " +
-                s"${Plural.count(com.histmersion.api.Plural.CountN(plan.changes.value.toLong), com.histmersion.api.Plural.CountSingular("change"))})? A backup is taken first."
+              Cli.Question(
+                s"Merge ${MergeMarkdown.who(plan.from)} into this collection (plan $hash, " +
+                  s"${Plural.count(com.histmersion.api.Plural.CountN(plan.changes.value.toLong), com.histmersion.api.Plural.CountSingular("change"))})? A backup is taken first."
+              )
             ),
           (),
           Cli.Error(Cli.Error.Message("aborted"), exitCode = ExitCode.Usage)

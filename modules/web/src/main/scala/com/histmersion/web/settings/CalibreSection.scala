@@ -12,8 +12,10 @@ object CalibreSection:
       SettingsForm(
         com.histmersion.web.settings.SettingsForm.ApplyTitle("Calibre library"),
         Some(
-          "Calibre keeps the original of every book and paper. The command line (histmersion calibre …) reads and " +
-            "fills this library on this computer; close the Calibre app while it writes."
+          SettingsForm.Intro(
+            "Calibre keeps the original of every book and paper. The command line (histmersion calibre …) reads and " +
+              "fills this library on this computer; close the Calibre app while it writes."
+          )
         ),
         List(
           SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("cli.calibre.library-dir"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("Library folder"))),

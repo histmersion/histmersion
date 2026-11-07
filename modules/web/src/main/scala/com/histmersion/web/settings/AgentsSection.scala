@@ -40,10 +40,13 @@ object AgentsSection:
         Providers.flatMap(p =>
           List(
             SettingsForm
-              .Item(s"agents.providers.$p.base-url", Some(s"${com.histmersion.api.Wording.humanize(p)}: address")),
+              .Item(
+                SettingsForm.Item.Key(s"agents.providers.$p.base-url"),
+                Some(SettingsForm.Item.Name(s"${com.histmersion.api.Wording.humanize(com.histmersion.api.Wording.Id(p))}: address"))
+              ),
             SettingsForm.Item(
-              s"agents.providers.$p.timeout-seconds",
-              Some(s"${com.histmersion.api.Wording.humanize(p)}: time limit (seconds)")
+              SettingsForm.Item.Key(s"agents.providers.$p.timeout-seconds"),
+              Some(SettingsForm.Item.Name(s"${com.histmersion.api.Wording.humanize(com.histmersion.api.Wording.Id(p))}: time limit (seconds)"))
             )
           )
         ) ++

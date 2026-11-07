@@ -6,10 +6,16 @@ import scala.scalajs.js
 
 /** A region: south, west, north, east (east may pass 180 across the antimeridian). */
 final case class GeoBounds(south: GeoBounds.South, west: GeoBounds.West, north: GeoBounds.North, east: GeoBounds.East):
-  def contains(p: LatLon): Boolean = p.lat >= south && p.lat <= north && p.lon >= west && p.lon <= east
+  def contains(p: LatLon): Boolean =
+    p.lat.value >= south.value && p.lat.value <= north.value && p.lon.value >= west.value && p.lon.value <= east.value
   def extend(o: GeoBounds): GeoBounds =
-    GeoBounds(math.min(south, o.south), math.min(west, o.west), math.max(north, o.north), math.max(east, o.east))
-  def valid: Boolean = south <= north && west <= east && !south.isNaN && !west.isNaN
+    GeoBounds(
+      GeoBounds.South(math.min(south.value, o.south.value)),
+      GeoBounds.West(math.min(west.value, o.west.value)),
+      GeoBounds.North(math.max(north.value, o.north.value)),
+      GeoBounds.East(math.max(east.value, o.east.value))
+    )
+  def valid: Boolean = south.value <= north.value && west.value <= east.value && !south.value.isNaN && !west.value.isNaN
 
 object GeoBounds:
   /** The bounds of a GeoJSON geometry's coordinates (`None` for none). Pure over the parsed object. */
@@ -44,4 +50,4 @@ object GeoBounds:
       if !js.isUndefined(g.geometries) then
         g.geometries.asInstanceOf[js.Array[js.Dynamic]].foreach(x => walk(x.coordinates))
       else walk(g.coordinates)
-    Option.when(s <= n)(GeoBounds(s, w, n, e))
+    Option.when(s <= n)(GeoBounds(GeoBounds.South(s), GeoBounds.West(w), GeoBounds.North(n), GeoBounds.East(e)))

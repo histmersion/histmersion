@@ -34,25 +34,25 @@ object MapLibreEngine extends MapEngine:
           case Some(g) =>
             // RENDERER names the GPU in Firefox (which warns that the debug extension is going away); Chromium
             // answers a generic name there and the GPU only through the extension
-            val plain = g.getParameter(g.RENDERER).toString
+            val plain = Capabilities.Renderer(g.getParameter(g.RENDERER).toString)
             val renderer =
               if !Capabilities.genericRenderer(plain) then plain
               else
                 val ext = g.getExtension("WEBGL_debug_renderer_info")
-                if ext != null && !js.isUndefined(ext) then g.getParameter(ext.UNMASKED_RENDERER_WEBGL).toString
+                if ext != null && !js.isUndefined(ext) then Capabilities.Renderer(g.getParameter(ext.UNMASKED_RENDERER_WEBGL).toString)
                 else plain
             // the probe's context is left to the garbage collector: losing it on purpose makes Firefox warn
             Capabilities(
               webgl = com.histmersion.web.map.Capabilities.Webgl(true),
               software = Capabilities.isSoftware(renderer),
               renderer = renderer,
-              webgl2 = gl2.isDefined
+              webgl2 = Capabilities.Webgl2(gl2.isDefined)
             )
       }
       .getOrElse(Capabilities(webgl = com.histmersion.web.map.Capabilities.Webgl(false), software = com.histmersion.web.map.Capabilities.Software(true), renderer = com.histmersion.web.map.Capabilities.Renderer(""), webgl2 = com.histmersion.web.map.Capabilities.Webgl2(false)))
 
   /** MapLibre GL JS 6 draws every map — vector and raster — with WebGL 2 only. */
-  override def unsupported(c: Capabilities): Option[String] = Capabilities.withoutWebgl2(c)
+  override def unsupported(c: Capabilities): Option[MapEngine.Problem] = Capabilities.withoutWebgl2(c)
 
   def create(el: dom.HTMLElement, maxZoom: com.histmersion.web.map.MapEngine.MaxZoom, pixelRatio: Option[com.histmersion.web.map.MapEngine.PixelRatio]): MapSurface =
     MapLibreSurface(el, maxZoom, pixelRatio, probe())

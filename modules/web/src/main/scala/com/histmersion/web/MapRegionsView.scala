@@ -53,7 +53,7 @@ object MapRegionsView:
     status.now().flatMap(_.regions.find(_.name.value == id.value)).map(_.name)
 
   private def current(dryRun: Basemap.FetchQuery.DryRun): Either[Basemap.Problem, Basemap.FetchQuery] =
-    request(box.now(), content.now(), namedOf(pick.now()), depth.now(), dryRun)
+    request(com.histmersion.api.catalogue.MapArea.Bbox(box.now().value), content.now(), namedOf(pick.now()), depth.now(), dryRun)
 
   private def choose(id: RegionChoice.Id): Unit =
     pick.set(id)

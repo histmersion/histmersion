@@ -15,7 +15,7 @@ trait MapSurface:
   /** The container's size, CSS pixels. */
   def size: (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension)
   def setView(at: LatLon, zoom: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.MapSurface.SetViewAnimate = com.histmersion.web.map.MapSurface.SetViewAnimate(false)): Unit
-  def setZoom(zoom: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.MapSurface.SetZoomAnimate = com.histmersion.web.map.MapSurface.SetZoomAnimate(true)): Unit = setView(center, zoom, animate)
+  def setZoom(zoom: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.MapSurface.SetViewAnimate = com.histmersion.web.map.MapSurface.SetViewAnimate(true)): Unit = setView(center, zoom, animate)
   def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.MapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.MaxZoom, animate: com.histmersion.web.map.MapSurface.FitBoundsAnimate = com.histmersion.web.map.MapSurface.FitBoundsAnimate(true)): Unit
   def panBy(dx: com.histmersion.web.map.MapSurface.PanByDx, dy: com.histmersion.web.map.MapSurface.PanByDy, animate: com.histmersion.web.map.MapSurface.PanByAnimate = com.histmersion.web.map.MapSurface.PanByAnimate(false)): Unit
   def project(p: LatLon): ScreenPt
@@ -36,7 +36,7 @@ trait MapSurface:
   def popupBody(p: Popup): Option[dom.HTMLElement] = p.element
 
   /** Locked, a person's drag, wheel, keys and pinch neither pan nor zoom it (the page's own moves still do). */
-  def setLocked(locked: com.histmersion.web.map.MapSurface.SetLockedLocked): Unit = ()
+  def setLocked(locked: com.histmersion.web.map.MapSurface.Locked): Unit = ()
 
   /** How many times a change of the container's size was taken (diagnostics). */
   def resizeCount: com.histmersion.web.map.MapSurface.ResizeCount = com.histmersion.web.map.MapSurface.ResizeCount(0)
@@ -118,8 +118,6 @@ object MapSurface:
   object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetViewAnimate = SetViewAnimate.T
   object SetViewAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetZoomAnimate = SetZoomAnimate.T
-  object SetZoomAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FitBoundsPadding = FitBoundsPadding.T
   object FitBoundsPadding extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FitBoundsAnimate = FitBoundsAnimate.T
@@ -130,8 +128,8 @@ object MapSurface:
   object PanByDy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PanByAnimate = PanByAnimate.T
   object PanByAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetLockedLocked = SetLockedLocked.T
-  object SetLockedLocked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Locked = Locked.T
+  object Locked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShapesId = ShapesId.T
   object ShapesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShapeSetId = ShapeSetId.T

@@ -15,12 +15,9 @@ object AdvancedSection:
   object SectionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Does a setting match what was typed in the filter (its key or its words)? Pure. */
-  type SectionNameId = SectionNameId.T
-  object SectionNameId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def matches(f: ConfigEdit.Field, q: com.histmersion.web.settings.AdvancedSection.Query): Boolean =
-    val t = q.trim.toLowerCase
-    t.isEmpty || f.relative.toLowerCase.contains(t) || f.doc.toLowerCase.contains(t)
+    val t = q.value.trim.toLowerCase
+    t.isEmpty || f.relative.value.toLowerCase.contains(t) || f.doc.value.toLowerCase.contains(t)
 
   def pane: HtmlElement =
     val draft = Draft()
@@ -45,18 +42,18 @@ object AdvancedSection:
       ),
       child <-- SettingsStore.current.map {
         case None           => p(cls := "muted", "Loading…")
-        case Some(Left(m))  => com.histmersion.web.ErrorLine.text(s"Could not read the settings: $m")
+        case Some(Left(m))  => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(s"Could not read the settings: $m"))
         case Some(Right(p)) =>
           div(
             cls := "advanced-file muted",
             p.file.fold("This server has no settings file.")(f => s"Settings file: $f"),
-            p.problems.map(x => com.histmersion.web.ErrorLine.text(x))
+            p.problems.map(x => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(x.value)))
           )
       },
       div(cls := "advanced-save", SettingsForm.saveBar(draft)),
       children <-- SettingsStore.current
         .map(_.flatMap(_.toOption).toList.flatMap(_.sections))
-        .map(_.map(s => block(s, draft, query.signal)))
+        .map(_.map(s => block(s, draft, query.signal.map(Query(_)))))
     )
 
   /** The blocks whose names say little as words. */
@@ -76,7 +73,7 @@ object AdvancedSection:
   )
 
   /** A block's name for a person. Pure. */
-  def sectionName(id: com.histmersion.web.settings.AdvancedSection.SectionNameId): com.histmersion.web.settings.AdvancedSection.SectionName = Names.getOrElse(id, Wording.humanize(id))
+  def sectionName(id: ConfigEdit.Section.Id): com.histmersion.web.settings.AdvancedSection.SectionName = SectionName(Names.getOrElse(id.value, Wording.humanize(Wording.Id(id.value))))
 
   /** One block, folded until opened (or while the filter finds something in it). */
   private def block(s: ConfigEdit.Section, draft: Draft, query: Signal[com.histmersion.web.settings.AdvancedSection.Query]): HtmlElement =
@@ -84,19 +81,19 @@ object AdvancedSection:
     val shown = s.fields.filter(_.credential.isEmpty)
     detailsTag(
       cls := "advanced-block",
-      dataAttr("section") := s.id,
+      dataAttr("section") := s.id.value,
       htmlAttr("open", com.raquo.laminar.codecs.BooleanAsAttrPresenceCodec) <-- open.signal
         .combineWith(query)
-        .map((o, q) => o || q.trim.nonEmpty && shown.exists(matches(_, q))),
+        .map((o, q) => o || q.value.trim.nonEmpty && shown.exists(matches(_, q))),
       summaryTag(
         cls := "advanced-summary",
         onClick.preventDefault --> (_ => open.update(!_)),
-        span(cls := "advanced-name", sectionName(s.id)),
+        span(cls := "advanced-name", sectionName(s.id).value),
         span(cls := "muted", s" · ${s.fields.size}"),
-        Option.when(s.doc.nonEmpty)(span(cls := "advanced-doc muted", s" — ${s.doc}"))
+        Option.when(s.doc.value.nonEmpty)(span(cls := "advanced-doc muted", s" — ${s.doc}"))
       ),
       children <-- open.signal.combineWith(query).map { (o, q) =>
-        if !o && q.trim.isEmpty then Nil
-        else shown.filter(matches(_, q)).map(f => SettingControl(f, draft, Some(f.relative.stripPrefix(s"${s.id}."))))
+        if !o && q.value.trim.isEmpty then Nil
+        else shown.filter(matches(_, q)).map(f => SettingControl(f, draft, Some(SettingsForm.Item.Name(f.relative.value.stripPrefix(s"${s.id}.")))))
       }
     )

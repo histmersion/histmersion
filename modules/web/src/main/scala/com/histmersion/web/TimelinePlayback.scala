@@ -127,7 +127,7 @@ object TimelinePlayback:
     // playback reads the polities: boundaries go on for its duration (the toggle shows it) and
     // back off afterwards unless the reader had them on already
     overlayWasOn = UiState.layers.now().contains(MapLayer.Boundaries)
-    if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, com.histmersion.web.UiState.SetLayerOn(true))
+    if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, true)
     MapView.setPlaybackMode(com.histmersion.web.MapView.Playback(true))
     // the filter's events over the span played, fetched once; each frame then draws them locally
     if eventsConfig != null then
@@ -147,7 +147,7 @@ object TimelinePlayback:
     dom.window.cancelAnimationFrame(frameId)
     MapView.setPlaybackMode(com.histmersion.web.MapView.Playback(false))
     EventLayer.stop()
-    if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, com.histmersion.web.UiState.SetLayerOn(false))
+    if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, false)
     // the last frame drew the playhead's window: the map shows the whole span again (findings, legend,
     // sites, pictures, events, boundaries), whether playback ran out or ⏹ stopped it
     val (sf, st) = TimelineView.currentSpan
@@ -160,7 +160,7 @@ object TimelinePlayback:
       lastTs = ts
 
       val totalYears = (spanTo.value - spanFrom.value).toDouble
-      val yearsPerSecond = totalYears / Layout.playbackDuration * speed.now().value
+      val yearsPerSecond = totalYears / Layout.playbackDuration.value * speed.now().value
       val advance = (yearsPerSecond * dt).toLong.max(1)
       val next = com.histmersion.api.Years.Astronomical(playhead.now().value + advance)
 

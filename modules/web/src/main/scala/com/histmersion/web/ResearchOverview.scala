@@ -68,7 +68,7 @@ object ResearchOverview:
 
   /** The decisions to show first: the oldest waiting. */
   def oldestFirst(as: List[ApprovalInfo]): List[ApprovalInfo] =
-    as.filter(_.state == ApprovalState.Open.wire).sortBy(a => (a.createdAt.value, a.id.value))
+    as.filter(_.state == ApprovalState.Open.wire).sortBy(a => (a.createdAt.value: String, a.id.value: Long))
 
   /** What to read before deciding, and where it is: the source a status or edge is about (and the work it points at),
     * the article draft, the goal's plan, the manager a hint is for.
@@ -271,14 +271,14 @@ object ResearchOverview:
           if top.isEmpty then p(cls := "muted row", "No research goals yet.")
           else
             div(top.map { g =>
-              val pr = progressOf(g.slug, ms)
+              val pr = progressOf(com.histmersion.api.automation.Goal.Slug(g.slug.value), ms)
               div(
                 cls := "row goal-progress",
                 dataAttr("goal") := g.slug.value,
                 div(
                   cls := "goal-progress-head",
-                  GoalsView.badge(g.status),
-                  RouteLink(Route.Goal(g.slug), cls := "goal-progress-title", g.title.value),
+                  GoalsView.badge(com.histmersion.api.automation.Goal.StatusValue(g.status.value)),
+                  RouteLink(Route.Goal(com.histmersion.api.automation.Goal.Slug(g.slug.value)), cls := "goal-progress-title", g.title.value),
                   span(
                     cls := "muted goal-steps",
                     if pr.total.value > 0 then s"${pr.done} of ${pr.total} steps" else "no steps yet"

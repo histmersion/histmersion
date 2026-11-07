@@ -7,21 +7,15 @@ package com.histmersion.web.library
   */
 import com.histmersion.api.library.Ingest
 object DoiIngest:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type RequestTyped = RequestTyped.T
-  object RequestTyped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   private val DoiLink = "(?i)^(https?://)?(dx\\.)?doi\\.org/"
   private val Doi = "(?i)^10\\.\\d{4,9}/\\S+$"
   private val Arxiv = "(?i)^(arxiv:)?(\\d{4}\\.\\d{4,5}(v\\d+)?|[a-z-]+(\\.[a-z]{2})?/\\d{7}(v\\d+)?)$"
 
   /** The request for `typed`, or what is wrong with it. */
-  def request(typed: com.histmersion.web.library.DoiIngest.RequestTyped): Either[com.histmersion.web.library.DoiIngest.Problem, Ingest.Request] =
+  def request(typed: String): Either[com.histmersion.web.ErrorLine.Problem, Ingest.Request] =
     val t = typed.trim.replaceFirst(DoiLink, "").replaceFirst("(?i)^doi:\\s*", "")
-    if t.isEmpty then Left("Type a DOI (e.g. 10.1017/S0003598X00000001) or an arXiv id (e.g. arxiv:2101.01234).")
-    else if t.matches(Doi) then Right(Ingest.Request(id = t, legalOnly = com.histmersion.api.library.Ingest.Request.LegalOnly(true)))
+    if t.isEmpty then Left(com.histmersion.web.ErrorLine.Problem("Type a DOI (e.g. 10.1017/S0003598X00000001) or an arXiv id (e.g. arxiv:2101.01234)."))
+    else if t.matches(Doi) then Right(Ingest.Request(id = Ingest.Request.Id(t), legalOnly = com.histmersion.api.library.Ingest.Request.LegalOnly(true)))
     else if t.matches(Arxiv) then
-      Right(Ingest.Request(id = if t.toLowerCase.startsWith("arxiv:") then t else s"arxiv:$t", legalOnly = true))
-    else Left(s"“$typed” is neither a DOI (10.…/…) nor an arXiv id.")
+      Right(Ingest.Request(id = Ingest.Request.Id(if t.toLowerCase.startsWith("arxiv:") then t else s"arxiv:$t"), legalOnly = com.histmersion.api.library.Ingest.Request.LegalOnly(true)))
+    else Left(com.histmersion.web.ErrorLine.Problem(s"“$typed” is neither a DOI (10.…/…) nor an arXiv id."))

@@ -7,51 +7,23 @@ package com.histmersion.web.marks
 object NoteMarkdown:
   type Href = Href.T
   object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Line = Line.T
-  object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Markdown = Markdown.T
   object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
 
   enum Inline:
-    case Text(s: Inline.Text.S)
-    case Strong(s: Inline.Strong.S)
-    case Em(s: Inline.Em.S)
-    case Code(s: Inline.Code.S)
-    case Link(text: Inline.Link.Text, href: Inline.Link.Href)
-    case Cite(citekey: Inline.Cite.Citekey)
-
-  object Inline:
-    object Text:
-      type S = com.histmersion.web.marks.NoteMarkdown.Text
-      val S: _root_.com.histmersion.web.marks.NoteMarkdown.Text.type = _root_.com.histmersion.web.marks.NoteMarkdown.Text
-    object Strong:
-      type S = com.histmersion.web.marks.NoteMarkdown.Text
-      val S: _root_.com.histmersion.web.marks.NoteMarkdown.Text.type = _root_.com.histmersion.web.marks.NoteMarkdown.Text
-    object Em:
-      type S = com.histmersion.web.marks.NoteMarkdown.Text
-      val S: _root_.com.histmersion.web.marks.NoteMarkdown.Text.type = _root_.com.histmersion.web.marks.NoteMarkdown.Text
-    object Code:
-      type S = com.histmersion.web.marks.NoteMarkdown.Text
-      val S: _root_.com.histmersion.web.marks.NoteMarkdown.Text.type = _root_.com.histmersion.web.marks.NoteMarkdown.Text
-    object Link:
-      type Text = com.histmersion.web.marks.NoteMarkdown.Text
-      val Text: _root_.com.histmersion.web.marks.NoteMarkdown.Text.type = _root_.com.histmersion.web.marks.NoteMarkdown.Text
-      type Href = com.histmersion.web.marks.NoteMarkdown.Href
-      val Href: _root_.com.histmersion.web.marks.NoteMarkdown.Href.type = _root_.com.histmersion.web.marks.NoteMarkdown.Href
-    object Cite:
-      type Citekey = com.histmersion.web.WindowKey.Source.Citekey
-      val Citekey: _root_.com.histmersion.web.WindowKey.Source.Citekey.type = _root_.com.histmersion.web.WindowKey.Source.Citekey
+    case Text(s: String)
+    case Strong(s: String)
+    case Em(s: String)
+    case Code(s: String)
+    case Link(text: String, href: NoteMarkdown.Href)
+    case Cite(citekey: com.histmersion.api.library.Citekey)
 
   enum Block:
     case Heading(level: Block.Heading.Level, text: List[Inline])
     case Para(text: List[Inline])
     case Items(ordered: Block.Items.Ordered, items: List[List[Inline]])
     case Quote(text: List[Inline])
-    case CodeBlock(text: Block.CodeBlock.Text)
+    case CodeBlock(text: String)
 
   object Block:
     object Heading:
@@ -60,9 +32,6 @@ object NoteMarkdown:
     object Items:
       type Ordered = Ordered.T
       object Ordered extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    object CodeBlock:
-      type Text = com.histmersion.web.marks.NoteMarkdown.Text
-      val Text: _root_.com.histmersion.web.marks.NoteMarkdown.Text.type = _root_.com.histmersion.web.marks.NoteMarkdown.Text
 
   private val Heading = """^(#{1,6})\s+(.*)$""".r
   private val Bullet = """^\s*[-*+]\s+(.*)$""".r
@@ -71,52 +40,54 @@ object NoteMarkdown:
 
   /** Only addresses a person can follow safely: the web, mail, or a page of this server. */
   def safeHref(h: com.histmersion.web.marks.NoteMarkdown.Href): Option[com.histmersion.web.marks.NoteMarkdown.Href] =
-    val t = h.trim
+    val t = h.value.trim
     Option.when(
       t.startsWith("https://") || t.startsWith("http://") || t.startsWith("mailto:") ||
         (t.startsWith("/") && !t.startsWith("//"))
-    )(t)
+    )(Href(t))
 
   def blocks(text: com.histmersion.web.marks.NoteMarkdown.Markdown): List[Block] =
     @annotation.tailrec
-    def loop(lines: List[com.histmersion.web.marks.NoteMarkdown.Markdown], out: List[Block]): List[Block] = lines match
+    def loop(lines: List[String], out: List[Block]): List[Block] = lines match
       case Nil                                   => out.reverse
       case l :: rest if l.trim.isEmpty           => loop(rest, out)
       case l :: rest if l.trim.startsWith("```") =>
         val (code, after) = rest.span(!_.trim.startsWith("```"))
         loop(after.drop(1), Block.CodeBlock(code.mkString("\n")) :: out)
-      case Heading(h, t) :: rest   => loop(rest, Block.Heading(h.length, inlines(t.trim)) :: out)
+      case Heading(h, t) :: rest   => loop(rest, Block.Heading(Block.Heading.Level(h.length), inlinesOf(t.trim)) :: out)
       case (l @ Bullet(_)) :: rest =>
         val (more, after) = rest.span { case Bullet(_) => true; case _ => false }
-        loop(after, Block.Items(com.histmersion.web.marks.NoteMarkdown.Block.Items.Ordered(false), (l :: more).collect { case Bullet(t) => inlines(t) }) :: out)
+        loop(after, Block.Items(com.histmersion.web.marks.NoteMarkdown.Block.Items.Ordered(false), (l :: more).collect { case Bullet(t) => inlinesOf(t) }) :: out)
       case (l @ Number(_)) :: rest =>
         val (more, after) = rest.span { case Number(_) => true; case _ => false }
-        loop(after, Block.Items(com.histmersion.web.marks.NoteMarkdown.Block.Items.Ordered(true), (l :: more).collect { case Number(t) => inlines(t) }) :: out)
+        loop(after, Block.Items(com.histmersion.web.marks.NoteMarkdown.Block.Items.Ordered(true), (l :: more).collect { case Number(t) => inlinesOf(t) }) :: out)
       case (l @ QuoteL(_)) :: rest =>
         val (more, after) = rest.span { case QuoteL(_) => true; case _ => false }
-        loop(after, Block.Quote(inlines((l :: more).collect { case QuoteL(t) => t }.mkString(" "))) :: out)
+        loop(after, Block.Quote(inlinesOf((l :: more).collect { case QuoteL(t) => t }.mkString(" "))) :: out)
       case lines0 =>
         val (para, after) = lines0.span(l => l.trim.nonEmpty && !starts(l))
         val taken = if para.isEmpty then List(lines0.head) else para
-        loop(if para.isEmpty then lines0.tail else after, Block.Para(inlines(taken.map(_.trim).mkString(" "))) :: out)
-    loop(text.replace("\r\n", "\n").split("\n", -1).toList, Nil)
+        loop(if para.isEmpty then lines0.tail else after, Block.Para(inlinesOf(taken.map(_.trim).mkString(" "))) :: out)
+    loop(text.value.replace("\r\n", "\n").split("\n", -1).toList, Nil)
 
-  private def starts(l: com.histmersion.web.marks.NoteMarkdown.Line): Boolean = l match
+  private def starts(l: String): Boolean = l match
     case Heading(_, _) | Bullet(_) | Number(_) | QuoteL(_) => true
     case _                                                 => l.trim.startsWith("```")
 
   private val Token =
     """\[\[([a-z][a-z0-9_.-]{1,120})\]\]|\[([^\]]+)\]\(([^)\s]+)\)|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_""".r
 
-  def inlines(s: com.histmersion.web.marks.NoteMarkdown.Markdown): List[Inline] =
+  def inlines(s: com.histmersion.web.marks.NoteMarkdown.Markdown): List[Inline] = inlinesOf(s.value)
+
+  private def inlinesOf(s: String): List[Inline] =
     val out = List.newBuilder[Inline]
     // `var`: where the text not yet taken by a token starts
     var at = 0
     Token.findAllMatchIn(s).foreach { m =>
       if m.start > at then out += Inline.Text(s.substring(at, m.start))
-      out += (if m.group(1) != null then Inline.Cite(m.group(1))
+      out += (if m.group(1) != null then Inline.Cite(com.histmersion.api.library.Citekey(m.group(1)))
               else if m.group(2) != null then
-                safeHref(m.group(3)).fold(Inline.Text(m.matched))(Inline.Link(m.group(2), _))
+                safeHref(Href(m.group(3))).fold(Inline.Text(m.matched))(Inline.Link(m.group(2), _))
               else if m.group(4) != null then Inline.Code(m.group(4))
               else if m.group(5) != null then Inline.Strong(m.group(5))
               else Inline.Em(Option(m.group(6)).getOrElse(m.group(7))))

@@ -10,7 +10,7 @@ enum SetupStep(val label: SetupStep.Label, val optional: SetupStep.Optional = co
   case Calibre extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Calibre library"), optional = com.histmersion.web.setup.SetupStep.Optional(true))
   case Ready extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Ready"))
 
-  def number: com.histmersion.web.setup.SetupStep.Number = ordinal + 1
+  def number: com.histmersion.web.setup.SetupStep.Number = com.histmersion.web.setup.SetupStep.Number(ordinal + 1)
   def next: Option[SetupStep] = SetupStep.values.lift(ordinal + 1)
   def back: Option[SetupStep] = Option.when(ordinal > 0)(SetupStep.values(ordinal - 1))
 

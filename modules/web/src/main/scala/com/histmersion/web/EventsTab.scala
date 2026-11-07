@@ -25,7 +25,7 @@ object EventsTab:
     fetch = (q, offset) =>
       ApiClient
         .events(q.modify(_.filter.offset).setTo(offset))
-        .map(r => TabPage(r.events, r.total, List(ResultsPaging.span(UiState.from.now().map(com.histmersion.api.catalogue.Year(_)), UiState.to.now().map(com.histmersion.api.catalogue.Year(_)))))),
+        .map(r => TabPage(r.events, r.total, List(TabPage.Extras(ResultsPaging.span(UiState.from.now().map(com.histmersion.api.catalogue.Year(_)), UiState.to.now().map(com.histmersion.api.catalogue.Year(_))).value)))),
     render = renderEvent,
     empty = com.histmersion.web.FilterTab.Empty("No events relate to the current filter."),
     page = ResultsPaging.PageNumber(Layout.tabPage.value),

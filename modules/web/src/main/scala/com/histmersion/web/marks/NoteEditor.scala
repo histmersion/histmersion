@@ -14,21 +14,14 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object NoteEditor:
 
-  type WriteTitle = _root_.com.histmersion.api.library.Title
-  val WriteTitle: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title
-
-  final private case class Session(target: Target, title: Session.Title, note: Option[Note], back: Option[dom.HTMLElement])
-
-  object Session:
-    type Title = com.histmersion.api.library.Title
-    val Title: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title
+  final private case class Session(target: Target, title: com.histmersion.api.library.Title, note: Option[Note], back: Option[dom.HTMLElement])
 
   private val session = Var(Option.empty[Session])
 
   def isOpen: Boolean = session.now().isDefined
 
   /** A new note on `target`. */
-  def write(target: Target, title: com.histmersion.web.marks.NoteEditor.WriteTitle): Unit = open(Session(target, title, None, focused))
+  def write(target: Target, title: com.histmersion.api.library.Title): Unit = open(Session(target, title, None, focused))
 
   def edit(n: Note): Unit = open(Session(n.target, n.title, Some(n), focused))
 
@@ -49,14 +42,14 @@ object NoteEditor:
     div(cls := "note-editor-root", child.maybe <-- session.signal.map(_.map(dialog)))
 
   private def dialog(s: Session): HtmlElement =
-    val draftKey = NoteDrafts.key(s.target, s.note.map(_.id.value))
-    val restored = NoteDrafts.get(draftKey).filter(d => !s.note.exists(_.text.value == d))
-    val text = Var(restored.getOrElse(s.note.fold("")(_.text.value)))
+    val draftKey = NoteDrafts.key(s.target, s.note.map(_.id))
+    val restored = NoteDrafts.get(draftKey).filter(d => !s.note.exists(_.text == d))
+    val text = Var(restored.getOrElse(s.note.fold(Note.Text(""))(_.text)))
     val preview = Var(false)
     val saving = Var(false)
     val problem = Var(Option.empty[String])
     def save(): Unit =
-      if text.now().trim.nonEmpty && !saving.now() then
+      if text.now().value.trim.nonEmpty && !saving.now() then
         saving.set(true)
         problem.set(None)
         val f = s.note.fold(MyItems.addNote(s.target, text.now(), s.title))(n => MyItems.editNote(n, text.now()))
@@ -89,10 +82,10 @@ object NoteEditor:
         ),
         p(
           cls := "note-editor-on muted",
-          s"On ${s.target.kind.label.toLowerCase}: ",
-          strong(s.title),
-          Option.when(com.histmersion.api.personal.Target.where(s.target).nonEmpty)(
-            span(s" · ${com.histmersion.api.personal.Target.where(s.target)}")
+          s"On ${s.target.kind.label.value.toLowerCase}: ",
+          strong(s.title.value),
+          Option.when(com.histmersion.api.personal.Target.where(s.target).value.nonEmpty)(
+            span(s" · ${com.histmersion.api.personal.Target.where(s.target).value}")
           )
         ),
         Option.when(restored.isDefined)(
@@ -128,7 +121,7 @@ object NoteEditor:
           cls("is-hidden") <-- preview.signal,
           rows := 10,
           placeholder := "Write your note. **bold**, *italic*, - a list, [[citekey]] for a source.",
-          controlled(value <-- text.signal, onInput.mapToValue --> { v => text.set(v); NoteDrafts.put(draftKey, v) }),
+          controlled(value <-- text.signal.map(_.value), onInput.mapToValue --> { v => val t = Note.Text(v); text.set(t); NoteDrafts.put(draftKey, t) }),
           onMountCallback(ctx => ctx.thisNode.ref.focus())
         ),
         div(
@@ -136,7 +129,7 @@ object NoteEditor:
           cls("is-hidden") <-- preview.signal.map(!_),
           aria.live := "polite",
           child <-- text.signal.map(t =>
-            if t.trim.isEmpty then p(cls := "muted", "Nothing written yet.") else NoteView(t)
+            if t.value.trim.isEmpty then p(cls := "muted", "Nothing written yet.") else NoteView(NoteMarkdown.Markdown(t.value))
           )
         ),
         p(
@@ -144,14 +137,14 @@ object NoteEditor:
           "Markdown: **bold**, *italic*, `code`, - lists, > quotes, [a link](https://…), [[citekey]]. ",
           "Ctrl/⌘+Enter saves."
         ),
-        child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(s"Not saved: $m"))),
+        child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(ErrorLine.Problem(s"Not saved: $m")))),
         div(
           cls := "toolbar note-editor-actions",
           button(
             typ := "button",
             cls := "btn btn--primary note-save",
             "Save",
-            disabled <-- text.signal.combineWith(saving.signal).map((t, busy) => t.trim.isEmpty || busy),
+            disabled <-- text.signal.combineWith(saving.signal).map((t, busy) => t.value.trim.isEmpty || busy),
             onClick --> (_ => save())
           ),
           button(

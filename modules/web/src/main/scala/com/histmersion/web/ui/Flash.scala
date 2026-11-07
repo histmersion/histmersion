@@ -16,7 +16,7 @@ object Flash:
   private var timer = 0
 
   def say(text: com.histmersion.web.ui.Flash.Text): Unit =
-    line.set(Some(text))
+    line.set(Some(text.value))
     dom.window.clearTimeout(timer)
     timer = dom.window.setTimeout(() => line.set(None), 3000)
 

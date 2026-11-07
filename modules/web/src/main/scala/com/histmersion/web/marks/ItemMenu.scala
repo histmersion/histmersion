@@ -18,36 +18,29 @@ object ItemMenu:
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The item's link, whole (copied, it works elsewhere). Pure. */
-  type TextByline = _root_.com.histmersion.web.library.TableRow.Byline
-  val TextByline: _root_.com.histmersion.web.library.TableRow.Byline.type = _root_.com.histmersion.web.library.TableRow.Byline
-  type MarkdownOrigin = _root_.com.histmersion.web.marks.ItemMenu.Origin
-  val MarkdownOrigin: _root_.com.histmersion.web.marks.ItemMenu.Origin.type = _root_.com.histmersion.web.marks.ItemMenu.Origin
-  type EntriesByline = _root_.com.histmersion.web.library.TableRow.Byline
-  val EntriesByline: _root_.com.histmersion.web.library.TableRow.Byline.type = _root_.com.histmersion.web.library.TableRow.Byline
-
-  def link(origin: com.histmersion.web.marks.ItemMenu.Origin, ref: ItemRef): com.histmersion.web.marks.ItemMenu.Href = origin.stripSuffix("/") + ItemRef.page(ref.target)
+  def link(origin: com.histmersion.web.marks.ItemMenu.Origin, ref: ItemRef): com.histmersion.web.marks.ItemMenu.Href = Href(origin.value.stripSuffix("/") + ItemRef.page(ref.target).value)
 
   /** The item as a line of plain text: its title and what the page says under it (authors, year). Pure. */
-  def text(ref: ItemRef, byline: com.histmersion.web.marks.ItemMenu.TextByline): com.histmersion.web.marks.ItemMenu.Text =
-    List(ref.title, byline).map(_.trim).filter(_.nonEmpty).mkString(" — ")
+  def text(ref: ItemRef, byline: String): com.histmersion.web.marks.ItemMenu.Text =
+    Text(List(ref.title.value, byline).map(_.trim).filter(_.nonEmpty).mkString(" — "))
 
   /** The item as Markdown: a link with its title, and a source's `[[citekey]]` for the wiki. Pure. */
-  def markdown(origin: com.histmersion.web.marks.ItemMenu.MarkdownOrigin, ref: ItemRef, byline: com.histmersion.web.library.TableRow.Byline): com.histmersion.web.marks.ItemMenu.Markdown =
-    val title = ref.title.replace("[", "\\[").replace("]", "\\]")
-    val cite = ref.target.itemKey.filter(_ => ref.kind == ItemKind.Source).fold("")(ck => s" [[$ck]]")
-    s"[$title](${link(origin, ref)})" + Option(byline.trim).filter(_.nonEmpty).fold("")(b => s" — $b") + cite
+  def markdown(origin: com.histmersion.web.marks.ItemMenu.Origin, ref: ItemRef, byline: String): com.histmersion.web.marks.ItemMenu.Markdown =
+    val title = ref.title.value.replace("[", "\\[").replace("]", "\\]")
+    val cite = ref.target.itemKey.filter(_ => ref.kind == ItemKind.Source).fold("")(ck => s" [[${ck.value}]]")
+    Markdown(s"[$title](${link(origin, ref).value})" + Option(byline.trim).filter(_.nonEmpty).fold("")(b => s" — $b") + cite)
 
-  def entries(ref: ItemRef, byline: com.histmersion.web.marks.ItemMenu.EntriesByline): List[ContextMenu.Entry] =
-    val origin = dom.window.location.origin
+  def entries(ref: ItemRef, byline: String): List[ContextMenu.Entry] =
+    val origin = Origin(dom.window.location.origin)
     val marked = ref.identity.exists(i => MyItems.bookmarks.now().exists(_.target.identity.contains(i)))
     List(
-      ContextMenu.Entry(com.histmersion.web.ui.ContextMenu.Entry.Label("Copy the text"), () => Clipboard.copy(text(ref, byline), com.histmersion.web.ui.Clipboard.CopyWhat("the text"))),
-      ContextMenu.Entry(com.histmersion.web.ui.ContextMenu.Entry.Label("Copy as Markdown"), () => Clipboard.copy(markdown(origin, ref, byline), com.histmersion.web.ui.Clipboard.CopyWhat("the Markdown"))),
-      ContextMenu.Entry(com.histmersion.web.ui.ContextMenu.Entry.Label("Copy the link"), () => Clipboard.copy(link(origin, ref), com.histmersion.web.ui.Clipboard.CopyWhat("the link"))),
+      ContextMenu.Entry(com.histmersion.web.ui.ContextMenu.Entry.Label("Copy the text"), () => Clipboard.copy(Clipboard.CopyText(text(ref, byline).value), com.histmersion.web.ui.Clipboard.CopyWhat("the text"))),
+      ContextMenu.Entry(com.histmersion.web.ui.ContextMenu.Entry.Label("Copy as Markdown"), () => Clipboard.copy(Clipboard.CopyText(markdown(origin, ref, byline).value), com.histmersion.web.ui.Clipboard.CopyWhat("the Markdown"))),
+      ContextMenu.Entry(com.histmersion.web.ui.ContextMenu.Entry.Label("Copy the link"), () => Clipboard.copy(Clipboard.CopyText(link(origin, ref).value), com.histmersion.web.ui.Clipboard.CopyWhat("the link"))),
       ContextMenu.Separator,
       ContextMenu.Entry(if marked then com.histmersion.web.ui.ContextMenu.Entry.Label("Remove the bookmark") else com.histmersion.web.ui.ContextMenu.Entry.Label("Bookmark"), () => ItemActions.bookmark(ref)),
       ContextMenu.Entry(
         com.histmersion.web.ui.ContextMenu.Entry.Label("Open in a new tab"),
-        () => { val _ = dom.window.open(ItemRef.page(ref.target), "_blank", "noopener") }
+        () => { val _ = dom.window.open(ItemRef.page(ref.target).value, "_blank", "noopener") }
       )
     )

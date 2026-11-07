@@ -236,7 +236,7 @@ object Pages:
           Router.go(Route.Run(Route.Run.Id(j.id.value)), push = com.histmersion.web.Router.Push(false))
           p(cls := "muted", "Loading…")
         case Some(Right(j)) =>
-          Router.retitle(Route.Job(id), Wording.jobKindOf(j.kind))
+          Router.retitle(Route.Job(id), com.histmersion.api.UiLabels.Text(Wording.jobKindOf(j.kind)))
           div(ul(cls := "job-list", JobsView.row(j, mine = false)), jobControls(j), QueueView.ofJob(JobId(j.id.value)))
       },
       p(RouteLink(Route.Activity(ActivityTab.JobList), "All background jobs"))

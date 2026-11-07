@@ -56,7 +56,7 @@ object MediaFilters:
             IconSelect.Opt.Value(v.value),
             IconSelect.Opt.Label(t.value),
             if v.value.isEmpty then LayerFilters.layerIcon(PointKinds.Media)
-            else LayerFilters.badge(Shape.Photo, CardIcons.Media)
+            else LayerFilters.badge(Shape.Photo, Glyphs.BadgeName(CardIcons.Media))
           )
         )
       },

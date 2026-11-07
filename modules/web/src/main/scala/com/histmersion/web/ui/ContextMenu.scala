@@ -10,39 +10,11 @@ import org.scalajs.dom
   * gives the focus back.
   */
 object ContextMenu:
-  type KeyName = KeyName.T
-  object KeyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Position = Position.T
-  object Position extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One action. `disabled`: shown, with why it cannot run now (`hint`). */
-  type MenuGoI = MenuGoI.T
-  object MenuGoI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type IsMenuKeyShift = IsMenuKeyShift.T
-  object IsMenuKeyShift extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceX = PlaceX.T
-  object PlaceX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceY = PlaceY.T
-  object PlaceY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceW = PlaceW.T
-  object PlaceW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceH = PlaceH.T
-  object PlaceH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceVw = PlaceVw.T
-  object PlaceVw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceVh = PlaceVh.T
-  object PlaceVh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceMargin = PlaceMargin.T
-  object PlaceMargin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShowTitle = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
   val ShowTitle: _root_.com.histmersion.web.ui.ContextMenu.Open.Title.type = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
-  type ShowX = _root_.com.histmersion.web.ui.ContextMenu.Open.X
-  val ShowX: _root_.com.histmersion.web.ui.ContextMenu.Open.X.type = _root_.com.histmersion.web.ui.ContextMenu.Open.X
-  type ShowY = _root_.com.histmersion.web.ui.ContextMenu.Open.Y
-  val ShowY: _root_.com.histmersion.web.ui.ContextMenu.Open.Y.type = _root_.com.histmersion.web.ui.ContextMenu.Open.Y
-  type CloseReturnFocus = CloseReturnFocus.T
-  object CloseReturnFocus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OnTitle = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
   val OnTitle: _root_.com.histmersion.web.ui.ContextMenu.Open.Title.type = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
   type ButtonTitle = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
@@ -74,38 +46,34 @@ object ContextMenu:
   final private case class Open(
       title: Open.Title,
       entries: List[Entry],
-      x: Open.X,
-      y: Open.Y,
+      x: Double,
+      y: Double,
       back: Option[dom.HTMLElement]
   )
 
   object Open:
     type Title = Title.T
     object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type X = X.T
-    object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Y = Y.T
-    object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val open = Var(Option.empty[Open])
 
   def isOpen: Boolean = open.now().isDefined
 
   /** The menu key: the keyboard's own, or Shift+F10. Pure. */
-  def isMenuKey(key: com.histmersion.web.ui.ContextMenu.KeyName, shift: com.histmersion.web.ui.ContextMenu.IsMenuKeyShift): Boolean = key == "ContextMenu" || (shift && key == "F10")
+  def isMenuKey(key: String, shift: Boolean): Boolean = key == "ContextMenu" || (shift && key == "F10")
 
   /** Where a menu of `w`×`h` opened at (`x`, `y`) stands so that it stays inside a `vw`×`vh` viewport (with a margin),
     * flipped to the other side of the point where it would not fit. Pure.
     */
-  def place(x: com.histmersion.web.ui.ContextMenu.PlaceX, y: com.histmersion.web.ui.ContextMenu.PlaceY, w: com.histmersion.web.ui.ContextMenu.PlaceW, h: com.histmersion.web.ui.ContextMenu.PlaceH, vw: com.histmersion.web.ui.ContextMenu.PlaceVw, vh: com.histmersion.web.ui.ContextMenu.PlaceVh, margin: com.histmersion.web.ui.ContextMenu.PlaceMargin = com.histmersion.web.ui.ContextMenu.PlaceMargin(8)): (com.histmersion.web.ui.ContextMenu.Position, com.histmersion.web.ui.ContextMenu.Position) =
+  def place(x: Double, y: Double, w: Double, h: Double, vw: Double, vh: Double, margin: Double = 8): (Double, Double) =
     val px = if x + w + margin > vw then math.max(margin, x - w) else x
     val py = if y + h + margin > vh then math.max(margin, y - h) else y
     (math.max(margin, math.min(px, vw - w - margin)), math.max(margin, math.min(py, vh - h - margin)))
 
-  def show(title: com.histmersion.web.ui.ContextMenu.ShowTitle, entries: List[Entry], x: com.histmersion.web.ui.ContextMenu.ShowX, y: com.histmersion.web.ui.ContextMenu.ShowY, back: Option[dom.HTMLElement]): Unit =
+  def show(title: com.histmersion.web.ui.ContextMenu.ShowTitle, entries: List[Entry], x: Double, y: Double, back: Option[dom.HTMLElement]): Unit =
     open.set(Some(Open(title, entries, x, y, back)))
 
-  def close(returnFocus: com.histmersion.web.ui.ContextMenu.CloseReturnFocus = com.histmersion.web.ui.ContextMenu.CloseReturnFocus(true)): Unit =
+  def close(returnFocus: Boolean = true): Unit =
     val was = open.now()
     open.set(None)
     if returnFocus then was.flatMap(_.back).filter(_.isConnected).foreach(_.focus())
@@ -151,14 +119,14 @@ object ContextMenu:
     L.button(
       typ := "button",
       cls := s"btn btn--icon btn--sm menu-btn $extraCls".trim,
-      aria.label := title,
-      L.title := title,
+      aria.label := title.value,
+      L.title := title.value,
       aria.hasPopup := true,
       aria.expanded <-- open.signal.map(_.exists(_.title == title)),
       com.histmersion.web.Icon(com.histmersion.web.Icon.More),
       onClick --> { ev =>
         ev.stopPropagation()
-        if open.now().exists(_.title == title) then close(returnFocus = com.histmersion.web.ui.ContextMenu.CloseReturnFocus(false))
+        if open.now().exists(_.title == title) then close(returnFocus = false)
         else showUnder(ev.currentTarget.asInstanceOf[dom.HTMLElement], title, entries())
       }
     )
@@ -178,7 +146,7 @@ object ContextMenu:
     div(
       cls := "context-menu",
       role := "menu",
-      aria.label := o.title,
+      aria.label := o.title.value,
       tabIndex := -1,
       styleAttr := s"--menu-x:${o.x}px;--menu-y:${o.y}px",
       onMountCallback { ctx =>
@@ -191,23 +159,23 @@ object ContextMenu:
       },
       documentEvents(_.onPointerDown) --> { ev =>
         val t = ev.target.asInstanceOf[dom.Element]
-        if t.closest(".context-menu") == null && t.closest(".menu-btn") == null then close(returnFocus = com.histmersion.web.ui.ContextMenu.CloseReturnFocus(false))
+        if t.closest(".context-menu") == null && t.closest(".menu-btn") == null then close(returnFocus = false)
       },
       onKeyDown --> { ev =>
         val el = ev.currentTarget.asInstanceOf[dom.Element]
         val all = items(el)
         val at = all.indexWhere(_ == dom.document.activeElement)
-        def go(i: com.histmersion.web.ui.ContextMenu.MenuGoI): Unit = if all.nonEmpty then { ev.preventDefault(); all((i + all.size) % all.size).focus() }
+        def go(i: Int): Unit = if all.nonEmpty then { ev.preventDefault(); all((i + all.size) % all.size).focus() }
         ev.key match
           case "ArrowDown" => go(at + 1)
           case "ArrowUp"   => go(if at < 0 then all.size - 1 else at - 1)
-          case "Home"      => go(com.histmersion.web.ui.ContextMenu.MenuGoI(0))
+          case "Home"      => go(0)
           case "End"       => go(all.size - 1)
           case "Escape"    => ev.preventDefault(); ev.stopPropagation(); close()
-          case "Tab"       => close(returnFocus = com.histmersion.web.ui.ContextMenu.CloseReturnFocus(false))
+          case "Tab"       => close(returnFocus = false)
           case _           => ()
       },
-      p(cls := "context-menu-title", o.title),
+      p(cls := "context-menu-title", o.title.value),
       o.entries.map { e =>
         if e == Separator then div(cls := "context-menu-sep", role := "separator")
         else
@@ -215,11 +183,11 @@ object ContextMenu:
             typ := "button",
             cls := "context-menu-item",
             role := (if e.pressed.isDefined then "menuitemcheckbox" else "menuitem"),
-            e.pressed.map(on => aria.checked := on.toString),
-            disabled := e.disabled,
-            e.hint.map(h => L.title := h),
-            span(cls := "context-menu-label", e.label),
-            e.hint.filter(_ => e.disabled).map(h => span(cls := "context-menu-hint", h)),
+            e.pressed.map(on => aria.checked := on.value.toString),
+            disabled := e.disabled.value,
+            e.hint.map(h => L.title := h.value),
+            span(cls := "context-menu-label", e.label.value),
+            e.hint.filter(_ => e.disabled.value).map(h => span(cls := "context-menu-hint", h.value)),
             onClick --> { _ =>
               close()
               e.run()

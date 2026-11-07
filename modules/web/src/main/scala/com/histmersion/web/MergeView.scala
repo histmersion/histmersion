@@ -225,7 +225,7 @@ object MergeView:
   def axis(spans: List[IssueSpan]): Option[(com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year)] =
     val ends = spans.flatMap(s => s.start.toList ++ s.end.toList)
     Option.when(ends.nonEmpty) {
-      val (lo, hi) = (ends.minBy(_.value), ends.maxBy(_.value))
+      val (lo, hi) = (ends.minBy(e => e.value: Long), ends.maxBy(e => e.value: Long))
       val m = math.max(10L, (hi.value - lo.value) / 10)
       (com.histmersion.api.catalogue.Year(lo.value - m), com.histmersion.api.catalogue.Year(hi.value + m))
     }
@@ -628,7 +628,7 @@ object MergeView:
       h5(who),
       s.fold(span(cls := "muted", "nothing")) { x =>
         div(
-          if who == "here" && entity == Bundle.Kind.Source then SourceLink(x.label) else code(x.label.value),
+          if who == "here" && entity == Bundle.Kind.Source then SourceLink(com.histmersion.api.library.Citekey(x.label.value)) else code(x.label.value),
           x.lines.map(l => div(cls := "muted", l.value))
         )
       }
@@ -751,7 +751,7 @@ object MergeView:
       cls := "merge-map",
       onMountUnmountCallback(
         mount = ctx =>
-          val m = Engines.surface(ctx.thisNode.ref, tiles.fold(12.0)(_._2.value.toDouble), _ => None)
+          val m = Engines.surface(ctx.thisNode.ref, Engines.MaxZoom(tiles.fold(12.0)(_._2.value.toDouble)), _ => None)
           m.setBaseMap(BaseMaps.current)
           val geoms = List("left" -> left, "right" -> right).collect { case (who, Some(g)) =>
             val geo = js.JSON.parse(g)

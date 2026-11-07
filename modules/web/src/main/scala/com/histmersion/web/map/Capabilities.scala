@@ -22,9 +22,9 @@ object Capabilities:
   type Webgl2 = Webgl2.T
   object Webgl2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def withoutWebgl2(c: Capabilities): Option[com.histmersion.web.map.Capabilities.Renderer] =
-    if !c.webgl then Some("this browser draws no WebGL (it is turned off, or its graphics driver is blocked)")
-    else if !c.webgl2 then Some(com.histmersion.web.map.Capabilities.Renderer("this browser draws WebGL 1 only, not WebGL 2"))
+  def withoutWebgl2(c: Capabilities): Option[com.histmersion.web.map.MapEngine.Problem] =
+    if !c.webgl.value then Some(com.histmersion.web.map.MapEngine.Problem("this browser draws no WebGL (it is turned off, or its graphics driver is blocked)"))
+    else if !c.webgl2.value then Some(com.histmersion.web.map.MapEngine.Problem("this browser draws WebGL 1 only, not WebGL 2"))
     else None
 
   /** Pure: a WebGL renderer string that names a software rasteriser. */
@@ -32,11 +32,11 @@ object Capabilities:
     * instead. Pure.
     */
   def genericRenderer(renderer: com.histmersion.web.map.Capabilities.Renderer): Boolean =
-    val r = renderer.trim.toLowerCase
+    val r = renderer.value.trim.toLowerCase
     r.isEmpty || r == "webkit webgl" || r == "webgl" || r.startsWith("mozilla")
 
   def isSoftware(renderer: com.histmersion.web.map.Capabilities.Renderer): Boolean =
-    val r = renderer.toLowerCase
+    val r = renderer.value.toLowerCase
     List("swiftshader", "llvmpipe", "softpipe", "software", "basic render", "mesa offscreen", "lavapipe").exists(
       r.contains
     )

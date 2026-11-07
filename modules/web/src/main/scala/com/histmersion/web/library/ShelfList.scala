@@ -1,6 +1,6 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.personal.UnreadPage
+import com.histmersion.api.personal.{ItemKey, Target, UnreadPage}
 import com.histmersion.api.ItemKind
 import com.histmersion.web.*
 import com.histmersion.web.marks.{ItemRef, MyItems, NoteEditor, OpenBack}
@@ -16,17 +16,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   * article not marked read.
   */
 object ShelfList:
-  type Href = Href.T
-  object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemKey = ItemKey.T
-  object ItemKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RowKey = RowKey.T
-  object RowKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type ElementChosen = _root_.com.histmersion.web.library.ShelfList.RowKey
-  val ElementChosen: _root_.com.histmersion.web.library.ShelfList.RowKey.type = _root_.com.histmersion.web.library.ShelfList.RowKey
-
-  private def isRead(i: com.histmersion.web.library.ShelfList.ItemKey): Boolean = MyItems.readNow(i)
+  private def isRead(i: Target.Identity): Boolean = MyItems.readNow(i)
 
   /** The section a source's or an article's row is read in. */
   private def sectionOf(k: ItemKind): Option[LibrarySection] = k match
@@ -39,18 +29,18 @@ object ShelfList:
       case (Some(s), Some(k)) => Router.go(Route.Library(s), search = LibraryAddress.search(Some(k), shelf))
       case _                  => OpenBack(r.target)
 
-  private def hrefOf(r: ShelfRow, shelf: Shelf): com.histmersion.web.library.ShelfList.Href =
+  private def hrefOf(r: ShelfRow, shelf: Shelf): String =
     (sectionOf(r.target.kind), r.target.itemKey) match
       case (Some(s), Some(k)) => LibraryAddress.href(s, Some(k), shelf)
       case _                  => ItemRef.back(r.target)
 
-  def element(shelf: Shelf, section: LibrarySection, chosen: Signal[Option[com.histmersion.web.library.ShelfList.ElementChosen]]): HtmlElement =
+  def element(shelf: Shelf, section: LibrarySection, chosen: Signal[Option[ItemKey]]): HtmlElement =
     val unread = Var(Option.empty[Either[String, UnreadPage]])
     val offset = Var(0)
     def readUnread(): Unit =
       val kind = if section == LibrarySection.Articles then ItemKind.Article else ItemKind.Source
       ApiClient
-        .unread(kind.wire, Layout.libraryPage, offset.now())
+        .unread(ApiClient.Kind(kind.wire.value), com.histmersion.api.Paging.Limit(Layout.libraryPage.value), com.histmersion.api.Offset(offset.now()))
         .onComplete(r =>
           unread.set(Some(r.toEither.left.map(e => Option(e.getMessage).getOrElse("the server could not be reached"))))
         )
@@ -80,7 +70,7 @@ object ShelfList:
       case _            => "Everything here is marked read."
     div(
       cls := "shelf-list",
-      dataAttr("shelf") := shelf.wire,
+      dataAttr("shelf") := shelf.wire.value,
       onMountCallback(_ => if shelf == Shelf.Unread then readUnread()),
       offset.signal.changes --> (_ => readUnread()),
       div(
@@ -92,11 +82,11 @@ object ShelfList:
             case Shelf.Unread =>
               unread.signal.map(
                 _.flatMap(_.toOption).fold("Loading…")(p =>
-                  if p.total == 0 then "Nothing left to read"
-                  else s"${p.offset + 1}–${p.offset + p.rows.size} of ${ListPage.grouped(p.total)} not read yet"
+                  if p.total.value == 0 then "Nothing left to read"
+                  else s"${p.offset.value + 1}–${p.offset.value + p.rows.size} of ${ListPage.grouped(p.total.value)} not read yet"
                 )
               )
-            case _ => rows.map(rs => s"${ListPage.grouped(rs.size)} ${shelf.label.toLowerCase}"))
+            case _ => rows.map(rs => s"${ListPage.grouped(rs.size)} ${shelf.label.value.toLowerCase}"))
         ),
         Option.when(shelf == Shelf.Unread)(
           div(
@@ -108,7 +98,7 @@ object ShelfList:
               cls := "btn btn--sm",
               "‹ Previous",
               disabled <-- offset.signal.map(_ <= 0),
-              onClick --> (_ => offset.update(o => math.max(0, o - Layout.libraryPage)))
+              onClick --> (_ => offset.update(o => math.max(0, o - Layout.libraryPage.value)))
             ),
             button(
               typ := "button",
@@ -116,16 +106,16 @@ object ShelfList:
               "Next ›",
               disabled <-- unread.signal
                 .combineWith(offset.signal)
-                .map((u, o) => !u.flatMap(_.toOption).exists(p => o + p.rows.size < p.total)),
-              onClick --> (_ => offset.update(_ + Layout.libraryPage))
+                .map((u, o) => !u.flatMap(_.toOption).exists(p => o + p.rows.size < p.total.value)),
+              onClick --> (_ => offset.update(_ + Layout.libraryPage.value))
             )
           )
         )
       ),
       child.maybe <-- unread.signal.map(
-        _.flatMap(_.left.toOption).map(m => ErrorLine.text(s"Could not list what is not read yet: $m"))
+        _.flatMap(_.left.toOption).map(m => ErrorLine.text(ErrorLine.Problem(s"Could not list what is not read yet: $m")))
       ),
-      ul(cls := "shelf-rows", aria.label := shelf.label, children <-- rows.map(_.map(row(_, shelf, section, chosen)))),
+      ul(cls := "shelf-rows", aria.label := shelf.label.value, children <-- rows.map(_.map(row(_, shelf, section, chosen)))),
       child.maybe <-- rows.map(rs =>
         Option.when(rs.isEmpty && (shelf != Shelf.Unread || unread.now().exists(_.isRight)))(
           p(cls := "library-empty muted", empty)
@@ -133,7 +123,7 @@ object ShelfList:
       )
     )
 
-  private def row(r: ShelfRow, shelf: Shelf, section: LibrarySection, chosen: Signal[Option[com.histmersion.web.library.ShelfList.RowKey]]): HtmlElement =
+  private def row(r: ShelfRow, shelf: Shelf, section: LibrarySection, chosen: Signal[Option[ItemKey]]): HtmlElement =
     val on =
       chosen.map(c => r.target.itemKey.isDefined && c == r.target.itemKey && sectionOf(r.target.kind).contains(section))
     li(

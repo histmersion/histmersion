@@ -232,7 +232,7 @@ object GoalPage:
           GoalsView.badge(g.status),
           child.text <-- managers.combineWith(items).map { (ms, is) =>
             val ref = com.histmersion.api.automation.Goal.Ref(g.slug.value)
-            val pr = ResearchOverview.progressOf(ref, ms)
+            val pr = ResearchOverview.progressOf(g.slug, ms)
             val watcher = ms.find(_.id == Managers.watchId(ref))
             val lastCheck =
               is.filter(i => i.kind.value == Managers.CurrencyCheck && i.status.value == "done").map(_.updatedAt.value).maxOption.map(LastCheck(_))

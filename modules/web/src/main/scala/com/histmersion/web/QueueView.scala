@@ -582,7 +582,7 @@ object QueueView:
       goals: Map[Queue.QueueItem.Id, List[Queue.GoalRef]],
       target: Option[Queue.QueueItem.Id]
   ): HtmlElement =
-    val (title, path) = heading(topic, sp.untitled)
+    val (title, path) = heading(topic, com.histmersion.api.UiLabels.Text(sp.untitled.value))
     div(
       cls := "queue-group",
       if path.nonEmpty then div(cls := "group-path muted", path.mkString(" › ")) else emptyNode,

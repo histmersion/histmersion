@@ -1,36 +1,27 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.library.NeighborRow
+import com.histmersion.api.library.{Edge, NeighborRow}
 import com.histmersion.api.research.Article
 
 /** What the reading pane counts of a source's place in the citation graph: what it cites (as its page's "Cites" lists
   * it), the sources that answer it — challenge, refute, update or supersede it — and the articles that cite it. Pure.
   */
-final case class CitationCounts(cites: CitationCounts.Cites, answers: CitationCounts.Answers, articles: CitationCounts.Articles)
+final case class CitationCounts(cites: Int, answers: Int, articles: Int)
 
 object CitationCounts:
 
   /** A disagreement is stored on the critic (`challenges`, `refutes`, `updates` point at this source) and a superseding
     * on the older source (`superseded_by` points from this one to the newer).
     */
-  type OfCitingArticles = OfCitingArticles.T
-  object OfCitingArticles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type Cites = Cites.T
-  object Cites extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Answers = Answers.T
-  object Answers extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Articles = Articles.T
-  object Articles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def answering(r: NeighborRow): Boolean =
-    (r.direction == "in" && Article.Coverage.DisagreementKinds.contains(r.kind) && r.kind != "superseded_by") ||
-      (r.direction == "in" && r.kind == "supersedes") ||
-      (r.direction == "out" && r.kind == "superseded_by")
+    val kind = Edge.Kind.wireOf(r.kind).value
+    (r.direction.value == "in" && Article.Coverage.DisagreementKinds.exists(_.value == kind) && kind != "superseded_by") ||
+      (r.direction.value == "in" && kind == "supersedes") ||
+      (r.direction.value == "out" && kind == "superseded_by")
 
-  def of(rows: List[NeighborRow], citingArticles: com.histmersion.web.library.CitationCounts.OfCitingArticles): CitationCounts =
+  def of(rows: List[NeighborRow], citingArticles: Int): CitationCounts =
     CitationCounts(
-      cites = rows.count(_.direction == "out"),
+      cites = rows.count(_.direction.value == "out"),
       answers = rows.filter(answering).map(_.citekey).distinct.size,
       articles = citingArticles
     )

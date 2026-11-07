@@ -22,35 +22,29 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object MapMenu:
 
-  type Locked = Locked.T
-  object Locked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetLockedOn = SetLockedOn.T
-  object SetLockedOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointZoom = PointZoom.T
-  object PointZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  val locked: Var[MapSurface.Locked] = Var(MapSurface.Locked(false))
 
-  val locked: Var[com.histmersion.web.marks.MapMenu.Locked] = Var(com.histmersion.web.marks.MapMenu.Locked(false))
-
-  def setLocked(on: com.histmersion.web.marks.MapMenu.SetLockedOn, surface: MapSurface): Unit =
+  def setLocked(on: MapSurface.Locked, surface: MapSurface): Unit =
     locked.set(on)
     surface.setLocked(on)
-    Flash.say(if on then com.histmersion.web.ui.Flash.Text("The map is locked: it does not move until you unlock it.") else com.histmersion.web.ui.Flash.Text("The map moves again."))
+    Flash.say(if on.value then com.histmersion.web.ui.Flash.Text("The map is locked: it does not move until you unlock it.") else com.histmersion.web.ui.Flash.Text("The map moves again."))
 
   /** A point on the map, as a target. Pure. */
-  def point(at: LatLon, zoom: com.histmersion.web.marks.MapMenu.PointZoom, span: Option[(com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)]): Target =
+  def point(at: LatLon, zoom: MapSurface.Zoom, span: Option[(Year, Year)]): Target =
     Target(
       ItemKind.Point,
-      lat = Latitude.option(at.lat),
-      lon = Longitude.option(wrap(at.lon)),
-      zoom = MapZoom.option(math.round(zoom * 10) / 10.0),
-      from = span.map(s => Year(s._1.toInt)),
-      to = span.map(s => Year(s._2.toInt))
+      lat = Latitude.option(at.lat.value),
+      lon = Longitude.option(wrap(at.lon).value),
+      zoom = MapZoom.option(math.round(zoom.value * 10) / 10.0),
+      from = span.map(_._1),
+      to = span.map(_._2)
     )
 
   /** A longitude on the world's first copy (the map draws copies side by side). Pure. */
-  def wrap(lon: com.histmersion.api.Geo.Longitude): com.histmersion.api.Geo.Longitude = ((lon + 180) % 360 + 360) % 360 - 180
+  def wrap(lon: LatLon.Lon): LatLon.Lon = LatLon.Lon(((lon.value + 180) % 360 + 360) % 360 - 180)
 
-  private def spanNow: Option[(com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)] = UiState.from.now().zip(UiState.to.now())
+  private def spanNow: Option[(Year, Year)] =
+    UiState.from.now().zip(UiState.to.now()).map((a, b) => (Year(a), Year(b)))
 
   private def writing(act: => Unit): Unit = if Auth.writableNow then act else WindowManager.open(WindowKey.ApiKey)
 
@@ -63,15 +57,15 @@ object MapMenu:
           writing(
             MyItems
               .add(here.modify(_.from).setTo(None).modify(_.to).setTo(None), None, com.histmersion.api.library.Title("Place on the map"))
-              .foreach(_ => Flash.say("Bookmarked the place: it is in My library › Bookmarks."))
+              .foreach(_ => Flash.say(Flash.Text("Bookmarked the place: it is in My library › Bookmarks.")))
           )
       ),
-      ContextMenu.Entry(com.histmersion.web.ui.ContextMenu.Entry.Label("Add a note here"), () => NoteEditor.write(here, com.histmersion.web.marks.NoteEditor.WriteTitle("Place on the map"))),
+      ContextMenu.Entry(com.histmersion.web.ui.ContextMenu.Entry.Label("Add a note here"), () => NoteEditor.write(here, com.histmersion.api.library.Title("Place on the map"))),
       ContextMenu.Separator,
       ContextMenu.Entry(
-        if locked.now() then com.histmersion.web.ui.ContextMenu.Entry.Label("Unlock the map") else com.histmersion.web.ui.ContextMenu.Entry.Label("Lock the map"),
-        () => setLocked(!locked.now(), surface),
-        pressed = Some(locked.now())
+        if locked.now().value then com.histmersion.web.ui.ContextMenu.Entry.Label("Unlock the map") else com.histmersion.web.ui.ContextMenu.Entry.Label("Lock the map"),
+        () => setLocked(MapSurface.Locked(!locked.now().value), surface),
+        pressed = Some(ContextMenu.Entry.Pressed(locked.now().value))
       ),
       ContextMenu.Entry(
         com.histmersion.web.ui.ContextMenu.Entry.Label("Start the map here"),
@@ -80,7 +74,7 @@ object MapMenu:
       ),
       ContextMenu.Entry(
         com.histmersion.web.ui.ContextMenu.Entry.Label("Bookmark this view of the map"),
-        () => SavedViews.save(SavedViews.suggestedName(UiState.q.now(), UiState.from.now(), UiState.to.now()))
+        () => SavedViews.save(SavedViews.suggestedName(UiState.q.now(), UiState.from.now().map(Year(_)), UiState.to.now().map(Year(_))))
       )
     )
 
@@ -88,16 +82,16 @@ object MapMenu:
   def startHere(surface: MapSurface, at: LatLon): Unit =
     val c = MapStartConfig(
       MapStartMode.Place.wire,
-      at.lat,
-      wrap(at.lon),
-      math.round(surface.zoom * 10) / 10.0,
+      Latitude(at.lat.value),
+      Longitude(wrap(at.lon).value),
+      MapStartConfig.Zoom(math.round(surface.zoom.value * 10) / 10.0),
       com.histmersion.api.instance.MapStartConfig.Label("the view I chose")
     )
     SettingsStore
-      .save(StartPlace.changes(c).map((k, v) => ConfigEdit.Change(k, Some(v))))
+      .save(StartPlace.changes(c).map((k, v) => ConfigEdit.Change(ConfigEdit.Change.Key(k.value), Some(ConfigEdit.Change.Value(v.value)))))
       .onComplete(r =>
         Flash.say(
-          r.fold(e => s"The start was not saved: ${SettingsStore.message(e)}", _ => com.histmersion.web.ui.Flash.Text("The map opens here from now on."))
+          r.fold(e => Flash.Text(s"The start was not saved: ${SettingsStore.message(e)}"), _ => com.histmersion.web.ui.Flash.Text("The map opens here from now on."))
         )
       )
 
@@ -111,22 +105,22 @@ object MapMenu:
         if t.closest(".hd-marker, .map-lock-note") == null && !surface.isChrome(t) then
           e.preventDefault()
           val r = box.getBoundingClientRect()
-          val at = surface.unproject(ScreenPt(e.clientX - r.left, e.clientY - r.top))
-          ContextMenu.show(com.histmersion.web.ui.ContextMenu.ShowTitle("Map actions"), entries(surface, at), e.clientX, e.clientY, Some(box))
+          val at = surface.unproject(ScreenPt(ScreenPt.X(e.clientX - r.left), ScreenPt.Y(e.clientY - r.top)))
+          ContextMenu.show(com.histmersion.web.ui.ContextMenu.ShowTitle("Map actions"), entries(surface, at), ContextMenu.ShowX(e.clientX), ContextMenu.ShowY(e.clientY), Some(box))
       }
     )
     box.addEventListener(
       "keydown",
       { (e: dom.KeyboardEvent) =>
         val t = e.target.asInstanceOf[dom.Element]
-        if ContextMenu.isMenuKey(e.key, e.shiftKey) && t.closest(".hd-marker") == null && !surface.isChrome(t) then
+        if ContextMenu.isMenuKey(ContextMenu.KeyName(e.key), e.shiftKey) && t.closest(".hd-marker") == null && !surface.isChrome(t) then
           e.preventDefault()
           val r = box.getBoundingClientRect()
           ContextMenu.show(
             com.histmersion.web.ui.ContextMenu.ShowTitle("Map actions"),
             entries(surface, surface.center),
-            r.left + r.width / 2,
-            r.top + r.height / 2,
+            ContextMenu.ShowX(r.left + r.width / 2),
+            ContextMenu.ShowY(r.top + r.height / 2),
             Option(e.target).collect { case h: dom.HTMLElement => h }
           )
       }
@@ -139,10 +133,10 @@ object MapMenu:
       box,
       div(
         cls := "map-lock-note",
-        cls("is-hidden") <-- locked.signal.map(!_),
+        cls("is-hidden") <-- locked.signal.map(l => !l.value),
         role := "status",
         Icon(Icon.Lock),
         span("The map is locked"),
-        button(typ := "button", cls := "btn btn--sm map-unlock", "Unlock", onClick --> (_ => setLocked(com.histmersion.web.marks.MapMenu.SetLockedOn(false), surface)))
+        button(typ := "button", cls := "btn btn--sm map-unlock", "Unlock", onClick --> (_ => setLocked(MapSurface.Locked(false), surface)))
       )
     )

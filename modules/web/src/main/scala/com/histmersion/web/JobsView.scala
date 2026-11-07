@@ -152,7 +152,7 @@ object JobsView:
   private val list = PolledList[JobInfo](
     fetch = (upTo, before) => ApiClient.jobs(currentFilter(), Some(Paging.Limit(Limit)), upTo = upTo, before = before),
     id = j => PolledList.ItemId(j.id.value),
-    live = (rows, page) => PolledList.LiveResult(live(rows, page)),
+    live = (rows, page) => live(rows, page),
     after = (cur, rows) => if ticksOff(cur.rows, rows) then QueueView.changed.emit(Queue.Kind.Acquire)
   )
   private def listing = list.listing

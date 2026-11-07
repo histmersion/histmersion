@@ -17,4 +17,4 @@ object Shelf:
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  def parse(s: com.histmersion.web.library.Shelf.Wire): Option[Shelf] = values.find(_.wire == s.trim.toLowerCase)
+  def parse(s: com.histmersion.web.library.Shelf.Wire): Option[Shelf] = values.find(_.wire.value == s.value.trim.toLowerCase)

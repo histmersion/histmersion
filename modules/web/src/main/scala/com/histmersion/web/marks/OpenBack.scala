@@ -4,7 +4,7 @@ import com.histmersion.api.personal.Target
 import com.histmersion.api.ItemKind
 import com.histmersion.web.*
 import com.histmersion.web.library.LibraryAddress
-import com.histmersion.web.map.{LatLon, TheMap}
+import com.histmersion.web.map.{LatLon, MapSurface, TheMap}
 import org.scalajs.dom
 
 /** Opening a bookmark or a note back where it was left: a source or an article in Library's reading pane, a goal on its
@@ -22,17 +22,17 @@ object OpenBack:
       case ItemKind.Source | ItemKind.Article =>
         val section = if t.kind == ItemKind.Article then LibrarySection.Articles else LibrarySection.Sources
         Router.go(Route.Library(section), search = LibraryAddress.search(key))
-      case ItemKind.Goal  => key.foreach(k => Router.go(Route.Goal(k)))
+      case ItemKind.Goal  => key.foreach(k => Router.go(Route.Goal(Route.Goal.Slug(k.value))))
       case ItemKind.Place =>
-        key.foreach { k => Router.go(Route.Explore); ResultsPanel.show(Preview.Target.Place(k, None)) }
-      case ItemKind.Event   => key.foreach { k => Router.go(Route.Explore); ResultsPanel.show(Preview.Target.Event(k)) }
+        key.foreach { k => Router.go(Route.Explore); ResultsPanel.show(Preview.Target.Place(Preview.Target.Place.Id(k.value), None)) }
+      case ItemKind.Event   => key.foreach { k => Router.go(Route.Explore); ResultsPanel.show(Preview.Target.Event(Preview.Target.Event.Id(k.value))) }
       case ItemKind.Picture =>
         key.foreach { k =>
-          val _ = dom.window.open(ItemRef.page(t), "_blank", "noopener")
+          val _ = dom.window.open(ItemRef.page(t).value, "_blank", "noopener")
         }
       case ItemKind.View =>
         Router.go(Route.Explore)
-        t.view.foreach(v => UiState.loadHash(v.value))
+        t.view.foreach(v => UiState.loadHash(UiState.UrlHash(v.value)))
         span(t)
         UiState.set()(push = com.histmersion.web.UiState.SetPush(true))
         at(t)
@@ -55,6 +55,6 @@ object OpenBack:
     if TheMap.isUp then
       for la <- t.lat; lo <- t.lon do
         TheMap.surface.setView(
-          LatLon(la.value, lo.value),
-          t.zoom.fold(math.max(TheMap.surface.zoom, PointZoom))(_.value)
+          LatLon(LatLon.Lat(la.value), LatLon.Lon(lo.value)),
+          MapSurface.Zoom(t.zoom.fold(math.max(TheMap.surface.zoom.value, PointZoom))(_.value))
         )

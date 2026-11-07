@@ -27,8 +27,8 @@ object SettingsForm:
   )
 
   object Item:
-    type Key = Key.T
-    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Key = ConfigEdit.Field.Key
+    val Key: ConfigEdit.Field.Key.type = ConfigEdit.Field.Key
     type Name = Name.T
     object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Help = Help.T
@@ -42,14 +42,14 @@ object SettingsForm:
       cls := "settings-card",
       div(
         cls := "settings-card-head",
-        h2(cls := "settings-card-title", title),
-        intro.map(t => p(cls := "settings-card-intro", t))
+        h2(cls := "settings-card-title", title.value),
+        intro.map(t => p(cls := "settings-card-intro", t.value))
       ),
       div(
         cls := "settings-card-body",
         children <-- SettingsStore.current.map {
           case None           => List(p(cls := "muted", "Loading…"))
-          case Some(Left(m))  => List(com.histmersion.web.ErrorLine.text(s"Could not read the settings: $m"))
+          case Some(Left(m))  => List(com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(s"Could not read the settings: $m")))
           case Some(Right(p)) =>
             items.flatMap(i =>
               p.field(i.key)
@@ -76,10 +76,10 @@ object SettingsForm:
           typ := "button",
           cls := "btn btn--primary settings-save-btn",
           child.text <-- draft.count.map(n =>
-            if n == 0 then "Save" else s"Save ${if n == 1 then "the change" else s"$n changes"}"
+            if n.value == 0 then "Save" else s"Save ${if n.value == 1 then "the change" else s"$n changes"}"
           ),
           disabled <-- draft.isEmpty.combineWith(Auth.writable).map((empty, w) => empty || !w),
-          onClick --> (_ => SettingsStore.save(draft.changes, consent()).foreach(_ => draft.clear()))
+          onClick --> (_ => SettingsStore.save(draft.changes, SettingsStore.SaveLiteralConsent(consent())).foreach(_ => draft.clear()))
         ),
         button(
           typ := "button",

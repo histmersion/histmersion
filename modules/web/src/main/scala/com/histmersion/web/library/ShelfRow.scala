@@ -10,94 +10,77 @@ import com.histmersion.web.marks.Ago
   * Pure.
   */
 final case class ShelfRow(
-    key: ShelfRow.Key,
+    key: String,
     target: Target,
-    name: ShelfRow.Name,
-    kind: ShelfRow.Kind,
-    line: ShelfRow.Line,
-    when: ShelfRow.When,
-    unread: ShelfRow.Unread,
+    name: String,
+    kind: String,
+    line: String,
+    when: String,
+    unread: Boolean,
     bookmark: Option[Bookmark] = None,
     note: Option[Note] = None
 )
 
 object ShelfRow:
-  type Ago = Ago.T
-  object Ago extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-  type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Line = Line.T
-  object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type When = When.T
-  object When extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Unread = Unread.T
-  object Unread extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  private def readable(t: Target, isRead: com.histmersion.web.library.ShelfRow.Key => Boolean): Boolean =
+  private def readable(t: Target, isRead: Target.Identity => Boolean): Boolean =
     ItemKind.Readable.contains(t.kind) && t.identity.exists(i => !isRead(i))
 
-  def of(b: Bookmark, isRead: com.histmersion.web.library.ShelfRow.Key => Boolean, ago: com.histmersion.web.library.ShelfRow.When => com.histmersion.web.library.ShelfRow.Ago): ShelfRow =
+  def of(b: Bookmark, isRead: Target.Identity => Boolean, ago: String => String): ShelfRow =
     val where = Target.where(b.target)
     val line = List(
-      Option.when(b.label.exists(_.value != b.title) && b.target.kind.isItem)(b.title),
-      Option(where).filter(_.nonEmpty)
+      Option.when(b.label.exists(_.value != b.title.value) && b.target.kind.isItem)(b.title.value),
+      Option(where.value).filter(_.nonEmpty)
     ).flatten.mkString(" · ")
     ShelfRow(
       s"bookmark:${b.id.value}",
       b.target,
-      b.name,
-      b.target.kind.label,
+      b.name.value,
+      b.target.kind.label.value,
       line,
-      ago(b.createdAt),
+      ago(b.createdAt.value),
       readable(b.target, isRead),
       bookmark = Some(b)
     )
 
-  def of(n: Note, isRead: com.histmersion.web.library.ShelfRow.Key => Boolean, ago: com.histmersion.web.library.ShelfRow.When => com.histmersion.web.library.ShelfRow.Ago): ShelfRow =
+  def of(n: Note, isRead: Target.Identity => Boolean, ago: String => String): ShelfRow =
     val where = Target.where(n.target)
     ShelfRow(
       s"note:${n.id.value}",
       n.target,
-      n.title,
-      s"Note on a ${n.target.kind.label.toLowerCase}",
-      List(PersonalMarkdown.excerpt(n.text.value), where).filter(_.nonEmpty).mkString(" · "),
-      ago(n.updatedAt),
+      n.title.value,
+      s"Note on a ${n.target.kind.label.value.toLowerCase}",
+      List(PersonalMarkdown.excerpt(n.text), where.value).filter(_.nonEmpty).mkString(" · "),
+      ago(n.updatedAt.value),
       readable(n.target, isRead),
       note = Some(n)
     )
 
-  def of(m: ReadMark, ago: com.histmersion.web.library.ShelfRow.When => com.histmersion.web.library.ShelfRow.Ago): ShelfRow =
+  def of(m: ReadMark, ago: String => String): ShelfRow =
     ShelfRow(
       s"opened:${m.kind.wire}:${m.id.value}",
-      Target.item(m.kind, m.id.value),
-      m.title,
-      m.kind.label,
-      if m.read then com.histmersion.web.library.ShelfRow.Line("Read") else com.histmersion.web.library.ShelfRow.Line("Not read yet"),
-      m.openedAt.fold("")(o => s"opened ${ago(o)}"),
-      !m.read
+      Target.item(m.kind, m.id),
+      m.title.value,
+      m.kind.label.value,
+      if m.read.value then "Read" else "Not read yet",
+      m.openedAt.fold("")(o => s"opened ${ago(o.value)}"),
+      !m.read.value
     )
 
   def of(u: UnreadRow): ShelfRow =
     ShelfRow(
       s"unread:${u.kind.wire}:${u.id.value}",
-      Target.item(u.kind, u.id.value),
-      u.title,
-      u.kind.label,
-      List(TableRow.authors(u.authors), u.year.fold("")(_.toString), YearFmt.period(u.periodStart, u.periodEnd))
+      Target.item(u.kind, u.id),
+      u.title.value,
+      u.kind.label.value,
+      List(TableRow.authors(u.authors.map(_.value)), u.year.fold("")(_.toString), YearFmt.period(u.periodStart, u.periodEnd))
         .filter(_.nonEmpty)
         .mkString(" · "),
-      com.histmersion.web.library.ShelfRow.When(""),
-      unread = com.histmersion.web.library.ShelfRow.Unread(true)
+      "",
+      unread = true
     )
 
   /** "Recently opened": the marks opened, last first. Pure. */
   def recent(marks: Iterable[ReadMark]): List[ReadMark] =
-    marks.filter(_.openedAt.isDefined).toList.sortBy(_.openedAt.getOrElse("")).reverse
+    marks.filter(_.openedAt.isDefined).toList.sortBy(_.openedAt.fold("")(_.value)).reverse
 
-  def defaultAgo(iso: com.histmersion.web.library.ShelfRow.When): com.histmersion.web.library.ShelfRow.Ago = Ago.of(iso)
+  def defaultAgo(iso: String): String = Ago.of(Ago.IsoDate(iso)).value

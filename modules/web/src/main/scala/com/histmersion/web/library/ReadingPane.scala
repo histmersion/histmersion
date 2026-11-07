@@ -19,38 +19,11 @@ import com.histmersion.api.research.Article
   * row holds is shown at once; the rest when the item is read.
   */
 object ReadingPane:
-  type ArticleSlug = ArticleSlug.T
-  object ArticleSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CacheKey = CacheKey.T
-  object CacheKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Href = Href.T
-  object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Ref = Ref.T
-  object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RowKey = RowKey.T
-  object RowKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-  type ReadSourceCk = _root_.com.histmersion.web.WindowKey.Source.Citekey
-  val ReadSourceCk: _root_.com.histmersion.web.WindowKey.Source.Citekey.type = _root_.com.histmersion.web.WindowKey.Source.Citekey
-  type SourcePaneCk = _root_.com.histmersion.web.WindowKey.Source.Citekey
-  val SourcePaneCk: _root_.com.histmersion.web.WindowKey.Source.Citekey.type = _root_.com.histmersion.web.WindowKey.Source.Citekey
-  type CountLinkText = CountLinkText.T
-  object CountLinkText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountLinkN = CountLinkN.T
-  object CountLinkN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceLinksCk = _root_.com.histmersion.web.WindowKey.Source.Citekey
-  val SourceLinksCk: _root_.com.histmersion.web.WindowKey.Source.Citekey.type = _root_.com.histmersion.web.WindowKey.Source.Citekey
-  type ArticlePaneSlug = _root_.com.histmersion.web.library.ReadingPane.ArticleSlug
-  val ArticlePaneSlug: _root_.com.histmersion.web.library.ReadingPane.ArticleSlug.type = _root_.com.histmersion.web.library.ReadingPane.ArticleSlug
-
-  private val sourceReads = BoundedCache[String, Future[SourceReading]](Layout.libraryPage)
-  private val articleReads = BoundedCache[String, Future[Article.View]](Layout.libraryPage)
+  private val sourceReads = BoundedCache[String, Future[SourceReading]](BoundedCache.MaxEntries(Layout.libraryPage.value))
+  private val articleReads = BoundedCache[String, Future[Article.View]](BoundedCache.MaxEntries(Layout.libraryPage.value))
 
   /** A failed read is forgotten, so choosing the item again tries again. */
-  private def cached[A](cache: BoundedCache[com.histmersion.web.library.ReadingPane.CacheKey, Future[A]], key: com.histmersion.web.library.ReadingPane.CacheKey)(read: => Future[A]): Future[A] =
+  private def cached[A](cache: BoundedCache[String, Future[A]], key: String)(read: => Future[A]): Future[A] =
     cache.getOrElseUpdate(
       key, {
         val f = read
@@ -61,18 +34,19 @@ object ReadingPane:
       }
     )
 
-  private def readSource(ck: com.histmersion.web.library.ReadingPane.ReadSourceCk): Future[SourceReading] =
-    cached(sourceReads, ck) {
-      val record = ApiClient.getSource(ck, body = com.histmersion.web.ApiClient.IncludeBody(false))
-      val edges = ApiClient.neighbors(ck)
-      val articles = ApiClient.sourceArticles(ck)
+  private def readSource(ck: com.histmersion.api.library.Citekey): Future[SourceReading] =
+    cached(sourceReads, ck.value) {
+      val key = ApiClient.Citekey(ck.value)
+      val record = ApiClient.getSource(key, body = com.histmersion.web.ApiClient.IncludeBody(false))
+      val edges = ApiClient.neighbors(key)
+      val articles = ApiClient.sourceArticles(key)
       for r <- record; e <- edges; a <- articles yield SourceReading(r, CitationCounts.of(e, a.size))
     }
 
-  private def readArticle(slug: com.histmersion.web.library.ReadingPane.ArticleSlug): Future[Article.View] =
-    cached(articleReads, slug)(ApiClient.getArticle(slug, brief = com.histmersion.web.ApiClient.Brief(true)))
+  private def readArticle(slug: Article.Slug): Future[Article.View] =
+    cached(articleReads, slug.value)(ApiClient.getArticle(ApiClient.ArticleSlug(slug.value), brief = com.histmersion.web.ApiClient.Brief(true)))
 
-  def element(section: LibrarySection, chosen: Signal[Option[com.histmersion.web.library.ReadingPane.RowKey]]): HtmlElement =
+  def element(section: LibrarySection, chosen: Signal[Option[com.histmersion.api.personal.ItemKey]]): HtmlElement =
     htmlTag("aside")(
       cls := "reading-pane",
       aria.label := "Reading pane",
@@ -84,7 +58,7 @@ object ReadingPane:
             else "Choose a source to read it here."),
             p("↑ and ↓ move through the list; Enter opens the whole page.")
           )
-        case Some(k) => if section == LibrarySection.Articles then articlePane(k) else sourcePane(k)
+        case Some(k) => if section == LibrarySection.Articles then articlePane(Article.Slug(k.value)) else sourcePane(com.histmersion.api.library.Citekey(k.value))
       }
     )
 
@@ -92,11 +66,11 @@ object ReadingPane:
 
   private def actions(
       section: LibrarySection,
-      page: com.histmersion.web.library.TableRow.Page,
+      page: String,
       pin: () => Unit,
       showOnMap: () => Unit,
       ref: Signal[marks.ItemRef],
-      byline: com.histmersion.web.library.TableRow.Byline
+      byline: String
   ): HtmlElement =
     div(
       cls := "reading-actions",
@@ -135,9 +109,9 @@ object ReadingPane:
     )
 
   /** Explore's address with the filters: what a modifier click on "Show on the map" opens. */
-  private def explore: com.histmersion.web.library.ReadingPane.Href =
+  private def explore: String =
     val hash = UiState.hashString
-    Route.Explore.path + (if hash.nonEmpty then s"#$hash" else "")
+    Route.Explore.path + (if hash.value.nonEmpty then s"#$hash" else "")
 
   private def head(h: ReadingHead): HtmlElement =
     div(
@@ -158,9 +132,9 @@ object ReadingPane:
 
   // ── a source ────────────────────────────────────────────────────────────────────────────────────
 
-  private def sourcePane(ck: com.histmersion.web.library.ReadingPane.SourcePaneCk): HtmlElement =
-    val row = LibraryLists.sources.now().rows.find(_.source.citekey.value.toString == ck).map(_.source)
-    val reading = Var(Option.empty[Either[String, SourceReading]])
+  private def sourcePane(ck: com.histmersion.api.library.Citekey): HtmlElement =
+    val row = LibraryLists.sources.now().rows.find(_.source.citekey.value == ck.value).map(_.source)
+    val reading = Var(Option.empty[Either[com.histmersion.web.ErrorLine.Problem, SourceReading]])
     val page = SourceLink.href(ck)
     def showOnMap(): Unit =
       Router.go(Route.Explore)
@@ -169,8 +143,8 @@ object ReadingPane:
         .now()
         .flatMap(_.toOption)
         .flatMap(r => bounds(r.source.findings))
-        .foreach(b => TheMap.surface.fitBounds(b, com.histmersion.web.map.MapSurface.FitBoundsPadding(40), Layout.fitMaxZoom))
-    val ref0 = marks.ItemRef.source(ck, row.map(_.title.value).getOrElse(ck))
+        .foreach(b => TheMap.surface.fitBounds(b, com.histmersion.web.map.MapSurface.FitBoundsPadding(40), com.histmersion.web.map.MapSurface.MaxZoom(Layout.fitMaxZoom.value)))
+    val ref0 = marks.ItemRef.source(ck, row.map(_.title.value).getOrElse(ck.value))
     // the item's own title once its record is read (the row is not on the page when the address chose it)
     val ref = reading.signal
       .map(_.flatMap(_.toOption).fold(ref0)(r => marks.ItemRef.source(ck, r.source.source.title.value)))
@@ -180,7 +154,7 @@ object ReadingPane:
     )
     div(
       cls := "reading-item",
-      dataAttr("key") := ck,
+      dataAttr("key") := ck.value,
       com.histmersion.web.ui.ContextMenu
         .on(s"Actions: ${ref0.title}", () => marks.ItemMenu.entries(refNow(reading, ref0), byline)),
       onMountCallback { _ =>
@@ -205,7 +179,7 @@ object ReadingPane:
         },
         child <-- reading.signal.map {
           case None           => emptyNode
-          case Some(Left(m))  => ErrorLine.text(s"Could not read this source: $m")
+          case Some(Left(m))  => ErrorLine.text(ErrorLine.Problem(s"Could not read this source: $m"))
           case Some(Right(r)) =>
             div(findings(ck, r.source.findings), marks.NoteList.on(ref0), sourceLinks(ck, r.counts))
         }
@@ -214,9 +188,14 @@ object ReadingPane:
 
   /** The box around a source's located findings, for the map to show. Pure. */
   def bounds(findings: List[Finding.Row]): Option[GeoBounds] =
-    val points = findings.flatMap(f => f.lat.zip(f.lon))
+    val points = findings.flatMap(f => f.lat.zip(f.lon)).map((la, lo) => (la.value, lo.value))
     Option.when(points.nonEmpty)(
-      GeoBounds(points.map(_._1).min, points.map(_._2).min, points.map(_._1).max, points.map(_._2).max)
+      GeoBounds(
+        GeoBounds.South(points.map(_._1).min),
+        GeoBounds.West(points.map(_._2).min),
+        GeoBounds.North(points.map(_._1).max),
+        GeoBounds.East(points.map(_._2).max)
+      )
     )
 
   private def findings(ck: com.histmersion.web.WindowKey.Source.Citekey, all: List[Finding.Row]): Modifier[HtmlElement] =
@@ -224,7 +203,7 @@ object ReadingPane:
       div(
         cls := "reading-findings",
         h2(cls := "reading-subtitle", s"Findings · ${all.size}"),
-        ul(all.take(Layout.readingFindings).map { f =>
+        ul(all.take(Layout.readingFindings.value).map { f =>
           li(
             cls := "reading-finding",
             f.claim,
@@ -234,16 +213,16 @@ object ReadingPane:
             f.regionName.filter(_.trim.nonEmpty).map(r => span(cls := "muted", s" · ${Fmt.display(r)}"))
           )
         }),
-        Option.when(all.size > Layout.readingFindings)(
+        Option.when(all.size > Layout.readingFindings.value)(
           a(cls := "reading-all-findings", href := s"${SourceLink.href(ck)}#findings", s"All ${all.size} findings")
         )
       )
     )
 
-  private def countLink(href0: com.histmersion.web.library.ReadingPane.Href, text: com.histmersion.web.library.ReadingPane.CountLinkText, n: com.histmersion.web.library.ReadingPane.CountLinkN): HtmlElement =
+  private def countLink(href0: String, text: String, n: Int): HtmlElement =
     if n > 0 then a(href := href0, text) else span(cls := "reading-none", text)
 
-  private def sourceLinks(ck: com.histmersion.web.library.ReadingPane.SourceLinksCk, c: CitationCounts): HtmlElement =
+  private def sourceLinks(ck: com.histmersion.api.library.Citekey, c: CitationCounts): HtmlElement =
     val page = SourceLink.href(ck)
     navTag(
       cls := "reading-links",
@@ -254,29 +233,29 @@ object ReadingPane:
         .amend(title := "The sources that challenge, refute, update or supersede it"),
       countLink(
         s"$page#cited-by",
-        if c.articles == 1 then com.histmersion.web.library.ReadingPane.CountLinkText("Cited in 1 article") else s"Cited in ${c.articles} articles",
+        if c.articles == 1 then "Cited in 1 article" else s"Cited in ${c.articles} articles",
         c.articles
       )
     )
 
   // ── an article ──────────────────────────────────────────────────────────────────────────────────
 
-  private def articlePane(slug: com.histmersion.web.library.ReadingPane.ArticlePaneSlug): HtmlElement =
+  private def articlePane(slug: Article.Slug): HtmlElement =
     val row = LibraryLists.articles.now().rows.find(_.slug == slug)
-    val reading = Var(Option.empty[Either[String, Article.View]])
+    val reading = Var(Option.empty[Either[com.histmersion.web.ErrorLine.Problem, Article.View]])
     val page = ArticleLink.href(slug)
     def showOnMap(): Unit =
       Router.go(Route.Explore)
-      ResultsPanel.show(Preview.Target.Article(slug))
-    val ref0 = marks.ItemRef.article(slug, row.map(_.title).getOrElse(slug))
-    def refOf(v: Option[Either[com.histmersion.web.library.ReadingPane.Ref, Article.View]]) =
-      v.flatMap(_.toOption).fold(ref0)(a => marks.ItemRef.article(slug, a.article.title))
+      ResultsPanel.show(Preview.Target.Article(Preview.Target.Article.Slug(slug.value)))
+    val ref0 = marks.ItemRef.article(slug, row.map(_.title.value).getOrElse(slug.value))
+    def refOf(v: Option[Either[com.histmersion.web.ErrorLine.Problem, Article.View]]) =
+      v.flatMap(_.toOption).fold(ref0)(a => marks.ItemRef.article(slug, a.article.title.value))
     val ref = reading.signal.map(refOf).distinct
     div(
       cls := "reading-item",
-      dataAttr("key") := slug,
+      dataAttr("key") := slug.value,
       com.histmersion.web.ui.ContextMenu
-        .on(s"Actions: ${ref0.title}", () => marks.ItemMenu.entries(refOf(reading.now()), com.histmersion.web.marks.ItemMenu.EntriesByline(""))),
+        .on(s"Actions: ${ref0.title}", () => marks.ItemMenu.entries(refOf(reading.now()), "")),
       onMountCallback { _ =>
         readArticle(slug).onComplete { r =>
           reading.set(Some(r.toEither.left.map(message)))
@@ -289,7 +268,7 @@ object ReadingPane:
         () => WindowManager.open(WindowKey.Article(slug)),
         () => showOnMap(),
         ref,
-        com.histmersion.web.library.TableRow.Byline("")
+        ""
       ),
       div(
         cls := "reading-body",
@@ -299,13 +278,13 @@ object ReadingPane:
         },
         child <-- reading.signal.map {
           case None           => emptyNode
-          case Some(Left(m))  => ErrorLine.text(s"Could not read this article: $m")
+          case Some(Left(m))  => ErrorLine.text(ErrorLine.Problem(s"Could not read this article: $m"))
           case Some(Right(v)) =>
             div(
               marks.NoteList.on(ref0),
               ArticleOpening
                 .of(v.article.body, Layout.readingOpening)
-                .filterNot(o => v.article.summary.exists(_.trim == o))
+                .filterNot(o => v.article.summary.exists(_.value.trim == o))
                 .map(o => p(cls := "reading reading-opening", o)),
               navTag(
                 cls := "reading-links",
@@ -318,10 +297,11 @@ object ReadingPane:
       )
     )
 
-  private def refNow(reading: Var[Option[Either[com.histmersion.web.library.ReadingPane.Ref, SourceReading]]], ref0: marks.ItemRef): marks.ItemRef =
+  private def refNow(reading: Var[Option[Either[com.histmersion.web.ErrorLine.Problem, SourceReading]]], ref0: marks.ItemRef): marks.ItemRef =
     reading
       .now()
       .flatMap(_.toOption)
-      .fold(ref0)(r => marks.ItemRef.source(ref0.target.itemKey.getOrElse(""), r.source.source.title.value))
+      .fold(ref0)(r => marks.ItemRef.source(ref0.target.itemKey.map(k => com.histmersion.api.library.Citekey(k.value)).getOrElse(com.histmersion.api.library.Citekey("")), r.source.source.title.value))
 
-  private def message(e: Throwable): com.histmersion.web.library.ReadingPane.Problem = Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString)
+  private def message(e: Throwable): com.histmersion.web.ErrorLine.Problem =
+    com.histmersion.web.ErrorLine.Problem(Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString))
