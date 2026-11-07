@@ -58,7 +58,7 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
   /** `POST /api/merge/import` — import an uploaded bundle with resolutions. A write. */
   def importUploaded(req: MergeImportRequest): Either[Api.Error, Bundle.ImportResult] =
     maintenance.guard(WriteGate.OperationName("merge/import")):
-      BundleControllers.sha256(req.bundle.value).flatMap(bundles.importKept(_, req.resolutions, req.dryRun))
+      BundleControllers.sha256(req.bundle.value).flatMap(bundles.importKept(_, req.resolutions, ImportOptions.DryRun(req.dryRun.value)))
 
   /** `POST /api/merge/apply` — carry out the reviewed plan of an uploaded bundle (M5). A write, and the one that takes
     * a backup first (`histmersion backup`'s `pg_dump`, into `backups.dir`). It runs as a background job

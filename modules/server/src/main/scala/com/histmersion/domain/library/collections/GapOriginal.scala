@@ -26,24 +26,24 @@ object GapOriginal:
 
   def row(g: CalibreGap): CollectionGapRow =
     val original = g.storedOriginal match
-      case Some(true)  => Stored
-      case Some(false) => Missing
-      case None        => Unknown
-    val inCalibre = g.calibreId.exists(_.trim.nonEmpty) ||
-      g.provenance.exists(_.trim.toLowerCase(java.util.Locale.ROOT) == "calibre")
+      case Some(stored) if stored.value => Stored
+      case Some(_)                      => Missing
+      case None                         => Unknown
+    val inCalibre = g.calibreId.exists(_.value.trim.nonEmpty) ||
+      g.provenance.exists(_.value.trim.toLowerCase(java.util.Locale.ROOT) == "calibre")
     CollectionGapRow(
       g.citekey,
       g.title,
-      g.authors,
+      g.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
       g.doi,
       g.year,
       g.venue,
-      g.summary,
-      g.topics,
-      g.provenance,
+      g.summary.map(x => CollectionGapRow.Summary(x.value)),
+      g.topics.map(t => CollectionGapRow.Topics(t.value)),
+      g.provenance.map(p => CollectionGapRow.Provenance(p.value)),
       g.calibreId,
-      g.isbn,
-      g.storedOriginal,
-      original.label,
-      counted = original != Missing && !inCalibre
+      g.isbn.map(i => CollectionGapRow.Isbn(i.value)),
+      g.storedOriginal.map(s => CollectionGapRow.StoredOriginal(s.value)),
+      CollectionGapRow.Original(original.label.value),
+      counted = CollectionGapRow.Counted(original != Missing && !inCalibre)
     )

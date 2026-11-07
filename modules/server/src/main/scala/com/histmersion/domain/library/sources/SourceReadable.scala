@@ -17,26 +17,34 @@ final class SourceReadable(db: Transactor) extends Readable:
 
   private def notRead(read: Set[ItemRef]): Sql =
     Sql.of(
-      " FROM sources i WHERE NOT (i.citekey = ANY(?::text[]) OR i.uid = ANY(?::uuid[]))",
-      Param.A(read.toList.map(_.key.value)),
-      Param.A(read.toList.flatMap(_.uid).map(_.value.toString))
+      Sql.Text(" FROM sources i WHERE NOT (i.citekey = ANY(?::text[]) OR i.uid = ANY(?::uuid[]))"),
+      Param.A(read.toList.map(r => Param.A.V(r.key.value))),
+      Param.A(read.toList.flatMap(_.uid).map(u => Param.A.V(u.value.toString)))
     )
 
   def unread(read: Set[ItemRef], size: PageSize, from: Offset): UnreadItems =
     db.read:
       val rows =
-        (Sql.raw("SELECT i.citekey, i.title, i.authors, i.year, i.status, lower(i.period), upper(i.period) - 1") ++
+        (Sql.raw(Sql.Text("SELECT i.citekey, i.title, i.authors, i.year, i.status, lower(i.period), upper(i.period) - 1")) ++
           notRead(read) ++
-          Sql.of(" ORDER BY lower(i.title), i.citekey LIMIT ? OFFSET ?", Param.I(size.value), Param.I(from.value))).frag
+          Sql.of(Sql.Text(" ORDER BY lower(i.title), i.citekey LIMIT ? OFFSET ?"), Param.I(size.value), Param.I(from.value))).frag
           .query[(String, String, List[String], Option[Int], Option[String], Option[Long], Option[Long])]
           .run()
           .toList
       val total = (Sql.raw(com.histmersion.util.database.Sql.Text("SELECT count(*)")) ++ notRead(read)).frag.query[Long].run().head.toInt
       UnreadItems(
         rows.map((ck, title, authors, year, status, start, end) =>
-          SourceReadable.row(ck, title, authors, year, status, start, end)
+          SourceReadable.row(
+            com.histmersion.domain.library.Citekey.assume(ck),
+            Title(title),
+            authors.map(a => FullSourceRow.Authors(a)),
+            year.map(Year(_)),
+            status.map(w => Source.Status.Wire(w)),
+            start.map(RowStart(_)),
+            end.map(RowEnd(_))
+          )
         ),
-        total
+        UnreadItems.Total(total)
       )
 
 
@@ -56,11 +64,11 @@ object SourceReadable:
       end: Option[com.histmersion.domain.library.sources.SourceReadable.RowEnd]
   ): UnreadItem =
     UnreadItem(
-      ItemKey(ck),
-      Title(title),
-      authors.map(com.histmersion.domain.AuthorName(_)),
-      year.map(Year(_)),
-      status.flatMap(summon[WireEnumValues[Source.Status]].fromWire).map(s => UnreadItem.Status(s.wire)),
-      start.map(y => Year(y.toInt)),
-      end.map(y => Year(y.toInt))
+      ItemKey(ck.value),
+      title,
+      authors.map(a => com.histmersion.domain.AuthorName(a.value)),
+      year,
+      status.flatMap(w => summon[WireEnumValues[Source.Status]].fromWire(WireEnumValues.Wire(w.value))).map(s => UnreadItem.Status(s.wire)),
+      start.map(y => Year(y.value.toInt)),
+      end.map(y => Year(y.value.toInt))
     )

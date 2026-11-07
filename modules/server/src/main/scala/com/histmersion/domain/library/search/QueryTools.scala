@@ -27,7 +27,7 @@ object QueryTools:
   def apply(queries: QueryControllers) =
     val query =
       tool("query")
-        .description(queries.toolDescription)
+        .description(queries.toolDescription.value)
         .input[QueryInput]
         .handle { in =>
           queries.run(Query.QueryRequest(in.sql)) match
@@ -45,6 +45,6 @@ object QueryTools:
             "searching the corpus."
         )
         .input[SchemaInput]
-        .handle(_ => ToolResult.text(Query.schemaMarkdown(queries.schemaTables)))
+        .handle(_ => ToolResult.text(Query.schemaMarkdown(queries.schemaTables).value))
 
     List(query, schema)

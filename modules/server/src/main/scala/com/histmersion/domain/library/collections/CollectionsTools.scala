@@ -19,9 +19,6 @@ import com.histmersion.api.library.{
 
 /** The collections as one MCP tool, `collection`: the same controllers the REST routes call, every answer Markdown. */
 object CollectionsTools:
-  type Answer = Answer.T
-  object Answer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   import com.histmersion.util.mcp.ToolInputs.given
 
   final case class CollectionInput(
@@ -29,13 +26,13 @@ object CollectionsTools:
       name: Option[CollectionInput.Name] = None,
       query: Option[CollectionInput.Query] = None,
       id: Option[CollectionInput.Id] = None,
-      citekey: Option[com.histmersion.domain.library.Citekey] = None,
+      citekey: Option[com.histmersion.api.library.Citekey] = None,
       format: Option[CollectionInput.Format] = None,
       limit: Option[CollectionInput.Limit] = None,
-      unlinked: CollectionInput.Unlinked = com.histmersion.domain.library.collections.CollectionsTools.CollectionInput.(false),
-      convert: CollectionInput.Convert = com.histmersion.domain.library.collections.CollectionsTools.CollectionInput.(true),
-      replace: CollectionInput.Replace = com.histmersion.domain.library.collections.CollectionsTools.CollectionInput.(false),
-      apply: CollectionInput.Apply = com.histmersion.domain.library.collections.CollectionsTools.CollectionInput.(false),
+      unlinked: CollectionInput.Unlinked = CollectionInput.Unlinked(false),
+      convert: CollectionInput.Convert = CollectionInput.Convert(true),
+      replace: CollectionInput.Replace = CollectionInput.Replace(false),
+      apply: CollectionInput.Apply = CollectionInput.Apply(false),
       fields: List[CollectionInput.Fields] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
@@ -67,7 +64,7 @@ object CollectionsTools:
 
   def apply(c: CollectionsControllers) =
     val me = Caller.Local
-    def answer[A](r: Either[com.histmersion.api.Api.Error, A])(f: A => com.histmersion.domain.library.collections.CollectionsTools.Answer) =
+    def answer[A](r: Either[com.histmersion.api.Api.Error, A])(f: A => String) =
       ToolResult.text(r.fold(McpOut.refusal, f))
     val collection =
       tool("collection")
@@ -84,50 +81,77 @@ object CollectionsTools:
         )
         .input[CollectionInput]
         .handle { in =>
-          val name = in.name.map(_.trim).filter(_.nonEmpty).getOrElse(CollectionsService.Calibre)
-          in.action.trim.toLowerCase(java.util.Locale.ROOT) match
+          val name = in.name
+            .map(_.value.trim)
+            .filter(_.nonEmpty)
+            .fold(CollectionsService.Calibre)(CollectionsService.CollectionName(_))
+          val limit = in.limit.map(l => CollectionsService.Limit(l.value))
+          in.action.value.trim.toLowerCase(java.util.Locale.ROOT) match
             case "list"   => answer(c.collections(me))(CollectionsMarkdown.collections)
             case "info"   => answer(c.collection(me, name))(CollectionsMarkdown.collection)
             case "search" =>
-              answer(c.search(me, name, in.query, in.limit, in.unlinked))(s =>
-                if in.unlinked then CollectionsMarkdown.unlinked(s.entries, s.total)
+              answer(c.search(me, name, in.query, limit, CollectionsService.SearchUnlinked(in.unlinked.value)))(s =>
+                if in.unlinked.value then CollectionsMarkdown.unlinked(s.entries, CollectionsMarkdown.Total(s.total.value))
                 else CollectionsMarkdown.search(s.entries)
               )
             case "import" =>
               in.id.fold(ToolResult.text("_give the entry's `id`_"))(id =>
-                answer(c.importItem(me, name, CollectionImportRequest(id, in.citekey, in.format, in.convert)))(
+                answer(
+                  c.importItem(
+                    me,
+                    name,
+                    CollectionImportRequest(
+                      CollectionImportRequest.Id(id.value),
+                      in.citekey,
+                      in.format.map(f => CollectionImportRequest.Format(f.value)),
+                      CollectionImportRequest.Convert(in.convert.value)
+                    )
+                  )
+                )(
                   CollectionsMarkdown.imported
                 )
               )
             case "link" =>
               (in.citekey, in.id) match
                 case (Some(ck), Some(id)) =>
-                  answer(c.link(me, name, CollectionLinkRequest(ck, id)))(CollectionsMarkdown.linked)
+                  answer(c.link(me, name, CollectionLinkRequest(ck, CollectionLinkRequest.Id(id.value))))(CollectionsMarkdown.linked)
                 case _ => ToolResult.text("_give a `citekey` and the entry's `id`_")
             case "push" =>
               in.citekey.fold(ToolResult.text("_give a `citekey`_"))(ck =>
-                answer(c.push(me, name, CollectionPushRequest(ck, in.replace)))(CollectionsMarkdown.pushed)
+                answer(c.push(me, name, CollectionPushRequest(ck, CollectionPushRequest.Replace(in.replace.value))))(
+                  CollectionsMarkdown.pushed
+                )
               )
             case "update" =>
               in.citekey match
                 case Some(ck) => answer(c.updateOne(me, name, CollectionUpdateOne(ck)))(CollectionsMarkdown.updatedOne)
                 case None     =>
-                  answer(c.updateAll(me, name, CollectionUpdateAll.Request(in.apply)))(u =>
+                  answer(c.updateAll(me, name, CollectionUpdateAll.Request(CollectionUpdateAll.Request.Apply(in.apply.value))))(u =>
                     CollectionsMarkdown.updateAll(u.rows, u.applied)
                   )
             case "set" =>
               val fields = in.fields.flatMap(f =>
-                f.split(":", 2) match
-                  case Array(k, v) if k.trim.nonEmpty => Some(CollectionFieldValue(k.trim, v))
-                  case _                              => None
+                f.value.split(":", 2) match
+                  case Array(k, v) if k.trim.nonEmpty =>
+                    Some(CollectionFieldValue(CollectionFieldValue.Name(k.trim), CollectionFieldValue.Value(v)))
+                  case _ => None
               )
               in.id.fold(ToolResult.text("_give the entry's `id`_"))(id =>
-                answer(c.set(me, name, CollectionSetRequest(id, fields)))(CollectionsMarkdown.set)
+                answer(c.set(me, name, CollectionSetRequest(CollectionSetRequest.Id(id.value), fields)))(CollectionsMarkdown.set)
               )
             case "audit" => answer(c.audit(me, name))(CollectionsMarkdown.audit)
-            case "gaps"  => answer(c.gaps(me, name, in.limit))(g => CollectionsMarkdown.gaps(g.gaps))
+            case "gaps"  => answer(c.gaps(me, name, limit))(g => CollectionsMarkdown.gaps(g.gaps))
             case "sync"  =>
-              answer(c.sync(me, name, CollectionSync.Request(in.apply, in.limit)))(CollectionsMarkdown.sync)
+              answer(
+                c.sync(
+                  me,
+                  name,
+                  CollectionSync.Request(
+                    CollectionSync.Request.Apply(in.apply.value),
+                    in.limit.map(l => CollectionSync.Request.Limit(l.value))
+                  )
+                )
+              )(CollectionsMarkdown.sync)
             case other =>
               ToolResult.text(
                 s"_unknown action '$other' — list, info, search, import, link, push, update, set, audit, gaps, sync_"

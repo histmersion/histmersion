@@ -130,7 +130,7 @@ object BasemapFetch:
     * estimate per zoom (#3760). Pure.
     */
   def perZoom(p: Plan): List[(PmTiles.Zoom, TileCount, ByteCount)] =
-    p.tiles.groupBy(t => PmTiles.zxy(t.id)._1).toList.sortBy(_._1.value).map { (z, ts) =>
+    p.tiles.groupBy(t => PmTiles.zxy(t.id)._1).toList.sortBy[Int](_._1.value).map { (z, ts) =>
       (
         z,
         TileCount(ts.size.toLong),
@@ -153,9 +153,9 @@ object BasemapFetch:
     val out = mutable.ArrayBuilder.make[Long]
     for z <- minZoom.value to maxZoom.value do
       val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, Basemap.Zoom(z))
-      var x = x0.value // nested loops over one zoom's rectangle
+      var x: Long = x0.value // nested loops over one zoom's rectangle
       while x <= x1.value do
-        var y = y0.value
+        var y: Long = y0.value
         while y <= y1.value do
           out += PmTiles.tileId(PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y)).value
           y += 1
@@ -254,7 +254,7 @@ object BasemapFetch:
       _ = note(Note(s"reading the directories of ${ids.length} tiles (zoom $low–$top)"))
       tiles <- resolve(root, ids, h, pace, get, 0)
     yield
-      val sorted = tiles.sortBy(_.id.value)
+      val sorted = tiles.sortBy[Long](_.id.value)
       val contents = sorted
         .map(t => (t.offset, ByteCount.applyUnsafe(t.length.value.toLong)))
         .distinct
@@ -295,7 +295,7 @@ object BasemapFetch:
     if leaves.isEmpty then Right(found.result())
     else if depth >= 3 then Left(Problem("PMTiles directories nested too deep"))
     else
-      val byOffset = leaves.keys.toVector.sortBy(_.offset.value)
+      val byOffset = leaves.keys.toVector.sortBy[Long](_.offset.value)
       val ranges = coalesce(
         byOffset.map(e => (e.offset, ByteCount.applyUnsafe(e.length.value.toLong))),
         ByteCount.applyUnsafe(8L * 1024 * 1024),
@@ -395,7 +395,7 @@ object BasemapFetch:
       metadata: Json,
       note: Note => Unit
   ): Either[Problem, (ByteCount, TileCount)] =
-    val starts = p.requests.map(_._1.value).toArray
+    val starts = p.requests.map[Long](_._1.value).toArray
     val readers = mutable.HashMap.empty[Int, RandomReader]
     def read(offset: ByteOffset, length: Wanted.Length): PmTiles.TileBytes =
       val i = { val k = java.util.Arrays.binarySearch(starts, offset.value); if k >= 0 then k else -k - 2 }

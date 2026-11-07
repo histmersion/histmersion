@@ -10,7 +10,15 @@ final class QueryControllers(queries: QueryService, cfg: () => AppConfig):
 
   def run(req: QueryRequest): Either[Api.Error, QueryResult] =
     val q = cfg().query
-    queries.run(req.sql, q.timeoutMs, q.maxRows, q.maxCellChars).left.map(m => Api.Error(m))
+    queries
+      .run(
+        QueryRepo.Statement(req.sql.value),
+        com.histmersion.util.database.Transactor.TimeoutMs(q.timeoutMs.value),
+        QueryRepo.MaxRows(q.maxRows.value),
+        QueryRepo.MaxCellChars(q.maxCellChars.value)
+      )
+      .left
+      .map(m => Api.Error(Api.Error.Message(m.value)))
 
   def schemaTables: SchemaTables = SchemaTables(queries.tables)
 
@@ -18,9 +26,5 @@ final class QueryControllers(queries: QueryService, cfg: () => AppConfig):
     * database cannot be read while the tool list is being built — a server that cannot answer `information_schema` has
     * bigger problems than a thin tool description.
     */
-  def toolDescription: com.histmersion.domain.library.search.QueryControllers.ToolDescription =
+  def toolDescription: Query.ToolDescription =
     Query.toolDescription(scala.util.Try(schemaTables).getOrElse(SchemaTables(Nil)))
-
-object QueryControllers:
-  type ToolDescription = ToolDescription.T
-  object ToolDescription extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

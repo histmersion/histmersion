@@ -5,12 +5,7 @@ import com.histmersion.domain.*
 
 /** No citation or author alerts (a test, or a server built without them). */
 object NoAlerts extends CitationAlerts:
-  type AuthorId = AuthorId.T
-  object AuthorId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  private val off = Left("the citation alerts are not connected")
-  def citing(doi: com.histmersion.domain.library.Doi, since: java.time.LocalDate, limit: com.histmersion.domain.library.acquisition.NoAlerts.Limit) = off
+  private val off = Left(CitationAlerts.Problem("the citation alerts are not connected"))
+  def citing(doi: com.histmersion.domain.library.Doi, since: java.time.LocalDate, limit: CitationAlerts.CitingLimit) = off
   def authors(doi: com.histmersion.domain.library.Doi) = off
-  def byAuthor(authorId: com.histmersion.domain.library.acquisition.NoAlerts.AuthorId, since: java.time.LocalDate, limit: com.histmersion.domain.library.acquisition.NoAlerts.Limit) = off
+  def byAuthor(authorId: CitationAlerts.ByAuthorAuthorId, since: java.time.LocalDate, limit: CitationAlerts.ByAuthorLimit) = off

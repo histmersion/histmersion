@@ -9,7 +9,8 @@ import com.histmersion.domain.catalogue.places.{PlaceScope, PlaceService}
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Aggregate, Filter, SearchHit, SearchResult, TimeHistogram}
-import com.histmersion.api.catalogue.Place
+import com.histmersion.api.catalogue.{Place, RegionNode}
+import com.histmersion.api.catalogue.Year
 
 /** The search over REST and MCP: the sources a filter selects with their matched findings and why, the histogram and
   * its nested tree, and the counts of what a filter selects. The gazetteer (`places`) is the catalogue's: the tree's
@@ -25,12 +26,12 @@ final class SearchControllers(
   /** Legacy `GET /api/search` — kept working (the web page uses it) by delegating to the filtered search and dropping
     * the evidence, so there is ONE query path (FTS ranking and snippets included). New callers should use [[sources]].
     */
-  def search(q: Option[com.histmersion.domain.library.search.Search.Query], limit: Option[com.histmersion.domain.library.search.SearchControllers.Limit]): List[SearchHit] =
-    sources(Filter(q = q.map(_.trim).filter(_.nonEmpty), limit = limit.getOrElse(0))).hits.map(_.source)
+  def search(q: Option[com.histmersion.domain.library.search.Search.Query], limit: Option[Filter.Limit]): List[SearchHit] =
+    sources(Filter(q = q.map(_.value.trim).filter(_.nonEmpty).map(Filter.Q(_)), limit = limit.getOrElse(Filter.Limit(0)))).hits.map(_.source)
 
   /** `GET /api/sources` — THE discovery operation: sources with their matched findings and reasons. */
   def sources(f: Filter): SearchResult =
-    search.sources(filters.page(f), cfg().limits.snippetWords, filters.scope(f))
+    search.sources(filters.page(f), Search.SnippetWords(cfg().limits.snippetWords.value), filters.scope(f))
 
   /** How many sources, findings, articles and events `f` selects. */
   def selectionCounts(f: Filter): Place.Counts = search.selectionCounts(f, filters.scope(f))
@@ -47,21 +48,24 @@ final class SearchControllers(
     * bucket and asks again, which is the same query with a smaller window.
     */
   def aggregate(q: Api.AggregateQuery): Either[Api.Error, TimeHistogram] =
-    def norm(o: Option[com.histmersion.domain.library.search.SearchControllers.Unit], dflt: com.histmersion.domain.library.search.SearchControllers.Unit) = o.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(dflt)
-    val unit = norm(q.unit, com.histmersion.domain.library.search.SearchControllers.Unit("sources"))
+    def norm(o: Option[String], dflt: String) = o.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(dflt)
+    val unit = norm(q.unit.map(_.value), "sources")
+    val by = norm(q.by.map(_.value), Tree.KindTime)
     Tree
-      .parseBy(norm(q.by, Tree.KindTime))
+      .parseBy(by)
       .toRight(
-        Api.Error(
-          s"unsupported by='${norm(q.by, Tree.KindTime)}' — use " +
+        error(
+          s"unsupported by='$by' — use " +
             "time | region | time,region | region,time"
         )
       )
       .flatMap { axes =>
         if unit != "sources" && unit != "findings" && unit != Aggregate.UnitStarts then
-          Left(Api.Error(s"unsupported unit='$unit' — use sources, findings or starts"))
+          Left(error(s"unsupported unit='$unit' — use sources, findings or starts"))
         else aggregateOn(axes, unit, q)
       }
+
+  private def error(message: String): Api.Error = Api.Error(Api.Error.Message(message))
 
   /** The aggregation itself, once `by`/`unit` have been validated.
     *
@@ -70,21 +74,24 @@ final class SearchControllers(
     * built them one `TimeBucket` at a time until the heap gave out, and `to = Long.MaxValue` overflowed the bucket
     * arithmetic on top of that.
     */
-  private def aggregateOn(axes: List[com.histmersion.domain.library.search.SearchControllers.Axes], unit: com.histmersion.domain.library.search.SearchControllers.Unit, q: Api.AggregateQuery): Either[Api.Error, TimeHistogram] =
+  private def aggregateOn(axes: List[String], unit: String, q: Api.AggregateQuery): Either[Api.Error, TimeHistogram] =
     val ui = cfg().ui
     val t = ui.time
     // the window to bucket = the filter's deep-time range, defaulted (half-open bounds included)
-    val a = Filter.lowerGiven(q.filter.period).getOrElse(t.defaultFrom)
-    val b = Filter.upperGiven(q.filter.period).getOrElse(t.defaultTo)
-    val (lo, hi) = if a <= b then (a, b) else (b, a)
-    val (from, to) = (clampToSpan(lo, t.min, t.max), clampToSpan(hi, t.min, t.max))
-    val size = q.size.filter(_ > 0).getOrElse(Aggregate.bucketSize(to - from))
+    val a = Filter.lowerGiven(q.filter.period).getOrElse(Year(t.defaultFrom.value))
+    val b = Filter.upperGiven(q.filter.period).getOrElse(Year(t.defaultTo.value))
+    val (lo, hi) = if a.value <= b.value then (a, b) else (b, a)
+    val (from, to) = (clampToSpan(lo, t.min.value, t.max.value), clampToSpan(hi, t.min.value, t.max.value))
+    val size = q.size
+      .map(_.value)
+      .filter(_ > 0)
+      .fold(Aggregate.bucketSize(Aggregate.Span(to.value - from.value)))(n => Aggregate.Width(n))
     val wanted = Aggregate.bucketCount(from, to, size)
-    if wanted > BigInt(math.max(1, ui.maxBuckets)) then
+    if wanted > BigInt(math.max(1, ui.maxBuckets.value)) then
       Left(
-        Api.Error(
-          s"that window needs $wanted buckets of $size year(s), over the " +
-            s"${ui.maxBuckets} allowed (ui.max-buckets) — narrow `from`/`to`"
+        error(
+          s"that window needs $wanted buckets of ${size.value} year(s), over the " +
+            s"${ui.maxBuckets.value} allowed (ui.max-buckets) — narrow `from`/`to`"
         )
       )
     else Right(aggregateWindow(axes, unit, q, from, to, size))
@@ -92,21 +99,21 @@ final class SearchControllers(
   /** A caller's year, forced inside the configured span. `ui.time.min/max` is what the web UI can draw and what the
     * corpus covers; nothing outside it can have a non-empty answer anyway.
     */
-  private def clampToSpan(v: com.histmersion.domain.library.search.SearchControllers.ClampToSpanV, min: com.histmersion.domain.library.search.SearchControllers.SpanMin, max: com.histmersion.domain.library.search.SearchControllers.SpanMax): com.histmersion.domain.library.search.SearchControllers.ClampToSpanResult = math.max(min, math.min(max, v))
+  private def clampToSpan(v: Year, min: Long, max: Long): Year = Year(math.max(min, math.min(max, v.value)))
 
   private def aggregateWindow(
-      axes: List[com.histmersion.domain.library.search.SearchControllers.Axes],
-      unit: com.histmersion.domain.library.search.SearchControllers.Unit,
+      axes: List[String],
+      unit: String,
       q: Api.AggregateQuery,
-      from: com.histmersion.domain.library.search.SearchControllers.From,
-      to: com.histmersion.domain.library.search.SearchControllers.To,
-      size: com.histmersion.domain.library.search.SearchControllers.WindowSize
+      from: Year,
+      to: Year,
+      size: Aggregate.Width
   ): TimeHistogram =
     val ui = cfg().ui
     val window = q.filter.modify(_.period).setTo(Some(Period(from, to)))
     val scope = filters.scope(window)
-    val depth = q.depth.filter(_ > 0).getOrElse(ui.treeDepth).max(1).min(Tree.MaxDepth)
-    val samples = q.samples.getOrElse(ui.treeSamples).max(0).min(Tree.MaxSamples)
+    val depth = Tree.Depth(q.depth.map(_.value).filter(_ > 0).getOrElse(ui.treeDepth.value).max(1).min(Tree.MaxDepth.value))
+    val samples = Tree.MaxSamplesCount(q.samples.map(_.value).getOrElse(ui.treeSamples.value).max(0).min(Tree.MaxSamples.value))
     // `unit=starts` is the SOURCE unit counted a different way (plan §1.7): same rows, one bar each,
     // by where the period begins. The rows query therefore still asks for sources.
     val starts = unit == Aggregate.UnitStarts
@@ -114,30 +121,38 @@ final class SearchControllers(
     val counting = if starts then Aggregate.Counting.Starts else Aggregate.Counting.Overlap
     val flat =
       if axes.headOption.contains(Tree.KindTime) then
-        Aggregate.histogram(search.periods(rowUnit, window, scope), from, to, size, counting)
+        Aggregate.histogram(search.periods(AggregateRepo.Unit(rowUnit), window, scope), from, to, size, counting)
       else Nil
-    val base = TimeHistogram(from, to, size, flat, by = axes.mkString(","), unit = unit, depth = depth)
+    val base = TimeHistogram(
+      TimeHistogram.From(from.value),
+      TimeHistogram.To(to.value),
+      TimeHistogram.Bucket(size.value),
+      flat,
+      by = TimeHistogram.By(axes.mkString(",")),
+      unit = TimeHistogram.Unit(unit),
+      depth = TimeHistogram.Depth(depth.value)
+    )
     // The TIMELINE STRIP asks for `by=time` on every span change and only wants `buckets`; building
     // the tree as well would double its cost for nothing. A caller that wants the nested answer for
     // the same axis says so by asking for a `depth`/`samples` — which is exactly what the "by time"
     // tab does, and what the CLI's `--group time` sends.
     if axes == List(Tree.KindTime) && q.depth.isEmpty && q.samples.isEmpty then base
-    else treeOn(axes, rowUnit, window, scope, from, to, depth, samples, q.asOf, base)
+    else treeOn(axes, rowUnit, window, scope, from, to, depth, samples, q.asOf.map(a => Year(a.value)), base)
 
   /** The nested part of [[aggregateOn]] — split out so the flat strip never pays for it. */
   private def treeOn(
-      axes: List[com.histmersion.domain.library.search.SearchControllers.Axes],
-      unit: com.histmersion.domain.library.search.SearchControllers.Unit,
+      axes: List[String],
+      unit: String,
       window: Filter,
       scope: PlaceScope,
-      from: com.histmersion.domain.library.search.SearchControllers.From,
-      to: com.histmersion.domain.library.search.SearchControllers.To,
-      depth: com.histmersion.domain.library.search.SearchControllers.Depth,
-      samples: com.histmersion.domain.library.search.SearchControllers.Samples,
-      askedAsOf: Option[com.histmersion.domain.library.search.SearchControllers.AsOf],
+      from: Year,
+      to: Year,
+      depth: Tree.Depth,
+      samples: Tree.MaxSamplesCount,
+      askedAsOf: Option[Year],
       base: TimeHistogram
   ): TimeHistogram =
-    val rows = search.treeRows(unit, window, scope)
+    val rows = search.treeRows(AggregateRepo.Unit(unit), window, scope)
     // the gazetteer slice these rows hang off — one upward closure, not the whole 16 k-place table
     def gaz = places.gazetteer(rows.flatMap(_.placeIds))
     // `by=region` reads the hierarchy at ONE year: the caller's, else the middle of the window
@@ -145,8 +160,8 @@ final class SearchControllers(
     // LAZY DEEPER LEVELS: `place=<one gazetteer id>` roots the region tree AT that place, so
     // expanding a node returns its subtree rather than the whole forest with the node buried in it.
     // (Two place chips, or a name that is not a gazetteer id, is an ordinary filter — no re-rooting.)
-    val root = window.places.filter(p => scope.idsFor(p).isDefined) match
-      case one :: Nil => Some(one)
+    val root = window.places.filter(p => scope.idsFor(PlaceScope.Value(p.value)).isDefined) match
+      case one :: Nil => Some(RegionNode.Id(one.value))
       case _          => None
     val tree = axes match
       case Tree.KindTime :: Nil   => Tree.timeTree(rows, from, to, depth, samples)
@@ -158,38 +173,9 @@ final class SearchControllers(
         val (ns, rs) = gaz; Tree.regionTimeTree(rows, from, to, ns, rs, asOf, depth, samples, root)
     base
       .modify(_.total)
-      .setTo(rows.iterator.map(_.key).toSet.size)
+      .setTo(TimeHistogram.Total(rows.iterator.map(_.key).toSet.size))
       // `time,region` reads the gazetteer at each bucket's OWN midpoint, so no single asOf applies
       .modify(_.asOf)
       .setTo(if axes == List(Tree.KindTime, Tree.KindRegion) || axes == List(Tree.KindTime) then None else asOf)
       .modify(_.tree)
       .setTo(tree)
-
-object SearchControllers:
-  type AsOf = AsOf.T
-  object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Axes = Axes.T
-  object Axes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Depth = Depth.T
-  object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type From = From.T
-  object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Samples = Samples.T
-  object Samples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpanMax = SpanMax.T
-  object SpanMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpanMin = SpanMin.T
-  object SpanMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type To = To.T
-  object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Unit = Unit.T
-  object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WindowSize = WindowSize.T
-  object WindowSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type ClampToSpanResult = ClampToSpanResult.T
-  object ClampToSpanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClampToSpanV = ClampToSpanV.T
-  object ClampToSpanV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

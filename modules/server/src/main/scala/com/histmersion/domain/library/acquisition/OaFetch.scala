@@ -22,10 +22,15 @@ object OaFetch:
       CoreBudget.quotas(core, CoreBudget.limits(loaded.config.acquire.core))
     )
     val cfg = loaded.config.acquire
-    FetchChain.of(g.registries.sourceFetchers, cfg.chainIds, cfg.allowUnauthorised, plugins = g.registered)._1
+    FetchChain.of(
+      g.registries.sourceFetchers,
+      cfg.chainIds.map(c => com.histmersion.util.plugins.Plugin.Id(c.value)),
+      FetchChain.AllowUnauthorised(cfg.allowUnauthorised.value),
+      plugins = g.registered
+    )._1
 
   /** Hex MD5 of a download, to compare with the one a PMC dataset record or a Zenodo record states; `None` when the
     * runtime offers no MD5 (the check is then skipped, never failed).
     */
   def md5(b: com.histmersion.domain.library.acquisition.OaFetch.Bytes): Option[com.histmersion.domain.library.acquisition.OaFetch.Md5] =
-    scala.util.Try(java.security.MessageDigest.getInstance("MD5").digest(b).map("%02x".format(_)).mkString).toOption
+    scala.util.Try(java.security.MessageDigest.getInstance("MD5").digest(b.value).map("%02x".format(_)).mkString).toOption.map(Md5(_))

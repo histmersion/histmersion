@@ -1,18 +1,25 @@
 package com.histmersion.domain.library.acquisition
 
+import com.histmersion.domain.CoreQuota
+
 /** The host's [[Http]] as the plugin SPI's client: plugins get bytes, and parse what they asked for; a metered call is
   * sent [[Http.once]], answered with its status and headers.
   */
 import com.histmersion.plugin.Plugin
 final class HttpPlugin(http: Http) extends Plugin.Http:
-  def get(url: com.histmersion.domain.library.acquisition.HttpPlugin.Url, headers: Map[com.histmersion.domain.library.acquisition.HttpPlugin.HeaderName, com.histmersion.domain.library.acquisition.HttpPlugin.GetHeadersPart2]) = http.bytes(url, headers)
-  override def fetch(url: String, headers: Map[String, String]) =
-    http.once(url, headers).map(a => Plugin.HttpResponse(a.code, a.headers, a.body))
-
-object HttpPlugin:
-  type HeaderName = HeaderName.T
-  object HeaderName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetHeadersPart2 = GetHeadersPart2.T
-  object GetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  private def sent(headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+    headers.map((k, v) => CoreQuota.HeaderName(k.value) -> CoreQuota.HeaderValue(v.value))
+  def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+    http.bytes(Http.Url(url.value), sent(headers)).left
+      .map(e => Plugin.Http.GetResultPart1(e.value))
+      .map(b => Plugin.HttpResponse.Body(b.value))
+  override def fetch(url: Plugin.Http.FetchUrl, headers: Map[Plugin.Http.FetchHeadersPart1, Plugin.Http.FetchHeadersPart2]) =
+    http.once(Http.Url(url.value), sent(headers)).left
+      .map(e => Plugin.Http.FetchResultPart1(e.value))
+      .map(a =>
+        Plugin.HttpResponse(
+          Plugin.HttpResponse.Status(a.code.value),
+          a.headers.map((k, v) => Plugin.HttpResponse.HeadersKey(k.value) -> Plugin.HttpResponse.HeadersValue(v.value)),
+          Plugin.HttpResponse.Body(a.body.value)
+        )
+      )

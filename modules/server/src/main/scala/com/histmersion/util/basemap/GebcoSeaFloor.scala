@@ -63,7 +63,7 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: BasemapBathymetryCo
   /** What a fetch would do, zoom by zoom — the dry run's answer. */
   def describe(p: GebcoPlan): GebcoSeaFloor.Description =
     val byZoom =
-      p.tiles.groupBy(_._2._1).toList.sortBy(_._1.value).map((z, ts) => s"zoom ${z.value}: ${ts.size}").mkString(" · ")
+      p.tiles.groupBy(_._2._1).toList.sortBy[Int](_._1.value).map((z, ts) => s"zoom ${z.value}: ${ts.size}").mkString(" · ")
     GebcoSeaFloor.Description(
       s"bathymetry from GEBCO (zoom 0–${p.maxZoom.value}): would read ${human(p.readBytes.value)} of " +
         s"${count(p.parts.size.toLong, "GeoTIFF", "GeoTIFFs")} in ${count(p.parts.map(_.runs.size).sum.toLong, "range request", "range requests")}, " +
@@ -199,7 +199,7 @@ object GebcoSeaFloor:
           val tile = (Zoom(z), TileX(x), TileY(y))
           (PmTiles.tileId(tile._1, tile._2, tile._3), tile)
       }
-      .sortBy(_._1.value)
+      .sortBy[Long](_._1.value)
 
   /** The west, south, east and north of a tile, in degrees (Web Mercator). */
   def bounds(z: Zoom, x: TileX, y: TileY): (Degrees, Degrees, Degrees, Degrees) =

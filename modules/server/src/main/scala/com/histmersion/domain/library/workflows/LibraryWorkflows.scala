@@ -32,8 +32,16 @@ final class LibraryWorkflows(
   val proposals: SourceProposals = SourceProposals(
     SourceApprovalService(transactor, a.approvalStore, a.clock),
     cfg().agents,
-    ck => site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).toOption.map(_.source.status),
-    p => site.sources.patch(p.citekey, p.patch).left.map(_.message).map(_ => p.describe)
+    ck =>
+      com.histmersion.domain.library.Citekey
+        .option(ck.value)
+        .flatMap(c => site.sources.get(c, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).toOption.map(_.source.status)),
+    p =>
+      site.sources
+        .patch(p.citekey, p.patch)
+        .left
+        .map(e => SourceProposals.ApplyKey(e.message.value))
+        .map(_ => SourceProposals.ApplyText(p.describe.value))
   )
 
   val enrichSource: WorkflowDefinition = LibraryWorkflow(

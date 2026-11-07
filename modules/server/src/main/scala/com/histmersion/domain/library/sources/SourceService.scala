@@ -26,7 +26,7 @@ import com.histmersion.api.library.Finding
 trait SourceService:
 
   /** The citekey a source has now: `id` itself, or the source an old citekey was renamed to. */
-  def current(id: com.histmersion.domain.library.sources.SourceService.Id): Option[com.histmersion.domain.library.sources.SourceService.CurrentResult]
+  def current(id: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey]
 
   /** The source `citekey` was renamed to, when it is an old citekey. */
   def aliasOf(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey]
@@ -100,7 +100,7 @@ trait SourceService:
   def addEdges(edges: List[Edge], caller: Caller): com.histmersion.RowCount
 
   /** The digest of the source's stored original. */
-  def original(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.SourceService.OriginalResult]
+  def original(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.Sha256]
 
   /** The source that holds an original with this digest. */
   def holderOf(sha256: com.histmersion.Sha256): Option[com.histmersion.domain.library.Citekey]
@@ -155,7 +155,7 @@ object SourceService:
 
   final private class Implementation(db: Transactor, referrers: SourceReferrers, settings: () => SourceSettings)
       extends SourceService:
-    def current(id: com.histmersion.domain.library.sources.SourceService.Id): Option[com.histmersion.domain.library.sources.SourceService.Implementation.CurrentResult] = db.read(SourceRepo.canonical(id))
+    def current(id: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.canonical(id))
     def aliasOf(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.aliasOf(citekey))
     def aliasesOf(citekey: com.histmersion.domain.library.Citekey): Set[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.aliasesOf(citekey))
     def aliases: List[Source.Alias] = db.read(SourceRepo.aliases)
@@ -203,7 +203,7 @@ object SourceService:
     def citekeyOfDoi(doi: com.histmersion.domain.library.Doi): Option[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.citekeyOfDoi(doi))
     def addEdges(edges: List[Edge], caller: Caller): com.histmersion.RowCount =
       if edges.isEmpty then com.histmersion.RowCount(0) else db.transact(SourceRepo.insertEdges(edges))
-    def original(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.SourceService.Implementation.OriginalResult] = db.read(SourceRepo.sha256Of(citekey))
+    def original(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.Sha256] = db.read(SourceRepo.sha256Of(citekey))
     def holderOf(sha256: com.histmersion.Sha256): Option[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.citekeyOfSha256(sha256))
     def originals(citekeys: List[com.histmersion.domain.library.Citekey]): Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.sources.SourceService.Implementation.OriginalsResultPart2] =
       if citekeys.isEmpty then Map.empty else db.read(SourceRepo.sha256s(citekeys))
@@ -665,7 +665,7 @@ object SourceService:
 
     private def stored(citekey: com.histmersion.domain.library.Citekey): Option[LibraryState.Stored] = state.get.sources.get(citekey)
 
-    def original(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.SourceService.InMemory.OriginalResult] = stored(citekey).flatMap(_.sha256)
+    def original(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.Sha256] = stored(citekey).flatMap(_.sha256)
 
     def holderOf(sha256: com.histmersion.Sha256): Option[com.histmersion.domain.library.Citekey] =
       state.get.sources.toList.sortBy(_._1).collectFirst { case (ck, x) if x.sha256.contains(sha256) => ck }

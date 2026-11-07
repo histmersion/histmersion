@@ -8,33 +8,35 @@ import com.histmersion.domain.*
 import com.histmersion.api.library.WikirefsResult
 
 final class Wikipedia(cfg: AcquireConfig, http: Http) extends WikiClient:
-  def refs(articleUrl: com.histmersion.domain.library.acquisition.Wikipedia.ArticleUrl): Either[com.histmersion.domain.library.acquisition.Wikipedia.Problem, WikirefsResult] =
+  def refs(articleUrl: WikiClient.ArticleUrl): Either[WikiClient.Problem, WikirefsResult] =
     AcquireParse
-      .wikiPageTitle(articleUrl)
-      .toRight(s"'$articleUrl' is not a Wikipedia article URL")
+      .wikiPageTitle(Http.Url(articleUrl.value))
+      .toRight(WikiClient.Problem(s"'$articleUrl' is not a Wikipedia article URL"))
       .flatMap { page =>
         http
           .json(
             Url(
-              cfg.wikipedia.url,
-              "",
+              Http.Url(cfg.wikipedia.url.value),
+              com.histmersion.upstreams.http.Url.UrlPath(""),
               "action" -> "parse",
-              "page" -> page,
+              "page" -> page.value,
               "prop" -> "wikitext",
               "format" -> "json",
               "redirects" -> "1"
             )
           )
+          .left
+          .map(e => WikiClient.Problem(e.value))
           .flatMap { j =>
-            AcquireParse.wikiText(j).toRight(s"Wikipedia returned no wikitext for '$page'").map { text =>
+            AcquireParse.wikiText(j).toRight(WikiClient.Problem(s"Wikipedia returned no wikitext for '$page'")).map { text =>
               val (dois, arxiv) = AcquireParse.wikiRefs(text)
-              WikirefsResult(AcquireParse.wikiTitle(j).getOrElse(page), articleUrl, dois.size, dois, arxiv)
+              WikirefsResult(
+                WikirefsResult.Article(AcquireParse.wikiTitle(j).getOrElse(page).value),
+                WikirefsResult.Url(articleUrl.value),
+                WikirefsResult.DoiCount(dois.size),
+                dois.map(d => WikirefsResult.Dois(d.value)),
+                arxiv.map(a => WikirefsResult.Arxiv(a.value))
+              )
             }
           }
       }
-
-object Wikipedia:
-  type ArticleUrl = ArticleUrl.T
-  object ArticleUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

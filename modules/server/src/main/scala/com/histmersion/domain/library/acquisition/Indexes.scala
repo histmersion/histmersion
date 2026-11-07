@@ -6,6 +6,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.pluginhost.upstreamSettings
 import com.histmersion.upstreams.core.CoreApi
+import com.histmersion.util.plugins.Plugins
 
 object Indexes:
   /** The indexes `acquire.candidates.indexes` names, in its order (an unknown name is left out). `coreKey` is CORE's
@@ -17,17 +18,17 @@ object Indexes:
   def of(
       cfg: AcquireConfig,
       http: Http,
-      coreKey: Option[com.histmersion.domain.library.acquisition.CoreIndex.Key] = None,
+      coreKey: Option[Plugins.CoreKey] = None,
       core: CoreBudget
   ): (List[ScholarlyIndex], CitationAlerts) =
-    val key = coreKey.orElse(cfg.core.key)
+    val key = coreKey.map(k => ApiKey(k.value)).orElse(cfg.core.key)
     val openalex = OpenAlexIndex(cfg, http)
-    val all: Map[com.histmersion.domain.library.acquisition.ScholarlyIndex.Name, ScholarlyIndex] = Map(
-      "openalex" -> openalex,
-      "crossref" -> CrossrefIndex(cfg, http),
-      "europepmc" -> EuropePmcIndex(cfg, http),
-      "arxiv" -> ArxivIndex(cfg, http),
-      "core" -> {
+    val all: Map[ScholarlyIndex.Name, ScholarlyIndex] = Map(
+      ScholarlyIndex.Name("openalex") -> openalex,
+      ScholarlyIndex.Name("crossref") -> CrossrefIndex(cfg, http),
+      ScholarlyIndex.Name("europepmc") -> EuropePmcIndex(cfg, http),
+      ScholarlyIndex.Name("arxiv") -> ArxivIndex(cfg, http),
+      ScholarlyIndex.Name("core") -> {
         val limits = CoreBudget.limits(cfg.core)
         CoreIndex(CoreApi(cfg.upstreamSettings.core, HttpPlugin(http), CoreQuotaLend(core, limits)), key, core, limits)
       }
@@ -38,6 +39,6 @@ object Indexes:
         .map(_.value.trim.toLowerCase)
         .distinct
         .filter(n => n != "core" || key.isDefined)
-        .flatMap(all.get),
+        .flatMap(n => all.get(ScholarlyIndex.Name(n))),
       openalex
     )

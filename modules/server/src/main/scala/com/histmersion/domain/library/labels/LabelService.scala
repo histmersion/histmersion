@@ -9,15 +9,12 @@ import com.histmersion.api.library.{Facet, Filter}
   * no in-memory twin.
   */
 trait LabelService:
-  def facets(field: Facet.Field, prefix: Option[com.histmersion.domain.library.search.FilterSql.FacetPrefix], filter: Filter, limit: com.histmersion.domain.library.labels.LabelService.Limit, scope: PlaceScope): List[Facet]
+  def facets(field: Facet.Field, prefix: Option[com.histmersion.domain.library.search.FilterSql.FacetPrefix], filter: Filter, limit: com.histmersion.PageSize, scope: PlaceScope): List[Facet]
 
 object LabelService:
-  type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def apply(db: Transactor): LabelService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends LabelService:
-    def facets(field: Facet.Field, prefix: Option[com.histmersion.domain.library.search.FilterSql.FacetPrefix], filter: Filter, limit: com.histmersion.domain.library.labels.LabelService.Limit, scope: PlaceScope): List[Facet] =
+    def facets(field: Facet.Field, prefix: Option[com.histmersion.domain.library.search.FilterSql.FacetPrefix], filter: Filter, limit: com.histmersion.PageSize, scope: PlaceScope): List[Facet] =
       db.read(LabelRepo.facets(field, prefix, filter, limit, scope)).toList
 

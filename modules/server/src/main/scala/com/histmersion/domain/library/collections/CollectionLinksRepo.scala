@@ -13,5 +13,11 @@ private[collections] object CollectionLinksRepo:
       .run()
       .toList
       .map((ck, id, title, authors, year) =>
-        LinkedSource(ck, id, title.getOrElse(""), authors.map(_.trim).filter(_.nonEmpty), year)
+        LinkedSource(
+          com.histmersion.domain.library.Citekey.assume(ck),
+          LinkedSource.Id(id),
+          LinkedSource.Title(title.getOrElse("")),
+          authors.map(_.trim).filter(_.nonEmpty).map(LinkedSource.Authors(_)),
+          year.map(com.histmersion.Year(_))
+        )
       )

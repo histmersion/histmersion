@@ -156,8 +156,8 @@ final class PersonalControllers(
           case com.histmersion.domain.personal.notes.Note.EditRefused.Missing      => missing(s"note $id")
           case com.histmersion.domain.personal.notes.Note.EditRefused.Changed(was) =>
             Api.Error(
-              s"the note changed since it was opened (now ${was.iso}); open it again",
-              Some(Write.CodePrecondition)
+              Api.Error.Message(s"the note changed since it was opened (now ${was.iso}); open it again"),
+              Some(Api.Error.Code(Write.CodePrecondition))
             )
         }
       yield n.wire

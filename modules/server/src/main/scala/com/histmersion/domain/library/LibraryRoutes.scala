@@ -1,11 +1,12 @@
 package com.histmersion.domain.library
 
-import com.histmersion.api.Api
-import com.histmersion.domain.library.citations.CitationsControllers
+import com.histmersion.api.{Api, Write}
+import com.histmersion.api.library.{Citekey => ApiCitekey}
+import com.histmersion.domain.library.citations.{CitationService, CitationsControllers}
 import com.histmersion.domain.library.findings.FindingsControllers
 import com.histmersion.domain.library.labels.LabelsControllers
-import com.histmersion.domain.library.search.SearchControllers
-import com.histmersion.domain.library.sources.SourcesControllers
+import com.histmersion.domain.library.search.{FilterSql, Search, SearchControllers}
+import com.histmersion.domain.library.sources.{SourceService, SourcesControllers}
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 
@@ -28,35 +29,59 @@ object LibraryRoutes:
       exportSource: ServerEndpoint[Any, Identity],
       reindex: ServerEndpoint[Any, Identity]
   ): List[ServerEndpoint[Any, Identity]] =
+    def citekey(ck: ApiCitekey): Either[Api.Error, Citekey] =
+      Citekey.parse(ck.value).left.map(p => Write.invalid(Api.Error.Message(p.value)))
+    def citekeyOpt(ck: Option[ApiCitekey]): Either[Api.Error, Option[Citekey]] =
+      ck.fold[Either[Api.Error, Option[Citekey]]](Right(None))(c => citekey(c).map(Some(_)))
     List(
-      Api.search.serverLogicSuccess[Identity]((q, limit) => search.search(q, limit)),
+      Api.search.serverLogicSuccess[Identity]((q, limit) =>
+        search.search(q.map(t => Search.Query(t.value)), limit.map(l => SearchControllers.Limit(l.value)))),
       Api.sources.serverLogicSuccess[Identity](f => search.sources(f)),
-      Api.facets.serverLogic[Identity]((field, prefix, f) => labels.facets(field, prefix, f)),
+      Api.facets.serverLogic[Identity]((field, prefix, f) =>
+        labels.facets(LabelsControllers.FacetField(field.value), prefix.map(p => FilterSql.FacetPrefix(p.value)), f)),
       sourceArticles,
-      Api.lintSource.serverLogic[Identity](ck => sources.lint(ck)),
-      Api.fixSourceFormat.serverLogic[Identity](ck => sources.fix(ck)),
+      Api.lintSource.serverLogic[Identity](ck => citekey(ck).flatMap(sources.lint)),
+      Api.fixSourceFormat.serverLogic[Identity](ck => citekey(ck).flatMap(sources.fix)),
       lintMarkdown,
       Api.sourceView.serverLogic[Identity](q =>
-        sources.markdown(q.citekey, q.fullText, q.section, q.heading, q.offset, q.chars)
+        citekey(q.citekey).flatMap(ck =>
+          sources.markdown(
+            ck,
+            SourcesControllers.MarkdownFullText(q.fullText.value),
+            q.section,
+            q.heading.map(h => SourceService.Heading(h.value)),
+            q.offset.map(o => com.histmersion.Offset.option(o.value).getOrElse(com.histmersion.Offset.Start)),
+            q.chars.map(c => SourcesControllers.Chars(c.value))
+          )
+        )
       ),
       Api.passages.serverLogic[Identity](q => sources.passages(q)),
       resolveId,
-      Api.getSource.serverLogic[Identity]((ck, body) => sources.get(ck, body)),
+      Api.getSource.serverLogic[Identity]((ck, body) =>
+        citekey(ck).flatMap(sources.get(_, SourcesControllers.GetBody(body.value)))),
       Api.findingsPage.serverLogicSuccess[Identity](q => findings.page(q)),
       Api.findings.serverLogicSuccess[Identity](q => findings.feed(q)),
       Api.aggregate.serverLogic[Identity](q => search.aggregate(q)),
-      Api.neighbors.serverLogicSuccess[Identity]((ck, kinds) => citations.neighbors(ck, kinds)),
-      Api.graph.serverLogicSuccess[Identity]((ck, depth) => citations.graph(ck, depth)),
-      Api.contradictions.serverLogicSuccess[Identity]((ck, since) => citations.contradictions(ck, since)),
+      Api.neighbors.serverLogic[Identity]((ck, kinds) =>
+        citekey(ck).map(citations.neighbors(_, kinds.map(k => Edge.Kind.Wire(k.value))))
+      ),
+      Api.graph.serverLogic[Identity]((ck, depth) =>
+        citekey(ck).map(citations.graph(_, depth.map(d => CitationService.Depth(d.value))))
+      ),
+      Api.contradictions.serverLogic[Identity]((ck, since) =>
+        citekeyOpt(ck).map(citations.contradictions(_, since.map(a => CitationService.Since(a.value))))
+      ),
       seed,
       exportSource,
-      Api.putSource.serverLogic[Identity]((ck, in, strict) => sources.put(ck, in, strict)),
-      Api.patchSource.serverLogic[Identity]((ck, p, strict) => sources.patch(ck, p, strict)),
-      Api.renameSource.serverLogic[Identity]((ck, req) => sources.rename(ck, req)),
-      Api.deleteSource.serverLogic[Identity]((ck, req) => sources.delete(ck, req)),
+      Api.putSource.serverLogic[Identity]((ck, in, strict) =>
+        citekey(ck).flatMap(sources.put(_, in, SourcesControllers.PutStrict(strict.value)))),
+      Api.patchSource.serverLogic[Identity]((ck, p, strict) =>
+        citekey(ck).flatMap(sources.patch(_, p, SourcesControllers.PatchStrict(strict.value)))),
+      Api.renameSource.serverLogic[Identity]((ck, req) => citekey(ck).flatMap(sources.rename(_, req))),
+      Api.deleteSource.serverLogic[Identity]((ck, req) => citekey(ck).flatMap(sources.delete(_, req))),
       Api.sourceAliases.serverLogicSuccess[Identity](_ => sources.aliases),
       Api.importNote.serverLogic[Identity](req => sources.importNote(req)),
-      Api.citekeys.serverLogicSuccess[Identity](_ => sources.citekeys),
+      Api.citekeys.serverLogicSuccess[Identity](_ => sources.citekeys.map(c => ApiCitekey(c.value))),
       Api.resolveEdges.serverLogic[Identity](_ => citations.resolveEdges),
       reindex
     )

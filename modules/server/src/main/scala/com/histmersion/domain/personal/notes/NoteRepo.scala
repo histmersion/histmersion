@@ -37,7 +37,7 @@ private[notes] object NoteRepo:
         )
       ) ++
       Sql.raw(com.histmersion.util.database.Sql.Text(" ORDER BY n.updated_at DESC, n.id DESC")) ++
-      size.fold(Sql.empty)(s => Sql.of(" LIMIT ?", Param.I(Param.I.V(s.value))))).frag.query[Note.Row].run().toList
+      size.fold(Sql.empty)(s => Sql.of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(s.value))))).frag.query[Note.Row].run().toList
 
   def live(user: UserId, id: com.histmersion.api.personal.Note.Id)(using DbCon): Option[Note.Row] =
     Sql

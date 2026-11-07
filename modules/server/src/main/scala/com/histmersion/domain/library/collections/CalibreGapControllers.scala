@@ -4,7 +4,8 @@ import com.histmersion.api.Write
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.ingest.StoredOriginals
-import com.histmersion.domain.library.sources.SourceService
+import com.histmersion.PageSize
+import com.histmersion.domain.library.sources.{FullSourceRow, SourceService}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.domain.library.Citekey
 
@@ -25,7 +26,11 @@ final class CalibreGapControllers(
   def gaps(limit: Option[com.histmersion.domain.library.collections.CalibreGapControllers.Limit]): CalibreGaps =
     // capped like every other listing: `calibreGaps(None)` used to mean LIMIT Int.MaxValue
     val limits = cfg().limits
-    val gaps = sources.calibreGaps(Some(limits.page(limit, limits.maxPage)))
+    val page = limits.page(
+      limit.flatMap(l => PageSize.option(l.value)),
+      PageSize.assume(math.max(1, limits.maxPage.value))
+    )
+    val gaps = sources.calibreGaps(Some(SourceService.Limit(page.value)))
     // which originals the server can hand the host's push (`GET /api/sources/{ck}/original`)
     val hashes = sources.originals(gaps.map(_.citekey))
     val stored = if hashes.isEmpty then Set.empty[String] else originals.hashes
@@ -33,15 +38,19 @@ final class CalibreGapControllers(
     CalibreGaps(marked.size, marked)
 
   def pushMeta(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, CalibreGap] =
-    Citekey
-      .parse(citekey)
-      .left
-      .map(Write.invalid)
-      .flatMap(_ => sources.calibrePushMeta(citekey).toRight(Write.notFound(citekey)))
+    sources.calibrePushMeta(citekey).toRight(Write.notFound(com.histmersion.api.library.Citekey(citekey.value)))
 
   def pushed(req: CalibrePushRequest): Either[Api.Error, CalibrePushResult] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("calibre/pushed")):
-      Citekey.parse(req.citekey).left.map(Api.Error(_)).flatMap(_ => sources.setCalibreId(req.citekey, req.calibreId, Caller.Local).map(_ => CalibrePushResult(req.citekey, req.calibreId, ok = true)))
+      Citekey
+        .parse(req.citekey.value)
+        .left
+        .map(p => Api.Error(Api.Error.Message(p.value)))
+        .flatMap(ck =>
+          sources
+            .setCalibreId(ck, FullSourceRow.CalibreId(req.calibreId.value), Caller.Local)
+            .map(_ => CalibrePushResult(req.citekey, req.calibreId, ok = CalibrePushResult.Ok(true)))
+        )
 
 object CalibreGapControllers:
   type Limit = Limit.T

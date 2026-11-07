@@ -40,23 +40,28 @@ final class CandidateSearch(
   /** The goal's watches as of now: what is read, from where (the watermark is the stored one). */
   private def plan(goal: Goal): List[CandidateWatch] =
     val c = cfg
-    val links = goals.links(goal.slug)
-    def refs(kind: LinkKind) = links.filter(_.kind == kind).map(_.ref)
-    val queries = Some(refs(LinkKind.Query)).filter(_.nonEmpty).getOrElse(List(goal.title))
+    val links = goals.links(com.histmersion.domain.automation.Goal.Slug.assume(goal.slug.value))
+    def refs(kind: LinkKind) = links.filter(_.kind == kind).map(_.ref.value)
+    val watchGoal = CandidateWatch.Goal(goal.slug.value)
+    val queries = Some(refs(LinkKind.Query)).filter(_.nonEmpty).getOrElse(List(goal.title.value))
     val q = for query <- queries; i <- indexes
-    yield CandidateWatch(goal.slug, Candidates.WatchKind.Query.wire, query, i.name)
-    val cited = (refs(LinkKind.Source) ++ refs(LinkKind.Article).flatMap(articles.cited)).distinct
+    yield CandidateWatch(watchGoal, Candidates.WatchKind.Query.wire, CandidateWatch.Subject(query), CandidateWatch.Index(i.name.value))
+    val cited = (refs(LinkKind.Source).flatMap(com.histmersion.domain.library.Citekey.option(_)) ++
+      refs(LinkKind.Article).flatMap(com.histmersion.domain.research.Slug.option(_)).flatMap(articles.cited)).distinct
       .take(math.max(0, c.sources.value))
-    val withDoi = cited.flatMap(ck => sources.load(ck).flatMap(_.doi).flatMap(doi => Ident.doi(doi.value)).map(ck -> _))
-    val citing = withDoi.map((ck, doi) => CandidateWatch(goal.slug, Candidates.WatchKind.Citing.wire, doi, "openalex"))
+    val withDoi = cited.flatMap(ck => sources.load(ck).flatMap(_.doi).flatMap(doi => Ident.doi(Ident.Written(doi.value))).map(ck -> _))
+    val citing = withDoi.map((ck, doi) =>
+      CandidateWatch(watchGoal, Candidates.WatchKind.Citing.wire, CandidateWatch.Subject(doi.value), CandidateWatch.Index("openalex"))
+    )
     q ++ citing
 
   /** Sweep `goal` now; a dry run reads, but stores neither candidates nor watermarks. */
   def sweep(goal: com.histmersion.domain.automation.Goal.Slug, dryRun: com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun): Either[Api.Error, CandidateSweep] =
-    goals.get(goal).toRight(Api.Error(s"no goal '$goal'", Some(Write.CodeNotFound))).map { g =>
+    goals.get(goal).toRight(Api.Error(Api.Error.Message(s"no goal '$goal'"), Some(Api.Error.Code(Write.CodeNotFound)))).map { g =>
       val c = cfg
       val now = today()
-      val stored = candidates.watches(g.slug).map(w => (w.kind, w.subject, w.index) -> w).toMap
+      val watchGoal = CandidateWatch.Goal(g.slug.value)
+      val stored = candidates.watches(goal).map(w => (w.kind, w.subject, w.index) -> w).toMap
       def known(w: CandidateWatch) =
         stored.get((w.kind, w.subject, w.index)).fold(w)(s => w.modify(_.watermark).setTo(s.watermark))
       val base = plan(g).map(known)
@@ -65,95 +70,118 @@ final class CandidateSearch(
       val authorWatches = base
         .filter(_.kind == Candidates.WatchKind.Citing.wire)
         .flatMap { w =>
-          alerts
-            .authors(w.subject)
-            .toOption
-            .toList
-            .flatMap(as => (as.headOption ++ as.lastOption).toList.distinct.take(c.authorsPerSource.value))
-            .map(a => known(CandidateWatch(g.slug, Candidates.WatchKind.Author.wire, a, "openalex")))
+          com.histmersion.domain.library.Doi.option(w.subject.value).toList.flatMap { doi =>
+            alerts
+              .authors(doi)
+              .toOption
+              .toList
+              .flatMap(as => (as.headOption ++ as.lastOption).toList.distinct.take(c.authorsPerSource.value))
+              .map(a => known(CandidateWatch(watchGoal, Candidates.WatchKind.Author.wire, CandidateWatch.Subject(a.value), CandidateWatch.Index("openalex"))))
+          }
         }
         .distinctBy(w => w.subject)
       // an index that may not be asked now (CORE's budget spent, CORE asked to wait) is left out of the rest
       // of this sweep: its watches keep their watermarks and are read next time
-      val leftOut = scala.collection.mutable.LinkedHashMap.empty[String, (String, Int)] // this sweep's tally
-      def query(i: ScholarlyIndex, w: CandidateWatch, since: LocalDate): Either[com.histmersion.domain.library.acquisition.CandidateSearch.Problem, List[WorkRef]] =
-        leftOut.get(i.name).orElse(i.unavailable.map(_ -> 0)) match
+      val leftOut = scala.collection.mutable.LinkedHashMap.empty[ScholarlyIndex.Name, (String, Int)] // this sweep's tally
+      def query(i: ScholarlyIndex, w: CandidateWatch, since: LocalDate): Either[String, List[WorkRef]] =
+        leftOut.get(i.name).orElse(i.unavailable.map(p => p.value -> 0)) match
           case Some((why, n)) =>
             leftOut.update(i.name, (why, n + 1))
             Left(s"not asked this sweep — $why")
           case None =>
-            val got = i.search(w.subject, since, c.perWatch.value)
-            got.left.foreach(_ => i.unavailable.foreach(why => leftOut.update(i.name, (why, 0))))
-            got
+            val got = i.search(com.histmersion.domain.library.search.Search.Query(w.subject.value), since, ScholarlyIndex.Limit(c.perWatch.value))
+            got.left.foreach(_ => i.unavailable.foreach(why => leftOut.update(i.name, (why.value, 0))))
+            got.left.map(_.value)
       val read = (base ++ authorWatches).map { w =>
-        val since = Candidates.since(w.watermark, now, c.lookbackDays.value)
-        val got: Either[com.histmersion.domain.library.acquisition.CandidateSearch.Problem, List[WorkRef]] = Candidates.WatchKind.parse(w.kind) match
+        val since = Candidates.since(w.watermark.map(m => Candidates.Watermark(m.value)), now, Candidates.Lookback(c.lookbackDays.value))
+        val got: Either[String, List[WorkRef]] = Candidates.WatchKind.parse(w.kind) match
           case Some(Candidates.WatchKind.Query) =>
             byIndex
-              .get(w.index)
+              .get(ScholarlyIndex.Name(w.index.value))
               .toRight(s"index '${w.index}' is not configured")
               .flatMap(query(_, w, since))
-          case Some(Candidates.WatchKind.Citing) => alerts.citing(w.subject, since, c.perWatch.value)
-          case Some(Candidates.WatchKind.Author) => alerts.byAuthor(w.subject, since, c.perWatch.value)
-          case None                              => Left(s"unknown watch kind '${w.kind}'")
+          case Some(Candidates.WatchKind.Citing) =>
+            com.histmersion.domain.library.Doi
+              .either(w.subject.value)
+              .flatMap(doi => alerts.citing(doi, since, CitationAlerts.CitingLimit(c.perWatch.value)).left.map(_.value))
+          case Some(Candidates.WatchKind.Author) =>
+            alerts
+              .byAuthor(CitationAlerts.ByAuthorAuthorId(w.subject.value), since, CitationAlerts.ByAuthorLimit(c.perWatch.value))
+              .left
+              .map(_.value)
+          case None => Left(s"unknown watch kind '${w.kind}'")
         (w, since, got)
       }
       val found = read.flatMap { (w, _, got) =>
-        val by = w.kind match
+        val by = CandidateDedupe.FoundBy(w.kind.value match
           case "query"  => s"${w.index} query \"${w.subject}\""
           case "citing" => s"${w.index} citing ${w.subject}"
           case _        => s"${w.index} author ${w.subject}"
+        )
         got.toOption.toList.flatten.map(by -> _)
       }
       // known already: the corpus, the acquisition list (open or done)
       val corpus = sources.doiIndex.keySet
-      val queued = queues.list(Queue.Kind.Acquire, QueueScope.All).flatMap(i => Scheduling.dois(i.text)).toSet
+      val queued = queues.list(Queue.Kind.Acquire, QueueScope.All).flatMap(i => Scheduling.dois(i.text.value)).toSet
       val (fresh, skipped) = CandidateDedupe.dedupe(found, corpus ++ queued)
-      val earlier = candidates.dois(g.slug)
+      val earlier = candidates.dois(goal)
       val again = fresh.count((k, _, _) => earlier.contains(k))
       val added =
-        if dryRun then fresh.count((k, _, _) => !earlier.contains(k))
+        if dryRun.value then fresh.count((k, _, _) => !earlier.contains(k))
         else
           fresh.count { (k, w, by) =>
             candidates.upsert(
               Source.Candidate(
-                0,
-                g.slug,
-                com.histmersion.api.library.Doi(k),
-                w.title.getOrElse(com.histmersion.api.library.Title(k)),
+                Source.Candidate.Id(0L),
+                watchGoal,
+                com.histmersion.api.library.Doi(k.value),
+                w.title.getOrElse(com.histmersion.api.library.Title(k.value)),
                 w.year,
                 w.authors.take(8),
                 w.venue,
-                w.abstractText.map(_.take(2000)),
+                w.abstractText.map(a => Source.Candidate.AbstractText(a.value.take(2000))),
                 w.isOa,
                 w.arxivId,
-                by
+                by.map(b => Source.Candidate.FoundBy(b.value))
               )
             )
           }
       // a watch read moves its watermark to today; a failed one keeps its own (nothing is skipped)
       val watches = read.map { (w, _, got) =>
-        val mark = got.toOption.map(_ => now.toString)
-        if !dryRun then
-          candidates.recordWatch(w, mark, got.left.toOption.map(_.take(500)), got.map(_.size).getOrElse(0))
+        val mark = got.toOption.map(_ => CandidateWatch.Watermark(now.toString))
+        val lastFound = CandidateWatch.LastFound(got.map(_.size).getOrElse(0))
+        if !dryRun.value then
+          candidates.recordWatch(w, mark, got.left.toOption.map(e => CandidateWatch.LastError(e.take(500))), lastFound)
         w.modify(_.watermark)
-          .setTo(if dryRun then w.watermark else mark.orElse(w.watermark))
+          .setTo(if dryRun.value then w.watermark else mark.orElse(w.watermark))
           .modify(_.lastError)
-          .setTo(got.left.toOption)
+          .setTo(got.left.toOption.map(CandidateWatch.LastError(_)))
           .modify(_.lastFound)
-          .setTo(got.map(_.size).getOrElse(0))
+          .setTo(lastFound)
       }
-      val unseen = candidates.counts(Some(g.slug)).find(_.state == Candidates.State.New.wire).fold(0)(_.count)
+      val unseen = candidates
+        .counts(Some(goal))
+        .find(_.state.value == Candidates.State.New.wire.value)
+        .fold(CandidateSweep.Unseen(0))(n => CandidateSweep.Unseen(n.count.value))
       val notes = leftOut.toList.map { case (index, (why, n)) =>
-        s"$index not asked this sweep: $why — ${Plural.count(n, "watch", "watches")} left unread, which keep their " +
-          "watermarks and are read next sweep"
+        CandidateSweep.Notes(
+          s"$index not asked this sweep: $why — ${Plural.count(Plural.CountN(n), Plural.CountSingular("watch"), Plural.CountPlural("watches"))} left unread, which keep their " +
+            "watermarks and are read next sweep"
+        )
       }
-      CandidateSweep(g.slug, watches, found.size, added, again, skipped, unseen, dryRun, notes)
+      CandidateSweep(
+        CandidateSweep.Goal(g.slug.value),
+        watches,
+        CandidateSweep.Found(found.size),
+        CandidateSweep.Added(added),
+        CandidateSweep.Again(again),
+        skipped.map((reason, n) => CandidateSweep.SkippedKey(reason.value) -> CandidateSweep.SkippedValue(n.value)),
+        unseen,
+        CandidateSweep.DryRun(dryRun.value),
+        notes
+      )
     }
 
 object CandidateSearch:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   type SweepDryRun = SweepDryRun.T
   object SweepDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

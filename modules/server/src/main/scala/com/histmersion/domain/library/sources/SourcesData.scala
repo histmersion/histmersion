@@ -8,6 +8,8 @@ import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun, FixRank, FixWhen, SafeFix}
 import com.histmersion.util.data.diagnostics.DataCount
 import com.histmersion.util.data.maintenance.{MaintenanceSite, MaintenanceSlice, MaintenanceTask}
+import com.histmersion.domain.library.Citekey
+import com.histmersion.util.ocr.Chunker
 import com.augustnagro.magnum.DbCon
 
 /** The sources' share of the library's data contribution: their counts, the rebuild of their full-text chunks, and
@@ -15,13 +17,9 @@ import com.augustnagro.magnum.DbCon
   * rebuilt, the old geocoder's points moved and the unplaced findings given a point when named.
   */
 object SourcesData:
-  type Rank = Rank.T
-  object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
   def figures(using DbCon): List[DataCount] =
     val (sources, findings) = SourceRepo.counts()
-    List(DataCount(com.histmersion.util.data.diagnostics.DataCount.Noun("sources"), sources), DataCount(com.histmersion.util.data.diagnostics.DataCount.Noun("findings"), findings))
+    List(DataCount(DataCount.Noun("sources"), DataCount.Count(sources.value)), DataCount(DataCount.Noun("findings"), DataCount.Count(findings.value)))
 
   /** The rebuild of every source's full-text chunks from its OCR'd body: at most `limit` sources after `after` (and at
     * most `limits.reindex-chars` characters) per slice.
@@ -31,41 +29,38 @@ object SourcesData:
     val name: MaintenanceTask.Name = MaintenanceTask.Name("reindex")
     def run(slice: MaintenanceSlice, site: MaintenanceSite): ReindexResult =
       SourceRepairs(Transactor(site.dataSource)).reindexChunks(
-        site.settings.limits.chunkChars,
-        slice.after,
-        slice.limit,
-        site.settings.limits.reindexChars
+        Chunker.ChunkMaxChars(site.settings.limits.chunkChars.value),
+        slice.after.flatMap(a => Citekey.option(a.value)),
+        slice.limit.map(l => SourceRepairs.MaxSources(l.value)),
+        SourceRepairs.MaxChars(site.settings.limits.reindexChars.value)
       )
 
-  final private class Check(val owner: DataOwner, name: Check.Name, override val fix: Option[SafeFix]) extends CheckRule:
-    val rule: Rule = Lint.rule(name).getOrElse(Rule(name, name))
+  final private class Check(val owner: DataOwner, name: Rule.Name, override val fix: Option[SafeFix]) extends CheckRule:
+    val rule: Rule = Lint.rule(name).getOrElse(Rule(name, Rule.Description(name.value)))
 
-    def report(context: CheckContext, maxItems: com.histmersion.domain.library.sources.SourcesData.Check.MaxItems)(using CheckRun)(using DbCon): LintRuleReport =
+    def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using CheckRun)(using DbCon): LintRuleReport =
+      val stored = SourceCheckRepo.storedCitekey
       SourceCheckRepo.report(
         rule,
-        SourceCheckRepo.Context.of(context.config, context.format(SourceCheckRepo.storedCitekey)),
-        maxItems
+        SourceCheckRepo.Context.of(
+          context.config,
+          context.format(ck => CheckContext.FormatArg1Result(Citekey.option(ck.value).exists(stored)))
+        ),
+        Lint.ItemLimit(maxItems.value)
       )
 
-  object Check:
-    type MaxItems = MaxItems.T
-    object MaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  private def listed(owner: DataOwner, names: String*): List[CheckRule] = names.toList.map(n => Check(owner, Rule.Name(n), None))
 
-
-  private def listed(owner: DataOwner, names: String*): List[CheckRule] = names.toList.map(Check(owner, _, None))
-
-  private def fixed(owner: DataOwner, name: com.histmersion.domain.library.sources.SourcesData.Check.Name, when: FixWhen, rank: com.histmersion.domain.library.sources.SourcesData.Rank)(
+  private def fixed(owner: DataOwner, name: String, when: FixWhen, rank: Int)(
       run: CheckContext => LintFixResult
   ): CheckRule =
-    Check(owner, name, Some(SafeFix(when, FixRank(rank), run)))
+    Check(owner, Rule.Name(name), Some(SafeFix(when, FixRank(rank), run)))
 
   /** The library's rules, in the order the report has always listed them. */
   def checks(owner: DataOwner): List[CheckRule] =
     listed(owner, DanglingEdges) ++
       List(
-        fixed(owner, UnresolvedShortCitekeys, FixWhen.EveryFix, com.histmersion.domain.library.sources.SourcesData.Rank(10))(c =>
+        fixed(owner, UnresolvedShortCitekeys, FixWhen.EveryFix, 10)(c =>
           SourceRepairs(Transactor(c.dataSource)).resolveEdgesFix()
         )
       ) ++

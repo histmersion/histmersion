@@ -19,10 +19,10 @@ object Upload:
   type Size = Size.T
   object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def handed(file: HandedFile.Snapshot): Upload = Upload(file.name, file.size, file.bytes)
+  def handed(file: HandedFile.Snapshot): Upload = Upload(Upload.Name(file.name.value), Upload.Size(file.size.value), file.bytes)
 
   /** A stored file. */
-  def stored(blob: Blob): Upload = Upload(blob.key.name, blob.size.value, blob.asSource)
+  def stored(blob: Blob): Upload = Upload(Upload.Name(blob.key.name.value), Upload.Size(blob.size.value), blob.asSource)
 
   /** Bytes in memory, under `name`. */
-  def inline(name: com.histmersion.domain.library.ingest.Upload.InlineName, bytes: com.histmersion.domain.library.ingest.Upload.Bytes): Upload = Upload(name, bytes.length.toLong, ByteSource.bytes(bytes))
+  def inline(name: com.histmersion.domain.library.ingest.Upload.InlineName, bytes: com.histmersion.domain.library.ingest.Upload.Bytes): Upload = Upload(name, Upload.Size(bytes.value.length.toLong), ByteSource.bytes(ByteSource.Content(bytes.value)))

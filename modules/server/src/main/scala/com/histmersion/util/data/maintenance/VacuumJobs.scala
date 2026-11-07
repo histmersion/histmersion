@@ -44,7 +44,7 @@ final class VacuumJobs(
       Vacuum.plan(in, defaults(), vacuumable).flatMap { plan =>
         BackgroundJob.start(
           ds,
-          Vacuum.JobKind,
+          com.histmersion.util.jobs.Job.Kind.applyUnsafe(Vacuum.JobKind),
           Some(VacuumPlan.Detail(Some(plan))),
           slot,
           BackgroundJob.Work("a vacuum job"),

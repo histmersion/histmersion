@@ -21,7 +21,7 @@ import com.histmersion.plugin.{
   SourceCollection,
   Year
 }
-import com.histmersion.pluginhost.HostCollection
+import com.histmersion.pluginhost.{HostCollection, Registries}
 import com.histmersion.util.database.Transactor
 
 import java.util.concurrent.atomic.AtomicReference
@@ -59,8 +59,9 @@ import com.histmersion.api.library.{
   Ingest,
   MetadataPatch
 }
-import com.histmersion.api.media.{MediaCoversRequest, MediaProvider, SourceCoverParams}
-import com.histmersion.api.Api
+import com.histmersion.api.media.{MediaCoversRequest, MediaItem, MediaProvider, SourceCoverParams}
+import com.histmersion.api.{Api, Write}
+
 
 /** The library's source collections — the Calibre library, archive.org — run by the library: searching one, importing
   * an item into the library, linking a source to an item, pushing a source's original into one, rewriting its items
@@ -71,79 +72,47 @@ trait CollectionsService:
   def collections(): List[CollectionInfo]
   def collection(name: com.histmersion.domain.library.collections.CollectionsService.CollectionName): Either[Api.Error, CollectionInfo]
   def search(
-      name: com.histmersion.domain.library.collections.CollectionsService.SearchName,
+      name: com.histmersion.domain.library.collections.CollectionsService.CollectionName,
       q: Option[com.histmersion.domain.library.search.Search.Query],
-      limit: Option[com.histmersion.domain.library.collections.CollectionsService.SearchLimit],
+      limit: Option[com.histmersion.domain.library.collections.CollectionsService.Limit],
       unlinked: com.histmersion.domain.library.collections.CollectionsService.SearchUnlinked
   ): Either[Api.Error, CollectionSearch]
-  def importItem(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.ImportItemName, req: CollectionImportRequest): Either[Api.Error, CollectionImported]
-  def link(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.LinkName, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked]
-  def push(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.PushName, req: CollectionPushRequest): Either[Api.Error, CollectionPushed]
-  def updateOne(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.UpdateOneName, citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, CollectionUpdatedOne]
-  def updateAll(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.UpdateAllName, apply: com.histmersion.domain.library.collections.CollectionsService.UpdateAllApply): Either[Api.Error, CollectionUpdateAll]
-  def set(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.SetName, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone]
-  def audit(name: com.histmersion.domain.library.collections.CollectionsService.AuditName): Either[Api.Error, CollectionAudit]
-  def gaps(name: com.histmersion.domain.library.collections.CollectionsService.GapsName, limit: Option[com.histmersion.domain.library.collections.CollectionsService.Limit]): Either[Api.Error, CollectionGaps]
-  def sync(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.SyncName, req: CollectionSync.Request): Either[Api.Error, CollectionSync]
+  def importItem(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, req: CollectionImportRequest): Either[Api.Error, CollectionImported]
+  def link(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked]
+  def push(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, req: CollectionPushRequest): Either[Api.Error, CollectionPushed]
+  def updateOne(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, CollectionUpdatedOne]
+  def updateAll(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, apply: com.histmersion.domain.library.collections.CollectionsService.UpdateAllApply): Either[Api.Error, CollectionUpdateAll]
+  def set(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone]
+  def audit(name: com.histmersion.domain.library.collections.CollectionsService.CollectionName): Either[Api.Error, CollectionAudit]
+  def gaps(name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, limit: Option[com.histmersion.domain.library.collections.CollectionsService.Limit]): Either[Api.Error, CollectionGaps]
+  def sync(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.CollectionName, req: CollectionSync.Request): Either[Api.Error, CollectionSync]
   def archiveSearch(q: com.histmersion.domain.library.search.Search.Query, rows: Option[com.histmersion.domain.library.collections.CollectionsService.Limit]): Either[Api.Error, ArchiveSearchResult]
   def archiveInfo(id: com.histmersion.domain.library.ArchiveId): Either[Api.Error, ArchiveItem]
   def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report]
 
 object CollectionsService:
-  type Hint = Hint.T
-  object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HtmlText = HtmlText.T
-  object HtmlText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Limit = Limit.T
   object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlainText = PlainText.T
-  object PlainText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegistryKey = RegistryKey.T
-  object RegistryKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  /** The collection the library links its sources to (`sources.calibre_id`). */
+  /** A source collection, by the name the registry knows it under. */
   type CollectionName = CollectionName.T
   object CollectionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchName = SearchName.T
-  object SearchName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchLimit = SearchLimitValue
-  type SearchLimitValue = com.histmersion.domain.library.collections.CollectionsService.Limit
-  val SearchLimitValue: _root_.com.histmersion.domain.library.collections.CollectionsService.Limit.type = _root_.com.histmersion.domain.library.collections.CollectionsService.Limit
   type SearchUnlinked = SearchUnlinked.T
   object SearchUnlinked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImportItemName = ImportItemName.T
-  object ImportItemName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkName = LinkName.T
-  object LinkName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PushName = PushName.T
-  object PushName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdateOneName = UpdateOneName.T
-  object UpdateOneName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdateAllName = UpdateAllName.T
-  object UpdateAllName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UpdateAllApply = UpdateAllApply.T
   object UpdateAllApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetName = SetName.T
-  object SetName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AuditName = AuditName.T
-  object AuditName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GapsName = GapsName.T
-  object GapsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SyncName = SyncName.T
-  object SyncName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val Calibre = "calibre"
+  /** The collection the library links its sources to (`sources.calibre_id`). */
+  val Calibre: CollectionName = CollectionName("calibre")
 
   /** archive.org's texts. */
-  val ArchiveOrg = "archive-org"
+  val ArchiveOrg: CollectionName = CollectionName("archive-org")
 
   /** The library's collections over the database; `registry` answers the plugin generation's collections now. */
   def apply(
       transactor: Transactor,
       library: CollectionLibrary,
-      registry: () => ListMap[com.histmersion.domain.library.collections.CollectionsService.RegistryKey, SourceCollection],
-      archiveRows: com.histmersion.domain.library.collections.CollectionsService.Limit
+      registry: () => ListMap[Registries.SourceCollectionsKey, SourceCollection],
+      archiveRows: Limit
   ): CollectionsService =
     Implementation(() => transactor.read(CollectionLinksRepo.linked()), library, registry, archiveRows)
 
@@ -151,17 +120,11 @@ object CollectionsService:
   final class InMemory(
       linked: AtomicReference[List[LinkedSource]],
       library: CollectionLibrary,
-      registry: () => ListMap[InMemory.RegistryResultKey, SourceCollection],
-      archiveRows: InMemory.ArchiveRows
+      registry: () => ListMap[Registries.SourceCollectionsKey, SourceCollection],
+      archiveRows: Limit
   ) extends CollectionsService:
-    private val run = Implementation(() => linked.get.sortBy(_.citekey), library, registry, archiveRows)
+    private val run = Implementation(() => linked.get.sortBy(_.citekey.value), library, registry, archiveRows)
     export run.*
-
-  object InMemory:
-    type RegistryResultKey = com.histmersion.domain.library.collections.CollectionsService.RegistryKey
-    val RegistryResultKey: _root_.com.histmersion.domain.library.collections.CollectionsService.RegistryKey.type = _root_.com.histmersion.domain.library.collections.CollectionsService.RegistryKey
-    type ArchiveRows = ArchiveRows.T
-    object ArchiveRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val StoredOriginalHint =
     " — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf"
@@ -169,136 +132,162 @@ object CollectionsService:
   final private class Implementation(
       linked: () => List[LinkedSource],
       library: CollectionLibrary,
-      registry: () => ListMap[Implementation.RegistryResultKey, SourceCollection],
-      archiveRows: Implementation.ArchiveRows
+      registry: () => ListMap[Registries.SourceCollectionsKey, SourceCollection],
+      archiveRows: Limit
   ) extends CollectionsService:
 
-    private def fail(message: com.histmersion.domain.library.collections.CollectionsService.Problem): Api.Error = Api.Error(message)
-    private def usage(message: com.histmersion.domain.library.collections.CollectionsService.Problem): Api.Error = Api.Error(message, Some(CollectionsApi.Usage))
+    private def fail(message: String): Api.Error = Api.Error(Api.Error.Message(message))
+    private def usage(message: String): Api.Error =
+      Api.Error(Api.Error.Message(message), Some(Api.Error.Code(CollectionsApi.Usage)))
+    private def failed(problem: HostCollection.Problem): Api.Error = fail(problem.value)
 
-    private def lookup(name: com.histmersion.domain.library.collections.CollectionsService.Implementation.LookupName): Either[Api.Error, HostCollection] =
+    private def apiKey(ck: com.histmersion.domain.library.Citekey): Citekey = Citekey(ck.value)
+
+    /** The citekey a request names, or the 400 that refuses it. */
+    private def checked(raw: Citekey): Either[Api.Error, com.histmersion.domain.library.Citekey] =
+      com.histmersion.domain.library.Citekey.parse(raw.value).left.map(p => Write.invalid(Write.InvalidMessage(p.value)))
+
+    private def lookup(name: CollectionName): Either[Api.Error, HostCollection] =
       registry()
-        .get(name)
-        .map(HostCollection(name, _))
+        .get(Registries.SourceCollectionsKey(name.value))
+        .map(HostCollection(HostCollection.Name(name.value), _))
         .toRight(
           Api.Error(
-            s"no source collection '$name' is registered on this server — its plugin is off or not installed",
-            Some(CollectionsApi.NoCollection)
+            Api.Error.Message(s"no source collection '$name' is registered on this server — its plugin is off or not installed"),
+            Some(Api.Error.Code(CollectionsApi.NoCollection))
           )
         )
 
     /** The collections the library links sources to: Calibre alone (`sources.calibre_id`). */
-    private def linking(name: com.histmersion.domain.library.collections.CollectionsService.Implementation.LinkingName): Either[Api.Error, HostCollection] =
+    private def linking(name: CollectionName): Either[Api.Error, HostCollection] =
       if name == Calibre then lookup(name)
       else Left(fail(s"the library links sources to Calibre only, not to '$name'"))
 
     private def info(c: HostCollection): CollectionInfo =
       val reach = c.reach
       CollectionInfo(
-        c.name,
-        c.title,
-        c.description,
-        CollectionCapability.values.toList.filter(c.can).map(_.toString.toLowerCase(java.util.Locale.ROOT)),
-        reach.isRight,
-        reach.left.toOption
+        CollectionInfo.Name(c.name.value),
+        Title(c.title.value),
+        CollectionInfo.Description(c.description.value),
+        CollectionCapability.values.toList
+          .filter(c.can)
+          .map(k => CollectionInfo.Capabilities(k.toString.toLowerCase(java.util.Locale.ROOT))),
+        CollectionInfo.Reachable(reach.isRight),
+        reach.left.toOption.map(p => CollectionInfo.Problem(p.value))
       )
 
-    def collections(): List[CollectionInfo] = registry().toList.map((n, c) => info(HostCollection(n, c)))
+    def collections(): List[CollectionInfo] =
+      registry().toList.map((n, c) => info(HostCollection(HostCollection.Name(n.value), c)))
 
-    def collection(name: com.histmersion.domain.library.collections.CollectionsService.Implementation.CollectionName): Either[Api.Error, CollectionInfo] = lookup(name).map(info)
+    def collection(name: CollectionName): Either[Api.Error, CollectionInfo] = lookup(name).map(info)
+
+    private def apiAuthors(authors: List[CollectionItem.Authors]): List[AuthorName] = authors.map(a => AuthorName(a.value))
+
+    private def apiYear(year: Option[Year]): Option[com.histmersion.api.catalogue.Year] =
+      year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong))
 
     private def entry(i: CollectionItem): CollectionEntry =
       CollectionEntry(
-        i.id.value,
-        i.title.getOrElse(""),
-        i.authors,
-        i.year.map(_.value),
-        i.publisher,
-        i.tags,
-        i.identifiers,
-        i.files.map(_.name)
+        CollectionEntry.Id(i.id.value),
+        Title(i.title.fold("")(_.value)),
+        apiAuthors(i.authors),
+        apiYear(i.year),
+        i.publisher.map(p => CollectionEntry.Publisher(p.value)),
+        i.tags.map(t => CollectionEntry.Tags(t.value)),
+        i.identifiers.map((k, v) => CollectionEntry.IdentifiersKey(k.value) -> CollectionEntry.IdentifiersValue(v.value)),
+        i.files.map(f => CollectionEntry.Formats(f.name.value))
       )
 
-    private def linkedIds(): Set[com.histmersion.domain.library.sources.FullSourceRow.CalibreId] = linked().flatMap(_.id.trim.toIntOption).map(_.toString).toSet
+    private def linkedIds(): Set[String] = linked().flatMap(_.id.value.trim.toIntOption).map(_.toString).toSet
 
     def search(
-        name: com.histmersion.domain.library.collections.CollectionsService.Implementation.SearchName,
+        name: CollectionName,
         q: Option[com.histmersion.domain.library.search.Search.Query],
-        limit: Option[com.histmersion.domain.library.collections.CollectionsService.Limit],
-        unlinked: com.histmersion.domain.library.collections.CollectionsService.Implementation.SearchUnlinked
+        limit: Option[Limit],
+        unlinked: SearchUnlinked
     ): Either[Api.Error, CollectionSearch] =
       val max = limit.getOrElse(SearchLimit)
-      if q.isEmpty && !unlinked then Left(usage(com.histmersion.domain.library.collections.CollectionsService.Problem("give a query, or --unlinked")))
-      else if !unlinked then
+      if q.isEmpty && !unlinked.value then Left(usage("give a query, or --unlinked"))
+      else if !unlinked.value then
         lookup(name).flatMap(
-          _.search(CollectionQuery(Some(q.getOrElse("")), Some(max))).left
-            .map(fail)
-            .map(items => CollectionSearch(items.map(entry), items.size))
+          _.search(CollectionQuery(Some(CollectionQuery.Text(q.fold("")(_.value))), Some(CollectionQuery.Limit(max.value)))).left
+            .map(failed)
+            .map(items => CollectionSearch(items.map(entry), CollectionSearch.Total(items.size)))
         )
       else
         for
           c <- linking(name)
           ids = linkedIds()
           query = q
-            .map(_.trim)
+            .map(_.value.trim)
             .filter(_.nonEmpty)
-            .fold(CollectionQuery(None))(t => CollectionQuery(Some(t), Some(Int.MaxValue)))
-          items <- c.search(query).left.map(fail)
+            .fold(CollectionQuery(None))(t => CollectionQuery(Some(CollectionQuery.Text(t)), Some(CollectionQuery.Limit(Int.MaxValue))))
+          items <- c.search(query).left.map(failed)
         yield
           val all = items
             .filterNot(i => i.id.value.trim.toIntOption.exists(n => ids(n.toString)))
             .sortBy(i => -i.id.value.trim.toIntOption.getOrElse(0))
-          CollectionSearch(all.take(max.max(1)).map(entry), all.size)
+          CollectionSearch(all.take(max.value.max(1)).map(entry), CollectionSearch.Total(all.size))
 
     // ── import ────────────────────────────────────────────────────────────────────────────────
 
-    def importItem(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.Implementation.ImportItemName, req: CollectionImportRequest): Either[Api.Error, CollectionImported] =
+    def importItem(caller: Caller, name: CollectionName, req: CollectionImportRequest): Either[Api.Error, CollectionImported] =
       for
         c <- linking(name)
         _ <- req.acquireItem.fold(Right(()))(i =>
-          library.queueItem(i).flatMap(found => Queue.fulfillable(i, found).left.map(usage).map(_ => ()))
+          library
+            .queueItem(CollectionLibrary.QueueItemId(i.value))
+            .flatMap(found =>
+              Queue.fulfillable(Queue.QueueItem.Id(i.value), found).left.map(p => usage(p.value)).map(_ => ())
+            )
         )
         item <- c
-          .item(CollectionId(req.id))
+          .item(CollectionId(req.id.value))
           .left
-          .map(fail)
+          .map(failed)
           .flatMap(_.toRight(fail(s"no Calibre book with id ${req.id}")))
-        _ <- c.admits(item).left.map(fail)
-        file <- c.file(item, req.format).left.map(fail)
-        ck = req.citekey.getOrElse(ImportTarget.citekeyFor(item))
+        _ <- c.admits(item).left.map(failed)
+        file <- c.file(item, req.format.map(f => SourceCollection.FileFormat(f.value))).left.map(failed)
+        ck <- req.citekey.fold(ImportTarget.citekeyFor(item).left.map(p => usage(p.value)))(checked)
         existing <- library.pushMeta(ck) match
-          case Right(m)                                     => Right(Some(m.calibreId))
-          case Left(e) if e.message.startsWith("No source") => Right(None)
-          case Left(e)                                      => Left(e)
-        target <- ImportTarget.of(ck, req.id, req.citekey.isDefined, existing).left.map(usage)
+          case Right(m)                                           => Right(Some(m.calibreId.map(i => ImportTarget.Previous(i.value))))
+          case Left(e) if e.message.value.startsWith("No source") => Right(None)
+          case Left(e)                                            => Left(e)
+        target <- ImportTarget
+          .of(ck, ImportTarget.Id(req.id.value), ImportTarget.OfExplicit(req.citekey.isDefined), existing)
+          .left
+          .map(p => usage(p.value))
         record <- upsert(ck, item, target)
       yield
-        val cover = Option.when(req.cover)(coverOf(c, ck, item))
-        val conversion = if req.convert then Some(convert(c, item, file, ck, req.acquireItem)) else None
+        val cover = Option.when(req.cover.value)(coverOf(c, ck, item))
+        val conversion = if req.convert.value then Some(convert(c, item, file, ck, req.acquireItem)) else None
         CollectionImported(
-          ck,
-          req.id,
-          item.title.getOrElse(""),
+          apiKey(ck),
+          CollectionImported.Id(req.id.value),
+          Title(item.title.fold("")(_.value)),
           target match
-            case ImportTarget.Update(previous) => previous
+            case ImportTarget.Update(previous) => previous.map(p => CollectionImported.RelinkedFrom(p.value))
             case ImportTarget.Create           => None
           ,
-          file.name,
+          CollectionImported.File(file.name.value),
           record,
           cover,
           conversion.flatMap(_.toOption),
-          conversion.flatMap(_.left.toOption.map(_.message)),
-          conversion.flatMap(_.left.toOption.flatMap(_.code))
+          conversion.flatMap(_.left.toOption.map(e => CollectionImported.JobError(e.message.value))),
+          conversion.flatMap(_.left.toOption.flatMap(_.code).map(code => CollectionImported.JobErrorCode(code.value)))
         )
 
-    private def stripHtml(s: com.histmersion.domain.library.collections.CollectionsService.HtmlText): com.histmersion.domain.library.collections.CollectionsService.PlainText = s.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim
+    private def stripHtml(s: String): String = s.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim
 
     /** Create the source, or enrich it if the citekey exists — a re-import never wipes the findings and notes an agent
       * compiled; either way the record ends up linked to this entry.
       */
     private def upsert(ck: com.histmersion.domain.library.Citekey, item: CollectionItem, target: ImportTarget): Either[Api.Error, Source.WithFindings] =
-      val summary = item.description.map(stripHtml).filter(_.nonEmpty).map(_.take(500))
-      val doi = item.identifiers.get(com.histmersion.plugin.CollectionItem.IdentifiersKey("doi"))
+      val summary = item.description
+        .map(d => stripHtml(d.value))
+        .filter(_.nonEmpty)
+        .map(text => Source.Summary(text.take(500)))
+      val doi = item.identifiers.get(CollectionItem.IdentifiersKey("doi")).map(d => Doi(d.value))
       target match
         case ImportTarget.Update(_) =>
           for
@@ -308,12 +297,12 @@ object CollectionsService:
               Source.Patch(
                 metadata = Some(
                   MetadataPatch(
-                    title = (item.title.orElse(Some(""))).map(com.histmersion.api.library.Title.apply),
-                    authors = (Some(item.authors)).map(_.map(com.histmersion.api.library.AuthorName.apply)),
-                    year = (item.year.map(_.value)).map(com.histmersion.api.catalogue.Year.apply),
-                    venue = (item.publisher).map(com.histmersion.api.library.Source.Venue.apply),
-                    doi = (doi).map(com.histmersion.api.library.Doi.apply),
-                    calibreId = Some(item.id.value)
+                    title = Some(Title(item.title.fold("")(_.value))),
+                    authors = Some(apiAuthors(item.authors)),
+                    year = apiYear(item.year),
+                    venue = item.publisher.map(p => Source.Venue(p.value)),
+                    doi = doi,
+                    calibreId = Some(Source.CalibreId(item.id.value))
                   )
                 ),
                 summary = ImportTarget.summary(summary, current.source.summary)
@@ -324,19 +313,19 @@ object CollectionsService:
           library.create(
             ck,
             Source.Put(
-              title = com.histmersion.api.library.Title(item.title.getOrElse("")),
-              authors = (item.authors).map(com.histmersion.api.library.AuthorName.apply),
-              doi = (doi).map(com.histmersion.api.library.Doi.apply),
-              year = (item.year.map(_.value)).map(com.histmersion.api.catalogue.Year.apply),
-              venue = (item.publisher).map(com.histmersion.api.library.Source.Venue.apply),
+              title = Title(item.title.fold("")(_.value)),
+              authors = apiAuthors(item.authors),
+              doi = doi,
+              year = apiYear(item.year),
+              venue = item.publisher.map(p => Source.Venue(p.value)),
               status = Some(
                 com.histmersion.domain.library.Source.Status.Unassessed
                   .transformInto[com.histmersion.api.library.Source.Status]
               ),
-              tags = item.tags,
+              tags = item.tags.map(t => Source.Tags(t.value)),
               summary = summary,
-              provenance = Some("calibre"),
-              calibreId = Some(item.id.value)
+              provenance = Some(Source.Provenance("calibre")),
+              calibreId = Some(Source.CalibreId(item.id.value))
             )
           )
 
@@ -345,21 +334,34 @@ object CollectionsService:
       */
     private def coverOf(c: HostCollection, ck: com.histmersion.domain.library.Citekey, item: CollectionItem): CollectionCover =
       c.cover(item) match
-        case Left(why)       => CollectionCover(s"$ck: $why", warning = com.histmersion.api.library.CollectionCover.Warning(true))
+        case Left(why) => CollectionCover(CollectionCover.Line(s"$ck: $why"), warning = CollectionCover.Warning(true))
         case Right(Some(fc)) =>
-          library.putCover(SourceCoverParams(ck, MediaProvider.Calibre, item.id.value, None), fc.bytes) match
-            case Right(_) => CollectionCover(com.histmersion.api.library.CollectionCover.Line("Cover: from the Calibre library"))
-            case Left(e)  => CollectionCover(s"$ck: ${e.message}", warning = com.histmersion.api.library.CollectionCover.Warning(true))
+          library.putCover(
+            SourceCoverParams(apiKey(ck), MediaItem.Provider(MediaProvider.Calibre), SourceCoverParams.Key(item.id.value), None),
+            CollectionLibrary.Bytes(fc.bytes.value)
+          ) match
+            case Right(_) => CollectionCover(CollectionCover.Line("Cover: from the Calibre library"))
+            case Left(e)  => CollectionCover(CollectionCover.Line(s"$ck: ${e.message}"), warning = CollectionCover.Warning(true))
         case Right(None) =>
-          CoverChoice.choose(None, _ => false, item.identifiers.get(com.histmersion.plugin.CollectionItem.IdentifiersKey("isbn")).toList, item.identifiers.get(com.histmersion.plugin.CollectionItem.IdentifiersKey("oclc"))) match
-            case Some(CoverChoice.Pick.OpenLibrary("isbn", isbn)) =>
+          CoverChoice.choose(
+            None,
+            _ => false,
+            item.identifiers.get(CollectionItem.IdentifiersKey("isbn")).toList.map(v => com.histmersion.domain.library.Isbn(v.value)),
+            item.identifiers.get(CollectionItem.IdentifiersKey("oclc")).map(v => com.histmersion.domain.media.covers.OpenLibrary.Oclc(v.value))
+          ) match
+            case Some(CoverChoice.Pick.OpenLibrary(kind, isbn)) if kind.value == "isbn" =>
               library.openLibraryCover(
-                MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(ck), illustrations = false, isbn = Some(isbn))
+                MediaCoversRequest(
+                  dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false),
+                  citekey = Some(apiKey(ck)),
+                  illustrations = MediaCoversRequest.Illustrations(false),
+                  isbn = Some(MediaCoversRequest.Isbn(isbn.value))
+                )
               ) match
-                case Right(r) if r.covers > 0 => CollectionCover(s"Cover: from Open Library (ISBN $isbn)")
-                case _ => CollectionCover(com.histmersion.api.library.CollectionCover.Line("Cover: none (no cover file in Calibre, none at Open Library)"))
-            case Some(_) => CollectionCover(com.histmersion.api.library.CollectionCover.Line("Cover: none (no cover file in Calibre)"))
-            case None    => CollectionCover(com.histmersion.api.library.CollectionCover.Line("Cover: none (no cover file in Calibre, no ISBN)"))
+                case Right(r) if r.covers.value > 0 => CollectionCover(CollectionCover.Line(s"Cover: from Open Library (ISBN $isbn)"))
+                case _ => CollectionCover(CollectionCover.Line("Cover: none (no cover file in Calibre, none at Open Library)"))
+            case Some(_) => CollectionCover(CollectionCover.Line("Cover: none (no cover file in Calibre)"))
+            case None    => CollectionCover(CollectionCover.Line("Cover: none (no cover file in Calibre, no ISBN)"))
 
     /** The conversion: the same upload `histmersion ingest <file>` makes, marked as Calibre's. */
     private def convert(
@@ -367,201 +369,242 @@ object CollectionsService:
         item: CollectionItem,
         file: CollectionFile,
         ck: com.histmersion.domain.library.Citekey,
-        acquireItem: Option[com.histmersion.domain.library.acquisition.AcquireCheckRow.Item]
+        acquireItem: Option[CollectionImportRequest.AcquireItem]
     ): Either[Api.Error, Ingest.Accepted] =
-      val fileName = file.name.reverse.takeWhile(_ != '/').reverse
+      val fileName = file.name.value.reverse.takeWhile(_ != '/').reverse
       c.original(item, file) match
-        case Right(f) if f.bytes.nonEmpty =>
+        case Right(f) if f.bytes.value.nonEmpty =>
           library.ingest(
-            Ingest.Params(ck, Some(fileName), provenance = Some("calibre"), acquireItem = acquireItem),
-            f.bytes
+            Ingest.Params(
+              apiKey(ck),
+              Some(Ingest.Params.Filename(fileName)),
+              provenance = Some(Source.Provenance("calibre")),
+              acquireItem = acquireItem.map(i => Ingest.Params.AcquireItem(i.value))
+            ),
+            CollectionLibrary.Bytes(f.bytes.value)
           )
         case _ => Left(usage(s"${file.name} is empty — there is nothing to convert"))
 
     // ── link, push, update, set ───────────────────────────────────────────────────────────────
 
-    def link(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.Implementation.LinkName, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked] =
+    def link(caller: Caller, name: CollectionName, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked] =
       for
         c <- linking(name)
         item <- c
-          .item(CollectionId(req.id))
+          .item(CollectionId(req.id.value))
           .left
-          .map(fail)
+          .map(failed)
           .flatMap(_.toRight(fail(s"no Calibre book with id ${req.id}")))
-        sw <- library.patch(req.citekey, Source.Patch(metadata = Some(MetadataPatch(calibreId = Some(req.id)))))
-      yield CollectionLinked(sw.source.citekey, req.id, item.title.getOrElse(""))
+        ck <- checked(req.citekey)
+        sw <- library.patch(ck, Source.Patch(metadata = Some(MetadataPatch(calibreId = Some(Source.CalibreId(req.id.value))))))
+      yield CollectionLinked(sw.source.citekey, CollectionLinked.Id(req.id.value), Title(item.title.fold("")(_.value)))
 
     private def metadata(ck: com.histmersion.domain.library.Citekey, s: CalibreGap): CollectionMetadata =
       CollectionMetadata(
-        ck,
-        s.title,
-        s.authors,
-        s.doi,
-        s.isbn,
-        s.year.map(Year(_)),
-        s.venue,
-        s.summary.map(_.take(500)),
-        s.topics
+        CollectionMetadata.Key(ck.value),
+        CollectionMetadata.Title(s.title.value),
+        s.authors.map(a => CollectionMetadata.Authors(a.value)),
+        s.doi.map(d => CollectionMetadata.Doi(d.value)),
+        s.isbn.map(i => CollectionMetadata.Isbn(i.value)),
+        s.year.map(y => Year(y.value.toInt)),
+        s.venue.map(v => CollectionMetadata.Publisher(v.value)),
+        s.summary.map(x => CollectionMetadata.Summary(x.value.take(500))),
+        s.topics.map(t => CollectionMetadata.Tags(t.value))
       )
 
     /** The stored original of `ck` as a file to hand a collection; `hint` is added to the refusal when there is none.
       */
-    private def original(ck: com.histmersion.domain.library.Citekey, hint: com.histmersion.domain.library.collections.CollectionsService.Hint): Either[Api.Error, FetchedFile] =
+    private def original(ck: com.histmersion.domain.library.Citekey, hint: String): Either[Api.Error, FetchedFile] =
       for
-        o <- library.original(ck).left.map(e => if hint.isEmpty then e else e.modify(_.message).setTo(e.message + hint))
-        ext <- Ingest.dispositionExtension(o.disposition).toRight(fail(s"the server did not say what format '$ck' is"))
-      yield FetchedFile("original", None, o.bytes, ext)
+        o <- library.original(ck).left.map(e => if hint.isEmpty then e else e.modify(_.message).setTo(Api.Error.Message(e.message.value + hint)))
+        ext <- Ingest.dispositionExtension(Ingest.Disposition(o.disposition.value)).toRight(fail(s"the server did not say what format '$ck' is"))
+      yield FetchedFile(FetchedFile.Source("original"), None, FetchedFile.Bytes(o.bytes.value), FetchedFile.Extension(ext.value))
 
     /** One push: the source's metadata, its stored original into the collection as a new item, and the new id recorded
       * so it stops counting as a gap.
       */
-    private def pushOne(c: HostCollection, ck: com.histmersion.domain.library.Citekey): Either[Api.Error, (com.histmersion.domain.library.collections.CollectionsService.Implementation.PushOneResultPart2Part1, com.histmersion.domain.library.collections.CollectionsService.Implementation.PushOneResultPart2Part2)] =
+    private def pushOne(c: HostCollection, ck: com.histmersion.domain.library.Citekey): Either[Api.Error, (CollectionId, Title)] =
       for
         s <- library.pushMeta(ck)
         file <- original(ck, StoredOriginalHint)
-        id <- c.add(metadata(ck, s), file).left.map(fail)
-        _ <- library.pushed(CalibrePushRequest(ck, id.value))
-      yield (id.value, s.title)
+        id <- c.add(metadata(ck, s), file).left.map(failed)
+        _ <- library.pushed(CalibrePushRequest(apiKey(ck), Source.CalibreId(id.value)))
+      yield (id, s.title)
 
-    def push(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.Implementation.PushName, req: CollectionPushRequest): Either[Api.Error, CollectionPushed] =
-      val ck = req.citekey
+    def push(caller: Caller, name: CollectionName, req: CollectionPushRequest): Either[Api.Error, CollectionPushed] =
       linking(name).flatMap { c =>
-        if !req.replace then pushOne(c, ck).map((id, title) => CollectionPushed(ck, id, title))
-        else
-          for
-            s <- library.pushMeta(ck)
-            id <- s.calibreId
-              .flatMap(_.trim.toIntOption)
-              .toRight(
-                fail(
-                  s"'$ck' is not linked to a Calibre entry — `histmersion calibre push $ck` adds one, " +
-                    s"`histmersion calibre link $ck <id>` links an existing one"
+        checked(req.citekey).flatMap { ck =>
+          if !req.replace.value then pushOne(c, ck).map((id, title) => CollectionPushed(apiKey(ck), CollectionPushed.Id(id.value), title))
+          else
+            for
+              s <- library.pushMeta(ck)
+              id <- s.calibreId
+                .flatMap(_.value.trim.toIntOption)
+                .toRight(
+                  fail(
+                    s"'$ck' is not linked to a Calibre entry — `histmersion calibre push $ck` adds one, " +
+                      s"`histmersion calibre link $ck <id>` links an existing one"
+                  )
                 )
-              )
-            file <- original(ck, "")
-            fmt <- c.replace(CollectionId(id.toString), ck, file).left.map(fail)
-          yield CollectionPushed(ck, id.toString, s.title, Some(fmt))
+              file <- original(ck, "")
+              fmt <- c.replace(CollectionId(id.toString), SourceCollection.ReplaceKey(ck.value), file).left.map(failed)
+            yield CollectionPushed(apiKey(ck), CollectionPushed.Id(id.toString), s.title, Some(CollectionPushed.Replaced(fmt.value)))
+        }
       }
 
-    def updateOne(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.Implementation.UpdateOneName, citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, CollectionUpdatedOne] =
+    def updateOne(caller: Caller, name: CollectionName, citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, CollectionUpdatedOne] =
       for
         c <- linking(name)
         s <- library.pushMeta(citekey)
         id <- s.calibreId
-          .flatMap(_.toIntOption)
+          .flatMap(_.value.toIntOption)
           .toRight(fail(s"'$citekey' has no Calibre entry yet — use `histmersion calibre push $citekey`"))
-        changes <- c.update(CollectionId(id.toString), metadata(citekey, s)).left.map(fail)
-      yield CollectionUpdatedOne(citekey, id.toString, changes.map(_.field), s.title)
+        changes <- c.update(CollectionId(id.toString), metadata(citekey, s)).left.map(failed)
+      yield CollectionUpdatedOne(apiKey(citekey), CollectionUpdatedOne.Id(id.toString), changes.map(ch => CollectionUpdatedOne.Changed(ch.field.value)), s.title)
 
-    def updateAll(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.Implementation.UpdateAllName, apply: com.histmersion.domain.library.collections.CollectionsService.Implementation.UpdateAllApply): Either[Api.Error, CollectionUpdateAll] =
+    def updateAll(caller: Caller, name: CollectionName, apply: UpdateAllApply): Either[Api.Error, CollectionUpdateAll] =
       @tailrec def links(rest: List[LinkedSource], acc: List[CollectionLink]): Either[Api.Error, List[CollectionLink]] =
         rest match
           case Nil       => Right(acc.reverse)
           case l :: tail =>
             library.pushMeta(l.citekey) match
               case Left(e)  => Left(e)
-              case Right(s) => links(tail, CollectionLink(CollectionId(l.id), metadata(l.citekey, s)) :: acc)
+              case Right(s) => links(tail, CollectionLink(CollectionId(l.id.value), metadata(l.citekey, s)) :: acc)
       for
         c <- linking(name)
         ls <- links(linked(), Nil)
-        entries <- c.updateAll(ls, apply).left.map(fail)
-      yield CollectionUpdateAll(entries.map(updateRow), apply)
+        entries <- c.updateAll(ls, SourceCollection.UpdateAllApply(apply.value)).left.map(failed)
+      yield CollectionUpdateAll(entries.map(updateRow), CollectionUpdateAll.Applied(apply.value))
 
     private def updateRow(e: com.histmersion.plugin.CollectionUpdateEntry): CollectionUpdateRow =
       def changes(cs: List[com.histmersion.plugin.CollectionChange]) =
-        cs.map(ch => CollectionFieldChange(ch.field, ch.from, ch.to))
+        cs.map(ch =>
+          CollectionFieldChange(
+            CollectionFieldChange.Field(ch.field.value),
+            CollectionFieldChange.From(ch.from.value),
+            CollectionFieldChange.To(ch.to.value)
+          )
+        )
       val (state, cs, reason) = e.outcome match
         case CollectionUpdateOutcome.Change(cs)         => ("would-change", changes(cs), None)
         case CollectionUpdateOutcome.Applied(cs)        => ("updated", changes(cs), None)
-        case CollectionUpdateOutcome.Failed(cs, reason) => ("failed", changes(cs), Some(reason))
+        case CollectionUpdateOutcome.Failed(cs, reason) => ("failed", changes(cs), Some(CollectionUpdateRow.Reason(reason.value)))
         case CollectionUpdateOutcome.UpToDate           => ("up-to-date", Nil, None)
         case CollectionUpdateOutcome.Shared             => ("shared", Nil, None)
         case CollectionUpdateOutcome.Missing            => ("missing", Nil, None)
-        case CollectionUpdateOutcome.Refused(reason)    => ("refused", Nil, Some(reason))
-      CollectionUpdateRow(e.id.value, e.keys, state, cs, reason)
+        case CollectionUpdateOutcome.Refused(reason)    => ("refused", Nil, Some(CollectionUpdateRow.Reason(reason.value)))
+      CollectionUpdateRow(
+        CollectionUpdateRow.Id(e.id.value),
+        e.keys.map(k => CollectionUpdateRow.Citekeys(k.value)),
+        CollectionUpdateRow.State(state),
+        cs,
+        reason
+      )
 
-    def set(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.Implementation.SetName, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone] =
+    def set(caller: Caller, name: CollectionName, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone] =
       linking(name).flatMap(
-        _.set(CollectionId(req.id), req.fields.map(f => f.name -> f.value)).left
-          .map(fail)
-          .map(_ => CollectionSetDone(req.id, req.fields.map(_.name)))
+        _.set(
+          CollectionId(req.id.value),
+          req.fields.map(f => SourceCollection.SetFieldsPart1(f.name.value) -> SourceCollection.SetFieldsPart2(f.value.value))
+        ).left
+          .map(failed)
+          .map(_ => CollectionSetDone(CollectionSetDone.Id(req.id.value), req.fields.map(f => CollectionSetDone.Fields(f.name.value))))
       )
 
     // ── audit, gaps, sync ─────────────────────────────────────────────────────────────────────
 
-    def audit(name: com.histmersion.domain.library.collections.CollectionsService.Implementation.AuditName): Either[Api.Error, CollectionAudit] =
+    def audit(name: CollectionName): Either[Api.Error, CollectionAudit] =
       val recs = linked()
       val records =
-        recs.map(r => CollectionRecord(r.citekey, CollectionId(r.id), r.title, r.authors, r.year.map(Year(_))))
+        recs.map(r =>
+          CollectionRecord(
+            CollectionRecord.Key(r.citekey.value),
+            CollectionId(r.id.value),
+            CollectionRecord.Title(r.title.value),
+            r.authors.map(a => CollectionRecord.Authors(a.value)),
+            r.year.map(y => Year(y.value))
+          )
+        )
       for
         c <- linking(name)
-        found <- c.audit(records).left.map(fail)
+        found <- c.audit(records).left.map(failed)
       yield CollectionAudit(
         found.map { f =>
           CollectionAudit.Row(
-            f.id.value,
-            f.keys,
-            f.issues.map(_.code),
-            f.issues.map(_.label),
-            CollectionRecordView(f.record.title, f.record.authors, f.record.year.map(_.value)),
-            f.item.map(i => CollectionRecordView(i.title.getOrElse(""), i.authors, i.year.map(_.value))),
-            Option.when(f.fixable)(f.record.key)
+            CollectionAudit.Row.Id(f.id.value),
+            f.keys.map(k => CollectionAudit.Row.Citekeys(k.value)),
+            f.issues.map(i => CollectionAudit.Row.Codes(i.code.value)),
+            f.issues.map(i => CollectionAudit.Row.Labels(i.label.value)),
+            CollectionRecordView(
+              Title(f.record.title.value),
+              f.record.authors.map(a => AuthorName(a.value)),
+              apiYear(f.record.year)
+            ),
+            f.item.map(i => CollectionRecordView(Title(i.title.fold("")(_.value)), apiAuthors(i.authors), apiYear(i.year))),
+            Option.when(f.fixable.value)(CollectionAudit.Row.Fix(f.record.key.value))
           )
         },
-        recs.flatMap(_.id.trim.toIntOption).distinct.size
+        CollectionAudit.Checked(recs.flatMap(_.id.value.trim.toIntOption).distinct.size)
       )
 
-    def gaps(name: com.histmersion.domain.library.collections.CollectionsService.Implementation.GapsName, limit: Option[com.histmersion.domain.library.collections.CollectionsService.Limit]): Either[Api.Error, CollectionGaps] =
+    def gaps(name: CollectionName, limit: Option[Limit]): Either[Api.Error, CollectionGaps] =
       linking(name).map { _ =>
-        val rows = library.gaps(limit).gaps.map(GapOriginal.row)
-        val n = rows.count(_.counted)
-        CollectionGaps(n, rows.size - n, rows.size, rows)
+        val rows = library.gaps(limit.map(l => CollectionLibrary.Limit(l.value))).gaps.map(GapOriginal.row)
+        val n = rows.count(_.counted.value)
+        CollectionGaps(CollectionGaps.Count(n), CollectionGaps.Uncounted(rows.size - n), CollectionGaps.Total(rows.size), rows)
       }
 
-    def sync(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.Implementation.SyncName, req: CollectionSync.Request): Either[Api.Error, CollectionSync] =
+    def sync(caller: Caller, name: CollectionName, req: CollectionSync.Request): Either[Api.Error, CollectionSync] =
       for
-        g <- gaps(name, req.limit)
+        g <- gaps(name, req.limit.map(l => Limit(l.value)))
         c <- linking(name)
       yield
         val pushes =
-          if !req.apply then Nil
+          if !req.apply.value then Nil
           else
-            g.gaps.filter(_.counted).map { r =>
-              pushOne(c, r.citekey).fold(
-                e => CollectionSync.Push(r.citekey, None, Some(e.message)),
-                (id, _) => CollectionSync.Push(r.citekey, Some(id), None)
+            g.gaps.filter(_.counted.value).map { r =>
+              checked(r.citekey).flatMap(pushOne(c, _)).fold(
+                e => CollectionSync.Push(r.citekey, None, Some(CollectionSync.Push.Error(e.message.value))),
+                (id, _) => CollectionSync.Push(r.citekey, Some(CollectionSync.Push.Id(id.value)), None)
               )
             }
-        CollectionSync(g, req.apply, pushes)
+        CollectionSync(g, CollectionSync.Applied(req.apply.value), pushes)
 
     // ── archive.org ───────────────────────────────────────────────────────────────────────────
 
-    private def archiveItem(i: CollectionItem): ArchiveItem =
-      ArchiveItem(
-        i.id.value,
-        i.title,
-        i.authors,
-        i.year.map(_.value),
-        i.publisher,
-        i.description,
-        i.restricted,
-        i.files.map(f => ArchiveFile(f.name, f.format, f.megabytes.getOrElse(0.0)))
+    private def archiveFile(f: CollectionFile): ArchiveFile =
+      ArchiveFile(
+        ArchiveFile.Name(f.name.value),
+        f.format.map(x => ArchiveFile.Format(x.value)),
+        ArchiveFile.Megabytes(f.megabytes.fold(0.0)(_.value))
       )
 
-    def archiveSearch(q: com.histmersion.domain.library.search.Search.Query, rows: Option[com.histmersion.domain.library.collections.CollectionsService.Limit]): Either[Api.Error, ArchiveSearchResult] =
-      val query = q.trim
-      if query.isEmpty then Left(fail(com.histmersion.domain.library.collections.CollectionsService.Problem("give a search query")))
+    private def archiveItem(i: CollectionItem): ArchiveItem =
+      ArchiveItem(
+        ArchiveItem.Identifier(i.id.value),
+        i.title.map(t => ArchiveItem.Title(t.value)),
+        i.authors.map(a => ArchiveItem.Creator(a.value)),
+        apiYear(i.year),
+        i.publisher.map(p => ArchiveItem.Publisher(p.value)),
+        i.description.map(d => ArchiveItem.Description(d.value)),
+        ArchiveItem.LendingOnly(i.restricted.value),
+        i.files.map(archiveFile)
+      )
+
+    def archiveSearch(q: com.histmersion.domain.library.search.Search.Query, rows: Option[Limit]): Either[Api.Error, ArchiveSearchResult] =
+      val query = q.value.trim
+      if query.isEmpty then Left(fail("give a search query"))
       else
         for
           c <- lookup(ArchiveOrg)
           items <- c
-            .search(CollectionQuery(Some(query), Some(rows.filter(_ > 0).getOrElse(archiveRows))))
+            .search(CollectionQuery(Some(CollectionQuery.Text(query)), Some(CollectionQuery.Limit(rows.filter(_.value > 0).getOrElse(archiveRows).value))))
             .left
-            .map(fail)
-        yield ArchiveSearchResult(query, items.size, items.map(archiveItem))
+            .map(failed)
+        yield ArchiveSearchResult(ArchiveSearchResult.Query(query), ArchiveSearchResult.Count(items.size), items.map(archiveItem))
 
     private def archiveFound(c: HostCollection, id: com.histmersion.domain.library.ArchiveId): Either[Api.Error, CollectionItem] =
-      c.item(CollectionId(id)).left.map(fail).flatMap(_.toRight(fail(s"no archive.org item '$id'")))
+      c.item(CollectionId(id.value)).left.map(failed).flatMap(_.toRight(fail(s"no archive.org item '$id'")))
 
     def archiveInfo(id: com.histmersion.domain.library.ArchiveId): Either[Api.Error, ArchiveItem] =
       lookup(ArchiveOrg).flatMap(archiveFound(_, id)).map(archiveItem)
@@ -572,63 +615,22 @@ object CollectionsService:
     def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report] =
       for
         c <- lookup(ArchiveOrg)
-        item <- archiveFound(c, req.id)
+        item <- archiveFound(c, com.histmersion.domain.library.ArchiveId(req.id.value))
         _ <- Either.cond(
-          !item.restricted,
+          !item.restricted.value,
           (),
           fail(
             s"'${item.id.value}' is a lending-only item — borrow it on archive.org; " +
               "it is not downloadable here (no DRM circumvention)"
           )
         )
-        file <- c.file(item, req.format).left.map(fail)
+        file <- c.file(item, req.format.map(f => SourceCollection.FileFormat(f.value))).left.map(failed)
         report <- library.archiveImport(
           archiveItem(item),
-          ArchiveFile(file.name, file.format, file.megabytes.getOrElse(0.0)),
+          archiveFile(file),
           req
         )
       yield report
 
-  object Implementation:
-    type RegistryResultKey = com.histmersion.domain.library.collections.CollectionsService.RegistryKey
-    val RegistryResultKey: _root_.com.histmersion.domain.library.collections.CollectionsService.RegistryKey.type = _root_.com.histmersion.domain.library.collections.CollectionsService.RegistryKey
-    type ArchiveRows = ArchiveRows.T
-    object ArchiveRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-    type LookupName = LookupName.T
-    object LookupName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkingName = LinkingName.T
-    object LinkingName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CollectionName = CollectionName.T
-    object CollectionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SearchName = SearchName.T
-    object SearchName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SearchUnlinked = SearchUnlinked.T
-    object SearchUnlinked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ImportItemName = ImportItemName.T
-    object ImportItemName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkName = LinkName.T
-    object LinkName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PushOneResultPart2Part1 = PushOneResultPart2Part1.T
-    object PushOneResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PushOneResultPart2Part2 = PushOneResultPart2Part2.T
-    object PushOneResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PushName = PushName.T
-    object PushName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdateOneName = UpdateOneName.T
-    object UpdateOneName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdateAllName = UpdateAllName.T
-    object UpdateAllName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdateAllApply = UpdateAllApply.T
-    object UpdateAllApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetName = SetName.T
-    object SetName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AuditName = AuditName.T
-    object AuditName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GapsName = GapsName.T
-    object GapsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SyncName = SyncName.T
-    object SyncName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** The most entries a search shows when not told. */
-  val SearchLimit: com.histmersion.domain.library.collections.CollectionsService.SearchLimit = com.histmersion.domain.library.collections.CollectionsService.SearchLimit(20)
+  val SearchLimit: Limit = Limit(20)
