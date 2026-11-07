@@ -62,7 +62,7 @@ final class Approvals(
           q.state.map(s => Paging.Page.CountState(s.wire.value)).toList,
           Option.when(more)(Filter.Last(rows.last.id.toString)),
           facets.map((name, vs) =>
-            (Facet.Name(name.value), vs.map((v, n) => (Facet.Value(v.value), Facet.Count(n.value))))
+            (Facet.Name(name), vs.map((v, n) => (Facet.Value(v), Facet.Count(n.value))))
           )
         )
       )

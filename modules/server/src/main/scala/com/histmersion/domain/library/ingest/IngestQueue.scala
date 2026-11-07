@@ -258,7 +258,7 @@ final class IngestQueue(
             Queue.fulfil(item, com.histmersion.api.library.Citekey(citekey.value), Some(Queue.QueueItem.ClosedBy(jobId.value)))
           ) match
             case Right(_) => s"ticked off acquisition item $id"
-            case Left(e)  => warning(e.message.value)
+            case Left(e)  => warning(e.message)
     catch
       // Storage failures are not Left(ApiError). The source is already committed; preserve its
       // successful job and report the bookkeeping failure, without swallowing interruption.
@@ -296,7 +296,7 @@ final class IngestQueue(
                           Queue.fulfil(item, com.histmersion.api.library.Citekey(citekey.value), Some(Queue.QueueItem.ClosedBy(jobId.value)))
                         )
                         .left
-                        .map(e => AcquireMatch.Problem(e.message.value))
+                        .map(e => AcquireMatch.Problem(e.message))
                     )
                     .map(_ => ())
               )

@@ -872,9 +872,9 @@ final class AgentsControllers(
           Option.when(more)(com.histmersion.api.library.Filter.Last(rows.last.id.value)),
           facets.map((name, values) =>
             (
-              com.histmersion.api.library.Facet.Name(name.value),
+              com.histmersion.api.library.Facet.Name(name),
               values.map((v, n) =>
-                (com.histmersion.api.library.Facet.Value(v.value), com.histmersion.api.library.Facet.Count(n.value))
+                (com.histmersion.api.library.Facet.Value(v), com.histmersion.api.library.Facet.Count(n.value))
               )
             )
           )
