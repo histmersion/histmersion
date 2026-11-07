@@ -1,5 +1,7 @@
 package com.histmersion.plugins.vaults
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.plugin.*
 import org.ekrich.config.ConfigFactory
 
@@ -53,12 +55,12 @@ class VaultsSuite extends munit.FunSuite:
   test("locate: a bare name on the given PATH, a full path as given, and what is missing"):
     val d = bin()
     val t = script(d, "tool", "exit 0\n")
-    assertEquals(Subprocess.locate("tool", Some(s"/nonexistent:$d")), Right(t.toString))
+    assertEquals(Subprocess.locate(com.histmersion.plugins.vaults.Subprocess.Tool("tool"), Some(s"/nonexistent:$d")), Right(t.toString))
     assertEquals(Subprocess.locate(t.toString, None), Right(t.toString))
-    assert(Subprocess.locate("tool", Some("/nonexistent")).left.exists(_.contains("not found on the PATH")))
-    assert(Subprocess.locate("tool", None).isLeft)
+    assert(Subprocess.locate(com.histmersion.plugins.vaults.Subprocess.Tool("tool"), Some(com.histmersion.plugin.Plugin.Context.EnvResult("/nonexistent"))).left.exists(_.contains("not found on the PATH")))
+    assert(Subprocess.locate(com.histmersion.plugins.vaults.Subprocess.Tool("tool"), None).isLeft)
     assert(Subprocess.locate(d.resolve("nope").toString, None).left.exists(_.contains("not an executable")))
-    assert(Subprocess.locate(" ", Some(d.toString)).isLeft)
+    assert(Subprocess.locate(com.histmersion.plugins.vaults.Subprocess.Tool(" "), Some(d.toString)).isLeft)
 
   test("run: argv without a shell, stdin, extra env, exit code and both streams"):
     val d = bin()
@@ -67,8 +69,8 @@ class VaultsSuite extends munit.FunSuite:
       "echoer",
       "IFS= read -r line\nprintf '%s|%s|%s\\n' \"$1\" \"$line\" \"$EXTRA\"\necho oops >&2\nexit 3\n"
     )
-    val r = Subprocess.run(List(t.toString, "a b; rm -rf /tmp/x"), Map("EXTRA" -> "e"), Some("in\n"), 5.seconds)
-    assertEquals(r, Right(Subprocess.Result(3, "a b; rm -rf /tmp/x|in|e\n", "oops\n")))
+    val r = Subprocess.run(List(t.toString, com.histmersion.plugin.Processes.RunArgv("a b; rm -rf /tmp/x")), Map("EXTRA" -> "e"), Some(com.histmersion.plugin.Processes.RunStdin("in\n")), 5.seconds)
+    assertEquals(r, Right(Subprocess.Result(com.histmersion.plugin.Processes.Result.Exit(3), com.histmersion.plugin.Processes.Result.Out("a b; rm -rf /tmp/x|in|e\n"), com.histmersion.plugin.Processes.Result.Err("oops\n"))))
 
   test("run: a tool that waits on a prompt sees end-of-file; one that hangs is killed at the timeout"):
     val d = bin()
@@ -81,18 +83,18 @@ class VaultsSuite extends munit.FunSuite:
     assert((System.nanoTime - t0).nanos < 10.seconds)
 
   test("pure helpers: the problem line, the value without its line break, arguments that look like options"):
-    assertEquals(Subprocess.problem("\n  Error: locked \nmore"), "Error: locked")
-    assertEquals(Subprocess.problem(""), "no message")
-    assertEquals(Subprocess.value(" v \n"), " v ")
-    assertEquals(Subprocess.value("v\r\n"), "v")
-    assertEquals(Subprocess.plain("x", "--help"), Left("x may not start with '-'"))
-    assertEquals(Subprocess.plain("x", ""), Left("x is empty"))
-    assertEquals(Vaults.entryAndField("A/B#UserName", "password"), ("A/B", "UserName"))
-    assertEquals(Vaults.entryAndField("A#B#c", "password"), ("A#B", "c"))
-    assertEquals(Vaults.entryAndField("A/B", "password"), ("A/B", "password"))
-    assertEquals(Vaults.entryAndField("A/B#", "password"), ("A/B", "password"))
-    assertEquals(Vaults.expand("~/x.kdbx", Some("/h")), "/h/x.kdbx")
-    assertEquals(Vaults.expand("/a/~/x", Some("/h")), "/a/~/x")
+    assertEquals(Subprocess.problem(com.histmersion.plugins.vaults.Subprocess.Problem("\n  Error: locked \nmore")), "Error: locked")
+    assertEquals(Subprocess.problem(com.histmersion.plugins.vaults.Subprocess.Problem("")), "no message")
+    assertEquals(Subprocess.value(com.histmersion.plugins.vaults.Subprocess.ValueOut(" v \n")), " v ")
+    assertEquals(Subprocess.value(com.histmersion.plugins.vaults.Subprocess.ValueOut("v\r\n")), "v")
+    assertEquals(Subprocess.plain(com.histmersion.plugins.vaults.Vaults.Operation("x"), com.histmersion.plugins.vaults.Subprocess.Text("--help")), Left("x may not start with '-'"))
+    assertEquals(Subprocess.plain(com.histmersion.plugins.vaults.Vaults.Operation("x"), com.histmersion.plugins.vaults.Subprocess.Text("")), Left("x is empty"))
+    assertEquals(Vaults.entryAndField(com.histmersion.plugin.Secret.Vault.ResolveRef("A/B#UserName"), com.histmersion.plugins.vaults.Vaults.Field("password")), ("A/B", "UserName"))
+    assertEquals(Vaults.entryAndField(com.histmersion.plugin.Secret.Vault.ResolveRef("A#B#c"), com.histmersion.plugins.vaults.Vaults.Field("password")), ("A#B", "c"))
+    assertEquals(Vaults.entryAndField(com.histmersion.plugin.Secret.Vault.ResolveRef("A/B"), com.histmersion.plugins.vaults.Vaults.Field("password")), ("A/B", "password"))
+    assertEquals(Vaults.entryAndField(com.histmersion.plugin.Secret.Vault.ResolveRef("A/B#"), com.histmersion.plugins.vaults.Vaults.Field("password")), ("A/B", "password"))
+    assertEquals(Vaults.expand(com.histmersion.plugins.vaults.Vaults.Path("~/x.kdbx"), Some(com.histmersion.plugin.Plugin.Context.EnvResult("/h"))), "/h/x.kdbx")
+    assertEquals(Vaults.expand(com.histmersion.plugins.vaults.Vaults.Path("/a/~/x"), Some(com.histmersion.plugin.Plugin.Context.EnvResult("/h"))), "/a/~/x")
 
   // ── KeePassXC ───────────────────────────────────────────────────────────────────────────────
 
@@ -127,11 +129,11 @@ class VaultsSuite extends munit.FunSuite:
   test("keepassxc: the password comes from a Secret over stdin, never the command line; the attribute defaults"):
     val d = bin(); fakeKeePassXc(d)
     val db = Files.writeString(d.resolve("v.kdbx"), "")
-    val ctx = Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("KP") -> "master-pw"))
+    val ctx = Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env(com.histmersion.plugin.Secret.Ref.Env.Name("KP")) -> "master-pw"))
     val v = registered(KeePassXcPlugin(), s"""database = "$db", password = "env:KP"""", ctx)
     assertEquals(v.name, "keepassxc")
-    assertEquals(v.resolve("Histmersion/Portal"), Right("value of Histmersion/Portal/password"))
-    assertEquals(v.resolve("Histmersion/Portal#UserName"), Right("value of Histmersion/Portal/UserName"))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("Histmersion/Portal")), Right("value of Histmersion/Portal/password"))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("Histmersion/Portal#UserName")), Right("value of Histmersion/Portal/UserName"))
     val args = Files.readAllLines(d.resolve("kp-args")).asScala.toList
     assertEquals(args, List("show", "-q", "-a", "UserName", db.toString, "Histmersion/Portal"))
     assert(!args.exists(_.contains("master-pw")))
@@ -142,13 +144,13 @@ class VaultsSuite extends munit.FunSuite:
     val key = Files.writeString(d.resolve("v.key"), "k")
     val withKey =
       registered(KeePassXcPlugin(), s"""database = "$db", key-file = "$key"""", Ctx(Map("PATH" -> d.toString)))
-    assertEquals(withKey.resolve("E"), Right("value of E/password"))
+    assertEquals(withKey.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("E")), Right("value of E/password"))
     assertEquals(
       Files.readAllLines(d.resolve("kp-args")).asScala.toList,
       List("show", "-q", "-a", "password", "-k", key.toString, "--no-password", db.toString, "E")
     )
     val bare = registered(KeePassXcPlugin(), s"""database = "$db"""", Ctx(Map("PATH" -> d.toString)))
-    assert(bare.resolve("E").left.exists(_.contains("the database is locked")), bare.resolve("E"))
+    assert(bare.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("E")).left.exists(_.contains("the database is locked")), bare.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("E")))
 
   test("keepassxc: a wrong password is locked, a missing entry is named, a hung tool times out, options are refused"):
     val d = bin(); fakeKeePassXc(d)
@@ -156,18 +158,18 @@ class VaultsSuite extends munit.FunSuite:
     val wrong = registered(
       KeePassXcPlugin(),
       s"""database = "$db", password = "env:KP"""",
-      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("KP") -> "nope"))
+      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env(com.histmersion.plugin.Secret.Ref.Env.Name("KP")) -> "nope"))
     )
-    assert(wrong.resolve("E").left.exists(_.contains("locked")))
+    assert(wrong.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("E")).left.exists(_.contains("locked")))
     val v = registered(
       KeePassXcPlugin(),
       s"""database = "$db", password = "env:KP", timeout-seconds = 1""",
-      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("KP") -> "master-pw"))
+      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env(com.histmersion.plugin.Secret.Ref.Env.Name("KP")) -> "master-pw"))
     )
-    assertEquals(v.resolve("missing"), Left("keepassxc: no entry 'missing'"))
-    assert(v.resolve("slow").left.exists(_.contains("did not answer within 1 s")))
-    assert(v.resolve("--help").left.exists(_.contains("may not start with '-'")))
-    assert(v.resolve("E#-x").left.exists(_.contains("may not start with '-'")))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("missing")), Left("keepassxc: no entry 'missing'"))
+    assert(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("slow")).left.exists(_.contains("did not answer within 1 s")))
+    assert(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("--help")).left.exists(_.contains("may not start with '-'")))
+    assert(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("E#-x")).left.exists(_.contains("may not start with '-'")))
 
   test("keepassxc: registration names what is missing — the database, the tool, a secret"):
     val d = bin()
@@ -196,42 +198,42 @@ class VaultsSuite extends munit.FunSuite:
   // ── KeePassXC + YubiKey ─────────────────────────────────────────────────────────────────────
 
   test("yubikey: parsing <slot>[:<serial>], lists without repeats, the setting as a string or a list"):
-    assertEquals(YubiKey.parse("2"), Right(YubiKey.Slot(2, None)))
-    assertEquals(YubiKey.parse(" 1:7370001 "), Right(YubiKey.Slot(1, Some(7370001L))))
-    assertEquals(YubiKey.Slot(2, Some(5L)).shown, "2:5")
+    assertEquals(YubiKey.parse(com.histmersion.plugins.vaults.YubiKey.Text("2")), Right(YubiKey.Slot(com.histmersion.plugins.vaults.YubiKey.Slot.Value(2), None)))
+    assertEquals(YubiKey.parse(com.histmersion.plugins.vaults.YubiKey.Text(" 1:7370001 ")), Right(YubiKey.Slot(com.histmersion.plugins.vaults.YubiKey.Slot.Value(1), Some(com.histmersion.plugins.vaults.YubiKey.Slot.Serial(7370001L)))))
+    assertEquals(YubiKey.Slot(com.histmersion.plugins.vaults.YubiKey.Slot.Value(2), Some(com.histmersion.plugins.vaults.YubiKey.Slot.Serial(5L))).shown, "2:5")
     List("3", "0", "x", "2:", "2:abc", "2:-1", "2:1:3", "", ":5").foreach(b =>
       assert(YubiKey.parse(b).left.exists(_.contains("<slot>[:<serial>]")), b)
     )
     assertEquals(
-      YubiKey.parseAll(List("2:1", "", "2:1", "1")),
-      Right(List(YubiKey.Slot(2, Some(1)), YubiKey.Slot(1, None)))
+      YubiKey.parseAll(List(com.histmersion.plugins.vaults.YubiKey.Setting.Entries("2:1"), com.histmersion.plugins.vaults.YubiKey.Setting.Entries(""), com.histmersion.plugins.vaults.YubiKey.Setting.Entries("2:1"), com.histmersion.plugins.vaults.YubiKey.Setting.Entries("1"))),
+      Right(List(YubiKey.Slot(com.histmersion.plugins.vaults.YubiKey.Slot.Value(2), Some(com.histmersion.plugins.vaults.YubiKey.Slot.Serial(1))), YubiKey.Slot(com.histmersion.plugins.vaults.YubiKey.Slot.Value(1), None)))
     )
-    assert(YubiKey.parseAll(List("2:1", "9")).left.exists(_.contains("'9'")))
+    assert(YubiKey.parseAll(List(com.histmersion.plugins.vaults.YubiKey.Setting.Entries("2:1"), com.histmersion.plugins.vaults.YubiKey.Setting.Entries("9"))).left.exists(_.contains("'9'")))
     assertEquals(decode(KeePassXcPlugin(), "").yubikey, None)
     assertEquals(
       decode(KeePassXcPlugin(), "yubikey = \"2:12345678\"").yubikey,
-      Some(YubiKey.Setting(List("2:12345678")))
+      Some(YubiKey.Setting(List(com.histmersion.plugins.vaults.YubiKey.Setting.Entries("2:12345678"))))
     )
-    assertEquals(decode(KeePassXcPlugin(), "yubikey = \"2:1, 1\"").yubikey, Some(YubiKey.Setting(List("2:1", "1"))))
+    assertEquals(decode(KeePassXcPlugin(), "yubikey = \"2:1, 1\"").yubikey, Some(YubiKey.Setting(List(com.histmersion.plugins.vaults.YubiKey.Setting.Entries("2:1"), com.histmersion.plugins.vaults.YubiKey.Setting.Entries("1")))))
     assertEquals(
       decode(KeePassXcPlugin(), "yubikey = [\"2:1\", \"2:2\", \"1\"]").yubikey,
-      Some(YubiKey.Setting(List("2:1", "2:2", "1")))
+      Some(YubiKey.Setting(List(com.histmersion.plugins.vaults.YubiKey.Setting.Entries("2:1"), com.histmersion.plugins.vaults.YubiKey.Setting.Entries("2:2"), com.histmersion.plugins.vaults.YubiKey.Setting.Entries("1"))))
     )
     val c = decode(KeePassXcPlugin(), "")
     assertEquals((c.yubikeyTimeoutSeconds, c.ykman), (30, "ykman"))
 
   test("yubikey: serials from ykman, the plan with and without detection, the last key first"):
-    assertEquals(YubiKey.serials("12345678\n 87654321 \nWARNING: x\n\n"), Set(12345678L, 87654321L))
-    val a = YubiKey.Slot(2, Some(1)); val b = YubiKey.Slot(2, Some(2)); val any = YubiKey.Slot(1, None)
+    assertEquals(YubiKey.serials(com.histmersion.plugins.vaults.YubiKey.SerialsOut("12345678\n 87654321 \nWARNING: x\n\n")), Set(12345678L, 87654321L))
+    val a = YubiKey.Slot(com.histmersion.plugins.vaults.YubiKey.Slot.Value(2), Some(com.histmersion.plugins.vaults.YubiKey.Slot.Serial(1))); val b = YubiKey.Slot(com.histmersion.plugins.vaults.YubiKey.Slot.Value(2), Some(com.histmersion.plugins.vaults.YubiKey.Slot.Serial(2))); val any = YubiKey.Slot(com.histmersion.plugins.vaults.YubiKey.Slot.Value(1), None)
     assertEquals(YubiKey.plan(List(a, b, any), None), (List(a, b, any), Nil))
-    assertEquals(YubiKey.plan(List(a, b, any), Some(Set(2L))), (List(b, any), List(a)))
+    assertEquals(YubiKey.plan(List(a, b, any), Some(Set(com.histmersion.plugins.vaults.YubiKey.Slot.Serial(2L)))), (List(b, any), List(a)))
     assertEquals(YubiKey.plan(List(a, b, any), Some(Set.empty)), (Nil, List(a, b, any)))
-    assertEquals(YubiKey.plan(List(a, b, any), Some(Set(1L, 2L)), Some(b)), (List(b, a, any), Nil))
-    assertEquals(YubiKey.plan(List(a, b), Some(Set(1L)), Some(b)), (List(a), List(b)))
+    assertEquals(YubiKey.plan(List(a, b, any), Some(Set(com.histmersion.plugins.vaults.YubiKey.Slot.Serial(1L), com.histmersion.plugins.vaults.YubiKey.Slot.Serial(2L))), Some(b)), (List(b, a, any), Nil))
+    assertEquals(YubiKey.plan(List(a, b), Some(Set(com.histmersion.plugins.vaults.YubiKey.Slot.Serial(1L))), Some(b)), (List(a), List(b)))
 
   test("yubikey: KeePassXC's messages — absent or failed is the next key; credentials, entry, touch stop"):
     import YubiKey.Failure.*
-    def f(m: String) = YubiKey.failure(m.toLowerCase(java.util.Locale.ROOT), "E")
+    def f(m: String) = YubiKey.failure(m.toLowerCase(java.util.Locale.ROOT), com.histmersion.plugins.vaults.YubiKey.Setting.Entries("E"))
     assert(f("Could not find hardware key with serial number 1. Please plug it in to continue.").isInstanceOf[Next])
     assert(f("Failed to complete a challenge-response, the specific error was: x").isInstanceOf[Next])
     assert(f("Hardware key slot is not configured.").isInstanceOf[Next])
@@ -240,7 +242,7 @@ class VaultsSuite extends munit.FunSuite:
         "Please present or touch your YubiKey to continue.\nError while reading the database: Invalid credentials were provided"
       ).isInstanceOf[Stop]
     )
-    assertEquals(f("Hardware key timed out waiting for user interaction."), Stop("the YubiKey was not touched in time"))
+    assertEquals(f("Hardware key timed out waiting for user interaction."), Stop(com.histmersion.plugins.vaults.YubiKey.Failure.Stop.Why("the YubiKey was not touched in time")))
     assertEquals(f("Could not find entry with path E."), Stop("no entry 'E'"))
     assert(f("Segmentation fault").isInstanceOf[Stop])
     assertEquals(
@@ -323,13 +325,13 @@ class VaultsSuite extends munit.FunSuite:
 
   private def ykVault(d: Path, extra: String, pw: String = "master-pw"): (Secret.Vault, Ctx) =
     val db = d.resolve("v.kdbx"); if !Files.exists(db) then Files.writeString(db, "")
-    val ctx = Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("KP") -> pw))
+    val ctx = Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env(com.histmersion.plugin.Secret.Ref.Env.Name("KP")) -> pw))
     (registered(KeePassXcPlugin(), s"""database = "$db", password = "env:KP", $extra""", ctx), ctx)
 
   test("yubikey: a single entry adds -y <slot:serial> beside the password on stdin, and says to touch it"):
     val d = bin(); fakeKeePassXcYk(d); plug(d, "12345678")
     val (v, ctx) = ykVault(d, "yubikey = \"2:12345678\"")
-    assertEquals(v.resolve("Portal"), Right("secret of Portal"))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("Portal")), Right("secret of Portal"))
     assertEquals(calls(d), List(s"show -q -a password -y 2:12345678 ${d.resolve("v.kdbx")} Portal"))
     assert(ctx.infos.exists(m => m.contains("touch your YubiKey") && m.contains("2:12345678")), ctx.infos)
     assert(
@@ -341,19 +343,19 @@ class VaultsSuite extends munit.FunSuite:
   test("yubikey: with ykman, an absent first key is skipped without running keepassxc-cli; the present one opens"):
     val d = bin(); fakeKeePassXcYk(d); fakeYkman(d); plug(d, "87654321")
     val (v, _) = ykVault(d, "yubikey = [\"2:12345678\", \"2:87654321\", \"1\"]")
-    assertEquals(v.resolve("Portal"), Right("secret of Portal"))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("Portal")), Right("secret of Portal"))
     assertEquals(calls(d).map(_.split(' ')(5)), List("2:87654321"))
     assertEquals(Files.readAllLines(d.resolve("ykman-calls")).asScala.toList, List("list --serials"))
     // the key that worked goes first next time
     plug(d, "12345678", "87654321")
-    assertEquals(v.resolve("Other"), Right("secret of Other"))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("Other")), Right("secret of Other"))
     assertEquals(calls(d).map(_.split(' ')(5)), List("2:87654321", "2:87654321"))
 
   test("yubikey: with ykman and no key plugged in, nothing is run and the error lists what was configured"):
     val d = bin(); fakeKeePassXcYk(d); fakeYkman(d); plug(d)
     val (v, _) = ykVault(d, "yubikey = [\"2:12345678\", \"1\"]")
     assertEquals(
-      v.resolve("Portal"),
+      v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("Portal")),
       Left(
         "keepassxc: none of the configured YubiKeys is connected (ykman sees no YubiKey) — 2:12345678, 1; plug one in"
       )
@@ -363,11 +365,11 @@ class VaultsSuite extends munit.FunSuite:
   test("yubikey: without detection, entries are tried in order — absent and failed slots go on, the error names each"):
     val d = bin(); fakeKeePassXcYk(d); plug(d, "87654321")
     val (v, _) = ykVault(d, "ykman = \"\", yubikey = [\"2:12345678\", \"1\", \"2:87654321\"]")
-    assertEquals(v.resolve("Portal"), Right("secret of Portal"))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("Portal")), Right("secret of Portal"))
     assertEquals(calls(d).map(_.split(' ')(5)), List("2:12345678", "1", "2:87654321"))
     val d2 = bin(); fakeKeePassXcYk(d2); plug(d2)
     val (none, _) = ykVault(d2, "ykman = \"\", yubikey = [\"2:12345678\", \"2\"]")
-    val err = none.resolve("Portal")
+    val err = none.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("Portal"))
     assert(
       err.left.exists(e =>
         e.contains("2:12345678: not connected (Error while reading the database: Could not find hardware key") &&
@@ -380,7 +382,7 @@ class VaultsSuite extends munit.FunSuite:
   test("yubikey: a wrong password stops at the first key — no other key is tried, and the password is never shown"):
     val d = bin(); fakeKeePassXcYk(d); plug(d, "1", "2")
     val (v, _) = ykVault(d, "ykman = \"\", yubikey = [\"2:1\", \"2:2\"]", pw = "wrong-pw")
-    val r = v.resolve("Portal")
+    val r = v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("Portal"))
     assert(
       r.left.exists(e =>
         e.contains("2:1: invalid credentials") && e.contains("not trying further keys") &&
@@ -395,7 +397,7 @@ class VaultsSuite extends munit.FunSuite:
     val d = bin(); fakeKeePassXcYk(d); plug(d, "1"); Files.writeString(d.resolve("slow"), "")
     val (v, _) = ykVault(d, "ykman = \"\", yubikey = [\"2:1\", \"2:2\"], yubikey-timeout-seconds = 1")
     val t0 = System.nanoTime
-    val r = v.resolve("Portal")
+    val r = v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("Portal"))
     assert(
       r.left.exists(e =>
         e.contains("2:1: not touched in time (keepassxc-cli did not answer within 1 s)") &&
@@ -410,14 +412,14 @@ class VaultsSuite extends munit.FunSuite:
     val d = bin(); fakeKeePassXcYk(d); plug(d, "5"); Files.writeString(d.resolve("key-only"), "")
     val db = Files.writeString(d.resolve("v.kdbx"), ""); val key = Files.writeString(d.resolve("v.key"), "k")
     val v = registered(KeePassXcPlugin(), s"""database = "$db", yubikey = "2:5"""", Ctx(Map("PATH" -> d.toString)))
-    assertEquals(v.resolve("E"), Right("secret of E"))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("E")), Right("secret of E"))
     assertEquals(calls(d).last, s"show -q -a password -y 2:5 --no-password $db E")
     val k = registered(
       KeePassXcPlugin(),
       s"""database = "$db", key-file = "$key", yubikey = "2:5"""",
       Ctx(Map("PATH" -> d.toString))
     )
-    assertEquals(k.resolve("E"), Right("secret of E"))
+    assertEquals(k.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("E")), Right("secret of E"))
     assertEquals(calls(d).last, s"show -q -a password -k $key -y 2:5 --no-password $db E")
 
   test("yubikey: registration refuses a malformed entry and a wrong ykman path; a missing entry is named"):
@@ -430,29 +432,29 @@ class VaultsSuite extends munit.FunSuite:
     assertEquals(reg(s"""ykman = "${d.resolve("no-ykman")}"""").isRight, true) // no yubikey: ykman is not looked at
     script(d, "keepassxc-cli", "echo 'Could not find entry with path missing.' >&2\nexit 1\n")
     val (v, _) = ykVault(d, "ykman = \"\", yubikey = [\"2:1\", \"2:2\"]")
-    assertEquals(v.resolve("missing"), Left("keepassxc: no entry 'missing'"))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("missing")), Left("keepassxc: no entry 'missing'"))
 
   // ── KeePassXC: one open for many references ────────────────────────────────────────────────
 
   test("keepassxc session: the prompt, escaping for the interactive line, the answer without its echo"):
-    assertEquals(KeePassXcSession.prompt("v.kdbx> "), Some("v.kdbx> "))
-    assertEquals(KeePassXcSession.prompt("Please touch\nResearch> "), Some("Research> "))
-    assertEquals(KeePassXcSession.prompt("v.kdbx"), None)
+    assertEquals(KeePassXcSession.prompt(com.histmersion.plugin.Processes.Session.OutResult("v.kdbx> ")), Some("v.kdbx> "))
+    assertEquals(KeePassXcSession.prompt(com.histmersion.plugin.Processes.Session.OutResult("Please touch\nResearch> ")), Some("Research> "))
+    assertEquals(KeePassXcSession.prompt(com.histmersion.plugin.Processes.Session.OutResult("v.kdbx")), None)
     assertEquals(KeePassXcSession.escape("A/Two words \"q\" b\\s\tt"), "A/Two\\ words\\ \\\"q\\\"\\ b\\\\s\\\tt")
-    assertEquals(KeePassXcSession.command("password", "A/Two words"), "show -q -a password A/Two\\ words")
-    assert(!KeePassXcSession.sendable("a\nb") && KeePassXcSession.sendable("a b"))
+    assertEquals(KeePassXcSession.command(com.histmersion.plugins.vaults.Vaults.Field("password"), com.histmersion.plugins.vaults.KeePassXcSession.Entry("A/Two words")), "show -q -a password A/Two\\ words")
+    assert(!KeePassXcSession.sendable(com.histmersion.plugins.vaults.KeePassXcSession.Entry("a\nb")) && KeePassXcSession.sendable("a b"))
     val out = "v.kdbx> show -q -a password A\nsecret\nv.kdbx> "
-    assertEquals(KeePassXcSession.segment(out, 8, "v.kdbx> "), Some("show -q -a password A\nsecret\n"))
-    assertEquals(KeePassXcSession.segment(out.dropRight(8), 8, "v.kdbx> "), None, "not answered yet")
-    assertEquals(KeePassXcSession.segment("v.kdbx> ", 8, "v.kdbx> "), None, "the old prompt is not an answer")
-    assertEquals(KeePassXcSession.answer("show -q -a password A\nsecret\n", "show -q -a password A"), "secret")
+    assertEquals(KeePassXcSession.segment(out, com.histmersion.plugins.vaults.KeePassXcSession.SegmentFrom(8), com.histmersion.plugins.vaults.KeePassXcSession.Prompt("v.kdbx> ")), Some("show -q -a password A\nsecret\n"))
+    assertEquals(KeePassXcSession.segment(out.dropRight(8), com.histmersion.plugins.vaults.KeePassXcSession.SegmentFrom(8), com.histmersion.plugins.vaults.KeePassXcSession.Prompt("v.kdbx> ")), None, "not answered yet")
+    assertEquals(KeePassXcSession.segment(com.histmersion.plugin.Processes.Session.OutResult("v.kdbx> "), com.histmersion.plugins.vaults.KeePassXcSession.SegmentFrom(8), com.histmersion.plugins.vaults.KeePassXcSession.Prompt("v.kdbx> ")), None, "the old prompt is not an answer")
+    assertEquals(KeePassXcSession.answer(com.histmersion.plugins.vaults.KeePassXcSession.Segment("show -q -a password A\nsecret\n"), com.histmersion.plugins.vaults.KeePassXcSession.Command("show -q -a password A")), "secret")
     assertEquals(
-      KeePassXcSession.answer("secret\n", "show -q -a password A"),
+      KeePassXcSession.answer(com.histmersion.plugins.vaults.KeePassXcSession.Segment("secret\n"), com.histmersion.plugins.vaults.KeePassXcSession.Command("show -q -a password A")),
       "secret",
       "a session without readline echoes nothing"
     )
     assertEquals(
-      KeePassXcSession.answer("show -q -a password A\n", "show -q -a password A"),
+      KeePassXcSession.answer(com.histmersion.plugins.vaults.KeePassXcSession.Segment("show -q -a password A\n"), com.histmersion.plugins.vaults.KeePassXcSession.Command("show -q -a password A")),
       "",
       "a missing entry prints nothing"
     )
@@ -463,7 +465,7 @@ class VaultsSuite extends munit.FunSuite:
     val d = bin(); fakeKeePassXcYk(d); plug(d, "12345678")
     val (v, ctx) = ykVault(d, "ykman = \"\", yubikey = \"2:12345678\"")
     val quoted = "B/\"quoted\" back\\slash"
-    val r = v.resolveAll(List("A/One", "A/Two words#UserName", "missing", quoted, "A/One"))
+    val r = v.resolveAll(List(com.histmersion.plugin.Secret.Vault.ResolveRef("A/One"), com.histmersion.plugin.Secret.Vault.ResolveRef("A/Two words#UserName"), com.histmersion.plugin.Secret.Vault.ResolveRef("missing"), quoted, com.histmersion.plugin.Secret.Vault.ResolveRef("A/One")))
     assertEquals(
       r,
       Map(
@@ -481,20 +483,20 @@ class VaultsSuite extends munit.FunSuite:
   test("keepassxc batch: the first YubiKey absent, the second opens the session; it goes first next time"):
     val d = bin(); fakeKeePassXcYk(d); plug(d, "87654321")
     val (v, ctx) = ykVault(d, "ykman = \"\", yubikey = [\"2:12345678\", \"2:87654321\"]")
-    assertEquals(v.resolveAll(List("A", "B")), Map("A" -> Right("secret of A"), "B" -> Right("secret of B")))
+    assertEquals(v.resolveAll(List(com.histmersion.plugin.Secret.Vault.ResolveRef("A"), com.histmersion.plugin.Secret.Vault.ResolveRef("B"))), Map("A" -> Right("secret of A"), "B" -> Right("secret of B")))
     assertEquals(
       calls(d).map(_.split(' ').take(4).mkString(" ")),
       List("open -q -y 2:12345678", "open -q -y 2:87654321")
     )
     assertEquals(ctx.infos.count(_.contains("touch your YubiKey")), 2, "one line per open attempt")
     plug(d, "12345678", "87654321")
-    assertEquals(v.resolveAll(List("C", "D")), Map("C" -> Right("secret of C"), "D" -> Right("secret of D")))
+    assertEquals(v.resolveAll(List(com.histmersion.plugin.Secret.Vault.ResolveRef("C"), com.histmersion.plugin.Secret.Vault.ResolveRef("D"))), Map("C" -> Right("secret of C"), "D" -> Right("secret of D")))
     assertEquals(calls(d).drop(2).map(_.split(' ').take(4).mkString(" ")), List("open -q -y 2:87654321"))
 
   test("keepassxc batch: a wrong password fails every reference after one open; no further key is tried"):
     val d = bin(); fakeKeePassXcYk(d); plug(d, "1", "2")
     val (v, _) = ykVault(d, "ykman = \"\", yubikey = [\"2:1\", \"2:2\"]", pw = "wrong-pw")
-    val r = v.resolveAll(List("A", "B"))
+    val r = v.resolveAll(List(com.histmersion.plugin.Secret.Vault.ResolveRef("A"), com.histmersion.plugin.Secret.Vault.ResolveRef("B")))
     assertEquals(r.keySet, Set("A", "B"))
     assert(
       r.values.forall(
@@ -515,28 +517,28 @@ class VaultsSuite extends munit.FunSuite:
     val v = registered(
       KeePassXcPlugin(),
       s"""database = "$db", password = "env:KP"""",
-      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("KP") -> "master-pw"))
+      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env(com.histmersion.plugin.Secret.Ref.Env.Name("KP")) -> "master-pw"))
     )
     assertEquals(
-      v.resolveAll(List("A", "B#UserName")),
+      v.resolveAll(List(com.histmersion.plugin.Secret.Vault.ResolveRef("A"), com.histmersion.plugin.Secret.Vault.ResolveRef("B#UserName"))),
       Map("A" -> Right("secret of A"), "B#UserName" -> Right("secret of B/UserName"))
     )
     assertEquals(calls(d), List(s"open -q $db"))
-    assertEquals(v.resolveAll(List("C")), Map("C" -> Right("secret of C")))
+    assertEquals(v.resolveAll(List(com.histmersion.plugin.Secret.Vault.ResolveRef("C"))), Map("C" -> Right("secret of C")))
     assertEquals(calls(d).last, s"show -q -a password $db C")
-    val bad = v.resolveAll(List("-x", "D", "E"))
+    val bad = v.resolveAll(List(com.histmersion.plugin.Secret.Vault.ResolveRef("-x"), com.histmersion.plugin.Secret.Vault.ResolveRef("D"), com.histmersion.plugin.Secret.Vault.ResolveRef("E")))
     assertEquals(bad("-x"), Left("the entry may not start with '-'"))
     assertEquals((bad("D"), bad("E")), (Right("secret of D"), Right("secret of E")))
     assertEquals(calls(d).last, s"open -q $db", "the refused one ran nothing")
     val wrong = registered(
       KeePassXcPlugin(),
       s"""database = "$db", password = "env:KP"""",
-      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("KP") -> "nope"))
+      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env(com.histmersion.plugin.Secret.Ref.Env.Name("KP")) -> "nope"))
     )
-    assert(wrong.resolveAll(List("A", "B")).values.forall(_.left.exists(_.contains("the database is locked"))))
+    assert(wrong.resolveAll(List(com.histmersion.plugin.Secret.Vault.ResolveRef("A"), com.histmersion.plugin.Secret.Vault.ResolveRef("B"))).values.forall(_.left.exists(_.contains("the database is locked"))))
 
   test("keepassxc batch against the installed keepassxc-cli and a throwaway database (HISTMERSION_TEST_KEEPASSXC=1)"):
-    val cli = Subprocess.locate("keepassxc-cli", sys.env.get("PATH"))
+    val cli = Subprocess.locate(com.histmersion.plugins.vaults.Subprocess.Tool("keepassxc-cli"), sys.env.get("PATH"))
     val why = if !sys.env.get("HISTMERSION_TEST_KEEPASSXC").contains("1") then Some("set HISTMERSION_TEST_KEEPASSXC=1")
     else cli.left.toOption
     why.foreach(w => println(s"SKIPPED VaultsSuite real keepassxc-cli: $w"))
@@ -555,10 +557,10 @@ class VaultsSuite extends munit.FunSuite:
     val v = registered(
       KeePassXcPlugin(),
       s"""cli = "$exe", database = "$db", password = "env:KP", ykman = \"\"""",
-      Ctx(Map("PATH" -> sys.env.getOrElse("PATH", "")), Map(Secret.Ref.Env("KP") -> "test-pw"))
+      Ctx(Map("PATH" -> sys.env.getOrElse("PATH", "")), Map(Secret.Ref.Env(com.histmersion.plugin.Secret.Ref.Env.Name("KP")) -> "test-pw"))
     )
     assertEquals(
-      v.resolveAll(List("G/One", "G/Two words \"q\" b\\s", "missing", "Three#UserName", "Three")),
+      v.resolveAll(List(com.histmersion.plugin.Secret.Vault.ResolveRef("G/One"), com.histmersion.plugin.Secret.Vault.ResolveRef("G/Two words \"q\" b\\s"), com.histmersion.plugin.Secret.Vault.ResolveRef("missing"), com.histmersion.plugin.Secret.Vault.ResolveRef("Three#UserName"), com.histmersion.plugin.Secret.Vault.ResolveRef("Three"))),
       Map(
         "G/One" -> Right("first value"),
         "G/Two words \"q\" b\\s" -> Right("second"),
@@ -585,18 +587,18 @@ class VaultsSuite extends munit.FunSuite:
 
   test("1password: op read with the service-account token from a Secret, in the tool's environment only"):
     val d = bin(); fakeOp(d)
-    val ctx = Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("OPT") -> "sa-token"))
+    val ctx = Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env(com.histmersion.plugin.Secret.Ref.Env.Name("OPT")) -> "sa-token"))
     val v = registered(OnePasswordPlugin(), """service-account-token = "env:OPT", account = "me"""", ctx)
     assertEquals(v.name, "1password")
-    assertEquals(v.resolve("op://Private/Portal/password"), Right("op-value"))
-    assertEquals(v.resolve("Private/Portal/password"), Right("op-value"))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("op://Private/Portal/password")), Right("op-value"))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("Private/Portal/password")), Right("op-value"))
     assertEquals(
       Files.readAllLines(d.resolve("op-args")).asScala.toList,
       List("read", "op://Private/Portal/password", "--account", "me")
     )
-    assertEquals(v.resolve("Private/Nope/password"), Left("1password: no item at op://Private/Nope/password"))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("Private/Nope/password")), Left("1password: no item at op://Private/Nope/password"))
     val unsigned = registered(OnePasswordPlugin(), "", Ctx(Map("PATH" -> d.toString)))
-    assert(unsigned.resolve("Private/Portal/password").left.exists(_.contains("not signed in")))
+    assert(unsigned.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("Private/Portal/password")).left.exists(_.contains("not signed in")))
 
   // ── Bitwarden ───────────────────────────────────────────────────────────────────────────────
 
@@ -619,24 +621,24 @@ class VaultsSuite extends munit.FunSuite:
     val v = registered(
       BitwardenPlugin(),
       """session = "env:BWS"""",
-      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env("BWS") -> "sess"))
+      Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env(com.histmersion.plugin.Secret.Ref.Env.Name("BWS")) -> "sess"))
     )
-    assertEquals(v.resolve("item-1"), Right("bw password"))
-    assertEquals(v.resolve("item-1#username"), Right("bw username"))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("item-1")), Right("bw password"))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("item-1#username")), Right("bw username"))
     assertEquals(
       Files.readAllLines(d.resolve("bw-args")).asScala.toList,
       List("get", "username", "item-1", "--nointeraction")
     )
-    assertEquals(v.resolve("dup"), Left("bitwarden: 'dup' matches more than one item — use its id"))
-    assertEquals(v.resolve("other"), Left("bitwarden: no item 'other'"))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("dup")), Left("bitwarden: 'dup' matches more than one item — use its id"))
+    assertEquals(v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("other")), Left("bitwarden: no item 'other'"))
     val locked = registered(BitwardenPlugin(), "", Ctx(Map("PATH" -> d.toString)))
-    assert(locked.resolve("item-1").left.exists(_.contains("the vault is locked")))
+    assert(locked.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("item-1")).left.exists(_.contains("the vault is locked")))
 
   test("no error text ever carries the value a tool printed"):
     val d = bin()
     script(d, "bw", "echo 'leaked-value'\necho 'bad thing' >&2\nexit 2\n")
     val v = registered(BitwardenPlugin(), "", Ctx(Map("PATH" -> d.toString)))
-    val r = v.resolve("x")
+    val r = v.resolve(com.histmersion.plugin.Secret.Vault.ResolveRef("x"))
     assertEquals(r, Left("bitwarden: could not read 'x' (exit 2: bad thing)"))
 
   test("the three are discoverable providers, built for this SPI, disabled by their defaults"):
