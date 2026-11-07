@@ -10,8 +10,8 @@ import org.ekrich.config.{ConfigValue, ConfigValueType}
 object YubiKey:
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = com.histmersion.plugins.vaults.Subprocess.Problem
+  val Problem: com.histmersion.plugins.vaults.Subprocess.Problem.type = com.histmersion.plugins.vaults.Subprocess.Problem
   type Text = Text.T
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -21,7 +21,7 @@ object YubiKey:
 
   final case class Slot(slot: Slot.Value, serial: Option[Slot.Serial]):
     /** The form `keepassxc-cli -y` takes, and the one the settings and the errors show. */
-    def shown: com.histmersion.plugins.vaults.YubiKey.Label = _root_.com.histmersion.plugins.vaults.YubiKey.Label(serial.fold(slot.toString)(s => s"$slot:$s"))
+    def shown: com.histmersion.plugins.vaults.YubiKey.Label = _root_.com.histmersion.plugins.vaults.YubiKey.Label(serial.fold(slot.value.toString)(s => s"${slot.value}:${s.value}"))
 
   object Slot:
 
@@ -36,7 +36,7 @@ object YubiKey:
     def bad =
       s"yubikey '$t' is not <slot>[:<serial>] — the slot is 1 or 2, the serial the key's number (`ykman list --serials`)"
     t.split(":", -1).toList match
-      case List(s)    => s.toIntOption.filter(Set(1, 2)).map(Slot(_root_.com.histmersion.plugins.vaults.YubiKey.Slot.Value(_), None)).toRight(_root_.com.histmersion.plugins.vaults.YubiKey.Problem(bad))
+      case List(s)    => s.toIntOption.filter(Set(1, 2)).map(v => Slot(_root_.com.histmersion.plugins.vaults.YubiKey.Slot.Value(v), None)).toRight(_root_.com.histmersion.plugins.vaults.YubiKey.Problem(bad))
       case List(s, n) =>
         (for
           slot <- s.toIntOption.filter(Set(1, 2)).toRight(bad)
@@ -137,5 +137,5 @@ object YubiKey:
 
     given ConfigReader[Setting] = new ConfigReader[Setting]:
       def from(v: ConfigValue) =
-        if v.valueType == ConfigValueType.LIST then summon[ConfigReader[List[String]]].from(v).map(Setting((_).map(refactorValue3 => _root_.com.histmersion.plugins.vaults.YubiKey.Setting.Entries(refactorValue3))))
+        if v.valueType == ConfigValueType.LIST then summon[ConfigReader[List[String]]].from(v).map(l => Setting(l.map(refactorValue3 => _root_.com.histmersion.plugins.vaults.YubiKey.Setting.Entries(refactorValue3))))
         else ConfigReader.stringReader.from(v).map(s => Setting((s.split("[,\\s]+").toList.filter(_.nonEmpty)).map(refactorValue4 => _root_.com.histmersion.plugins.vaults.YubiKey.Setting.Entries(refactorValue4))))

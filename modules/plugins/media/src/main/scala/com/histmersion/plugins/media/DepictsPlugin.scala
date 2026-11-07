@@ -5,7 +5,7 @@ import com.histmersion.plugin.Plugin
 final class DepictsPlugin extends MediaPlugin("media-depicts"):
   type Config = MediaPlugin.Config
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.DepictsPlugin.Problem, Unit] =
-    ctx.mediaCollections.add(com.histmersion.plugin.Registry.AddId("depicts"), Commons.Depictions(c.media, ctx.licences))
+    ctx.mediaCollections.add(com.histmersion.plugin.Registry.AddId("depicts"), Commons.Depictions(c.media, ctx.licences)).left.map(e => DepictsPlugin.Problem(e.value))
 
 object DepictsPlugin:
   type Problem = Problem.T

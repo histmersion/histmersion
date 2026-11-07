@@ -23,22 +23,27 @@ abstract class KeyedCollection(
     needs: KeyedCollection.Needs,
     settings: KeyedCollection.Settings
 ) extends MediaCollection:
-  override def perPlace: Int = conf.perPlace
-  override def requestIntervalMs: Int = conf.requestIntervalMs
-  override def refusalBackoffMs: List[Long] = conf.refusalBackoffMs
-  override def latestYear: Option[Year] = conf.latestYear.map(Year(_))
-  val role = MediaCollection.Object
+  override def perPlace: com.histmersion.plugin.MediaCollection.PerPlaceResult = com.histmersion.plugin.MediaCollection.PerPlaceResult(conf.perPlace.value)
+  override def requestIntervalMs: com.histmersion.plugin.MediaCollection.RequestIntervalMsResult = com.histmersion.plugin.MediaCollection.RequestIntervalMsResult(conf.requestIntervalMs.value)
+  override def refusalBackoffMs: List[com.histmersion.plugin.MediaCollection.RefusalBackoffMsResult] =
+    conf.refusalBackoffMs.map(ms => com.histmersion.plugin.MediaCollection.RefusalBackoffMsResult(ms.value))
+  override def latestYear: Option[Year] = conf.latestYear.map(y => Year(y.value))
+  val role = MediaItem.Role(MediaCollection.Object)
 
   /** What `histmersion media providers` says of it: its description, and that it is not asked without a key. */
-  protected def described(text: com.histmersion.plugins.media.KeyedCollection.Text): com.histmersion.plugins.media.KeyedCollection.DescribedResult = text + (if key.isEmpty then " — NO KEY SET: not asked" else "")
+  protected def described(text: String): com.histmersion.plugin.MediaCollection.DescriptionResult =
+    com.histmersion.plugin.MediaCollection.DescriptionResult(text + (if key.isEmpty then " — NO KEY SET: not asked" else ""))
 
-  override def check: Either[String, Unit] =
-    if !conf.enabled then Left(s"$title is switched off ($settings.enabled = false)")
+  override def check: Either[com.histmersion.plugin.MediaCollection.CheckResultPart1, Unit] =
+    if !conf.enabled.value then
+      Left(com.histmersion.plugin.MediaCollection.CheckResultPart1(s"${title.value} is switched off (${settings.value}.enabled = false)"))
     else
       key
         .toRight(
-          s"$title needs $needs: set histmersion.plugins.$plugin.api-key to a secret " +
-            "reference (\"env:<NAME>\" or a vault's, e.g. \"keepassxc:<entry>#password\"); it was not asked"
+          com.histmersion.plugin.MediaCollection.CheckResultPart1(
+            s"${title.value} needs ${needs.value}: set histmersion.plugins.${plugin.value}.api-key to a secret " +
+              "reference (\"env:<NAME>\" or a vault's, e.g. \"keepassxc:<entry>#password\"); it was not asked"
+          )
         )
         .map(_ => ())
 
@@ -47,17 +52,15 @@ abstract class KeyedCollection(
 
   /** Pure: an HTTP 401/403 of a key-gated API named as a refused key, with the setting to check. */
   protected def explain(e: com.histmersion.plugins.media.KeyedCollection.Problem): com.histmersion.plugins.media.KeyedCollection.Explanation =
-    if e.contains("HTTP 401") || e.contains("HTTP 403") then
-      s"$e — the API key was refused (check histmersion.plugins.$plugin.api-key)"
-    else e
+    if e.value.contains("HTTP 401") || e.value.contains("HTTP 403") then
+      com.histmersion.plugins.media.KeyedCollection.Explanation(s"${e.value} — the API key was refused (check histmersion.plugins.${plugin.value}.api-key)")
+    else com.histmersion.plugins.media.KeyedCollection.Explanation(e.value)
 
 object KeyedCollection:
   type Explanation = Explanation.T
   object Explanation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Plugin = Plugin.T
   object Plugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Key = Key.T
@@ -67,5 +70,3 @@ object KeyedCollection:
   type Settings = Settings.T
   object Settings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type DescribedResult = DescribedResult.T
-  object DescribedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

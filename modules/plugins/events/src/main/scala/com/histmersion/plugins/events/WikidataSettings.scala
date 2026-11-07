@@ -10,7 +10,7 @@ final case class WikidataSettings(sparqlUrl: WikidataSettings.SparqlUrl, request
     derives ConfigReader:
   /** The label languages, English always among them. */
   def labelLanguages: com.histmersion.plugins.events.WikidataSettings.LabelLanguage =
-    (languages.split(",").map(_.trim).filter(_.nonEmpty).toList :+ "en").distinct.mkString(",")
+    WikidataSettings.LabelLanguage((languages.value.split(",").map(_.trim).filter(_.nonEmpty).toList :+ "en").distinct.mkString(","))
 
 object WikidataSettings:
   type LabelLanguage = LabelLanguage.T

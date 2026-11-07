@@ -18,8 +18,8 @@ trait AiHttpPlugin(id: String, name: String) extends Plugin:
 
   def register(c: HostAi, ctx: Plugin.Context): Either[com.histmersion.plugins.ai.AiHttpPlugin.Problem, Unit] =
     settings(c.agents.providers)
-      .toRight(s"no agents.providers.$name settings were supplied")
-      .flatMap(s => ctx.aiProviders.add(_root_.com.histmersion.plugin.Registry.AddId(name), provider(s)))
+      .toRight(AiHttpPlugin.Problem(s"no agents.providers.$name settings were supplied"))
+      .flatMap(s => ctx.aiProviders.add(_root_.com.histmersion.plugin.Registry.AddId(name), provider(s)).left.map(e => AiHttpPlugin.Problem(e.value)))
 
 object AiHttpPlugin:
   type Problem = Problem.T

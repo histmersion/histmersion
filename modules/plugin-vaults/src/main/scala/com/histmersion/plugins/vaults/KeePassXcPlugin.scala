@@ -11,45 +11,57 @@ final class KeePassXcPlugin extends Plugin:
   type Config = KeePassXcConfig
   val info = Plugin.Info(_root_.com.histmersion.plugin.Plugin.Info.Id("keepassxc"), _root_.com.histmersion.plugin.Plugin.Info.Version(Vaults.Version), _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version))
 
-  def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[com.histmersion.plugins.vaults.KeePassXcPlugin.Problem, Unit] =
+  def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[com.histmersion.plugin.Plugin.RegisterResultPart1, Unit] =
     given files: com.histmersion.plugin.LocalFiles = ctx.files
     given processes: com.histmersion.plugin.Processes = ctx.processes
+    def failed(why: String) = Plugin.RegisterResultPart1(why)
     val home = ctx.env(_root_.com.histmersion.plugin.Plugin.Context.EnvName("HOME"))
     for
-      db <- Option(c.database)
+      db <- Option(c.database.value)
         .map(_.trim)
         .filter(_.nonEmpty)
-        .map(Vaults.expand(_, home))
-        .toRight("set database = \"<path to the .kdbx file>\"")
-      _ <- Either.cond(files.isFile(Path.of(db)), (), s"database $db does not exist")
-      key = Option(c.keyFile).map(_.trim).filter(_.nonEmpty).map(Vaults.expand(_, home))
-      _ <- key.fold(Right(()))(k => Either.cond(files.isFile(Path.of(k)), (), s"key-file $k does not exist"))
-      exe <- Subprocess.locate(c.cli, ctx.env("PATH"))
-      yks <- YubiKey.parseAll(c.yubikey.fold(Nil)(_.entries))
-      det <- if yks.isEmpty then Right(None) else detector(c.ykman, ctx)
-      pw <- Vaults.optional(c.password, ctx)
-      _ <- ctx.secretVaults.add(
-        info.id,
-        KeePassXcVault(
-          info.id,
-          exe,
-          db,
-          key,
-          pw,
-          c.attribute,
-          Vaults.timeout(c.timeoutSeconds),
-          yks,
-          det,
-          Vaults.timeout(c.yubikeyTimeoutSeconds),
-          ctx.log
-        )
+        .map(d => Vaults.expand(Vaults.Path(d), home))
+        .toRight(failed("set database = \"<path to the .kdbx file>\""))
+      _ <- Either.cond(files.isFile(Path.of(db.value)).value, (), failed(s"database ${db.value} does not exist"))
+      key = Option(c.keyFile.value).map(_.trim).filter(_.nonEmpty).map(k => Vaults.expand(Vaults.Path(k), home))
+      _ <- key.fold[Either[Plugin.RegisterResultPart1, Unit]](Right(()))(k =>
+        Either.cond(files.isFile(Path.of(k.value)).value, (), failed(s"key-file ${k.value} does not exist"))
       )
+      exe <- Subprocess
+        .locate(Subprocess.Tool(c.cli.value), ctx.env(Plugin.Context.EnvName("PATH")))
+        .left
+        .map(e => failed(e.value))
+      yks <- YubiKey
+        .parseAll(c.yubikey.fold[List[YubiKey.Setting.Entries]](Nil)(_.entries))
+        .left
+        .map(e => failed(e.value))
+      det <- if yks.isEmpty then Right(None) else detector(c.ykman, ctx)
+      pw <- Vaults.optional(c.password, ctx).left.map(e => failed(e.value))
+      _ <- ctx.secretVaults
+        .add(
+          Registry.AddId(info.id.value),
+          KeePassXcVault(
+            Secret.Vault.NameResult(info.id.value),
+            exe,
+            db,
+            key,
+            pw,
+            Vaults.Field(c.attribute.value),
+            Vaults.timeout(c.timeoutSeconds.value),
+            yks,
+            det,
+            Vaults.timeout(c.yubikeyTimeoutSeconds.value),
+            ctx.log
+          )
+        )
+        .left
+        .map(e => failed(e.value))
     yield ()
 
   /** `ykman`, when it can be found: a bare name missing from the PATH only means the keys are tried in order; a path
     * that was given and is wrong is an error.
     */
-  private def detector(ykman: com.histmersion.plugins.vaults.KeePassXcConfig.Ykman, ctx: Plugin.Context): Either[com.histmersion.plugins.vaults.KeePassXcPlugin.Problem, Option[com.histmersion.plugins.vaults.KeePassXcPlugin.Detected]] =
+  private def detector(ykman: com.histmersion.plugins.vaults.KeePassXcConfig.Ykman, ctx: Plugin.Context): Either[com.histmersion.plugin.Plugin.RegisterResultPart1, Option[Vaults.Path]] =
     given files: com.histmersion.plugin.LocalFiles = ctx.files
     val t = Option(ykman).map((_).value.trim).getOrElse("")
     if t.isEmpty then
@@ -64,10 +76,4 @@ final class KeePassXcPlugin extends Plugin:
               "(optional: with ykman on the PATH, only the connected ones are tried)")
           )
           Right(None)
-        case Left(e) => Left(s"ykman: $e")
-
-object KeePassXcPlugin:
-  type Detected = Detected.T
-  object Detected extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+        case Left(e) => Left(Plugin.RegisterResultPart1(s"ykman: ${e.value}"))

@@ -8,7 +8,7 @@ import com.histmersion.plugin.{Plugin, Spi}
   * contact, a credential — never an endpoint.
   */
 trait FetcherPlugin(id: String) extends Plugin:
-  val info: Plugin.Info = Plugin.Info(id, FetcherPlugin.Version, Spi.Version)
+  val info: Plugin.Info = Plugin.Info(Plugin.Info.Id(id), Plugin.Info.Version(FetcherPlugin.Version), Plugin.Info.SpiVersion(Spi.Version))
 
 object FetcherPlugin:
   val Version = "0.1.0"

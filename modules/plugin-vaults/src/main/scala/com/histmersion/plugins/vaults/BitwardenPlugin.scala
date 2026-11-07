@@ -14,12 +14,15 @@ final class BitwardenPlugin extends Plugin:
     given files: com.histmersion.plugin.LocalFiles = ctx.files
     given processes: com.histmersion.plugin.Processes = ctx.processes
     for
-      exe <- Subprocess.locate(c.cli, ctx.env(_root_.com.histmersion.plugin.Plugin.Context.EnvName("PATH")))
-      session <- Vaults.optional(c.session, ctx)
-      _ <- ctx.secretVaults.add(
-        info.id,
-        BitwardenVault(info.id, exe, session, c.field, Vaults.timeout(c.timeoutSeconds))
-      )
+      exe <- Subprocess.locate(Subprocess.Tool(c.cli.value), ctx.env(_root_.com.histmersion.plugin.Plugin.Context.EnvName("PATH"))).left.map(e => BitwardenPlugin.Problem(e.value))
+      session <- Vaults.optional(c.session, ctx).left.map(e => BitwardenPlugin.Problem(e.value))
+      _ <- ctx.secretVaults
+        .add(
+          Registry.AddId(info.id.value),
+          BitwardenVault(Secret.Vault.NameResult(info.id.value), exe, session, Vaults.Field(c.field.value), Vaults.timeout(c.timeoutSeconds.value))
+        )
+        .left
+        .map(e => BitwardenPlugin.Problem(e.value))
     yield ()
 
 object BitwardenPlugin:

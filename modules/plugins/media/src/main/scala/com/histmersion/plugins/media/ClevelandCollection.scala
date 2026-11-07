@@ -12,28 +12,18 @@ import io.circe.Json
 final class ClevelandCollection(conf: CollectionSettings)
     extends MuseumCollection(conf, com.histmersion.plugins.media.MuseumCollection.Provider("The Cleveland Museum of Art"), com.histmersion.plugins.media.MuseumCollection.Key("media.cleveland")):
   val title = com.histmersion.plugin.MediaCollection.TitleResult("Cleveland Museum of Art objects")
-  override val description = "The Cleveland Museum of Art (CC0, share_license_status)" + MetCollection.Museum
-  val role = MediaCollection.Object
+  override val description = MediaCollection.DescriptionResult("The Cleveland Museum of Art (CC0, share_license_status)" + MetCollection.Museum)
+  val role = MediaCollection.RoleResult(MediaCollection.Object)
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.ClevelandCollection.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugin.MediaCollection.SearchResultPart1, List[Either[com.histmersion.plugin.MediaCollection.SearchResultPart2Part1, MediaItem]]] =
     http
-      .askJson(ClevelandCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
+      .askJson(ClevelandCollection.searchUrl(Plugin.Http.GetUrl(conf.apiUrl.value), CollectionQuery.Text(place.label.value), conf.candidates))
+      .left
+      .map(e => MediaCollection.SearchResultPart1(e))
       .flatMap(ClevelandCollection.records)
 
 object ClevelandCollection:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Size = Size.T
-  object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-  type Fields = FieldsValue
-  type FieldsValue = FieldsValue.T
-  object FieldsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlLimit = SearchUrlLimit.T
-  object SearchUrlLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  val Fields: com.histmersion.plugins.media.ClevelandCollection.Fields = List(
+  val Fields: String = List(
     "id",
     "accession_number",
     "title",
@@ -49,19 +39,19 @@ object ClevelandCollection:
     "tombstone"
   ).mkString(",")
 
-  def searchUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, name: com.histmersion.plugin.CollectionQuery.Text, limit: com.histmersion.plugins.media.ClevelandCollection.SearchUrlLimit): com.histmersion.plugin.Plugin.Http.GetUrl =
-    s"${api.stripSuffix("/")}/artworks/?q=${name.enc}&cc0=1&has_image=1&limit=${limit.max(1)}&fields=$Fields"
+  def searchUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, name: com.histmersion.plugin.CollectionQuery.Text, limit: com.histmersion.plugins.media.CollectionSettings.Candidates): com.histmersion.plugin.Plugin.Http.GetUrl =
+    com.histmersion.plugin.Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/artworks/?q=${name.value.enc}&cc0=1&has_image=1&limit=${limit.value.max(1)}&fields=$Fields")
 
   /** Pure: the records of a search answer. */
-  def records(json: Json): Either[com.histmersion.plugins.media.ClevelandCollection.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
+  def records(json: Json): Either[com.histmersion.plugin.MediaCollection.SearchResultPart1, List[Either[com.histmersion.plugin.MediaCollection.SearchResultPart2Part1, MediaItem]]] =
     val c = json.hcursor
     c.downField("data").focus.flatMap(_.asArray) match
-      case None       => Left(c.str("detail").orElse(c.str("message")).getOrElse("no data in the answer"))
+      case None       => Left(MediaCollection.SearchResultPart1(c.str("detail").orElse(c.str("message")).getOrElse("no data in the answer")))
       case Some(rows) => Right(rows.toList.map(record))
 
-  def record(json: Json): Either[com.histmersion.plugins.media.ClevelandCollection.Problem, MediaItem] =
+  def record(json: Json): Either[com.histmersion.plugin.MediaCollection.SearchResultPart2Part1, MediaItem] =
     val c = json.hcursor
-    c.str("accession_number").orElse(c.str("id")).toRight("no accession number").map { acc =>
+    c.str("accession_number").orElse(c.str("id")).toRight(MediaCollection.SearchResultPart2Part1("no accession number")).map { acc =>
       val title = c.str("title").getOrElse(acc)
       val creator = c
         .downField("creators")
@@ -76,18 +66,18 @@ object ClevelandCollection:
         c.str("creditline").toList :+ "CC0").mkString(", ")
       val rights =
         if c.str("share_license_status").exists(_.equalsIgnoreCase("CC0")) then Right(MediaRights.cc0(creator, credit))
-        else Left(s"not Open Access (share_license_status ${c.str("share_license_status").getOrElse("missing")})")
+        else Left(MediaItem.RightsPart1(s"not Open Access (share_license_status ${c.str("share_license_status").getOrElse("missing")})"))
       val img = c.downField("images")
-      def url(size: com.histmersion.plugins.media.ClevelandCollection.Size) = img.downField(size).downField("url").focus.flatMap(_.asString)
+      def url(size: String) = img.downField(size).downField("url").focus.flatMap(_.asString)
       val geo = c.str("find_spot").map("find_spot" -> _).toList ++ c.strs("culture").map("culture" -> _)
       MediaItem(
-        acc,
-        title,
-        page,
-        url(com.histmersion.plugins.media.ClevelandCollection.Size("web")),
+        MediaItem.Key(acc),
+        MediaItem.Title(title),
+        MediaItem.PageUrl(page),
+        url("web").map(u => MediaItem.ImageUrl(u)),
         rights,
-        originalUrl = url("print").orElse(url("full")),
-        geography = geo,
+        originalUrl = url("print").orElse(url("full")).map(u => MediaItem.OriginalUrl(u)),
+        geography = geo.map((f, v) => (MediaItem.GeographyPart1(f), MediaItem.GeographyPart2(v))),
         period = Period.range(c.long("creation_date_earliest"), c.long("creation_date_latest"))
       )
     }

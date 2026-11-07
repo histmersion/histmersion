@@ -19,52 +19,61 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
   def title = com.histmersion.plugin.EventCatalogue.TitleResult("Smithsonian Global Volcanism Program")
   def licence = Licence("Smithsonian Terms of Use (non-commercial use with attribution)")
   def citation =
-    "Global Volcanism Program, Volcanoes of the World (v. 5.x), Smithsonian Institution, compiled by Venzke, E. " +
-      "https://doi.org/10.5479/si.GVP.VOTW5-2024.5.2"
+    com.histmersion.plugin.EventCatalogue.CitationResult(
+      "Global Volcanism Program, Volcanoes of the World (v. 5.x), Smithsonian Institution, compiled by Venzke, E. " +
+        "https://doi.org/10.5479/si.GVP.VOTW5-2024.5.2"
+    )
   def home = com.histmersion.plugin.EventCatalogue.HomeResult("https://volcano.si.edu")
-  override def requestIntervalMs: Int = cfg.gvp.requestIntervalMs
-  override def floorYear: Option[Year] = JsonFields.year(cfg.gvp.floorYear)
+  override def requestIntervalMs: com.histmersion.plugin.EventCatalogue.RequestIntervalMsResult =
+    com.histmersion.plugin.EventCatalogue.RequestIntervalMsResult(cfg.gvp.requestIntervalMs.value)
+  override def floorYear: Option[Year] = Dated.year(CatalogDating.HistoricalYear(cfg.gvp.floorYear.value))
 
-  def parts(query: CatalogueQuery): List[com.histmersion.plugins.events.GvpCatalogue.Part] =
+  def parts(query: CatalogueQuery): List[com.histmersion.plugin.EventCatalogue.PartsResult] =
     GvpCatalogue
-      .windows(query.from.fold(cfg.minYear)(_.value.toLong), query.to.value.toLong, cfg.gvp.windowYears)
-      .map((a, b) => s"years:$a..$b")
+      .windows(
+        GvpCatalogue.Year(query.from.fold(cfg.minYear.value)(_.value.toLong)),
+        GvpCatalogue.Year(query.to.value.toLong),
+        cfg.gvp.windowYears
+      )
+      .map((a, b) => com.histmersion.plugin.EventCatalogue.PartsResult(s"years:${a.value}..${b.value}"))
 
-  def read(part: com.histmersion.plugins.events.GvpCatalogue.Part, query: CatalogueQuery, http: Plugin.Http): Either[com.histmersion.plugins.events.GvpCatalogue.Problem, CataloguePage] =
-    part match
+  def read(part: com.histmersion.plugin.EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[com.histmersion.plugin.EventCatalogue.ReadResultPart1, CataloguePage] =
+    part.value match
       case GvpCatalogue.Window(a, b) =>
-        CatalogueJson(http)(GvpCatalogue.url(cfg.gvp.url, a.toLong, b.toLong, cfg.gvp.pageSize))
-          .flatMap(GvpCatalogue.parse)
+        CatalogueJson(http)(
+          GvpCatalogue.url(cfg.gvp.url, GvpCatalogue.Year(a.toLong), GvpCatalogue.Year(b.toLong), cfg.gvp.pageSize)
+        ).left
+          .map(e => com.histmersion.plugin.EventCatalogue.ReadResultPart1(e.value))
+          .flatMap(j =>
+            GvpCatalogue.parse(j).left.map(e => com.histmersion.plugin.EventCatalogue.ReadResultPart1(e.value))
+          )
           .flatMap((rs, total) =>
             Either.cond(
-              total.forall(_ <= rs.size),
+              total.forall(_.value <= rs.size),
               CataloguePage(rs),
-              s"${total.getOrElse(0)} eruptions in $a..$b, more than one request takes (events.gvp.page-size)"
+              com.histmersion.plugin.EventCatalogue.ReadResultPart1(
+                s"${total.map(_.value).getOrElse(0)} eruptions in $a..$b, more than one request takes (events.gvp.page-size)"
+              )
             )
           )
-      case other => Left(s"'$other' is no window of years of the GVP's")
+      case other =>
+        Left(com.histmersion.plugin.EventCatalogue.ReadResultPart1(s"'$other' is no window of years of the GVP's"))
 
   /** The feature read again from its `raw`; a record stored before the central year and the ± were kept (V088, no
     * `raw`), read back from its span and the "dated by …" of its description.
     */
   override def reread(stored: CatalogueEvent): Option[CatalogueEvent] =
     stored.raw
-      .flatMap(t => io.circe.parser.parse(t).toOption)
+      .flatMap(t => io.circe.parser.parse(t.value).toOption)
       .flatMap(GvpCatalogue.record)
-      .map(n => n.copy(names = (stored.names ++ n.names).distinct.filterNot(_ == n.label)))
+      .map(n => n.copy(names = (stored.names ++ n.names).distinct.filterNot(_.value == n.label.value)))
       .orElse(Option.when(stored.central.isEmpty)(GvpCatalogue.fromBefore088(stored)))
 
 object GvpCatalogue:
   type Count = Count.T
   object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Encoded = Encoded.T
-  object Encoded extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Part = Part.T
-  object Part extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Year = Year.T
   object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -72,18 +81,25 @@ object GvpCatalogue:
 
   private val Window = "years:(-?\\d+)\\.\\.(-?\\d+)".r
 
-  private def enc(s: com.histmersion.plugins.events.GvpCatalogue.Text): com.histmersion.plugins.events.GvpCatalogue.Encoded = URLEncoder.encode(s, UTF_8)
+  private def enc(s: String): String = URLEncoder.encode(s, UTF_8)
 
   /** Pure: the eruptions that started in `from`…`to` (signed years, both inclusive), unpaged. */
-  def url(base: com.histmersion.plugin.Plugin.Http.GetUrl, from: com.histmersion.plugins.events.GvpCatalogue.Year, to: com.histmersion.plugins.events.GvpCatalogue.Year, max: com.histmersion.plugins.events.GvpSettings.PageSize): com.histmersion.plugin.Plugin.Http.GetUrl =
-    val cql = s"StartDateYear>=$from AND StartDateYear<=$to"
-    s"$base?service=WFS&version=2.0.0&request=GetFeature&typeNames=${enc(TypeName)}" +
-      s"&outputFormat=${enc("application/json")}&count=$max&CQL_FILTER=${enc(cql)}"
+  def url(base: com.histmersion.plugins.events.GvpSettings.Url, from: com.histmersion.plugins.events.GvpCatalogue.Year, to: com.histmersion.plugins.events.GvpCatalogue.Year, max: com.histmersion.plugins.events.GvpSettings.PageSize): com.histmersion.plugin.Plugin.Http.GetUrl =
+    val cql = s"StartDateYear>=${from.value} AND StartDateYear<=${to.value}"
+    com.histmersion.plugin.Plugin.Http.GetUrl(
+      s"${base.value}?service=WFS&version=2.0.0&request=GetFeature&typeNames=${enc(TypeName)}" +
+        s"&outputFormat=${enc("application/json")}&count=${max.value}&CQL_FILTER=${enc(cql)}"
+    )
 
   /** Pure: `from`…`to` cut into windows of `years` (the last one shorter). */
   def windows(from: com.histmersion.plugins.events.GvpCatalogue.Year, to: com.histmersion.plugins.events.GvpCatalogue.Year, years: com.histmersion.plugins.events.GvpSettings.WindowYears): List[(com.histmersion.plugins.events.GvpCatalogue.Year, com.histmersion.plugins.events.GvpCatalogue.Year)] =
-    if from > to || years <= 0 then Nil
-    else Iterator.iterate(from)(_ + years).takeWhile(_ <= to).map(a => (a, (a + years - 1).min(to))).toList
+    if from.value > to.value || years.value <= 0 then Nil
+    else
+      Iterator
+        .iterate(from.value)(_ + years.value)
+        .takeWhile(_ <= to.value)
+        .map(a => (Year(a), Year((a + years.value - 1).min(to.value))))
+        .toList
 
   /** Pure: the records of one page and how many match in all. "Discredited" eruptions are dropped; "Uncertain" ones are
     * `contested`. Years are GVP's signed years (BCE negative), ± its stated uncertainty.
@@ -92,10 +108,10 @@ object GvpCatalogue:
     val c = json.hcursor
     c.downField("features").focus.flatMap(_.asArray) match
       case None =>
-        Left(c.downField("exceptions").focus.map(_.noSpaces.take(200)).getOrElse("no features in the answer"))
+        Left(Problem(c.downField("exceptions").focus.map(_.noSpaces.take(200)).getOrElse("no features in the answer")))
       case Some(fs) =>
         val total = c.get[Int]("numberMatched").toOption.orElse(c.get[Int]("totalFeatures").toOption)
-        Right((fs.toList.flatMap(record), total))
+        Right((fs.toList.flatMap(record), total.map(Count(_))))
 
   /** Pure: one feature of the WFS's answer as an event (`None`: a discredited eruption, or no eruption number or year).
     * The stated year and ± are kept (`central`, `plusMinus`), as is the dating method (`StartEvidenceMethod`) and the
@@ -108,45 +124,53 @@ object GvpCatalogue:
       f.hcursor.downField("geometry").downField("coordinates").focus.flatMap(_.asArray).getOrElse(Vector.empty)
     val (lon, lat) =
       (coords.headOption.flatMap(_.asNumber).map(_.toDouble), coords.lift(1).flatMap(_.asNumber).map(_.toDouble))
-    val activity = str(p, com.histmersion.plugins.events.JsonFields.Key("Activity_Type")).getOrElse("")
+    val activity = str(p, JsonFields.Key("Activity_Type")).map(_.value).getOrElse("")
     for
-      num <- long(p, com.histmersion.plugins.events.JsonFields.Key("Eruption_Number"))
-      year <- long(p, "StartDateYear")
+      num <- long(p, JsonFields.Key("Eruption_Number"))
+      year <- long(p, JsonFields.Key("StartDateYear"))
       if !activity.toLowerCase(Locale.ROOT).contains("discredited")
     yield
-      val volcano = str(p, "Volcano_Name").getOrElse("unnamed volcano")
-      val vnum = long(p, "Volcano_Number")
-      val pm = long(p, "StartDateYearUncertainty").filter(_ > 0)
-      val start = CatalogDating.year(year, pm)
-      val end = long(p, "EndDateYear").map(y => CatalogDating.year(y, long(p, "EndDateYearUncertainty")))
-      val vei = long(p, "ExplosivityIndexMax").map(_.toInt)
-      val method = str(p, "StartEvidenceMethod")
+      val volcano = str(p, JsonFields.Key("Volcano_Name")).map(_.value).getOrElse("unnamed volcano")
+      val vnum = long(p, JsonFields.Key("Volcano_Number"))
+      val pm = long(p, JsonFields.Key("StartDateYearUncertainty")).filter(_.value > 0)
+      val start = CatalogDating.year(CatalogDating.HistoricalYear(year.value), pm.map(m => CatalogDating.YearMargin(m.value)))
+      val end = long(p, JsonFields.Key("EndDateYear")).map(y =>
+        CatalogDating.year(
+          CatalogDating.HistoricalYear(y.value),
+          long(p, JsonFields.Key("EndDateYearUncertainty")).map(m => CatalogDating.YearMargin(m.value))
+        )
+      )
+      val vei = long(p, JsonFields.Key("ExplosivityIndexMax")).map(_.value.toInt)
+      val method = str(p, JsonFields.Key("StartEvidenceMethod"))
       val doubt =
-        activity.toLowerCase(Locale.ROOT).contains("uncertain") || str(p, "StartDateYearModifier").contains("?")
+        activity.toLowerCase(Locale.ROOT).contains("uncertain") ||
+          str(p, JsonFields.Key("StartDateYearModifier")).map(_.value).contains("?")
       val d = Dated.of(CatalogDating.span(Some(start), end))
       CatalogueEvent(
-        id = num.toString,
-        url = vnum.fold("https://volcano.si.edu")(v => s"https://volcano.si.edu/volcano.cfm?vn=$v"),
-        label = s"Eruption of $volcano",
-        kind = "eruption",
+        id = CatalogueEvent.Id(num.value.toString),
+        url = CatalogueEvent.Url(vnum.fold("https://volcano.si.edu")(v => s"https://volcano.si.edu/volcano.cfm?vn=${v.value}")),
+        label = CatalogueEvent.Label(s"Eruption of $volcano"),
+        kind = CatalogueEvent.Kind("eruption"),
         notBefore = d.notBefore,
         notAfter = d.notAfter,
         beginBy = d.beginBy,
         endFrom = d.endFrom,
-        lat = latitude(lat),
-        lon = longitude(lon),
-        historicity = if doubt then "contested" else "attested",
-        vei = vei,
-        names = List(s"$volcano eruption"),
+        lat = latitude(lat.map(JsonFields.Decimal(_))),
+        lon = longitude(lon.map(JsonFields.Decimal(_))),
+        historicity = CatalogueEvent.Historicity(if doubt then "contested" else "attested"),
+        vei = vei.map(CatalogueEvent.Vei(_)),
+        names = List(CatalogueEvent.Names(s"$volcano eruption")),
         description = Some(
-          (List(s"$activity at $volcano") ++ vei.map(v => s"VEI $v") ++
-            str(p, "ActivityArea").map(a => s"area: $a")).mkString("; ")
+          CatalogueEvent.Description(
+            (List(s"$activity at $volcano") ++ vei.map(v => s"VEI $v") ++
+              str(p, JsonFields.Key("ActivityArea")).map(a => s"area: ${a.value}")).mkString("; ")
+          )
         ),
-        group = vnum.map(v => s"volcano:$v"),
-        central = JsonFields.year(year),
-        plusMinus = pm,
-        datingMethod = method,
-        raw = Some(f.noSpaces)
+        group = vnum.map(v => CatalogueEvent.Group(s"volcano:${v.value}")),
+        central = Dated.year(CatalogDating.HistoricalYear(year.value)),
+        plusMinus = pm.map(m => CatalogueEvent.PlusMinus(m.value)),
+        datingMethod = method.map(m => CatalogueEvent.DatingMethod(m.value)),
+        raw = Some(CatalogueEvent.Raw(f.noSpaces))
       )
 
   private val Dated088 = "(?:^|;\\s*)dated by ([^;]+)".r
@@ -155,12 +179,15 @@ object GvpCatalogue:
     * and its dating method from the "dated by …" of its description.
     */
   def fromBefore088(r: CatalogueEvent): CatalogueEvent =
-    val method = r.description.flatMap(d => Dated088.findFirstMatchIn(d).map(_.group(1).trim))
-    val desc = r.description.map(d => Dated088.replaceAllIn(d, "").trim.stripSuffix(";").trim).filter(_.nonEmpty)
+    val method = r.description.flatMap(d => Dated088.findFirstMatchIn(d.value).map(_.group(1).trim))
+    val desc = r.description
+      .map(d => Dated088.replaceAllIn(d.value, "").trim.stripSuffix(";").trim)
+      .filter(_.nonEmpty)
+      .map(CatalogueEvent.Description(_))
     val c = CatalogDating.centralOf(Dated.span(r))
     r.copy(
-      central = c.flatMap(x => JsonFields.year(x._1)),
-      plusMinus = c.map(_._2).filter(_ > 0),
-      datingMethod = r.datingMethod.orElse(method),
+      central = c.flatMap(x => Dated.year(x._1)),
+      plusMinus = c.map(_._2).filter(_.value > 0).map(m => CatalogueEvent.PlusMinus(m.value)),
+      datingMethod = r.datingMethod.orElse(method.map(CatalogueEvent.DatingMethod(_))),
       description = desc
     )

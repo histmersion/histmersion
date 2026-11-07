@@ -20,17 +20,9 @@ object FreeTextDates:
   private enum Unit:
     case Year, Century, Millennium
 
-  final private case class Bound(n: Bound.N, unit: Option[Unit], ordinal: Bound.Ordinal, bce: Option[Bound.Bce])
+  final private case class Bound(n: Long, unit: Option[Unit], ordinal: Boolean, bce: Option[Boolean])
 
-  object Bound:
-    type N = N.T
-    object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Ordinal = Ordinal.T
-    object Ordinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Bce = Bce.T
-    object Bce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  private def bound(raw: com.histmersion.plugins.media.FreeTextDates.Text): Option[Bound] =
+  private def bound(raw: String): Option[Bound] =
     raw.trim match
       case Part(n, unit, era) =>
         val u = Option(unit).map(x => if x.startsWith("cent") then Unit.Century else Unit.Millennium)
@@ -39,7 +31,7 @@ object FreeTextDates:
       case _ => None
 
   /** Pure: the signed span of one bound, given the unit and era it carries or inherits. */
-  private def span(b: Bound): Option[(com.histmersion.plugins.media.FreeTextDates.Year, com.histmersion.plugins.media.FreeTextDates.Year)] =
+  private def span(b: Bound): Option[(Long, Long)] =
     val bce = b.bce.contains(true)
     b.unit.getOrElse(Unit.Year) match
       case Unit.Year if b.ordinal => None
@@ -51,7 +43,10 @@ object FreeTextDates:
 
   /** Pure: the span a date text states, or `None`. */
   def parse(text: com.histmersion.plugins.media.FreeTextDates.Text): Option[(com.histmersion.plugins.media.FreeTextDates.Year, com.histmersion.plugins.media.FreeTextDates.Year)] =
-    val s0 = Option(text).getOrElse("").toLowerCase(Locale.ROOT).trim
+    spanOf(Option(text).fold("")(_.value)).map((from, to) => (Year(from), Year(to)))
+
+  private def spanOf(text: String): Option[(Long, Long)] =
+    val s0 = text.toLowerCase(Locale.ROOT).trim
     if s0.isEmpty || s0.contains("?") then None
     else
       // eras first (so `b.c.` is not taken for `c.` = circa), then the hedges, then the separators

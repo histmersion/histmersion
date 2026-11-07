@@ -22,12 +22,12 @@ object Subprocess:
   type Tool = Tool.T
   object Tool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type RunResultPart1 = RunResultPart1.T
-  object RunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunEnvPart1 = RunEnvPart1.T
-  object RunEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunEnvPart2 = RunEnvPart2.T
-  object RunEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunResultPart1 = com.histmersion.plugin.Processes.RunResultPart1
+  val RunResultPart1: com.histmersion.plugin.Processes.RunResultPart1.type = com.histmersion.plugin.Processes.RunResultPart1
+  type RunEnvPart1 = com.histmersion.plugin.Processes.RunEnvPart1
+  val RunEnvPart1: com.histmersion.plugin.Processes.RunEnvPart1.type = com.histmersion.plugin.Processes.RunEnvPart1
+  type RunEnvPart2 = com.histmersion.plugin.Processes.RunEnvPart2
+  val RunEnvPart2: com.histmersion.plugin.Processes.RunEnvPart2.type = com.histmersion.plugin.Processes.RunEnvPart2
   type ValueResult = ValueResult.T
   object ValueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ValueOut = ValueOut.T
@@ -39,7 +39,7 @@ object Subprocess:
   /** Pure: the executable for `tool` — a path as given (`/opt/kp/keepassxc-cli`), or a bare name looked up in `path`
     * (the PATH the server started with).
     */
-  def locate(tool: com.histmersion.plugins.vaults.Subprocess.Tool, path: Option[com.histmersion.plugins.vaults.Vaults.Path])(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.vaults.Subprocess.Problem, com.histmersion.plugins.vaults.Vaults.Path] =
+  def locate(tool: com.histmersion.plugins.vaults.Subprocess.Tool, path: Option[com.histmersion.plugin.Plugin.Context.EnvResult])(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.vaults.Subprocess.Problem, com.histmersion.plugins.vaults.Vaults.Path] =
     val t = Option((tool).value).getOrElse("").trim
     def runnable(p: Path) = ((files.isFile(p)) == _root_.com.histmersion.plugin.LocalFiles.IsFileResult(true)) && ((files.isExecutable(p)) == _root_.com.histmersion.plugin.LocalFiles.IsExecutableResult(true))
     if t.isEmpty then Left(_root_.com.histmersion.plugins.vaults.Subprocess.Problem("no command is configured (cli = \"…\")"))
@@ -75,12 +75,12 @@ object Subprocess:
 
   object Session:
     /** Start `argv` (no shell) with `env` added to the server's environment. */
-    type StartResultPart1 = StartResultPart1.T
-    object StartResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StartEnvPart1 = StartEnvPart1.T
-    object StartEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StartEnvPart2 = StartEnvPart2.T
-    object StartEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StartResultPart1 = com.histmersion.plugin.Processes.StartResultPart1
+    val StartResultPart1: com.histmersion.plugin.Processes.StartResultPart1.type = com.histmersion.plugin.Processes.StartResultPart1
+    type StartEnvPart1 = com.histmersion.plugin.Processes.StartEnvPart1
+    val StartEnvPart1: com.histmersion.plugin.Processes.StartEnvPart1.type = com.histmersion.plugin.Processes.StartEnvPart1
+    type StartEnvPart2 = com.histmersion.plugin.Processes.StartEnvPart2
+    val StartEnvPart2: com.histmersion.plugin.Processes.StartEnvPart2.type = com.histmersion.plugin.Processes.StartEnvPart2
 
     def start(argv: List[com.histmersion.plugin.Processes.StartArgv], env: Map[com.histmersion.plugins.vaults.Subprocess.Session.StartEnvPart1, com.histmersion.plugins.vaults.Subprocess.Session.StartEnvPart2])(using processes: com.histmersion.plugin.Processes): Either[com.histmersion.plugins.vaults.Subprocess.Session.StartResultPart1, Session] =
       processes.start(argv, env)

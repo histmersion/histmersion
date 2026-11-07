@@ -3,6 +3,7 @@ package com.histmersion.plugins.events
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.wikidata.WikidataClasses
 import com.histmersion.upstreams.dating.CatalogDating
+import com.histmersion.upstreams.wikidata.WikidataItem
 import io.circe.{ACursor, Json}
 
 import java.net.URLEncoder
@@ -16,70 +17,58 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
   def licence = Licence("CC0-1.0")
   def citation = com.histmersion.plugin.EventCatalogue.CitationResult("Wikidata (CC0), https://www.wikidata.org")
   def home = com.histmersion.plugin.EventCatalogue.HomeResult("https://www.wikidata.org")
-  override def requestIntervalMs: Int = cfg.requestIntervalMs
+  override def requestIntervalMs: com.histmersion.plugin.EventCatalogue.RequestIntervalMsResult = com.histmersion.plugin.EventCatalogue.RequestIntervalMsResult(cfg.requestIntervalMs.value)
 
-  private def classes: List[(com.histmersion.plugin.WikidataId, com.histmersion.plugins.events.WikidataCatalogue.ClassLabel)] = WikidataClasses.parse(cfg.classes)
+  private def classes: List[(WikidataItem.Id, WikidataClasses.ClassLabel)] = WikidataClasses.parse(WikidataClasses.WikidataText(cfg.classes.value))
 
-  def parts(query: CatalogueQuery): List[com.histmersion.plugins.events.WikidataCatalogue.Part] = classes.map((qid, _) => s"class:$qid")
+  def parts(query: CatalogueQuery): List[com.histmersion.plugin.EventCatalogue.PartsResult] = classes.map((qid, _) => com.histmersion.plugin.EventCatalogue.PartsResult(s"class:$qid"))
 
-  def read(part: com.histmersion.plugins.events.WikidataCatalogue.Part, query: CatalogueQuery, http: Plugin.Http): Either[com.histmersion.plugins.events.WikidataCatalogue.Problem, CataloguePage] =
-    classes.find((qid, _) => part == s"class:$qid") match
-      case None              => Left(s"'$part' is no class of the configured events.wikidata.classes")
+  def read(part: com.histmersion.plugin.EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[com.histmersion.plugin.EventCatalogue.ReadResultPart1, CataloguePage] =
+    classes.find((qid, _) => part.value == s"class:$qid") match
+      case None              => Left(com.histmersion.plugin.EventCatalogue.ReadResultPart1(s"'$part' is no class of the configured events.wikidata.classes"))
       case Some((qid, kind)) =>
-        val q = WikidataCatalogue.sparql(qid, query.from.map(_.value.toLong), query.to.value.toLong, cfg.labelLanguages)
+        val q = WikidataCatalogue.sparql(qid, query.from.map(y => CatalogDating.HistoricalYear(y.value.toLong)), CatalogDating.HistoricalYear(query.to.value.toLong), cfg.labelLanguages)
         CatalogueJson(http)(WikidataCatalogue.sparqlUrl(cfg.sparqlUrl, q))
-          .flatMap(WikidataCatalogue.parse(_, kind))
+          .left
+          .map(e => com.histmersion.plugin.EventCatalogue.ReadResultPart1(e.value))
+          .flatMap(j => WikidataCatalogue.parse(j, CatalogueEvent.Kind(kind.value)).left.map(e => com.histmersion.plugin.EventCatalogue.ReadResultPart1(e.value)))
           .map(CataloguePage(_))
 
   /** The item read again from its `raw` (its rows of the query's answer), in the kind it is stored with. */
   override def reread(stored: CatalogueEvent): Option[CatalogueEvent] =
     stored.raw
-      .flatMap(t => io.circe.parser.parse(t).toOption)
+      .flatMap(t => io.circe.parser.parse(t.value).toOption)
       .flatMap(j =>
         WikidataCatalogue
           .parse(Json.obj("results" -> Json.obj("bindings" -> j)), stored.kind)
           .toOption
           .flatMap(_.headOption)
       )
-      .map(n => n.copy(names = (stored.names ++ n.names).distinct.filterNot(_ == n.label)))
+      .map(n => n.copy(names = (stored.names ++ n.names).distinct.filterNot(_.value == n.label.value)))
 
 object WikidataCatalogue:
-  type ClassLabel = ClassLabel.T
-  object ClassLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Part = Part.T
-  object Part extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Query = Query.T
   object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Wkt = Wkt.T
   object Wkt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Year = Year.T
-  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** Items that are only told of, never shown to have happened: a mythical event, a legendary battle, a narrative event
     * (2026-10-14, checked against their labels).
     */
-
-  type Legendary = LegendaryValue
-  type LegendaryValue = LegendaryValue.T
-  object LegendaryValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BindingResult = BindingResult.T
-  object BindingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   val Mythical = "Q24336466"
-  val Legendary: Set[com.histmersion.plugins.events.WikidataCatalogue.Legendary] = Set(com.histmersion.plugins.events.WikidataCatalogue.LegendaryValue("Q26913948"), com.histmersion.plugins.events.WikidataCatalogue.LegendaryValue("Q122397289"))
+  val Legendary: Set[String] = Set("Q26913948", "Q122397289")
 
   /** Pure: the SPARQL of one class — its instances (and its subclasses'), dated (point in time, else start/end) before
     * `to`, with their precision, their own coordinates or their location's, whether they are legendary or mythical, and
     * the deaths.
     */
-  def sparql(qid: com.histmersion.plugin.WikidataId, from: Option[com.histmersion.plugins.events.WikidataCatalogue.Year], to: com.histmersion.plugins.events.WikidataCatalogue.Year, lang: com.histmersion.plugins.events.WikidataSettings.Languages): com.histmersion.plugins.events.WikidataCatalogue.Query =
+  def sparql(qid: com.histmersion.upstreams.wikidata.WikidataItem.Id, from: Option[com.histmersion.upstreams.dating.CatalogDating.HistoricalYear], to: com.histmersion.upstreams.dating.CatalogDating.HistoricalYear, lang: com.histmersion.plugins.events.WikidataSettings.LabelLanguage): com.histmersion.plugins.events.WikidataCatalogue.Query =
     // the query service compares astronomical years; `to`/`from` are historical
     val toA = CatalogDating.toAstronomical(to)
     val fromF = from.fold("")(f => s" && YEAR(?t) >= ${CatalogDating.toAstronomical(f)}")
-    s"""SELECT ?item ?itemLabel ?itemDescription ?date ?datePrec ?start ?startPrec ?end ?endPrec ?coord ?locCoord ?legend ?deaths WHERE {
+    Query(s"""SELECT ?item ?itemLabel ?itemDescription ?date ?datePrec ?start ?startPrec ?end ?endPrec ?coord ?locCoord ?legend ?deaths WHERE {
        |  ?item wdt:P31/wdt:P279* wd:$qid .
        |  OPTIONAL { ?item p:P585/psv:P585 [ wikibase:timeValue ?date ; wikibase:timePrecision ?datePrec ] }
        |  OPTIONAL { ?item p:P580/psv:P580 [ wikibase:timeValue ?start ; wikibase:timePrecision ?startPrec ] }
@@ -93,18 +82,18 @@ object WikidataCatalogue:
         .mkString(" ")} } }
        |  OPTIONAL { ?item wdt:P1120 ?deaths }
        |  SERVICE wikibase:label { bd:serviceParam wikibase:language "$lang". }
-       |}""".stripMargin
+       |}""".stripMargin)
 
   def sparqlUrl(endpoint: com.histmersion.plugins.events.WikidataSettings.SparqlUrl, query: com.histmersion.plugins.events.WikidataCatalogue.Query): com.histmersion.plugin.Plugin.Http.GetUrl =
-    s"$endpoint?format=json&query=${URLEncoder.encode(query, UTF_8)}"
+    com.histmersion.plugin.Plugin.Http.GetUrl(s"$endpoint?format=json&query=${URLEncoder.encode(query.value, UTF_8)}")
 
-  private def binding(b: ACursor, k: com.histmersion.plugins.events.WikidataCatalogue.Key): Option[com.histmersion.plugins.events.WikidataCatalogue.BindingResult] =
+  private def binding(b: ACursor, k: String): Option[String] =
     b.downField(k).get[String]("value").toOption.map(_.trim).filter(_.nonEmpty)
 
   /** Pure: `Point(4.5 47.53)` → (lat 47.53, lon 4.5). */
-  def point(wkt: com.histmersion.plugins.events.WikidataCatalogue.Wkt): Option[(com.histmersion.plugin.Latitude, com.histmersion.plugin.Longitude)] =
-    "Point\\(\\s*([-0-9.eE]+)\\s+([-0-9.eE]+)\\s*\\)".r.findFirstMatchIn(wkt).flatMap { m =>
-      for lon <- m.group(1).toDoubleOption; lat <- m.group(2).toDoubleOption yield (lat, lon)
+  def point(wkt: com.histmersion.plugins.events.WikidataCatalogue.Wkt): Option[(com.histmersion.plugins.events.JsonFields.Decimal, com.histmersion.plugins.events.JsonFields.Decimal)] =
+    "Point\\(\\s*([-0-9.eE]+)\\s+([-0-9.eE]+)\\s*\\)".r.findFirstMatchIn(wkt.value).flatMap { m =>
+      for lon <- m.group(1).toDoubleOption; lat <- m.group(2).toDoubleOption yield (JsonFields.Decimal(lat), JsonFields.Decimal(lon))
     }
 
   /** Pure: the events of one class's answer, one per item (its rows joined: the first coordinates, its own before its
@@ -116,21 +105,21 @@ object WikidataCatalogue:
       case None       => Left(com.histmersion.plugins.events.WikidataCatalogue.Problem("no results in the answer"))
       case Some(rows) =>
         val bs = rows.toList.map(_.hcursor)
-        Right(bs.groupBy(b => binding(b, com.histmersion.plugins.events.WikidataCatalogue.Key("item")).getOrElse("")).toList.filter(_._1.nonEmpty).sortBy(_._1).flatMap {
+        Right(bs.groupBy(b => binding(b, "item").getOrElse("")).toList.filter(_._1.nonEmpty).sortBy(_._1).flatMap {
           (uri, rs) =>
             val qid = uri.reverse.takeWhile(_ != '/').reverse
-            def first(k: com.histmersion.plugins.events.WikidataCatalogue.Key) = rs.flatMap(binding(_, k)).headOption
-            def bound(dateKey: com.histmersion.plugins.events.WikidataCatalogue.Key, precKey: com.histmersion.plugins.events.WikidataCatalogue.Key): Option[CatalogDating.Bound] =
+            def first(k: String) = rs.flatMap(binding(_, k)).headOption
+            def bound(dateKey: String, precKey: String): Option[CatalogDating.Bound] =
               rs.flatMap(r =>
                 binding(r, dateKey)
-                  .flatMap(CatalogDating.isoYear)
-                  .map(y => CatalogDating.wikidata(y, binding(r, precKey).flatMap(_.toIntOption).getOrElse(9)))
-              ).sortBy(b => b.hi - b.lo)
+                  .flatMap(d => CatalogDating.isoYear(CatalogDating.XsdYearText(d)))
+                  .map(y => CatalogDating.wikidata(y, CatalogDating.WikidataPrecision(binding(r, precKey).flatMap(_.toIntOption).getOrElse(9))))
+              ).sortBy(b => b.hi.value - b.lo.value)
                 .headOption
             val at = bound("date", "datePrec")
             val start = bound("start", "startPrec").orElse(at)
             val end = bound("end", "endPrec").orElse(at)
-            val pos = first("coord").flatMap(point).orElse(first("locCoord").flatMap(point))
+            val pos = first("coord").flatMap(c => point(Wkt(c))).orElse(first("locCoord").flatMap(c => point(Wkt(c))))
             val legends = rs.flatMap(binding(_, "legend")).map(u => u.reverse.takeWhile(_ != '/').reverse).toSet
             val hist =
               if legends(Mythical) then "mythic"
@@ -140,9 +129,9 @@ object WikidataCatalogue:
             Option.when(start.isDefined || end.isDefined) {
               val d = Dated.of(CatalogDating.span(start, end))
               CatalogueEvent(
-                id = qid,
-                url = s"https://www.wikidata.org/wiki/$qid",
-                label = label,
+                id = CatalogueEvent.Id(qid),
+                url = CatalogueEvent.Url(s"https://www.wikidata.org/wiki/$qid"),
+                label = CatalogueEvent.Label(label),
                 kind = kind,
                 notBefore = d.notBefore,
                 notAfter = d.notAfter,
@@ -150,11 +139,11 @@ object WikidataCatalogue:
                 endFrom = d.endFrom,
                 lat = JsonFields.latitude(pos.map(_._1)),
                 lon = JsonFields.longitude(pos.map(_._2)),
-                historicity = hist,
-                deaths = rs.flatMap(binding(_, "deaths")).flatMap(d => d.toDoubleOption.map(_.toLong)).maxOption,
+                historicity = CatalogueEvent.Historicity(hist),
+                deaths = rs.flatMap(binding(_, "deaths")).flatMap(d => d.toDoubleOption.map(_.toLong)).maxOption.map(n => CatalogueEvent.Deaths(n)),
                 wikidata = WikidataId.option(qid),
-                description = first("itemDescription"),
-                raw = Some(Json.arr(rs.flatMap(_.focus)*).noSpaces)
+                description = first("itemDescription").map(t => CatalogueEvent.Description(t)),
+                raw = Some(CatalogueEvent.Raw(Json.arr(rs.flatMap(_.focus)*).noSpaces))
               )
             }
         })

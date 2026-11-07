@@ -7,7 +7,7 @@ import com.histmersion.plugin.*
   * (the natural-history departments' specimens) are left out of the search and refused if one still answers; an object
   * made after `max-year` is refused.
   */
-final class SmithsonianCollection(conf: CollectionSettings, key: Option[SmithsonianCollection.Key])
+final class SmithsonianCollection(conf: CollectionSettings, key: Option[KeyedCollection.Key])
     extends KeyedCollection(conf, com.histmersion.plugins.media.KeyedCollection.Plugin("media-smithsonian"), key, com.histmersion.plugins.media.KeyedCollection.Needs("an api.data.gov key"), com.histmersion.plugins.media.KeyedCollection.Settings("media.smithsonian")):
   val title = com.histmersion.plugin.MediaCollection.TitleResult("Smithsonian Open Access objects")
   override val description = described(
@@ -16,21 +16,16 @@ final class SmithsonianCollection(conf: CollectionSettings, key: Option[Smithson
       "natural-history units' specimens and objects made after media.smithsonian.max-year are refused; " +
       "needs an api.data.gov key (histmersion.plugins.media-smithsonian.api-key, a secret reference)"
   )
-  private val units = CollectionSettings.items(conf.excludeProviders)
+  private val units = CollectionSettings.items(conf.excludeProviders).map(i => Smithsonian.Unit(i.value))
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.SmithsonianCollection.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
     http
       .askJson(
         Smithsonian.searchUrl(conf.apiUrl, place.label, conf.candidates, units),
-        Map(Smithsonian.KeyHeader -> apiKey)
+        Map(Plugin.Http.GetHeadersPart1(Smithsonian.KeyHeader) -> Plugin.Http.GetHeadersPart2(apiKey.value))
       )
-      .flatMap(Smithsonian.records(_, units))
+      .flatMap(j => Smithsonian.records(j, units).left.map(_.value))
       .left
-      .map(explain)
-
-object SmithsonianCollection:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      .map(e => MediaCollection.SearchResultPart1(explain(KeyedCollection.Problem(e)).value))
+      .map(_.map(_.left.map(e => MediaCollection.SearchResultPart2Part1(e.value))))
 

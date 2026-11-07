@@ -10,7 +10,7 @@ final case class NoaaSettings(url: NoaaSettings.Url, pageSize: NoaaSettings.Page
     derives ConfigReader:
   /** The datasets named, in order; a name NCEI has no dataset of is left out. */
   def datasetList: List[com.histmersion.plugins.events.NoaaCatalogue.Dataset] =
-    datasets.split(",").map(_.trim).filter(NoaaCatalogue.Datasets.contains).toList
+    datasets.value.split(",").map(_.trim).flatMap(d => NoaaCatalogue.Datasets.find(_.value == d)).toList
 
 object NoaaSettings:
 

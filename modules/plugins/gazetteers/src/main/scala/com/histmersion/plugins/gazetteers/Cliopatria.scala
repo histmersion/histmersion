@@ -15,80 +15,79 @@ import io.circe.{Json, JsonObject}
   * parents come first in [[fetch]]'s answer, so the slices' relations find them.
   */
 object Cliopatria extends DownloadedGazetteer:
-  type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Year = Year.T
-  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type ReadFeatureOrdinal = ReadFeatureOrdinal.T
-  object ReadFeatureOrdinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Ordinal = Ordinal.T
+  object Ordinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val title = com.histmersion.plugin.GazetteerSource.TitleResult("Seshat Cliopatria polity polygons")
   override val description = com.histmersion.plugin.GazetteerSource.DescriptionResult("Seshat Cliopatria polity polygons (CC BY 4.0, ~13K features from 3400 BCE)")
-  val url = "https://github.com/Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip"
+  val url = Plugin.Http.GetUrl("https://github.com/Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip")
   val rights: GazetteerRights = GazetteerRights(
     Licence("CC BY 4.0"),
     com.histmersion.plugin.GazetteerRights.Credit("Cliopatria (Seshat Databank), CC BY 4.0"),
     Some(com.histmersion.plugin.GazetteerRights.LicenceUrl("https://creativecommons.org/licenses/by/4.0/"))
   )
 
-  private val Polity = "polity"
+  private val Polity = GazetteerPlace.Kind("polity")
+  private val PartOf = GazetteerRelation.Kind(GazetteerRelation.PartOf)
 
-  override def fetch(http: Plugin.Http): Either[String, List[GazetteerPlace]] =
+  override def fetch(http: Plugin.Http): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]] =
     download(http).flatMap(read).map(items => parentConcepts(items) ++ items)
 
-  def read(text: com.histmersion.plugins.gazetteers.Cliopatria.Text): Either[com.histmersion.plugins.gazetteers.Cliopatria.Problem, List[GazetteerPlace]] =
-    io.circe.parser.parse(text).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
+  def read(text: DownloadedGazetteer.Text): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]] =
+    io.circe.parser.parse(text.value).left.map(e => DownloadedGazetteer.Problem(s"invalid JSON: ${e.getMessage}")).flatMap { doc =>
       val features = doc.asObject
         .flatMap(_("features"))
         .flatMap(_.asArray)
         .map(_.toList)
         .orElse(doc.asArray.map(_.toList))
-        .toRight("not a GeoJSON FeatureCollection")
-      features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, i).toOption))
+        .toRight(DownloadedGazetteer.Problem("not a GeoJSON FeatureCollection"))
+      features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, Ordinal(i)).toOption))
     }
 
-  def readFeature(j: Json, ordinal: com.histmersion.plugins.gazetteers.Cliopatria.ReadFeatureOrdinal): Either[com.histmersion.plugins.gazetteers.Cliopatria.Problem, GazetteerPlace] =
-    j.asObject.toRight(s"feature #$ordinal is not a JSON object").flatMap { f =>
+  def readFeature(j: Json, ordinal: Ordinal): Either[DownloadedGazetteer.Problem, GazetteerPlace] =
+    j.asObject.toRight(DownloadedGazetteer.Problem(s"feature #$ordinal is not a JSON object")).flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
-      val rawName = str(props, "Name").getOrElse("")
-      if rawName.isEmpty then Left(s"feature #$ordinal has no Name")
+      val rawName = str(props, "Name").fold("")(_.value)
+      if rawName.isEmpty then Left(DownloadedGazetteer.Problem(s"feature #$ordinal has no Name"))
       else
-        val from = numYear(props, com.histmersion.plugins.gazetteers.Cliopatria.Key("FromYear"))
-        val to = numYear(props, com.histmersion.plugins.gazetteers.Cliopatria.Key("ToYear"))
-        val slug = slugify(rawName)
+        val from = numYear(props, "FromYear")
+        val to = numYear(props, "ToYear")
+        val slug = slugify(GazetteerName.Name(rawName))
         val sliceId = (from, to) match
           case (Some(a), Some(b)) => s"cliopatria_${slug}_${a}_$b"
           case _                  => s"cliopatria_${slug}_$ordinal"
         val parentId = s"cliopatria_$slug"
         val period = for a <- from; b <- to; p <- span(a, b) yield p
-        val geom = f("geometry").filterNot(_.isNull).map(_.noSpaces)
+        val geom = f("geometry").filterNot(_.isNull).map(g => GazetteerPlace.Geometry(g.noSpaces))
 
-        val wikidata = str(props, "Wikidata").filter(_.nonEmpty)
-        val wikipedia = str(props, "Wikipedia").filter(_.nonEmpty)
-        val memberOf = str(props, "MemberOf").filter(_.nonEmpty)
-        val seshatId = str(props, "SeshatID").filter(_.nonEmpty)
+        val wikidata = str(props, "Wikidata").filter(_.value.nonEmpty)
+        val wikipedia = str(props, "Wikipedia").filter(_.value.nonEmpty)
+        val memberOf = str(props, "MemberOf").filter(_.value.nonEmpty)
+        val seshatId = str(props, "SeshatID").filter(_.value.nonEmpty)
         val leftover = JsonObject.fromIterable(
-          wikidata.map("wikidata" -> Json.fromString(_)).toList ++
-            wikipedia.map("wikipedia" -> Json.fromString(_)).toList ++
-            seshatId.map("seshatId" -> Json.fromString(_)).toList ++
-            memberOf.map("memberOf" -> Json.fromString(_)).toList
+          wikidata.map(w => "wikidata" -> Json.fromString(w.value)).toList ++
+            wikipedia.map(w => "wikipedia" -> Json.fromString(w.value)).toList ++
+            seshatId.map(s => "seshatId" -> Json.fromString(s.value)).toList ++
+            memberOf.map(m => "memberOf" -> Json.fromString(m.value)).toList
         )
-        val relations = List(GazetteerRelation(sliceId, parentId, GazetteerRelation.PartOf, period)) ++
-          memberOf.map(m => GazetteerRelation(sliceId, s"cliopatria_${slugify(m)}", GazetteerRelation.PartOf, period))
+        val relations = List(GazetteerRelation(GazetteerRelation.ChildId(sliceId), GazetteerRelation.ParentId(parentId), PartOf, period)) ++
+          memberOf.map(m =>
+            GazetteerRelation(
+              GazetteerRelation.ChildId(sliceId),
+              GazetteerRelation.ParentId(s"cliopatria_${slugify(GazetteerName.Name(m.value))}"),
+              PartOf,
+              period
+            )
+          )
         Right(
           GazetteerPlace(
-            id = sliceId,
-            label = rawName,
+            id = GazetteerPlace.Id(sliceId),
+            label = GazetteerPlace.Label(rawName),
             kind = Polity,
             geometry = geom,
             period = period,
-            properties = Some(leftover).filter(_.nonEmpty).map(Json.fromJsonObject(_).noSpaces),
-            names = List(GazetteerName(rawName)),
+            properties = Some(leftover).filter(_.nonEmpty).map(l => GazetteerPlace.Properties(Json.fromJsonObject(l).noSpaces)),
+            names = List(GazetteerName(GazetteerName.Name(rawName))),
             relations = relations
           )
         )
@@ -105,16 +104,16 @@ object Cliopatria extends DownloadedGazetteer:
     features
       .flatMap(_.relations.map(_.parentId))
       .distinct
-      .filter(_.startsWith("cliopatria_"))
-      .filterNot(id => features.exists(_.id == id))
+      .filter(_.value.startsWith("cliopatria_"))
+      .filterNot(id => features.exists(_.id.value == id.value))
       .map { pid =>
-        val label = pid.stripPrefix("cliopatria_").replace("_", " ")
+        val label = pid.value.stripPrefix("cliopatria_").replace("_", " ")
         val dated = spans.getOrElse(pid, Nil)
         val period =
           if dated.isEmpty then None
-          else span(dated.map(_.start.value.toLong).min, dated.map(_.end.value.toLong).max)
-        GazetteerPlace(id = pid, label = label, kind = Polity, period = period)
+          else span(DownloadedGazetteer.Year(dated.map(_.start.value.toLong).min), DownloadedGazetteer.Year(dated.map(_.end.value.toLong).max))
+        GazetteerPlace(id = GazetteerPlace.Id(pid.value), label = GazetteerPlace.Label(label), kind = Polity, period = period)
       }
 
-  private def numYear(o: JsonObject, key: com.histmersion.plugins.gazetteers.Cliopatria.Key): Option[com.histmersion.plugins.gazetteers.Cliopatria.Year] =
-    o(key).flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.toLongOption)))
+  private def numYear(o: JsonObject, key: String): Option[DownloadedGazetteer.Year] =
+    o(key).flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.toLongOption))).map(DownloadedGazetteer.Year(_))

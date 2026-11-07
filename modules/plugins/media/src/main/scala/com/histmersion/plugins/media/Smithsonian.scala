@@ -20,70 +20,58 @@ object Smithsonian:
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Unit = Unit.T
   object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Rows = Rows.T
+  object Rows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The header the key travels in (api.data.gov's documented alternative to the `api_key` parameter). */
-
-  type SearchUrlName = _root_.com.histmersion.plugin.CollectionQuery.Text
-  val SearchUrlName: _root_.com.histmersion.plugin.CollectionQuery.Text.type = _root_.com.histmersion.plugin.CollectionQuery.Text
-  type SearchUrlRows = SearchUrlRows.T
-  object SearchUrlRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlExcludedUnits = _root_.com.histmersion.plugins.media.Smithsonian.Unit
-  val SearchUrlExcludedUnits: _root_.com.histmersion.plugins.media.Smithsonian.Unit.type = _root_.com.histmersion.plugins.media.Smithsonian.Unit
-  type DateLabels = DateLabelsValue
-  type DateLabelsValue = DateLabelsValue.T
-  object DateLabelsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MakerLabels = MakerLabelsValue
-  type MakerLabelsValue = MakerLabelsValue.T
-  object MakerLabelsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsExcludedUnits = _root_.com.histmersion.plugins.media.Smithsonian.Unit
-  val RecordsExcludedUnits: _root_.com.histmersion.plugins.media.Smithsonian.Unit.type = _root_.com.histmersion.plugins.media.Smithsonian.Unit
-
   val KeyHeader = "X-Api-Key"
 
   /** Pure: the query — the place's name as a phrase, objects with images only, none of the excluded units (`unit_code`,
     * a fielded term the API's `terms` endpoint lists).
     */
   def query(name: com.histmersion.plugin.CollectionQuery.Text, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.Unit] = Nil): com.histmersion.plugin.CollectionQuery.Text =
-    val units = excludedUnits.map(_.replaceAll("[^A-Za-z0-9_]", "")).filter(_.nonEmpty)
-    s"\"${name.replace("\"", " ").trim}\" AND online_media_type:Images" +
-      (if units.isEmpty then "" else units.mkString(" AND NOT unit_code:(", " OR ", ")"))
+    val units = excludedUnits.map(_.value.replaceAll("[^A-Za-z0-9_]", "")).filter(_.nonEmpty)
+    com.histmersion.plugin.CollectionQuery.Text(
+      s"\"${name.value.replace("\"", " ").trim}\" AND online_media_type:Images" +
+        (if units.isEmpty then "" else units.mkString(" AND NOT unit_code:(", " OR ", ")"))
+    )
 
-  def searchUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, name: com.histmersion.plugins.media.Smithsonian.SearchUrlName, rows: com.histmersion.plugins.media.Smithsonian.SearchUrlRows, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.SearchUrlExcludedUnits] = Nil): com.histmersion.plugin.Plugin.Http.GetUrl =
-    s"${api.stripSuffix("/")}/search?q=${query(name, excludedUnits).enc}&rows=${rows.max(1).min(1000)}" +
-      "&type=edanmdm&row_group=objects"
+  def searchUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, name: com.histmersion.plugin.CollectionQuery.Text, rows: com.histmersion.plugins.media.Smithsonian.Rows, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.Unit] = Nil): com.histmersion.plugin.Plugin.Http.GetUrl =
+    com.histmersion.plugin.Plugin.Http.GetUrl(
+      s"${api.value.stripSuffix("/")}/search?q=${query(name, excludedUnits).value.enc}&rows=${rows.value.max(1).min(1000)}" +
+        "&type=edanmdm&row_group=objects"
+    )
 
   /** Pure: the unit a row comes from — `descriptiveNonRepeating.unit_code`, else the row's `unitCode`. */
   def unitOf(json: Json): Option[com.histmersion.plugins.media.Smithsonian.Unit] =
     val c = json.hcursor
-    c.downField("content").downField("descriptiveNonRepeating").str("unit_code").orElse(c.str("unitCode"))
+    c.downField("content").downField("descriptiveNonRepeating").str("unit_code").orElse(c.str("unitCode")).map(u => Unit(u))
 
   /** The labels of `freetext.date` that name when the object was made. */
-  val DateLabels: Set[com.histmersion.plugins.media.Smithsonian.DateLabels] =
-    Set(com.histmersion.plugins.media.Smithsonian.DateLabelsValue("date"), com.histmersion.plugins.media.Smithsonian.DateLabelsValue("date made"), com.histmersion.plugins.media.Smithsonian.DateLabelsValue("date created"), com.histmersion.plugins.media.Smithsonian.DateLabelsValue("creation date"), com.histmersion.plugins.media.Smithsonian.DateLabelsValue("production date"), com.histmersion.plugins.media.Smithsonian.DateLabelsValue("object date"))
+  val DateLabels: Set[com.histmersion.plugins.media.Smithsonian.Label] =
+    Set("date", "date made", "date created", "creation date", "production date", "object date").map(l => Label(l))
 
   /** The labels of `freetext.name` that name who made it. */
-  val MakerLabels: Set[com.histmersion.plugins.media.Smithsonian.MakerLabels] = Set(
-    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("artist"),
-    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("maker"),
-    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("creator"),
-    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("author"),
-    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("manufacturer"),
-    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("photographer"),
-    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("designer"),
-    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("sculptor"),
-    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("potter"),
-    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("illustrator"),
-    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("engraver")
-  )
+  val MakerLabels: Set[com.histmersion.plugins.media.Smithsonian.Label] = Set(
+    "artist",
+    "maker",
+    "creator",
+    "author",
+    "manufacturer",
+    "photographer",
+    "designer",
+    "sculptor",
+    "potter",
+    "illustrator",
+    "engraver"
+  ).map(l => Label(l))
 
   /** Pure: the rows of a search answer; an error answer (api.data.gov's `{error: {code, message}}`, or EDAN's
     * `{response: {error}}`) is a `Left`.
     */
-  def records(json: Json, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.RecordsExcludedUnits] = Nil): Either[com.histmersion.plugins.media.Smithsonian.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
+  def records(json: Json, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.Unit] = Nil): Either[com.histmersion.plugins.media.Smithsonian.Problem, List[Either[com.histmersion.plugins.media.Smithsonian.Problem, MediaItem]]] =
     val c = json.hcursor
     val resp = c.downField("response")
     resp.downField("rows").focus.flatMap(_.asArray) match
@@ -91,14 +79,14 @@ object Smithsonian:
       case None if resp.long("rowCount").isDefined => Right(Nil)
       case None                                    =>
         val gov = c.downField("error")
-        Left(List(gov.str("code"), gov.str("message")).flatten.mkString(": ") match
+        Left(Problem(List(gov.str("code"), gov.str("message")).flatten.mkString(": ") match
           case "" => resp.str("error").orElse(c.str("message")).getOrElse("no rows in the answer")
-          case e  => e)
+          case e  => e))
 
-  private def labelled(c: ACursor, field: com.histmersion.plugins.media.Smithsonian.Label): List[(com.histmersion.plugins.media.Smithsonian.Label, com.histmersion.plugins.media.Smithsonian.Text)] =
+  private def labelled(c: ACursor, field: String): List[(com.histmersion.plugins.media.Smithsonian.Label, String)] =
     c.downField(field).focus.flatMap(_.asArray).toList.flatten.flatMap { e =>
       val h = e.hcursor
-      h.str("content").map(v => h.str("label").getOrElse("").toLowerCase(Locale.ROOT) -> v)
+      h.str("content").map(v => Label(h.str("label").getOrElse("").toLowerCase(Locale.ROOT)) -> v)
     }
 
   /** Pure: one row of a search answer; a row of an excluded unit (a natural-history department's specimen) is withheld
@@ -114,7 +102,7 @@ object Smithsonian:
       .str("record_ID")
       .orElse(c.str("url").map(_.split(":", 2).last))
       .orElse(c.str("id"))
-      .toRight("no record id")
+      .toRight(Problem("no record id"))
       .map { key =>
         val title = c.str("title").orElse(dnr.downField("title").str("content")).getOrElse(key)
         val page = dnr
@@ -122,8 +110,8 @@ object Smithsonian:
           .orElse(dnr.str("guid"))
           .getOrElse(s"https://collections.si.edu/search/detail/${c.str("url").getOrElse(s"edanmdm:$key")}")
         val unit = dnr.str("data_source")
-        val maker = labelled(free, com.histmersion.plugins.media.Smithsonian.Label("name")).find((l, _) => MakerLabels(l)).map(_._2)
-        val creditLine = labelled(free, com.histmersion.plugins.media.Smithsonian.Label("creditLine")).headOption.map(_._2)
+        val maker = labelled(free, "name").find((l, _) => MakerLabels(l)).map(_._2)
+        val creditLine = labelled(free, "creditLine").headOption.map(_._2)
         val credit =
           (List(Some(title), maker, unit).flatten ++ List("Smithsonian Institution") ++ creditLine.toList :+ "CC0")
             .mkString(", ")
@@ -139,11 +127,11 @@ object Smithsonian:
         val cc0 = media.find(m => m.downField("usage").str("access").exists(_.equalsIgnoreCase("CC0")))
         val rights: Either[com.histmersion.plugins.media.Smithsonian.Problem, MediaRights] = cc0 match
           case Some(_)               => Right(MediaRights.cc0(maker, credit))
-          case None if media.isEmpty => Left(com.histmersion.plugins.media.Smithsonian.Problem("no image on the record"))
+          case None if media.isEmpty => Left(Problem("no image on the record"))
           case None                  =>
             val stated = media.flatMap(m => m.downField("usage").str("access")).distinct
-            Left(s"no CC0 image (usage.access ${if stated.isEmpty then "missing" else stated.mkString(", ")})")
-        def resource(m: ACursor, label: com.histmersion.plugins.media.Smithsonian.Label) =
+            Left(Problem(s"no CC0 image (usage.access ${if stated.isEmpty then "missing" else stated.mkString(", ")})"))
+        def resource(m: ACursor, label: String) =
           m.downField("resources")
             .focus
             .flatMap(_.asArray)
@@ -152,13 +140,13 @@ object Smithsonian:
             .map(_.hcursor)
             .find(r => r.str("label").exists(_.equalsIgnoreCase(label)))
             .flatMap(_.str("url"))
-        val image = cc0.flatMap(m => resource(m, com.histmersion.plugins.media.Smithsonian.Label("Screen Image")).orElse(m.str("content")))
-        val thumb = cc0.flatMap(m => resource(m, com.histmersion.plugins.media.Smithsonian.Label("Thumbnail Image")).orElse(m.str("thumbnail")))
-        val original = cc0.flatMap(m => resource(m, com.histmersion.plugins.media.Smithsonian.Label("High-resolution JPEG")).orElse(m.str("content")))
+        val image = cc0.flatMap(m => resource(m, "Screen Image").orElse(m.str("content")))
+        val thumb = cc0.flatMap(m => resource(m, "Thumbnail Image").orElse(m.str("thumbnail")))
+        val original = cc0.flatMap(m => resource(m, "High-resolution JPEG").orElse(m.str("content")))
         // the free-text places first (each value's comma parts, most specific first), then the
         // structured location from its finest level down
-        val places = labelled(free, com.histmersion.plugins.media.Smithsonian.Label("place")).flatMap((l, v) =>
-          v.split(",").toList.map(_.trim).filter(_.nonEmpty).map((if l.isEmpty then "place" else l) -> _)
+        val places = labelled(free, "place").flatMap((l, v) =>
+          v.split(",").toList.map(_.trim).filter(_.nonEmpty).map((if l.value.isEmpty then "place" else l.value) -> _)
         )
         val levels = idx.downField("geoLocation").focus.flatMap(_.asArray).toList.flatten.flatMap { g =>
           val h = g.hcursor
@@ -168,23 +156,23 @@ object Smithsonian:
           }
         }
         val geo = (places ++ levels).distinctBy((_, v) => v.toLowerCase(Locale.ROOT))
-        val period = labelled(free, com.histmersion.plugins.media.Smithsonian.Label("date"))
+        val period = labelled(free, "date")
           .filter((l, _) => DateLabels(l))
           .iterator
-          .flatMap((_, v) => FreeTextDates.parse(v))
+          .flatMap((_, v) => FreeTextDates.parse(FreeTextDates.Text(v)))
           .nextOption()
-          .flatMap((a, b) => Period.span(a, b))
+          .flatMap((a, b) => Period.span(a.value, b.value))
         val excluded =
-          unitOf(json).filter(u => excludedUnits.exists(_.equalsIgnoreCase(u))).map(u => s"an excluded unit ($u)")
+          unitOf(json).filter(u => excludedUnits.exists(_.value.equalsIgnoreCase(u.value))).map(u => MediaItem.Withheld(s"an excluded unit (${u.value})"))
         MediaItem(
-          key,
-          title,
-          page,
-          image,
-          rights,
-          thumbUrl = thumb,
-          originalUrl = original,
-          geography = geo,
+          MediaItem.Key(key),
+          MediaItem.Title(title),
+          MediaItem.PageUrl(page),
+          image.map(i => MediaItem.ImageUrl(i)),
+          rights.left.map(p => MediaItem.RightsPart1(p.value)),
+          thumbUrl = thumb.map(t => MediaItem.ThumbUrl(t)),
+          originalUrl = original.map(o => MediaItem.OriginalUrl(o)),
+          geography = geo.map((f, v) => (MediaItem.GeographyPart1(f), MediaItem.GeographyPart2(v))),
           period = period,
           withheld = excluded
         )
