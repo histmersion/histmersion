@@ -44,6 +44,8 @@ object CalibreCmd:
 
 
 
+  type Unlinked = Unlinked.T
+  object Unlinked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private def calibre(c: Client)(using console: Console): Calibre = Calibre(Settings.app.cli.calibre)
 
   private def fail(msg: com.histmersion.cli.Cli.Problem) = Cli.Error(msg, exitCode = ExitCode.Refused)
@@ -86,7 +88,7 @@ object CalibreCmd:
   private def hostSearch(
       c: Client,
       q: Option[com.histmersion.api.Api.Search.Text],
-      unlinked: com.histmersion.config.Limits.Search.Unlinked,
+      unlinked: com.histmersion.cli.CalibreCmd.Unlinked,
       max: com.histmersion.api.Paging.Limit,
       json: com.histmersion.cli.Cli.JsonOutput
   )(using console: Console): Either[Cli.Error, Unit] =
