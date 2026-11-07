@@ -395,7 +395,7 @@ final class SchedulerService(
   /** The waiting items in the order shown: the ones in the order first (by place), then the rest. */
   private def ordered(d: Decision): List[(Scored, SchedulerPolicy.Wait)] =
     val (inOrder, rest) = d.waiting.partition(_._2.position.value > 0)
-    inOrder.sortBy(_._2.position.value) ++ rest
+    inOrder.sortBy(w => (w._2.position.value: Int)) ++ rest
 
   private def wire(x: (Scored, SchedulerPolicy.Wait)): Waiting =
     val (sc, w) = x
@@ -595,7 +595,7 @@ final class SchedulerService(
             Right(s"strategy ${st.name} (by $by)")
     done.map { line =>
       last = None
-      val _ = agents.workLists.add(Queue.Kind.Log.label, QueueAdd(Queue.QueueItem.Text(s"agent scheduler: $line".take(1000))))
+      val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName(Queue.Kind.Log.label.value), QueueAdd(Queue.QueueItem.Text(s"agent scheduler: $line".take(1000))))
       scribe.info(s"agent scheduler: $line")
       agents.managers.nudge()
       status(None, now, List(SchedulerStatus.Changes(line)))

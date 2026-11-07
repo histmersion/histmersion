@@ -12,24 +12,18 @@ object CliOutcomes:
   /** The answer as the step's schema: the final text is JSON (code fences tolerated), a `null` field the same as an
     * absent one.
     */
-  type ResultUser = ResultUser.T
-  object ResultUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TextProblemText = TextProblemText.T
   object TextProblemText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StripFenceResult = StripFenceResult.T
-  object StripFenceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StripFenceS = StripFenceS.T
-  object StripFenceS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def result[Out](
       o: CliOutcome,
-      user: com.histmersion.server.agents.CliOutcomes.ResultUser,
+      user: com.histmersion.domain.automation.agents.LlmCall.User,
       schema: ResponseSchema[Out],
-      modelId: Option[com.histmersion.server.agents.ClaudeCode.ModelId]
+      modelId: Option[com.histmersion.api.automation.Agents.ModelRef.Model]
   ): AgentResult[Either[AgentFailure, Out]] =
-    val raw = o.finalText.getOrElse("")
+    val raw = o.finalText.map(_.value).getOrElse("")
     val parsed = parser.parse(stripFence(raw))
-    val finish = o.error.fold(FinishReason.NaturalStop)(e => FinishReason.Error(e.take(600)))
+    val finish = o.error.fold(FinishReason.NaturalStop)(e => FinishReason.Error(e.value.take(600)))
     val answer: Either[AgentFailure, Out] = parsed match
       // a null decodes as an absent field: Codex's strict schema makes the model answer `null` for
       // every optional field it would have left out (StrictJsonSchema), and a field with a default
@@ -38,14 +32,14 @@ object CliOutcomes:
       // #941: an answer that ended normally but is not JSON keeps the parser's error as its cause
       case Left(pf) =>
         Left(AgentIncomplete(raw, finish, Option.when(finish == FinishReason.NaturalStop && raw.trim.nonEmpty)(pf)))
-    val entries = ConversationEntry.UserPrompt(user) +: o.entries
+    val entries = ConversationEntry.UserPrompt(user.value) +: o.entries
     AgentResult(
       answer,
-      math.max(1, o.turns),
+      math.max(1, o.turns.value),
       o.toolCalls,
       finish,
       o.usage,
-      Seq(LlmCallUsage(modelId, o.usage)),
+      Seq(LlmCallUsage(modelId.map(_.value), o.usage)),
       ConversationHistory(entries)
     )
 
@@ -55,7 +49,7 @@ object CliOutcomes:
     * "not the JSON the schema asks for".
     */
   def textProblem(text: com.histmersion.server.agents.CliOutcomes.TextProblemText): Option[io.circe.ParsingFailure] =
-    val t = text.trim
+    val t = text.value.trim
     if t.isEmpty then None
     else if parser.parse(stripFence(t)).exists(j => !j.isObject) then
       Some(io.circe.ParsingFailure("the answer is JSON but not an object", null))
@@ -73,7 +67,7 @@ object CliOutcomes:
             case Right(j) if !j.isObject => Some(io.circe.ParsingFailure("the answer is JSON but not an object", null))
             case Right(_)                => None
 
-  def stripFence(s: com.histmersion.server.agents.CliOutcomes.StripFenceS): com.histmersion.server.agents.CliOutcomes.StripFenceResult =
+  def stripFence(s: String): String =
     val t = s.trim
     if t.startsWith("```") then
       t.dropWhile(_ != '\n').drop(1).reverse.dropWhile(_ != '`').dropWhile(_ == '`').reverse.trim
@@ -81,6 +75,6 @@ object CliOutcomes:
 
   /** A plan's usage limit as a CLI words it ("You've hit your usage limit", "rate limit reached"). */
   def isLimit(message: com.histmersion.server.agents.ClaudeCode.Limit.Message): Boolean =
-    val low = message.toLowerCase(java.util.Locale.ROOT)
+    val low = message.value.toLowerCase(java.util.Locale.ROOT)
     low.contains("usage limit") || low.contains("rate limit reached") || low.contains("rate_limit_reached") ||
     low.contains("hit your limit") || low.contains("quota exceeded")

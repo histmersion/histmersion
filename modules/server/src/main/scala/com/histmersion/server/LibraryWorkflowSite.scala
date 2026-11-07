@@ -29,8 +29,8 @@ final class LibraryWorkflowSite(h: ServerWiring, deps: Deps) extends LibrarySite
   def query: QueryControllers = h.library.query
   def jobs: JobListing = h.jobs
 
-  def geocode(name: com.histmersion.server.LibraryWorkflowSite.PlaceName, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
-    h.geocode(name, hint, at)
+  def geocode(name: com.histmersion.domain.library.workflows.LibrarySite.PlaceName, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
+    h.geocode(Geocode.Attempt.Name(name.value), hint, at)
 
   def articleSources(slug: com.histmersion.domain.research.Slug): Either[Api.Error, List[com.histmersion.domain.library.Citekey]] =
     h.research.articles.get(slug).map(v => h.research.articles.citedSources(v.article.body))
@@ -42,6 +42,3 @@ final class LibraryWorkflowSite(h: ServerWiring, deps: Deps) extends LibrarySite
 
   def upstreamQuotas(now: Instant): List[UpstreamQuota] = h.upstreamQuotas(now)
 
-object LibraryWorkflowSite:
-  type PlaceName = PlaceName.T
-  object PlaceName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

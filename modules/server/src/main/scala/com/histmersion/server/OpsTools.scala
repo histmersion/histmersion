@@ -77,7 +77,7 @@ object OpsTools:
                 in.rules.map(com.histmersion.util.data.checks.CheckRule.Name(_)),
                 com.histmersion.util.data.checks.CheckControllers.ApplyFix(in.fix)
               ) match
-                case Right(rep) => ToolResult.text(Lint.markdown(rep))
+                case Right(rep) => ToolResult.text(Lint.markdown(rep).value)
                 case Left(e)    => McpOut.error(e)
         }
 
@@ -123,7 +123,7 @@ object OpsTools:
         com.histmersion.server.views.WorkListView.IncludeAll(in.all)
       ) match
         case Right(l) =>
-          l.markdown.getOrElse(s"_unknown list ${l.list}_")
+          l.markdown.map(_.value).getOrElse(s"_unknown list ${l.list}_")
         case Left(e) => McpOut.refusal(e)
 
     in.action.trim.toLowerCase match
@@ -132,14 +132,15 @@ object OpsTools:
       case "add" =>
         (in.list, in.text.map(_.trim).filter(_.nonEmpty)) match
           case (Some(list), Some(text)) =>
-            h.workLists.add(
-              Queue.Kind.Label(list),
+            val added = h.workLists.add(
+              com.histmersion.domain.automation.worklists.WorkListControllers.ListName(list),
               QueueAdd(
                 Queue.QueueItem.Text(text),
                 in.topic.map(Queue.QueueItem.Topic(_)),
                 reason = in.reason.map(Queue.QueueItem.Reason(_))
               )
-            ) match
+            )
+            added match
               case Right(i) => s"added **#${i.id}** to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}: ${i.text}"
               case Left(e)  => McpOut.refusal(e)
           case _ => "_add needs both `list` and `text`_"

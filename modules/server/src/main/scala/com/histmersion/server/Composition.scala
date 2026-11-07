@@ -35,16 +35,12 @@ import scala.collection.immutable.ListMap
   * builds a server with [[server]].
   */
 object Composition:
-  type Host = Host.T
-  object Host extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Port = Port.T
-  object Port extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Build a configured (not yet started) server. `port = 0` → ephemeral port (tests use
     * `supervised { server(...).start() }`; `main` binds it in its own scope). Its components — the pools above all —
     * belong to the enclosing Ox scope and close with it.
     */
-  def server(cfg: AppConfig, host: com.histmersion.server.Composition.Host, port: com.histmersion.server.Composition.Port)(using Ox): NettySyncServer =
+  def server(cfg: AppConfig, host: com.histmersion.config.ServerConfig.Host, port: com.histmersion.config.ServerConfig.Port)(using Ox): NettySyncServer =
     build(HotConfig.fixed(cfg), None, host, port, None)
 
   /** Same, with an explicit OCR sidecar client — the seam an HTTP test uses to ingest a document through a fake
@@ -53,8 +49,8 @@ object Composition:
     */
   def server(
       cfg: AppConfig,
-      host: com.histmersion.server.Composition.Host,
-      port: com.histmersion.server.Composition.Port,
+      host: com.histmersion.config.ServerConfig.Host,
+      port: com.histmersion.config.ServerConfig.Port,
       converter: ConverterClient,
       autoInit: InitConfig.Auto = InitConfig.Auto(false),
       onWiring: ServerWiring => Unit = _ => (),
@@ -114,8 +110,8 @@ object Composition:
   private[server] def build(
       hc: HotConfig,
       source: Option[ConfigSource],
-      host: com.histmersion.server.Composition.Host,
-      port: com.histmersion.server.Composition.Port,
+      host: com.histmersion.config.ServerConfig.Host,
+      port: com.histmersion.config.ServerConfig.Port,
       converter: Option[ConverterClient],
       autoInit: InitConfig.Auto = InitConfig.Auto(false),
       onWiring: ServerWiring => Unit = _ => (),
@@ -169,12 +165,12 @@ object Composition:
       .host(host.value)
       .port(port.value)
       .modifyConfig(
-        _.requestTimeout(cfg.server.requestTimeoutSeconds.seconds)
+        _.requestTimeout(cfg.server.requestTimeoutSeconds.value.seconds)
       ) // netty default 20 s is shorter than a pg_dump
       // tapir waits this long on stop for the open connections — idle keep-alive ones included
       .modifyConfig(nc =>
-        if cfg.server.shutdownGraceSeconds > 0 then
-          nc.withGracefulShutdownTimeout(cfg.server.shutdownGraceSeconds.seconds)
+        if cfg.server.shutdownGraceSeconds.value > 0 then
+          nc.withGracefulShutdownTimeout(cfg.server.shutdownGraceSeconds.value.seconds)
         else closeAtOnce(nc)
       )
       .addEndpoint(mcp.endpoint)
@@ -220,7 +216,7 @@ object Composition:
       deps = List(sg.migrations, sg.pool),
       onPublish = held => {
         val failed = h.ingest.queue.start()
-        if failed > 0 then scribe.info(s"the new database had $failed interrupted job(s): failed them")
+        if failed.value > 0 then scribe.info(s"the new database had $failed interrupted job(s): failed them")
         if held then h.agents.adoptDatabase()
         else if lease.started then
           scribe.warn(
@@ -328,7 +324,7 @@ object Composition:
       ),
       cfg.chainIds.flatMap(c => Plugin.Id.option(c.value)),
       FetchChain.AllowUnauthorised(cfg.allowUnauthorised.value),
-      plugins = plugins.registered
+      plugins = plugins.registered.flatMap(i => Plugin.Id.option(i.value))
     )
     notes.foreach(n => scribe.info(n))
     scribe.info(chain.plan match

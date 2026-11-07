@@ -22,7 +22,7 @@ final class SeedNoteFiles(dir: Path, confineTo: Option[com.histmersion.util.stor
 
   def read(name: SeedFolder.Name): Option[SeedNote] =
     val f = dir.resolve(name.value)
-    SourceNote.parseFile(f, confineTo).map(s => SeedNote(s, Files.getLastModifiedTime(f).toMillis))
+    SourceNote.parseFile(f, confineTo).map(s => SeedNote(s, com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(Files.getLastModifiedTime(f).toMillis)))
 
   def figures(name: SeedFolder.Name, citekey: com.histmersion.domain.library.Citekey, maxBytes: SeedFolder.MaxBytes): List[NewFigure] =
     val note = dir.resolve(name.value)

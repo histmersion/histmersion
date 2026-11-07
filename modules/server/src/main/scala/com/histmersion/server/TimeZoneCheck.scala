@@ -15,11 +15,19 @@ object TimeZoneCheck:
   type Report = Report.T
   object Report extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  /** Why a zone could not be resolved. */
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  /** How many region ids the JDK knows. */
+  type ZoneCount = ZoneCount.T
+  object ZoneCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  /** The tzdb version the JDK carries. */
+  type TzdbVersion = TzdbVersion.T
+  object TzdbVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** A zone, an instant, and the offset the zone has then (tzdb rules in force since 2008 or earlier). */
-  type ReportZones = ReportZones.T
-  object ReportZones extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReportVersion = ReportVersion.T
-  object ReportVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Probe(zone: Probe.Zone, at: Instant, offset: ZoneOffset)
 
@@ -45,10 +53,10 @@ object TimeZoneCheck:
     */
   def report(
       probes: List[Probe],
-      offset: (com.histmersion.server.TimeZoneCheck.Probe.Zone, Instant) => Either[com.histmersion.server.TimeZoneCheck.Report, ZoneOffset],
-      zones: com.histmersion.server.TimeZoneCheck.ReportZones,
-      version: Option[com.histmersion.server.TimeZoneCheck.ReportVersion],
-      default: Either[com.histmersion.server.TimeZoneCheck.Probe.Zone, com.histmersion.server.TimeZoneCheck.Report]
+      offset: (com.histmersion.server.TimeZoneCheck.Probe.Zone, Instant) => Either[com.histmersion.server.TimeZoneCheck.Problem, ZoneOffset],
+      zones: com.histmersion.server.TimeZoneCheck.ZoneCount,
+      version: Option[com.histmersion.server.TimeZoneCheck.TzdbVersion],
+      default: Either[com.histmersion.server.TimeZoneCheck.Problem, com.histmersion.server.TimeZoneCheck.Probe.Zone]
   ): (Boolean, com.histmersion.server.TimeZoneCheck.Report) =
     val wrong = probes.flatMap { p =>
       offset(p.zone, p.at) match
@@ -56,24 +64,26 @@ object TimeZoneCheck:
         case Right(o)                  => List(s"${p.zone} at ${p.at}: $o, expected ${p.offset}")
         case Left(err)                 => List(s"${p.zone}: $err")
     } ++ default.left.toOption.map(err => s"the default zone: $err")
-    val problems = (if zones > 0 then Nil else List("no zone ids")) ++ wrong
+    val problems = (if zones.value > 0 then Nil else List("no zone ids")) ++ wrong
     if problems.isEmpty then
       (
         true,
-        s"time zones: $zones from the JDK's tzdb ${version.getOrElse("(no version)")} · default " +
-          s"${default.getOrElse("?")} · ${probes.size} offsets checked"
+        Report(
+          s"time zones: ${zones.value} from the JDK's tzdb ${version.map(_.value).getOrElse("(no version)")} · default " +
+            s"${default.map(_.value).getOrElse("?")} · ${probes.size} offsets checked"
+        )
       )
-    else (false, s"time zones: BROKEN — ${problems.mkString("; ")}")
+    else (false, Report(s"time zones: BROKEN — ${problems.mkString("; ")}"))
 
   /** The check against this JDK (or binary). */
   def jdk(): (Boolean, com.histmersion.server.TimeZoneCheck.Report) =
-    def err(t: Throwable) = s"${t.getClass.getSimpleName}: ${t.getMessage}"
+    def err(t: Throwable) = Problem(s"${t.getClass.getSimpleName}: ${t.getMessage}")
     val ids = Try(ZoneId.getAvailableZoneIds.size).getOrElse(0)
     val version = Try(ZoneRulesProvider.getVersions("Europe/Warsaw").lastKey).toOption
     report(
       Probes,
-      (z, at) => Try(ZoneId.of(z).getRules.getOffset(at)).toEither.left.map(err),
-      ids,
-      version,
-      Try(ZoneId.systemDefault().getId).toEither.left.map(err)
+      (z, at) => Try(ZoneId.of(z.value).getRules.getOffset(at)).toEither.left.map(err),
+      ZoneCount(ids),
+      version.map(TzdbVersion(_)),
+      Try(Probe.Zone(ZoneId.systemDefault().getId)).toEither.left.map(err)
     )

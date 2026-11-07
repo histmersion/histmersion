@@ -399,8 +399,8 @@ object AgentsTools:
           val out: Either[Api.Error, String] = in.action.trim.toLowerCase match
             case "list"   => Right(ManagersMarkdown.list(m.list))
             case "show"   => m.get(id).map(ManagersMarkdown.detail)
-            case "pause"  => m.action(id, com.histmersion.domain.automation.managers.ManagersControllers.ActionAction("pause"), Some(com.histmersion.domain.automation.managers.ManagersControllers.ActionRuns(in.runs))).map(ManagersMarkdown.line)
-            case "resume" => m.action(id, com.histmersion.domain.automation.managers.ManagersControllers.ActionAction("resume"), None).map(ManagersMarkdown.line)
+            case "pause"  => m.action(id, com.histmersion.domain.automation.managers.ManagersControllers.Action("pause"), Some(Managers.ManagerInfo.PauseRuns(in.runs))).map(ManagersMarkdown.line)
+            case "resume" => m.action(id, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None).map(ManagersMarkdown.line)
             case "create" =>
               m.create(
                 Managers.ManagerCreate(
@@ -432,7 +432,7 @@ object AgentsTools:
                 .flatMap(t =>
                   m.patchItem(
                     id,
-                    com.histmersion.domain.automation.managers.ManagersControllers.ItemRef(t),
+                    Managers.ManagerItem.Ref(t),
                     Managers.ItemPatch(
                       Managers.ItemPatch.Action("hold"),
                       until = in.until.map(Managers.ItemPatch.Until(_)),
@@ -514,9 +514,9 @@ object AgentsTools:
         .handle { in =>
           val m = a.managing
           val out: Either[Api.Error, String] = in.action.trim.toLowerCase match
-            case "status" | "" => Right(AgentSchedulerMarkdown.status(m.scheduler(in.limit.map(ManagerContext.Limit(_)))))
+            case "status" | "" => Right(AgentSchedulerMarkdown.status(m.scheduler(in.limit.flatMap(PageSize.option(_)))))
             case "queue"       =>
-              val st = m.scheduler(in.limit.orElse(Some(200)).map(ManagerContext.Limit(_)))
+              val st = m.scheduler(in.limit.orElse(Some(200)).flatMap(PageSize.option(_)))
               Right(if st.waiting.isEmpty then "_Nothing waits._"
               else
                 (s"# Waiting (${st.waitingTotal}, strategy ${st.strategy})" :: "" :: st.waiting
@@ -526,7 +526,7 @@ object AgentsTools:
                 .map(_.trim)
                 .filter(_.nonEmpty)
                 .toRight(Api.Error(com.histmersion.api.Api.Error.Message("`why` needs `item`")))
-                .flatMap(i => m.schedulerWhy(com.histmersion.domain.automation.managers.ManagersControllers.SchedulerWhyItem(i)))
+                .flatMap(i => m.schedulerWhy(Managers.ManagerItem.Ref(i)))
                 .map(AgentSchedulerMarkdown.why)
             case "strategy" =>
               in.strategy
@@ -535,7 +535,7 @@ object AgentsTools:
                 .toRight(Api.Error(com.histmersion.api.Api.Error.Message("`strategy` needs `strategy`")))
                 .flatMap(n => m.setScheduler(AgentScheduler.SchedulerSet(AgentScheduler.SchedulerSet.Strategy(n), Some(com.histmersion.api.automation.AgentScheduler.SchedulerSet.By("mcp")))))
                 .map(AgentSchedulerMarkdown.status)
-            case "stalls" => Right(StallsMarkdown.report(m.stalls(in.days.map(com.histmersion.domain.automation.managers.ManagersControllers.StallsDays(_)))))
+            case "stalls" => Right(StallsMarkdown.report(m.stalls(in.days.map(AgentAutopilotConfig.StallDays(_)))))
             case other    => Left(Api.Error(Api.Error.Message(s"unknown action '$other' (status, queue, why, strategy, stalls)")))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }

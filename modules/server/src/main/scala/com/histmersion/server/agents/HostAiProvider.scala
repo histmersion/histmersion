@@ -9,9 +9,13 @@ import com.histmersion.pluginhost.HostOwned
   * settings, unchanged and read at each call. The SPI's `turn` is never called for it.
   */
 final case class HostAiProvider(plugin: HostAiProvider.Plugin, kind: ProviderKind) extends AiProvider, HostOwned:
-  def title: com.histmersion.domain.Title = BuiltinAi.titles.getOrElse(kind, kind.wire)
+  def title: com.histmersion.domain.Title = BuiltinAi.titles.getOrElse(kind, com.histmersion.domain.Title(kind.wire.value))
   def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
-    Left(AiFailure.Error(s"${kind.wire} is Histmersion's own provider; it is run by the host, not through the SPI"))
+    Left(
+      AiFailure.Error(
+        AiFailure.Error.Message(s"${kind.wire} is Histmersion's own provider; it is run by the host, not through the SPI")
+      )
+    )
 
 object HostAiProvider:
 

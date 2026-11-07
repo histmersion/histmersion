@@ -170,7 +170,7 @@ object CatalogueWiring:
           deps.storage.store(Location.GazetteerExtracts),
           deps.storage.find(Location.GazetteerFolder),
           deps.storage.store(Location.GazetteerDrop),
-          paths.manifest.toString,
+          GazetteerLoad.Stores.ManifestAt(paths.manifest.toString),
           () => paths.manifestText()
         )
       ,

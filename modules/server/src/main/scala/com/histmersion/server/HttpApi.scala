@@ -60,7 +60,7 @@ final class HttpApi(
     Api.seed.serverLogic[Identity](req => h.seeding.seed(req)),
     // ── writes (plan §1.9a): the `export` route must precede `getSource`, which is a prefix of it ──
     Api.exportSource.serverLogic[Identity](ck =>
-      h.mirror.note(com.histmersion.domain.library.LibraryData.SourceNotes, com.histmersion.util.data.mirror.MirrorPlacement.RecordId(ck.value))
+      h.mirror.note(com.histmersion.domain.library.LibraryData.SourceNotes, com.histmersion.util.data.mirror.MirrorPlacement.RecordId(ck.value)).map(n => com.histmersion.api.library.Source.Export(n.value))
     ),
     Api.reindex.serverLogic[Identity]((after, limit) => h.upkeep.reindex(
         after.map(a => com.histmersion.server.instance.MaintenanceControllers.Cursor(a.value)),
@@ -78,7 +78,7 @@ final class HttpApi(
     // ── portable bundles (M0–M2) ──────────────────────────────────────────────────────────────
     Api.instance.serverLogicSuccess[Identity](_ => h.bundles.instance),
     Api.setInstance.serverLogic[Identity](in => h.bundles.setInstance(in.label.map(l => com.histmersion.api.aliases.InstanceInfo.Label(l.value)))),
-    Api.exportBundle.serverLogic[Identity](since => h.bundles.exportBundle(since.map(s => com.histmersion.util.data.exchange.BundleScope.Since.At(s.value)))),
+    Api.exportBundle.serverLogic[Identity](since => h.bundles.exportBundle(since.map(s => com.histmersion.util.data.exchange.BundleScope.Since.At(s.value))).map((f, d) => (f, Api.FileName(d.value)))),
     Api.verifyBundle.serverLogic[Identity](f => h.bundles.verify(f)),
     Api.importBundle.serverLogic[Identity]((dryRun, f) => h.bundles.importBundle(com.histmersion.util.data.exchange.ImportOptions.DryRun(dryRun.value), f)),
     // ── the merge plan (M3) ──
@@ -152,7 +152,7 @@ final class HttpApi(
     Api.reocr.serverLogic[Identity]((ck, quality) => HttpApi.citekey(ck).flatMap(c => h.ingest.controllers.reocr(c, com.histmersion.api.library.Ingest.Params.Quality(quality.value)))),
     Api.original.serverLogic[Identity](ck =>
       // the stored original is served from where the store keeps it (the HTTP layer streams a file)
-      HttpApi.citekey(ck).flatMap(h.ingest.controllers.original).map((blob, disposition) => (java.io.File(blob.where), disposition))
+      HttpApi.citekey(ck).flatMap(h.ingest.controllers.original).map((blob, disposition) => (java.io.File(blob.where.value), Api.FileName(disposition.value)))
     ),
     Api.job.serverLogic[Identity](id => HttpApi.jobId(id.value).flatMap(h.jobs.job)),
     Api.jobControl.serverLogic[Identity]((id, action) => HttpApi.jobId(id.value).flatMap(j => h.jobControl.control(j, com.histmersion.util.jobs.JobAction.Wire(action.value)))),

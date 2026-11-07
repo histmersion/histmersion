@@ -469,7 +469,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
             field,
             MarkdownLint.Context(
               article = MarkdownLint.Context.Article(article),
-              isCitekey = Some(t => isCitekey(t.value))
+              isCitekey = Some(t => isCitekey(com.histmersion.util.data.checks.CheckContext.FormatArg1Arg1(t.value)))
             )
           ),
       (record, text, token) =>
@@ -522,7 +522,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
         ),
       upstreamQuotas,
       now => Some(com.histmersion.server.agents.EngineContributions.work(agents).acquireRecheck.status(now)),
-      () => settings.setupDue
+      () => com.histmersion.server.instance.InstanceControllers.SetupDueResult(settings.setupDue)
     )
 
   /** The autopilot's page: the automation's status with the library's upstreams and its acquisition list's re-check. */
@@ -559,5 +559,5 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
         mirror.note(
           com.histmersion.domain.research.ResearchData.ArticleNotes,
           com.histmersion.util.data.mirror.MirrorPlacement.RecordId(slug.value)
-        )
+        ).map(n => com.histmersion.domain.research.Article.Note(n.value))
     )

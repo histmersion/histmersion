@@ -36,19 +36,17 @@ final class CliRuntime(
   def loopback: Boolean = ClaudeCode.Env.isLoopback(app.server.host)
 
   /** The agent MCP endpoint as a CLI reaches it (one URL; the run token decides the tools). */
-  def agentMcpUrl: com.histmersion.server.HttpDownload.Url = trees.settings(com.histmersion.domain.automation.agents.AgentTrees.SettingsVersion("")).agentMcpUrl
-  def quotaUrl: com.histmersion.server.HttpDownload.Url = trees.settings(com.histmersion.domain.automation.agents.AgentTrees.SettingsVersion("")).quotaUrl
+  def agentMcpUrl: com.histmersion.domain.automation.agents.GenSettings.AgentMcpUrl = trees.settings(com.histmersion.domain.automation.agents.AgentTrees.SettingsVersion("")).agentMcpUrl
+  def quotaUrl: com.histmersion.domain.automation.agents.GenSettings.QuotaUrl = trees.settings(com.histmersion.domain.automation.agents.AgentTrees.SettingsVersion("")).quotaUrl
 
   /** A token for one step attempt, alive a little longer than the CLI may run. */
-  def grant(call: LlmCall[?], agent: Option[AgentDef], timeoutSeconds: com.histmersion.server.agents.CliRuntime.GrantTimeoutSeconds): Option[RunGrant] =
-    agent.map(a => tokens.issue(a, call.scope, (math.max(1, timeoutSeconds).toLong + 60L) * 1000L))
+  def grant(call: LlmCall[?], agent: Option[AgentDef], timeoutSeconds: com.histmersion.server.agents.CliProcess.RunTimeoutSeconds): Option[RunGrant] =
+    agent.map(a => tokens.issue(a, call.scope, com.histmersion.domain.automation.agents.RunTokens.TtlMillis((math.max(1, timeoutSeconds.value).toLong + 60L) * 1000L)))
 
 object CliRuntime:
   /** `roster`: the agent tools the engine's toolbox holds and the contributed roles (what a definition may list and
     * take).
     */
-  type GrantTimeoutSeconds = GrantTimeoutSeconds.T
-  object GrantTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(app: AppConfig, roster: AgentRoster, paths: UserPaths = AgentTrees.NoEnvironment)(using stores: com.histmersion.util.storage.Stores, resources: com.histmersion.util.storage.Resources, clock: java.time.Clock, jvmHome: com.histmersion.util.system.JvmHome): CliRuntime =
-    new CliRuntime(app, AgentDefinitions(Prompts(app.agents.promptsDir), roster), paths)
+    new CliRuntime(app, AgentDefinitions(Prompts(Prompts.OverrideDir(app.agents.promptsDir.value)), roster), paths)

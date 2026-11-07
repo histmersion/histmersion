@@ -14,24 +14,17 @@ import com.histmersion.domain.automation.Run
   * exist; `note` blocks of a queue are export scaffolding and never count.
   */
 object UiRepo:
-  type Board = Board.T
-  object Board extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ColumnName = ColumnName.T
-  object ColumnName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeenMark = SeenMark.T
-  object SeenMark extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** UTC, microseconds, one fixed format — so two instants compare as strings ([[UiNotices.fresh]]). */
 
-  private def iso(col: com.histmersion.server.instance.UiRepo.ColumnName): SqlLiteral =
+  private def iso(col: String): SqlLiteral =
     SqlLiteral(s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')""")
 
-  private val Latest = iso(com.histmersion.server.instance.UiRepo.ColumnName("b.latest"))
+  private val Latest = iso("b.latest")
 
   /** Every board's counter, in [[Board]]'s order, with the reader's `seen` marks (board → ISO instant). A board with no
     * rows yet counts 0 and has no `latest`; one never opened has no `seen`.
     */
-  def counters(seen: Map[com.histmersion.server.instance.UiRepo.Board, com.histmersion.server.instance.UiRepo.SeenMark])(using DbCon): Counters =
+  def counters(seen: Map[Board.Wire, UiNotices.Counter.Seen])(using DbCon): Counters =
     val rows =
       sql"""WITH b(board, n, latest) AS (
               SELECT list, (count(*) FILTER (WHERE status = 'open'))::int, max(updated_at) FILTER (WHERE status <> 'note')
@@ -44,10 +37,12 @@ object UiRepo:
             SELECT b.board, b.n, $Latest FROM b"""
         .query[(String, Option[Int], Option[String])]
         .run()
-    val byBoard = rows.map((k, n, l) => k -> (n, l)).toMap
+    val byBoard = rows
+      .map((k, n, l) => Board.Wire(k) -> (n.map(UiNotices.Counter.Count(_)), l.map(UiNotices.Counter.Latest(_))))
+      .toMap
     Counters(Board.values.toList.map { b =>
       val (n, latest) = byBoard.getOrElse(b.wire, (None, None))
-      UiNotices.counter(b, Some(n.getOrElse(0)), latest, seen.get(b.wire))
+      UiNotices.counter(b, Some(n.getOrElse(UiNotices.Counter.Count(0))), latest, seen.get(b.wire))
     })
 
   /** The research agents at a glance: the agent runs running and queued, and the autopilot's switch and drain (off and
@@ -66,4 +61,9 @@ object UiRepo:
         .run()
         .headOption
         .getOrElse((false, false))
-    UiNotices.AgentsGlance(running, queued, on, draining)
+    UiNotices.AgentsGlance(
+      UiNotices.AgentsGlance.Running(running),
+      UiNotices.AgentsGlance.Queued(queued),
+      UiNotices.AgentsGlance.On(on),
+      UiNotices.AgentsGlance.Draining(draining)
+    )

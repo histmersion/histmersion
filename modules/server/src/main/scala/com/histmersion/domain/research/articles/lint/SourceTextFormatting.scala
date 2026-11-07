@@ -7,7 +7,7 @@ import com.histmersion.server.{LinkTarget, MarkdownLint}
 /** A source's summary and notes checked with the prose lint the articles are checked with, their `[[links]]` resolved
   * by `links` (the corpus's sources and articles).
   */
-final class SourceTextFormatting(links: List[com.histmersion.domain.library.Citekey] => com.histmersion.domain.library.Citekey => Option[LinkTarget]) extends SourceFormatting:
+final class SourceTextFormatting(links: List[com.histmersion.api.text.WikiLinks.Occurrence.Target] => com.histmersion.api.text.WikiLinks.Occurrence.Target => Option[LinkTarget]) extends SourceFormatting:
   def issues(summary: Option[com.histmersion.domain.library.Source.Summary], notes: Option[com.histmersion.domain.library.sources.SourceNote.Text]): List[FormatIssue] =
     MarkdownLint.ofSource(
       summary,

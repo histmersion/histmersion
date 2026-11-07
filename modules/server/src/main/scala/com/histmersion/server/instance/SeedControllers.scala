@@ -16,10 +16,11 @@ final class SeedControllers(deps: Deps, importer: => SeedImport):
   private def cfg = deps.cfg
 
   /** `corpus.dir` as an `Option`: empty string = not configured. */
-  private def corpusRoot: Option[com.histmersion.server.instance.SeedControllers.CorpusRoot] = Option(cfg.corpus.dir).map(_.trim).filter(_.nonEmpty)
+  private def corpusRoot: Option[SafePath.Base] =
+    Option(cfg.corpus.dir.value).map(_.trim).filter(_.nonEmpty).map(SafePath.Base(_))
 
   def seed(req: SeedRequest): Either[Api.Error, SeedResult] = deps.maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("seed")):
-    val asked = Option(req.dir).map(_.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir)
+    val asked = Option(req.dir).map(_.value.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir.value)
     if asked.isEmpty then Left(Api.Error(com.histmersion.api.Api.Error.Message("no directory given and histmersion.corpus.dir is not configured")))
     else
       if !SafePath.configured(corpusRoot) then
@@ -27,11 +28,7 @@ final class SeedControllers(deps: Deps, importer: => SeedImport):
           "histmersion.corpus.dir is not configured — `seed` will read any path the caller " +
             "names; set it (HISTMERSION_CORPUS_DIR) to confine server-side reads"
         )
-      SafePath.confine(corpusRoot, asked).left.map(Api.Error(_)).flatMap { dir =>
-        if !Files.isDirectory(dir) then Left(Api.Error(s"not a directory on the server: $dir"))
+      SafePath.confine(corpusRoot, SafePath.Candidate(asked)).left.map(p => Api.Error(Api.Error.Message(p.value))).flatMap { dir =>
+        if !Files.isDirectory(dir) then Left(Api.Error(Api.Error.Message(s"not a directory on the server: $dir")))
         else Right(importer.run(SeedNoteFiles(dir, corpusRoot)(using deps.textFiles), req.force, cfg.limits.assetBytes))
       }
-
-object SeedControllers:
-  type CorpusRoot = CorpusRoot.T
-  object CorpusRoot extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

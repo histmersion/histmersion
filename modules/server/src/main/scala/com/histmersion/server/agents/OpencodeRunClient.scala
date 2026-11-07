@@ -25,24 +25,25 @@ final class OpencodeRunClient(val model: ModelRef, cfg: OpencodeConfig, rt: CliR
         throw java.io.IOException(s"opencode: no generated agent ${agent.name} — run `histmersion agent generate`")
       )
     CliProcess.withDir(com.histmersion.server.agents.CliProcess.WithDirPrefix("histmersion-opencode-")) { dir =>
-      val grant = rt.grant(call, Some(agent), cfg.timeoutSeconds)
+      val timeout = CliProcess.RunTimeoutSeconds(cfg.timeoutSeconds.value)
+      val grant = rt.grant(call, Some(agent), timeout)
       try
-        val argv = Opencode.argv(cfg, model.model, agent.name, dir.toString)
-        val user = call.user + Opencode.schemaNote(Codex.schemaJson(call.schema))
+        val argv = Opencode.argv(cfg, model.model, agent.name, dir)
+        val user = CliProcess.RunStdin(call.user.value + Opencode.schemaNote(Codex.schemaJson(call.schema)).value)
         val out = java.util.concurrent.atomic.AtomicReference[Option[CliOutcome]](None)
         val ctx = LlmCallContext(
-          ConversationHistory.withInitialPrompt(call.user),
+          ConversationHistory.withInitialPrompt(call.user.value),
           call.tools.nonEmpty,
-          IterationInfo(1, math.max(1, call.maxIterations))
+          IterationInfo(1, math.max(1, call.maxIterations.value))
         )
         val _ = AgentInterceptor.compose(call.interceptors).aroundLlmCall(ctx) {
           val r = CliProcess.run(
             argv,
             dir,
-            env => Opencode.environment(xdg.toString, conf.toString, grant.map(_.token), env),
+            env => Opencode.environment(xdg, conf, grant.map(_.token), env),
             user,
-            cfg.timeoutSeconds,
-            "install opencode or set agents.providers.opencode.command (HISTMERSION_AGENTS_OPENCODE_COMMAND)"
+            timeout,
+            CliProcess.RunHint("install opencode or set agents.providers.opencode.command (HISTMERSION_AGENTS_OPENCODE_COMMAND)")
           )
           val o = Opencode.parse(r.lines)
           out.set(Some(o))
@@ -50,13 +51,18 @@ final class OpencodeRunClient(val model: ModelRef, cfg: OpencodeConfig, rt: CliR
           if o.finalText.isEmpty && o.error.isEmpty then
             throw java.io.IOException(
               s"opencode run exited ${r.exit} without an answer" +
-                (if r.stderr.nonEmpty then s": ${r.stderr.takeRight(600)}" else "")
+                (if r.stderr.value.nonEmpty then s": ${r.stderr.value.takeRight(600)}" else "")
             )
-          AgentResponse(o.finalText.getOrElse(""), Nil, StopReason.EndTurn, Some(o.usage), Some(model.model))
+          AgentResponse(o.finalText.fold("")(_.value), Nil, StopReason.EndTurn, Some(o.usage), Some(model.model.value))
         }
         val o = out.get().getOrElse(throw IllegalStateException("opencode: no outcome"))
-        o.error.filter(CliOutcomes.isLimit) match
-          case Some(m) => throw ModelLimitReached(model, None, s"opencode run: $m".take(300))
-          case None    => CliOutcomes.result(o, call.user, call.schema, Some(model.model))
+        o.error.filter(e => CliOutcomes.isLimit(ClaudeCode.Limit.Message(e.value))) match
+          case Some(m) => throw ModelLimitReached(model, None, ModelLimitReached.Message(s"opencode run: $m".take(300)))
+          case None    => CliOutcomes.result(
+              o,
+              CliOutcomes.ResultUser(call.user.value),
+              call.schema,
+              Some(ClaudeCode.ModelId(model.model.value))
+            )
       finally grant.foreach(g => rt.tokens.revoke(g.token))
     }

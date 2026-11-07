@@ -33,29 +33,31 @@ object BuiltinAi:
     ProviderKind.values.toList.filter(runtimes.contains).map(k => HostAiProvider(pluginOf(k), k))
 
   /** The plugin a built-in provider comes with. */
-  def pluginOf(kind: ProviderKind): com.histmersion.util.plugins.Plugin.Id = s"ai-${kind.wire}"
+  def pluginOf(kind: ProviderKind): com.histmersion.util.plugins.Plugin.Id = com.histmersion.util.plugins.Plugin.Id.assume(s"ai-${kind.wire.value}")
 
   /** The six built-in providers' plugins. */
   val pluginIds: Set[com.histmersion.util.plugins.Plugin.Id] = ProviderKind.values.map(pluginOf).toSet
 
-  def plugins: List[Plugin] = entries.map(e => HostProvided(e.plugin, _.aiProviders.add(e.kind.wire, e)))
+  def plugins: List[Plugin] = entries.map(e => HostProvided(e.plugin, _.aiProviders.add(Registry.AddId(e.kind.wire.value), e)))
 
   /** Names a plugin's provider may not take. */
-  val reserved: Set[com.histmersion.server.agents.BuiltinAi.Reserved] = ProviderKind.values.map(_.wire).toSet
+  val reserved: Set[com.histmersion.server.agents.BuiltinAi.Reserved] = ProviderKind.values.map(k => Reserved(k.wire.value)).toSet
 
   /** Pure: the names plugin providers are registered under — what `provider:model` may name besides the host's own
     * (`ModelRef.parse`'s `known`).
     */
-  def known(registered: ListMap[com.histmersion.util.plugins.Plugin.Id, AiProvider]): Set[com.histmersion.util.plugins.Plugin.Id] = registered.keySet.toSet -- reserved
+  def known(registered: ListMap[com.histmersion.util.plugins.Plugin.Id, AiProvider]): Set[com.histmersion.util.plugins.Plugin.Id] = registered.keySet.toSet.filterNot(id => reserved(Reserved(id.value)))
 
   /** Pure: the provider a reference names among the registered ones, or why it cannot be used: a built-in provider
     * whose plugin is switched off, or a plugin provider no longer registered.
     */
   def lookup(kind: ProviderKind, registered: ListMap[com.histmersion.util.plugins.Plugin.Id, AiProvider]): Either[com.histmersion.server.agents.BuiltinAi.Problem, AiProvider] =
     registered
-      .get(kind.wire)
+      .get(com.histmersion.util.plugins.Plugin.Id.assume(kind.wire.value))
       .toRight(
-        if reserved(kind.wire) then
-          s"the ${kind.wire} provider is switched off (histmersion.plugins.${pluginOf(kind)}.enabled = false)"
-        else s"no AI provider '${kind.wire}' is registered (its plugin is switched off or was removed)"
+        Problem(
+          if reserved(Reserved(kind.wire.value)) then
+            s"the ${kind.wire} provider is switched off (histmersion.plugins.${pluginOf(kind)}.enabled = false)"
+          else s"no AI provider '${kind.wire}' is registered (its plugin is switched off or was removed)"
+        )
       )

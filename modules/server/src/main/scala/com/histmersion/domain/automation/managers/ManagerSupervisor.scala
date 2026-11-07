@@ -336,7 +336,7 @@ final class ManagerSupervisor(
         val filed = task.flatMap(t =>
           workLists
             .add(
-              Queue.Kind.Tasks.label,
+              WorkListControllers.ListName(Queue.Kind.Tasks.label.value),
               QueueAdd(
                 Queue.QueueItem.Text(t.value),
                 topic = Some(Queue.QueueItem.Topic("agent manager")),
@@ -548,7 +548,7 @@ final class ManagerSupervisor(
           }
         }
         moved.toList.map { text =>
-          val _ = workLists.add(Queue.Kind.Log.label, QueueAdd(Queue.QueueItem.Text(s"goal $g: $text (watcher $id)".take(1000)), goal = Some(apiGoal)))
+          val _ = workLists.add(WorkListControllers.ListName(Queue.Kind.Log.label.value), QueueAdd(Queue.QueueItem.Text(s"goal $g: $text (watcher $id)".take(1000)), goal = Some(apiGoal)))
           scribe.info(s"goal $g: $text")
           TickLine(s"$id: migrated")
         }
@@ -826,7 +826,7 @@ final class ManagerSupervisor(
         now: Instant,
         out: Builder[TickLine, List[TickLine]]
     ): Option[ManagerLight.Id] = None
-    def target(m: ManagerInfo, itemKind: ManagerContext.ItemKind, raw: Managers.ManagerItem.Target): Either[Api.Error, ManagerContext.ItemTarget] =
+    def target(m: ManagerInfo, itemKind: ManagerContext.ItemKind, raw: ManagerItem.Target): Either[Api.Error, ManagerContext.ItemTarget] =
       Left(Api.Error(Api.Error.Message(s"unknown item kind '$itemKind'")))
     def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline = ManagerSupervisor.this.pipelineOf(itemKind)
     def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig = ManagerConfig()

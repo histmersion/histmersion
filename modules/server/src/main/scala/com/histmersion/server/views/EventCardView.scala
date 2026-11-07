@@ -15,11 +15,11 @@ import com.histmersion.api.Api
   * sources that attest it), and its pictures. What `GET`, `PUT` and `PATCH /api/events/{id}` and the `events` and
   * `patch_event` tools answer.
   */
-final class EventCardView(events: EventsControllers, pictures: EventCardView.PicturesArg1 => List[MediaThumb]):
+final class EventCardView(events: EventsControllers, pictures: com.histmersion.domain.catalogue.Event.Id => List[MediaThumb]):
 
   /** The catalogue's event with its pictures. */
   def page(e: EventEntry): EventDetail =
-    e.into[EventDetail].withFieldConst(_.media, pictures(e.event.id)).transform
+    e.into[EventDetail].withFieldConst(_.media, pictures(com.histmersion.domain.catalogue.Event.Id.assume(e.event.id.value))).transform
 
   def get(id: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, EventDetail] = events.get(id).map(page)
 
@@ -34,12 +34,9 @@ object EventCardView:
   object CitationCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** An event's card: the catalogue's context (`context`), then the articles citing the sources that attest it. */
-  type PicturesArg1 = com.histmersion.domain.catalogue.Event.Id
-  val PicturesArg1: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
-
 
   def cited(context: EventEntry => EventEntry, citing: (List[com.histmersion.domain.library.Citekey], com.histmersion.server.views.EventCardView.CitationCount) => List[EventArticleRef])(
       e: EventEntry
   ): EventEntry =
     val withContext = context(e)
-    withContext.modify(_.articles).setTo(citing(withContext.sources.map(_.citekey), com.histmersion.server.views.EventCardView.CitationCount(10)))
+    withContext.modify(_.articles).setTo(citing(withContext.sources.map(s => com.histmersion.domain.library.Citekey.assume(s.citekey.value)), com.histmersion.server.views.EventCardView.CitationCount(10)))

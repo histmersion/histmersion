@@ -68,7 +68,7 @@ final class Engine(
   def pruneTrace(force: com.histmersion.domain.automation.agents.Engine.PruneTraceForce = com.histmersion.domain.automation.agents.Engine.PruneTraceForce(false), now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis = com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(agents.clock.millis())): com.histmersion.RowCount =
     val every = math.max(1, cfg.trace.pruneEveryMinutes.value).toLong * 60000L
     val last = lastPrune.get()
-    if cfg.trace.keepMessagesDays.value <= 0 || (!force && now.value - last < every) || !lastPrune.compareAndSet(last, now.value) then com.histmersion.RowCount(0)
+    if cfg.trace.keepMessagesDays.value <= 0 || (!force.value && now.value - last < every) || !lastPrune.compareAndSet(last, now.value) then com.histmersion.RowCount(0)
     else
       try
         val n = com.histmersion.RowCount(agents.runs.pruneMessages(RunService.RetentionDays(cfg.trace.keepMessagesDays.value)).value)
@@ -206,7 +206,7 @@ final class Engine(
     // a run nobody is watching goes on by itself after a restart; a person's waits for them
     val at = java.time.Instant.now(agents.clock).plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes.value).toLong * 60L)
     paused.foreach { (id, origin) =>
-      if origin.flatMap(Origin.parse).exists(_.unattended) then
+      if origin.flatMap(o => Origin.parse(Origin.Wire(o.value))).exists(_.unattended) then
         val _ = agents.jobRuns.resumeAt(jobKind, id, rowStatus(RunState.Paused), at)
     }
     (com.histmersion.RowCount(paused.size), queued)
@@ -250,7 +250,7 @@ final class Engine(
     agents.jobRuns.pausedWith(jobKind, rowStatus(RunState.Paused), com.histmersion.util.jobs.JobRuns.Prefix(s"${PauseReason.PlanQuota.wire}:"), now).toList.flatMap {
       (id, pipeline, model, error) =>
         val roles = ModelPicker
-          .pausedRole(error)
+          .pausedRole(ModelPicker.Problem(error.value))
           .map(List(_))
           .getOrElse(Pipeline.parse(pipeline).map(_.roles).getOrElse(Nil))
         val notes = List.newBuilder[String]
@@ -361,7 +361,7 @@ final class Engine(
                     pr => { val _ = ctl.procs.remove(pr) },
                     () => beat(id)
                   )
-                  CliProcess.withHooks(hooks)(p.run(RunCtx(run.modify(_.status).setTo(RunInfo.Status(RunState.Running.wire.value)), this)))
+                  CliProcess.withHooks(hooks)(p.run(RunCtx(run.modify(_.status).setTo(RunInfo.Status(RunState.Running.wire.value)), this)).map(_.value))
             catch
               case _: InterruptedException if ctl.cancel            => Left(Halt.Cancel)
               case _: InterruptedException if ctl.stalled.isDefined => Left(ctl.stalled.get)

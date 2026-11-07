@@ -13,6 +13,9 @@ import com.histmersion.domain.automation.worklists.QueueService
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.domain.library.acquisition.AcquireCheckService
 import com.histmersion.api.Api
+import com.histmersion.api.automation.{Goal => ApiGoal}
+import com.histmersion.domain.automation.goals.GoalLinkRepo
+import com.histmersion.domain.library.acquisition.AcquireCheckRow
 import com.histmersion.api.library.Acquire
 
 /** A work list as `GET /api/queue/{list}` shows it: its items (open, all, a goal's or a job's) as the automation keeps
@@ -26,34 +29,61 @@ final class WorkListView(
     acquireChecks: AcquireCheckService
 ):
   def list(
-      list: com.histmersion.server.views.WorkListView.QueueName,
+      list: WorkListControllers.KindOfList,
       all: com.histmersion.server.views.WorkListView.IncludeAll,
       goal: Option[com.histmersion.domain.automation.Goal.Slug] = None,
       job: Option[com.histmersion.util.jobs.Job.Id] = None
   ): Either[Api.Error, QueueListing] =
     workLists.kindOf(list).map { k =>
-      val scope = (goal.map(_.trim).filter(_.nonEmpty), job.map(_.trim).filter(_.nonEmpty)) match
-        case (_, Some(j))    => QueueScope.ForJob(j)
-        case (Some(g), None) => QueueScope.ForGoal(g, goals.refs(g, com.histmersion.domain.automation.Goal.LinkKind.QueueItem).toSet, withDone = all)
-        case (None, None)    => if all then QueueScope.All else QueueScope.Open
+      val scope = (goal, job) match
+        case (_, Some(j))    => QueueScope.ForJob(QueueScope.ForJob.Job(j.value))
+        case (Some(g), None) =>
+          QueueScope.ForGoal(
+            QueueScope.ForGoal.Goal(g.value),
+            goals
+              .refs(g, com.histmersion.domain.automation.Goal.LinkKind.QueueItem)
+              .map(r => QueueScope.ForGoal.Linked(r.value))
+              .toSet,
+            withDone = QueueScope.ForGoal.WithDone(all.value)
+          )
+        case (None, None)    => if all.value then QueueScope.All else QueueScope.Open
       val items = queues.list(k, scope)
       val checks =
         if k != Kind.Acquire then Nil
         else
           acquireChecks
-            .of(items.map(_.id))
+            .of(items.map(i => AcquireCheckRow.Item(i.id.value)))
             .values
             .toList
-            .sortBy(_.item)
-            .map(r => Acquire.Checks.AcquireCheck(r.item, r.at.toString, r.outcome, r.reason, r.checks))
-      val linked = goals.goalsOfItems(items.map(_.id)).map((id, slug, title) => (id, GoalRef(slug, title)))
-      val titles = items.flatMap(_.goal).distinct.flatMap(s => goals.get(s).map(g => s -> g.title)).toMap
-      val own = items.flatMap(i => i.goal.map(s => (i.id, GoalRef(s, titles.getOrElse(s, s)))))
+            .sortBy(_.item.value)
+            .map(r =>
+              Acquire.Checks.AcquireCheck(
+                Queue.QueueItem.Id(r.item.value),
+                Acquire.Checks.AcquireCheck.CheckedAt(r.at.toString),
+                Acquire.Checks.AcquireCheck.Outcome(r.outcome.value),
+                Queue.QueueItem.Reason(r.reason.value),
+                Acquire.Checks.AcquireCheck.Checks(r.checks.value)
+              )
+            )
+      val linked = goals
+        .goalsOfItems(items.map(i => GoalLinkRepo.ItemId(i.id.value)))
+        .map((id, slug, title) =>
+          (
+            Queue.QueueItem.Id(id.value),
+            GoalRef(ApiGoal.Slug(slug.value), ApiGoal.Title(title.value))
+          )
+        )
+      val titles = items
+        .flatMap(_.goal)
+        .distinct
+        .flatMap(s =>
+          com.histmersion.domain.automation.Goal.Slug.option(s.value).flatMap(goals.get).map(g => s -> ApiGoal.Title(g.title.value))
+        )
+        .toMap
+      val own = items.flatMap(i => i.goal.map(s => (i.id, GoalRef(s, titles.getOrElse(s, ApiGoal.Title(s.value))))))
       QueueListing(k.label, items, checks, Queue.itemGoals(own, linked))
     }
 
 object WorkListView:
   type IncludeAll = IncludeAll.T
   object IncludeAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueueName = QueueName.T
-  object QueueName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

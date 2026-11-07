@@ -6,11 +6,12 @@ import com.histmersion.api.catalogue.EventsMarkdown
 import com.histmersion.domain.catalogue.events.EventsControllers
 
 import chimp.server.*
-import com.histmersion.api.{Api, Markdown, StrictJson}
+import com.histmersion.api.{Api, Markdown, StrictJson, Write}
 import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.catalogue.{EventGeometry, EventPatch}
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.Caller
+import com.histmersion.domain.catalogue.Event
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -36,20 +37,20 @@ object EventCardTools:
       offset: Option[EventsInput.Offset] = None
   ) derives KindlingsCodecAsObject
   object EventsInput:
-    type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Id = com.histmersion.domain.catalogue.Event.Id
-    val Id: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Historicity = com.histmersion.domain.catalogue.Historicity.Wire
-    val Historicity: _root_.com.histmersion.domain.catalogue.Historicity.Wire.type = _root_.com.histmersion.domain.catalogue.Historicity.Wire
-    type PlaceId = com.histmersion.domain.catalogue.Place.Id
-    val PlaceId: _root_.com.histmersion.domain.catalogue.Place.Id.type = _root_.com.histmersion.domain.catalogue.Place.Id
-    type From = From.T
-    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type To = To.T
-    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = com.histmersion.api.Api.EventQuery.Text
+    val Query: _root_.com.histmersion.api.Api.EventQuery.Text.type = _root_.com.histmersion.api.Api.EventQuery.Text
+    type Id = com.histmersion.api.catalogue.Event.Id
+    val Id: _root_.com.histmersion.api.catalogue.Event.Id.type = _root_.com.histmersion.api.catalogue.Event.Id
+    type Kind = com.histmersion.api.Api.EventQuery.Kind
+    val Kind: _root_.com.histmersion.api.Api.EventQuery.Kind.type = _root_.com.histmersion.api.Api.EventQuery.Kind
+    type Historicity = com.histmersion.api.Api.EventQuery.Historicity
+    val Historicity: _root_.com.histmersion.api.Api.EventQuery.Historicity.type = _root_.com.histmersion.api.Api.EventQuery.Historicity
+    type PlaceId = com.histmersion.api.Api.EventQuery.PlaceId
+    val PlaceId: _root_.com.histmersion.api.Api.EventQuery.PlaceId.type = _root_.com.histmersion.api.Api.EventQuery.PlaceId
+    type From = com.histmersion.api.catalogue.Year
+    val From: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
+    type To = com.histmersion.api.catalogue.Year
+    val To: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
     type Title = com.histmersion.domain.Title
     val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
     type Limit = com.histmersion.PageSize
@@ -89,32 +90,32 @@ object EventCardTools:
       wikidata: Option[PatchEventInput.Wikidata] = None
   )
   object PatchEventInput:
-    type Id = com.histmersion.domain.catalogue.Event.Id
-    val Id: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
-    type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Historicity = com.histmersion.domain.catalogue.Historicity.Wire
-    val Historicity: _root_.com.histmersion.domain.catalogue.Historicity.Wire.type = _root_.com.histmersion.domain.catalogue.Historicity.Wire
-    type Scale = Scale.T
-    object Scale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PlaceId = com.histmersion.domain.catalogue.Place.Id
-    val PlaceId: _root_.com.histmersion.domain.catalogue.Place.Id.type = _root_.com.histmersion.domain.catalogue.Place.Id
-    type Geometry = Geometry.T
-    object Geometry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Lat = Lat.T
-    object Lat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Lon = Lon.T
-    object Lon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParentId = com.histmersion.domain.catalogue.Event.Id
-    val ParentId: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
-    type Description = Description.T
-    object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Citekey = com.histmersion.domain.library.Citekey
-    val Citekey: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
-    type Wikidata = com.histmersion.domain.catalogue.places.Wikidata.Id
-    val Wikidata: _root_.com.histmersion.domain.catalogue.places.Wikidata.Id.type = _root_.com.histmersion.domain.catalogue.places.Wikidata.Id
+    type Id = com.histmersion.api.catalogue.Event.Id
+    val Id: _root_.com.histmersion.api.catalogue.Event.Id.type = _root_.com.histmersion.api.catalogue.Event.Id
+    type Label = com.histmersion.api.catalogue.EventSummary.Label
+    val Label: _root_.com.histmersion.api.catalogue.EventSummary.Label.type = _root_.com.histmersion.api.catalogue.EventSummary.Label
+    type Kind = com.histmersion.api.catalogue.EventSummary.Kind
+    val Kind: _root_.com.histmersion.api.catalogue.EventSummary.Kind.type = _root_.com.histmersion.api.catalogue.EventSummary.Kind
+    type Historicity = com.histmersion.api.catalogue.EventSummary.Historicity
+    val Historicity: _root_.com.histmersion.api.catalogue.EventSummary.Historicity.type = _root_.com.histmersion.api.catalogue.EventSummary.Historicity
+    type Scale = com.histmersion.api.catalogue.EventSummary.Scale
+    val Scale: _root_.com.histmersion.api.catalogue.EventSummary.Scale.type = _root_.com.histmersion.api.catalogue.EventSummary.Scale
+    type PlaceId = com.histmersion.api.catalogue.Place.Id
+    val PlaceId: _root_.com.histmersion.api.catalogue.Place.Id.type = _root_.com.histmersion.api.catalogue.Place.Id
+    type Geometry = com.histmersion.api.catalogue.EventGeometry.Geojson
+    val Geometry: _root_.com.histmersion.api.catalogue.EventGeometry.Geojson.type = _root_.com.histmersion.api.catalogue.EventGeometry.Geojson
+    type Lat = com.histmersion.api.catalogue.Latitude
+    val Lat: _root_.com.histmersion.api.catalogue.Latitude.type = _root_.com.histmersion.api.catalogue.Latitude
+    type Lon = com.histmersion.api.catalogue.Longitude
+    val Lon: _root_.com.histmersion.api.catalogue.Longitude.type = _root_.com.histmersion.api.catalogue.Longitude
+    type ParentId = com.histmersion.api.catalogue.Event.Id
+    val ParentId: _root_.com.histmersion.api.catalogue.Event.Id.type = _root_.com.histmersion.api.catalogue.Event.Id
+    type Description = com.histmersion.api.catalogue.EventSummary.Description
+    val Description: _root_.com.histmersion.api.catalogue.EventSummary.Description.type = _root_.com.histmersion.api.catalogue.EventSummary.Description
+    type Citekey = com.histmersion.api.library.Citekey
+    val Citekey: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
+    type Wikidata = com.histmersion.api.catalogue.EventPatch.Wikidata
+    val Wikidata: _root_.com.histmersion.api.catalogue.EventPatch.Wikidata.type = _root_.com.histmersion.api.catalogue.EventPatch.Wikidata
 
     given Schema[PatchEventInput] = KindlingsSchema
       .derived[PatchEventInput]
@@ -145,9 +146,12 @@ object EventCardTools:
         )
         .input[EventsInput]
         .handle { in =>
-          in.id.map(_.trim).filter(_.nonEmpty) match
-            case Some(id) =>
-              page.get(id) match
+          in.id.map(_.value.trim).filter(_.nonEmpty) match
+            case Some(raw) =>
+              Event.Id
+                .option(raw)
+                .toRight(Api.Error(Api.Error.Message(s"No event '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
+                .flatMap(page.get) match
                 case Right(d) => ToolResult.text(d.markdown)
                 case Left(e)  => McpOut.error(e)
             case None =>
@@ -180,13 +184,13 @@ object EventCardTools:
         .input[PatchEventInput]
         .handle { in =>
           EventGeometry.of(in.geometry, in.lat, in.lon) match
-            case Left(msg)   => McpOut.text(McpOut.refusal(msg))
+            case Left(msg)   => McpOut.text(McpOut.refusal(msg.value))
             case Right(geom) =>
               val p = EventPatch(
                 label = in.label,
                 kind = in.kind,
                 historicity = in.historicity,
-                geometry = geom,
+                geometry = geom.map(g => EventPatch.Geometry(g.value)),
                 placeId = in.placeId,
                 parentId = in.parentId,
                 description = in.description,
@@ -194,9 +198,14 @@ object EventCardTools:
                 scale = in.scale,
                 wikidata = in.wikidata
               )
-              page.patch(Caller.Local, in.id, p) match
+              Event.Id
+                .option(in.id.value)
+                .toRight(Api.Error(Api.Error.Message(s"No event '${in.id.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+                .flatMap(page.patch(Caller.Local, _, p)) match
                 case Right(d) =>
-                  ToolResult.text(Aliases.note(AliasKinds.EventRecords, in.id, d.event.id)(d.markdown))
+                  ToolResult.text(
+                    Aliases.note(AliasKinds.EventRecords, Aliases.Id(in.id.value), Aliases.Id(d.event.id.value))(d.markdown)
+                  )
                 case Left(e) => McpOut.error(e)
         }
     List(listTool, patchTool)

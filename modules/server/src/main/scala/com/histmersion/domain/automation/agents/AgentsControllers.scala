@@ -131,7 +131,7 @@ final class AgentsControllers(
   /** A `hint-effect` approval a person approves is applied by the managers (read when it happens, so the forward
     * reference to [[managing]] is safe).
     */
-  val approvals: Approvals = Approvals(approvalStore, cfg, site.approvalEffects, p => managing.applyProposal(p))
+  val approvals: Approvals = Approvals(approvalStore, cfg, site.approvalEffects, p => managing.applyProposal(p).left.map(com.histmersion.domain.automation.approvals.ApprovalEffects.Problem(_)))
 
   /** What the domains register into the engine: their workflows and agent tools. A registration the engine refuses (two
     * workflows with one identifier, a tool nobody contributes) stops the server here.
@@ -570,7 +570,7 @@ final class AgentsControllers(
         aiHttp = aiHttp,
         paths = site.userPaths
       )
-        .report(online = !offline.value)
+        .report(online = DoctorReport.Online(!offline.value))
     val held = lease.status match
       case Some((o, u, false, true)) =>
         DoctorCheck(

@@ -171,7 +171,7 @@ object MarkdownLint:
       val s = new Scan(text, field, ctx)
       s.run()
       s.findings.toList
-        .sortBy(f => (f.issue.line.value, f.issue.column.value, f.issue.rule.ordinal))
+        .sortBy(f => ((f.issue.line.value: Int), (f.issue.column.value: Int), f.issue.rule.ordinal))
         .distinctBy(f => (f.issue.rule, f.issue.line, f.issue.column))
 
   /** HTML elements a browser knows. Anything else (`<etal>`, `<insert>`) is dropped by it. */

@@ -6,81 +6,57 @@ import com.histmersion.domain.automation.managers.Zero
 import com.histmersion.config.OpencodeConfig
 import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
 import com.histmersion.api.automation.PlanQuota
+import java.nio.file.Path
 import io.circe.{parser, Json}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*
 import sttp.apispec.circe.*
 
 object Opencode:
-  type AgentName = AgentName.T
-  object AgentName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApiToken = ApiToken.T
-  object ApiToken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CommandLine = CommandLine.T
-  object CommandLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConfigDir = ConfigDir.T
-  object ConfigDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvName = EnvName.T
-  object EnvName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvSetting = EnvSetting.T
-  object EnvSetting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FinalText = FinalText.T
-  object FinalText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ModelName = ModelName.T
-  object ModelName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OutputLine = OutputLine.T
-  object OutputLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SchemaJson = SchemaJson.T
-  object SchemaJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SchemaNote = SchemaNote.T
   object SchemaNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToolName = ToolName.T
-  object ToolName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WorkingDir = WorkingDir.T
-  object WorkingDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type XdgDir = XdgDir.T
-  object XdgDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
 
-  def argv(cfg: OpencodeConfig, model: com.histmersion.server.agents.Opencode.ModelName, agent: com.histmersion.server.agents.Opencode.AgentName, dir: com.histmersion.server.agents.Opencode.WorkingDir): List[com.histmersion.server.agents.Opencode.CommandLine] =
-    List(cfg.command, com.histmersion.server.agents.Opencode.CommandLine("run"), com.histmersion.server.agents.Opencode.CommandLine("--agent"), agent, com.histmersion.server.agents.Opencode.CommandLine("--format"), com.histmersion.server.agents.Opencode.CommandLine("json"), com.histmersion.server.agents.Opencode.CommandLine("-m"), model, com.histmersion.server.agents.Opencode.CommandLine("--dir"), dir)
+  def argv(cfg: OpencodeConfig, model: ModelRef.Model, agent: AgentDef.Name, dir: Path): List[com.histmersion.server.agents.ClaudeCode.Argument] =
+    List(cfg.command.value, "run", "--agent", agent.value, "--format", "json", "-m", model.value, "--dir", dir.toString)
+      .map(com.histmersion.server.agents.ClaudeCode.Argument(_))
 
   /** Isolation (docs/research-agent-runtimes.md §1.3): a global config of its own, the generated config dir, no
     * `.claude` skills, no autoupdate; the run token for the MCP header.
     */
-  def environment(xdg: com.histmersion.server.agents.Opencode.XdgDir, configDir: com.histmersion.server.agents.Opencode.ConfigDir, token: Option[com.histmersion.server.agents.Opencode.ApiToken], env: java.util.Map[com.histmersion.server.agents.Opencode.EnvName, com.histmersion.server.agents.Opencode.EnvSetting]): Unit =
-    val _ = env.put(com.histmersion.server.agents.Opencode.EnvName("XDG_CONFIG_HOME"), xdg)
-    val _ = env.put(com.histmersion.server.agents.Opencode.EnvName("OPENCODE_CONFIG_DIR"), configDir)
-    val _ = env.put(com.histmersion.server.agents.Opencode.EnvName("OPENCODE_DISABLE_CLAUDE_CODE"), com.histmersion.server.agents.Opencode.EnvSetting("1"))
-    val _ = env.put(com.histmersion.server.agents.Opencode.EnvName("OPENCODE_DISABLE_AUTOUPDATE"), com.histmersion.server.agents.Opencode.EnvSetting("1"))
-    val _ = env.put(AgentGenerator.TokenEnv, token.getOrElse("none"))
+  def environment(xdg: Path, configDir: Path, token: Option[RunGrant.Token], env: java.util.Map[String, String]): Unit =
+    val _ = env.put("XDG_CONFIG_HOME", xdg.toString)
+    val _ = env.put("OPENCODE_CONFIG_DIR", configDir.toString)
+    val _ = env.put("OPENCODE_DISABLE_CLAUDE_CODE", "1")
+    val _ = env.put("OPENCODE_DISABLE_AUTOUPDATE", "1")
+    val _ = env.put(AgentGenerator.TokenEnv, token.fold("none")(_.value))
 
-  def schemaNote(schema: com.histmersion.server.agents.Opencode.SchemaJson): com.histmersion.server.agents.Opencode.SchemaNote =
-    s"\n\nReply with ONE JSON object that matches this JSON Schema, and nothing else:\n$schema"
+  def schemaNote(schema: Codex.SchemaJson): com.histmersion.server.agents.Opencode.SchemaNote =
+    SchemaNote(s"\n\nReply with ONE JSON object that matches this JSON Schema, and nothing else:\n$schema")
 
   /** `--format json` events: `text` parts (the last is the answer), `tool_use` (a tool part with its state: input,
     * output or error), `step_finish` (tokens, cost), `error`.
     */
-  def parse(lines: List[com.histmersion.server.agents.Opencode.OutputLine]): CliOutcome =
-    val events = lines.map(_.trim).filter(_.startsWith("{")).flatMap(l => parser.parse(l).toOption)
+  def parse(lines: List[CliProcess.Run.Lines]): CliOutcome =
+    val events = lines.map(_.value.trim).filter(_.startsWith("{")).flatMap(l => parser.parse(l).toOption)
     val entries = Vector.newBuilder[ConversationEntry]
     val calls = Vector.newBuilder[ToolCallRecord]
     // accumulators of ONE parse, over the events in order
-    var finalText: Option[com.histmersion.server.agents.Opencode.FinalText] = None
+    var finalText: Option[CliOutcome.FinalText] = None
     var usage = TokenUsage.Zero
-    var error: Option[com.histmersion.server.agents.Opencode.Problem] = None
+    var error: Option[CliOutcome.Error] = None
     var turns = 0
-    def strip(t: com.histmersion.server.agents.Opencode.ToolName) = t.stripPrefix(s"${AgentDefinitions.McpServer}_")
+    def strip(t: String) = t.stripPrefix(s"${AgentDefinitions.McpServer}_")
     events.foreach { e =>
       val c = e.hcursor
       val part = c.downField("part")
       c.downField("type").as[String].getOrElse("") match
         case "text" =>
           val t = part.downField("text").as[String].getOrElse("")
-          finalText = Some(t)
+          finalText = Some(CliOutcome.FinalText(t))
           entries += ConversationEntry.AssistantResponse(t, Nil)
         case "tool_use" =>
           val id = part.downField("callID").as[String].orElse(part.downField("id").as[String]).getOrElse("")
@@ -113,15 +89,16 @@ object Opencode:
             .orElse(err.downField("message").as[String].toOption)
             .orElse(err.focus.map(_.noSpaces))
             .orElse(Some("error"))
+            .map(CliOutcome.Error(_))
         case _ => ()
     }
-    CliOutcome(entries.result(), calls.result(), finalText, usage, error, turns)
+    CliOutcome(entries.result(), calls.result(), finalText, usage, error, CliOutcome.Turns(turns))
 
   def client(cfg: OpencodeConfig, rt: CliRuntime, ref: ModelRef): Either[com.histmersion.server.agents.Opencode.Problem, LlmClient] =
-    if ref.provider != ProviderKind.Opencode then Left(s"${ref.wire} is not an opencode model")
-    else if !ref.model.contains('/') then
-      Left(s"${ref.wire}: an opencode model is <provider>/<model>, e.g. opencode:openai/gpt-5")
-    else if PlanQuota.poolOf(ref, PlanQuota.Logins(opencodeChatgpt = cfg.chatgptLogin)).isDefined && !rt.loopback then
-      Left("opencode on a ChatGPT login is refused while the server listens beyond loopback")
-    else if cfg.command.trim.isEmpty then Left(com.histmersion.server.agents.Opencode.Problem("agents.providers.opencode.command is empty"))
+    if ref.provider != ProviderKind.Opencode then Left(Problem(s"${ref.wire} is not an opencode model"))
+    else if !ref.model.value.contains('/') then
+      Left(Problem(s"${ref.wire}: an opencode model is <provider>/<model>, e.g. opencode:openai/gpt-5"))
+    else if PlanQuota.poolOf(ref, PlanQuota.Logins(opencodeChatgpt = PlanQuota.Logins.OpencodeChatgpt(cfg.chatgptLogin.value))).isDefined && !rt.loopback then
+      Left(Problem("opencode on a ChatGPT login is refused while the server listens beyond loopback"))
+    else if cfg.command.value.trim.isEmpty then Left(Problem("agents.providers.opencode.command is empty"))
     else Right(OpencodeRunClient(ref, cfg, rt))
