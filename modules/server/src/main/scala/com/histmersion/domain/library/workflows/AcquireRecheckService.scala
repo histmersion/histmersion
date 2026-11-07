@@ -96,8 +96,8 @@ final class AcquireRecheckService(
   private def resumable(j: JobInfo): Boolean =
     AcquireRecheck.resumable(j.status, j.error.map(e => AcquireRecheck.Problem(e.value)))
 
-  private def countOf(counts: Map[AcquireCheckService.CountSinceResultPart1, AcquireCheckService.CountSinceResultPart2], o: Outcome): Int =
-    counts.get(AcquireCheckService.CountSinceResultPart1(o.wire.value)).fold(0)(_.value)
+  private def countOf(counts: Map[AcquireRecheck.Outcome.Wire, com.histmersion.RowCount], o: Outcome): Int =
+    counts.get(o.wire).fold(0)(_.value)
 
   private def error(message: String): Api.Error = Api.Error(Api.Error.Message(message))
 
@@ -143,9 +143,9 @@ final class AcquireRecheckService(
 
   private def candidate(f: Facts): Candidate = Candidate(Candidate.Item(f.item.id.value), f.last.map(_.last))
 
-  private def isDue(c: Candidate, generation: com.histmersion.domain.library.acquisition.AcquireClients.Generation, now: Instant): Boolean =
+  private def isDue(c: Candidate, generation: AcquireRecheck.LastCheck.Generation, now: Instant): Boolean =
     val s = settings
-    AcquireRecheck.isDue(c.last, AcquireRecheck.LastCheck.Generation(generation.value), s.everyDays, s.retryHours, now)
+    AcquireRecheck.isDue(c.last, generation, s.everyDays, s.retryHours, now)
 
   /** The items with a DOI to look up, in [[AcquireRecheck.order]]. */
   private def fetchable(fs: List[Facts]): List[Facts] =
@@ -153,7 +153,7 @@ final class AcquireRecheckService(
     AcquireRecheck.order(fs.filter(_.action.isInstanceOf[Action.Fetch]).map(candidate)).flatMap(c => byId.get(c.item.value))
 
   /** The items a pass would try, in order: due, the never-checked first, then the oldest check. */
-  private def due(fs: List[Facts], generation: com.histmersion.domain.library.acquisition.AcquireClients.Generation, now: Instant): List[Facts] =
+  private def due(fs: List[Facts], generation: AcquireRecheck.LastCheck.Generation, now: Instant): List[Facts] =
     fetchable(fs).filter(f => isDue(candidate(f), generation, now))
 
   /** The DOI an item is about (the first its text names). */
@@ -475,7 +475,7 @@ final class AcquireRecheckService(
   private def close(
       f: Facts,
       citekey: com.histmersion.domain.library.Citekey,
-      generation: com.histmersion.domain.library.acquisition.AcquireClients.Generation,
+      generation: AcquireRecheck.LastCheck.Generation,
       now: Instant,
       job: Option[Job.Id] = None
   ): Option[RecheckRow] =
@@ -505,7 +505,7 @@ final class AcquireRecheckService(
   final private case class Tried(row: RecheckRow, outcome: Outcome, detail: String)
 
   /** One item through the legal chain, recorded. */
-  private def attempt(f: Facts, generation: com.histmersion.domain.library.acquisition.AcquireClients.Generation, now: Instant): Tried =
+  private def attempt(f: Facts, generation: AcquireRecheck.LastCheck.Generation, now: Instant): Tried =
     val (doi, into) = f.action match
       case Action.Fetch(d, i) => (Some(d), i)
       case _                  => (None, None)
@@ -558,7 +558,7 @@ final class AcquireRecheckService(
           AcquireRecheck
             .nextDue(
               fs.filter(_.action.isInstanceOf[Action.Fetch]).flatMap(_.last.map(_.last)),
-              AcquireRecheck.LastCheck.Generation(gen.value),
+              gen,
               s.everyDays,
               s.retryHours
             )

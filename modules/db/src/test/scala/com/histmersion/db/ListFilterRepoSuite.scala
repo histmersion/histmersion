@@ -216,4 +216,4 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(states.toMap, Map("done" -> 1, "failed" -> 1))
     assertEquals(facets.toMap.apply("kind").toMap, Map("ingest" -> 1, "media-import" -> 1, "agent" -> 1))
     // the old single-state page still reads through the same query
-    assert(Transactor(ds).read(JobRepo.page(Some(com.histmersion.util.jobs.JobRepo.PageStatus("failed")), com.histmersion.PageSize(500))).toOption.get._1.exists(_.id.value == i2))
+    assert(Transactor(ds).read(JobRepo.page(Some(com.histmersion.api.jobs.JobState.Wire("failed")), com.histmersion.PageSize(500))).toOption.get._1.exists(_.id.value == i2))

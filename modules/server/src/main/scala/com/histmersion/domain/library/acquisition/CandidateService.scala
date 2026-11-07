@@ -140,7 +140,7 @@ object CandidateService:
     def list(goal: Option[com.histmersion.domain.automation.Goal.Slug], st: Source.Candidate.State, limit: ListLimit, offset: com.histmersion.Offset): List[Source.Candidate] =
       state.get.candidates
         .filter(c => goal.forall(_.value == c.goal.value) && c.state == st)
-        .sortBy(_.id.value)
+        .sortBy[Long](_.id.value)
         .slice(offset.value, offset.value + limit.value)
 
     def counts(goal: Option[com.histmersion.domain.automation.Goal.Slug]): List[CandidateCount] =

@@ -62,8 +62,8 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   private def sha256Of(bundle: Path): com.histmersion.Sha256 =
     com.histmersion.Sha256.assume(BundleFormat.sha256Hex(Files.readAllBytes(bundle)).value)
 
-  private def applyJob(ds: DataSource, id: com.histmersion.api.SpatialHierarchyResult.Job.Id) =
-    Transactor(ds).read(JobRepo.mergeApply(JobRepo.MergeApplyId(id.value)))
+  private def applyJob(ds: DataSource, id: com.histmersion.util.jobs.Job.Id) =
+    Transactor(ds).read(JobRepo.mergeApply(id))
 
   private def exec(ds: DataSource, stmt: String): Unit =
     val c = ds.getConnection
@@ -520,7 +520,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       applyJob(ds, a).map(j => (j.state, j.bundle, j.planHash)),
       Some((MergeJobState.Running, "a" * 64, "abc123"))
     )
-    Transactor(ds).transact(JobRepo.finishMergeApply(JobRepo.FinishMergeApplyId(a.value), Right(res)))
+    Transactor(ds).transact(JobRepo.finishMergeApply(a, Right(res)))
     assert(!Transactor(ds).read(JobRepo.mergeApplyRunning))
     assertEquals(
       applyJob(ds, a).map(j => (j.state, j.result)),
@@ -530,15 +530,15 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(Transactor(ds).transact(JobRepo.failInterrupted()), 1) // the startup reconciliation
     assertEquals(applyJob(ds, b).map(_.state), Some(MergeJobState.Interrupted))
     // the thread that outlived nothing cannot overwrite it; a crash is failed with its reason
-    Transactor(ds).transact(JobRepo.finishMergeApply(JobRepo.FinishMergeApplyId(b.value), Right(res)))
+    Transactor(ds).transact(JobRepo.finishMergeApply(b, Right(res)))
     assertEquals(applyJob(ds, b).map(_.state), Some(MergeJobState.Interrupted))
     val c = Transactor(ds).transact(JobRepo.startMergeApply(MergeRepo.BundleName("c" * 64), com.histmersion.util.data.exchange.MergeRow.PlanHash("0")))
-    Transactor(ds).transact(JobRepo.finishMergeApply(JobRepo.FinishMergeApplyId(c.value), Left(com.histmersion.util.jobs.JobRepo.Problem("merge apply crashed: boom"))))
+    Transactor(ds).transact(JobRepo.finishMergeApply(c, Left(com.histmersion.util.jobs.JobRepo.Problem("merge apply crashed: boom"))))
     assertEquals(
       applyJob(ds, c).map(j => (j.state, j.error)),
       Some((MergeJobState.Failed, Some("merge apply crashed: boom")))
     )
     // not a merge apply, or nothing: no answer
-    assertEquals(Transactor(ds).read(JobRepo.mergeApply(com.histmersion.util.jobs.JobRepo.MergeApplyId("no-such-job"))), None)
-    val ocr = Transactor(ds).transact(JobRepo.create(JobRepo.CreateKind(Ingest.KindIngest), Some(com.histmersion.domain.library.Citekey("zz2020_x")), None))
-    assertEquals(applyJob(ds, ocr.id), None)
+    assertEquals(Transactor(ds).read(JobRepo.mergeApply(com.histmersion.util.jobs.Job.Id("00000000-0000-0000-0000-000000000000"))), None)
+    val ocr = Transactor(ds).transact(JobRepo.create(com.histmersion.util.jobs.Job.Kind.applyUnsafe(Ingest.KindIngest), Some(com.histmersion.domain.library.Citekey("zz2020_x")), None))
+    assertEquals(applyJob(ds, com.histmersion.util.jobs.Job.Id.assume(ocr.id.value)), None)

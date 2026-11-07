@@ -30,8 +30,8 @@ object QueryTools:
         .description(queries.toolDescription.value)
         .input[QueryInput]
         .handle { in =>
-          queries.run(Query.QueryRequest(in.sql)) match
-            case Right(r) => ToolResult.text(Query.markdown(r))
+          queries.run(Query.QueryRequest(Query.QueryRequest.Sql(in.sql.value))) match
+            case Right(r) => ToolResult.text(Query.markdown(r).value)
             // hand the live schema back with the error so the next attempt can be right
             case Left(e) =>
               ToolResult.text(s"${McpOut.refusal(e)}\n\n${Query.schemaMarkdown(queries.schemaTables)}")

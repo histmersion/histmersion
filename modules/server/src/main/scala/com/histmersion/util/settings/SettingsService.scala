@@ -1,6 +1,6 @@
 package com.histmersion.util.settings
 
-import com.histmersion.config.{AppConfig, ConfigLayers, LoadedConfig, SetupConfig}
+import com.histmersion.config.{AppConfig, ConfigProblem, LoadedConfig, SetupConfig}
 import com.histmersion.config.edit.*
 import org.ekrich.config.{Config, ConfigFactory, ConfigParseOptions, ConfigSyntax}
 
@@ -47,7 +47,7 @@ object SettingsService:
   private[settings] def snapshot(
       schema: ConfigSchema,
       state: ConfigFileState,
-      loaded: Either[ConfigLayers.Problem, LoadedConfig],
+      loaded: Either[ConfigProblem, LoadedConfig],
       env: Config,
       prefix: Option[SettingKey],
       completed: SetupConfig.Completed,

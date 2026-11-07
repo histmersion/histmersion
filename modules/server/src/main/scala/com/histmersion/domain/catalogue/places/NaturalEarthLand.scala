@@ -8,11 +8,8 @@ package com.histmersion.domain.catalogue.places
   * can be assigned to.
   */
 import com.histmersion.api.catalogue.Place
+import com.histmersion.server.HttpDownload
 object NaturalEarthLand:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
   val name = "land"
   val description = "Natural Earth 1:10 m land + minor islands (public domain) — clips polities to the coastline"
   val urls = List(
@@ -21,13 +18,13 @@ object NaturalEarthLand:
   )
 
   /** The polygon geometries of a GeoJSON FeatureCollection, each as its own GeoJSON text. Pure. */
-  def geometries(rawJson: com.histmersion.domain.catalogue.places.PlaceDetailRow.Geometry): Either[com.histmersion.domain.catalogue.places.NaturalEarthLand.Problem, List[com.histmersion.domain.catalogue.places.PlaceDetailRow.Geometry]] =
-    io.circe.parser.parse(rawJson).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
+  def geometries(rawJson: String): Either[GazetteerImports.Problem, List[PlaceDetailRow.Geometry]] =
+    io.circe.parser.parse(rawJson).left.map(e => GazetteerImports.Problem(s"invalid JSON: ${e.getMessage}")).flatMap { doc =>
       doc.hcursor
         .downField("features")
         .focus
         .flatMap(_.asArray)
-        .toRight("not a GeoJSON FeatureCollection")
+        .toRight(GazetteerImports.Problem("not a GeoJSON FeatureCollection"))
         .map(_.toList.flatMap { f =>
           f.hcursor
             .downField("geometry")
@@ -35,7 +32,7 @@ object NaturalEarthLand:
             .filter { g =>
               g.hcursor.downField("type").as[String].toOption.exists(t => t == "Polygon" || t == "MultiPolygon")
             }
-            .map(_.noSpaces)
+            .map(g => PlaceDetailRow.Geometry(g.noSpaces))
         })
     }
 
@@ -43,23 +40,23 @@ object NaturalEarthLand:
     * the number of polities now drawn clipped; `failed` carries the piece count as a note.
     */
   def run(
-      download: com.histmersion.domain.catalogue.places.GazetteerSourceRow.Url => Either[com.histmersion.domain.catalogue.places.GazetteerSourceRow.File, com.histmersion.Sha256],
+      download: HttpDownload.Url => Either[HttpDownload.Problem, HttpDownload.Text],
       geometry: PlaceGeometry,
-      dryRun: com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun
-  ): Either[com.histmersion.domain.catalogue.places.NaturalEarthLand.Problem, Place.ImportResult] =
+      dryRun: GazetteerControllers.DryRun
+  ): Either[GazetteerImports.Problem, Place.ImportResult] =
     for
-      raws <- urls.foldLeft[Either[String, List[String]]](Right(Nil))((acc, u) =>
-        acc.flatMap(l => download(u).map(l :+ _))
+      raws <- urls.foldLeft[Either[GazetteerImports.Problem, List[String]]](Right(Nil))((acc, u) =>
+        acc.flatMap(l => download(HttpDownload.Url(u)).left.map(p => GazetteerImports.Problem(p.value)).map(l :+ _.value))
       )
-      geoms <- raws.foldLeft[Either[String, List[String]]](Right(Nil))((acc, r) =>
+      geoms <- raws.foldLeft[Either[GazetteerImports.Problem, List[PlaceDetailRow.Geometry]]](Right(Nil))((acc, r) =>
         acc.flatMap(l => geometries(r).map(l ++ _))
       )
-      _ <- if geoms.isEmpty then Left("no land polygons in the download") else Right(())
+      _ <- if geoms.isEmpty then Left(GazetteerImports.Problem("no land polygons in the download")) else Right(())
     yield
-      if dryRun then Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(0), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), List(s"dry run: ${geoms.size} land polygons"))
+      if dryRun.value then Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(0), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), List(Place.ImportResult.Failed(s"dry run: ${geoms.size} land polygons")))
       else
         scribe.info(s"[import] land: storing ${geoms.size} polygons…")
         val pieces = geometry.replaceLand(geoms)
         scribe.info(s"[import] land: $pieces pieces; clipping polities…")
         val clipped = geometry.reclip()
-        Place.ImportResult(clipped, com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), List(s"$pieces land pieces from ${geoms.size} polygons"))
+        Place.ImportResult(Place.ImportResult.Places(clipped.value), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), List(Place.ImportResult.Failed(s"$pieces land pieces from ${geoms.size} polygons")))

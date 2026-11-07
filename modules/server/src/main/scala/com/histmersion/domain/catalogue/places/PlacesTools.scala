@@ -1,6 +1,9 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.catalogue.PlacesMarkdown
+import com.histmersion.api.Write
+import com.histmersion.api.catalogue.{Latitude, Longitude, ManualPlaceName, PlacesMarkdown, Year}
+import com.histmersion.api.catalogue.Place as ApiPlace
+import com.histmersion.domain.DeepTime
 
 import chimp.server.*
 import com.histmersion.api.StrictJson
@@ -50,7 +53,7 @@ object PlacesTools:
 
   /** Input of the `place_override` tool (V080). */
   final case class PlaceOverrideInput(
-      placeId: Option[com.histmersion.domain.catalogue.Place.Id] = None,
+      placeId: Option[PlaceOverrideInput.PlaceId] = None,
       kind: Option[PlaceOverrideInput.Kind] = None,
       periodStart: Option[com.histmersion.Year] = None,
       periodEnd: Option[com.histmersion.Year] = None,
@@ -62,6 +65,8 @@ object PlacesTools:
       pointLon: Option[PlaceOverrideInput.PointLon] = None
   )
   object PlaceOverrideInput:
+    type PlaceId = PlaceId.T
+    object PlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Kind = Kind.T
     object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Reason = Reason.T
@@ -98,12 +103,14 @@ object PlacesTools:
 
   /** Input of the `place_names` tool (#987). */
   final case class PlaceNamesInput(
-      placeId: Option[com.histmersion.domain.catalogue.Place.Id] = None,
+      placeId: Option[PlaceNamesInput.PlaceId] = None,
       name: Option[PlaceNamesInput.Name] = None,
       lang: Option[PlaceNamesInput.Lang] = None,
       remove: Option[PlaceNamesInput.Remove] = None
   )
   object PlaceNamesInput:
+    type PlaceId = PlaceId.T
+    object PlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Name = Name.T
     object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Lang = Lang.T
@@ -119,6 +126,11 @@ object PlacesTools:
       .modify(_.lang)(_.description("Language tag of the name: en, grc, la, pl …; omit when unknown"))
       .modify(_.remove)(_.description("true: remove this name (only a name added by hand)"))
     given Codec.AsObject[PlaceNamesInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PlaceNamesInput])
+
+  private def placeId(raw: String): Either[Api.Error, Place.Id] =
+    Place.Id.either(raw).left.map(_ => Api.Error(Api.Error.Message(s"No place '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
+
+  private def year(y: com.histmersion.Year): Year = Year(y.value.toLong)
 
   def apply(places: PlacesControllers) =
     val me = Caller.Local
@@ -141,16 +153,29 @@ object PlacesTools:
         )
         .input[PlacesInput]
         .handle { in =>
-          in.id.map(_.trim).filter(_.nonEmpty) match
-            case Some(id) =>
-              places.get(id, in.asOf) match
-                case Right(d) =>
-                  val tree = places.tree(id, in.asOf, None).getOrElse(Nil)
-                  ToolResult.text(PlacesMarkdown.place(d, tree.toVector))
-                case Left(e) => McpOut.error(e)
+          val asOf = in.asOf.map(y => DeepTime.SignedYear(y.value))
+          in.id.map(_.value.trim).filter(_.nonEmpty) match
+            case Some(raw) =>
+              Place.Id.either(raw) match
+                case Left(_)   => McpOut.error(Api.Error(Api.Error.Message(s"No place '$raw'")))
+                case Right(id) =>
+                  places.get(id, asOf) match
+                    case Right(d) =>
+                      val tree = places.tree(id, asOf, None).getOrElse(Nil)
+                      ToolResult.text(PlacesMarkdown.place(d, tree.toVector))
+                    case Left(e) => McpOut.error(e)
             case None =>
               ToolResult.text(
-                PlacesMarkdown.places(places.search(in.name.orElse(in.query), in.asOf, in.limit).toVector, in.asOf)
+                PlacesMarkdown.places(
+                  places
+                    .search(
+                      in.name.map(_.value).orElse(in.query.map(_.value)).map(PlaceService.SearchQ(_)),
+                      asOf,
+                      in.limit.flatMap(l => com.histmersion.PageSize.option(l.value))
+                    )
+                    .toVector,
+                  in.asOf.map(y => Year(y.value))
+                )
               )
         },
       /** A person's names for a place (#987): list, add or remove — the names a re-seed never deletes. */
@@ -166,16 +191,35 @@ object PlacesTools:
         )
         .input[PlaceNamesInput]
         .handle { in =>
-          val id = in.placeId.map(_.trim).filter(_.nonEmpty)
-          (id, in.name.map(_.trim).filter(_.nonEmpty)) match
-            case (_, None)       => ToolResult.text(PlacesMarkdown.manualPlaceNames(places.manualNames(id)))
+          val id = in.placeId.map(_.value.trim).filter(_.nonEmpty)
+          (id, in.name.map(_.value.trim).filter(_.nonEmpty)) match
+            case (_, None)       =>
+              ToolResult.text(
+                PlacesMarkdown.manualPlaceNames(id match
+                  case None      => places.manualNames(None)
+                  case Some(raw) => Place.Id.option(raw).fold(List.empty[ManualPlaceName])(i => places.manualNames(Some(i)))
+                )
+              )
             case (None, Some(_)) =>
               ToolResult.text("_`placeId` is required to add or remove a name — find it with `places`_")
             case (Some(pid), Some(n)) =>
-              val r =
-                if in.remove.getOrElse(false) then
-                  places.removeName(me, pid, com.histmersion.api.catalogue.Place.NameRemove(n, in.lang))
-                else places.addName(me, pid, com.histmersion.api.catalogue.Place.NameAdd(n, in.lang))
+              val r = placeId(pid).flatMap(found =>
+                if in.remove.exists(_.value) then
+                  places.removeName(
+                    me,
+                    found,
+                    ApiPlace.NameRemove(
+                      ApiPlace.NameRemove.Name(n),
+                      in.lang.map(l => ApiPlace.NameRemove.Lang(l.value))
+                    )
+                  )
+                else
+                  places.addName(
+                    me,
+                    found,
+                    ApiPlace.NameAdd(ApiPlace.NameAdd.Name(n), in.lang.map(l => ApiPlace.NameAdd.Lang(l.value)))
+                  )
+              )
               r.fold(McpOut.error, x => ToolResult.text(PlacesMarkdown.placeNameChanged(x)))
         },
       /** A person's kind and period for a place (V080): list, set or reset — kept by every re-import. */
@@ -198,45 +242,61 @@ object PlacesTools:
         )
         .input[PlaceOverrideInput]
         .handle { in =>
-          val id = in.placeId.map(_.trim).filter(_.nonEmpty)
-          val into = in.mergeInto.map(_.trim).filter(_.nonEmpty)
-          val gone = into.isDefined || in.remove.getOrElse(false)
-          val ask = gone || in.kind.exists(_.trim.nonEmpty) || in.periodStart.isDefined || in.periodEnd.isDefined ||
-            in.pointLat.isDefined || in.pointLon.isDefined || in.reset.getOrElse(false)
+          val id = in.placeId.map(_.value.trim).filter(_.nonEmpty)
+          val into = in.mergeInto.map(_.value.trim).filter(_.nonEmpty)
+          val gone = into.isDefined || in.remove.exists(_.value)
+          val ask = gone || in.kind.exists(_.value.trim.nonEmpty) || in.periodStart.isDefined || in.periodEnd.isDefined ||
+            in.pointLat.isDefined || in.pointLon.isDefined || in.reset.exists(_.value)
           def text(r: Either[Api.Error, String]) = ToolResult.text(r.fold(McpOut.refusal, identity))
           (id, ask) match
-            case (_, false)   => ToolResult.text(PlacesMarkdown.placeOverrides(places.overrides(id)))
+            case (_, false)   =>
+              ToolResult.text(
+                PlacesMarkdown.placeOverrides(id match
+                  case None      => places.overrides(None)
+                  case Some(raw) => Place.Id.option(raw).fold(List.empty[ApiPlace.Override])(i => places.overrides(Some(i)))
+                )
+              )
             case (None, true) =>
               ToolResult.text("_`placeId` is required to set, reset, merge or remove — find it with `places`_")
             case (Some(pid), true) =>
-              (into, in.remove.getOrElse(false)) match
+              (into, in.remove.exists(_.value)) match
                 case (Some(_), true)  => ToolResult.text("_`mergeInto` and `remove` exclude each other_")
                 case (Some(t), false) =>
                   text(
-                    places
-                      .merge(me, pid, com.histmersion.api.catalogue.Place.MergeIn(t, in.reason))
+                    placeId(pid)
+                      .flatMap(found =>
+                        places.merge(
+                          me,
+                          found,
+                          ApiPlace.MergeIn(ApiPlace.Id(t), in.reason.map(q => ApiPlace.MergeIn.Reason(q.value)))
+                        )
+                      )
                       .map(PlacesMarkdown.placeGone)
                   )
                 case (None, true) =>
                   text(
-                    places
-                      .remove(me, pid, com.histmersion.api.catalogue.Place.RemoveIn(in.reason))
+                    placeId(pid)
+                      .flatMap(found =>
+                        places.remove(me, found, ApiPlace.RemoveIn(in.reason.map(q => ApiPlace.RemoveIn.Reason(q.value))))
+                      )
                       .map(PlacesMarkdown.placeGone)
                   )
                 case (None, false) =>
                   text(
-                    places
-                      .setOverride(
-                        me,
-                        pid,
-                        com.histmersion.api.catalogue.Place.OverrideSet(
-                          in.kind,
-                          in.periodStart,
-                          in.periodEnd,
-                          in.reason,
-                          in.reset.getOrElse(false),
-                          in.pointLat,
-                          in.pointLon
+                    placeId(pid)
+                      .flatMap(found =>
+                        places.setOverride(
+                          me,
+                          found,
+                          ApiPlace.OverrideSet(
+                            in.kind.map(k => ApiPlace.OverrideSet.Kind(k.value)),
+                            in.periodStart.map(year),
+                            in.periodEnd.map(year),
+                            in.reason.map(q => ApiPlace.OverrideSet.Reason(q.value)),
+                            ApiPlace.OverrideSet.Reset(in.reset.exists(_.value)),
+                            in.pointLat.map(l => Latitude(l.value)),
+                            in.pointLon.map(l => Longitude(l.value))
+                          )
                         )
                       )
                       .map(PlacesMarkdown.placeOverrideChanged)

@@ -1,7 +1,17 @@
 package com.histmersion.domain.catalogue.evidence
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.api.catalogue.{EventFindingRef, EventSourceRef, EventTier}
+import com.histmersion.api.catalogue.{
+  ArticleEventLead,
+  CatalogRecord,
+  EventEntry,
+  EventFindingRef,
+  EventSourceRef,
+  EventTier
+}
+import com.histmersion.domain.DeepTime.SignedYear
+import com.histmersion.domain.catalogue.Event
+import com.histmersion.domain.catalogue.events.CatalogMerge as CM
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.domain.catalogue.events.{EventSelection, EventSourceFilter}
@@ -18,48 +28,62 @@ trait LeadService:
   def attestingSources(id: com.histmersion.domain.catalogue.Event.Id): List[EventSourceRef]
 
   /** The dated, placed findings within `km` and `years` of an event, nearest in time then space first. */
-  def nearFindings(id: com.histmersion.domain.catalogue.Event.Id, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years, limit: com.histmersion.PageSize): List[EventFindingRef]
+  def nearFindings(id: com.histmersion.domain.catalogue.Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years, limit: com.histmersion.PageSize): List[EventFindingRef]
 
   /** The facts of the leads of the events `selection` selects, the catalogue's and the largest first, one page; and how
     * many it selects.
     */
-  def leads(selection: EventSelection, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years, limit: com.histmersion.PageSize, offset: com.histmersion.Offset): (com.histmersion.RowCount, List[LeadRow])
+  def leads(selection: EventSelection, km: CM.Tolerance.Km, years: CM.Tolerance.Years, limit: com.histmersion.PageSize, offset: com.histmersion.Offset): (com.histmersion.RowCount, List[LeadRow])
 
   /** The facts of one event's lead. */
-  def leadOf(id: com.histmersion.domain.catalogue.Event.Id, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years): List[LeadRow]
+  def leadOf(id: com.histmersion.domain.catalogue.Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years): List[LeadRow]
 
   /** Catalogue events overlapping `period` within `km` of a dated finding of `citekeys` of that period, large enough
     * (`minVei`, `minMagnitude`) or a war, with how many of those findings are near each.
     */
   def articleCandidates(
       citekeys: List[com.histmersion.domain.library.Citekey],
-      period: Option[(com.histmersion.domain.catalogue.periods.BPeriodRow.PLo, com.histmersion.domain.catalogue.periods.BPeriodRow.PHi)],
-      km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km,
-      minVei: com.histmersion.domain.catalogue.events.EventGeoRow.Vei,
-      minMagnitude: com.histmersion.domain.catalogue.events.EventGeoRow.Magnitude,
+      period: Option[(SignedYear, SignedYear)],
+      km: CM.Tolerance.Km,
+      minVei: CatalogRecord.Vei,
+      minMagnitude: CatalogRecord.Magnitude,
       limit: com.histmersion.PageSize
-  ): List[(com.histmersion.domain.catalogue.evidence.LeadRow.Id, com.histmersion.domain.catalogue.evidence.LeadRow.Kind, com.histmersion.domain.catalogue.evidence.LeadRow.Label, TimeSpan, List[com.histmersion.domain.catalogue.evidence.LeadRow.Tier], Option[com.histmersion.domain.catalogue.evidence.LeadRow.Attesting], Option[com.histmersion.domain.catalogue.evidence.LeadRow.Magnitude], com.histmersion.domain.catalogue.evidence.LeadRow.FindingsNear, com.histmersion.domain.catalogue.evidence.CandidateRow.Title)]
+  ): List[LeadService.ArticleCandidate]
 
 object LeadService:
+  /** A catalogue event an article's region and period hold: its id, label, kind, span, names, size, the findings near it
+    * and the catalogue it comes from.
+    */
+  type ArticleCandidate = (
+      Event.Id,
+      CatalogRecord.Label,
+      CatalogRecord.Kind,
+      TimeSpan,
+      List[EventEntry.Names],
+      Option[CatalogRecord.Vei],
+      Option[CatalogRecord.Magnitude],
+      ArticleEventLead.FindingsNear,
+      CatalogRecord.Provider
+  )
 
   def apply(db: Transactor, related: EventSourceFilter): LeadService = Implementation(db, related)
 
   final private class Implementation(db: Transactor, related: EventSourceFilter) extends LeadService:
     def attestingSources(id: com.histmersion.domain.catalogue.Event.Id): List[EventSourceRef] = db.read(LeadRepo.attestingSources(id))
-    def nearFindings(id: com.histmersion.domain.catalogue.Event.Id, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years, limit: com.histmersion.PageSize): List[EventFindingRef] =
+    def nearFindings(id: com.histmersion.domain.catalogue.Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years, limit: com.histmersion.PageSize): List[EventFindingRef] =
       db.read(LeadRepo.nearFindings(id, km, years, limit))
-    def leads(selection: EventSelection, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years, limit: com.histmersion.PageSize, offset: com.histmersion.Offset): (com.histmersion.RowCount, List[LeadRow]) =
+    def leads(selection: EventSelection, km: CM.Tolerance.Km, years: CM.Tolerance.Years, limit: com.histmersion.PageSize, offset: com.histmersion.Offset): (com.histmersion.RowCount, List[LeadRow]) =
       db.read(LeadRepo.leadRows(selection.sql(related), km, years, limit, offset))
-    def leadOf(id: com.histmersion.domain.catalogue.Event.Id, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years): List[LeadRow] =
-      db.read(LeadRepo.leadRows(Sql.of(com.histmersion.util.database.Sql.Text("e.id = ?"), Param.S(id)), km, years, com.histmersion.PageSize(1), com.histmersion.Offset(0)))._2
+    def leadOf(id: com.histmersion.domain.catalogue.Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years): List[LeadRow] =
+      db.read(LeadRepo.leadRows(Sql.of(com.histmersion.util.database.Sql.Text("e.id = ?"), Param.S(Param.S.V(id.value))), km, years, com.histmersion.PageSize(1), com.histmersion.Offset.Start))._2
     def articleCandidates(
         citekeys: List[com.histmersion.domain.library.Citekey],
-        period: Option[(com.histmersion.domain.catalogue.periods.BPeriodRow.PLo, com.histmersion.domain.catalogue.periods.BPeriodRow.PHi)],
-        km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km,
-        minVei: com.histmersion.domain.catalogue.events.EventGeoRow.Vei,
-        minMagnitude: com.histmersion.domain.catalogue.events.EventGeoRow.Magnitude,
+        period: Option[(SignedYear, SignedYear)],
+        km: CM.Tolerance.Km,
+        minVei: CatalogRecord.Vei,
+        minMagnitude: CatalogRecord.Magnitude,
         limit: com.histmersion.PageSize
-    ): List[(com.histmersion.domain.catalogue.evidence.LeadRow.Id, com.histmersion.domain.catalogue.evidence.LeadRow.Kind, com.histmersion.domain.catalogue.evidence.LeadRow.Label, TimeSpan, List[com.histmersion.domain.catalogue.evidence.LeadRow.Tier], Option[com.histmersion.domain.catalogue.evidence.LeadRow.Attesting], Option[com.histmersion.domain.catalogue.evidence.LeadRow.Magnitude], com.histmersion.domain.catalogue.evidence.LeadRow.FindingsNear, com.histmersion.domain.catalogue.evidence.CandidateRow.Title)] =
+    ): List[LeadService.ArticleCandidate] =
       db.read(LeadRepo.articleCandidates(citekeys, period, km, minVei, minMagnitude, limit))
 
 
@@ -70,7 +94,7 @@ object LeadService:
   final class InMemory(
       state: AtomicReference[CatalogueState],
       events: com.histmersion.domain.catalogue.events.EventService,
-      source: InMemory.SourceArg1 => Option[(Option[InMemory.SourceResultPart1], Option[InMemory.SourceResultPart2])]
+      source: com.histmersion.domain.library.Citekey => Option[(Option[EventSourceRef.Title], Option[com.histmersion.api.catalogue.Year])]
   ) extends LeadService:
 
     def attestingSources(id: com.histmersion.domain.catalogue.Event.Id): List[EventSourceRef] =
@@ -78,67 +102,72 @@ object LeadService:
       val own = s.events
         .find(_.id == id)
         .flatMap(_.citekey)
-        .flatMap(ck => source(ck).map((t, y) => EventSourceRef(ck, t, y, com.histmersion.api.catalogue.EventSourceRef.Via("citekey"))))
+        .flatMap(ck =>
+          source(ck).map((t, y) =>
+            EventSourceRef(com.histmersion.api.library.Citekey(ck.value), t, y, com.histmersion.api.catalogue.EventSourceRef.Via("citekey"))
+          )
+        )
       val att = s.attestations
-        .filter(a => a.targetType == "event" && a.targetId == id)
-        .sortBy(a => (a.citekey, a.id))
+        .filter(a => a.targetType.value == "event" && a.targetId.value == id.value)
+        .sortBy(a => (a.citekey.value, a.id.value))
         .distinctBy(_.citekey)
-        .flatMap(a => source(a.citekey).map((t, y) => EventSourceRef(a.citekey, t, y, "attestation", a.quote)))
+        .flatMap(a =>
+          com.histmersion.domain.library.Citekey
+            .option(a.citekey.value)
+            .flatMap(source)
+            .map((t, y) =>
+              EventSourceRef(a.citekey, t, y, EventSourceRef.Via("attestation"), a.quote.map(q => EventSourceRef.Quote(q.value)))
+            )
+        )
         .toList
       own.toList ++ att.filterNot(a => own.exists(_.citekey == a.citekey))
 
-    def nearFindings(id: com.histmersion.domain.catalogue.Event.Id, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years, limit: com.histmersion.PageSize): List[EventFindingRef] = Nil
+    def nearFindings(id: com.histmersion.domain.catalogue.Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years, limit: com.histmersion.PageSize): List[EventFindingRef] = Nil
 
     private def factsOf(s: CatalogueState, id: com.histmersion.domain.catalogue.Event.Id): Option[LeadRow] =
       s.events.find(_.id == id).map { e =>
         val recs = s.catalogueRecords.filter(_._1 == id).map(_._2)
         val tier =
-          if e.citekey.isDefined || s.attestations.exists(a => a.targetType == "event" && a.targetId == id) then
-            EventTier.Attested
+          if e.citekey.isDefined || s.attestations.exists(a => a.targetType.value == "event" && a.targetId.value == id.value)
+          then EventTier.Attested
           else EventTier.Catalogue
-        val cs = s.candidates.filter(_.eventId == com.histmersion.api.catalogue.Event.Id(id))
+        val cs = s.candidates.filter(_.eventId.value == id.value)
         LeadRow(
-          e.id,
-          e.label,
-          e.kind,
-          e.timeSpan.notBefore,
-          e.timeSpan.beginBy,
-          e.timeSpan.endFrom,
-          e.timeSpan.notAfter,
-          tier,
-          recs.flatMap(_.vei).maxOption,
-          recs.flatMap(_.magnitude).maxOption,
-          com.histmersion.domain.catalogue.evidence.LeadRow.FindingsNear(0),
-          cs.count(_.status == com.histmersion.domain.catalogue.Event.LinkStatus.Proposed),
-          cs.count(_.status == com.histmersion.domain.catalogue.Event.LinkStatus.Confirmed)
+          LeadRow.Id(e.id.value),
+          LeadRow.Label(e.label.value),
+          LeadRow.Kind(e.kind.value),
+          e.timeSpan.notBefore.map(y => LeadRow.NotBefore(y.value)),
+          e.timeSpan.beginBy.map(y => LeadRow.BeginBy(y.value)),
+          e.timeSpan.endFrom.map(y => LeadRow.EndFrom(y.value)),
+          e.timeSpan.notAfter.map(y => LeadRow.NotAfter(y.value)),
+          LeadRow.Tier(tier),
+          recs.flatMap(_.vei.map(_.value)).maxOption.map(LeadRow.Vei(_)),
+          recs.flatMap(_.magnitude.map(_.value)).maxOption.map(LeadRow.Magnitude(_)),
+          LeadRow.FindingsNear(0),
+          LeadRow.Proposed(cs.count(_.status.value == Event.LinkStatus.Proposed)),
+          LeadRow.Attesting(cs.count(_.status.value == Event.LinkStatus.Confirmed))
         )
       }
 
-    def leads(selection: EventSelection, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years, limit: com.histmersion.PageSize, offset: com.histmersion.Offset): (com.histmersion.RowCount, List[LeadRow]) =
+    def leads(selection: EventSelection, km: CM.Tolerance.Km, years: CM.Tolerance.Years, limit: com.histmersion.PageSize, offset: com.histmersion.Offset): (com.histmersion.RowCount, List[LeadRow]) =
       val s = state.get
-      val listed = events.list(selection, Int.MaxValue, com.histmersion.Offset(0))
-      val rows = listed.events.flatMap(e => factsOf(s, e.id)).sortBy { r =>
-        val size = r.vei.fold(0.0)(_.toDouble) + r.magnitude.getOrElse(0.0)
-        (r.tier != EventTier.Catalogue, -size, r.notBefore.orElse(r.beginBy).fold((1, 0L))(y => (0, y)), r.id)
+      val listed = events.list(selection, com.histmersion.PageSize(Int.MaxValue), com.histmersion.Offset.Start)
+      val rows = listed.events.flatMap(e => Event.Id.option(e.id.value).flatMap(factsOf(s, _))).sortBy { r =>
+        val size = r.vei.fold(0.0)(_.value.toDouble) + r.magnitude.fold(0.0)(_.value)
+        (r.tier.value != EventTier.Catalogue, -size, r.notBefore.orElse(r.beginBy).fold((1, 0L))(y => (0, y.value)), r.id.value)
       }
-      (com.histmersion.RowCount(listed.total.value), rows.slice(offset.max(0), offset.max(0) + limit.max(1)))
+      (
+        com.histmersion.RowCount(listed.total.value),
+        rows.slice(offset.value.max(0), offset.value.max(0) + limit.value.max(1))
+      )
 
-    def leadOf(id: com.histmersion.domain.catalogue.Event.Id, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years): List[LeadRow] = factsOf(state.get, id).toList
+    def leadOf(id: com.histmersion.domain.catalogue.Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years): List[LeadRow] = factsOf(state.get, id).toList
 
     def articleCandidates(
         citekeys: List[com.histmersion.domain.library.Citekey],
-        period: Option[(com.histmersion.domain.catalogue.periods.BPeriodRow.PLo, com.histmersion.domain.catalogue.periods.BPeriodRow.PHi)],
-        km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km,
-        minVei: com.histmersion.domain.catalogue.events.EventGeoRow.Vei,
-        minMagnitude: com.histmersion.domain.catalogue.events.EventGeoRow.Magnitude,
+        period: Option[(SignedYear, SignedYear)],
+        km: CM.Tolerance.Km,
+        minVei: CatalogRecord.Vei,
+        minMagnitude: CatalogRecord.Magnitude,
         limit: com.histmersion.PageSize
-    ): List[(com.histmersion.domain.catalogue.evidence.LeadRow.Id, com.histmersion.domain.catalogue.evidence.LeadRow.Kind, com.histmersion.domain.catalogue.evidence.LeadRow.Label, TimeSpan, List[com.histmersion.domain.catalogue.evidence.LeadRow.Tier], Option[com.histmersion.domain.catalogue.evidence.LeadRow.Attesting], Option[com.histmersion.domain.catalogue.evidence.LeadRow.Magnitude], com.histmersion.domain.catalogue.evidence.LeadRow.FindingsNear, com.histmersion.domain.catalogue.evidence.CandidateRow.Title)] = Nil
-
-  object InMemory:
-    type SourceArg1 = com.histmersion.domain.library.Citekey
-    val SourceArg1: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
-    type SourceResultPart1 = com.histmersion.domain.library.Citekey
-    val SourceResultPart1: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
-    type SourceResultPart2 = com.histmersion.RowCount
-    val SourceResultPart2: _root_.com.histmersion.RowCount.type = _root_.com.histmersion.RowCount
-
+    ): List[LeadService.ArticleCandidate] = Nil

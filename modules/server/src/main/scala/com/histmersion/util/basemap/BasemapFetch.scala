@@ -258,7 +258,7 @@ object BasemapFetch:
       val contents = sorted
         .map(t => (t.offset, ByteCount.applyUnsafe(t.length.value.toLong)))
         .distinct
-        .sortBy(_._1.value)
+        .sortBy[Long](_._1.value)
       Plan(
         source,
         h,

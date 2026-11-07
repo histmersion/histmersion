@@ -9,15 +9,14 @@ import com.histmersion.domain.library.sources.SourcesControllers
   * sources' own controllers, exactly as a person would send it.
   */
 final class SourceProposalEffect(sources: => SourcesControllers) extends ProposalEffect:
-  def proposal(payload: com.histmersion.domain.library.workflows.SourceProposalEffect.ProposalPayload): Option[() => Either[com.histmersion.domain.library.workflows.SourceProposalEffect.ProposalOutcome, com.histmersion.domain.library.workflows.SourceProposalEffect.ProposalOutcomeText]] =
+  def proposal(payload: com.histmersion.domain.automation.approvals.ApprovalEffects.Payload): Option[() => Either[com.histmersion.domain.automation.approvals.ApprovalEffects.Problem, String]] =
     Jsonb
-      .read[Proposal](payload)
-      .map(p => () => sources.patch(p.citekey, p.patch).left.map(_.message).map(_ => p.describe))
-
-object SourceProposalEffect:
-  type ProposalOutcome = ProposalOutcome.T
-  object ProposalOutcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProposalOutcomeText = ProposalOutcomeText.T
-  object ProposalOutcomeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProposalPayload = ProposalPayload.T
-  object ProposalPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      .read[Proposal](Jsonb.JsonText(payload.value))
+      .map(p =>
+        () =>
+          sources
+            .patch(p.citekey, p.patch)
+            .left
+            .map(e => com.histmersion.domain.automation.approvals.ApprovalEffects.Problem(e.message.value))
+            .map(_ => p.describe.value)
+      )

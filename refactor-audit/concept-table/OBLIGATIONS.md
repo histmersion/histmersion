@@ -116,3 +116,13 @@ Also check: `ModelChains.headroom` returns `Option[LimitState.FreesAt]` for a to
 - api Year (Long) narrowed to domain Year (Int) with `.toInt`: domain and api differ.
 - db JobRepo positional types (GetId, ListStatus, ...) and config's private[config] ConfigLayers.Problem block util/jobs and SettingsService.
 - Api Acquire.Checks.RecheckStatus.Job is a job id type carrying a text line. OpenAlexIndex.authors turns author ids into AuthorName.
+
+## Place.Id pattern widened (found in wave 3)
+
+Master's `[a-z][a-z0-9]*_.+` refuses the seed's own bare ids (`anatolia`, `aegean`, `levant`, `mesopotamia`, `egypt`). Master rarely applied it because most code took String; now every read and request goes through it. Now `[a-z][a-z0-9-]*(_.+)?`, a superset. The `Place.Id.applyUnsafe("levant")` test wrappers still work and can become plain. Confirm against every place id on the restored copy. Check other constrained ids the same way (Event.Id, Citekey, Slug, Goal.Slug, Doi, Sha256, Run.Id): reading them from the seed files and the restored copy.
+
+## From server, wave 3
+
+- PlacesControllers.renamed 400 on a new id outside the pattern; merge refuses an invalid `into` as not found; PlaceService.InMemory.scopeFor drops invalid ids; CorrectionsTools refuses a malformed event id (old: matched nothing). PlacesRoutes: malformed id 404, and empty list for placeNames and placeOverrides. PlacesTools PlaceOverrideInput periodStart/periodEnd went Long to Int.
+- GazetteerLoad.load records the file's lowercase sha rather than the manifest text. AcquisitionSweepPipeline's dry-run Ingested holds a non-citekey via Citekey.assume. AcquisitionControllers.updateRetractionsNow filter through Ident.doi removed to match master; check the normalisation note from core.
+- db tests: four suites had "no-such-job" replaced with an all-zero UUID. Rerun db tests after server (JobRepo changed).

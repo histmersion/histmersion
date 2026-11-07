@@ -12,6 +12,9 @@ import scala.collection.immutable.ListMap
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.catalogue.Gazetteer
 import com.histmersion.plugin.Plugin
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.pluginhost.Registries
+import com.histmersion.server.HttpDownload
 
 /** How the gazetteer comes in: the bundled seed, the pinned extracts and the drop folder ([[GazetteerLoad]]), a source
   * a plugin registers ([[ImportRunner]]) and the land ([[NaturalEarthLand]]). The composition root gives the stores,
@@ -25,73 +28,86 @@ final class GazetteerImports(
     stores: () => GazetteerLoad.Stores,
     cfg: () => AppConfig,
     download: GazetteerLoad.Download,
-    text: GazetteerImports.TextArg1 => Either[GazetteerImports.TextResultPart1, GazetteerImports.TextResultPart2],
-    registered: () => ListMap[GazetteerImports.RegisteredResultKey, GazetteerSource],
+    text: HttpDownload.Url => Either[HttpDownload.Problem, HttpDownload.Text],
+    registered: () => ListMap[Registries.GazetteerSourcesKey, GazetteerSource],
     http: () => Plugin.Http
 ):
   private def settings: GazetteerLoad.Settings = GazetteerLoad.settings(cfg(), stores())
+
+  private def pointTolerance: GeocodeSettings.ToleranceKm = GeocodeSettings.ToleranceKm(cfg().places.pointToleranceKm.value)
 
   /** `GET /api/places/sources` — the pinned extracts, the LPF drop folder, and what was imported. */
   def sources(): List[Gazetteer.SourceInfo] = GazetteerLoad.list(db, settings)
 
   /** One external source imported (or, `apply = false`, dry-run); `note` reports progress on the job. */
-  def load(kind: Gazetteer.Kind, apply: com.histmersion.domain.catalogue.places.GazetteerImports.LoadApply, note: com.histmersion.domain.library.sources.SourceNote.Text => Unit): Either[com.histmersion.domain.catalogue.places.GazetteerImports.Problem, List[Gazetteer.LoadCounts]] =
+  def load(kind: Gazetteer.Kind, apply: GazetteerLoad.LoadApply, note: JobInfo.Progress => Unit): Either[GazetteerImports.Problem, List[Gazetteer.LoadCounts]] =
     GazetteerLoad.load(db, settings, kind, apply, note, download)
 
   /** The bundled gazetteer, the way `histmersion places seed` imports it: [[PlaceSeed.files]] order, then a second pass
     * over every file that reported a dangling parent, then `finding_places`.
     */
-  def seed(seed: Store, note: com.histmersion.domain.library.sources.SourceNote.Text => Unit): Either[com.histmersion.domain.catalogue.places.GazetteerImports.Problem, com.histmersion.domain.catalogue.places.GazetteerSourceRow.Key] =
-    if !seed.isDirectory(Store.Key.Root) then Left(s"no gazetteer seed at ${seed.where()} (set init.data-dir)")
+  def seed(seed: Store, note: JobInfo.Progress => Unit): Either[GazetteerImports.Problem, GazetteerImports.Summary] =
+    if !seed.isDirectory(Store.Key.Root) then
+      Left(GazetteerImports.Problem(s"no gazetteer seed at ${seed.where()} (set init.data-dir)"))
     else
       def entries(dir: Store.Key): List[PlaceSeed.Entry[Store.Key]] =
         seed
           .list(dir)
           .filter(e => e.isFile || e.isDirectory)
-          .map(e => PlaceSeed.Entry(e.key.name, e.isDirectory, e.key))
+          .map(e =>
+            PlaceSeed.Entry(PlaceSeed.Entry.Name(e.key.name.value), PlaceSeed.Entry.Directory(e.isDirectory), e.key)
+          )
       val files = PlaceSeed.files(entries(Store.Key.Root), entries)
-      val batch = math.max(1, cfg().places.importBatch)
+      val batch = math.max(1, cfg().places.importBatch.value)
       def importFile(
           f: Store.Key,
-          kind: Option[com.histmersion.domain.catalogue.places.GazetteerSourceRow.Kind]
-      ): Either[com.histmersion.domain.catalogue.places.GazetteerImports.Problem, com.histmersion.api.catalogue.Place.ImportResult] =
+          kind: Option[Place.Kind.Wire]
+      ): Either[GazetteerImports.Problem, com.histmersion.api.catalogue.Place.ImportResult] =
         seed
           .get(f)
-          .toRight(s"${f.value}: not found")
-          .flatMap(blob => Lpf.parse(blob.text(), kind.getOrElse(Place.Kind.Region)).left.map(e => s"${f.value}: $e"))
-          .map(_.grouped(batch).foldLeft(com.histmersion.api.catalogue.Place.ImportResult(0, 0, 0, Nil)) { (sum, b) =>
+          .toRight(GazetteerImports.Problem(s"${f.value}: not found"))
+          .flatMap(blob =>
+            Lpf
+              .parse(
+                blob.text().value,
+                com.histmersion.api.catalogue.Place.KindValue(kind.fold(Place.Kind.Region)(_.value))
+              )
+              .left
+              .map(e => GazetteerImports.Problem(s"${f.value}: $e"))
+          )
+          .map(_.grouped(batch).foldLeft(com.histmersion.api.catalogue.Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(0), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), Nil)) { (sum, b) =>
             val r = places.importPlaces(b, Dataset.Seed)
             com.histmersion.api.catalogue.Place.ImportResult(
-              sum.places + r.places,
-              sum.names + r.names,
-              sum.relations + r.relations,
+              com.histmersion.api.catalogue.Place.ImportResult.Places(sum.places.value + r.places.value),
+              com.histmersion.api.catalogue.Place.ImportResult.Names(sum.names.value + r.names.value),
+              com.histmersion.api.catalogue.Place.ImportResult.Relations(sum.relations.value + r.relations.value),
               (sum.failed ++ r.failed).take(20)
             )
           })
-      def pass(fs: List[(Store.Key, Option[com.histmersion.domain.catalogue.places.GazetteerSourceRow.File])]): Either[com.histmersion.domain.catalogue.places.GazetteerImports.Problem, (com.histmersion.RowCount, List[(Store.Key, Option[com.histmersion.domain.catalogue.places.GazetteerSourceRow.Key])])] =
-        fs.zipWithIndex.foldLeft[Either[String, (Int, List[(Store.Key, Option[String])])]](Right((0, Nil))) {
+      def pass(fs: List[(Store.Key, Option[Place.Kind.Wire])]): Either[GazetteerImports.Problem, (Int, List[(Store.Key, Option[Place.Kind.Wire])])] =
+        fs.zipWithIndex.foldLeft[Either[GazetteerImports.Problem, (Int, List[(Store.Key, Option[Place.Kind.Wire])])]](Right((0, Nil))) {
           case (acc, ((f, kind), i)) =>
             acc.flatMap { (n, retry) =>
-              note(s"gazetteer: ${f.value} (${i + 1}/${fs.size})")
-              importFile(f, kind).map(r => (n + r.places, if r.failed.isEmpty then retry else retry :+ (f -> kind)))
+              note(JobInfo.Progress(s"gazetteer: ${f.value} (${i + 1}/${fs.size})"))
+              importFile(f, kind).map(r => (n + r.places.value, if r.failed.isEmpty then retry else retry :+ (f -> kind)))
             }
         }
-      if files.isEmpty then Left(s"no JSON files under ${seed.where()}")
+      if files.isEmpty then Left(GazetteerImports.Problem(s"no JSON files under ${seed.where()}"))
       else
         for
           first <- pass(files)
           _ <- if first._2.isEmpty then Right((0, Nil)) else pass(first._2)
         yield
-          note("gazetteer: matching findings to places")
-          val r = geometry.rebuildFindingPlaces(cfg().places.pointToleranceKm)
-          s"${first._1} place(s) from ${files.size} file(s); ${r.links} finding→place link(s)"
+          note(JobInfo.Progress("gazetteer: matching findings to places"))
+          val r = geometry.rebuildFindingPlaces(pointTolerance)
+          GazetteerImports.Summary(s"${first._1} place(s) from ${files.size} file(s); ${r.links} finding→place link(s)")
 
   /** Natural Earth's land downloaded and every polity clipped to it again (a dry run counts the polygons). */
-  def land(dryRun: com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun): Either[com.histmersion.domain.catalogue.places.GazetteerImports.Problem, com.histmersion.api.catalogue.Place.ImportResult] =
+  def land(dryRun: GazetteerControllers.DryRun): Either[GazetteerImports.Problem, com.histmersion.api.catalogue.Place.ImportResult] =
     NaturalEarthLand.run(text, geometry, dryRun)
 
   /** The source a plugin registered under `name` (or a built-in's), `unknown` when there is none. */
-  def source(name: com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name, unknown: com.histmersion.domain.catalogue.places.GazetteerImports.Problem): Either[com.histmersion.domain.catalogue.places.GazetteerImports.Problem, GazetteerSource] =
+  def source(name: BuiltinGazetteers.Entry.Name, unknown: GazetteerImports.Problem): Either[GazetteerImports.Problem, GazetteerSource] =
     BuiltinGazetteers.resolve(name, registered(), unknown)
 
   /** The names the sources are known by, a plugin's among them. */
@@ -103,22 +119,12 @@ final class GazetteerImports(
   /** A plugin's source read and its places upserted in batches (a dry run counts them), then the findings matched. */
   def fetch(
       source: GazetteerSource,
-      dryRun: com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun
-  ): Either[com.histmersion.domain.catalogue.places.GazetteerImports.Problem, com.histmersion.api.catalogue.Place.ImportResult] =
-    ImportRunner.fetchAndImport(source, http(), places, geometry, dryRun, cfg().places.pointToleranceKm)
+      dryRun: GazetteerControllers.DryRun
+  ): Either[GazetteerImports.Problem, com.histmersion.api.catalogue.Place.ImportResult] =
+    ImportRunner.fetchAndImport(source, http(), places, geometry, dryRun, pointTolerance)
 
 object GazetteerImports:
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type TextArg1 = TextArg1.T
-  object TextArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextResultPart1 = TextResultPart1.T
-  object TextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextResultPart2 = TextResultPart2.T
-  object TextResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegisteredResultKey = RegisteredResultKey.T
-  object RegisteredResultKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type LoadApply = LoadApply.T
-  object LoadApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Summary = Summary.T
+  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

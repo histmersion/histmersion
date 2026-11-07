@@ -13,7 +13,7 @@ import com.histmersion.api.library.Source
   */
 final class CitationsControllers(citations: CitationService, sources: SourceService, maintenance: WriteGate):
 
-  private def canonical(id: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.Citekey = sources.current(SourceService.Id(id.value)).fold(id)(canon => com.histmersion.domain.library.Citekey.assume(canon.value))
+  private def canonical(id: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.Citekey = sources.current(id).getOrElse(id)
 
   def neighbors(citekey: com.histmersion.domain.library.Citekey, kinds: List[com.histmersion.domain.library.Edge.Kind.Wire] = Nil): List[NeighborRow] =
     citations.neighbors(canonical(citekey), kinds)

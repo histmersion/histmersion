@@ -17,25 +17,14 @@ object AttestationsTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
   final case class AttestationsInput(
-      id: Option[AttestationsInput.Id] = None,
-      citekey: Option[com.histmersion.domain.library.Citekey] = None,
-      targetType: Option[AttestationsInput.TargetType] = None,
-      targetId: Option[AttestationsInput.TargetId] = None,
-      limit: Option[AttestationsInput.Limit] = None,
-      offset: Option[AttestationsInput.Offset] = None
+      id: Option[Attestation.Id] = None,
+      citekey: Option[com.histmersion.api.library.Citekey] = None,
+      targetType: Option[Attestation.TargetType] = None,
+      targetId: Option[Attestation.TargetId] = None,
+      limit: Option[com.histmersion.PageSize] = None,
+      offset: Option[com.histmersion.Offset] = None
   ) derives KindlingsCodecAsObject
   object AttestationsInput:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TargetType = TargetType.T
-    object TargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TargetId = TargetId.T
-    object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = com.histmersion.PageSize
-    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
-    type Offset = com.histmersion.Offset
-    val Offset: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
-
     given Schema[AttestationsInput] = KindlingsSchema
       .derived[AttestationsInput]
       .schema
@@ -45,49 +34,22 @@ object AttestationsTools:
       .modify(_.targetId)(_.description("Filter by target entity id"))
 
   final case class AttestationPutInput(
-      citekey: com.histmersion.domain.library.Citekey,
-      targetType: AttestationPutInput.TargetType,
-      targetId: AttestationPutInput.TargetId,
-      quote: Option[AttestationPutInput.Quote] = None,
-      prefix: Option[AttestationPutInput.Prefix] = None,
-      suffix: Option[AttestationPutInput.Suffix] = None,
-      charStart: Option[AttestationPutInput.CharStart] = None,
-      charEnd: Option[AttestationPutInput.CharEnd] = None,
-      chunkOrd: Option[AttestationPutInput.ChunkOrd] = None,
-      page: Option[AttestationPutInput.Page] = None,
-      canvas: Option[AttestationPutInput.Canvas] = None,
-      xywh: Option[AttestationPutInput.Xywh] = None,
-      ctsUrn: Option[AttestationPutInput.CtsUrn] = None,
-      note: Option[AttestationPutInput.Note] = None
+      citekey: com.histmersion.api.library.Citekey,
+      targetType: Attestation.TargetType,
+      targetId: Attestation.TargetId,
+      quote: Option[Attestation.Quote] = None,
+      prefix: Option[Attestation.Prefix] = None,
+      suffix: Option[Attestation.Suffix] = None,
+      charStart: Option[Attestation.CharStart] = None,
+      charEnd: Option[Attestation.CharEnd] = None,
+      chunkOrd: Option[Attestation.ChunkOrd] = None,
+      page: Option[Attestation.Page] = None,
+      canvas: Option[Attestation.Canvas] = None,
+      xywh: Option[Attestation.Xywh] = None,
+      ctsUrn: Option[Attestation.CtsUrn] = None,
+      note: Option[Attestation.Note] = None
   )
   object AttestationPutInput:
-    type TargetType = com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetType
-    val TargetType: _root_.com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetType.type = _root_.com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetType
-    type TargetId = com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetId
-    val TargetId: _root_.com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetId.type = _root_.com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetId
-    type Quote = com.histmersion.domain.catalogue.evidence.TextAnchor.Quote
-    val Quote: _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.Quote.type = _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.Quote
-    type Prefix = com.histmersion.domain.catalogue.evidence.TextAnchor.Prefix
-    val Prefix: _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.Prefix.type = _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.Prefix
-    type Suffix = com.histmersion.domain.catalogue.evidence.TextAnchor.Suffix
-    val Suffix: _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.Suffix.type = _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.Suffix
-    type CharStart = com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CharStart
-    val CharStart: _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CharStart.type = _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CharStart
-    type CharEnd = com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CharEnd
-    val CharEnd: _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CharEnd.type = _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CharEnd
-    type ChunkOrd = com.histmersion.domain.catalogue.evidence.BAttestationFullRow.ChunkOrd
-    val ChunkOrd: _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.ChunkOrd.type = _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.ChunkOrd
-    type Page = com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Page
-    val Page: _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Page.type = _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Page
-    type Canvas = com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Canvas
-    val Canvas: _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Canvas.type = _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Canvas
-    type Xywh = com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Xywh
-    val Xywh: _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Xywh.type = _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Xywh
-    type CtsUrn = com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CtsUrn
-    val CtsUrn: _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CtsUrn.type = _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CtsUrn
-    type Note = com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Note
-    val Note: _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Note.type = _root_.com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Note
-
     given Schema[AttestationPutInput] = KindlingsSchema
       .derived[AttestationPutInput]
       .schema
@@ -107,11 +69,8 @@ object AttestationsTools:
     given Codec.AsObject[AttestationPutInput] =
       StrictJson.codec(KindlingsCodecAsObject.derived[AttestationPutInput]) // #813
 
-  final case class DeleteAttestationInput(id: DeleteAttestationInput.Id) derives KindlingsCodecAsObject
+  final case class DeleteAttestationInput(id: Attestation.Id) derives KindlingsCodecAsObject
   object DeleteAttestationInput:
-    type Id = com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.Id
-    val Id: _root_.com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.Id.type = _root_.com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.Id
-
     given Schema[DeleteAttestationInput] = KindlingsSchema
       .derived[DeleteAttestationInput]
       .schema

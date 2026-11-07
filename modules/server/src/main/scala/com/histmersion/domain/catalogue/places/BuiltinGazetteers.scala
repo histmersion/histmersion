@@ -1,6 +1,8 @@
 package com.histmersion.domain.catalogue.places
 
 import com.histmersion.plugin.GazetteerSource
+import com.histmersion.pluginhost.Registries
+import com.histmersion.util.plugins.Plugin
 import com.histmersion.domain.catalogue.periods.PeriodOFetch
 
 import scala.collection.immutable.ListMap
@@ -14,23 +16,18 @@ import com.histmersion.api.catalogue.Gazetteer
 object BuiltinGazetteers:
 
   /** A first-party gazetteer: its plugin, the name it registers, and what to call it. */
-  type AvailableRegisteredPart1 = _root_.com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name
-  val AvailableRegisteredPart1: _root_.com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name.type = _root_.com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name
-
-  final case class Entry(plugin: Entry.Plugin, name: Entry.Name, title: Entry.Title)
+  final case class Entry(plugin: Plugin.Id, name: Entry.Name, title: Entry.Title)
 
   object Entry:
-    type Plugin = Plugin.T
-    object Plugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Name = Name.T
     object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Title = Title.T
     object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val entries: List[Entry] = List(
-    Entry(com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Plugin("gazetteer-cliopatria"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("cliopatria"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Title("Seshat Cliopatria polity polygons")),
-    Entry(com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Plugin("gazetteer-awmc"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("awmc"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Title("AWMC classical-world regional names and features")),
-    Entry(com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Plugin("gazetteer-chronontology"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("chronontology"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Title("ChronOntology named periods"))
+    Entry(Plugin.Id("gazetteer-cliopatria"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("cliopatria"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Title("Seshat Cliopatria polity polygons")),
+    Entry(Plugin.Id("gazetteer-awmc"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("awmc"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Title("AWMC classical-world regional names and features")),
+    Entry(Plugin.Id("gazetteer-chronontology"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("chronontology"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Title("ChronOntology named periods"))
   )
 
   val pluginIds: Set[com.histmersion.util.plugins.Plugin.Id] = entries.map(_.plugin).toSet
@@ -42,27 +39,32 @@ object BuiltinGazetteers:
     * coastline, PeriodO, the bundled extracts).
     */
   val reserved: Set[com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name] =
-    names.toSet ++ Set(NaturalEarthLand.name, PeriodOFetch.name) ++ Gazetteer.Kind.values.map(_.wire)
+    names.toSet ++ Set(NaturalEarthLand.name, PeriodOFetch.name).map(Entry.Name(_)) ++
+      Gazetteer.Kind.values.map(k => Entry.Name(k.wire.value))
 
   /** Pure: the registered sources that are not first-party, in registration order. */
-  def thirdParty(registered: ListMap[com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name, GazetteerSource]): List[com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name] =
-    registered.keys.toList.filterNot(names.contains)
+  def thirdParty(registered: ListMap[Registries.GazetteerSourcesKey, GazetteerSource]): List[com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name] =
+    registered.keys.toList.map(k => Entry.Name(k.value)).filterNot(names.contains)
 
   /** Pure: the names a fetch may ask for — the first-party ones in their order (one switched off says so when asked),
     * then the plugins' in registration order.
     */
-  def available(registered: ListMap[com.histmersion.domain.catalogue.places.BuiltinGazetteers.AvailableRegisteredPart1, GazetteerSource]): List[com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name] = names ++ thirdParty(registered)
+  def available(registered: ListMap[Registries.GazetteerSourcesKey, GazetteerSource]): List[com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name] = names ++ thirdParty(registered)
 
   /** The registered source `name` (trimmed, lower case) names, or why none: a first-party one switched off, else
     * `unknown`.
     */
   def resolve(
       name: com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name,
-      registered: ListMap[com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name, GazetteerSource],
-      unknown: => String
-  ): Either[com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name, GazetteerSource] =
-    registered.get(name).toRight {
+      registered: ListMap[Registries.GazetteerSourcesKey, GazetteerSource],
+      unknown: => GazetteerImports.Problem
+  ): Either[GazetteerImports.Problem, GazetteerSource] =
+    registered.get(Registries.GazetteerSourcesKey(name.value)).toRight {
       entries
         .find(_.name == name)
-        .fold(unknown)(e => s"${e.title} ($name) is switched off (histmersion.plugins.${e.plugin}.enabled = false)")
+        .fold(unknown)(e =>
+          GazetteerImports.Problem(
+            s"${e.title} ($name) is switched off (histmersion.plugins.${e.plugin}.enabled = false)"
+          )
+        )
     }

@@ -2,6 +2,8 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.checks.Lint.*
+import com.histmersion.api.library.Citekey
+import com.histmersion.domain.catalogue.Place
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun, FixRank, FixWhen, SafeFix}
@@ -14,24 +16,21 @@ import com.augustnagro.magnum.DbCon
   * a point.
   */
 object PlacesData:
-  type RuleName = RuleName.T
-  object RuleName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-  def figures(using DbCon): List[DataCount] = List(DataCount(com.histmersion.util.data.diagnostics.DataCount.Noun("places"), PlaceRepo.count().toLong))
+  def figures(using DbCon): List[DataCount] = List(DataCount(com.histmersion.util.data.diagnostics.DataCount.Noun("places"), com.histmersion.util.data.diagnostics.DataCount.Count(PlaceRepo.count().value.toLong)))
 
   def checks(owner: DataOwner): List[CheckRule] = List(Kind(owner), GridPoint(owner), PointArea(owner))
 
-  private def ruleOf(name: com.histmersion.domain.catalogue.places.PlacesData.RuleName): Rule = Lint.rule(name).getOrElse(Rule(name, name))
+  private def ruleOf(name: String): Rule =
+    Lint.rule(Rule.Name(name)).getOrElse(Rule(Rule.Name(name), Rule.Description(name)))
 
   /** `place-imported-point-area`'s knobs (`places.sources.point-area-*`). */
   def pointAreaOf(cfg: AppConfig): PointAreaRepo.Settings =
     val src = cfg.places.sources
     PointAreaRepo.Settings(
-      src.pointAreaKindSet.toList.sorted,
-      src.pointAreaFixBatch,
-      src.pointAreaFixSeconds.toLong * 1000L,
-      cfg.places.pointToleranceKm
+      src.pointAreaKindSet.toList.map(_.value).sorted.map(PointAreaRepo.Settings.Kinds(_)),
+      PointAreaRepo.Settings.Batch(src.pointAreaFixBatch.value),
+      PointAreaRepo.Settings.BudgetMs(src.pointAreaFixSeconds.value.toLong * 1000L),
+      PointAreaRepo.Settings.ToleranceKm(cfg.places.pointToleranceKm.value)
     )
 
   private def geometry(c: CheckContext): PlaceGeometry = PlaceGeometry(Transactor(c.dataSource))(using c.timer)
@@ -39,22 +38,28 @@ object PlacesData:
   /** `place-kind`: what the record says a place is, where its source filed it otherwise. */
   final private class Kind(val owner: DataOwner) extends CheckRule:
     val rule: Rule = ruleOf(PlaceKindRule)
-    def report(context: CheckContext, maxItems: com.histmersion.domain.catalogue.places.PointAreas.ReportMaxItems)(using CheckRun)(using DbCon): LintRuleReport =
-      Lint.report(rule, PlaceReviewRepo.proposalsIn().map(p => LintItem(p.id, p.detail)), maxItems)
+    def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using CheckRun)(using DbCon): LintRuleReport =
+      Lint.report(
+        rule,
+        PlaceReviewRepo.proposalsIn().map(p => LintItem(Citekey(p.id.value), LintItem.Detail(p.detail.value))),
+        Lint.ItemLimit(maxItems.value)
+      )
     override val fix: Option[SafeFix] = Some(
       SafeFix(
         FixWhen.WhenNamed,
         FixRank(50),
         c =>
-          val (reclassified, merged) = geometry(c).reclassify(c.config.places.pointToleranceKm)
+          val (reclassified, merged) = geometry(c).reclassify(GeocodeSettings.ToleranceKm(c.config.places.pointToleranceKm.value))
           LintFixResult(
-            List(s"$PlaceKindRule: $reclassified place(s) reclassified, $merged merged into their replacement"),
+            List(
+              LintFixResult.Applied(s"$PlaceKindRule: $reclassified place(s) reclassified, $merged merged into their replacement")
+            ),
             com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0),
             com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0),
             com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0),
             com.histmersion.api.checks.Lint.LintFixResult.Remaining(0),
-            placesReclassified = reclassified,
-            placesMerged = merged
+            placesReclassified = LintFixResult.PlacesReclassified(reclassified.value),
+            placesMerged = LintFixResult.PlacesMerged(merged.value)
           )
       )
     )
@@ -63,23 +68,29 @@ object PlacesData:
   /** `place-grid-point`: a place at the centre of an atlas grid square whose linked record gives its point. */
   final private class GridPoint(val owner: DataOwner) extends CheckRule:
     val rule: Rule = ruleOf(PlaceGridPoint)
-    def report(context: CheckContext, maxItems: com.histmersion.domain.catalogue.places.PointAreas.ReportMaxItems)(using CheckRun)(using DbCon): LintRuleReport =
-      Lint.report(rule, PlaceReviewRepo.relocationsIn().map(r => LintItem(r.id, r.detail)), maxItems)
+    def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using CheckRun)(using DbCon): LintRuleReport =
+      Lint.report(
+        rule,
+        PlaceReviewRepo.relocationsIn().map(r => LintItem(Citekey(r.id.value), LintItem.Detail(r.detail.value))),
+        Lint.ItemLimit(maxItems.value)
+      )
     override val fix: Option[SafeFix] = Some(
       SafeFix(
         FixWhen.WhenNamed,
         FixRank(60),
         c =>
-          val relocated = geometry(c).relocate(c.config.places.pointToleranceKm)
+          val relocated = geometry(c).relocate(GeocodeSettings.ToleranceKm(c.config.places.pointToleranceKm.value))
           LintFixResult(
             List(
-              s"$PlaceGridPoint: $relocated place(s) moved from a grid square's centre to their linked record's point"
+              LintFixResult.Applied(
+                s"$PlaceGridPoint: $relocated place(s) moved from a grid square's centre to their linked record's point"
+              )
             ),
             com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0),
             com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0),
             com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0),
             com.histmersion.api.checks.Lint.LintFixResult.Remaining(0),
-            placesRelocated = relocated
+            placesRelocated = LintFixResult.PlacesRelocated(relocated.value)
           )
       )
     )
@@ -88,15 +99,19 @@ object PlacesData:
   /** `place-imported-point-area`: an imported region, polity or people stored with only a point. */
   final private class PointArea(val owner: DataOwner) extends CheckRule:
     val rule: Rule = ruleOf(PlaceImportedPointArea)
-    def report(context: CheckContext, maxItems: com.histmersion.domain.catalogue.places.PointAreas.ReportMaxItems)(using CheckRun)(using DbCon): LintRuleReport =
-      PointAreaRepo.reportIn(rule, pointAreaOf(context.config).kinds, maxItems)
+    def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using CheckRun)(using DbCon): LintRuleReport =
+      PointAreaRepo.reportIn(
+        rule,
+        pointAreaOf(context.config).kinds.map(k => Place.Kind.Wire(k.value)),
+        PointAreas.ReportMaxItems(maxItems.value)
+      )
     override val fix: Option[SafeFix] = Some(
       SafeFix(
         FixWhen.WhenNamed,
         FixRank(70),
         c =>
           val r = geometry(c).removePointAreas(pointAreaOf(c.config))
-          LintFixResult(List(r.line), com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0), com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0), com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0), com.histmersion.api.checks.Lint.LintFixResult.Remaining(0), pointAreasRemoved = r.removed, pointAreasRemaining = r.remaining)
+          LintFixResult(List(LintFixResult.Applied(r.line.value)), com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0), com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0), com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0), com.histmersion.api.checks.Lint.LintFixResult.Remaining(0), pointAreasRemoved = LintFixResult.PointAreasRemoved(r.removed.value), pointAreasRemaining = LintFixResult.PointAreasRemaining(r.remaining.value))
       )
     )
 

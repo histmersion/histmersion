@@ -1,6 +1,9 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.Api
+import com.histmersion.api.{Api, Dataset, Write}
+import com.histmersion.api.catalogue.{ManualPlaceName, Place as ApiPlace}
+import com.histmersion.domain.DeepTime
+import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.domain.Caller
 import sttp.shared.Identity
@@ -13,35 +16,65 @@ import com.histmersion.api.catalogue.Gazetteer
   * pinned extracts and the drop folder).
   */
 object PlacesRoutes:
-  type ApplyLoadArg2 = ApplyLoadArg2.T
-  object ApplyLoadArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  private def missing(id: ApiPlace.Id): Api.Error =
+    Api.Error(Api.Error.Message(s"No place '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
+
+  private def exact(id: ApiPlace.Id): Either[Api.Error, Place.Id] = Place.Id.either(id.value).left.map(_ => missing(id))
+
+  private def trimmed(id: ApiPlace.Id): Either[Api.Error, Place.Id] =
+    Place.Id.either(id.value.trim).left.map(_ => missing(id))
+
+  private def year(asOf: Option[Api.AggregateQuery.AsOf]): Option[DeepTime.SignedYear] =
+    asOf.map(y => DeepTime.SignedYear(y.value))
 
   def apply(
       places: PlacesControllers,
       gazetteer: GazetteerControllers,
       card: ServerEndpoint[Any, Identity],
       sources: () => List[Gazetteer.SourceInfo],
-      load: (com.histmersion.domain.catalogue.places.GazetteerSourceRow.Key, com.histmersion.domain.catalogue.places.PlacesRoutes.ApplyLoadArg2) => Either[Api.Error, JobInfo]
+      load: (Api.ExternalPlaces.Source, Api.Apply) => Either[Api.Error, JobInfo]
   ): List[ServerEndpoint[Any, Identity]] =
     val me = Caller.Local
     List(
-      Api.places.serverLogicSuccess[Identity]((q, asOf, limit) => places.search(q, asOf, limit)),
+      Api.places.serverLogicSuccess[Identity]((q, asOf, limit) =>
+        places.search(
+          q.map(t => PlaceService.SearchQ(t.value)),
+          year(asOf),
+          limit.flatMap(l => com.histmersion.PageSize.option(l.value))
+        )
+      ),
       Api.placesGeo.serverLogic[Identity](q => places.shapes(q)),
-      Api.placeNames.serverLogicSuccess[Identity](place => places.manualNames(place)),
-      Api.placeOverrides.serverLogicSuccess[Identity](id => places.overrides(id)),
+      Api.placeNames.serverLogicSuccess[Identity](place =>
+        place.map(_.value.trim).filter(_.nonEmpty) match
+          case None      => places.manualNames(None)
+          case Some(raw) => Place.Id.option(raw).fold(List.empty[ManualPlaceName])(i => places.manualNames(Some(i)))
+      ),
+      Api.placeOverrides.serverLogicSuccess[Identity](id =>
+        id.map(_.value.trim).filter(_.nonEmpty) match
+          case None      => places.overrides(None)
+          case Some(raw) => Place.Id.option(raw).fold(List.empty[ApiPlace.Override])(i => places.overrides(Some(i)))
+      ),
       Api.placeSources.serverLogic[Identity](_ => Right(sources())),
-      Api.placeChildren.serverLogic[Identity]((id, asOf) => places.children(id, asOf)),
-      Api.placeTree.serverLogic[Identity]((id, asOf, depth) => places.tree(id, asOf, depth)),
-      Api.placeFootprints.serverLogic[Identity]((id, asOf) => places.footprints(id, asOf)),
-      Api.placeLinks.serverLogic[Identity](id => places.links(id)),
+      Api.placeChildren.serverLogic[Identity]((id, asOf) => exact(id).flatMap(i => places.children(i, year(asOf)))),
+      Api.placeTree.serverLogic[Identity]((id, asOf, depth) =>
+        exact(id).flatMap(i => places.tree(i, year(asOf), depth.map(d => PlaceService.DepthLimit(d.value))))
+      ),
+      Api.placeFootprints.serverLogic[Identity]((id, asOf) => exact(id).flatMap(i => places.footprints(i, year(asOf)))),
+      Api.placeLinks.serverLogic[Identity](id => exact(id).flatMap(places.links)),
       card,
-      Api.addPlaceName.serverLogic[Identity]((id, in) => places.addName(me, id, in)),
-      Api.removePlaceName.serverLogic[Identity]((id, in) => places.removeName(me, id, in)),
-      Api.setPlaceOverride.serverLogic[Identity]((id, in) => places.setOverride(me, id, in)),
-      Api.mergePlace.serverLogic[Identity]((id, in) => places.merge(me, id, in)),
-      Api.removePlace.serverLogic[Identity]((id, in) => places.remove(me, id, in)),
+      Api.addPlaceName.serverLogic[Identity]((id, in) => trimmed(id).flatMap(i => places.addName(me, i, in))),
+      Api.removePlaceName.serverLogic[Identity]((id, in) => trimmed(id).flatMap(i => places.removeName(me, i, in))),
+      Api.setPlaceOverride.serverLogic[Identity]((id, in) => trimmed(id).flatMap(i => places.setOverride(me, i, in))),
+      Api.mergePlace.serverLogic[Identity]((id, in) => trimmed(id).flatMap(i => places.merge(me, i, in))),
+      Api.removePlace.serverLogic[Identity]((id, in) => trimmed(id).flatMap(i => places.remove(me, i, in))),
       Api.addPlace.serverLogic[Identity](in => places.add(me, in)),
-      Api.importPlaces.serverLogic[Identity]((kind, dataset, body) => places.importPlaces(me, kind, dataset, body)),
+      Api.importPlaces.serverLogic[Identity]((kind, dataset, body) => 
+        places.importPlaces(
+          me,
+          kind.map(k => Place.Kind.Wire(k.value)),
+          dataset.map(d => Dataset.Wire(d.value)),
+          PlacesControllers.DatasetBody(body.value)
+        )),
       Api.rebuildPlaces.serverLogic[Identity](_ => places.rebuild(me)),
       Api.fetchExternalPlaces.serverLogic[Identity]((source, dryRun) => gazetteer.fetch(me, source, dryRun)),
       Api.loadPlaces.serverLogic[Identity]((source, apply) => load(source, apply)),

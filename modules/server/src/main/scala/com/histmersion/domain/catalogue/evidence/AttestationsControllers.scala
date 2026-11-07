@@ -7,8 +7,11 @@ import com.histmersion.api.aliases.AliasKinds
 import com.histmersion.domain.catalogue.AttestationTarget
 
 import com.histmersion.api.Write
+import com.histmersion.api.automation.Activity
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.domain.Caller
+import com.histmersion.domain.library.Citekey
+import com.histmersion.{Offset, PageSize}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
 
@@ -23,61 +26,71 @@ import com.histmersion.domain.catalogue.evidence.passages.Passage
 final class AttestationsControllers(
     attestations: AttestationService,
     sources: Passage.Source,
-    current: (AliasKind, AttestationsControllers.CurrentArg2) => AttestationsControllers.CurrentResult,
-    page: Option[AttestationsControllers.PageArg1] => AttestationsControllers.PageResult,
+    current: (AliasKind, AttestationsControllers.Alias) => AttestationsControllers.Alias,
+    page: Option[PageSize] => PageSize,
     maintenance: WriteGate
 ):
 
-  private def refId(targetType: com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetType, id: com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetId): com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetId =
-    AliasKinds.ofTarget(targetType).fold(id)(current(_, id))
+  private def invalid(m: String) = Api.Error(Api.Error.Message(m), Some(Api.Error.Code(Write.CodeInvalid)))
+
+  private def notFound(id: Attestation.Id) =
+    Api.Error(Api.Error.Message(s"No attestation $id"), Some(Api.Error.Code(Write.CodeNotFound)))
+
+  private def refId(targetType: Attestation.TargetType, id: Attestation.TargetId): Attestation.TargetId =
+    AliasKinds
+      .ofTarget(Activity.Entry.TargetKind(targetType.value))
+      .fold(id)(k => Attestation.TargetId(current(k, AttestationsControllers.Alias(id.value)).value))
 
   def list(
-      citekey: Option[com.histmersion.domain.library.Citekey],
-      targetType: Option[com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetType],
-      targetId: Option[com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetId],
-      limit: Option[com.histmersion.PageSize],
-      offset: Option[com.histmersion.Offset]
+      citekey: Option[com.histmersion.api.library.Citekey],
+      targetType: Option[Attestation.TargetType],
+      targetId: Option[Attestation.TargetId],
+      limit: Option[PageSize],
+      offset: Option[Offset]
   ): Attestation.List =
     val target = for t <- targetType; i <- targetId yield refId(t, i)
-    attestations.list(
-      citekey.map(current(AliasKinds.SourceRecords, _)),
-      targetType,
-      target.orElse(targetId),
-      page(limit),
-      offset.getOrElse(com.histmersion.Offset(0))
-    )
+    // a key that is no citekey names no source, so no attestation
+    val keys =
+      citekey.map(c => Citekey.option(current(AliasKinds.SourceRecords, AttestationsControllers.Alias(c.value)).value))
+    if keys.contains(None) then
+      Attestation.List.of(com.histmersion.api.RowCount(0), Nil, com.histmersion.api.personal.UnreadPage.Offset(0))
+    else attestations.list(keys.flatten, targetType, target.orElse(targetId), page(limit), offset.getOrElse(Offset.Start))
 
-  def get(id: com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.Id): Either[Api.Error, Attestation] =
-    attestations.get(id).toRight(Api.Error(s"No attestation $id", Some(Write.CodeNotFound)))
+  def get(id: Attestation.Id): Either[Api.Error, Attestation] =
+    attestations.get(id).toRight(notFound(id))
 
   /** An unknown target type is a 400 and a missing source a 404 — checked first: the table's constraints would answer
     * both with a 500.
     */
   def create(caller: Caller, in: Attestation.Put): Either[Api.Error, Attestation] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("create_attestation")):
-      val ck = current(AliasKinds.SourceRecords, in.citekey)
+      val ck = current(AliasKinds.SourceRecords, AttestationsControllers.Alias(in.citekey.value)).value
       for
-        t <- AttestationTarget.check(in.targetType).left.map(Api.Error(_, Some(Write.CodeInvalid)))
-        _ <- Either.cond(sources.canonical(ck).isDefined, (), Write.notFound(ck))
-      yield attestations.create(in.modify(_.citekey).setTo(ck).modify(_.targetType).setTo(t).modify(_.targetId).setTo(refId(t, in.targetId)))
+        wire <- AttestationTarget.check(AttestationTarget.Wire(in.targetType.value)).left.map(p => invalid(p.value))
+        t = Attestation.TargetType(wire.value)
+        _ <- Either.cond(
+          Citekey.option(ck).flatMap(sources.canonical).isDefined,
+          (),
+          Write.notFound(com.histmersion.api.library.Citekey(ck))
+        )
+      yield attestations.create(
+        in.modify(_.citekey)
+          .setTo(com.histmersion.api.library.Citekey(ck))
+          .modify(_.targetType)
+          .setTo(t)
+          .modify(_.targetId)
+          .setTo(refId(t, in.targetId))
+      )
 
-  def patch(caller: Caller, id: com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.Id, p: Attestation.Patch): Either[Api.Error, Attestation] =
+  def patch(caller: Caller, id: Attestation.Id, p: Attestation.Patch): Either[Api.Error, Attestation] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("patch_attestation"))(attestations.patch(id, p))
 
-  def delete(caller: Caller, id: com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.Id): Either[Api.Error, Attestation.Deleted] =
+  def delete(caller: Caller, id: Attestation.Id): Either[Api.Error, Attestation.Deleted] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("delete_attestation")):
       if attestations.delete(id) then Right(Attestation.Deleted(id, com.histmersion.api.catalogue.Attestation.Deleted.Value(true)))
-      else Left(Api.Error(s"No attestation $id", Some(Write.CodeNotFound)))
+      else Left(notFound(id))
 
 object AttestationsControllers:
+  /** An identifier an alias table reads: the text of a record's old or current name. */
   type Alias = Alias.T
   object Alias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CurrentArg2 = com.histmersion.domain.catalogue.evidence.AttestationsControllers.Alias
-  val CurrentArg2: _root_.com.histmersion.domain.catalogue.evidence.AttestationsControllers.Alias.type = _root_.com.histmersion.domain.catalogue.evidence.AttestationsControllers.Alias
-  type CurrentResult = com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetId
-  val CurrentResult: _root_.com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetId.type = _root_.com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetId
-  type PageArg1 = com.histmersion.Offset
-  val PageArg1: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
-  type PageResult = com.histmersion.Offset
-  val PageResult: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
-

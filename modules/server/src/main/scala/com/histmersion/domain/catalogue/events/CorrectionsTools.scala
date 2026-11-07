@@ -48,8 +48,26 @@ object CorrectionsTools:
         )
         .input[EventCorrectionsInput]
         .handle { in =>
+          val event: Either[com.histmersion.api.Api.Error, Option[com.histmersion.domain.catalogue.Event.Id]] =
+            in.id.map(_.value.trim).filter(_.nonEmpty) match
+              case None    => Right(None)
+              case Some(i) =>
+                com.histmersion.domain.catalogue.Event.Id
+                  .either(i)
+                  .left
+                  .map(e => com.histmersion.api.Api.Error(com.histmersion.api.Api.Error.Message(e)))
+                  .map(Some(_))
           ToolResult.text(
-            imports.corrections(in.status, in.id, in.limit, None).fold(McpOut.refusal, Corrections.markdown)
+            event
+              .flatMap(e =>
+                imports.corrections(
+                  in.status.map(s => com.histmersion.api.catalogue.Correction.StatusValue(s.value)),
+                  e,
+                  in.limit.map(l => com.histmersion.PageSize(l.value)),
+                  None
+                )
+              )
+              .fold(McpOut.refusal, Corrections.markdown)
           )
         }
     List(corrections)

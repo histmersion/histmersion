@@ -127,7 +127,7 @@ object CollectionsTools:
                 case Some(ck) => answer(c.updateOne(me, name, CollectionUpdateOne(ck)))(CollectionsMarkdown.updatedOne)
                 case None     =>
                   answer(c.updateAll(me, name, CollectionUpdateAll.Request(CollectionUpdateAll.Request.Apply(in.apply.value))))(u =>
-                    CollectionsMarkdown.updateAll(u.rows, u.applied)
+                    CollectionsMarkdown.updateAll(u.rows, u.applied.value)
                   )
             case "set" =>
               val fields = in.fields.flatMap(f =>

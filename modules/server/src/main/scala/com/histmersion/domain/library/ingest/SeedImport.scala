@@ -36,7 +36,15 @@ final class SeedImport(
                 Right(Some(n.source.citekey))
               case Right(ck) =>
                 val found = folder.figures(name, ck, assetBytes)
-                val s = n.source.modify(_.ocrMarkdown).using(_.map(AssetLinks.normalizeBody(_, n.source.title.value)))
+                val s = n.source.modify(_.ocrMarkdown).using(
+                  _.map(md =>
+                    com.histmersion.api.library.Source.OcrMarkdown(
+                      AssetLinks
+                        .normalizeBody(AssetLinks.NormalizeBodyMd(md.value), AssetLinks.NormalizeBodyTitle(n.source.title.value))
+                        .value
+                    )
+                  )
+                )
                 val _ = sources.put(s, Caller.Local)
                 if found.nonEmpty then
                   val _ = addFigures(ck, found)

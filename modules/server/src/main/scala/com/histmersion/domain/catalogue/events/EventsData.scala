@@ -12,14 +12,22 @@ import com.augustnagro.magnum.DbCon
   */
 object EventsData:
 
-  def figures(using DbCon): List[DataCount] = List(DataCount(com.histmersion.util.data.diagnostics.DataCount.Noun("events"), EventRepo.count()))
+  def figures(using DbCon): List[DataCount] = List(
+    DataCount(DataCount.Noun("events"), DataCount.Count(EventRepo.count().value))
+  )
 
   def checks(owner: DataOwner): List[CheckRule] = List(Conflicts(owner))
 
   /** `event-correction-conflict`: a field a person kept by hand that the catalogue changed since. */
   final private class Conflicts(val owner: DataOwner) extends CheckRule:
     val rule: Rule =
-      Lint.rule(EventCorrectionConflict).getOrElse(Rule(EventCorrectionConflict, EventCorrectionConflict))
-    def report(context: CheckContext, maxItems: com.histmersion.domain.catalogue.places.PointAreas.ReportMaxItems)(using CheckRun)(using DbCon): LintRuleReport =
-      Lint.report(rule, CorrectionRepo.conflictsIn().map((id, detail) => LintItem(id, detail)), maxItems)
+      Lint
+        .rule(Rule.Name(EventCorrectionConflict))
+        .getOrElse(Rule(Rule.Name(EventCorrectionConflict), Rule.Description(EventCorrectionConflict)))
+    def report(context: CheckContext, maxItems: ItemLimit)(using CheckRun)(using DbCon): LintRuleReport =
+      Lint.report(
+        rule,
+        CorrectionRepo.conflictsIn().map((id, detail) => LintItem(com.histmersion.api.library.Citekey(id.value), detail)),
+        maxItems
+      )
 

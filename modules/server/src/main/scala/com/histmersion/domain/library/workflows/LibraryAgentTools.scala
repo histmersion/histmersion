@@ -105,7 +105,11 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
           in.prefix.map(p => com.histmersion.api.Api.Facets.Prefix(p.value))
         )
         site.labels
-          .facets(com.histmersion.domain.library.labels.LabelsControllers.FacetField(in.field.value), in.prefix, facetsIn.toFilter)
+          .facets(
+            com.histmersion.api.library.Facet.Field.Wire(in.field.value),
+            in.prefix.map(p => com.histmersion.domain.library.search.FilterSql.FacetPrefix(p.value)),
+            facetsIn.toFilter
+          )
           .fold(e => e.message.value, fs => cap(SearchMarkdown.facets(facetsIn.field, fs.toVector), max, "narrow it with `prefix`"))
       }
     },

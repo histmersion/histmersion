@@ -27,7 +27,7 @@ final class SourceReadable(db: Transactor) extends Readable:
       val rows =
         (Sql.raw(Sql.Text("SELECT i.citekey, i.title, i.authors, i.year, i.status, lower(i.period), upper(i.period) - 1")) ++
           notRead(read) ++
-          Sql.of(Sql.Text(" ORDER BY lower(i.title), i.citekey LIMIT ? OFFSET ?"), Param.I(size.value), Param.I(from.value))).frag
+          Sql.of(Sql.Text(" ORDER BY lower(i.title), i.citekey LIMIT ? OFFSET ?"), Param.I(Param.I.V(size.value)), Param.I(Param.I.V(from.value)))).frag
           .query[(String, String, List[String], Option[Int], Option[String], Option[Long], Option[Long])]
           .run()
           .toList
@@ -68,7 +68,7 @@ object SourceReadable:
       title,
       authors.map(a => com.histmersion.domain.AuthorName(a.value)),
       year,
-      status.flatMap(w => summon[WireEnumValues[Source.Status]].fromWire(WireEnumValues.Wire(w.value))).map(s => UnreadItem.Status(s.wire)),
+      status.flatMap(w => summon[WireEnumValues[Source.Status]].fromWire(WireEnumValues.Wire(w.value))).map(s => UnreadItem.Status(s.wire.value)),
       start.map(y => Year(y.value.toInt)),
       end.map(y => Year(y.value.toInt))
     )

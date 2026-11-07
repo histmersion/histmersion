@@ -6,7 +6,10 @@ import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Managers.*
+import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.QueueAdd
+import com.histmersion.domain.automation.managers.ManagerLight
+import com.histmersion.domain.automation.managers.ManagerService
 import com.histmersion.domain.automation.goals.FocusService
 import com.histmersion.domain.library.acquisition.CandidateService
 
@@ -37,62 +40,75 @@ final class SeedService(
     */
   def due(
       goals: List[FocusService.Goal],
-      sources: Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.workflows.SeedService.DueDays],
-      watchers: Set[com.histmersion.domain.library.workflows.SeedService.Watcher],
-      lastSweep: com.histmersion.domain.library.workflows.SeedService.LastSweep => Option[Instant],
+      sources: Map[com.histmersion.domain.automation.Goal.Slug, com.histmersion.RowCount],
+      watchers: Set[ManagerLight.Id],
+      lastSweep: com.histmersion.domain.automation.Goal.Slug => Option[Instant],
       now: Instant
-  ): List[com.histmersion.domain.library.workflows.SeedService.DueText] =
-    val every = math.max(1, cfg.scheduler.seedEveryHours).toLong * 3600L
+  ): List[com.histmersion.domain.automation.Goal.Slug] =
+    val every = math.max(1, cfg.scheduler.seedEveryHours.value).toLong * 3600L
     goals
-      .filter(g => !GoalFocus.finished(g.status) && sources.getOrElse(g.slug, 0) == 0 && watchers(watchId(g.slug)))
-      .filter(g => lastSweep(g.slug).forall(t => !t.plusSeconds(every).isAfter(now)))
-      .sortBy(g => (-(g.priority + (if g.pinned then SchedulerPolicy.PinBoost else 0)), g.createdAt, g.slug))
-      .map(_.slug)
+      .map(g => g -> com.histmersion.domain.automation.Goal.Slug.assume(g.slug.value))
+      .filter((g, slug) =>
+        !GoalFocus.finished(com.histmersion.domain.automation.Goal.Status.Wire(g.status.value)) &&
+          sources.get(slug).fold(0)(_.value) == 0 && watchers(watcherOf(slug))
+      )
+      .filter((_, slug) => lastSweep(slug).forall(t => !t.plusSeconds(every).isAfter(now)))
+      .sortBy((g, slug) =>
+        (-(g.priority.value + (if g.pinned.value then SchedulerPolicy.PinBoost else 0)), g.createdAt.value: String, slug.value: String)
+      )
+      .map(_._2)
+
+  /** The id of a goal's watcher manager. */
+  private def watcherOf(goal: com.histmersion.domain.automation.Goal.Slug): ManagerLight.Id =
+    ManagerLight.Id(watchId(com.histmersion.api.automation.Goal.Ref(goal.value)).value)
 
   /** When each goal was last seeded here (in memory: the candidate watches' own `last_run` covers restarts). */
   private val seeded = java.util.concurrent.ConcurrentHashMap[String, Instant]()
 
   /** One tick's seeding; one line per goal seeded. */
-  def tick(now: Instant): List[com.histmersion.domain.library.workflows.SeedService.TickLine] =
-    val n = cfg.scheduler.seedGoalsPerTick
+  def tick(now: Instant): List[String] =
+    val n = cfg.scheduler.seedGoalsPerTick.value
     if n <= 0 || !agents.autopilot.on || agents.drain.draining then Nil
     else
       val watchers =
         agents.managerStore
           .light()
-          .filter(m => m.kind == Kind.Watch.wire && m.state == State.Active.wire)
+          .filter(m => m.kind.value == Kind.Watch.wire.value && m.state.value == State.Active.wire.value)
           .map(_.id)
           .toSet
       val goals = due(
         agents.focusStore.goals(),
-        agents.focusStore.sourceCounts(),
+        agents.focusStore.sourceCounts().map((g, c) => com.histmersion.domain.automation.Goal.Slug.assume(g.value) -> com.histmersion.RowCount(c.value)),
         watchers,
         g =>
-          (candidates.watches(g).flatMap(_.lastRun).flatMap(ManagerPolicy.parseInstant) ++ Option(
-            seeded.get(g)
+          (candidates
+            .watches(g)
+            .flatMap(_.lastRun)
+            .flatMap(l => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(l.value))) ++ Option(
+            seeded.get(g.value)
           )).maxOption,
         now
       )
       val lines = goals.take(n).flatMap { g =>
-        val _ = seeded.put(g, now)
+        val _ = seeded.put(g.value, now)
         seed(g)
       }
       if lines.nonEmpty then
-        val _ = site.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(s"seed before the plan: ${lines.mkString("; ")}".take(1000)))
+        val _ = site.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text(s"seed before the plan: ${lines.mkString("; ")}".take(1000))))
       lines
 
   /** Sweep one goal's candidates and queue its legal open-access ones for ingest. */
-  def seed(goal: com.histmersion.domain.automation.Goal.Slug): Option[com.histmersion.domain.library.workflows.SeedService.Seeded] =
+  def seed(goal: com.histmersion.domain.automation.Goal.Slug): Option[String] =
     acquisition().sweepCandidates(goal, dryRun = com.histmersion.domain.library.workflows.AgentUpstream.SweepCandidatesDryRun(false)) match
       case Left(why) =>
         scribe.info(s"seed before the plan: goal $goal not swept: $why")
         None
       case Right(sw) =>
         val fresh = acquisition().candidates(goal, Candidates.State.New.wire, com.histmersion.domain.library.workflows.AgentUpstream.Limit(200)).getOrElse(Nil)
-        val oa = fresh.filter(_.isOa).take(math.max(0, cfg.scheduler.seedIngestPerGoal))
+        val oa = fresh.filter(_.isOa.value).take(math.max(0, cfg.scheduler.seedIngestPerGoal.value))
         val placed = oa.map { c =>
           c -> backlog.add(
-            watchId(goal),
+            watcherOf(goal),
             goal,
             OaWork(
               c.doi,
@@ -100,28 +116,14 @@ final class SeedService(
               c.year,
               c.authors,
               c.venue,
-              List(goal),
-              "seed before the plan: a legal open-access candidate of the goal's own search (no model)"
+              List(com.histmersion.api.automation.Goal.Slug(goal.value)),
+              OaWork.Why("seed before the plan: a legal open-access candidate of the goal's own search (no model)")
             )
           )
         }
         val queued = placed.count(_._2 == IngestBacklog.Placement.New)
         val _ = acquisition().markCandidates(oa.map(_.id), Candidates.State.Queued.wire)
         val line = s"$goal: ${sw.found} found, ${sw.added} new candidate(s), " +
-          s"${Plural.count(queued, com.histmersion.api.Plural.CountSingular("legal open-access work"))} queued for ingest (the plan is not needed for this)"
-        agents.managerStore.event(watchId(goal), None, None, Feed.Swept, s"seed before the plan — $line".take(2000))
+          s"${Plural.count(Plural.CountN(queued.toLong), com.histmersion.api.Plural.CountSingular("legal open-access work"))} queued for ingest (the plan is not needed for this)"
+        agents.managerStore.event(watcherOf(goal), None, None, ManagerService.EventKind(Feed.Swept), ManagerService.EventText(s"seed before the plan — $line".take(2000)))
         Some(line)
-
-object SeedService:
-  type DueDays = DueDays.T
-  object DueDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DueText = DueText.T
-  object DueText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LastSweep = LastSweep.T
-  object LastSweep extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Seeded = Seeded.T
-  object Seeded extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TickLine = TickLine.T
-  object TickLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Watcher = Watcher.T
-  object Watcher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

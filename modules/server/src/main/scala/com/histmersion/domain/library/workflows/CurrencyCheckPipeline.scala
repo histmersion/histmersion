@@ -44,15 +44,15 @@ final class CurrencyCheckPipeline(
     for
       targets <- ctx.code[List[Target]](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(Right(load(goal)))
       assessed <- ctx.code[Assessed](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("assess"))(Right(assess(ctx, targets)))
-      followed <- ctx.code[Followed]("followups")(Right(followups(ctx, goal, targets)))
-      line <- ctx.code[String]("close")(
+      followed <- ctx.code[Followed](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("followups"))(Right(followups(ctx, goal, targets)))
+      line <- ctx.code[String](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("close"))(
         log(
           ctx,
           s"currency-check goal $goal: ${targets.size} source(s), ${targets.count(_.doi.isDefined)} with a DOI; " +
             s"assess: ${assessed.checked} checked, ${assessed.retracted.size} retracted" +
             assessed.retracted.map(r => s" [[$r]]").mkString +
             s"; followups: ${followed.citing} citing paper(s), ${followed.proposed} edge(s) proposed, " +
-            s"${followed.queued} paper(s) queued for acquisition (agent run ${ctx.run.id.take(8)})"
+            s"${followed.queued} paper(s) queued for acquisition (agent run ${ctx.run.id.value.take(8)})"
         )
       )
     yield PipelineDef.RunResultPart2(line)
@@ -72,9 +72,9 @@ final class CurrencyCheckPipeline(
       upstream().assess(t.citekey, apply = AgentUpstream.AssessApply(!ctx.dryRun)) match
         case Left(m)  => ctx.warn(s"assess ${t.citekey}: $m"); None
         case Right(a) =>
-          if a.isRetracted then ctx.warn(s"assess: [[${t.citekey}]] is RETRACTED — ${a.recommendation}")
+          if a.isRetracted.value then ctx.warn(s"assess: [[${t.citekey}]] is RETRACTED — ${a.recommendation}")
           if ctx.dryRun then ctx.write(s"assess [[${t.citekey}]] applied: verdict ${a.verdict}", a.asJson)(())(())
-          Some((t.citekey, a.isRetracted))
+          Some((t.citekey, a.isRetracted.value))
     }
     Assessed(Assessed.Checked(results.flatten.size), results.flatten.collect { case (ck, true) => ck })
 
@@ -88,8 +88,8 @@ final class CurrencyCheckPipeline(
           val proposed = acts.collect { case CurrencyAction.Propose(p) => p }.count { p =>
             val known = approvals.proposedBefore(p) ||
               site.citations
-                .neighbors(p.citekey, p.edgeKind.map(Edge.Kind.wireOf).toList)
-                .exists(n => n.direction == "out" && p.target.contains(n.citekey))
+                .neighbors(p.citekey, p.edgeKind.map(k => com.histmersion.domain.library.Edge.Kind.Wire(Edge.Kind.wireOf(k).value)).toList)
+                .exists(n => n.direction.value == "out" && p.target.exists(_.value == n.citekey.value))
             !known && (approvals.propose(ctx, p) match
               case SourceProposals.Outcome.Recorded(id, w) => ctx.warn(s"approval $id waits for a person: $w"); true
               case SourceProposals.Outcome.Applied(_)      => true
@@ -98,7 +98,7 @@ final class CurrencyCheckPipeline(
               case _                                       => false)
           }
           val fetched = acts.collect { case CurrencyAction.Fetch(row) => row }.count { row =>
-            row.doi.flatMap(Ident.doi).exists { doi =>
+            row.doi.flatMap(d => Ident.doi(Ident.Written(d.value))).exists { doi =>
               queueOnce(ctx, goal, doi, com.histmersion.api.automation.Queue.QueueItem.Text(CurrencyCheckRules.acquireText(row, t.citekey, goal).value), queued) match
                 case Left(m)      => ctx.warn(s"followups: $doi not queued — $m"); false
                 case Right(added) => added

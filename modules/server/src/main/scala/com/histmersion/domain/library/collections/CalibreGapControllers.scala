@@ -5,7 +5,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.ingest.StoredOriginals
 import com.histmersion.PageSize
-import com.histmersion.domain.library.sources.{FullSourceRow, SourceService}
+import com.histmersion.domain.library.sources.{FullSourceRow, SourceRepo, SourceService}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.domain.library.Citekey
 
@@ -30,12 +30,13 @@ final class CalibreGapControllers(
       limit.flatMap(l => PageSize.option(l.value)),
       PageSize.assume(math.max(1, limits.maxPage.value))
     )
-    val gaps = sources.calibreGaps(Some(SourceService.Limit(page.value)))
+    val gaps = sources.calibreGaps(Some(SourceRepo.Limit(page.value)))
     // which originals the server can hand the host's push (`GET /api/sources/{ck}/original`)
-    val hashes = sources.originals(gaps.map(_.citekey))
-    val stored = if hashes.isEmpty then Set.empty[String] else originals.hashes
-    val marked = gaps.map(g => g.modify(_.storedOriginal).setTo(Some(hashes.get(g.citekey).exists(stored))))
-    CalibreGaps(marked.size, marked)
+    def held(ck: com.histmersion.api.library.Citekey): Citekey = Citekey.assume(ck.value)
+    val hashes = sources.originals(gaps.map(g => held(g.citekey)))
+    val stored = if hashes.isEmpty then Set.empty[com.histmersion.Sha256] else originals.hashes
+    val marked = gaps.map(g => g.modify(_.storedOriginal).setTo(Some(CalibreGap.StoredOriginal(hashes.get(held(g.citekey)).exists(stored)))))
+    CalibreGaps(CalibreGaps.Count(marked.size), marked)
 
   def pushMeta(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, CalibreGap] =
     sources.calibrePushMeta(citekey).toRight(Write.notFound(com.histmersion.api.library.Citekey(citekey.value)))

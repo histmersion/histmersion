@@ -36,7 +36,7 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
 
   private val tag = s"zzpg${System.nanoTime().toHexString.takeRight(8)}"
 
-  private def pageStatus(st: String) = Some(JobRepo.PageStatus(st))
+  private def pageStatus(st: String) = Some(com.histmersion.api.jobs.JobState.Wire(st))
   private def jobCursor(id: String) = Some(JobRepo.PageCursor(id))
   private def runCursor(id: String) = Some(AgentRepo.PageCursor(id))
   private def runWire(w: com.histmersion.api.automation.Run.State.Wire) =
@@ -82,7 +82,7 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(all.take(2), List(s"$tag-j-007", s"$tag-j-006"))
     assertEquals(Transactor(ds).read(JobRepo.stateCounts).find(_._1.value == st), Some(st -> 7))
     // the old list reads the same order
-    assertEquals(Transactor(ds).read(JobRepo.list(Some(JobRepo.ListStatus(st)), com.histmersion.PageSize(7))).map(_.id).toList, all)
+    assertEquals(Transactor(ds).read(JobRepo.list(Some(com.histmersion.api.jobs.JobState.Wire(st)), com.histmersion.PageSize(7))).map(_.id).toList, all)
 
   test("jobs: upTo is every row down to that one; a filter narrows the page, not the cursor's place"):
     val st = s"${tag}u"

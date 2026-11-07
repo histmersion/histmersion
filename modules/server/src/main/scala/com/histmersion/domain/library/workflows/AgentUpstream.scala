@@ -17,6 +17,8 @@ import com.histmersion.api.library.{
 }
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
+import com.histmersion.api.library.AcquireApi
+import com.histmersion.api.library.Candidates
 
 /** The acquisition operations an agent run uses — OpenAlex/Crossref metadata, the deposited reference list, the
   * retraction/impact assessment, the citation graph forward — as a small seam over [[AcquisitionControllers]] (built
@@ -55,7 +57,7 @@ trait AgentUpstream:
   def ingestLegalInto(doi: com.histmersion.domain.library.Doi, into: Option[com.histmersion.domain.library.Citekey]): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, Ingest.Report] = ingestLegal(doi)
 
   /** The legal chain's generation (a digest that changes with a fetcher or a key); "" when not connected. */
-  def fetcherGeneration: com.histmersion.domain.library.acquisition.AcquireClients.Generation = com.histmersion.domain.library.acquisition.AcquireClients.Generation("")
+  def fetcherGeneration: com.histmersion.domain.AcquireRecheck.LastCheck.Generation = com.histmersion.domain.AcquireRecheck.LastCheck.Generation("")
 
   /** Whether the acquisition toolset is attached (Offline is not). */
   def connected: Boolean = true
@@ -69,12 +71,12 @@ trait AgentUpstream:
   )
 
   /** A goal's candidates in one state (`new`: the unseen), oldest first. */
-  def candidates(goal: com.histmersion.domain.automation.Goal.Slug, state: com.histmersion.domain.library.acquisition.CandidateService.State, limit: com.histmersion.domain.library.workflows.AgentUpstream.Limit): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, List[Source.Candidate]] = Left(
+  def candidates(goal: com.histmersion.domain.automation.Goal.Slug, state: Candidates.State.Wire, limit: com.histmersion.domain.library.workflows.AgentUpstream.Limit): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, List[Source.Candidate]] = Left(
     com.histmersion.domain.library.workflows.AgentUpstream.Problem("the candidate search is not connected")
   )
 
   /** Record a decision on candidates by id. */
-  def markCandidates(ids: List[com.histmersion.domain.library.workflows.AgentUpstream.CandidateId], state: com.histmersion.domain.library.acquisition.CandidateService.State): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, com.histmersion.RowCount] = Left(
+  def markCandidates(ids: List[Source.Candidate.Id], state: Candidates.State.Wire): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, com.histmersion.RowCount] = Left(
     com.histmersion.domain.library.workflows.AgentUpstream.Problem("the candidate search is not connected")
   )
 
@@ -92,8 +94,6 @@ object AgentUpstream:
   object FollowupsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SweepCandidatesDryRun = SweepCandidatesDryRun.T
   object SweepCandidatesDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CandidateId = CandidateId.T
-  object CandidateId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def problem(e: com.histmersion.api.Api.Error): Problem = Problem(e.message.value)
 
@@ -111,12 +111,12 @@ object AgentUpstream:
 
   /** The server's own acquisition handlers — the same calls `histmersion refs/assess/followups` make. */
   def of(a: AcquisitionControllers): AgentUpstream = new AgentUpstream:
-    def meta(doi: com.histmersion.domain.library.Doi) = a.meta(AcquisitionControllers.MetaId(doi.value)).left.map(problem)
+    def meta(doi: com.histmersion.domain.library.Doi) = a.meta(AcquireApi.Identifier(doi.value)).left.map(problem)
     def refs(citekey: com.histmersion.domain.library.Citekey, apply: RefsApply) =
       a.refs(RefsRequest(RefsRequest.Id(citekey.value), apply = RefsRequest.Apply(apply.value))).left.map(problem)
     def assess(citekey: com.histmersion.domain.library.Citekey, apply: AssessApply) =
       (if apply.value then a.assess(AssessRequest(AssessRequest.Id(citekey.value), apply = AssessRequest.Apply(true)))
-       else a.assessReadOnly(AcquisitionControllers.AssessReadOnlyId(citekey.value))).left.map(problem)
+       else a.assessReadOnly(AssessRequest.Id(citekey.value))).left.map(problem)
     def followups(id: FollowupsId, since: Option[com.histmersion.Year], limit: Option[com.histmersion.domain.library.workflows.FollowupsInput.Limit]) =
       a.followups(
         FollowupsRequest(
@@ -127,7 +127,7 @@ object AgentUpstream:
         )
       ).left.map(problem)
     def discover(query: com.histmersion.domain.library.search.Search.Query, limit: Limit) =
-      a.discover(query, None, None, Some(AcquisitionControllers.DiscoverLimit(limit.value)), notInDb = AcquisitionControllers.DiscoverNotInDb(false)).left.map(problem)
+      a.discover(AcquireApi.Query(query.value), None, None, Some(AcquireApi.Limit(limit.value)), notInDb = false).left.map(problem)
     override def ingestLegal(doi: com.histmersion.domain.library.Doi) =
       a.ingestLegal(Ingest.Request(Ingest.Request.Id(doi.value))).left.map(problem)
     override def ingestLegalInto(doi: com.histmersion.domain.library.Doi, into: Option[com.histmersion.domain.library.Citekey]) =
@@ -135,15 +135,15 @@ object AgentUpstream:
     override def fetcherGeneration = a.fetcherGeneration
     override def sweepCandidates(goal: com.histmersion.domain.automation.Goal.Slug, dryRun: SweepCandidatesDryRun) =
       a.sweepCandidates(CandidateSweep.Request(CandidateSweep.Request.Goal(goal.value), CandidateSweep.Request.DryRun(dryRun.value))).left.map(problem)
-    override def candidates(goal: com.histmersion.domain.automation.Goal.Slug, state: com.histmersion.domain.library.acquisition.CandidateService.State, limit: Limit) =
+    override def candidates(goal: com.histmersion.domain.automation.Goal.Slug, state: Candidates.State.Wire, limit: Limit) =
       a.candidates(
-        Some(AcquisitionControllers.CandidatesGoal(goal.value)),
-        Some(AcquisitionControllers.CandidatesState(state.value)),
-        Some(AcquisitionControllers.CandidatesLimit(limit.value)),
+        Some(com.histmersion.api.automation.Goal.Slug(goal.value)),
+        Some(state),
+        Some(AcquireApi.Limit(limit.value)),
         None
       ).map(_.candidates).left.map(problem)
-    override def markCandidates(ids: List[CandidateId], state: com.histmersion.domain.library.acquisition.CandidateService.State) =
-      a.markCandidates(CandidateMark(ids.map(i => Source.Candidate.Id(i.value)), Source.Candidate.State(state.value)))
+    override def markCandidates(ids: List[Source.Candidate.Id], state: Candidates.State.Wire) =
+      a.markCandidates(CandidateMark(ids,Source.Candidate.State(state.value)))
         .map(m => com.histmersion.RowCount(m.updated.value))
         .left
         .map(problem)

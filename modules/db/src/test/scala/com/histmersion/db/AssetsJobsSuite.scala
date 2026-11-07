@@ -39,8 +39,8 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
 
   private def png(colour: Byte): NewFigure.Bytes = NewFigure.Bytes(Array[Byte](0x89.toByte, 'P', 'N', 'G', colour))
 
-  private val ingestKind = JobRepo.CreateKind(Ingest.KindIngest)
-  private val reocrKind = JobRepo.CreateKind(Ingest.KindReocr)
+  private val ingestKind = com.histmersion.util.jobs.Job.Kind.applyUnsafe(Ingest.KindIngest)
+  private val reocrKind = com.histmersion.util.jobs.Job.Kind.applyUnsafe(Ingest.KindReocr)
 
   private def source(body: Option[Source.OcrMarkdown] = None) = Source(
     citekey = com.histmersion.api.library.Citekey(ck.value),
@@ -173,34 +173,34 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
     val j = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), Some(com.histmersion.Sha256.assume("abc"))))
     assertEquals(j.status, JobState.Queued.wire)
     assertEquals(
-      Transactor(ds).transact(JobRepo.transition(JobRepo.TransitionId(j.id.value), JobState.Queued, JobState.Running, Some(com.histmersion.util.jobs.JobRepo.TransitionProgress("converting")))),
+      Transactor(ds).transact(JobRepo.transition(com.histmersion.util.jobs.Job.Id.assume(j.id.value), JobState.Queued, JobState.Running, Some(com.histmersion.util.jobs.JobRow.Progress("converting")))),
       Some(JobState.Running)
     )
-    Transactor(ds).transact(JobRepo.progress(JobRepo.ProgressId(j.id.value), com.histmersion.util.jobs.JobRepo.ProgressText("storing 3 asset(s)")))
-    assertEquals(Transactor(ds).read(JobRepo.get(JobRepo.GetId(j.id.value))).flatMap(_.progress), Some("storing 3 asset(s)"))
+    Transactor(ds).transact(JobRepo.progress(com.histmersion.util.jobs.Job.Id.assume(j.id.value), com.histmersion.util.jobs.JobRow.Progress("storing 3 asset(s)")))
+    assertEquals(Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(j.id.value))).flatMap(_.progress), Some("storing 3 asset(s)"))
     assertEquals(
-      Transactor(ds).transact(JobRepo.transition(JobRepo.TransitionId(j.id.value), JobState.Running, JobState.Done, Some(com.histmersion.util.jobs.JobRepo.TransitionProgress("1 page(s)")))),
+      Transactor(ds).transact(JobRepo.transition(com.histmersion.util.jobs.Job.Id.assume(j.id.value), JobState.Running, JobState.Done, Some(com.histmersion.util.jobs.JobRow.Progress("1 page(s)")))),
       Some(JobState.Done)
     )
-    val done = Transactor(ds).read(JobRepo.get(JobRepo.GetId(j.id.value))).get
+    val done = Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(j.id.value))).get
     assertEquals(done.status, JobState.Done.wire)
     assert(done.succeeded && done.isTerminal)
 
   test("a job remembers the acquisition item it ticks off; one without an item reads back none"):
-    val j = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None, acquireItem = Some(com.histmersion.util.jobs.JobRepo.CreateAcquireItem(4242))))
+    val j = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None, acquireItem = Some(com.histmersion.util.jobs.JobRow.AcquireItem(4242))))
     assertEquals(j.acquireItem, Some(4242))
-    assertEquals(Transactor(ds).read(JobRepo.get(JobRepo.GetId(j.id.value))).flatMap(_.acquireItem), Some(4242))
+    assertEquals(Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(j.id.value))).flatMap(_.acquireItem), Some(4242))
     assert(Transactor(ds).read(JobRepo.list(None, com.histmersion.PageSize(50))).exists(x => x.id == j.id && x.acquireItem.contains(4242)))
     assertEquals(
       Transactor(ds)
-        .read(JobRepo.get(JobRepo.GetId(Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None)).id.value)))
+        .read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None)).id.value)))
         .flatMap(_.acquireItem),
       None
     )
 
   test("a transition from the wrong state is refused — two workers cannot claim one job"):
     val j = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None))
-    val id = JobRepo.TransitionId(j.id.value)
+    val id = com.histmersion.util.jobs.Job.Id.assume(j.id.value)
     assertEquals(
       Transactor(ds).transact(JobRepo.transition(id, JobState.Queued, JobState.Running)),
       Some(JobState.Running)
@@ -212,38 +212,38 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
 
   test("failure records the reason"):
     val j = Transactor(ds).transact(JobRepo.create(reocrKind, Some(ck), None))
-    val id = JobRepo.TransitionId(j.id.value)
+    val id = com.histmersion.util.jobs.Job.Id.assume(j.id.value)
     Transactor(ds).transact(JobRepo.transition(id, JobState.Queued, JobState.Running))
     Transactor(ds).transact(
-      JobRepo.transition(id, JobState.Running, JobState.Failed, error = Some(JobRepo.TransitionError("converter unreachable")))
+      JobRepo.transition(id, JobState.Running, JobState.Failed, error = Some(com.histmersion.util.jobs.JobRow.Error("converter unreachable")))
     )
-    val f = Transactor(ds).read(JobRepo.get(JobRepo.GetId(j.id.value))).get
+    val f = Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(j.id.value))).get
     assertEquals(f.status, JobState.Failed.wire)
     assertEquals(f.error, Some("converter unreachable"))
     assert(!f.succeeded)
 
   test("a restart fails whatever was unfinished, and leaves terminal rows alone"):
     val done = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None))
-    Transactor(ds).transact(JobRepo.transition(JobRepo.TransitionId(done.id.value), JobState.Queued, JobState.Running))
-    Transactor(ds).transact(JobRepo.transition(JobRepo.TransitionId(done.id.value), JobState.Running, JobState.Done))
+    Transactor(ds).transact(JobRepo.transition(com.histmersion.util.jobs.Job.Id.assume(done.id.value), JobState.Queued, JobState.Running))
+    Transactor(ds).transact(JobRepo.transition(com.histmersion.util.jobs.Job.Id.assume(done.id.value), JobState.Running, JobState.Done))
     val running = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None))
-    Transactor(ds).transact(JobRepo.transition(JobRepo.TransitionId(running.id.value), JobState.Queued, JobState.Running))
+    Transactor(ds).transact(JobRepo.transition(com.histmersion.util.jobs.Job.Id.assume(running.id.value), JobState.Queued, JobState.Running))
     val queued = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None))
 
     assert(Transactor(ds).transact(JobRepo.failInterrupted()).value >= 2)
-    assertEquals(Transactor(ds).read(JobRepo.get(JobRepo.GetId(running.id.value))).map(_.error), Some(Some(JobState.Interrupted)))
-    assertEquals(Transactor(ds).read(JobRepo.get(JobRepo.GetId(queued.id.value))).map(_.status), Some(JobState.Failed.wire))
-    assertEquals(Transactor(ds).read(JobRepo.get(JobRepo.GetId(done.id.value))).map(_.status), Some(JobState.Done.wire))
+    assertEquals(Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(running.id.value))).map(_.error), Some(Some(JobState.Interrupted)))
+    assertEquals(Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(queued.id.value))).map(_.status), Some(JobState.Failed.wire))
+    assertEquals(Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(done.id.value))).map(_.status), Some(JobState.Done.wire))
 
   test("jobs list is newest-first and filterable by status"):
     Transactor(ds).transact(JobRepo.failInterrupted())
     val a = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None))
     val all = Transactor(ds).read(JobRepo.list(None, com.histmersion.PageSize(10)))
     assertEquals(all.headOption.map(_.id), Some(a.id))
-    assert(Transactor(ds).read(JobRepo.list(Some(com.histmersion.util.jobs.JobRepo.ListStatus("queued")), com.histmersion.PageSize(10))).forall(_.status.value == "queued"))
-    assert(Transactor(ds).read(JobRepo.list(Some(com.histmersion.util.jobs.JobRepo.ListStatus("done")), com.histmersion.PageSize(10))).forall(_.status.value == "done"))
-    assertEquals(Transactor(ds).read(JobRepo.list(Some(com.histmersion.util.jobs.JobRepo.ListStatus("nonsense")), com.histmersion.PageSize(10))), Vector.empty)
-    assertEquals(Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.JobRepo.GetId("no-such-job"))), None)
+    assert(Transactor(ds).read(JobRepo.list(Some(com.histmersion.api.jobs.JobState.Wire("queued")), com.histmersion.PageSize(10))).forall(_.status.value == "queued"))
+    assert(Transactor(ds).read(JobRepo.list(Some(com.histmersion.api.jobs.JobState.Wire("done")), com.histmersion.PageSize(10))).forall(_.status.value == "done"))
+    assertEquals(Transactor(ds).read(JobRepo.list(Some(com.histmersion.api.jobs.JobState.Wire("nonsense")), com.histmersion.PageSize(10))), Vector.empty)
+    assertEquals(Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id("00000000-0000-0000-0000-000000000000"))), None)
 
   private def connectForTest(sql: String): Unit =
     val c = ds.getConnection()

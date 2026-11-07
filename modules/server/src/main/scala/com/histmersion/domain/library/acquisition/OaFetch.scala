@@ -23,7 +23,9 @@ object OaFetch:
     )
     val cfg = loaded.config.acquire
     FetchChain.of(
-      g.registries.sourceFetchers,
+      scala.collection.immutable.ListMap.from(
+        g.registries.sourceFetchers.iterator.map((k, v) => com.histmersion.util.plugins.Plugin.Id.assume(k.value) -> v)
+      ),
       cfg.chainIds.map(c => com.histmersion.util.plugins.Plugin.Id(c.value)),
       FetchChain.AllowUnauthorised(cfg.allowUnauthorised.value),
       plugins = g.registered

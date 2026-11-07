@@ -44,15 +44,17 @@ object AcquireCheckService:
   /** The checks in memory; the acquisition list is the work lists' `queues`, the sources the library's `sources`. */
   final class InMemory(state: AtomicReference[AcquisitionState], queues: QueueService, sources: SourceService)
       extends AcquireCheckService:
-    def of(items: List[com.histmersion.domain.library.acquisition.AcquireCheckRow.Item]): Map[com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, AcquireCheckRow] = state.get.checks.filter((id, _) => items.contains(id))
+    def of(items: List[com.histmersion.domain.library.acquisition.AcquireCheckRow.Item]): Map[com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, AcquireCheckRow] =
+      state.get.checks.values.filter(r => items.contains(r.item)).map(r => r.item -> r).toMap
     def open: Map[com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, AcquireCheckRow] =
       val ids = queues.list(Queue.Kind.Acquire, QueueScope.Open).map(i => AcquireCheckRow.Item(i.id.value)).toSet
-      state.get.checks.filter((id, _) => ids(id))
+      state.get.checks.values.filter(r => ids(r.item)).map(r => r.item -> r).toMap
     def record(item: com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, at: Instant, generation: AcquireRecheck.LastCheck.Generation, outcome: AcquireRecheck.Outcome, reason: com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason): Unit =
       val _ = state.updateAndGet(
         _.modify(_.checks).using { cs =>
-          val n = cs.get(item).fold(AcquireCheckRow.Checks(1))(c => AcquireCheckRow.Checks(c.checks.value + 1))
-          cs.updated(item, AcquireCheckRow(item, at, generation, outcome.wire, reason, n))
+          val key = AcquisitionState.ChecksKey(item.value)
+          val n = cs.get(key).fold(AcquireCheckRow.Checks(1))(c => AcquireCheckRow.Checks(c.checks.value + 1))
+          cs.updated(key, AcquireCheckRow(item, at, generation, outcome.wire, reason, n))
         }
       )
     def countSince(since: Instant): Map[AcquireRecheck.Outcome.Wire, com.histmersion.RowCount] =

@@ -12,17 +12,17 @@ import com.histmersion.api.catalogue.Period
   */
 final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, maintenance: WriteGate):
 
-  def period(id: com.histmersion.domain.catalogue.periods.BPeriodRow.Id): Either[Api.Error, Period.Detail] =
-    periods.get(id).toRight(Api.Error(s"No period '$id'", Some(Write.CodeNotFound))).map { p =>
-      Period.Detail(p, p.parentId.flatMap(periods.get), periods.children(id))
+  def period(id: HistoricalPeriod.Id): Either[Api.Error, Period.Detail] =
+    periods.get(id).toRight(Api.Error(Api.Error.Message(s"No period '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))).map { p =>
+      Period.Detail(p, p.parentId.flatMap(parent => periods.get(HistoricalPeriod.Id(parent.value))), periods.children(id))
     }
 
-  def search(q: Option[com.histmersion.domain.catalogue.periods.PeriodSearch.Text], region: Option[com.histmersion.domain.catalogue.periods.PeriodsControllers.SearchRegion], from: Option[com.histmersion.domain.catalogue.periods.PeriodsControllers.SearchFrom], to: Option[com.histmersion.domain.catalogue.periods.PeriodsControllers.SearchTo]): List[HistoricalPeriod] =
+  def search(q: Option[com.histmersion.domain.catalogue.periods.PeriodSearch.Text], region: Option[PeriodSearch.Region], from: Option[PeriodSearch.From], to: Option[PeriodSearch.To]): List[HistoricalPeriod] =
     periods.search(PeriodSearch(q, region, from, to))
 
   /** `POST /api/periods/seed?replace=` — the presets bundled with this server. */
   def seed(caller: Caller, replace: com.histmersion.domain.catalogue.periods.PeriodImports.Replace): Either[Api.Error, Period.ImportResult] =
-    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("periods/seed"))(imports.applySeed(replace).left.map(Api.Error(_)))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("periods/seed"))(imports.applySeed(replace).left.map(e => Api.Error(Api.Error.Message(e.value))))
 
   /** `POST /api/periods/import` — a PeriodO dataset sent by the client (a dump, or a subset of one). */
   def importDataset(
@@ -33,21 +33,13 @@ final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, m
   ): Either[Api.Error, Period.ImportResult] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("periods/import")):
       for
-        set <- Dataset.ofParam(dataset)
-        d <- PeriodO.parse(body).left.map(Api.Error(_))
-      yield imports.write(d.only(collections.map(_.trim).toSet), set)
+        set <- Dataset.ofParam(dataset.map(d => Dataset.Wire(d.value)))
+        d <- PeriodO.parse(body.value).left.map(e => Api.Error(Api.Error.Message(e.value)))
+      yield imports.write(d.only(collections.map(c => HistoricalPeriod.Id(c.value.trim)).toSet), set)
 
   /** `POST /api/periods/fetch?source=periodo` — the live PeriodO dump, the named collections only. */
   def fetch(caller: Caller, source: com.histmersion.domain.catalogue.periods.PeriodSources.PeriodoUrl, collections: List[com.histmersion.domain.catalogue.periods.PeriodSources.Collections]): Either[Api.Error, Period.ImportResult] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("periods/fetch")):
-      if source.trim.toLowerCase != PeriodImports.PeriodOSource then
-        Left(Api.Error(s"unknown period source '$source' (available: ${PeriodImports.PeriodOSource})"))
-      else imports.fetch(collections).left.map(Api.Error(_))
-
-object PeriodsControllers:
-  type SearchRegion = _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.Region
-  val SearchRegion: _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.Region.type = _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.Region
-  type SearchFrom = _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.From
-  val SearchFrom: _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.From.type = _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.From
-  type SearchTo = _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.To
-  val SearchTo: _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.To.type = _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.To
+      if source.value.trim.toLowerCase != PeriodImports.PeriodOSource then
+        Left(Api.Error(Api.Error.Message(s"unknown period source '$source' (available: ${PeriodImports.PeriodOSource})")))
+      else imports.fetch(collections).left.map(e => Api.Error(Api.Error.Message(e.value)))

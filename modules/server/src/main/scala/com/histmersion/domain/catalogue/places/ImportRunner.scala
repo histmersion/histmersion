@@ -14,18 +14,13 @@ import com.histmersion.plugin.Plugin
   * places again.
   */
 object ImportRunner:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchAndImportToleranceKm = _root_.com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm
-  val FetchAndImportToleranceKm: _root_.com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm.type = _root_.com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm
-
   private val BatchSize = 1000
 
   /** The places a run of `source` stores, in order, and the ones refused with the reason. */
-  def places(source: GazetteerSource, http: Plugin.Http): Either[com.histmersion.domain.catalogue.places.ImportRunner.Problem, (List[Place.Input], List[com.histmersion.domain.catalogue.Place.Id])] =
-    PluginGazetteers.places(source, http).map { (items, refused) =>
+  def places(source: GazetteerSource, http: Plugin.Http): Either[GazetteerImports.Problem, (List[Place.Input], List[Place.ImportResult.Failed])] =
+    PluginGazetteers.places(source, http).left.map(p => GazetteerImports.Problem(p.value)).map { (items, refused) =>
       refused.foreach(why => scribe.warn(s"[import] refused $why"))
-      (items, refused)
+      (items, refused.map(why => Place.ImportResult.Failed(why.value)))
     }
 
   def fetchAndImport(
@@ -33,13 +28,13 @@ object ImportRunner:
       http: Plugin.Http,
       places: PlaceService,
       geometry: PlaceGeometry,
-      dryRun: com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun,
-      toleranceKm: com.histmersion.domain.catalogue.places.ImportRunner.FetchAndImportToleranceKm
-  ): Either[com.histmersion.domain.catalogue.places.ImportRunner.Problem, Place.ImportResult] =
+      dryRun: GazetteerControllers.DryRun,
+      toleranceKm: GeocodeSettings.ToleranceKm
+  ): Either[GazetteerImports.Problem, Place.ImportResult] =
     for
       (all, refused) <- ImportRunner.places(source, http)
       result <-
-        if dryRun then Right(Place.ImportResult(all.size, com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), ("dry run" :: refused).take(20)))
+        if dryRun.value then Right(Place.ImportResult(Place.ImportResult.Places(all.size), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), (Place.ImportResult.Failed("dry run") :: refused).take(20)))
         else
           batchUpsert(all, places, geometry, toleranceKm)
             .map(r => r.modify(_.failed).setTo((refused ++ r.failed).take(20)))
@@ -49,21 +44,21 @@ object ImportRunner:
       items: List[Place.Input],
       places: PlaceService,
       geometry: PlaceGeometry,
-      toleranceKm: com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm
-  ): Either[com.histmersion.domain.catalogue.places.ImportRunner.Problem, Place.ImportResult] =
+      toleranceKm: GeocodeSettings.ToleranceKm
+  ): Either[GazetteerImports.Problem, Place.ImportResult] =
     try
       val batches = items.grouped(BatchSize).toList
       val total = batches.zipWithIndex.foldLeft(Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(0), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), Nil)) { case (acc, (batch, i)) =>
         scribe.info(s"[import] upserting batch ${i + 1}/${batches.size} (${batch.size} places)…")
         val r = places.importPlaces(batch, Dataset.Seed)
         Place.ImportResult(
-          acc.places + r.places,
-          acc.names + r.names,
-          acc.relations + r.relations,
+          Place.ImportResult.Places(acc.places.value + r.places.value),
+          Place.ImportResult.Names(acc.names.value + r.names.value),
+          Place.ImportResult.Relations(acc.relations.value + r.relations.value),
           (acc.failed ++ r.failed).take(20)
         )
       }
       scribe.info(s"[import] rebuilding finding_places…")
       val _ = geometry.rebuildFindingPlaces(toleranceKm)
       Right(total)
-    catch case e: Exception => Left(s"upsert failed: ${e.getMessage}")
+    catch case e: Exception => Left(GazetteerImports.Problem(s"upsert failed: ${e.getMessage}"))
