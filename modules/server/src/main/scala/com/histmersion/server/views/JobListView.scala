@@ -41,6 +41,6 @@ object JobListView:
   def query(f: JobFilter, now: Instant): Either[Api.Error, JobQuery] =
     val n = f.normalized
     for
-      st <- ListFilters.known("status", n.status, JobStatuses).left.map(Api.Error(_))
+      st <- ListFilters.known(com.histmersion.api.automation.ListFilters.FacetName("status"), n.status, JobStatuses).left.map(Api.Error(_))
       tr <- ListFilters.range(n.since, n.until, now).left.map(Api.Error(_))
     yield JobQuery(st, n.kind, tr._1, tr._2, n.subject)

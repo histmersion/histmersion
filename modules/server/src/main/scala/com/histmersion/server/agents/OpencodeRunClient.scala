@@ -24,7 +24,7 @@ final class OpencodeRunClient(val model: ModelRef, cfg: OpencodeConfig, rt: CliR
       .getOrElse(
         throw java.io.IOException(s"opencode: no generated agent ${agent.name} — run `histmersion agent generate`")
       )
-    CliProcess.withDir("histmersion-opencode-") { dir =>
+    CliProcess.withDir(com.histmersion.server.agents.CliProcess.WithDirPrefix("histmersion-opencode-")) { dir =>
       val grant = rt.grant(call, Some(agent), cfg.timeoutSeconds)
       try
         val argv = Opencode.argv(cfg, model.model, agent.name, dir.toString)

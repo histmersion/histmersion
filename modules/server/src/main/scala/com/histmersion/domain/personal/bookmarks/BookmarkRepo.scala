@@ -27,8 +27,8 @@ private[bookmarks] object BookmarkRepo:
   /** Newest first; every one when no `size` is given. */
   def list(user: UserId, kind: Option[MarkKind], size: Option[PageSize])(using DbCon): List[Bookmark.Row] =
     (Sql.of(Sql.Text(s"$Projection WHERE b.user_id = ? AND b.deleted_at IS NULL"), Param.S(Param.S.V(user.value))) ++
-      kind.fold(Sql.empty)(k => Sql.of(" AND b.target_kind = ?", Param.S(Param.S.V(k.wire.value)))) ++
-      Sql.raw(" ORDER BY b.created_at DESC, b.id DESC") ++
+      kind.fold(Sql.empty)(k => Sql.of(com.histmersion.util.database.Sql.Text(" AND b.target_kind = ?"), Param.S(Param.S.V(k.wire.value)))) ++
+      Sql.raw(com.histmersion.util.database.Sql.Text(" ORDER BY b.created_at DESC, b.id DESC")) ++
       size.fold(Sql.empty)(s => Sql.of(" LIMIT ?", Param.I(Param.I.V(s.value))))).frag.query[Bookmark.Row].run().toList
 
   def live(user: UserId, id: com.histmersion.api.personal.Bookmark.Id)(using DbCon): Option[Bookmark.Row] =

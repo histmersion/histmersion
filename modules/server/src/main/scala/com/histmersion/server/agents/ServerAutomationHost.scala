@@ -31,7 +31,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
   def patchGoal(slug: com.histmersion.domain.automation.Goal.Slug, patch: Goal.Patch): Either[Api.Error, Goal] = h.goals.patch(slug, patch)
   def runTarget(p: Pipeline, raw: com.histmersion.server.agents.ServerAutomationHost.RunTarget): Option[Either[Api.Error, com.histmersion.server.agents.ServerAutomationHost.RunTarget]] =
     p.targetKind match
-      case TargetKind.Source => Some(h.library.sources.get(raw, body = false).map(_.source.citekey))
+      case TargetKind.Source => Some(h.library.sources.get(raw, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).map(_.source.citekey))
       case TargetKind.Article if p == Pipeline.CompileArticle =>
         Some(Slug.parse(raw).map(_.value).left.map(Api.Error(_)))
       case TargetKind.Article => Some(h.research.articles.get(raw).map(_.article.slug))
@@ -81,10 +81,10 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
 
   def linkRef(kind: LinkKind, raw: com.histmersion.server.agents.ServerAutomationHost.LinkRef): Either[Api.Error, com.histmersion.server.agents.ServerAutomationHost.LinkTarget] =
     if kind == LinkKind.Article then h.research.articles.get(raw).map(_.article.slug)
-    else h.library.sources.get(raw, body = false).map(_.source.citekey)
+    else h.library.sources.get(raw, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).map(_.source.citekey)
 
   def probeSubject(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, ProbeAnswer] =
-    h.library.sources.get(citekey, body = false).map(s => ProbeAnswer(s.source.citekey, s.source.title, s.source.year))
+    h.library.sources.get(citekey, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).map(s => ProbeAnswer(s.source.citekey, s.source.title, s.source.year))
 
   def sameTitle(answered: com.histmersion.domain.Title, record: com.histmersion.domain.Title): Boolean = AgentVerify.sameTitle(answered, record)
 

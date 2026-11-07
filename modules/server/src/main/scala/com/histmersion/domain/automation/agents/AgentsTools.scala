@@ -368,7 +368,7 @@ object AgentsTools:
                       in.item,
                       Some(in.once),
                       in.effect,
-                      Some("mcp"),
+                      Some(com.histmersion.api.automation.Managers.HintAdd.Author("mcp")),
                       propose = Some(in.effect.isDefined),
                       suggest = Some(in.suggest)
                     )
@@ -388,7 +388,7 @@ object AgentsTools:
                 .map(_.trim)
                 .filter(_.nonEmpty)
                 .toRight(Api.Error(com.histmersion.api.Api.Error.Message("`mode` needs `mode`: working, finish or pause")))
-                .flatMap(md => m.setMode(AgentMode.ModeSet(md, Some("mcp"))))
+                .flatMap(md => m.setMode(AgentMode.ModeSet(md, Some(com.histmersion.api.automation.AgentMode.ModeSet.By("mcp")))))
                 .map(autopilotPage)
             case "focus" =>
               in.focus.map(_.trim.toLowerCase).filter(v => v.nonEmpty && v != "list") match
@@ -444,7 +444,7 @@ object AgentsTools:
                 .map(_.trim)
                 .filter(_.nonEmpty)
                 .toRight(Api.Error(com.histmersion.api.Api.Error.Message("`strategy` needs `strategy`")))
-                .flatMap(n => m.setScheduler(AgentScheduler.SchedulerSet(n, Some("mcp"))))
+                .flatMap(n => m.setScheduler(AgentScheduler.SchedulerSet(n, Some(com.histmersion.api.automation.AgentScheduler.SchedulerSet.By("mcp")))))
                 .map(AgentSchedulerMarkdown.status)
             case "stalls" => Right(StallsMarkdown.report(m.stalls(in.days)))
             case other    => Left(Api.Error(s"unknown action '$other' (status, queue, why, strategy, stalls)"))

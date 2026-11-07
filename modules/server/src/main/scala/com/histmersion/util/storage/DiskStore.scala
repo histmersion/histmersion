@@ -314,7 +314,6 @@ private[storage] object DiskStore:
 
     def close(): Unit = synchronized { closed = true; ch.close() }
 
-  object ChannelReader:
 
 
 

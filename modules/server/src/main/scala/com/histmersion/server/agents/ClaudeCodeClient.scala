@@ -39,7 +39,7 @@ import java.nio.file.Files
 final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: CliRuntime) extends LlmClient:
 
   def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
-    CliProcess.withDir("histmersion-claude-") { dir =>
+    CliProcess.withDir(com.histmersion.server.agents.CliProcess.WithDirPrefix("histmersion-claude-")) { dir =>
       val grant = Option.when(call.tools.nonEmpty)(rt.grant(call, call.agent, cfg.timeoutSeconds)).flatten
       try
         val mcp = grant.map(g =>

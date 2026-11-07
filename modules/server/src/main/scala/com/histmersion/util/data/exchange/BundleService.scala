@@ -254,7 +254,7 @@ object BundleService:
               w.ds,
               source,
               bundle,
-              options(dryRun = false),
+              options(dryRun = com.histmersion.util.data.exchange.ImportOptions.DryRun(false)),
               originals,
               resolutions,
               MergeSettingsViews.settings(cfg.merge),

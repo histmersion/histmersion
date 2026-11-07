@@ -97,7 +97,7 @@ object Hot:
     import Graph.*
 
     private val defs = AtomicReference(Vector.empty[Def[C]])
-    private val current = AtomicReference[Snap[C]](Snap(0L, initial, Map.empty))
+    private val current = AtomicReference[Snap[C]](Snap(com.histmersion.server.hot.Hot.Graph.Snap.Generation(0L), initial, Map.empty))
     private val pinnedTL = ThreadLocal[Snap[C] | Null]()
 
     /** Node registration and reloads, one at a time. */
@@ -190,7 +190,7 @@ object Hot:
         name: com.histmersion.server.hot.Hot.Graph.Def.Name,
         deps: List[Hot[?]] = Nil,
         keys: List[com.histmersion.server.hot.Hot.Graph.Def.Keys] = Nil,
-        idle: A => com.histmersion.server.hot.Hot.Graph.Def.Idle = (_: A) => true,
+        idle: A => com.histmersion.server.hot.Hot.Graph.Def.Idle = (_: A) => com.histmersion.server.hot.Hot.Graph.Def.Idle(true),
         onPublish: A => Unit = (_: A) => ()
     )(build: BuildCtx[C, A] => Ox ?=> Either[com.histmersion.server.hot.Hot.Graph.Problem, A]): Either[com.histmersion.server.hot.Hot.Graph.Problem, Hot[A]] =
       locked {
@@ -248,7 +248,7 @@ object Hot:
         drain: FiniteDuration = 10.seconds
     ): Either[com.histmersion.server.hot.Hot.Graph.Problem, Outcome] =
       locked {
-        if closed.get() then Left("hot graph: closed")
+        if closed.get() then Left(com.histmersion.server.hot.Hot.Graph.Problem("hot graph: closed"))
         else
           val s = current.get()
           val specs = defs.get()
@@ -320,9 +320,9 @@ object Hot:
           finally done.countDown()
         }
         val deadline = System.nanoTime() + bound.toNanos
-        def settled = old.forall(i => i.isClosed || i.freeBut(if own(i) then 1 else 0))
+        def settled = old.forall(i => i.isClosed || i.freeBut(if own(i) then com.histmersion.server.hot.Hot.Graph.Instance.PinCount(1) else com.histmersion.server.hot.Hot.Graph.Instance.PinCount(0)))
         while !settled && System.nanoTime() < deadline do Thread.sleep(DrainPollMs)
-        val busy = old.filterNot(i => i.isClosed || i.freeBut(if own(i) then 1 else 0))
+        val busy = old.filterNot(i => i.isClosed || i.freeBut(if own(i) then com.histmersion.server.hot.Hot.Graph.Instance.PinCount(1) else com.histmersion.server.hot.Hot.Graph.Instance.PinCount(0)))
         busy.foreach(i =>
           log.warn(
             s"config reload: ${i.describe} is still in use after ${bound.toSeconds} s — " +

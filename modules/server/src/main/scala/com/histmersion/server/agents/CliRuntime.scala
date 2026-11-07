@@ -36,8 +36,8 @@ final class CliRuntime(
   def loopback: Boolean = ClaudeCode.Env.isLoopback(app.server.host)
 
   /** The agent MCP endpoint as a CLI reaches it (one URL; the run token decides the tools). */
-  def agentMcpUrl: com.histmersion.server.HttpDownload.Url = trees.settings("").agentMcpUrl
-  def quotaUrl: com.histmersion.server.HttpDownload.Url = trees.settings("").quotaUrl
+  def agentMcpUrl: com.histmersion.server.HttpDownload.Url = trees.settings(com.histmersion.domain.automation.agents.AgentTrees.SettingsVersion("")).agentMcpUrl
+  def quotaUrl: com.histmersion.server.HttpDownload.Url = trees.settings(com.histmersion.domain.automation.agents.AgentTrees.SettingsVersion("")).quotaUrl
 
   /** A token for one step attempt, alive a little longer than the CLI may run. */
   def grant(call: LlmCall[?], agent: Option[AgentDef], timeoutSeconds: com.histmersion.server.agents.CliRuntime.GrantTimeoutSeconds): Option[RunGrant] =

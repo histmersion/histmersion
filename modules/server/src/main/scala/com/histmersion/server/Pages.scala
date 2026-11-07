@@ -156,7 +156,7 @@ object Pages:
     def block(anchor: com.histmersion.server.Pages.Anchor, title: com.histmersion.domain.Title, cs: List[Citation]) =
       if cs.isEmpty then ""
       else s"""<h2 id="$anchor">$title (${cs.size})</h2><ul class="citations">${cs.map(citation).mkString}</ul>"""
-    block(com.histmersion.server.Pages.Anchor("cites"), com.histmersion.domain.Title("Cites"), cites) + block("cited-by", "Cited by", citedBy)
+    block(com.histmersion.server.Pages.Anchor("cites"), com.histmersion.domain.Title("Cites"), cites) + block(com.histmersion.server.Pages.Anchor("cited-by"), com.histmersion.domain.Title("Cited by"), citedBy)
 
   private def kindLabel(kind: com.histmersion.domain.library.Edge.Kind.Wire): com.histmersion.server.HtmlRender.Html = s"""<span class="edge-kind">${esc(Label.display(kind))}</span> """
 

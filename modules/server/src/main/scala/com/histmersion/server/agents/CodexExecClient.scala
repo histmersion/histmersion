@@ -41,7 +41,7 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
       agent: AgentDef,
       home: java.nio.file.Path
   ): AgentResult[Either[AgentFailure, Out]] =
-    CliProcess.withDir("histmersion-codex-") { dir =>
+    CliProcess.withDir(com.histmersion.server.agents.CliProcess.WithDirPrefix("histmersion-codex-")) { dir =>
       val grant = rt.grant(call, Some(agent), cfg.timeoutSeconds)
       try
         val schema = CliProcess.privateFile(dir.resolve("schema.json"), Codex.outputSchemaJson(call.schema))

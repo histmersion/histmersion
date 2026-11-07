@@ -18,9 +18,9 @@ final class SeedControllers(deps: Deps, importer: => SeedImport):
   /** `corpus.dir` as an `Option`: empty string = not configured. */
   private def corpusRoot: Option[com.histmersion.server.instance.SeedControllers.CorpusRoot] = Option(cfg.corpus.dir).map(_.trim).filter(_.nonEmpty)
 
-  def seed(req: SeedRequest): Either[Api.Error, SeedResult] = deps.maintenance.guard("seed"):
+  def seed(req: SeedRequest): Either[Api.Error, SeedResult] = deps.maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("seed")):
     val asked = Option(req.dir).map(_.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir)
-    if asked.isEmpty then Left(Api.Error("no directory given and histmersion.corpus.dir is not configured"))
+    if asked.isEmpty then Left(Api.Error(com.histmersion.api.Api.Error.Message("no directory given and histmersion.corpus.dir is not configured")))
     else
       if !SafePath.configured(corpusRoot) then
         scribe.warn(

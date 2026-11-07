@@ -28,15 +28,15 @@ private[notes] object NoteRepo:
       DbCon
   ): List[Note.Row] =
     (Sql.of(Sql.Text(s"$Projection WHERE n.user_id = ? AND n.deleted_at IS NULL"), Param.S(Param.S.V(user.value))) ++
-      kind.fold(Sql.empty)(k => Sql.of(" AND n.target_kind = ?", Param.S(Param.S.V(k.wire.value)))) ++
+      kind.fold(Sql.empty)(k => Sql.of(com.histmersion.util.database.Sql.Text(" AND n.target_kind = ?"), Param.S(Param.S.V(k.wire.value)))) ++
       item.fold(Sql.empty)(i =>
         Sql.of(
-          " AND (n.target_id = ? OR n.target_uid = ANY(?::uuid[]))",
+          com.histmersion.util.database.Sql.Text(" AND (n.target_id = ? OR n.target_uid = ANY(?::uuid[]))"),
           Param.S(Param.S.V(i.key.value)),
           Param.A(i.uids.toList.map(u => Param.A.V(u.value.toString)))
         )
       ) ++
-      Sql.raw(" ORDER BY n.updated_at DESC, n.id DESC") ++
+      Sql.raw(com.histmersion.util.database.Sql.Text(" ORDER BY n.updated_at DESC, n.id DESC")) ++
       size.fold(Sql.empty)(s => Sql.of(" LIMIT ?", Param.I(Param.I.V(s.value))))).frag.query[Note.Row].run().toList
 
   def live(user: UserId, id: com.histmersion.api.personal.Note.Id)(using DbCon): Option[Note.Row] =

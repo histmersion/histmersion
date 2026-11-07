@@ -174,5 +174,5 @@ object Deps:
     ReloadReport(
       published = com.histmersion.api.settings.ReloadReport.Published(false),
       generation = com.histmersion.api.settings.ReloadReport.Generation(0),
-      errors = List("this server was started without a config file to reload")
+      errors = List(com.histmersion.api.settings.ReloadReport.Errors("this server was started without a config file to reload"))
     )
