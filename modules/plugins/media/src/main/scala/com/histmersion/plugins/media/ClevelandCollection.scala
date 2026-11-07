@@ -15,37 +15,23 @@ final class ClevelandCollection(conf: CollectionSettings)
   override val description = "The Cleveland Museum of Art (CC0, share_license_status)" + MetCollection.Museum
   val role = MediaCollection.Object
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.ClevelandCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.ClevelandCollection.SearchResultPart2Part1, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.ClevelandCollection.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
     http
       .askJson(ClevelandCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(ClevelandCollection.records)
 
 object ClevelandCollection:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Size = Size.T
+  object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type RecordUrlSize = RecordUrlSize.T
-  object RecordUrlSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SearchResultPart1 = SearchResultPart1.T
-  object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchResultPart2Part1 = SearchResultPart2Part1.T
-  object SearchResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Fields = FieldsValue
   type FieldsValue = FieldsValue.T
   object FieldsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlResult = SearchUrlResult.T
-  object SearchUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlApi = SearchUrlApi.T
-  object SearchUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlName = SearchUrlName.T
-  object SearchUrlName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchUrlLimit = SearchUrlLimit.T
   object SearchUrlLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsResultPart1 = RecordsResultPart1.T
-  object RecordsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsResultPart2Part1 = RecordsResultPart2Part1.T
-  object RecordsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordResultPart1 = RecordResultPart1.T
-  object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Fields: com.histmersion.plugins.media.ClevelandCollection.Fields = List(
     "id",
@@ -63,17 +49,17 @@ object ClevelandCollection:
     "tombstone"
   ).mkString(",")
 
-  def searchUrl(api: com.histmersion.plugins.media.ClevelandCollection.SearchUrlApi, name: com.histmersion.plugins.media.ClevelandCollection.SearchUrlName, limit: com.histmersion.plugins.media.ClevelandCollection.SearchUrlLimit): com.histmersion.plugins.media.ClevelandCollection.SearchUrlResult =
+  def searchUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, name: com.histmersion.plugin.CollectionQuery.Text, limit: com.histmersion.plugins.media.ClevelandCollection.SearchUrlLimit): com.histmersion.plugin.Plugin.Http.GetUrl =
     s"${api.stripSuffix("/")}/artworks/?q=${name.enc}&cc0=1&has_image=1&limit=${limit.max(1)}&fields=$Fields"
 
   /** Pure: the records of a search answer. */
-  def records(json: Json): Either[com.histmersion.plugins.media.ClevelandCollection.RecordsResultPart1, List[Either[com.histmersion.plugins.media.ClevelandCollection.RecordsResultPart2Part1, MediaItem]]] =
+  def records(json: Json): Either[com.histmersion.plugins.media.ClevelandCollection.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
     val c = json.hcursor
     c.downField("data").focus.flatMap(_.asArray) match
       case None       => Left(c.str("detail").orElse(c.str("message")).getOrElse("no data in the answer"))
       case Some(rows) => Right(rows.toList.map(record))
 
-  def record(json: Json): Either[com.histmersion.plugins.media.ClevelandCollection.RecordResultPart1, MediaItem] =
+  def record(json: Json): Either[com.histmersion.plugins.media.ClevelandCollection.Problem, MediaItem] =
     val c = json.hcursor
     c.str("accession_number").orElse(c.str("id")).toRight("no accession number").map { acc =>
       val title = c.str("title").getOrElse(acc)
@@ -92,7 +78,7 @@ object ClevelandCollection:
         if c.str("share_license_status").exists(_.equalsIgnoreCase("CC0")) then Right(MediaRights.cc0(creator, credit))
         else Left(s"not Open Access (share_license_status ${c.str("share_license_status").getOrElse("missing")})")
       val img = c.downField("images")
-      def url(size: com.histmersion.plugins.media.ClevelandCollection.RecordUrlSize) = img.downField(size).downField("url").focus.flatMap(_.asString)
+      def url(size: com.histmersion.plugins.media.ClevelandCollection.Size) = img.downField(size).downField("url").focus.flatMap(_.asString)
       val geo = c.str("find_spot").map("find_spot" -> _).toList ++ c.strs("culture").map("culture" -> _)
       MediaItem(
         acc,

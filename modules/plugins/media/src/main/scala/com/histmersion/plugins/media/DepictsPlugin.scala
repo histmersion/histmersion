@@ -4,9 +4,9 @@ package com.histmersion.plugins.media
 import com.histmersion.plugin.Plugin
 final class DepictsPlugin extends MediaPlugin("media-depicts"):
   type Config = MediaPlugin.Config
-  def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.DepictsPlugin.RegisterResultPart1, Unit] =
+  def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.DepictsPlugin.Problem, Unit] =
     ctx.mediaCollections.add("depicts", Commons.Depictions(c.media, ctx.licences))
 
 object DepictsPlugin:
-  type RegisterResultPart1 = RegisterResultPart1.T
-  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

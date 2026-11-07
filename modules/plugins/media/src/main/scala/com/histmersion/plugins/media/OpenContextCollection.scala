@@ -17,7 +17,7 @@ final class OpenContextCollection(conf: CollectionSettings, licences: LicenceRea
   val role = MediaCollection.Object
   override def matchRule = MediaMatchRule.PlaceIds(Set(OpenContext.Context))
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.OpenContextCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.OpenContextCollection.SearchResultPart2Part1, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.OpenContextCollection.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
     http
       .askJson(OpenContext.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(OpenContext.records(_, licences))
@@ -26,7 +26,5 @@ final class OpenContextCollection(conf: CollectionSettings, licences: LicenceRea
     http.askJson(OpenContext.itemUrl(conf.apiUrl, item.key)).flatMap(OpenContext.item(_, item, licences))
 
 object OpenContextCollection:
-  type SearchResultPart1 = SearchResultPart1.T
-  object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchResultPart2Part1 = SearchResultPart2Part1.T
-  object SearchResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

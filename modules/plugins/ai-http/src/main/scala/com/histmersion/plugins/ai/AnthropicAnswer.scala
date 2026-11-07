@@ -14,24 +14,20 @@ import com.histmersion.plugin.AiTool
 final case class AnthropicAnswer(status: AnthropicAnswer.Status, body: AnthropicAnswer.Body):
 
   /** The turn the answer says, or the failure's description. */
-  def turn: Either[com.histmersion.plugins.ai.AnthropicAnswer.TurnResultPart1, AiTurn] =
-    if (status).value / 100 != 2 then Left(_root_.com.histmersion.plugins.ai.AnthropicAnswer.TurnResultPart1((body).value))
+  def turn: Either[com.histmersion.plugins.ai.AnthropicAnswer.Problem, AiTurn] =
+    if (status).value / 100 != 2 then Left(_root_.com.histmersion.plugins.ai.AnthropicAnswer.Problem((body).value))
     else
       parse((body).value).flatMap(_.as(using AnthropicAnswer.message)) match
         case Right(turn) => Right(turn)
         case Left(_)     =>
           parse((body).value).flatMap(_.as(using AnthropicAnswer.error)) match
-            case Right(message) => Left(_root_.com.histmersion.plugins.ai.AnthropicAnswer.TurnResultPart1((message).value))
-            case Left(e)        => Left(_root_.com.histmersion.plugins.ai.AnthropicAnswer.TurnResultPart1(e.getMessage))
+            case Right(message) => Left(_root_.com.histmersion.plugins.ai.AnthropicAnswer.Problem((message).value))
+            case Left(e)        => Left(_root_.com.histmersion.plugins.ai.AnthropicAnswer.Problem(e.getMessage))
 
 object AnthropicAnswer:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type TurnResultPart1 = TurnResultPart1.T
-  object TurnResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Error = Error.T
-  object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ErrorDetail = ErrorDetail.T
-  object ErrorDetail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OptionalIntResultPart2 = OptionalIntResultPart2.T
   object OptionalIntResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -44,19 +40,19 @@ object AnthropicAnswer:
     if c.value.isObject then Right(()) else Left(DecodingFailure(WrongTypeExpectation("object", c.value), c.history))
 
   /** An error answer's message: `{"error": {"type": …, "message": …}}`. */
-  val error: Decoder[com.histmersion.plugins.ai.AnthropicAnswer.Error] = Decoder.instance { c =>
+  val error: Decoder[com.histmersion.plugins.ai.AnthropicAnswer.Problem] = Decoder.instance { c =>
     for
       _ <- objectAt(c)
       m <- c.downField("error").as(using errorDetail)
-    yield _root_.com.histmersion.plugins.ai.AnthropicAnswer.Error((m).value)
+    yield _root_.com.histmersion.plugins.ai.AnthropicAnswer.Problem((m).value)
   }
 
-  private val errorDetail: Decoder[com.histmersion.plugins.ai.AnthropicAnswer.ErrorDetail] = Decoder.instance { c =>
+  private val errorDetail: Decoder[com.histmersion.plugins.ai.AnthropicAnswer.Problem] = Decoder.instance { c =>
     for
       _ <- objectAt(c)
       _ <- c.downField("type").as[String]
       m <- c.downField("message").as[String]
-    yield _root_.com.histmersion.plugins.ai.AnthropicAnswer.ErrorDetail(m)
+    yield _root_.com.histmersion.plugins.ai.AnthropicAnswer.Problem(m)
   }
 
   /** One content block: its text, or its tool call, or neither (a thinking block, an image …); a block of an unknown

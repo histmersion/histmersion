@@ -11,7 +11,7 @@ final class KeePassXcPlugin extends Plugin:
   type Config = KeePassXcConfig
   val info = Plugin.Info(_root_.com.histmersion.plugin.Plugin.Info.Id("keepassxc"), _root_.com.histmersion.plugin.Plugin.Info.Version(Vaults.Version), _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version))
 
-  def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[com.histmersion.plugins.vaults.KeePassXcPlugin.RegisterResultPart1, Unit] =
+  def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[com.histmersion.plugins.vaults.KeePassXcPlugin.Problem, Unit] =
     given files: com.histmersion.plugin.LocalFiles = ctx.files
     given processes: com.histmersion.plugin.Processes = ctx.processes
     val home = ctx.env(_root_.com.histmersion.plugin.Plugin.Context.EnvName("HOME"))
@@ -49,14 +49,14 @@ final class KeePassXcPlugin extends Plugin:
   /** `ykman`, when it can be found: a bare name missing from the PATH only means the keys are tried in order; a path
     * that was given and is wrong is an error.
     */
-  private def detector(ykman: com.histmersion.plugins.vaults.KeePassXcPlugin.DetectorYkman, ctx: Plugin.Context): Either[com.histmersion.plugins.vaults.KeePassXcPlugin.DetectorResultPart1, Option[com.histmersion.plugins.vaults.KeePassXcPlugin.DetectorResultPart2]] =
+  private def detector(ykman: com.histmersion.plugins.vaults.KeePassXcConfig.Ykman, ctx: Plugin.Context): Either[com.histmersion.plugins.vaults.KeePassXcPlugin.Problem, Option[com.histmersion.plugins.vaults.KeePassXcPlugin.Detected]] =
     given files: com.histmersion.plugin.LocalFiles = ctx.files
     val t = Option(ykman).map((_).value.trim).getOrElse("")
     if t.isEmpty then
       ctx.log.info(_root_.com.histmersion.plugin.Plugin.Log.InfoMessage("YubiKey detection is off (ykman = \"\"): the configured YubiKeys are tried in order"))
       Right(None)
     else
-      Subprocess.locate(_root_.com.histmersion.plugins.vaults.Subprocess.LocateTool(t), ctx.env(_root_.com.histmersion.plugin.Plugin.Context.EnvName("PATH"))) match
+      Subprocess.locate(_root_.com.histmersion.plugins.vaults.Subprocess.Tool(t), ctx.env(_root_.com.histmersion.plugin.Plugin.Context.EnvName("PATH"))) match
         case Right(p)                    => Right(Some(p))
         case Left(_) if !t.contains('/') =>
           ctx.log.info(
@@ -67,11 +67,7 @@ final class KeePassXcPlugin extends Plugin:
         case Left(e) => Left(s"ykman: $e")
 
 object KeePassXcPlugin:
-  type RegisterResultPart1 = RegisterResultPart1.T
-  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DetectorResultPart1 = DetectorResultPart1.T
-  object DetectorResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DetectorResultPart2 = DetectorResultPart2.T
-  object DetectorResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DetectorYkman = DetectorYkman.T
-  object DetectorYkman extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Detected = Detected.T
+  object Detected extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

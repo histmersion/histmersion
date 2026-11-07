@@ -14,71 +14,33 @@ import java.util.Locale
   * whose subject is human remains, is not shown whatever its licence. Pure.
   */
 object OpenContext:
+  type Cite = Cite.T
+  object Cite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Context = Context.T
+  object Context extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Integer = Integer.T
+  object Integer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LicenceId = LicenceId.T
+  object LicenceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Project = Project.T
+  object Project extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Segment = Segment.T
+  object Segment extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Uuid = Uuid.T
+  object Uuid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Year = Year.T
+  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type RecordRightsPart1 = RecordRightsPart1.T
-  object RecordRightsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemFileT = ItemFileT.T
-  object ItemFileT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Attributes = AttributesValue
   type AttributesValue = AttributesValue.T
   object AttributesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlResult = SearchUrlResult.T
-  object SearchUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlApi = SearchUrlApi.T
-  object SearchUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlName = SearchUrlName.T
-  object SearchUrlName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchUrlRows = SearchUrlRows.T
   object SearchUrlRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemUrlResult = ItemUrlResult.T
-  object ItemUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemUrlApi = ItemUrlApi.T
-  object ItemUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemUrlUuid = ItemUrlUuid.T
-  object ItemUrlUuid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UuidOfResult = UuidOfResult.T
-  object UuidOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UuidOfUri = UuidOfUri.T
-  object UuidOfUri extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShortLicenceResult = ShortLicenceResult.T
-  object ShortLicenceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShortLicenceLabel = ShortLicenceLabel.T
-  object ShortLicenceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShortLicenceId = ShortLicenceId.T
-  object ShortLicenceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsResultPart1 = RecordsResultPart1.T
-  object RecordsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsResultPart2Part1 = RecordsResultPart2Part1.T
-  object RecordsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordResultPart1 = RecordResultPart1.T
-  object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnitSegmentResult = UnitSegmentResult.T
-  object UnitSegmentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnitSegmentSeg = UnitSegmentSeg.T
-  object UnitSegmentSeg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumResult = NumResult.T
-  object NumResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumK = NumK.T
-  object NumK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditResult = CreditResult.T
-  object CreditResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditTitle = CreditTitle.T
-  object CreditTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditContext = CreditContext.T
-  object CreditContext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditCreators = CreditCreators.T
-  object CreditCreators extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditYear = CreditYear.T
-  object CreditYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditProject = CreditProject.T
-  object CreditProject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditCite = CreditCite.T
-  object CreditCite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditLicence = CreditLicence.T
-  object CreditLicence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemResultPart1 = ItemResultPart1.T
-  object ItemResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Attributes: com.histmersion.plugins.media.OpenContext.Attributes =
     List("dc-terms-license", "dc-terms-spatial", "dc-terms-creator", "dc-terms-subject").mkString(",")
@@ -88,16 +50,16 @@ object OpenContext:
   val Region = "region"
   val Spatial = "dc-terms:spatial"
 
-  def searchUrl(api: com.histmersion.plugins.media.OpenContext.SearchUrlApi, name: com.histmersion.plugins.media.OpenContext.SearchUrlName, rows: com.histmersion.plugins.media.OpenContext.SearchUrlRows): com.histmersion.plugins.media.OpenContext.SearchUrlResult =
+  def searchUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, name: com.histmersion.plugin.CollectionQuery.Text, rows: com.histmersion.plugins.media.OpenContext.SearchUrlRows): com.histmersion.plugin.Plugin.Http.GetUrl =
     s"${api.stripSuffix("/")}/query/.json?type=media&cat=oc-gen-image&q=${name.enc}&rows=${rows.max(1)}" +
       s"&attributes=${Attributes.enc}&add-attribute-uris=1&response=${"metadata,uri-meta".enc}"
 
-  def itemUrl(api: com.histmersion.plugins.media.OpenContext.ItemUrlApi, uuid: com.histmersion.plugins.media.OpenContext.ItemUrlUuid): com.histmersion.plugins.media.OpenContext.ItemUrlResult = s"${api.stripSuffix("/")}/media/${uuid.enc}.json"
+  def itemUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, uuid: com.histmersion.plugins.media.OpenContext.Uuid): com.histmersion.plugin.Plugin.Http.GetUrl = s"${api.stripSuffix("/")}/media/${uuid.enc}.json"
 
   private val Uuid = """.*/media/([0-9a-fA-F-]{36})/?$""".r
 
   /** Pure: the uuid of a media URI (`http://opencontext.org/media/084e8977-…`). */
-  def uuidOf(uri: com.histmersion.plugins.media.OpenContext.UuidOfUri): Option[com.histmersion.plugins.media.OpenContext.UuidOfResult] = uri.trim match
+  def uuidOf(uri: com.histmersion.plugin.Plugin.Http.GetUrl): Option[com.histmersion.plugins.media.OpenContext.Uuid] = uri.trim match
     case Uuid(u) => Some(u.toLowerCase(Locale.ROOT))
     case _       => None
 
@@ -105,14 +67,14 @@ object OpenContext:
   private val Withheld = "human remains (Open Context flags them; not shown)"
 
   /** Pure: the short name of a licence label (`Attribution 4.0 International (CC BY 4.0)` → `CC BY 4.0`). */
-  def shortLicence(label: com.histmersion.plugins.media.OpenContext.ShortLicenceLabel, id: com.histmersion.plugins.media.OpenContext.ShortLicenceId): com.histmersion.plugins.media.OpenContext.ShortLicenceResult =
+  def shortLicence(label: com.histmersion.plugin.Licence, id: com.histmersion.plugins.media.OpenContext.LicenceId): com.histmersion.plugin.Licence =
     """\(([^()]+)\)\s*$""".r
       .findFirstMatchIn(label)
       .map(_.group(1).trim)
       .getOrElse(if label.trim.nonEmpty then label.trim else id)
 
   /** Pure: the records of a search answer, in its order. */
-  def records(json: Json, licences: LicenceReader): Either[com.histmersion.plugins.media.OpenContext.RecordsResultPart1, List[Either[com.histmersion.plugins.media.OpenContext.RecordsResultPart2Part1, MediaItem]]] =
+  def records(json: Json, licences: LicenceReader): Either[com.histmersion.plugins.media.OpenContext.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
     val c = json.hcursor
     c.downField("oc-api:has-results").focus.flatMap(_.asArray) match
       case Some(rows) => Right(rows.toList.map(record(_, licences)))
@@ -121,7 +83,7 @@ object OpenContext:
       case None => Left(c.str("error").orElse(c.str("message")).getOrElse("no results in the answer"))
 
   /** Pure: one search record. Its rights are its own licence (or why it has none). */
-  def record(json: Json, licences: LicenceReader): Either[com.histmersion.plugins.media.OpenContext.RecordResultPart1, MediaItem] =
+  def record(json: Json, licences: LicenceReader): Either[com.histmersion.plugins.media.OpenContext.Problem, MediaItem] =
     val c = json.hcursor
     c.str("uri").flatMap(uuidOf).orElse(c.str("href").flatMap(uuidOf)).toRight("no media uri").map { uuid =>
       val title = c.str("label").getOrElse(uuid)
@@ -133,7 +95,7 @@ object OpenContext:
       val page = c.str("href").getOrElse(s"https://opencontext.org/media/$uuid")
       val licUrl = c.strs("License [URI]").headOption
       val licLabel = c.strs("License").headOption.getOrElse("")
-      val rights: Either[com.histmersion.plugins.media.OpenContext.RecordRightsPart1, MediaRights] = licUrl match
+      val rights: Either[com.histmersion.plugins.media.OpenContext.Problem, MediaRights] = licUrl match
         case None    => Left("no licence on the record")
         case Some(u) =>
           val lic = licences.readUrl(u)
@@ -220,12 +182,12 @@ object OpenContext:
     * (`2631.1`, `Trench 42`, `A`, `I`: the live map has a place called "I"), or one named by a unit word (`Locus none
     * provided`, `Area`, `Survey`, `Stray Finds`)?
     */
-  def unitSegment(seg: com.histmersion.plugins.media.OpenContext.UnitSegmentSeg): com.histmersion.plugins.media.OpenContext.UnitSegmentResult =
+  def unitSegment(seg: com.histmersion.plugins.media.OpenContext.Segment): Boolean =
     val s = seg.trim
     val first = s.split("\\s+").headOption.getOrElse("").toLowerCase(Locale.ROOT).stripSuffix(".")
     s.exists(_.isDigit) || s.length <= 2 || Roman.matches(s) || UnitWords(first)
 
-  private def num(c: ACursor, k: com.histmersion.plugins.media.OpenContext.NumK): Option[com.histmersion.plugins.media.OpenContext.NumResult] =
+  private def num(c: ACursor, k: com.histmersion.plugins.media.OpenContext.Key): Option[com.histmersion.plugins.media.OpenContext.Integer] =
     c.downField(k)
       .focus
       .flatMap(j => j.asNumber.map(_.toDouble).orElse(j.asString.flatMap(_.trim.toDoubleOption)))
@@ -235,14 +197,14 @@ object OpenContext:
     * and the licence's short name.
     */
   def credit(
-      title: com.histmersion.plugins.media.OpenContext.CreditTitle,
-      context: com.histmersion.plugins.media.OpenContext.CreditContext,
-      creators: List[com.histmersion.plugins.media.OpenContext.CreditCreators],
-      year: Option[com.histmersion.plugins.media.OpenContext.CreditYear],
-      project: Option[com.histmersion.plugins.media.OpenContext.CreditProject],
-      cite: Option[com.histmersion.plugins.media.OpenContext.CreditCite],
-      licence: com.histmersion.plugins.media.OpenContext.CreditLicence
-  ): com.histmersion.plugins.media.OpenContext.CreditResult =
+      title: com.histmersion.plugin.MediaItem.Title,
+      context: com.histmersion.plugins.media.OpenContext.Context,
+      creators: List[com.histmersion.plugin.MediaRights.Author],
+      year: Option[com.histmersion.plugins.media.OpenContext.Year],
+      project: Option[com.histmersion.plugins.media.OpenContext.Project],
+      cite: Option[com.histmersion.plugins.media.OpenContext.Cite],
+      licence: com.histmersion.plugin.Licence
+  ): com.histmersion.plugin.MediaRights.Credit =
     val who = if creators.isEmpty then "" else creators.mkString(", ") + year.fold("")(y => s" ($y)") + ". "
     val what = s"\"$title${if context.nonEmpty then s" from $context" else ""}\"."
     (List(who + what) ++ project.map(p => s"In $p.") ++ List("Open Context.") ++ cite.map(_ + ".") :+ licence)
@@ -251,13 +213,13 @@ object OpenContext:
   /** Pure: a record completed from its media item — the preview to store, the thumbnail, the original — with the
     * licence read AGAIN from the item: a missing or different licence refuses it.
     */
-  def item(json: Json, rec: MediaItem, licences: LicenceReader): Either[com.histmersion.plugins.media.OpenContext.ItemResultPart1, MediaItem] =
+  def item(json: Json, rec: MediaItem, licences: LicenceReader): Either[com.histmersion.plugins.media.OpenContext.Problem, MediaItem] =
     val c = json.hcursor
     val files = c.downField("oc-gen:has-files").focus.flatMap(_.asArray).toList.flatten.flatMap { f =>
       val h = f.hcursor
       for t <- h.str("type"); u <- h.str("id") yield t -> u
     }
-    def file(t: com.histmersion.plugins.media.OpenContext.ItemFileT) = files.find(_._1 == t).map(_._2)
+    def file(t: com.histmersion.plugin.CollectionFile.Format) = files.find(_._1 == t).map(_._2)
     val stated = c
       .downField("dc-terms:license")
       .focus

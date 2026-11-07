@@ -36,22 +36,14 @@ object OaRecords:
   object Datacite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Handle = Handle.T
   object Handle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HandleUrlResult = HandleUrlResult.T
-  object HandleUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HandleUrlDoi = HandleUrlDoi.T
-  object HandleUrlDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DataciteUrlResult = DataciteUrlResult.T
-  object DataciteUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DataciteUrlDoi = DataciteUrlDoi.T
-  object DataciteUrlDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def handleUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: com.histmersion.plugins.fetchers.OaRecords.HandleUrlDoi): Option[com.histmersion.plugins.fetchers.OaRecords.HandleUrlResult] =
+  def handleUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: com.histmersion.plugins.fetchers.OaRecords.Doi): Option[com.histmersion.plugin.Plugin.Http.GetUrl] =
     http.json(Url(cfg.doiHandles.url, s"/$doi", "type" -> "URL")) match
       case Right(j) => RepositoryLanding.handleUrl(j)
       case Left(e)  =>
         log.info(s"doi handles: no URL for $doi ($e)"); None
 
-  def dataciteUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: com.histmersion.plugins.fetchers.OaRecords.DataciteUrlDoi): Option[com.histmersion.plugins.fetchers.OaRecords.DataciteUrlResult] =
+  def dataciteUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: com.histmersion.plugins.fetchers.OaRecords.Doi): Option[com.histmersion.plugin.Plugin.Http.GetUrl] =
     http.json(Url(cfg.datacite.url, s"/dois/$doi")) match
       case Right(j) => RepositoryLanding.dataciteUrl(j)
       case Left(e)  =>

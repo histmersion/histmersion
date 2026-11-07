@@ -5,9 +5,7 @@ package com.histmersion.plugins.media
   */
 import com.histmersion.plugin.Plugin
 final class EuropeanaPlugin extends KeyedPlugin("media-europeana", "europeana"):
-  protected def collection(c: KeyedPlugin.Config, key: Option[com.histmersion.plugins.media.EuropeanaPlugin.CollectionKey], ctx: Plugin.Context) =
+  protected def collection(c: KeyedPlugin.Config, key: Option[com.histmersion.plugins.media.EuropeanaCollection.Key], ctx: Plugin.Context) =
     EuropeanaCollection(c.media.europeana, key, ctx.licences)
 
 object EuropeanaPlugin:
-  type CollectionKey = CollectionKey.T
-  object CollectionKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

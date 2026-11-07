@@ -10,27 +10,17 @@ import java.util.Locale
   * Commons category, or to a picture on any other site is counted with the reason it is not taken. Pure.
   */
 object PleiadesLinks:
+  type Decoded = Decoded.T
+  object Decoded extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type PlaceUrlResult = PlaceUrlResult.T
-  object PlaceUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceUrlApi = PlaceUrlApi.T
-  object PlaceUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceUrlId = PlaceUrlId.T
-  object PlaceUrlId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeResult = DecodeResult.T
-  object DecodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeS = DecodeS.T
-  object DecodeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClassifyResultPart1 = ClassifyResultPart1.T
-  object ClassifyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClassifyResultPart2 = ClassifyResultPart2.T
-  object ClassifyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClassifyUrl = ClassifyUrl.T
-  object ClassifyUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinksResultPart1 = LinksResultPart1.T
-  object LinksResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def placeUrl(api: com.histmersion.plugins.media.PleiadesLinks.PlaceUrlApi, id: com.histmersion.plugins.media.PleiadesLinks.PlaceUrlId): com.histmersion.plugins.media.PleiadesLinks.PlaceUrlResult = s"${api.stripSuffix("/")}/places/${id.enc}/json"
+  def placeUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, id: com.histmersion.plugin.GazetteerPlace.Id): com.histmersion.plugin.Plugin.Http.GetUrl = s"${api.stripSuffix("/")}/places/${id.enc}/json"
 
   val OnFlickr = "on Flickr (its API needs a key)"
   val Category = "a Commons category, not a file"
@@ -39,7 +29,7 @@ object PleiadesLinks:
   private val PictureHosts = List("geograph.org.uk/photo", "panoramio.com/photo", "/photos/", "/image/", "iiif")
 
   /** Pure: a path segment decoded (`%27` → `'`; a `+` stays a `+`). */
-  def decode(s: com.histmersion.plugins.media.PleiadesLinks.DecodeS): com.histmersion.plugins.media.PleiadesLinks.DecodeResult =
+  def decode(s: com.histmersion.plugins.media.PleiadesLinks.Text): com.histmersion.plugins.media.PleiadesLinks.Decoded =
     scala.util
       .Try(java.net.URLDecoder.decode(s.replace("+", "%2B"), java.nio.charset.StandardCharsets.UTF_8))
       .getOrElse(s)
@@ -48,7 +38,7 @@ object PleiadesLinks:
     * picture at all (a book, a gazetteer entry). Wikipedia's `File:` pages are asked of Commons too — a file only a
     * Wikipedia holds (a non-free one) is then "missing on Commons".
     */
-  def classify(url: com.histmersion.plugins.media.PleiadesLinks.ClassifyUrl): Option[Either[com.histmersion.plugins.media.PleiadesLinks.ClassifyResultPart1, com.histmersion.plugins.media.PleiadesLinks.ClassifyResultPart2]] =
+  def classify(url: com.histmersion.plugin.Plugin.Http.GetUrl): Option[Either[com.histmersion.plugins.media.PleiadesLinks.Problem, com.histmersion.plugins.media.PleiadesLinks.Kind]] =
     val u = url.trim.stripPrefix("=")
     val lower = u.toLowerCase(Locale.ROOT)
     val host = scala.util
@@ -78,7 +68,7 @@ object PleiadesLinks:
     else None
 
   /** Pure: the picture links of a place record, in its order, one per URL. */
-  def links(json: Json): Either[com.histmersion.plugins.media.PleiadesLinks.LinksResultPart1, List[PleiadesLink]] =
+  def links(json: Json): Either[com.histmersion.plugins.media.PleiadesLinks.Problem, List[PleiadesLink]] =
     val c = json.hcursor
     c.downField("references").focus.flatMap(_.asArray) match
       case None =>

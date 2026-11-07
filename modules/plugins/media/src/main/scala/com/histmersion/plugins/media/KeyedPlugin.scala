@@ -14,9 +14,9 @@ abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends M
   type Config = KeyedPlugin.Config
 
   /** The collection over the media settings and the key, when one is set. */
-  protected def collection(c: KeyedPlugin.Config, key: Option[com.histmersion.plugins.media.KeyedPlugin.CollectionKey], ctx: Plugin.Context): MediaCollection
+  protected def collection(c: KeyedPlugin.Config, key: Option[com.histmersion.plugins.media.KeyedCollection.Key], ctx: Plugin.Context): MediaCollection
 
-  def register(c: KeyedPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.KeyedPlugin.RegisterResultPart1, Unit] =
+  def register(c: KeyedPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.KeyedPlugin.Problem, Unit] =
     c.apiKey
       .fold[Either[String, Option[String]]](Right(None))(s =>
         ctx.secret(s).map(v => Option(v).map(_.trim).filter(_.nonEmpty))
@@ -24,6 +24,8 @@ abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends M
       .flatMap(key => ctx.mediaCollections.add(name, collection(c, key, ctx)))
 
 object KeyedPlugin:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A key-gated collection's settings: `api-key`, the key as a SECRET REFERENCE (`env:<NAME>`, a vault's), never the
     * key; `null` = none, and the collection is then not asked. Its other settings are Histmersion's own `media.*`.
@@ -33,9 +35,5 @@ object KeyedPlugin:
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type CollectionKey = CollectionKey.T
-  object CollectionKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegisterResultPart1 = RegisterResultPart1.T
-  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Config(apiKey: Option[Secret], media: MediaSettings) derives ConfigReader

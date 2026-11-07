@@ -14,57 +14,35 @@ final class ArtInstituteCollection(conf: CollectionSettings, thumbPx: ArtInstitu
   override val description = "The Art Institute of Chicago (CC0, is_public_domain; IIIF images)" + MetCollection.Museum
   val role = MediaCollection.Object
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.ArtInstituteCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.ArtInstituteCollection.SearchResultPart2Part1, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.ArtInstituteCollection.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
     http
       .askJson(ArtInstituteCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(ArtInstituteCollection.records(_, conf.imageUrl, conf.displayPx, thumbPx))
 
 object ArtInstituteCollection:
+  type ImageId = ImageId.T
+  object ImageId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type ThumbPx = ThumbPx.T
   object ThumbPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SearchResultPart1 = SearchResultPart1.T
-  object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchResultPart2Part1 = SearchResultPart2Part1.T
-  object SearchResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Fields = FieldsValue
   type FieldsValue = FieldsValue.T
   object FieldsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlResult = SearchUrlResult.T
-  object SearchUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlApi = SearchUrlApi.T
-  object SearchUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlName = SearchUrlName.T
-  object SearchUrlName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchUrlLimit = SearchUrlLimit.T
   object SearchUrlLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImageUrlResult = ImageUrlResult.T
-  object ImageUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImageUrlIiif = ImageUrlIiif.T
-  object ImageUrlIiif extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImageUrlImageId = ImageUrlImageId.T
-  object ImageUrlImageId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ImageUrlWidth = ImageUrlWidth.T
   object ImageUrlWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsResultPart1 = RecordsResultPart1.T
-  object RecordsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsResultPart2Part1 = RecordsResultPart2Part1.T
-  object RecordsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsIiif = _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif
-  val RecordsIiif: _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif.type = _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif
-  type RecordsDisplayPx = _root_.com.histmersion.plugins.media.ArtInstituteCollection.RecordDisplayPx
-  val RecordsDisplayPx: _root_.com.histmersion.plugins.media.ArtInstituteCollection.RecordDisplayPx.type = _root_.com.histmersion.plugins.media.ArtInstituteCollection.RecordDisplayPx
-  type RecordsThumbPx = _root_.com.histmersion.plugins.media.ArtInstituteCollection.RecordThumbPx
-  val RecordsThumbPx: _root_.com.histmersion.plugins.media.ArtInstituteCollection.RecordThumbPx.type = _root_.com.histmersion.plugins.media.ArtInstituteCollection.RecordThumbPx
-  type RecordResultPart1 = RecordResultPart1.T
-  object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordIiif = _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif
-  val RecordIiif: _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif.type = _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif
-  type RecordDisplayPx = RecordDisplayPx.T
-  object RecordDisplayPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordThumbPx = RecordThumbPx.T
-  object RecordThumbPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsIiif = _root_.com.histmersion.plugin.Plugin.Http.GetUrl
+  val RecordsIiif: _root_.com.histmersion.plugin.Plugin.Http.GetUrl.type = _root_.com.histmersion.plugin.Plugin.Http.GetUrl
+  type RecordsDisplayPx = _root_.com.histmersion.plugins.media.CollectionSettings.DisplayPx
+  val RecordsDisplayPx: _root_.com.histmersion.plugins.media.CollectionSettings.DisplayPx.type = _root_.com.histmersion.plugins.media.CollectionSettings.DisplayPx
+  type RecordsThumbPx = _root_.com.histmersion.plugins.media.ArtInstituteCollection.ThumbPx
+  val RecordsThumbPx: _root_.com.histmersion.plugins.media.ArtInstituteCollection.ThumbPx.type = _root_.com.histmersion.plugins.media.ArtInstituteCollection.ThumbPx
+  type RecordIiif = _root_.com.histmersion.plugin.Plugin.Http.GetUrl
+  val RecordIiif: _root_.com.histmersion.plugin.Plugin.Http.GetUrl.type = _root_.com.histmersion.plugin.Plugin.Http.GetUrl
 
   val Fields: com.histmersion.plugins.media.ArtInstituteCollection.Fields = List(
     "id",
@@ -78,19 +56,19 @@ object ArtInstituteCollection:
     "credit_line"
   ).mkString(",")
 
-  def searchUrl(api: com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlApi, name: com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlName, limit: com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlLimit): com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlResult =
+  def searchUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, name: com.histmersion.plugin.CollectionQuery.Text, limit: com.histmersion.plugins.media.ArtInstituteCollection.SearchUrlLimit): com.histmersion.plugin.Plugin.Http.GetUrl =
     s"${api.stripSuffix("/")}/artworks/search?q=${name.enc}&limit=${limit.max(1)}&fields=$Fields"
 
-  def imageUrl(iiif: com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif, imageId: com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlImageId, width: com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlWidth): com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlResult =
+  def imageUrl(iiif: com.histmersion.plugin.Plugin.Http.GetUrl, imageId: com.histmersion.plugins.media.ArtInstituteCollection.ImageId, width: com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlWidth): com.histmersion.plugin.Plugin.Http.GetUrl =
     s"${iiif.stripSuffix("/")}/${imageId.enc}/full/${width.max(1)},/0/default.jpg"
 
-  def records(json: Json, iiif: com.histmersion.plugins.media.ArtInstituteCollection.RecordsIiif, displayPx: com.histmersion.plugins.media.ArtInstituteCollection.RecordsDisplayPx, thumbPx: com.histmersion.plugins.media.ArtInstituteCollection.RecordsThumbPx): Either[com.histmersion.plugins.media.ArtInstituteCollection.RecordsResultPart1, List[Either[com.histmersion.plugins.media.ArtInstituteCollection.RecordsResultPart2Part1, MediaItem]]] =
+  def records(json: Json, iiif: com.histmersion.plugins.media.ArtInstituteCollection.RecordsIiif, displayPx: com.histmersion.plugins.media.ArtInstituteCollection.RecordsDisplayPx, thumbPx: com.histmersion.plugins.media.ArtInstituteCollection.RecordsThumbPx): Either[com.histmersion.plugins.media.ArtInstituteCollection.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
     val c = json.hcursor
     c.downField("data").focus.flatMap(_.asArray) match
       case None       => Left(c.str("detail").orElse(c.str("error")).getOrElse("no data in the answer"))
       case Some(rows) => Right(rows.toList.map(r => record(r, iiif, displayPx, thumbPx)))
 
-  def record(json: Json, iiif: com.histmersion.plugins.media.ArtInstituteCollection.RecordIiif, displayPx: com.histmersion.plugins.media.ArtInstituteCollection.RecordDisplayPx, thumbPx: com.histmersion.plugins.media.ArtInstituteCollection.RecordThumbPx): Either[com.histmersion.plugins.media.ArtInstituteCollection.RecordResultPart1, MediaItem] =
+  def record(json: Json, iiif: com.histmersion.plugins.media.ArtInstituteCollection.RecordIiif, displayPx: com.histmersion.plugins.media.CollectionSettings.DisplayPx, thumbPx: com.histmersion.plugins.media.ArtInstituteCollection.ThumbPx): Either[com.histmersion.plugins.media.ArtInstituteCollection.Problem, MediaItem] =
     val c = json.hcursor
     c.long("id").toRight("no id").map { id =>
       val title = c.str("title").getOrElse(s"Artwork $id")

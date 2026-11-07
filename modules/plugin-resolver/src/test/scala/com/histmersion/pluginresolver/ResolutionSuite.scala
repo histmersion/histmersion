@@ -4,8 +4,8 @@ import java.nio.file.Path
 
 class ResolutionSuite extends munit.FunSuite:
 
-  private def c(s: String): ModuleCoordinates = ModuleCoordinates.parse(_root_.com.histmersion.pluginresolver.ModuleCoordinates.ParseRaw(s)).fold(e => fail((e).value), identity)
-  private def k(s: String): ModuleKey = ModuleKey.parse(_root_.com.histmersion.pluginresolver.ModuleKey.ParseRaw(s)).fold(e => fail((e).value), identity)
+  private def c(s: String): ModuleCoordinates = ModuleCoordinates.parse(_root_.com.histmersion.pluginresolver.ModuleCoordinates.Text(s)).fold(e => fail((e).value), identity)
+  private def k(s: String): ModuleKey = ModuleKey.parse(_root_.com.histmersion.pluginresolver.ModuleKey.Text(s)).fold(e => fail((e).value), identity)
 
   private val server = ServerModules
     .parse(
@@ -98,7 +98,7 @@ class ResolutionSuite extends munit.FunSuite:
 
   test("repository arguments: URLs as given, a directory as its file: URL"):
     assertEquals(
-      RepositoryUrl.fromArgument(_root_.com.histmersion.pluginresolver.RepositoryUrl.FromArgumentRaw("https://repo.example.org/m2")).map(_.value: String),
+      RepositoryUrl.fromArgument(_root_.com.histmersion.pluginresolver.Resolver.Argument("https://repo.example.org/m2")).map(_.value: String),
       Right("https://repo.example.org/m2")
     )
-    assert(RepositoryUrl.fromArgument(_root_.com.histmersion.pluginresolver.RepositoryUrl.FromArgumentRaw("/tmp/repo")).exists(_.value.startsWith("file:/")))
+    assert(RepositoryUrl.fromArgument(_root_.com.histmersion.pluginresolver.Resolver.Argument("/tmp/repo")).exists(_.value.startsWith("file:/")))

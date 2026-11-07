@@ -1,0 +1,217 @@
+## CONCEPTS NEARBY
+com.histmersion.plugins.media.KeyedCollection.Key (String)
+com.histmersion.plugins.media.KeyedCollection.Needs (String)
+com.histmersion.plugins.media.KeyedCollection.Plugin (String)
+com.histmersion.plugins.media.KeyedCollection.Settings (String)
+com.histmersion.plugins.media.KeyedPlugin.Id (String)
+com.histmersion.plugins.media.KeyedPlugin.Name (String)
+com.histmersion.plugins.media.LocCollection.ThumbPx (Int)
+com.histmersion.plugins.media.MediaSettings.DisplayPx (Int)
+com.histmersion.plugins.media.MediaSettings.PerProperty (Int)
+com.histmersion.plugins.media.MediaSettings.RequestIntervalMs (Int)
+com.histmersion.plugins.media.MediaSettings.ThumbPx (Int)
+com.histmersion.plugins.media.MetCollection.GeographyFieldsValue (String)
+com.histmersion.plugins.media.MuseumCollection.Key (String)
+com.histmersion.plugins.media.MuseumCollection.Provider (String)
+com.histmersion.plugins.media.OpenContext.AttributesValue (String)
+com.histmersion.plugins.media.PleiadesLink.Citation (String)
+com.histmersion.plugins.media.PleiadesLink.FilePart1 (String)
+com.histmersion.plugins.media.PleiadesLink.FilePart2 (String)
+com.histmersion.plugins.media.PleiadesLink.Url (String)
+
+## TYPES TO DECIDE
+com.histmersion.plugins.media.KeyedCollection.ApiKeyResult | base String | generated | method-result
+    protected def apiKey: com.histmersion.plugins.media.KeyedCollection.ApiKeyResult = key.getOrElse("")
+com.histmersion.plugins.media.KeyedCollection.DescribedResult | base String | generated | method-result
+    protected def described(text: com.histmersion.plugins.media.KeyedCollection.DescribedText): com.histmersion.plugins.media.KeyedCollection.DescribedResult = text + (if key
+com.histmersion.plugins.media.KeyedCollection.DescribedText | base String | generated | method-parameter
+    protected def described(text: com.histmersion.plugins.media.KeyedCollection.DescribedText): com.histmersion.plugins.media.KeyedCollection.DescribedResult = text + (if key
+com.histmersion.plugins.media.KeyedCollection.ExplainE | base String | generated | method-parameter
+    protected def explain(e: com.histmersion.plugins.media.KeyedCollection.ExplainE): com.histmersion.plugins.media.KeyedCollection.ExplainResult =
+com.histmersion.plugins.media.KeyedCollection.ExplainResult | base String | generated | method-result
+    protected def explain(e: com.histmersion.plugins.media.KeyedCollection.ExplainE): com.histmersion.plugins.media.KeyedCollection.ExplainResult =
+com.histmersion.plugins.media.KeyedCollection.Key | base String | generated | constructor-parameter
+    protected def apiKey: com.histmersion.plugins.media.KeyedCollection.ApiKeyResult = key.getOrElse("")
+com.histmersion.plugins.media.KeyedCollection.Needs | base String | generated | constructor-parameter
+com.histmersion.plugins.media.KeyedCollection.Plugin | base String | generated | constructor-parameter
+com.histmersion.plugins.media.KeyedCollection.Settings | base String | generated | constructor-parameter
+com.histmersion.plugins.media.KeyedPlugin.CollectionKey | base String | generated | method-parameter
+    protected def collection(c: KeyedPlugin.Config, key: Option[com.histmersion.plugins.media.KeyedPlugin.CollectionKey], ctx: Plugin.Context): MediaCollection
+com.histmersion.plugins.media.KeyedPlugin.Id | base String | generated | constructor-parameter
+    abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends MediaPlugin(id):
+com.histmersion.plugins.media.KeyedPlugin.Name | base String | generated | constructor-parameter
+    abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends MediaPlugin(id):
+com.histmersion.plugins.media.KeyedPlugin.RegisterResultPart1 | base String | generated | method-result
+    def register(c: KeyedPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.KeyedPlugin.RegisterResultPart1, Unit] =
+com.histmersion.plugins.media.LocCollection.ExplainE | base String | generated | method-parameter
+    private def explain(e: com.histmersion.plugins.media.LocCollection.ExplainE): com.histmersion.plugins.media.LocCollection.ExplainResult =
+com.histmersion.plugins.media.LocCollection.ExplainResult | base String | generated | method-result
+    private def explain(e: com.histmersion.plugins.media.LocCollection.ExplainE): com.histmersion.plugins.media.LocCollection.ExplainResult =
+com.histmersion.plugins.media.LocCollection.ItemIdResult | base String | generated | method-result
+    def itemId(url: com.histmersion.plugins.media.LocCollection.ItemIdUrl): Option[com.histmersion.plugins.media.LocCollection.ItemIdResult] = url match
+com.histmersion.plugins.media.LocCollection.ItemIdUrl | base String | generated | method-parameter
+    def itemId(url: com.histmersion.plugins.media.LocCollection.ItemIdUrl): Option[com.histmersion.plugins.media.LocCollection.ItemIdResult] = url match
+com.histmersion.plugins.media.LocCollection.ItemUrlBase | base String | generated | method-parameter
+    def itemUrl(base: com.histmersion.plugins.media.LocCollection.ItemUrlBase, id: com.histmersion.plugins.media.LocCollection.ItemUrlId): com.histmersion.plugins.media.LocCo
+com.histmersion.plugins.media.LocCollection.ItemUrlId | base String | generated | method-parameter
+    def itemUrl(base: com.histmersion.plugins.media.LocCollection.ItemUrlBase, id: com.histmersion.plugins.media.LocCollection.ItemUrlId): com.histmersion.plugins.media.LocCo
+com.histmersion.plugins.media.LocCollection.ItemUrlResult | base String | generated | method-result
+    def itemUrl(base: com.histmersion.plugins.media.LocCollection.ItemUrlBase, id: com.histmersion.plugins.media.LocCollection.ItemUrlId): com.histmersion.plugins.media.LocCo
+com.histmersion.plugins.media.LocCollection.RecordBase | base String | generated | method-parameter
+    def record(json: Json, base: com.histmersion.plugins.media.LocCollection.RecordBase, maxYear: com.histmersion.plugins.media.LocCollection.RecordMaxYear, displayPx: com.hi
+com.histmersion.plugins.media.LocCollection.RecordDisplayPx | base Int | generated | method-parameter
+    def record(json: Json, base: com.histmersion.plugins.media.LocCollection.RecordBase, maxYear: com.histmersion.plugins.media.LocCollection.RecordMaxYear, displayPx: com.hi
+com.histmersion.plugins.media.LocCollection.RecordMaxYear | base Int | generated | method-parameter
+    def record(json: Json, base: com.histmersion.plugins.media.LocCollection.RecordBase, maxYear: com.histmersion.plugins.media.LocCollection.RecordMaxYear, displayPx: com.hi
+com.histmersion.plugins.media.LocCollection.RecordResultPart1 | base String | generated | method-result
+    def record(json: Json, base: com.histmersion.plugins.media.LocCollection.RecordBase, maxYear: com.histmersion.plugins.media.LocCollection.RecordMaxYear, displayPx: com.hi
+com.histmersion.plugins.media.LocCollection.RecordThumbPx | base Int | generated | method-parameter
+    def record(json: Json, base: com.histmersion.plugins.media.LocCollection.RecordBase, maxYear: com.histmersion.plugins.media.LocCollection.RecordMaxYear, displayPx: com.hi
+com.histmersion.plugins.media.LocCollection.ResultsResultPart1 | base String | generated | method-result
+    def results(json: Json): Either[com.histmersion.plugins.media.LocCollection.ResultsResultPart1, List[com.histmersion.plugins.media.LocCollection.ResultsResultPart2]] =
+com.histmersion.plugins.media.LocCollection.ResultsResultPart2 | base String | generated | method-result
+    def results(json: Json): Either[com.histmersion.plugins.media.LocCollection.ResultsResultPart1, List[com.histmersion.plugins.media.LocCollection.ResultsResultPart2]] =
+com.histmersion.plugins.media.LocCollection.SearchResultPart1 | base String | generated | method-result
+    def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.LocCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.LocColle
+com.histmersion.plugins.media.LocCollection.SearchResultPart2Part1 | base String | generated | method-result
+    def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.LocCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.LocColle
+com.histmersion.plugins.media.LocCollection.SearchUrlBase | base String | generated | method-parameter
+    def searchUrl(base: com.histmersion.plugins.media.LocCollection.SearchUrlBase, name: com.histmersion.plugins.media.LocCollection.SearchUrlName, limit: com.histmersion.plu
+com.histmersion.plugins.media.LocCollection.SearchUrlLimit | base Int | generated | method-parameter
+    def searchUrl(base: com.histmersion.plugins.media.LocCollection.SearchUrlBase, name: com.histmersion.plugins.media.LocCollection.SearchUrlName, limit: com.histmersion.plu
+com.histmersion.plugins.media.LocCollection.SearchUrlName | base String | generated | method-parameter
+    def searchUrl(base: com.histmersion.plugins.media.LocCollection.SearchUrlBase, name: com.histmersion.plugins.media.LocCollection.SearchUrlName, limit: com.histmersion.plu
+com.histmersion.plugins.media.LocCollection.SearchUrlResult | base String | generated | method-result
+    def searchUrl(base: com.histmersion.plugins.media.LocCollection.SearchUrlBase, name: com.histmersion.plugins.media.LocCollection.SearchUrlName, limit: com.histmersion.plu
+com.histmersion.plugins.media.LocCollection.ThumbPx | base Int | generated | constructor-parameter
+    final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.ThumbPx)
+com.histmersion.plugins.media.LocCollection.YearsOfDate | base String | generated | method-parameter
+    def yearsOf(date: com.histmersion.plugins.media.LocCollection.YearsOfDate): Option[Period] =
+com.histmersion.plugins.media.LocPlugin.RegisterResultPart1 | base String | generated | method-result
+    def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.LocPlugin.RegisterResultPart1, Unit] =
+com.histmersion.plugins.media.MediaSettings.DisplayPx | base Int | original | constructor-parameter
+com.histmersion.plugins.media.MediaSettings.PerProperty | base Int | original | constructor-parameter
+com.histmersion.plugins.media.MediaSettings.RequestIntervalMs | base Int | original | constructor-parameter
+com.histmersion.plugins.media.MediaSettings.ThumbPx | base Int | original | constructor-parameter
+com.histmersion.plugins.media.MetCollection.GeographyFieldsValue | base String | original | alias
+com.histmersion.plugins.media.MetCollection.IdsResultPart1 | base String | generated | method-result
+    def ids(json: Json): Either[com.histmersion.plugins.media.MetCollection.IdsResultPart1, List[com.histmersion.plugins.media.MetCollection.IdsResultPart2]] =
+com.histmersion.plugins.media.MetCollection.IdsResultPart2 | base Long | generated | method-result
+    def ids(json: Json): Either[com.histmersion.plugins.media.MetCollection.IdsResultPart1, List[com.histmersion.plugins.media.MetCollection.IdsResultPart2]] =
+com.histmersion.plugins.media.MetCollection.ObjectUrlApi | base String | generated | method-parameter
+    def objectUrl(api: com.histmersion.plugins.media.MetCollection.ObjectUrlApi, id: com.histmersion.plugins.media.MetCollection.ObjectUrlId): com.histmersion.plugins.media.M
+com.histmersion.plugins.media.MetCollection.ObjectUrlId | base Long | generated | method-parameter
+    def objectUrl(api: com.histmersion.plugins.media.MetCollection.ObjectUrlApi, id: com.histmersion.plugins.media.MetCollection.ObjectUrlId): com.histmersion.plugins.media.M
+com.histmersion.plugins.media.MetCollection.ObjectUrlResult | base String | generated | method-result
+    def objectUrl(api: com.histmersion.plugins.media.MetCollection.ObjectUrlApi, id: com.histmersion.plugins.media.MetCollection.ObjectUrlId): com.histmersion.plugins.media.M
+com.histmersion.plugins.media.MetCollection.RecordResultPart1 | base String | generated | method-result
+    def record(json: Json): Either[com.histmersion.plugins.media.MetCollection.RecordResultPart1, MediaItem] =
+com.histmersion.plugins.media.MetCollection.SearchResultPart1 | base String | generated | method-result
+    def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.MetCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.MetColle
+com.histmersion.plugins.media.MetCollection.SearchResultPart2Part1 | base String | generated | method-result
+    def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.MetCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.MetColle
+com.histmersion.plugins.media.MetCollection.SearchUrlApi | base String | generated | method-parameter
+    def searchUrl(api: com.histmersion.plugins.media.MetCollection.SearchUrlApi, name: com.histmersion.plugins.media.MetCollection.SearchUrlName, limit: com.histmersion.plugi
+com.histmersion.plugins.media.MetCollection.SearchUrlLimit | base Int | generated | method-parameter
+    def searchUrl(api: com.histmersion.plugins.media.MetCollection.SearchUrlApi, name: com.histmersion.plugins.media.MetCollection.SearchUrlName, limit: com.histmersion.plugi
+com.histmersion.plugins.media.MetCollection.SearchUrlName | base String | generated | method-parameter
+    def searchUrl(api: com.histmersion.plugins.media.MetCollection.SearchUrlApi, name: com.histmersion.plugins.media.MetCollection.SearchUrlName, limit: com.histmersion.plugi
+com.histmersion.plugins.media.MetCollection.SearchUrlResult | base String | generated | method-result
+    def searchUrl(api: com.histmersion.plugins.media.MetCollection.SearchUrlApi, name: com.histmersion.plugins.media.MetCollection.SearchUrlName, limit: com.histmersion.plugi
+com.histmersion.plugins.media.MetCollection.YearAstronomical | base Long | generated | method-parameter
+    def year(astronomical: com.histmersion.plugins.media.MetCollection.YearAstronomical): com.histmersion.plugins.media.MetCollection.YearResult = if astronomical <= 0 then a
+com.histmersion.plugins.media.MetCollection.YearResult | base Long | generated | method-result
+    def year(astronomical: com.histmersion.plugins.media.MetCollection.YearAstronomical): com.histmersion.plugins.media.MetCollection.YearResult = if astronomical <= 0 then a
+com.histmersion.plugins.media.MetPlugin.RegisterResultPart1 | base String | generated | method-result
+    def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.MetPlugin.RegisterResultPart1, Unit] =
+com.histmersion.plugins.media.MuseumCollection.Key | base String | generated | constructor-parameter
+    abstract class MuseumCollection(conf: CollectionSettings, provider: MuseumCollection.Provider, key: MuseumCollection.Key) extends MediaCollection:
+com.histmersion.plugins.media.MuseumCollection.Provider | base String | generated | constructor-parameter
+    abstract class MuseumCollection(conf: CollectionSettings, provider: MuseumCollection.Provider, key: MuseumCollection.Key) extends MediaCollection:
+com.histmersion.plugins.media.OpenContext.AttributesValue | base String | original | alias
+com.histmersion.plugins.media.OpenContext.CreditCite | base String | generated | method-parameter
+com.histmersion.plugins.media.OpenContext.CreditContext | base String | generated | method-parameter
+com.histmersion.plugins.media.OpenContext.CreditCreators | base String | generated | method-parameter
+com.histmersion.plugins.media.OpenContext.CreditLicence | base String | generated | method-parameter
+com.histmersion.plugins.media.OpenContext.CreditProject | base String | generated | method-parameter
+com.histmersion.plugins.media.OpenContext.CreditResult | base String | generated | method-result
+com.histmersion.plugins.media.OpenContext.CreditTitle | base String | generated | method-parameter
+com.histmersion.plugins.media.OpenContext.CreditYear | base String | generated | method-parameter
+com.histmersion.plugins.media.OpenContext.ItemFileT | base String | generated | method-parameter
+    def file(t: com.histmersion.plugins.media.OpenContext.ItemFileT) = files.find(_._1 == t).map(_._2)
+com.histmersion.plugins.media.OpenContext.ItemResultPart1 | base String | generated | method-result
+    def item(json: Json, rec: MediaItem, licences: LicenceReader): Either[com.histmersion.plugins.media.OpenContext.ItemResultPart1, MediaItem] =
+com.histmersion.plugins.media.OpenContext.ItemUrlApi | base String | generated | method-parameter
+    def itemUrl(api: com.histmersion.plugins.media.OpenContext.ItemUrlApi, uuid: com.histmersion.plugins.media.OpenContext.ItemUrlUuid): com.histmersion.plugins.media.OpenCon
+com.histmersion.plugins.media.OpenContext.ItemUrlResult | base String | generated | method-result
+    def itemUrl(api: com.histmersion.plugins.media.OpenContext.ItemUrlApi, uuid: com.histmersion.plugins.media.OpenContext.ItemUrlUuid): com.histmersion.plugins.media.OpenCon
+com.histmersion.plugins.media.OpenContext.ItemUrlUuid | base String | generated | method-parameter
+    def itemUrl(api: com.histmersion.plugins.media.OpenContext.ItemUrlApi, uuid: com.histmersion.plugins.media.OpenContext.ItemUrlUuid): com.histmersion.plugins.media.OpenCon
+com.histmersion.plugins.media.OpenContext.NumK | base String | generated | method-parameter
+    private def num(c: ACursor, k: com.histmersion.plugins.media.OpenContext.NumK): Option[com.histmersion.plugins.media.OpenContext.NumResult] =
+com.histmersion.plugins.media.OpenContext.NumResult | base Long | generated | method-result
+    private def num(c: ACursor, k: com.histmersion.plugins.media.OpenContext.NumK): Option[com.histmersion.plugins.media.OpenContext.NumResult] =
+com.histmersion.plugins.media.OpenContext.RecordResultPart1 | base String | generated | method-result
+    def record(json: Json, licences: LicenceReader): Either[com.histmersion.plugins.media.OpenContext.RecordResultPart1, MediaItem] =
+com.histmersion.plugins.media.OpenContext.RecordRightsPart1 | base String | generated | value
+    val rights: Either[com.histmersion.plugins.media.OpenContext.RecordRightsPart1, MediaRights] = licUrl match
+com.histmersion.plugins.media.OpenContext.RecordsResultPart1 | base String | generated | method-result
+    def records(json: Json, licences: LicenceReader): Either[com.histmersion.plugins.media.OpenContext.RecordsResultPart1, List[Either[com.histmersion.plugins.media.OpenConte
+com.histmersion.plugins.media.OpenContext.RecordsResultPart2Part1 | base String | generated | method-result
+    def records(json: Json, licences: LicenceReader): Either[com.histmersion.plugins.media.OpenContext.RecordsResultPart1, List[Either[com.histmersion.plugins.media.OpenConte
+com.histmersion.plugins.media.OpenContext.SearchUrlApi | base String | generated | method-parameter
+    def searchUrl(api: com.histmersion.plugins.media.OpenContext.SearchUrlApi, name: com.histmersion.plugins.media.OpenContext.SearchUrlName, rows: com.histmersion.plugins.me
+com.histmersion.plugins.media.OpenContext.SearchUrlName | base String | generated | method-parameter
+    def searchUrl(api: com.histmersion.plugins.media.OpenContext.SearchUrlApi, name: com.histmersion.plugins.media.OpenContext.SearchUrlName, rows: com.histmersion.plugins.me
+com.histmersion.plugins.media.OpenContext.SearchUrlResult | base String | generated | method-result
+    def searchUrl(api: com.histmersion.plugins.media.OpenContext.SearchUrlApi, name: com.histmersion.plugins.media.OpenContext.SearchUrlName, rows: com.histmersion.plugins.me
+com.histmersion.plugins.media.OpenContext.SearchUrlRows | base Int | generated | method-parameter
+    def searchUrl(api: com.histmersion.plugins.media.OpenContext.SearchUrlApi, name: com.histmersion.plugins.media.OpenContext.SearchUrlName, rows: com.histmersion.plugins.me
+com.histmersion.plugins.media.OpenContext.ShortLicenceId | base String | generated | method-parameter
+    def shortLicence(label: com.histmersion.plugins.media.OpenContext.ShortLicenceLabel, id: com.histmersion.plugins.media.OpenContext.ShortLicenceId): com.histmersion.plugin
+com.histmersion.plugins.media.OpenContext.ShortLicenceLabel | base String | generated | method-parameter
+    def shortLicence(label: com.histmersion.plugins.media.OpenContext.ShortLicenceLabel, id: com.histmersion.plugins.media.OpenContext.ShortLicenceId): com.histmersion.plugin
+com.histmersion.plugins.media.OpenContext.ShortLicenceResult | base String | generated | method-result
+    def shortLicence(label: com.histmersion.plugins.media.OpenContext.ShortLicenceLabel, id: com.histmersion.plugins.media.OpenContext.ShortLicenceId): com.histmersion.plugin
+com.histmersion.plugins.media.OpenContext.UnitSegmentResult | base Boolean | generated | method-result
+    def unitSegment(seg: com.histmersion.plugins.media.OpenContext.UnitSegmentSeg): com.histmersion.plugins.media.OpenContext.UnitSegmentResult =
+com.histmersion.plugins.media.OpenContext.UnitSegmentSeg | base String | generated | method-parameter
+    def unitSegment(seg: com.histmersion.plugins.media.OpenContext.UnitSegmentSeg): com.histmersion.plugins.media.OpenContext.UnitSegmentResult =
+com.histmersion.plugins.media.OpenContext.UuidOfResult | base String | generated | method-result
+    def uuidOf(uri: com.histmersion.plugins.media.OpenContext.UuidOfUri): Option[com.histmersion.plugins.media.OpenContext.UuidOfResult] = uri.trim match
+com.histmersion.plugins.media.OpenContext.UuidOfUri | base String | generated | method-parameter
+    def uuidOf(uri: com.histmersion.plugins.media.OpenContext.UuidOfUri): Option[com.histmersion.plugins.media.OpenContext.UuidOfResult] = uri.trim match
+com.histmersion.plugins.media.OpenContextCollection.SearchResultPart1 | base String | generated | method-result
+    def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.OpenContextCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.
+com.histmersion.plugins.media.OpenContextCollection.SearchResultPart2Part1 | base String | generated | method-result
+    def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.OpenContextCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.
+com.histmersion.plugins.media.OpenContextPlugin.RegisterResultPart1 | base String | generated | method-result
+    def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.OpenContextPlugin.RegisterResultPart1, Unit] =
+com.histmersion.plugins.media.PleiadesLink.Citation | base String | original | constructor-parameter
+    final case class PleiadesLink(url: PleiadesLink.Url, citation: PleiadesLink.Citation, file: Either[PleiadesLink.FilePart1, PleiadesLink.FilePart2])
+com.histmersion.plugins.media.PleiadesLink.FilePart1 | base String | original | constructor-parameter
+    final case class PleiadesLink(url: PleiadesLink.Url, citation: PleiadesLink.Citation, file: Either[PleiadesLink.FilePart1, PleiadesLink.FilePart2])
+com.histmersion.plugins.media.PleiadesLink.FilePart2 | base String | original | constructor-parameter
+    final case class PleiadesLink(url: PleiadesLink.Url, citation: PleiadesLink.Citation, file: Either[PleiadesLink.FilePart1, PleiadesLink.FilePart2])
+com.histmersion.plugins.media.PleiadesLink.Url | base String | original | constructor-parameter
+    final case class PleiadesLink(url: PleiadesLink.Url, citation: PleiadesLink.Citation, file: Either[PleiadesLink.FilePart1, PleiadesLink.FilePart2])
+com.histmersion.plugins.media.PleiadesLinks.ClassifyResultPart1 | base String | generated | method-result
+    def classify(url: com.histmersion.plugins.media.PleiadesLinks.ClassifyUrl): Option[Either[com.histmersion.plugins.media.PleiadesLinks.ClassifyResultPart1, com.histmersion
+com.histmersion.plugins.media.PleiadesLinks.ClassifyResultPart2 | base String | generated | method-result
+    def classify(url: com.histmersion.plugins.media.PleiadesLinks.ClassifyUrl): Option[Either[com.histmersion.plugins.media.PleiadesLinks.ClassifyResultPart1, com.histmersion
+com.histmersion.plugins.media.PleiadesLinks.ClassifyUrl | base String | generated | method-parameter
+    def classify(url: com.histmersion.plugins.media.PleiadesLinks.ClassifyUrl): Option[Either[com.histmersion.plugins.media.PleiadesLinks.ClassifyResultPart1, com.histmersion
+com.histmersion.plugins.media.PleiadesLinks.DecodeResult | base String | generated | method-result
+    def decode(s: com.histmersion.plugins.media.PleiadesLinks.DecodeS): com.histmersion.plugins.media.PleiadesLinks.DecodeResult =
+com.histmersion.plugins.media.PleiadesLinks.DecodeS | base String | generated | method-parameter
+    def decode(s: com.histmersion.plugins.media.PleiadesLinks.DecodeS): com.histmersion.plugins.media.PleiadesLinks.DecodeResult =
+com.histmersion.plugins.media.PleiadesLinks.LinksResultPart1 | base String | generated | method-result
+    def links(json: Json): Either[com.histmersion.plugins.media.PleiadesLinks.LinksResultPart1, List[PleiadesLink]] =
+com.histmersion.plugins.media.PleiadesLinks.PlaceUrlApi | base String | generated | method-parameter
+    def placeUrl(api: com.histmersion.plugins.media.PleiadesLinks.PlaceUrlApi, id: com.histmersion.plugins.media.PleiadesLinks.PlaceUrlId): com.histmersion.plugins.media.Plei
+com.histmersion.plugins.media.PleiadesLinks.PlaceUrlId | base String | generated | method-parameter
+    def placeUrl(api: com.histmersion.plugins.media.PleiadesLinks.PlaceUrlApi, id: com.histmersion.plugins.media.PleiadesLinks.PlaceUrlId): com.histmersion.plugins.media.Plei
+com.histmersion.plugins.media.PleiadesLinks.PlaceUrlResult | base String | generated | method-result
+    def placeUrl(api: com.histmersion.plugins.media.PleiadesLinks.PlaceUrlApi, id: com.histmersion.plugins.media.PleiadesLinks.PlaceUrlId): com.histmersion.plugins.media.Plei
+com.histmersion.plugins.media.PleiadesPlugin.RegisterResultPart1 | base String | generated | method-result
+    def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.PleiadesPlugin.RegisterResultPart1, Unit] =

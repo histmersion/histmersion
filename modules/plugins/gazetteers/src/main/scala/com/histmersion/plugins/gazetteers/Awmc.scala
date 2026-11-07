@@ -13,19 +13,13 @@ import io.circe.{Json, JsonObject}
   * match to sites with real geometry.
   */
 object Awmc extends DownloadedGazetteer:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ReadResultPart1 = ReadResultPart1.T
-  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadText = ReadText.T
-  object ReadText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadFeatureResultPart1 = ReadFeatureResultPart1.T
-  object ReadFeatureResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadFeatureOrdinal = ReadFeatureOrdinal.T
   object ReadFeatureOrdinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindOfResult = KindOfResult.T
-  object KindOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindOfPType = KindOfPType.T
-  object KindOfPType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val title = "AWMC classical-world regional names and features"
   override val description = "AWMC classical-world regional names and features (ODbL, ~2600 features)"
@@ -37,7 +31,7 @@ object Awmc extends DownloadedGazetteer:
     Some("https://opendatacommons.org/licenses/odbl/1-0/")
   )
 
-  def read(text: com.histmersion.plugins.gazetteers.Awmc.ReadText): Either[com.histmersion.plugins.gazetteers.Awmc.ReadResultPart1, List[GazetteerPlace]] =
+  def read(text: com.histmersion.plugins.gazetteers.Awmc.Text): Either[com.histmersion.plugins.gazetteers.Awmc.Problem, List[GazetteerPlace]] =
     io.circe.parser.parse(text).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
       val features = doc.asObject
         .flatMap(_("features"))
@@ -48,7 +42,7 @@ object Awmc extends DownloadedGazetteer:
       features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, i).toOption))
     }
 
-  def readFeature(j: Json, ordinal: com.histmersion.plugins.gazetteers.Awmc.ReadFeatureOrdinal): Either[com.histmersion.plugins.gazetteers.Awmc.ReadFeatureResultPart1, GazetteerPlace] =
+  def readFeature(j: Json, ordinal: com.histmersion.plugins.gazetteers.Awmc.ReadFeatureOrdinal): Either[com.histmersion.plugins.gazetteers.Awmc.Problem, GazetteerPlace] =
     j.asObject.toRight(s"feature #$ordinal is not a JSON object").flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
       val title = str(props, "TITLE", "title", "name", "NAME").getOrElse("")
@@ -81,7 +75,7 @@ object Awmc extends DownloadedGazetteer:
   /** The map's kind of an AWMC type: a mountain, plain, island or labelled feature is a `feature`, anything else a
     * `region`.
     */
-  def kindOf(pType: com.histmersion.plugins.gazetteers.Awmc.KindOfPType): com.histmersion.plugins.gazetteers.Awmc.KindOfResult = pType.toLowerCase match
+  def kindOf(pType: com.histmersion.plugin.GazetteerPlace.Kind): com.histmersion.plugin.GazetteerPlace.Kind = pType.toLowerCase match
     case "region"                        => "region"
     case "people, tribe" | "people"      => "region"
     case "mountain" | "plain" | "island" => "feature"

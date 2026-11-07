@@ -1,0 +1,7 @@
+com.histmersion.plugins.fetchers.ArchiveOrgCollection.RowsValue	Int
+com.histmersion.plugins.fetchers.ByDoi.CopyArg2	String
+com.histmersion.plugins.fetchers.ByDoi.Step	String
+com.histmersion.plugins.fetchers.OaRecords.Doi	String
+com.histmersion.plugins.fetchers.Pmc.PmcLookup.Doi	String
+com.histmersion.plugins.fetchers.UnpaywallConfig.ContactEmail	String
+com.histmersion.plugins.fetchers.UnpaywallPeer.ContactEmail	String

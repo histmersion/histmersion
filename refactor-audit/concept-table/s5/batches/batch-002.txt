@@ -1,0 +1,233 @@
+## CONCEPTS NEARBY
+com.histmersion.plugins.ai.AnthropicAnswer.Block.Text.Value (String)
+com.histmersion.plugins.ai.AnthropicAnswer.Body (String)
+com.histmersion.plugins.ai.AnthropicAnswer.Status (Int)
+com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutputValue (String)
+com.histmersion.plugins.ai.ChatAnswer.Body (String)
+com.histmersion.plugins.ai.ChatAnswer.Status (Int)
+com.histmersion.plugins.ai.ChatCompletionsProvider.KeyedPart1 (String)
+com.histmersion.plugins.ai.ChatCompletionsProvider.KeyedPart2 (String)
+com.histmersion.plugins.ai.ChatCompletionsProvider.Name (String)
+com.histmersion.plugins.ai.ChatCompletionsProvider.Title (String)
+com.histmersion.plugins.ai.ProviderSettings.ApiKey (String)
+com.histmersion.plugins.ai.ProviderSettings.BaseUrl (String)
+com.histmersion.plugins.ai.ProviderSettings.StrictTools (Boolean)
+com.histmersion.plugins.ai.ProviderSettings.TimeoutSeconds (Int)
+com.histmersion.plugins.ai.SendFailure.Reported (String)
+com.histmersion.plugins.calibre.AuditFinding.CalibreId (Int)
+com.histmersion.plugins.calibre.AuditFinding.Citekeys (String)
+com.histmersion.plugins.calibre.AuditIssue.Label (String)
+com.histmersion.plugins.calibre.AuditRecord.Authors (String)
+com.histmersion.plugins.calibre.AuditRecord.CalibreId (Int)
+com.histmersion.plugins.calibre.AuditRecord.Citekey (String)
+com.histmersion.plugins.calibre.AuditRecord.Title (String)
+com.histmersion.plugins.calibre.AuditRecord.Year (Int)
+com.histmersion.plugins.vaults.YubiKey.Failure.Next.Why (String)
+com.histmersion.plugins.vaults.YubiKey.Failure.Stop.Why (String)
+com.histmersion.plugins.vaults.YubiKey.Setting.Entries (String)
+com.histmersion.plugins.vaults.YubiKey.Slot.Serial (Long)
+com.histmersion.plugins.vaults.YubiKey.Slot.Value (Int)
+
+## TYPES TO DECIDE
+com.histmersion.plugins.vaults.YubiKey.Failure.Next.Why | base String | generated | constructor-parameter
+    case Next(why: Failure.Next.Why)
+    case Stop(why: Failure.Stop.Why)
+com.histmersion.plugins.vaults.YubiKey.Failure.Stop.Why | base String | generated | constructor-parameter
+    case Next(why: Failure.Next.Why)
+    case Stop(why: Failure.Stop.Why)
+com.histmersion.plugins.vaults.YubiKey.FailureEntry | base String | generated | method-parameter
+    def failure(err: com.histmersion.plugins.vaults.YubiKey.FailureErr, entry: com.histmersion.plugins.vaults.YubiKey.FailureEntry): Failure =
+com.histmersion.plugins.vaults.YubiKey.FailureErr | base String | generated | method-parameter
+    def failure(err: com.histmersion.plugins.vaults.YubiKey.FailureErr, entry: com.histmersion.plugins.vaults.YubiKey.FailureEntry): Failure =
+com.histmersion.plugins.vaults.YubiKey.ParseAllEntries | base String | generated | method-parameter
+    def parseAll(entries: List[com.histmersion.plugins.vaults.YubiKey.ParseAllEntries]): Either[com.histmersion.plugins.vaults.YubiKey.ParseAllResultPart1, List[Slot]] =
+com.histmersion.plugins.vaults.YubiKey.ParseAllResultPart1 | base String | generated | method-result
+    def parseAll(entries: List[com.histmersion.plugins.vaults.YubiKey.ParseAllEntries]): Either[com.histmersion.plugins.vaults.YubiKey.ParseAllResultPart1, List[Slot]] =
+com.histmersion.plugins.vaults.YubiKey.ParseResultPart1 | base String | generated | method-result
+    def parse(text: com.histmersion.plugins.vaults.YubiKey.ParseText): Either[com.histmersion.plugins.vaults.YubiKey.ParseResultPart1, Slot] =
+    case List(s)    => s.toIntOption.filter(Set(1, 2)).map(Slot(_root_.com.histmersion.plugins.vaults.YubiKey.Slot.Value(_), None)).toRight(_root_.com.histmersion.plugins.vau
+com.histmersion.plugins.vaults.YubiKey.ParseText | base String | generated | method-parameter
+    def parse(text: com.histmersion.plugins.vaults.YubiKey.ParseText): Either[com.histmersion.plugins.vaults.YubiKey.ParseResultPart1, Slot] =
+com.histmersion.plugins.vaults.YubiKey.PlanConnected | base Long | generated | method-parameter
+    def plan(entries: List[Slot], connected: Option[Set[com.histmersion.plugins.vaults.YubiKey.PlanConnected]], first: Option[Slot] = None): (List[Slot], List[Slot]) =
+com.histmersion.plugins.vaults.YubiKey.ProblemErr | base String | generated | method-parameter
+    def problem(err: com.histmersion.plugins.vaults.YubiKey.ProblemErr): com.histmersion.plugins.vaults.YubiKey.ProblemResult =
+com.histmersion.plugins.vaults.YubiKey.ProblemResult | base String | generated | method-result
+    def problem(err: com.histmersion.plugins.vaults.YubiKey.ProblemErr): com.histmersion.plugins.vaults.YubiKey.ProblemResult =
+com.histmersion.plugins.vaults.YubiKey.SerialsOut | base String | generated | method-parameter
+    def serials(out: com.histmersion.plugins.vaults.YubiKey.SerialsOut): Set[com.histmersion.plugins.vaults.YubiKey.SerialsResult] =
+com.histmersion.plugins.vaults.YubiKey.SerialsResult | base Long | generated | method-result
+    def serials(out: com.histmersion.plugins.vaults.YubiKey.SerialsOut): Set[com.histmersion.plugins.vaults.YubiKey.SerialsResult] =
+com.histmersion.plugins.vaults.YubiKey.Setting.Entries | base String | original | constructor-parameter
+    final case class Setting(entries: List[Setting.Entries])
+com.histmersion.plugins.vaults.YubiKey.Slot.Serial | base Long | original | constructor-parameter
+    final case class Slot(slot: Slot.Value, serial: Option[Slot.Serial]):
+com.histmersion.plugins.vaults.YubiKey.Slot.ShownResult | base String | generated | method-result
+    def shown: com.histmersion.plugins.vaults.YubiKey.Slot.ShownResult = _root_.com.histmersion.plugins.vaults.YubiKey.Slot.ShownResult(serial.fold(slot.toString)(s => s"$slo
+com.histmersion.plugins.vaults.YubiKey.Slot.Value | base Int | original | constructor-parameter
+    final case class Slot(slot: Slot.Value, serial: Option[Slot.Serial]):
+    case List(s)    => s.toIntOption.filter(Set(1, 2)).map(Slot(_root_.com.histmersion.plugins.vaults.YubiKey.Slot.Value(_), None)).toRight(_root_.com.histmersion.plugins.vau
+com.histmersion.plugins.ai.AiHttpPlugin.RegisterResultPart1 | base String | generated | method-result
+    def register(c: HostAi, ctx: Plugin.Context): Either[com.histmersion.plugins.ai.AiHttpPlugin.RegisterResultPart1, Unit] =
+com.histmersion.plugins.ai.AnthropicAnswer.Block.Text.Value | base String | generated | constructor-parameter
+    case Text(text: Block.Text.Value)
+    case Some("text")     => objectAt(c).flatMap(_ => c.downField("text").as[String]).map(Block.Text(_root_.com.histmersion.plugins.ai.AnthropicAnswer.Block.Text.Value(_)))
+com.histmersion.plugins.ai.AnthropicAnswer.Body | base String | original | constructor-parameter
+    final case class AnthropicAnswer(status: AnthropicAnswer.Status, body: AnthropicAnswer.Body):
+com.histmersion.plugins.ai.AnthropicAnswer.Error | base String | generated | value
+    val error: Decoder[com.histmersion.plugins.ai.AnthropicAnswer.Error] = Decoder.instance { c =>
+com.histmersion.plugins.ai.AnthropicAnswer.ErrorDetail | base String | generated | value
+    private val errorDetail: Decoder[com.histmersion.plugins.ai.AnthropicAnswer.ErrorDetail] = Decoder.instance { c =>
+com.histmersion.plugins.ai.AnthropicAnswer.OptionalIntResultPart2 | base Int | generated | method-result
+    private def optionalInt(c: ACursor): Either[DecodingFailure, Option[com.histmersion.plugins.ai.AnthropicAnswer.OptionalIntResultPart2]] = c.as[Option[Int]]
+com.histmersion.plugins.ai.AnthropicAnswer.Status | base Int | original | constructor-parameter
+    final case class AnthropicAnswer(status: AnthropicAnswer.Status, body: AnthropicAnswer.Body):
+com.histmersion.plugins.ai.AnthropicAnswer.TurnResultPart1 | base String | generated | method-result
+    def turn: Either[com.histmersion.plugins.ai.AnthropicAnswer.TurnResultPart1, AiTurn] =
+    case Right(message) => Left(_root_.com.histmersion.plugins.ai.AnthropicAnswer.TurnResultPart1((message).value))
+com.histmersion.plugins.ai.AnthropicProvider.BaseResultPart1 | base String | generated | method-result
+    private def base: Either[com.histmersion.plugins.ai.AnthropicProvider.BaseResultPart1, BaseUrl] =
+com.histmersion.plugins.ai.AnthropicProvider.HeadersKey | base String | generated | method-parameter
+    def headers(key: com.histmersion.plugins.ai.AnthropicProvider.HeadersKey): Map[com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1, com.histmersion.plugins.ai
+com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1 | base String | generated | method-result
+    def headers(key: com.histmersion.plugins.ai.AnthropicProvider.HeadersKey): Map[com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1, com.histmersion.plugins.ai
+    Map({ val refactorTuple = "x-api-key" -> key; (_root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1(refactorTuple._1), _root_.com.histmersion.plugins.ai
+com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2 | base String | generated | method-result
+    def headers(key: com.histmersion.plugins.ai.AnthropicProvider.HeadersKey): Map[com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1, com.histmersion.plugins.ai
+    Map({ val refactorTuple = "x-api-key" -> key; (_root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1(refactorTuple._1), _root_.com.histmersion.plugins.ai
+com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputModel | base String | generated | method-parameter
+    def noStructuredOutput(model: com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputModel): com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputResult
+com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputResult | base String | generated | method-result
+    def noStructuredOutput(model: com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputModel): com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputResult
+com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputModel | base String | generated | method-parameter
+    def structuredOutput(model: com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputModel): com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputResult = _ro
+com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputResult | base Boolean | generated | method-result
+    def structuredOutput(model: com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputModel): com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputResult = _ro
+com.histmersion.plugins.ai.AnthropicProvider.TitleResult | base String | generated | method-result
+    def title: com.histmersion.plugins.ai.AnthropicProvider.TitleResult = _root_.com.histmersion.plugins.ai.AnthropicProvider.TitleResult("Anthropic API")
+com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutputValue | base String | original | alias
+    def structuredOutput(model: com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputModel): com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputResult = _ro
+com.histmersion.plugins.ai.AnthropicRequest.BodyResult | base String | generated | method-result
+    def body: com.histmersion.plugins.ai.AnthropicRequest.BodyResult = _root_.com.histmersion.plugins.ai.AnthropicRequest.BodyResult(json.noSpaces)
+com.histmersion.plugins.ai.AnthropicRequest.MessageRole | base String | generated | method-parameter
+    private def message(role: com.histmersion.plugins.ai.AnthropicRequest.MessageRole, content: List[Json]): Json =
+    case AiMessage.User(t) :: tail                => go(tail, message(_root_.com.histmersion.plugins.ai.AnthropicRequest.MessageRole("user"), List(text(t))) :: acc)
+com.histmersion.plugins.ai.AnthropicRequest.MessagesGoResultPart1 | base String | generated | method-result
+    def go(rest: List[AiMessage], acc: List[Json]): Either[com.histmersion.plugins.ai.AnthropicRequest.MessagesGoResultPart1, List[Json]] = rest match
+com.histmersion.plugins.ai.AnthropicRequest.MessagesResultPart1 | base String | generated | method-result
+    private def messages(ms: List[AiMessage]): Either[com.histmersion.plugins.ai.AnthropicRequest.MessagesResultPart1, List[Json]] =
+com.histmersion.plugins.ai.AnthropicRequest.OfResultPart1 | base String | generated | method-result
+    def of(r: AiTurn.Request): Either[com.histmersion.plugins.ai.AnthropicRequest.OfResultPart1, AnthropicRequest] =
+com.histmersion.plugins.ai.AnthropicRequest.TextT | base String | generated | method-parameter
+    private def text(t: com.histmersion.plugins.ai.AnthropicRequest.TextT): Json = Json.obj("text" -> Json.fromString((t).value), "type" -> Json.fromString("text"))
+com.histmersion.plugins.ai.AnthropicRequest.ToolUsesCallsPart1 | base String | generated | method-parameter
+    private def toolUses(calls: List[(com.histmersion.plugins.ai.AnthropicRequest.ToolUsesCallsPart1, com.histmersion.plugins.ai.AnthropicRequest.ToolUsesCallsPart2, com.hist
+com.histmersion.plugins.ai.AnthropicRequest.ToolUsesCallsPart2 | base String | generated | method-parameter
+    private def toolUses(calls: List[(com.histmersion.plugins.ai.AnthropicRequest.ToolUsesCallsPart1, com.histmersion.plugins.ai.AnthropicRequest.ToolUsesCallsPart2, com.hist
+com.histmersion.plugins.ai.AnthropicRequest.ToolUsesCallsPart3 | base String | generated | method-parameter
+    private def toolUses(calls: List[(com.histmersion.plugins.ai.AnthropicRequest.ToolUsesCallsPart1, com.histmersion.plugins.ai.AnthropicRequest.ToolUsesCallsPart2, com.hist
+com.histmersion.plugins.ai.AnthropicRequest.ToolUsesResultPart1 | base String | generated | method-result
+    private def toolUses(calls: List[(com.histmersion.plugins.ai.AnthropicRequest.ToolUsesCallsPart1, com.histmersion.plugins.ai.AnthropicRequest.ToolUsesCallsPart2, com.hist
+    case Left(e)  => Left(_root_.com.histmersion.plugins.ai.AnthropicRequest.ToolUsesResultPart1(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
+com.histmersion.plugins.ai.BaseUrl.EndpointResult | base String | generated | method-result
+    def endpoint(segments: String*): com.histmersion.plugins.ai.BaseUrl.EndpointResult = _root_.com.histmersion.plugins.ai.BaseUrl.EndpointResult(uri.addPath(segments.toList)
+com.histmersion.plugins.ai.BaseUrl.ParseResultPart1 | base String | generated | method-result
+    def parse(text: com.histmersion.plugins.ai.BaseUrl.ParseText, setting: com.histmersion.plugins.ai.BaseUrl.ParseSetting): Either[com.histmersion.plugins.ai.BaseUrl.ParseRe
+com.histmersion.plugins.ai.BaseUrl.ParseSetting | base String | generated | method-parameter
+    def parse(text: com.histmersion.plugins.ai.BaseUrl.ParseText, setting: com.histmersion.plugins.ai.BaseUrl.ParseSetting): Either[com.histmersion.plugins.ai.BaseUrl.ParseRe
+com.histmersion.plugins.ai.BaseUrl.ParseText | base String | generated | method-parameter
+    def parse(text: com.histmersion.plugins.ai.BaseUrl.ParseText, setting: com.histmersion.plugins.ai.BaseUrl.ParseSetting): Either[com.histmersion.plugins.ai.BaseUrl.ParseRe
+com.histmersion.plugins.ai.ChatAnswer.Body | base String | original | constructor-parameter
+    final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
+com.histmersion.plugins.ai.ChatAnswer.ChoicePart1 | base String | generated | value
+    private val choice: Decoder[(com.histmersion.plugins.ai.ChatAnswer.ChoicePart1, List[AiTool.Call], com.histmersion.plugins.ai.ChatAnswer.ChoicePart3)] = product { c =>
+com.histmersion.plugins.ai.ChatAnswer.ChoicePart3 | base String | generated | value
+    private val choice: Decoder[(com.histmersion.plugins.ai.ChatAnswer.ChoicePart1, List[AiTool.Call], com.histmersion.plugins.ai.ChatAnswer.ChoicePart3)] = product { c =>
+com.histmersion.plugins.ai.ChatAnswer.Error | base String | generated | value
+    private val error: Decoder[Option[com.histmersion.plugins.ai.ChatAnswer.Error]] = Decoder.instance { c =>
+com.histmersion.plugins.ai.ChatAnswer.ErrorMessageBody | base String | generated | method-parameter
+    def errorMessage(status: com.histmersion.plugins.ai.ChatAnswer.ErrorMessageStatus, body: com.histmersion.plugins.ai.ChatAnswer.ErrorMessageBody): com.histmersion.plugins.
+com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult | base String | generated | method-result
+    def errorMessage(status: com.histmersion.plugins.ai.ChatAnswer.ErrorMessageStatus, body: com.histmersion.plugins.ai.ChatAnswer.ErrorMessageBody): com.histmersion.plugins.
+    case Right(Some(message)) => _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult((message).value)
+com.histmersion.plugins.ai.ChatAnswer.ErrorMessageStatus | base Int | generated | method-parameter
+    def errorMessage(status: com.histmersion.plugins.ai.ChatAnswer.ErrorMessageStatus, body: com.histmersion.plugins.ai.ChatAnswer.ErrorMessageBody): com.histmersion.plugins.
+com.histmersion.plugins.ai.ChatAnswer.FunctionPart1 | base String | generated | value
+    private val function: Decoder[(com.histmersion.plugins.ai.ChatAnswer.FunctionPart1, Option[com.histmersion.plugins.ai.ChatAnswer.FunctionPart2])] = product { c =>
+com.histmersion.plugins.ai.ChatAnswer.FunctionPart2 | base String | generated | value
+    private val function: Decoder[(com.histmersion.plugins.ai.ChatAnswer.FunctionPart1, Option[com.histmersion.plugins.ai.ChatAnswer.FunctionPart2])] = product { c =>
+com.histmersion.plugins.ai.ChatAnswer.MessagePart1 | base String | generated | value
+    private val message: Decoder[(com.histmersion.plugins.ai.ChatAnswer.MessagePart1, List[AiTool.Call])] = product { c =>
+com.histmersion.plugins.ai.ChatAnswer.Status | base Int | original | constructor-parameter
+    final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
+com.histmersion.plugins.ai.ChatAnswer.ToolCallPart1 | base String | generated | value
+    private val toolCall: Decoder[(Option[com.histmersion.plugins.ai.ChatAnswer.ToolCallPart1], (com.histmersion.plugins.ai.ChatAnswer.ToolCallPart2Part1, Option[com.histmers
+    yield ((id).map(refactorValue3 => _root_.com.histmersion.plugins.ai.ChatAnswer.ToolCallPart1(refactorValue3)), { val refactorTuple = f; (_root_.com.histmersion.plugins.ai
+com.histmersion.plugins.ai.ChatAnswer.ToolCallPart2Part1 | base String | generated | value
+    private val toolCall: Decoder[(Option[com.histmersion.plugins.ai.ChatAnswer.ToolCallPart1], (com.histmersion.plugins.ai.ChatAnswer.ToolCallPart2Part1, Option[com.histmers
+    yield ((id).map(refactorValue3 => _root_.com.histmersion.plugins.ai.ChatAnswer.ToolCallPart1(refactorValue3)), { val refactorTuple = f; (_root_.com.histmersion.plugins.ai
+com.histmersion.plugins.ai.ChatAnswer.ToolCallPart2Part2 | base String | generated | value
+    private val toolCall: Decoder[(Option[com.histmersion.plugins.ai.ChatAnswer.ToolCallPart1], (com.histmersion.plugins.ai.ChatAnswer.ToolCallPart2Part1, Option[com.histmers
+    yield ((id).map(refactorValue3 => _root_.com.histmersion.plugins.ai.ChatAnswer.ToolCallPart1(refactorValue3)), { val refactorTuple = f; (_root_.com.histmersion.plugins.ai
+com.histmersion.plugins.ai.ChatAnswer.TurnResultPart1 | base String | generated | method-result
+    def turn: Either[com.histmersion.plugins.ai.ChatAnswer.TurnResultPart1, AiTurn] =
+com.histmersion.plugins.ai.ChatCompletionsProvider.BaseResultPart1 | base String | generated | method-result
+    private def base: Either[com.histmersion.plugins.ai.ChatCompletionsProvider.BaseResultPart1, BaseUrl] = BaseUrl.parse(settings.baseUrl, _root_.com.histmersion.plugins.ai.
+com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersKey | base String | generated | method-parameter
+    def headers(key: com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersKey): Map[com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart1, com.histmersio
+com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart1 | base String | generated | method-result
+    def headers(key: com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersKey): Map[com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart1, com.histmersio
+    Map({ val refactorTuple = "Authorization" -> s"Bearer $key"; (_root_.com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart1(refactorTuple._1), _root_.com.h
+com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart2 | base String | generated | method-result
+    def headers(key: com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersKey): Map[com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart1, com.histmersio
+    Map({ val refactorTuple = "Authorization" -> s"Bearer $key"; (_root_.com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart1(refactorTuple._1), _root_.com.h
+com.histmersion.plugins.ai.ChatCompletionsProvider.KeyResult | base String | generated | method-result
+    private def key: com.histmersion.plugins.ai.ChatCompletionsProvider.KeyResult = if settings.apiKey.isEmpty then _root_.com.histmersion.plugins.ai.ChatCompletionsProvider.
+com.histmersion.plugins.ai.ChatCompletionsProvider.KeyedPart1 | base String | generated | constructor-parameter
+com.histmersion.plugins.ai.ChatCompletionsProvider.KeyedPart2 | base String | generated | constructor-parameter
+com.histmersion.plugins.ai.ChatCompletionsProvider.Name | base String | generated | constructor-parameter
+com.histmersion.plugins.ai.ChatCompletionsProvider.Title | base String | generated | constructor-parameter
+    val title: ChatCompletionsProvider.Title,
+com.histmersion.plugins.ai.ChatRequest.BodyResult | base String | generated | method-result
+    def body: com.histmersion.plugins.ai.ChatRequest.BodyResult = _root_.com.histmersion.plugins.ai.ChatRequest.BodyResult(json.noSpaces)
+com.histmersion.plugins.ai.ProviderSettings.ApiKey | base String | original | constructor-parameter
+    final case class ProviderSettings(baseUrl: ProviderSettings.BaseUrl, apiKey: ProviderSettings.ApiKey, strictTools: ProviderSettings.StrictTools, timeoutSeconds: ProviderS
+com.histmersion.plugins.ai.ProviderSettings.BaseUrl | base String | original | constructor-parameter
+    final case class ProviderSettings(baseUrl: ProviderSettings.BaseUrl, apiKey: ProviderSettings.ApiKey, strictTools: ProviderSettings.StrictTools, timeoutSeconds: ProviderS
+com.histmersion.plugins.ai.ProviderSettings.StrictTools | base Boolean | original | alias,constructor-parameter
+    final case class ProviderSettings(baseUrl: ProviderSettings.BaseUrl, apiKey: ProviderSettings.ApiKey, strictTools: ProviderSettings.StrictTools, timeoutSeconds: ProviderS
+com.histmersion.plugins.ai.ProviderSettings.TimeoutSeconds | base Int | original | constructor-parameter
+    final case class ProviderSettings(baseUrl: ProviderSettings.BaseUrl, apiKey: ProviderSettings.ApiKey, strictTools: ProviderSettings.StrictTools, timeoutSeconds: ProviderS
+com.histmersion.plugins.ai.SchemaJson.ShapedElsewhereResult | base Boolean | generated | method-result
+    private def shapedElsewhere(obj: JsonObject): com.histmersion.plugins.ai.SchemaJson.ShapedElsewhereResult =
+com.histmersion.plugins.ai.SendFailure.DescribeMethod | base String | generated | method-parameter
+    def describe(method: com.histmersion.plugins.ai.SendFailure.DescribeMethod, url: com.histmersion.plugins.ai.SendFailure.DescribeUrl): com.histmersion.plugins.ai.SendFailu
+com.histmersion.plugins.ai.SendFailure.DescribeResult | base String | generated | method-result
+    def describe(method: com.histmersion.plugins.ai.SendFailure.DescribeMethod, url: com.histmersion.plugins.ai.SendFailure.DescribeUrl): com.histmersion.plugins.ai.SendFailu
+com.histmersion.plugins.ai.SendFailure.DescribeUrl | base String | generated | method-parameter
+    def describe(method: com.histmersion.plugins.ai.SendFailure.DescribeMethod, url: com.histmersion.plugins.ai.SendFailure.DescribeUrl): com.histmersion.plugins.ai.SendFailu
+com.histmersion.plugins.ai.SendFailure.ExceptionResult | base String | generated | method-result
+    def exception: com.histmersion.plugins.ai.SendFailure.ExceptionResult = _root_.com.histmersion.plugins.ai.SendFailure.ExceptionResult((reported).value.takeWhile(_ != ':')
+com.histmersion.plugins.ai.SendFailure.KindException | base String | generated | method-parameter
+    def kind(exception: com.histmersion.plugins.ai.SendFailure.KindException): Option[com.histmersion.plugins.ai.SendFailure.KindResult] =
+com.histmersion.plugins.ai.SendFailure.KindResult | base String | generated | method-result
+    def kind(exception: com.histmersion.plugins.ai.SendFailure.KindException): Option[com.histmersion.plugins.ai.SendFailure.KindResult] =
+com.histmersion.plugins.ai.SendFailure.Reported | base String | original | constructor-parameter
+    final case class SendFailure(reported: SendFailure.Reported):
+com.histmersion.plugins.calibre.AuditFinding.CalibreId | base Int | original | constructor-parameter
+com.histmersion.plugins.calibre.AuditFinding.Citekeys | base String | original | constructor-parameter
+com.histmersion.plugins.calibre.AuditFinding.FixableResult | base Boolean | generated | method-result
+    def fixable: com.histmersion.plugins.calibre.AuditFinding.FixableResult = _root_.com.histmersion.plugins.calibre.AuditFinding.FixableResult(!issues.contains(AuditIssue.Mi
+com.histmersion.plugins.calibre.AuditIssue.Label | base String | generated | constructor-parameter
+    enum AuditIssue(val label: AuditIssue.Label):
+    case Missing extends AuditIssue(_root_.com.histmersion.plugins.calibre.AuditIssue.Label("no such Calibre entry"))
+com.histmersion.plugins.calibre.AuditRecord.Authors | base String | original | constructor-parameter
+    final case class AuditRecord(citekey: AuditRecord.Citekey, calibreId: AuditRecord.CalibreId, title: AuditRecord.Title, authors: List[AuditRecord.Authors], year: Option[Au
+com.histmersion.plugins.calibre.AuditRecord.CalibreId | base Int | original | constructor-parameter
+    final case class AuditRecord(citekey: AuditRecord.Citekey, calibreId: AuditRecord.CalibreId, title: AuditRecord.Title, authors: List[AuditRecord.Authors], year: Option[Au
+com.histmersion.plugins.calibre.AuditRecord.Citekey | base String | original | constructor-parameter
+    final case class AuditRecord(citekey: AuditRecord.Citekey, calibreId: AuditRecord.CalibreId, title: AuditRecord.Title, authors: List[AuditRecord.Authors], year: Option[Au
+com.histmersion.plugins.calibre.AuditRecord.Title | base String | original | constructor-parameter
+    final case class AuditRecord(citekey: AuditRecord.Citekey, calibreId: AuditRecord.CalibreId, title: AuditRecord.Title, authors: List[AuditRecord.Authors], year: Option[Au
+com.histmersion.plugins.calibre.AuditRecord.Year | base Int | original | constructor-parameter
+    final case class AuditRecord(citekey: AuditRecord.Citekey, calibreId: AuditRecord.CalibreId, title: AuditRecord.Title, authors: List[AuditRecord.Authors], year: Option[Au

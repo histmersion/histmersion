@@ -11,69 +11,59 @@ import scala.concurrent.duration.*
   * `show -q -a <attribute> <entry>` line on its stdin. What the session prints is read here; all pure.
   */
 object KeePassXcSession:
+  type Answer = Answer.T
+  object Answer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Argument = Argument.T
+  object Argument extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Command = Command.T
+  object Command extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Entry = Entry.T
+  object Entry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EscapedText = EscapedText.T
+  object EscapedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Prompt = Prompt.T
+  object Prompt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Segment = Segment.T
+  object Segment extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: the prompt the session prints once the database is open and after each answer (`<name>> `, the database's
     * name or file name) — the text after the last line break, once stdout ends in `> `.
     */
-  type PromptResult = PromptResult.T
-  object PromptResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PromptOut = PromptOut.T
   object PromptOut extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SendableResult = SendableResult.T
-  object SendableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SendableS = SendableS.T
-  object SendableS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EscapeResult = EscapeResult.T
-  object EscapeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EscapeS = EscapeS.T
-  object EscapeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CommandResult = CommandResult.T
-  object CommandResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CommandAttribute = CommandAttribute.T
-  object CommandAttribute extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CommandEntry = CommandEntry.T
-  object CommandEntry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SegmentResult = SegmentResult.T
-  object SegmentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SegmentOut = SegmentOut.T
   object SegmentOut extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SegmentFrom = SegmentFrom.T
   object SegmentFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SegmentPrompt = SegmentPrompt.T
-  object SegmentPrompt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AnswerResult = AnswerResult.T
-  object AnswerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AnswerSegment = AnswerSegment.T
-  object AnswerSegment extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AnswerCommand = AnswerCommand.T
-  object AnswerCommand extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def prompt(out: com.histmersion.plugins.vaults.KeePassXcSession.PromptOut): Option[com.histmersion.plugins.vaults.KeePassXcSession.PromptResult] =
-    Option.when((out).value.endsWith("> "))(_root_.com.histmersion.plugins.vaults.KeePassXcSession.PromptResult((out).value.substring((out).value.lastIndexOf('\n') + 1)))
+  def prompt(out: com.histmersion.plugins.vaults.KeePassXcSession.PromptOut): Option[com.histmersion.plugins.vaults.KeePassXcSession.Prompt] =
+    Option.when((out).value.endsWith("> "))(_root_.com.histmersion.plugins.vaults.KeePassXcSession.Prompt((out).value.substring((out).value.lastIndexOf('\n') + 1)))
 
   /** Pure: can `s` be sent as one argument of an interactive line? A line break would end the line. */
-  def sendable(s: com.histmersion.plugins.vaults.KeePassXcSession.SendableS): com.histmersion.plugins.vaults.KeePassXcSession.SendableResult = _root_.com.histmersion.plugins.vaults.KeePassXcSession.SendableResult(!(s).value.exists(_.isControl))
+  def sendable(s: com.histmersion.plugin.Processes.Session.SendLine): Boolean = (!(s).value.exists(_.isControl))
 
   /** Pure: an argument for the interactive mode's own splitting, which reads a backslash as "the next character as it
     * is": every space, tab, quote and backslash is escaped.
     */
-  def escape(s: com.histmersion.plugins.vaults.KeePassXcSession.EscapeS): com.histmersion.plugins.vaults.KeePassXcSession.EscapeResult =
-    _root_.com.histmersion.plugins.vaults.KeePassXcSession.EscapeResult((s).value.flatMap(c => if c == ' ' || c == '\t' || c == '"' || c == '\\' then s"\\$c" else c.toString))
+  def escape(s: com.histmersion.plugins.vaults.KeePassXcSession.Text): com.histmersion.plugins.vaults.KeePassXcSession.EscapedText =
+    _root_.com.histmersion.plugins.vaults.KeePassXcSession.EscapedText((s).value.flatMap(c => if c == ' ' || c == '\t' || c == '"' || c == '\\' then s"\\$c" else c.toString))
 
   /** Pure: the line that asks for one attribute of one entry. */
-  def command(attribute: com.histmersion.plugins.vaults.KeePassXcSession.CommandAttribute, entry: com.histmersion.plugins.vaults.KeePassXcSession.CommandEntry): com.histmersion.plugins.vaults.KeePassXcSession.CommandResult = _root_.com.histmersion.plugins.vaults.KeePassXcSession.CommandResult(s"show -q -a ${escape(_root_.com.histmersion.plugins.vaults.KeePassXcSession.EscapeS((attribute).value))} ${escape(_root_.com.histmersion.plugins.vaults.KeePassXcSession.EscapeS((entry).value))}")
+  def command(attribute: com.histmersion.plugins.vaults.KeePassXcConfig.Attribute, entry: com.histmersion.plugins.vaults.KeePassXcSession.Entry): com.histmersion.plugins.vaults.KeePassXcSession.Command = _root_.com.histmersion.plugins.vaults.KeePassXcSession.Command(s"show -q -a ${escape(_root_.com.histmersion.plugins.vaults.KeePassXcSession.Text((attribute).value))} ${escape(_root_.com.histmersion.plugins.vaults.KeePassXcSession.Text((entry).value))}")
 
   /** Pure: what the session printed for the request sent when its output was `from` characters long, once it has
     * printed its prompt again: the text in between (`None` while it has not).
     */
-  def segment(out: com.histmersion.plugins.vaults.KeePassXcSession.SegmentOut, from: com.histmersion.plugins.vaults.KeePassXcSession.SegmentFrom, prompt: com.histmersion.plugins.vaults.KeePassXcSession.SegmentPrompt): Option[com.histmersion.plugins.vaults.KeePassXcSession.SegmentResult] =
+  def segment(out: com.histmersion.plugins.vaults.KeePassXcSession.SegmentOut, from: com.histmersion.plugins.vaults.KeePassXcSession.SegmentFrom, prompt: com.histmersion.plugins.vaults.KeePassXcSession.Prompt): Option[com.histmersion.plugins.vaults.KeePassXcSession.Segment] =
     Option
-      .when((out).value.length >= (from).value + (prompt).value.length && (out).value.endsWith((prompt).value))(_root_.com.histmersion.plugins.vaults.KeePassXcSession.SegmentResult((out).value.substring((from).value, (out).value.length - (prompt).value.length)))
+      .when((out).value.length >= (from).value + (prompt).value.length && (out).value.endsWith((prompt).value))(_root_.com.histmersion.plugins.vaults.KeePassXcSession.Segment((out).value.substring((from).value, (out).value.length - (prompt).value.length)))
 
   /** Pure: the value in a segment — without the echo of the request line (a session reading through readline prints it
     * back) and without the line break the value ends with.
     */
-  def answer(segment: com.histmersion.plugins.vaults.KeePassXcSession.AnswerSegment, command: com.histmersion.plugins.vaults.KeePassXcSession.AnswerCommand): com.histmersion.plugins.vaults.KeePassXcSession.AnswerResult =
+  def answer(segment: com.histmersion.plugins.vaults.KeePassXcSession.Segment, command: com.histmersion.plugins.vaults.KeePassXcSession.Command): com.histmersion.plugins.vaults.KeePassXcSession.Answer =
     val body =
       List((command).value + "\r\n", (command).value + "\n").find((segment).value.startsWith).fold(segment)(e => (segment).value.drop(e.length))
     Subprocess.value(body)

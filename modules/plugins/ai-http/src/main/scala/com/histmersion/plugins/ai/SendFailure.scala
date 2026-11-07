@@ -7,26 +7,20 @@ package com.histmersion.plugins.ai
 final case class SendFailure(reported: SendFailure.Reported):
 
   /** The exception the host's client named. */
-  def exception: com.histmersion.plugins.ai.SendFailure.ExceptionResult = _root_.com.histmersion.plugins.ai.SendFailure.ExceptionResult((reported).value.takeWhile(_ != ':').trim)
+  def exception: com.histmersion.plugins.ai.SendFailure.Problem = _root_.com.histmersion.plugins.ai.SendFailure.Problem((reported).value.takeWhile(_ != ':').trim)
 
   /** The failure of `method` to `url`. */
-  def describe(method: com.histmersion.plugins.ai.SendFailure.DescribeMethod, url: com.histmersion.plugins.ai.SendFailure.DescribeUrl): com.histmersion.plugins.ai.SendFailure.DescribeResult =
-    SendFailure.kind(_root_.com.histmersion.plugins.ai.SendFailure.KindException((exception).value)).fold(reported)(k => s"$k: Exception when sending request: $method $url")
+  def describe(method: com.histmersion.plugins.ai.SendFailure.Method, url: com.histmersion.plugin.AiHttp.GetUrl): com.histmersion.plugins.ai.SendFailure.Problem =
+    SendFailure.kind(_root_.com.histmersion.plugins.ai.SendFailure.Problem((exception).value)).fold(reported)(k => s"$k: Exception when sending request: $method $url")
 
 object SendFailure:
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Method = Method.T
+  object Method extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ExceptionResult = ExceptionResult.T
-  object ExceptionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribeResult = DescribeResult.T
-  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribeMethod = DescribeMethod.T
-  object DescribeMethod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribeUrl = DescribeUrl.T
-  object DescribeUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindResult = KindResult.T
-  object KindResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindException = KindException.T
-  object KindException extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Reported = Reported.T
   object Reported extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -56,8 +50,8 @@ object SendFailure:
   )
 
   /** The kind of transport failure an exception of the host's client is, if it is one. */
-  def kind(exception: com.histmersion.plugins.ai.SendFailure.KindException): Option[com.histmersion.plugins.ai.SendFailure.KindResult] =
-    if Connect((exception).value) then Some(_root_.com.histmersion.plugins.ai.SendFailure.KindResult("ConnectException"))
-    else if Timeout((exception).value) then Some(_root_.com.histmersion.plugins.ai.SendFailure.KindResult("TimeoutException"))
-    else if (exception).value.endsWith("Exception") && !NotTransport((exception).value) then Some(_root_.com.histmersion.plugins.ai.SendFailure.KindResult("ReadException"))
+  def kind(exception: com.histmersion.plugins.ai.SendFailure.Problem): Option[com.histmersion.plugins.ai.SendFailure.Kind] =
+    if Connect((exception).value) then Some(_root_.com.histmersion.plugins.ai.SendFailure.Kind("ConnectException"))
+    else if Timeout((exception).value) then Some(_root_.com.histmersion.plugins.ai.SendFailure.Kind("TimeoutException"))
+    else if (exception).value.endsWith("Exception") && !NotTransport((exception).value) then Some(_root_.com.histmersion.plugins.ai.SendFailure.Kind("ReadException"))
     else None

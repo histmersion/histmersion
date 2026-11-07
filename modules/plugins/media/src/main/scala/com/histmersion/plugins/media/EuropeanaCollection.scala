@@ -26,7 +26,7 @@ final class EuropeanaCollection(conf: CollectionSettings, key: Option[EuropeanaC
   )
   private def headers = Map(Europeana.KeyHeader -> apiKey)
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.EuropeanaCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.EuropeanaCollection.SearchResultPart2Part1, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.EuropeanaCollection.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
     http
       .askJson(Europeana.searchUrl(conf.apiUrl, place.label, conf.candidates, exclusions), headers)
       .flatMap(Europeana.records(_, conf.apiUrl, licences, exclusions))
@@ -41,10 +41,8 @@ final class EuropeanaCollection(conf: CollectionSettings, key: Option[EuropeanaC
       .map(explain)
 
 object EuropeanaCollection:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SearchResultPart1 = SearchResultPart1.T
-  object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchResultPart2Part1 = SearchResultPart2Part1.T
-  object SearchResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

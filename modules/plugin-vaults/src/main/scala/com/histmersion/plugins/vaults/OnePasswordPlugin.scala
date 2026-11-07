@@ -10,7 +10,7 @@ final class OnePasswordPlugin extends Plugin:
   type Config = OnePasswordConfig
   val info = Plugin.Info(_root_.com.histmersion.plugin.Plugin.Info.Id("1password"), _root_.com.histmersion.plugin.Plugin.Info.Version(Vaults.Version), _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version))
 
-  def register(c: OnePasswordConfig, ctx: Plugin.Context): Either[com.histmersion.plugins.vaults.OnePasswordPlugin.RegisterResultPart1, Unit] =
+  def register(c: OnePasswordConfig, ctx: Plugin.Context): Either[com.histmersion.plugins.vaults.OnePasswordPlugin.Problem, Unit] =
     given files: com.histmersion.plugin.LocalFiles = ctx.files
     given processes: com.histmersion.plugin.Processes = ctx.processes
     for
@@ -29,5 +29,5 @@ final class OnePasswordPlugin extends Plugin:
     yield ()
 
 object OnePasswordPlugin:
-  type RegisterResultPart1 = RegisterResultPart1.T
-  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -40,16 +40,14 @@ final case class SchemaJson(json: Json):
 object SchemaJson:
 
   /** The keywords that give an object's shape without `properties`. */
-  type ShapedElsewhereResult = ShapedElsewhereResult.T
-  object ShapedElsewhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val ShapeKeywords = List("$ref", "oneOf", "anyOf", "allOf", "discriminator")
 
   /** Keywords whose value maps names (not keywords) to schemas. */
   private val NameToSchema = Set("$defs", "definitions", "patternProperties", "dependentSchemas", "dependencies")
 
-  private def shapedElsewhere(obj: JsonObject): com.histmersion.plugins.ai.SchemaJson.ShapedElsewhereResult =
-    _root_.com.histmersion.plugins.ai.SchemaJson.ShapedElsewhereResult(ShapeKeywords.exists(obj.contains) || obj("additionalProperties").exists(ap =>
+  private def shapedElsewhere(obj: JsonObject): Boolean =
+    (ShapeKeywords.exists(obj.contains) || obj("additionalProperties").exists(ap =>
       !ap.isBoolean || ap.asBoolean.contains(true)
     ))
 

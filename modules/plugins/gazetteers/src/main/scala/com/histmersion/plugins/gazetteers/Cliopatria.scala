@@ -15,19 +15,17 @@ import io.circe.{Json, JsonObject}
   * parents come first in [[fetch]]'s answer, so the slices' relations find them.
   */
 object Cliopatria extends DownloadedGazetteer:
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Year = Year.T
+  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ReadResultPart1 = ReadResultPart1.T
-  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadText = ReadText.T
-  object ReadText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadFeatureResultPart1 = ReadFeatureResultPart1.T
-  object ReadFeatureResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadFeatureOrdinal = ReadFeatureOrdinal.T
   object ReadFeatureOrdinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumYearResult = NumYearResult.T
-  object NumYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumYearKey = NumYearKey.T
-  object NumYearKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val title = "Seshat Cliopatria polity polygons"
   override val description = "Seshat Cliopatria polity polygons (CC BY 4.0, ~13K features from 3400 BCE)"
@@ -43,7 +41,7 @@ object Cliopatria extends DownloadedGazetteer:
   override def fetch(http: Plugin.Http): Either[String, List[GazetteerPlace]] =
     download(http).flatMap(read).map(items => parentConcepts(items) ++ items)
 
-  def read(text: com.histmersion.plugins.gazetteers.Cliopatria.ReadText): Either[com.histmersion.plugins.gazetteers.Cliopatria.ReadResultPart1, List[GazetteerPlace]] =
+  def read(text: com.histmersion.plugins.gazetteers.Cliopatria.Text): Either[com.histmersion.plugins.gazetteers.Cliopatria.Problem, List[GazetteerPlace]] =
     io.circe.parser.parse(text).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
       val features = doc.asObject
         .flatMap(_("features"))
@@ -54,7 +52,7 @@ object Cliopatria extends DownloadedGazetteer:
       features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, i).toOption))
     }
 
-  def readFeature(j: Json, ordinal: com.histmersion.plugins.gazetteers.Cliopatria.ReadFeatureOrdinal): Either[com.histmersion.plugins.gazetteers.Cliopatria.ReadFeatureResultPart1, GazetteerPlace] =
+  def readFeature(j: Json, ordinal: com.histmersion.plugins.gazetteers.Cliopatria.ReadFeatureOrdinal): Either[com.histmersion.plugins.gazetteers.Cliopatria.Problem, GazetteerPlace] =
     j.asObject.toRight(s"feature #$ordinal is not a JSON object").flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
       val rawName = str(props, "Name").getOrElse("")
@@ -118,5 +116,5 @@ object Cliopatria extends DownloadedGazetteer:
         GazetteerPlace(id = pid, label = label, kind = Polity, period = period)
       }
 
-  private def numYear(o: JsonObject, key: com.histmersion.plugins.gazetteers.Cliopatria.NumYearKey): Option[com.histmersion.plugins.gazetteers.Cliopatria.NumYearResult] =
+  private def numYear(o: JsonObject, key: com.histmersion.plugins.gazetteers.Cliopatria.Key): Option[com.histmersion.plugins.gazetteers.Cliopatria.Year] =
     o(key).flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.toLongOption)))
