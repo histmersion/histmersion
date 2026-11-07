@@ -204,7 +204,7 @@ object ArticleCli:
           .orNone,
         Output.jsonFlag
       ).mapN { (slug, parts, json) => (c: Client) =>
-        c.getArticle(Article.Slug(slug)).map { v =>
+        c.getArticle(com.histmersion.api.research.ReviewGoal.Slug(slug)).map { v =>
           val ps = parts.map(_.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil)
           Output.emit(json, v)(ArticleMarkdown.article(_, ps.map(Article.Part(_))))
         }
@@ -236,7 +236,7 @@ object ArticleCli:
               // slug the note itself declares (as the server parsed it), so the writer sees them now
               val slug = ArticleNote.parse(req.text.value, req.slug.getOrElse(Article.Slug("")), fallback).map(_.slug).filter(_.value.nonEmpty)
               if r.imported.value > 0 then
-                slug.foreach(s => c.lintArticle(s).foreach(f => Cli.out.println(FormatMarkdown.notice(f.issues))))
+                slug.foreach(s => c.lintArticle(com.histmersion.api.research.ReviewGoal.Slug(s.value)).foreach(f => Cli.out.println(FormatMarkdown.notice(f.issues))))
             }
         }
     }
@@ -251,7 +251,7 @@ object ArticleCli:
       Opts.flag("fix", "Apply the repairs that never change wording, then report what is left").orFalse,
       Output.jsonFlag
     ).mapN { (slug, fix, json) => (c: Client) =>
-      (if fix then c.fixArticleFormat(Article.Slug(slug)) else c.lintArticle(Article.Slug(slug)))
+      (if fix then c.fixArticleFormat(com.histmersion.api.research.ReviewGoal.Slug(slug)) else c.lintArticle(com.histmersion.api.research.ReviewGoal.Slug(slug)))
         .map(r => Output.emit(json, r)(FormatMarkdown.report))
     }
   }
@@ -302,14 +302,14 @@ object ArticleCli:
             )
           )
         case _ => Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("give --edits-file or --body-file (one of them)"), exitCode = ExitCode.Usage))
-      req.flatMap(c.checkArticle(Article.Slug(slug), _)).map(r => Output.emit(json, r)(Article.Edits.markdown(_).value))
+      req.flatMap(c.checkArticle(com.histmersion.api.research.ReviewGoal.Slug(slug), _)).map(r => Output.emit(json, r)(Article.Edits.markdown(_).value))
     }
   }
 
   private def delete(using console: Console) = Opts.subcommand("delete", "Remove one article (its links go with it)") {
     Opts
       .argument[String]("slug")
-      .map(slug => (c: Client) => c.deleteArticle(Article.Slug(slug)).map(d => Cli.out.println(s"deleted ${d.slug}")))
+      .map(slug => (c: Client) => c.deleteArticle(com.histmersion.api.research.ReviewGoal.Slug(slug)).map(d => Cli.out.println(s"deleted ${d.slug}")))
   }
 
   private def exportCmd(using console: Console) =
@@ -391,7 +391,7 @@ object ArticleCli:
     "The article's filter against the corpus: sources cited, not used (with reasons), statuses, edges, drift, the critique checklist (disagreements checked), and the generated sections"
   ) {
     (Opts.argument[String]("slug"), Output.jsonFlag).mapN { (slug, json) => (c: Client) =>
-      c.articleCoverage(Article.Slug(slug)).map(r => Output.emit(json, r)(Article.Coverage.markdown(_).value))
+      c.articleCoverage(com.histmersion.api.research.ReviewGoal.Slug(slug)).map(r => Output.emit(json, r)(Article.Coverage.markdown(_).value))
     }
   }
 
@@ -401,7 +401,7 @@ object ArticleCli:
     "The article's review state (unreviewed, queued, in review, passed, majors open, stopped), the goals linking it, and every review finding by run and round with what became of it"
   ) {
     (Opts.argument[String]("slug"), Output.jsonFlag).mapN { (slug, json) => (c: Client) =>
-      c.articleReview(Article.Slug(slug)).map(r => Output.emit(json, r)(Article.ReviewView.markdown(_).value))
+      c.articleReview(com.histmersion.api.research.ReviewGoal.Slug(slug)).map(r => Output.emit(json, r)(Article.ReviewView.markdown(_).value))
     }
   }
 
@@ -463,7 +463,7 @@ object ArticleCli:
             .flatMap(ArticlePatches.withCoverage(_, ff, rs))
             .flatMap(ArticlePatches.withCritiques(_, crs))
             .flatMap(p =>
-              c.patchArticle(Article.Slug(slug), p, Cli.Strict(strict)).map { v =>
+              c.patchArticle(com.histmersion.api.research.ReviewGoal.Slug(slug), p, Cli.Strict(strict)).map { v =>
                 Cli.out.println(ArticleMarkdown.article(v))
                 v.article.updatedAt.foreach(u => Cli.out.println(s"\nupdatedAt: $u"))
               }
@@ -475,14 +475,14 @@ object ArticleCli:
     Opts
       .argument[String]("slug")
       .map(slug =>
-        (c: Client) => c.articleVersions(Article.Slug(slug)).map(vs => Cli.out.println(ArticleMarkdown.versions(Article.Slug(slug), vs)))
+        (c: Client) => c.articleVersions(com.histmersion.api.research.ReviewGoal.Slug(slug)).map(vs => Cli.out.println(ArticleMarkdown.versions(Article.Slug(slug), vs)))
       )
   }
 
   private def versionCmd(using console: Console) =
     Opts.subcommand("version", "Show one historical version's full body") {
       (Opts.argument[String]("slug"), Opts.argument[Long]("id")).mapN { (slug, id) => (c: Client) =>
-        c.articleVersion(Article.Slug(slug), Article.VersionId(id)).map(v => Cli.out.println(ArticleMarkdown.version(v)))
+        c.articleVersion(com.histmersion.api.research.ReviewGoal.Slug(slug), Article.VersionId(id)).map(v => Cli.out.println(ArticleMarkdown.version(v)))
       }
     }
 

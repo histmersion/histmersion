@@ -40,39 +40,16 @@ import scala.scalajs.js
   *     place's card and chooses it ([[PlaceHover.bindName]]).
   */
 object MapLabels:
-  type Amount = Amount.T
-  object Amount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Epsilon = Epsilon.T
-  object Epsilon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Opacity = Opacity.T
-  object Opacity extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Reduced = Reduced.T
-  object Reduced extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Scale = Scale.T
-  object Scale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Signature = Signature.T
-  object Signature extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Time = Time.T
-  object Time extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Unit = Unit.T
-  object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WrapClass = WrapClass.T
   object WrapClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Zoom = Zoom.T
-  object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The pane the area names are drawn in: above the shapes, below the markers, and never a pointer target (the shape
     * under a name answers the pointer).
     */
-  type FrameReduced = _root_.com.histmersion.web.MapLabels.Reduced
-  val FrameReduced: _root_.com.histmersion.web.MapLabels.Reduced.type = _root_.com.histmersion.web.MapLabels.Reduced
-
   private def pane = TheMap.pane(MapStack.Pane.Labels)
 
   // `var`s: the one map, and the frames queued for it
@@ -128,16 +105,16 @@ object MapLabels:
 
   /** Shapes already placed, by id and outline — a year's slider drag re-reads the same shapes. */
   private val ShapeCacheSize = 2000
-  private val shapes = BoundedCache[String, Option[LabelPlacement.Shape]](ShapeCacheSize)
+  private val shapes = BoundedCache[String, Option[LabelPlacement.Shape]](BoundedCache.MaxEntries(ShapeCacheSize))
 
   /** What the names hold, for [[Diagnostics]]: the names placed, their per-name state, the shapes. */
   def stats: List[(com.histmersion.web.MapLabels.Key, BoundedCache.Stats)] =
     List(
-      "labels.entries" -> BoundedCache.Stats(entries.size, com.histmersion.web.BoundedCache.Stats.MaxEntries(0), com.histmersion.web.BoundedCache.Stats.Weight(0L), com.histmersion.web.BoundedCache.Stats.MaxWeight(0L)),
-      "labels.state" -> BoundedCache.Stats(state.size, com.histmersion.web.BoundedCache.Stats.MaxEntries(0), com.histmersion.web.BoundedCache.Stats.Weight(0L), com.histmersion.web.BoundedCache.Stats.MaxWeight(0L)),
-      "labels.shapes" -> BoundedCache.stats(shapes)
+      com.histmersion.web.MapLabels.Key("labels.entries") -> BoundedCache.Stats(BoundedCache.Stats.Entries(entries.size), com.histmersion.web.BoundedCache.Stats.MaxEntries(0), com.histmersion.web.BoundedCache.Stats.Weight(0L), com.histmersion.web.BoundedCache.Stats.MaxWeight(0L)),
+      com.histmersion.web.MapLabels.Key("labels.state") -> BoundedCache.Stats(BoundedCache.Stats.Entries(state.size), com.histmersion.web.BoundedCache.Stats.MaxEntries(0), com.histmersion.web.BoundedCache.Stats.Weight(0L), com.histmersion.web.BoundedCache.Stats.MaxWeight(0L)),
+      com.histmersion.web.MapLabels.Key("labels.shapes") -> BoundedCache.stats(shapes)
     )
-  private def live(k: com.histmersion.web.MapLabels.Key): Live = state.getOrElseUpdate(k, Live())
+  private def live(k: String): Live = state.getOrElseUpdate(k, Live())
 
   // the view: the zoom the size classes were chosen at, whether the view is the one the pass placed
   // the names for, whether the map is moving, a zoom animation in flight, and the last frame's time
@@ -153,7 +130,7 @@ object MapLabels:
     m.on(MapEventKind.MoveStart) { _ => moving = true; settled = false; loop() }
     m.on(MapEventKind.ZoomStart) { _ => moving = true; settled = false; loop() }
     m.on(MapEventKind.MoveEnd) { _ => moving = false; schedule() }
-    val configured = MapTone.parse(ui.tilesTone)
+    val configured = MapTone.parse(MapTone.Wire(ui.tilesTone.value))
     BaseMaps.shown.signal.foreach { b =>
       val c = m.container.classList
       val dark = BaseMap.tone(b, configured) == MapTone.Dark
@@ -191,7 +168,7 @@ object MapLabels:
       key: js.Dynamic => com.histmersion.web.MapLabels.Key,
       label: js.Dynamic => com.histmersion.web.MapLabels.Label,
       wrapClass: js.Dynamic => com.histmersion.web.MapLabels.WrapClass,
-      place: js.Dynamic => Option[(com.histmersion.web.MapLabels.Key, com.histmersion.web.MapLabels.Label, com.histmersion.web.MapLabels.WrapClass)],
+      place: js.Dynamic => Option[(com.histmersion.web.PlaceHover.PlaceId, com.histmersion.api.UiLabels.Text, com.histmersion.web.PlaceHover.PlaceKind)],
       asOf: () => Option[com.histmersion.api.Years.Astronomical],
       release: js.Dynamic => Unit = _ => ()
   ): Unit =
@@ -217,7 +194,7 @@ object MapLabels:
             val f = todo.dequeue()
             shapeOf(f).foreach(known(f) = _)
             release(f)
-          timed(com.histmersion.web.MapLabels.Name("hd-label-shapes"), t0)
+          timed("hd-label-shapes", t0)
           // named once all are placed: each naming is a diff of every area and a layout pass
           if todo.nonEmpty then { val _ = dom.window.setTimeout(() => slice(), 0) }
           else name()
@@ -235,18 +212,18 @@ object MapLabels:
       key: js.Dynamic => com.histmersion.web.MapLabels.Key,
       label: js.Dynamic => com.histmersion.web.MapLabels.Label,
       wrapClass: js.Dynamic => com.histmersion.web.MapLabels.WrapClass,
-      place: js.Dynamic => Option[(com.histmersion.web.MapLabels.Key, com.histmersion.web.MapLabels.Label, com.histmersion.web.MapLabels.WrapClass)],
+      place: js.Dynamic => Option[(com.histmersion.web.PlaceHover.PlaceId, com.histmersion.api.UiLabels.Text, com.histmersion.web.PlaceHover.PlaceKind)],
       asOf: () => Option[com.histmersion.api.Years.Astronomical]
   ): Unit =
     if map != null && areasOn then
-      val keep = named.map((f, _) => AreaKey + key(f)).toSet
+      val keep = named.map((f, _) => AreaKey + key(f).value).toSet
       entries.filterInPlace((k, _) => !k.startsWith(AreaKey) || keep(k))
       state.filterInPlace((k, _) => !k.startsWith(AreaKey) || keep(k))
       areaMarkers.filterInPlace { (k, m) =>
         val stays = keep(k)
         if !stays then
-          m.el.classList.add(FadingLayer.fadeOut.value)
-          dom.window.setTimeout(() => pane.remove(m), com.histmersion.web.ui.Layout.exitAnimMs)
+          m.el.classList.add(FadingLayer.fadeOut.value.toString)
+          dom.window.setTimeout(() => pane.remove(m), com.histmersion.web.ui.Layout.exitAnimMs.value)
         stays
       }
       // the names new to the map are made a slice at a time (a whole range's 1 600 at once was one long
@@ -254,7 +231,7 @@ object MapLabels:
       val fresh = scala.collection.mutable.Queue.empty[(js.Dynamic, LabelPlacement.Shape)]
       val mine = generation
       named.foreach { (f, s) =>
-        val k = AreaKey + key(f)
+        val k = AreaKey + key(f).value
         areaMarkers.get(k) match
           case Some(m) =>
             // a new outline moves the home; the name stays where it is drawn and glides from there
@@ -269,7 +246,7 @@ object MapLabels:
           val t0 = now()
           while fresh.nonEmpty && now() - t0 < SliceMs do
             val (f, s) = fresh.dequeue()
-            val k = AreaKey + key(f)
+            val k = AreaKey + key(f).value
             if !areaMarkers.contains(k) then
               val m = areaMarker(s, label(f), wrapClass(f))
               place(f).foreach((id, l, kind) => PlaceHover.bindName(m, id, l, kind, asOf))
@@ -284,9 +261,9 @@ object MapLabels:
 
   /** A point-only label ([[PlaceGlyph.labelMarker]]) takes part in the pass while it is on the map. */
   def trackPoint(marker: DomMarker, key: com.histmersion.web.MapLabels.Key): Unit =
-    val k = PointKey + key
+    val k = PointKey + key.value
     marker.onAdded(() =>
-      entries(k) = Entry(marker.at, -1.0, None, () => inner(marker))
+      entries(k) = Entry(marker.at, Entry.Rank(-1.0), None, () => inner(marker))
       state.remove(k)
       schedule()
     )
@@ -318,8 +295,8 @@ object MapLabels:
     state.filterInPlace((k, _) => !k.startsWith(EventKey))
     if entries.size != before then schedule()
 
-  private def register(k: com.histmersion.web.MapLabels.Key, m: DomMarker, s: LabelPlacement.Shape): Unit =
-    entries(k) = Entry(m.at, s.size0, Some(s), () => inner(m), marker = Some(m))
+  private def register(k: String, m: DomMarker, s: LabelPlacement.Shape): Unit =
+    entries(k) = Entry(m.at, Entry.Rank(s.size0), Some(s), () => inner(m), marker = Some(m))
 
   private def inner(m: DomMarker): Option[dom.HTMLElement] =
     Option(m.el.firstElementChild).map(_.asInstanceOf[dom.HTMLElement])
@@ -329,13 +306,13 @@ object MapLabels:
     DomMarker(
       s.lat,
       s.lon,
-      DomMarker.element(wrapClass, s"""<span class="hd-map-label is-culled" style="--o:0">${Fmt.esc(label)}</span>""")
+      DomMarker.element(wrapClass.value, s"""<span class="hd-map-label is-culled" style="--o:0">${Fmt.esc(label.value)}</span>""")
     )
 
   // ── shapes ─────────────────────────────────────────────────────────────────────────────────────
 
   /** The parts of an area feature's outline, and their cache key; `None` for anything but a polygon. */
-  private def outline(f: js.Dynamic): Option[(com.histmersion.web.MapLabels.Key, js.Array[js.Dynamic])] =
+  private def outline(f: js.Dynamic): Option[(String, js.Array[js.Dynamic])] =
     val g = f.geometry
     if js.isUndefined(g) || g == null then None
     else
@@ -369,7 +346,7 @@ object MapLabels:
   /** An outline's identity, cheaply: the feature's id, its parts, and each outer ring's length and first vertex — two
     * years of one polity with the same outline share it.
     */
-  private def signature(f: js.Dynamic, parts: js.Array[js.Dynamic]): com.histmersion.web.MapLabels.Signature =
+  private def signature(f: js.Dynamic, parts: js.Array[js.Dynamic]): String =
     val id = Option(f.properties).filterNot(js.isUndefined).map(_.id.toString).getOrElse("")
     val sb = StringBuilder(id)
     parts.foreach { p =>
@@ -385,7 +362,7 @@ object MapLabels:
   private def polyRings(p: js.Dynamic): Seq[Seq[(com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude)]] =
     p.asInstanceOf[js.Array[js.Array[js.Array[Double]]]].toSeq.map { ring =>
       val step = math.max(1, math.ceil(ring.length.toDouble / LabelPlacement.MaxRingPoints).toInt)
-      (0 until ring.length by step).map(i => (ring(i)(1), ring(i)(0)))
+      (0 until ring.length by step).map(i => (com.histmersion.api.Geo.Latitude(ring(i)(1)), com.histmersion.api.Geo.Longitude(ring(i)(0))))
     }
 
   // ── the pass ───────────────────────────────────────────────────────────────────────────────────
@@ -400,17 +377,17 @@ object MapLabels:
   private val TierClasses = LabelPlacement.Tier.values.map(_.css)
 
   /** The map's zoom now (the raster grid's) — fractional in a zoom. */
-  private def zoomNow(): com.histmersion.web.MapLabels.Zoom = map.zoom
+  private def zoomNow(): Double = map.zoom.value
 
   /** The names snap instead of easing when the map does not animate (the reader's "Map motion", #4718). */
   private def reducedMotion(): Boolean = !MotionPref.animate()
 
   /** The settled viewport in the zoom-0 plane. */
-  private def viewNow(zoom: com.histmersion.web.MapLabels.Zoom): Rect =
+  private def viewNow(zoom: Double): Rect =
     val scale = math.pow(2, zoom)
     val c = map.center
     val p = LabelPlacement.project(c.lat, c.lon)
-    val (w, h) = map.size
+    val (w, h) = (map.size._1.value, map.size._2.value)
     Rect(p.x - w / 2 / scale, p.y - h / 2 / scale, p.x + w / 2 / scale, p.y + h / 2 / scale)
 
   /** Size every name for the zoom (writes), measure them (one layout), place the area names exactly in the settled
@@ -465,12 +442,12 @@ object MapLabels:
         before.get(k).foreach(w0 => st.s = LabelMotion.rebase(st.s, w0, st.w, reduced))
       }
     }
-    timed(com.histmersion.web.MapLabels.Name("hd-label-place"), tPlace)
+    timed("hd-label-place", tPlace)
     settledZoom = z
     settled = !moving
     // 4. the first frame of it, now, so a class change and its size compensation land together
     frame(now(), reduced)
-    timed(com.histmersion.web.MapLabels.Name("hd-labels"), t0)
+    timed("hd-labels", t0)
     loop()
 
   // ── the frames ─────────────────────────────────────────────────────────────────────────────────
@@ -482,17 +459,17 @@ object MapLabels:
       lastFrame = now()
       dom.window.requestAnimationFrame(tick)
 
-  private val tick: js.Function1[com.histmersion.web.MapLabels.Time, Unit] = (_: Double) =>
+  private val tick: js.Function1[Double, Unit] = (_: Double) =>
     val t = now()
     val busy = frame(t, reducedMotion())
-    timed(com.histmersion.web.MapLabels.Name("hd-label-frame"), t)
+    timed("hd-label-frame", t)
     if busy || moving then dom.window.requestAnimationFrame(tick)
     else looping = false
 
   /** One frame: every name's target (cheap), the cull, the easing, and the writes of what changed. `true` while some
     * name is still on its way.
     */
-  private def frame(t: com.histmersion.web.MapLabels.Time, reduced: com.histmersion.web.MapLabels.FrameReduced): Boolean =
+  private def frame(t: Double, reduced: Boolean): Boolean =
     if map == null then false
     else
       val dt = math.max(0.0, math.min(0.1, (t - lastFrame) / 1000.0))
@@ -500,7 +477,7 @@ object MapLabels:
       val z = zoomNow()
       val view = viewNow(z)
       val scale = math.pow(2, z)
-      val far = PlaceGlyph.far(math.round(z).toInt)
+      val far = PlaceGlyph.far(PlaceGlyph.ZoomLevel(math.round(z).toInt))
       val zs = LabelMotion.zoomScale(z, settledZoom, reduced)
       val items = entries.toList.flatMap((k, e) => e.el().map(el => (k, e, el, live(k))))
       // 1. targets and boxes (world pixels at this zoom)
@@ -513,12 +490,12 @@ object MapLabels:
                 if st.tier.isEmpty then None
                 else if settled then st.precise
                 else LabelPlacement.glide(s, view, scale, st.w * zs / 2, st.h * zs / 2, st.precise)
-              st.target.map(p => LabelPlacement.Box(k, p.x * scale, p.y * scale, st.w * zs, st.h * zs, e.rank))
+              st.target.map(p => LabelPlacement.Box(k, p.x * scale, p.y * scale, st.w * zs, st.h * zs, e.rank.value))
             case None =>
               if far && e.anchorEl.isEmpty then None
               else
                 val p = LabelPlacement.project(e.latlng.lat, e.latlng.lon)
-                Some(LabelPlacement.Box(k, p.x * scale + st.ox, p.y * scale + st.oy, st.w, st.h, e.rank))
+                Some(LabelPlacement.Box(k, p.x * scale + st.ox, p.y * scale + st.oy, st.w, st.h, e.rank.value))
       }
       // 2. which are shown (a shown name keeps its slot until the overlap is clear)
       val kept = LabelPlacement.cull(boxes, shown = k => state.get(k).exists(_.shown))
@@ -564,18 +541,18 @@ object MapLabels:
       st: Live,
       el: dom.HTMLElement,
       s: LabelPlacement.Shape,
-      scale: com.histmersion.web.MapLabels.Scale,
-      reduced: com.histmersion.web.MapLabels.Reduced = com.histmersion.web.MapLabels.Reduced(false)
+      scale: Double,
+      reduced: Boolean = false
   ): Unit =
     if st.motion != null then
-      write(st, el, 0, com.histmersion.web.MapLabels.Name("--dx"), (st.motion.p.x - s.home.x) * scale, 0.05, com.histmersion.web.MapLabels.Unit("px"))
-      write(st, el, 1, com.histmersion.web.MapLabels.Name("--dy"), (st.motion.p.y - s.home.y) * scale, 0.05, com.histmersion.web.MapLabels.Unit("px"))
-    write(st, el, 2, com.histmersion.web.MapLabels.Name("--s"), st.s * LabelMotion.appearScale(st.a, reduced), 0.002, com.histmersion.web.MapLabels.Unit(""))
+      write(st, el, 0, "--dx", (st.motion.p.x - s.home.x) * scale, 0.05, "px")
+      write(st, el, 1, "--dy", (st.motion.p.y - s.home.y) * scale, 0.05, "px")
+    write(st, el, 2, "--s", st.s * LabelMotion.appearScale(st.a, reduced), 0.002, "")
     writeO(st, el, st.a)
 
-  private def writeO(st: Live, el: dom.HTMLElement, a: com.histmersion.web.MapLabels.Opacity): Unit = write(st, el, 3, com.histmersion.web.MapLabels.Name("--o"), a, 0.005, com.histmersion.web.MapLabels.Unit(""))
+  private def writeO(st: Live, el: dom.HTMLElement, a: Double): Unit = write(st, el, 3, "--o", a, 0.005, "")
 
-  private def write(st: Live, el: dom.HTMLElement, i: Int, name: com.histmersion.web.MapLabels.Name, v: com.histmersion.web.MapLabels.Amount, eps: com.histmersion.web.MapLabels.Epsilon, unit: com.histmersion.web.MapLabels.Unit): Unit =
+  private def write(st: Live, el: dom.HTMLElement, i: Int, name: String, v: Double, eps: Double, unit: String): Unit =
     val last = st.wrote(i)
     // past the threshold, or arriving exactly at an end (fully hidden, fully shown, at home)
     if last.isNaN || math.abs(last - v) > eps || (v != last && (v == 0 || v == 1)) then
@@ -589,9 +566,9 @@ object MapLabels:
 
   // ── what a pass costs, for the browser's performance panel (the latest of each, never a backlog) ──
 
-  private def now(): com.histmersion.web.MapLabels.Time = dom.window.performance.now()
+  private def now(): Double = dom.window.performance.now()
 
-  private def timed(name: com.histmersion.web.MapLabels.Name, t0: com.histmersion.web.MapLabels.Time): Unit =
+  private def timed(name: String, t0: Double): Unit =
     val p = dom.window.performance.asInstanceOf[js.Dynamic]
     if js.typeOf(p.measure) == "function" then
       p.clearMeasures(name)

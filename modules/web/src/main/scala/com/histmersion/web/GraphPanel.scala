@@ -19,18 +19,12 @@ import com.histmersion.api.library.Source
   * window, and nothing is added again per render.
   */
 object GraphPanel:
-  type Citekey = Citekey.T
-  object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Inbound = Inbound.T
-  object Inbound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkLabel = LinkLabel.T
-  object LinkLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Outbound = Outbound.T
-  object Outbound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Citekey = com.histmersion.api.library.Citekey
+  val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
 
 
   def open(citekey: com.histmersion.web.GraphPanel.Citekey): Unit =
-    WindowManager.open(WindowKey.Graph(citekey))
+    WindowManager.open(WindowKey.Graph(WindowKey.Graph.Citekey(citekey.value)))
 
   private val Depth = 2
 
@@ -41,13 +35,13 @@ object GraphPanel:
     */
   def legend(g: com.histmersion.api.library.Source.Graph): (List[Source.Status], List[Edge.Kind]) =
     val statuses = g.nodes.map(_.status.getOrElse(Source.Status.Unassessed)).toSet
-    val kinds = g.links.flatMap(l => Edge.Kind.fromWire(l.kind)).toSet
+    val kinds = g.links.map(l => l.kind).toSet
     (Source.Status.values.toList.filter(statuses), Edge.Kind.values.toList.filter(kinds))
 
   /** Links as node-index pairs. Every link of a V026 graph joins two of its nodes, so none is lost; a link to a node
     * the graph does not carry is dropped rather than drawn to nowhere.
     */
-  def indexLinks(g: com.histmersion.api.library.Source.Graph): List[(com.histmersion.web.GraphPanel.Inbound, com.histmersion.web.GraphPanel.Outbound, com.histmersion.web.GraphPanel.LinkLabel)] =
+  def indexLinks(g: com.histmersion.api.library.Source.Graph): List[(Int, Int, Edge.Kind)] =
     val idx = g.nodes.zipWithIndex.map((n, i) => n.id -> i).toMap
     g.links.flatMap(l => for s <- idx.get(l.source); t <- idx.get(l.target) yield (s, t, l.kind))
 
@@ -58,7 +52,7 @@ object GraphPanel:
     case Failed(message: Load.Failed.Message)
     case Loaded(g: com.histmersion.api.library.Source.Graph)
 
-  object Load:
+  private object Load:
     object Failed:
       type Message = Message.T
       object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -66,15 +60,15 @@ object GraphPanel:
   def element(citekey: com.histmersion.web.GraphPanel.Citekey): HtmlElement =
     val state = Var[Load](Load.Loading)
     val hovered = Var(Option.empty[GraphNode])
-    ApiClient.graph(citekey, Some(Depth)).onComplete {
+    ApiClient.graph(ApiClient.Citekey(citekey.value), Some(ApiClient.Depth(Depth))).onComplete {
       case scala.util.Success(g) =>
         state.set(Load.Loaded(g))
         g.nodes
           .find(_.id == g.root)
           .flatMap(_.title)
-          .filter(_.trim.nonEmpty)
-          .foreach(t => WindowManager.retitle(WindowKey.Graph(citekey), s"Citation graph · $t"))
-      case scala.util.Failure(e) => state.set(Load.Failed(e.getMessage))
+          .filter(_.value.trim.nonEmpty)
+          .foreach(t => WindowManager.retitle(WindowKey.Graph(WindowKey.Graph.Citekey(citekey.value)), WindowManager.WinState.Title(s"Citation graph · ${t.value}")))
+      case scala.util.Failure(e) => state.set(Load.Failed(Load.Failed.Message(e.getMessage)))
     }
     div(
       cls := "graph-panel",
@@ -97,7 +91,7 @@ object GraphPanel:
         span(
           cls := "graph-legend-item",
           span(cls := "graph-legend-color", styleAttr := s"--c:var(${Palette.edge(Edge.Kind.wireOf(k))})"),
-          Wording.capitalize(Label.display(Edge.Kind.wireOf(k)))
+          Wording.capitalize(Label.display(Label.Text(Edge.Kind.wireOf(k).value)).value)
         )
       )
     )
@@ -109,9 +103,9 @@ object GraphPanel:
         case None    => span(cls := "muted", "hover a node · double-click opens it · drag to move · wheel to zoom")
         case Some(n) =>
           span(
-            SourceLink(n.id),
+            SourceLink(Preview.Target.Source.Citekey(n.id.value)),
             " ",
-            n.title.getOrElse(""),
+            n.title.map(_.value).getOrElse(""),
             n.year.fold("")(y => s" ($y)"),
             " ",
             n.status.fold(emptyNode)(s => StatusBadge(s))
@@ -120,37 +114,17 @@ object GraphPanel:
     )
 
   final private case class SimNode(
-      id: SimNode.Id,
-      title: SimNode.Title,
-      year: Option[SimNode.Year],
+      id: com.histmersion.api.library.Citekey,
+      title: String,
+      year: Option[com.histmersion.api.catalogue.Year],
       status: Option[Source.Status],
-      depth: SimNode.Depth,
-      var x: SimNode.X,
-      var y: SimNode.Y,
-      var vx: SimNode.Vx,
-      var vy: SimNode.Vy,
-      var pinned: SimNode.Pinned
+      depth: Int,
+      var x: Double,
+      var y: Double,
+      var vx: Double,
+      var vy: Double,
+      var pinned: Boolean
   )
-
-  object SimNode:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Year = Year.T
-    object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Depth = Depth.T
-    object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type X = X.T
-    object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Y = Y.T
-    object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Vx = Vx.T
-    object Vx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Vy = Vy.T
-    object Vy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Pinned = Pinned.T
-    object Pinned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The canvas and its simulation. Everything mutable lives inside this one mount. */
   private def stage(g: com.histmersion.api.library.Source.Graph, hovered: Var[Option[GraphNode]]): HtmlElement =
@@ -190,7 +164,7 @@ object GraphPanel:
   final private class Simulation(
       g: com.histmersion.api.library.Source.Graph,
       canvas: dom.html.Canvas,
-      size: () => (Simulation.SizeResultPart1, Simulation.SizeResultPart2),
+      size: () => (Double, Double),
       hovered: Var[Option[GraphNode]]
   ):
     private val ctx = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
@@ -199,17 +173,17 @@ object GraphPanel:
     private val links = indexLinks(g).toArray
     private val nodes: Array[SimNode] = g.nodes.zipWithIndex.map { (n, i) =>
       val angle = 2 * Math.PI * i / g.nodes.length.max(1)
-      val r = if n.id == g.root then 0.0 else 100.0 + n.depth * 60.0
+      val r = if n.id == g.root then 0.0 else 100.0 + n.depth.value * 60.0
       SimNode(
         n.id,
-        n.title.getOrElse(n.id),
+        n.title.map(_.value).getOrElse(n.id.value),
         n.year,
         n.status,
-        n.depth,
+        n.depth.value,
         r * Math.cos(angle),
         r * Math.sin(angle),
-        com.histmersion.web.GraphPanel.SimNode.Vx(0),
-        com.histmersion.web.GraphPanel.SimNode.Vy(0),
+        0.0,
+        0.0,
         n.id == g.root
       )
     }.toArray
@@ -244,10 +218,10 @@ object GraphPanel:
       running = false
       dom.window.cancelAnimationFrame(frameId)
 
-    private def toWorld(sx: com.histmersion.web.GraphPanel.Simulation.ScreenX, sy: com.histmersion.web.GraphPanel.Simulation.ScreenY): (com.histmersion.web.GraphPanel.Simulation.WorldX, com.histmersion.web.GraphPanel.Simulation.WorldY) =
+    private def toWorld(sx: Double, sy: Double): (Double, Double) =
       ((sx - w / 2 - panX) / zoom, (sy - h / 2 - panY) / zoom)
 
-    private def nodeAt(sx: com.histmersion.web.GraphPanel.Simulation.ScreenX, sy: com.histmersion.web.GraphPanel.Simulation.ScreenY): Option[com.histmersion.web.GraphPanel.Simulation.NodeIndex] =
+    private def nodeAt(sx: Double, sy: Double): Option[Int] =
       val (wx, wy) = toWorld(sx, sy)
       nodes.indices
         .map(i => i -> Math.hypot(nodes(i).x - wx, nodes(i).y - wy))
@@ -255,7 +229,7 @@ object GraphPanel:
         .minByOption(_._2)
         .map(_._1)
 
-    private def local(e: dom.MouseEvent): (com.histmersion.web.GraphPanel.Simulation.ScreenX, com.histmersion.web.GraphPanel.Simulation.ScreenY) =
+    private def local(e: dom.MouseEvent): (Double, Double) =
       val r = canvas.getBoundingClientRect()
       (e.clientX - r.left, e.clientY - r.top)
 
@@ -329,7 +303,7 @@ object GraphPanel:
         val (a, b) = (nodes(i), nodes(j))
         val dx = a.x - b.x; val dy = a.y - b.y
         val dist = Math.hypot(dx, dy).max(1.0)
-        val force = GL.repulsion / (dist * dist)
+        val force = GL.repulsion.value / (dist * dist)
         val fx = dx / dist * force; val fy = dy / dist * force
         if !a.pinned then { a.vx += fx; a.vy += fy }
         if !b.pinned then { b.vx -= fx; b.vy -= fy }
@@ -337,7 +311,7 @@ object GraphPanel:
         val (a, b) = (nodes(s), nodes(t))
         val dx = b.x - a.x; val dy = b.y - a.y
         val dist = Math.hypot(dx, dy).max(1.0)
-        val force = GL.springK * (dist - GL.restLen)
+        val force = GL.springK.value * (dist - GL.restLen.value)
         val fx = dx / dist * force; val fy = dy / dist * force
         if !a.pinned then { a.vx += fx; a.vy += fy }
         if !b.pinned then { b.vx -= fx; b.vy -= fy }
@@ -346,12 +320,12 @@ object GraphPanel:
       val cy = nodes.map(_.y).sum / nodes.length
       var maxV = 0.0
       for n <- nodes if !n.pinned do
-        n.vx = (n.vx - cx * GL.centering) * GL.damping
-        n.vy = (n.vy - cy * GL.centering) * GL.damping
+        n.vx = (n.vx - cx * GL.centering.value) * GL.damping.value
+        n.vy = (n.vy - cy * GL.centering.value) * GL.damping.value
         n.x += n.vx; n.y += n.vy
         maxV = maxV.max(Math.abs(n.vx)).max(Math.abs(n.vy))
       ticks += 1
-      if ticks > GL.maxTicks || maxV < 0.1 then running = false
+      if ticks > GL.maxTicks.value || maxV < 0.1 then running = false
 
     private def tick(): Unit =
       if running then
@@ -372,7 +346,7 @@ object GraphPanel:
         ctx.beginPath()
         ctx.moveTo(a.x, a.y)
         ctx.lineTo(b.x, b.y)
-        ctx.strokeStyle = ThemeTokens(Palette.edge(kind))
+        ctx.strokeStyle = ThemeTokens(ThemeTokens.Name(Palette.edge(Edge.Kind.wireOf(kind)).value)).value
         ctx.lineWidth = if lit then 2.0 else 1.0
         ctx.globalAlpha = if lit then 1.0 else 0.55
         ctx.stroke()
@@ -388,46 +362,25 @@ object GraphPanel:
         ctx.lineTo(ax - uy * 3, ay + ux * 3)
         ctx.lineTo(ax + uy * 3, ay - ux * 3)
         ctx.closePath()
-        ctx.fillStyle = ThemeTokens(Palette.edge(kind))
+        ctx.fillStyle = ThemeTokens(ThemeTokens.Name(Palette.edge(Edge.Kind.wireOf(kind)).value)).value
         ctx.fill()
       for i <- nodes.indices do
         val n = nodes(i)
         val on = hover.contains(i)
         ctx.beginPath()
         ctx.arc(n.x, n.y, radius(i), 0, 2 * Math.PI)
-        ctx.fillStyle = ThemeTokens(Palette.status(n.status.getOrElse(Source.Status.Unassessed).wire))
+        ctx.fillStyle = ThemeTokens(ThemeTokens.Name(Palette.status(n.status.getOrElse(Source.Status.Unassessed).wire).value)).value
         ctx.fill()
         if on then
-          ctx.strokeStyle = ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--graph-hover"))
+          ctx.strokeStyle = ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--graph-hover")).value
           ctx.lineWidth = 2
           ctx.stroke()
-        val label = if n.title.length > GL.labelMaxLen then n.title.take(GL.labelTruncLen) + "…" else n.title
+        val label = if n.title.length > GL.labelMaxLen.value then n.title.take(GL.labelTruncLen.value) + "…" else n.title
         ctx.font = if on then "bold 11px system-ui" else "10px system-ui"
-        ctx.fillStyle = ThemeTokens(if on then com.histmersion.web.ui.ThemeTokens.Name("--graph-label-hover") else com.histmersion.web.ui.ThemeTokens.Name("--graph-label"))
+        ctx.fillStyle = ThemeTokens(if on then com.histmersion.web.ui.ThemeTokens.Name("--graph-label-hover") else com.histmersion.web.ui.ThemeTokens.Name("--graph-label")).value
         ctx.textAlign = "center"
         ctx.fillText(label + n.year.fold("")(y => s" ($y)"), n.x, n.y + radius(i) + 12)
       ctx.restore()
 
-    private def radius(i: com.histmersion.web.GraphPanel.Simulation.Degree): com.histmersion.web.GraphPanel.Simulation.Radius =
-      if i == rootIdx then GL.rootRadius else if nodes(i).depth <= 1 then GL.depth1Radius else GL.leafRadius
-
-  object Simulation:
-    type Degree = Degree.T
-    object Degree extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NodeIndex = NodeIndex.T
-    object NodeIndex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Radius = Radius.T
-    object Radius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ScreenX = ScreenX.T
-    object ScreenX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ScreenY = ScreenY.T
-    object ScreenY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WorldX = WorldX.T
-    object WorldX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WorldY = WorldY.T
-    object WorldY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SizeResultPart1 = SizeResultPart1.T
-    object SizeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SizeResultPart2 = SizeResultPart2.T
-    object SizeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
+    private def radius(i: Int): Double =
+      if i == rootIdx then GL.rootRadius.value else if nodes(i).depth <= 1 then GL.depth1Radius.value else GL.leafRadius.value

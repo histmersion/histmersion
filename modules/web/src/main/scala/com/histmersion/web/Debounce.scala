@@ -11,17 +11,17 @@ import scala.scalajs.js
 final class Debounce[A](
     quietMs: Debounce.QuietMs,
     f: A => Unit,
-    later: (Debounce.LaterArg1, () => Unit) => Debounce.LaterResult = (ms, g) => dom.window.setTimeout(() => g(), ms),
-    cancel: Debounce.CancelArg1 => Unit = id => dom.window.clearTimeout(id)
+    later: (Debounce.Delay, () => Unit) => Debounce.TimerId = (ms, g) => Debounce.TimerId(dom.window.setTimeout(() => g(), ms.value)),
+    cancel: Debounce.TimerId => Unit = id => dom.window.clearTimeout(id.value)
 ):
   // `var`s: the one pending run and its timer
   private var pending: Option[A] = None
-  private var timer: Int = 0
+  private var timer: Debounce.TimerId = Debounce.TimerId(0)
 
   def apply(a: A): Unit =
     if pending.isDefined then cancel(timer)
     pending = Some(a)
-    timer = later(quietMs, () => { val p = pending; pending = None; p.foreach(f) })
+    timer = later(Debounce.Delay(quietMs.value.toDouble), () => { val p = pending; pending = None; p.foreach(f) })
 
   /** Drop the pending run. */
   def cancelPending(): Unit =
@@ -31,10 +31,8 @@ final class Debounce[A](
 object Debounce:
   type QuietMs = QuietMs.T
   object QuietMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LaterArg1 = LaterArg1.T
-  object LaterArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LaterResult = LaterResult.T
-  object LaterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CancelArg1 = CancelArg1.T
-  object CancelArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Delay = Delay.T
+  object Delay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimerId = TimerId.T
+  object TimerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

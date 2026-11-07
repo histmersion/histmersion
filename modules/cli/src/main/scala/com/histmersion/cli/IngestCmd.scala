@@ -137,8 +137,8 @@ object IngestCmd:
                 IngestMarkdown.jobs(
                   js.toVector,
                   page,
-                  f.qualifier,
-                  PageCmd.older(page, "jobs", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString)))
+                  f.qualifier.map(q => Ingest.JobStatus(q.value)),
+                  PageCmd.older(page, "jobs", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString))).map(t => Ingest.JobAge(t.value))
                 )
               )
             }

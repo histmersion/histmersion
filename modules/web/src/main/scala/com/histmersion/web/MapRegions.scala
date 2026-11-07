@@ -11,10 +11,6 @@ import com.histmersion.api.basemap.Basemap
   * asks for, and the dry run's sizes zoom by zoom.
   */
 object MapRegions:
-  type DryRun = DryRun.T
-  object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SizesText = SizesText.T
   object SizesText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ZoomText = ZoomText.T
@@ -36,30 +32,32 @@ object MapRegions:
     object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-    def parse(s: com.histmersion.web.MapRegions.Content.Name): Content = values.find(_.toString == s).getOrElse(Map)
+    def parse(s: com.histmersion.web.MapRegions.Content.Name): Content = values.find(_.toString == s.value).getOrElse(Map)
 
   /** One entry of the region list: what it is called and its box (`None`: the box typed in). */
-  final case class RegionChoice(id: RegionChoice.Id, label: RegionChoice.Label, bbox: Option[RegionChoice.Bbox])
+  final case class RegionChoice(id: RegionChoice.Id, label: RegionChoice.Label, bbox: Option[com.histmersion.api.BBox.Text])
 
   object RegionChoice:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Label = Label.T
     object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Bbox = Bbox.T
-    object Bbox extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val OwnBox = "own"
 
   /** The configured region first — the whole world by default, then listed once, as itself. */
   def choices(s: Basemap.Status): List[RegionChoice] =
-    val world = RegionChoice(com.histmersion.web.MapRegions.RegionChoice.Id("world"), com.histmersion.web.MapRegions.RegionChoice.Label("the whole world"), Some(com.histmersion.web.MapRegions.RegionChoice.Bbox("world")))
+    val world = RegionChoice(com.histmersion.web.MapRegions.RegionChoice.Id("world"), com.histmersion.web.MapRegions.RegionChoice.Label("the whole world"), Some(com.histmersion.api.BBox.Text("world")))
     val configured =
-      if s.bbox.trim.equalsIgnoreCase("world") then
-        world.modify(_.id).setTo("configured").modify(_.label).setTo("the configured region (the whole world)")
-      else RegionChoice(com.histmersion.web.MapRegions.RegionChoice.Id("configured"), s"the configured region (${s.bbox})", Some(s.bbox))
-    List(configured) ++ s.regions.map(r => RegionChoice(r.name, s"${r.name} (${r.bbox})", Some(r.bbox))) ++
-      Option.unless(configured.bbox == world.bbox)(world).toList ++ List(RegionChoice(OwnBox, com.histmersion.web.MapRegions.RegionChoice.Label("a box of my own"), None))
+      if s.bbox.value.trim.equalsIgnoreCase("world") then
+        world
+          .modify(_.id)
+          .setTo(com.histmersion.web.MapRegions.RegionChoice.Id("configured"))
+          .modify(_.label)
+          .setTo(com.histmersion.web.MapRegions.RegionChoice.Label("the configured region (the whole world)"))
+      else RegionChoice(com.histmersion.web.MapRegions.RegionChoice.Id("configured"), com.histmersion.web.MapRegions.RegionChoice.Label(s"the configured region (${s.bbox})"), Some(s.bbox))
+    List(configured) ++ s.regions.map(r => RegionChoice(com.histmersion.web.MapRegions.RegionChoice.Id(r.name.value), com.histmersion.web.MapRegions.RegionChoice.Label(s"${r.name} (${r.bbox})"), Some(r.bbox))) ++
+      Option.unless(configured.bbox == world.bbox)(world).toList ++ List(RegionChoice(com.histmersion.web.MapRegions.RegionChoice.Id(OwnBox), com.histmersion.web.MapRegions.RegionChoice.Label("a box of my own"), None))
 
   /** The fetch for a box, what it holds, the named region it is (if it is one) and the depth typed (blank: the
     * configured one). A relief download is a focus region: the named one, or one named after its box.
@@ -67,26 +65,32 @@ object MapRegions:
   def request(
       box: com.histmersion.api.catalogue.MapArea.Bbox,
       content: Content,
-      named: Option[com.histmersion.web.MapRegions.Name],
+      named: Option[Basemap.Focus.Name],
       maxZoom: com.histmersion.web.MapRegions.ZoomText,
-      dryRun: com.histmersion.web.MapRegions.DryRun
-  ): Either[com.histmersion.web.MapRegions.Name, Basemap.FetchQuery] =
+      dryRun: Basemap.FetchQuery.DryRun
+  ): Either[Basemap.Problem, Basemap.FetchQuery] =
+    val typed = box.value.trim
     for
-      b <- Basemap.validBBox(box.trim)
-      z <- maxZoom.trim match
+      b <- Basemap.validBBox(Basemap.Focus.Bbox(typed))
+      z <- maxZoom.value.trim match
         case "" => Right(None)
         case t  =>
           t.toIntOption
             .filter(z => z >= 0 && z <= Basemap.MaxZoomCap)
             .map(Some(_))
-            .toRight(s"the deepest zoom is a number from 0 to ${Basemap.MaxZoomCap}")
+            .toRight(Basemap.Problem(s"the deepest zoom is a number from 0 to ${Basemap.MaxZoomCap}"))
     yield content match
-      case Content.Map    => Basemap.FetchQuery(bbox = Some(box.trim), maxZoom = z, dryRun = dryRun)
+      case Content.Map    =>
+        Basemap.FetchQuery(
+          bbox = Some(Basemap.FetchQuery.Bbox(typed)),
+          maxZoom = z.map(Basemap.FetchQuery.MaxZoom(_)),
+          dryRun = dryRun
+        )
       case Content.Relief =>
         Basemap.FetchQuery(
           layer = Basemap.Layer.Terrain.wire,
-          bbox = Some(box.trim),
-          terrainMaxZoom = z,
+          bbox = Some(Basemap.FetchQuery.Bbox(typed)),
+          terrainMaxZoom = z.map(Basemap.FetchQuery.TerrainMaxZoom(_)),
           dryRun = dryRun,
           focus = Some(named.getOrElse(Basemap.focusNameOf(b)))
         )
@@ -104,8 +108,8 @@ object MapRegions:
     * `by zoom — zoom 0: … · zoom 1: …`).
     */
   def sizes(answer: com.histmersion.web.MapRegions.SizesText): List[LayerSizes] =
-    answer.split("; ").toList.map(_.trim).filter(_.nonEmpty).foldLeft(List.empty[LayerSizes]) { (acc, part) =>
+    answer.value.split("; ").toList.map(_.trim).filter(_.nonEmpty).foldLeft(List.empty[LayerSizes]) { (acc, part) =>
       if part.startsWith("by zoom — ") && acc.nonEmpty then
-        acc.init :+ acc.last.copy(zooms = part.stripPrefix("by zoom — ").split(" · ").toList.map(_.trim))
-      else acc :+ LayerSizes(part, Nil)
+        acc.init :+ acc.last.copy(zooms = part.stripPrefix("by zoom — ").split(" · ").toList.map(z => LayerSizes.Zooms(z.trim)))
+      else acc :+ LayerSizes(LayerSizes.Line(part), Nil)
     }

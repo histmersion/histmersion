@@ -48,7 +48,7 @@ object DeleteCmd:
   def calibreCheck(
       calibreId: Source.CalibreId,
       libraryExists: => Boolean,
-      library: com.histmersion.cli.Calibre.LibraryDir,
+      library: com.histmersion.config.CalibreCliConfig.LibraryDir,
       byId: com.histmersion.cli.Calibre.Book.Id => Either[com.histmersion.cli.Calibre.Problem, Option[Calibre.Book]]
   ): CalibreEntryCheck =
     calibreId.value.trim.toIntOption match
@@ -69,7 +69,7 @@ object DeleteCmd:
       lazy val check = d.calibreId.map { id =>
         val cfg = Settings.app.cli.calibre
         val lib = Calibre(cfg)
-        calibreCheck(id, lib.libraryExists, Calibre.LibraryDir(cfg.library.value), lib.byId)
+        calibreCheck(id, lib.libraryExists, cfg.library, lib.byId)
       }
       Output.emit(a.json, d)(Source.Delete.markdown(_, check).value)
       // a refused dry run is not a success: a script that goes on to `--apply` would fail anyway

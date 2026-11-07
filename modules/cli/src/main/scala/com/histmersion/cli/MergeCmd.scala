@@ -150,7 +150,7 @@ object MergeCmd:
         _ <- Either.cond(Files.isRegularFile(p), (), Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
         res <- resolutions(flags)
         u <- upload(c, p.toFile)
-        plan <- c.mergePlan(MergePlan.Request(u.sha256, res))
+        plan <- c.mergePlan(MergePlan.Request(MergePlan.Request.Bundle(u.sha256.value), res))
         _ <- template.fold[Either[Cli.Error, Unit]](Right(())) { t =>
           scala.util
             .Try(Files.writeString(Path.of(t), MergeResolutionsFile.template(plan, res).value))
@@ -191,7 +191,7 @@ object MergeCmd:
         res0 <- resolutions(flags)
         res <- withTexts(res0)
         u <- upload(c, p.toFile)
-        plan <- c.mergePlan(MergePlan.Request(u.sha256, res))
+        plan <- c.mergePlan(MergePlan.Request(MergePlan.Request.Bundle(u.sha256.value), res))
         _ <- Either.cond(
           plan.problems.isEmpty && plan.resolutionErrors.isEmpty && plan.open.isEmpty,
           (), {
@@ -251,7 +251,7 @@ object MergeCmd:
           s"merge apply ${j.job.value.take(8)}: running (${j.elapsedMs.value / 1000}s — the backup comes first)"
         )
         Thread.sleep(PollMs.toLong)
-        c.mergeApplyStatus(j.job) match
+        c.mergeApplyStatus(Api.Merge.Id(j.job.value)) match
           case Left(e)     => Cli.err.println(); Left(e)
           case Right(next) =>
             if next.state != MergeJobState.Running then JobFollow.Progress.clear()
@@ -281,7 +281,7 @@ object MergeCmd:
       Opts.option[Int]("limit", "How many rows (default 200)").orNone,
       Output.jsonFlag
     ).mapN { (uid, merge, limit, json) => (c: Client) =>
-      c.mergeLedger(uid, merge.map(Api.Merge.Id(_)), limit.map(Paging.Limit(_))).map(l => Output.emit(json, l)(MergeMarkdown.ledger))
+      c.mergeLedger(uid.map(Api.Merge.Id(_)), merge.map(Api.Merge.Entity(_)), limit.map(Paging.Limit(_))).map(l => Output.emit(json, l)(MergeMarkdown.ledger))
     }
   }
 

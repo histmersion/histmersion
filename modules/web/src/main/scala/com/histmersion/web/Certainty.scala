@@ -17,8 +17,6 @@ object Certainty:
   object MarkerClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Rank = Rank.T
   object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Rgb = Rgb.T
-  object Rgb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What a dot that is not a finding (a site, an event, a picture) says about certainty: nothing — the full colour,
     * which never outweighs a finding's own.
@@ -33,12 +31,12 @@ object Certainty:
     * while a stated low or contested in the same group says more than "not stated" does.
     */
   def rank(c: Certainty): com.histmersion.web.Certainty.Rank = c match
-    case Stated(level) => 2 * ConfidenceStyle.rank(level)
-    case Unstated      => 2 * ConfidenceStyle.rank(Confidence.High) - 1
+    case Stated(level) => Rank(2 * ConfidenceStyle.rank(level).value)
+    case Unstated      => Rank(2 * ConfidenceStyle.rank(Confidence.High).value - 1)
 
   /** The certainty a group of dots is drawn with: its weakest; [[NoSay]] for none. */
   def worst(items: Iterable[Certainty]): Certainty =
-    items.foldLeft(NoSay)((w, c) => if rank(c) < rank(w) then c else w)
+    items.foldLeft(NoSay)((w, c) => if rank(c).value < rank(w).value then c else w)
 
   /** The certainty of a group of findings ([[worst]] of [[of]]). */
   def ofAll(items: Iterable[Option[Confidence]]): Certainty = worst(items.map(of))
@@ -47,13 +45,13 @@ object Certainty:
     * badges), turned to its luminance grey when unstated — the neutral look keeps the period ramp's lightness, so an
     * unstated dot still reads older or newer. Anything that is not an `rgb(…)` string comes back unchanged.
     */
-  def desaturate(rgb: com.histmersion.web.Certainty.Rgb, c: Certainty): com.histmersion.web.Certainty.Rgb = c match
+  def desaturate(rgb: ConfidenceStyle.Rgb, c: Certainty): ConfidenceStyle.Rgb = c match
     case Stated(level) => ConfidenceStyle.desaturate(rgb, level)
     case Unstated      =>
-      "\\d+".r.findAllIn(rgb).take(3).map(_.toInt).toList match
+      "\\d+".r.findAllIn(rgb.value).take(3).map(_.toInt).toList match
         case r :: g :: b :: Nil =>
           val grey = (0.299 * r + 0.587 * g + 0.114 * b).round.toInt
-          s"rgb($grey,$grey,$grey)"
+          ConfidenceStyle.Rgb(s"rgb($grey,$grey,$grey)")
         case _ => rgb
 
   /** The marker class of an unstated dot (its dashed edge, `style.css`); none for a stated one. */

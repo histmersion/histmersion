@@ -237,7 +237,7 @@ object PluginCmd:
           )
           written <- PluginAuthoring.write(
             target,
-            PluginTemplate.files(PluginTemplate.Request(id, kind, pkg, repo, agentNotes))
+            PluginTemplate.files(PluginTemplate.Request(id, kind, pkg, repo, PluginTemplate.Request.AgentNotes(agentNotes)))
           )
         yield
           if copied.nonEmpty then

@@ -5,6 +5,7 @@ import hearth.kindlings.optics.syntax.*
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.map.VectorStyle
 import com.histmersion.api.VocabularyCodecs.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import org.scalajs.dom
 import org.scalajs.dom.window
 
@@ -24,21 +25,19 @@ final case class MapPrefs(
 
   /** Is the sea drawn by its depth in `style`: the viewer's choice, else the style's default. Pure. */
   def seaDepth(style: VectorStyle): Boolean = style match
-    case VectorStyle.Physical => depthPhysical.getOrElse(MapPrefs.depthByDefault(style))
-    case VectorStyle.Readable => depthReadable.getOrElse(MapPrefs.depthByDefault(style))
+    case VectorStyle.Physical => depthPhysical.fold(MapPrefs.depthByDefault(style))(_.value)
+    case VectorStyle.Readable => depthReadable.fold(MapPrefs.depthByDefault(style))(_.value)
 
   /** The viewer's choice of the depth in `style`; the style's default is kept as no choice. Pure. */
   def withSeaDepth(style: VectorStyle, on: com.histmersion.web.MapPrefs.SeaDepth): MapPrefs =
-    val v = Option.when(on != MapPrefs.depthByDefault(style))(on)
+    val v = Option.when(on.value != MapPrefs.depthByDefault(style))(on.value)
     style match
-      case VectorStyle.Physical => this.modify(_.depthPhysical).setTo(v)
-      case VectorStyle.Readable => this.modify(_.depthReadable).setTo(v)
+      case VectorStyle.Physical => this.modify(_.depthPhysical).setTo(v.map(MapPrefs.DepthPhysical(_)))
+      case VectorStyle.Readable => this.modify(_.depthReadable).setTo(v.map(MapPrefs.DepthReadable(_)))
 
 object MapPrefs:
   type SeaDepth = SeaDepth.T
   object SeaDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Stored = Stored.T
-  object Stored extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** Physical is the map of the land's form, its sea coloured by depth; Readable keeps OSM Carto's flat water unless
     * the viewer asks for the depth.
     */
@@ -58,6 +57,6 @@ object MapPrefs:
 
   /** Kept as one JSON value; anything unreadable is no options at all. */
   given FieldCodec[MapPrefs]:
-    def encode(a: MapPrefs) = if a == MapPrefs() then Nil else List(io.circe.syntax.EncoderOps(a).asJson.noSpaces)
-    def decode(vs: List[com.histmersion.web.MapPrefs.Stored]) =
-      Some(vs.headOption.flatMap(v => io.circe.parser.decode[MapPrefs](v).toOption).getOrElse(MapPrefs()))
+    def encode(a: MapPrefs) = if a == MapPrefs() then Nil else List(com.histmersion.web.FieldCodec.Token(io.circe.syntax.EncoderOps(a).asJson.noSpaces))
+    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) =
+      Some(vs.headOption.flatMap(v => io.circe.parser.decode[MapPrefs](v.value).toOption).getOrElse(MapPrefs()))

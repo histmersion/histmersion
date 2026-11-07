@@ -224,7 +224,7 @@ object App:
       else
         lastParams = Some(key)
         dom.window.clearTimeout(timer)
-        timer = dom.window.setTimeout(() => load(), UiState.reloadDelay(UiState.ReloadDelayNormalMs(config.debounce.reloadMs.value)))
+        timer = dom.window.setTimeout(() => load(), UiState.reloadDelay(UiState.ReloadDelayNormalMs(config.debounce.reloadMs.value)).value)
 
   private def load(): Unit =
     val mine = latest.start()

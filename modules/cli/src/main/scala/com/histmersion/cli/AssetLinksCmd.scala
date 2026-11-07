@@ -22,7 +22,7 @@ object AssetLinksCmd:
       .mapN { (ck, asset, tt, ti) => (c: Client) =>
         c.assetLinks(
           ck.map(com.histmersion.api.library.Citekey(_)),
-          asset.map(com.histmersion.api.exchange.Bundle.Asset.FileName(_)),
+          asset.map(com.histmersion.api.exchange.Bundle.Asset.Variant(_)),
           tt.map(com.histmersion.api.catalogue.Attestation.TargetType(_)),
           ti.map(com.histmersion.api.catalogue.Attestation.TargetId(_))
         ).map(r => Cli.out.println(MediaMarkdown.assetLinkList(r)))

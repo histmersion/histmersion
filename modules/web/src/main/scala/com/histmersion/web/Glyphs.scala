@@ -12,8 +12,6 @@ package com.histmersion.web
 object Glyphs:
   type ExtraClass = ExtraClass.T
   object ExtraClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Markup = Markup.T
-  object Markup extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Svg = Svg.T
@@ -23,7 +21,7 @@ object Glyphs:
   type BadgeName = _root_.com.histmersion.web.Glyphs.Name
   val BadgeName: _root_.com.histmersion.web.Glyphs.Name.type = _root_.com.histmersion.web.Glyphs.Name
 
-  val inner: Map[com.histmersion.web.Glyphs.Name, com.histmersion.web.Glyphs.Markup] = Map(
+  private val inner: Map[String, String] = Map(
     "activity" -> """<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" />""",
     // not Lucide: an exclamation mark alone (Lucide's `circle-alert` without its circle, drawn larger) —
     // the glyph of a thing on the map whose type is not known
@@ -84,22 +82,22 @@ object Glyphs:
     * for an unknown name.
     */
   def svg(name: com.histmersion.web.Glyphs.Name, extraClass: com.histmersion.web.Glyphs.ExtraClass = com.histmersion.web.Glyphs.ExtraClass("")): com.histmersion.web.Glyphs.Svg =
-    inner.get(name).fold("") { body =>
-      val cls = if extraClass.isEmpty then "glyph" else s"glyph $extraClass"
+    Svg(inner.get(name.value).fold("") { body =>
+      val cls = if extraClass.value.isEmpty then "glyph" else s"glyph $extraClass"
       s"""<svg class="$cls" viewBox="0 0 24 24" aria-hidden="true" focusable="false">$body</svg>"""
-    }
+    })
 
   /** Pure: an icon as a map BADGE draws it (`.glyph.glyph--badge`): the strokes twice — a wider, dark halo under the
     * light ink — so a white line stays readable on a pale period colour. Two strokes, no CSS filter: thousands of
     * markers draw it. Empty for an unknown name.
     */
-  def badge(name: com.histmersion.web.Glyphs.BadgeName): com.histmersion.web.Glyphs.Svg = badges.getOrElseUpdate(name, badgeOf(name))
+  def badge(name: com.histmersion.web.Glyphs.BadgeName): com.histmersion.web.Glyphs.Svg = Svg(badges.getOrElseUpdate(name.value, badgeOf(name)))
 
   // one string per icon, built once: thousands of markers share it
   private val badges = scala.collection.mutable.HashMap.empty[String, String]
 
-  private def badgeOf(name: com.histmersion.web.Glyphs.Name): com.histmersion.web.Glyphs.Svg =
-    inner.get(name).fold("") { body =>
+  private def badgeOf(name: com.histmersion.web.Glyphs.Name): String =
+    inner.get(name.value).fold("") { body =>
       s"""<svg class="glyph glyph--badge" viewBox="0 0 24 24" aria-hidden="true" focusable="false">""" +
         s"""<g class="glyph-halo">$body</g><g class="glyph-ink">$body</g></svg>"""
     }

@@ -10,55 +10,51 @@ import com.raquo.laminar.api.L.*
 object FilterChips:
   type ChipCount = ChipCount.T
   object ChipCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodCounted = PeriodCounted.T
-  object PeriodCounted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: is the span `from`–`to` other than the default one? */
 
-  def periodSet(from: Option[com.histmersion.api.Years.Astronomical], to: Option[com.histmersion.api.Years.Astronomical], defaultFrom: com.histmersion.api.Years.Astronomical, defaultTo: com.histmersion.api.Years.Astronomical): Boolean =
+  def periodSet(from: Option[Long], to: Option[Long], defaultFrom: Long, defaultTo: Long): Boolean =
     from.getOrElse(defaultFrom) != defaultFrom || to.getOrElse(defaultTo) != defaultTo
 
   /** Pure: how many filters are active — the chips and, when set, the period. */
-  def count(chips: List[UiState.ActiveChip], period: com.histmersion.web.FilterChips.PeriodCounted): com.histmersion.web.FilterChips.ChipCount = chips.size + (if period then 1 else 0)
+  def count(chips: List[UiState.ActiveChip], period: Boolean): com.histmersion.web.FilterChips.ChipCount = ChipCount(chips.size + (if period then 1 else 0))
 
   /** How many filters are active now. */
   def countNow(config: UiConfig): com.histmersion.web.FilterChips.ChipCount =
     count(
       UiState.activeChips(),
-      periodSet(UiState.from.now(), UiState.to.now(), config.time.defaultFrom, config.time.defaultTo)
+      periodSet(UiState.from.now(), UiState.to.now(), config.time.defaultFrom.value, config.time.defaultTo.value)
     )
 
   /** The label a chip's field reads as. */
-  private def labelOf(c: UiState.ActiveChip): com.histmersion.web.FilterChips.Label = c.key match
-    case k if k == UiState.q.key => com.histmersion.web.FilterChips.Label("Words")
-    case _                       => Wording.capitalize(c.label)
+  private def labelOf(c: UiState.ActiveChip): String = c.key match
+    case k if k.value == UiState.q.key.value => "Words"
+    case _                                   => Wording.capitalize(c.label.value)
 
   /** One active filter's chip; a chosen place is named by its label, never by its id. */
   def chip(c: UiState.ActiveChip): HtmlElement =
-    val remove = Some { () => UiState.removeChip(c.key, c.value); PlacesInput.sync() }
-    if c.key == UiState.placeIds.key then
+    val remove = Some { () => UiState.removeChip(UiState.RemoveChipKey(c.key.value), c.value); PlacesInput.sync() }
+    if c.key.value == UiState.placeIds.key.value then
       span(
         child <-- PlacesInput
-          .chipTextSignal(c.value)
-          .map(t => Chip(t, prefix = Some(s"${labelOf(c)}: "), extraCls = "place", remove = remove))
+          .chipTextSignal(PlacesInput.ChipTextSignalId(c.value.value))
+          .map(t => Chip(Chip.Text(t.value), prefix = Some(Chip.Prefix(s"${labelOf(c)}: ")), extraCls = Chip.ExtraClass("place"), remove = remove))
       )
-    else if c.key == UiState.status.key then
-      Chip(Wording.statusOf(c.value), prefix = Some(s"${labelOf(c)}: "), remove = remove)
-    else Chip(c.shown.getOrElse(Fmt.displayTag(c.value)), prefix = Some(s"${labelOf(c)}: "), remove = remove)
+    else if c.key.value == UiState.status.key.value then
+      Chip(Chip.Text(Wording.statusOf(com.histmersion.api.Api.GoalQuery.Status(c.value.value))), prefix = Some(Chip.Prefix(s"${labelOf(c)}: ")), remove = remove)
+    else Chip(Chip.Text(c.shown.map(_.value).getOrElse(Fmt.displayTag(Fmt.DisplayTagS(c.value.value)).value)), prefix = Some(Chip.Prefix(s"${labelOf(c)}: ")), remove = remove)
 
   private def periodChip(config: UiConfig): HtmlElement =
     Chip(
-      Fmt.periodStr(
-        UiState.from.now().getOrElse(config.time.defaultFrom),
-        UiState.to.now().getOrElse(config.time.defaultTo)
-      ),
+      Chip.Text(Fmt.periodStr(
+        com.histmersion.api.catalogue.Year(UiState.from.now().getOrElse(config.time.defaultFrom.value)),
+        com.histmersion.api.catalogue.Year(UiState.to.now().getOrElse(config.time.defaultTo.value))
+      ).value),
       prefix = Some(com.histmersion.web.Chip.Prefix("Period: ")),
-      extraCls = "chip-period",
+      extraCls = Chip.ExtraClass("chip-period"),
       remove = Some(() =>
         UiState
-          .set(UiState.from := Some(config.time.defaultFrom), UiState.to := Some(config.time.defaultTo))(push = true)
+          .set(UiState.from := Some(config.time.defaultFrom.value), UiState.to := Some(config.time.defaultTo.value))(push = true)
       )
     )
 
@@ -68,7 +64,7 @@ object FilterChips:
       cls := "filter-chips",
       aria.label := "Active filters",
       children <-- UiState.signal.map { _ =>
-        val period = periodSet(UiState.from.now(), UiState.to.now(), config.time.defaultFrom, config.time.defaultTo)
+        val period = periodSet(UiState.from.now(), UiState.to.now(), config.time.defaultFrom.value, config.time.defaultTo.value)
         (if period then List(li(periodChip(config))) else Nil) ++ UiState.activeChips().map(c => li(chip(c)))
       }
     )

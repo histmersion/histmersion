@@ -8,12 +8,7 @@ import scala.scalajs.js
   * because it shows that thing's state rather than keeping its own.
   */
 object LayerToggle:
-  type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type On = On.T
-  object On extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  def apply(icon: Icon, label: com.histmersion.web.LayerToggle.Label, on: Signal[com.histmersion.web.LayerToggle.On], set: com.histmersion.web.LayerToggle.On => Unit): HtmlElement =
+  def apply(icon: Icon, label: String, on: Signal[Boolean], set: Boolean => Unit): HtmlElement =
     button(
       typ := "button",
       cls := "btn btn--toggle", // the shared control look: style.css `.btn`, `.btn--toggle`

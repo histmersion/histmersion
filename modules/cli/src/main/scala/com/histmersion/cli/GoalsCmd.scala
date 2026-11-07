@@ -117,7 +117,7 @@ object GoalsCmd:
       Opts.argument[String]("ref")
     ).mapN { (slug, kind, ref) => (c: Client) =>
       c.call(AgentsApi.removeGoalLink)((ReviewGoal.Slug(slug), LinkKind.Wire(kind), Citekey(ref)))
-        .map(r => Cli.out.println(if r.removed then "unlinked" else "there was no such link"))
+        .map(r => Cli.out.println(if r.removed.value then "unlinked" else "there was no such link"))
     }
   }
 
@@ -144,7 +144,7 @@ object GoalsCmd:
         set match
           case None =>
             c.call(AgentsApi.removeSchedule)((ReviewGoal.Slug(slug), ScheduleKind.Wire(kind)))
-              .map(r => Cli.out.println(if r.removed then "removed" else "there was no such schedule"))
+              .map(r => Cli.out.println(if r.removed.value then "removed" else "there was no such schedule"))
           case Some((cron, off, budget)) =>
             c.call(AgentsApi.setSchedule)(
               (

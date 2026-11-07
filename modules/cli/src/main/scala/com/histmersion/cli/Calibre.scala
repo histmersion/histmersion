@@ -448,7 +448,7 @@ object Calibre:
 
   /** Plan `update --all`: one [[UpdateEntry]] per linked Calibre id, in id order. */
   def planAll(linked: List[LinkedRecord], books: Map[com.histmersion.cli.Calibre.Book.Id, com.histmersion.cli.Calibre.Book]): List[UpdateEntry] =
-    linked.groupBy(_.calibreId.value).toList.sortBy(_._1).map { (idValue, rs) =>
+    linked.groupBy(_.calibreId.value).toList.sortBy(kv => kv._1: Int).map { (idValue, rs) =>
       val id = Book.Id(idValue)
       val keys = rs.map(_.citekey.value).distinct.sorted
       val outcome =
@@ -841,7 +841,7 @@ object Calibre:
       ).flatten
 
     def audit(records: List[AuditRecord], books: Map[com.histmersion.cli.Calibre.Book.Id, Book]): List[AuditFinding] =
-      records.groupBy(_.calibreId.value).toList.sortBy(_._1).flatMap { (idValue, rs) =>
+      records.groupBy(_.calibreId.value).toList.sortBy(kv => kv._1: Int).flatMap { (idValue, rs) =>
         val id = AuditFinding.CalibreId(idValue)
         val keys = rs.map(r => AuditFinding.Citekeys(r.citekey.value)).sortBy(_.value)
         books.get(Book.Id(idValue)) match

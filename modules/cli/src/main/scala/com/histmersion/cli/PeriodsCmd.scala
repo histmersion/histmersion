@@ -4,6 +4,7 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.{Api, Dataset}
 import com.histmersion.api.catalogue.Period
+import com.histmersion.api.instance.CorpusCounts.Periods as PeriodsApi
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
@@ -27,7 +28,7 @@ object PeriodsCmd:
       Opts.option[Long]("to", "Signed year the period must start by").orNone
     )
       .mapN { (q, region, from, to) => (c: Client) =>
-        c.periods(q.map(_.trim).filter(_.nonEmpty).map(Api.Search.Text(_)), region, from, to)
+        c.periods(q.map(_.trim).filter(_.nonEmpty).map(PeriodsApi.Source(_)), region.map(PeriodsApi.Collection(_)), from.map(Api.PlacesGeoQuery.From(_)), to.map(Api.PlacesGeoQuery.To(_)))
           .map(ps => Cli.out.println(PeriodsMarkdown.list(ps.toVector)))
       }
   }
@@ -56,7 +57,7 @@ object PeriodsCmd:
             case Some(_) if replace =>
               Left(Cli.Error(Cli.Error.Message("--replace applies to the bundled seed, not to --file"), exitCode = ExitCode.Usage))
             case Some(f) if !Files.isRegularFile(f) => Left(Cli.Error(Cli.Error.Message(s"no such file: $f"), exitCode = ExitCode.Usage))
-            case Some(f)                            => c.importPeriods(Nil, Files.readString(f), Dataset.Seed)
+            case Some(f)                            => c.importPeriods(Nil, PeriodsApi.Name(Files.readString(f)), Dataset.Seed)
           r.map(x => Cli.out.println(PeriodsMarkdown.imported(x)))
         }
     }
@@ -73,7 +74,7 @@ object PeriodsCmd:
       .mapN { (file, cols, dataset) => (c: Client) =>
         val f = Path.of(file)
         if !Files.isRegularFile(f) then Left(Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
-        else c.importPeriods(cols, Files.readString(f), dataset).map(x => Cli.out.println(PeriodsMarkdown.imported(x)))
+        else c.importPeriods(cols.map(PeriodsApi.Source(_)), PeriodsApi.Name(Files.readString(f)), dataset).map(x => Cli.out.println(PeriodsMarkdown.imported(x)))
       }
   }
 
@@ -91,7 +92,7 @@ object PeriodsCmd:
         .orEmpty
     )
       .mapN { (source, cols) => (c: Client) =>
-        c.fetchPeriods(source, cols).map(r => Cli.out.println(PeriodsMarkdown.imported(r)))
+        c.fetchPeriods(PeriodsApi.Source(source), cols.map(PeriodsApi.Collection(_))).map(r => Cli.out.println(PeriodsMarkdown.imported(r)))
       }
   }
 
@@ -111,7 +112,7 @@ object PeriodsCmd:
         Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
       )
         .mapN { (fetch, noWait) => (c: Client) =>
-          c.init(fetch).flatMap { j =>
+          c.init(Api.Overwrite(fetch)).flatMap { j =>
             Cli.out.println(s"init job `${j.id}` started (`histmersion jobs` lists it)")
             if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
           }

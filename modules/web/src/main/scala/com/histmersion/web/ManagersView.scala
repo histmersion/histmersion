@@ -27,42 +27,20 @@ import com.histmersion.api.automation.Goal
   * gate. Also the article window's Review button.
   */
 object ManagersView:
-  type ArticleSlug = ArticleSlug.T
-  object ArticleSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Badge = Badge.T
   object Badge extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Busy = Busy.T
-  object Busy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ButtonLabel = ButtonLabel.T
   object ButtonLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Changed = Changed.T
-  object Changed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ConfigKey = ConfigKey.T
   object ConfigKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConfigLabel = ConfigLabel.T
-  object ConfigLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ConfigText = ConfigText.T
   object ConfigText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CountsText = CountsText.T
   object CountsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Delay = Delay.T
-  object Delay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DrainLine = DrainLine.T
   object DrainLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EnqueuedNote = EnqueuedNote.T
   object EnqueuedNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Extended = Extended.T
-  object Extended extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FacetCount = FacetCount.T
-  object FacetCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FacetLabel = FacetLabel.T
-  object FacetLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FacetText = FacetText.T
-  object FacetText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FieldName = FieldName.T
-  object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FieldText = FieldText.T
-  object FieldText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FocusHead = FocusHead.T
   object FocusHead extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FocusPace = FocusPace.T
@@ -71,30 +49,14 @@ object ManagersView:
   object GoalLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Hint = Hint.T
   object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HintId = HintId.T
-  object HintId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ItemAction = ItemAction.T
   object ItemAction extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type JobTypeMeaning = JobTypeMeaning.T
   object JobTypeMeaning extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListText = ListText.T
-  object ListText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ManagerMeaning = ManagerMeaning.T
   object ManagerMeaning extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Mounted = Mounted.T
-  object Mounted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Number = Number.T
-  object Number extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumberText = NumberText.T
-  object NumberText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RowId = RowId.T
-  object RowId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SchedulerHead = SchedulerHead.T
   object SchedulerHead extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Separator = Separator.T
-  object Separator extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Stages = Stages.T
   object Stages extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StatusMeaning = StatusMeaning.T
@@ -111,17 +73,15 @@ object ManagersView:
   object WriteLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Items per page, events per page. */
-
-
-  val ItemLimit = 25
-  val EventLimit = 30
+  val ItemLimit = com.histmersion.api.Paging.Limit(25)
+  val EventLimit = com.histmersion.api.Paging.Limit(30)
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** The badge of a manager: its person-set state, or — active — what the supervisor derived. */
   def badge(m: ManagerInfo): com.histmersion.web.ManagersView.Badge =
-    val note = m.statusNote.getOrElse("")
-    if m.state != State.Active.wire then m.state
+    val note = m.statusNote.fold("")(_.value)
+    if m.state != State.Active.wire then com.histmersion.web.ManagersView.Badge(m.state.value)
     else if note.startsWith("starved") then com.histmersion.web.ManagersView.Badge("starved")
     else if note.startsWith("budget") then com.histmersion.web.ManagersView.Badge("budget")
     else if note.startsWith("at capacity") then com.histmersion.web.ManagersView.Badge("at capacity")
@@ -133,31 +93,31 @@ object ManagersView:
     * window's manager menu.
     */
   def managerMeaning(id: com.histmersion.api.automation.Managers.ManagerInfo.Id): Option[com.histmersion.web.ManagersView.ManagerMeaning] =
-    val goal = id.dropWhile(_ != ':').drop(1)
-    Kind.parse(id.takeWhile(_ != ':')).map {
-      case Kind.Review => "The review manager: reviews the library's articles until their reviews converge."
-      case Kind.Enrich => "The enrich manager: enriches the library's sources until each one is enriched."
+    val goal = id.value.dropWhile(_ != ':').drop(1)
+    Kind.parse(Kind.Wire(id.value.takeWhile(_ != ':'))).map {
+      case Kind.Review => com.histmersion.web.ManagersView.ManagerMeaning("The review manager: reviews the library's articles until their reviews converge.")
+      case Kind.Enrich => com.histmersion.web.ManagersView.ManagerMeaning("The enrich manager: enriches the library's sources until each one is enriched.")
       case Kind.Seed   =>
-        s"Seeds the research area $goal: plans it, proposes its new articles and, once approved, compiles them."
-      case Kind.Watch => s"Watches the research area $goal: an acquisition sweep and a currency check on its schedule."
+        com.histmersion.web.ManagersView.ManagerMeaning(s"Seeds the research area $goal: plans it, proposes its new articles and, once approved, compiles them.")
+      case Kind.Watch => com.histmersion.web.ManagersView.ManagerMeaning(s"Watches the research area $goal: an acquisition sweep and a currency check on its schedule.")
     }
 
   /** What each status of a manager's item means; a tooltip on the items' filter buttons. */
   def itemStatusMeaning(s: ItemStatus): com.histmersion.web.ManagersView.StatusMeaning = s match
     case ItemStatus.Pending => com.histmersion.web.ManagersView.StatusMeaning("Waiting to start; the scheduler picks the order.")
-    case ItemStatus.Held    => "Held: it does not start until released, its approval is decided, or its hold ends."
+    case ItemStatus.Held    => com.histmersion.web.ManagersView.StatusMeaning("Held: it does not start until released, its approval is decided, or its hold ends.")
     case ItemStatus.Active  => com.histmersion.web.ManagersView.StatusMeaning("A run is working on it now.")
     case ItemStatus.Done    => com.histmersion.web.ManagersView.StatusMeaning("Settled: its runs got it where the manager wanted it.")
     case ItemStatus.Stopped =>
-      "Settled without being done: skipped, or the manager gave up on it. Re-open brings it back."
+      com.histmersion.web.ManagersView.StatusMeaning("Settled without being done: skipped, or the manager gave up on it. Re-open brings it back.")
     case ItemStatus.Failed    => com.histmersion.web.ManagersView.StatusMeaning("Settled because its run failed. Re-open brings it back.")
-    case ItemStatus.Cancelled => "Settled because the work is moot: its target is gone, or its sweep was removed."
+    case ItemStatus.Cancelled => com.histmersion.web.ManagersView.StatusMeaning("Settled because the work is moot: its target is gone, or its sweep was removed.")
 
   /** What a person can do to this item: by its status — but an item the autopilot's focus holds is not released by hand
     * (pin its goal instead).
     */
   def itemActionsFor(i: ManagerItem): List[com.histmersion.web.ManagersView.ItemAction] =
-    if i.hold.exists(_.focus.isDefined) then itemActions(i.status).filterNot(_ == "release") else itemActions(i.status)
+    if i.hold.exists(_.focus.isDefined) then itemActions(i.status).filterNot(_ == com.histmersion.web.ManagersView.ItemAction("release")) else itemActions(i.status)
 
   /** What a person can do to an item in this status. */
   def itemActions(status: com.histmersion.api.automation.ItemStatus.Wire): List[com.histmersion.web.ManagersView.ItemAction] = ItemStatus.parse(status) match
@@ -168,14 +128,14 @@ object ManagersView:
     case _                        => Nil
 
   /** A whole number the person typed, or nothing. */
-  def int(s: com.histmersion.web.ManagersView.NumberText): Option[com.histmersion.web.ManagersView.Number] = s.trim.toIntOption.filter(_ >= 0)
+  private def whole(s: String): Option[Int] = s.trim.toIntOption.filter(_ >= 0)
 
-  private def list(s: com.histmersion.web.ManagersView.ListText, sep: com.histmersion.web.ManagersView.Separator): Option[List[com.histmersion.api.Write.ListItem]] =
+  private def list(s: String, sep: String): Option[List[String]] =
     Option(s.split(sep).toList.map(_.trim).filter(_.nonEmpty)).filter(_.nonEmpty)
 
   /** The settings form → a config (blank fields are the server's defaults). Left = what does not parse. */
   def config(f: Map[com.histmersion.web.ManagersView.ConfigKey, com.histmersion.web.ManagersView.ConfigText]): Either[com.histmersion.web.ManagersView.ConfigText, ManagerConfig] =
-    def g(k: com.histmersion.web.ManagersView.ConfigKey) = f.getOrElse(k, "").trim
+    def g(k: String): String = f.getOrElse(com.histmersion.web.ManagersView.ConfigKey(k), com.histmersion.web.ManagersView.ConfigText("")).value.trim
     val bad = List(
       "maxRuns",
       "maxOpen",
@@ -193,90 +153,92 @@ object ManagersView:
       "autoIngestPerDay",
       "extendMinNew"
     )
-      .filter(k => g(k).nonEmpty && int(g(k)).isEmpty)
-    def onOff(k: com.histmersion.web.ManagersView.ConfigKey, what: com.histmersion.web.ManagersView.ConfigLabel): Either[com.histmersion.web.ManagersView.ConfigText, Option[Boolean]] = g(k).toLowerCase match
+      .filter(k => g(k).nonEmpty && whole(g(k)).isEmpty)
+    def onOff(k: String, what: String): Either[String, Option[Boolean]] = g(k).toLowerCase match
       case ""                     => Right(None)
       case "true" | "on" | "yes"  => Right(Some(true))
       case "false" | "off" | "no" => Right(Some(false))
       case other                  => Left(s"$what: '$other' is not on or off")
-    val sweeps = list(g(com.histmersion.web.ManagersView.ConfigKey("sweeps")), com.histmersion.web.ManagersView.Separator(",")).map(ws => ws.map(w => Sweep.parse(w).toRight(w)))
+    val sweeps = list(g("sweeps"), ",").map(ws => ws.map(w => Sweep.parse(Sweep.Wire(w)).toRight(w)))
     val infer = for
-      i <- onOff(com.histmersion.web.ManagersView.ConfigKey("inferFilter"), com.histmersion.web.ManagersView.ConfigLabel("infer filter"))
-      ai <- onOff(com.histmersion.web.ManagersView.ConfigKey("autoIngest"), com.histmersion.web.ManagersView.ConfigLabel("ingest legal open access"))
+      i <- onOff("inferFilter", "infer filter")
+      ai <- onOff("autoIngest", "ingest legal open access")
       aa <- onOff("autoApprove", "decide its approvals by code checks")
       _ <- sweeps.toList.flatten
         .collectFirst { case Left(w) => w }
         .fold[Either[String, Unit]](Right(()))(w => Left(s"sweeps: '$w' is not acquisition or currency"))
     yield (i, ai, aa)
-    val usd = g(com.histmersion.web.ManagersView.ConfigKey("budgetUsd"))
-    val daily = g(com.histmersion.web.ManagersView.ConfigKey("dailyUsd"))
-    val models = list(g(com.histmersion.web.ManagersView.ConfigKey("models")), com.histmersion.web.ManagersView.Separator(";")).getOrElse(Nil).map(Agents.ModelOverride.parse)
-    if bad.nonEmpty then Left(s"not a whole number: ${bad.mkString(", ")}")
-    else if usd.nonEmpty && usd.toDoubleOption.forall(_ <= 0) then Left(com.histmersion.web.ManagersView.ConfigText("budget USD is not a positive number"))
-    else if daily.nonEmpty && daily.toDoubleOption.forall(_ < 0) then Left(com.histmersion.web.ManagersView.ConfigText("daily cap USD is not a number (0 = no cap)"))
-    else
-      infer.flatMap((inf, ai, aa) =>
-        models.collectFirst { case Left(e) => e } match
-          case Some(e) => Left(s"models: $e")
-          case None    =>
-            Right(
-              ManagerConfig(
-                int(g("maxRuns")),
-                int(g("maxOpen")),
-                int(g("rounds")),
-                int(g("maxRunsPerArticle")),
-                int(g("noProgressRuns")),
-                int(g("reopenLimit")),
-                int(g("cooldownMinutes")),
-                int(g("lowWater")),
-                int(g("refillBatch")),
-                int(g("maxFailures")),
-                usd.toDoubleOption,
-                list(g("includeTags"), ","),
-                Option(g("includeGoal")).filter(_.nonEmpty),
-                Option(models.collect { case Right(m) => m }).filter(_.nonEmpty),
-                int(g("staleAfterDays")),
-                inf,
-                int(g("minSources")),
-                int(g("maxArticles")),
-                sweeps.map(_.collect { case Right(s) => s.wire }.distinct),
-                ai,
-                int(g("autoIngestPerDay")),
-                daily.toDoubleOption,
-                aa,
-                int(g("extendMinNew"))
+    val usd = g("budgetUsd")
+    val daily = g("dailyUsd")
+    val models = list(g("models"), ";").getOrElse(Nil).map(w => Agents.ModelOverride.parse(Agents.ModelOverride.Wire(w)))
+    val result: Either[String, ManagerConfig] =
+      if bad.nonEmpty then Left(s"not a whole number: ${bad.mkString(", ")}")
+      else if usd.nonEmpty && usd.toDoubleOption.forall(_ <= 0) then Left("budget USD is not a positive number")
+      else if daily.nonEmpty && daily.toDoubleOption.forall(_ < 0) then Left("daily cap USD is not a number (0 = no cap)")
+      else
+        infer.flatMap((inf, ai, aa) =>
+          models.collectFirst { case Left(e) => e } match
+            case Some(e) => Left(s"models: $e")
+            case None    =>
+              Right(
+                ManagerConfig(
+                  whole(g("maxRuns")).map(ManagerConfig.MaxRuns(_)),
+                  whole(g("maxOpen")).map(ManagerConfig.MaxOpen(_)),
+                  whole(g("rounds")).map(ManagerConfig.Rounds(_)),
+                  whole(g("maxRunsPerArticle")).map(ManagerConfig.MaxRunsPerArticle(_)),
+                  whole(g("noProgressRuns")).map(ManagerConfig.NoProgressRuns(_)),
+                  whole(g("reopenLimit")).map(ManagerConfig.ReopenLimit(_)),
+                  whole(g("cooldownMinutes")).map(ManagerConfig.CooldownMinutes(_)),
+                  whole(g("lowWater")).map(ManagerConfig.LowWater(_)),
+                  whole(g("refillBatch")).map(ManagerConfig.RefillBatch(_)),
+                  whole(g("maxFailures")).map(ManagerConfig.MaxFailures(_)),
+                  usd.toDoubleOption.map(ManagerConfig.BudgetUsd(_)),
+                  list(g("includeTags"), ",").map(_.map(ManagerConfig.IncludeTags(_))),
+                  Option(g("includeGoal")).filter(_.nonEmpty).map(ManagerConfig.IncludeGoal(_)),
+                  Option(models.collect { case Right(m) => m }).filter(_.nonEmpty),
+                  whole(g("staleAfterDays")).map(ManagerConfig.StaleAfterDays(_)),
+                  inf.map(ManagerConfig.InferFilter(_)),
+                  whole(g("minSources")).map(ManagerConfig.MinSources(_)),
+                  whole(g("maxArticles")).map(ManagerConfig.MaxArticles(_)),
+                  sweeps.map(_.collect { case Right(s) => s.wire }.distinct),
+                  ai.map(ManagerConfig.AutoIngest(_)),
+                  whole(g("autoIngestPerDay")).map(ManagerConfig.AutoIngestPerDay(_)),
+                  daily.toDoubleOption.map(ManagerConfig.DailyUsd(_)),
+                  aa.map(ManagerConfig.AutoApprove(_)),
+                  whole(g("extendMinNew")).map(ManagerConfig.ExtendMinNew(_))
+                )
               )
-            )
-      )
+        )
+    result.left.map(com.histmersion.web.ManagersView.ConfigText(_))
 
   /** A config as the form shows it (blank = the default). */
-  def fields(c: ManagerConfig): Map[com.histmersion.web.ManagersView.FieldName, com.histmersion.web.ManagersView.FieldText] = Map(
-    "maxRuns" -> c.maxRuns,
-    "maxOpen" -> c.maxOpen,
-    "rounds" -> c.rounds,
-    "maxRunsPerArticle" -> c.maxRunsPerArticle,
-    "noProgressRuns" -> c.noProgressRuns,
-    "reopenLimit" -> c.reopenLimit,
-    "cooldownMinutes" -> c.cooldownMinutes,
-    "lowWater" -> c.lowWater,
-    "refillBatch" -> c.refillBatch,
-    "maxFailures" -> c.maxFailures,
-    "staleAfterDays" -> c.staleAfterDays,
-    "minSources" -> c.minSources,
-    "maxArticles" -> c.maxArticles,
-    "autoIngestPerDay" -> c.autoIngestPerDay,
-    "extendMinNew" -> c.extendMinNew
-  ).view.mapValues(_.fold("")(_.toString)).toMap ++ Map(
-    "inferFilter" -> c.inferFilter.fold("")(b => if b then "on" else "off"),
-    "autoApprove" -> c.autoApprove.fold("")(b => if b then "on" else "off"),
-    "autoIngest" -> c.autoIngest.fold("")(b => if b then "on" else "off"),
-    "sweeps" -> c.sweeps.fold("")(_.mkString(", ")),
-    "budgetUsd" -> c.budgetUsd.fold("")(_.toString),
-    "dailyUsd" -> c.dailyUsd.fold("")(_.toString),
-    "includeTags" -> c.includeTags.getOrElse(Nil).mkString(", "),
-    "includeGoal" -> c.includeGoal.getOrElse(""),
-    "models" -> c.models.getOrElse(Nil).map(_.text).mkString("; ")
-  )
+  def fields(c: ManagerConfig): Map[com.histmersion.web.ManagersView.ConfigKey, com.histmersion.web.ManagersView.ConfigText] =
+    List(
+      "maxRuns" -> c.maxRuns.fold("")(_.toString),
+      "maxOpen" -> c.maxOpen.fold("")(_.toString),
+      "rounds" -> c.rounds.fold("")(_.toString),
+      "maxRunsPerArticle" -> c.maxRunsPerArticle.fold("")(_.toString),
+      "noProgressRuns" -> c.noProgressRuns.fold("")(_.toString),
+      "reopenLimit" -> c.reopenLimit.fold("")(_.toString),
+      "cooldownMinutes" -> c.cooldownMinutes.fold("")(_.toString),
+      "lowWater" -> c.lowWater.fold("")(_.toString),
+      "refillBatch" -> c.refillBatch.fold("")(_.toString),
+      "maxFailures" -> c.maxFailures.fold("")(_.toString),
+      "staleAfterDays" -> c.staleAfterDays.fold("")(_.toString),
+      "minSources" -> c.minSources.fold("")(_.toString),
+      "maxArticles" -> c.maxArticles.fold("")(_.toString),
+      "autoIngestPerDay" -> c.autoIngestPerDay.fold("")(_.toString),
+      "extendMinNew" -> c.extendMinNew.fold("")(_.toString),
+      "inferFilter" -> c.inferFilter.fold("")(b => if b.value then "on" else "off"),
+      "autoApprove" -> c.autoApprove.fold("")(b => if b.value then "on" else "off"),
+      "autoIngest" -> c.autoIngest.fold("")(b => if b.value then "on" else "off"),
+      "sweeps" -> c.sweeps.fold("")(_.mkString(", ")),
+      "budgetUsd" -> c.budgetUsd.fold("")(_.toString),
+      "dailyUsd" -> c.dailyUsd.fold("")(_.toString),
+      "includeTags" -> c.includeTags.getOrElse(Nil).mkString(", "),
+      "includeGoal" -> c.includeGoal.fold("")(_.value),
+      "models" -> c.models.getOrElse(Nil).map(_.text).mkString("; ")
+    ).map((k, v) => com.histmersion.web.ManagersView.ConfigKey(k) -> com.histmersion.web.ManagersView.ConfigText(v)).toMap
 
   /** The settings the form offers, with their labels. */
   val Settings: List[(com.histmersion.web.ManagersView.ConfigKey, com.histmersion.web.ManagersView.ConfigText)] = List(
@@ -304,7 +266,7 @@ object ManagersView:
     "autoIngestPerDay" -> "watch: ingests a day at most",
     "autoApprove" -> "decide its runs' plans and drafts by code checks (on/off; blank = agents.approvals)",
     "extendMinNew" -> "extend an article at this many new sources (0 never)"
-  )
+  ).map((k, label) => com.histmersion.web.ManagersView.ConfigKey(k) -> com.histmersion.web.ManagersView.ConfigText(label))
 
   /** What a manager's settings form offers: every setting, but a watcher's only to a watcher (and the review settings
     * not to one).
@@ -324,12 +286,12 @@ object ManagersView:
       "inferFilter",
       "extendMinNew"
     )
-    if kind == Kind.Watch.wire then Settings.filterNot((k, _) => reviewOnly(k))
-    else Settings.filterNot((k, _) => watchOnly(k))
+    if kind == Kind.Watch.wire then Settings.filterNot((k, _) => reviewOnly(k.value))
+    else Settings.filterNot((k, _) => watchOnly(k.value))
 
   /** A watcher's sweeps as its events tell them: each settled sweep and each work it ingested, newest first. */
   def sweepEvents(es: List[ManagerEvent]): List[ManagerEvent] =
-    es.filter(e => e.kind == Feed.Swept || e.kind == Feed.Ingested)
+    es.filter(e => e.kind.value == Feed.Swept || e.kind.value == Feed.Ingested)
 
   /** The hint box → a hint. `action` none/prioritise/hold/skip; `targets` comma-separated slugs; `suggest`
     * = the server's model proposes the action (none chosen here; a person approves what it proposes).
@@ -345,29 +307,33 @@ object ManagersView:
       untilSource: com.histmersion.api.automation.Managers.HintEffect.UntilSource,
       suggest: com.histmersion.api.automation.Managers.HintAdd.Suggest = com.histmersion.api.automation.Managers.HintAdd.Suggest(false)
   ): Either[com.histmersion.api.automation.Managers.HintAdd.Text, HintAdd] =
-    val t = text.trim
-    val a = action.trim.toLowerCase
+    val t = text.value.trim
+    val a = action.value.trim.toLowerCase
+    val itemText = Option(item.value.trim).filter(_.nonEmpty).map(HintAdd.Item(_))
     if t.isEmpty then Left(com.histmersion.api.automation.Managers.HintAdd.Text("a hint needs text"))
-    else if suggest && a.nonEmpty && a != "none" then Left(com.histmersion.api.automation.Managers.HintAdd.Text("choose an action, or let the model suggest one — not both"))
-    else if suggest then Right(HintAdd(t, Option(item.trim).filter(_.nonEmpty), Some(once), suggest = Some(true)))
-    else if a.isEmpty || a == "none" then Right(HintAdd(t, Option(item.trim).filter(_.nonEmpty), Some(once)))
-    else if !HintEffect.Actions.contains(a) then Left(s"unknown action $a")
+    else if suggest.value && a.nonEmpty && a != "none" then Left(com.histmersion.api.automation.Managers.HintAdd.Text("choose an action, or let the model suggest one — not both"))
+    else if suggest.value then Right(HintAdd(HintAdd.Text(t), itemText, Some(once), suggest = Some(suggest)))
+    else if a.isEmpty || a == "none" then Right(HintAdd(HintAdd.Text(t), itemText, Some(once)))
+    else if !HintEffect.Actions.contains(a) then Left(com.histmersion.api.automation.Managers.HintAdd.Text(s"unknown action $a"))
     else
       val e = HintEffect(
-        a,
-        list(targets, com.histmersion.web.ManagersView.Separator(",")).getOrElse(Nil),
-        Option(tag.trim).filter(_.nonEmpty),
+        HintEffect.Action(a),
+        list(targets.value, ",").getOrElse(Nil).map(HintEffect.Targets(_)),
+        Option(tag.value.trim).filter(_.nonEmpty).map(HintEffect.Tag(_)),
         None,
         None,
-        Option(until.trim).filter(_.nonEmpty),
-        Option(untilSource.trim).filter(_.nonEmpty)
+        Option(until.value.trim).filter(_.nonEmpty).map(HintEffect.Until(_)),
+        Option(untilSource.value.trim).filter(_.nonEmpty).map(HintEffect.UntilSource(_))
       )
       if a == HintEffect.HoldAction && e.until.isEmpty && e.untilSource.isEmpty then
         Left(com.histmersion.api.automation.Managers.HintAdd.Text("hold: give a date or a source"))
-      else if e.targets.isEmpty && e.tag.isEmpty && item.trim.isEmpty then Left(s"$a: name the articles or a tag")
-      else Right(HintAdd(t, Option(item.trim).filter(_.nonEmpty), Some(once), Some(e)))
+      else if e.targets.isEmpty && e.tag.isEmpty && item.value.trim.isEmpty then Left(com.histmersion.api.automation.Managers.HintAdd.Text(s"$a: name the articles or a tag"))
+      else Right(HintAdd(HintAdd.Text(t), itemText, Some(once), Some(e)))
 
   // ── the page buttons: Review, Extend, Enrich ────────────────────────────────────────────────────
+
+  private def counted(n: Int, noun: String): String =
+    Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(noun)).value
 
   /** What an enqueue did, in one line: the items queued (and how many were skipped as enriched). */
   def enqueuedNote(kind: EnqueueKind, r: EnqueueResult): com.histmersion.web.ManagersView.EnqueuedNote =
@@ -376,12 +342,13 @@ object ManagersView:
       case EnqueueKind.Extend => "queued to be extended, then reviewed"
       case EnqueueKind.Enrich => "queued for enrichment"
       case EnqueueKind.Seed   => "queued: its seeding manager proposes the next articles"
-    val skipped = if r.skipped.isEmpty then "" else s"; ${Plural.count(r.skipped.size, com.histmersion.api.Plural.CountSingular("source"))} enriched already"
-    r.items match
+    val skipped = if r.skipped.isEmpty then "" else s"; ${counted(r.skipped.size, "source")} enriched already"
+    val line = r.items match
       case Nil if kind == EnqueueKind.Enrich => s"nothing to enrich$skipped"
-      case Nil                               => com.histmersion.web.ManagersView.EnqueuedNote("nothing queued")
+      case Nil                               => "nothing queued"
       case List(i)                           => s"$what (item #${i.id}, ${i.status})$skipped"
-      case is                                => s"${Plural.count(is.size, com.histmersion.api.Plural.CountSingular("item"))} $what$skipped"
+      case is                                => s"${counted(is.size, "item")} $what$skipped"
+    com.histmersion.web.ManagersView.EnqueuedNote(line)
 
   /** Buttons that hand a target to a manager (only where the server runs agents), with the line saying what was queued
     * and a link to the manager.
@@ -392,21 +359,32 @@ object ManagersView:
       ApiClient
         .enqueue(kind, target)
         .onComplete(r =>
-          note.set(Some(r.fold(e => (s"not queued: ${e.getMessage}", ""), x => (enqueuedNote(kind, x), x.managerId))))
+          note.set(Some(r.fold(e => (s"not queued: ${e.getMessage}", ""), x => (enqueuedNote(kind, x).value, x.managerId.value))))
         )
     div(
       cls := "wm-actions",
       child.maybe <-- RunsView.enabled.signal.map(on =>
-        Option.when(on)(
+        Option.when(on.value)(
           div(
             cls := "btn-group",
-            buttons.map((kind, icon, label, tip) => WriteButton(icon, label, tip, () => go(kind)))
+            buttons.map((kind, icon, label, tip) =>
+              WriteButton(
+                icon,
+                com.histmersion.web.WriteButton.ApplyLabel(label.value),
+                com.histmersion.web.WriteButton.ApplyTip(tip.value),
+                () => go(kind)
+              )
+            )
           )
         )
       ),
       child.maybe <-- note.signal.map(
         _.map((n, id) =>
-          span(cls := "muted wm-note", n, Option.when(id.nonEmpty)(WinLink(WindowKey.Manager(id), " open the manager")))
+          span(
+            cls := "muted wm-note",
+            n,
+            Option.when(id.nonEmpty)(WinLink(WindowKey.Manager(WindowKey.Manager.Id(id)), " open the manager"))
+          )
         )
       )
     )
@@ -414,9 +392,9 @@ object ManagersView:
   /** The article window: Review (the review manager, first in line), Extend (compile the new sources of its filter into
     * it, then review it) and Enrich (the sources it cites that are not enriched yet).
     */
-  def articleActions(slug: com.histmersion.web.ManagersView.ArticleSlug): HtmlElement =
+  def articleActions(slug: com.histmersion.api.research.Article.Slug): HtmlElement =
     enqueueButtons(
-      slug,
+      EnqueueRequest.Target(slug.value),
       List(
         (EnqueueKind.Review, Icon.Managers, com.histmersion.web.ManagersView.ButtonLabel("review"), com.histmersion.web.ManagersView.Hint("queue this article for the review manager (first in line)")),
         (
@@ -434,7 +412,7 @@ object ManagersView:
     */
   def goalActions(slug: com.histmersion.api.automation.Goal.Slug): HtmlElement =
     enqueueButtons(
-      slug,
+      EnqueueRequest.Target(slug.value),
       List(
         (
           EnqueueKind.Seed,
@@ -450,23 +428,32 @@ object ManagersView:
 
   /** One goal's line in the autopilot's table: its counts and its pace. */
   def goalLine(g: Autopilot.GoalProgress): com.histmersion.web.ManagersView.GoalLine =
-    s"${Plural.count(g.sources, com.histmersion.api.Plural.CountSingular("source"))} · ${Plural.count(g.articles, com.histmersion.api.Plural.CountSingular("article"))}" +
-      (if g.openApprovals > 0 then s" · ${Plural.count(g.openApprovals, "open approval")}" else "") +
-      s" · ${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s" (~$d d)")
+    com.histmersion.web.ManagersView.GoalLine(
+      s"${counted(g.sources.value, "source")} · ${counted(g.articles.value, "article")}" +
+        (if g.openApprovals.value > 0 then s" · ${counted(g.openApprovals.value, "open approval")}" else "") +
+        s" · ${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s" (~$d d)")
+    )
 
   /** An active or queued goal's pace, in a line. */
   def focusPace(g: Autopilot.FocusGoal): com.histmersion.web.ManagersView.FocusPace =
-    s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s" (~$d d)")
+    com.histmersion.web.ManagersView.FocusPace(s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s" (~$d d)"))
 
   /** The goals that cannot use a focus slot now, by why, the commonest first. */
   def waitingSummary(ws: List[Autopilot.FocusWaiting]): com.histmersion.web.ManagersView.WaitingSummary =
-    ws.groupBy(_.code).toList.sortBy((c, xs) => (-xs.size, c)).map((c, xs) => s"${xs.size} $c").mkString(" · ")
+    com.histmersion.web.ManagersView.WaitingSummary(
+      ws.groupBy(_.code).toList.sortBy((c, xs) => (-xs.size, c.value)).map((c, xs) => s"${xs.size} $c").mkString(" · ")
+    )
 
   /** The focus's heading: the cap and where it comes from, or why it is not in force. */
   def focusHead(f: Autopilot.FocusInfo): com.histmersion.web.ManagersView.FocusHead =
-    (if f.on then s"Focus: at most ${f.max} active goals" else "Focus: not in force") +
-      (if f.maxFrom == "person" then " (cap set by a person)" else "") +
-      (if f.held > 0 then s" · ${Plural.count(f.held, com.histmersion.api.Plural.CountSingular("item"))} held" else "")
+    com.histmersion.web.ManagersView.FocusHead(
+      (if f.on.value then s"Focus: at most ${f.max} active goals" else "Focus: not in force") +
+        (if f.maxFrom.value == "person" then " (cap set by a person)" else "") +
+        (if f.held.value > 0 then s" · ${counted(f.held.value, "item")} held" else "")
+    )
+
+  private def errorLine(message: Signal[Option[String]]): Modifier[HtmlElement] =
+    ErrorLine(message.map(_.map(com.histmersion.web.ErrorLine.Problem(_))))
 
   /** The focus: the active goals (why each was chosen, what it does or waits for, its pace), the queue in the order the
     * next become active, and why the others cannot use a slot; pin / unpin a goal and set the cap (each behind the
@@ -475,7 +462,7 @@ object ManagersView:
   private def focusPanel(
       f: Autopilot.FocusInfo,
       changed: Autopilot.FocusInfo => Unit,
-      failure: Var[Option[com.histmersion.web.ManagersView.Problem]]
+      failure: Var[Option[String]]
   ): HtmlElement =
     val cap = Var(f.max.toString)
     def go(what: com.histmersion.web.ManagersView.WriteLabel)(call: => scala.concurrent.Future[Autopilot.FocusInfo]): Unit =
@@ -485,21 +472,25 @@ object ManagersView:
           _.fold(e => failure.set(Some(s"focus $what: ${e.getMessage}")), x => { failure.set(None); changed(x) })
         )
     def pinButton(g: Autopilot.FocusGoal) =
-      val (verb, tip) = if g.pinned then ("unpin", "Let the focus choose again")
+      val (verb, tip) = if g.pinned.value then ("unpin", "Let the focus choose again")
       else ("pin", "Keep this goal active (it takes a slot now)")
       button(
         typ := "button",
         cls := "btn btn--sm",
         Wording.capitalize(verb),
         title := tip,
-        onClick --> (_ => go(s"$verb ${g.slug}")(ApiClient.setFocus(verb, Some(g.slug))))
+        onClick --> (_ =>
+          go(com.histmersion.web.ManagersView.WriteLabel(s"$verb ${g.slug}"))(
+            ApiClient.setFocus(Autopilot.FocusSet.Action(verb), Some(Goal.Slug(g.slug.value)))
+          )
+        )
       )
-    def goalLink(slug: com.histmersion.api.automation.Goal.Slug) = WinLink(WindowKey.Goal(slug), slug)
+    def goalLink(slug: Autopilot.FocusGoal.Slug) = WinLink(WindowKey.Goal(WindowKey.Goal.Slug(slug.value)), slug.value)
     div(
       cls := "autopilot-focus",
       div(
         cls := "toolbar",
-        div(cls := "btn-group", span(cls := "autopilot-state", focusHead(f))),
+        div(cls := "btn-group", span(cls := "autopilot-state", focusHead(f).value)),
         div(
           cls := "btn-group",
           input(
@@ -514,38 +505,44 @@ object ManagersView:
             cls := "btn btn--sm",
             "Set cap",
             title := "At most this many goals active for model work (0 = no cap)",
-            onClick --> (_ => int(cap.now()).foreach(n => go("cap")(ApiClient.setFocus("max", value = Some(n)))))
+            onClick --> (_ =>
+              whole(cap.now()).foreach(n =>
+                go(com.histmersion.web.ManagersView.WriteLabel("cap"))(
+                  ApiClient.setFocus(Autopilot.FocusSet.Action("max"), value = Some(Autopilot.FocusSet.Value(n)))
+                )
+              )
+            )
           ),
-          Option.when(f.maxFrom == "person")(
+          Option.when(f.maxFrom.value == "person")(
             button(
               typ := "button",
               cls := "btn btn--sm",
               "default",
               title := "back to agents.autopilot.max-active-goals",
-              onClick --> (_ => go(com.histmersion.web.ManagersView.WriteLabel("cap"))(ApiClient.setFocus(com.histmersion.web.ApiClient.FocusAction("max"))))
+              onClick --> (_ => go(com.histmersion.web.ManagersView.WriteLabel("cap"))(ApiClient.setFocus(Autopilot.FocusSet.Action("max"))))
             )
           )
         )
       ),
-      f.note.map(n => div(cls := "muted", n)),
+      f.note.map(n => div(cls := "muted", n.value)),
       Option.when(f.changes.nonEmpty)(div(cls := "form-ok", f.changes.mkString("; ").take(400))),
       ul(
         cls := "job-list focus-active",
         f.active.map(g =>
           li(
             cls := "job-row",
-            GoalsView.badge(g.status, g.stage),
+            GoalsView.badge(GoalsView.BadgeStatus(g.status.value), GoalsView.BadgeText(g.stage.value)),
             div(
               cls := "job-main",
               div(
                 cls := "job-subject",
                 goalLink(g.slug),
-                Option.when(g.pinned)(span(cls := "muted", " · pinned")),
+                Option.when(g.pinned.value)(span(cls := "muted", " · pinned")),
                 span(cls := "muted", s" · ${g.title}")
               ),
-              div(cls := "job-progress", g.why),
+              div(cls := "job-progress", g.why.value),
               g.doing.map(d => div(cls := "muted", s"now: $d")),
-              div(cls := "job-meta muted", focusPace(g)),
+              div(cls := "job-meta muted", focusPace(g).value),
               child.maybe <-- Auth.writable.map(w => Option.when(w)(div(cls := "form-row", pinButton(g))))
             )
           )
@@ -559,11 +556,11 @@ object ManagersView:
             f.queue.map(g =>
               li(
                 cls := "job-row",
-                GoalsView.badge(g.status, g.stage),
+                GoalsView.badge(GoalsView.BadgeStatus(g.status.value), GoalsView.BadgeText(g.stage.value)),
                 div(
                   cls := "job-main",
                   div(cls := "job-subject", goalLink(g.slug)),
-                  div(cls := "muted", g.why),
+                  div(cls := "muted", g.why.value),
                   child.maybe <-- Auth.writable.map(w => Option.when(w)(div(cls := "form-row", pinButton(g))))
                 )
               )
@@ -578,17 +575,21 @@ object ManagersView:
 
   /** The drain in a line: draining (runs still finishing) or drained (safe to stop the server). */
   def drainLine(d: Autopilot.DrainInfo): com.histmersion.web.ManagersView.DrainLine =
-    if d.drained then
-      s"Paused since ${d.drainedAt.getOrElse(d.since)}: nothing runs, nothing new starts — safe to stop the server"
-    else
-      s"Finishing current work, then pausing (since ${d.since}${
-          if d.by.nonEmpty then s", by ${d.by}" else ""
-        }): nothing new starts; " +
-        s"${Plural.count(d.inFlight, com.histmersion.api.Plural.CountSingular("run"))} in flight still finishing"
+    val line =
+      if d.drained.value then
+        s"Paused since ${d.drainedAt.getOrElse(d.since)}: nothing runs, nothing new starts — safe to stop the server"
+      else
+        s"Finishing current work, then pausing (since ${d.since}${
+            if d.by.value.nonEmpty then s", by ${d.by}" else ""
+          }): nothing new starts; " +
+          s"${counted(d.inFlight.value, "run")} in flight still finishing"
+    com.histmersion.web.ManagersView.DrainLine(line)
 
   /** The goals by stage, in the order a goal moves through them: how many in each. */
   def stages(gs: List[Autopilot.GoalProgress]): com.histmersion.web.ManagersView.Stages =
-    Goal.Status.all.map(st => st -> gs.count(_.status == st)).filter(_._2 > 0).map((st, n) => s"$n $st").mkString(" · ")
+    com.histmersion.web.ManagersView.Stages(
+      Goal.Status.all.map(st => st -> gs.count(_.status.value == st.value)).filter(_._2 > 0).map((st, n) => s"$n $st").mkString(" · ")
+    )
 
   /** The switch and the status: on/off (the click shows the new state at once; the server's answer follows), the
     * approval rules, today's ingests, and every goal's stage, counts and pace.
@@ -607,12 +608,12 @@ object ManagersView:
           _.fold(e => failure.set(Some(s"drain: ${e.getMessage}")), s => { failure.set(None); st.set(Some(s)) })
         )
     def flip(on: com.histmersion.api.automation.Autopilot.AutopilotSet.On): Unit =
-      pending.set(Some(on))
+      pending.set(Some(on.value))
       ApiClient.setAutopilot(on).onComplete { r =>
         pending.set(None)
         r.fold(e => failure.set(Some(s"autopilot: ${e.getMessage}")), s => { failure.set(None); st.set(Some(s)) })
       }
-    val shownOn = st.signal.combineWith(pending.signal).map((s, p) => p.orElse(s.map(_.on)).getOrElse(false))
+    val shownOn = st.signal.combineWith(pending.signal).map((s, p) => p.orElse(s.map(_.on.value)).getOrElse(false))
     div(
       cls := "autopilot",
       onMountCallback(_ => load()),
@@ -623,7 +624,14 @@ object ManagersView:
           span(
             cls := "autopilot-state",
             cls("is-on") <-- shownOn,
-            child.text <-- shownOn.combineWith(st.signal.map(_.flatMap(_.drain).isDefined)).map(Wording.agentsState)
+            child.text <-- shownOn
+              .combineWith(st.signal.map(_.flatMap(_.drain).isDefined))
+              .map((on, draining) =>
+                Wording.agentsState(
+                  com.histmersion.api.automation.AgentMode.Step.Autopilot.On(on),
+                  com.histmersion.api.automation.AgentMode.Step.Drain.On(draining)
+                )
+              )
           ),
           child <-- shownOn.map(on =>
             if on then
@@ -637,7 +645,7 @@ object ManagersView:
               WriteButton(
                 Icon.Managers,
                 com.histmersion.web.WriteButton.ApplyLabel("Start working"),
-                "every research goal gets an active seeding manager and watcher and moves from planned to reviewed by itself",
+                com.histmersion.web.WriteButton.ApplyTip("every research goal gets an active seeding manager and watcher and moves from planned to reviewed by itself"),
                 () => flip(com.histmersion.api.automation.Autopilot.AutopilotSet.On(true))
               )
           )
@@ -648,22 +656,22 @@ object ManagersView:
             case Some(_) =>
               WriteButton(
                 Icon.Managers,
-                Wording.Undrain,
+                com.histmersion.web.WriteButton.ApplyLabel(Wording.Undrain),
                 com.histmersion.web.WriteButton.ApplyTip("The scheduler admits work again (undrain)"),
                 () => drain(com.histmersion.api.automation.Autopilot.DrainSet.On(false))
               )
             case None =>
               WriteButton(
                 Icon.Managers,
-                Wording.Drain,
-                "Before a deploy: nothing new starts while the runs in flight finish; no manager is paused (drain)",
+                com.histmersion.web.WriteButton.ApplyLabel(Wording.Drain),
+                com.histmersion.web.WriteButton.ApplyTip("Before a deploy: nothing new starts while the runs in flight finish; no manager is paused (drain)"),
                 () => drain(com.histmersion.api.automation.Autopilot.DrainSet.On(true))
               )
           }
         )
       ),
-      child.maybe <-- st.signal.map(_.flatMap(_.drain).map(d => div(cls := "form-ok", drainLine(d)))),
-      ErrorLine(failure.signal),
+      child.maybe <-- st.signal.map(_.flatMap(_.drain).map(d => div(cls := "form-ok", drainLine(d).value))),
+      errorLine(failure.signal),
       child.maybe <-- st.signal.map(_.map { s =>
         div(
           cls := "autopilot-status",
@@ -671,18 +679,26 @@ object ManagersView:
             cls := "muted",
             s.since.fold("")(t => s"since $t") + s.by.fold("")(b => s" by $b") +
               s" · ${stages(s.goals)} · ingests today ${s.ingestedToday}${
-                  if s.ingestCap > 0 then s" of ${s.ingestCap}" else ""
+                  if s.ingestCap.value > 0 then s" of ${s.ingestCap}" else ""
                 }" +
               s" · at most ${s.maxConcurrentRuns} runs at once"
           ),
-          Option.when(s.backlog > 0)(div(cls := "muted", ManagersMarkdown.backlog(s.backlog, s.backlogDays))),
+          Option.when(s.backlog.value > 0)(
+            div(
+              cls := "muted",
+              ManagersMarkdown.backlog(
+                com.histmersion.api.automation.Managers.ManagerInfo.Backlog(s.backlog.value),
+                s.backlogDays.map(d => com.histmersion.api.automation.Managers.ManagerInfo.BacklogDays(d.value))
+              )
+            )
+          ),
           div(
             cls := "muted",
             "Approvals: " + s.approvals
               .map(r => s"${ApprovalsView.kindLabel(r.kind).toLowerCase}: ${r.mode}")
               .mkString(" · ")
           ),
-          Option.when(!s.cronsEnabled)(p(cls := "form-error", role := "alert", Autopilot.EngineStatus.CronsOff)),
+          Option.when(!s.cronsEnabled.value)(p(cls := "form-error", role := "alert", Autopilot.EngineStatus.CronsOff)),
           Option.when(s.changes.nonEmpty)(div(cls := "form-ok", s.changes.mkString("; ").take(400))),
           s.focus.map(f => focusPanel(f, x => st.update(_.map(_.modify(_.focus).setTo(Some(x)))), failure)),
           ul(
@@ -690,23 +706,23 @@ object ManagersView:
             s.goals.map(g =>
               li(
                 cls := "job-row",
-                GoalsView.badge(g.status),
+                GoalsView.badge(GoalsView.BadgeStatus(g.status.value)),
                 div(
                   cls := "job-main",
                   div(
                     cls := "job-subject",
                     WinLink(
-                      WindowKey.Goal(g.slug),
-                      title := g.slug,
-                      Option(g.title).filter(_.trim.nonEmpty).getOrElse(Wording.humanize(g.slug))
+                      WindowKey.Goal(WindowKey.Goal.Slug(g.slug.value)),
+                      title := g.slug.value,
+                      Option(g.title.value).filter(_.trim.nonEmpty).getOrElse(Wording.humanize(Wording.Id(g.slug.value)))
                     )
                   ),
-                  div(cls := "job-meta muted", goalLine(g)),
+                  div(cls := "job-meta muted", goalLine(g).value),
                   Option.when(g.managers.nonEmpty)(
                     div(
                       cls := "muted",
                       g.managers
-                        .map(m => s"${Wording.manager(m.id).takeWhile(_ != '·').trim} ${m.state}")
+                        .map(m => s"${Wording.manager(Wording.Id(m.id.value)).takeWhile(_ != '·').trim} ${m.state}")
                         .mkString(" · ")
                     )
                   )
@@ -723,67 +739,76 @@ object ManagersView:
   /** The waiting items a person's filters leave: any of the job types, any of the reasons, the target text. */
   def visibleWaiting(
       ws: List[AgentScheduler.Waiting],
-      types: List[com.histmersion.api.automation.AgentScheduler.TypeLine.Label],
+      types: List[com.histmersion.api.automation.AgentScheduler.Waiting.JobType],
       codes: List[com.histmersion.api.automation.AgentScheduler.Waiting.Code],
       subject: Option[com.histmersion.api.automation.Activity.Subject]
   ): List[AgentScheduler.Waiting] =
     ws.filter(w =>
       (types.isEmpty || types.contains(w.jobType)) && (codes.isEmpty || codes.contains(w.code)) &&
         subject.forall(t =>
-          (w.target + " " + w.goal.getOrElse("") + " " + w.manager).toLowerCase.contains(t.trim.toLowerCase)
+          (w.target.value + " " + w.goal.fold("")(_.value) + " " + w.manager.value).toLowerCase
+            .contains(t.value.trim.toLowerCase)
         )
     )
 
   /** What each job type of the scheduler's queue is; a tooltip on its filter chip. */
-  def jobTypeMeaning(jobType: com.histmersion.api.automation.Activity.Kind): Option[com.histmersion.web.ManagersView.JobTypeMeaning] = jobType match
-    case "goal-plan" => Some("Planning a research goal: its sub-goals, search queries and works (plan-goal runs).")
+  def jobTypeMeaning(jobType: com.histmersion.api.jobs.JobKinds.Wire): Option[com.histmersion.web.ManagersView.JobTypeMeaning] = jobType.value match
+    case "goal-plan" => Some(com.histmersion.web.ManagersView.JobTypeMeaning("Planning a research goal: its sub-goals, search queries and works (plan-goal runs)."))
     case "propose"   => Some(com.histmersion.web.ManagersView.JobTypeMeaning("Proposing the articles a research area should have (propose-articles runs)."))
     case "sweep"     =>
-      Some("Acquisition sweeps: discovering new works for a goal and ranking them (acquisition-sweep runs).")
+      Some(com.histmersion.web.ManagersView.JobTypeMeaning("Acquisition sweeps: discovering new works for a goal and ranking them (acquisition-sweep runs)."))
     case "currency" =>
-      Some("Currency checks: retractions and newer critiques of a goal's sources (currency-check runs).")
-    case "enrich"  => Some("Enriching a source: summary, findings, dates, places, status (enrich-source runs).")
+      Some(com.histmersion.web.ManagersView.JobTypeMeaning("Currency checks: retractions and newer critiques of a goal's sources (currency-check runs)."))
+    case "enrich"  => Some(com.histmersion.web.ManagersView.JobTypeMeaning("Enriching a source: summary, findings, dates, places, status (enrich-source runs)."))
     case "compile" => Some(com.histmersion.web.ManagersView.JobTypeMeaning("Compiling a new article from the corpus (compile-article runs)."))
-    case "extend"  => Some("Appending a section to an article from its new sources (compile-article runs).")
-    case "filter"  => Some("Inferring an article's coverage filter (infer-filter runs).")
+    case "extend"  => Some(com.histmersion.web.ManagersView.JobTypeMeaning("Appending a section to an article from its new sources (compile-article runs)."))
+    case "filter"  => Some(com.histmersion.web.ManagersView.JobTypeMeaning("Inferring an article's coverage filter (infer-filter runs)."))
     case "review"  => Some(com.histmersion.web.ManagersView.JobTypeMeaning("Reviewing articles and revising them (review-article runs)."))
     case _         => None
 
   /** Why an item waits, by its code (the queue's, and an item's own); a tooltip on the "why" chips. */
-  def waitMeaning(code: com.histmersion.api.automation.AgentScheduler.Waiting.Code): Option[com.histmersion.web.ManagersView.WaitMeaning] = code match
+  def waitMeaning(code: com.histmersion.api.automation.AgentScheduler.Waiting.Code): Option[com.histmersion.web.ManagersView.WaitMeaning] = code.value match
     case "capacity" =>
-      Some("No place free: the most runs at once are running. It starts when one finishes, in the order shown.")
-    case "pool"        => Some("The subscription plan its models draw on already carries as many runs as it takes.")
-    case "manager-cap" => Some("Its manager already has as many runs in flight as its own runs-at-once setting allows.")
+      Some(com.histmersion.web.ManagersView.WaitMeaning("No place free: the most runs at once are running. It starts when one finishes, in the order shown."))
+    case "pool"        => Some(com.histmersion.web.ManagersView.WaitMeaning("The subscription plan its models draw on already carries as many runs as it takes."))
+    case "manager-cap" => Some(com.histmersion.web.ManagersView.WaitMeaning("Its manager already has as many runs in flight as its own runs-at-once setting allows."))
     case "blocked"     =>
-      Some("Cannot start yet; its row says why (a spending cap, a model's allowance, or work that must come first).")
+      Some(com.histmersion.web.ManagersView.WaitMeaning("Cannot start yet; its row says why (a spending cap, a model's allowance, or work that must come first)."))
     case "busy" =>
-      Some("Could not start in the last pass (another run is writing its target, say); the next pass tries again.")
-    case "budget" => Some("Nothing starts: today's or this month's agent spending cap is reached.")
-    case "drain"  => Some("Nothing new starts: draining, so the runs in flight finish first, until a person lifts it.")
+      Some(com.histmersion.web.ManagersView.WaitMeaning("Could not start in the last pass (another run is writing its target, say); the next pass tries again."))
+    case "budget" => Some(com.histmersion.web.ManagersView.WaitMeaning("Nothing starts: today's or this month's agent spending cap is reached."))
+    case "drain"  => Some(com.histmersion.web.ManagersView.WaitMeaning("Nothing new starts: draining, so the runs in flight finish first, until a person lifts it."))
     case AgentScheduler.Code.Person  => Some(com.histmersion.web.ManagersView.WaitMeaning("Waits for a person to decide an approval; it holds no place."))
     case AgentScheduler.Code.Held    => Some(com.histmersion.web.ManagersView.WaitMeaning("Held by a person; it holds no place."))
-    case AgentScheduler.Code.NotDue  => Some("Not due yet: a cooldown, or a failed run's backoff.")
+    case AgentScheduler.Code.NotDue  => Some(com.histmersion.web.ManagersView.WaitMeaning("Not due yet: a cooldown, or a failed run's backoff."))
     case AgentScheduler.Code.Running => Some(com.histmersion.web.ManagersView.WaitMeaning("Started: its run is in flight."))
     case AgentScheduler.Code.Settled => Some(com.histmersion.web.ManagersView.WaitMeaning("Settled: done, stopped, failed or cancelled."))
     case AgentScheduler.Code.Paused  => Some(com.histmersion.web.ManagersView.WaitMeaning("Its manager or its run is paused."))
     case _                           => None
 
   /** A facet of the queue as the filter chips count it: each value with its items, the most first. */
-  def facet(ws: List[AgentScheduler.Waiting], of: AgentScheduler.Waiting => com.histmersion.web.ManagersView.FacetText): List[(com.histmersion.web.ManagersView.FacetLabel, com.histmersion.web.ManagersView.FacetCount)] =
-    ws.groupMapReduce(of)(_ => 1)(_ + _).toList.sortBy((v, n) => (-n, v))
+  def facet(ws: List[AgentScheduler.Waiting], of: AgentScheduler.Waiting => com.histmersion.api.library.Facet.Value): List[(com.histmersion.api.library.Facet.Value, com.histmersion.api.library.Facet.Count)] =
+    ws.groupMapReduce(of)(_ => 1)(_ + _)
+      .toList
+      .sortBy((v, n) => (-n, v.value))
+      .map((v, n) => (v, com.histmersion.api.library.Facet.Count(n)))
 
-  def strategyLabel(name: com.histmersion.api.automation.AgentScheduler.StrategyLine.Name): com.histmersion.web.ManagersView.StrategyLabel = Wording.strategies.getOrElse(name, Wording.humanize(name))
-  def jobTypeLabel(t: com.histmersion.api.automation.Activity.Kind): com.histmersion.api.ItemKind.Label = Wording.schedulerJobTypes.getOrElse(t, Wording.humanize(t))
-  def waitLabel(code: com.histmersion.api.automation.AgentScheduler.Waiting.Code): com.histmersion.web.ManagersView.WaitLabel = AgentScheduler.waitCodes.getOrElse(code, Wording.humanize(code))
+  def strategyLabel(name: com.histmersion.api.automation.AgentScheduler.StrategyLine.Name): com.histmersion.web.ManagersView.StrategyLabel =
+    com.histmersion.web.ManagersView.StrategyLabel(Wording.strategies.getOrElse(name, Wording.humanize(Wording.Id(name.value))))
+  def jobTypeLabel(t: com.histmersion.api.jobs.JobKinds.Wire): com.histmersion.api.UiLabels.Text =
+    com.histmersion.api.UiLabels.Text(Wording.schedulerJobTypes.getOrElse(t, Wording.humanize(Wording.Id(t.value))))
+  def waitLabel(code: com.histmersion.api.automation.AgentScheduler.Waiting.Code): com.histmersion.web.ManagersView.WaitLabel =
+    com.histmersion.web.ManagersView.WaitLabel(AgentScheduler.waitCodes.getOrElse(code, Wording.humanize(Wording.Id(code.value))))
 
   /** The scheduler's heading: the strategy (and who chose it), the runs at once, the pools, what waits for a person. */
   def schedulerHead(s: AgentScheduler.SchedulerStatus): com.histmersion.web.ManagersView.SchedulerHead =
-    s"Scheduler: ${strategyLabel(s.strategy)}" + (if s.strategyFrom == "person" then " (set by a person)" else "") +
-      s" · ${s.occupied} of ${s.maxRuns} runs at once" +
-      (if s.pools.isEmpty then ""
-       else " · " + s.pools.map(p => s"${Wording.pool(p.pool)} ${p.used}/${p.cap}").mkString(", ")) +
-      (if s.forPerson > 0 then s" · ${Plural.count(s.forPerson, "item")} wait for a person (no place held)" else "")
+    com.histmersion.web.ManagersView.SchedulerHead(
+      s"Scheduler: ${strategyLabel(AgentScheduler.StrategyLine.Name(s.strategy.value))}" + (if s.strategyFrom.value == "person" then " (set by a person)" else "") +
+        s" · ${s.occupied} of ${s.maxRuns} runs at once" +
+        (if s.pools.isEmpty then ""
+         else " · " + s.pools.map(p => s"${Wording.pool(p.pool)} ${p.used}/${p.cap}").mkString(", ")) +
+        (if s.forPerson.value > 0 then s" · ${counted(s.forPerson.value, "item")} wait for a person (no place held)" else "")
+    )
 
   /** The central scheduler: the strategy switch (behind the write gate), the resources, what the last pass started
     * (each opening its manager's runs in the runs window), and the queue — filtered by job type, reason and text like
@@ -799,15 +824,15 @@ object ManagersView:
       if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
       else
         ApiClient
-          .setScheduler(name)
+          .setScheduler(AgentScheduler.SchedulerSet.Strategy(name.value))
           .onComplete(
             _.fold(e => failure.set(Some(s"scheduler: ${e.getMessage}")), s => { failure.set(None); st.set(Some(s)) })
           )
     val filters = List(UiState.schedTypes, UiState.schedCodes, UiState.schedSubject)
     val stalls = Var(Option.empty[Stalls.StallReport])
     val waiting = st.signal.map(_.fold(List.empty[AgentScheduler.Waiting])(_.waiting))
-    def openRuns(manager: com.histmersion.api.automation.Managers.ManagerInfo.Id): Unit =
-      UiState.set(UiState.runManager := Some(manager), UiState.runStatus := None)()
+    def openRuns(manager: com.histmersion.api.automation.AgentScheduler.Started.Manager): Unit =
+      UiState.set(UiState.runManager := Some(manager.value), UiState.runStatus := None)()
       WindowManager.open(WindowKey.Runs)
     div(
       cls := "scheduler",
@@ -816,7 +841,7 @@ object ManagersView:
         cls := "toolbar",
         div(
           cls := "btn-group",
-          span(cls := "autopilot-state", child.text <-- st.signal.map(_.fold("Scheduler")(schedulerHead)))
+          span(cls := "autopilot-state", child.text <-- st.signal.map(_.fold("Scheduler")(s => schedulerHead(s).value)))
         ),
         div(
           cls := "btn-group",
@@ -828,9 +853,9 @@ object ManagersView:
                 button(
                   typ := "button",
                   cls := "btn btn--toggle btn--sm",
-                  strategyLabel(x.name),
+                  strategyLabel(x.name).value,
                   title := s"${x.describe} (${x.name})",
-                  aria.pressed := (x.name == s.strategy).toString,
+                  aria.pressed := (x.name.value == s.strategy.value).toString,
                   onClick --> (_ => switch(x.name))
                 )
               )
@@ -860,7 +885,7 @@ object ManagersView:
           )
         )
       ),
-      ErrorLine(failure.signal),
+      errorLine(failure.signal),
       child.maybe <-- stalls.signal.map(_.map { r =>
         div(
           cls := "scheduler-stalls",
@@ -876,15 +901,19 @@ object ManagersView:
               .map(x =>
                 li(
                   cls := "job-row",
-                  span(cls := s"job-state state-${x.code}", title := x.code, Wording.humanize(x.code)),
+                  span(cls := s"job-state state-${x.code}", title := x.code.value, Wording.humanize(Wording.Id(x.code.value))),
                   div(
                     cls := "job-main",
                     div(
                       cls := "job-subject",
-                      WinLink(WindowKey.Goal(x.slug), title := x.slug, Wording.humanize(x.slug)),
+                      WinLink(
+                        WindowKey.Goal(WindowKey.Goal.Slug(x.slug.value)),
+                        title := x.slug.value,
+                        Wording.humanize(Wording.Id(x.slug.value))
+                      ),
                       span(cls := "muted", x.idleDays.fold(" · never progressed")(d => s" · idle $d d"))
                     ),
-                    div(cls := "job-progress", x.why),
+                    div(cls := "job-progress", x.why.value),
                     div(cls := "muted", s"unblock: ${x.action}")
                   )
                 )
@@ -897,10 +926,10 @@ object ManagersView:
           s.stop.map(x => p(cls := "form-error", role := "alert", s"nothing starts: $x")),
           div(
             cls := "muted",
-            (if s.dry then "what a pass would do now (nothing started) · "
+            (if s.dry.value then "what a pass would do now (nothing started) · "
              else s.at.fold("")(t => s"last pass $t · ")) +
               s.types
-                .filter(t => t.waiting > 0 || t.recent > 0)
+                .filter(t => t.waiting.value > 0 || t.recent.value > 0)
                 .map(t => s"${t.jobType} ${t.recent} recent, ${t.waiting} waiting")
                 .mkString(" · ")
           ),
@@ -910,7 +939,7 @@ object ManagersView:
               s.started.map(x =>
                 li(
                   cls := "job-row",
-                  span(cls := "job-state state-running", title := x.jobType, jobTypeLabel(x.jobType)),
+                  span(cls := "job-state state-running", title := x.jobType.value, jobTypeLabel(x.jobType).value),
                   div(
                     cls := "job-main",
                     div(
@@ -918,13 +947,17 @@ object ManagersView:
                       button(
                         typ := "button",
                         cls := "link-btn",
-                        x.target,
+                        x.target.value,
                         title := "its manager's runs",
                         onClick --> (_ => openRuns(x.manager))
                       ),
-                      span(cls := "muted", title := x.manager, s" · ${Wording.manager(x.manager)}")
+                      span(
+                        cls := "muted",
+                        title := x.manager.value,
+                        s" · ${Wording.manager(Wording.Id(x.manager.value))}"
+                      )
                     ),
-                    div(cls := "muted", x.why)
+                    div(cls := "muted", x.why.value)
                   )
                 )
               )
@@ -935,31 +968,36 @@ object ManagersView:
       div(
         cls := "list-filters",
         ListFilterBar.chips(
-          com.histmersion.web.ListFilterBar.Label("type"),
-          waiting.map(facet(_, _.jobType)),
+          "type",
+          waiting.map(facet(_, w => com.histmersion.api.library.Facet.Value(w.jobType.value))),
           UiState.schedTypes,
-          show = jobTypeLabel,
-          hint = jobTypeMeaning,
+          show = t => jobTypeLabel(com.histmersion.api.jobs.JobKinds.Wire(t)).value,
+          hint = t => jobTypeMeaning(com.histmersion.api.jobs.JobKinds.Wire(t)).map(_.value),
           about = "Show only waiting items of the job types picked (any of them): what kind of work they are."
         ),
         ListFilterBar.chips(
-          com.histmersion.web.ListFilterBar.Label("why"),
-          waiting.map(facet(_, _.code)),
+          "why",
+          waiting.map(facet(_, w => com.histmersion.api.library.Facet.Value(w.code.value))),
           UiState.schedCodes,
-          show = waitLabel,
-          hint = waitMeaning,
-          about = com.histmersion.web.ListFilterBar.About("Show only waiting items held back for the reasons picked (any of them).")
+          show = c => waitLabel(AgentScheduler.Waiting.Code(c)).value,
+          hint = c => waitMeaning(AgentScheduler.Waiting.Code(c)).map(_.value),
+          about = "Show only waiting items held back for the reasons picked (any of them)."
         ),
         div(
           cls := "toolbar",
-          ListFilterBar.text(com.histmersion.web.ListFilterBar.Label("target, goal or manager"), UiState.schedSubject),
+          ListFilterBar.text("target, goal or manager", UiState.schedSubject),
           ListFilterBar.clearButton(filters)
         )
       ),
       child <-- waiting
         .combineWith(UiState.schedTypes.signal, UiState.schedCodes.signal, UiState.schedSubject.signal)
         .map { (ws, ty, co, su) =>
-          val shown = visibleWaiting(ws, ty, co, su)
+          val shown = visibleWaiting(
+            ws,
+            ty.map(AgentScheduler.Waiting.JobType(_)),
+            co.map(AgentScheduler.Waiting.Code(_)),
+            su.map(com.histmersion.api.automation.Activity.Subject(_))
+          )
           if ws.isEmpty then p(cls := "muted", "Nothing waits.")
           else
             ol(
@@ -967,20 +1005,20 @@ object ManagersView:
               shown.map(w =>
                 li(
                   cls := "job-row",
-                  span(cls := s"job-state state-${w.code}", title := w.code, waitLabel(w.code)),
+                  span(cls := s"job-state state-${w.code}", title := w.code.value, waitLabel(w.code).value),
                   div(
                     cls := "job-main",
                     div(
                       cls := "job-subject",
-                      WinLink(WindowKey.Manager(w.manager), w.target),
+                      WinLink(WindowKey.Manager(WindowKey.Manager.Id(w.manager.value)), w.target.value),
                       span(
                         cls := "muted",
-                        s" · ${jobTypeLabel(w.jobType)} · ${Wording.manager(w.manager)}" + w.goal
-                          .fold("")(g => s" · goal ${Wording.humanize(g)}") +
-                          (if w.position > 0 then s" · #${w.position} in line" else "")
+                        s" · ${jobTypeLabel(w.jobType)} · ${Wording.manager(Wording.Id(w.manager.value))}" + w.goal
+                          .fold("")(g => s" · goal ${Wording.humanize(Wording.Id(g.value))}") +
+                          (if w.position.value > 0 then s" · #${w.position} in line" else "")
                       )
                     ),
-                    div(cls := "job-progress", w.why),
+                    div(cls := "job-progress", w.why.value),
                     Option.when(w.behind.nonEmpty)(div(cls := "muted", s"behind ${w.behind.mkString(", ")}")),
                     div(
                       cls := "job-meta muted",
@@ -996,10 +1034,10 @@ object ManagersView:
   // ── the managers window ─────────────────────────────────────────────────────────────────────────
 
   private def stateBadge(m: ManagerInfo): HtmlElement =
-    val b = badge(m)
+    val b = badge(m).value
     span(
       cls := s"job-state state-${b.replace(' ', '-')}",
-      title := m.statusNote.getOrElse(m.state),
+      title := m.statusNote.fold(m.state.value)(_.value),
       Wording.capitalize(b)
     )
 
@@ -1016,7 +1054,7 @@ object ManagersView:
       onMountCallback(_ => refresh()),
       div(cls := "pane-bar", button(typ := "button", cls := "btn", "Refresh", onClick --> (_ => refresh()))),
       child.maybe <-- RunsView.enabled.signal.map(on =>
-        Option.when(!on)(
+        Option.when(!on.value)(
           p(cls := "muted", "Embedded agents are off on this server (agents.enabled): no manager starts a run.")
         )
       ),
@@ -1036,16 +1074,23 @@ object ManagersView:
                 stateBadge(m),
                 div(
                   cls := "job-main",
-                  div(cls := "job-subject", WinLink(WindowKey.Manager(m.id), title := m.id, Wording.manager(m.id))),
-                  m.statusNote.filter(_.nonEmpty).map(n => div(cls := "job-progress", n)),
+                  div(
+                    cls := "job-subject",
+                    WinLink(
+                      WindowKey.Manager(WindowKey.Manager.Id(m.id.value)),
+                      title := m.id.value,
+                      Wording.manager(Wording.Id(m.id.value))
+                    )
+                  ),
+                  m.statusNote.filter(_.value.nonEmpty).map(n => div(cls := "job-progress", n.value)),
                   div(
                     cls := "job-meta muted",
-                    counts(m.counts),
-                    s" · ${Plural.count(m.inFlight, com.histmersion.api.Plural.CountSingular("run"))} in flight",
+                    counts(m.counts).value,
+                    s" · ${counted(m.inFlight.value, "run")} in flight",
                     s" · ${ManagersMarkdown.today(m)}"
                   ),
-                  Option.when(m.backlog > 0)(div(cls := "muted", ManagersMarkdown.backlog(m.backlog, m.backlogDays))),
-                  m.lastEvent.map(e => div(cls := "muted", s"${e.at} · ${e.kind}: ${e.text.take(160)}"))
+                  Option.when(m.backlog.value > 0)(div(cls := "muted", ManagersMarkdown.backlog(m.backlog, m.backlogDays))),
+                  m.lastEvent.map(e => div(cls := "muted", s"${e.at} · ${e.kind}: ${e.text.value.take(160)}"))
                 )
               )
             )
@@ -1054,26 +1099,25 @@ object ManagersView:
     )
 
   private def counts(c: ItemCounts): com.histmersion.web.ManagersView.CountsText =
-    List(
-      "pending" -> c.pending,
-      "held" -> c.held,
-      "active" -> c.active,
-      "done" -> c.done,
-      "stopped" -> c.stopped,
-      "failed" -> c.failed
-    ).filter(_._2 > 0).map((k, n) => s"$n $k").mkString(", ") match
-      case "" => com.histmersion.web.ManagersView.CountsText("no items")
-      case s  => s
+    val text = List(
+      "pending" -> c.pending.value,
+      "held" -> c.held.value,
+      "active" -> c.active.value,
+      "done" -> c.done.value,
+      "stopped" -> c.stopped.value,
+      "failed" -> c.failed.value
+    ).filter(_._2 > 0).map((k, n) => s"$n $k").mkString(", ")
+    com.histmersion.web.ManagersView.CountsText(if text.isEmpty then "no items" else text)
 
   // ── one manager ─────────────────────────────────────────────────────────────────────────────────
 
   def managerPane(id: com.histmersion.api.automation.Managers.ManagerInfo.Id): HtmlElement =
     val detail = Var(Option.empty[ManagerDetail])
     val page = Var(Option.empty[ItemPage])
-    val offset = Var(0)
-    val status = Var(Option.empty[String])
+    val offset = Var(com.histmersion.api.Offset(0))
+    val status = Var(Option.empty[ItemStatus.Wire])
     val events = Var(List.empty[ManagerEvent])
-    val older = Var(Option.empty[Long])
+    val older = Var(Option.empty[EventPage.Before])
     val loadingOlder = Var(false)
     val failure = Var(Option.empty[String])
     val message = Var(Option.empty[String])
@@ -1081,29 +1125,35 @@ object ManagersView:
     // `var`s local to this window: its pending poll, the delay, whether it is mounted, whether older
     // events were loaded (a poll then keeps them)
     var timer: Int = 0
-    var delay: Option[com.histmersion.web.ManagersView.Delay] = None
-    var mounted: com.histmersion.web.ManagersView.Mounted = com.histmersion.web.ManagersView.Mounted(false)
-    var extended: com.histmersion.web.ManagersView.Extended = com.histmersion.web.ManagersView.Extended(false)
+    var delay: Option[com.histmersion.web.Poll.Revision] = None
+    var mounted: Boolean = false
+    var extended: Boolean = false
 
     def items(): Unit =
       ApiClient.managerItems(id, status.now(), offset.now(), ItemLimit).foreach(p => page.set(Some(p)))
 
-    def refresh(changed: com.histmersion.web.ManagersView.Changed): Unit =
+    def refresh(changed: com.histmersion.web.Poll.DataChanged): Unit =
       dom.window.clearTimeout(timer)
       ApiClient.manager(id).onComplete { r =>
         if mounted then
           r.fold(
             e => failure.set(Some(e.getMessage)),
             d => {
-              val moved = changed || !detail.now().contains(d)
+              val moved = changed.value || !detail.now().contains(d)
               failure.set(None)
               detail.set(Some(d))
-              if extended then events.update(ListPaging.keepOlder(_, d.events, _.id < _.id))
+              if extended then events.update(ListPaging.keepOlder(_, d.events, _.id.value < _.id.value))
               else
                 events.set(d.events)
-                older.set(Option.when(d.events.nonEmpty)(d.events.last.id))
-              delay = Poll.next(delay, d.manager.inFlight > 0 || d.current.nonEmpty, moved)
-              delay.foreach(ms => timer = dom.window.setTimeout(() => refresh(false), ms))
+                older.set(Option.when(d.events.nonEmpty)(EventPage.Before(d.events.last.id.value)))
+              delay = Poll.next(
+                delay,
+                com.histmersion.web.Poll.LiveMode(d.manager.inFlight.value > 0 || d.current.nonEmpty),
+                com.histmersion.web.Poll.DataChanged(moved)
+              )
+              delay.foreach(ms =>
+                timer = dom.window.setTimeout(() => refresh(com.histmersion.web.Poll.DataChanged(false)), ms.value)
+              )
             }
           )
       }
@@ -1117,7 +1167,7 @@ object ManagersView:
           e => failure.set(Some(s"$what: ${e.getMessage}")),
           _ => { failure.set(None); message.set(Some(s"$what: done")) }
         )
-        refresh(changed = com.histmersion.web.ManagersView.Changed(true))
+        refresh(changed = com.histmersion.web.Poll.DataChanged(true))
       }
 
     def showOlder(): Unit =
@@ -1136,11 +1186,13 @@ object ManagersView:
 
     div(
       cls := "tool-pane manager-pane",
-      onMountCallback { _ => mounted = com.histmersion.web.ManagersView.Mounted(true); extended = com.histmersion.web.ManagersView.Extended(false); refresh(changed = com.histmersion.web.ManagersView.Changed(true)) },
-      onUnmountCallback { _ => mounted = com.histmersion.web.ManagersView.Mounted(false); dom.window.clearTimeout(timer) },
+      onMountCallback { _ =>
+        mounted = true; extended = false; refresh(changed = com.histmersion.web.Poll.DataChanged(true))
+      },
+      onUnmountCallback { _ => mounted = false; dom.window.clearTimeout(timer) },
       offset.signal.changes --> (_ => items()),
-      status.signal.changes --> { _ => offset.set(0); items() },
-      ErrorLine(failure.signal),
+      status.signal.changes --> { _ => offset.set(com.histmersion.api.Offset(0)); items() },
+      errorLine(failure.signal),
       child.maybe <-- message.signal.map(_.map(m => p(cls := "form-ok", m))),
       child <-- detail.signal.map {
         case None    => p(cls := "muted", "Loading…")
@@ -1164,9 +1216,9 @@ object ManagersView:
               d.manager.cron.fold("No cron: its sweeps run only when re-opened by hand.")(c =>
                 s"Cron `$c` (UTC)" + d.manager.nextTickAt.fold("")(t => s", next $t") +
                   (if d.manager.state == State.Active.wire then "" else " — fires once it is resumed") + ". " +
-                  (if d.manager.effective.autoIngest.contains(true)
+                  (if d.manager.effective.autoIngest.exists(_.value)
                    then
-                     s"Legal open-access picks are ingested, at most ${d.manager.effective.autoIngestPerDay.getOrElse(0)} a day (legal open access only)."
+                     s"Legal open-access picks are ingested, at most ${d.manager.effective.autoIngestPerDay.fold(0)(_.value)} a day (legal open access only)."
                    else "Its picks go to the acquisition list (auto-ingest off).")
               )
             ),
@@ -1177,7 +1229,7 @@ object ManagersView:
                 else
                   ul(
                     cls := "manager-events",
-                    es.map(e => li(span(cls := "muted", s"${e.at} · "), strong(e.kind), s" ${e.text}"))
+                    es.map(e => li(span(cls := "muted", s"${e.at} · "), strong(e.kind.value), s" ${e.text}"))
                   )
               )
           )
@@ -1195,8 +1247,8 @@ object ManagersView:
                 typ := "button",
                 cls := "btn btn--toggle btn--sm",
                 aria.pressed <-- status.signal.map(v => (v == s).toString),
-                title := s.flatMap(ItemStatus.parse).fold("Every item, whatever its status.")(itemStatusMeaning),
-                s.getOrElse("all"),
+                title := s.flatMap(ItemStatus.parse).fold("Every item, whatever its status.")(st => itemStatusMeaning(st).value),
+                s.fold("all")(_.value),
                 onClick --> (_ => status.set(s))
               )
             )
@@ -1207,7 +1259,13 @@ object ManagersView:
           case Some(pg) if pg.items.isEmpty => p(cls := "muted", "No items.")
           case Some(pg) => ul(cls := "job-list manager-items", pg.items.map(i => itemRow(id, i, busy.signal, write)))
         },
-        Pager(com.histmersion.web.Pager.Label("items"), offset, ItemLimit, page.signal.map(_.fold(0)(_.items.size)), page.signal.map(_.fold(0)(_.total)))
+        Pager(
+          com.histmersion.web.Pager.Label("items"),
+          offset,
+          ItemLimit,
+          page.signal.map(p => com.histmersion.api.Paging.Shown(p.fold(0)(_.items.size))),
+          page.signal.map(p => com.histmersion.api.Paging.Page.Total(p.fold(0)(_.total.value)))
+        )
       ),
       hintBox(id, busy.signal, write),
       div(
@@ -1248,9 +1306,11 @@ object ManagersView:
               es.map(e =>
                 li(
                   span(cls := "muted", s"${e.at} · "),
-                  strong(e.kind),
+                  strong(e.kind.value),
                   s" ${e.text}",
-                  e.runId.map(r => span(" ", WinLink(WindowKey.Run(r), s"run ${r.take(8)}")))
+                  e.runId.map(r =>
+                    span(" ", WinLink(WindowKey.Run(WindowKey.Run.Id(r.value)), s"run ${r.value.take(8)}"))
+                  )
                 )
               )
             )
@@ -1266,26 +1326,30 @@ object ManagersView:
 
   private def head(
       d: ManagerDetail,
-      busy: Signal[com.histmersion.web.ManagersView.Busy],
+      busy: Signal[Boolean],
       write: com.histmersion.web.ManagersView.WriteLabel => (=> scala.concurrent.Future[Any]) => Unit
   ): HtmlElement =
     val m = d.manager
     div(
       cls := "goal-detail",
-      div(cls := "run-head", stateBadge(m), span(cls := "run-title", title := m.id, s" ${Wording.manager(m.id)}")),
-      m.statusNote.filter(_.nonEmpty).map(n => p(cls := "job-progress", n)),
-      Option.when(m.state == State.Paused.wire && m.inFlight == 0)(
+      div(
+        cls := "run-head",
+        stateBadge(m),
+        span(cls := "run-title", title := m.id.value, s" ${Wording.manager(Wording.Id(m.id.value))}")
+      ),
+      m.statusNote.filter(_.value.nonEmpty).map(n => p(cls := "job-progress", n.value)),
+      Option.when(m.state == State.Paused.wire && m.inFlight.value == 0)(
         p(cls := "muted", "Paused: it starts nothing (nothing is spent) until you resume it.")
       ),
       dl(
         cls := "run-facts",
         dt("items"),
-        dd(counts(m.counts)),
+        dd(counts(m.counts).value),
         m.cron.toList.flatMap(c => List(dt("cron"), dd(s"$c (UTC)" + m.nextTickAt.fold("")(t => s", next $t")))),
         dt("in flight"),
-        dd(Plural.count(m.inFlight, com.histmersion.api.Plural.CountSingular("run"))),
+        dd(counted(m.inFlight.value, "run")),
         Option
-          .when(m.backlog > 0)(List(dt("ingest backlog"), dd(ManagersMarkdown.backlog(m.backlog, m.backlogDays))))
+          .when(m.backlog.value > 0)(List(dt("ingest backlog"), dd(ManagersMarkdown.backlog(m.backlog, m.backlogDays))))
           .toList
           .flatten,
         dt("today"),
@@ -1363,32 +1427,32 @@ object ManagersView:
     )
 
   private def itemRow(
-      mid: com.histmersion.web.ManagersView.RowId,
+      mid: com.histmersion.api.automation.Managers.ManagerInfo.Id,
       i: ManagerItem,
-      busy: Signal[com.histmersion.web.ManagersView.Busy],
+      busy: Signal[Boolean],
       write: com.histmersion.web.ManagersView.WriteLabel => (=> scala.concurrent.Future[Any]) => Unit
   ): HtmlElement =
     val prio = Var(i.priority.toString)
     val until = Var("")
     li(
       cls := s"job-row manager-item item-${i.status}",
-      span(cls := s"job-state state-${i.status}", i.status),
+      span(cls := s"job-state state-${i.status}", i.status.value),
       div(
         cls := "job-main",
         div(
           cls := "job-subject",
-          com.histmersion.web.ArticleLink(i.target, i.target),
+          com.histmersion.web.ArticleLink(com.histmersion.api.research.Article.Slug(i.target.value), i.target.value),
           span(
             cls := "muted",
-            s" · priority ${i.priority} · ${Plural.count(i.attempts, com.histmersion.api.Plural.CountSingular("run"))}" +
-              (if i.failures > 0 then s", ${i.failures} failed" else "")
+            s" · priority ${i.priority} · ${counted(i.attempts.value, "run")}" +
+              (if i.failures.value > 0 then s", ${i.failures} failed" else "")
           )
         ),
         i.run.map(r =>
           div(
             cls := "job-progress",
-            WinLink(WindowKey.Run(r.id), s"run ${r.id.take(8)} ${r.status}"),
-            r.progress.filter(_.nonEmpty).map(p => span(cls := "muted", s" · $p"))
+            WinLink(WindowKey.Run(WindowKey.Run.Id(r.id.value)), s"run ${r.id.value.take(8)} ${r.status}"),
+            r.progress.filter(_.value.nonEmpty).map(p => span(cls := "muted", s" · $p"))
           )
         ),
         i.hold.map(h =>
@@ -1396,74 +1460,84 @@ object ManagersView:
             cls := "muted",
             "held" + h.until.fold("")(u => s" until $u") + h.untilSource.fold("")(s => s" until $s exists") +
               h.focus.fold("")(g => s" for the focus (goal $g; pin it in the managers window to run it now)") +
-              Option(h.reason).filter(_.nonEmpty).fold("")(r => s" — $r")
+              Option(h.reason).filter(_.value.nonEmpty).fold("")(r => s" — $r")
           )
         ),
         i.notBefore.map(t => div(cls := "muted", s"not before $t")),
-        i.outcome.filter(_.nonEmpty).map(o => div(cls := "muted", o)),
+        i.outcome.filter(_.value.nonEmpty).map(o => div(cls := "muted", o.value)),
         child.maybe <-- Auth.writable.map(w =>
           Option.when(w && itemActionsFor(i).nonEmpty)(
             div(
               cls := "form-row manager-item-actions",
-              itemActionsFor(i).map {
-                case "hold" =>
-                  span(
-                    input(
-                      typ := "text",
-                      cls := "field",
-                      aria.label := "hold until",
-                      placeholder := "until 2026-11-01 or a DOI",
-                      controlled(value <-- until.signal, onInput.mapToValue --> until.writer)
-                    ),
-                    button(
-                      typ := "button",
-                      cls := "btn btn--sm",
-                      "hold",
-                      disabled <-- busy,
-                      onClick --> { _ =>
-                        val u = until.now().trim
-                        val patch = if u.isEmpty then ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("hold"))
-                        else if ManagerPolicyText.isDate(u) then ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("hold"), until = Some(u))
-                        else ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("hold"), untilSource = Some(u))
-                        write(s"hold ${i.target}")(ApiClient.managerPatchItem(mid, i.id.toString, patch))
-                      }
-                    )
-                  )
-                case "priority" =>
-                  span(
-                    input(
-                      typ := "number",
-                      cls := "field manager-prio",
-                      aria.label := "priority",
-                      controlled(value <-- prio.signal, onInput.mapToValue --> prio.writer)
-                    ),
-                    button(
-                      typ := "button",
-                      cls := "btn btn--sm",
-                      "set priority",
-                      disabled <-- busy,
-                      onClick --> (_ =>
-                        int(prio.now())
-                          .orElse(prio.now().trim.toIntOption)
-                          .foreach(p =>
-                            write(s"priority of ${i.target}")(
-                              ApiClient.managerPatchItem(mid, i.id.toString, ItemPatch("priority", priority = Some(p)))
-                            )
-                          )
+              itemActionsFor(i).map(action =>
+                action.value match
+                  case "hold" =>
+                    span(
+                      input(
+                        typ := "text",
+                        cls := "field",
+                        aria.label := "hold until",
+                        placeholder := "until 2026-11-01 or a DOI",
+                        controlled(value <-- until.signal, onInput.mapToValue --> until.writer)
+                      ),
+                      button(
+                        typ := "button",
+                        cls := "btn btn--sm",
+                        "hold",
+                        disabled <-- busy,
+                        onClick --> { _ =>
+                          val u = until.now().trim
+                          val patch = if u.isEmpty then ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("hold"))
+                          else if ManagerPolicyText.isDate(u) then ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("hold"), until = Some(com.histmersion.api.automation.Managers.ItemPatch.Until(u)))
+                          else ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("hold"), untilSource = Some(com.histmersion.api.automation.Managers.ItemPatch.UntilSource(u)))
+                          write(com.histmersion.web.ManagersView.WriteLabel(s"hold ${i.target}"))(ApiClient.managerPatchItem(mid, i.id, patch))
+                        }
                       )
                     )
-                  )
-                case a =>
-                  button(
-                    typ := "button",
-                    cls := (if a == "skip" then "btn btn--sm btn--danger" else "btn btn--sm"),
-                    a,
-                    disabled <-- busy,
-                    onClick --> (_ =>
-                      write(s"$a ${i.target}")(ApiClient.managerPatchItem(mid, i.id.toString, ItemPatch(a)))
+                  case "priority" =>
+                    span(
+                      input(
+                        typ := "number",
+                        cls := "field manager-prio",
+                        aria.label := "priority",
+                        controlled(value <-- prio.signal, onInput.mapToValue --> prio.writer)
+                      ),
+                      button(
+                        typ := "button",
+                        cls := "btn btn--sm",
+                        "set priority",
+                        disabled <-- busy,
+                        onClick --> (_ =>
+                          whole(prio.now())
+                            .orElse(prio.now().trim.toIntOption)
+                            .foreach(p =>
+                              write(com.histmersion.web.ManagersView.WriteLabel(s"priority of ${i.target}"))(
+                                ApiClient.managerPatchItem(
+                                  mid,
+                                  i.id,
+                                  ItemPatch(
+                                    com.histmersion.api.automation.Managers.ItemPatch.Action("priority"),
+                                    priority = Some(com.histmersion.api.automation.Managers.ItemPatch.Priority(p))
+                                  )
+                                )
+                              )
+                            )
+                        )
+                      )
                     )
-                  )
-              }
+                  case a =>
+                    button(
+                      typ := "button",
+                      cls := (if a == "skip" then "btn btn--sm btn--danger" else "btn btn--sm"),
+                      a,
+                      disabled <-- busy,
+                      onClick --> (_ =>
+                        write(com.histmersion.web.ManagersView.WriteLabel(s"$a ${i.target}"))(
+                          ApiClient.managerPatchItem(mid, i.id, ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action(a)))
+                        )
+                      )
+                    )
+              )
             )
           )
         )
@@ -1471,8 +1545,8 @@ object ManagersView:
     )
 
   private def hintBox(
-      id: com.histmersion.web.ManagersView.HintId,
-      busy: Signal[com.histmersion.web.ManagersView.Busy],
+      id: com.histmersion.api.automation.Managers.ManagerInfo.Id,
+      busy: Signal[Boolean],
       write: com.histmersion.web.ManagersView.WriteLabel => (=> scala.concurrent.Future[Any]) => Unit
   ): HtmlElement =
     val text = Var("")
@@ -1518,7 +1592,7 @@ object ManagersView:
                 " next run only"
               ),
               child.maybe <-- RunsView.enabled.signal.map(on =>
-                Option.when(on)(
+                Option.when(on.value)(
                   label(
                     title := "the server's planner model proposes the action the note asks for; nothing changes until you approve it",
                     input(
@@ -1580,7 +1654,7 @@ object ManagersView:
                 )
               )
             ),
-            ErrorLine(error.signal),
+            errorLine(error.signal),
             button(
               typ := "button",
               cls := "btn btn--primary",
@@ -1588,20 +1662,20 @@ object ManagersView:
               disabled <-- busy,
               onClick --> { _ =>
                 hint(
-                  text.now(),
-                  item.now(),
-                  once.now(),
-                  action.now(),
-                  targets.now(),
-                  tag.now(),
-                  until.now(),
-                  source.now(),
-                  suggest.now()
+                  HintAdd.Text(text.now()),
+                  HintAdd.Item(item.now()),
+                  HintAdd.Once(once.now()),
+                  HintEffect.Action(action.now()),
+                  HintEffect.Targets(targets.now()),
+                  HintEffect.Tag(tag.now()),
+                  HintEffect.Until(until.now()),
+                  HintEffect.UntilSource(source.now()),
+                  HintAdd.Suggest(suggest.now())
                 ) match
-                  case Left(e)  => error.set(Some(e))
+                  case Left(e)  => error.set(Some(e.value))
                   case Right(h) =>
                     error.set(None)
-                    write(if h.suggest.contains(true) then com.histmersion.web.ManagersView.WriteLabel("hint (a model suggests its action: see Approvals)")
+                    write(if h.suggest.exists(_.value) then com.histmersion.web.ManagersView.WriteLabel("hint (a model suggests its action: see Approvals)")
                     else com.histmersion.web.ManagersView.WriteLabel("hint"))(ApiClient.managerAddHint(id, h))
                     text.set(""); targets.set(""); tag.set(""); until.set(""); source.set(""); suggest.set(false)
               }
@@ -1612,11 +1686,11 @@ object ManagersView:
 
   private def settings(
       m: ManagerInfo,
-      busy: Signal[com.histmersion.web.ManagersView.Busy],
+      busy: Signal[Boolean],
       write: com.histmersion.web.ManagersView.WriteLabel => (=> scala.concurrent.Future[Any]) => Unit
   ): HtmlElement =
     val form = Var(fields(m.config))
-    val cron = Var(m.cron.getOrElse(""))
+    val cron = Var(m.cron.fold("")(_.value))
     val error = Var(Option.empty[String])
     val eff = fields(m.effective)
     htmlTag("details")(
@@ -1641,21 +1715,21 @@ object ManagersView:
         settingsFor(m.kind).map { (k, lbl) =>
           label(
             cls := "manager-setting",
-            span(lbl),
+            span(lbl.value),
             input(
               typ := "text",
               cls := "field",
-              aria.label := lbl,
-              placeholder := eff.getOrElse(k, ""),
+              aria.label := lbl.value,
+              placeholder := eff.getOrElse(k, com.histmersion.web.ManagersView.ConfigText("")).value,
               controlled(
-                value <-- form.signal.map(_.getOrElse(k, "")),
-                onInput.mapToValue --> (v => form.update(_ + (k -> v)))
+                value <-- form.signal.map(_.getOrElse(k, com.histmersion.web.ManagersView.ConfigText("")).value),
+                onInput.mapToValue --> (v => form.update(_ + (k -> com.histmersion.web.ManagersView.ConfigText(v))))
               )
             )
           )
         }
       ),
-      ErrorLine(error.signal),
+      errorLine(error.signal),
       child <-- Auth.writable.map { w =>
         if !w then Auth.keyNeeded("change these settings")
         else
@@ -1666,11 +1740,11 @@ object ManagersView:
             disabled <-- busy,
             onClick --> { _ =>
               config(form.now()) match
-                case Left(e)  => error.set(Some(e))
+                case Left(e)  => error.set(Some(e.value))
                 case Right(c) =>
                   error.set(None)
                   // the cron goes only when it changed (sending it again would move its next firing)
-                  val cr = Option(cron.now().trim).filter(_ != m.cron.getOrElse(""))
+                  val cr = Option(cron.now().trim).filter(_ != m.cron.fold("")(_.value)).map(ManagerUpdate.Cron(_))
                   write(com.histmersion.web.ManagersView.WriteLabel("settings"))(ApiClient.managerUpdate(m.id, ManagerUpdate(Some(c), cr)))
             }
           )

@@ -69,7 +69,7 @@ object BaseMaps:
     "Today's terrain. Coastlines, rivers, lakes and vegetation were different in the past."
 
   /** The line added without a GPU. */
-  val SoftwareNotice: BooleanNotice =
+  val SoftwareNotice: String =
     "This browser draws maps without a GPU: the relief is left out to keep the map quick."
 
   /** The docs section the notice links to, under `ui.docs-url`. */
@@ -140,7 +140,7 @@ object BaseMaps:
     val url = b.url.map(_.value).getOrElse(ui.tiles.value)
     val credit =
       if url.contains("openstreetmap.fr/hot") then s"$osm · tiles © Humanitarian OSM Team, OSM France" else osm
-    BaseMapSpec.Raster(BaseMapSpec.Raster.Template(url), BaseMapSpec.Raster.MaxZoom(ui.tilesMaxZoom.value), BaseMapSpec.Raster.Attribution(credit), dark = BaseMap.darkened(b, MapTone.parse(MapTone.Wire(ui.tilesTone.value))))
+    BaseMapSpec.Raster(BaseMapSpec.Raster.Template(url), BaseMapSpec.Raster.MaxZoom(ui.tilesMaxZoom.value), BaseMapSpec.Raster.Attribution(credit), dark = BaseMapSpec.Raster.Dark(BaseMap.darkened(b, MapTone.parse(MapTone.Wire(ui.tilesTone.value)))))
 
   /** What is drawn for base map `b` (already [[effective]]), the server's status and the viewer's options: the spec,
     * the notice, and how deep the map zooms. Pure.
@@ -221,7 +221,7 @@ object BaseMaps:
       val eb = effective(b, localOnly.now(), s)
       shown.set(eb)
       val (spec, notice, maxZoom) = plan(eb, s, prefs, config, localOnly.now(), software.now())
-      m.setMaxZoom(maxZoom.value.toDouble)
+      m.setMaxZoom(com.histmersion.web.map.MapSurface.MaxZoom(maxZoom.value.toDouble))
       m.setBaseMap(spec)
       current = spec
       setNotice(
@@ -284,7 +284,7 @@ object BaseMaps:
         if notice.nonEmpty then com.histmersion.web.MapFold.Label("about this map: its terrain and credits") else com.histmersion.web.MapFold.Label("map credits"),
         com.histmersion.web.MapFold.InnerHtml(Icon.html(Icon.Info).value),
         com.histmersion.web.MapFold.Open(open)
-      )
+      ).value
       MapFold.set(box, com.histmersion.web.MapFold.Open(open))
       box.classList.toggle("is-expanded", footOpen.contains(true))
       // the online OpenStreetMap tiles' credit stays in sight, folded or not

@@ -25,19 +25,20 @@ object MapFold:
   object Open extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The class an opened overlay carries. */
-
-  val Open = "is-open"
+  val OpenClass = "is-open"
 
   /** Pure: an overlay's button, which opens and closes the part `controls` (an element id); `label` names the overlay
     * to a screen reader, `inner` is what it shows.
     */
   def toggleHtml(cls: com.histmersion.web.MapFold.ClassName, controls: com.histmersion.web.MapFold.ControlsId, label: com.histmersion.web.MapFold.Label, inner: com.histmersion.web.MapFold.InnerHtml, open: com.histmersion.web.MapFold.Open): com.histmersion.web.MapFold.Html =
-    s"""<button type="button" class="btn btn--sm $cls" aria-controls="$controls" """ +
-      s"""aria-expanded="$open" aria-label="${Fmt.esc(label)}" title="${Fmt.esc(label)}">$inner</button>"""
+    com.histmersion.web.MapFold.Html(
+      s"""<button type="button" class="btn btn--sm $cls" aria-controls="$controls" """ +
+        s"""aria-expanded="$open" aria-label="${Fmt.esc(label.value)}" title="${Fmt.esc(label.value)}">$inner</button>"""
+    )
 
   /** Open or close `box`, its button saying which. */
   def set(box: dom.Element, open: com.histmersion.web.MapFold.Open): Unit =
-    box.classList.toggle(Open, open)
+    box.classList.toggle(OpenClass, open.value)
     Option(box.querySelector("button[aria-expanded]")).foreach(_.setAttribute("aria-expanded", open.toString))
 
   /** `box`'s button opens and closes it, Escape inside it closes it; `changed` hears the new state. */
@@ -47,16 +48,16 @@ object MapFold:
         "click",
         { (e: dom.MouseEvent) =>
           e.stopPropagation()
-          val open = !box.classList.contains(Open)
-          set(box, open)
-          changed(open)
+          val open = !box.classList.contains(OpenClass)
+          set(box, com.histmersion.web.MapFold.Open(open))
+          changed(com.histmersion.web.MapFold.Changed(open))
         }
       )
     }
     box.addEventListener(
       "keydown",
       (e: dom.KeyboardEvent) =>
-        if e.key == "Escape" && box.classList.contains(Open) then
+        if e.key == "Escape" && box.classList.contains(OpenClass) then
           set(box, com.histmersion.web.MapFold.Open(false))
           changed(com.histmersion.web.MapFold.Changed(false))
           Option(box.querySelector("button[aria-expanded]")).foreach(_.asInstanceOf[dom.HTMLElement].focus())

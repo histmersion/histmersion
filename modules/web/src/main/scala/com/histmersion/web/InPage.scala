@@ -10,20 +10,9 @@ import scala.scalajs.js
   * URL, where the web UI keeps its filter state.
   */
 object InPage:
-  type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Fragment = Fragment.T
-  object Fragment extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Href = Href.T
-  object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Index = Index.T
-  object Index extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The id a same-page link points at: `#cite-3` → `cite-3`; anything else → `None`. Pure. */
-
-  def fragmentOf(href: com.histmersion.web.InPage.Href): Option[com.histmersion.web.InPage.Fragment] =
+  def fragmentOf(href: String): Option[String] =
     Option(href).filter(h => h.startsWith("#") && h.length > 1).map(_.drop(1))
 
   /** One delegated click handler per content root. */
@@ -45,12 +34,12 @@ object InPage:
           case _ => ()
     )
 
-  private def scrollTo(root: dom.Element, id: com.histmersion.web.InPage.Id): Unit =
+  private def scrollTo(root: dom.Element, id: String): Unit =
     Option(root.querySelector(s"[id=\"${id.replace("\"", "")}\"]"))
       .foreach(_.asInstanceOf[js.Dynamic].scrollIntoView(js.Dynamic.literal(behavior = "smooth", block = "center")))
 
   /** The index of the match after `current` among `count`, wrapping — pure. */
-  def nextIndex(current: com.histmersion.web.InPage.Index, count: com.histmersion.web.InPage.Count): com.histmersion.web.InPage.Index = if count <= 0 then com.histmersion.web.InPage.Index(-1) else (current + 1) % count
+  def nextIndex(current: Int, count: Int): Int = if count <= 0 then -1 else (current + 1) % count
 
   /** Step to the next `<mark id="hl…">`, remembering the position on the root. */
   def nextMatch(root: dom.Element): Unit =
