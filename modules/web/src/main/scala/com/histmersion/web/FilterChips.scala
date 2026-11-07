@@ -54,7 +54,7 @@ object FilterChips:
       extraCls = Chip.ExtraClass("chip-period"),
       remove = Some(() =>
         UiState
-          .set(UiState.from := Some(config.time.defaultFrom.value), UiState.to := Some(config.time.defaultTo.value))(push = true)
+          .set(UiState.from := Some(config.time.defaultFrom.value), UiState.to := Some(config.time.defaultTo.value))(push = com.histmersion.web.UiState.SetPush(true))
       )
     )
 

@@ -71,7 +71,7 @@ final class FilterTab[Q, Row](
     val q = query()
     lastQuery = Some(q)
     state.update(TabState.loading)
-    latest(fetch(q, com.histmersion.api.library.Filter.Offset(0)))(p => state.set(TabState.first(p, page)), m => state.update(TabState.failed(_, TabState.Problem(m.value))))
+    latest(fetch(q, com.histmersion.api.library.Filter.Offset(0)))(p => state.set(TabState.first(p, page)), m => state.update(TabState.failed(_, TabState.Problem(m))))
 
   /** "show more": the loaded rows first, then the next page from the server. */
   def more(): Unit =
@@ -82,7 +82,7 @@ final class FilterTab[Q, Row](
         state.update(TabState.loading)
         latest(fetch(q, com.histmersion.api.library.Filter.Offset(offset.value)))(
           p => state.update(TabState.appended(_, p, page)),
-          m => state.update(TabState.failed(_, TabState.Problem(m.value)))
+          m => state.update(TabState.failed(_, TabState.Problem(m)))
         )
 
 object FilterTab:

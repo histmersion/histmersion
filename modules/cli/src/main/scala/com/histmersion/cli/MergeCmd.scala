@@ -207,7 +207,7 @@ object MergeCmd:
           yes || plan.changes == 0 ||
             Cli.confirm(
               s"Merge ${MergeMarkdown.who(plan.from)} into this collection (plan $hash, " +
-                s"${Plural.count(plan.changes, "change")})? A backup is taken first."
+                s"${Plural.count(plan.changes, com.histmersion.api.Plural.CountSingular("change"))})? A backup is taken first."
             ),
           (),
           Cli.Error(Cli.Error.Message("aborted"), exitCode = ExitCode.Usage)
