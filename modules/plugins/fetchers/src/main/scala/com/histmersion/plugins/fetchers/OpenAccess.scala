@@ -44,7 +44,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
 
   /** `unpaywall`, asking with `email` (the plugin's `contact-email`, else Histmersion's). */
   def unpaywall(email: Option[com.histmersion.plugins.fetchers.UnpaywallConfig.ContactEmail]): SourceFetcher =
-    ByDoi("unpaywall", (ctx, d) => unpaywallPdf(ctx, unpaywallRecord(ctx, d, email)))
+    ByDoi(com.histmersion.plugins.fetchers.ByDoi.Step("unpaywall"), (ctx, d) => unpaywallPdf(ctx, unpaywallRecord(ctx, d, email)))
 
   /** `core`, with CORE's API key; without one it is never asked (a miss). Asked through the server's CORE budget
     * (`quota`): while CORE asked to wait, or the day's tokens are spent, it is a miss saying so, and the chain goes on.
@@ -52,15 +52,15 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
   def core(key: Option[com.histmersion.plugins.fetchers.OpenAccess.CoreKey], quota: UpstreamQuota): SourceFetcher = new SourceFetcher:
     val access = com.histmersion.plugin.Access.Open
     def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
-      work.doi.map(_.value).fold[Fetch](Fetch.Miss("core needs a DOI"))(corePdf(ctx, _, key, quota))
+      work.doi.map(_.value).fold[Fetch](Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("core needs a DOI")))(corePdf(ctx, _, key, quota))
 
-  val openalex: SourceFetcher = ByDoi("openalex", (ctx, d) => openalexOa(ctx, records(ctx, d)))
+  val openalex: SourceFetcher = ByDoi(com.histmersion.plugins.fetchers.ByDoi.Step("openalex"), (ctx, d) => openalexOa(ctx, records(ctx, d)))
 
   /** `landing`: the indexes' records only of the index plugins registered, Unpaywall's with the very contact (so the
     * very memo key) `oa-unpaywall` asks with — one request per upstream per work.
     */
   def landing(unpaywallEmail: Option[com.histmersion.plugins.fetchers.UnpaywallConfig.ContactEmail]): SourceFetcher = ByDoi(
-    "landing",
+    com.histmersion.plugins.fetchers.ByDoi.Step("landing"),
     (ctx, d) =>
       landingPdf(
         ctx,
@@ -74,7 +74,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
     record.toList
       .map(AcquireParse.unpaywall)
       .flatMap(_._1)
-      .flatMap(u => downloads.pdf(ctx.log, "unpaywall", u))
+      .flatMap(u => downloads.pdf(ctx.log, com.histmersion.plugin.FetchedFile.Source("unpaywall"), u))
       .headOption
 
   private def corePdf(ctx: Fetch.Context, doi: com.histmersion.plugins.fetchers.OaRecords.Doi, key: Option[com.histmersion.plugins.fetchers.OpenAccess.CorePdfKey], quota: UpstreamQuota): Fetch =
@@ -96,7 +96,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
   private def openalexOa(ctx: Fetch.Context, r: OaRecords): Option[FetchedFile] =
     r.openalex.toList
       .flatMap(AcquireParse.openalexPdfUrls)
-      .flatMap(u => downloads.pdf(ctx.log, "openalex", u))
+      .flatMap(u => downloads.pdf(ctx.log, com.histmersion.plugin.FetchedFile.Source("openalex"), u))
       .headOption
 
   // ── repository landing pages ────────────────────────────────────────────────────────────────
@@ -183,7 +183,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
           case Left(e) =>
             ctx.log.info(s"landing: ${c.url} failed ($e)"); None
           case Right(b) if Downloads.looksLikePdf(b) =>
-            Some(FetchedFile(source, Some(c.url), b, "pdf"))
+            Some(FetchedFile(source, Some(c.url), b, com.histmersion.plugin.FetchedFile.Extension("pdf")))
           case Right(b) if !RepositoryLanding.looksLikeHtml(b) =>
             ctx.log.info(s"landing: ${c.url} is neither a PDF nor a page — skipping"); None
           case Right(b) =>

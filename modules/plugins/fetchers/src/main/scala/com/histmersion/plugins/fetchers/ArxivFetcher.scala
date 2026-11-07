@@ -8,7 +8,7 @@ import com.histmersion.plugin.Plugin
 final class ArxivFetcher(cfg: UpstreamSettings, http: () => Plugin.Http) extends SourceFetcher:
   val access: Access = Access.Open
   def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
-    work.arxiv.fold[Fetch](Fetch.Miss("arxiv needs an arXiv id")) { id =>
+    work.arxiv.fold[Fetch](Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("arxiv needs an arXiv id"))) { id =>
       Downloads(http())
         .pdf(ctx.log, "arxiv", s"${cfg.arxiv.url}/pdf/$id")
         .fold(Fetch.Miss(s"arxiv has no PDF of $id"))(Fetch.Found(_))

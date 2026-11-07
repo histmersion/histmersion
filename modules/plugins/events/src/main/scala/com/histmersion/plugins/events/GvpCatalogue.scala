@@ -16,12 +16,12 @@ import java.util.Locale
 final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
   // volcano.si.edu (its terms page) did not answer on 2026-10-14; the Smithsonian's general Terms of
   // Use allow non-commercial, educational use with attribution, and the GVP asks to be cited as below.
-  def title = "Smithsonian Global Volcanism Program"
+  def title = com.histmersion.plugin.EventCatalogue.TitleResult("Smithsonian Global Volcanism Program")
   def licence = Licence("Smithsonian Terms of Use (non-commercial use with attribution)")
   def citation =
     "Global Volcanism Program, Volcanoes of the World (v. 5.x), Smithsonian Institution, compiled by Venzke, E. " +
       "https://doi.org/10.5479/si.GVP.VOTW5-2024.5.2"
-  def home = "https://volcano.si.edu"
+  def home = com.histmersion.plugin.EventCatalogue.HomeResult("https://volcano.si.edu")
   override def requestIntervalMs: Int = cfg.gvp.requestIntervalMs
   override def floorYear: Option[Year] = JsonFields.year(cfg.gvp.floorYear)
 
@@ -108,9 +108,9 @@ object GvpCatalogue:
       f.hcursor.downField("geometry").downField("coordinates").focus.flatMap(_.asArray).getOrElse(Vector.empty)
     val (lon, lat) =
       (coords.headOption.flatMap(_.asNumber).map(_.toDouble), coords.lift(1).flatMap(_.asNumber).map(_.toDouble))
-    val activity = str(p, "Activity_Type").getOrElse("")
+    val activity = str(p, com.histmersion.plugins.events.JsonFields.Key("Activity_Type")).getOrElse("")
     for
-      num <- long(p, "Eruption_Number")
+      num <- long(p, com.histmersion.plugins.events.JsonFields.Key("Eruption_Number"))
       year <- long(p, "StartDateYear")
       if !activity.toLowerCase(Locale.ROOT).contains("discredited")
     yield

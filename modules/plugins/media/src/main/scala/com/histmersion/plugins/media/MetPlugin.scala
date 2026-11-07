@@ -5,7 +5,7 @@ import com.histmersion.plugin.Plugin
 final class MetPlugin extends MediaPlugin("media-met"):
   type Config = MediaPlugin.Config
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.MetPlugin.Problem, Unit] =
-    ctx.mediaCollections.add("met", MetCollection(c.media.met))
+    ctx.mediaCollections.add(com.histmersion.plugin.Registry.AddId("met"), MetCollection(c.media.met))
 
 object MetPlugin:
   type Problem = Problem.T

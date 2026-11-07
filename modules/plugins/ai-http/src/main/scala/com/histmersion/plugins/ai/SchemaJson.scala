@@ -19,7 +19,7 @@ final case class SchemaJson(json: Json):
           val typed = if obj.contains("type") then obj else obj.add("type", Json.fromString("object"))
           val repaired =
             if typed("type").contains(Json.fromString("object")) && !typed.contains("properties") &&
-              !(SchemaJson.shapedElsewhere(typed)).value
+              !(SchemaJson.shapedElsewhere(typed))
             then typed.add("properties", Json.obj())
             else typed
           SchemaJson(Json.fromJsonObject(repaired))
@@ -107,7 +107,7 @@ object SchemaJson:
     val remove = additionalRemove ++ requiredRemove
     val all = additionalAdd ++ requiredAdd ++ fields.filterNot((k, _) => remove(k))
     val plainPropertyless =
-      value("type").contains(Json.fromString("object")) && !value.contains("properties") && !(shapedElsewhere(value)).value
+      value("type").contains(Json.fromString("object")) && !value.contains("properties") && !(shapedElsewhere(value))
     Json.fromFields(if plainPropertyless then all :+ ("properties" -> Json.obj()) else all)
 
   private def nullableOf(schema: Json): Json =

@@ -12,8 +12,8 @@ import java.util.Locale
   * is where it is of. A 403 is loc.gov's bot challenge to automated clients — reported as such, never worked around.
   */
 final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.ThumbPx)
-    extends MuseumCollection(conf, "Library of Congress", "media.loc"):
-  val title = "Library of Congress maps"
+    extends MuseumCollection(conf, com.histmersion.plugins.media.MuseumCollection.Provider("Library of Congress"), com.histmersion.plugins.media.MuseumCollection.Key("media.loc")):
+  val title = com.histmersion.plugin.MediaCollection.TitleResult("Library of Congress maps")
   override val description =
     "Historical maps from the Library of Congress, Geography and Map Division: public domain only (rights " +
       "'No known restrictions' and dated by media.loc.max-year), linked as role map to the places their " +
@@ -76,7 +76,7 @@ object LocCollection:
   def results(json: Json): Either[com.histmersion.plugins.media.LocCollection.Problem, List[com.histmersion.plugins.media.LocCollection.ResultsResultPart2]] =
     val c = json.hcursor
     c.downField("results").focus.flatMap(_.asArray) match
-      case None     => Left("no results in the answer")
+      case None     => Left(com.histmersion.plugins.media.LocCollection.Problem("no results in the answer"))
       case Some(rs) =>
         Right(rs.toList.flatMap { r =>
           val h = r.hcursor
@@ -95,7 +95,7 @@ object LocCollection:
     */
   def record(json: Json, base: com.histmersion.plugin.Plugin.Http.GetUrl, maxYear: com.histmersion.plugins.media.LocCollection.RecordMaxYear, displayPx: com.histmersion.plugins.media.MediaSettings.DisplayPx, thumbPx: com.histmersion.plugins.media.MediaSettings.ThumbPx): Either[com.histmersion.plugins.media.LocCollection.Problem, MediaItem] =
     val item = json.hcursor.downField("item")
-    if item.focus.isEmpty then Left("no item in the answer")
+    if item.focus.isEmpty then Left(com.histmersion.plugins.media.LocCollection.Problem("no item in the answer"))
     else
       val c = item
       val id = c

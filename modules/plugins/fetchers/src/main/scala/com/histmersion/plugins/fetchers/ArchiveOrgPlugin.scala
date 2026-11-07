@@ -11,7 +11,7 @@ final class ArchiveOrgPlugin extends FetcherPlugin("archive-org"):
   def register(c: HostAcquire, ctx: Plugin.Context): Either[com.histmersion.plugins.fetchers.ArchiveOrgPlugin.Problem, Unit] =
     lazy val archive = ArchiveOrg(c.acquire.archiveOrg, ctx.http)
     ctx.sourceFetchers
-      .add("archive-org", ArchiveOrgFetcher(() => archive))
+      .add(com.histmersion.plugin.Registry.AddId("archive-org"), ArchiveOrgFetcher(() => archive))
       .flatMap(_ => ctx.sourceCollections.add("archive-org", ArchiveOrgCollection(() => archive)))
 
 object ArchiveOrgPlugin:

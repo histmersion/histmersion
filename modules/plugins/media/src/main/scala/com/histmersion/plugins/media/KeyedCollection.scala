@@ -43,7 +43,7 @@ abstract class KeyedCollection(
         .map(_ => ())
 
   /** The key, for a request: a collection without one is never asked ([[check]]). */
-  protected def apiKey: com.histmersion.plugins.media.KeyedCollection.Key = key.getOrElse("")
+  protected def apiKey: com.histmersion.plugins.media.KeyedCollection.Key = key.getOrElse(com.histmersion.plugins.media.KeyedCollection.Key(""))
 
   /** Pure: an HTTP 401/403 of a key-gated API named as a refused key, with the setting to check. */
   protected def explain(e: com.histmersion.plugins.media.KeyedCollection.Problem): com.histmersion.plugins.media.KeyedCollection.Explanation =

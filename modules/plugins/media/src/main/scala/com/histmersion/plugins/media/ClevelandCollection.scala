@@ -10,8 +10,8 @@ import io.circe.Json
   * given.
   */
 final class ClevelandCollection(conf: CollectionSettings)
-    extends MuseumCollection(conf, "The Cleveland Museum of Art", "media.cleveland"):
-  val title = "Cleveland Museum of Art objects"
+    extends MuseumCollection(conf, com.histmersion.plugins.media.MuseumCollection.Provider("The Cleveland Museum of Art"), com.histmersion.plugins.media.MuseumCollection.Key("media.cleveland")):
+  val title = com.histmersion.plugin.MediaCollection.TitleResult("Cleveland Museum of Art objects")
   override val description = "The Cleveland Museum of Art (CC0, share_license_status)" + MetCollection.Museum
   val role = MediaCollection.Object
 
@@ -84,7 +84,7 @@ object ClevelandCollection:
         acc,
         title,
         page,
-        url("web"),
+        url(com.histmersion.plugins.media.ClevelandCollection.Size("web")),
         rights,
         originalUrl = url("print").orElse(url("full")),
         geography = geo,

@@ -187,7 +187,7 @@ object ChatAnswer:
     yield
       val first = choices.headOption
       AiTurn(
-        first.map(_._1).getOrElse(""),
+        first.map(_._1).getOrElse(com.histmersion.plugin.AiTurn.Text("")),
         first.map(_._2).getOrElse(Nil),
         first.map(_._3) match
           case Some(refactorPattern) | None if (refactorPattern.value == "stop")                   => AiStop.EndTurn

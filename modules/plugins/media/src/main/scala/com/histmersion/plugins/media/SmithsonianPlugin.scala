@@ -4,7 +4,7 @@ package com.histmersion.plugins.media
   * key.
   */
 import com.histmersion.plugin.Plugin
-final class SmithsonianPlugin extends KeyedPlugin("media-smithsonian", "smithsonian"):
+final class SmithsonianPlugin extends KeyedPlugin(com.histmersion.plugins.media.KeyedPlugin.Id("media-smithsonian"), com.histmersion.plugins.media.KeyedPlugin.Name("smithsonian")):
   protected def collection(c: KeyedPlugin.Config, key: Option[com.histmersion.plugins.media.SmithsonianCollection.Key], ctx: Plugin.Context) =
     SmithsonianCollection(c.media.smithsonian, key)
 

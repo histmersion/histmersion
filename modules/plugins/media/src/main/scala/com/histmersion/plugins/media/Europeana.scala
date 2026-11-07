@@ -134,8 +134,8 @@ object Europeana:
 
   /** Pure: a licence's short name for the credit line (`CC-BY-SA-4.0` → `CC BY-SA 4.0`). */
   def shortName(l: Licence.Read): com.histmersion.plugin.Licence = l.family match
-    case Licence.Read.Cc0          => "CC0"
-    case Licence.Read.PublicDomain => "Public Domain Mark"
+    case Licence.Read.Cc0          => com.histmersion.plugin.Licence("CC0")
+    case Licence.Read.PublicDomain => com.histmersion.plugin.Licence("Public Domain Mark")
     case _                         =>
       val parts = l.id.split("-").toList
       val (name, rest) = parts.span(p => !p.headOption.exists(_.isDigit))
@@ -167,13 +167,13 @@ object Europeana:
     val c = json.hcursor
     if c.bool("success").contains(false) then
       Left(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": ") match
-        case "" => "the search failed"
+        case "" => com.histmersion.plugins.media.Europeana.Problem("the search failed")
         case e  => e)
     else
       c.downField("items").focus.flatMap(_.asArray) match
         case Some(items)                              => Right(items.toList.map(record(_, api, licences, ex)))
         case None if c.long("totalResults").isDefined => Right(Nil)
-        case None                                     => Left("no items in the answer")
+        case None                                     => Left(com.histmersion.plugins.media.Europeana.Problem("no items in the answer"))
 
   /** Pure: one search item; one of an excluded aggregator or institution ([[Exclusions]]) is withheld with that reason.
     */
@@ -185,13 +185,13 @@ object Europeana:
   ): Either[com.histmersion.plugins.media.Europeana.Problem, MediaItem] =
     val c = json.hcursor
     c.str("id").filter(_.startsWith("/")).toRight("no Europeana id").map { id =>
-      val title = values(c, "title").headOption.orElse(values(c, "dcTitleLangAware").headOption).getOrElse(id)
-      val creator = values(c, "dcCreator").filterNot(isUri).headOption
-      val provider = values(c, "dataProvider").headOption
-      val shownBy = values(c, "edmIsShownBy").headOption
-      val media = values(c, "edmPreview").headOption.flatMap(previewSource).orElse(shownBy)
-      val rights: Either[com.histmersion.plugins.media.Europeana.Problem, MediaRights] = values(c, "rights").headOption match
-        case None    => Left("no rights statement on the record")
+      val title = values(c, com.histmersion.plugins.media.Europeana.Field("title")).headOption.orElse(values(c, "dcTitleLangAware").headOption).getOrElse(id)
+      val creator = values(c, com.histmersion.plugins.media.Europeana.Field("dcCreator")).filterNot(isUri).headOption
+      val provider = values(c, com.histmersion.plugins.media.Europeana.Field("dataProvider")).headOption
+      val shownBy = values(c, com.histmersion.plugins.media.Europeana.Field("edmIsShownBy")).headOption
+      val media = values(c, com.histmersion.plugins.media.Europeana.Field("edmPreview")).headOption.flatMap(previewSource).orElse(shownBy)
+      val rights: Either[com.histmersion.plugins.media.Europeana.Problem, MediaRights] = values(c, com.histmersion.plugins.media.Europeana.Field("rights")).headOption match
+        case None    => Left(com.histmersion.plugins.media.Europeana.Problem("no rights statement on the record"))
         case Some(u) =>
           val lic = licences.readUrl(u)
           if lic.family == Licence.Read.Unknown then Left(s"not an open licence ($u)")
@@ -204,11 +204,11 @@ object Europeana:
                 (List(Some(title), creator, provider).flatten ++ List("via Europeana", shortName(lic))).mkString(", ")
               )
             )
-      val spatial = values(c, "dctermsSpatial")
+      val spatial = values(c, com.histmersion.plugins.media.Europeana.Field("dctermsSpatial"))
       val geo = spatial.filterNot(isUri).map(Spatial -> _) ++
         (values(c, "edmPlaceLabel") ++ values(c, "edmPlaceLabelLangAware")).distinct.map(Place -> _)
       val ids = (spatial.filter(isUri) ++ values(c, "edmPlace")).flatMap(GazetteerUri.of).distinct
-      val years = values(c, "year").flatMap(y => y.trim.toLongOption).filter(_ != 0)
+      val years = values(c, com.histmersion.plugins.media.Europeana.Field("year")).flatMap(y => y.trim.toLongOption).filter(_ != 0)
       val period = Option.when(years.nonEmpty)(()).flatMap(_ => Period.span(years.min, years.max))
       MediaItem(
         id.stripPrefix("/"),
@@ -221,7 +221,7 @@ object Europeana:
         geography = geo,
         period = period,
         ids = ids,
-        withheld = excludedBy(values(c, "provider"), values(c, "dataProvider"), ex)
+        withheld = excludedBy(values(c, com.histmersion.plugins.media.Europeana.Field("provider")), values(c, com.histmersion.plugins.media.Europeana.Field("dataProvider")), ex)
       )
     }
 
@@ -242,7 +242,7 @@ object Europeana:
       val obj = c.downField("object")
       val aggs = obj.downField("aggregations").focus.flatMap(_.asArray).toList.flatten.map(_.hcursor)
       val types =
-        obj.downField("proxies").focus.flatMap(_.asArray).toList.flatten.map(_.hcursor).flatMap(values(_, "dcType"))
+        obj.downField("proxies").focus.flatMap(_.asArray).toList.flatten.map(_.hcursor).flatMap(values(_, com.histmersion.plugins.media.Europeana.Field("dcType")))
       val firstAggregation = excludedType(types, ex) match
         case Some(t) => Left(s"an excluded type ($t)")
         case None    => aggs.headOption.toRight("no aggregation on the record")

@@ -5,7 +5,7 @@ import com.histmersion.plugin.Plugin
 final class GvpPlugin extends EventsPlugin("events-gvp"):
   type Config = GvpConfig
   def register(c: GvpConfig, ctx: Plugin.Context): Either[com.histmersion.plugins.events.GvpPlugin.Problem, Unit] =
-    ctx.eventCatalogues.add("gvp", GvpCatalogue(c.events))
+    ctx.eventCatalogues.add(com.histmersion.plugin.Registry.AddId("gvp"), GvpCatalogue(c.events))
 
 object GvpPlugin:
   type Problem = Problem.T

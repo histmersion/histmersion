@@ -68,14 +68,14 @@ object Resolution:
   ): List[Dependency] =
     joint
       .collect {
-        case (c, Some(file)) if !plugins.contains(c.key) && !(server.provides(c.key)).value =>
+        case (c, Some(file)) if !plugins.contains(c.key) && !(server.provides(c.key)) =>
           Dependency(c, file, needed.getOrElse(c.key, Nil))
       }
       .sortBy(_.libName)
 
   /** The modules of a plugin's own resolution the server provides (shown, not installed). */
   def provided(resolved: List[ModuleCoordinates], plugins: Set[ModuleKey], server: ServerModules): List[ModuleKey] =
-    resolved.map(_.key).filter(k => !plugins.contains(k) && (server.provides(k)).value).distinct.sortBy(_.toString)
+    resolved.map(_.key).filter(k => !plugins.contains(k) && (server.provides(k))).distinct.sortBy(_.toString)
 
   /** `lib/classpath`: the dependency jars' file names, one per line, in class-path order. */
   def classpathFile(deps: List[Dependency]): com.histmersion.pluginresolver.Resolution.ClasspathFile = _root_.com.histmersion.pluginresolver.Resolution.ClasspathFile(deps.map(_.libName).map((_).value + "\n").mkString)

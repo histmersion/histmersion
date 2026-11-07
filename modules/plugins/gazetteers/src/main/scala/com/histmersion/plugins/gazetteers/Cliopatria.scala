@@ -27,13 +27,13 @@ object Cliopatria extends DownloadedGazetteer:
   type ReadFeatureOrdinal = ReadFeatureOrdinal.T
   object ReadFeatureOrdinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val title = "Seshat Cliopatria polity polygons"
-  override val description = "Seshat Cliopatria polity polygons (CC BY 4.0, ~13K features from 3400 BCE)"
+  val title = com.histmersion.plugin.GazetteerSource.TitleResult("Seshat Cliopatria polity polygons")
+  override val description = com.histmersion.plugin.GazetteerSource.DescriptionResult("Seshat Cliopatria polity polygons (CC BY 4.0, ~13K features from 3400 BCE)")
   val url = "https://github.com/Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip"
   val rights: GazetteerRights = GazetteerRights(
     Licence("CC BY 4.0"),
-    "Cliopatria (Seshat Databank), CC BY 4.0",
-    Some("https://creativecommons.org/licenses/by/4.0/")
+    com.histmersion.plugin.GazetteerRights.Credit("Cliopatria (Seshat Databank), CC BY 4.0"),
+    Some(com.histmersion.plugin.GazetteerRights.LicenceUrl("https://creativecommons.org/licenses/by/4.0/"))
   )
 
   private val Polity = "polity"
@@ -58,8 +58,8 @@ object Cliopatria extends DownloadedGazetteer:
       val rawName = str(props, "Name").getOrElse("")
       if rawName.isEmpty then Left(s"feature #$ordinal has no Name")
       else
-        val from = numYear(props, "FromYear")
-        val to = numYear(props, "ToYear")
+        val from = numYear(props, com.histmersion.plugins.gazetteers.Cliopatria.Key("FromYear"))
+        val to = numYear(props, com.histmersion.plugins.gazetteers.Cliopatria.Key("ToYear"))
         val slug = slugify(rawName)
         val sliceId = (from, to) match
           case (Some(a), Some(b)) => s"cliopatria_${slug}_${a}_$b"

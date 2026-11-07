@@ -62,6 +62,6 @@ object DownloadedGazetteer:
         else if e.isDirectory || e.getName.startsWith("__MACOSX") then usable(zis.getNextEntry)
         else Some(e)
       usable(zis.getNextEntry) match
-        case None    => Left("zip contains no usable file")
+        case None    => Left(com.histmersion.plugins.gazetteers.DownloadedGazetteer.Problem("zip contains no usable file"))
         case Some(_) => Right(String(zis.readAllBytes(), UTF_8))
     catch case e: Exception => Left(s"unzip failed: ${e.getMessage}")

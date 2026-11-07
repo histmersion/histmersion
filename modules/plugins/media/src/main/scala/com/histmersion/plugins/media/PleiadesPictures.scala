@@ -11,7 +11,7 @@ import com.histmersion.plugin.*
   */
 final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) extends MediaCollection:
   private val conf = media.pleiades
-  val title = "Pleiades-linked pictures"
+  val title = com.histmersion.plugin.MediaCollection.TitleResult("Pleiades-linked pictures")
   override val description =
     "Wikimedia Commons files that Pleiades place records link, for the places on the map that carry a Pleiades id " +
       "(matched by that id, no name matching); licence read from Commons; links to Flickr (needs a key), Commons " +
@@ -25,7 +25,7 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
   override def check =
     Either.cond(conf.enabled, (), "Pleiades (linked Commons files) is switched off (media.pleiades.enabled = false)")
 
-  def search(place: MediaPlace, http: Plugin.Http) = Left("the Pleiades pictures are found for a batch of places")
+  def search(place: MediaPlace, http: Plugin.Http) = Left(com.histmersion.plugin.MediaCollection.SearchResultPart1("the Pleiades pictures are found for a batch of places"))
 
   override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
     // 1. each place's record(s): the picture links, in order

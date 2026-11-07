@@ -7,7 +7,7 @@ import com.histmersion.plugin.Plugin
 final class WikidataPlugin extends EventsPlugin("events-wikidata"):
   type Config = WikidataConfig
   def register(c: WikidataConfig, ctx: Plugin.Context): Either[com.histmersion.plugins.events.WikidataPlugin.Problem, Unit] =
-    ctx.eventCatalogues.add("wikidata", WikidataCatalogue(c.events.wikidata))
+    ctx.eventCatalogues.add(com.histmersion.plugin.Registry.AddId("wikidata"), WikidataCatalogue(c.events.wikidata))
 
 object WikidataPlugin:
   type Problem = Problem.T

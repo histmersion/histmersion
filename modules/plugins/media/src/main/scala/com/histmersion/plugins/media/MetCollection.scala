@@ -10,8 +10,8 @@ import io.circe.Json
   * (`-1399` is 1400 BCE, as its "ca. 14th–13th century BCE" shows), so a year ≤ 0 is moved one back.
   */
 final class MetCollection(conf: CollectionSettings)
-    extends MuseumCollection(conf, "The Metropolitan Museum of Art", "media.met"):
-  val title = "Met objects"
+    extends MuseumCollection(conf, com.histmersion.plugins.media.MuseumCollection.Provider("The Metropolitan Museum of Art"), com.histmersion.plugins.media.MuseumCollection.Key("media.met")):
+  val title = com.histmersion.plugin.MediaCollection.TitleResult("Met objects")
   override val description = "The Metropolitan Museum of Art (CC0, isPublicDomain)" + MetCollection.Museum
   val role = MediaCollection.Object
 
@@ -68,7 +68,7 @@ object MetCollection:
 
   /** The geography fields, most specific first. */
   val GeographyFields: List[com.histmersion.plugins.media.MetCollection.GeographyFields] =
-    List("excavation", "locus", "locale", "city", "county", "state", "subregion", "region", "river", "country")
+    List(com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("excavation"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("locus"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("locale"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("city"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("county"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("state"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("subregion"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("region"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("river"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("country"))
 
   /** Pure: one object. Not public domain → its rights are a `Left`. */
   def record(json: Json): Either[com.histmersion.plugins.media.MetCollection.Problem, MediaItem] =

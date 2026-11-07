@@ -5,7 +5,7 @@ import com.histmersion.plugin.Plugin
 final class LocPlugin extends MediaPlugin("media-loc"):
   type Config = MediaPlugin.Config
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.LocPlugin.Problem, Unit] =
-    ctx.mediaCollections.add("loc", LocCollection(c.media.loc, c.media.thumbPx))
+    ctx.mediaCollections.add(com.histmersion.plugin.Registry.AddId("loc"), LocCollection(c.media.loc, c.media.thumbPx))
 
 object LocPlugin:
   type Problem = Problem.T

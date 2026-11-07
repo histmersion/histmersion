@@ -8,7 +8,7 @@ final class Downloads(http: Plugin.Http):
 
   def pdf(log: Plugin.Log, source: com.histmersion.plugin.FetchedFile.Source, url: com.histmersion.plugin.Plugin.Http.GetUrl, headers: Map[com.histmersion.plugin.Plugin.HttpResponse.HeadersKey, com.histmersion.plugins.fetchers.Downloads.PdfHeadersPart2] = Map.empty): Option[FetchedFile] =
     http.get(url, headers) match
-      case Right(b) if Downloads.looksLikePdf(b) => Some(FetchedFile(source, Some(url), b, "pdf"))
+      case Right(b) if Downloads.looksLikePdf(b) => Some(FetchedFile(source, Some(url), b, com.histmersion.plugin.FetchedFile.Extension("pdf")))
       case Right(b)                              =>
         log.info(s"$source: $url returned ${b.length} bytes that are not a PDF — skipping")
         None

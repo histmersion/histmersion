@@ -234,7 +234,7 @@ object OpenContext:
       .toList
       .flatten
       .flatMap(l => l.hcursor.str("label"))
-    if !c.str("category").forall(_ == "oc-gen:image") then Left("not an image")
+    if !c.str("category").forall(_ == "oc-gen:image") then Left(com.histmersion.plugins.media.OpenContext.Problem("not an image"))
     else if subjects.exists(_.toLowerCase(Locale.ROOT).contains(HumanRemains)) then Left(Withheld)
     else
       rec.rights.flatMap { r =>
@@ -244,7 +244,7 @@ object OpenContext:
           case Some(l) if l.id != searched.id =>
             Left(s"the media item's licence (${l.id}) differs from the search's (${searched.id})")
           case Some(_) =>
-            file("oc-gen:preview").orElse(file("oc-gen:thumbnail")).toRight("no preview file on the media item").map {
+            file(com.histmersion.plugin.CollectionFile.Format("oc-gen:preview")).orElse(file("oc-gen:thumbnail")).toRight("no preview file on the media item").map {
               preview =>
                 rec.copy(
                   imageUrl = Some(preview),

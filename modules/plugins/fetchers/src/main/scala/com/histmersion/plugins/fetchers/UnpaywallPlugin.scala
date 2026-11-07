@@ -6,7 +6,7 @@ import com.histmersion.plugin.Plugin
 final class UnpaywallPlugin extends FetcherPlugin("oa-unpaywall"):
   type Config = UnpaywallConfig
   def register(c: UnpaywallConfig, ctx: Plugin.Context): Either[com.histmersion.plugins.fetchers.UnpaywallPlugin.Problem, Unit] =
-    ctx.sourceFetchers.add("unpaywall", OpenAccess(c.acquire, () => ctx.http, ctx.log).unpaywall(c.email))
+    ctx.sourceFetchers.add(com.histmersion.plugin.Registry.AddId("unpaywall"), OpenAccess(c.acquire, () => ctx.http, ctx.log).unpaywall(c.email))
 
 object UnpaywallPlugin:
   type Problem = Problem.T
