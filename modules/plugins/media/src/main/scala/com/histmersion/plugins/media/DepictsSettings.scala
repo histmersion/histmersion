@@ -1,5 +1,6 @@
 package com.histmersion.plugins.media
 
+import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `histmersion.media.depicts`: pictures kept per event, P180 files looked at, and whether P1299 is read. */

@@ -15,7 +15,7 @@ final class OnePasswordPlugin extends Plugin:
     given processes: com.histmersion.plugin.Processes = ctx.processes
     for
       exe <- Subprocess
-        .locate(Subprocess.Tool(c.cli.value), ctx.env(Plugin.Context.EnvName("PATH")).map(p => Vaults.Path(p.value)))
+        .locate(Subprocess.Tool(c.cli.value), ctx.env(Plugin.Context.EnvName("PATH")))
         .left
         .map(e => Plugin.RegisterResultPart1(e.value))
       token <- Vaults.optional(c.serviceAccountToken, ctx).left.map(e => Plugin.RegisterResultPart1(e.value))

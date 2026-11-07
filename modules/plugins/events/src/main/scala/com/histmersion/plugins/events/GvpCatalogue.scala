@@ -96,7 +96,7 @@ object GvpCatalogue:
     if from.value > to.value || years.value <= 0 then Nil
     else
       Iterator
-        .iterate(from.value)(_ + years.value)
+        .iterate[Long](from.value)(_ + years.value)
         .takeWhile(_ <= to.value)
         .map(a => (Year(a), Year((a + years.value - 1).min(to.value))))
         .toList

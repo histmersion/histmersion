@@ -52,7 +52,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
   def file(item: CollectionItem, format: Option[SourceCollection.FileFormat]): Either[SourceCollection.FileResultPart1, CollectionFile] =
     CalibreCollection
       .book(item)
-      .pick(format.map(f => Calibre.Book.Formats(f.value)))
+      .pick(format.map(f => CollectionFile.Format(f.value)))
       .map(f => CollectionFile(CollectionFile.Name(f.value)))
       .toRight(
         SourceCollection.FileResultPart1(
@@ -117,7 +117,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
   override def set(id: CollectionId, fields: List[(SourceCollection.SetFieldsPart1, SourceCollection.SetFieldsPart2)]): Either[SourceCollection.SetResultPart1, Unit] =
     CalibreCollection
       .number(id)
-      .flatMap(calibre.set(_, fields.map((name, value) => (Calibre.Field.Name(name.value), Calibre.SetFieldsPart2(value.value)))))
+      .flatMap(calibre.set(_, fields.map((name, value) => (Calibre.Field.Name(name.value), Calibre.Field.Value(value.value)))))
       .left
       .map(e => SourceCollection.SetResultPart1(e.value))
 

@@ -65,7 +65,7 @@ object ClevelandCollection:
       val credit = (List(Some(title), creator).flatten ++ List("The Cleveland Museum of Art") ++
         c.str("creditline").toList :+ "CC0").mkString(", ")
       val rights =
-        if c.str("share_license_status").exists(_.equalsIgnoreCase("CC0")) then Right(MediaRights.cc0(creator, credit))
+        if c.str("share_license_status").exists(_.equalsIgnoreCase("CC0")) then Right(MediaRights.cc0(creator.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
         else Left(MediaItem.RightsPart1(s"not Open Access (share_license_status ${c.str("share_license_status").getOrElse("missing")})"))
       val img = c.downField("images")
       def url(size: String) = img.downField(size).downField("url").focus.flatMap(_.asString)

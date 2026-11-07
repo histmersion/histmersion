@@ -1,5 +1,6 @@
 package com.histmersion.plugins.ai
 
+import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** One HTTP provider's settings, Histmersion's own `agents.providers.<name>`: where it listens, its key (from the
