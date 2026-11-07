@@ -54,7 +54,7 @@ final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentT
         ResearchAgentTools.CheckEdits.value,
         "Dry-run edits (or a whole draft `body`) against the stored article: which edits apply, and what the " +
           "review checks find in the result. Nothing is written."
-      )(in => cap(ArticleTools.checkEdits(articles, in).value, max, "dry-run fewer edits at once"))
+      )(in => cap(ArticleTools.checkEdits(articles, in), max, "dry-run fewer edits at once"))
     },
 
     contribution(ResearchAgentTools.ArticleCoverage) {
@@ -64,7 +64,7 @@ final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentT
           "drift (sources with no reason), and the generated Not used list and Method note."
       )(in =>
         cap(
-          ArticleTools.articleCoverageMarkdown(articles, in).value,
+          ArticleTools.articleCoverageMarkdown(articles, in),
           max,
           "read one source's record with get_source"
         )
