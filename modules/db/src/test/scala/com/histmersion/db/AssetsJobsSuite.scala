@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.database.Transactor
@@ -64,8 +66,8 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
       ds,
       ck,
       List(
-        NewFigure("a.png", "image/png", png(1), Some(10), Some(20)),
-        NewFigure("b.png", "image/png", png(2), None, None)
+        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("a.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(1), Some(com.histmersion.domain.media.assets.NewFigure.Width(10)), Some(com.histmersion.domain.media.assets.NewFigure.Height(20))),
+        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("b.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(2), None, None)
       )
     )
     assertEquals(n, 2)
@@ -84,9 +86,9 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
       ds,
       ck,
       List(
-        NewFigure("page1-logo.png", "image/png", png(7), None, None),
-        NewFigure("page2-logo.png", "image/png", png(7), None, None), // same bytes
-        NewFigure("plot.png", "image/png", png(8), None, None)
+        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("page1-logo.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(7), None, None),
+        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("page2-logo.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(7), None, None), // same bytes
+        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("plot.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(8), None, None)
       )
     )
     assertEquals(n, 2)
@@ -94,10 +96,10 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
 
   test("replace clears the previous set; add keeps it"):
     seed()
-    AssetFixtures.replace(ds, ck, List(NewFigure("old.png", "image/png", png(1), None, None)))
-    AssetFixtures.add(ds, ck, List(NewFigure("new.png", "image/png", png(2), None, None)))
+    AssetFixtures.replace(ds, ck, List(NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("old.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(1), None, None)))
+    AssetFixtures.add(ds, ck, List(NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("new.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(2), None, None)))
     assertEquals(AssetFixtures.list(ds, ck).map(_.name).toList, List("new.png", "old.png"))
-    AssetFixtures.replace(ds, ck, List(NewFigure("only.png", "image/png", png(3), None, None)))
+    AssetFixtures.replace(ds, ck, List(NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("only.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(3), None, None)))
     assertEquals(AssetFixtures.list(ds, ck).map(_.name).toList, List("only.png"))
 
   test("a re-conversion keeps each asset's uid and links: same name in place, a moved picture renamed (#826)"):
@@ -107,9 +109,9 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
       ds,
       ck,
       List(
-        NewFigure("fig-1.png", "image/png", png(1), None, None),
-        NewFigure("fig-2.png", "image/png", png(2), None, None),
-        NewFigure("fig-3.png", "image/png", png(3), None, None)
+        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig-1.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(1), None, None),
+        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig-2.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(2), None, None),
+        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig-3.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(3), None, None)
       )
     )
     import com.augustnagro.magnum.*
@@ -118,21 +120,21 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
     def links = AssetLinkFixtures.list(ds, Some(ck), None, None, None).links.map(l => l.assetName -> l.targetId).sorted
     val (u1, u2) = (uid("fig-1.png"), uid("fig-2.png"))
     AssetLinkFixtures
-      .create(ds, AssetLink.Put(ck, "fig-1.png", "depicts", "place", "hattusa"))
+      .create(ds, AssetLink.Put(ck, com.histmersion.api.exchange.Bundle.Asset.FileName("fig-1.png"), com.histmersion.api.media.AssetRelation.Wire("depicts"), com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("hattusa")))
       .fold(e => fail(e.message), _ => ())
     AssetLinkFixtures
-      .create(ds, AssetLink.Put(ck, "fig-2.png", "depicts", "place", "troy"))
+      .create(ds, AssetLink.Put(ck, com.histmersion.api.exchange.Bundle.Asset.FileName("fig-2.png"), com.histmersion.api.media.AssetRelation.Wire("depicts"), com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("troy")))
       .fold(e => fail(e.message), _ => ())
     AssetLinkFixtures
-      .create(ds, AssetLink.Put(ck, "fig-3.png", "depicts", "place", "mycenae"))
+      .create(ds, AssetLink.Put(ck, com.histmersion.api.exchange.Bundle.Asset.FileName("fig-3.png"), com.histmersion.api.media.AssetRelation.Wire("depicts"), com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("mycenae")))
       .fold(e => fail(e.message), _ => ())
     // re-OCR: fig-1 re-rendered under its name, fig-2's picture now numbered fig-4, fig-3 gone
     AssetFixtures.replace(
       ds,
       ck,
       List(
-        NewFigure("fig-1.png", "image/png", png(11), None, None),
-        NewFigure("fig-4.png", "image/png", png(2), None, None)
+        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig-1.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(11), None, None),
+        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig-4.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(2), None, None)
       )
     )
     assertEquals(AssetFixtures.list(ds, ck).map(_.name).toList, List("fig-1.png", "fig-4.png"))
@@ -143,7 +145,7 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
 
   test("assets die with their source (ON DELETE CASCADE)"):
     seed()
-    AssetFixtures.replace(ds, ck, List(NewFigure("x.png", "image/png", png(1), None, None)))
+    AssetFixtures.replace(ds, ck, List(NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("x.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(1), None, None)))
     connectForTest(s"DELETE FROM sources WHERE citekey = '$ck'")
     assertEquals(AssetFixtures.count(ds, ck), 0)
 
@@ -164,16 +166,16 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
 
   // ── jobs ───────────────────────────────────────────────────────────────────────────────────
   test("job lifecycle: queued → running → done, with progress"):
-    val j = Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(ck), Some("abc")))
+    val j = Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(ck), Some(com.histmersion.Sha256("abc"))))
     assertEquals(j.status, JobState.Queued.wire)
     assertEquals(
-      Transactor(ds).transact(JobRepo.transition(j.id, JobState.Queued, JobState.Running, Some("converting"))),
+      Transactor(ds).transact(JobRepo.transition(j.id, JobState.Queued, JobState.Running, Some(com.histmersion.util.jobs.JobRepo.TransitionProgress("converting")))),
       Some(JobState.Running)
     )
-    Transactor(ds).transact(JobRepo.progress(j.id, "storing 3 asset(s)"))
+    Transactor(ds).transact(JobRepo.progress(j.id, com.histmersion.util.jobs.JobRepo.ProgressText("storing 3 asset(s)")))
     assertEquals(Transactor(ds).read(JobRepo.get(j.id)).flatMap(_.progress), Some("storing 3 asset(s)"))
     assertEquals(
-      Transactor(ds).transact(JobRepo.transition(j.id, JobState.Running, JobState.Done, Some("1 page(s)"))),
+      Transactor(ds).transact(JobRepo.transition(j.id, JobState.Running, JobState.Done, Some(com.histmersion.util.jobs.JobRepo.TransitionProgress("1 page(s)")))),
       Some(JobState.Done)
     )
     val done = Transactor(ds).read(JobRepo.get(j.id)).get
@@ -181,10 +183,10 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
     assert(done.succeeded && done.isTerminal)
 
   test("a job remembers the acquisition item it ticks off; one without an item reads back none"):
-    val j = Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(ck), None, acquireItem = Some(4242)))
+    val j = Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(ck), None, acquireItem = Some(com.histmersion.util.jobs.JobRepo.CreateAcquireItem(4242))))
     assertEquals(j.acquireItem, Some(4242))
     assertEquals(Transactor(ds).read(JobRepo.get(j.id)).flatMap(_.acquireItem), Some(4242))
-    assert(Transactor(ds).read(JobRepo.list(None, 50)).exists(x => x.id == j.id && x.acquireItem.contains(4242)))
+    assert(Transactor(ds).read(JobRepo.list(None, com.histmersion.PageSize(50))).exists(x => x.id == j.id && x.acquireItem.contains(4242)))
     assertEquals(
       Transactor(ds)
         .read(JobRepo.get(Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(ck), None)).id))
@@ -230,12 +232,12 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
   test("jobs list is newest-first and filterable by status"):
     Transactor(ds).transact(JobRepo.failInterrupted())
     val a = Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(ck), None))
-    val all = Transactor(ds).read(JobRepo.list(None, 10))
+    val all = Transactor(ds).read(JobRepo.list(None, com.histmersion.PageSize(10)))
     assertEquals(all.headOption.map(_.id), Some(a.id))
-    assert(Transactor(ds).read(JobRepo.list(Some("queued"), 10)).forall(_.status == "queued"))
-    assert(Transactor(ds).read(JobRepo.list(Some("done"), 10)).forall(_.status == "done"))
-    assertEquals(Transactor(ds).read(JobRepo.list(Some("nonsense"), 10)), Vector.empty)
-    assertEquals(Transactor(ds).read(JobRepo.get("no-such-job")), None)
+    assert(Transactor(ds).read(JobRepo.list(Some(com.histmersion.util.jobs.JobRepo.ListStatus("queued")), com.histmersion.PageSize(10))).forall(_.status == "queued"))
+    assert(Transactor(ds).read(JobRepo.list(Some(com.histmersion.util.jobs.JobRepo.ListStatus("done")), com.histmersion.PageSize(10))).forall(_.status == "done"))
+    assertEquals(Transactor(ds).read(JobRepo.list(Some(com.histmersion.util.jobs.JobRepo.ListStatus("nonsense")), com.histmersion.PageSize(10))), Vector.empty)
+    assertEquals(Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.JobRepo.GetId("no-such-job"))), None)
 
   private def connectForTest(sql: String): Unit =
     val c = ds.getConnection()

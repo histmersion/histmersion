@@ -1,5 +1,7 @@
 package com.histmersion.util.storage
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
 
@@ -15,21 +17,21 @@ class ContentDirectorySuite extends munit.FunSuite:
     val store = ContentDirectory(dir)
     val data = "an original".getBytes(UTF_8)
     assertEquals(store.find(sha(data)), None)
-    assert(store.store(sha(data), "pdf", java.io.ByteArrayInputStream("not it".getBytes(UTF_8))).isLeft)
+    assert(store.store(sha(data), com.histmersion.util.storage.ContentStore.Ext("pdf"), java.io.ByteArrayInputStream("not it".getBytes(UTF_8))).isLeft)
     assertEquals(Files.list(dir).count(), 0L)
-    assertEquals(store.store(sha(data), "PDF", java.io.ByteArrayInputStream(data)), Right(()))
+    assertEquals(store.store(sha(data), com.histmersion.util.storage.ContentStore.Ext("PDF"), java.io.ByteArrayInputStream(data)), Right(()))
     val (file, ext) = store.find(sha(data)).get
     assertEquals(ext, "pdf")
     assertEquals(file.size, data.length.toLong)
     assertEquals(file.read(_.readAllBytes()).toList, data.toList)
-    assertEquals(store.store(sha(data), "txt", java.io.ByteArrayInputStream(data)), Right(())) // already there
+    assertEquals(store.store(sha(data), com.histmersion.util.storage.ContentStore.Ext("txt"), java.io.ByteArrayInputStream(data)), Right(())) // already there
     assertEquals(Files.list(dir).count(), 1L)
 
   test("an extension is kept only when short and alphanumeric"):
-    assertEquals(ContentStore.safeExt(" PDF "), "pdf")
-    assertEquals(ContentStore.safeExt("../evil"), "bin")
-    assertEquals(ContentStore.safeExt(""), "bin")
-    assertEquals(ContentStore.safeExt("abcdefghi"), "bin")
+    assertEquals(ContentStore.safeExt(com.histmersion.util.storage.ContentStore.Ext(" PDF ")), "pdf")
+    assertEquals(ContentStore.safeExt(com.histmersion.util.storage.ContentStore.Ext("../evil")), "bin")
+    assertEquals(ContentStore.safeExt(com.histmersion.util.storage.ContentStore.Ext("")), "bin")
+    assertEquals(ContentStore.safeExt(com.histmersion.util.storage.ContentStore.Ext("abcdefghi")), "bin")
 
   test("bytes in memory read from the start each time"):
     val source = ByteSource.bytes("abc".getBytes(UTF_8))

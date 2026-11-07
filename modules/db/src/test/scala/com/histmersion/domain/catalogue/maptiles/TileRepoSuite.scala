@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.maptiles
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.media.assets.AssetFixtures
@@ -46,12 +48,12 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
 
   private val Lon = -100.0
   private val Lat = -70.0
-  private val grid = TileGrid.of(maxZoom = 11, maxPoints = 600, cellPx = 32)
+  private val grid = TileGrid.of(maxZoom = com.histmersion.domain.catalogue.maptiles.TileGrid.MaxZoom(11), maxPoints = com.histmersion.domain.catalogue.maptiles.TileGrid.MaxPoints(600), cellPx = com.histmersion.domain.catalogue.maptiles.TileGrid.CellPx(32))
 
   /** The tile of zoom `z` that holds (`lat`, `lon`). */
   private def tileAt(z: Int, lat: Double = Lat, lon: Double = Lon): TileCoord =
     val (mx, my) = TileCoord.mercator(lat, lon)
-    TileCoord.of(z, math.floor(mx * (1 << z)).toLong, math.floor(my * (1 << z)).toLong, 22).toOption.get
+    TileCoord.of(z, math.floor(mx * (1 << z)).toLong, math.floor(my * (1 << z)).toLong, com.histmersion.domain.catalogue.maptiles.TileCoord.Z(22)).toOption.get
 
   private def site(
       id: String,
@@ -119,14 +121,14 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
     )
     val c = tileAt(9)
     def shown(lo: Long, hi: Long) =
-      keysIn(connect(ds)(TileRepo.siteCells(c, grid, (lo, hi), None, 1500))).filter(_.contains("zztile"))
+      keysIn(connect(ds)(TileRepo.siteCells(c, grid, (lo, hi), None, com.histmersion.domain.DeepTime.SignedYear(1500)))).filter(_.contains("zztile"))
     assertEquals(shown(-1600, -1000), Set("zztile_a", "zztile_c", "wikidata_qzztile1"))
     assertEquals(shown(-2600, -2600), Set("zztile_b"))
     // a single year is the range of that year; the undated import stays off the map even after modern-from
     assertEquals(shown(1800, 1800), Set("zztile_c"))
-    val rec = connect(ds)(TileRepo.sitesOf(List("zztile_a", "zztile_c")))
-    assertEquals(rec("zztile_a"), SiteTile("zztile_a", "Zztile A", "site", None, "dated", Some(-2000L), Some(-1500L)))
-    assertEquals(rec("zztile_c").periodEnd, None)
+    val rec = connect(ds)(TileRepo.sitesOf(List(com.histmersion.domain.catalogue.maptiles.TileRepo.SiteId("zztile_a"), com.histmersion.domain.catalogue.maptiles.TileRepo.SiteId("zztile_c"))))
+    assertEquals(rec(com.histmersion.domain.catalogue.maptiles.TileRepo.SiteId("zztile_a")), SiteTile(com.histmersion.api.catalogue.SiteTile.Id("zztile_a"), com.histmersion.api.catalogue.SiteTile.Label("Zztile A"), com.histmersion.api.catalogue.SiteTile.Kind("site"), None, com.histmersion.api.catalogue.SiteTile.Basis("dated"), Some(com.histmersion.api.catalogue.Year(-2000L)), Some(com.histmersion.api.catalogue.Year(-1500L))))
+    assertEquals(rec(com.histmersion.domain.catalogue.maptiles.TileRepo.SiteId("zztile_c")).periodEnd, None)
 
   test("sites: the site-type filter reads the same type the site is drawn with"):
     site(
@@ -144,12 +146,12 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
     )
     site("zztile_t3", "Zztile Fort", "int8range(-500, -100, '[]')", dx = 0.02, siteType = Some("fortification"))
     val c = tileAt(9)
-    def of(t: String) = keysIn(connect(ds)(TileRepo.siteCells(c, grid, (-300, -300), Some(t), 1500)))
+    def of(t: String) = keysIn(connect(ds)(TileRepo.siteCells(c, grid, (com.histmersion.domain.DeepTime.SignedYear(-300), com.histmersion.domain.DeepTime.SignedYear(-300)), Some(t), com.histmersion.domain.DeepTime.SignedYear(1500))))
     assertEquals(of("sanctuary"), Set("zztile_t1"))
     assertEquals(of("settlement"), Set("zztile_t2"))
     assertEquals(of("fortification"), Set("zztile_t3"))
     assertEquals(
-      connect(ds)(TileRepo.sitesOf(List("zztile_t1"))).get("zztile_t1").flatMap(_.siteType),
+      connect(ds)(TileRepo.sitesOf(List(com.histmersion.domain.catalogue.maptiles.TileRepo.SiteId("zztile_t1")))).get(com.histmersion.domain.catalogue.maptiles.TileRepo.SiteId("zztile_t1")).flatMap(_.siteType),
       Some("sanctuary")
     )
 
@@ -168,24 +170,24 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
     site("zztile_d1", "Zztile Dated", "int8range(-500, -100, '[]')", dx = 0.02)
     val deep = tileAt(9)
     val listed =
-      connect(ds)(UndatedSiteRepo.items(deep, None, except = List("zztile_u2"))).filter(_.key.startsWith("zztile"))
+      connect(ds)(UndatedSiteRepo.items(deep, None, except = List(com.histmersion.domain.catalogue.maptiles.TileRepo.SiteId("zztile_u2")))).filter(_.key.startsWith("zztile"))
     assertEquals(listed.map(c => (c.key, c.undated)).toSet, Set("zztile_u1" -> 1))
     assertEquals(
-      connect(ds)(UndatedSiteRepo.items(deep, Some("tower"), Nil)).map(_.key).filter(_.startsWith("zztile")),
+      connect(ds)(UndatedSiteRepo.items(deep, Some(com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType("tower")), Nil)).map(_.key).filter(_.startsWith("zztile")),
       List("zztile_u1")
     )
     val shallow = tileAt(4)
     val counted = connect(ds)(UndatedSiteRepo.counted(shallow, grid, None))
     val v = connect(ds)(UndatedSiteRepo.version())
-    assert(transact(ds)(UndatedSiteRepo.rebuild(v, 16, 6)))
+    assert(transact(ds)(UndatedSiteRepo.rebuild(v, com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide(16), com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom(6))))
     assertEquals(connect(ds)(UndatedSiteRepo.built()).map(_.version), Some(v))
-    val kept = connect(ds)(UndatedSiteRepo.kept(shallow, 16, None))
+    val kept = connect(ds)(UndatedSiteRepo.kept(shallow, com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide(16), None))
     assertEquals(kept.map(k => (k.gx, k.gy, k.n)).sortBy(_._1), counted.map(k => (k.gx, k.gy, k.n)).sortBy(_._1))
     kept.zip(counted.sortBy(_.gx)).foreach((k, c) => assertEqualsDouble(k.sumX, c.sumX, 1e-3))
     assertEquals(counted.map(_.n).sum, 3)
     // the dated site is no undated one, and the span's dated count marks no site as undated
     assertEquals(
-      connect(ds)(TileRepo.items(TileRepo.datedSites(deep, (-300, -300), None, 1500), deep))
+      connect(ds)(TileRepo.items(TileRepo.datedSites(deep, (com.histmersion.domain.DeepTime.SignedYear(-300), com.histmersion.domain.DeepTime.SignedYear(-300)), None, com.histmersion.domain.DeepTime.SignedYear(1500)), deep))
         .filter(_.key.startsWith("zztile"))
         .map(c => (c.key, c.undated)),
       List("zztile_d1" -> 0)
@@ -221,10 +223,10 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
     val r = PlaceFixtures.get(ds, "zztile_r1").get.record
     assertEquals(r.dateSource, Some("wikidata-p571"))
     assertEquals(r.periods, List("Byzantine"))
-    assertEquals(r.designations, List(Place.Designation("Q2", Some("listed monument"), Some("1922"), None)))
+    assertEquals(r.designations, List(Place.Designation(com.histmersion.api.catalogue.Place.Designation.Id("Q2"), Some(com.histmersion.api.catalogue.Place.Designation.Label("listed monument")), Some(com.histmersion.api.catalogue.Place.Designation.Start("1922")), None)))
     assertEquals(
       r.registers,
-      List(Place.Register("P1936", "99"), Place.Register("P2186", "GR-1"), Place.Register("P2186", "GR-2"))
+      List(Place.Register(com.histmersion.api.catalogue.Place.Register.Property("P1936"), com.histmersion.api.catalogue.Place.Register.Id("99")), Place.Register(com.histmersion.api.catalogue.Place.Register.Property("P2186"), com.histmersion.api.catalogue.Place.Register.Id("GR-1")), Place.Register(com.histmersion.api.catalogue.Place.Register.Property("P2186"), com.histmersion.api.catalogue.Place.Register.Id("GR-2")))
     )
     assert(PlaceFixtures.get(ds, "zztile_r2").get.record.isEmpty)
 
@@ -242,20 +244,20 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
         .frag
         .update
         .run()
-    val small = TileGrid.of(maxZoom = 11, maxPoints = 100, cellPx = 32)
+    val small = TileGrid.of(maxZoom = com.histmersion.domain.catalogue.maptiles.TileGrid.MaxZoom(11), maxPoints = com.histmersion.domain.catalogue.maptiles.TileGrid.MaxPoints(100), cellPx = com.histmersion.domain.catalogue.maptiles.TileGrid.CellPx(32))
     List(3, 6, 9).foreach { z =>
       // every tile of zoom z the fixture touches
       val corners = for dx <- List(0.0, 0.3); dy <- List(0.0, 0.3) yield tileAt(z, Lat + dy, Lon + dx)
       val tiles = corners.distinct
       val cells = tiles
-        .flatMap(t => connect(ds)(TileRepo.siteCells(t, small, (-2000, 2000), None, 1500)))
+        .flatMap(t => connect(ds)(TileRepo.siteCells(t, small, (com.histmersion.domain.DeepTime.SignedYear(-2000), com.histmersion.domain.DeepTime.SignedYear(2000)), None, com.histmersion.domain.DeepTime.SignedYear(1500))))
         .filter(c => c.key.startsWith("zztile") || c.key.startsWith("c"))
       val ours = cells.filter(c => !c.isItem || c.key.startsWith("zztile_g"))
       assertEquals(ours.map(_.n).sum, 900, s"zoom $z")
       tiles.foreach(t =>
         assert(
           connect(ds)(
-            TileRepo.siteCells(t, small, (-2000, 2000), None, 1500)
+            TileRepo.siteCells(t, small, (com.histmersion.domain.DeepTime.SignedYear(-2000), com.histmersion.domain.DeepTime.SignedYear(2000)), None, com.histmersion.domain.DeepTime.SignedYear(1500))
           ).size <= (TileCoord.Extent / small.cellUnits) * (TileCoord.Extent / small.cellUnits)
         )
       )
@@ -266,7 +268,7 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
       }
     }
     // at the deepest tile every item is one feature
-    val deepest = connect(ds)(TileRepo.siteCells(tileAt(11), small, (-2000, 2000), None, 1500))
+    val deepest = connect(ds)(TileRepo.siteCells(tileAt(11), small, (com.histmersion.domain.DeepTime.SignedYear(-2000), com.histmersion.domain.DeepTime.SignedYear(2000)), None, com.histmersion.domain.DeepTime.SignedYear(1500)))
     assert(deepest.forall(_.isItem), deepest.filterNot(_.isItem).take(3).toString)
 
   test("events and pictures: a span is a range of overlap; a picture's provider and licence narrow it"):
@@ -334,15 +336,15 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
     site("zztile_v1", "Zztile V", "int8range(1, 2, '[]')")
     val after = connect(ds)(TileRepo.versions)
     assertEquals(
-      after.getOrElse("places", 0L),
-      before.getOrElse("places", 0L) + 2
+      after.getOrElse(com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("places"), 0L),
+      before.getOrElse(com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("places"), 0L) + 2
     ) // the insert's transaction, then the update's
-    assertEquals(after.getOrElse("media", 0L), before.getOrElse("media", 0L))
+    assertEquals(after.getOrElse(com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("media"), 0L), before.getOrElse(com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("media"), 0L))
     transact(ds):
       val _ = sql"UPDATE places SET label = 'Zztile V2' WHERE id = 'zztile_v1'".update.run()
       val _ = sql"UPDATE places SET label = 'Zztile V3' WHERE id = 'zztile_v1'".update.run()
-    assertEquals(connect(ds)(TileRepo.versions)("places"), after("places") + 1)
+    assertEquals(connect(ds)(TileRepo.versions)(com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("places")), after(com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("places")) + 1)
     val v = connect(ds)(TileRepo.versions)
-    transact(ds)(TileRepo.compact("places"))
+    transact(ds)(TileRepo.compact(com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("places")))
     assertEquals(connect(ds)(TileRepo.versions), v)
-    assertEquals(connect(ds)(TileRepo.changeRows)("places"), 1)
+    assertEquals(connect(ds)(TileRepo.changeRows)(com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("places")), 1)

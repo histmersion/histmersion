@@ -48,8 +48,8 @@ class RepoDetailsSuite extends com.histmersion.db.DbSuite:
         topics = Nil,
         regions = Nil,
         tags = Nil,
-        period = Some(Period(-1200, -1100)),
-        summary = Some("sea peoples"),
+        period = Some(Period(com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-1100))),
+        summary = Some(com.histmersion.api.library.Source.Summary("sea peoples")),
         citedByCount = None,
         influentialCitations = None,
         provenance = None,
@@ -59,10 +59,10 @@ class RepoDetailsSuite extends com.histmersion.db.DbSuite:
           Finding(
             s"$ck#0",
             com.histmersion.api.library.Citekey(ck),
-            "A claim",
-            Some("Nile"),
+            com.histmersion.api.library.Finding.Claim("A claim"),
+            Some(com.histmersion.api.library.Finding.Region("Nile")),
             Some(GeoPoint(31.0, 30.0)),
-            Some(Period(-1150, -1120)),
+            Some(Period(com.histmersion.api.catalogue.Year(-1150), com.histmersion.api.catalogue.Year(-1120))),
             None,
             Nil,
             None
@@ -79,14 +79,14 @@ class RepoDetailsSuite extends com.histmersion.db.DbSuite:
     val _ = seed()
     // limits.snippetWords is snippetChars/6, so a small `snippet-chars` puts MaxWords under 8.
     List(1, 2, 5, 7, 8, 40).foreach { maxWords =>
-      val r = SearchFixtures.sources(ds, Filter(q = Some("sea peoples"), limit = 5), maxWords)
+      val r = SearchFixtures.sources(ds, Filter(q = Some(com.histmersion.api.library.Filter.Q("sea peoples")), limit = com.histmersion.api.library.Filter.Limit(5)), maxWords)
       assert(r.hits.nonEmpty, s"maxWords=$maxWords returned nothing")
     }
 
   test("the fragment keeps MinWords strictly below MaxWords at every budget"):
     List(1, 2, 8, 100).foreach { max =>
       val text = Search
-        .bestChunkJoin("x", max)
+        .bestChunkJoin(com.histmersion.domain.library.search.Search.BestChunkJoinQ("x"), max)
         .params
         .collect { case Param.S(v) => v }
         .find(_.contains("MaxWords"))
@@ -98,7 +98,7 @@ class RepoDetailsSuite extends com.histmersion.db.DbSuite:
 
   // ── 21 + 22: the assets contract ─────────────────────────────────────────────────────────────
 
-  private def png(byte: Byte) = NewFigure("fig1.png", "image/png", Array[Byte](1, 2, 3, byte), None, None)
+  private def png(byte: Byte) = NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig1.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), Array[Byte](1, 2, 3, byte), None, None)
 
   private def updatedAt: String = SourceFixtures.load(ds, ck).get.updatedAt.get
 
@@ -126,7 +126,7 @@ class RepoDetailsSuite extends com.histmersion.db.DbSuite:
     val afterReplace = updatedAt
     assertNotEquals(afterReplace, before, "replace() must invalidate the concurrency token")
     Thread.sleep(5)
-    val _ = AssetFixtures.add(ds, ck, List(NewFigure("fig2.png", "image/png", Array[Byte](9, 9), None, None)))
+    val _ = AssetFixtures.add(ds, ck, List(NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig2.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), Array[Byte](9, 9), None, None)))
     assertNotEquals(updatedAt, afterReplace, "add() must too")
 
   // ── 23: findings_flat's inclusive upper bound ────────────────────────────────────────────────

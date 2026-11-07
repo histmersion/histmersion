@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.sources.SourceCheckFixtures
@@ -148,8 +150,8 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("Albania: the country, not the site that has it as an alias; a covering snapshot when dated"):
     assertEquals(chosen("Zzalbania"), Some("zzgeo_ne_alb"))
-    assertEquals(chosen("Zzalbania", at = Some(Period(800, 900))), Some("zzgeo_ne_alb"))
-    assertEquals(chosen("Zzalbania", at = Some(Period(1925, 1925))), Some("zzgeo_alb_1920"))
+    assertEquals(chosen("Zzalbania", at = Some(Period(com.histmersion.api.catalogue.Year(800), com.histmersion.api.catalogue.Year(900)))), Some("zzgeo_ne_alb"))
+    assertEquals(chosen("Zzalbania", at = Some(Period(com.histmersion.api.catalogue.Year(1925), com.histmersion.api.catalogue.Year(1925)))), Some("zzgeo_alb_1920"))
     assertEquals(chosen("Zzhulwan"), Some("zzgeo_site_alb"), "the site still answers to its own names")
 
   test("Mesopotamia: the curated region, not the placeholder point Pleiades shares with other provinces"):
@@ -157,12 +159,12 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals((r.placeId, r.isApproximate), ("zzgeo_mesopotamia", false))
     // alone on a placeholder, a name still resolves, and says it is rough
     val o = resolve("Zzosroene").get
-    assertEquals(o.approximate, List(Approximation.Rough(4)))
+    assertEquals(o.approximate, List(Approximation.Rough(com.histmersion.api.catalogue.Geocode.Approximation.Rough.Places(4))))
 
   test("Kievan Rus': the snapshot of the finding's own time"):
-    assertEquals(chosen("Zzkievan Rus'", at = Some(Period(1000, 1000))), Some("zzgeo_kr_990_1017"))
-    assertEquals(chosen("Zzkievan Rus", at = Some(Period(1237, 1239))), Some("zzgeo_kr_1236_1240"))
-    assertEquals(chosen("Zzkievan Rus’", at = Some(Period(1100, 1100))), Some("zzgeo_kr_990_1017"), "nearest in time")
+    assertEquals(chosen("Zzkievan Rus'", at = Some(Period(com.histmersion.api.catalogue.Year(1000), com.histmersion.api.catalogue.Year(1000)))), Some("zzgeo_kr_990_1017"))
+    assertEquals(chosen("Zzkievan Rus", at = Some(Period(com.histmersion.api.catalogue.Year(1237), com.histmersion.api.catalogue.Year(1239)))), Some("zzgeo_kr_1236_1240"))
+    assertEquals(chosen("Zzkievan Rus’", at = Some(Period(com.histmersion.api.catalogue.Year(1100), com.histmersion.api.catalogue.Year(1100)))), Some("zzgeo_kr_990_1017"), "nearest in time")
 
   test("Ur: the Pleiades city under 'Ur(i)' when the model says site; the polity otherwise"):
     assertEquals(chosen("Zzur", KindHint.Site), Some("zzgeo_ur_city"))
@@ -179,11 +181,11 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
     val k = resolve("Zzkormadin, Zzserbia").get
     assertEquals((k.placeId, k.isApproximate, k.lon, k.lat), ("zzgeo_kormadin", false, 20.2, 44.8))
     val g = resolve("Zzgornij, Zzserbia").get
-    assertEquals((g.placeId, g.approximate), ("zzgeo_serbia", List(Approximation.OnlyWithin("Zzgornij"))))
+    assertEquals((g.placeId, g.approximate), ("zzgeo_serbia", List(Approximation.OnlyWithin(com.histmersion.api.catalogue.Geocode.Approximation.OnlyWithin.Missing("Zzgornij")))))
 
   test("a directional qualifier resolves to the base region, flagged approximate"):
     val s = resolve("southern Zzlevant").get
-    assertEquals((s.placeId, s.approximate), ("zzgeo_levant", List(Approximation.Qualifier("southern"))))
+    assertEquals((s.placeId, s.approximate), ("zzgeo_levant", List(Approximation.Qualifier(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("southern")))))
     assertEquals(resolve("Southern Zzlevant").map(_.placeId), Some("zzgeo_levant"))
     val n = resolve("Northern Zzalbania").get
     assertEquals((n.placeId, n.isApproximate), ("zzgeo_ne_alb", true))
@@ -242,9 +244,9 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
         // a person placed this one by hand, in Albania: never touched
         finding(1, "Zzalbania", 19.8, 41.3, "A hand-placed claim."),
         // the old pick by region_name (no run): the placeholder point
-        finding(2, "Zzmesopotamia", 37.5, 37.5, "Sumerian cities in Mesopotamia.", Some(Period(-2500, -2000))),
+        finding(2, "Zzmesopotamia", 37.5, 37.5, "Sumerian cities in Mesopotamia.", Some(Period(com.histmersion.api.catalogue.Year(-2500), com.histmersion.api.catalogue.Year(-2000)))),
         // the old pick, dated 1000 CE: the snapshot with the smaller area, 1236-1240
-        finding(3, "Zzkievan Rus'", 0, 0, "Rus in 1000.", Some(Period(1000, 1000))),
+        finding(3, "Zzkievan Rus'", 0, 0, "Rus in 1000.", Some(Period(com.histmersion.api.catalogue.Year(1000), com.histmersion.api.catalogue.Year(1000)))),
         // the old pick and the new one are the same place: nothing to do
         finding(4, "Zzlevant", 0, 0, "Levant claim.")
       )

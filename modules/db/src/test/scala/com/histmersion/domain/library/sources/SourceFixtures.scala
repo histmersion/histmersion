@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
 import com.histmersion.util.ocr.Chunk
 

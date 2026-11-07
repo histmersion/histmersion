@@ -1,5 +1,7 @@
 package com.histmersion.util.data.diagnostics
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.TableSize
@@ -32,13 +34,13 @@ class StatsRepoSuite extends com.histmersion.db.DbSuite:
   test("#718: corpus counts read every table they name"):
     val c = connect(ds)(
       CorpusCounts(
-        StatsRepo.rows("sources").toInt,
-        StatsRepo.rows("findings").toInt,
-        StatsRepo.rows("articles").toInt,
-        StatsRepo.rows("events").toInt,
-        StatsRepo.rows("places").toInt,
-        StatsRepo.rows("periods").toInt,
-        StatsRepo.rowsWith("periods", "preset").toInt
+        StatsRepo.rows(com.histmersion.util.data.TableName("sources")).toInt,
+        StatsRepo.rows(com.histmersion.util.data.TableName("findings")).toInt,
+        StatsRepo.rows(com.histmersion.util.data.TableName("articles")).toInt,
+        StatsRepo.rows(com.histmersion.util.data.TableName("events")).toInt,
+        StatsRepo.rows(com.histmersion.util.data.TableName("places")).toInt,
+        StatsRepo.rows(com.histmersion.util.data.TableName("periods")).toInt,
+        StatsRepo.rowsWith(com.histmersion.util.data.TableName("periods"), com.histmersion.util.data.diagnostics.StatsRepo.ColumnName("preset")).toInt
       )
     )
     // places and periods are reference data no other suite deletes: they can only have grown

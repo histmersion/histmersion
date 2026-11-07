@@ -1,5 +1,7 @@
 package com.histmersion.util.identity
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.automation.goals.GoalAliasTable
 import com.histmersion.domain.catalogue.events.EventAliasTable
 import com.histmersion.domain.catalogue.places.PlaceAliasTable
@@ -25,5 +27,5 @@ class AliasTablesSuite extends munit.FunSuite:
 
   test("an identifier of a kind nobody registered is answered as it is, trimmed"):
     val none = AliasTables(Nil)
-    assertEquals(none.current(null, AliasKinds.SourceRecords, " ck "), "ck")
-    assertEquals(none.renamedTo(null, AliasKinds.SourceRecords, "ck"), None)
+    assertEquals(none.current(null, AliasKinds.SourceRecords, com.histmersion.util.identity.AliasTable.Id(" ck ")), "ck")
+    assertEquals(none.renamedTo(null, AliasKinds.SourceRecords, com.histmersion.util.identity.AliasTable.Id("ck")), None)

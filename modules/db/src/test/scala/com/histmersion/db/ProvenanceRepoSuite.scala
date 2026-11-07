@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -59,7 +61,7 @@ class ProvenanceRepoSuite extends com.histmersion.db.DbSuite:
     val patched = SourceFixtures.patch(
       ds,
       a,
-      Source.Patch(metadata = Some(MetadataPatch(provenance = Some("another-one")))),
+      Source.Patch(metadata = Some(MetadataPatch(provenance = Some(com.histmersion.api.library.Source.Provenance("another-one"))))),
       cfg.limits.chunkChars
     )
     assert(patched.isRight, patched.toString)

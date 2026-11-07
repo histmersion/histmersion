@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.search.SearchFixtures
@@ -43,7 +45,7 @@ class FtsSuite extends com.histmersion.db.DbSuite:
       tags = Nil,
       period = None,
       summary = Some(summary),
-      citedByCount = Some(0),
+      citedByCount = Some(com.histmersion.api.library.Source.CitedByCount(0)),
       influentialCitations = None,
       provenance = None,
       calibreId = None,
@@ -124,7 +126,7 @@ class FtsSuite extends com.histmersion.db.DbSuite:
 
   test("no query keeps the most-cited listing, with no snippet"):
     fixture
-    val hits = listing(Filter(limit = 5))
+    val hits = listing(Filter(limit = com.histmersion.api.library.Filter.Limit(5)))
     assert(hits.nonEmpty)
     assert(hits.forall(h => h.snippet.isEmpty && h.matchedHeading.isEmpty))
 

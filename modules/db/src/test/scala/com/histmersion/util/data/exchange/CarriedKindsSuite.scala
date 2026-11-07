@@ -1,5 +1,7 @@
 package com.histmersion.util.data.exchange
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.Bundle
 

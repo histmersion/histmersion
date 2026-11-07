@@ -22,7 +22,7 @@ object PlaceFixtures:
   export Geocoder.{apply as applyMoves, candidates, moves, place, placements, resolve, tierSql}
 
   def upsertPlaces(ds: DataSource, batch: List[Place.Input], dataset: Dataset = Dataset.Seed): Place.ImportResult =
-    if batch.isEmpty then Place.ImportResult(0, 0, 0, Nil) else transact(ds)(PlaceRepo.upsertPlaces(batch, dataset))
+    if batch.isEmpty then Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(0), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), Nil) else transact(ds)(PlaceRepo.upsertPlaces(batch, dataset))
 
   def search(
       ds: DataSource,

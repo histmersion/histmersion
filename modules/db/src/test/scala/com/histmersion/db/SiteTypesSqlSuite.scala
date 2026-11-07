@@ -58,7 +58,7 @@ class SiteTypesSqlSuite extends com.histmersion.db.DbSuite:
     val json = Option.when(p31.nonEmpty)(io.circe.Json.arr(p31.map(io.circe.Json.fromString)*))
     assertEquals(
       sqlType(kind, stored, ft, fcode, cls, json),
-      SiteTypes.of("x", kind, stored, ft, fcode, cls, SiteTypes.p31Of(json.map(_.noSpaces))),
+      SiteTypes.of(com.histmersion.api.catalogue.Place.Id("x"), kind, stored, ft, fcode, cls, SiteTypes.p31Of(json.map(_.noSpaces))),
       s"$kind $stored $ft $fcode $cls $p31"
     )
 

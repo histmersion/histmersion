@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import java.time.Instant
 import com.histmersion.util.database.{ListSql, Param, Sql}
 import com.histmersion.util.database.given
@@ -15,14 +17,14 @@ class ListSqlSuite extends munit.FunSuite:
     assertEquals(ListSql.anyOf("kind", Nil), Sql.empty)
     assertEquals(
       ListSql.anyOf("kind", List("edge", "goal-plan")),
-      Sql(" AND kind = ANY(?::text[])", List(Param.A(List("edge", "goal-plan"))))
+      Sql(com.histmersion.util.database.Sql.Text(" AND kind = ANY(?::text[])"), List(Param.A(List(com.histmersion.util.database.Param.A.V("edge"), com.histmersion.util.database.Param.A.V("goal-plan")))))
     )
-    assertEquals(ListSql.equal("j.goal_slug", Some("g")), Sql(" AND j.goal_slug = ?", List(Param.S("g"))))
+    assertEquals(ListSql.equal("j.goal_slug", Some("g")), Sql(com.histmersion.util.database.Sql.Text(" AND j.goal_slug = ?"), List(Param.S(com.histmersion.util.database.Param.S.V("g")))))
 
   test("a time range is bound as instants; either side may be open"):
     val s = Instant.parse("2026-10-01T00:00:00Z")
     assertEquals(ListSql.between("created_at", Some(s), None).text, " AND created_at >= ?::timestamptz")
-    assertEquals(ListSql.between("created_at", None, Some(s)).params, List(Param.S("2026-10-01T00:00:00Z")))
+    assertEquals(ListSql.between("created_at", None, Some(s)).params, List(Param.S(com.histmersion.util.database.Param.S.V("2026-10-01T00:00:00Z"))))
     assertEquals(ListSql.between("created_at", None, None), Sql.empty)
 
   test("a facet is counted under every condition but its own"):

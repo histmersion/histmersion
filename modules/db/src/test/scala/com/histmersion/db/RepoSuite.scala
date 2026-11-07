@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.citations.CitationFixtures
@@ -33,29 +35,29 @@ class RepoSuite extends com.histmersion.db.DbSuite:
     year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
     venue = None,
     status = com.histmersion.api.library.Source.Status.Current,
-    topics = List("t"),
-    regions = List("Anatolia"),
-    tags = List("x"),
-    period = Some(Period(-2000, -1500)),
-    summary = Some("sum"),
-    citedByCount = Some(1),
+    topics = List(com.histmersion.api.library.Source.Topics("t")),
+    regions = List(com.histmersion.api.library.Source.Regions("Anatolia")),
+    tags = List(com.histmersion.api.library.Source.Tags("x")),
+    period = Some(Period(com.histmersion.api.catalogue.Year(-2000), com.histmersion.api.catalogue.Year(-1500))),
+    summary = Some(com.histmersion.api.library.Source.Summary("sum")),
+    citedByCount = Some(com.histmersion.api.library.Source.CitedByCount(1)),
     influentialCitations = None,
     provenance = None,
     calibreId = None,
     findings = List(
       Finding(
-        "zz_test_source#0",
+        com.histmersion.api.library.Finding.Id("zz_test_source#0"),
         com.histmersion.api.library.Citekey("zz_test_source"),
-        "claim",
-        Some("Anatolia"),
+        com.histmersion.api.library.Finding.Claim("claim"),
+        Some(com.histmersion.api.library.Finding.Region("Anatolia")),
         Some(GeoPoint(32.0, 39.0)),
-        Some(Period(-1800, -1700)),
+        Some(Period(com.histmersion.api.catalogue.Year(-1800), com.histmersion.api.catalogue.Year(-1700))),
         None,
-        List("f"),
+        List(com.histmersion.api.library.Finding.Tags("f")),
         Some(Confidence.High)
       )
     ),
-    edges = List(Edge(com.histmersion.api.library.Citekey("zz_test_source"), com.histmersion.api.library.Citekey("zz_other"), "references"))
+    edges = List(Edge(com.histmersion.api.library.Citekey("zz_test_source"), com.histmersion.api.library.Citekey("zz_other"), com.histmersion.api.library.Edge.Kind("references")))
   )
 
   test("upsert → get round-trip, int8range bounds inclusive"):
@@ -75,7 +77,7 @@ class RepoSuite extends com.histmersion.db.DbSuite:
 
   test("the map feed says what each finding's source is (core.SourceKinds): its DOI, else its provenance"):
     SourceFixtures.upsert(ds, src.modify(_.doi).setTo(Some("10.1007/978-3-030-12345-6_7")), AppConfig.load().limits.chunkChars)
-    val box = Filter(bbox = Some(BBox(30.0, 38.0, 34.0, 40.0)), period = Some(Period(-1750, -1750)), limit = 10)
+    val box = Filter(bbox = Some(BBox(30.0, 38.0, 34.0, 40.0)), period = Some(Period(com.histmersion.api.catalogue.Year(-1750), com.histmersion.api.catalogue.Year(-1750))), limit = 10)
     def kind = FindingFixtures.findingsFor(ds, box).find(_.citekey == "zz_test_source").flatMap(_.sourceKind)
     assertEquals(kind, Some(Source.Kinds.Chapter))
     SourceFixtures.upsert(ds, src.modify(_.doi).setTo(None).modify(_.provenance).setTo(Some("calibre")), AppConfig.load().limits.chunkChars)

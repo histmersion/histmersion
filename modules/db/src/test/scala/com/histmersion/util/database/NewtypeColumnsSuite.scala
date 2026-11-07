@@ -1,5 +1,7 @@
 package com.histmersion.util.database
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.augustnagro.magnum.*
 import com.histmersion.config.AppConfig
 import com.histmersion.db.{DbSuite, TestDb}

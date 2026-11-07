@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -72,12 +74,12 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
-        in(Place(com.histmersion.api.catalogue.Place.Id(Hellas), "Zzph Hellas", com.histmersion.domain.catalogue.Place.Kind.Region, box(150, -44, 154, -40))),
-        in(Place(com.histmersion.api.catalogue.Place.Id(Balkans), "Zzph Balkans", com.histmersion.domain.catalogue.Place.Kind.Region, box(149, -46, 156, -39))),
+        in(Place(com.histmersion.api.catalogue.Place.Id(Hellas), com.histmersion.api.catalogue.Place.Label("Zzph Hellas"), com.histmersion.domain.catalogue.Place.Kind.Region, box(150, -44, 154, -40))),
+        in(Place(com.histmersion.api.catalogue.Place.Id(Balkans), com.histmersion.api.catalogue.Place.Label("Zzph Balkans"), com.histmersion.domain.catalogue.Place.Kind.Region, box(149, -46, 156, -39))),
         in(
           Place(
             com.histmersion.api.catalogue.Place.Id(Pelop),
-            "Zzph Peloponnesos",
+            com.histmersion.api.catalogue.Place.Label("Zzph Peloponnesos"),
             com.histmersion.domain.catalogue.Place.Kind.Polity,
             box(151.0, -43.5, 152.8, -42.2)
           )
@@ -85,14 +87,14 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
         in(
           Place(
             com.histmersion.api.catalogue.Place.Id(Mykenai),
-            "Zzph Mykenai Realm",
+            com.histmersion.api.catalogue.Place.Label("Zzph Mykenai Realm"),
             com.histmersion.domain.catalogue.Place.Kind.Polity,
             box(150, -44, 152, -41),
-            Some(Period(-1600, -1100))
+            Some(Period(com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1100)))
           )
         ),
-        in(Place(com.histmersion.api.catalogue.Place.Id(Tegea), "Zzph Tegea", com.histmersion.domain.catalogue.Place.Kind.Site, pt(152.52, -42.53))),
-        in(Place(com.histmersion.api.catalogue.Place.Id(Mantinea), "Zzph Mantinea", com.histmersion.domain.catalogue.Place.Kind.Site, pt(152.45, -42.45)))
+        in(Place(com.histmersion.api.catalogue.Place.Id(Tegea), com.histmersion.api.catalogue.Place.Label("Zzph Tegea"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(152.52, -42.53))),
+        in(Place(com.histmersion.api.catalogue.Place.Id(Mantinea), com.histmersion.api.catalogue.Place.Label("Zzph Mantinea"), com.histmersion.domain.catalogue.Place.Kind.Site, pt(152.45, -42.45)))
       )
     )
     val r = rep
@@ -102,7 +104,7 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
         in(
           Place(
             com.histmersion.api.catalogue.Place.Id(NearRep),
-            "Zzph Nearrep",
+            com.histmersion.api.catalogue.Place.Label("Zzph Nearrep"),
             com.histmersion.domain.catalogue.Place.Kind.Site,
             pt(r.lon + 0.02, r.lat + 0.01)
           )
@@ -131,11 +133,11 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
         provenance = None,
         calibreId = None,
         findings = List(
-          f(0, Some("Zzph Hellas"), Some(Grid), Some(Period(-1300, -1200))), // a model's "Greece" on round numbers
-          f(1, None, Some(Grid), Some(Period(-1300, -1200))), // the same point, no name
+          f(0, Some("Zzph Hellas"), Some(Grid), Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200)))), // a model's "Greece" on round numbers
+          f(1, None, Some(Grid), Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200)))), // the same point, no name
           f(2, Some("Zzph Hellas"), Some(r)), // the geocoder's point for the name
           f(3, Some("Zzph Tegea"), Some(GeoPoint(152.52, -42.53))), // a precise point
-          f(4, Some("Zzph Hellas"), Some(Grid), Some(Period(-500, -400)))
+          f(4, Some("Zzph Hellas"), Some(Grid), Some(Period(com.histmersion.api.catalogue.Year(-500), com.histmersion.api.catalogue.Year(-400))))
         )
       ), // after the Mykenai realm
       cfg.limits.chunkChars,
@@ -196,8 +198,8 @@ class PlaceholderPointSuite extends com.histmersion.db.DbSuite with Bounded:
       ds,
       List(
         Place.Input(
-          Place(com.histmersion.api.catalogue.Place.Id("zzph_tribe"), "Zzph Tribe", com.histmersion.domain.catalogue.Place.Kind.People, pt(153.31, -41.17)),
-          List(Place.Name("Zzph Tribe"))
+          Place(com.histmersion.api.catalogue.Place.Id("zzph_tribe"), com.histmersion.api.catalogue.Place.Label("Zzph Tribe"), com.histmersion.domain.catalogue.Place.Kind.People, pt(153.31, -41.17)),
+          List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzph Tribe")))
         )
       )
     )

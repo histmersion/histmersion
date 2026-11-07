@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -50,9 +52,9 @@ class VocabCodecSuite extends com.histmersion.db.DbSuite:
         calibreId = None,
         ocrMarkdown = None,
         findings = List(
-          Finding(s"$ck#0", com.histmersion.api.library.Citekey(ck), "stated low", None, None, None, None, Nil, Some(Confidence.Low)),
-          Finding(s"$ck#1", com.histmersion.api.library.Citekey(ck), "garbled", None, None, None, None, Nil, Some(Confidence.Medium)),
-          Finding(s"$ck#2", com.histmersion.api.library.Citekey(ck), "not stated", None, None, None, None, Nil, None)
+          Finding(s"$ck#0", com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Finding.Claim("stated low"), None, None, None, None, Nil, Some(Confidence.Low)),
+          Finding(s"$ck#1", com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Finding.Claim("garbled"), None, None, None, None, Nil, Some(Confidence.Medium)),
+          Finding(s"$ck#2", com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Finding.Claim("not stated"), None, None, None, None, Nil, None)
         )
       ),
       cfg.limits.chunkChars,
@@ -79,11 +81,11 @@ class JsonbCodecSuite extends com.histmersion.db.DbSuite:
 
   test("write: compact, nulls kept unless dropNulls"):
     assertEquals(Jsonb.write(Doc(2, None)), """{"a":2,"b":null}""")
-    assertEquals(Jsonb.write(Doc(2, None), dropNulls = true), """{"a":2}""")
+    assertEquals(Jsonb.write(Doc(2, None), dropNulls = com.histmersion.util.database.Jsonb.DropNulls(true)), """{"a":2}""")
 
   test("read and decode: a document this build cannot read is absent, or says why"):
     assertEquals(Jsonb.read[Doc]("""{"a":3}"""), Some(Doc(3)))
     assertEquals(Jsonb.read[Doc]("""{"a":"x"}"""), None)
-    assertEquals(Jsonb.read[Doc]("not json"), None)
+    assertEquals(Jsonb.read[Doc](com.histmersion.util.database.Jsonb.JsonText("not json")), None)
     assert(Jsonb.decode[Doc]("""{"a":"x"}""").isLeft)
-    assertEquals(Jsonb.decode[List[Int]]("[1,2]"), Right(List(1, 2)))
+    assertEquals(Jsonb.decode[List[Int]](com.histmersion.util.database.Jsonb.JsonText("[1,2]")), Right(List(1, 2)))
