@@ -65,3 +65,11 @@ SQL is a boundary: `Param.S(x.value)`, SQL fragments as plain String and row-to-
 ## Plugins
 
 A plugin module sees only `plugin-api` (`com.histmersion.plugin...`), its own types and, for bundled plugins, `upstreams`. It never sees `domain` or `api`. Parsing an upstream's JSON and building its URLs are boundaries. Positional leftovers in `plugin-api` (`GetHeadersPart1`) stay as they are for now: use them, do not edit `plugin-api`, and list them. A plugin's own positional leftovers get real names. Tests make no real network calls.
+
+## Server
+
+API types (`com.histmersion.api...`) are unconstrained, so the server is the only place their values get checked. A Controller turns an API value into a domain value once, at the top of the request: with a constrained domain type use `Domain.X.either(api.value)` or the existing Chimney `transformIntoPartial`, and answer a refused value with the 400 `Api.Error` that endpoint gives (compare 7e197c2b's wording). Never `.assume` or `applyUnsafe` a value that came from a request, a model answer or a plugin: those may be refused and may be malformed. Services and repositories take domain types. `.assume` is only for values read back from our own database, and `X.option` on a type with no constraint always succeeds, so it is not a check: if the old code refused the value, keep it refused with a constrained type.
+
+Tool and model answers (`Mcp`, agents, proposals) hold raw text and normalise where they are used. `MarkdownLint` and `*Markdown` text assembly are plain String. Binary codecs (`Vp8l`, `PmTiles`, `TerrariumPng`, `Rle`): offsets and lengths inside a private loop are plain numbers, and each byte of arithmetic must stay exactly as 7e197c2b wrote it. Boolean logic (`!x`, `a && b`) on a type holding a Boolean: a predicate result is plain Boolean; a Boolean config flag keeps its type and uses `.value`.
+
+If a table-generated name shadows a real type of the same name imported in the file (`PoolId`), rename the generated one. String interpolation of a newtype prints its value; of an enum prints `toString`, which is usually wrong: use `.wire`.
