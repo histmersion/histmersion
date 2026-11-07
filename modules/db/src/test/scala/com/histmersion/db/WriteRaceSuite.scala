@@ -62,7 +62,7 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
         regions = Nil,
         tags = Nil,
         period = None,
-        summary = Some("before"),
+        summary = Some(com.histmersion.api.library.Source.Summary("before")),
         citedByCount = None,
         influentialCitations = None,
         provenance = None,
@@ -83,14 +83,14 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
         SourceFixtures.patch(
           ds,
           ck,
-          Source.Patch(summary = Some("A"), ifUpdatedAt = Some(token)),
+          Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("A")), ifUpdatedAt = Some(token)),
           cfg.limits.chunkChars,
           cfg.places.pointToleranceKm
         ),
         SourceFixtures.patch(
           ds,
           ck,
-          Source.Patch(summary = Some("B"), ifUpdatedAt = Some(token)),
+          Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("B")), ifUpdatedAt = Some(token)),
           cfg.limits.chunkChars,
           cfg.places.pointToleranceKm
         )
@@ -108,9 +108,9 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
       ds,
       Article(
         slug = slug,
-        title = "Race",
-        kind = "concept",
-        body = "before",
+        title = com.histmersion.api.research.Article.Title("Race"),
+        kind = com.histmersion.api.research.Article.KindValue("concept"),
+        body = com.histmersion.api.research.Article.Body("before"),
         summary = None,
         tags = Nil,
         regions = Nil,
@@ -122,8 +122,8 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
     (1 to Rounds).foreach { round =>
       val token = seedArticle()
       val (a, b) = race(
-        ArticleFixtures.patch(ds, slug, Article.Patch(body = Some("A"), ifUpdatedAt = Some(token))),
-        ArticleFixtures.patch(ds, slug, Article.Patch(body = Some("B"), ifUpdatedAt = Some(token)))
+        ArticleFixtures.patch(ds, slug, Article.Patch(body = Some(com.histmersion.api.research.Article.Body("A")), ifUpdatedAt = Some(token))),
+        ArticleFixtures.patch(ds, slug, Article.Patch(body = Some(com.histmersion.api.research.Article.Body("B")), ifUpdatedAt = Some(token)))
       )
       assertEquals(List(a, b).count(_.isRight), 1, s"round $round: a=$a b=$b — a lost update slipped through")
       assertEquals(List(a, b).collectFirst { case Left(e) => e }.get.code, Some(Write.CodePrecondition))

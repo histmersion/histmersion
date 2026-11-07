@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.research.articles.ArticleFixtures
@@ -62,16 +64,16 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     citedByCount = None,
     influentialCitations = None,
     provenance = None,
-    calibreId = Some("1693"),
+    calibreId = Some(com.histmersion.api.library.Source.CalibreId("1693")),
     ocrMarkdown = Some(s"# $ck\n\nbody text of $ck"),
     findings = (0 until findings).toList.map(i =>
       Finding(
         s"$ck#$i",
         com.histmersion.api.library.Citekey(ck),
         s"claim $i",
-        Some("Anatolia"),
+        Some(com.histmersion.api.library.Finding.Region("Anatolia")),
         Some(GeoPoint(32.0, 39.0)),
-        Some(Period(-1300, -1200)),
+        Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200))),
         None,
         Nil,
         Some(Confidence.High)
@@ -129,23 +131,23 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
 
   test("a rename moves every table, finding id, link and parked edge, and leaves an alias"):
     // ── fixtures: the renamed source, a source citing it, one waiting for the NEW name ──
-    put(source(Old, findings = 2, edges = List(Edge(com.histmersion.api.library.Citekey(Old), com.histmersion.api.library.Citekey(Other), "challenges")), notes = Some(s"Self link [[$Old]].")))
+    put(source(Old, findings = 2, edges = List(Edge(com.histmersion.api.library.Citekey(Old), com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Edge.Kind("challenges"))), notes = Some(s"Self link [[$Old]].")))
     put(
       source(
         Other,
-        edges = List(Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Old), "references")),
+        edges = List(Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Old), com.histmersion.api.library.Edge.Kind("references"))),
         notes = Some(s"See [[$Old|Beckman]] and the short form [[zzrn2025]], not [[${Old}x]]."),
         summary = Some(s"Cites [[$Old#ch-2]].")
       )
     )
-    put(source(Waiter, edges = List(Edge(com.histmersion.api.library.Citekey(Waiter), com.histmersion.api.library.Citekey(New), "references"), Edge(com.histmersion.api.library.Citekey(Waiter), com.histmersion.api.library.Citekey("zzrn2011"), "updates"))))
+    put(source(Waiter, edges = List(Edge(com.histmersion.api.library.Citekey(Waiter), com.histmersion.api.library.Citekey(New), com.histmersion.api.library.Edge.Kind("references")), Edge(com.histmersion.api.library.Citekey(Waiter), com.histmersion.api.library.Citekey("zzrn2011"), com.histmersion.api.library.Edge.Kind("updates")))))
     assertEquals(count(sql"SELECT count(*)::int FROM unresolved_edges WHERE src = $Waiter"), 2)
     val body =
       s"""# Article
          |
          |Exact [[$Old]], labelled [[$Old|the book]], anchored [[$Old#ch-1]], short [[zzrn2025]],
          |escaped \\[\\[$Old\\]\\], embedded ![[$Old]] and unrelated [[$Other]].""".stripMargin
-    val _ = ArticleFixtures.put(ds, Article(Slug, "Zz", "concept", body, Some(s"About [[$Old]]."), Nil, Nil, None))
+    val _ = ArticleFixtures.put(ds, Article(Slug, com.histmersion.api.research.Article.Title("Zz"), com.histmersion.api.research.Article.KindValue("concept"), body, Some(s"About [[$Old]]."), Nil, Nil, None))
     val versionsBefore = ArticleFixtures.listVersions(ds, Slug).size
     connect(ds):
       sql"""INSERT INTO places (id, label, kind, source) VALUES ($Place, 'Zz place', 'site', $Old)""".update.run()
@@ -293,16 +295,16 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     put(source(Old)); put(source(Other))
     val _ = SourceFixtures.rename(ds, Old, New).fold(e => fail(e.message), identity)
     // an article written LATER with the old key links the source, recorded under the new key
-    val _ = ArticleFixtures.put(ds, Article(Slug, "Zz", "concept", s"Late [[$Old]].", None, Nil, Nil, None))
+    val _ = ArticleFixtures.put(ds, Article(Slug, com.histmersion.api.research.Article.Title("Zz"), com.histmersion.api.research.Article.KindValue("concept"), s"Late [[$Old]].", None, Nil, Nil, None))
     assertEquals(ArticleFixtures.backlinksForSource(ds, New).map(_.id), List(Slug))
     // an edge written later to the old key is a real edge to the new one, not a parked one
-    put(source(Other, edges = List(Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Old), "challenges"))))
+    put(source(Other, edges = List(Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Old), com.histmersion.api.library.Edge.Kind("challenges")))))
     assertEquals(
       CitationFixtures.neighbors(ds, New).map(n => (n.direction, n.citekey, n.target)),
       Vector(("in", Other, NeighborTarget.Source))
     )
     // a patch by the old key patches the renamed source
-    assert(SourceFixtures.patch(ds, Old, Source.Patch(summary = Some("patched")), cfg.limits.chunkChars).isRight)
+    assert(SourceFixtures.patch(ds, Old, Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("patched"))), cfg.limits.chunkChars).isRight)
     assertEquals(SourceFixtures.load(ds, New).flatMap(_.summary), Some("patched"))
     // …but creating a source under the old key is refused rather than shadowing the alias
     val e = intercept[IllegalStateException](put(source(Old)))

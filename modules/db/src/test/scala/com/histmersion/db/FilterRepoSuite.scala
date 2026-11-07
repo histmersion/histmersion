@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.findings.FindingFixtures
@@ -100,7 +102,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     List("collapse"),
     List("Levant"),
     List("sea-peoples"),
-    Some(Period(-1300, -1100)),
+    Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1100))),
     100,
     List(
       finding("zzf_alpha", 0, "Ugarit destroyed", "Ugarit", 35.78, 35.60, -1200, -1180, List("destruction")),
@@ -118,7 +120,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     List("migration"),
     List("Pontic Steppe"),
     List("steppe"),
-    Some(Period(-4000, -3000)),
+    Some(Period(com.histmersion.api.catalogue.Year(-4000), com.histmersion.api.catalogue.Year(-3000))),
     500,
     List(
       finding(
@@ -189,12 +191,12 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
   private def run(f: Filter) =
     SearchFixtures.sources(ds, f.modify(_.limit).setTo(if f.limit <= 0 then 50 else f.limit), words)
   // scoped to this suite's fixtures (the test DB is shared with other suites' rows)
-  private val own = Filter(places = List("Levant", "Pontic", "Oceania"))
+  private val own = Filter(places = List(com.histmersion.api.library.Filter.Places("Levant"), com.histmersion.api.library.Filter.Places("Pontic"), com.histmersion.api.library.Filter.Places("Oceania")))
   private def facetMap(field: Facet.Field, prefix: Option[String] = None, f: Filter = own) =
     LabelFixtures.facets(ds, field, prefix, f.modify(_.limit).setTo(200), 200).map(x => x.value -> x.count).toMap
 
   test("acceptance: --tag sea-peoples --from -1300 --to -1100 returns sources WITH matched findings"):
-    val r = run(Filter(tags = List("sea-peoples"), period = Some(Period(-1300, -1100))))
+    val r = run(Filter(tags = List(com.histmersion.api.library.Filter.Tags("sea-peoples")), period = Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1100)))))
     assertEquals(keys(r), List("zzf_alpha")) // gamma has the tag but no finding in that window
     val hit = find(r, "zzf_alpha")
     assertEquals(hit.matched.map(_.id), List("zzf_alpha#0"))
@@ -204,28 +206,28 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     assert(hit.why.contains("period: 1300 BCE–1100 BCE"), hit.why.toString)
 
   test("a source matches a period through its findings even when itself undated"):
-    val r = run(Filter(period = Some(Period(-1000, -950))))
+    val r = run(Filter(period = Some(Period(com.histmersion.api.catalogue.Year(-1000), com.histmersion.api.catalogue.Year(-950)))))
     assertEquals(keys(r), List("zzf_gamma"))
     assertEquals(find(r, "zzf_gamma").matched.size, 2)
     assertEquals(find(r, "zzf_gamma").why, Nil) // no source-level reason: the findings are the reason
 
   test("tags are AND semantics over sources.tags ∪ findings.tags"):
-    assertEquals(keys(run(Filter(tags = List("steppe")))), List("zzf_beta"))
-    assertEquals(keys(run(Filter(tags = List("steppe", "migration")))), List("zzf_beta"))
-    assertEquals(keys(run(Filter(tags = List("steppe", "sea-peoples")))), Nil)
+    assertEquals(keys(run(Filter(tags = List(com.histmersion.api.library.Filter.Tags("steppe"))))), List("zzf_beta"))
+    assertEquals(keys(run(Filter(tags = List(com.histmersion.api.library.Filter.Tags("steppe"), com.histmersion.api.library.Filter.Tags("migration"))))), List("zzf_beta"))
+    assertEquals(keys(run(Filter(tags = List(com.histmersion.api.library.Filter.Tags("steppe"), com.histmersion.api.library.Filter.Tags("sea-peoples"))))), Nil)
     // "destruction" exists only on a finding — the source still matches
-    assertEquals(keys(run(Filter(tags = List("destruction")))), List("zzf_alpha"))
+    assertEquals(keys(run(Filter(tags = List(com.histmersion.api.library.Filter.Tags("destruction"))))), List("zzf_alpha"))
 
   test("authors are any-of and case-insensitive substrings"):
-    assertEquals(keys(run(Filter(authors = List("cline")))), List("zzf_alpha"))
-    assertEquals(keys(run(Filter(authors = List("cline", "anthony")))).sorted, List("zzf_alpha", "zzf_beta"))
-    assertEquals(find(run(Filter(authors = List("cline"))), "zzf_alpha").why, List("author: Eric H. Cline"))
+    assertEquals(keys(run(Filter(authors = List(com.histmersion.api.library.Filter.Authors("cline"))))), List("zzf_alpha"))
+    assertEquals(keys(run(Filter(authors = List(com.histmersion.api.library.Filter.Authors("cline"), com.histmersion.api.library.Filter.Authors("anthony"))))).sorted, List("zzf_alpha", "zzf_beta"))
+    assertEquals(find(run(Filter(authors = List(com.histmersion.api.library.Filter.Authors("cline")))), "zzf_alpha").why, List("author: Eric H. Cline"))
     // the row carries its authors, for a table of sources
-    assertEquals(find(run(Filter(authors = List("cline"))), "zzf_alpha").source.authors, List("Eric H. Cline"))
+    assertEquals(find(run(Filter(authors = List(com.histmersion.api.library.Filter.Authors("cline")))), "zzf_alpha").source.authors, List("Eric H. Cline"))
 
   test("places match sources.regions ∪ findings.region_name"):
-    assertEquals(keys(run(Filter(places = List("Levant")))), List("zzf_alpha"))
-    val r = run(Filter(places = List("cyprus"))) // only a finding carries this name
+    assertEquals(keys(run(Filter(places = List(com.histmersion.api.library.Filter.Places("Levant"))))), List("zzf_alpha"))
+    val r = run(Filter(places = List(com.histmersion.api.library.Filter.Places("cyprus")))) // only a finding carries this name
     assertEquals(keys(r), List("zzf_alpha"))
     assertEquals(find(r, "zzf_alpha").matched.map(_.id), List("zzf_alpha#1"))
 
@@ -238,17 +240,17 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(keys(run(Filter(bbox = Some(BBox(30.0, 30.0, 40.0, 40.0))))), List("zzf_alpha"))
 
   test("free text matches title, summary or body; why says which"):
-    val r = run(Filter(q = Some("Steppe horses")))
+    val r = run(Filter(q = Some(com.histmersion.api.library.Filter.Q("Steppe horses"))))
     assertEquals(keys(r), List("zzf_beta"))
     assert(find(r, "zzf_beta").why.contains("title matches 'Steppe horses'"))
     assertEquals(find(r, "zzf_beta").matched, Nil) // q is not a finding-level criterion
 
   test("status and publication-year filters"):
-    assertEquals(keys(run(Filter(status = List("foundational")))), List("zzf_beta"))
-    assertEquals(keys(run(Filter(years = Some(Period(2010, 2016))))), List("zzf_alpha"))
+    assertEquals(keys(run(Filter(status = List(com.histmersion.api.library.Filter.Status("foundational"))))), List("zzf_beta"))
+    assertEquals(keys(run(Filter(years = Some(Period(com.histmersion.api.catalogue.Year(2010), com.histmersion.api.catalogue.Year(2016)))))), List("zzf_alpha"))
 
   test("total is count(DISTINCT source) and ignores limit/offset"):
-    val f = Filter(places = List("Levant", "Pontic", "Oceania"))
+    val f = Filter(places = List(com.histmersion.api.library.Filter.Places("Levant"), com.histmersion.api.library.Filter.Places("Pontic"), com.histmersion.api.library.Filter.Places("Oceania")))
     assertEquals((run(f).total.value: Int), 3)
     val page = SearchFixtures.sources(ds, f.modify(_.limit).setTo(1).modify(_.sort).setTo(Sort.Title), words)
     assertEquals((page.total.value: Int), 3)
@@ -258,7 +260,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     assertNotEquals(page.hits.head.source.citekey, next.hits.head.source.citekey)
 
   test("sorting: by publication year, newest or oldest first"):
-    val f = Filter(places = List("Levant", "Pontic", "Oceania"))
+    val f = Filter(places = List(com.histmersion.api.library.Filter.Places("Levant"), com.histmersion.api.library.Filter.Places("Pontic"), com.histmersion.api.library.Filter.Places("Oceania")))
     assertEquals(
       keys(SearchFixtures.sources(ds, f.modify(_.limit).setTo(50).modify(_.sort).setTo(Sort.Year), words)),
       List("zzf_gamma", "zzf_alpha", "zzf_beta")
@@ -269,7 +271,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     )
 
   test("sorting: by title, by citations, by period start"):
-    val f = Filter(places = List("Levant", "Pontic", "Oceania"))
+    val f = Filter(places = List(com.histmersion.api.library.Filter.Places("Levant"), com.histmersion.api.library.Filter.Places("Pontic"), com.histmersion.api.library.Filter.Places("Oceania")))
     assertEquals(
       keys(SearchFixtures.sources(ds, f.modify(_.limit).setTo(50).modify(_.sort).setTo(Sort.Title), words)),
       List("zzf_alpha", "zzf_gamma", "zzf_beta")
@@ -286,34 +288,34 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
 
   test("facets count DISTINCT sources, not findings"):
     val tags = facetMap(Facet.Field.Tags)
-    assertEquals(tags.get("sea-peoples"), Some(2)) // alpha + gamma
-    assertEquals(tags.get("island"), Some(1)) // two findings, ONE source
-    assertEquals(tags.get("steppe"), Some(1)) // source tag and finding tag, one source
-    assertEquals(tags.get("destruction"), Some(1))
+    assertEquals(tags.get(com.histmersion.api.library.Facet.Value("sea-peoples")), Some(2)) // alpha + gamma
+    assertEquals(tags.get(com.histmersion.api.library.Facet.Value("island")), Some(1)) // two findings, ONE source
+    assertEquals(tags.get(com.histmersion.api.library.Facet.Value("steppe")), Some(1)) // source tag and finding tag, one source
+    assertEquals(tags.get(com.histmersion.api.library.Facet.Value("destruction")), Some(1))
 
   test("facets are computed inside the current filter"):
-    val tags = facetMap(Facet.Field.Tags, f = Filter(period = Some(Period(-1300, -1100))))
-    assertEquals(tags.get("sea-peoples"), Some(1))
-    assertEquals(tags.get("island"), None)
+    val tags = facetMap(Facet.Field.Tags, f = Filter(period = Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1100)))))
+    assertEquals(tags.get(com.histmersion.api.library.Facet.Value("sea-peoples")), Some(1))
+    assertEquals(tags.get(com.histmersion.api.library.Facet.Value("island")), None)
 
   test("facet prefix is a case-insensitive prefix, not a substring"):
-    assertEquals(facetMap(Facet.Field.Places, Some("pon")).get("Pontic Steppe"), Some(1))
-    assertEquals(facetMap(Facet.Field.Places, Some("steppe")).get("Pontic Steppe"), None)
+    assertEquals(facetMap(Facet.Field.Places, Some("pon")).get(com.histmersion.api.library.Facet.Value("Pontic Steppe")), Some(1))
+    assertEquals(facetMap(Facet.Field.Places, Some("steppe")).get(com.histmersion.api.library.Facet.Value("Pontic Steppe")), None)
 
   test("places facet unions sources.regions with findings.region_name"):
     val places = facetMap(Facet.Field.Places)
-    assertEquals(places.get("Levant"), Some(1))
-    assertEquals(places.get("Ugarit"), Some(1))
-    assertEquals(places.get("Fiji"), Some(1))
+    assertEquals(places.get(com.histmersion.api.library.Facet.Value("Levant")), Some(1))
+    assertEquals(places.get(com.histmersion.api.library.Facet.Value("Ugarit")), Some(1))
+    assertEquals(places.get(com.histmersion.api.library.Facet.Value("Fiji")), Some(1))
 
   test("author, topic and status facets"):
-    assertEquals(facetMap(Facet.Field.Authors).get("David W. Anthony"), Some(1))
-    assertEquals(facetMap(Facet.Field.Topics).get("collapse"), Some(1))
-    assertEquals(facetMap(Facet.Field.Status).get("foundational"), Some(1))
+    assertEquals(facetMap(Facet.Field.Authors).get(com.histmersion.api.library.Facet.Value("David W. Anthony")), Some(1))
+    assertEquals(facetMap(Facet.Field.Topics).get(com.histmersion.api.library.Facet.Value("collapse")), Some(1))
+    assertEquals(facetMap(Facet.Field.Status).get(com.histmersion.api.library.Facet.Value("foundational")), Some(1))
 
   test("facets are ordered by count desc, then value"):
     val rows = LabelFixtures
-      .facets(ds, Facet.Field.Tags, None, Filter(limit = 200), 200)
+      .facets(ds, Facet.Field.Tags, None, Filter(limit = com.histmersion.api.library.Filter.Limit(200)), 200)
       .filter(f => Set("sea-peoples", "destruction", "island")(f.value))
     assertEquals(rows.map(_.value).toList, List("sea-peoples", "destruction", "island"))
 
@@ -323,8 +325,8 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     assert(mine(r).forall(h => h.matched.isEmpty && h.why.isEmpty))
 
   test("LIKE wildcards in user input are literal"):
-    assertEquals(keys(run(Filter(places = List("%")))), Nil)
-    assertEquals(keys(run(Filter(q = Some("100%")))), Nil)
+    assertEquals(keys(run(Filter(places = List(com.histmersion.api.library.Filter.Places("%"))))), Nil)
+    assertEquals(keys(run(Filter(q = Some(com.histmersion.api.library.Filter.Q("100%"))))), Nil)
 
   // ── the map feed: `/api/findings` through the SAME filter (plan §1.0) ────────────────────────
   /** Findings of THIS suite's fixtures only (the test DB is shared with other suites' rows). */
@@ -341,47 +343,47 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     assert(!hits.exists(_.citekey == "zzf_alpha"), hits.toString)
 
   test("map feed: tag= restricts it, over findings.tags ∪ sources.tags"):
-    assertEquals(feed(Filter(tags = List("destruction"))).map(_.claim).toList, List("Ugarit destroyed"))
+    assertEquals(feed(Filter(tags = List(com.histmersion.api.library.Filter.Tags("destruction")))).map(_.claim).toList, List("Ugarit destroyed"))
     // a SOURCE tag qualifies every finding of that source
-    assertEquals(feed(Filter(tags = List("steppe"))).map(_.claim).toList, List("Yamnaya expansion"))
+    assertEquals(feed(Filter(tags = List(com.histmersion.api.library.Filter.Tags("steppe")))).map(_.claim).toList, List("Yamnaya expansion"))
     assertEquals(
-      feed(Filter(tags = List("sea-peoples"))).map(_.citekey).toList.distinct.sorted,
+      feed(Filter(tags = List(com.histmersion.api.library.Filter.Tags("sea-peoples")))).map(_.citekey).toList.distinct.sorted,
       List("zzf_alpha", "zzf_gamma")
     )
-    assertEquals(feed(Filter(tags = List("no-such-tag"))).toList, Nil)
+    assertEquals(feed(Filter(tags = List(com.histmersion.api.library.Filter.Tags("no-such-tag")))).toList, Nil)
 
   test("map feed: q= restricts it to the findings of sources whose text matches"):
-    assertEquals(feed(Filter(q = Some("Steppe horses"))).map(_.claim).toList, List("Yamnaya expansion"))
-    assertEquals(feed(Filter(q = Some("Collapse of the Bronze Age"))).map(_.citekey).toList.distinct, List("zzf_alpha"))
-    assertEquals(feed(Filter(q = Some("zzz no such text anywhere"))).toList, Nil)
+    assertEquals(feed(Filter(q = Some(com.histmersion.api.library.Filter.Q("Steppe horses")))).map(_.claim).toList, List("Yamnaya expansion"))
+    assertEquals(feed(Filter(q = Some(com.histmersion.api.library.Filter.Q("Collapse of the Bronze Age")))).map(_.citekey).toList.distinct, List("zzf_alpha"))
+    assertEquals(feed(Filter(q = Some(com.histmersion.api.library.Filter.Q("zzz no such text anywhere")))).toList, Nil)
 
   test("map feed: period and place are judged per FINDING, not per source"):
     // alpha itself is dated -1300…-1100, but only its Ugarit finding lies in this window
-    assertEquals(feed(Filter(period = Some(Period(-1200, -1180)))).map(_.claim).toList, List("Ugarit destroyed"))
-    assertEquals(feed(Filter(places = List("cyprus"))).map(_.claim).toList, List("Cypriot trade revives"))
+    assertEquals(feed(Filter(period = Some(Period(com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-1180))))).map(_.claim).toList, List("Ugarit destroyed"))
+    assertEquals(feed(Filter(places = List(com.histmersion.api.library.Filter.Places("cyprus")))).map(_.claim).toList, List("Cypriot trade revives"))
 
   test("map feed: the limit is honoured"):
-    assertEquals(FindingFixtures.findingsFor(ds, Filter(tags = List("sea-peoples"), limit = 1)).size, 1)
+    assertEquals(FindingFixtures.findingsFor(ds, Filter(tags = List(com.histmersion.api.library.Filter.Tags("sea-peoples")), limit = com.histmersion.api.library.Filter.Limit(1))).size, 1)
 
   // ── facets fold case (plan §1.3) ────────────────────────────────────────────────────────────
-  private val caseScope = Filter(places = List("zzftolia"))
+  private val caseScope = Filter(places = List(com.histmersion.api.library.Filter.Places("zzftolia")))
   private def casedKeys(r: SearchResult) =
     r.hits.map(_.source.citekey).filter(_.startsWith("zzc_")).sorted
 
   test("facets group values case-insensitively, labelled with the commonest spelling"):
     val places = facetMap(Facet.Field.Places, f = caseScope)
-    assertEquals(places.get("Zzftolia"), Some(3))
-    assertEquals(places.get("zzftolia"), None)
+    assertEquals(places.get(com.histmersion.api.library.Facet.Value("Zzftolia")), Some(3))
+    assertEquals(places.get(com.histmersion.api.library.Facet.Value("zzftolia")), None)
     val tags = facetMap(Facet.Field.Tags, f = caseScope)
-    assertEquals(tags.get("Zzftag"), Some(3))
-    assertEquals(tags.get("zzftag"), None)
+    assertEquals(tags.get(com.histmersion.api.library.Facet.Value("Zzftag")), Some(3))
+    assertEquals(tags.get(com.histmersion.api.library.Facet.Value("zzftag")), None)
 
   test("a facet prefix stays case-insensitive over the folded bucket"):
-    assertEquals(facetMap(Facet.Field.Places, Some("ZZFT"), caseScope).get("Zzftolia"), Some(3))
-    assertEquals(facetMap(Facet.Field.Places, Some("zzft"), caseScope).get("Zzftolia"), Some(3))
+    assertEquals(facetMap(Facet.Field.Places, Some("ZZFT"), caseScope).get(com.histmersion.api.library.Facet.Value("Zzftolia")), Some(3))
+    assertEquals(facetMap(Facet.Field.Places, Some("zzft"), caseScope).get(com.histmersion.api.library.Facet.Value("Zzftolia")), Some(3))
 
   test("tags and places match case-insensitively, so either spelling finds the whole bucket"):
     val all = List("zzc_one", "zzc_three", "zzc_two")
-    assertEquals(casedKeys(run(Filter(tags = List("zzftag")))), all)
-    assertEquals(casedKeys(run(Filter(tags = List("ZZFTAG")))), all)
-    assertEquals(casedKeys(run(Filter(places = List("ZZFTOLIA")))), all)
+    assertEquals(casedKeys(run(Filter(tags = List(com.histmersion.api.library.Filter.Tags("zzftag"))))), all)
+    assertEquals(casedKeys(run(Filter(tags = List(com.histmersion.api.library.Filter.Tags("ZZFTAG"))))), all)
+    assertEquals(casedKeys(run(Filter(places = List(com.histmersion.api.library.Filter.Places("ZZFTOLIA"))))), all)

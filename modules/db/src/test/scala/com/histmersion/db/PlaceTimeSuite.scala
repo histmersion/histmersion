@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -44,25 +46,25 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private def place(id: String, kind: String, i: Int, period: Option[Period], props: Option[String] = None) =
     Place.Input(
-      Place(com.histmersion.api.catalogue.Place.Id(id), s"Zqtv ${id.stripPrefix("zqtv_")}", kind, pt(i), period, Some("fixture"), props),
+      Place(com.histmersion.api.catalogue.Place.Id(id), s"Zqtv ${id.stripPrefix("zqtv_")}", kind, pt(i), period, Some(com.histmersion.api.catalogue.Place.Source("fixture")), props),
       List(Place.Name(s"Zqtv ${id.stripPrefix("zqtv_")}")),
-      List(Place.Relation(id, "zqtv_root"))
+      List(Place.Relation(id, com.histmersion.api.catalogue.Place.Relation.ParentId("zqtv_root")))
     )
 
   private val fixtures = List(
     Place.Input(
-      Place(com.histmersion.api.catalogue.Place.Id("zqtv_root"), "Zqtv root", com.histmersion.domain.catalogue.Place.Kind.Region),
-      List(Place.Name("Zqtv root"))
+      Place(com.histmersion.api.catalogue.Place.Id("zqtv_root"), com.histmersion.api.catalogue.Place.Label("Zqtv root"), com.histmersion.domain.catalogue.Place.Kind.Region),
+      List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqtv root")))
     ),
-    place("zqtv_dated", com.histmersion.domain.catalogue.Place.Kind.Site, 0, Some(Period(-2600, -2400))),
-    place("zqtv_late", com.histmersion.domain.catalogue.Place.Kind.Site, 1, Some(Period(1100, 1300))),
+    place("zqtv_dated", com.histmersion.domain.catalogue.Place.Kind.Site, 0, Some(Period(com.histmersion.api.catalogue.Year(-2600), com.histmersion.api.catalogue.Year(-2400)))),
+    place("zqtv_late", com.histmersion.domain.catalogue.Place.Kind.Site, 1, Some(Period(com.histmersion.api.catalogue.Year(1100), com.histmersion.api.catalogue.Year(1300)))),
     place("zqtv_bare", com.histmersion.domain.catalogue.Place.Kind.Site, 2, None),
     place("zqtv_evid", com.histmersion.domain.catalogue.Place.Kind.Site, 3, None),
     place("zqtv_undfind", com.histmersion.domain.catalogue.Place.Kind.Site, 4, None),
     place("zqtv_evt", com.histmersion.domain.catalogue.Place.Kind.Site, 5, None),
-    place("zqtv_river", com.histmersion.domain.catalogue.Place.Kind.Feature, 6, Some(Period(-30, 2100))),
+    place("zqtv_river", com.histmersion.domain.catalogue.Place.Kind.Feature, 6, Some(Period(com.histmersion.api.catalogue.Year(-30), com.histmersion.api.catalogue.Year(2100)))),
     place("zqtv_city", com.histmersion.domain.catalogue.Place.Kind.Site, 7, None, Some("""{"modern":true}""")),
-    place("zqtv_su", com.histmersion.domain.catalogue.Place.Kind.Site, 8, Some(Period(1469, 1769)))
+    place("zqtv_su", com.histmersion.domain.catalogue.Place.Kind.Site, 8, Some(Period(com.histmersion.api.catalogue.Year(1469), com.histmersion.api.catalogue.Year(1769))))
   )
 
   private def clean(): Unit = connect(ds):
@@ -97,7 +99,7 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
           influentialCitations = None,
           provenance = None,
           calibreId = None,
-          findings = List(f(0, 3, Some(Period(-2550, -2450))), f(1, 4, None))
+          findings = List(f(0, 3, Some(Period(com.histmersion.api.catalogue.Year(-2550), com.histmersion.api.catalogue.Year(-2450)))), f(1, 4, None))
         ),
         cfg.limits.chunkChars,
         cfg.places.pointToleranceKm
@@ -106,8 +108,8 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
         ds,
         "zqtv_event",
         EventPut(
-          "Zqtv siege",
-          timeSpan = TimeSpan(notBefore = Some(-1520), notAfter = Some(-1480)),
+          com.histmersion.api.catalogue.EventSummary.Label("Zqtv siege"),
+          timeSpan = TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1520)), notAfter = Some(com.histmersion.api.catalogue.Year(-1480))),
           placeId = Some("zqtv_evt")
         )
       )

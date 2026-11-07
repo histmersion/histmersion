@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -52,14 +54,14 @@ class EventOuterSpanSuite extends com.histmersion.db.DbSuite:
 
   test("V089: the generated outer_span is TimeSpan.outer (an undated event stays unbounded)"):
     val spans = List(
-      TimeSpan(Some(-1300), Some(-1290), Some(-1260), Some(-1250)),
-      TimeSpan(beginBy = Some(-1290), endFrom = Some(-1260)),
-      TimeSpan(notBefore = Some(-1274)),
-      TimeSpan(beginBy = Some(-1200)),
-      TimeSpan(notBefore = Some(-1200), beginBy = Some(-1195)),
-      TimeSpan(notAfter = Some(-1100)),
-      TimeSpan(endFrom = Some(-1110), notAfter = Some(-1100)),
-      TimeSpan(Some(-10), None, Some(5), Some(30)),
+      TimeSpan(Some(com.histmersion.api.catalogue.Year(-1300)), Some(com.histmersion.api.catalogue.Year(-1290)), Some(com.histmersion.api.catalogue.Year(-1260)), Some(com.histmersion.api.catalogue.Year(-1250))),
+      TimeSpan(beginBy = Some(com.histmersion.api.catalogue.Year(-1290)), endFrom = Some(com.histmersion.api.catalogue.Year(-1260))),
+      TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1274))),
+      TimeSpan(beginBy = Some(com.histmersion.api.catalogue.Year(-1200))),
+      TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1200)), beginBy = Some(com.histmersion.api.catalogue.Year(-1195))),
+      TimeSpan(notAfter = Some(com.histmersion.api.catalogue.Year(-1100))),
+      TimeSpan(endFrom = Some(com.histmersion.api.catalogue.Year(-1110)), notAfter = Some(com.histmersion.api.catalogue.Year(-1100))),
+      TimeSpan(Some(com.histmersion.api.catalogue.Year(-10)), None, Some(com.histmersion.api.catalogue.Year(5)), Some(com.histmersion.api.catalogue.Year(30))),
       TimeSpan()
     )
     spans.zipWithIndex.foreach { (ts, i) =>
@@ -69,8 +71,8 @@ class EventOuterSpanSuite extends com.histmersion.db.DbSuite:
     }
 
   test("an event with only a start is in the views of its start, not of every later period"):
-    put("zqos_case_open", TimeSpan(notBefore = Some(-1200)))
-    put("zqos_case_closed", TimeSpan(Some(-1210), None, None, Some(-1190)))
+    put("zqos_case_open", TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1200))))
+    put("zqos_case_closed", TimeSpan(Some(com.histmersion.api.catalogue.Year(-1210)), None, None, Some(com.histmersion.api.catalogue.Year(-1190))))
     def geoIds(p: Period) =
       EventFixtures
         .geo(ds, Filter(period = Some(p)), PlaceScope.empty, Some("Zqos zqos_case_"), None, None, None, 100, 0.01)
@@ -83,6 +85,6 @@ class EventOuterSpanSuite extends com.histmersion.db.DbSuite:
         .events
         .map(_.id)
         .toSet
-    assertEquals(geoIds(Period(-1205, -1195)), Set("zqos_case_open", "zqos_case_closed"))
-    assertEquals(geoIds(Period(-500, -400)), Set.empty[String], "not in a view of a later period")
-    assertEquals(listIds(Period(-500, -400)), Set.empty[String], "nor in the list of one")
+    assertEquals(geoIds(Period(com.histmersion.api.catalogue.Year(-1205), com.histmersion.api.catalogue.Year(-1195))), Set("zqos_case_open", "zqos_case_closed"))
+    assertEquals(geoIds(Period(com.histmersion.api.catalogue.Year(-500), com.histmersion.api.catalogue.Year(-400))), Set.empty[String], "not in a view of a later period")
+    assertEquals(listIds(Period(com.histmersion.api.catalogue.Year(-500), com.histmersion.api.catalogue.Year(-400))), Set.empty[String], "nor in the list of one")

@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.config.AppConfig
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.database.given

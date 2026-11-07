@@ -1,12 +1,14 @@
 package com.histmersion.domain.library.sources.referrers
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** What a referrer asks of a source a delete or a rename touches. */
 class SourceKeysSuite extends munit.FunSuite:
 
   private val Ck = "beckman2011_ahhiyawa"
 
   test("linkedIn: any [[key]], with a label or an anchor, case-insensitively, under the citekey or an old one"):
-    val source = SourceKeys(Ck, List(Ck, "beckman2010_ahh"), _ => Map.empty)
+    val source = SourceKeys(Ck, List(Ck, com.histmersion.domain.library.Citekey("beckman2010_ahh")), _ => Map.empty)
     assert(source.linkedIn(s"see [[$Ck|Beckman]]"))
     assert(source.linkedIn(s"ingested as [[${Ck.toUpperCase}]]"))
     assert(source.linkedIn(s"[[$Ck#ch-2]]"))
@@ -25,7 +27,7 @@ class SourceKeysSuite extends munit.FunSuite:
     assert(!source.citedIn(List("see [[other2000_x]]")))
 
   test("a rename: where each link points now, the needle, the finding prefix, the whole-token replacement"):
-    val rename = SourceRename(Ck, "beckman2012_ahhiyawa", Set("beckman2011"))
+    val rename = SourceRename(Ck, com.histmersion.domain.library.Citekey("beckman2012_ahhiyawa"), Set(com.histmersion.domain.library.Citekey("beckman2011")))
     assertEquals(rename.target(Ck), Some("beckman2012_ahhiyawa"))
     assertEquals(rename.target("beckman2011"), Some("beckman2012_ahhiyawa"))
     assertEquals(rename.target("cline2014_1177"), None)

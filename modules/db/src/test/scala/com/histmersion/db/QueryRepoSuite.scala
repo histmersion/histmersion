@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.search.QueryAccess
@@ -69,8 +71,8 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
         topics = Nil,
         regions = Nil,
         tags = Nil,
-        period = Some(Period(-2000, -1500)),
-        summary = Some("s"),
+        period = Some(Period(com.histmersion.api.catalogue.Year(-2000), com.histmersion.api.catalogue.Year(-1500))),
+        summary = Some(com.histmersion.api.library.Source.Summary("s")),
         citedByCount = None,
         influentialCitations = None,
         provenance = None,

@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.worklists.QueueRows
@@ -174,10 +176,10 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
           s"$ck#${i + 1}",
           com.histmersion.api.library.Citekey(ck),
           claim,
-          Some("Anatolia"),
+          Some(com.histmersion.api.library.Finding.Region("Anatolia")),
           Some(GeoPoint(34.6, 40.0)),
-          Some(Period(-1400, -1200)),
-          Some("LBA"),
+          Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1200))),
+          Some(com.histmersion.api.library.Finding.PeriodName("LBA")),
           tags,
           Some(Confidence.High)
         )
@@ -186,11 +188,11 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     )
 
   private def png(n: Byte): Array[Byte] = Array[Byte](0x89.toByte, 'P', 'N', 'G', 13, 10, 26, 10, n, n, n)
-  private def asset(name: String, n: Byte) = NewFigure(name, "image/png", png(n), None, None)
+  private def asset(name: String, n: Byte) = NewFigure(name, com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(n), None, None)
   private def attest(ds: DataSource, ck: String, quote: String, target: String): Unit =
     val _ = AttestationRows.create(
       ds,
-      Attestation.Put(ck, "place", target, quote = Some(quote), charStart = Some(0), charEnd = Some(quote.length))
+      Attestation.Put(ck, com.histmersion.api.catalogue.Attestation.TargetType("place"), target, quote = Some(quote), charStart = Some(0), charEnd = Some(quote.length))
     )
 
   private def put(ds: DataSource, s: Source): Unit = SourceFixtures.upsert(ds, s, cfg.limits.chunkChars)
@@ -207,14 +209,14 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
   private def craft(tag: String): (DataSource, DataSource, Path, Path) =
     val (work, home) = (fresh(s"${tag}w"), fresh(s"${tag}h"))
     val (sw, sh) = (spool(s"${tag}w"), spool(s"${tag}h"))
-    Transactor(work).transact(BundleRepo.setLabel(Some("work")))
-    Transactor(home).transact(BundleRepo.setLabel(Some("home")))
+    Transactor(work).transact(BundleRepo.setLabel(Some(com.histmersion.api.aliases.InstanceInfo.Label("work"))))
+    Transactor(home).transact(BundleRepo.setLabel(Some(com.histmersion.api.aliases.InstanceInfo.Label("home"))))
     // ── the shared history ──
     put(work, src("zzshared2001_alpha", "Alpha", List("Doe, John"), 2001, summary = Some("as imported")))
-    transact(work)(GoalRepo.put("zz_shared_goal", Goal.Put("Shared goal")))
+    transact(work)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_shared_goal"), Goal.Put(com.histmersion.api.automation.Goal.Title("Shared goal"))))
     // two articles both sides will edit: in different places (a clean three-way merge), in one place
-    val _ = ArticleFixtures.put(work, Article("zz_shared_art", "Shared", "concept", "Intro.\n\nMiddle.\n\nEnd."))
-    val _ = ArticleFixtures.put(work, Article("zz_shared_conf", "Conflict", "concept", "One.\n\nTwo.\n\nThree."))
+    val _ = ArticleFixtures.put(work, Article(com.histmersion.api.research.Article.Slug("zz_shared_art"), com.histmersion.api.research.Article.Title("Shared"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("Intro.\n\nMiddle.\n\nEnd.")))
+    val _ = ArticleFixtures.put(work, Article(com.histmersion.api.research.Article.Slug("zz_shared_conf"), com.histmersion.api.research.Article.Title("Conflict"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("One.\n\nTwo.\n\nThree.")))
     val first = importInto(home, exportOf(work, sw), sh)
     assert(first.applied, first.problems.mkString("\n"))
     // …then both sides go on
@@ -222,24 +224,24 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       SourceFixtures.patch(
         work,
         "zzshared2001_alpha",
-        Source.Patch(summary = Some("edited at work")),
+        Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("edited at work"))),
         cfg.limits.chunkChars
       )
     val _ =
       SourceFixtures.patch(
         home,
         "zzshared2001_alpha",
-        Source.Patch(summary = Some("edited at home")),
+        Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("edited at home"))),
         cfg.limits.chunkChars
       )
-    val _ = Transactor(work).transact(GoalRepo.deleteIn("zz_shared_goal"))
-    val _ = Transactor(home).transact(GoalRepo.patchIn("zz_shared_goal", Goal.Patch(notes = Some("edited at home"))))
-    val _ = ArticleFixtures.put(work, Article("zz_shared_art", "Shared", "concept", "Intro (work).\n\nMiddle.\n\nEnd."))
-    val _ = ArticleFixtures.put(home, Article("zz_shared_art", "Shared", "concept", "Intro.\n\nMiddle.\n\nEnd (home)."))
+    val _ = Transactor(work).transact(GoalRepo.deleteIn(com.histmersion.domain.automation.Goal.Slug("zz_shared_goal")))
+    val _ = Transactor(home).transact(GoalRepo.patchIn(com.histmersion.domain.automation.Goal.Slug("zz_shared_goal"), Goal.Patch(notes = Some(com.histmersion.api.automation.Goal.Notes("edited at home")))))
+    val _ = ArticleFixtures.put(work, Article(com.histmersion.api.research.Article.Slug("zz_shared_art"), com.histmersion.api.research.Article.Title("Shared"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("Intro (work).\n\nMiddle.\n\nEnd.")))
+    val _ = ArticleFixtures.put(home, Article(com.histmersion.api.research.Article.Slug("zz_shared_art"), com.histmersion.api.research.Article.Title("Shared"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("Intro.\n\nMiddle.\n\nEnd (home).")))
     val _ =
-      ArticleFixtures.put(work, Article("zz_shared_conf", "Conflict", "concept", "One.\n\nTwo at work.\n\nThree."))
+      ArticleFixtures.put(work, Article(com.histmersion.api.research.Article.Slug("zz_shared_conf"), com.histmersion.api.research.Article.Title("Conflict"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("One.\n\nTwo at work.\n\nThree.")))
     val _ =
-      ArticleFixtures.put(home, Article("zz_shared_conf", "Conflict", "concept", "One.\n\nTwo at home.\n\nThree."))
+      ArticleFixtures.put(home, Article(com.histmersion.api.research.Article.Slug("zz_shared_conf"), com.histmersion.api.research.Article.Title("Conflict"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("One.\n\nTwo at home.\n\nThree.")))
 
     // ── work ──
     put(
@@ -329,26 +331,26 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = ArticleFixtures.put(
       work,
       Article(
-        "bronze_age_collapse",
-        "Bronze Age collapse",
-        "concept",
+        com.histmersion.api.research.Article.Slug("bronze_age_collapse"),
+        com.histmersion.api.research.Article.Title("Bronze Age collapse"),
+        com.histmersion.api.research.Article.KindValue("concept"),
         "Work's account of the collapse, citing [[kuhrt1995_near]]."
       )
     )
-    val _ = ArticleFixtures.put(work, Article("zz_same_text", "Same", "concept", "Identical on both sides."))
+    val _ = ArticleFixtures.put(work, Article(com.histmersion.api.research.Article.Slug("zz_same_text"), com.histmersion.api.research.Article.Title("Same"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("Identical on both sides.")))
     EventFixtures.put(
       work,
       "zz_siege",
-      EventPut("Siege of Troy (work)", "battle", TimeSpan(Some(-1200), None, None, Some(-1190)))
+      EventPut(com.histmersion.api.catalogue.EventSummary.Label("Siege of Troy (work)"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1200)), None, None, Some(com.histmersion.api.catalogue.Year(-1190))))
     )
     // the same event (dated alike) created on both sides
     EventFixtures.put(
       work,
       "zz_ev_same",
-      EventPut("Fall of Hattusa (work)", "destruction", TimeSpan(Some(-1190), None, None, Some(-1180)))
+      EventPut(com.histmersion.api.catalogue.EventSummary.Label("Fall of Hattusa (work)"), com.histmersion.api.catalogue.EventSummary.Kind("destruction"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1190)), None, None, Some(com.histmersion.api.catalogue.Year(-1180))))
     )
-    transact(work)(GoalRepo.put("zz_goal_both", Goal.Put("Goal created at work", status = "seeding")))
-    val _ = QueueRows.add(work, Queue.Kind.Tasks, Queue.QueueAdd("Find the  Kuhrt reprint"))
+    transact(work)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_goal_both"), Goal.Put(com.histmersion.api.automation.Goal.Title("Goal created at work"), status = com.histmersion.api.automation.Goal.StatusValue("seeding"))))
+    val _ = QueueRows.add(work, Queue.Kind.Tasks, Queue.QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("Find the  Kuhrt reprint")))
 
     // ── home ──
     put(
@@ -426,21 +428,21 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     val _ = ArticleFixtures.put(
       home,
-      Article("bronze_age_collapse", "Bronze Age collapse", "concept", "Home's account of the collapse.")
+      Article(com.histmersion.api.research.Article.Slug("bronze_age_collapse"), com.histmersion.api.research.Article.Title("Bronze Age collapse"), com.histmersion.api.research.Article.KindValue("concept"), "Home's account of the collapse.")
     )
-    val _ = ArticleFixtures.put(home, Article("zz_same_text", "Same", "concept", "Identical on both sides."))
+    val _ = ArticleFixtures.put(home, Article(com.histmersion.api.research.Article.Slug("zz_same_text"), com.histmersion.api.research.Article.Title("Same"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("Identical on both sides.")))
     EventFixtures.put(
       home,
       "zz_siege",
-      EventPut("Siege of Troy (home)", "battle", TimeSpan(Some(-1210), None, None, Some(-1180)))
+      EventPut(com.histmersion.api.catalogue.EventSummary.Label("Siege of Troy (home)"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1210)), None, None, Some(com.histmersion.api.catalogue.Year(-1180))))
     )
     EventFixtures.put(
       home,
       "zz_ev_same",
-      EventPut("Fall of Hattusa (home)", "destruction", TimeSpan(Some(-1190), None, None, Some(-1180)))
+      EventPut(com.histmersion.api.catalogue.EventSummary.Label("Fall of Hattusa (home)"), com.histmersion.api.catalogue.EventSummary.Kind("destruction"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1190)), None, None, Some(com.histmersion.api.catalogue.Year(-1180))))
     )
-    transact(home)(GoalRepo.put("zz_goal_both", Goal.Put("Goal created at home", notes = Some("home's plan"))))
-    val task = QueueRows.add(home, Queue.Kind.Tasks, Queue.QueueAdd("Find the Kuhrt reprint"))
+    transact(home)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_goal_both"), Goal.Put(com.histmersion.api.automation.Goal.Title("Goal created at home"), notes = Some("home's plan"))))
+    val task = QueueRows.add(home, Queue.Kind.Tasks, Queue.QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("Find the Kuhrt reprint")))
     val _ = QueueRows.patch(home, task.id, Queue.QueuePatch(status = Some(Queue.Done)))
     (work, home, sw, sh)
 
@@ -495,7 +497,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(p.issues.size, expected.size, p.issues.mkString("\n"))
     assertEquals(
       p.matches,
-      MatchCounts(sources = 11, byUid = 1, byStrongKey = 3, byScore = 4, undecided = 1, unmatched = 2)
+      MatchCounts(sources = com.histmersion.api.exchange.MatchCounts.Sources(11), byUid = com.histmersion.api.exchange.MatchCounts.ByUid(1), byStrongKey = com.histmersion.api.exchange.MatchCounts.ByStrongKey(3), byScore = com.histmersion.api.exchange.MatchCounts.ByScore(4), undecided = com.histmersion.api.exchange.MatchCounts.Undecided(1), unmatched = com.histmersion.api.exchange.MatchCounts.Unmatched(2))
     )
     assertEquals(p.problems, Nil)
     assertEquals(p.from.label, Some("work"))
@@ -534,7 +536,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     // decided the importable way, the merges still need merge apply
     val res = MergeResolutions(
-      p.open.filter(i => i.options.contains(DecisionKind.KeepLeft)).map(i => MergeResolution(i.id, "keep-left"))
+      p.open.filter(i => i.options.contains(DecisionKind.KeepLeft)).map(i => MergeResolution(i.id, com.histmersion.api.exchange.MergeResolution.Decision("keep-left")))
     )
     val r2 = importInto(home, bundle, sh, res)
     assert(!r2.applied)
@@ -571,7 +573,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     // it changes over there; ours has not changed since the merge → fast-forward onto OUR row
     val _ =
-      SourceFixtures.patch(a, "zzx2001_there", Source.Patch(summary = Some("v2 from there")), cfg.limits.chunkChars)
+      SourceFixtures.patch(a, "zzx2001_there", Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("v2 from there"))), cfg.limits.chunkChars)
     val bundle = exportOf(a, sa)
     val p = planIn(b, bundle, sb)
     assertEquals(p.issues, Nil)
@@ -595,13 +597,13 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     val (a, b) = (fresh("da"), fresh("db"))
     val (sa, sb) = (spool("da"), spool("db"))
     put(a, src("zzy2001_new", "A new one", List("Roe, Richard"), 2001))
-    EventFixtures.put(a, "zz_both", EventPut("Event at a", "battle", TimeSpan(Some(-1200), None, None, Some(-1190))))
-    EventFixtures.put(b, "zz_both", EventPut("Event at b", "battle", TimeSpan(Some(-1300), None, None, Some(-1290))))
+    EventFixtures.put(a, "zz_both", EventPut(com.histmersion.api.catalogue.EventSummary.Label("Event at a"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1200)), None, None, Some(com.histmersion.api.catalogue.Year(-1190)))))
+    EventFixtures.put(b, "zz_both", EventPut(com.histmersion.api.catalogue.EventSummary.Label("Event at b"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1300)), None, None, Some(com.histmersion.api.catalogue.Year(-1290)))))
     val bundle = exportOf(a, sa)
     val p = planIn(b, bundle, sb)
     val taken = p.open.find(_.kind == Issue.Kind.LabelTaken).getOrElse(fail(p.issues.toString))
     assertEquals(p.open.size, 1, p.issues.mkString("\n"))
-    val r = importInto(b, bundle, sb, MergeResolutions(List(MergeResolution(taken.id, "keep-left"))))
+    val r = importInto(b, bundle, sb, MergeResolutions(List(MergeResolution(taken.id, com.histmersion.api.exchange.MergeResolution.Decision("keep-left")))))
     assert(r.applied, r.problems.mkString("\n"))
     assertEquals(count(b, "SELECT count(*)::int FROM sources WHERE citekey = 'zzy2001_new'"), 1)
     assertEquals(connect(b)(sql"SELECT label FROM events WHERE id = 'zz_both'".query[String].run().head), "Event at b")
@@ -624,7 +626,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         com.histmersion.util.storage.ByteSource.file(bundle),
         BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
         BundleImport
-          .Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm),
+          .Options(dryRun = com.histmersion.util.data.exchange.ImportOptions.DryRun(false), cfg.limits.chunkChars, cfg.places.pointToleranceKm),
         com.histmersion.util.storage.ContentDirectory(originals),
         res,
         merge,
@@ -862,7 +864,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     (1 to 4).foreach { round =>
       val (a, b) = (fresh(s"p${round}a"), fresh(s"p${round}b"))
       val (sa, sb) = (spool(s"p${round}a"), spool(s"p${round}b"))
-      Transactor(a).transact(BundleRepo.setLabel(Some("work")))
+      Transactor(a).transact(BundleRepo.setLabel(Some(com.histmersion.api.aliases.InstanceInfo.Label("work"))))
       // six works; each side holds some of them under its own citekeys, a DOI or not, a year off by
       // more than one now and then (an edition question), findings from one pool, edges among its own
       def side(ds: DataSource, tag: String): Unit =
@@ -945,16 +947,16 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
   test("renames over there are followed: an article slug (its old one kept as an alias), an event id, a goal slug"):
     val (a, b) = (fresh("rna"), fresh("rnb"))
     val (sa, sb) = (spool("rna"), spool("rnb"))
-    val _ = ArticleFixtures.put(a, Article("zz_old_slug", "Old", "concept", "Text."))
-    val _ = ArticleFixtures.put(a, Article("zz_linker", "Linker", "concept", "See [[zz_old_slug]]."))
-    EventFixtures.put(a, "zz_old_event", EventPut("An event", "battle", TimeSpan(Some(-1200), None, None, Some(-1190))))
-    transact(a)(GoalRepo.put("zz_old_goal", Goal.Put("A goal")))
+    val _ = ArticleFixtures.put(a, Article(com.histmersion.api.research.Article.Slug("zz_old_slug"), com.histmersion.api.research.Article.Title("Old"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("Text.")))
+    val _ = ArticleFixtures.put(a, Article(com.histmersion.api.research.Article.Slug("zz_linker"), com.histmersion.api.research.Article.Title("Linker"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("See [[zz_old_slug]].")))
+    EventFixtures.put(a, "zz_old_event", EventPut(com.histmersion.api.catalogue.EventSummary.Label("An event"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1200)), None, None, Some(com.histmersion.api.catalogue.Year(-1190)))))
+    transact(a)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_old_goal"), Goal.Put(com.histmersion.api.automation.Goal.Title("A goal"))))
     val first = importInto(b, exportOf(a, sa), sb)
     assert(first.applied, first.problems.mkString("\n"))
     transact(a) {
-      ArticleFixtures.renameIn("zz_old_slug", "zz_new_slug").fold(e => fail(e.message), identity)
+      ArticleFixtures.renameIn(com.histmersion.domain.research.Slug("zz_old_slug"), com.histmersion.domain.research.Slug("zz_new_slug")).fold(e => fail(e.message), identity)
       EventFixtures.renameIn("zz_old_event", "zz_new_event").fold(e => fail(e.message), identity)
-      GoalRepo.renameIn("zz_old_goal", "zz_new_goal").fold(e => fail(e.message), identity)
+      GoalRepo.renameIn(com.histmersion.domain.automation.Goal.Slug("zz_old_goal"), com.histmersion.domain.automation.Goal.Slug("zz_new_goal")).fold(e => fail(e.message), identity)
     }
     // the rename rewrote the link in the other article over there
     assertEquals(ArticleFixtures.load(a, "zz_linker").map(_.body), Some("See [[zz_new_slug]]."))

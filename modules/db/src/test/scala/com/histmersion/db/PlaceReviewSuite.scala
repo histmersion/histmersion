@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
@@ -104,9 +106,9 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
         calibreId = None,
         findings = List(
           Finding(
-            "zzrc_src2#0",
+            com.histmersion.api.library.Finding.Id("zzrc_src2#0"),
             com.histmersion.api.library.Citekey("zzrc_src2"),
-            "on the real point",
+            com.histmersion.api.library.Finding.Claim("on the real point"),
             None,
             Some(GeoPoint(141.71, -47.62)),
             None,

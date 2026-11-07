@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.database.Transactor
@@ -209,8 +211,8 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
     // the start of an id finds that job
     assertEquals(ids(com.histmersion.util.jobs.JobQuery(q = Some(s"$tag-j3"))), Set(m1))
     val (states, facets) =
-      Transactor(ds).read(JobRepo.facets(mine.modify(_.kinds).setTo(List("ingest")).modify(_.status).setTo(List("done")), 40))
+      Transactor(ds).read(JobRepo.facets(mine.modify(_.kinds).setTo(List("ingest")).modify(_.status).setTo(List("done")), com.histmersion.PageSize(40)))
     assertEquals(states.toMap, Map("done" -> 1, "failed" -> 1))
     assertEquals(facets.toMap.apply("kind").toMap, Map("ingest" -> 1, "media-import" -> 1, "agent" -> 1))
     // the old single-state page still reads through the same query
-    assert(Transactor(ds).read(JobRepo.page(Some("failed"), 500)).toOption.get._1.exists(_.id == i2))
+    assert(Transactor(ds).read(JobRepo.page(Some(com.histmersion.util.jobs.JobRepo.PageStatus("failed")), com.histmersion.PageSize(500))).toOption.get._1.exists(_.id == i2))

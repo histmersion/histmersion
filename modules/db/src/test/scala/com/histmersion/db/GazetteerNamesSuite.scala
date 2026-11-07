@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.sources.SourceCheckFixtures
@@ -145,21 +147,21 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     // the curated Southern Levant is a name of its own: exact, not the Levant with a word dropped
     assert(!resolvesTo("southern Levant", Set(SLevant)).isApproximate)
     val lev = resolvesTo("northern Levant", Set(Levant))
-    assertEquals(lev.approximate, List(Approximation.Qualifier("northern")))
+    assertEquals(lev.approximate, List(Approximation.Qualifier(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("northern"))))
     assert(lev.lat > resolvesTo("Levant", Set(Levant)).lat, "the point moves into the northern half")
     val east = resolvesTo("Eastern Mediterranean", Set(Med))
-    assertEquals(east.approximate, List(Approximation.Qualifier("Eastern")))
+    assertEquals(east.approximate, List(Approximation.Qualifier(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("Eastern"))))
     // the eastern half of the sea, not its point on the surface off Algeria
     assert(east.lon > 17.0, east)
     assertEquals(
       resolvesTo("Western and Central Balkans", Set(Balkans)).approximate,
-      List(Approximation.Qualifier("Western and Central"))
+      List(Approximation.Qualifier(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("Western and Central")))
     )
 
   test("a dated finding still finds the timeless English name (names carry no Pleiades date range)"):
     resolvesTo("Dead Sea", DeadSea)
     assert(
-      resolve("Dead Sea", Some(Period(-1200, -1100))).exists(r =>
+      resolve("Dead Sea", Some(Period(com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-1100)))).exists(r =>
         DeadSea.contains(r.placeId) || r.placeId == "pleiades_697709"
       )
     )
@@ -225,11 +227,11 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     val in = com.histmersion.api.catalogue.Place.Edits
       .toInput(
         com.histmersion.api.catalogue.Place.Add(
-          "Zzgn Gornji",
+          com.histmersion.api.catalogue.Place.Add.Label("Zzgn Gornji"),
           Place.Kind.Site,
           15.98,
           45.81,
-          "fixture: a hand-checked map",
+          com.histmersion.api.catalogue.Place.Add.Source("fixture: a hand-checked map"),
           names = List("Zzgn Gornij"),
           lang = Some("hr")
         )
@@ -279,7 +281,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
       provenance = None,
       calibreId = None,
       findings = List(
-        finding(0, "Dead Sea", None, Some(Period(-1200, -1100))),
+        finding(0, "Dead Sea", None, Some(Period(com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-1100)))),
         finding(1, "Balkans", Some(GeoPoint(-40.0, 10.0))), // placed by hand (in the Atlantic): never touched
         finding(2, "Zzgn nowhere at all", None), // unknown: stays unplaced, never guessed
         finding(3, "northern Levant", None),

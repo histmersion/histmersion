@@ -17,7 +17,7 @@ object AssetLinkFixtures:
       targetId: Option[String]
   ): AssetLink.List =
     val rows = connect(ds)(AssetLinkRepo.list(citekey, asset, targetType, targetId))
-    AssetLink.List.of(rows.size, rows, 0)
+    AssetLink.List.of(rows.size, rows, com.histmersion.api.personal.UnreadPage.Offset(0))
 
   def create(ds: DataSource, in: AssetLink.Put): Either[Api.Error, AssetLink] =
     transact(ds):

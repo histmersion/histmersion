@@ -13,19 +13,19 @@ class ProposalEvidenceSuite extends munit.FunSuite:
   private val proposals = List(
     Proposal(
       Approval.Kind.StatusChange,
-      "a2000_x",
+      com.histmersion.domain.library.Citekey("a2000_x"),
       status = Some(Source.Status.Contested),
-      evidence = "why",
-      quote = Some("q")
+      evidence = com.histmersion.domain.AgentProposals.Proposal.Evidence("why"),
+      quote = Some(com.histmersion.domain.AgentProposals.Proposal.Quote("q"))
     ),
     Proposal(
       Approval.Kind.Edge,
-      "a2000_x",
+      com.histmersion.domain.library.Citekey("a2000_x"),
       edgeKind = Some(Edge.Kind.Refutes),
-      target = Some("b2001_y"),
-      evidence = "e"
+      target = Some(com.histmersion.domain.library.Citekey("b2001_y")),
+      evidence = com.histmersion.domain.AgentProposals.Proposal.Evidence("e")
     ),
-    Proposal(Approval.Kind.Edge, "a2000_x", edgeKind = Some(Edge.Kind.Challenges), target = Some("b2001_y"))
+    Proposal(Approval.Kind.Edge, com.histmersion.domain.library.Citekey("a2000_x"), edgeKind = Some(Edge.Kind.Challenges), target = Some(com.histmersion.domain.library.Citekey("b2001_y")))
   )
 
   test("every proposal's payload reads as its evidence and quote"):
@@ -36,4 +36,4 @@ class ProposalEvidenceSuite extends munit.FunSuite:
     }
 
   test("a payload that is no JSON reads as nothing"):
-    assertEquals(Jsonb.read[ProposalEvidence]("not json"), None)
+    assertEquals(Jsonb.read[ProposalEvidence](com.histmersion.util.database.Jsonb.JsonText("not json")), None)

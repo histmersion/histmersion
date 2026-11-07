@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.research.articles.ArticleFixtures
@@ -72,7 +74,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
       Article(
         slug = slug,
         title = title,
-        kind = "concept",
+        kind = com.histmersion.api.research.Article.KindValue("concept"),
         body = body,
         summary = None,
         tags = Nil,
@@ -94,14 +96,14 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
         "zz_rel_match",
         List(Tag),
         com.histmersion.api.library.Source.Status.Current,
-        Period(-1300, -1200),
+        Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200)),
         "Zzrelauthor"
       )
       val _ = source(
         "zz_rel_other",
         Nil,
         com.histmersion.api.library.Source.Status.Contested,
-        Period(-600, -500),
+        Period(com.histmersion.api.catalogue.Year(-600), com.histmersion.api.catalogue.Year(-500)),
         "Someone"
       )
       val _ = article("zz_rel_cites_match", "Zz Rel Kadesh article", "# K\n\nSee [[zz_rel_match]].")
@@ -141,15 +143,15 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
 
   test("articles: one citing a matching source is listed, one citing none (or another) is not"):
     assertEquals(articles(Filter(tags = List(Tag))), Set("zz_rel_cites_match"))
-    assertEquals(articles(Filter(authors = List("zzrelauth"))), Set("zz_rel_cites_match"))
-    assertEquals(articles(Filter(status = List("contested"))), Set("zz_rel_cites_other"))
+    assertEquals(articles(Filter(authors = List(com.histmersion.api.library.Filter.Authors("zzrelauth")))), Set("zz_rel_cites_match"))
+    assertEquals(articles(Filter(status = List(com.histmersion.api.library.Filter.Status("contested")))), Set("zz_rel_cites_other"))
 
   test("articles: the period selects through the cited sources, as the Sources list does"):
-    assertEquals(articles(Filter(period = Some(Period(-1250, -1100)))), Set("zz_rel_cites_match"))
+    assertEquals(articles(Filter(period = Some(Period(com.histmersion.api.catalogue.Year(-1250), com.histmersion.api.catalogue.Year(-1100))))), Set("zz_rel_cites_match"))
 
   test("articles: title narrows the ARTICLE's own title, not its sources'"):
-    assertEquals(articles(Filter(title = Some("kadesh"))), Set("zz_rel_cites_match"))
-    assertEquals(articles(Filter(title = Some("Source title"))), Set.empty[String])
+    assertEquals(articles(Filter(title = Some(com.histmersion.api.library.Filter.Title("kadesh")))), Set("zz_rel_cites_match"))
+    assertEquals(articles(Filter(title = Some(com.histmersion.api.library.Filter.Title("Source title")))), Set.empty[String])
     assertEquals(articles(Filter(title = Some("lonely"), tags = List(Tag))), Set.empty[String])
 
   test("events: listed when the source matches; an event outside the period is excluded"):
@@ -158,15 +160,15 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
 
   test("events: a period alone matches the event's own span, with or without a source"):
     assertEquals(
-      events(Filter(period = Some(Period(-1300, -1200)))),
+      events(Filter(period = Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200))))),
       Set("zz_rel_ev_match", "zz_rel_ev_other", "zz_rel_ev_nosrc")
     )
 
   test("events: title narrows the label; text still searches label and description"):
-    assertEquals(events(Filter(title = Some("KADESH"))), Set("zz_rel_ev_match"))
-    assertEquals(events(Filter(title = Some("battle"), status = List("contested"))), Set("zz_rel_ev_other"))
+    assertEquals(events(Filter(title = Some(com.histmersion.api.library.Filter.Title("KADESH")))), Set("zz_rel_ev_match"))
+    assertEquals(events(Filter(title = Some(com.histmersion.api.library.Filter.Title("battle")), status = List(com.histmersion.api.library.Filter.Status("contested")))), Set("zz_rel_ev_other"))
     assertEquals(events(Filter(), text = Some("unsourced")), Set("zz_rel_ev_nosrc"))
 
   test("sources: title narrows the source list by its own title"):
-    val r = SearchFixtures.sources(ds, Filter(title = Some("title zz_rel_m"), limit = 50), 20, PlaceScope.empty)
+    val r = SearchFixtures.sources(ds, Filter(title = Some(com.histmersion.api.library.Filter.Title("title zz_rel_m")), limit = com.histmersion.api.library.Filter.Limit(50)), 20, PlaceScope.empty)
     assertEquals(r.hits.map(_.source.citekey), List("zz_rel_match"))

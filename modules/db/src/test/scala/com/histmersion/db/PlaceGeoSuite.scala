@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
@@ -18,7 +20,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
   import Param.*
 
   test("an as-of query ranks sources and drops shadowed shapes; the limit comes last"):
-    val q = PlaceFixtures.geoJsonQuery(Some("Polity"), Some(-1900L), 50)
+    val q = PlaceFixtures.geoJsonQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("Polity")), Some(com.histmersion.domain.DeepTime.SignedYear(-1900L)), com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonQueryLimit(50))
     assert(q.text.contains("hi.tier < lo.tier"), q.text)
     // a lone tier has no pairs: each side keeps only the tiers that can be in one
     assert(q.text.contains("WHERE tier > (SELECT min(tier) FROM live)) lo"), q.text)
@@ -27,23 +29,23 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
     assert(q.text.contains("ORDER BY l.area DESC"), q.text)
     // the window of the time rule first (year, year, year ≥ modern-from), then the live set in its two
     // halves (curated, imported with a finding), each with the layer's own filters
-    val half = List(S(PlaceFixtures.UninformativeLabel), S("polity"))
+    val half = List(S(PlaceFixtures.UninformativeLabel), S(com.histmersion.util.database.Param.S.V("polity")))
     assertEquals(
       q.params,
-      List(L(-1900L), L(-1900L), L(-1900L), L(PlaceFixtures.DefaultModernFrom)) ++
+      List(L(com.histmersion.util.database.Param.L.V(-1900L)), L(com.histmersion.util.database.Param.L.V(-1900L)), L(com.histmersion.util.database.Param.L.V(-1900L)), L(PlaceFixtures.DefaultModernFrom)) ++
         half ++ half ++ List(I(50))
     )
     assert(q.text.contains(PlaceFixtures.inTimeSql("p", Some(-1900L), Some("polity"))), q.text)
 
   test("without as-of nothing is collapsed (successive shapes across time are all real)"):
-    val q = PlaceFixtures.geoJsonQuery(None, None, 10)
+    val q = PlaceFixtures.geoJsonQuery(None, None, com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonQueryLimit(10))
     assert(q.text.contains("shadowed AS (SELECT NULL::text AS id WHERE false)"), q.text)
-    assertEquals(q.params, List(S(PlaceFixtures.UninformativeLabel), S(PlaceFixtures.UninformativeLabel), I(10)))
+    assertEquals(q.params, List(S(PlaceFixtures.UninformativeLabel), S(PlaceFixtures.UninformativeLabel), I(com.histmersion.util.database.Param.I.V(10))))
 
   test(
     "the base layers are the curated gazetteer: GeoNames and Wikidata only with a finding, and an undated one never at a year"
   ):
-    val timed = PlaceFixtures.geoJsonQuery(Some("site"), Some(-1400L), 10).text
+    val timed = PlaceFixtures.geoJsonQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("site")), Some(com.histmersion.domain.DeepTime.SignedYear(-1400L)), com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonQueryLimit(10)).text
     // BaseLayerSql in its two halves: the curated places (V075's partial index), the imported with a finding
     assert(timed.contains(s"AND ${PlaceFixtures.CuratedSql} UNION ALL "), timed)
     // at a year the imported half says it holds dated imports only, the predicate of `places_dated_import` (V076)
@@ -55,23 +57,23 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
       timed
     )
     assert(timed.contains(s"NOT ${PlaceFixtures.UndatedImportSql}"), timed)
-    val untimed = PlaceFixtures.geoJsonQuery(Some("site"), None, 10).text
+    val untimed = PlaceFixtures.geoJsonQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("site")), None, com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonQueryLimit(10)).text
     assert(
       untimed.contains(s"AND NOT ${PlaceFixtures.CuratedSql} AND p.id IN (SELECT fp.place_id FROM finding_places fp)")
     )
     assert(!untimed.contains(s"NOT ${PlaceFixtures.UndatedImportSql}"))
 
   test("an undated polity known only by a point is left out at a year, in both halves; across all time it is drawn"):
-    val timed = PlaceFixtures.geoJsonQuery(Some("polity"), Some(-200L), 10).text
+    val timed = PlaceFixtures.geoJsonQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")), Some(com.histmersion.domain.DeepTime.SignedYear(-200L)), com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonQueryLimit(10)).text
     assertEquals(
       timed.split(java.util.regex.Pattern.quote(PlaceFixtures.UndatedPolityPointSql), -1).length - 1,
       2,
       timed
     )
-    assert(!PlaceFixtures.geoJsonQuery(Some("polity"), None, 10).text.contains(PlaceFixtures.UndatedPolityPointSql))
+    assert(!PlaceFixtures.geoJsonQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")), None, com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonQueryLimit(10)).text.contains(PlaceFixtures.UndatedPolityPointSql))
 
   test("over a whole range: the window is the range, shadowing only among shapes that coexist, one version per state"):
-    val q = PlaceFixtures.geoJsonTimeQuery(Some("polity"), GeoTime.Within(-2000, -1000, latest = false), 50)
+    val q = PlaceFixtures.geoJsonTimeQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")), GeoTime.Within(com.histmersion.api.catalogue.Year(-2000), com.histmersion.api.catalogue.Year(-1000), latest = com.histmersion.api.catalogue.GeoTime.Within.Latest(false)), com.histmersion.domain.catalogue.places.PlaceRepo.Limit(50))
     assert(q.text.contains(PlaceFixtures.inWindowSql("p", Some((-2000L, -1000L)), Some("polity"))), q.text)
     assert(q.text.contains("p.period && int8range(-2000::bigint, -1000::bigint, '[]')"), q.text)
     // a layer of areas: the two small tiers (sketches, OHM) find their partners through the index of
@@ -97,19 +99,19 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
     assert(q.text.contains("coalesce(p.web_geojson, ST_AsGeoJSON(coalesce(p.geom_clipped, p.geom), 5))"), q.text)
     assert(q.text.contains("min(es) OVER (PARTITION BY kind, coalesce(nullif(norm, ''), id))"), q.text)
     assert(q.text.contains("FROM (SELECT * FROM shown ORDER BY area DESC"), q.text)
-    val half = List(S(PlaceFixtures.UninformativeLabel), S("polity"))
+    val half = List(S(PlaceFixtures.UninformativeLabel), S(com.histmersion.util.database.Param.S.V("polity")))
     // the live set's two halves, then the two pair halves (each holds a partner to the same filters)
     assertEquals(
       q.params,
-      List(L(-2000L), L(-1000L), L(-1000L), L(PlaceFixtures.DefaultModernFrom)) ++ half ++ half ++
+      List(L(com.histmersion.util.database.Param.L.V(-2000L)), L(com.histmersion.util.database.Param.L.V(-1000L)), L(com.histmersion.util.database.Param.L.V(-1000L)), L(PlaceFixtures.DefaultModernFrom)) ++ half ++ half ++
         half ++ half ++ List(I(50))
     )
     // the plain pairing — a site or kindless layer, and the reference below: the small tiers against `live`
     val plain =
       PlaceFixtures.geoJsonTimeQuery(
-        Some("polity"),
-        GeoTime.Within(-2000, -1000, latest = false),
-        50,
+        Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+        GeoTime.Within(com.histmersion.api.catalogue.Year(-2000), com.histmersion.api.catalogue.Year(-1000), latest = com.histmersion.api.catalogue.GeoTime.Within.Latest(false)),
+        com.histmersion.domain.catalogue.places.PlaceRepo.Limit(50),
         pairsByIndex = false
       )
     assert(
@@ -123,22 +125,22 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
     )
     assertEquals(
       plain.params,
-      List(L(-2000L), L(-1000L), L(-1000L), L(PlaceFixtures.DefaultModernFrom)) ++ half ++ half ++ List(I(50))
+      List(L(com.histmersion.util.database.Param.L.V(-2000L)), L(com.histmersion.util.database.Param.L.V(-1000L)), L(com.histmersion.util.database.Param.L.V(-1000L)), L(PlaceFixtures.DefaultModernFrom)) ++ half ++ half ++ List(I(50))
     )
     List(Some("site"), None).foreach(k =>
       assert(
         PlaceFixtures
-          .geoJsonTimeQuery(k, GeoTime.Within(-2000, -1000, latest = false), 50)
+          .geoJsonTimeQuery(k, GeoTime.Within(com.histmersion.api.catalogue.Year(-2000), com.histmersion.api.catalogue.Year(-1000), latest = com.histmersion.api.catalogue.GeoTime.Within.Latest(false)), com.histmersion.domain.catalogue.places.PlaceRepo.Limit(50))
           .text
           .contains(PlaceFixtures.rangeShadowedSql),
         s"kind $k"
       )
     )
-    val late = PlaceFixtures.geoJsonTimeQuery(Some("polity"), GeoTime.Within(-2000, -1000, latest = true), 50).text
+    val late = PlaceFixtures.geoJsonTimeQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")), GeoTime.Within(com.histmersion.api.catalogue.Year(-2000), com.histmersion.api.catalogue.Year(-1000), latest = com.histmersion.api.catalogue.GeoTime.Within.Latest(true)), com.histmersion.domain.catalogue.places.PlaceRepo.Limit(50)).text
     assert(late.contains("max(ee) OVER") && late.contains("WHERE v.ee = v.anchor"), late)
     // a year is what it always was: none of the range's machinery
-    val year = PlaceFixtures.geoJsonTimeQuery(Some("polity"), GeoTime.At(-1500), 50)
-    assertEquals(year.text, PlaceFixtures.geoJsonQuery(Some("polity"), Some(-1500L), 50).text)
+    val year = PlaceFixtures.geoJsonTimeQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")), GeoTime.At(com.histmersion.api.catalogue.Year(-1500)), com.histmersion.domain.catalogue.places.PlaceRepo.Limit(50))
+    assertEquals(year.text, PlaceFixtures.geoJsonQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")), Some(com.histmersion.domain.DeepTime.SignedYear(-1500L)), com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonQueryLimit(50)).text)
     assert(!year.text.contains(" per") && !year.text.contains("shown"), year.text)
 
   test("the pair test skips the polygon intersection only where the boxes rule it out"):
@@ -172,7 +174,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
         com.histmersion.domain.catalogue.Place.Kind.Polity,
         Some(g),
         Some(Period(from, to)),
-        Some("fixture"),
+        Some(com.histmersion.api.catalogue.Place.Source("fixture")),
         method.map(m => s"""{"method":"$m"}""")
       ),
       Nil
@@ -297,14 +299,14 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
       limit <- List(2, 500)
     do
       val t = GeoTime.Within(lo, hi, latest)
-      val indexed = rows(PlaceFixtures.geoJsonTimeQuery(Some("polity"), t, limit))
+      val indexed = rows(PlaceFixtures.geoJsonTimeQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")), t, limit))
       assertEquals(
         indexed,
-        rows(PlaceFixtures.geoJsonTimeQuery(Some("polity"), t, limit, pairsByIndex = false)),
+        rows(PlaceFixtures.geoJsonTimeQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")), t, limit, pairsByIndex = false)),
         s"$lo..$hi latest=$latest limit=$limit"
       )
     // and the collapse did happen: OHM over Cliopatria, Cliopatria over the sketch of the same state
-    val over = rows(PlaceFixtures.geoJsonTimeQuery(Some("polity"), GeoTime.Within(-2700, -1600, false), 500)).mkString
+    val over = rows(PlaceFixtures.geoJsonTimeQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")), GeoTime.Within(com.histmersion.api.catalogue.Year(-2700), com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.GeoTime.Within.Latest(false)), com.histmersion.domain.catalogue.places.PlaceRepo.Limit(500))).mkString
     assert(
       over.contains("zzq_ohm_ok") && !over.contains("zzq_clio_ok") && !over.contains("zzq_agent_crete"),
       over.take(600)
@@ -326,11 +328,11 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
     val round = Place.Input(
       Place(
         com.histmersion.api.catalogue.Place.Id("zzs_round"),
-        "The Kingdom of Zzs-Round (East)",
+        com.histmersion.api.catalogue.Place.Label("The Kingdom of Zzs-Round (East)"),
         com.histmersion.domain.catalogue.Place.Kind.Polity,
         Some(circle(157.5, -38.5, 1.5, 720)),
-        Some(Period(3000, 3100)),
-        Some("fixture")
+        Some(Period(com.histmersion.api.catalogue.Year(3000), com.histmersion.api.catalogue.Year(3100))),
+        Some(com.histmersion.api.catalogue.Place.Source("fixture"))
       ),
       Nil
     )
@@ -338,11 +340,11 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
     val dot = Place.Input(
       Place(
         com.histmersion.api.catalogue.Place.Id("zzs_dot"),
-        "Zzs Dot",
+        com.histmersion.api.catalogue.Place.Label("Zzs Dot"),
         com.histmersion.domain.catalogue.Place.Kind.Site,
         Some("""{"type":"Point","coordinates":[156.2,-38.2]}"""),
-        Some(Period(3000, 3100)),
-        Some("fixture")
+        Some(Period(com.histmersion.api.catalogue.Year(3000), com.histmersion.api.catalogue.Year(3100))),
+        Some(com.histmersion.api.catalogue.Place.Source("fixture"))
       ),
       Nil
     )
@@ -394,7 +396,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
     )
     assertEquals(valid, Vector(("zzs_bowtie", false), ("zzs_round", true), ("zzs_tiny", true)))
     // the map draws the stored outline
-    val drawn = PlaceFixtures.geoJsonAt(ds, Some("polity"), GeoTime.Within(3000, 3100, latest = false), 500)
+    val drawn = PlaceFixtures.geoJsonAt(ds, Some("polity"), GeoTime.Within(com.histmersion.api.catalogue.Year(3000), com.histmersion.api.catalogue.Year(3100), latest = com.histmersion.api.catalogue.GeoTime.Within.Latest(false)), 500)
     val stored = connect(ds)(sql"SELECT web_geojson FROM places WHERE id = 'zzs_round'".query[String].run().head)
     assert(drawn.contains(s""""geometry":$stored"""), drawn.take(300))
     // a re-import with a new label and shape: every column follows
@@ -429,7 +431,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
           com.histmersion.domain.catalogue.Place.Kind.Site,
           Some("""{"type":"Point","coordinates":[165.5,-38.5]}"""),
           None,
-          Some("fixture"),
+          Some(com.histmersion.api.catalogue.Place.Source("fixture")),
           None
         ),
         Nil
@@ -450,7 +452,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
   // since the time rule (2026-10-09) they are drawn from `places.modern-from` on, never before it
   test("a present-day (modern) place is drawn only once the map reaches the modern era"):
     assert(
-      PlaceFixtures.geoJsonQuery(Some("site"), None, 10).text.contains(s"NOT ${PlaceFixtures.ModernSql}"),
+      PlaceFixtures.geoJsonQuery(Some(com.histmersion.domain.catalogue.Place.Kind.Wire("site")), None, com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonQueryLimit(10)).text.contains(s"NOT ${PlaceFixtures.ModernSql}"),
       "across all time, as before"
     )
     assume(testDb.nonEmpty, "HISTMERSION_TEST_DB_URL is not set")
@@ -458,11 +460,11 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
       Place.Input(
         Place(
           com.histmersion.api.catalogue.Place.Id(id),
-          "Zzqmodern",
+          com.histmersion.api.catalogue.Place.Label("Zzqmodern"),
           com.histmersion.domain.catalogue.Place.Kind.Site,
           Some("""{"type":"Point","coordinates":[166.5,-38.5]}"""),
           None,
-          Some("fixture"),
+          Some(com.histmersion.api.catalogue.Place.Source("fixture")),
           props
         ),
         Nil
@@ -500,7 +502,7 @@ class PlaceGeoSuite extends com.histmersion.db.DbSuite:
     val again = polity("zzq_fp_polity", "Footprint Kingdom", box(166, -40, 168, -38), -1500, -1100, None)
     val _ =
       PlaceFixtures.upsertPlaces(ds, List(again.modify(_.place).setTo(again.place.modify(_.source).setTo(Some("drawn by an AI agent")))))
-    assertEquals(fp.map(f => (f.citekey, f.period)), Vector((Some("drawn by an AI agent"), Some(Period(-1500, -1100)))))
+    assertEquals(fp.map(f => (f.citekey, f.period)), Vector((Some("drawn by an AI agent"), Some(Period(com.histmersion.api.catalogue.Year(-1500), com.histmersion.api.catalogue.Year(-1100))))))
 
   // #357: generalised outlines ran out to sea; with land loaded a polity is drawn on land only
   test("with land loaded a polity is drawn clipped to it, and its published shape is kept"):

@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.catalogue.AttestationTarget
@@ -63,8 +65,8 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
     status = com.histmersion.api.library.Source.Status.Current,
     topics = Nil,
     regions = Nil,
-    tags = List("zqec"),
-    period = Some(Period(-1700, -1500)),
+    tags = List(com.histmersion.api.library.Source.Tags("zqec")),
+    period = Some(Period(com.histmersion.api.catalogue.Year(-1700), com.histmersion.api.catalogue.Year(-1500))),
     summary = None,
     citedByCount = None,
     influentialCitations = None,
@@ -72,23 +74,23 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
     calibreId = None,
     findings = List(
       Finding(
-        "zqec_src2020#0",
+        com.histmersion.api.library.Finding.Id("zqec_src2020#0"),
         com.histmersion.api.library.Citekey("zqec_src2020"),
-        "ash layer",
+        com.histmersion.api.library.Finding.Claim("ash layer"),
         None,
         Some(GeoPoint(150.2, Lat)),
-        Some(Period(-1620, -1600)),
+        Some(Period(com.histmersion.api.catalogue.Year(-1620), com.histmersion.api.catalogue.Year(-1600))),
         None,
         Nil,
         Some(Confidence.High)
       ),
       Finding(
-        "zqec_src2020#1",
+        com.histmersion.api.library.Finding.Id("zqec_src2020#1"),
         com.histmersion.api.library.Citekey("zqec_src2020"),
-        "far away",
+        com.histmersion.api.library.Finding.Claim("far away"),
         None,
         Some(GeoPoint(170.0, Lat)),
-        Some(Period(-1620, -1600)),
+        Some(Period(com.histmersion.api.catalogue.Year(-1620), com.histmersion.api.catalogue.Year(-1600))),
         None,
         Nil,
         Some(Confidence.High)
@@ -128,9 +130,9 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
         ds,
         "zqec_compiled",
         EventPut(
-          "Zqec compiled eruption",
-          "natural_disaster",
-          TimeSpan(Some(-1615), None, None, Some(-1605)),
+          com.histmersion.api.catalogue.EventSummary.Label("Zqec compiled eruption"),
+          com.histmersion.api.catalogue.EventSummary.Kind("natural_disaster"),
+          TimeSpan(Some(com.histmersion.api.catalogue.Year(-1615)), None, None, Some(com.histmersion.api.catalogue.Year(-1605))),
           geometry = Some(s"""{"type":"Point","coordinates":[150.0,$Lat]}"""),
           citekey = Some("zqec_src2020")
         )
@@ -161,7 +163,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
       rec("zztest", "a", "natural_disaster", -1610, 150.01, Some(6)), // the compiled event's kind is not eruption: new
       rec("zztest", "b", "eruption", -1200, 151.0, Some(4))
     )
-    val placed = CatalogMerge.place(records, stored, CatalogMerge.Tolerance(60, 30))
+    val placed = CatalogMerge.place(records, stored, CatalogMerge.Tolerance(com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km(60), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years(30)))
     // the first is natural_disaster like the compiled one, at its place and time: matched
     assertEquals(placed.map(_._2.eventId), List("zqec_compiled", "zztest_b"))
     val saved = EventFixtures.save(ds, placed)
@@ -178,7 +180,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
     // a second save of the same records changes nothing
     assertEquals(
       EventFixtures
-        .save(ds, CatalogMerge.place(records, EventFixtures.stored(ds), CatalogMerge.Tolerance(60, 30)))
+        .save(ds, CatalogMerge.place(records, EventFixtures.stored(ds), CatalogMerge.Tolerance(com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km(60), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years(30))))
         .created,
       0
     )
@@ -191,15 +193,15 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
         .map(_.id)
         .filter(i => i.startsWith("zqec") || i.startsWith("zztest"))
         .toSet
-    assertEquals(ids(more = EventSql.Narrow(tier = Some("catalogue"))), Set("zztest_b"))
-    assertEquals(ids(more = EventSql.Narrow(tier = Some("attested"))), Set("zqec_compiled"))
+    assertEquals(ids(more = EventSql.Narrow(tier = Some(com.histmersion.domain.catalogue.events.EventSql.Narrow.Tier("catalogue")))), Set("zztest_b"))
+    assertEquals(ids(more = EventSql.Narrow(tier = Some(com.histmersion.domain.catalogue.events.EventSql.Narrow.Tier("attested")))), Set("zqec_compiled"))
     assertEquals(ids(kind = Some("natural")), Set("zqec_compiled", "zztest_b"))
     assertEquals(ids(kind = Some("human")), Set.empty[String])
     // a source filter selects the compiled event; with the catalogue context, the catalogue's too
-    val bySource = Filter(tags = List("zqec"), period = Some(Period(-2000, -1000)))
+    val bySource = Filter(tags = List(com.histmersion.api.library.Filter.Tags("zqec")), period = Some(Period(com.histmersion.api.catalogue.Year(-2000), com.histmersion.api.catalogue.Year(-1000))))
     assertEquals(ids(bySource), Set("zqec_compiled"))
-    assertEquals(ids(bySource, more = EventSql.Narrow(context = true)), Set("zqec_compiled", "zztest_b"))
-    assertEquals(ids(more = EventSql.Narrow(area = BBox.parse("150.5,-41,151.5,-39"))), Set("zztest_b"))
+    assertEquals(ids(bySource, more = EventSql.Narrow(context = com.histmersion.domain.catalogue.events.EventSql.Narrow.Context(true))), Set("zqec_compiled", "zztest_b"))
+    assertEquals(ids(more = EventSql.Narrow(area = BBox.parse(com.histmersion.api.BBox.Text("150.5,-41,151.5,-39")))), Set("zztest_b"))
     val geo = EventFixtures.geo(
       ds,
       Filter(),
@@ -210,7 +212,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
       None,
       100,
       0.01,
-      EventSql.Narrow(tier = Some("catalogue"))
+      EventSql.Narrow(tier = Some(com.histmersion.domain.catalogue.events.EventSql.Narrow.Tier("catalogue")))
     )
     assertEquals(geo.events.find(_.id == "zztest_b").map(g => (g.tier, g.size)), Some(("catalogue", Some("VEI 4"))))
 
@@ -228,7 +230,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
       com.histmersion.api.library.Citekey("zqec_src2020"),
       1.1,
       findings = Nil,
-      passages = List(EventPassage(10, 26, "Zqecian eruption", "Zqecian eruption")),
+      passages = List(EventPassage(com.histmersion.api.catalogue.EventPassage.Start(10), com.histmersion.api.catalogue.EventPassage.End(26), com.histmersion.api.catalogue.EventPassage.Quote("Zqecian eruption"), com.histmersion.api.catalogue.EventPassage.Name("Zqecian eruption"))),
       reasons = List("names it")
     )
     EvidenceFixtures.saveCandidates(ds, "zztest_b", List(c))
@@ -246,10 +248,10 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
     val _ = AttestationRows.create(
       ds,
       Attestation.Put(
-        "zqec_src2020",
+        com.histmersion.api.library.Citekey("zqec_src2020"),
         AttestationTarget.Event,
-        "zztest_b",
-        quote = Some("Zqecian eruption"),
+        com.histmersion.api.catalogue.Attestation.TargetId("zztest_b"),
+        quote = Some(com.histmersion.api.catalogue.Attestation.Quote("Zqecian eruption")),
         charStart = Some(10),
         charEnd = Some(26)
       )
@@ -263,7 +265,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(EventFixtures.tierAndNames(ds, "zztest_b").map(_._1), Some(EventTier.Catalogue))
 
   test("lead facts count the findings around a catalogue event"):
-    val (_, rows) = EvidenceFixtures.leadRows(ds, Sql.of("e.id = ?", Param.S("zztest_b")), 300, 500, 5, 0)
+    val (_, rows) = EvidenceFixtures.leadRows(ds, Sql.of(com.histmersion.util.database.Sql.Text("e.id = ?"), Param.S(com.histmersion.util.database.Param.S.V("zztest_b"))), 300, 500, 5, 0)
     assertEquals(rows.map(r => (r.id, r.tier, r.vei, r.findingsNear)), List(("zztest_b", "catalogue", Some(4), 1)))
 
   test("an article's catalogue events: in its period, near its sources' findings, large enough"):
@@ -287,8 +289,8 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
       ds,
       List(
         Place.Input(
-          Place(com.histmersion.api.catalogue.Place.Id("zqec_site"), "Zqec site", com.histmersion.domain.catalogue.Place.Kind.Site, pt),
-          List(Place.Name("Zqec site"))
+          Place(com.histmersion.api.catalogue.Place.Id("zqec_site"), com.histmersion.api.catalogue.Place.Label("Zqec site"), com.histmersion.domain.catalogue.Place.Kind.Site, pt),
+          List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqec site")))
         )
       )
     )

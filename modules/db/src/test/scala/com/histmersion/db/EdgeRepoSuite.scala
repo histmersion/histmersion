@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.research.articles.ArticleFixtures
@@ -59,9 +61,9 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
 
   test("an edge to a source not stored yet is parked, listed as unresolved, and promoted when it arrives"):
     val a = s"${Prefix}a2020_x"; val b = s"${Prefix}b2021_y"
-    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(b), "challenges"))))
+    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(b), com.histmersion.api.library.Edge.Kind("challenges")))))
     // the domain read still carries it — a patch or an export must not lose it
-    assertEquals(SourceFixtures.load(ds, a).get.edges, List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(b), "challenges")))
+    assertEquals(SourceFixtures.load(ds, a).get.edges, List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(b), com.histmersion.api.library.Edge.Kind("challenges"))))
     assertEquals(
       CitationFixtures.neighbors(ds, a).map(n => (n.citekey, n.target)),
       Vector(b -> NeighborTarget.Unresolved)
@@ -78,8 +80,8 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
   test("a parked edge naming a compiled article is classified as an article"):
     val a = s"${Prefix}a2020_x"
     val slug = s"${Prefix}_topic"
-    val _ = ArticleFixtures.put(ds, Article(slug, "A topic", "concept", "# A topic", None, Nil, Nil, None))
-    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(slug), "updates"))))
+    val _ = ArticleFixtures.put(ds, Article(slug, com.histmersion.api.research.Article.Title("A topic"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("# A topic"), None, Nil, Nil, None))
+    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(slug), com.histmersion.api.library.Edge.Kind("updates")))))
     assertEquals(
       CitationFixtures.neighbors(ds, a).map(n => (n.citekey, n.target, n.title)),
       Vector((slug, NeighborTarget.Article, Some("A topic")))
@@ -91,7 +93,7 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
     val a = s"${Prefix}a2020_x"
     put(source(s"${Prefix}c2019_full"))
     put(source(s"${Prefix}d2018_one")); put(source(s"${Prefix}d2018_two"))
-    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(s"${Prefix}c2019"), "references"), Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(s"${Prefix}d2018"), "references"))))
+    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(s"${Prefix}c2019"), com.histmersion.api.library.Edge.Kind("references")), Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(s"${Prefix}d2018"), com.histmersion.api.library.Edge.Kind("references")))))
     assert(SourceFixtures.resolveEdges(ds) >= 1)
     assertEquals(
       CitationFixtures.neighbors(ds, a).map(n => (n.citekey, n.target)),
@@ -101,8 +103,8 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
   test("graph: every link joins two nodes of the result, whatever the depth cut-off"):
     val (a, b, c, d) = (s"${Prefix}a2020_x", s"${Prefix}b2021_y", s"${Prefix}c2019_z", s"${Prefix}d2018_w")
     List(b, c, d).foreach(k => put(source(k)))
-    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(b), "references"), Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey("not_a_source_topic"), "references"))))
-    put(source(c, edges = List(Edge(com.histmersion.api.library.Citekey(c), com.histmersion.api.library.Citekey(a), "challenges"), Edge(com.histmersion.api.library.Citekey(c), com.histmersion.api.library.Citekey(d), "references"))))
+    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(b), com.histmersion.api.library.Edge.Kind("references")), Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey("not_a_source_topic"), com.histmersion.api.library.Edge.Kind("references")))))
+    put(source(c, edges = List(Edge(com.histmersion.api.library.Citekey(c), com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Edge.Kind("challenges")), Edge(com.histmersion.api.library.Citekey(c), com.histmersion.api.library.Citekey(d), com.histmersion.api.library.Edge.Kind("references")))))
     val g1 = CitationFixtures.graph(ds, a, 1)
     assertEquals(g1.nodes.map(_.id).toSet, Set(a, b, c))
     assertEquals(g1.links.map(l => (l.source, l.target)).toSet, Set(a -> b, c -> a))
