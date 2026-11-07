@@ -43,7 +43,7 @@ final class CurrencyCheckPipeline(
     val goal = goalOf(ctx)
     for
       targets <- ctx.code[List[Target]](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(Right(load(goal)))
-      assessed <- ctx.code[Assessed]("assess")(Right(assess(ctx, targets)))
+      assessed <- ctx.code[Assessed](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("assess"))(Right(assess(ctx, targets)))
       followed <- ctx.code[Followed]("followups")(Right(followups(ctx, goal, targets)))
       line <- ctx.code[String]("close")(
         log(

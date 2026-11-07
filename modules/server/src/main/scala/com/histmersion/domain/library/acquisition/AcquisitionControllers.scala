@@ -765,7 +765,7 @@ final class AcquisitionControllers(
           authors = item.creator,
           year = item.year.map(com.histmersion.plugin.Year(_))
         ),
-        legalOnly = true
+        legalOnly = com.histmersion.pluginhost.FetchChain.LegalOnly(true)
       ).left
         .map(e => err(s"'${item.identifier}': $e"))
         .flatMap { f =>
