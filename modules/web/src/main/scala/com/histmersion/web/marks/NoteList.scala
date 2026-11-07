@@ -18,8 +18,8 @@ object NoteList:
     div(
       cls := "note-card",
       dataAttr("note") := n.id.value,
-      p(cls := "note-when muted", "Your note · ", child.text <-- Val(Ago.of(n.updatedAt))),
-      NoteView(n.text.value),
+      p(cls := "note-when muted", "Your note · ", child.text <-- Val(Ago.of(Ago.IsoDate(n.updatedAt.value)).value)),
+      NoteView(NoteMarkdown.Markdown(n.text.value)),
       div(
         cls := "btn-group note-card-acts",
         button(

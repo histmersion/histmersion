@@ -9,7 +9,7 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 
 /** A [[MapSurface]] over one MapLibre map. */
-final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZoom0, pixelRatio: Option[MapLibreSurface.PixelRatio], caps: Capabilities)
+final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pixelRatio: Option[MapEngine.PixelRatio], caps: Capabilities)
     extends MapSurface:
   import MapLibreEngine.ZoomShift
 
@@ -19,7 +19,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
       style = MapLibreStyles.blank(),
       center = js.Array(30.0, 37.0),
       zoom = 5 - ZoomShift,
-      maxZoom = maxZoom0 - ZoomShift,
+      maxZoom = maxZoom0.value - ZoomShift,
       renderWorldCopies = true,
       attributionControl = false,
       maxPitch = 0,
@@ -32,7 +32,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
       // observer resized it a second time, 50 ms later, sending every move event again
       trackResize = false
     )
-    pixelRatio.foreach(r => o.pixelRatio = r)
+    pixelRatio.foreach(r => o.pixelRatio = r.value)
     // MapLibre's own gestures (the zoom buttons, a double click, the keys, a drag's glide) ease unless it is told
     // the reader wants reduced motion: its one switch for them is this option, read when the map is made — the
     // reader's "Map motion" ([[MotionPref]]; under "follow the system" MapLibre reads the system itself, live)
@@ -53,37 +53,39 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
 
   // ── the view ─────────────────────────────────────────────────────────────────────────────────
 
-  def zoom: com.histmersion.web.map.MapSurface.Zoom = gl.getZoom() + ZoomShift
-  def maxZoom: com.histmersion.web.map.MapSurface.MaxZoom = gl.getMaxZoom() + ZoomShift
-  def setMaxZoom(z: com.histmersion.web.map.MapSurface.MaxZoom): Unit = { val _ = gl.setMaxZoom(z - ZoomShift) }
+  def zoom: com.histmersion.web.map.MapSurface.Zoom = MapSurface.Zoom(gl.getZoom() + ZoomShift)
+  def maxZoom: com.histmersion.web.map.MapSurface.MaxZoom = MapSurface.MaxZoom(gl.getMaxZoom() + ZoomShift)
+  def setMaxZoom(z: com.histmersion.web.map.MapSurface.MaxZoom): Unit = { val _ = gl.setMaxZoom(z.value - ZoomShift) }
   def center: LatLon = { val c = gl.getCenter(); LatLon(c.lat, c.lng) }
   def bounds: GeoBounds =
     val b = gl.getBounds()
-    GeoBounds(b.getSouth(), b.getWest(), b.getNorth(), b.getEast())
+    GeoBounds(GeoBounds.South(b.getSouth()), GeoBounds.West(b.getWest()), GeoBounds.North(b.getNorth()), GeoBounds.East(b.getEast()))
+  private def sizeNow(): (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension) =
+    (MapSurface.Dimension(el.clientWidth.toDouble), MapSurface.Dimension(el.clientHeight.toDouble))
   // the container's size, read when it changes (a layout read per marker per frame forced a layout each)
-  private var sizeV: (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension) = (el.clientWidth.toDouble, el.clientHeight.toDouble)
-  gl.on("resize", (_: GlEvent) => sizeV = (el.clientWidth.toDouble, el.clientHeight.toDouble))
+  private var sizeV: (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension) = sizeNow()
+  gl.on("resize", (_: GlEvent) => sizeV = sizeNow())
   def size: (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension) = sizeV
 
   // Every camera move the app asks for: animated only when the map animates now ([[MotionPref]]), and then
   // `essential` — MapLibre otherwise drops the ease itself when the system asks for reduced motion, and "always
   // animate" would not. A move that does not animate is a jump.
-  def setView(at: LatLon, z: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.maplibre.MapLibreSurface.SetViewAnimate): Unit =
-    val o = js.Dynamic.literal(center = js.Array(at.lon, at.lat), zoom = z - ZoomShift)
-    if MapLibreSurface.eases(animate) then { o.essential = true; val _ = gl.easeTo(o.asInstanceOf[js.Object]) }
+  def setView(at: LatLon, z: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.MapSurface.SetViewAnimate): Unit =
+    val o = js.Dynamic.literal(center = js.Array(at.lon.value, at.lat.value), zoom = z.value - ZoomShift)
+    if MapLibreSurface.eases(animate.value) then { o.essential = true; val _ = gl.easeTo(o.asInstanceOf[js.Object]) }
     else { val _ = gl.jumpTo(o.asInstanceOf[js.Object]) }
 
-  def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.maplibre.MapLibreSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.MaxZoom, animate: com.histmersion.web.map.maplibre.MapLibreSurface.FitBoundsAnimate): Unit =
+  def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.MapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.MaxZoom, animate: com.histmersion.web.map.MapSurface.FitBoundsAnimate): Unit =
     val _ = gl.fitBounds(
-      js.Array(js.Array(b.west, b.south), js.Array(b.east, b.north)),
-      MapLibreSurface.motion(animate, js.Dynamic.literal(padding = padding, maxZoom = maxZoom - ZoomShift))
+      js.Array(js.Array(b.west.value, b.south.value), js.Array(b.east.value, b.north.value)),
+      MapLibreSurface.motion(animate.value, js.Dynamic.literal(padding = padding.value, maxZoom = maxZoom.value - ZoomShift))
     )
 
-  def panBy(dx: com.histmersion.web.map.maplibre.MapLibreSurface.PanByDx, dy: com.histmersion.web.map.maplibre.MapLibreSurface.PanByDy, animate: com.histmersion.web.map.maplibre.MapLibreSurface.PanByAnimate): Unit =
-    val _ = gl.panBy(js.Array(dx, dy), MapLibreSurface.motion(animate, js.Dynamic.literal()))
+  def panBy(dx: com.histmersion.web.map.MapSurface.PanByDx, dy: com.histmersion.web.map.MapSurface.PanByDy, animate: com.histmersion.web.map.MapSurface.PanByAnimate): Unit =
+    val _ = gl.panBy(js.Array(dx.value, dy.value), MapLibreSurface.motion(animate.value, js.Dynamic.literal()))
 
-  def project(p: LatLon): ScreenPt = { val q = gl.project(js.Array(p.lon, p.lat)); ScreenPt(q.x, q.y) }
-  def unproject(p: ScreenPt): LatLon = { val ll = gl.unproject(js.Array(p.x, p.y)); LatLon(ll.lat, ll.lng) }
+  def project(p: LatLon): ScreenPt = { val q = gl.project(js.Array(p.lon.value, p.lat.value)); ScreenPt(q.x, q.y) }
+  def unproject(p: ScreenPt): LatLon = { val ll = gl.unproject(js.Array(p.x.value, p.y.value)); LatLon(ll.lat, ll.lng) }
 
   /** The container's new size taken — only when it changed (a resize sends every move event: the markers, the names and
     * the tiled layers follow those) — and the map drawn again AT ONCE, in the same frame: a resized canvas is blank
@@ -91,7 +93,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
     * whole map on every step of a sidebar drag or a filter row folded.
     */
   def resize(): Unit =
-    val now = (el.clientWidth.toDouble, el.clientHeight.toDouble)
+    val now = sizeNow()
     if now != sizeV then
       sizeV = now
       resizes += 1
@@ -99,7 +101,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
       val _ = gl.redraw()
   // `var`: how many times the container's size was taken (diagnostics: a chrome change resizes, nothing more)
   private var resizes = 0
-  override def resizeCount: Int = resizes
+  override def resizeCount: MapSurface.ResizeCount = MapSurface.ResizeCount(resizes)
   def isMoving: Boolean = gl.isMoving()
   def isDrawn: Boolean = !gl.isMoving() && gl.loaded() && gl.areTilesLoaded()
   def capabilities: Capabilities = caps
@@ -115,7 +117,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
         .asInstanceOf[js.Array[js.Dynamic]]
         .filter(l =>
           l.`type`.toString == "symbol" &&
-            !shapeSets.values.exists(_.layerIds.contains(l.id.toString))
+            !shapeSets.values.exists(_.layerIds.contains(MapSurface.LayerId(l.id.toString)))
         )
         .map(_.id.toString)
       if symbols.isEmpty then Nil
@@ -126,7 +128,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
           js.Dynamic.literal(layers = symbols).asInstanceOf[js.Object]
         ).toSeq
           .flatMap(f =>
-            f.properties.get(key).orElse(f.properties.get("name:en")).orElse(f.properties.get("name")).map(_.toString)
+            f.properties.get(key).orElse(f.properties.get("name:en")).orElse(f.properties.get("name")).map(t => MapSurface.LabelText(t.toString))
           )
           .distinct
   def baseMapLabels: Seq[(com.histmersion.web.map.MapSurface.LabelText, com.histmersion.web.map.MapSurface.LabelText, ScreenPt)] =
@@ -137,7 +139,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
         .asInstanceOf[js.Array[js.Dynamic]]
         .filter(l =>
           l.`type`.toString == "symbol" &&
-            !shapeSets.values.exists(_.layerIds.contains(l.id.toString))
+            !shapeSets.values.exists(_.layerIds.contains(MapSurface.LayerId(l.id.toString)))
         )
         .map(_.id.toString)
       if symbols.isEmpty then Nil
@@ -155,12 +157,12 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
               case "Point"      => ShapeHits.point(g)
               case "LineString" =>
                 val cs = g.coordinates.asInstanceOf[js.Array[js.Array[Double]]]
-                cs.lift(cs.length / 2).map(c => LatLon(c(1), c(0)))
+                cs.lift(cs.length / 2).map(c => LatLon(LatLon.Lat(c(1)), LatLon.Lon(c(0))))
               case "MultiLineString" =>
                 val cs = g.coordinates.asInstanceOf[js.Array[js.Array[js.Array[Double]]]].flatMap(identity)
-                cs.lift(cs.length / 2).map(c => LatLon(c(1), c(0)))
+                cs.lift(cs.length / 2).map(c => LatLon(LatLon.Lat(c(1)), LatLon.Lon(c(0))))
               case _ => None
-            for t <- text; a <- at yield (f.layer.id.toString, t, project(a))
+            for t <- text; a <- at yield (MapSurface.LabelText(f.layer.id.toString), MapSurface.LabelText(t), project(a))
           }
           .distinctBy((l, t, _) => (l, t))
   def baseMapAreasAt(p: ScreenPt): Seq[com.histmersion.web.map.MapSurface.LayerId] =
@@ -171,41 +173,43 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
         .asInstanceOf[js.Array[js.Dynamic]]
         .filter(l =>
           l.`type`.toString == "fill" &&
-            !shapeSets.values.exists(_.layerIds.contains(l.id.toString))
+            !shapeSets.values.exists(_.layerIds.contains(MapSurface.LayerId(l.id.toString)))
         )
         .map(_.id.toString)
       if fills.isEmpty then Nil
       else
-        gl.queryRenderedFeatures(js.Array(p.x, p.y), js.Dynamic.literal(layers = fills).asInstanceOf[js.Object])
+        gl.queryRenderedFeatures(js.Array(p.x.value, p.y.value), js.Dynamic.literal(layers = fills).asInstanceOf[js.Object])
           .toSeq
-          .map(f => s"${f.layer.id}:${f.properties.get("kind").fold("")(_.toString)}")
+          .map(f => MapSurface.LayerId(s"${f.layer.id}:${f.properties.get("kind").fold("")(_.toString)}"))
           .distinct
   def baseMapLayer(id: com.histmersion.web.map.MapSurface.LayerId): Option[com.histmersion.web.map.MapSurface.LayerId] =
-    gl.getLayer(id)
+    gl.getLayer(id.value)
       .toOption
-      .map(_ => Option(gl.getLayoutProperty(id, "visibility")).filterNot(js.isUndefined).fold("visible")(_.toString))
+      .map(_ => MapSurface.LayerId(Option(gl.getLayoutProperty(id.value, "visibility")).filterNot(js.isUndefined).fold("visible")(_.toString)))
   def baseMapDrawn(id: com.histmersion.web.map.MapSurface.LayerId): com.histmersion.web.map.MapSurface.DrawnCount =
-    if gl.getLayer(id).isEmpty then com.histmersion.web.map.MapSurface.DrawnCount(0)
+    if gl.getLayer(id.value).isEmpty then com.histmersion.web.map.MapSurface.DrawnCount(0)
     else
-      gl.queryRenderedFeatures(
-        js.undefined.asInstanceOf[js.Array[Double]],
-        js.Dynamic.literal(layers = js.Array(id)).asInstanceOf[js.Object]
-      ).length
+      com.histmersion.web.map.MapSurface.DrawnCount(
+        gl.queryRenderedFeatures(
+          js.undefined.asInstanceOf[js.Array[Double]],
+          js.Dynamic.literal(layers = js.Array(id.value)).asInstanceOf[js.Object]
+        ).length
+      )
   def destroy(): Unit = gl.remove()
 
   // ── events ───────────────────────────────────────────────────────────────────────────────────
 
-  private def name(k: MapEventKind): com.histmersion.web.map.maplibre.MapLibreSurface.EventName = k match
-    case MapEventKind.MoveStart    => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("movestart")
-    case MapEventKind.Move         => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("move")
-    case MapEventKind.MoveEnd      => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("moveend")
-    case MapEventKind.ZoomStart    => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("zoomstart")
-    case MapEventKind.ZoomEnd      => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("zoomend")
-    case MapEventKind.Resize       => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("resize")
-    case MapEventKind.Click        => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("click")
-    case MapEventKind.PointerMove  => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("mousemove")
-    case MapEventKind.PointerOut   => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("mouseout")
-    case MapEventKind.BaseMapReady => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("hd-basemap")
+  private def name(k: MapEventKind): String = k match
+    case MapEventKind.MoveStart    => "movestart"
+    case MapEventKind.Move         => "move"
+    case MapEventKind.MoveEnd      => "moveend"
+    case MapEventKind.ZoomStart    => "zoomstart"
+    case MapEventKind.ZoomEnd      => "zoomend"
+    case MapEventKind.Resize       => "resize"
+    case MapEventKind.Click        => "click"
+    case MapEventKind.PointerMove  => "mousemove"
+    case MapEventKind.PointerOut   => "mouseout"
+    case MapEventKind.BaseMapReady => "hd-basemap"
 
   // the base map's "drawn" listeners (our own event: the first `idle` after a new style)
   private val ready = mutable.ListBuffer.empty[MapEvent => Unit]
@@ -218,10 +222,10 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
       val h: js.Function1[js.Dynamic, Unit] = e =>
         val pt = Option(e.point)
           .filterNot(js.isUndefined)
-          .map(p => ScreenPt(p.x.asInstanceOf[Double], p.y.asInstanceOf[Double]))
+          .map(p => ScreenPt(ScreenPt.X(p.x.asInstanceOf[Double]), ScreenPt.Y(p.y.asInstanceOf[Double])))
         val ll = Option(e.lngLat)
           .filterNot(js.isUndefined)
-          .map(l => LatLon(l.lat.asInstanceOf[Double], l.lng.asInstanceOf[Double]))
+          .map(l => LatLon(LatLon.Lat(l.lat.asInstanceOf[Double]), LatLon.Lon(l.lng.asInstanceOf[Double])))
         val ne = Option(e.originalEvent).filterNot(js.isUndefined).map(_.asInstanceOf[dom.Event])
         f(MapEvent(pt, ll, ne))
       val n = name(kind)
@@ -254,12 +258,12 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
 
   // `var`: the credits of the style set last
   private var creditsV: Seq[com.histmersion.web.map.BaseMapSpec.Raster.Attribution] = Nil
-  override def credits: Seq[String] = creditsV
+  override def credits: Seq[com.histmersion.web.map.BaseMapSpec.Raster.Attribution] = creditsV
 
   def setBaseMap(b: BaseMapSpec): Unit =
     generation += 1
     b match
-      case v: BaseMapSpec.Vector => lang = v.lang
+      case v: BaseMapSpec.Vector => lang = v.lang.value
       case _                     => ()
     val mine = generation
     // the same style with other options (names, their language, contours): MapLibre's diff changes only the
@@ -269,8 +273,8 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
         p.style == v.style && p.status == v.status && p.reduced == v.reduced
       case _ => false
     lastSpec = Some(b)
-    def make(retry: com.histmersion.web.map.maplibre.MapLibreSurface.SetBaseMapMakeRetry): Unit =
-      MapLibreStyles.style(b, dom.window.location.origin).onComplete {
+    def make(retry: Boolean): Unit =
+      MapLibreStyles.style(b, MapLibreStyles.Origin(dom.window.location.origin)).onComplete {
         case scala.util.Success(style) =>
           // applied after the next paint: the input that asked for it (a checkbox, a menu) shows first, and the
           // style's work runs off that input
@@ -296,29 +300,29 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
               val _ = dom.window.setTimeout(() => if mine == generation && !leaving then make(retry = false), 1000)
             } else dom.console.error(s"the base map could not be made: ${e.getMessage}")
       }
-    make(retry = com.histmersion.web.map.maplibre.MapLibreSurface.SetBaseMapMakeRetry(true))
+    make(retry = true)
 
   // ── shapes ───────────────────────────────────────────────────────────────────────────────────
 
   private val shapeSets = mutable.LinkedHashMap.empty[String, GlShapes]
 
-  def shapes(id: com.histmersion.web.map.maplibre.MapLibreSurface.ShapesId, style: ShapeStyle): ShapeSet =
-    shapeSets.getOrElseUpdate(id, GlShapes(gl, id, style))
+  def shapes(id: com.histmersion.web.map.MapSurface.ShapesId, style: ShapeStyle): ShapeSet =
+    shapeSets.getOrElseUpdate(id.value, GlShapes(gl, NoMap.Shapes.Id(id.value), style))
 
-  def shapeSet(id: com.histmersion.web.map.maplibre.MapLibreSurface.ShapeSetId): Option[ShapeSet] = shapeSets.get(id)
+  def shapeSet(id: com.histmersion.web.map.MapSurface.ShapeSetId): Option[ShapeSet] = shapeSets.get(id.value)
 
   def shapesAt(p: ScreenPt): Seq[ShapeHit] =
     val at = unproject(p)
     shapeSets.values.toSeq.reverse
-      .filter(_.look.interactive)
-      .flatMap(set => set.under(at, p, this).map(ShapeHit(set.id, _)))
+      .filter(_.look.interactive.value)
+      .flatMap(set => set.under(at, p, this).map(fid => ShapeHit(ShapeHit.Set(set.id.value), ShapeHit.Id(fid.value))))
 
   // ── point layers from the server's tiles ─────────────────────────────────────────────────────
 
   private val pointSets = mutable.LinkedHashMap.empty[String, GlPointTiles]
 
-  def pointTiles(id: com.histmersion.web.map.MapSurface.LayerId, layer: com.histmersion.web.map.MapSurface.LayerId, maxZoom: com.histmersion.web.map.maplibre.MapLibreSurface.PointTilesMaxZoom): PointTiles =
-    pointSets.getOrElseUpdate(id, GlPointTiles(gl, id, layer, maxZoom))
+  def pointTiles(id: com.histmersion.web.map.MapSurface.LayerId, layer: com.histmersion.web.map.MapSurface.LayerId, maxZoom: com.histmersion.web.map.MapSurface.PointTilesMaxZoom): PointTiles =
+    pointSets.getOrElseUpdate(id.value, GlPointTiles(gl, id, layer, maxZoom))
 
   // ── popups ───────────────────────────────────────────────────────────────────────────────────
 
@@ -335,16 +339,16 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
       Option(e.querySelector(".maplibregl-popup-content")).collect { case h: dom.HTMLElement => h }.getOrElse(e)
     )
 
-  override def setLocked(locked: Boolean): Unit =
+  override def setLocked(locked: com.histmersion.web.map.MapSurface.Locked): Unit =
     List(gl.dragPan, gl.scrollZoom, gl.boxZoom, gl.doubleClickZoom, gl.keyboard, gl.touchZoomRotate).foreach { h =>
-      if locked then h.disable() else h.enable()
+      if locked.value then h.disable() else h.enable()
     }
-    if !locked then
+    if !locked.value then
       gl.touchZoomRotate.disableRotation()
       gl.keyboard.disableRotation()
-    el.classList.toggle("is-map-locked", locked)
+    el.classList.toggle("is-map-locked", locked.value)
 
-  def popup(at: LatLon, html: com.histmersion.web.map.maplibre.MapLibreSurface.PopupHtml, cls: com.histmersion.web.map.maplibre.MapLibreSurface.PopupCls): Popup =
+  def popup(at: LatLon, html: com.histmersion.web.map.MapSurface.PopupHtml, cls: com.histmersion.web.map.MapSurface.PopupCls): Popup =
     closePopups()
     val p = GlPopup(
       js.Dynamic
@@ -353,11 +357,11 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
           closeOnClick = true,
           maxWidth = "340px",
           offset = 14,
-          className = s"hd-popup $cls".trim
+          className = s"hd-popup ${cls.value}".trim
         )
         .asInstanceOf[js.Object]
     )
-    p.setLngLat(js.Array(at.lon, at.lat)).setHTML(html).addTo(gl)
+    p.setLngLat(js.Array(at.lon.value, at.lat.value)).setHTML(html.value).addTo(gl)
     popups += p
     p.on("close", _ => { val _ = popups -= p })
     new Popup:
@@ -368,48 +372,11 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
   def closePopups(): Unit = popups.toList.foreach(_.remove())
 
 object MapLibreSurface:
-  type EventName = EventName.T
-  object EventName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** Does a camera move the caller wants `animated` ease — only while the map animates ([[MotionPref]]). */
-  type SetBaseMapMakeRetry = SetBaseMapMakeRetry.T
-  object SetBaseMapMakeRetry extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type MaxZoom0 = com.histmersion.web.map.MapSurface.MaxZoom
-  val MaxZoom0: _root_.com.histmersion.web.map.MapSurface.MaxZoom.type = _root_.com.histmersion.web.map.MapSurface.MaxZoom
-  type PixelRatio = PixelRatio.T
-  object PixelRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type SetViewAnimate = SetViewAnimate.T
-  object SetViewAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FitBoundsPadding = FitBoundsPadding.T
-  object FitBoundsPadding extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FitBoundsAnimate = FitBoundsAnimate.T
-  object FitBoundsAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PanByDx = PanByDx.T
-  object PanByDx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PanByDy = PanByDy.T
-  object PanByDy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PanByAnimate = PanByAnimate.T
-  object PanByAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShapesId = ShapesId.T
-  object ShapesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShapeSetId = ShapeSetId.T
-  object ShapeSetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointTilesMaxZoom = PointTilesMaxZoom.T
-  object PointTilesMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PopupHtml = PopupHtml.T
-  object PopupHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PopupCls = PopupCls.T
-  object PopupCls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EasesAnimated = EasesAnimated.T
-  object EasesAnimated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MotionAnimated = _root_.com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated
-  val MotionAnimated: _root_.com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated.type = _root_.com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated
-
-  def eases(animated: com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated): Boolean = animated && MotionPref.animate()
+  private[maplibre] def eases(animated: Boolean): Boolean = animated && MotionPref.animate()
 
   /** `o` with the motion of a camera move: `animate`, and `essential` when it eases (see `setView`). */
-  def motion(animated: com.histmersion.web.map.maplibre.MapLibreSurface.MotionAnimated, o: js.Dynamic): js.Object =
+  private[maplibre] def motion(animated: Boolean, o: js.Dynamic): js.Object =
     val e = eases(animated)
     o.animate = e
     if e then o.essential = true

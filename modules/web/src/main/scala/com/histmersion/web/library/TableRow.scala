@@ -12,61 +12,45 @@ import com.histmersion.api.research.Article
   */
 final case class TableRow(
     key: TableRow.Key,
-    title: TableRow.Title,
-    byline: TableRow.Byline,
-    year: Option[TableRow.Year],
+    title: String,
+    byline: String,
+    year: Option[com.histmersion.api.catalogue.Year],
     status: Option[Source.Status],
-    kind: TableRow.Kind,
-    period: TableRow.Period,
-    page: TableRow.Page
+    kind: String,
+    period: String,
+    page: String
 )
 
 object TableRow:
-  type Authors = Authors.T
-  object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** The authors as the table shows them: the first three, then "et al.". */
 
-  type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Title = com.histmersion.api.library.Title
-  val Title: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title
-  type Byline = Byline.T
-  object Byline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Year = Year.T
-  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Period = Period.T
-  object Period extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Page = Page.T
-  object Page extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  def authors(names: List[com.histmersion.api.library.AuthorName]): com.histmersion.web.library.TableRow.Authors =
+  type Key = com.histmersion.api.personal.ItemKey
+  val Key: _root_.com.histmersion.api.personal.ItemKey.type = _root_.com.histmersion.api.personal.ItemKey
+  def authors(names: List[String]): String =
     val named = names.map(_.trim).filter(_.nonEmpty)
     if named.size <= 3 then named.mkString(", ") else named.take(3).mkString(", ") + " et al."
 
   def of(h: Hit): TableRow =
     val s = h.source
     TableRow(
-      s.citekey.value.toString,
+      Key(s.citekey.value),
       s.title.value,
       authors(s.authors.map(_.value)),
-      s.year.map(_.value.toInt),
+      s.year,
       Some(s.status),
-      com.histmersion.web.library.TableRow.Kind(""),
+      "",
       YearFmt.period(s.periodStart, s.periodEnd),
-      SourceLink.href(s.citekey.value.toString)
+      SourceLink.href(s.citekey)
     )
 
   def of(a: Article.Summary): TableRow =
     TableRow(
-      a.slug,
-      a.title,
-      a.regions.map(Label.display).mkString(" · "),
+      Key(a.slug.value),
+      a.title.value,
+      a.regions.map(r => Label.display(Label.Text(r.value)).value).mkString(" · "),
       None,
       None,
-      Wording.capitalize(Label.display(a.kind.trim)),
+      Wording.capitalize(Label.display(Label.Text(a.kind.value.trim)).value),
       YearFmt.period(a.periodStart, a.periodEnd),
       ArticleLink.href(a.slug)
     )

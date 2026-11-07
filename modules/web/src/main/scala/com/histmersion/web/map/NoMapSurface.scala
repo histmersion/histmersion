@@ -9,10 +9,10 @@ import scala.collection.mutable
   * works on: every call is answered and draws nothing, markers are kept off screen, so the list, the timeline and the
   * windows behave as with a map.
   */
-final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capabilities, maxZoom0: NoMapSurface.MaxZoom0) extends MapSurface:
+final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capabilities, maxZoom0: MapSurface.MaxZoom) extends MapSurface:
 
   // `var`s: the view the app asked for, kept so it reads back what it set; the max zoom
-  private var at = LatLon(37.0, 30.0)
+  private var at = LatLon(LatLon.Lat(37.0), LatLon.Lon(30.0))
   private var z = 5.0
   private var maxZ = maxZoom0
 
@@ -20,7 +20,7 @@ final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capab
   private val note = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
   note.className = "map-unavailable"
   note.setAttribute("role", "alert")
-  note.innerHTML = NoMap.html(why)
+  note.innerHTML = NoMap.html(why).value
   el.appendChild(note)
   // the markers' panes live here, hidden: nothing of them is ever shown
   private val overlay = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
@@ -38,18 +38,18 @@ final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capab
     .toMap
   private val sets = mutable.LinkedHashMap.empty[String, ShapeSet]
 
-  def zoom: com.histmersion.web.map.MapSurface.Zoom = z
+  def zoom: com.histmersion.web.map.MapSurface.Zoom = MapSurface.Zoom(z)
   def maxZoom: com.histmersion.web.map.MapSurface.MaxZoom = maxZ
   def setMaxZoom(v: com.histmersion.web.map.MapSurface.MaxZoom): Unit = maxZ = v
   def center: LatLon = at
   def bounds: GeoBounds = GeoBounds(com.histmersion.web.map.GeoBounds.South(-85), com.histmersion.web.map.GeoBounds.West(-180), com.histmersion.web.map.GeoBounds.North(85), com.histmersion.web.map.GeoBounds.East(180))
-  def size: (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension) = (0.0, 0.0)
-  def setView(p: LatLon, zoom: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.NoMapSurface.SetViewAnimate = com.histmersion.web.map.MapSurface.SetViewAnimate(false)): Unit = { at = p; z = zoom.min(maxZ) }
-  def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.NoMapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.MaxZoom, animate: com.histmersion.web.map.NoMapSurface.FitBoundsAnimate = com.histmersion.web.map.MapSurface.FitBoundsAnimate(true)): Unit =
-    at = LatLon((b.south + b.north) / 2, (b.west + b.east) / 2)
-  def panBy(dx: com.histmersion.web.map.NoMapSurface.PanByDx, dy: com.histmersion.web.map.NoMapSurface.PanByDy, animate: com.histmersion.web.map.NoMapSurface.PanByAnimate = com.histmersion.web.map.MapSurface.PanByAnimate(false)): Unit = ()
+  def size: (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension) = (MapSurface.Dimension(0.0), MapSurface.Dimension(0.0))
+  def setView(p: LatLon, zoom: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.MapSurface.SetViewAnimate = com.histmersion.web.map.MapSurface.SetViewAnimate(false)): Unit = { at = p; z = math.min(zoom.value, maxZ.value) }
+  def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.MapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.MaxZoom, animate: com.histmersion.web.map.MapSurface.FitBoundsAnimate = com.histmersion.web.map.MapSurface.FitBoundsAnimate(true)): Unit =
+    at = LatLon(LatLon.Lat((b.south.value + b.north.value) / 2), LatLon.Lon((b.west.value + b.east.value) / 2))
+  def panBy(dx: com.histmersion.web.map.MapSurface.PanByDx, dy: com.histmersion.web.map.MapSurface.PanByDy, animate: com.histmersion.web.map.MapSurface.PanByAnimate = com.histmersion.web.map.MapSurface.PanByAnimate(false)): Unit = ()
   // far outside any view: a marker placed here is hidden, never moved ([[MarkerPane]])
-  def project(p: LatLon): ScreenPt = ScreenPt(-1e6, -1e6)
+  def project(p: LatLon): ScreenPt = ScreenPt(ScreenPt.X(-1e6), ScreenPt.Y(-1e6))
   def unproject(p: ScreenPt): LatLon = at
   def resize(): Unit = ()
   def isMoving: Boolean = false
@@ -59,11 +59,11 @@ final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capab
   def overlayRoot: dom.HTMLElement = overlay
   def corner(c: Corner): dom.HTMLElement = corners(c)
   def setBaseMap(b: BaseMapSpec): Unit = ()
-  def shapes(id: com.histmersion.web.map.NoMapSurface.ShapesId, style: ShapeStyle): ShapeSet = sets.getOrElseUpdate(id, NoMap.Shapes(id))
-  def shapeSet(id: com.histmersion.web.map.NoMapSurface.ShapeSetId): Option[ShapeSet] = sets.get(id)
+  def shapes(id: com.histmersion.web.map.MapSurface.ShapesId, style: ShapeStyle): ShapeSet = sets.getOrElseUpdate(id.value, NoMap.Shapes(NoMap.Shapes.Id(id.value)))
+  def shapeSet(id: com.histmersion.web.map.MapSurface.ShapeSetId): Option[ShapeSet] = sets.get(id.value)
   def shapesAt(p: ScreenPt): Seq[ShapeHit] = Nil
-  def pointTiles(id: com.histmersion.web.map.MapSurface.LayerId, layer: com.histmersion.web.map.MapSurface.LayerId, maxZoom: com.histmersion.web.map.NoMapSurface.PointTilesMaxZoom): PointTiles = NoMap.Tiles
-  def popup(at: LatLon, html: com.histmersion.web.map.NoMapSurface.PopupHtml, cls: com.histmersion.web.map.NoMapSurface.PopupCls = com.histmersion.web.map.MapSurface.PopupCls("")): Popup = new Popup:
+  def pointTiles(id: com.histmersion.web.map.MapSurface.LayerId, layer: com.histmersion.web.map.MapSurface.LayerId, maxZoom: com.histmersion.web.map.MapSurface.PointTilesMaxZoom): PointTiles = NoMap.Tiles
+  def popup(at: LatLon, html: com.histmersion.web.map.MapSurface.PopupHtml, cls: com.histmersion.web.map.MapSurface.PopupCls = com.histmersion.web.map.MapSurface.PopupCls("")): Popup = new Popup:
     def close(): Unit = ()
     def isOpen: Boolean = false
     def element: Option[dom.HTMLElement] = None
@@ -77,36 +77,8 @@ final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capab
   def destroy(): Unit = { note.remove(); overlay.remove() }
 
   /** Why there is no map (what the message says first). */
-  def unavailable: com.histmersion.web.map.NoMapSurface.Problem = why
+  def unavailable: com.histmersion.web.map.NoMapSurface.Why = why
 
 object NoMapSurface:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   type Why = Why.T
   object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxZoom0 = com.histmersion.web.map.MapSurface.MaxZoom
-  val MaxZoom0: _root_.com.histmersion.web.map.MapSurface.MaxZoom.type = _root_.com.histmersion.web.map.MapSurface.MaxZoom
-
-  type SetViewAnimate = SetViewAnimate.T
-  object SetViewAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FitBoundsPadding = FitBoundsPadding.T
-  object FitBoundsPadding extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FitBoundsAnimate = FitBoundsAnimate.T
-  object FitBoundsAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PanByDx = PanByDx.T
-  object PanByDx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PanByDy = PanByDy.T
-  object PanByDy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PanByAnimate = PanByAnimate.T
-  object PanByAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShapesId = ShapesId.T
-  object ShapesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShapeSetId = ShapeSetId.T
-  object ShapeSetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointTilesMaxZoom = PointTilesMaxZoom.T
-  object PointTilesMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PopupHtml = PopupHtml.T
-  object PopupHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PopupCls = PopupCls.T
-  object PopupCls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -194,7 +194,7 @@ object ApprovalsView:
               w.title.map(_.value).getOrElse(w.doi.value),
               s" (${w.year.fold("n.d.")(_.toString)}) ",
               a(href := s"https://doi.org/${w.doi}", target := "_blank", rel := "noopener", w.doi.value),
-              if w.inCorpus.value then span(" — in the corpus as ", w.citekey.fold(span("?"))(ck => SourceLink(SourceLink.ApplyCitekey(ck.value))))
+              if w.inCorpus.value then span(" — in the corpus as ", w.citekey.fold(span("?"))(ck => SourceLink(ck)))
               else span(cls := "muted", if w.isOa.value then " — to acquire (open access)" else " — to acquire"),
               Option(w.why.value).filter(_.nonEmpty).map(y => div(cls := "muted", y))
             )
@@ -248,8 +248,8 @@ object ApprovalsView:
     */
   private val list = PolledList[ApprovalInfo](
     fetch = (upTo, before) => ApiClient.approvals(currentFilter(), Some(Limit), upTo = upTo, before = before),
-    id = a => com.histmersion.web.PolledList.IdResult(key(a)),
-    live = (_, _) => com.histmersion.web.PolledList.LiveResult(false)
+    id = a => PolledList.ItemId(key(a)),
+    live = (_, _) => false
   )
   private val busy = Var(Set.empty[ApprovalInfo.Id])
 
@@ -531,9 +531,9 @@ object ApprovalsView:
           ApprovalKind.parse(Approval.Kind.Wire(a.kind.value)) match
             case Some(ApprovalKind.Edge) =>
               span(
-                SourceLink(SourceLink.ApplyCitekey(a.citekey.value)),
+                SourceLink(a.citekey),
                 s" ${a.edgeKind.map(_.value.replace('_', ' ')).getOrElse("?")} ",
-                a.target.fold(span("?"))(t => SourceLink(SourceLink.ApplyCitekey(t.value)))
+                a.target.fold(span("?"))(t => SourceLink(com.histmersion.api.library.Citekey(t.value)))
               )
             case Some(ApprovalKind.GoalPlan) =>
               span(
@@ -568,7 +568,7 @@ object ApprovalsView:
             case _                                                                 =>
               span(
                 "status of ",
-                SourceLink(SourceLink.ApplyCitekey(a.citekey.value)),
+                SourceLink(a.citekey),
                 s": ${a.current.getOrElse("?")} → ",
                 strong(a.status.fold("?")(_.value))
               )

@@ -21,22 +21,6 @@ object Viewport:
   object ModeWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ModeHeight = ModeHeight.T
   object ModeHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ModeCoarsePointer = ModeCoarsePointer.T
-  object ModeCoarsePointer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ModeMaxWidth = ModeMaxWidth.T
-  object ModeMaxWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ModeMaxHeight = ModeMaxHeight.T
-  object ModeMaxHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ModeTabletMaxWidth = ModeTabletMaxWidth.T
-  object ModeTabletMaxWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryMaxWidth = QueryMaxWidth.T
-  object QueryMaxWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryMaxHeight = QueryMaxHeight.T
-  object QueryMaxHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TabletQueryTabletMaxWidth = TabletQueryTabletMaxWidth.T
-  object TabletQueryTabletMaxWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Narrow = Narrow.T
-  object Narrow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Mode(val wire: Mode.Wire):
     case Narrow extends Mode(com.histmersion.web.Viewport.Mode.Wire("narrow"))
@@ -53,26 +37,26 @@ object Viewport:
   def mode(
       width: com.histmersion.web.Viewport.ModeWidth,
       height: com.histmersion.web.Viewport.ModeHeight,
-      coarsePointer: com.histmersion.web.Viewport.ModeCoarsePointer,
-      maxWidth: com.histmersion.web.Viewport.ModeMaxWidth,
-      maxHeight: com.histmersion.web.Viewport.ModeMaxHeight,
-      tabletMaxWidth: com.histmersion.web.Viewport.ModeTabletMaxWidth
+      coarsePointer: Boolean,
+      maxWidth: UiConfig.NarrowMaxWidthPx,
+      maxHeight: UiConfig.NarrowMaxHeightPx,
+      tabletMaxWidth: UiConfig.TabletMaxWidthPx
   ): Mode =
-    if width <= maxWidth || (coarsePointer && height <= maxHeight) then Mode.Narrow
-    else if width <= tabletMaxWidth then Mode.Tablet
+    if width.value <= maxWidth.value || (coarsePointer && height.value <= maxHeight.value) then Mode.Narrow
+    else if width.value <= tabletMaxWidth.value then Mode.Tablet
     else Mode.Wide
 
   /** The phone's rule as a media query, so the browser tells us when it flips. */
-  def query(maxWidth: com.histmersion.web.Viewport.QueryMaxWidth, maxHeight: com.histmersion.web.Viewport.QueryMaxHeight): com.histmersion.web.Viewport.MediaQuery =
-    s"(max-width: ${maxWidth}px), (max-height: ${maxHeight}px) and (pointer: coarse)"
+  def query(maxWidth: UiConfig.NarrowMaxWidthPx, maxHeight: UiConfig.NarrowMaxHeightPx): com.histmersion.web.Viewport.MediaQuery =
+    MediaQuery(s"(max-width: ${maxWidth.value}px), (max-height: ${maxHeight.value}px) and (pointer: coarse)")
 
   /** The tablet's: every width up to its own limit (the phone's query is asked first). */
-  def tabletQuery(tabletMaxWidth: com.histmersion.web.Viewport.TabletQueryTabletMaxWidth): com.histmersion.web.Viewport.MediaQuery = s"(max-width: ${tabletMaxWidth}px)"
+  def tabletQuery(tabletMaxWidth: UiConfig.TabletMaxWidthPx): com.histmersion.web.Viewport.MediaQuery = MediaQuery(s"(max-width: ${tabletMaxWidth.value}px)")
 
   private val current = Var(Mode.Wide)
 
   val modeSignal: Signal[Mode] = current.signal.distinct
-  val narrow: Signal[com.histmersion.web.Viewport.Narrow] = current.signal.map(_ != Mode.Wide)
+  val narrow: Signal[Boolean] = current.signal.map(_ != Mode.Wide)
   def narrowNow: Boolean = current.now() != Mode.Wide
   def tabletNow: Boolean = current.now() == Mode.Tablet
 
@@ -81,12 +65,12 @@ object Viewport:
     def apply(m: Mode): Unit =
       current.set(m)
       val root = dom.document.documentElement
-      root.setAttribute("data-layout", m.wire)
+      root.setAttribute("data-layout", m.wire.value)
       if m == Mode.Tablet then root.setAttribute("data-tablet", "") else root.removeAttribute("data-tablet")
     val queries = Try(
       (
-        dom.window.matchMedia(query(ui.narrowMaxWidthPx, ui.narrowMaxHeightPx)),
-        dom.window.matchMedia(tabletQuery(ui.tabletMaxWidthPx))
+        dom.window.matchMedia(query(ui.narrowMaxWidthPx, ui.narrowMaxHeightPx).value),
+        dom.window.matchMedia(tabletQuery(ui.tabletMaxWidthPx).value)
       )
     ).toOption
     queries match
@@ -100,8 +84,8 @@ object Viewport:
         val coarse = Try(dom.window.matchMedia("(pointer: coarse)").matches).getOrElse(false)
         apply(
           mode(
-            dom.window.innerWidth,
-            dom.window.innerHeight,
+            ModeWidth(dom.window.innerWidth),
+            ModeHeight(dom.window.innerHeight),
             coarse,
             ui.narrowMaxWidthPx,
             ui.narrowMaxHeightPx,

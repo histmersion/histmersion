@@ -11,89 +11,81 @@ import scala.scalajs.js.JSConverters.*
 /** One [[ShapeSet]] as a GeoJSON source and its layers. Its features carry numeric ids (feature state needs them) and
   * their own id as `hid`; colour and visibility live in feature state, so a restyle never sends the geometry again.
   */
-final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look: ShapeStyle) extends ShapeSet:
+final private[maplibre] class GlShapes(gl: GlMap, val id: NoMap.Shapes.Id, val look: ShapeStyle) extends ShapeSet:
   // `var`s: the next numeric id, and what is drawn: our id → (numeric id, geometry, colour, alpha, dashed)
+  private val sourceId: String = id.value
   private var next = 1
   final private class Drawn(
-      val n: Drawn.N,
+      val n: Int,
       val geometry: js.Any,
-      var colour: Drawn.Colour,
-      var alpha: Drawn.Alpha,
-      val dashed: Drawn.Dashed
+      var colour: ShapeFeature.Colour,
+      var alpha: ShapeFeature.Alpha,
+      val dashed: ShapeFeature.Dashed
   ):
     lazy val bounds: Option[GeoBounds] = GeoBounds.ofGeometry(geometry.asInstanceOf[js.Dynamic])
 
-  object Drawn:
-    type N = N.T
-    object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Colour = Colour.T
-    object Colour extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Alpha = Alpha.T
-    object Alpha extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Dashed = Dashed.T
-    object Dashed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  private val drawn = mutable.LinkedHashMap.empty[String, Drawn]
-  private val numeric = mutable.HashMap.empty[String, Int]
+  private val drawn = mutable.LinkedHashMap.empty[ShapeFeature.Id, Drawn]
+  private val numeric = mutable.HashMap.empty[ShapeFeature.Id, Int]
   // the shapes whose colour or visibility was set in place (feature state): only these need it again
   // after the geometry is sent anew — the others carry theirs in their properties
-  private val stated = mutable.HashSet.empty[String]
+  private val stated = mutable.HashSet.empty[ShapeFeature.Id]
 
   private def colourExpr: js.Any = look.colour match
-    case Some(c) => c
+    case Some(c) => c.value
     case None    => js.Array("coalesce", js.Array("feature-state", "c"), js.Array("get", "c"))
   private val alphaExpr: js.Array[js.Any] = js.Array("coalesce", js.Array("feature-state", "a"), js.Array("get", "a"))
-  private def times(k: com.histmersion.web.map.maplibre.GlShapes.AlphaFactor): js.Any = js.Array("*", k, alphaExpr)
+  private def times(k: Double): js.Any = js.Array("*", k, alphaExpr)
   private val notPoint = js.Array("!=", js.Array("geometry-type"), "Point")
 
   def layerIds: List[com.histmersion.web.map.MapSurface.LayerId] =
     List(
-      Option.when(look.fillOpacity > 0)(s"$id-fill"),
-      Some(s"$id-line"),
-      Option.when(look.dash.nonEmpty)(s"$id-dashed"),
-      Option.when(look.circleRadius > 0)(s"$id-points")
+      Option.when(look.fillOpacity.value > 0)(MapSurface.LayerId(s"$sourceId-fill")),
+      Some(MapSurface.LayerId(s"$sourceId-line")),
+      Option.when(look.dash.nonEmpty)(MapSurface.LayerId(s"$sourceId-dashed")),
+      Option.when(look.circleRadius.value > 0)(MapSurface.LayerId(s"$sourceId-points"))
     ).flatten
 
   private def layers: List[js.Object] =
-    val fill = Option.when(look.fillOpacity > 0)(
+    val fill = Option.when(look.fillOpacity.value > 0)(
       js.Dynamic.literal(
-        id = s"$id-fill",
+        id = s"$sourceId-fill",
         `type` = "fill",
-        source = id,
+        source = sourceId,
         filter = notPoint,
-        paint = js.Dynamic.literal(`fill-color` = colourExpr, `fill-opacity` = times(look.fillOpacity))
+        paint = js.Dynamic.literal(`fill-color` = colourExpr, `fill-opacity` = times(look.fillOpacity.value))
       )
     )
     val solid = js.Dynamic.literal(
-      id = s"$id-line",
+      id = s"$sourceId-line",
       `type` = "line",
-      source = id,
+      source = sourceId,
       filter = if look.dash.isEmpty then notPoint else js.Array("all", notPoint, js.Array("!", js.Array("get", "d"))),
       layout = js.Dynamic.literal(`line-join` = "round"),
       paint = js.Dynamic
-        .literal(`line-color` = colourExpr, `line-width` = look.lineWidth, `line-opacity` = times(look.lineOpacity))
+        .literal(`line-color` = colourExpr, `line-width` = look.lineWidth.value, `line-opacity` = times(look.lineOpacity.value))
     )
     val dashed = Option.when(look.dash.nonEmpty)(
       js.Dynamic.literal(
-        id = s"$id-dashed",
+        id = s"$sourceId-dashed",
         `type` = "line",
-        source = id,
+        source = sourceId,
         filter = js.Array("all", notPoint, js.Array("get", "d")),
         paint = js.Dynamic.literal(
           `line-color` = colourExpr,
-          `line-width` = look.lineWidth,
-          `line-opacity` = times(look.dashedLineOpacity.getOrElse(look.lineOpacity)),
-          `line-dasharray` = look.dash.toJSArray
+          `line-width` = look.lineWidth.value,
+          `line-opacity` = times(look.dashedLineOpacity.map(_.value).getOrElse(look.lineOpacity.value)),
+          `line-dasharray` = look.dash.map(_.value).toJSArray
         )
       )
     )
-    val points = Option.when(look.circleRadius > 0)(
+    val points = Option.when(look.circleRadius.value > 0)(
       js.Dynamic.literal(
-        id = s"$id-points",
+        id = s"$sourceId-points",
         `type` = "circle",
-        source = id,
+        source = sourceId,
         filter = js.Array("==", js.Array("geometry-type"), "Point"),
         paint = js.Dynamic.literal(
-          `circle-radius` = look.circleRadius,
+          `circle-radius` = look.circleRadius.value,
           `circle-color` = colourExpr,
           `circle-opacity` = times(0.9),
           `circle-stroke-width` = 2,
@@ -101,7 +93,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look:
         )
       )
     )
-    (fill.toList :+ solid) ++ dashed.toList ++ points.toList map (_.asInstanceOf[js.Object])
+    ((fill.toList :+ solid) ++ dashed.toList ++ points.toList).map(_.asInstanceOf[js.Object])
 
   private def collection: js.Object =
     js.Dynamic
@@ -112,7 +104,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look:
             `type` = "Feature",
             id = d.n,
             geometry = d.geometry,
-            properties = js.Dynamic.literal(hid = k, c = d.colour, a = d.alpha, d = d.dashed)
+            properties = js.Dynamic.literal(hid = k.value, c = d.colour.value, a = d.alpha.value, d = d.dashed.value)
           )
         }.toJSArray
       )
@@ -122,8 +114,8 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look:
   def restore(): Unit =
     if gl.isStyleLoaded() || gl.getStyle() != null then
       scala.util.Try {
-        if gl.getSource(id).isEmpty then
-          gl.addSource(id, js.Dynamic.literal(`type` = "geojson", data = collection).asInstanceOf[js.Object])
+        if gl.getSource(sourceId).isEmpty then
+          gl.addSource(sourceId, js.Dynamic.literal(`type` = "geojson", data = collection).asInstanceOf[js.Object])
         layers.foreach(l =>
           if gl.getLayer(l.asInstanceOf[js.Dynamic].id.asInstanceOf[String]).isEmpty then gl.addLayer(l)
         )
@@ -133,8 +125,8 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look:
   private def state(d: Drawn): Unit =
     scala.util.Try(
       gl.setFeatureState(
-        js.Dynamic.literal(source = id, id = d.n).asInstanceOf[js.Object],
-        js.Dynamic.literal(c = d.colour, a = d.alpha).asInstanceOf[js.Object]
+        js.Dynamic.literal(source = sourceId, id = d.n).asInstanceOf[js.Object],
+        js.Dynamic.literal(c = d.colour.value, a = d.alpha.value).asInstanceOf[js.Object]
       )
     )
 
@@ -144,8 +136,8 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look:
 
   // `var`: how many times the outlines were sent (diagnostics)
   private var sent = 0
-  override def uploads: Int = sent
-  override def styleOf(k: String): Option[(String, Double)] = drawn.get(k).map(d => (d.colour, d.alpha))
+  override def uploads: ShapeSet.UploadCount = ShapeSet.UploadCount(sent)
+  override def styleOf(k: ShapeFeature.Id): Option[(ShapeStyle.Colour, ShapeFeature.Alpha)] = drawn.get(k).map(d => (ShapeStyle.Colour(d.colour.value), d.alpha))
 
   /** The shapes under map point `at` (screen point `p`), topmost (last drawn) first: an area that holds it, a point
     * within its circle.
@@ -153,22 +145,24 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look:
   def under(at: LatLon, p: ScreenPt, s: MapSurface): Seq[com.histmersion.web.map.ShapeFeature.Id] =
     // a shape faded out (playback's states before and after their years) answers nothing
     drawn.toSeq.reverseIterator
-      .filter((_, d) => d.alpha > 0.05)
+      .filter((_, d) => d.alpha.value > 0.05)
       .filter { (_, d) =>
         ShapeHits.point(d.geometry.asInstanceOf[js.Dynamic]) match
           case Some(q) =>
             val sp = s.project(q)
-            math.hypot(sp.x - p.x, sp.y - p.y) <= look.circleRadius + 3
+            math.hypot(sp.x.value - p.x.value, sp.y.value - p.y.value) <= look.circleRadius.value + 3
           case None =>
-            d.bounds.exists(b => at.lat >= b.south && at.lat <= b.north) && {
+            d.bounds.exists(b => at.lat.value >= b.south.value && at.lat.value <= b.north.value) && {
               // the copy of the world the shape's bounds are in
-              val lon = d.bounds.fold(at.lon)(b =>
-                if at.lon < b.west then at.lon + 360 else if at.lon > b.east then at.lon - 360 else at.lon
+              val lon = d.bounds.fold(at.lon.value)(b =>
+                if at.lon.value < b.west.value then at.lon.value + 360
+                else if at.lon.value > b.east.value then at.lon.value - 360
+                else at.lon.value
               )
-              d.bounds.exists(b => lon >= b.west && lon <= b.east) && ShapeHits.contains(
+              d.bounds.exists(b => lon >= b.west.value && lon <= b.east.value) && ShapeHits.contains(
                 d.geometry.asInstanceOf[js.Dynamic],
                 at.lat,
-                lon
+                LatLon.Lon(lon)
               )
             }
       }
@@ -187,7 +181,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look:
         val n = numeric.getOrElseUpdate(s.id, { next += 1; next })
         drawn(s.id) = Drawn(n, s.geometry, s.colour, s.alpha, s.dashed)
       }
-      gl.getSource(id).toOption match
+      gl.getSource(sourceId).toOption match
         case Some(src) =>
           sent += 1
           src.setData(collection)
@@ -209,12 +203,12 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look:
     */
   private def sameGeometry(a: js.Any, b: js.Any): Boolean =
     (a eq b) || {
-      def sig(g: js.Any): com.histmersion.web.map.maplibre.GlShapes.GeometrySignature =
+      def sig(g: js.Any): String =
         val d = g.asInstanceOf[js.Dynamic]
-        if js.isUndefined(d) || d == null then com.histmersion.web.map.maplibre.GlShapes.GeometrySignature("")
+        if js.isUndefined(d) || d == null then ""
         else
           val sb = StringBuilder(d.selectDynamic("type").toString)
-          def walk(c: js.Dynamic, depth: com.histmersion.web.map.maplibre.GlShapes.SameGeometrySigWalkDepth): Unit =
+          def walk(c: js.Dynamic, depth: Int): Unit =
             if js.Array.isArray(c) && depth < 4 then
               val arr = c.asInstanceOf[js.Array[js.Dynamic]]
               sb.append('[').append(arr.length)
@@ -222,19 +216,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look:
                 if js.typeOf(arr(0)) == "number" then sb.append(':').append(arr.mkString(","))
                 else { walk(arr(0), depth + 1); if arr.length > 1 then walk(arr(arr.length - 1), depth + 1) }
               sb.append(']')
-          walk(d.coordinates, com.histmersion.web.map.maplibre.GlShapes.SameGeometrySigWalkDepth(0))
+          walk(d.coordinates, 0)
           sb.toString
       sig(a) == sig(b)
     }
-
-object GlShapes:
-  type AlphaFactor = AlphaFactor.T
-  object AlphaFactor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeometrySignature = GeometrySignature.T
-  object GeometrySignature extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SameGeometrySigWalkDepth = SameGeometrySigWalkDepth.T
-  object SameGeometrySigWalkDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-

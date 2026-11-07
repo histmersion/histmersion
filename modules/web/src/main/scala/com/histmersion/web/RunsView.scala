@@ -283,8 +283,8 @@ object RunsView:
   /** The rows, the poll and "Show older" ([[PolledList]]). */
   private val list = PolledList[RunInfo](
     fetch = (upTo, before) => ApiClient.agentRuns(currentFilter(), Some(Paging.Limit(Limit)), upTo = upTo, before = before),
-    id = r => PolledList.IdResult(r.id.value),
-    live = (rows, page) => PolledList.LiveResult(anyLive(rows, page))
+    id = r => PolledList.ItemId(r.id.value),
+    live = (rows, page) => anyLive(rows, page)
   )
   private def listing = list.listing
 
@@ -604,7 +604,7 @@ object RunsView:
         div(
           cls := "run-trace",
           h4("Trace"),
-          d.messages.groupBy(_.seq).toList.sortBy(_._1.value).map { (seq, ms) =>
+          d.messages.groupBy(_.seq).toList.sortBy(t => t._1.value: Int).map { (seq, ms) =>
             val name = d.steps.find(_.seq == seq).map(_.name.value).getOrElse(s"step $seq")
             htmlTag("details")(
               htmlTag("summary")(s"$name — ${Plural.count(Plural.CountN(ms.size.toLong), Plural.CountSingular("message"))}"),

@@ -44,7 +44,7 @@ object AddSources:
         idAttr := "add-sources-menu",
         cls("is-hidden") <-- open.signal.map(!_),
         ul(
-          ways.map(w => li(RouteLink(Route.Library(w), cls := "add-way", w.label, onClick --> (_ => open.set(false)))))
+          ways.map(w => li(RouteLink(Route.Library(w), cls := "add-way", w.label.value, onClick --> (_ => open.set(false)))))
         ),
         calibreHint
       )
@@ -69,7 +69,7 @@ object AddSources:
             cls := "page-tab",
             cls("on") := w == on,
             aria.current := (if w == on then "page" else "false"),
-            w.label
+            w.label.value
           )
         )
       ),

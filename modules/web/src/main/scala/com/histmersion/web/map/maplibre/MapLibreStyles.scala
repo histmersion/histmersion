@@ -18,15 +18,8 @@ import com.histmersion.api.basemap.Basemap
 object MapLibreStyles:
   type Origin = Origin.T
   object Origin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type StyleOrigin = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.Origin
-  val StyleOrigin: _root_.com.histmersion.web.map.maplibre.MapLibreStyles.Origin.type = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.Origin
-  type ResolveOrigin = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.Origin
-  val ResolveOrigin: _root_.com.histmersion.web.map.maplibre.MapLibreStyles.Origin.type = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.Origin
-
-  private val docs = mutable.HashMap.empty[String, Future[js.Dynamic]]
+  private val docs = mutable.HashMap.empty[VectorStyle.Id, Future[js.Dynamic]]
 
   /** The style document of `s`, fetched once. */
   private def doc(s: VectorStyle): Future[js.Dynamic] =
@@ -47,7 +40,7 @@ object MapLibreStyles:
   /** A copy of a JSON value. */
   private def copy(v: js.Any): js.Dynamic = js.JSON.parse(js.JSON.stringify(v)).asInstanceOf[js.Dynamic]
 
-  private def background(): com.histmersion.web.map.ShapeStyle.Colour = ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--bg"))
+  private def background(): String = ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--bg")).value
 
   /** The page's own background and nothing else. */
   def blank(): js.Object =
@@ -65,11 +58,11 @@ object MapLibreStyles:
       )
       .asInstanceOf[js.Object]
 
-  def style(b: BaseMapSpec, origin: com.histmersion.web.map.maplibre.MapLibreStyles.StyleOrigin): Future[js.Any] = b match
+  def style(b: BaseMapSpec, origin: Origin): Future[js.Any] = b match
     case BaseMapSpec.Blank     => Future.successful(blank())
     case r: BaseMapSpec.Raster => Future.successful(raster(r))
     case v: BaseMapSpec.Vector =>
-      val withContours = v.contours && !v.reduced && v.style == VectorStyle.Physical && deeperRelief(v.status).isDefined
+      val withContours = v.contours.value && !v.reduced.value && v.style == VectorStyle.Physical && deeperRelief(v.status).isDefined
       doc(v.style).flatMap { d =>
         val s = resolve(copy(d), v.status, v.lang, v.names, v.reduced, origin, v.seaDepth)
         if withContours then
@@ -98,16 +91,17 @@ object MapLibreStyles:
         val src = s.sources.selectDynamic(id)
         if js.isUndefined(src) || src == null || js.isUndefined(src.attribution) || src.attribution == null then None
         else Some(src.attribution.toString).filter(_.trim.nonEmpty)
-      }.distinct
+      }.distinct.map(a => BaseMapSpec.Raster.Attribution(a))
 
   /** `{s}` → the subdomains a, b, c. Pure. */
   def expand(template: com.histmersion.api.basemap.BasemapApi.TileTemplate): js.Array[String] =
-    if template.contains("{s}") then js.Array("a", "b", "c").map(x => template.replace("{s}", x))
-    else js.Array(template)
+    val t = template.value
+    if t.contains("{s}") then js.Array("a", "b", "c").map(x => t.replace("{s}", x))
+    else js.Array(t)
 
   def raster(r: BaseMapSpec.Raster): js.Object =
-    val paint = js.Dynamic.literal(`raster-opacity` = r.opacity)
-    if r.dark then
+    val paint = js.Dynamic.literal(`raster-opacity` = r.opacity.value)
+    if r.dark.value then
       // the light tiles drawn dark: inverted, the hues turned back, a little dimmed
       paint.`raster-brightness-min` = 0.9
       paint.`raster-brightness-max` = 0.06
@@ -121,8 +115,8 @@ object MapLibreStyles:
             `type` = "raster",
             tiles = expand(r.template),
             tileSize = 256,
-            maxzoom = r.maxZoom,
-            attribution = r.attribution
+            maxzoom = r.maxZoom.value,
+            attribution = r.attribution.value
           )
         ),
         layers = js.Array(
@@ -136,20 +130,20 @@ object MapLibreStyles:
       )
       .asInstanceOf[js.Object]
 
-  private def info(s: Basemap.Status, layer: com.histmersion.web.map.MapSurface.LayerId): Option[Basemap.LayerInfo] =
-    s.layers.find(i => i.layer == layer && i.present && i.error.isEmpty)
+  private def info(s: Basemap.Status, layer: String): Option[Basemap.LayerInfo] =
+    s.layers.find(i => i.layer.value == layer && i.present.value && i.error.isEmpty)
 
   /** The relief, when it reaches deeper than the extract — a focus region, or the on-demand relief: what the contours
     * are traced from (the extract's relief alone is too coarse for them).
     */
   private def deeperRelief(s: Basemap.Status): Option[Basemap.LayerInfo] =
-    info(s, com.histmersion.web.map.MapSurface.LayerId("terrain")).filter(i => i.focus.nonEmpty || i.onDemand.exists(_.enabled))
+    info(s, "terrain").filter(i => i.focus.nonEmpty || i.onDemand.exists(_.enabled.value))
 
   /** Take source `id` and every layer drawing it out of style `s`. */
   def drop(s: js.Dynamic, id: com.histmersion.web.map.MapSurface.LayerId): Unit =
     js.special.delete(s.sources, id)
     s.layers =
-      s.layers.asInstanceOf[js.Array[js.Dynamic]].filter(l => js.isUndefined(l.source) || l.source.toString != id)
+      s.layers.asInstanceOf[js.Array[js.Dynamic]].filter(l => js.isUndefined(l.source) || l.source.toString != id.value)
 
   /** A style document made drawable over this server's extracts. Pure over the JSON (`s` is changed and answered): each
     * source pointed at the layer the server has (its version in the URL: a new fetch is never a stale cached tile, its
@@ -165,7 +159,7 @@ object MapLibreStyles:
       lang: com.histmersion.web.map.BaseMapSpec.Vector.Lang,
       names: com.histmersion.web.map.BaseMapSpec.Vector.Names,
       reduced: com.histmersion.web.map.BaseMapSpec.Vector.Reduced,
-      origin: com.histmersion.web.map.maplibre.MapLibreStyles.ResolveOrigin,
+      origin: Origin,
       seaDepth: com.histmersion.web.map.BaseMapSpec.Vector.SeaDepth = com.histmersion.web.map.BaseMapSpec.Vector.SeaDepth(true)
   ): js.Dynamic =
     val meta = s.metadata.selectDynamic("histmersion:sources").asInstanceOf[js.Dictionary[String]]
@@ -175,42 +169,42 @@ object MapLibreStyles:
         case Some("contours") => ()
         case Some(layer)      =>
           info(status, layer) match
-            case None    => drop(s, id)
+            case None    => drop(s, MapSurface.LayerId(id))
             case Some(i) =>
-              val v = i.version.getOrElse("0")
-              src.tiles = src.tiles.asInstanceOf[js.Array[String]].map(t => origin + t.replace("{version}", v))
+              val v = i.version.map(_.value).getOrElse("0")
+              src.tiles = src.tiles.asInstanceOf[js.Array[String]].map(t => origin.value + t.replace("{version}", v))
               // the deepest the server serves: the extract, a focus region, the tiles read on demand (#3760)
               val depth = (id, layer) match
-                case ("lc", _) => Some(math.min(7, i.maxZoom.getOrElse(7)))
-                case _         => i.deepest
+                case ("lc", _) => Some(math.min(7, i.maxZoom.map(_.value).getOrElse(7)))
+                case _         => i.deepest.map(_.value)
               depth.foreach(z => src.maxzoom = z)
-              if i.attribution.nonEmpty && id != "lc" then src.attribution = i.attribution
+              if i.attribution.value.nonEmpty && id != "lc" then src.attribution = i.attribution.value
               // where the server has tiles: the map asks for none outside — unless the server reads the layer on
               // demand there (#3760), or (the relief) a focus region lies outside it
               i.bbox
                 .flatMap(com.histmersion.api.BBox.parse)
-                .filter(_ => i.focus.isEmpty && !i.onDemand.exists(_.enabled))
-                .foreach(b => src.bounds = js.Array(b.minLon, b.minLat, b.maxLon, b.maxLat))
-        case None => drop(s, id)
+                .filter(_ => i.focus.isEmpty && !i.onDemand.exists(_.enabled.value))
+                .foreach(b => src.bounds = js.Array(b.minLon.value, b.minLat.value, b.maxLon.value, b.maxLat.value))
+        case None => drop(s, MapSurface.LayerId(id))
     }
-    if reduced then
+    if reduced.value then
       s.layers = s.layers
         .asInstanceOf[js.Array[js.Dynamic]]
         .filter(l => l.`type`.toString != "hillshade" && l.`type`.toString != "color-relief")
-      List("dem", "sea").foreach(id => if !js.isUndefined(s.sources.selectDynamic(id)) then drop(s, id))
-    if !names then s.layers = s.layers.asInstanceOf[js.Array[js.Dynamic]].filter(l => l.`type`.toString != "symbol")
+      List("dem", "sea").foreach(id => if !js.isUndefined(s.sources.selectDynamic(id)) then drop(s, MapSurface.LayerId(id)))
+    if !names.value then s.layers = s.layers.asInstanceOf[js.Array[js.Dynamic]].filter(l => l.`type`.toString != "symbol")
     val seaSources =
       js.Object.keys(s.sources.asInstanceOf[js.Object]).filter(id => meta.get(id).contains("bathymetry")).toSet
     s.layers.asInstanceOf[js.Array[js.Dynamic]].foreach { l =>
       if !js.isUndefined(l.source) && seaSources.contains(l.source.toString) then
         if js.isUndefined(l.layout) then l.layout = js.Dynamic.literal()
-        l.layout.visibility = if seaDepth then "visible" else "none"
+        l.layout.visibility = if seaDepth.value then "visible" else "none"
     }
     // the names' language: `name:{lang}` in every text field
-    val key = if lang == "local" then "name" else s"name:$lang"
+    val key = if lang.value == "local" then "name" else s"name:${lang.value}"
     s.layers.asInstanceOf[js.Array[js.Dynamic]].foreach { l =>
       if !js.isUndefined(l.layout) && !js.isUndefined(l.layout.`text-field`) then
-        l.layout.`text-field` = replaceString(l.layout.`text-field`, com.histmersion.web.map.maplibre.MapLibreStyles.Text("name:{lang}"), key)
+        l.layout.`text-field` = replaceString(l.layout.`text-field`, "name:{lang}", key)
     }
     val faces = s.selectDynamic("font-faces")
     if !js.isUndefined(faces) then
@@ -220,12 +214,12 @@ object MapLibreStyles:
           faces
             .selectDynamic(f)
             .asInstanceOf[js.Array[js.Dynamic]]
-            .foreach(face => face.url = origin + face.url.toString)
+            .foreach(face => face.url = origin.value + face.url.toString)
         )
     js.special.delete(s, "metadata")
     s
 
-  private def replaceString(v: js.Dynamic, from: com.histmersion.web.map.maplibre.MapLibreStyles.Text, to: com.histmersion.web.map.maplibre.MapLibreStyles.Text): js.Dynamic =
+  private def replaceString(v: js.Dynamic, from: String, to: String): js.Dynamic =
     if js.typeOf(v) == "string" then (if v.toString == from then to.asInstanceOf[js.Dynamic] else v)
     else if js.Array.isArray(v) then
       v.asInstanceOf[js.Array[js.Dynamic]].map(x => replaceString(x, from, to)).asInstanceOf[js.Dynamic]
@@ -250,15 +244,15 @@ object MapLibreStyles:
   // one contour source per relief version and depth (the library registers a page protocol for it)
   private val demSources = mutable.HashMap.empty[String, js.Dynamic]
 
-  private def contours(s: js.Dynamic, status: Basemap.Status, origin: com.histmersion.web.map.maplibre.MapLibreStyles.Origin): Future[Unit] =
+  private def contours(s: js.Dynamic, status: Basemap.Status, origin: Origin): Future[Unit] =
     contourLib.map { lib =>
       val t = deeperRelief(status).get
-      val deepest = t.deepest.getOrElse(t.maxZoom.getOrElse(8))
+      val deepest = t.deepest.map(_.value).getOrElse(t.maxZoom.map(_.value).getOrElse(8))
       val dem = demSources.getOrElseUpdate(
-        s"${t.version.getOrElse("0")}@$deepest", {
+        s"${t.version.map(_.value).getOrElse("0")}@$deepest", {
           val d = js.Dynamic.newInstance(lib.DemSource)(
             js.Dynamic.literal(
-              url = s"$origin/api/basemap/terrain/{z}/{x}/{y}?v=${t.version.getOrElse("0")}",
+              url = s"${origin.value}/api/basemap/terrain/{z}/{x}/{y}?v=${t.version.map(_.value).getOrElse("0")}",
               encoding = "terrarium",
               maxzoom = deepest,
               worker = true

@@ -21,4 +21,4 @@ object LibrarySort:
 
 
   def of(wire: Option[com.histmersion.web.library.LibrarySort.Wire]): LibrarySort =
-    wire.flatMap(w => values.find(_.wire == w.trim.toLowerCase)).getOrElse(Relevance)
+    wire.flatMap(w => values.find(_.wire.value == w.value.trim.toLowerCase)).getOrElse(Relevance)

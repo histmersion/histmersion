@@ -22,19 +22,19 @@ object ItemActions:
     val on = MyItems.bookmarked(ref)
     button(
       typ := "button",
-      cls := (if compact then "btn btn--bare btn--icon btn--sm row-bookmark" else "btn btn--sm item-bookmark"),
+      cls := (if compact.value then "btn btn--bare btn--icon btn--sm row-bookmark" else "btn btn--sm item-bookmark"),
       cls("is-on") <-- on,
       aria.pressed <-- on.map(_.toString),
       title <-- on.map(b =>
-        if b then s"Bookmarked — remove the bookmark of “${ref.title}”" else s"Bookmark “${ref.title}”"
+        if b then s"Bookmarked — remove the bookmark of “${ref.title.value}”" else s"Bookmark “${ref.title.value}”"
       ),
-      aria.label <-- on.map(b => if b then s"Remove the bookmark of ${ref.title}" else s"Bookmark ${ref.title}"),
+      aria.label <-- on.map(b => if b then s"Remove the bookmark of ${ref.title.value}" else s"Bookmark ${ref.title.value}"),
       Icon(Icon.Bookmark),
-      Option.when(!compact)(span(child.text <-- on.map(b => if b then "Bookmarked" else "Bookmark"))),
+      Option.when(!compact.value)(span(child.text <-- on.map(b => if b then "Bookmarked" else "Bookmark"))),
       onClick --> { ev => ev.stopPropagation(); bookmark(ref) }
     )
 
-  def apply(ref: ItemRef, byline: com.histmersion.web.library.TableRow.Byline = com.histmersion.web.library.TableRow.Byline("")): HtmlElement =
+  def apply(ref: ItemRef, byline: String = ""): HtmlElement =
     val read = MyItems.isRead(ref)
     div(
       cls := "btn-group item-actions",
@@ -46,7 +46,7 @@ object ItemActions:
         cls := "btn btn--sm item-note",
         Icon(Icon.Note),
         "Add note",
-        title := s"Write a note on “${ref.title}”",
+        title := s"Write a note on “${ref.title.value}”",
         onClick --> (_ => NoteEditor.write(ref.target, ref.title))
       ),
       Option.when(ref.readable)(
@@ -56,8 +56,8 @@ object ItemActions:
           Icon(Icon.Read),
           cls("is-on") <-- read,
           child.text <-- read.map(r => if r then "Mark as unread" else "Mark as read"),
-          onClick --> (_ => writing(MyItems.setRead(ref, !MyItems.readNow(ref.identity.getOrElse(com.histmersion.web.marks.ItemRef.Identity(""))))))
+          onClick --> (_ => writing(MyItems.setRead(ref, com.histmersion.api.personal.ReadMark.Read(!MyItems.readNow(ref.identity.getOrElse(com.histmersion.api.personal.Target.Identity("")))))))
         )
       ),
-      ContextMenu.button(s"More: ${ref.title}", () => ItemMenu.entries(ref, byline), com.histmersion.web.ui.ContextMenu.ButtonExtraCls("item-more"))
+      ContextMenu.button(ContextMenu.ButtonTitle(s"More: ${ref.title.value}"), () => ItemMenu.entries(ref, byline), com.histmersion.web.ui.ContextMenu.ButtonExtraCls("item-more"))
     )

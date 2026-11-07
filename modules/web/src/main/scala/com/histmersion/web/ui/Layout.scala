@@ -92,7 +92,7 @@ object Layout:
   val overviewBase: Px = Px(com.histmersion.web.ui.Px.ApplyV(30))
   val detailHeight: Px = Px(com.histmersion.web.ui.Px.ApplyV(58))
   val detailBase: Px = Px(com.histmersion.web.ui.Px.ApplyV(40))
-  val handleWidth: com.histmersion.web.ui.Layout.HandleWidth = 6.0
+  val handleWidth: com.histmersion.web.ui.Layout.HandleWidth = com.histmersion.web.ui.Layout.HandleWidth(6.0)
   val markerRadiusDefault: com.histmersion.web.ui.Layout.MarkerRadiusDefault = com.histmersion.web.ui.Layout.MarkerRadiusDefault(5)
   val maxBuckets: com.histmersion.web.ui.Layout.MaxBuckets = com.histmersion.web.ui.Layout.MaxBuckets(1500L)
 
@@ -101,12 +101,12 @@ object Layout:
   val minSpan: com.histmersion.web.ui.Layout.MinSpan = com.histmersion.web.ui.Layout.MinSpan(10L)
   val windowMinWidth: Px = Px(com.histmersion.web.ui.Px.ApplyV(300))
   val windowMinHeight: Px = Px(com.histmersion.web.ui.Px.ApplyV(200))
-  val windowMaxWidth: com.histmersion.web.ui.Layout.WindowMaxWidth = 780.0
-  val windowMaxHeight: com.histmersion.web.ui.Layout.WindowMaxHeight = 600.0
+  val windowMaxWidth: com.histmersion.web.ui.Layout.WindowMaxWidth = com.histmersion.web.ui.Layout.WindowMaxWidth(780.0)
+  val windowMaxHeight: com.histmersion.web.ui.Layout.WindowMaxHeight = com.histmersion.web.ui.Layout.WindowMaxHeight(600.0)
 
   /** The merge review screen's window: wide enough for a field table and a diff3 view side by side. */
-  val mergeWindowMaxWidth: com.histmersion.web.ui.Layout.MergeWindowMaxWidth = 1500.0
-  val mergeWindowMaxHeight: com.histmersion.web.ui.Layout.MergeWindowMaxHeight = 1000.0
+  val mergeWindowMaxWidth: com.histmersion.web.ui.Layout.MergeWindowMaxWidth = com.histmersion.web.ui.Layout.MergeWindowMaxWidth(1500.0)
+  val mergeWindowMaxHeight: com.histmersion.web.ui.Layout.MergeWindowMaxHeight = com.histmersion.web.ui.Layout.MergeWindowMaxHeight(1000.0)
   val windowCascadeOffset: com.histmersion.web.ui.Layout.WindowCascadeOffset = com.histmersion.web.ui.Layout.WindowCascadeOffset(28)
 
   /** The least room under the map options' button for the panel to open there on a tablet; with less, and more above,
@@ -153,19 +153,19 @@ object Layout:
   /** A site's badge (#1449): its type's icon, the exclamation mark when the type is unknown. */
   val siteIconSize: Px = Px(com.histmersion.web.ui.Px.ApplyV(26))
   val playbackWindowHalf: com.histmersion.web.ui.Layout.PlaybackWindowHalf = com.histmersion.web.ui.Layout.PlaybackWindowHalf(50L)
-  val playbackDuration: com.histmersion.web.ui.Layout.PlaybackDuration = 30.0
+  val playbackDuration: com.histmersion.web.ui.Layout.PlaybackDuration = com.histmersion.web.ui.Layout.PlaybackDuration(30.0)
 
   /** Playback's findings are fetched this many seconds of playback ahead, at most [[playbackFetchLimit]] a request, and
     * cut to each frame's window locally (#3764).
     */
-  val playbackFetchSeconds: com.histmersion.web.ui.Layout.PlaybackFetchSeconds = 4.0
+  val playbackFetchSeconds: com.histmersion.web.ui.Layout.PlaybackFetchSeconds = com.histmersion.web.ui.Layout.PlaybackFetchSeconds(4.0)
   val playbackFetchLimit: com.histmersion.web.ui.Layout.PlaybackFetchLimit = com.histmersion.web.ui.Layout.PlaybackFetchLimit(2000)
 
   /** Playback's states are fetched this many seconds of playback ahead of the playhead, and each fades in and out over
     * this many seconds of playback at its first and last year (#3764).
     */
-  val playbackLeadSeconds: com.histmersion.web.ui.Layout.PlaybackLeadSeconds = 0.5
-  val playbackAreaFadeSeconds: com.histmersion.web.ui.Layout.PlaybackAreaFadeSeconds = 0.3
+  val playbackLeadSeconds: com.histmersion.web.ui.Layout.PlaybackLeadSeconds = com.histmersion.web.ui.Layout.PlaybackLeadSeconds(0.5)
+  val playbackAreaFadeSeconds: com.histmersion.web.ui.Layout.PlaybackAreaFadeSeconds = com.histmersion.web.ui.Layout.PlaybackAreaFadeSeconds(0.3)
   val exitAnimMs: com.histmersion.web.ui.Layout.ExitAnimMs = com.histmersion.web.ui.Layout.ExitAnimMs(350)
 
   /** Minimum gap between overlay-layer (regions, sites, media) refetches while the span moves. */
@@ -180,7 +180,7 @@ object Layout:
     * [[geoCacheChars]] characters of them together: a year's polities are 0.1–2 MB, a whole range's ~7 MB (#1949).
     */
   val geoCacheSize: com.histmersion.web.ui.Layout.GeoCacheSize = com.histmersion.web.ui.Layout.GeoCacheSize(48)
-  val geoCacheChars: com.histmersion.web.ui.Layout.GeoCacheChars = 24L * 1024 * 1024
+  val geoCacheChars: com.histmersion.web.ui.Layout.GeoCacheChars = com.histmersion.web.ui.Layout.GeoCacheChars(24L * 1024 * 1024)
 
   /** Hover cards kept per kind (sources, articles, places, events), the least recently hovered going first.
     */

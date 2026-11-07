@@ -19,70 +19,58 @@ import com.histmersion.api.research.Article
   * filter, order and page is not read again.
   */
 object LibraryLists:
-  type ListKey = ListKey.T
-  object ListKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type ReadFor = ReadFor.T
-  object ReadFor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Timer = Timer.T
-  object Timer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TurnToOffset = _root_.com.histmersion.api.Offset
-  val TurnToOffset: _root_.com.histmersion.api.Offset.type = _root_.com.histmersion.api.Offset
-  type ReadSourcesOffset = _root_.com.histmersion.api.Offset
-  val ReadSourcesOffset: _root_.com.histmersion.api.Offset.type = _root_.com.histmersion.api.Offset
-
   val sources: Var[ListPage[Hit]] = Var(ListPage())
   val articles: Var[ListPage[Article.Summary]] = Var(ListPage())
 
   private val latestSources = Latest()
   private val latestArticles = Latest()
   // `var`s: what the lists were last read for (the filter and the order), the pending reread
-  private var readFor: Option[com.histmersion.web.library.LibraryLists.ReadFor] = None
-  private var timer: com.histmersion.web.library.LibraryLists.Timer = com.histmersion.web.library.LibraryLists.Timer(0)
+  private var readFor: Option[String] = None
+  private var timer: Int = 0
 
-  def sort: LibrarySort = LibrarySort.of(UiState.librarySort.now())
+  def sort: LibrarySort = LibrarySort.of(UiState.librarySort.now().map(LibrarySort.Wire(_)))
 
   /** The filter the lists follow: the panel's, everywhere. */
   def filter(): Filter = UiState.toFilter(except = Set(com.histmersion.web.UiState.ToFilterExcept("bbox")))
 
-  private def key(f: Filter): com.histmersion.web.library.LibraryLists.ListKey = s"$f|${sort.wire}"
+  private def key(f: Filter): String = s"$f|${sort.wire.value}"
 
   /** The table's rows of `section`, as keys. */
-  def keys(section: LibrarySection): List[com.histmersion.web.library.LibraryLists.ListKey] =
-    if section == LibrarySection.Articles then articles.now().rows.map(_.slug)
-    else sources.now().rows.map(_.source.citekey.value)
+  def keys(section: LibrarySection): List[TableRow.Key] =
+    if section == LibrarySection.Articles then articles.now().rows.map(a => TableRow.Key(a.slug.value))
+    else sources.now().rows.map(h => TableRow.Key(h.source.citekey.value))
 
   /** Read both lists' first pages, unless they are already read for this filter and order. */
   def refresh(): Unit =
     val f = filter()
     if !readFor.contains(key(f)) then
       readFor = Some(key(f))
-      readSources(f, com.histmersion.web.library.LibraryLists.ReadSourcesOffset(0))
+      readSources(f, com.histmersion.api.Offset(0))
       readArticles(f, com.histmersion.api.Offset(0))
 
   /** [[refresh]] after the filter has stopped changing (typing in the words field), as Explore's lists do. */
   def refreshSoon(): Unit =
     dom.window.clearTimeout(timer)
-    timer = dom.window.setTimeout(() => refresh(), UiState.reloadDelay(Layout.tabReloadMs))
+    timer = dom.window.setTimeout(() => refresh(), UiState.reloadDelay(UiState.ReloadDelayNormalMs(Layout.tabReloadMs.value)).value)
 
   /** Turn `section`'s list to the page starting at `offset`. */
-  def turnTo(section: LibrarySection, offset: com.histmersion.web.library.LibraryLists.TurnToOffset): Unit =
+  def turnTo(section: LibrarySection, offset: com.histmersion.api.Offset): Unit =
     if section == LibrarySection.Articles then readArticles(filter(), offset) else readSources(filter(), offset)
 
-  private def readSources(f: Filter, offset: com.histmersion.web.library.LibraryLists.ReadSourcesOffset): Unit =
-    sources.update(_.copy(loading = com.histmersion.web.library.ListPage.Loading(true), error = None))
-    val page = f.modify(_.sort).setTo(sort.sort).modify(_.limit).setTo(Layout.libraryPage).modify(_.offset).setTo(offset)
+  private def readSources(f: Filter, offset: com.histmersion.api.Offset): Unit =
+    sources.update(_.copy(loading = true, error = None))
+    val page = f.modify(_.sort).setTo(sort.sort).modify(_.limit).setTo(Filter.Limit(Layout.libraryPage.value)).modify(_.offset).setTo(Filter.Offset(offset.value))
     latestSources(ApiClient.sources(page))(
-      r => sources.set(ListPage(r.hits, r.offset, r.total, loaded = com.histmersion.web.library.ListPage.Loaded(true))),
-      m => sources.update(_.copy(loading = com.histmersion.web.library.ListPage.Loading(false), loaded = com.histmersion.web.library.ListPage.Loaded(true), error = Some(m)))
+      r => sources.set(ListPage(r.hits, r.offset, r.total, loaded = true)),
+      m => sources.update(_.copy(loading = false, loaded = true, error = Some(com.histmersion.web.ErrorLine.Problem(m))))
     )
 
   private def readArticles(f: Filter, offset: com.histmersion.api.Offset): Unit =
-    articles.update(_.copy(loading = com.histmersion.web.library.ListPage.Loading(true), error = None))
-    val page = f.modify(_.limit).setTo(Layout.libraryPage).modify(_.offset).setTo(offset)
+    articles.update(_.copy(loading = true, error = None))
+    val page = f.modify(_.limit).setTo(Filter.Limit(Layout.libraryPage.value)).modify(_.offset).setTo(Filter.Offset(offset.value))
     latestArticles(ApiClient.articles(Api.ArticleQuery(page)))(
-      r => articles.set(ListPage(r.articles, r.offset, r.total, loaded = com.histmersion.web.library.ListPage.Loaded(true))),
-      m => articles.update(_.copy(loading = com.histmersion.web.library.ListPage.Loading(false), loaded = com.histmersion.web.library.ListPage.Loaded(true), error = Some(m)))
+      r => articles.set(ListPage(r.articles, r.offset, r.total, loaded = true)),
+      m => articles.update(_.copy(loading = false, loaded = true, error = Some(com.histmersion.web.ErrorLine.Problem(m))))
     )
 
   /** How many sources and articles the collection holds, whatever the filter: "Everything"'s count. */

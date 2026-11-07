@@ -13,26 +13,10 @@ import com.raquo.laminar.api.L.*
   */
 object LibraryPage:
 
-  /** The item the address chooses. */
-  type Chosen = Chosen.T
-  object Chosen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChooseKey = ChooseKey.T
-  object ChooseKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChoosePush = ChoosePush.T
-  object ChoosePush extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EverythingListArticles = EverythingListArticles.T
-  object EverythingListArticles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EverythingListNoun = EverythingListNoun.T
-  object EverythingListNoun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TabLabel = TabLabel.T
-  object TabLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TurnBack = TurnBack.T
-  object TurnBack extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  val chosen: Signal[Option[com.histmersion.web.library.LibraryPage.Chosen]] = Router.search.map(LibraryAddress.item).distinct
+  val chosen: Signal[Option[com.histmersion.api.personal.ItemKey]] = Router.search.map(LibraryAddress.item).distinct
 
   /** Choose `key` in `section`'s list: a step in the history unless `push` is false. */
-  def choose(section: LibrarySection)(key: com.histmersion.web.library.LibraryPage.ChooseKey, push: com.histmersion.web.library.LibraryPage.ChoosePush): Unit =
+  def choose(section: LibrarySection)(key: com.histmersion.api.personal.ItemKey, push: Router.Push): Unit =
     Router.go(
       Route.Library(section),
       push = push,
@@ -58,8 +42,8 @@ object LibraryPage:
           navTag(
             cls := "library-tabs",
             aria.label := "What to list",
-            tab(LibrarySection.Sources, com.histmersion.web.library.LibraryPage.TabLabel("Sources"), LibraryLists.sources.signal.map(_.total), section),
-            tab(LibrarySection.Articles, com.histmersion.web.library.LibraryPage.TabLabel("Articles"), LibraryLists.articles.signal.map(_.total), section)
+            tab(LibrarySection.Sources, "Sources", LibraryLists.sources.signal.map(_.total), section),
+            tab(LibrarySection.Articles, "Articles", LibraryLists.articles.signal.map(_.total), section)
           ),
           div(cls := "library-head-end", filtersButton(ui), AddSources.menu)
         ),
@@ -73,9 +57,9 @@ object LibraryPage:
 
   private def everythingList(
       section: LibrarySection,
-      articles: com.histmersion.web.library.LibraryPage.EverythingListArticles,
+      articles: Boolean,
       page: Signal[ListPage[TableRow]],
-      noun: com.histmersion.web.library.LibraryPage.EverythingListNoun
+      noun: String
   ): HtmlElement =
     div(
       cls := "library-everything",
@@ -86,7 +70,7 @@ object LibraryPage:
         else sortSelect,
         pager(section, page)
       ),
-      child.maybe <-- page.map(_.error.map(m => ErrorLine.text(s"Could not list the $noun: $m"))),
+      child.maybe <-- page.map(_.error.map(m => ErrorLine.text(ErrorLine.Problem(s"Could not list the $noun: $m")))),
       LibraryTable.element(section, page.map(_.rows), chosen, choose(section)),
       child.maybe <-- page.map(listed =>
         Option.when(listed.loaded && listed.rows.isEmpty && listed.error.isEmpty)(
@@ -98,7 +82,7 @@ object LibraryPage:
       )
     )
 
-  private def tab(s: LibrarySection, label: com.histmersion.web.library.LibraryPage.TabLabel, total: Signal[com.histmersion.api.RowCount], on: LibrarySection): HtmlElement =
+  private def tab(s: LibrarySection, label: String, total: Signal[com.histmersion.api.RowCount], on: LibrarySection): HtmlElement =
     a(
       cls := "library-tab",
       cls("on") := s == on,
@@ -121,12 +105,12 @@ object LibraryPage:
         cls := "field",
         idAttr := "library-sort",
         controlled(
-          value <-- UiState.librarySort.signal.map(w => LibrarySort.of(w).wire),
+          value <-- UiState.librarySort.signal.map(w => LibrarySort.of(w.map(LibrarySort.Wire(_))).wire.value),
           onChange.mapToValue --> { v =>
-            UiState.set(UiState.librarySort := Option.when(v != LibrarySort.Relevance.wire)(v))()
+            UiState.set(UiState.librarySort := Option.when(v != LibrarySort.Relevance.wire.value)(v))()
           }
         ),
-        LibrarySort.values.toList.map(s => option(value := s.wire, s.label))
+        LibrarySort.values.toList.map(s => option(value := s.wire.value, s.label.value))
       )
     )
 
@@ -140,22 +124,22 @@ object LibraryPage:
         cls := "btn btn--sm library-prev",
         "‹ Previous",
         disabled <-- page.map(!_.hasPrevious),
-        onClick --> (_ => turn(section, back = com.histmersion.web.library.LibraryPage.TurnBack(true)))
+        onClick --> (_ => turn(section, back = true))
       ),
       button(
         typ := "button",
         cls := "btn btn--sm library-next",
         "Next ›",
         disabled <-- page.map(!_.hasNext),
-        onClick --> (_ => turn(section, back = com.histmersion.web.library.LibraryPage.TurnBack(false)))
+        onClick --> (_ => turn(section, back = false))
       )
     )
 
-  private def turn(section: LibrarySection, back: com.histmersion.web.library.LibraryPage.TurnBack): Unit =
+  private def turn(section: LibrarySection, back: Boolean): Unit =
     val p = if section == LibrarySection.Articles then LibraryLists.articles.now() else LibraryLists.sources.now()
     LibraryLists.turnTo(
       section,
-      if back then p.previousOffset(Layout.libraryPage) else p.nextOffset(Layout.libraryPage)
+      if back then p.previousOffset(Layout.libraryPage.value) else p.nextOffset(Layout.libraryPage.value)
     )
 
   /** In the narrow layouts the filter panel is a drawer: this opens it, counting the active filters. */
@@ -168,6 +152,6 @@ object LibraryPage:
       aria.expanded <-- MobileChrome.drawer.signal.map(_.contains(MobileChrome.Drawer.Filters)),
       Icon(Icon.Filter),
       "Filters",
-      child.maybe <-- active.map(n => Option.when(n > 0)(span(cls := "rail-count", n.toString))),
+      child.maybe <-- active.map(n => Option.when(n.value > 0)(span(cls := "rail-count", n.toString))),
       onClick --> (_ => MobileChrome.toggle(MobileChrome.Drawer.Filters))
     )

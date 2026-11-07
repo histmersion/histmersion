@@ -13,12 +13,15 @@ import scala.scalajs.js.JSConverters.*
   * the tiles of the view's zoom (`api.TileProps.Zoom`, which every feature carries — MapLibre keeps a coarser tile
   * drawn while the finer ones come in), once each.
   */
-final private[maplibre] class GlPointTiles(gl: GlMap, id: GlPointTiles.Id, layer: GlPointTiles.Layer, maxZoom: GlPointTiles.MaxZoom) extends PointTiles:
+final private[maplibre] class GlPointTiles(gl: GlMap, id: MapSurface.LayerId, layer: MapSurface.LayerId, maxZoom: MapSurface.PointTilesMaxZoom) extends PointTiles:
+  private val sourceId: String = id.value
+  private val tileLayer: String = layer.value
+  private val zoomCap: Int = maxZoom.value
   // `var`s: the template asked for, and the listeners
   private var template: Option[com.histmersion.api.basemap.BasemapApi.TileTemplate] = None
   private val listeners = mutable.ListBuffer.empty[() => Unit]
   private var queued = false
-  private val hitLayer = s"$id-points"
+  private val hitLayer = s"$sourceId-points"
 
   private def notifyLater(): Unit =
     if !queued then
@@ -28,7 +31,7 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: GlPointTiles.Id, layer
   gl.on(
     "sourcedata",
     (e: GlEvent) =>
-      if e.asInstanceOf[js.Dynamic].sourceId.asInstanceOf[js.UndefOr[String]].contains(id) && loaded then notifyLater()
+      if e.asInstanceOf[js.Dynamic].sourceId.asInstanceOf[js.UndefOr[String]].contains(sourceId) && loaded then notifyLater()
   )
   gl.on("moveend", (_: GlEvent) => if loaded then notifyLater())
 
@@ -37,11 +40,11 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: GlPointTiles.Id, layer
     template.foreach { t =>
       if gl.isStyleLoaded() || gl.getStyle() != null then
         scala.util.Try {
-          if gl.getSource(id).isEmpty then
+          if gl.getSource(sourceId).isEmpty then
             gl.addSource(
-              id,
+              sourceId,
               js.Dynamic
-                .literal(`type` = "vector", tiles = js.Array(t), minzoom = 0, maxzoom = maxZoom, tileSize = 512)
+                .literal(`type` = "vector", tiles = js.Array(t), minzoom = 0, maxzoom = zoomCap, tileSize = 512)
                 .asInstanceOf[js.Object]
             )
           if gl.getLayer(hitLayer).isEmpty then
@@ -50,8 +53,8 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: GlPointTiles.Id, layer
                 .literal(
                   id = hitLayer,
                   `type` = "circle",
-                  source = id,
-                  `source-layer` = layer,
+                  source = sourceId,
+                  `source-layer` = tileLayer,
                   paint = js.Dynamic.literal(`circle-radius` = 0, `circle-opacity` = 0, `circle-stroke-width` = 0)
                 )
                 .asInstanceOf[js.Object]
@@ -66,27 +69,27 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: GlPointTiles.Id, layer
         case None =>
           scala.util.Try {
             if gl.getLayer(hitLayer).isDefined then gl.removeLayer(hitLayer)
-            if gl.getSource(id).isDefined then gl.removeSource(id)
+            if gl.getSource(sourceId).isDefined then gl.removeSource(sourceId)
           }
         case Some(url) =>
-          gl.getSource(id).toOption match
+          gl.getSource(sourceId).toOption match
             case Some(src) => scala.util.Try(src.setTiles(js.Array(url)))
             case None      => restore()
 
   def loaded: Boolean =
-    template.isEmpty || scala.util.Try(gl.getSource(id).isDefined && gl.isSourceLoaded(id)).getOrElse(false)
+    template.isEmpty || scala.util.Try(gl.getSource(sourceId).isDefined && gl.isSourceLoaded(sourceId)).getOrElse(false)
 
   def onChange(f: () => Unit): Subscription =
     listeners += f
     () => { val _ = listeners -= f }
 
   def features: Seq[TilePointFeature] =
-    if template.isEmpty || gl.getSource(id).isEmpty then Nil
+    if template.isEmpty || gl.getSource(sourceId).isEmpty then Nil
     else
-      val z = math.max(0, math.min(maxZoom, math.floor(gl.getZoom()).toInt))
+      val z = math.max(0, math.min(zoomCap, math.floor(gl.getZoom()).toInt))
       val seen = mutable.HashSet.empty[String]
       scala.util
-        .Try(gl.querySourceFeatures(id, js.Dynamic.literal(sourceLayer = layer).asInstanceOf[js.Object]))
+        .Try(gl.querySourceFeatures(sourceId, js.Dynamic.literal(sourceLayer = tileLayer).asInstanceOf[js.Object]))
         .getOrElse(js.Array())
         .toSeq
         .flatMap { f =>
@@ -97,12 +100,3 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: GlPointTiles.Id, layer
           if !atZoom || !seen.add(key) then None
           else ShapeHits.point(f.geometry).map(TilePointFeature(_, props))
         }
-
-object GlPointTiles:
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Layer = Layer.T
-  object Layer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxZoom = MaxZoom.T
-  object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-

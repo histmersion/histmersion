@@ -10,19 +10,11 @@ import com.histmersion.api.library.Ingest
   * ([[DoiIngest]]); the answer says what was found and links to the new source.
   */
 object DoiForm:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   private enum State:
     case Idle
     case Adding
-    case Failed(message: State.Failed.Message)
+    case Failed(message: ErrorLine.Problem)
     case Added(report: Ingest.Report)
-
-  object State:
-    object Failed:
-      type Message = com.histmersion.web.library.DoiForm.Problem
-      val Message: _root_.com.histmersion.web.library.DoiForm.Problem.type = _root_.com.histmersion.web.library.DoiForm.Problem
 
   def pane: HtmlElement =
     val typed = Var("")
@@ -38,7 +30,7 @@ object DoiForm:
               state.set(
                 r.fold(
                   e =>
-                    State.Failed(s"Could not add it: ${Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString)}"),
+                    State.Failed(ErrorLine.Problem(s"Could not add it: ${Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString)}")),
                   State.Added(_)
                 )
               )
@@ -89,8 +81,8 @@ object DoiForm:
       cls := "doi-result",
       role := "status",
       p(
-        strong(if r.created then "Added: " else "Already in the library: "),
-        a(href := SourceLink.href(r.citekey), r.title.getOrElse(r.citekey))
+        strong(if r.created.value then "Added: " else "Already in the library: "),
+        a(href := SourceLink.href(r.citekey), r.title.map(_.value).getOrElse(r.citekey.value))
       ),
       p(
         cls := "muted",

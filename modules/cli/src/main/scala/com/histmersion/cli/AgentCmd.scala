@@ -328,7 +328,7 @@ object AgentCmd:
               as,
               page,
               f.qualifier.map(q => com.histmersion.api.automation.Approval.State.Wire(q.value)),
-              PageCmd.older(page, "agent approvals", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString)))
+              PageCmd.older(page, "agent approvals", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString))).map(t => com.histmersion.api.Paging.Cursor(t.value))
             )
           )
         }
@@ -368,7 +368,7 @@ object AgentCmd:
                 rs,
                 page,
                 f.qualifier.map(q => RunInfo.Status(q.value)),
-                PageCmd.older(page, "agent runs", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString)))
+                PageCmd.older(page, "agent runs", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString))).map(t => com.histmersion.api.Paging.Cursor(t.value))
               )
             )
           }

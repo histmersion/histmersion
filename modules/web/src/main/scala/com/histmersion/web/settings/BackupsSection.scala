@@ -11,9 +11,9 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object BackupsSection:
   def pane: HtmlElement =
-    val list = Var(Option.empty[Either[String, List[Backup.Info]]])
+    val list = Var(Option.empty[Either[SettingsStore.Problem, List[Backup.Info]]])
     val busy = Var(false)
-    val said = Var(Option.empty[Either[String, String]])
+    val said = Var(Option.empty[Either[SettingsStore.Problem, String]])
     def load(): Unit = ApiClient.backups().onComplete(r => list.set(Some(r.toEither.left.map(SettingsStore.message))))
     def now(): Unit =
       busy.set(true)
@@ -24,7 +24,7 @@ object BackupsSection:
             r.toEither.left
               .map(SettingsStore.message)
               .map(s =>
-                if s.state == "done" then s"Backed up: ${s.file}"
+                if s.state == Backup.State.Done.wire then s"Backed up: ${s.file}"
                 else s"The backup goes on in the background (${s.state})."
               )
           )
@@ -36,7 +36,7 @@ object BackupsSection:
       onMountCallback(_ => load()),
       SettingsForm(
         com.histmersion.web.settings.SettingsForm.ApplyTitle("How many to keep"),
-        Some("Each backup is a full copy of the database; the oldest are deleted after a new one."),
+        Some(SettingsForm.Intro("Each backup is a full copy of the database; the oldest are deleted after a new one.")),
         List(SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("backups.keep"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("Backups kept")), Some(com.histmersion.web.settings.SettingsForm.Item.Help("0 keeps every one."))))
       ),
       sectionTag(
@@ -62,12 +62,12 @@ object BackupsSection:
             )
           ),
           child.maybe <-- said.signal.map(_.map {
-            case Left(why) => com.histmersion.web.ErrorLine.text(why)
+            case Left(why) => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(why.value))
             case Right(m)  => p(cls := "settings-saved-line", role := "status", m)
           }),
           child <-- list.signal.map {
             case None             => p(cls := "muted", "Loading…")
-            case Some(Left(m))    => com.histmersion.web.ErrorLine.text(s"Could not list the backups: $m")
+            case Some(Left(m))    => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(s"Could not list the backups: $m"))
             case Some(Right(Nil)) => p(cls := "muted", "No backup yet.")
             case Some(Right(bs))  =>
               table(
@@ -76,9 +76,9 @@ object BackupsSection:
                 tbody(
                   bs.map(b =>
                     tr(
-                      td(b.createdAt.take(16).replace('T', ' ')),
+                      td(b.createdAt.value.take(16).replace('T', ' ')),
                       td(Backup.humanBytes(b.bytes)),
-                      td(cls := "muted", b.file)
+                      td(cls := "muted", b.file.value)
                     )
                   )
                 )

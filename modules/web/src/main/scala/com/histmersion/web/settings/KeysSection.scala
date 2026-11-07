@@ -18,8 +18,6 @@ object KeysSection:
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Reference = Reference.T
   object Reference extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Scheme = Scheme.T
-  object Scheme extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type State = State.T
   object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -31,7 +29,7 @@ object KeysSection:
     case Env extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("env"), com.histmersion.web.settings.KeysSection.Form.Label("Environment variable"), com.histmersion.web.settings.KeysSection.Form.Hint("its name, e.g. HISTMERSION_CORE_KEY"))
     case Keepassxc extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("keepassxc"), com.histmersion.web.settings.KeysSection.Form.Label("KeePassXC entry"), com.histmersion.web.settings.KeysSection.Form.Hint("Group/Entry#attribute"))
     case OnePass extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("1password"), com.histmersion.web.settings.KeysSection.Form.Label("1Password item"), com.histmersion.web.settings.KeysSection.Form.Hint("op://Vault/Item/field"))
-    case Bitwarden extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("bitwarden"), com.histmersion.web.settings.KeysSection.Form.Label("Bitwarden item"), "the item's name or id[#field]")
+    case Bitwarden extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("bitwarden"), com.histmersion.web.settings.KeysSection.Form.Label("Bitwarden item"), com.histmersion.web.settings.KeysSection.Form.Hint("the item's name or id[#field]"))
     case Value extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("value"), com.histmersion.web.settings.KeysSection.Form.Label("The value itself, in the settings file"), com.histmersion.web.settings.KeysSection.Form.Hint("the key or password"))
 
   object Form:
@@ -47,14 +45,14 @@ object KeysSection:
 
   /** The reference a form and its entry write, or why not. Pure. */
   def reference(form: Form, entry: com.histmersion.web.settings.KeysSection.ReferenceEntry): Either[com.histmersion.web.settings.KeysSection.Problem, com.histmersion.web.settings.KeysSection.Reference] =
-    val t = entry.trim
-    if t.isEmpty then Left(s"Write ${form.hint}.")
+    val t = entry.value.trim
+    if t.isEmpty then Left(Problem(s"Write ${form.hint}."))
     else if form == Form.Env && !t.matches("[A-Za-z_][A-Za-z0-9_]*") then
-      Left(s"$t is not an environment variable's name.")
-    else Right(s"${form.scheme}:$t")
+      Left(Problem(s"$t is not an environment variable's name."))
+    else Right(Reference(s"${form.scheme}:$t"))
 
   /** The keys that hold the value itself, by what they open. */
-  private val Named: Map[com.histmersion.web.settings.KeysSection.Scheme, com.histmersion.web.settings.KeysSection.Name] = Map(
+  private val Named: Map[String, String] = Map(
     "auth.api-key" -> "This server's own key for changes",
     "db.password" -> "The database's password",
     "query.password" -> "The read-only query login's password",
@@ -68,18 +66,22 @@ object KeysSection:
   /** A credential's name for a person: its plugin and what it is (`1Password: service account token`), or what it
     * opens. Pure.
     */
-  def name(relative: com.histmersion.web.settings.KeysSection.Name): com.histmersion.web.settings.KeysSection.Name =
-    relative.split('.').toList match
+  def name(relative: ConfigEdit.Field.LocalKey): com.histmersion.web.settings.KeysSection.Name =
+    relative.value.split('.').toList match
       case "plugins" :: id :: rest if rest.nonEmpty =>
-        s"${Wording.plugin(id)}: ${Wording.humanize(rest.mkString(" ")).toLowerCase.replace("api key", "API key")}"
-      case _ => Named.getOrElse(relative, Wording.humanize(relative.replace('.', ' ')))
+        Name(
+          s"${Wording.plugin(Wording.PluginId(id))}: ${Wording.humanize(Wording.Id(rest.mkString(" "))).toLowerCase.replace("api key", "API key")}"
+        )
+      case _ => Name(Named.getOrElse(relative.value, Wording.humanize(Wording.Id(relative.value.replace('.', ' ')))))
 
   /** How a credential is held, in words. Pure. */
-  def state(c: ConfigEdit.Credential): com.histmersion.web.settings.KeysSection.State = c.form match
+  def state(c: ConfigEdit.Credential): com.histmersion.web.settings.KeysSection.State = c.form.value match
     case "unset" => com.histmersion.web.settings.KeysSection.State("Not set")
     case "env"   => com.histmersion.web.settings.KeysSection.State("Set · from an environment variable")
     case "vault" =>
-      s"Set · from ${c.shown.flatMap(_.split(':').headOption).map(v => Wording.plugin(v)).getOrElse("a password manager")}"
+      com.histmersion.web.settings.KeysSection.State(
+        s"Set · from ${c.shown.flatMap(_.value.split(':').headOption).map(v => Wording.plugin(Wording.PluginId(v))).getOrElse("a password manager")}"
+      )
     case "value" => com.histmersion.web.settings.KeysSection.State("Set · the value is written in the settings file")
     case _       => com.histmersion.web.settings.KeysSection.State("Set")
 
@@ -100,7 +102,7 @@ object KeysSection:
       ),
       child <-- SettingsStore.current.map {
         case None            => p(cls := "muted", "Loading…")
-        case Some(Left(m))   => com.histmersion.web.ErrorLine.text(s"Could not read the settings: $m")
+        case Some(Left(m))   => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(s"Could not read the settings: $m"))
         case Some(Right(pg)) =>
           val creds = pg.fields.filter(_.credential.isDefined)
           div(
@@ -118,7 +120,7 @@ object KeysSection:
               ),
               div(
                 cls := "settings-card-body",
-                creds.filter(_.credential.exists(_.rule == "reference")).map(referenceRow)
+                creds.filter(_.credential.exists(_.rule.value == "reference")).map(referenceRow)
               )
             ),
             sectionTag(
@@ -132,7 +134,7 @@ object KeysSection:
                     "file: set the environment variable named for each where the server is started."
                 )
               ),
-              div(cls := "settings-card-body", creds.filter(_.credential.exists(_.rule == "environment")).map(envRow))
+              div(cls := "settings-card-body", creds.filter(_.credential.exists(_.rule.value == "environment")).map(envRow))
             )
           )
       },
@@ -142,13 +144,13 @@ object KeysSection:
   private def envRow(f: ConfigEdit.Field): HtmlElement =
     div(
       cls := "setting-row key-row",
-      dataAttr("key") := f.relative,
+      dataAttr("key") := f.relative.value,
       div(
         cls := "setting-head",
-        span(cls := "setting-name", name(f.relative)),
-        span(cls := "setting-key muted", f.relative)
+        span(cls := "setting-name", name(f.relative).value),
+        span(cls := "setting-key muted", f.relative.value)
       ),
-      p(cls := "key-state", f.credential.map(state).getOrElse("")),
+      p(cls := "key-state", f.credential.map(c => state(c).value).getOrElse("")),
       f.envVar.map(v => p(cls := "muted", s"Environment variable: $v"))
     )
 
@@ -158,25 +160,25 @@ object KeysSection:
     val consent = Var(false)
     val problem = Var(Option.empty[String])
     def save(): Unit =
-      reference(form.now(), entry.now()) match
-        case Left(why) => problem.set(Some(why))
+      reference(form.now(), ReferenceEntry(entry.now())) match
+        case Left(why) => problem.set(Some(why.value))
         case Right(r)  =>
           problem.set(None)
           SettingsStore
-            .save(List(ConfigEdit.Change(f.key, Some(r))), literalConsent = consent.now())
+            .save(List(ConfigEdit.Change(ConfigEdit.Change.Key(f.key.value), Some(ConfigEdit.Change.Value(r.value)))), literalConsent = SettingsStore.SaveLiteralConsent(consent.now()))
             .foreach(_ => entry.set(""))
-    val id = "key-" + f.key.replaceAll("[^A-Za-z0-9_-]", "-")
+    val id = "key-" + f.key.value.replaceAll("[^A-Za-z0-9_-]", "-")
     div(
       cls := "setting-row key-row",
-      dataAttr("key") := f.relative,
+      dataAttr("key") := f.relative.value,
       div(
         cls := "setting-head",
-        span(cls := "setting-name", name(f.relative)),
-        span(cls := "setting-key muted", f.relative)
+        span(cls := "setting-name", name(f.relative).value),
+        span(cls := "setting-key muted", f.relative.value)
       ),
       p(
         cls := "key-state",
-        f.credential.map(c => state(c) + c.shown.filter(_ => c.form != "value").fold("")(s => s" ($s)")).getOrElse("")
+        f.credential.map(c => state(c).value + c.shown.filter(_ => c.form.value != "value").fold("")(s => s" ($s)")).getOrElse("")
       ),
       div(
         cls := "key-edit toolbar",
@@ -184,15 +186,15 @@ object KeysSection:
         select(
           idAttr := s"$id-form",
           cls := "field key-form",
-          Form.values.toList.map(x => option(value := x.scheme, x.label)),
-          controlled(value <-- form.signal.map(_.scheme), onChange.mapToValue --> (v => form.set(Form.of(v))))
+          Form.values.toList.map(x => option(value := x.scheme.value, x.label.value)),
+          controlled(value <-- form.signal.map(_.scheme.value), onChange.mapToValue --> (v => form.set(Form.of(Form.Scheme(v)))))
         ),
         label(forId := s"$id-entry", cls := "sr-only", "The reference"),
         input(
           idAttr := s"$id-entry",
           cls := "field key-entry",
           typ <-- form.signal.map(x => if x == Form.Value then "password" else "text"),
-          placeholder <-- form.signal.map(_.hint),
+          placeholder <-- form.signal.map(_.hint.value),
           controlled(value <-- entry.signal, onInput.mapToValue --> entry.writer)
         ),
         button(
@@ -208,7 +210,7 @@ object KeysSection:
             cls := "btn btn--ghost key-remove",
             "Remove",
             disabled <-- Auth.writable.map(!_),
-            onClick --> (_ => SettingsStore.save(List(ConfigEdit.Change(f.key, None))))
+            onClick --> (_ => SettingsStore.save(List(ConfigEdit.Change(ConfigEdit.Change.Key(f.key.value), None))))
           )
         )
       ),
@@ -221,5 +223,5 @@ object KeysSection:
           )
         )
       ),
-      child.maybe <-- problem.signal.map(_.map(com.histmersion.web.ErrorLine.text))
+      child.maybe <-- problem.signal.map(_.map(m => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(m))))
     )

@@ -10,23 +10,15 @@ import org.scalajs.dom
   * ↓ move the choice while a title has the focus.
   */
 object LibraryTable:
-  type RowKey = RowKey.T
-  object RowKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type ElementChosen = _root_.com.histmersion.web.library.LibraryTable.RowKey
-  val ElementChosen: _root_.com.histmersion.web.library.LibraryTable.RowKey.type = _root_.com.histmersion.web.library.LibraryTable.RowKey
-  type RowSources = RowSources.T
-  object RowSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   private val colScope = htmlAttr("scope", com.raquo.laminar.codecs.StringAsIsCodec)
 
   /** Choose `key` in `section`'s list: a step in the history (`push`), or the arrow keys' quiet move. */
-  type Choose = (String, Boolean) => Unit
+  type Choose = (TableRow.Key, Router.Push) => Unit
 
   def element(
       section: LibrarySection,
       rows: Signal[List[TableRow]],
-      chosen: Signal[Option[com.histmersion.web.library.LibraryTable.ElementChosen]],
+      chosen: Signal[Option[TableRow.Key]],
       choose: Choose
   ): HtmlElement =
     val sources = section != LibrarySection.Articles
@@ -45,7 +37,7 @@ object LibraryTable:
           if keys.nonEmpty && !ev.altKey && !ev.metaKey && !ev.ctrlKey then
             ev.preventDefault()
             TableKeys.step(keys, chosenKey(ev), d).foreach { k =>
-              choose(k, false)
+              choose(k, Router.Push(false))
               focusRow(ev.currentTarget.asInstanceOf[dom.Element], k)
             }
         }
@@ -65,41 +57,41 @@ object LibraryTable:
       )
     )
 
-  private def currentKeys(ev: dom.KeyboardEvent): List[com.histmersion.web.library.LibraryTable.RowKey] =
+  private def currentKeys(ev: dom.KeyboardEvent): List[TableRow.Key] =
     val rows = ev.currentTarget.asInstanceOf[dom.Element].querySelectorAll("tbody tr[data-key]")
-    (0 until rows.length).toList.map(i => rows(i).getAttribute("data-key"))
+    (0 until rows.length).toList.map(i => TableRow.Key(rows(i).getAttribute("data-key")))
 
-  private def chosenKey(ev: dom.KeyboardEvent): Option[com.histmersion.web.library.LibraryTable.RowKey] =
+  private def chosenKey(ev: dom.KeyboardEvent): Option[TableRow.Key] =
     Option(ev.currentTarget.asInstanceOf[dom.Element].querySelector("tbody tr.is-chosen"))
-      .map(_.getAttribute("data-key"))
+      .map(el => TableRow.Key(el.getAttribute("data-key")))
       .orElse(
         Option(dom.document.activeElement)
           .flatMap(el => Option(el.closest("tr[data-key]")))
-          .map(_.getAttribute("data-key"))
+          .map(el => TableRow.Key(el.getAttribute("data-key")))
       )
 
-  private def focusRow(wrap: dom.Element, key: com.histmersion.web.library.LibraryTable.RowKey): Unit =
+  private def focusRow(wrap: dom.Element, key: TableRow.Key): Unit =
     val rows = wrap.querySelectorAll("tbody tr[data-key]")
-    (0 until rows.length).map(rows(_)).find(_.getAttribute("data-key") == key).foreach { tr =>
+    (0 until rows.length).map(rows(_)).find(_.getAttribute("data-key") == key.value).foreach { tr =>
       Option(tr.querySelector("a.lib-title")).foreach(_.asInstanceOf[dom.HTMLElement].focus())
     }
 
-  private def row(r: TableRow, sources: com.histmersion.web.library.LibraryTable.RowSources, chosen: Signal[Option[com.histmersion.web.library.LibraryTable.RowKey]], choose: Choose): HtmlElement =
+  private def row(r: TableRow, sources: Boolean, chosen: Signal[Option[TableRow.Key]], choose: Choose): HtmlElement =
     val on = chosen.map(_.contains(r.key))
     val ref =
-      if sources then com.histmersion.web.marks.ItemRef.source(r.key, r.title)
-      else com.histmersion.web.marks.ItemRef.article(r.key, r.title)
+      if sources then com.histmersion.web.marks.ItemRef.source(com.histmersion.api.library.Citekey(r.key.value), r.title)
+      else com.histmersion.web.marks.ItemRef.article(com.histmersion.api.research.Article.Slug(r.key.value), r.title)
     val unread = com.histmersion.web.marks.MyItems.loaded.signal
       .combineWith(com.histmersion.web.marks.MyItems.isRead(ref))
       .map((loaded, read) => loaded && !read)
     tr(
       cls := "lib-row",
       cls("is-chosen") <-- on,
-      dataAttr("key") := r.key,
+      dataAttr("key") := r.key.value,
       // a click anywhere on the row chooses it, as on its title
       onClick --> { ev =>
         val t = ev.target.asInstanceOf[dom.Element]
-        if t.closest("a") == null && Router.plain(ev) then choose(r.key, true)
+        if t.closest("a") == null && Router.plain(ev) then choose(r.key, Router.Push(true))
       },
       com.histmersion.web.ui.ContextMenu
         .on(s"Actions: ${r.title}", () => com.histmersion.web.marks.ItemMenu.entries(ref, r.byline)),
@@ -116,12 +108,12 @@ object LibraryTable:
           onClick --> { ev =>
             if Router.plain(ev) then
               ev.preventDefault()
-              choose(r.key, true)
+              choose(r.key, Router.Push(true))
           }
         ),
         Option.when(r.byline.nonEmpty)(div(cls := "lib-byline", r.byline))
       ),
-      if sources then td(cls := "col-year", r.year.fold("")(_.toString)) else emptyNode,
+      if sources then td(cls := "col-year", r.year.fold("")(_.value.toString)) else emptyNode,
       td(cls := "col-status", r.status.fold(span(cls := "lib-kind", r.kind))(StatusBadge(_))),
       td(cls := "col-period lib-period", r.period)
     )

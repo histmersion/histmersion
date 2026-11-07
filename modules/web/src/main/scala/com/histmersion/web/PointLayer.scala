@@ -92,7 +92,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
       )
     )
     kind.title(a).foreach(t => el.setAttribute("title", t.value))
-    if fadeIn.value then el.classList.add(FadingLayer.fadeIn.value)
+    if fadeIn.value then el.classList.add(FadingLayer.fadeIn.value.value)
     val m = DomMarker(at(d).lat, at(d).lon, el, Some((DomMarker.BoxSize(w.value), DomMarker.BoxSize(h.value))))
     val z = kind.zIndex(a)
     if z.value != 0 then m.setZ(DomMarker.ZIndex(z.value))

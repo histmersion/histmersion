@@ -28,7 +28,7 @@ enum BaseMapSpec:
   /** An online raster map: its tile URL template (`{s}` for its subdomains), its deepest zoom, its credits (HTML),
     * drawn inverted (`dark`: the light tiles as a dark map) at `opacity`.
     */
-  case Raster(template: BaseMapSpec.Raster.Template, maxZoom: BaseMapSpec.Raster.MaxZoom, attribution: BaseMapSpec.Raster.Attribution, dark: BaseMapSpec.Raster.Dark = com.histmersion.web.map.BaseMapSpec.Raster.Dark(false), opacity: BaseMapSpec.Raster.Opacity = 0.85)
+  case Raster(template: BaseMapSpec.Raster.Template, maxZoom: BaseMapSpec.Raster.MaxZoom, attribution: BaseMapSpec.Raster.Attribution, dark: BaseMapSpec.Raster.Dark = com.histmersion.web.map.BaseMapSpec.Raster.Dark(false), opacity: BaseMapSpec.Raster.Opacity = com.histmersion.web.map.BaseMapSpec.Raster.Opacity(0.85))
 
 object BaseMapSpec:
   object Vector:

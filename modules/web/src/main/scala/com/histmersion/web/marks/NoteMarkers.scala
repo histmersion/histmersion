@@ -17,7 +17,7 @@ object NoteMarkers:
 
   // `var`/map: whether the layer is on, and the markers drawn by note id
   private var on = false
-  private val drawn = mutable.LinkedHashMap.empty[String, DomMarker]
+  private val drawn = mutable.LinkedHashMap.empty[Note.Id, DomMarker]
   // the note shown in a popup, unmounted when the next one opens
   private var shown: Option[RootNode] = None
 
@@ -45,7 +45,7 @@ object NoteMarkers:
 
   private def draw(ns: List[Note]): Unit =
     if TheMap.isUp then
-      val now = placed(ns).map(n => (n.id.value: String) -> n).toMap
+      val now = placed(ns).map(n => n.id -> n).toMap
       drawn.keys.toList.filterNot(now.contains).foreach(k => drawn.remove(k).foreach(pane.remove))
       now.foreach { (id, n) =>
         drawn.get(id).foreach(pane.remove)
@@ -55,14 +55,14 @@ object NoteMarkers:
       }
 
   private def marker(n: Note): DomMarker =
-    val el = DomMarker.element(com.histmersion.web.map.DomMarker.ElementCls("hd-note-marker"), Icon.html(Icon.Note))
+    val el = DomMarker.element(com.histmersion.web.map.DomMarker.ElementCls("hd-note-marker"), com.histmersion.web.map.DomMarker.ElementHtml(Icon.html(Icon.Note).value))
     el.setAttribute("tabindex", "0")
     el.setAttribute("role", "button")
     el.setAttribute("data-note", n.id.value)
-    val words = s"Your note: ${PersonalMarkdown.excerpt(n.text.value, com.histmersion.api.checks.FormatIssue.Excerpt.Length(80))}"
+    val words = s"Your note: ${PersonalMarkdown.excerpt(n.text, com.histmersion.api.checks.FormatIssue.Excerpt.Length(80))}"
     el.setAttribute("aria-label", s"$words — show it")
     el.setAttribute("title", words)
-    val m = DomMarker(n.target.lat.get.value, n.target.lon.get.value, el, Some((com.histmersion.web.map.DomMarker.BoxSize(26), com.histmersion.web.map.DomMarker.BoxSize(26))))
+    val m = DomMarker(LatLon.Lat(n.target.lat.get.value), LatLon.Lon(n.target.lon.get.value), el, Some((com.histmersion.web.map.DomMarker.BoxSize(26), com.histmersion.web.map.DomMarker.BoxSize(26))))
     m.handlers = new MarkerHandlers:
       override def click(e: dom.MouseEvent): Unit = { e.stopPropagation(); show(n) }
       override def key(e: dom.KeyboardEvent): Unit =
@@ -73,14 +73,14 @@ object NoteMarkers:
   def show(n: Note): Unit =
     for la <- n.target.lat; lo <- n.target.lon do
       shown.foreach(_.unmount())
-      val pop = TheMap.surface.popup(LatLon(la.value, lo.value), com.histmersion.web.map.MapSurface.PopupHtml(""), com.histmersion.web.map.MapSurface.PopupCls("note-popup"))
+      val pop = TheMap.surface.popup(LatLon(LatLon.Lat(la.value), LatLon.Lon(lo.value)), com.histmersion.web.map.MapSurface.PopupHtml(""), com.histmersion.web.map.MapSurface.PopupCls("note-popup"))
       TheMap.surface.popupBody(pop).foreach { body =>
         val box = dom.document.createElement("div")
         body.appendChild(box)
         shown = Some(
           render(
             box,
-            div(cls := "note-popup-body", p(cls := "note-popup-where muted", Target.where(n.target)), NoteList.card(n))
+            div(cls := "note-popup-body", p(cls := "note-popup-where muted", Target.where(n.target).value), NoteList.card(n))
           )
         )
       }

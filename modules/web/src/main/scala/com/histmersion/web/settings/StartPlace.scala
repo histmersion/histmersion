@@ -3,8 +3,10 @@ package com.histmersion.web.settings
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.instance.{MapStartConfig, MapStartMode}
+import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.web.ApiClient
-import com.histmersion.web.map.{GeoBounds, LatLon, TheMap}
+import com.histmersion.web.map.{GeoBounds, LatLon, MapSurface, TheMap}
+import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -17,59 +19,53 @@ import com.histmersion.api.catalogue.Place
 object StartPlace:
   type Description = Description.T
   object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The zoom that shows a box of this size whole: a continent ~3, a country ~6, a city ~10. Pure. */
 
   type ChooserName = ChooserName.T
   object ChooserName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChooserShowLegend = ChooserShowLegend.T
-  object ChooserShowLegend extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def zoomFor(b: GeoBounds): com.histmersion.web.map.MapStart.Zoom =
-    val span = math.max(b.east - b.west, (b.north - b.south) * 1.4)
-    if span <= 0.01 then com.histmersion.web.map.MapStart.Zoom(9)
-    else math.max(2.0, math.min(10.0, math.floor(math.log(360.0 / span) / math.log(2)) + 1))
+  def zoomFor(b: GeoBounds): MapSurface.Zoom =
+    val span = math.max(b.east.value - b.west.value, (b.north.value - b.south.value) * 1.4)
+    if span <= 0.01 then MapSurface.Zoom(9)
+    else MapSurface.Zoom(math.max(2.0, math.min(10.0, math.floor(math.log(360.0 / span) / math.log(2)) + 1)))
 
   /** The centre and zoom of a place's geometry (GeoJSON), when it has one. */
-  def viewOf(geometry: com.histmersion.api.catalogue.Place.Geometry): Option[(LatLon, com.histmersion.web.map.MapStart.Zoom)] =
-    scala.util.Try(js.JSON.parse(geometry)).toOption.flatMap(GeoBounds.ofGeometry).filter(_.valid).map { b =>
-      (LatLon((b.south + b.north) / 2, (b.west + b.east) / 2), zoomFor(b))
+  def viewOf(geometry: com.histmersion.api.catalogue.Place.Geometry): Option[(LatLon, MapSurface.Zoom)] =
+    scala.util.Try(js.JSON.parse(geometry.value)).toOption.flatMap(GeoBounds.ofGeometry).filter(_.valid).map { b =>
+      (LatLon(LatLon.Lat((b.south.value + b.north.value) / 2), LatLon.Lon((b.west.value + b.east.value) / 2)), zoomFor(b))
     }
 
   /** The changes the choice writes (`ui.map-start.*`). Pure. */
-  def changes(c: MapStartConfig): List[(com.histmersion.web.settings.StartPlace.Label, com.histmersion.web.settings.StartPlace.Text)] =
+  def changes(c: MapStartConfig): List[(ConfigEdit.Change.Key, ConfigEdit.Change.Value)] =
     List(
-      "ui.map-start.mode" -> c.mode,
-      "ui.map-start.lat" -> round(c.lat),
-      "ui.map-start.lon" -> round(c.lon),
-      "ui.map-start.zoom" -> round(c.zoom),
-      "ui.map-start.label" -> c.label
+      ConfigEdit.Change.Key("ui.map-start.mode") -> ConfigEdit.Change.Value(c.mode.value),
+      ConfigEdit.Change.Key("ui.map-start.lat") -> ConfigEdit.Change.Value(round(c.lat.value)),
+      ConfigEdit.Change.Key("ui.map-start.lon") -> ConfigEdit.Change.Value(round(c.lon.value)),
+      ConfigEdit.Change.Key("ui.map-start.zoom") -> ConfigEdit.Change.Value(round(c.zoom.value)),
+      ConfigEdit.Change.Key("ui.map-start.label") -> ConfigEdit.Change.Value(c.label.value)
     )
 
-  private def round(v: com.histmersion.web.map.MapStart.Coordinate): com.histmersion.web.map.MapStart.Rounded =
+  private def round(v: Double): String =
     BigDecimal(v).setScale(4, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString
 
-  def chooser(choice: Var[MapStartConfig], name: com.histmersion.web.settings.StartPlace.ChooserName, showLegend: com.histmersion.web.settings.StartPlace.ChooserShowLegend = com.histmersion.web.settings.StartPlace.ChooserShowLegend(true)): HtmlElement =
+  def chooser(choice: Var[MapStartConfig], name: com.histmersion.web.settings.StartPlace.ChooserName, showLegend: Boolean = true): HtmlElement =
     val query = Var("")
     val hits = Var(List.empty[Place.Hit])
     val problem = Var(Option.empty[String])
-    def search(q: com.histmersion.web.settings.AdvancedSection.Query): Unit =
+    def search(q: String): Unit =
       query.set(q)
       if q.trim.length >= 2 then
-        ApiClient.places(Some(q.trim), None, Some(com.histmersion.api.Paging.Limit(6))).foreach(hs => if query.now() == q then hits.set(hs))
+        ApiClient.places(Some(com.histmersion.api.Api.Search.Text(q.trim)), None, Some(com.histmersion.api.Paging.Limit(6))).foreach(hs => if query.now() == q then hits.set(hs))
       else hits.set(Nil)
     def pick(h: Place.Hit): Unit =
       ApiClient.place(h.id, None).foreach { d =>
         d.geometry.flatMap(viewOf) match
           case Some((at, zoom)) =>
             choice.update(
-              _.modify(_.mode).setTo(MapStartMode.Place.wire).modify(_.lat).setTo(at.lat).modify(_.lon).setTo(at.lon).modify(_.zoom).setTo(zoom).modify(_.label).setTo(h.label)
+              _.modify(_.mode).setTo(MapStartMode.Place.wire).modify(_.lat).setTo(Latitude(at.lat.value)).modify(_.lon).setTo(Longitude(at.lon.value)).modify(_.zoom).setTo(MapStartConfig.Zoom(zoom.value)).modify(_.label).setTo(MapStartConfig.Label(h.label.value))
             )
-            problem.set(None); hits.set(Nil); query.set(h.label)
+            problem.set(None); hits.set(Nil); query.set(h.label.value)
           case None => problem.set(Some(s"${h.label} has no location on the map; choose another place."))
       }
     fieldSet(
@@ -81,14 +77,14 @@ object StartPlace:
           input(
             typ := "radio",
             nameAttr := s"$name-mode",
-            value := m.wire,
+            value := m.wire.value,
             controlled(
               checked <-- choice.signal.map(c => MapStartMode.parse(c.mode) == m),
               onClick.mapTo(m.wire) --> (w => choice.update(_.modify(_.mode).setTo(w)))
             )
           ),
           " ",
-          m.label
+          m.label.value
         )
       },
       div(
@@ -110,7 +106,7 @@ object StartPlace:
               val s = TheMap.surface
               choice.update(
                 _.modify(
-                  _.mode).setTo(MapStartMode.Place.wire).modify(_.lat).setTo(s.center.lat).modify(_.lon).setTo(s.center.lon).modify(_.zoom).setTo(math.round(s.zoom * 10) / 10.0).modify(_.label).setTo("the view I chose"
+                  _.mode).setTo(MapStartMode.Place.wire).modify(_.lat).setTo(Latitude(s.center.lat.value)).modify(_.lon).setTo(Longitude(s.center.lon.value)).modify(_.zoom).setTo(MapStartConfig.Zoom(math.round(s.zoom.value * 10) / 10.0)).modify(_.label).setTo(MapStartConfig.Label("the view I chose")
                 )
               )
             }
@@ -124,8 +120,8 @@ object StartPlace:
                 button(
                   typ := "button",
                   cls := "btn btn--bare start-place-hit",
-                  h.label,
-                  span(cls := "muted", s" ${com.histmersion.api.Wording.humanize(h.kind)}"),
+                  h.label.value,
+                  span(cls := "muted", s" ${com.histmersion.api.Wording.humanize(com.histmersion.api.Wording.Id(h.kind.value))}"),
                   onClick --> (_ => pick(h))
                 )
               )
@@ -133,13 +129,13 @@ object StartPlace:
           )
         )
       ),
-      child.maybe <-- problem.signal.map(_.map(com.histmersion.web.ErrorLine.text)),
-      p(cls := "muted start-place-now", child.text <-- choice.signal.map(describe))
+      child.maybe <-- problem.signal.map(_.map(m => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(m)))),
+      p(cls := "muted start-place-now", child.text <-- choice.signal.map(c => describe(c).value))
     )
 
   /** What the choice means, in words. Pure. */
   def describe(c: MapStartConfig): com.histmersion.web.settings.StartPlace.Description =
-    val at = if c.label.trim.nonEmpty then c.label else s"${round(c.lat)}, ${round(c.lon)}"
+    val at = if c.label.value.trim.nonEmpty then c.label.value else s"${round(c.lat.value)}, ${round(c.lon.value)}"
     MapStartMode.parse(c.mode) match
-      case MapStartMode.Last  => s"The first time, and in a new browser, it opens at $at."
-      case MapStartMode.Place => s"It opens at $at (zoom ${round(c.zoom)})."
+      case MapStartMode.Last  => com.histmersion.web.settings.StartPlace.Description(s"The first time, and in a new browser, it opens at $at.")
+      case MapStartMode.Place => com.histmersion.web.settings.StartPlace.Description(s"It opens at $at (zoom ${round(c.zoom.value)}).")

@@ -1,7 +1,8 @@
 package com.histmersion.web.settings
 
 import com.histmersion.api.settings.ConfigEdit
-import com.histmersion.api.instance.{MapStartConfig, UiConfig}
+import com.histmersion.api.catalogue.{Latitude, Longitude}
+import com.histmersion.api.instance.{MapStartConfig, MapStartMode, UiConfig}
 import com.histmersion.web.{Auth, Theme, ThemeChoice, UiState}
 import com.histmersion.web.map.MapMotion
 import com.raquo.laminar.api.L.*
@@ -12,19 +13,6 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   * file's `ui.map-start`, for every browser).
   */
 object GeneralSection:
-  type ChoiceKey = ChoiceKey.T
-  object ChoiceKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChoiceLabel = ChoiceLabel.T
-  object ChoiceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThemeName = ThemeName.T
-  object ThemeName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type StartCardFromPageTextK = StartCardFromPageTextK.T
-  object StartCardFromPageTextK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type ChoiceRowTitle = ChoiceRowTitle.T
-  object ChoiceRowTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def pane(ui: UiConfig): HtmlElement =
     div(
       cls := "settings-section",
@@ -38,35 +26,35 @@ object GeneralSection:
         div(
           cls := "settings-card-body",
           choiceRow(
-            com.histmersion.web.settings.GeneralSection.ChoiceRowTitle("Theme"),
-            com.histmersion.web.settings.SettingsForm.Item.Name("theme"),
-            ThemeChoice.values.toList.map(c => c.wire -> themeName(c)),
-            Theme.choice.map(_.wire),
+            "Theme",
+            "theme",
+            ThemeChoice.values.toList.map(c => c.wire.value -> themeName(c)),
+            Theme.choice.map(_.wire.value),
             w => Theme.choose(ThemeChoice.fromWire(w))
           ),
           choiceRow(
-            com.histmersion.web.settings.GeneralSection.ChoiceRowTitle("Map motion"),
-            com.histmersion.web.settings.SettingsForm.Item.Name("motion"),
-            MapMotion.values.toList.map(m => m.wire -> m.label),
-            UiState.mapMotion.signal.map(_.wire),
-            w => MapMotion.fromWire(w).foreach(m => UiState.set(UiState.mapMotion := m)())
+            "Map motion",
+            "motion",
+            MapMotion.values.toList.map(m => m.wire.value -> m.label.value),
+            UiState.mapMotion.signal.map(_.wire.value),
+            w => MapMotion.fromWire(MapMotion.Wire(w)).foreach(m => UiState.set(UiState.mapMotion := m)())
           )
         )
       ),
       startCard(ui)
     )
 
-  private def themeName(c: ThemeChoice): com.histmersion.web.settings.GeneralSection.ThemeName = c match
-    case ThemeChoice.System => com.histmersion.web.settings.GeneralSection.ThemeName("Follow the system")
-    case ThemeChoice.Light  => com.histmersion.web.settings.GeneralSection.ThemeName("Light")
-    case ThemeChoice.Dark   => com.histmersion.web.settings.GeneralSection.ThemeName("Dark")
+  private def themeName(c: ThemeChoice): String = c match
+    case ThemeChoice.System => "Follow the system"
+    case ThemeChoice.Light  => "Light"
+    case ThemeChoice.Dark   => "Dark"
 
   private def choiceRow(
-      title: com.histmersion.web.settings.GeneralSection.ChoiceRowTitle,
-      name: com.histmersion.web.settings.SettingsForm.Item.Name,
-      options: List[(com.histmersion.web.settings.GeneralSection.ChoiceKey, com.histmersion.web.settings.GeneralSection.ChoiceLabel)],
-      current: Signal[com.histmersion.web.settings.GeneralSection.ChoiceKey],
-      choose: com.histmersion.web.settings.GeneralSection.ChoiceKey => Unit
+      title: String,
+      name: String,
+      options: List[(String, String)],
+      current: Signal[String],
+      choose: String => Unit
   ): HtmlElement =
     fieldSet(
       cls := "setting-row setting-choice",
@@ -96,13 +84,14 @@ object GeneralSection:
     val saved = Var(ui.mapStart)
     // the file's own values once read (another window may have changed them since this page loaded)
     def fromPage(p: ConfigEdit.Page): MapStartConfig =
-      def text(k: com.histmersion.web.settings.GeneralSection.StartCardFromPageTextK) = p.field(s"ui.map-start.$k").flatMap(f => f.effective).map(v => Draft.plain(Some(v)))
+      def text(k: String): Option[String] =
+        p.field(ConfigEdit.Field.Key(s"ui.map-start.$k")).flatMap(f => f.effective).map(v => Draft.plain(Some(Draft.Text(v.value))).value)
       MapStartConfig(
-        text(com.histmersion.web.settings.GeneralSection.StartCardFromPageTextK("mode")).getOrElse(ui.mapStart.mode),
-        text(com.histmersion.web.settings.GeneralSection.StartCardFromPageTextK("lat")).flatMap(_.toDoubleOption).getOrElse(ui.mapStart.lat),
-        text(com.histmersion.web.settings.GeneralSection.StartCardFromPageTextK("lon")).flatMap(_.toDoubleOption).getOrElse(ui.mapStart.lon),
-        text(com.histmersion.web.settings.GeneralSection.StartCardFromPageTextK("zoom")).flatMap(_.toDoubleOption).getOrElse(ui.mapStart.zoom),
-        text(com.histmersion.web.settings.GeneralSection.StartCardFromPageTextK("label")).getOrElse(ui.mapStart.label)
+        text("mode").map(MapStartMode.Wire(_)).getOrElse(ui.mapStart.mode),
+        text("lat").flatMap(_.toDoubleOption).map(Latitude(_)).getOrElse(ui.mapStart.lat),
+        text("lon").flatMap(_.toDoubleOption).map(Longitude(_)).getOrElse(ui.mapStart.lon),
+        text("zoom").flatMap(_.toDoubleOption).map(MapStartConfig.Zoom(_)).getOrElse(ui.mapStart.zoom),
+        text("label").map(MapStartConfig.Label(_)).getOrElse(ui.mapStart.label)
       )
     sectionTag(
       cls := "settings-card",
@@ -114,7 +103,7 @@ object GeneralSection:
         h2(cls := "settings-card-title", "Where the map opens"),
         p(cls := "settings-card-intro", "For everyone who opens Histmersion from this server.")
       ),
-      div(cls := "settings-card-body", StartPlace.chooser(choice, com.histmersion.web.settings.StartPlace.ChooserName("general-start"), showLegend = com.histmersion.web.settings.StartPlace.ChooserShowLegend(false))),
+      div(cls := "settings-card-body", StartPlace.chooser(choice, com.histmersion.web.settings.StartPlace.ChooserName("general-start"), showLegend = false)),
       div(
         cls := "settings-save",
         child.maybe <-- Auth.writable.map(w =>

@@ -255,7 +255,7 @@ object ChipInput:
           if inputEl != null then inputEl.focus()
       }
     )
-  end apply
+  end view
 
   /** What a suggestion shows: the display form (`_` as a space), as a plain text node — Laminar escapes it, so it must
     * NOT be HTML-escaped first (that shows `&amp;` literally). The value itself is what gets committed.

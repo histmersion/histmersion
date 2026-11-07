@@ -161,8 +161,8 @@ object ResultsList:
 
     val rows = sorted.map { case (ck, ttl, pts) =>
       val per = Fmt.periodStr(
-        pts.flatMap(_.periodStart).minByOption(_.value),
-        pts.flatMap(_.periodEnd).maxByOption(_.value)
+        pts.flatMap(_.periodStart).minByOption(y => y.value: Long),
+        pts.flatMap(_.periodEnd).maxByOption(y => y.value: Long)
       )
       div(
         cls := "hit hit-source",

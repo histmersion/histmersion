@@ -9,13 +9,13 @@ import scala.scalajs.js
   * set answers the pointer ([[MapSurface.shapesAt]]).
   */
 final case class ShapeStyle(
-    fillOpacity: ShapeStyle.FillOpacity = 0.0,
-    lineWidth: ShapeStyle.LineWidth = 1.5,
-    lineOpacity: ShapeStyle.LineOpacity = 0.8,
+    fillOpacity: ShapeStyle.FillOpacity = com.histmersion.web.map.ShapeStyle.FillOpacity(0.0),
+    lineWidth: ShapeStyle.LineWidth = com.histmersion.web.map.ShapeStyle.LineWidth(1.5),
+    lineOpacity: ShapeStyle.LineOpacity = com.histmersion.web.map.ShapeStyle.LineOpacity(0.8),
     colour: Option[ShapeStyle.Colour] = None,
     dash: List[ShapeStyle.Dash] = Nil,
     dashedLineOpacity: Option[ShapeStyle.DashedLineOpacity] = None,
-    circleRadius: ShapeStyle.CircleRadius = 0.0,
+    circleRadius: ShapeStyle.CircleRadius = com.histmersion.web.map.ShapeStyle.CircleRadius(0.0),
     interactive: ShapeStyle.Interactive = com.histmersion.web.map.ShapeStyle.Interactive(false)
 )
 

@@ -10,14 +10,11 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object MyLibrary:
 
-  type Shown = Shown.T
-  object Shown extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   private def onList(r: Route): Boolean = r match
     case Route.Library(s) => s.isList
     case _                => false
 
-  private val shown: Signal[com.histmersion.web.library.MyLibrary.Shown] = Router.route.map(onList)
+  private val shown: Signal[Boolean] = Router.route.map(onList)
 
   private val everything = Var(Option.empty[com.histmersion.api.RowCount])
   private val unread = Var(Option.empty[com.histmersion.api.RowCount])
@@ -41,7 +38,7 @@ object MyLibrary:
     ApiClient
       .unread(com.histmersion.web.ApiClient.Kind("source"), com.histmersion.api.Paging.Limit(1), com.histmersion.api.Offset(0))
       .zip(ApiClient.unread(com.histmersion.web.ApiClient.Kind("article"), com.histmersion.api.Paging.Limit(1), com.histmersion.api.Offset(0)))
-      .foreach((s, a) => unread.set(Some(com.histmersion.api.RowCount(s.total + a.total))))
+      .foreach((s, a) => unread.set(Some(com.histmersion.api.RowCount(s.total.value + a.total.value))))
 
   /** "My library", for the top of the filter panel. */
   def panelTop: HtmlElement =
@@ -50,14 +47,14 @@ object MyLibrary:
       cls("is-hidden") <-- shown.map(!_),
       aria.label := "My library",
       shown.changes.filter(identity) --> (_ => refresh()),
-      marks.MyItems.marks.signal.map(_.values.count(_.read)).changes --> (_ => if onList(Router.now()) then refresh()),
+      marks.MyItems.marks.signal.map(_.values.count(_.read.value)).changes --> (_ => if onList(Router.now()) then refresh()),
       onMountCallback(_ => if onList(Router.now()) then refresh()),
       h2(cls := "my-library-title", "My library"),
       Shelf.values.toList.map { s =>
         val on = shelf.map(_ == s)
         a(
           cls := "side-link",
-          dataAttr("shelf") := s.wire,
+          dataAttr("shelf") := s.wire.value,
           cls("on") <-- on,
           aria.current <-- on.map(if _ then "page" else "false"),
           href <-- Router.route.map(_ => LibraryAddress.href(section, None, s)),
@@ -66,7 +63,7 @@ object MyLibrary:
               ev.preventDefault(); Router.go(Route.Library(section), search = LibraryAddress.search(None, s))
             }
           },
-          span(cls := "side-label", s.label),
+          span(cls := "side-label", s.label.value),
           child.maybe <-- count(s).map(_.map(n => span(cls := "side-count", ListPage.grouped(n.value))))
         )
       }
@@ -79,7 +76,7 @@ object MyLibrary:
       cls("is-hidden") <-- shown.map(!_),
       href <-- UiState.signal.map { _ =>
         val hash = UiState.hashString
-        Route.Explore.path + (if hash.nonEmpty then s"#$hash" else "")
+        Route.Explore.path + (if hash.value.nonEmpty then s"#$hash" else "")
       },
       "Show these on the map",
       onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); Router.go(Route.Explore) } }

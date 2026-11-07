@@ -73,11 +73,11 @@ final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
       markers.remove(m)
       m.el.classList.add("hd-cluster-ghost")
       m.removed()
-      dom.window.setTimeout(() => if m.el.parentNode == el then { val _ = el.removeChild(m.el) }, ms)
+      dom.window.setTimeout(() => if m.el.parentNode == el then { val _ = el.removeChild(m.el) }, ms.value.toDouble)
 
   def has(m: DomMarker): Boolean = markers.contains(m)
 
-  def size: com.histmersion.web.map.MarkerPane.MarkerCount = markers.size
+  def size: com.histmersion.web.map.MarkerPane.MarkerCount = com.histmersion.web.map.MarkerPane.MarkerCount(markers.size)
 
   def reposition(v: View): Unit = markers.foreach(_.place(v))
 

@@ -16,22 +16,22 @@ object PluginsSection:
 
   /** What became of a plugin, in words. Pure. */
 
-  def state(p: PluginStatus): com.histmersion.web.settings.PluginsSection.State = PluginState.parse(p.state) match
+  def state(p: PluginStatus): com.histmersion.web.settings.PluginsSection.State = PluginState.parse(PluginState.Wire(p.state.value)) match
     case Some(PluginState.Registered) => com.histmersion.web.settings.PluginsSection.State("Working")
     case Some(PluginState.Disabled)   => com.histmersion.web.settings.PluginsSection.State("Turned off")
-    case Some(PluginState.Failed)     => s"Not working: ${p.error.getOrElse("no reason given")}"
-    case Some(PluginState.Refused)    => s"Not loaded: ${p.error.getOrElse("no reason given")}"
-    case None                         => Wording.humanize(p.state)
+    case Some(PluginState.Failed)     => State(s"Not working: ${p.error.getOrElse("no reason given")}")
+    case Some(PluginState.Refused)    => State(s"Not loaded: ${p.error.getOrElse("no reason given")}")
+    case None                         => State(Wording.humanize(Wording.Id(p.state.value)))
 
   /** What a plugin adds, in words (`source-fetcher:oa-core` → "Finds papers"). Pure. */
   def provides(p: PluginStatus): List[com.histmersion.web.settings.PluginsSection.Capability] =
-    p.provides.map(_.takeWhile(_ != ':')).distinct.map {
+    p.provides.map(_.value.takeWhile(_ != ':')).distinct.map {
       case "source-fetcher"   => com.histmersion.web.settings.PluginsSection.Capability("Finds papers")
       case "media-collection" => com.histmersion.web.settings.PluginsSection.Capability("Pictures")
       case "event-catalogue"  => com.histmersion.web.settings.PluginsSection.Capability("Events")
       case "ai-provider"      => com.histmersion.web.settings.PluginsSection.Capability("An AI provider")
       case "secret-vault"     => com.histmersion.web.settings.PluginsSection.Capability("A password manager")
-      case other              => Wording.humanize(other)
+      case other              => Capability(Wording.humanize(Wording.Id(other)))
     }
 
   def pane(ui: UiConfig): HtmlElement =
@@ -41,15 +41,17 @@ object PluginsSection:
       SettingsForm(
         com.histmersion.web.settings.SettingsForm.ApplyTitle("Built-in plugins"),
         Some(
-          "Turn a plugin on or off; the server applies it at once. A plugin that needs a key of your own (Europeana, " +
-            "Smithsonian) works once the key is in Keys and passwords."
+          SettingsForm.Intro(
+            "Turn a plugin on or off; the server applies it at once. A plugin that needs a key of your own (Europeana, " +
+              "Smithsonian) works once the key is in Keys and passwords."
+          )
         ),
         r.plugins.map(p =>
           SettingsForm.Item(
-            s"plugins.${p.id}.enabled",
-            Some(Wording.plugin(p.id)),
-            Some((state(p) :: provides(p)).mkString(" · ")),
-            fallback = Some(p.enabled.toString)
+            SettingsForm.Item.Key(s"plugins.${p.id}.enabled"),
+            Some(SettingsForm.Item.Name(Wording.plugin(Wording.PluginId(p.id.value)))),
+            Some(SettingsForm.Item.Help((state(p).value :: provides(p).map(_.value)).mkString(" · "))),
+            fallback = Some(SettingsForm.Item.Fallback(p.enabled.toString))
           )
         )
       ),
@@ -66,8 +68,8 @@ object PluginsSection:
         ),
         div(
           cls := "settings-card-body",
-          p(PluginSet.describe(r.set)),
-          r.set.toList.flatMap(_.jars).map(j => p(cls := "muted", j.file))
+          p(PluginSet.describe(r.set).value),
+          r.set.toList.flatMap(_.jars).map(j => p(cls := "muted", j.file.value))
         )
       )
     )

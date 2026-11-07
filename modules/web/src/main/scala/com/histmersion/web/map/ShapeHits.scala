@@ -16,6 +16,7 @@ object ShapeHits:
   def contains(g: js.Dynamic, lat: com.histmersion.api.Geo.Latitude, lon: com.histmersion.api.Geo.Longitude): Boolean =
     if js.isUndefined(g) || g == null then false
     else
+      val (la, lo) = (lat.value, lon.value)
       def ring(r: js.Array[js.Array[Double]]): Boolean =
         // `var`s: the crossing count's walk over the ring's edges
         var inside = false
@@ -23,7 +24,7 @@ object ShapeHits:
         var i = 0
         while i < r.length do
           val (xi, yi, xj, yj) = (r(i)(0), r(i)(1), r(j)(0), r(j)(1))
-          if (yi > lat) != (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi then inside = !inside
+          if (yi > la) != (yj > la) && lo < (xj - xi) * (la - yi) / (yj - yi) + xi then inside = !inside
           j = i
           i += 1
         inside
@@ -41,7 +42,7 @@ object ShapeHits:
     else
       Some(
         LatLon(
-          g.coordinates.selectDynamic("1").asInstanceOf[Double],
-          g.coordinates.selectDynamic("0").asInstanceOf[Double]
+          LatLon.Lat(g.coordinates.selectDynamic("1").asInstanceOf[Double]),
+          LatLon.Lon(g.coordinates.selectDynamic("0").asInstanceOf[Double])
         )
       )

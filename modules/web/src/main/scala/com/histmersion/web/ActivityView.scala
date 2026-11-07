@@ -118,7 +118,7 @@ object ActivityView:
             )
           )
         ),
-      e.citekey.filterNot(_ => kind.contains(EntryKind.Decision)).map(ck => span(" · ", SourceLink(SourceLink.ApplyCitekey(ck.value)))),
+      e.citekey.filterNot(_ => kind.contains(EntryKind.Decision)).map(ck => span(" · ", SourceLink(ck))),
       e.article.map(slug => span(" · ", com.histmersion.web.ArticleLink(com.histmersion.api.research.Article.Slug(slug.value), slug.value))),
       e.queueItem
         .filter(_ => kind.contains(EntryKind.Job))
@@ -132,7 +132,7 @@ object ActivityView:
       val outcome = Agents.ApprovalState.parse(Approval.State.Wire(e.state.value)).fold[String](e.state.value)(Wording.approvalState).toLowerCase
       List[Modifier[HtmlElement]](
         span(s"$what — $outcome"),
-        e.citekey.map(ck => span(" · ", SourceLink(SourceLink.ApplyCitekey(ck.value)))),
+        e.citekey.map(ck => span(" · ", SourceLink(ck))),
         Option(e.text.value).filter(t => t.nonEmpty && e.citekey.isEmpty).map(t => span(s" · $t"))
       )
     case Some(EntryKind.Log) => span(cls := "activity-text", e.text.value.take(400))

@@ -13,40 +13,31 @@ object SettingControl:
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The name a setting is shown by: its last word, as words (`contact-email` → "Contact email"). Pure. */
-  type NameOfKey = NameOfKey.T
-  object NameOfKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ControlId = ControlId.T
-  object ControlId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ControlLocked = ControlLocked.T
-  object ControlLocked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultTextKind = DefaultTextKind.T
-  object DefaultTextKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultTextDefault = DefaultTextDefault.T
-  object DefaultTextDefault extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def nameOf(key: com.histmersion.web.settings.SettingControl.NameOfKey): com.histmersion.web.settings.SettingsForm.Item.Name = Wording.humanize(key.split('.').lastOption.getOrElse(key))
+  def nameOf(key: ConfigEdit.Field.Key): com.histmersion.web.settings.SettingsForm.Item.Name =
+    SettingsForm.Item.Name(Wording.humanize(Wording.Id(key.value.split('.').lastOption.getOrElse(key.value))))
 
   def apply(f: ConfigEdit.Field, draft: Draft, name: Option[com.histmersion.web.settings.SettingsForm.Item.Name] = None, help: Option[com.histmersion.web.settings.SettingsForm.Item.Help] = None): HtmlElement =
-    val id = "set-" + f.key.replaceAll("[^A-Za-z0-9_-]", "-")
+    val id = "set-" + f.key.value.replaceAll("[^A-Za-z0-9_-]", "-")
     val locked = f.locked.isDefined
     div(
       cls := "setting-row",
-      dataAttr("key") := f.relative,
+      dataAttr("key") := f.relative.value,
       cls("is-changed") <-- draft.signal.map(_.contains(f.key)),
       div(
         cls := "setting-head",
-        if f.kind == "flag" then
-          label(forId := id, cls := "setting-name", control(f, draft, id, locked), " ", name.getOrElse(nameOf(f.key)))
-        else label(forId := id, cls := "setting-name", name.getOrElse(nameOf(f.key))),
-        span(cls := "setting-key muted", f.relative)
+        if f.kind.value == "flag" then
+          label(forId := id, cls := "setting-name", control(f, draft, id, locked), " ", name.getOrElse(nameOf(f.key)).value)
+        else label(forId := id, cls := "setting-name", name.getOrElse(nameOf(f.key)).value),
+        span(cls := "setting-key muted", f.relative.value)
       ),
-      help.orElse(Option(f.doc).filter(_.nonEmpty)).map(t => p(cls := "setting-doc", t)),
-      Option.when(f.kind != "flag")(control(f, draft, id, locked)),
+      help.map(_.value).orElse(Option(f.doc.value).filter(_.nonEmpty)).map(t => p(cls := "setting-doc", t)),
+      Option.when(f.kind.value != "flag")(control(f, draft, id, locked)),
       status(f, draft)
     )
 
-  private def control(f: ConfigEdit.Field, draft: Draft, id: com.histmersion.web.settings.SettingControl.ControlId, locked: com.histmersion.web.settings.SettingControl.ControlLocked): HtmlElement =
-    f.kind match
+  private def control(f: ConfigEdit.Field, draft: Draft, id: String, locked: Boolean): HtmlElement =
+    f.kind.value match
       case "flag" =>
         input(
           typ := "checkbox",
@@ -55,7 +46,7 @@ object SettingControl:
           disabled := locked,
           controlled(
             checked <-- draft.shown(f).map(Draft.isOn),
-            onClick.mapToChecked --> (on => draft.set(f.key, Some(on.toString)))
+            onClick.mapToChecked --> (on => draft.set(f.key, Some(Draft.Text(on.toString))))
           )
         )
       case "number" =>
@@ -65,7 +56,7 @@ object SettingControl:
           cls := "field setting-input setting-number",
           disabled := locked,
           inputMode := "decimal",
-          controlled(value <-- draft.shown(f), onInput.mapToValue --> (v => draft.set(f.key, Some(v))))
+          controlled(value <-- draft.shown(f).map(_.value), onInput.mapToValue --> (v => draft.set(f.key, Some(Draft.Text(v)))))
         )
       case _ =>
         input(
@@ -73,22 +64,22 @@ object SettingControl:
           idAttr := id,
           cls := "field setting-input",
           disabled := locked,
-          placeholder := (if f.kind == "list" then "[a, b, c]" else ""),
-          controlled(value <-- draft.shown(f), onInput.mapToValue --> (v => draft.set(f.key, Some(v))))
+          placeholder := (if f.kind.value == "list" then "[a, b, c]" else ""),
+          controlled(value <-- draft.shown(f).map(_.value), onInput.mapToValue --> (v => draft.set(f.key, Some(Draft.Text(v)))))
         )
 
   /** Where the value comes from, and the way back to the default. */
   /** The default, in words: "On by default" for a flag, else "Default: …". Pure. */
-  def defaultText(kind: com.histmersion.web.settings.SettingControl.DefaultTextKind, default: com.histmersion.web.settings.SettingControl.DefaultTextDefault): com.histmersion.web.settings.SettingControl.Text =
-    if kind == "flag" then s"${if Draft.isOn(default) then "On" else "Off"} by default."
-    else if default.isEmpty then com.histmersion.web.settings.SettingControl.Text("Default: (empty).")
-    else s"Default: $default."
+  def defaultText(kind: ConfigEdit.Field.Kind, default: Draft.Text): com.histmersion.web.settings.SettingControl.Text =
+    if kind.value == "flag" then Text(s"${if Draft.isOn(default) then "On" else "Off"} by default.")
+    else if default.value.isEmpty then com.histmersion.web.settings.SettingControl.Text("Default: (empty).")
+    else Text(s"Default: $default.")
 
   private def status(f: ConfigEdit.Field, draft: Draft): HtmlElement =
-    val dflt = Draft.plain(f.default)
+    val dflt = Draft.plain(f.default.map(d => Draft.Text(d.value)))
     div(
       cls := "setting-status muted",
-      f.locked.map(why => span(cls := "setting-locked", why)),
+      f.locked.map(why => span(cls := "setting-locked", why.value)),
       Option.when(f.source == ConfigEdit.Source.Environment.wire)(
         span(
           cls := "setting-env",
@@ -103,8 +94,8 @@ object SettingControl:
               case Some(Some(_))                                   => "Changed — not saved yet."
               case None if f.source == ConfigEdit.Source.File.wire =>
                 s"Set in the settings file. ${defaultText(f.kind, dflt)}"
-              case None if f.kind == "flag" => defaultText(f.kind, dflt)
-              case None                     => s"The default${if dflt.isEmpty then "" else s": $dflt"}."
+              case None if f.kind.value == "flag" => defaultText(f.kind, dflt).value
+              case None                     => s"The default${if dflt.value.isEmpty then "" else s": $dflt"}."
           )
         )
       ),

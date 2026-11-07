@@ -10,10 +10,10 @@ import scala.scalajs.js
   * [[MapEvent.overMarker]]); the element answers the pointer and the keyboard itself (its kind binds them).
   */
 final class DomMarker(
-    private var latV: DomMarker.LatV,
-    private var lonV: DomMarker.LonV,
+    private var latV: LatLon.Lat,
+    private var lonV: LatLon.Lon,
     val el: dom.HTMLElement,
-    box: Option[(DomMarker.BoxPart1, DomMarker.BoxPart2)] = None
+    box: Option[(DomMarker.BoxSize, DomMarker.BoxSize)] = None
 ):
   // `var`s: the last position written, whether it is hidden off screen, and the handlers of being shown
   private var lastX = Double.NaN
@@ -34,11 +34,11 @@ final class DomMarker(
     el.style.setProperty("--mh", s"${h}px")
   }
 
-  def lat: com.histmersion.api.Geo.Latitude = latV
-  def lon: com.histmersion.api.Geo.Longitude = lonV
+  def lat: LatLon.Lat = latV
+  def lon: LatLon.Lon = lonV
   def at: LatLon = LatLon(latV, lonV)
 
-  def setLatLng(lat: com.histmersion.api.Geo.Latitude, lon: com.histmersion.api.Geo.Longitude): Unit =
+  def setLatLng(lat: LatLon.Lat, lon: LatLon.Lon): Unit =
     latV = lat
     lonV = lon
     if TheMap.isUp then place(View.of(TheMap.surface))
@@ -49,29 +49,29 @@ final class DomMarker(
   private[map] def removed(): Unit = onRemove.foreach(_())
 
   /** Where it is drawn now, container pixels (NaN before it was drawn). */
-  def screen: (com.histmersion.web.map.DomMarker.ScreenCoordinate, com.histmersion.web.map.DomMarker.ScreenCoordinate) = (lastX, lastY)
+  def screen: (ScreenPt.X, ScreenPt.Y) = (ScreenPt.X(lastX), ScreenPt.Y(lastY))
 
   private[map] def place(v: View): Unit =
     // the copy of the world nearest the view's centre (the map draws the world's copies side by side)
-    val lon = lonV + 360 * math.round((v.centreLon - lonV) / 360).toDouble
-    val p = v.surface.project(LatLon(latV, lon))
-    val (w, h) = (v.w, v.h)
-    val out = p.x < -400 || p.y < -400 || p.x > w + 400 || p.y > h + 400
+    val lon = lonV.value + 360 * math.round((v.centreLon.value - lonV.value) / 360).toDouble
+    val p = v.surface.project(LatLon(latV, LatLon.Lon(lon)))
+    val (w, h) = (v.w.value, v.h.value)
+    val out = p.x.value < -400 || p.y.value < -400 || p.x.value > w + 400 || p.y.value > h + 400
     if out != hidden then
       hidden = out
       el.classList.toggle("is-offscreen", out)
     if !out then
-      val rx = math.round(p.x).toDouble
-      val ry = math.round(p.y).toDouble
+      val rx = math.round(p.x.value).toDouble
+      val ry = math.round(p.y.value).toDouble
       if rx != lastX || ry != lastY then
         lastX = rx
         lastY = ry
-        moveTo(rx, ry)
+        moveTo(ScreenPt.X(rx), ScreenPt.Y(ry))
 
   /** Draw it at screen point (`x`, `y`) now (an animation's start), whatever the map says. */
-  def moveTo(x: com.histmersion.web.map.DomMarker.ScreenCoordinate, y: com.histmersion.web.map.DomMarker.ScreenCoordinate): Unit =
-    el.style.setProperty("--tx", s"${x}px")
-    el.style.setProperty("--ty", s"${y}px")
+  def moveTo(x: ScreenPt.X, y: ScreenPt.Y): Unit =
+    el.style.setProperty("--tx", s"${x.value}px")
+    el.style.setProperty("--ty", s"${y.value}px")
 
   /** Its stacking among the markers of its pane. */
   def setZ(z: com.histmersion.web.map.DomMarker.ZIndex): Unit = el.style.setProperty("--z", z.toString)
@@ -79,26 +79,10 @@ final class DomMarker(
 object DomMarker:
   type BoxSize = BoxSize.T
   object BoxSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ScreenCoordinate = ScreenCoordinate.T
-  object ScreenCoordinate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ZIndex = ZIndex.T
   object ZIndex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** A marker element of class `cls` holding `html`. */
-  type LatV = com.histmersion.api.Geo.Latitude
-  val LatV: _root_.com.histmersion.api.Geo.Latitude.type = _root_.com.histmersion.api.Geo.Latitude
-  type LonV = com.histmersion.api.Geo.Longitude
-  val LonV: _root_.com.histmersion.api.Geo.Longitude.type = _root_.com.histmersion.api.Geo.Longitude
-  type BoxPart1 = com.histmersion.web.map.DomMarker.BoxSize
-  val BoxPart1: _root_.com.histmersion.web.map.DomMarker.BoxSize.type = _root_.com.histmersion.web.map.DomMarker.BoxSize
-  type BoxPart2 = com.histmersion.web.map.DomMarker.BoxSize
-  val BoxPart2: _root_.com.histmersion.web.map.DomMarker.BoxSize.type = _root_.com.histmersion.web.map.DomMarker.BoxSize
-
-  type ElementCls = ElementCls.T
-  object ElementCls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ElementHtml = ElementHtml.T
-  object ElementHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  def element(cls: com.histmersion.web.map.DomMarker.ElementCls, html: com.histmersion.web.map.DomMarker.ElementHtml): dom.HTMLElement =
+  def element(cls: String, html: String): dom.HTMLElement =
     val el = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
     el.className = cls
     el.innerHTML = html

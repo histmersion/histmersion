@@ -146,7 +146,7 @@ object EventLayer:
     val el = DomMarker.element(com.histmersion.web.map.DomMarker.ElementCls("hd-event-wrap"), DomMarker.ElementHtml(EventPlayback.html(e, a).value))
     val marker = DomMarker(DomMarker.LatV(e.lat.value), DomMarker.LonV(e.lon.value), el)
     // a regional label under the local ones: the battle stays readable inside its war
-    marker.setZ(if e.scale == EventScale.Regional then com.histmersion.web.map.DomMarker.ZIndex(1) else com.histmersion.web.map.DomMarker.ZIndex(2))
+    marker.setZ(if e.scale.value == EventScale.Regional then com.histmersion.web.map.DomMarker.ZIndex(1) else com.histmersion.web.map.DomMarker.ZIndex(2))
     pane.add(marker)
     val s = Shown(marker, outline, a, Slot(0))
     MapLabels.trackEvent(e.id, marker, MapLabels.Entry.Rank(EventPlayback.rank(e, start).value), () => nameOf(s))

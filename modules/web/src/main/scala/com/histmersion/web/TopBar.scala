@@ -14,9 +14,6 @@ import scala.scalajs.js
   * search and the pills shrink first.
   */
 object TopBar:
-  type InApp = InApp.T
-  object InApp extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** Where the bar is: in the web UI (its links move between pages without a reload), or on one of the server's
     * standalone pages (a source, an article), whose links load the web UI.
     */
@@ -53,7 +50,7 @@ object TopBar:
             dataAttr("nav") := p.toString.toLowerCase,
             cls("on") <-- here.map(_ == p),
             currentAttr <-- here.map(h => if h == p then "page" else "false"),
-            p.label
+            p.label.value
           )
         }
       ),
@@ -63,8 +60,8 @@ object TopBar:
         agentsPill(inApp),
         decisionsPill(inApp),
         Theme.toggle,
-        Option.when(ui.docsUrl.trim.nonEmpty)(
-          a(cls := "btn btn--ghost help-link", href := ui.docsUrl, target := "_blank", rel := "noopener", "Help")
+        Option.when(ui.docsUrl.value.trim.nonEmpty)(
+          a(cls := "btn btn--ghost help-link", href := ui.docsUrl.value, target := "_blank", rel := "noopener", "Help")
         )
       )
     )
@@ -72,13 +69,13 @@ object TopBar:
   /** A link to a page: in the app it moves without a reload on a plain click; on a standalone page it is an ordinary
     * link (the web UI loads there).
     */
-  private def link(r: Route, inApp: com.histmersion.web.TopBar.InApp, mods: Modifier[HtmlElement]*): HtmlElement =
+  private def link(r: Route, inApp: Boolean, mods: Modifier[HtmlElement]*): HtmlElement =
     if inApp then RouteLink(r, mods*) else a(href := r.path, mods)
 
   /** The search field: the full-text filter every list and the map follow. Typing on Explore or in Library filters at
     * once; Enter anywhere else shows the results in Library. `/` puts the cursor in it from anywhere on the page.
     */
-  private def search(inApp: com.histmersion.web.TopBar.InApp): HtmlElement =
+  private def search(inApp: Boolean): HtmlElement =
     div(
       cls := "top-search",
       role := "search",
@@ -100,7 +97,7 @@ object TopBar:
           // controlled by UiState.q: "clear all", back/forward and a shared link all show up here
           controlled(
             value <-- UiState.q.signal.map(_.getOrElse("")),
-            onInput.mapToValue --> UiState.setSearch
+            onInput.mapToValue --> (v => UiState.setSearch(com.histmersion.api.Api.Search.Text(v)))
           ),
           onKeyDown --> { e =>
             if e.key == "Enter" then
@@ -134,14 +131,14 @@ object TopBar:
     case _                                                               => None
 
   /** What the agents are doing, linked to their activity; nothing where the server runs no agents. */
-  private def agentsPill(inApp: com.histmersion.web.TopBar.InApp): Modifier[HtmlElement] =
+  private def agentsPill(inApp: Boolean): Modifier[HtmlElement] =
     child.maybe <-- Notices.agents.map(_.map { g =>
       link(
         Route.Activity(ActivityTab.Everything),
         inApp,
         cls := "pill agent-pill",
-        cls("is-working") := g.on && g.running > 0,
-        cls("is-paused") := !g.on || (g.draining && g.running == 0),
+        cls("is-working") := g.on.value && g.running.value > 0,
+        cls("is-paused") := !g.on.value || (g.draining && g.running.value == 0),
         title := g.wording,
         span(cls := "pill-dot", aria.hidden := true),
         span(cls := "pill-text", g.wording)
@@ -149,9 +146,9 @@ object TopBar:
     })
 
   /** The only standing notice: the proposals that wait for a person, shown while there is one. */
-  private def decisionsPill(inApp: com.histmersion.web.TopBar.InApp): Modifier[HtmlElement] =
-    child.maybe <-- Notices.counter(UiNotices.Board.Approvals).map(_.flatMap(_.count).getOrElse(0)).distinct.map { n =>
-      Wording.decisions(n).map { text =>
+  private def decisionsPill(inApp: Boolean): Modifier[HtmlElement] =
+    child.maybe <-- Notices.counter(UiNotices.Board.Approvals).map(_.flatMap(_.count).map(_.value).getOrElse(0)).distinct.map { n =>
+      Wording.decisions(Wording.Decisions.Open(n)).map { text =>
         link(
           Route.Research(ResearchSection.Decisions),
           inApp,
@@ -159,7 +156,7 @@ object TopBar:
           title := text,
           aria.label := text,
           span(cls := "pill-long", text),
-          span(cls := "pill-short", aria.hidden := true, Wording.decisionsShort(n)),
+          span(cls := "pill-short", aria.hidden := true, Wording.decisionsShort(Wording.Decisions.Open(n))),
           span(cls := "pill-count", aria.hidden := true, n.toString)
         )
       }

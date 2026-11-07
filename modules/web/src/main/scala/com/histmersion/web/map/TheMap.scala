@@ -8,9 +8,6 @@ import scala.scalajs.js
 
 /** The page's one map: its surface, and the DOM panes over it ([[MapStack]]'s order). */
 object TheMap:
-  type MarkerCount = MarkerCount.T
-  object MarkerCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   // `var`: the surface, made once by `install`
 
   private var s: MapSurface = null
@@ -18,7 +15,7 @@ object TheMap:
   def surface: MapSurface = s
   def isUp: Boolean = s != null
 
-  private val panes = mutable.LinkedHashMap.empty[String, MarkerPane]
+  private val panes = mutable.LinkedHashMap.empty[MapStack.Pane.Name, MarkerPane]
 
   def pane(p: MapStack.Pane): MarkerPane = panes(p.name)
 
@@ -40,4 +37,4 @@ object TheMap:
     panes.values.foreach(_.reposition(v))
 
   /** Every marker on the map now, by pane (for [[com.histmersion.web.Diagnostics]]). */
-  def markerCount: com.histmersion.web.map.TheMap.MarkerCount = panes.values.map(_.size).sum
+  def markerCount: MarkerPane.MarkerCount = MarkerPane.MarkerCount(panes.values.map(_.size.value).sum)

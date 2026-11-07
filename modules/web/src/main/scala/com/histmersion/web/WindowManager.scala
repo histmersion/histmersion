@@ -11,59 +11,17 @@ import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object WindowManager:
-  type Href = Href.T
-  object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlParamName = UrlParamName.T
-  object UrlParamName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlParamText = UrlParamText.T
-  object UrlParamText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type WireLinksWid = _root_.com.histmersion.web.WindowManager.Stacked.Id
-  val WireLinksWid: _root_.com.histmersion.web.WindowManager.Stacked.Id.type = _root_.com.histmersion.web.WindowManager.Stacked.Id
-  type BuildUrlFragment = BuildUrlFragment.T
-  object BuildUrlFragment extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CloseWinReturnFocus = CloseWinReturnFocus.T
-  object CloseWinReturnFocus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EscapeIsOursKey = EscapeIsOursKey.T
-  object EscapeIsOursKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EscapeIsOursModified = EscapeIsOursModified.T
-  object EscapeIsOursModified extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EscapeIsOursTaken = EscapeIsOursTaken.T
-  object EscapeIsOursTaken extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EscapeIsOursTyping = EscapeIsOursTyping.T
-  object EscapeIsOursTyping extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EscapeIsOursDropdownOpen = EscapeIsOursDropdownOpen.T
-  object EscapeIsOursDropdownOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   private case class WinState(
-      id: WinState.Id,
+      id: Int,
       key: WindowKey,
-      title: WinState.Title,
-      x: WinState.X,
-      y: WinState.Y,
-      w: WinState.W,
-      h: WinState.H,
-      z: WinState.Z,
-      minimized: WinState.Minimized
+      title: com.histmersion.api.UiLabels.Text,
+      x: Double,
+      y: Double,
+      w: Double,
+      h: Double,
+      z: Int,
+      minimized: Boolean
   )
-
-  object WinState:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type X = X.T
-    object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Y = Y.T
-    object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type W = W.T
-    object W extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type H = H.T
-    object H extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Z = Z.T
-    object Z extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Minimized = Minimized.T
-    object Minimized extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val windows = Var[List[WinState]](Nil)
 
@@ -131,16 +89,16 @@ object WindowManager:
         // the merge review screen is a screen: three columns of a source pair, a diff3 view
         val (w0, h0) = key match
           case WindowKey.Merge =>
-            (math.min(Layout.mergeWindowMaxWidth, vw * 0.94), math.min(vh * 0.88, Layout.mergeWindowMaxHeight))
-          case _ => (math.min(Layout.windowMaxWidth, vw * 0.7), math.min(vh * 0.75, Layout.windowMaxHeight))
-        val offset = ((wid - 1) % Layout.windowCascadeSlots) * Layout.windowCascadeOffset
+            (math.min(Layout.mergeWindowMaxWidth.value, vw * 0.94), math.min(vh * 0.88, Layout.mergeWindowMaxHeight.value))
+          case _ => (math.min(Layout.windowMaxWidth.value, vw * 0.7), math.min(vh * 0.75, Layout.windowMaxHeight.value))
+        val offset = ((wid - 1) % Layout.windowCascadeSlots.value) * Layout.windowCascadeOffset.value
         // centred over what the results column leaves free (on a wide screen), so a pinned item never covers
         // the column it was pinned from
-        val beside = if Viewport.narrowNow || key == WindowKey.Merge then 0.0 else ResultsPanel.width.now().toDouble
+        val beside = if Viewport.narrowNow || key == WindowKey.Merge then 0.0 else ResultsPanel.width.now().value.toDouble
         val x0 =
           math.max(if key == WindowKey.Merge then 8 else 20, math.min((vw - beside - w0) / 2 + offset, vw - w0 - 8))
         val y0 = math.max(20, (if key == WindowKey.Merge then 30 else 60) + offset)
-        val ws = WinState(wid, key, key.initialTitle, x0, y0, w0, h0, nextZ, minimized = com.histmersion.web.WindowManager.WinState.Minimized(false))
+        val ws = WinState(wid, key, key.initialTitle, x0, y0, w0, h0, nextZ, minimized = false)
         shown += key -> wid
         dom.document.activeElement match
           case el: dom.HTMLElement if el != dom.document.body => openers += wid -> el
@@ -170,7 +128,7 @@ object WindowManager:
   /** The title of `key`'s window, once its content knows a better one than [[WindowKey.initialTitle]]: an item's own
     * title, never its identifier (which the title's tooltip keeps).
     */
-  def retitle(key: WindowKey, title: com.histmersion.web.WindowManager.WinState.Title): Unit =
+  def retitle(key: WindowKey, title: com.histmersion.api.UiLabels.Text): Unit =
     Route.ofItem(key).foreach(Router.retitle(_, title))
     shown
       .get(key)
@@ -193,17 +151,17 @@ object WindowManager:
   /** Only the server-rendered pages load here; every other window's content is a Laminar component (see
     * [[renderWindow]]) that mounts and unmounts with its window.
     */
-  private def loadContent(wid: com.histmersion.web.WindowManager.Stacked.Id, key: WindowKey, extraParams: Map[com.histmersion.web.WindowManager.UrlParamName, com.histmersion.web.WindowManager.UrlParamText] = Map.empty): Unit =
+  private def loadContent(wid: Int, key: WindowKey, extraParams: Map[String, String] = Map.empty): Unit =
     key match
       case WindowKey.Source(_) | WindowKey.Article(_) =>
         val id = key.subject.getOrElse("")
-        val fetchUrl = buildUrl(key, fragment = com.histmersion.web.WindowManager.BuildUrlFragment(true), extraParams)
+        val fetchUrl = buildUrl(key, fragment = true, extraParams)
         ApiClient.fetchHtml(fetchUrl).foreach { html =>
           val contentEl = document.getElementById(s"wm-content-$wid")
           if contentEl != null then
             contentEl.innerHTML = html
             val titleEl = contentEl.querySelector("h1, h2")
-            val title = if titleEl != null then titleEl.textContent.trim else key.initialTitle
+            val title = if titleEl != null then com.histmersion.api.UiLabels.Text(titleEl.textContent.trim) else key.initialTitle
             windows.update(_.map(w => if w.id == wid then w.modify(_.title).setTo(title) else w))
             // both handlers are delegated on the content root, which outlives its content: wire it once.
             // Every reload (a link to the same page inside it, an edit's refresh) added two more, and a
@@ -221,17 +179,17 @@ object WindowManager:
   /** The web UI's own filter links (`/#tag=x`, a chip on a source page) — pure: the hash to MERGE, or `None` for any
     * other href.
     */
-  private[web] def filterHash(href: com.histmersion.web.WindowManager.Href): Option[com.histmersion.web.UiState.UrlHash] =
+  private[web] def filterHash(href: String): Option[com.histmersion.web.UiState.UrlHash] =
     Option(href)
       .map(_.trim)
       .filter(h => (h.startsWith("/#") || h.startsWith("#")) && h.contains("="))
-      .map(_.dropWhile(_ != '#'))
+      .map(h => com.histmersion.web.UiState.UrlHash(h.dropWhile(_ != '#')))
 
   /** In-window links open in the page — another window, a filter added — on a plain click only: with ⌘/Ctrl/Shift/Alt
     * (or the middle button, which sends no click) the browser opens the link's address in a new tab or window, as
     * anywhere else.
     */
-  private def wireLinks(wid: com.histmersion.web.WindowManager.WireLinksWid, root: dom.Element): Unit =
+  private def wireLinks(wid: Int, root: dom.Element): Unit =
     root.addEventListener(
       "click",
       { (ev: dom.MouseEvent) =>
@@ -248,7 +206,7 @@ object WindowManager:
           m.foreach { mm =>
             ev.preventDefault()
             val linkId = mm.group(2)
-            val target = if mm.group(1) == "article" then WindowKey.Article(linkId) else WindowKey.Source(linkId)
+            val target = if mm.group(1) == "article" then WindowKey.Article(WindowKey.Article.Slug(linkId)) else WindowKey.Source(WindowKey.Source.Citekey(linkId))
             val qs = Option(mm.group(3)).getOrElse("")
             val params = new dom.URLSearchParams(qs)
             val paramsMap = scala.collection.mutable.Map.empty[String, String]
@@ -266,7 +224,7 @@ object WindowManager:
       }
     )
 
-  private def buildUrl(key: WindowKey, fragment: com.histmersion.web.WindowManager.BuildUrlFragment, extra: Map[com.histmersion.web.WindowManager.UrlParamName, com.histmersion.web.WindowManager.UrlParamText] = Map.empty): com.histmersion.web.WindowManager.Href =
+  private def buildUrl(key: WindowKey, fragment: Boolean, extra: Map[String, String] = Map.empty): String =
     val base = key.pageHref.getOrElse("/")
     val params = new dom.URLSearchParams("")
     if fragment then params.set("fragment", "true")
@@ -288,24 +246,24 @@ object WindowManager:
         span("Graph"),
         onClick --> (_ => open(WindowKey.Graph(ck)))
       ),
-      WriteButton(Icon.Edit, com.histmersion.web.WriteButton.ApplyLabel("Edit"), "Edit this source's metadata", () => open(WindowKey.EditSource(ck)))
+      WriteButton(Icon.Edit, "Edit", "Edit this source's metadata", () => open(WindowKey.EditSource(ck)))
     )
 
-  private def focus(wid: com.histmersion.web.WindowManager.Stacked.Id): Unit =
+  private def focus(wid: Int): Unit =
     nextZ += 1
     windows.update(_.map(w => if w.id == wid then w.modify(_.z).setTo(nextZ) else w))
 
-  private def restore(wid: com.histmersion.web.WindowManager.Stacked.Id): Unit =
+  private def restore(wid: Int): Unit =
     nextZ += 1
     windows.update(_.map(w => if w.id == wid then w.modify(_.minimized).setTo(false).modify(_.z).setTo(nextZ) else w))
 
-  private def minimize(wid: com.histmersion.web.WindowManager.Stacked.Id): Unit =
+  private def minimize(wid: Int): Unit =
     windows.update(_.map(w => if w.id == wid then w.modify(_.minimized).setTo(true) else w))
 
   /** Close one window. `returnFocus` when a person closed it (Escape, its ✕): the focus goes back to what opened it, if
     * that is still on the page and not inside the window being closed.
     */
-  private def closeWin(wid: com.histmersion.web.WindowManager.Stacked.Id, returnFocus: com.histmersion.web.WindowManager.CloseWinReturnFocus = com.histmersion.web.WindowManager.CloseWinReturnFocus(false)): Unit =
+  private def closeWin(wid: Int, returnFocus: Boolean = false): Unit =
     val key = shown.collectFirst { case (k, id) if id == wid => k }
     key.foreach(k => shown -= k)
     val opener = openers.get(wid)
@@ -317,19 +275,11 @@ object WindowManager:
   // ── Escape ──────────────────────────────────────────────────────────────────────────────────────
 
   /** An open window as the Escape key sees it. */
-  final private[web] case class Stacked(id: Stacked.Id, z: Stacked.Z, minimized: Stacked.Minimized)
-
-  object Stacked:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Z = Z.T
-    object Z extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Minimized = Minimized.T
-    object Minimized extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final private[web] case class Stacked(id: Int, z: Int, minimized: Boolean)
 
   /** The window Escape closes: the one holding the focus, else the topmost one showing; never a minimized one. Pure.
     */
-  private[web] def escapeTarget(ws: List[Stacked], focused: Option[com.histmersion.web.WindowManager.Stacked.Id]): Option[com.histmersion.web.WindowManager.Stacked.Id] =
+  private[web] def escapeTarget(ws: List[Stacked], focused: Option[Int]): Option[Int] =
     val showing = ws.filterNot(_.minimized)
     focused.filter(f => showing.exists(_.id == f)).orElse(showing.maxByOption(_.z).map(_.id))
 
@@ -337,11 +287,11 @@ object WindowManager:
     * lightbox, a drawer call `preventDefault`), not typed into a field, and with no suggestion list open. Pure.
     */
   private[web] def escapeIsOurs(
-      key: com.histmersion.web.WindowManager.EscapeIsOursKey,
-      modified: com.histmersion.web.WindowManager.EscapeIsOursModified,
-      taken: com.histmersion.web.WindowManager.EscapeIsOursTaken,
-      typing: com.histmersion.web.WindowManager.EscapeIsOursTyping,
-      dropdownOpen: com.histmersion.web.WindowManager.EscapeIsOursDropdownOpen
+      key: String,
+      modified: Boolean,
+      taken: Boolean,
+      typing: Boolean,
+      dropdownOpen: Boolean
   ): Boolean =
     key == "Escape" && !modified && !taken && !typing && !dropdownOpen
 
@@ -428,7 +378,7 @@ object WindowManager:
             dragWin = None
             ev.target.asInstanceOf[dom.HTMLElement].releasePointerCapture(ev.pointerId)
         },
-        span(cls := "wm-title", title := initial.key.wire, child.text <-- wSignal.map(_.title)),
+        span(cls := "wm-title", title := initial.key.wire.value, child.text <-- wSignal.map(_.title.value)),
         div(
           cls := "wm-buttons",
           button(
@@ -452,7 +402,7 @@ object WindowManager:
             cls := "btn btn--bare btn--icon btn--sm wm-btn wm-close",
             "✕",
             title := "Close (Escape)",
-            onClick.stopPropagation --> { _ => closeWin(wid, returnFocus = com.histmersion.web.WindowManager.CloseWinReturnFocus(true)) }
+            onClick.stopPropagation --> { _ => closeWin(wid, returnFocus = true) }
           )
         )
       ),

@@ -17,48 +17,45 @@ object SavedViews:
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The view on screen, as a bookmark's target. */
-  type SuggestedNameWords = SuggestedNameWords.T
-  object SuggestedNameWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OnExplore = OnExplore.T
-  object OnExplore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SaveName = SaveName.T
-  object SaveName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def current(): Target =
     val s = Option.when(TheMap.isUp)(TheMap.surface)
     Target(
       ItemKind.View,
-      lat = s.flatMap(x => Latitude.option(x.center.lat)),
-      lon = s.flatMap(x => Longitude.option(x.center.lon)),
-      zoom = s.flatMap(x => MapZoom.option(math.round(x.zoom * 100) / 100.0)),
+      lat = s.flatMap(x => Latitude.option(x.center.lat.value)),
+      lon = s.flatMap(x => Longitude.option(x.center.lon.value)),
+      zoom = s.flatMap(x => MapZoom.option(math.round(x.zoom.value * 100) / 100.0)),
       from = UiState.from.now().map(v => Year(v.toInt)),
       to = UiState.to.now().map(v => Year(v.toInt)),
-      view = Some(ViewState(UiState.hashString))
+      view = Some(ViewState(UiState.hashString.value))
     )
 
   /** A name to offer for the view: its span, and the words or the first filter. Pure. */
-  def suggestedName(words: Option[com.histmersion.web.marks.SavedViews.SuggestedNameWords], from: Option[com.histmersion.api.Years.Astronomical], to: Option[com.histmersion.api.Years.Astronomical]): com.histmersion.web.marks.SavedViews.Name =
+  def suggestedName(words: Option[String], from: Option[Year], to: Option[Year]): com.histmersion.web.marks.SavedViews.Name =
     val span = Fmt.periodStr(from, to)
-    List(words.map(_.trim).filter(_.nonEmpty).map(w => s"“$w”"), Option(span).filter(_.nonEmpty)).flatten
+    List(words.map(_.trim).filter(_.nonEmpty).map(w => s"“$w”"), Option(span.value).filter(_.nonEmpty)).flatten
       .mkString(", ") match
       case "" => com.histmersion.web.marks.SavedViews.Name("My view")
-      case s  => s
+      case s  => com.histmersion.web.marks.SavedViews.Name(s)
 
   val saved: Signal[List[Bookmark]] = MyItems.bookmarks.signal.map(_.filter(_.target.kind == ItemKind.View))
 
-  private val onExplore: Signal[com.histmersion.web.marks.SavedViews.OnExplore] = Router.route.map(_ == Route.Explore)
+  private val onExplore: Signal[Boolean] = Router.route.map(_ == Route.Explore)
 
   /** Save the view on screen as `name`. */
-  def save(name: com.histmersion.web.marks.SavedViews.SaveName): Unit =
+  def save(name: com.histmersion.web.marks.SavedViews.Name): Unit =
     if Auth.writableNow then
       MyItems
-        .add(current(), Some(name.trim).filter(_.nonEmpty), name.trim)
-        .foreach(_ => com.histmersion.web.ui.Flash.say(s"Saved the view “${name.trim}”."))
+        .add(
+          current(),
+          Some(name.value.trim).filter(_.nonEmpty).map(MyItems.AddLabel(_)),
+          com.histmersion.api.library.Title(name.value.trim)
+        )
+        .foreach(_ => com.histmersion.web.ui.Flash.say(com.histmersion.web.ui.Flash.Text(s"Saved the view “${name.value.trim}”.")))
     else WindowManager.open(WindowKey.ApiKey)
 
   /** The filter panel's "Saved views" part (Explore only). */
   def panelSection: HtmlElement =
-    val naming = Var(Option.empty[String])
+    val naming = Var(Option.empty[Name])
     div(
       cls := "f saved-views",
       cls("is-hidden") <-- onExplore.map(!_),
@@ -71,13 +68,13 @@ object SavedViews:
             cls := "btn save-view-btn",
             idAttr := "save-view",
             "Save this view…",
-            onClick --> (_ => naming.set(Some(suggestedName(UiState.q.now(), UiState.from.now(), UiState.to.now()))))
+            onClick --> (_ => naming.set(Some(suggestedName(UiState.q.now(), UiState.from.now().map(Year(_)), UiState.to.now().map(Year(_))))))
           )
         case Some(name0) =>
-          val name = Var(name0)
+          val name = Var(name0.value: String)
           form(
             cls := "save-view-form",
-            onSubmit.preventDefault --> { _ => save(name.now()); naming.set(None) },
+            onSubmit.preventDefault --> { _ => save(Name(name.now())); naming.set(None) },
             label(forId := "save-view-name", cls := "sr-only", "Name of the view"),
             input(
               typ := "text",
@@ -105,8 +102,8 @@ object SavedViews:
               cls := "saved-view",
               a(
                 cls := "saved-view-open",
-                href := ItemRef.back(b.target),
-                b.name,
+                href := ItemRef.back(b.target).value,
+                b.name.value,
                 title := s"Open the view “${b.name}”: ${Target.where(b.target)}",
                 onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); OpenBack(b.target) } }
               ),

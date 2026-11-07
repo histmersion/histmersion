@@ -271,10 +271,10 @@ object PlaceHover:
   def activatePlace(id: com.histmersion.web.PlaceHover.PlaceId, label: com.histmersion.api.UiLabels.Text, kind: com.histmersion.web.PlaceHover.PlaceKind, asOf: () => Option[com.histmersion.api.Years.Astronomical], how: Activation): Unit =
     val t = Preview.Target.Place(id, asOf())
     val on = PlacesInput.toggleFromMap(id, label, kind)
-    val anchor = (how.keyboard, how.element, how.latlng) match
+    val anchor = (how.keyboard.value, how.element, how.latlng) match
       case (true, Some(el), _) => anchorOn(el)
       case (_, _, Some(ll))    => anchorAt(ll)
       case _                   => { val (x, y) = (lastX, lastY); () => Some(Preview.Anchor.At(x, y)) }
-    settle(t, on, anchor, how.element.filter(_ => how.keyboard), how.keyboard)
+    settle(t, on, anchor, how.element.filter(_ => how.keyboard.value), Preview.KeyboardDriven(how.keyboard.value))
     // chosen, its detail replaces the results; unchosen, the results come back
     if on then ResultsPanel.show(t) else if ResultsPanel.selected.now().exists(_ == t) then ResultsPanel.back()
