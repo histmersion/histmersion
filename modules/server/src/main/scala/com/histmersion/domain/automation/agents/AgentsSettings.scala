@@ -17,14 +17,14 @@ import java.time.Duration
 import com.histmersion.domain.automation.Approval
 
 extension (c: AgentApprovalsConfig)
-  def statusMode: Approval.Mode = ApprovalModes.configured(c.statusChange)
-  def edgeMode: Approval.Mode = ApprovalModes.configured(c.edges)
+  def statusMode: Approval.Mode = ApprovalModes.configured(Approval.Mode.Wire(c.statusChange.value))
+  def edgeMode: Approval.Mode = ApprovalModes.configured(Approval.Mode.Wire(c.edges.value))
 
   /** `compile-article`: `manual` (the default) waits for a person before the article is written. */
-  def publishMode: Approval.Mode = ApprovalModes.configured(c.articlePublish)
+  def publishMode: Approval.Mode = ApprovalModes.configured(Approval.Mode.Wire(c.articlePublish.value))
 
   /** `infer-filter`: `manual` (the default) records the filter only once a person approves it. */
-  def filterMode: Approval.Mode = ApprovalModes.configured(c.articleFilter)
+  def filterMode: Approval.Mode = ApprovalModes.configured(Approval.Mode.Wire(c.articleFilter.value))
 
   /** Whether the managers' supervisor decides an open approval of `kind` by its code checks (the autopilot's auto
     * approvals): `article-plan` and `goal-plan` = `auto` (or `checked`); `article-publish` = `checked` — its `auto`
@@ -47,21 +47,30 @@ extension (c: AgentsConfig)
 
   /** The configured `provider:model` of a role, as written (empty = unset). */
   def role(r: AgentRole): String = r match
-    case AgentRole.Probe      => c.roles.probe
-    case AgentRole.Extractor  => c.roles.extractor
-    case AgentRole.Reviewer   => c.roles.reviewer
-    case AgentRole.ColdReader => c.roles.coldReader
-    case AgentRole.Skeptic    => c.roles.skeptic
-    case AgentRole.Fixer      => c.roles.fixer
-    case AgentRole.Planner    => c.roles.planner
-    case AgentRole.Writer     => c.roles.writer
+    case AgentRole.Probe      => c.roles.probe.value
+    case AgentRole.Extractor  => c.roles.extractor.value
+    case AgentRole.Reviewer   => c.roles.reviewer.value
+    case AgentRole.ColdReader => c.roles.coldReader.value
+    case AgentRole.Skeptic    => c.roles.skeptic.value
+    case AgentRole.Fixer      => c.roles.fixer.value
+    case AgentRole.Planner    => c.roles.planner.value
+    case AgentRole.Writer     => c.roles.writer.value
 
   /** How the command-line providers are signed in — which models draw on a plan pool. */
   def logins: PlanQuota.Logins =
-    PlanQuota.Logins(c.providers.claudeCode.useApiKey, c.providers.codex.useApiKey, c.providers.opencode.chatgptLogin)
+    PlanQuota.Logins(
+      PlanQuota.Logins.ClaudeCodeApiKey(c.providers.claudeCode.useApiKey.value),
+      PlanQuota.Logins.CodexApiKey(c.providers.codex.useApiKey.value),
+      PlanQuota.Logins.OpencodeChatgpt(c.providers.opencode.chatgptLogin.value)
+    )
 
 extension (c: AgentPlanConfig)
-  def caps: PlanGoal.Caps = PlanGoal.Caps(c.maxSubGoals, c.maxQueries, c.maxWorks, c.queryChars)
+  def caps: PlanGoal.Caps = PlanGoal.Caps(
+      PlanGoal.Caps.SubGoals(c.maxSubGoals.value),
+      PlanGoal.Caps.Queries(c.maxQueries.value),
+      PlanGoal.Caps.Works(c.maxWorks.value),
+      PlanGoal.Caps.QueryChars(c.queryChars.value)
+    )
 
 extension (s: ScheduledRefresh)
   def readSchedule: ReadSchedule = s match

@@ -18,8 +18,8 @@ import scala.jdk.CollectionConverters.*
   */
 trait PipelineDef:
   def pipeline: Pipeline
-  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.automation.workflows.PipelineDef.RunResultPart2]
+  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary]
 
 object PipelineDef:
-  type RunResultPart2 = RunResultPart2.T
-  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Summary = Summary.T
+  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

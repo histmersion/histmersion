@@ -17,13 +17,13 @@ trait FocusService:
   def goals(): List[FocusRepo.GoalRow]
 
   /** The goals linked to each of `refs` by a link of `kind`. */
-  def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.BGoalLinkRow.Ref]): Map[com.histmersion.domain.automation.goals.FocusService.GoalsOfResultPart1, List[com.histmersion.domain.automation.goals.FocusService.GoalsOfResultPart2]]
+  def goalsOf(kind: com.histmersion.domain.automation.Goal.LinkKind.Wire, refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref]): Map[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref, List[com.histmersion.domain.automation.Goal.Slug]]
 
   /** Per goal: the outcome of its last settled model-using item when it stopped or failed. */
-  def lastStops(): Map[com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart2]
+  def lastStops(): Map[com.histmersion.domain.automation.Goal.Slug, FocusRepo.GoalRow.LeftWhy]
 
   /** Per goal: how many sources it links. */
-  def sourceCounts(): Map[com.histmersion.domain.automation.goals.FocusService.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusService.SourceCountsResultPart2]
+  def sourceCounts(): Map[com.histmersion.domain.automation.Goal.Slug, com.histmersion.RowCount]
 
   /** The goal became active at `now`, `why`. */
   def joined(slug: com.histmersion.domain.automation.Goal.Slug, why: com.histmersion.domain.automation.goals.FocusRepo.JoinWhy, now: Instant): Unit
@@ -38,145 +38,111 @@ trait FocusService:
   def priority(slug: com.histmersion.domain.automation.Goal.Slug, n: com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Priority): Boolean
 
 object FocusService:
-  type ChangeFocusMustExist = ChangeFocusMustExist.T
-  object ChangeFocusMustExist extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** A goal as the focus reads it. */
-  type GoalsOfResultPart1 = GoalsOfResultPart1.T
-  object GoalsOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalsOfResultPart2 = GoalsOfResultPart2.T
-  object GoalsOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalsOfKind = GoalsOfKind.T
-  object GoalsOfKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LastStopsResultPart1 = LastStopsResultPart1.T
-  object LastStopsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LastStopsResultPart2 = LastStopsResultPart2.T
-  object LastStopsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceCountsResultPart1 = SourceCountsResultPart1.T
-  object SourceCountsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceCountsResultPart2 = SourceCountsResultPart2.T
-  object SourceCountsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   type Goal = FocusRepo.GoalRow
   def apply(db: Transactor): FocusService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends FocusService:
     def goals(): List[FocusRepo.GoalRow] = db.read(FocusRepo.goals())
-    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.BGoalLinkRow.Ref]): Map[com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfResultPart1, List[com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfResultPart2]] = db.read(FocusRepo.goalsOf(kind, refs))
-    def lastStops(): Map[com.histmersion.domain.automation.goals.FocusService.Implementation.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusService.Implementation.LastStopsResultPart2] = db.read(FocusRepo.lastStops())
-    def sourceCounts(): Map[com.histmersion.domain.automation.goals.FocusService.Implementation.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusService.Implementation.SourceCountsResultPart2] = db.read(FocusRepo.sourceCounts())
+    def goalsOf(kind: com.histmersion.domain.automation.Goal.LinkKind.Wire, refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref]): Map[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref, List[com.histmersion.domain.automation.Goal.Slug]] = db.read(FocusRepo.goalsOf(kind, refs))
+    def lastStops(): Map[com.histmersion.domain.automation.Goal.Slug, FocusRepo.GoalRow.LeftWhy] = db.read(FocusRepo.lastStops())
+    def sourceCounts(): Map[com.histmersion.domain.automation.Goal.Slug, com.histmersion.RowCount] = db.read(FocusRepo.sourceCounts())
     def joined(slug: com.histmersion.domain.automation.Goal.Slug, why: com.histmersion.domain.automation.goals.FocusRepo.JoinWhy, now: Instant): Unit = db.transact(FocusRepo.joined(slug, why, now))
     def left(slug: com.histmersion.domain.automation.Goal.Slug, why: com.histmersion.domain.automation.goals.FocusRepo.GoalRow.LeftWhy, now: Instant): Unit = db.transact(FocusRepo.left(slug, why, now))
     def pin(slug: com.histmersion.domain.automation.Goal.Slug, pinned: com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Pinned): Boolean = db.transact(FocusRepo.pin(slug, pinned))
     def priority(slug: com.histmersion.domain.automation.Goal.Slug, n: com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Priority): Boolean = db.transact(FocusRepo.priority(slug, n))
 
-  object Implementation:
-    type GoalsOfResultPart1 = GoalsOfResultPart1.T
-    object GoalsOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GoalsOfResultPart2 = GoalsOfResultPart2.T
-    object GoalsOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GoalsOfKind = GoalsOfKind.T
-    object GoalsOfKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LastStopsResultPart1 = LastStopsResultPart1.T
-    object LastStopsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LastStopsResultPart2 = LastStopsResultPart2.T
-    object LastStopsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SourceCountsResultPart1 = SourceCountsResultPart1.T
-    object SourceCountsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SourceCountsResultPart2 = SourceCountsResultPart2.T
-    object SourceCountsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** The focus in memory, over the shared state's goals, links and managers' items. */
   final class InMemory(state: AtomicReference[AutomationState], clock: Clock) extends FocusService:
-    private def t(at: Option[Instant]): Option[String] = at.map(AutomationState.text)
+    private def t(at: Option[Instant]): Option[String] = at.map(i => AutomationState.text(i).value)
     def goals(): List[FocusRepo.GoalRow] =
       val s = state.get
-      s.goals.values.toList.sortBy(_.goal.slug).map { g =>
-        val f = s.focus.getOrElse(g.goal.slug, FocusRecord.none)
+      s.goals.values.toList.sortBy(_.goal.slug.value).map { g =>
+        val f = s.focus.getOrElse(AutomationState.FocusKey(g.goal.slug.value), FocusRecord.none)
         FocusRepo.GoalRow(
-          g.goal.slug,
-          g.goal.title,
-          g.goal.parentSlug,
-          g.goal.status,
-          AutomationState.text(g.createdAt),
-          f.active,
-          f.pinned,
-          f.priority,
-          t(f.since),
-          f.why,
-          t(f.leftAt),
-          f.leftWhy
+          FocusRepo.GoalRow.Slug(g.goal.slug.value),
+          FocusRepo.GoalRow.Title(g.goal.title.value),
+          g.goal.parentSlug.map(p => FocusRepo.GoalRow.Parent(p.value)),
+          FocusRepo.GoalRow.Status(g.goal.status.value),
+          FocusRepo.GoalRow.CreatedAt(AutomationState.text(g.createdAt).value),
+          FocusRepo.GoalRow.Active(f.active.value),
+          FocusRepo.GoalRow.Pinned(f.pinned.value),
+          FocusRepo.GoalRow.Priority(f.priority.value),
+          t(f.since).map(FocusRepo.GoalRow.Since(_)),
+          f.why.map(w => FocusRepo.GoalRow.Why(w.value)),
+          t(f.leftAt).map(FocusRepo.GoalRow.LeftAt(_)),
+          f.leftWhy.map(w => FocusRepo.GoalRow.LeftWhy(w.value))
         )
       }
-    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.InMemory.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.BGoalLinkRow.Ref]): Map[com.histmersion.domain.automation.goals.FocusService.InMemory.GoalsOfResultPart1, List[com.histmersion.domain.automation.goals.FocusService.InMemory.GoalsOfResultPart2]] =
+    def goalsOf(kind: com.histmersion.domain.automation.Goal.LinkKind.Wire, refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref]): Map[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref, List[com.histmersion.domain.automation.Goal.Slug]] =
       if refs.isEmpty then Map.empty
       else
+        val wanted = refs.map(_.value)
         state.get.links
-          .filter(l => l.kind.wire == kind && refs.contains(l.ref))
-          .groupBy(_.ref)
+          .filter(l => l.kind.wire == kind && wanted.contains(l.ref.value))
+          .groupBy(_.ref.value)
           .view
-          .mapValues(_.map(_.goal).sorted.toList)
+          .map((ref, ls) =>
+            com.histmersion.api.automation.Goal.Plans.GoalLink.Ref(ref) ->
+              ls.map(_.goal.value).sorted.toList.map(com.histmersion.domain.automation.Goal.Slug.assume(_))
+          )
           .toMap
-    def lastStops(): Map[com.histmersion.domain.automation.goals.FocusService.InMemory.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusService.InMemory.LastStopsResultPart2] =
+    def lastStops(): Map[com.histmersion.domain.automation.Goal.Slug, FocusRepo.GoalRow.LeftWhy] =
       val s = state.get
-      val goalOf = s.managers.flatMap(m => m.goal.map(m.id -> _)).toMap
+      val goalOf = s.managers.flatMap(m => m.goal.map(g => m.id.value -> g.value)).toMap
       s.items
         .filter(i =>
-          goalOf.contains(i.managerId) && i.kind != "oa-ingest" && i.kind != "currency-check" &&
-            Set("done", "stopped", "failed")(i.status)
+          goalOf.contains(i.managerId.value) && i.kind.value != "oa-ingest" && i.kind.value != "currency-check" &&
+            Set("done", "stopped", "failed")(i.status.value)
         )
-        .groupBy(i => goalOf(i.managerId))
+        .groupBy(i => goalOf(i.managerId.value))
         .view
-        .mapValues(_.maxBy(i => (i.updatedAt, i.id)))
-        .collect { case (g, i) if i.status == "stopped" || i.status == "failed" => g -> i.outcome.getOrElse(i.status) }
+        .mapValues(_.maxBy(i => (i.updatedAt, i.id.value)))
+        .collect {
+          case (g, i) if i.status.value == "stopped" || i.status.value == "failed" =>
+            com.histmersion.domain.automation.Goal.Slug.assume(g) ->
+              FocusRepo.GoalRow.LeftWhy(i.outcome.fold(i.status.value)(_.value))
+        }
         .toMap
-    def sourceCounts(): Map[com.histmersion.domain.automation.goals.FocusService.InMemory.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusService.InMemory.SourceCountsResultPart2] =
+    def sourceCounts(): Map[com.histmersion.domain.automation.Goal.Slug, com.histmersion.RowCount] =
       state.get.links
         .filter(_.kind == com.histmersion.domain.automation.Goal.LinkKind.Source)
-        .groupBy(_.goal)
+        .groupBy(_.goal.value)
         .view
-        .mapValues(_.size)
+        .map((g, ls) => com.histmersion.domain.automation.Goal.Slug.assume(g) -> com.histmersion.RowCount(ls.size))
         .toMap
-    private def changeFocus(slug: com.histmersion.domain.automation.Goal.Slug, mustExist: com.histmersion.domain.automation.goals.FocusService.ChangeFocusMustExist)(f: FocusRecord => FocusRecord): Boolean =
+    private def changeFocus(slug: com.histmersion.domain.automation.Goal.Slug, mustExist: Boolean)(f: FocusRecord => FocusRecord): Boolean =
+      val goalKey = AutomationState.GoalsKey(slug.value)
+      val focusKey = AutomationState.FocusKey(slug.value)
       state
         .getAndUpdate(s =>
-          if mustExist && !s.goals.contains(slug) then s
-          else s.modify(_.focus).using(fs => fs.updated(slug, f(fs.getOrElse(slug, FocusRecord.none))))
+          if mustExist && !s.goals.contains(goalKey) then s
+          else s.modify(_.focus).using(fs => fs.updated(focusKey, f(fs.getOrElse(focusKey, FocusRecord.none))))
         )
         .goals
-        .contains(slug) || !mustExist
+        .contains(goalKey) || !mustExist
     def joined(slug: com.histmersion.domain.automation.Goal.Slug, why: com.histmersion.domain.automation.goals.FocusRepo.JoinWhy, now: Instant): Unit =
-      val _ = changeFocus(slug, mustExist = com.histmersion.domain.automation.goals.FocusService.ChangeFocusMustExist(false))(
-        _.modify(_.active).setTo(true).modify(_.since).setTo(Some(now)).modify(_.why).setTo(Some(why))
+      val _ = changeFocus(slug, mustExist = false)(
+        _.modify(_.active).setTo(FocusRecord.Active(true))
+          .modify(_.since).setTo(Some(now))
+          .modify(_.why).setTo(Some(FocusRecord.Why(why.value)))
       )
     def left(slug: com.histmersion.domain.automation.Goal.Slug, why: com.histmersion.domain.automation.goals.FocusRepo.GoalRow.LeftWhy, now: Instant): Unit =
+      val focusKey = AutomationState.FocusKey(slug.value)
       val _ = state.updateAndGet(
         _.modify(_.focus).using(fs =>
-          fs.get(slug)
+          fs.get(focusKey)
             .fold(fs)(f =>
               fs.updated(
-                slug,
-                f.modify(_.active).setTo(false).modify(_.leftAt).setTo(Some(now)).modify(_.leftWhy).setTo(Some(why))
+                focusKey,
+                f.modify(_.active).setTo(FocusRecord.Active(false))
+                  .modify(_.leftAt).setTo(Some(now))
+                  .modify(_.leftWhy).setTo(Some(FocusRecord.LeftWhy(why.value)))
               )
             )
         )
       )
     def pin(slug: com.histmersion.domain.automation.Goal.Slug, pinned: com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Pinned): Boolean =
-      changeFocus(slug, mustExist = com.histmersion.domain.automation.goals.FocusService.ChangeFocusMustExist(true))(_.modify(_.pinned).setTo(pinned))
-    def priority(slug: com.histmersion.domain.automation.Goal.Slug, n: com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Priority): Boolean = changeFocus(slug, mustExist = com.histmersion.domain.automation.goals.FocusService.ChangeFocusMustExist(true))(_.modify(_.priority).setTo(n))
-
-  object InMemory:
-    type GoalsOfResultPart1 = GoalsOfResultPart1.T
-    object GoalsOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GoalsOfResultPart2 = GoalsOfResultPart2.T
-    object GoalsOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GoalsOfKind = GoalsOfKind.T
-    object GoalsOfKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LastStopsResultPart1 = LastStopsResultPart1.T
-    object LastStopsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LastStopsResultPart2 = LastStopsResultPart2.T
-    object LastStopsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SourceCountsResultPart1 = SourceCountsResultPart1.T
-    object SourceCountsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SourceCountsResultPart2 = SourceCountsResultPart2.T
-    object SourceCountsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      changeFocus(slug, mustExist = true)(_.modify(_.pinned).setTo(FocusRecord.Pinned(pinned.value)))
+    def priority(slug: com.histmersion.domain.automation.Goal.Slug, n: com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Priority): Boolean =
+      changeFocus(slug, mustExist = true)(_.modify(_.priority).setTo(FocusRecord.Priority(n.value)))

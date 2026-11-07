@@ -16,7 +16,7 @@ import scala.concurrent.duration.*
   */
 final private[histmersion] class FirstCallProbe extends AgentInterceptor[Identity]:
   // set once per step attempt: by the first response, or by a CLI client's report (which wins)
-  private val state = java.util.concurrent.atomic.AtomicReference[Option[Option[Long]]](None)
+  private val state = java.util.concurrent.atomic.AtomicReference[Option[Option[AgentRepo.StepRecord.FirstCallTokens]]](None)
 
   def tokens: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.FirstCallTokens] = state.get().flatten
 
@@ -24,7 +24,7 @@ final private[histmersion] class FirstCallProbe extends AgentInterceptor[Identit
 
   override def aroundLlmCall(ctx: LlmCallContext)(next: => Identity[AgentResponse]): Identity[AgentResponse] =
     val r = next
-    val _ = state.compareAndSet(None, Some(r.usage.map(_.inputTokens.value).filter(_ > 0)))
+    val _ = state.compareAndSet(None, Some(r.usage.map(_.inputTokens.value).filter(_ > 0).map(AgentRepo.StepRecord.FirstCallTokens(_))))
     r
 
 private[histmersion] object FirstCallProbe:

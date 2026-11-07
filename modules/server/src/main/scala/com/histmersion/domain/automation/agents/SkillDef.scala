@@ -10,7 +10,7 @@ import scala.jdk.CollectionConverters.*
   */
 final case class SkillDef(name: SkillDef.Name, header: List[SkillDef.Header], body: SkillDef.Body):
   def description: String =
-    header.find(_.startsWith("description:")).map(_.stripPrefix("description:").trim).getOrElse("")
+    header.find(_.value.startsWith("description:")).map(_.value.stripPrefix("description:").trim).getOrElse("")
 
 object SkillDef:
 

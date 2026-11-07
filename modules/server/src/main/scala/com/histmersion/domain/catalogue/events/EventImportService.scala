@@ -60,14 +60,14 @@ object EventImportService:
           val pt = e.geometry.flatMap(HeldEvent.pointOf)
           StoredEvent(
             e.id,
-            e.kind,
+            StoredEvent.Kind(e.kind.value),
             e.timeSpan,
             pt.map(_._1),
             pt.map(_._2),
-            e.wikidata,
+            e.wikidata.map(w => CatalogRecord.Wikidata(w.value)),
             s.catalogueRecords.filter(_._1.value == e.id.value).map(_._2.key).toSet,
-            e.catalogue.isDefined,
-            e.label
+            StoredEvent.Catalogue(e.catalogue.isDefined),
+            StoredEvent.Label(e.label.value)
           )
         }
 
@@ -101,7 +101,7 @@ object EventImportService:
         now.get(c.field.value).map(up => (c, Corrections.reconcile(json(c.value.value), json(c.upstreamValue.value), up), up))
       )
       val keep = outcomes.collect {
-        case (c, o, _) if o != Corrections.Outcome.Retire => c.field.value -> json(c.value.value)
+        case (c, o, _) if o != Corrections.Outcome.Retire => (c.field.value: String) -> json(c.value.value)
       }.toMap
       def text(f: String): Option[Option[String]] = keep.get(f).map(_.asString)
       val spanKept = keep.contains(EventFields.Span)

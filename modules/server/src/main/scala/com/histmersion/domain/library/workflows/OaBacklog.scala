@@ -379,32 +379,42 @@ final class OaBacklog(
   private def acquireOnce(goals: List[com.histmersion.domain.automation.Goal.Slug], doi: com.histmersion.domain.library.Doi, w: OaWork): Option[Queue.QueueItem.Id] =
     val existing = site.queues.naming(Queue.Kind.Acquire, doi).headOption.map(_.id)
     val id = existing.orElse {
-      val goal = goals.headOption.fold("")(_.value)
-      val text = w.acquireText.getOrElse(
-        AcquisitionSweepRules.acquireText(
-          AcquisitionSweepRules.Candidate(
-            doi,
-            if w.title.value.nonEmpty then w.title else com.histmersion.api.library.Title(doi.value),
-            w.year,
-            w.authors,
-            w.venue,
-            isOa = com.histmersion.api.library.WorkRef.IsOa(true), com.histmersion.domain.library.workflows.AcquisitionSweepRules.Candidate.Query(""), None
-          ),
-          goal,
-          w.why
-        )
-      )
-      site.workLists
-        .add(
-          com.histmersion.domain.automation.worklists.WorkListControllers.ListName(Queue.Kind.Acquire.label.value),
-          QueueAdd(
-            text,
-            topic = Option.when(goal.nonEmpty)(Queue.QueueItem.Topic(s"goal $goal")),
-            goal = Option.when(goal.nonEmpty)(com.histmersion.api.automation.Goal.Slug(goal))
+      val goal = goals.headOption
+      val text = w.acquireText
+        .map(t => Queue.QueueItem.Text(t.value))
+        .orElse(
+          goal.map(g =>
+            Queue.QueueItem.Text(
+              AcquisitionSweepRules
+                .acquireText(
+                  AcquisitionSweepRules.Candidate(
+                    doi,
+                    if w.title.value.nonEmpty then w.title else com.histmersion.api.library.Title(doi.value),
+                    w.year,
+                    w.authors,
+                    w.venue,
+                    isOa = com.histmersion.api.library.WorkRef.IsOa(true), com.histmersion.domain.library.workflows.AcquisitionSweepRules.Candidate.Query(""), None
+                  ),
+                  g,
+                  AcquisitionSweepRules.Pick.Why(w.why.value)
+                )
+                .value
+            )
           )
         )
-        .toOption
-        .map(_.id)
+      text.flatMap(t =>
+        site.workLists
+          .add(
+            com.histmersion.domain.automation.worklists.WorkListControllers.ListName(Queue.Kind.Acquire.label.value),
+            QueueAdd(
+              t,
+              topic = goal.map(g => Queue.QueueItem.Topic(s"goal $g")),
+              goal = goal.map(g => com.histmersion.api.automation.Goal.Slug(g.value))
+            )
+          )
+          .toOption
+          .map(_.id)
+      )
     }
     id.foreach(i =>
       goals.foreach(g =>
@@ -434,7 +444,7 @@ final class OaBacklog(
     val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
     val rows = agents.managerStore.sweepAcquireItems()
     val light = agents.managerStore.light().map(m => m.id.value -> m).toMap
-    val items = rows.groupBy(_.item).toList.sortBy(_._1.value)
+    val items = rows.groupBy(_.item).toList.sortBy[Int](_._1.value)
     val out = items.map { (item, rs) =>
       val first = rs.find(_.isOa).getOrElse(rs.head)
       val goals = rs.map(_.goal).distinct

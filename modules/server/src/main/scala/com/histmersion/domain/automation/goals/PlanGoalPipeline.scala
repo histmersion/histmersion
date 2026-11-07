@@ -26,6 +26,8 @@ import javax.sql.DataSource
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.automation.Goal
+import com.histmersion.api.automation.Goal.Plans.GoalLink
+import com.histmersion.domain.automation.{Goal as DomainGoal}
 
 /** `plan-goal <goal>` (docs/research-embedded-agents.md §7 P3, §14): the planner proposes sub-goals, search queries and
   * candidate works for one goal, as a typed answer. Code checks the vocabulary (slugs, DOIs, caps), looks every DOI up
@@ -54,218 +56,267 @@ final class PlanGoalPipeline(
   private def taken(s: com.histmersion.domain.automation.Goal.Slug): Boolean =
     Transactor(ds).read(GoalRepo.exists(s)) || Transactor(ds).read(GoalRepo.renamedTo(s)).isDefined
 
-  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.automation.goals.PlanGoalPipeline.RunResultPart2] =
-    val slug = ctx.run.target
+  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+    DomainGoal.Slug
+      .either(ctx.run.target.value)
+      .left
+      .map(_ => Halt.Fail(Halt.Fail.Message(s"invalid goal slug '${ctx.run.target.value}'")))
+      .flatMap(runFor(ctx, _))
+
+  private def runFor(ctx: RunCtx, slug: DomainGoal.Slug): Either[Halt, PipelineDef.Summary] =
     for
-      loaded <- ctx.code[Loaded](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(load(slug))
+      loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(slug))
       proposed <- ctx.llm[PlanAnswer, Proposed](
-        "propose",
+        AgentRepo.StepRecord.Name("propose"),
         StepAgent.GoalPlanner,
-        input(loaded, caps(ctx)),
+        Prompt.UserText(input(loaded, caps(ctx))),
         AnswerSchemas.plan
       )((a, last) =>
         PlanGoal
-          .check(a, slug, taken, loaded.queries.toSet, caps(ctx), last)
-          .map(Checked(_, _))
+          .check(a, slug, taken, loaded.queries.toSet, caps(ctx), PlanGoal.LastRound(last.value))
+          .left
+          .map(_.map(p => RunCtx.Problem(p.value)))
+          .map((p, warnings) => Checked(p, warnings.map(w => Checked.Warnings(w.value))))
       )
-      plan <- ctx.code[Plan]("verify")(Right(verify(ctx, proposed, slug)))
+      plan <- ctx.code[Plan](AgentRepo.StepRecord.Name("verify"))(Right(verify(ctx, proposed, slug)))
       line <-
         if plan.isEmpty then
-          ctx.code[String]("close")(
+          ctx.code[String](AgentRepo.StepRecord.Name("close"))(
             log(
               ctx,
-              s"plan-goal $slug: nothing survived the checks " +
-                s"(${plan.dropped.size} dropped); no approval was opened (agent run ${ctx.run.id.take(8)})"
+              s"plan-goal ${slug.value}: nothing survived the checks " +
+                s"(${plan.dropped.size} dropped); no approval was opened (agent run ${ctx.run.id.value.take(8)})"
             )
           )
         else
           for
-            decided <- ctx.approval("approve", ApprovalKind.GoalPlan, slug, ApprovalMode.Manual)(
+            decided <- ctx.approval(
+              AgentRepo.StepRecord.Name("approve"),
+              ApprovalKind.GoalPlan,
+              com.histmersion.domain.automation.approvals.ApprovalQuery.Subject(slug.value),
+              ApprovalMode.Manual
+            )(
               Right(plan.asJson.noSpaces)
             )
-            applied <- ctx.code[Applied]("apply")(apply(ctx, slug, plan, decided))
-          yield applied.line
-    yield line
+            applied <- ctx.code[Applied](AgentRepo.StepRecord.Name("apply"))(apply(ctx, slug, plan, decided))
+          yield applied.line.value
+    yield PipelineDef.Summary(line)
 
   /** `agents.plan.*`, with the run's own sub-goal cap (the autopilot gives 0 at its depth limit). */
   private def caps(ctx: RunCtx): Caps =
     val c = cfg.plan.caps
-    ctx.run.params.subGoals.fold(c)(n => c.copy(subGoals = math.max(0, math.min(n, c.subGoals))))
+    ctx.run.params.subGoals.fold(c)(n =>
+      c.copy(subGoals = Caps.SubGoals(math.max(0, math.min(n.value, c.subGoals.value))))
+    )
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
-  private def load(slug: com.histmersion.domain.automation.Goal.Slug): Either[com.histmersion.domain.automation.goals.PlanGoalPipeline.LoadResultPart1, Loaded] =
-    host.goal(slug).left.map(_.message).map { g =>
+  private def load(slug: DomainGoal.Slug): Either[String, Loaded] =
+    host.goal(slug).left.map(_.message.value).map { g =>
       val links = goals.links(slug)
-      val vocab = (field: String) => host.vocabulary(field).take(VocabularySize)
+      val vocab = (field: String) => host.vocabulary(AutomationHost.VocabularyField(field)).take(VocabularySize)
       Loaded(
-        g.slug,
-        g.title,
-        g.notes,
-        g.tags,
-        g.regions,
+        DomainGoal.Slug.assume(g.slug.value),
+        com.histmersion.domain.Title(g.title.value),
+        g.notes.map(n => Loaded.Notes(n.value)),
+        g.tags.map(t => Loaded.Tags(t.value)),
+        g.regions.map(r => Loaded.Regions(r.value)),
         g.periodStart,
         g.periodEnd,
-        goals.children(slug).map(c => s"${c.slug} — ${c.title}"),
-        links.filter(_.kind == LinkKind.SearchQuery).map(_.ref),
+        goals.children(slug).map(c => Loaded.Children(s"${c.slug.value} — ${c.title.value}")),
+        links.filter(_.kind == LinkKind.SearchQuery).map(l => PlanGoal.Query(l.ref.value)),
         links
           .filter(l => l.kind == LinkKind.Source || l.kind == LinkKind.Article)
-          .map(l => s"${l.kind.wire} [[${l.ref}]]${l.title.fold("")(t => s" — $t")}"),
-        vocab("topics"),
-        vocab("tags")
+          .map(l =>
+            Loaded.Linked(s"${l.kind.wire.value} [[${l.ref.value}]]${l.title.fold("")(t => s" — ${t.value}")}")
+          ),
+        vocab("topics").map(v => Loaded.Topics(v.value)),
+        vocab("tags").map(v => Loaded.Tags0(v.value))
       )
     }
 
-  private def input(l: Loaded, caps: Caps): com.histmersion.domain.automation.goals.PlanGoalPipeline.InputResult =
+  private def input(l: Loaded, caps: Caps): String =
     val period = (l.periodStart, l.periodEnd) match
-      case (Some(a), Some(b)) => s"$a to $b (signed years, BCE negative)"
+      case (Some(a), Some(b)) => s"${a.value} to ${b.value} (signed years, BCE negative)"
       case _                  => "not given"
-    def list(xs: List[com.histmersion.domain.automation.goals.PlanGoalPipeline.InputListXs]) = if xs.isEmpty then "none" else xs.map(x => s"- $x").mkString("\n", "\n", "")
-    val goal = s"slug: ${l.slug}\ntitle: ${l.title}\nnotes: ${l.notes.getOrElse("none")}\n" +
-      s"tags: ${l.tags.mkString(", ")}\nregions: ${l.regions.mkString(", ")}\nperiod: $period"
+    def list(xs: List[String]) = if xs.isEmpty then "none" else xs.map(x => s"- $x").mkString("\n", "\n", "")
+    val goal = s"slug: ${l.slug.value}\ntitle: ${l.title.value}\nnotes: ${l.notes.fold("none")(_.value)}\n" +
+      s"tags: ${l.tags.map(_.value).mkString(", ")}\nregions: ${l.regions.map(_.value).mkString(", ")}\nperiod: $period"
     s"Plan the research of this goal.\n\n${Prompt.data("goal", goal)}\n\n" +
-      s"Its sub-goals: ${list(l.children)}\n\nIts queries: ${list(l.queries)}\n\nLinked to it: ${list(l.linked)}\n\n" +
-      s"The corpus's most used topics: ${l.topics.mkString(", ")}\nIts most used tags: ${l.tags0.mkString(", ")}\n\n" +
-      (if caps.subGoals == 0 then "Propose NO sub-goals: this goal is split far enough; give queries and works. "
+      s"Its sub-goals: ${list(l.children.map(_.value))}\n\nIts queries: ${list(l.queries.map(_.value))}\n\nLinked to it: ${list(l.linked.map(_.value))}\n\n" +
+      s"The corpus's most used topics: ${l.topics.map(_.value).mkString(", ")}\nIts most used tags: ${l.tags0.map(_.value).mkString(", ")}\n\n" +
+      (if caps.subGoals.value == 0 then "Propose NO sub-goals: this goal is split far enough; give queries and works. "
        else "") +
-      s"Limits: at most ${caps.subGoals} sub-goals, ${caps.queries} queries, ${caps.works} works; " +
-      s"a query is at most ${caps.queryChars} characters."
+      s"Limits: at most ${caps.subGoals.value} sub-goals, ${caps.queries.value} queries, ${caps.works.value} works; " +
+      s"a query is at most ${caps.queryChars.value} characters."
 
   /** Every DOI through the discover path (OpenAlex/Crossref). Offline, every work is dropped — a person never sees a
     * DOI code could not check.
     */
-  private def verify(ctx: RunCtx, p: Proposed, slug: com.histmersion.domain.automation.Goal.Slug): Plan =
+  private def verify(ctx: RunCtx, p: Proposed, slug: DomainGoal.Slug): Plan =
     val plan = PlanGoal.verify(p, slug, host.workLookup)
-    plan.dropped.foreach(d => ctx.warn(s"verify: $d"))
+    plan.dropped.foreach(d => ctx.warn(s"verify: ${d.value}"))
     plan
 
-  private def log(ctx: RunCtx, line: com.histmersion.domain.automation.goals.PlanGoalPipeline.LogLine): Either[com.histmersion.domain.automation.goals.PlanGoalPipeline.LogResultPart1, com.histmersion.domain.automation.goals.PlanGoalPipeline.LogResultPart2] = Pipelines.log(workLists, ctx, line)
+  private def log(ctx: RunCtx, line: String): Either[String, String] =
+    Pipelines.log(workLists, ctx, Pipelines.LogLine(line)).left.map(_.value).map(_.value)
+
+  private def runId(ctx: RunCtx): com.histmersion.domain.automation.Run.Id =
+    com.histmersion.domain.automation.Run.Id.assume(ctx.run.id.value)
 
   /** The approved plan, applied: sub-goals (children of the goal), query links, works in the corpus linked, the others
     * queued for acquisition and linked by item. A rejected plan changes nothing. Idempotent (a re-run after a crash
     * finds what it made: goals are upserted, links are keyed, a DOI already in the queue is not added again).
     */
-  private def apply(ctx: RunCtx, slug: com.histmersion.domain.automation.Goal.Slug, plan: Plan, d: Decided): Either[com.histmersion.domain.automation.goals.PlanGoalPipeline.ApplyResultPart1, Applied] =
-    if !d.approved then
-      log(ctx, PlanGoal.logLine(slug, plan, approved = com.histmersion.domain.PlanGoal.Approved(false), com.histmersion.domain.PlanGoal.CreatedCount(0), com.histmersion.domain.PlanGoal.LinkedCount(0), com.histmersion.domain.PlanGoal.QueuedCount(0), ctx.run.id)).map(Applied(_, 0, 0, 0))
+  private def apply(ctx: RunCtx, slug: DomainGoal.Slug, plan: Plan, d: Decided): Either[String, Applied] =
+    if !d.approved.value then
+      log(
+        ctx,
+        PlanGoal
+          .logLine(
+            slug,
+            plan,
+            approved = PlanGoal.Approved(false),
+            PlanGoal.CreatedCount(0),
+            PlanGoal.LinkedCount(0),
+            PlanGoal.QueuedCount(0),
+            runId(ctx)
+          )
+          .value
+      ).map(l => Applied(PlanGoal.LogLine(l), PlanGoal.CreatedCount(0), PlanGoal.LinkedCount(0), PlanGoal.QueuedCount(0)))
     else
       ctx.write(
-        s"apply the plan of goal $slug: ${plan.subGoals.size} sub-goal(s), ${plan.queries.size} query(ies), " +
+        s"apply the plan of goal ${slug.value}: ${plan.subGoals.size} sub-goal(s), ${plan.queries.size} query(ies), " +
           s"${plan.works.size} work(s)",
         plan.asJson
       )(applyApproved(ctx, slug, plan))(
         Right(
           Applied(
-            s"plan-goal $slug: plan not applied (${AgentsMarkdown.DryRunNote}) (agent run ${ctx.run.id.take(8)})",
-            com.histmersion.domain.automation.goals.PlanGoalPipeline.Applied.Created(0),
-            com.histmersion.domain.automation.goals.PlanGoalPipeline.Applied.Linked(0),
-            com.histmersion.domain.automation.goals.PlanGoalPipeline.Applied.Queued(0)
+            PlanGoal.LogLine(
+              s"plan-goal ${slug.value}: plan not applied (${AgentsMarkdown.DryRunNote}) (agent run ${ctx.run.id.value.take(8)})"
+            ),
+            PlanGoal.CreatedCount(0),
+            PlanGoal.LinkedCount(0),
+            PlanGoal.QueuedCount(0)
           )
         )
       )
 
-  private def applyApproved(ctx: RunCtx, slug: com.histmersion.domain.automation.Goal.Slug, plan: Plan): Either[com.histmersion.domain.automation.goals.PlanGoalPipeline.ApplyApprovedResultPart1, Applied] =
+  private def applyApproved(ctx: RunCtx, slug: DomainGoal.Slug, plan: Plan): Either[String, Applied] =
     val parent = host.goal(slug).toOption
     val created = plan.subGoals.filter { g =>
-      if Transactor(ds).read(GoalRepo.exists(g.slug)) then {
-        ctx.warn(s"apply: '${g.slug}' became a goal meanwhile; left as it is"); false
-      } else
-        host.putGoal(
-          g.slug,
-          com.histmersion.api.automation.Goal.Put(
-            g.title,
-            Goal.Status.Planned,
-            g.notes,
-            g.tags,
-            parent.toList.flatMap(_.regions),
-            parent.flatMap(_.periodStart),
-            parent.flatMap(_.periodEnd),
-            Some(slug)
-          )
-        ) match
-          case Right(_) => true
-          case Left(e)  => ctx.warn(s"apply: sub-goal '${g.slug}' not created — ${e.message}"); false
+      DomainGoal.Slug.either(g.slug.value) match
+        case Left(_) =>
+          ctx.warn(s"apply: sub-goal '${g.slug.value}' is not a goal slug; not created"); false
+        case Right(sub) =>
+          if Transactor(ds).read(GoalRepo.exists(sub)) then {
+            ctx.warn(s"apply: '${g.slug.value}' became a goal meanwhile; left as it is"); false
+          } else
+            host.putGoal(
+              sub,
+              com.histmersion.api.automation.Goal.Put(
+                g.title,
+                Goal.StatusValue(Goal.Status.Planned),
+                g.notes,
+                g.tags,
+                parent.toList.flatMap(_.regions),
+                parent.flatMap(_.periodStart),
+                parent.flatMap(_.periodEnd),
+                Some(Goal.Slug(slug.value))
+              )
+            ) match
+              case Right(_) => true
+              case Left(e)  => ctx.warn(s"apply: sub-goal '${g.slug.value}' not created — ${e.message.value}"); false
     }
-    plan.queries.foreach(q => goals.link(slug, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.SearchQuery), q, Some(com.histmersion.domain.automation.goals.BGoalLinkRow.Note("from the approved plan"))))
+    plan.queries.foreach(q =>
+      goals.link(slug, DomainGoal.LinkKind.SearchQuery, GoalLink.Ref(q.value), Some(GoalLink.Note("from the approved plan")))
+    )
     val queued = workLists
       .kindOf(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("acquire"))
       .toOption
       .toList
       .flatMap(queues.list(_, QueueScope.All))
-      .flatMap(i => Scheduling.dois(i.text).map(_ -> i.id))
+      .flatMap(i => Scheduling.dois(i.text.value).map(d => d.value -> i.id))
       .toMap
-    val (inCorpus, outside) = plan.works.partition(w => w.inCorpus && w.citekey.isDefined)
-    inCorpus.foreach(w => goals.link(slug, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.Source), w.citekey.get, Option(w.why).filter(_.nonEmpty)))
+    val (inCorpus, outside) = plan.works.partition(w => w.inCorpus.value && w.citekey.isDefined)
+    inCorpus.foreach(w =>
+      goals.link(
+        slug,
+        DomainGoal.LinkKind.Source,
+        GoalLink.Ref(w.citekey.get.value),
+        Option(w.why).filter(_.value.nonEmpty).map(y => GoalLink.Note(y.value))
+      )
+    )
     val items = outside.flatMap { w =>
       queued
-        .get(w.doi)
+        .get(w.doi.value)
         .map(Right(_))
         .getOrElse(
           workLists
             .add(
-              "acquire",
+              com.histmersion.domain.automation.worklists.WorkListControllers.ListName("acquire"),
               QueueAdd(
-                PlanGoal.acquireText(w, slug),
-                topic = Some(s"goal $slug"),
-                goal = Some(slug),
-                job = Some(ctx.run.id)
+                com.histmersion.api.automation.Queue.QueueItem.Text(PlanGoal.acquireText(w, slug).value),
+                topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic(s"goal ${slug.value}")),
+                goal = Some(Goal.Slug(slug.value)),
+                job = Some(com.histmersion.api.SpatialHierarchyResult.Job.Id(ctx.run.id.value))
               )
             )
             .map(_.id)
         ) match
         case Right(id) =>
-          goals.link(slug, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.QueueItem), id.toString, Some(w.doi)); Some(id)
-        case Left(e) => ctx.warn(s"apply: ${w.doi} not queued — ${e.message}"); None
+          goals.link(
+            slug,
+            DomainGoal.LinkKind.QueueItem,
+            GoalLink.Ref(id.value.toString),
+            Some(GoalLink.Note(w.doi.value))
+          ); Some(id)
+        case Left(e) => ctx.warn(s"apply: ${w.doi.value} not queued — ${e.message.value}"); None
     }
-    goals.setPlan(slug, plan.asJson.noSpaces)
-    log(ctx, PlanGoal.logLine(slug, plan, approved = com.histmersion.domain.PlanGoal.Approved(true), created.size, inCorpus.size, items.size, ctx.run.id))
-      .map(Applied(_, created.size, inCorpus.size, items.size))
+    goals.setPlan(slug, BGoalRow.Plan(plan.asJson.noSpaces))
+    log(
+      ctx,
+      PlanGoal
+        .logLine(
+          slug,
+          plan,
+          approved = PlanGoal.Approved(true),
+          PlanGoal.CreatedCount(created.size),
+          PlanGoal.LinkedCount(inCorpus.size),
+          PlanGoal.QueuedCount(items.size),
+          runId(ctx)
+        )
+        .value
+    ).map(l =>
+      Applied(
+        PlanGoal.LogLine(l),
+        PlanGoal.CreatedCount(created.size),
+        PlanGoal.LinkedCount(inCorpus.size),
+        PlanGoal.QueuedCount(items.size)
+      )
+    )
 
 object PlanGoalPipeline:
   /** How many of the most used topics and tags the planner is shown. */
-  type InputListXs = InputListXs.T
-  object InputListXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type RunResultPart2 = RunResultPart2.T
-  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadResultPart1 = LoadResultPart1.T
-  object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InputResult = InputResult.T
-  object InputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LogResultPart1 = LogResultPart1.T
-  object LogResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LogResultPart2 = LogResultPart2.T
-  object LogResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LogLine = LogLine.T
-  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyResultPart1 = ApplyResultPart1.T
-  object ApplyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyApprovedResultPart1 = ApplyApprovedResultPart1.T
-  object ApplyApprovedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   val VocabularySize = 40
 
   /** The goal as the planner sees it (checkpointed). `tags0` = the corpus's tags (`tags` are the goal's). */
   final case class Loaded(
-      slug: Loaded.Slug,
-      title: Loaded.Title,
+      slug: com.histmersion.domain.automation.Goal.Slug,
+      title: com.histmersion.domain.Title,
       notes: Option[Loaded.Notes],
       tags: List[Loaded.Tags],
       regions: List[Loaded.Regions],
-      periodStart: Option[com.histmersion.Year],
-      periodEnd: Option[com.histmersion.Year],
+      periodStart: Option[com.histmersion.api.catalogue.Year],
+      periodEnd: Option[com.histmersion.api.catalogue.Year],
       children: List[Loaded.Children],
-      queries: List[Loaded.Queries],
+      queries: List[com.histmersion.domain.PlanGoal.Query],
       linked: List[Loaded.Linked],
       topics: List[Loaded.Topics],
       tags0: List[Loaded.Tags0]
   ) derives KindlingsCodecAsObject
 
   object Loaded:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Notes = Notes.T
     object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Tags = Tags.T
@@ -274,8 +325,6 @@ object PlanGoalPipeline:
     object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Children = Children.T
     object Children extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Queries = Queries.T
-    object Queries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Linked = Linked.T
     object Linked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Topics = Topics.T
@@ -284,14 +333,9 @@ object PlanGoalPipeline:
     object Tags0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What applying the plan did. */
-  final case class Applied(line: Applied.Line, created: Applied.Created, linked: Applied.Linked, queued: Applied.Queued) derives KindlingsCodecAsObject
-
-  object Applied:
-    type Line = Line.T
-    object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Created = Created.T
-    object Created extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Linked = Linked.T
-    object Linked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Queued = Queued.T
-    object Queued extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class Applied(
+      line: com.histmersion.domain.PlanGoal.LogLine,
+      created: com.histmersion.domain.PlanGoal.CreatedCount,
+      linked: com.histmersion.domain.PlanGoal.LinkedCount,
+      queued: com.histmersion.domain.PlanGoal.QueuedCount
+  ) derives KindlingsCodecAsObject

@@ -6,7 +6,11 @@ import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.PageSize
+import com.histmersion.domain.automation.managers.{ManagerContext, ManagerLight}
 import com.histmersion.api.Paging
+import com.histmersion.domain.automation.Approval as DomainApproval
+import com.histmersion.domain.automation.goals.BGoalLinkRow
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{DecisionRequest, RunRequest}
@@ -62,25 +66,25 @@ object AgentsTools:
         )
         .input[RunInput]
         .handle { in =>
-          in.modelFor.map(Agents.ModelOverride.parse).partitionMap(identity) match
+          in.modelFor.map(m => Agents.ModelOverride.parse(Agents.ModelOverride.Wire(m))).partitionMap(identity) match
             case (Nil, over) =>
               a.startRun(
                 RunRequest(
-                  in.pipeline,
-                  in.target,
-                  in.model,
-                  in.budgetUsd,
+                  RunRequest.Pipeline(in.pipeline),
+                  RunRequest.Target(in.target),
+                  in.model.map(RunRequest.Model(_)),
+                  in.budgetUsd.map(RunRequest.BudgetUsd(_)),
                   None,
-                  Option.when(in.fix)(true),
-                  in.rounds,
-                  in.acquireItem,
-                  in.title,
-                  in.kind,
-                  in.query,
-                  in.topics,
-                  in.tags,
-                  in.goal,
-                  Option.when(in.dryRun)(true),
+                  Option.when(in.fix)(RunRequest.Fix(true)),
+                  in.rounds.map(RunRequest.Rounds(_)),
+                  in.acquireItem.map(com.histmersion.api.automation.Queue.QueueItem.Id(_)),
+                  in.title.map(RunRequest.Title(_)),
+                  in.kind.map(RunRequest.Kind(_)),
+                  in.query.map(RunRequest.Query(_)),
+                  in.topics.map(RunRequest.Topics(_)),
+                  in.tags.map(RunRequest.Tags(_)),
+                  in.goal.map(Goal.Slug(_)),
+                  Option.when(in.dryRun)(RunRequest.DryRun(true)),
                   over
                 )
               ) match
@@ -105,12 +109,17 @@ object AgentsTools:
         .handle { in =>
           in.id.map(_.trim).filter(_.nonEmpty) match
             case _ if in.compare.nonEmpty =>
-              ToolResult.text(a.compare(in.compare).fold(McpOut.refusal, AgentsMarkdown.compare))
-            case Some(id) => ToolResult.text(a.run(id).fold(McpOut.refusal, AgentsMarkdown.run(_, in.messages)))
+              ToolResult.text(
+                AgentsControllers.runIds(in.compare).flatMap(a.compare).fold(McpOut.refusal, AgentsMarkdown.compare)
+              )
+            case Some(id) =>
+              ToolResult.text(
+                AgentsControllers.runId(id).flatMap(a.run).fold(McpOut.refusal, AgentsMarkdown.run(_, in.messages))
+              )
             case None     =>
               val f = in.filter
               ToolResult.text(
-                a.runsPage(f, in.limit, in.before, None)
+                a.runsPage(f, in.limit.flatMap(PageSize.option(_)), in.before.map(Paging.Cursor(_)), None)
                   .fold(
                     McpOut.refusal,
                     (rs, page) =>
@@ -144,7 +153,7 @@ object AgentsTools:
           if in.digest then ToolResult.text(ApprovalDigestMarkdown.digest(a.managing.digest))
           else
             ToolResult.text(
-              a.approvalsPage(f, in.limit, in.before, None)
+              a.approvalsPage(f, in.limit.flatMap(PageSize.option(_)), in.before.map(Paging.Cursor(_)), None)
                 .fold(
                   McpOut.refusal,
                   (as, page) =>
@@ -174,7 +183,11 @@ object AgentsTools:
           in.id match
             case Some(id) =>
               ToolResult.text(
-                a.decide(id, in.decision, DecisionRequest(in.note))
+                a.decide(
+                  DomainApproval.Id(id),
+                  DomainApproval.Outcome(in.decision),
+                  DecisionRequest(in.note.map(DecisionRequest.Note(_)))
+                )
                   .fold(McpOut.refusal, x => AgentsMarkdown.approvalLine(x))
               )
             case None =>
@@ -182,7 +195,16 @@ object AgentsTools:
                 a.managing
                   .decideAll(
                     ApprovalDigest
-                      .BulkDecide(in.decision, in.kind, in.subject, in.ids, in.note, in.dryRun, in.limit, Some(com.histmersion.api.automation.ApprovalDigest.BulkDecide.By("mcp")))
+                      .BulkDecide(
+                        ApprovalDigest.BulkDecide.Decision(in.decision),
+                        in.kind.map(ApprovalDigest.BulkDecide.Kind(_)),
+                        in.subject.map(ApprovalDigest.BulkDecide.Subject(_)),
+                        in.ids.map(ApprovalDigest.BulkDecide.Ids(_)),
+                        in.note.map(ApprovalDigest.BulkDecide.Note(_)),
+                        ApprovalDigest.BulkDecide.DryRun(in.dryRun),
+                        in.limit.map(ApprovalDigest.BulkDecide.Limit(_)),
+                        Some(ApprovalDigest.BulkDecide.By("mcp"))
+                      )
                   )
                   .fold(McpOut.refusal, ApprovalDigestMarkdown.bulk)
               )
@@ -197,13 +219,29 @@ object AgentsTools:
         )
         .input[GoalLinkInput]
         .handle { in =>
-          val kind = Goal.Plans.LinkKind.parse(in.kind)
+          val kind = Goal.Plans.LinkKind.parse(Goal.Plans.LinkKind.Wire(in.kind))
           val done =
-            kind.toRight(Api.Error(s"unknown link kind '${in.kind}' (source, article, query, queue-item)")).flatMap { k =>
-              if in.remove then a.removeGoalLink(in.goal, k.wire, in.ref).map(_ => ())
-              else a.addGoalLink(in.goal, Goal.Plans.LinkAdd(k, in.ref, in.note)).map(_ => ())
-            }
-          ToolResult.text(done.flatMap(_ => a.goalView(in.goal)).fold(McpOut.refusal, AgentsMarkdown.goalView))
+            kind
+              .toRight(
+                Api.Error(
+                  Api.Error.Message(s"unknown link kind '${in.kind}' (source, article, query, queue-item)")
+                )
+              )
+              .flatMap { k =>
+                AgentsControllers.goalSlug(in.goal).flatMap { g =>
+                  if in.remove then a.removeGoalLink(g, k.wire, BGoalLinkRow.Ref(in.ref)).map(_ => ())
+                  else
+                    a.addGoalLink(
+                      g,
+                      Goal.Plans.LinkAdd(k, Goal.Plans.LinkAdd.Ref(in.ref), in.note.map(Goal.Plans.LinkAdd.Note(_)))
+                    ).map(_ => ())
+                }
+              }
+          ToolResult.text(
+            done
+              .flatMap(_ => AgentsControllers.goalSlug(in.goal).flatMap(a.goalView))
+              .fold(McpOut.refusal, AgentsMarkdown.goalView)
+          )
         }
 
     val schedule =
@@ -221,12 +259,27 @@ object AgentsTools:
         .handle { in =>
           val out = (in.goal, in.kind) match
             case (Some(g), Some(k)) if in.remove =>
-              a.removeSchedule(g, k).map(_ => AgentsMarkdown.schedules(a.schedules))
+              AgentsControllers
+                .goalSlug(g)
+                .flatMap(s => a.removeSchedule(s, com.histmersion.api.automation.ScheduleKind.Wire(k)))
+                .map(_ => AgentsMarkdown.schedules(a.schedules))
             case (Some(g), Some(k)) =>
               in.cron
                 .toRight(Api.Error(com.histmersion.api.Api.Error.Message("give `cron` to set a schedule (or `remove: true`)")))
                 .flatMap(c =>
-                  a.setSchedule(g, k, Goal.Plans.ScheduleSet(c, in.enabled, in.budgetUsd))
+                  AgentsControllers
+                    .goalSlug(g)
+                    .flatMap(slug =>
+                      a.setSchedule(
+                        slug,
+                        com.histmersion.api.automation.ScheduleKind.Wire(k),
+                        Goal.Plans.ScheduleSet(
+                          Goal.Plans.ScheduleSet.Cron(c),
+                          Goal.Plans.ScheduleSet.Enabled(in.enabled),
+                          in.budgetUsd.map(Goal.Plans.ScheduleSet.BudgetUsd(_))
+                        )
+                      )
+                    )
                     .map(s => AgentsMarkdown.scheduleLine(s))
                 )
             case (None, None) => Right(AgentsMarkdown.schedules(a.schedules))
@@ -246,7 +299,7 @@ object AgentsTools:
         )
         .input[ModelsInput]
         .handle { in =>
-          ToolResult.text(if in.doctor then AgentsMarkdown.doctor(a.doctor(offline = in.offline))
+          ToolResult.text(if in.doctor then AgentsMarkdown.doctor(a.doctor(offline = AgentsControllers.Offline(in.offline)))
           else if in.quota then AgentsMarkdown.quota(a.quota)
           else AgentsMarkdown.models(a.models))
         }
@@ -268,23 +321,38 @@ object AgentsTools:
         .input[SetModelsInput]
         .handle { in =>
           val out = (in.role.map(_.trim).filter(_.nonEmpty), in.target.map(_.trim).filter(_.nonEmpty)) match
-            case _ if in.refresh => a.refreshQuota(PlanQuota.QuotaRefresh(in.pool)).map(AgentsMarkdown.refreshed)
+            case _ if in.refresh => a.refreshQuota(PlanQuota.QuotaRefresh(in.pool.map(PlanQuota.QuotaRefresh.Pool(_)))).map(AgentsMarkdown.refreshed)
             case _ if in.pool.exists(_.trim.nonEmpty) =>
               if in.hold.isEmpty && in.floors.isEmpty then Left(Api.Error(com.histmersion.api.Api.Error.Message("with `pool`, give `hold` and/or `floors`")))
-              else a.setPool(in.pool.get.trim, PlanQuota.PoolSet(in.hold, in.floors)).map(AgentsMarkdown.pool)
+              else a.setPool(
+                PlanQuota.PoolIdText(in.pool.get.trim),
+                PlanQuota.PoolSet(in.hold.map(PlanQuota.PoolSet.Hold(_)), in.floors.map(PlanQuota.PoolSet.Floors(_)))
+              ).map(AgentsMarkdown.pool)
             case (Some(r), None) if in.fallthrough.isDefined =>
-              a.setFallthrough(r, PlanQuota.FallthroughSet(in.fallthrough.get)).map(AgentsMarkdown.quota)
-            case (Some(r), None) if in.reset => a.resetChain(r).map(AgentsMarkdown.roleChain)
-            case (Some(r), None) => a.setChain(r, ModelChains.ChainSet(in.models)).map(AgentsMarkdown.roleChain)
+              a.setFallthrough(
+                com.histmersion.api.automation.AgentRole.Wire(r),
+                PlanQuota.FallthroughSet(PlanQuota.FallthroughSet.Fallthrough(in.fallthrough.get))
+              ).map(AgentsMarkdown.quota)
+            case (Some(r), None) if in.reset => a.resetChain(com.histmersion.api.automation.AgentRole.Wire(r)).map(AgentsMarkdown.roleChain)
+            case (Some(r), None) => a.setChain(
+                com.histmersion.api.automation.AgentRole.Wire(r),
+                ModelChains.ChainSet(in.models.map(ModelChains.ChainSet.Models(_)))
+              ).map(AgentsMarkdown.roleChain)
             case (None, Some(t)) if in.reset =>
-              a.removeAllowance(t)
-                .map(x => if x.removed then s"The saved allowance of $t is removed." else s"No saved allowance for $t.")
+              a.removeAllowance(ModelChains.AllowanceSet.Target(t))
+                .map(x => if x.removed.value then s"The saved allowance of $t is removed." else s"No saved allowance for $t.")
             case (None, Some(t)) =>
-              in.limits.map(ModelChains.Limit.parse).partitionMap(identity) match
+              in.limits.map(l => ModelChains.Limit.parse(ModelChains.Limit.Spec(l))).partitionMap(identity) match
                 case (Nil, ls) =>
-                  a.setAllowance(ModelChains.AllowanceSet(t, ls.map(_.spec), in.reservePct))
+                  a.setAllowance(
+                    ModelChains.AllowanceSet(
+                      ModelChains.AllowanceSet.Target(t),
+                      ls.map(_.spec),
+                      ModelChains.Allowance.ReservePct(in.reservePct)
+                    )
+                  )
                     .map(AgentsMarkdown.allowance)
-                case (errs, _) => Left(Api.Error(errs.mkString("; ")))
+                case (errs, _) => Left(Api.Error(Api.Error.Message(errs.mkString("; "))))
             case _ => Left(Api.Error(com.histmersion.api.Api.Error.Message("give `role` (with `models`) or `target` (with `limits`), not both")))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
@@ -326,23 +394,37 @@ object AgentsTools:
         .input[ManagerInput]
         .handle { in =>
           val m = a.managing
-          val id = in.id.map(_.trim).filter(_.nonEmpty).getOrElse(Managers.ReviewId)
-          def target = in.target.map(_.trim).filter(_.nonEmpty).toRight(Api.Error(s"`${in.action}` needs `target`"))
+          val id = ManagerLight.Id(in.id.map(_.trim).filter(_.nonEmpty).getOrElse(Managers.ReviewId))
+          def target = in.target.map(_.trim).filter(_.nonEmpty).toRight(Api.Error(Api.Error.Message(s"`${in.action}` needs `target`")))
           val out: Either[Api.Error, String] = in.action.trim.toLowerCase match
             case "list"   => Right(ManagersMarkdown.list(m.list))
             case "show"   => m.get(id).map(ManagersMarkdown.detail)
-            case "pause"  => m.action(id, com.histmersion.domain.automation.managers.ManagersControllers.ActionAction("pause"), Some(in.runs)).map(ManagersMarkdown.line)
+            case "pause"  => m.action(id, com.histmersion.domain.automation.managers.ManagersControllers.ActionAction("pause"), Some(com.histmersion.domain.automation.managers.ManagersControllers.ActionRuns(in.runs))).map(ManagersMarkdown.line)
             case "resume" => m.action(id, com.histmersion.domain.automation.managers.ManagersControllers.ActionAction("resume"), None).map(ManagersMarkdown.line)
             case "create" =>
-              m.create(Managers.ManagerCreate(in.kind.getOrElse(""), in.goal, cron = in.cron))
+              m.create(
+                Managers.ManagerCreate(
+                  Managers.ManagerCreate.Kind(in.kind.getOrElse("")),
+                  in.goal.map(Goal.Slug(_)),
+                  cron = in.cron.map(Managers.ManagerCreate.Cron(_))
+                )
+              )
                 .map(ManagersMarkdown.line)
             case "enqueue" =>
               target
                 .flatMap(t =>
                   if in.id.exists(_.trim.nonEmpty) then
-                    m.addItem(id, Managers.EnqueueRequest(in.kind.getOrElse(""), t, in.priority))
+                    m.addItem(id, Managers.EnqueueRequest(
+                        Managers.EnqueueRequest.Kind(in.kind.getOrElse("")),
+                        Managers.EnqueueRequest.Target(t),
+                        in.priority.map(Managers.EnqueueRequest.Priority(_))
+                      ))
                       .map(i => Managers.EnqueueResult(id, List(i)))
-                  else m.enqueue(Managers.EnqueueRequest(in.kind.getOrElse("review"), t, in.priority))
+                  else m.enqueue(Managers.EnqueueRequest(
+                      Managers.EnqueueRequest.Kind(in.kind.getOrElse("review")),
+                      Managers.EnqueueRequest.Target(t),
+                      in.priority.map(Managers.EnqueueRequest.Priority(_))
+                    ))
                 )
                 .map(ManagersMarkdown.enqueued)
             case "hold" =>
@@ -350,8 +432,13 @@ object AgentsTools:
                 .flatMap(t =>
                   m.patchItem(
                     id,
-                    t,
-                    Managers.ItemPatch("hold", until = in.until, untilSource = in.untilSource, reason = in.text)
+                    com.histmersion.domain.automation.managers.ManagersControllers.ItemRef(t),
+                    Managers.ItemPatch(
+                      Managers.ItemPatch.Action("hold"),
+                      until = in.until.map(Managers.ItemPatch.Until(_)),
+                      untilSource = in.untilSource.map(Managers.ItemPatch.UntilSource(_)),
+                      reason = in.text.map(Managers.ItemPatch.Reason(_))
+                    )
                   )
                 )
                 .map(ManagersMarkdown.item)
@@ -364,13 +451,13 @@ object AgentsTools:
                   m.addHint(
                     id,
                     Managers.HintAdd(
-                      t,
-                      in.item,
-                      Some(in.once),
+                      Managers.HintAdd.Text(t),
+                      in.item.map(Managers.HintAdd.Item(_)),
+                      Some(Managers.HintAdd.Once(in.once)),
                       in.effect,
                       Some(com.histmersion.api.automation.Managers.HintAdd.Author("mcp")),
-                      propose = Some(in.effect.isDefined),
-                      suggest = Some(in.suggest)
+                      propose = Some(Managers.HintAdd.Propose(in.effect.isDefined)),
+                      suggest = Some(Managers.HintAdd.Suggest(in.suggest))
                     )
                   )
                 )
@@ -378,28 +465,30 @@ object AgentsTools:
             case "autopilot" =>
               in.on match
                 case None    => Right(autopilotPage(m.autopilot))
-                case Some(b) => m.setAutopilot(Autopilot.AutopilotSet(b, Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("mcp")))).map(autopilotPage)
+                case Some(b) => m.setAutopilot(Autopilot.AutopilotSet(Autopilot.AutopilotSet.On(b), Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("mcp")))).map(autopilotPage)
             case "repair-acquire" =>
-              repairAcquire(in.dryRun)
+              repairAcquire(RepairAcquire(in.dryRun))
             case "drain" =>
-              m.drain(Autopilot.DrainSet(in.on.getOrElse(true), Some(com.histmersion.api.automation.Autopilot.DrainSet.By("mcp")))).map(autopilotPage)
+              m.drain(Autopilot.DrainSet(Autopilot.DrainSet.On(in.on.getOrElse(true)), Some(com.histmersion.api.automation.Autopilot.DrainSet.By("mcp")))).map(autopilotPage)
             case "mode" =>
               in.mode
                 .map(_.trim)
                 .filter(_.nonEmpty)
                 .toRight(Api.Error(com.histmersion.api.Api.Error.Message("`mode` needs `mode`: working, finish or pause")))
-                .flatMap(md => m.setMode(AgentMode.ModeSet(md, Some(com.histmersion.api.automation.AgentMode.ModeSet.By("mcp")))))
+                .flatMap(md => m.setMode(AgentMode.ModeSet(AgentMode.ModeSet.Mode(md), Some(com.histmersion.api.automation.AgentMode.ModeSet.By("mcp")))))
                 .map(autopilotPage)
             case "focus" =>
               in.focus.map(_.trim.toLowerCase).filter(v => v.nonEmpty && v != "list") match
                 case None    => Right(AutopilotMarkdown.focus(m.focus))
                 case Some(v) =>
-                  m.setFocus(Autopilot.FocusSet(v, in.goal, in.value, Some(com.histmersion.api.automation.Autopilot.FocusSet.By("mcp")))).map(AutopilotMarkdown.focus)
+                  m.setFocus(Autopilot.FocusSet(Autopilot.FocusSet.Action(v), in.goal.map(Goal.Slug(_)), in.value.map(Autopilot.FocusSet.Value(_)), Some(com.histmersion.api.automation.Autopilot.FocusSet.By("mcp")))).map(AutopilotMarkdown.focus)
             case other =>
               Left(
                 Api.Error(
-                  s"unknown action '$other' (list, show, create, pause, resume, enqueue, hold, hint, autopilot, mode, " +
-                    "drain, repair-acquire, focus)"
+                  Api.Error.Message(
+                    s"unknown action '$other' (list, show, create, pause, resume, enqueue, hold, hint, autopilot, mode, " +
+                      "drain, repair-acquire, focus)"
+                  )
                 )
               )
           ToolResult.text(out.fold(McpOut.refusal, identity))
@@ -425,9 +514,9 @@ object AgentsTools:
         .handle { in =>
           val m = a.managing
           val out: Either[Api.Error, String] = in.action.trim.toLowerCase match
-            case "status" | "" => Right(AgentSchedulerMarkdown.status(m.scheduler(in.limit)))
+            case "status" | "" => Right(AgentSchedulerMarkdown.status(m.scheduler(in.limit.map(ManagerContext.Limit(_)))))
             case "queue"       =>
-              val st = m.scheduler(in.limit.orElse(Some(200)))
+              val st = m.scheduler(in.limit.orElse(Some(200)).map(ManagerContext.Limit(_)))
               Right(if st.waiting.isEmpty then "_Nothing waits._"
               else
                 (s"# Waiting (${st.waitingTotal}, strategy ${st.strategy})" :: "" :: st.waiting
@@ -437,17 +526,17 @@ object AgentsTools:
                 .map(_.trim)
                 .filter(_.nonEmpty)
                 .toRight(Api.Error(com.histmersion.api.Api.Error.Message("`why` needs `item`")))
-                .flatMap(m.schedulerWhy)
+                .flatMap(i => m.schedulerWhy(com.histmersion.domain.automation.managers.ManagersControllers.SchedulerWhyItem(i)))
                 .map(AgentSchedulerMarkdown.why)
             case "strategy" =>
               in.strategy
                 .map(_.trim)
                 .filter(_.nonEmpty)
                 .toRight(Api.Error(com.histmersion.api.Api.Error.Message("`strategy` needs `strategy`")))
-                .flatMap(n => m.setScheduler(AgentScheduler.SchedulerSet(n, Some(com.histmersion.api.automation.AgentScheduler.SchedulerSet.By("mcp")))))
+                .flatMap(n => m.setScheduler(AgentScheduler.SchedulerSet(AgentScheduler.SchedulerSet.Strategy(n), Some(com.histmersion.api.automation.AgentScheduler.SchedulerSet.By("mcp")))))
                 .map(AgentSchedulerMarkdown.status)
-            case "stalls" => Right(StallsMarkdown.report(m.stalls(in.days)))
-            case other    => Left(Api.Error(s"unknown action '$other' (status, queue, why, strategy, stalls)"))
+            case "stalls" => Right(StallsMarkdown.report(m.stalls(in.days.map(com.histmersion.domain.automation.managers.ManagersControllers.StallsDays(_)))))
+            case other    => Left(Api.Error(Api.Error.Message(s"unknown action '$other' (status, queue, why, strategy, stalls)")))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -465,7 +554,7 @@ object AgentsTools:
       a.definitions.agent(n) match
         case Right(d) =>
           List(
-            McpServer(tools = d.tools.flatMap(a.toolbox.tool).map(mcpTool(_))).endpoint(List("mcp", "agent", d.name))
+            McpServer(tools = d.tools.flatMap(a.toolbox.tool).map(mcpTool(_))).endpoint(List("mcp", "agent", d.name.value))
           )
         case Left(m) =>
           scribe.warn(s"agent MCP: no endpoint for $n: $m")
@@ -482,16 +571,9 @@ object AgentsTools:
         )
     }
 
-  final case class ModelsInput(doctor: ModelsInput.Doctor = com.histmersion.domain.automation.agents.AgentsTools.ModelsInput.Doctor(false), offline: ModelsInput.Offline = com.histmersion.domain.automation.agents.AgentsTools.ModelsInput.Offline(false), quota: ModelsInput.Quota = com.histmersion.domain.automation.agents.AgentsTools.ModelsInput.Quota(false))
+  final case class ModelsInput(doctor: Boolean = false, offline: Boolean = false, quota: Boolean = false)
       derives KindlingsCodecAsObject
   object ModelsInput:
-    type Doctor = Doctor.T
-    object Doctor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Offline = Offline.T
-    object Offline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Quota = Quota.T
-    object Quota extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     given Schema[ModelsInput] = KindlingsSchema
       .derived[ModelsInput]
       .schema
@@ -502,41 +584,19 @@ object AgentsTools:
       .modify(_.quota)(_.description("Show the subscription pools instead: windows, floors, resets, reading age, hold"))
 
   final case class SetModelsInput(
-      role: Option[SetModelsInput.Role] = None,
-      models: List[SetModelsInput.Models] = Nil,
-      target: Option[SetModelsInput.Target] = None,
-      limits: List[SetModelsInput.Limits] = Nil,
-      reservePct: SetModelsInput.ReservePct = com.histmersion.domain.automation.agents.AgentsTools.SetModelsInput.ReservePct(0),
-      reset: SetModelsInput.Reset = com.histmersion.domain.automation.agents.AgentsTools.SetModelsInput.Reset(false),
-      pool: Option[SetModelsInput.Pool] = None,
-      hold: Option[SetModelsInput.Hold] = None,
-      floors: Option[SetModelsInput.Floors] = None,
-      fallthrough: Option[SetModelsInput.Fallthrough] = None,
-      refresh: SetModelsInput.Refresh = com.histmersion.domain.automation.agents.AgentsTools.SetModelsInput.Refresh(false)
+      role: Option[String] = None,
+      models: List[String] = Nil,
+      target: Option[String] = None,
+      limits: List[String] = Nil,
+      reservePct: Int = 0,
+      reset: Boolean = false,
+      pool: Option[String] = None,
+      hold: Option[Boolean] = None,
+      floors: Option[String] = None,
+      fallthrough: Option[Boolean] = None,
+      refresh: Boolean = false
   ) derives KindlingsCodecAsObject
   object SetModelsInput:
-    type Role = Role.T
-    object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Models = Models.T
-    object Models extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limits = Limits.T
-    object Limits extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReservePct = ReservePct.T
-    object ReservePct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Reset = Reset.T
-    object Reset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Pool = Pool.T
-    object Pool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Hold = Hold.T
-    object Hold extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Floors = Floors.T
-    object Floors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Fallthrough = Fallthrough.T
-    object Fallthrough extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Refresh = Refresh.T
-    object Refresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Schema[SetModelsInput] = KindlingsSchema
       .derived[SetModelsInput]
@@ -570,53 +630,23 @@ object AgentsTools:
       )
 
   final case class RunInput(
-      pipeline: RunInput.Pipeline,
-      target: RunInput.Target,
-      model: Option[RunInput.Model] = None,
-      budgetUsd: Option[RunInput.BudgetUsd] = None,
-      fix: RunInput.Fix = com.histmersion.domain.automation.agents.AgentsTools.RunInput.Fix(false),
-      rounds: Option[RunInput.Rounds] = None,
-      acquireItem: Option[RunInput.AcquireItem] = None,
-      title: Option[RunInput.Title] = None,
-      kind: Option[RunInput.Kind] = None,
-      query: Option[RunInput.Query] = None,
-      topics: List[RunInput.Topics] = Nil,
-      tags: List[RunInput.Tags] = Nil,
-      goal: Option[RunInput.Goal] = None,
-      dryRun: RunInput.DryRun = com.histmersion.domain.automation.agents.AgentsTools.RunInput.DryRun(false),
-      modelFor: List[RunInput.ModelFor] = Nil
+      pipeline: String,
+      target: String,
+      model: Option[String] = None,
+      budgetUsd: Option[Double] = None,
+      fix: Boolean = false,
+      rounds: Option[Int] = None,
+      acquireItem: Option[Int] = None,
+      title: Option[String] = None,
+      kind: Option[String] = None,
+      query: Option[String] = None,
+      topics: List[String] = Nil,
+      tags: List[String] = Nil,
+      goal: Option[String] = None,
+      dryRun: Boolean = false,
+      modelFor: List[String] = Nil
   ) derives KindlingsCodecAsObject
   object RunInput:
-    type Pipeline = Pipeline.T
-    object Pipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Model = Model.T
-    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BudgetUsd = BudgetUsd.T
-    object BudgetUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Fix = Fix.T
-    object Fix extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Rounds = Rounds.T
-    object Rounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AcquireItem = AcquireItem.T
-    object AcquireItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Topics = Topics.T
-    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DryRun = DryRun.T
-    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ModelFor = ModelFor.T
-    object ModelFor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Schema[RunInput] = KindlingsSchema
       .derived[RunInput]
@@ -667,67 +697,37 @@ object AgentsTools:
       )
 
   final case class RunsInput(
-      id: Option[RunsInput.Id] = None,
-      status: Option[RunsInput.Status] = None,
-      limit: Option[RunsInput.Limit] = None,
-      messages: RunsInput.Messages = com.histmersion.domain.automation.agents.AgentsTools.RunsInput.Messages(false),
-      goal: Option[RunsInput.Goal] = None,
-      compare: List[RunsInput.Compare] = Nil,
-      before: Option[RunsInput.Before] = None,
-      manager: Option[RunsInput.Manager] = None,
-      pipeline: List[RunsInput.Pipeline] = Nil,
-      origin: List[RunsInput.Origin] = Nil,
-      model: List[RunsInput.Model] = Nil,
-      provider: List[RunsInput.Provider] = Nil,
-      since: Option[RunsInput.Since] = None,
-      until: Option[RunsInput.Until] = None,
-      subject: Option[RunsInput.Subject] = None
+      id: Option[String] = None,
+      status: Option[String] = None,
+      limit: Option[Int] = None,
+      messages: Boolean = false,
+      goal: Option[String] = None,
+      compare: List[String] = Nil,
+      before: Option[String] = None,
+      manager: Option[String] = None,
+      pipeline: List[String] = Nil,
+      origin: List[String] = Nil,
+      model: List[String] = Nil,
+      provider: List[String] = Nil,
+      since: Option[String] = None,
+      until: Option[String] = None,
+      subject: Option[String] = None
   ) derives KindlingsCodecAsObject:
     /** The listing's filter ([[ListFilters.RunFilter]]): `status` and `manager` may be comma-separated. */
     def filter: ListFilters.RunFilter =
       ListFilters.RunFilter(
-        status.toList,
-        pipeline,
-        manager.toList,
-        goal,
-        model,
-        provider,
-        origin,
-        since,
-        until,
-        subject
+        status.toList.map(ListFilters.RunFilter.Status(_)),
+        pipeline.map(ListFilters.RunFilter.Pipeline(_)),
+        manager.toList.map(ListFilters.RunFilter.Manager(_)),
+        goal.map(Goal.Slug(_)),
+        model.map(ListFilters.RunFilter.Model(_)),
+        provider.map(ListFilters.RunFilter.Provider(_)),
+        origin.map(ListFilters.RunFilter.Origin(_)),
+        since.map(ListFilters.RunFilter.Since(_)),
+        until.map(ListFilters.RunFilter.Until(_)),
+        subject.map(ListFilters.RunFilter.Subject(_))
       )
   object RunsInput:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Messages = Messages.T
-    object Messages extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Compare = Compare.T
-    object Compare extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Before = Before.T
-    object Before extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Manager = Manager.T
-    object Manager extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Pipeline = Pipeline.T
-    object Pipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Origin = Origin.T
-    object Origin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Model = Model.T
-    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Provider = Provider.T
-    object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Since = Since.T
-    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Until = Until.T
-    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Subject = Subject.T
-    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Schema[RunsInput] = KindlingsSchema
       .derived[RunsInput]
@@ -758,23 +758,13 @@ object AgentsTools:
       .modify(_.before)(_.description("Listing: the next older page — the id of the last run shown"))
 
   final case class GoalLinkInput(
-      goal: GoalLinkInput.Goal,
-      kind: GoalLinkInput.Kind,
-      ref: GoalLinkInput.Ref,
-      note: Option[GoalLinkInput.Note] = None,
-      remove: GoalLinkInput.Remove = com.histmersion.domain.automation.agents.AgentsTools.GoalLinkInput.Remove(false)
+      goal: String,
+      kind: String,
+      ref: String,
+      note: Option[String] = None,
+      remove: Boolean = false
   ) derives KindlingsCodecAsObject
   object GoalLinkInput:
-    type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Ref = Ref.T
-    object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Note = Note.T
-    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Remove = Remove.T
-    object Remove extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Schema[GoalLinkInput] = KindlingsSchema
       .derived[GoalLinkInput]
@@ -786,26 +776,14 @@ object AgentsTools:
       .modify(_.remove)(_.description("Unlink instead of link"))
 
   final case class ScheduleInput(
-      goal: Option[ScheduleInput.Goal] = None,
-      kind: Option[ScheduleInput.Kind] = None,
-      cron: Option[ScheduleInput.Cron] = None,
-      enabled: ScheduleInput.Enabled = com.histmersion.domain.automation.agents.AgentsTools.ScheduleInput.Enabled(true),
-      budgetUsd: Option[ScheduleInput.BudgetUsd] = None,
-      remove: ScheduleInput.Remove = com.histmersion.domain.automation.agents.AgentsTools.ScheduleInput.Remove(false)
+      goal: Option[String] = None,
+      kind: Option[String] = None,
+      cron: Option[String] = None,
+      enabled: Boolean = true,
+      budgetUsd: Option[Double] = None,
+      remove: Boolean = false
   ) derives KindlingsCodecAsObject
   object ScheduleInput:
-    type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Cron = Cron.T
-    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Enabled = Enabled.T
-    object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BudgetUsd = BudgetUsd.T
-    object BudgetUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Remove = Remove.T
-    object Remove extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Schema[ScheduleInput] = KindlingsSchema
       .derived[ScheduleInput]
@@ -822,33 +800,23 @@ object AgentsTools:
       .modify(_.remove)(_.description("Delete the schedule"))
 
   final case class ApprovalsInput(
-      state: Option[ApprovalsInput.State] = None,
-      limit: Option[ApprovalsInput.Limit] = None,
-      before: Option[ApprovalsInput.Before] = None,
-      kind: List[ApprovalsInput.Kind] = Nil,
-      subject: Option[ApprovalsInput.Subject] = None,
-      goal: Option[ApprovalsInput.Goal] = None,
-      decidedBy: List[ApprovalsInput.DecidedBy] = Nil,
-      digest: ApprovalsInput.Digest = com.histmersion.domain.automation.agents.AgentsTools.ApprovalsInput.Digest(false)
+      state: Option[String] = None,
+      limit: Option[Int] = None,
+      before: Option[String] = None,
+      kind: List[String] = Nil,
+      subject: Option[String] = None,
+      goal: Option[String] = None,
+      decidedBy: List[String] = Nil,
+      digest: Boolean = false
   ) derives KindlingsCodecAsObject:
-    def filter: ListFilters.ApprovalFilter = ListFilters.ApprovalFilter(state, kind, subject, goal, decidedBy)
+    def filter: ListFilters.ApprovalFilter = ListFilters.ApprovalFilter(
+      state.map(ListFilters.ApprovalFilter.State(_)),
+      kind.map(ListFilters.ApprovalFilter.Kind(_)),
+      subject.map(ListFilters.ApprovalFilter.Subject(_)),
+      goal.map(Goal.Slug(_)),
+      decidedBy.map(ListFilters.ApprovalFilter.DecidedBy(_))
+    )
   object ApprovalsInput:
-    type State = State.T
-    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Before = Before.T
-    object Before extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Subject = Subject.T
-    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DecidedBy = DecidedBy.T
-    object DecidedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Digest = Digest.T
-    object Digest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Schema[ApprovalsInput] = KindlingsSchema
       .derived[ApprovalsInput]
@@ -870,32 +838,16 @@ object AgentsTools:
       )
 
   final case class DecideInput(
-      id: Option[DecideInput.Id] = None,
-      decision: DecideInput.Decision,
-      note: Option[DecideInput.Note] = None,
-      kind: Option[DecideInput.Kind] = None,
-      subject: Option[DecideInput.Subject] = None,
-      ids: List[DecideInput.Ids] = Nil,
-      dryRun: DecideInput.DryRun = com.histmersion.domain.automation.agents.AgentsTools.DecideInput.DryRun(false),
-      limit: Option[DecideInput.Limit] = None
+      id: Option[Long] = None,
+      decision: String,
+      note: Option[String] = None,
+      kind: Option[String] = None,
+      subject: Option[String] = None,
+      ids: List[Long] = Nil,
+      dryRun: Boolean = false,
+      limit: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object DecideInput:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Decision = Decision.T
-    object Decision extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Note = Note.T
-    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Subject = Subject.T
-    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Ids = Ids.T
-    object Ids extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DryRun = DryRun.T
-    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Schema[DecideInput] = KindlingsSchema
       .derived[DecideInput]
@@ -912,23 +864,13 @@ object AgentsTools:
       .modify(_.limit)(_.description("A group: at most this many, the oldest first"))
 
   final case class SchedulerInput(
-      action: SchedulerInput.Action = com.histmersion.domain.automation.agents.AgentsTools.SchedulerInput.Action("status"),
-      item: Option[SchedulerInput.Item] = None,
-      strategy: Option[SchedulerInput.Strategy] = None,
-      limit: Option[SchedulerInput.Limit] = None,
-      days: Option[SchedulerInput.Days] = None
+      action: String = "status",
+      item: Option[String] = None,
+      strategy: Option[String] = None,
+      limit: Option[Int] = None,
+      days: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object SchedulerInput:
-    type Action = Action.T
-    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Item = Item.T
-    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Strategy = Strategy.T
-    object Strategy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Days = Days.T
-    object Days extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Schema[SchedulerInput] = KindlingsSchema
       .derived[SchedulerInput]
@@ -942,66 +884,28 @@ object AgentsTools:
       .modify(_.limit)(_.description("status, queue: how many waiting items to show (default 50; queue 200)"))
 
   final case class ManagerInput(
-      action: ManagerInput.Action = com.histmersion.domain.automation.agents.AgentsTools.ManagerInput.Action("list"),
-      id: Option[ManagerInput.Id] = None,
-      target: Option[ManagerInput.Target] = None,
-      text: Option[ManagerInput.Text] = None,
-      item: Option[ManagerInput.Item] = None,
-      once: ManagerInput.Once = com.histmersion.domain.automation.agents.AgentsTools.ManagerInput.Once(false),
-      runs: ManagerInput.Runs = com.histmersion.domain.automation.agents.AgentsTools.ManagerInput.Runs(false),
-      priority: Option[ManagerInput.Priority] = None,
-      until: Option[ManagerInput.Until] = None,
-      untilSource: Option[ManagerInput.UntilSource] = None,
-      kind: Option[ManagerInput.Kind] = None,
-      goal: Option[ManagerInput.Goal] = None,
-      cron: Option[ManagerInput.Cron] = None,
+      action: String = "list",
+      id: Option[String] = None,
+      target: Option[String] = None,
+      text: Option[String] = None,
+      item: Option[String] = None,
+      once: Boolean = false,
+      runs: Boolean = false,
+      priority: Option[Int] = None,
+      until: Option[String] = None,
+      untilSource: Option[String] = None,
+      kind: Option[String] = None,
+      goal: Option[String] = None,
+      cron: Option[String] = None,
       effect: Option[Managers.HintEffect] = None,
-      suggest: ManagerInput.Suggest = com.histmersion.domain.automation.agents.AgentsTools.ManagerInput.Suggest(false),
-      on: Option[ManagerInput.On] = None,
-      dryRun: ManagerInput.DryRun = com.histmersion.domain.automation.agents.AgentsTools.ManagerInput.DryRun(false),
-      focus: Option[ManagerInput.Focus] = None,
-      value: Option[ManagerInput.Value] = None,
-      mode: Option[ManagerInput.Mode] = None
+      suggest: Boolean = false,
+      on: Option[Boolean] = None,
+      dryRun: Boolean = false,
+      focus: Option[String] = None,
+      value: Option[Int] = None,
+      mode: Option[String] = None
   ) derives KindlingsCodecAsObject
   object ManagerInput:
-    type Action = Action.T
-    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Item = Item.T
-    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Once = Once.T
-    object Once extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Runs = Runs.T
-    object Runs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Priority = Priority.T
-    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Until = Until.T
-    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UntilSource = UntilSource.T
-    object UntilSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Cron = Cron.T
-    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Suggest = Suggest.T
-    object Suggest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type On = On.T
-    object On extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DryRun = DryRun.T
-    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Focus = Focus.T
-    object Focus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Mode = Mode.T
-    object Mode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Schema[ManagerInput] = KindlingsSchema
       .derived[ManagerInput]

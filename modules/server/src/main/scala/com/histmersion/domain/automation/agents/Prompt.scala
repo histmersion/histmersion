@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets.UTF_8
   */
 final case class Prompt(system: Prompt.System, user: Prompt.User):
   /** sha256 of the system prompt — which prompt version produced a checkpoint. */
-  def hash: com.histmersion.Sha256 = Prompt.sha256(system)
+  def hash: com.histmersion.Sha256 = Prompt.sha256(system.value)
 
 object Prompt:
   type Problem = Problem.T
@@ -55,8 +55,10 @@ object Prompt:
           "these points fixed.\n\n" + data("previous-answer", prev)
 
   def sha256(s: String): com.histmersion.Sha256 =
-    java.security.MessageDigest
-      .getInstance("SHA-256")
-      .digest(s.getBytes(UTF_8))
-      .map(b => f"$b%02x")
-      .mkString
+    com.histmersion.Sha256.assume(
+      java.security.MessageDigest
+        .getInstance("SHA-256")
+        .digest(s.getBytes(UTF_8))
+        .map(b => f"$b%02x")
+        .mkString
+    )

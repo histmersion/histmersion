@@ -25,45 +25,26 @@ trait AutopilotRowService:
   def linted(now: Instant): Unit
 
   /** A paused manager it resumed. */
-  def unpaused(managerId: com.histmersion.domain.automation.managers.ManagerLight.Id): Unit
+  def unpaused(managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id): Unit
 
   /** A person's scheduler strategy: (name, by, at). */
-  def strategy(): Option[(com.histmersion.domain.automation.autopilot.AutopilotRowService.StrategyResultPart1, com.histmersion.domain.automation.autopilot.AutopilotRowService.StrategyResultPart2, com.histmersion.domain.automation.autopilot.AutopilotRowService.StrategyResultPart3)]
+  def strategy(): Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)]
 
   /** Set (Some) or clear (None) the person's strategy. */
-  def setStrategy(name: Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName], by: com.histmersion.domain.automation.autopilot.AutopilotRowService.SetStrategyBy): Unit
+  def setStrategy(name: Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy): Unit
   def lastDigest(): Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.Digest]
   def digested(now: Instant): Unit
 
   /** Draining: since when, by whom, when it was first seen drained. */
-  def drain(): Option[(com.histmersion.domain.automation.autopilot.AutopilotRowService.DrainResultPart1, com.histmersion.domain.automation.autopilot.AutopilotRowService.DrainResultPart2, Option[com.histmersion.domain.automation.autopilot.AutopilotRowService.DrainResultPart3])]
+  def drain(): Option[(AutopilotRepo.DrainSince, AutopilotRepo.Row.ChangedBy, Option[AutopilotRepo.DrainedAt])]
 
   /** Start (a drain under way keeps its start) or stop draining. True = it changed. */
-  def setDrain(on: com.histmersion.domain.automation.autopilot.AutopilotRowService.SetDrainOn, by: com.histmersion.domain.automation.autopilot.AutopilotRowService.SetDrainBy): Boolean
+  def setDrain(on: Boolean, by: AutopilotRepo.Row.ChangedBy): Boolean
 
   /** First seen drained at (kept until lifted or work runs again: None). */
   def drained(at: Option[Instant]): Unit
 
 object AutopilotRowService:
-  type StrategyResultPart1 = StrategyResultPart1.T
-  object StrategyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StrategyResultPart2 = StrategyResultPart2.T
-  object StrategyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StrategyResultPart3 = StrategyResultPart3.T
-  object StrategyResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetStrategyBy = SetStrategyBy.T
-  object SetStrategyBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrainResultPart1 = DrainResultPart1.T
-  object DrainResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrainResultPart2 = DrainResultPart2.T
-  object DrainResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrainResultPart3 = DrainResultPart3.T
-  object DrainResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetDrainOn = SetDrainOn.T
-  object SetDrainOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetDrainBy = SetDrainBy.T
-  object SetDrainBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def apply(db: Transactor): AutopilotRowService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends AutopilotRowService:
@@ -74,34 +55,14 @@ object AutopilotRowService:
     def ensureSoon(): Unit = db.transact(AutopilotRepo.ensureSoon())
     def backedUp(now: Instant): Unit = db.transact(AutopilotRepo.backedUp(now))
     def linted(now: Instant): Unit = db.transact(AutopilotRepo.linted(now))
-    def unpaused(managerId: com.histmersion.domain.automation.managers.ManagerLight.Id): Unit = db.transact(AutopilotRepo.unpaused(managerId))
-    def strategy(): Option[(com.histmersion.domain.automation.autopilot.AutopilotRowService.Implementation.StrategyResultPart1, com.histmersion.domain.automation.autopilot.AutopilotRowService.Implementation.StrategyResultPart2, com.histmersion.domain.automation.autopilot.AutopilotRowService.Implementation.StrategyResultPart3)] = db.transact(AutopilotRepo.strategy())
-    def setStrategy(name: Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName], by: com.histmersion.domain.automation.autopilot.AutopilotRowService.Implementation.SetStrategyBy): Unit = db.transact(AutopilotRepo.setStrategy(name, by))
+    def unpaused(managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id): Unit = db.transact(AutopilotRepo.unpaused(managerId))
+    def strategy(): Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)] = db.transact(AutopilotRepo.strategy())
+    def setStrategy(name: Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy): Unit = db.transact(AutopilotRepo.setStrategy(name, by))
     def lastDigest(): Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.Digest] = db.transact(AutopilotRepo.lastDigest())
     def digested(now: Instant): Unit = db.transact(AutopilotRepo.digested(now))
-    def drain(): Option[(com.histmersion.domain.automation.autopilot.AutopilotRowService.Implementation.DrainResultPart1, com.histmersion.domain.automation.autopilot.AutopilotRowService.Implementation.DrainResultPart2, Option[com.histmersion.domain.automation.autopilot.AutopilotRowService.Implementation.DrainResultPart3])] = db.transact(AutopilotRepo.drain())
-    def setDrain(on: com.histmersion.domain.automation.autopilot.AutopilotRowService.Implementation.SetDrainOn, by: com.histmersion.domain.automation.autopilot.AutopilotRowService.Implementation.SetDrainBy): Boolean = db.transact(AutopilotRepo.setDrain(on, by))
+    def drain(): Option[(AutopilotRepo.DrainSince, AutopilotRepo.Row.ChangedBy, Option[AutopilotRepo.DrainedAt])] = db.transact(AutopilotRepo.drain())
+    def setDrain(on: Boolean, by: AutopilotRepo.Row.ChangedBy): Boolean = db.transact(AutopilotRepo.setDrain(on, by))
     def drained(at: Option[Instant]): Unit = db.transact(AutopilotRepo.drained(at))
-
-  object Implementation:
-    type StrategyResultPart1 = StrategyResultPart1.T
-    object StrategyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StrategyResultPart2 = StrategyResultPart2.T
-    object StrategyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StrategyResultPart3 = StrategyResultPart3.T
-    object StrategyResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetStrategyBy = SetStrategyBy.T
-    object SetStrategyBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DrainResultPart1 = DrainResultPart1.T
-    object DrainResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DrainResultPart2 = DrainResultPart2.T
-    object DrainResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DrainResultPart3 = DrainResultPart3.T
-    object DrainResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetDrainOn = SetDrainOn.T
-    object SetDrainOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetDrainBy = SetDrainBy.T
-    object SetDrainBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The row in memory, made at its first use as the database makes it; `clock` stands in for the database's `now()`.
     */
@@ -118,29 +79,29 @@ object AutopilotRowService:
         .autopilot
         .exists(when)
     private def always(f: AutopilotRowState => AutopilotRowState): Unit = change(_ => true)(f): Unit
-    private def t(at: Option[Instant]): Option[String] = at.map(AutomationState.text)
+    private def text(at: Instant): String = AutomationState.text(at).value
 
     def row(): AutopilotRepo.Row =
       val r = current()
       AutopilotRepo.Row(
-        r.enabled,
-        AutomationState.text(r.changedAt),
-        r.changedBy,
-        r.paused,
-        t(r.lastEnsureAt),
-        t(r.lastBackupAt),
-        t(r.lastLintAt)
+        AutopilotRepo.Row.Enabled(r.enabled.value),
+        AutopilotRepo.Row.ChangedAt(text(r.changedAt)),
+        AutopilotRepo.Row.ChangedBy(r.changedBy.value),
+        r.paused.map(p => AutopilotRepo.Row.Paused(p.value)),
+        r.lastEnsureAt.map(at => AutopilotRepo.Row.LastEnsureAt(text(at))),
+        r.lastBackupAt.map(at => AutopilotRepo.Row.LastBackupAt(text(at))),
+        r.lastLintAt.map(at => AutopilotRepo.Row.LastLintAt(text(at)))
       )
     def set(enabled: com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled, by: com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy, paused: List[com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Paused]): Boolean =
-      change(_.enabled != enabled)(
+      change(_.enabled.value != enabled.value)(
         _.modify(_.enabled)
-          .setTo(enabled)
+          .setTo(AutopilotRowState.Enabled(enabled.value))
           .modify(_.changedAt)
           .setTo(now)
           .modify(_.changedBy)
-          .setTo(by)
+          .setTo(AutopilotRowState.ChangedBy(by.value))
           .modify(_.paused)
-          .setTo(paused)
+          .setTo(paused.map(p => AutopilotRowState.Paused(p.value)))
           .modify(_.lastEnsureAt)
           .setTo(None)
       )
@@ -148,46 +109,49 @@ object AutopilotRowService:
     def ensureSoon(): Unit = always(_.modify(_.lastEnsureAt).setTo(None))
     def backedUp(now: Instant): Unit = always(_.modify(_.lastBackupAt).setTo(Some(now)))
     def linted(now: Instant): Unit = always(_.modify(_.lastLintAt).setTo(Some(now)))
-    def unpaused(managerId: com.histmersion.domain.automation.managers.ManagerLight.Id): Unit = always(_.modify(_.paused).using(_.filterNot(_ == managerId)))
-    def strategy(): Option[(com.histmersion.domain.automation.autopilot.AutopilotRowService.InMemory.StrategyResultPart1, com.histmersion.domain.automation.autopilot.AutopilotRowService.InMemory.StrategyResultPart2, com.histmersion.domain.automation.autopilot.AutopilotRowService.InMemory.StrategyResultPart3)] =
+    def unpaused(managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id): Unit = always(_.modify(_.paused).using(_.filterNot(_.value == managerId.value)))
+    def strategy(): Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)] =
       val r = current()
-      r.strategy.map(n => (n, r.strategyBy.getOrElse(""), t(r.strategyAt).getOrElse("")))
-    def setStrategy(name: Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName], by: com.histmersion.domain.automation.autopilot.AutopilotRowService.InMemory.SetStrategyBy): Unit =
-      always(
-        _.modify(_.strategy).setTo(name).modify(_.strategyBy).setTo(Some(by)).modify(_.strategyAt).setTo(Some(now))
+      r.strategy.map(n =>
+        (
+          AutopilotRepo.StrategyName(n.value),
+          AutopilotRepo.Row.ChangedBy(r.strategyBy.fold("")(_.value)),
+          AutopilotRepo.Row.ChangedAt(r.strategyAt.fold("")(text))
+        )
       )
-    def lastDigest(): Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.Digest] = t(current().lastDigestAt)
+    def setStrategy(name: Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy): Unit =
+      always(
+        _.modify(_.strategy)
+          .setTo(name.map(n => AutopilotRowState.Strategy(n.value)))
+          .modify(_.strategyBy)
+          .setTo(Some(AutopilotRowState.StrategyBy(by.value)))
+          .modify(_.strategyAt)
+          .setTo(Some(now))
+      )
+    def lastDigest(): Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.Digest] =
+      current().lastDigestAt.map(at => AutopilotRepo.Digest(text(at)))
     def digested(now: Instant): Unit = always(_.modify(_.lastDigestAt).setTo(Some(now)))
-    def drain(): Option[(com.histmersion.domain.automation.autopilot.AutopilotRowService.InMemory.DrainResultPart1, com.histmersion.domain.automation.autopilot.AutopilotRowService.InMemory.DrainResultPart2, Option[com.histmersion.domain.automation.autopilot.AutopilotRowService.InMemory.DrainResultPart3])] =
+    def drain(): Option[(AutopilotRepo.DrainSince, AutopilotRepo.Row.ChangedBy, Option[AutopilotRepo.DrainedAt])] =
       val r = current()
-      r.drainSince.map(s => (AutomationState.text(s), r.drainBy.getOrElse(""), t(r.drainedAt)))
-    def setDrain(on: com.histmersion.domain.automation.autopilot.AutopilotRowService.InMemory.SetDrainOn, by: com.histmersion.domain.automation.autopilot.AutopilotRowService.InMemory.SetDrainBy): Boolean =
+      r.drainSince.map(s =>
+        (
+          AutopilotRepo.DrainSince(text(s)),
+          AutopilotRepo.Row.ChangedBy(r.drainBy.fold("")(_.value)),
+          r.drainedAt.map(at => AutopilotRepo.DrainedAt(text(at)))
+        )
+      )
+    def setDrain(on: Boolean, by: AutopilotRepo.Row.ChangedBy): Boolean =
       if on then
         change(_.drainSince.isEmpty)(
-          _.modify(_.drainSince).setTo(Some(now)).modify(_.drainBy).setTo(Some(by)).modify(_.drainedAt).setTo(None)
+          _.modify(_.drainSince)
+            .setTo(Some(now))
+            .modify(_.drainBy)
+            .setTo(Some(AutopilotRowState.DrainBy(by.value)))
+            .modify(_.drainedAt)
+            .setTo(None)
         )
       else
         change(_.drainSince.isDefined)(
           _.modify(_.drainSince).setTo(None).modify(_.drainBy).setTo(None).modify(_.drainedAt).setTo(None)
         )
     def drained(at: Option[Instant]): Unit = change(_.drainSince.isDefined)(_.modify(_.drainedAt).setTo(at)): Unit
-
-  object InMemory:
-    type StrategyResultPart1 = StrategyResultPart1.T
-    object StrategyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StrategyResultPart2 = StrategyResultPart2.T
-    object StrategyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StrategyResultPart3 = StrategyResultPart3.T
-    object StrategyResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetStrategyBy = SetStrategyBy.T
-    object SetStrategyBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DrainResultPart1 = DrainResultPart1.T
-    object DrainResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DrainResultPart2 = DrainResultPart2.T
-    object DrainResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DrainResultPart3 = DrainResultPart3.T
-    object DrainResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetDrainOn = SetDrainOn.T
-    object SetDrainOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetDrainBy = SetDrainBy.T
-    object SetDrainBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

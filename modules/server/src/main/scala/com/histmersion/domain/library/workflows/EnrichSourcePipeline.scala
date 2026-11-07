@@ -17,6 +17,7 @@ import io.circe.syntax.*
 import com.histmersion.api.automation.{AgentsMarkdown, Queue}
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.domain.library.Source
+import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.Finding
 
 /** `enrich-source <citekey>` (docs/research-embedded-agents.md §4.2): read one source and propose its summary,
@@ -44,7 +45,7 @@ final class EnrichSourcePipeline(
   val pipeline: Pipeline = Pipeline.EnrichSource
   private val name = pipeline.wire
 
-  def run(ctx: RunCtx): Either[Halt, PipelineDef.RunResultPart2] =
+  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
     for
       ck <- Citekey.either(ctx.run.target.value).left.map(m => Halt.Fail(Halt.Fail.Message(m)))
       loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(ck))
@@ -74,7 +75,7 @@ final class EnrichSourcePipeline(
       assessed <- ctx.code[Upstreamed](AgentRepo.StepRecord.Name("assess"))(Right(assess(ctx, loaded)))
       routed <- ctx.code[StatusRouted](AgentRepo.StepRecord.Name("status"))(Right(status(ctx, ck, classified, patched, assessed)))
       closed <- ctx.code[Closed](AgentRepo.StepRecord.Name("close"))(close(ctx, ck, patched, routed))
-    yield PipelineDef.RunResultPart2(closed.line.value)
+    yield PipelineDef.Summary(closed.line.value)
 
   private def accepted[A](
       r: Either[List[EnrichSource.Problem], (A, List[EnrichSource.Description])]
@@ -300,12 +301,12 @@ final class EnrichSourcePipeline(
             ctx.warn(s"assess: $m")
             Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(m.value))
           case Right(a) =>
-            if a.isRetracted then ctx.warn(s"assess: RETRACTED — ${a.recommendation}")
+            if a.isRetracted.value then ctx.warn(s"assess: RETRACTED — ${a.recommendation}")
             if ctx.dryRun then ctx.write(s"assess [[${l.citekey}]] applied: verdict ${a.verdict}", a.asJson)(())(())
             Upstreamed(
               ran = Upstreamed.Ran(true),
               Upstreamed.Summary(s"verdict ${a.verdict}${a.applied.fold("")(st => s", status set to $st")}"),
-              Upstreamed.Retracted(a.isRetracted)
+              Upstreamed.Retracted(a.isRetracted.value)
             )
 
   /** The classify step's status, if the patch did not already fill it: through the approval gate. A retraction found by
@@ -347,7 +348,7 @@ final class EnrichSourcePipeline(
       }
     lint.foreach(l => ctx.warn(s"lint: $l"))
     val acquire = ctx.run.acquireItem.map(id =>
-      ctx.write(s"tick off acquisition item $id", io.circe.Json.obj("item" -> id.value.asJson, "fulfilledBy" -> ck.value.asJson))(
+      ctx.write(s"tick off acquisition item $id", io.circe.Json.obj("item" -> io.circe.Json.fromInt(id.value), "fulfilledBy" -> io.circe.Json.fromString(ck.value)))(
         tickOff(id, ck, ctx.run.id)
       )(s"acquisition item $id not ticked off (${AgentsMarkdown.DryRunNote})")
     )

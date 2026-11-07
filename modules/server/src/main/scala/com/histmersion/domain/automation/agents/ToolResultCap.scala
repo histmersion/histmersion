@@ -30,7 +30,7 @@ object ToolResultCap:
   private val IdentityLine = """(?m)^\*\*(?:Uid|Provenance):\*\* [^\n]*\n?""".r
 
   def plainLinks(md: com.histmersion.domain.automation.agents.ToolResultCap.Markdown): String =
-    ChipLink.replaceAllIn(md, m => java.util.regex.Matcher.quoteReplacement(m.group(1)))
+    ChipLink.replaceAllIn(md.value, m => java.util.regex.Matcher.quoteReplacement(m.group(1)))
 
   /** A source record as an agent reads it: chip labels without their links, no identity lines. */
   def compactSource(md: com.histmersion.domain.automation.agents.ToolResultCap.CompactSourceMd): String =
@@ -44,9 +44,9 @@ object ToolResultCap:
     * and closed with a [[trailer]] carrying `hint`. Shorter text is returned as is.
     */
   def cap(text: String, max: com.histmersion.domain.automation.agents.ToolResultCap.CapMax, hint: com.histmersion.domain.automation.agents.ToolResultCap.CapHint): String =
-    if max <= 0 || text.length <= max then text
+    if max.value <= 0 || text.length <= max.value then text
     else
-      val room = math.max(1, max - 160 - hint.length)
+      val room = math.max(1, max.value - 160 - hint.length)
       val nl = text.lastIndexOf('\n', room)
       val cut = if nl >= room / 2 then nl else room
       text.substring(0, cut).stripTrailing + trailer(cut, text.length, hint)
@@ -60,26 +60,28 @@ object ToolResultCap:
     * articles mentioning it; anything still over is cut like any result.
     */
   def source(md: com.histmersion.domain.automation.agents.ToolResultCap.Markdown, max: com.histmersion.domain.automation.agents.ToolResultCap.SourceMax): String =
-    if max <= 0 || md.length <= max then md
+    val text = md.value
+    val limit = max.value
+    if limit <= 0 || text.length <= limit then text
     else
-      val n = md.indexOf(NotesHead)
+      val n = text.indexOf(NotesHead)
       val shrunk =
-        if n < 0 then md
+        if n < 0 then text
         else
           val start = n + NotesHead.length
-          val end = List(md.indexOf(FindingsHead, start), md.indexOf(MentionHead, start))
+          val end = List(text.indexOf(FindingsHead, start), text.indexOf(MentionHead, start))
             .filter(_ >= 0)
             .minOption
-            .getOrElse(md.length)
-          val notes = md.substring(start, end)
-          val rest = md.length - notes.length
+            .getOrElse(text.length)
+          val notes = text.substring(start, end)
+          val rest = text.length - notes.length
           val hint = "the whole notes: get_source section=\"notes\"; a word in the source: passages"
-          val room = max - rest - 200 - hint.length
-          if room >= notes.length then md
-          else md.substring(0, start) + notesExcerpt(notes, room, hint) + md.substring(end)
+          val room = limit - rest - 200 - hint.length
+          if room >= notes.length then text
+          else text.substring(0, start) + notesExcerpt(notes, room, hint) + text.substring(end)
       val m = shrunk.indexOf(MentionHead)
       val lean =
-        if shrunk.length <= max || m < 0 then shrunk
+        if shrunk.length <= limit || m < 0 then shrunk
         else shrunk.substring(0, m) + "\n\n_(the list of articles mentioning this source is left out)_"
       cap(lean, max, "the findings alone: get_source section=\"findings\"; a word in the source: passages")
 

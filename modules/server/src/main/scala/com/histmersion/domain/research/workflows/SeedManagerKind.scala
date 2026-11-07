@@ -5,6 +5,10 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.domain.automation.approvals.ApprovalChecks
 import com.histmersion.domain.automation.managers.ManagerContext
 import com.histmersion.domain.automation.managers.ManagerKindDefinition
+import com.histmersion.domain.automation.managers.ManagerLight
+import com.histmersion.domain.automation.goals.BGoalLinkRow
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.domain.research.Slug
 
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Managers.*
@@ -36,52 +40,61 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
     SeedManagerKind.plan(lib.seed).managerDefaults(m)
 
-  def pipelineOf(itemKind: com.histmersion.domain.research.workflows.SeedManagerKind.ItemKind): Pipeline = itemKind match
+  def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline = itemKind.value match
     case ProposeArticles => Pipeline.ProposeArticles
     case ArticleCompile  => Pipeline.CompileArticle
     case PlanGoalItem    => Pipeline.PlanGoal
     case _               => Pipeline.ReviewArticle
 
   /** A firing proposes the goal's next articles. */
-  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.research.workflows.SeedManagerKind.Event] =
+  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase] =
     m.goal.toList.map { g =>
-      val (_, isNew) = c.upsert(m.id, ProposeArticles, g, ItemOrigin.Cron, com.histmersion.domain.automation.managers.ManagerContext.Priority(0), reopen = com.histmersion.domain.automation.managers.ManagerContext.UpsertReopen(true))
-      s"$ProposeArticles ${if isNew then "added" else "due"}"
+      val (_, isNew) = c.upsert(ManagerLight.Id(m.id.value), ManagerContext.ItemKind(ProposeArticles), ManagerContext.ItemTarget(g.value), ItemOrigin.Cron, ManagerContext.Priority(0), reopen = ManagerContext.UpsertReopen(true))
+      ManagerKindDefinition.FirePhrase(s"$ProposeArticles ${if isNew then "added" else "due"}")
     }
 
   def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts =
     lazy val progress = c.progress(run)
-    item.kind match
+    item.kind.value match
       case ProposeArticles =>
         c.approvalFacts(
           run,
           com.histmersion.domain.automation.Approval.Kind.ArticlePlan,
-          s"no article proposed — $progress"
+          ManagerPolicy.ItemOutcome(s"no article proposed — $progress")
         )
       case ArticleCompile =>
         CompileArticlePipeline.written(c, run) match
-          case Some(w) if w.written => StepFacts.Finished(s"compiled (${w.why})")
-          case Some(w)              =>
+          case Some(w) if w.written.value => StepFacts.Finished(ManagerPolicy.ItemOutcome(s"compiled (${w.why})"))
+          case Some(w)                    =>
             // a draft the autopilot's checks rejected is compiled again (a new draft may pass them)
             c.approvalsOf(run, com.histmersion.domain.automation.Approval.Kind.ArticlePublish)
               .lastOption
               .filter(a =>
-                a.state == ApprovalState.Rejected.wire && a.note.exists(_.startsWith(AutopilotPolicy.NotePrefix))
+                a.state == ApprovalState.Rejected.wire && a.note.exists(_.value.startsWith(AutopilotPolicy.NotePrefix.value))
               ) match
               case Some(a) =>
                 StepFacts.Redo(
-                  s"draft rejected by the autopilot's checks (approval #${a.id}: " +
-                    a.note.getOrElse("").stripPrefix(AutopilotPolicy.NotePrefix).trim.take(300) + ")"
+                  ManagerPolicy.ItemOutcome(
+                    s"draft rejected by the autopilot's checks (approval #${a.id}: " +
+                      a.note.fold("")(_.value).stripPrefix(AutopilotPolicy.NotePrefix.value).trim.take(300) + ")"
+                  )
                 )
-              case None => StepFacts.NotDone(s"stopped: no article written — ${w.why}", None)
-          case None => StepFacts.NotDone(s"stopped: nothing compiled — $progress", None)
+              case None => StepFacts.NotDone(ManagerPolicy.ItemOutcome(s"stopped: no article written — ${w.why}"), None)
+          case None => StepFacts.NotDone(ManagerPolicy.ItemOutcome(s"stopped: nothing compiled — $progress"), None)
       case PlanGoalItem =>
         // a blocking approval: the run ends only once its plan was decided
         c.approvalsOf(run, com.histmersion.domain.automation.Approval.Kind.GoalPlan).lastOption match
-          case None    => StepFacts.Finished(s"nothing planned — $progress")
+          case None    => StepFacts.Finished(ManagerPolicy.ItemOutcome(s"nothing planned — $progress"))
           case Some(a) =>
             StepFacts.Finished(
-              s"plan #${a.id} " + ManagerPolicy.decided(a.state, a.result.orElse(a.note)).getOrElse(a.state)
+              ManagerPolicy.ItemOutcome(
+                s"plan #${a.id} " + ManagerPolicy
+                  .decided(
+                    com.histmersion.domain.automation.Approval.State.Wire(a.state.value),
+                    a.result.map(_.value).orElse(a.note.map(_.value)).map(r => com.histmersion.domain.automation.Approval.Outcome(r))
+                  )
+                  .fold(a.state.value)(_.value)
+              )
             )
       case _ => StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("enriched"))
 
@@ -92,15 +105,29 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
       c: ManagerContext,
       m: ManagerInfo,
       item: ManagerItem,
-      run: Option[String],
-      out: Builder[String, List[String]]
+      run: Option[com.histmersion.domain.automation.Run.Id],
+      out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
   ): Unit =
-    item.kind match
-      case ArticleCompile if site.articles.get(item.target).isRight =>
-        m.goal.foreach(g => c.linkGoal(g, Goal.Plans.LinkKind.Article, item.target, Some(s"compiled by ${m.id}")))
-        val _ = c.ensure(Kind.Review, ReviewId, None)
-        c.chainReview(ReviewId, item.target, s"compiled by ${m.id}", out)
-        c.event(m.id, Some(item.id), run, Feed.Evaluated, s"${item.target}: queued for the review manager")
+    item.kind.value match
+      case ArticleCompile if Slug.option(item.target.value).exists(site.articles.get(_).isRight) =>
+        m.goal.foreach(g =>
+          c.linkGoal(
+            com.histmersion.domain.automation.Goal.Slug.assume(g.value),
+            Goal.Plans.LinkKind.Article,
+            BGoalLinkRow.Ref(item.target.value),
+            Some(BGoalLinkRow.Note(s"compiled by ${m.id}"))
+          )
+        )
+        val review = ManagerLight.Id(ReviewId)
+        val _ = c.ensure(Kind.Review, review, None)
+        c.chainReview(review, Slug.assume(item.target.value), ManagerContext.ChainReviewWhy(s"compiled by ${m.id}"), out)
+        c.event(
+          ManagerLight.Id(m.id.value),
+          Some(ManagerContext.ItemId(item.id.value)),
+          run,
+          ManagerContext.EventFeed(Feed.Evaluated),
+          ManagerContext.EventText(s"${item.target}: queued for the review manager")
+        )
       case ProposeArticles =>
         run.toList
           .flatMap(r => c.approvalsOf(r, com.histmersion.domain.automation.Approval.Kind.ArticlePlan))
@@ -114,23 +141,25 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         then c.autopilotSoon()
       case _ => ()
 
-  def target(m: ManagerInfo, itemKind: com.histmersion.domain.research.workflows.SeedManagerKind.ItemKind, raw: com.histmersion.domain.research.workflows.SeedManagerKind.Target): Either[Api.Error, com.histmersion.domain.research.workflows.SeedManagerKind.Target] =
-    itemKind match
+  def target(m: ManagerInfo, itemKind: ManagerContext.ItemKind, raw: ManagerItem.Target): Either[Api.Error, ManagerContext.ItemTarget] =
+    itemKind.value match
       case ProposeArticles | PlanGoalItem =>
-        val g = Option(raw.trim).filter(_.nonEmpty).orElse(m.goal).getOrElse("")
-        site
-          .goal(g)
+        val g = Option(raw.value.trim).filter(_.nonEmpty).orElse(m.goal.map(_.value)).getOrElse("")
+        com.histmersion.domain.automation.Goal.Slug
+          .option(g)
+          .toRight(Api.Error(Api.Error.Message(s"No goal '$g'")))
+          .flatMap(site.goal(_))
           .map(_.slug)
           .flatMap(s =>
             Either.cond(
-              m.goal.forall(_ == s),
-              s,
-              Api.Error(s"manager ${m.id} plans the articles of ${m.goal.getOrElse("?")}, not of $s")
+              m.goal.forall(_.value == s.value),
+              ManagerContext.ItemTarget(s.value),
+              Api.Error(Api.Error.Message(s"manager ${m.id} plans the articles of ${m.goal.fold("?")(_.value)}, not of $s"))
             )
           )
       case ArticleCompile =>
-        Left(Api.Error(s"'$ArticleCompile' items come from an approved article plan (propose-articles)"))
-      case other => Left(Api.Error(s"unknown item kind '$other'"))
+        Left(Api.Error(Api.Error.Message(s"'$ArticleCompile' items come from an approved article plan (propose-articles)")))
+      case other => Left(Api.Error(Api.Error.Message(s"unknown item kind '$other'")))
 
   /** The autopilot's checks of the approvals its items wait for: an article plan (each article's slug free and its
     * filter reaching enough sources, within the area's daily cap) and an article to publish (its draft's filter, the
@@ -151,45 +180,58 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
           a.articles match
             case None       => Verdict.Leave(com.histmersion.domain.AutopilotPolicy.Verdict.Leave.Why("the approval carries no readable plan"))
             case Some(plan) =>
-              val goal = a.subject.getOrElse(plan.goal)
+              val goal = a.subject.map(_.value).getOrElse(plan.goal.value)
               val min =
                 mgr
                   .flatMap(_.config.minSources)
-                  .orElse(run.flatMap(_.params.minSources))
-                  .getOrElse(lib.seed.minSources)
+                  .map(_.value)
+                  .orElse(run.flatMap(_.params.minSources).map(_.value))
+                  .getOrElse(lib.seed.minSources.value)
               val facts = plan.articles.map { p =>
-                val free = !c.slugExists(p.slug) && site.articles.get(p.slug).isLeft
-                PlannedFacts(p.slug, free, site.articles.filterReach(p.filter, Nil, com.histmersion.domain.research.articles.ArticlesControllers.FilterReachCap(0))._1)
+                val free = !c.slugExists(ApprovalChecks.Slug(p.slug.value)) &&
+                  Slug.parse(p.slug.value).fold(_ => true, s => site.articles.get(s).isLeft)
+                PlannedFacts(
+                  PlannedFacts.Slug(p.slug.value),
+                  PlannedFacts.SlugFree(free),
+                  PlannedFacts.Hits(site.articles.filterReach(p.filter, Nil, com.histmersion.domain.research.articles.ArticlesControllers.FilterReachCap(0))._1.value)
+                )
               }
               val today = c
                 .autoApprovedSince(com.histmersion.domain.automation.Approval.Kind.ArticlePlan, day)
-                .filter(_.subject.contains(goal))
+                .filter(_.subject.exists(_.value == goal))
                 .map(_.articles.fold(0)(_.articles.size))
                 .sum
-              AutopilotPolicy.articlePlan(facts, math.max(1, min), today, caps.articlesPerGoalPerDay)
+              AutopilotPolicy.articlePlan(
+                facts,
+                AutopilotPolicy.MinSources(math.max(1, min)),
+                AutopilotPolicy.ApprovedToday(today),
+                AutopilotPolicy.Cap(caps.articlesPerGoalPerDay.value)
+              )
         case Some(ApprovalKind.ArticlePublish) =>
           (a.article, run) match
             case (Some(d), Some(r)) =>
               val snap = c
-                .checkpoint(r.id, com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("snapshot"))
+                .checkpoint(com.histmersion.domain.automation.Run.Id.assume(r.id.value), AgentRepo.StepRecord.Name("snapshot"))
                 .flatMap(o => io.circe.parser.decode[CompileArticlePipeline.Snap](o).toOption)
               val found = c
-                .checkpoint(r.id, com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("filter"))
+                .checkpoint(com.histmersion.domain.automation.Run.Id.assume(r.id.value), AgentRepo.StepRecord.Name("filter"))
                 .flatMap(o => io.circe.parser.decode[CompileArticlePipeline.Found](o).toOption)
               val facts = DraftFacts(
-                d.slug,
-                d.mode == DraftMode.Create,
-                snap.exists(_.filter.isDefined),
-                found.map(_.total.value),
-                d.problems,
-                d.cited.distinct.size,
-                !c.slugExists(d.slug)
+                DraftFacts.Slug(d.slug.value),
+                DraftFacts.Create(d.mode == DraftMode.Create),
+                DraftFacts.FilterRecorded(snap.exists(_.filter.isDefined)),
+                found.map(f => DraftFacts.Hits(f.total.value)),
+                d.problems.map(p => DraftFacts.Problems(p.value)),
+                DraftFacts.Cited(d.cited.distinct.size),
+                DraftFacts.SlugFree(!c.slugExists(ApprovalChecks.Slug(d.slug.value)))
               )
               AutopilotPolicy.articlePublish(
                 facts,
-                caps.publishMinSources,
-                c.autoApprovedSince(com.histmersion.domain.automation.Approval.Kind.ArticlePublish, day).size,
-                c.publishCap
+                AutopilotPolicy.MinSources(caps.publishMinSources.value),
+                AutopilotPolicy.ApprovedToday(
+                  c.autoApprovedSince(com.histmersion.domain.automation.Approval.Kind.ArticlePublish, day).size
+                ),
+                AutopilotPolicy.Cap(c.publishCap.value)
               )
             case (None, _) => Verdict.Leave(com.histmersion.domain.AutopilotPolicy.Verdict.Leave.Why("the approval carries no readable draft"))
             case (_, None) => Verdict.Leave(com.histmersion.domain.AutopilotPolicy.Verdict.Leave.Why("the run that drafted it is gone"))
@@ -202,75 +244,72 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
       s: ReviewSettings,
       item: ManagerItem,
       now: Instant,
-      out: Builder[com.histmersion.domain.research.workflows.SeedManagerKind.Dispatch, List[com.histmersion.domain.research.workflows.SeedManagerKind.Dispatch]]
-  ): Option[com.histmersion.domain.research.workflows.SeedManagerKind.Dispatch] =
-    item.kind match
+      out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
+  ): Option[ManagerLight.Id] =
+    val goalOf = com.histmersion.domain.automation.Goal.Slug.option(item.target.value).flatMap(site.goal(_).toOption)
+    def budget = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
+    item.kind.value match
       case ProposeArticles =>
-        site.goal(item.target) match
-          case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, com.histmersion.domain.automation.managers.ManagerContext.SettleNowWhy("the goal no longer exists"))
-          case Right(g) =>
+        goalOf match
+          case None    => c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy("the goal no longer exists"))
+          case Some(g) =>
             c.start(
               m,
               item,
-              RunRequest(Pipeline.ProposeArticles.wire, g.slug, budgetUsd = m.config.budgetUsd),
-              _.modify(_.minSources).setTo(m.config.minSources).modify(_.maxArticles).setTo(m.config.maxArticles),
+              RunRequest(RunRequest.Pipeline(Pipeline.ProposeArticles.wire.value), RunRequest.Target(g.slug.value), budgetUsd = budget),
+              _.modify(_.minSources)
+                .setTo(m.config.minSources.map(v => RunParams.MinSources(v.value)))
+                .modify(_.maxArticles)
+                .setTo(m.config.maxArticles.map(v => RunParams.MaxArticles(v.value))),
               item.state,
-              com.histmersion.domain.automation.managers.ManagerContext.StartWhat("propose-articles"),
+              ManagerContext.StartWhat("propose-articles"),
               out
             )
       case ArticleCompile =>
         item.state.spec match
-          case None => c.settleNow(m, item, ItemStatus.Cancelled, com.histmersion.domain.automation.managers.ManagerContext.SettleNowWhy("no approved article to compile"))
-          case Some(_) if c.slugExists(item.target) =>
-            c.settleNow(m, item, ItemStatus.Cancelled, com.histmersion.domain.automation.managers.ManagerContext.SettleNowWhy("an article with this slug was created meanwhile"))
+          case None => c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy("no approved article to compile"))
+          case Some(_) if c.slugExists(Slug.assume(item.target.value)) =>
+            c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy("an article with this slug was created meanwhile"))
           case Some(sp) =>
             c.start(
               m,
               item,
               RunRequest(
-                Pipeline.CompileArticle.wire,
-                item.target,
-                budgetUsd = m.config.budgetUsd,
-                title = Some(sp.title),
-                kind = Some(sp.kind),
-                query = sp.filter.query,
-                topics = sp.filter.topics,
-                tags = sp.filter.tags,
+                RunRequest.Pipeline(Pipeline.CompileArticle.wire.value),
+                RunRequest.Target(item.target.value),
+                budgetUsd = budget,
+                title = Some(RunRequest.Title(sp.title.value)),
+                kind = Some(RunRequest.Kind(sp.kind.value)),
+                query = sp.filter.query.map(q => RunRequest.Query(q.value)),
+                topics = sp.filter.topics.map(t => RunRequest.Topics(t.value)),
+                tags = sp.filter.tags.map(t => RunRequest.Tags(t.value)),
                 goal = m.goal
               ),
-              _.modify(_.chainReview).setTo(Some(false)),
+              _.modify(_.chainReview).setTo(Some(RunParams.ChainReview(false))),
               item.state,
-              com.histmersion.domain.automation.managers.ManagerContext.StartWhat("compile-article (new; its review follows as an item)"),
+              ManagerContext.StartWhat("compile-article (new; its review follows as an item)"),
               out
             )
       case PlanGoalItem =>
-        site.goal(item.target) match
-          case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, com.histmersion.domain.automation.managers.ManagerContext.SettleNowWhy("the goal no longer exists"))
-          case Right(g) =>
+        goalOf match
+          case None    => c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy("the goal no longer exists"))
+          case Some(g) =>
             // sub-goals only above the depth limit (a goal there gets queries and works, no children)
-            val depth = AutopilotPolicy.depth(g.slug, c.parentOf)
-            val leaf = depth >= c.cfg.approvals.auto.maxGoalDepth
+            val depth = AutopilotPolicy.depth(com.histmersion.domain.automation.Goal.Slug.assume(g.slug.value), c.parentOf)
+            val leaf = depth.value >= c.cfg.approvals.auto.maxGoalDepth.value
             c.start(
               m,
               item,
-              RunRequest(Pipeline.PlanGoal.wire, g.slug, budgetUsd = m.config.budgetUsd),
-              p => if leaf then p.modify(_.subGoals).setTo(Some(0)) else p,
+              RunRequest(RunRequest.Pipeline(Pipeline.PlanGoal.wire.value), RunRequest.Target(g.slug.value), budgetUsd = budget),
+              p => if leaf then p.modify(_.subGoals).setTo(Some(RunParams.SubGoals(0))) else p,
               item.state,
-              s"plan-goal (depth $depth${if leaf then ": queries and works, no sub-goals" else ""})",
+              ManagerContext.StartWhat(s"plan-goal (depth $depth${if leaf then ": queries and works, no sub-goals" else ""})"),
               out
             )
       case other =>
-        c.settleNow(m, item, ItemStatus.Cancelled, s"'$other' items are not driven by a ${m.kind} manager")
+        c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy(s"'$other' items are not driven by a ${m.kind} manager"))
 
 object SeedManagerKind:
-  type Dispatch = Dispatch.T
-  object Dispatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Event = Event.T
-  object Event extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemKind = ItemKind.T
-  object ItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Target = Target.T
-  object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The seeding defaults a seed manager's plan is held to. */
 
   def plan(seed: AgentSeedConfig): SeedPlanDefaults = seed.transformInto[SeedPlanDefaults]

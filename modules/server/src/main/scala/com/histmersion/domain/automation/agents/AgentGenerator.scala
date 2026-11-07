@@ -345,7 +345,7 @@ object AgentGenerator:
       "plugin/.codex-plugin/plugin.json" -> pretty(
         Json.obj(
           "name" -> InteractivePlugin.asJson,
-          "version" -> s.version.value.asJson,
+          "version" -> Json.fromString(s.version.value),
           "description" -> InteractiveDescription.asJson,
           "skills" -> "./skills".asJson
         ).deepMerge(s.mcpUrl.fold(Json.obj())(_ => Json.obj("mcpServers" -> "./.mcp.json".asJson)))

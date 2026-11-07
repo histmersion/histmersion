@@ -32,8 +32,11 @@ final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentT
         "One compiled article by slug: body, summary, the generated coverage sections, the sources it cites " +
           "(title, year, status), backlinks. `parts` = comma-separated body,summary,coverage,cited,backlinks."
       ) { in =>
-        articles
-          .get(in.slug)
+        com.histmersion.domain.research.Slug
+          .parse(in.slug.value)
+          .left
+          .map(_ => com.histmersion.api.research.Articles.notFound(in.slug))
+          .flatMap(articles.get(_))
           .fold(
             e => s"No article '${in.slug}': ${e.message}",
             v =>

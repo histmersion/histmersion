@@ -4,7 +4,8 @@ import com.histmersion.util.database.Transactor
 
 import com.augustnagro.magnum.{connect, transact}
 
-import com.histmersion.domain.automation.agents.{AnswerSchemas, Checked, Halt, Prompt, RunCtx, StepAgent}
+import com.histmersion.domain.automation.agents.{AgentRepo, AnswerSchemas, ApprovalService, Checked, Halt, Prompt, RunCtx, StepAgent}
+import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 
 import com.histmersion.config.*
@@ -39,43 +40,61 @@ final class HintEffectPipeline(
   val pipeline: Pipeline = Pipeline.HintEffect
   import HintEffectPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.automation.managers.HintEffectPipeline.RunResultPart2] =
-    val mid = ctx.run.target
+  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
+    val mid = ManagerInfo.Id(ctx.run.target.value)
     for
-      loaded <- ctx.code[Loaded](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(load(mid, ctx.run.params.hint))
+      loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(
+        load(mid, ctx.run.params.hint.map(h => ManagerHint.Id(h.value)))
+      )
       proposed <- ctx.llm[HintAnswer, Proposed](
-        "propose",
+        AgentRepo.StepRecord.Name("propose"),
         StepAgent.HintReader,
-        input(loaded),
+        Prompt.UserText(input(loaded)),
         AnswerSchemas.hintEffect
       )((a, last) =>
         HintProposals
-          .check(a, t => loaded.known.contains(t), loaded.itemTarget, last)
-          .map((e, ws) => Checked(Proposed(e, Option(a.why).map(_.trim).getOrElse(""), ws), ws))
+          .check(a, t => loaded.known.contains(t), loaded.itemTarget.map(t => HintProposals.Item(t.value)), HintProposals.Last(last.value))
+          .left
+          .map(_.map(p => RunCtx.Problem(p.value)))
+          .map((e, ws) =>
+            Checked(
+              Proposed(e, Proposed.Why(Option(a.why).map(_.value.trim).getOrElse("")), ws),
+              ws.map(w => Checked.Warnings(w.value))
+            )
+          )
       )
-      line <- ctx.code[String]("record")(record(ctx, loaded, proposed))
-      closed <- ctx.code[String]("close")(
-        Pipelines.log(
-          workLists,
-          ctx,
-          s"hint-effect ${loaded.managerId} hint #${loaded.hint}: $line " +
-            s"(agent run ${ctx.run.id.take(8)})"
-        )
+      line <- ctx.code[String](AgentRepo.StepRecord.Name("record"))(record(ctx, loaded, proposed))
+      closed <- ctx.code[String](AgentRepo.StepRecord.Name("close"))(
+        Pipelines
+          .log(
+            workLists,
+            ctx,
+            Pipelines.LogLine(
+              s"hint-effect ${loaded.managerId.value} hint #${loaded.hint.value}: $line " +
+                s"(agent run ${ctx.run.id.value.take(8)})"
+            )
+          )
+          .left
+          .map(_.value)
+          .map(_.value)
       )
-    yield closed
+    yield PipelineDef.Summary(closed)
 
-  private def load(mid: com.histmersion.domain.automation.managers.ManagerLight.Id, hint: Option[com.histmersion.domain.automation.managers.HintEffectPipeline.LoadHint]): Either[com.histmersion.domain.automation.managers.HintEffectPipeline.LoadResultPart1, Loaded] =
+  private def load(mid: ManagerInfo.Id, hint: Option[ManagerHint.Id]): Either[String, Loaded] =
     for
-      m <- connect(ds)(ManagerRepo.get(mid)).toRight(s"no manager '$mid'")
+      m <- connect(ds)(ManagerRepo.get(mid)).toRight(s"no manager '${mid.value}'")
       id <- hint.toRight("the run names no hint (RunParams.hint)")
       ht <- Transactor(ds)
         .read(ManagerRepo.hint(id))
         .filter(_.managerId == m.id)
-        .toRight(s"manager $mid has no hint #$id")
+        .toRight(s"manager ${mid.value} has no hint #${id.value}")
     yield
       val (items, _) = Transactor(ds).read(ManagerRepo.itemPage(m.id, None, com.histmersion.Offset(0), ItemsShown))
-      val lines = items.map(i => s"${i.target} (${i.kind}, ${i.status}, priority ${i.priority})")
-      val itemTarget = ht.itemId.flatMap(connect(ds)(ManagerRepo.item(_))).map(_.target)
+      val lines =
+        items.map(i =>
+          Loaded.Items(s"${i.target.value} (${i.kind.value}, ${i.status.value}, priority ${i.priority.value})")
+        )
+      val itemTarget = ht.itemId.flatMap(i => connect(ds)(ManagerRepo.item(ManagerItem.Id(i.value)))).map(_.target)
       Loaded(
         m.id,
         m.kind,
@@ -84,60 +103,59 @@ final class HintEffectPipeline(
         ht.text,
         itemTarget,
         lines,
-        (items.map(_.target) ++ m.goal.toList).distinct,
-        ManagersMarkdown.configLine(m.config)
+        (items.map(_.target.value) ++ m.goal.toList.map(_.value)).distinct.map(HintProposals.Item(_)),
+        Loaded.Settings(ManagersMarkdown.configLine(m.config))
       )
 
-  private def input(l: Loaded): com.histmersion.domain.automation.managers.HintEffectPipeline.InputResult =
-    val manager = s"id: ${l.managerId}\nkind: ${l.kind}\nresearch area: ${l.goal.getOrElse("none (library-wide)")}\n" +
-      s"its settings now: ${l.settings}" + l.itemTarget.fold("")(t => s"\nthe hint is about the item: $t")
-    s"Propose the action this hint asks the manager to take, if any.\n\n${Prompt.data("hint", l.text)}\n\n" +
+  private def input(l: Loaded): String =
+    val manager = s"id: ${l.managerId.value}\nkind: ${l.kind.value}\nresearch area: ${l.goal.fold("none (library-wide)")(_.value)}\n" +
+      s"its settings now: ${l.settings.value}" + l.itemTarget.fold("")(t => s"\nthe hint is about the item: ${t.value}")
+    s"Propose the action this hint asks the manager to take, if any.\n\n${Prompt.data("hint", l.text.value)}\n\n" +
       s"${Prompt.data("manager", manager)}\n\n" +
-      Prompt.data("items", if l.items.isEmpty then "none" else l.items.map(x => s"- $x").mkString("\n")) +
+      Prompt.data("items", if l.items.isEmpty then "none" else l.items.map(x => s"- ${x.value}").mkString("\n")) +
       s"\n\nSettings a `config` action may change (key=value): $SettingKeys"
 
   /** The proposal, through the write gate: an open `hint-effect` approval about the manager (and the manager's event).
     * Nothing passed or asked for: nothing is recorded.
     */
-  private def record(ctx: RunCtx, l: Loaded, p: Proposed): Either[com.histmersion.domain.automation.managers.HintEffectPipeline.RecordResultPart1, com.histmersion.domain.automation.managers.HintEffectPipeline.RecordResultPart2] =
+  private def record(ctx: RunCtx, l: Loaded, p: Proposed): Either[String, String] =
     p.effect match
       case None =>
-        Right(if p.problems.isEmpty then com.histmersion.domain.automation.managers.HintEffectPipeline.RecordResultPart2.("the hint asks for no structured action")
-        else s"nothing proposed: ${p.problems.mkString("; ").take(600)}")
+        Right(if p.problems.isEmpty then "the hint asks for no structured action"
+        else s"nothing proposed: ${p.problems.map(_.value).mkString("; ").take(600)}")
       case Some(e) =>
-        val by = s"model (hint-effect run ${ctx.run.id.take(8)})"
-        val hp = HintProposal(l.managerId, l.hint, l.text, e, by, p.why)
+        val by = s"model (hint-effect run ${ctx.run.id.value.take(8)})"
+        val hp = HintProposal(
+          l.managerId,
+          HintProposal.Hint(l.hint.value),
+          HintProposal.Text(l.text.value),
+          e,
+          HintProposal.By(by),
+          HintProposal.Why(p.why.value)
+        )
         val what = ManagersMarkdown.effect(e)
-        ctx.write(s"${ApprovalKind.HintEffect.wire} approval for ${l.managerId} hint #${l.hint}", hp.asJson) {
-          val a = store.openSubject(Some(ctx.run.id), ApprovalKind.HintEffect, l.managerId, hp.asJson.noSpaces)
+        ctx.write(s"${ApprovalKind.HintEffect.wire.value} approval for ${l.managerId.value} hint #${l.hint.value}", hp.asJson) {
+          val a = store.openSubject(
+            Some(com.histmersion.util.jobs.Job.Id.assume(ctx.run.id.value)),
+            ApprovalKind.HintEffect,
+            ApprovalQuery.Subject(l.managerId.value),
+            ApprovalService.Payload(hp.asJson.noSpaces)
+          )
           transact(ds)(
             ManagerRepo.event(
               l.managerId,
               None,
               Some(ctx.run.id),
-              Feed.Hint,
-              s"hint #${l.hint}: a model proposed $what — approval #${a.id} waits for a person"
+              ManagerEvent.Kind(Feed.Hint),
+              ManagerEvent.Text(s"hint #${l.hint.value}: a model proposed $what — approval #${a.id.value} waits for a person")
             )
           )
-          Right(s"approval ${a.id} waits for a person: $what")
+          Right(s"approval ${a.id.value} waits for a person: $what")
         }(Right(s"no approval opened (${AgentsMarkdown.DryRunNote}): $what"))
 
 object HintEffectPipeline:
   /** Items the model is shown (the most urgent first). */
-  type RunResultPart2 = RunResultPart2.T
-  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadResultPart1 = LoadResultPart1.T
-  object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadHint = LoadHint.T
-  object LoadHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InputResult = InputResult.T
-  object InputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordResultPart1 = RecordResultPart1.T
-  object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordResultPart2 = RecordResultPart2.T
-  object RecordResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  val ItemsShown = 60
+  val ItemsShown: com.histmersion.PageSize = com.histmersion.PageSize(60)
 
   /** The keys a `config` action may name (what [[ManagerConfig.parse]] reads). */
   val SettingKeys =
@@ -147,33 +165,19 @@ object HintEffectPipeline:
 
   /** The manager and the hint as the step sees them (checkpointed). `known` = what a target may name. */
   final case class Loaded(
-      managerId: Loaded.ManagerId,
-      kind: Loaded.Kind,
-      goal: Option[Loaded.Goal],
-      hint: Loaded.Hint,
-      text: Loaded.Text,
-      itemTarget: Option[Loaded.ItemTarget],
+      managerId: ManagerInfo.Id,
+      kind: ManagerInfo.Kind,
+      goal: Option[com.histmersion.api.automation.Goal.Slug],
+      hint: ManagerHint.Id,
+      text: ManagerHint.Text,
+      itemTarget: Option[ManagerItem.Target],
       items: List[Loaded.Items],
-      known: List[Loaded.Known],
+      known: List[HintProposals.Item],
       settings: Loaded.Settings
   ) derives KindlingsCodecAsObject
 
   object Loaded:
-    type ManagerId = ManagerId.T
-    object ManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Hint = Hint.T
-    object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ItemTarget = ItemTarget.T
-    object ItemTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Items = Items.T
     object Items extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Known = Known.T
-    object Known extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Settings = Settings.T
     object Settings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

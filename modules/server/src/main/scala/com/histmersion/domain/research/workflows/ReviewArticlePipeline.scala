@@ -122,10 +122,10 @@ final class ReviewArticlePipeline(
 
   private val Reviewers = List(Reviewer.Rules, Reviewer.ColdReader, Reviewer.Skeptic)
 
-  def run(ctx: RunCtx): Either[Halt, PipelineDef.RunResultPart2] =
+  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
     Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(Halt.Fail.Message(p.value))).flatMap(runFor(ctx, _))
 
-  private def runFor(ctx: RunCtx, slug: Slug): Either[Halt, PipelineDef.RunResultPart2] =
+  private def runFor(ctx: RunCtx, slug: Slug): Either[Halt, PipelineDef.Summary] =
     val fix = ctx.run.params.fixes
     val rounds = ReviewArticle.rounds(
       ctx.run.params.rounds.map(r => RequestedRounds(r.value)),
@@ -138,15 +138,16 @@ final class ReviewArticlePipeline(
       first <- full(ctx, slug, 1, Carry(ledger, 0, 0, fixed = false), None, fixable = fix)
       end <- loop(ctx, slug, 1, rounds, fix, first, first.snap)
       line <- ctx.code[String](AgentRepo.StepRecord.Name("record"))(record(ctx, slug, end))
-    yield PipelineDef.RunResultPart2(line)
+    yield PipelineDef.Summary(line)
 
-  private def runId(ctx: RunCtx): com.histmersion.domain.automation.Run.Id =
-    com.histmersion.domain.automation.Run.Id.assume(ctx.run.id.value)
+  private def runId(ctx: RunCtx): com.histmersion.domain.automation.Run.Id = ctx.runId
 
   private def minRatio: AgentVerify.MinRatio = AgentVerify.MinRatio(lib.verify.quoteMinRatio.value)
 
   private def domainBody(b: ReviewArticle.Fix.Body): com.histmersion.domain.research.Article.Body =
     com.histmersion.domain.research.Article.Body(b.value)
+
+  private def apiBody(b: ReviewArticle.Fix.Body): Article.Body = Article.Body(b.value)
 
   private def checked[O](r: Either[List[String], (O, List[String])]): Either[List[RunCtx.Problem], Checked[O]] =
     r.left.map(_.map(RunCtx.Problem(_))).map((o, ws) => Checked(o, ws.map(Checked.Warnings(_))))
@@ -456,7 +457,7 @@ final class ReviewArticlePipeline(
           else v.sourcesCited.filter(c => linked(AgentVerify.Wikilink(c.citekey.value)))
         val canonical = Slug.assume(a.slug.value)
         // a dry run's reasons were never written: its checklist counts them all the same
-        val critiques = site.articles.critiques(canonical, domainBody(text), if ctx.dryRun then reasons else Nil)
+        val critiques = site.articles.critiques(canonical, apiBody(text), if ctx.dryRun then reasons else Nil)
         Right(
           Snapshot(
             canonical,
@@ -495,7 +496,7 @@ final class ReviewArticlePipeline(
       .flatMap { b =>
         val corpus = site.articles.bodyCorpus(
           List(domainBody(b), domainBody(s.body)),
-          generated = ArticlesControllers.BodyCorpusGenerated(s.coverage.isDefined)
+          generated = ReviewArticle.BodyCorpus.Generated(s.coverage.isDefined)
         )
         val old = corpus.formatErrors(b).toSet
         corpus.formatErrors(s.body).filterNot(old)
@@ -520,9 +521,9 @@ final class ReviewArticlePipeline(
     */
   private def isTarget(body: ReviewArticle.Fix.Body): Slug => Boolean =
     val resolve = site.articles.pageLinks(
-      AgentVerify.wikilinks(AgentVerify.Text(body.value)).flatMap(w => Slug.either(w.value).toOption)
+      AgentVerify.wikilinks(AgentVerify.Text(body.value)).map(w => com.histmersion.api.text.WikiLinks.Occurrence.Target(w.value))
     )
-    t => resolve(t).isDefined
+    t => resolve(com.histmersion.api.text.WikiLinks.Occurrence.Target(t.value)).isDefined
 
   private def isCitekey(ck: Citekey): Boolean = site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).isRight
 
@@ -803,19 +804,19 @@ final class ReviewArticlePipeline(
       else
         pairsMemo.computeIfAbsent(
           b.value,
-          x => site.articles.critiques(s.slug, com.histmersion.domain.research.Article.Body(x), extra)
+          x => site.articles.critiques(s.slug, Article.Body(x), extra)
         )
     def cites(b: ReviewArticle.Fix.Body, ck: Citekey) =
       citedMemo.computeIfAbsent(
         b.value,
-        x => site.articles.citedSources(com.histmersion.domain.research.Article.Body(x)).map(_.value).toSet
+        x => site.articles.citedSources(Article.Body(x)).map(c => c.value: String).toSet
       )(ck.value)
     def answered(b: ReviewArticle.Fix.Body, ref: CritiqueRef) = Critiques.find(pairsOf(b), ref).exists(!_.open)
     val guards = FixGuards(
       pairsOf,
       (b0, b1) => ReviewLedger.guard(l, b0, b1, answered, cites, minRatio),
       b =>
-        val (repaired, hits) = site.articles.repairPairing(domainBody(b))
+        val (repaired, hits) = site.articles.repairPairing(apiBody(b))
         (ReviewArticle.Fix.Body(repaired.value), hits)
     )
     ctx.llm[FixerAnswer, Fix](
@@ -832,7 +833,7 @@ final class ReviewArticlePipeline(
             .getOrElse(Nil)
             .flatMap(_.text)
             .map(t => com.histmersion.domain.research.Article.Body(t.value)),
-          generated = ArticlesControllers.BodyCorpusGenerated(s.coverage.isDefined)
+          generated = ReviewArticle.BodyCorpus.Generated(s.coverage.isDefined)
         )
       checked(
         checkFix(
@@ -860,7 +861,7 @@ final class ReviewArticlePipeline(
     * unambiguous, after the fix.
     */
   private def critiqueWork(s: Snapshot, m: Merged, l: Ledger): String =
-    val (hits, resolved) = site.articles.pairing(domainBody(s.body))
+    val (hits, resolved) = site.articles.pairing(apiBody(s.body))
     val resolve = (key: CritiquePairing.Mention.Key) =>
       resolved(Citekey.assume(key.value)).map(c => com.histmersion.api.library.Citekey(c.value))
     val units = Critiques.units(s.body)
@@ -877,6 +878,7 @@ final class ReviewArticlePipeline(
         )
       )
         .filter(_ >= 0)
+        .map(CritiquePairing.Instruction.Near(_))
     val stubborn = ReviewLedger.stubborn(l).map(_.id).toSet
     val critiques = m.findings
       .filter(f => isMissingCritique(f) && f.pair.isDefined)
@@ -976,7 +978,7 @@ final class ReviewArticlePipeline(
             .map(v => ReviewArticle.Fix.Body(v.article.body.value))
         )
         .getOrElse(st.snap.body)
-    val pairs = site.articles.critiques(slug, domainBody(body), if ctx.dryRun then c.reasons else Nil)
+    val pairs = site.articles.critiques(slug, apiBody(body), if ctx.dryRun then c.reasons else Nil)
     val line = logLine(outcome, last, runId(ctx)) +
       (if end.confirmed then ", confirmed by a full panel" else "") +
       (if end.deferred.isEmpty then ""
@@ -994,7 +996,7 @@ final class ReviewArticlePipeline(
       .filter(i => i.list == tasks && i.status.value == Queue.Open)
       .orElse(
         open
-          .filter(i => ReviewLedger.articleTask(ReviewLedger.ArticleTaskSlug(slug), ReviewLedger.TaskText(i.text)))
+          .filter(i => ReviewLedger.articleTask(slug, ReviewLedger.TaskText(i.text.value)))
           .sortBy(_.id)
           .headOption
       )
@@ -1035,8 +1037,8 @@ final class ReviewArticlePipeline(
     open
       .filter(i =>
         !current.exists(_.id == i.id) && !kept.contains(i.id) &&
-          (ReviewLedger.legacyTask(slug, ReviewLedger.TaskText(i.text)) ||
-            ReviewLedger.articleTask(ReviewLedger.ArticleTaskSlug(slug), ReviewLedger.TaskText(i.text)))
+          (ReviewLedger.legacyTask(slug, ReviewLedger.TaskText(i.text.value)) ||
+            ReviewLedger.articleTask(slug, ReviewLedger.TaskText(i.text.value)))
       )
       .foreach { item =>
         val why = kept.fold(s"no MAJOR open after agent run ${ctx.run.id.value.take(8)}")(id =>

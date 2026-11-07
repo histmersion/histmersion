@@ -29,12 +29,17 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   def approvalStore: com.histmersion.domain.automation.agents.ApprovalService = engine.agents.approvalStore
   private val cfg = engine.cfg
 
+  /** This run's id, read back from the store it was saved in. */
+  val runId: com.histmersion.domain.automation.Run.Id = com.histmersion.domain.automation.Run.Id.assume(run.id.value)
+  private val jobId: com.histmersion.util.jobs.Job.Id = com.histmersion.util.jobs.Job.Id.assume(run.id.value)
+  private val agentJobKind: com.histmersion.util.jobs.Job.Kind = com.histmersion.util.jobs.Job.Kind.assume(JobKind)
+
   /** The next step's number. A `var` because the pipeline is straight-line code calling steps in order; the counter IS
     * that order. Confined to the run's own thread.
     */
   private var nextSeq = 0
 
-  private def claimSeq(): com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq = { nextSeq += 1; nextSeq }
+  private def claimSeq(): com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq = { nextSeq += 1; AgentRepo.StepRecord.Seq(nextSeq) }
 
   /** The next `n` step numbers, for steps that then run IN PARALLEL ([[llmAt]] inside one [[RunCtx.parallel]]):
     * numbering happens here, in program order, so a resumed run lines its parallel steps up with their checkpoints
@@ -60,10 +65,10 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       case Some(h) => Left(h)
       case None    => Right(results.collect { case Right(a) => a }.toList)
 
-  def warn(w: String): Unit = engine.agents.jobRuns.warn(JobKind, run.id, w.take(500))
+  def warn(w: String): Unit = engine.agents.jobRuns.warn(agentJobKind, runId, com.histmersion.util.jobs.JobRepo.WarningText(w.take(500)))
 
   /** A DRY run (#992) reads and calls models as usual but writes nothing to the corpus. */
-  def dryRun: Boolean = run.dryRun
+  def dryRun: Boolean = run.dryRun.value
 
   /** The writes this run's current step skipped (a dry run), recorded with the step when it ends. A concurrent queue: a
     * step's body runs on the run's thread, but nothing stops a parallel step from asking.
@@ -81,24 +86,24 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   def write[A](what: String, payload: => io.circe.Json)(perform: => A)(simulated: => A): A =
     if !dryRun then perform
     else
-      skipped.add(WouldWrite(what, payload.noSpaces))
+      skipped.add(WouldWrite(WouldWrite.What(what), WouldWrite.Payload(payload.noSpaces)))
       simulated
 
-  def progress(p: String): Unit = engine.agents.jobRuns.progress(JobKind, run.id, p)
+  def progress(p: String): Unit = engine.agents.jobRuns.progress(agentJobKind, runId, com.histmersion.util.jobs.JobRow.Progress(p))
 
   /** Replay step `seq` if it finished before; a recorded step of another NAME means the pipeline changed under a paused
     * run, which is refused rather than misread.
     */
   private def replay[O: Decoder](seq: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq, name: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name): Option[Either[Halt, O]] =
-    engine.agents.runs.checkpoint(run.id, seq).map { (recorded, json) =>
+    engine.agents.runs.checkpoint(jobId, seq).map { (recorded, json) =>
       if recorded != name then
         Left(
           Halt
-            .Fail(s"step $seq is '$recorded' in the checkpoint but '$name' now — the pipeline changed; start a new run")
+            .Fail(Halt.Fail.Message(s"step $seq is '$recorded' in the checkpoint but '$name' now — the pipeline changed; start a new run"))
         )
       else
-        decode[O](json).left
-          .map(e => Halt.Fail(s"step $seq ($name): the checkpoint no longer decodes (${e.getMessage})"))
+        decode[O](json.value).left
+          .map(e => Halt.Fail(Halt.Fail.Message(s"step $seq ($name): the checkpoint no longer decodes (${e.getMessage})")))
     }
 
   /** A deterministic step. Its output is checkpointed, so a side effect in `body` (a patch, a queue entry) happens at
@@ -107,29 +112,29 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   def code[O: {Encoder, Decoder}](name: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name)(body: => Either[String, O]): Either[Halt, O] =
     val seq = claimSeq()
     replay[O](seq, name).getOrElse {
-      engine.checkControl(run.id).flatMap { _ =>
-        engine.beat(run.id, Some(seq))
-        progress(name)
+      engine.checkControl(runId).flatMap { _ =>
+        engine.beat(runId, Some(Engine.BeatSeq(seq.value)))
+        progress(name.value)
         val started = java.time.Instant.now(engine.agents.clock)
         val out =
           try body
           catch
             case e: InterruptedException => throw e
             case e: Exception            => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
-        engine.beat(run.id)
-        val attempt = engine.agents.runs.attempts(run.id, seq) + 1
+        engine.beat(runId)
+        val attempt = AgentRepo.StepRecord.Attempt(engine.agents.runs.attempts(jobId, seq).value + 1)
         val would = drainSkipped()
         out match
           case Right(o) =>
             engine.agents.runs.record(
-              run.id,
+              jobId,
               AgentRepo.StepRecord(
                 seq,
                 attempt,
                 name,
                 StepKind.Code,
                 StepStatus.Done,
-                Some(o.asJson.noSpaces),
+                Some(AgentRepo.StepRecord.Output(o.asJson.noSpaces)),
                 None,
                 None,
                 Usage.Zero,
@@ -143,7 +148,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
             Right(o)
           case Left(m) =>
             engine.agents.runs.record(
-              run.id,
+              jobId,
               AgentRepo.StepRecord(
                 seq,
                 attempt,
@@ -155,13 +160,13 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                 None,
                 Usage.Zero,
                 BigDecimal(0),
-                Some(m.take(2000)),
+                Some(AgentRepo.StepRecord.Error(m.take(2000))),
                 started,
                 wouldWrite = would
               ),
               Nil
             )
-            Left(Halt.Fail(s"$name: $m"))
+            Left(Halt.Fail(Halt.Fail.Message(s"$name: $m")))
       }
     }
 
@@ -178,18 +183,18 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   ): Either[Halt, Decided] =
     val seq = claimSeq()
     replay[Decided](seq, name).getOrElse {
-      engine.checkControl(run.id).flatMap { _ =>
+      engine.checkControl(runId).flatMap { _ =>
         val started = java.time.Instant.now(engine.agents.clock)
         def done(d: Decided): Either[Halt, Decided] =
           engine.agents.runs.record(
-            run.id,
+            jobId,
             AgentRepo.StepRecord(
               seq,
-              engine.agents.runs.attempts(run.id, seq) + 1,
+              AgentRepo.StepRecord.Attempt(engine.agents.runs.attempts(jobId, seq).value + 1),
               name,
               StepKind.Code,
               StepStatus.Done,
-              Some(d.asJson.noSpaces),
+              Some(AgentRepo.StepRecord.Output(d.asJson.noSpaces)),
               None,
               None,
               Usage.Zero,
@@ -203,10 +208,10 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
           Right(d)
         def waitFor(a: ApprovalInfo): Either[Halt, Decided] =
           progress(s"$name: waiting for approval ${a.id}")
-          Left(Halt.Wait(a.id, s"$name: approval ${a.id} waits for a person"))
-        approvalStore.forStep(run.id, seq) match
+          Left(Halt.Wait(Halt.Wait.Id(a.id.value), Halt.Wait.What(s"$name: approval ${a.id} waits for a person")))
+        approvalStore.forStep(jobId, ApprovalService.StepSeq(seq.value)) match
           case Some(a) if a.state == ApprovalState.Open.wire => waitFor(a)
-          case Some(a) => done(Decided(a.state == ApprovalState.Approved.wire, a.id, a.note))
+          case Some(a) => done(Decided(Decided.Approved(a.state == ApprovalState.Approved.wire), Decided.Approval(a.id.value), a.note.map(n => Decided.Note(n.value))))
           case None    =>
             val body =
               try payload
@@ -216,10 +221,10 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
             body match
               case Left(m) =>
                 engine.agents.runs.record(
-                  run.id,
+                  jobId,
                   AgentRepo.StepRecord(
                     seq,
-                    engine.agents.runs.attempts(run.id, seq) + 1,
+                    AgentRepo.StepRecord.Attempt(engine.agents.runs.attempts(jobId, seq).value + 1),
                     name,
                     StepKind.Code,
                     StepStatus.Failed,
@@ -228,27 +233,28 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                     None,
                     Usage.Zero,
                     BigDecimal(0),
-                    Some(m.take(2000)),
+                    Some(AgentRepo.StepRecord.Error(m.take(2000))),
                     started
                   ),
                   Nil
                 )
-                Left(Halt.Fail(s"$name: $m"))
+                Left(Halt.Fail(Halt.Fail.Message(s"$name: $m")))
               case Right(json) if dryRun =>
-                skipped.add(WouldWrite(s"${kind.wire} approval for $subject (treated as approved)", json))
-                done(Decided(approved = true, 0L, Some(Engine.DryRunApproval)))
+                skipped.add(WouldWrite(WouldWrite.What(s"${kind.wire} approval for $subject (treated as approved)"), WouldWrite.Payload(json)))
+                done(Decided(Decided.Approved(true), Decided.Approval(0L), Some(Decided.Note(Engine.DryRunApproval))))
               case Right(json) if mode == ApprovalMode.Auto =>
                 val a = approvalStore.openForStep(
-                  run.id,
-                  seq,
+                  jobId,
+                  ApprovalService.StepSeq(seq.value),
                   kind,
                   subject,
-                  json,
+                  ApprovalService.Payload(json),
                   ApprovalState.Approved,
-                  Some("approved automatically (agents.approvals)")
+                  Some(ApprovalService.OpenForStepResult("approved automatically (agents.approvals)"))
                 )
-                done(Decided(approved = true, a.id))
-              case Right(json) => waitFor(approvalStore.openForStep(run.id, seq, kind, subject, json))
+                done(Decided(Decided.Approved(true), Decided.Approval(a.id.value)))
+              case Right(json) =>
+                waitFor(approvalStore.openForStep(jobId, ApprovalService.StepSeq(seq.value), kind, subject, ApprovalService.Payload(json)))
       }
     }
 
@@ -263,7 +269,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     * appends to its USER message — never the system prompt: they are fenced, and subordinate to the record. Empty when
     * the run has none.
     */
-  def notes: String = Prompt.notes(run.params.noteList)
+  def notes: String = Prompt.notes(run.params.noteList.map(_.value))
 
   def llm[A, O: {Encoder, Decoder}](
       name: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name,
@@ -272,7 +278,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: Option[com.histmersion.domain.automation.agents.RunCtx.MaxTokens] = None,
       turns: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Turns] = None
-  )(validate: (A, com.histmersion.domain.automation.agents.RunCtx.Validate) => Either[List[com.histmersion.domain.automation.agents.RunCtx.Problem], Checked[O]]): Either[Halt, O] =
+  )(validate: (A, com.histmersion.domain.automation.agents.RunCtx.LastAttempt) => Either[List[com.histmersion.domain.automation.agents.RunCtx.Problem], Checked[O]]): Either[Halt, O] =
     llmAt(claimSeq(), name, agent, user, schema, maxTokens, turns)(validate)
 
   /** [[llm]] at a step number taken earlier with [[reserve]] — the form a parallel step uses. `maxTokens` overrides
@@ -288,7 +294,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: Option[com.histmersion.domain.automation.agents.RunCtx.MaxTokens] = None,
       turns: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Turns] = None
-  )(validate: (A, com.histmersion.domain.automation.agents.RunCtx.Validate) => Either[List[com.histmersion.domain.automation.agents.RunCtx.Problem], Checked[O]]): Either[Halt, O] =
+  )(validate: (A, com.histmersion.domain.automation.agents.RunCtx.LastAttempt) => Either[List[com.histmersion.domain.automation.agents.RunCtx.Problem], Checked[O]]): Either[Halt, O] =
     llmAtSeen[A, O](seq, name, agent, user, schema, maxTokens, turns)((a, last, _) => validate(a, last))
 
   /** [[llmAt]] whose `validate` also sees the tool calls the step has made so far — this attempt's and the earlier
@@ -304,25 +310,25 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: Option[com.histmersion.domain.automation.agents.RunCtx.MaxTokens] = None,
       turns: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Turns] = None
-  )(validate: (A, com.histmersion.domain.automation.agents.RunCtx.Validate, List[ToolUse]) => Either[List[com.histmersion.domain.automation.agents.RunCtx.Problem], Checked[O]]): Either[Halt, O] =
+  )(validate: (A, com.histmersion.domain.automation.agents.RunCtx.LastAttempt, List[ToolUse]) => Either[List[com.histmersion.domain.automation.agents.RunCtx.Problem], Checked[O]]): Either[Halt, O] =
     replay[O](seq, name).getOrElse {
-      engine.checkControl(run.id).flatMap { _ =>
-        engine.beat(run.id, Some(seq))
+      engine.checkControl(runId).flatMap { _ =>
+        engine.beat(runId, Some(Engine.BeatSeq(seq.value)))
         val defs = engine.agents.definitions
         (for
           d <- defs.agent(agent)
           sys <- defs.system(d, ToolStyle.Bare)
-        yield (d, Prompt(sys, user))).left.map(m => Halt.Fail(s"$name: $m")).flatMap { (d, prompt) =>
+        yield (d, Prompt(Prompt.System(sys), Prompt.User(user.value)))).left.map(m => Halt.Fail(Halt.Fail.Message(s"$name: $m"))).flatMap { (d, prompt) =>
           attempts(
             seq,
             name,
             d,
             prompt,
             schema,
-            maxTokens.getOrElse(cfg.step.maxTokens),
-            Engine.stepTurns(d, turns),
+            maxTokens.getOrElse(LlmCall.MaxTokens(cfg.step.maxTokens.value)),
+            Engine.stepTurns(d, turns.map(t => AgentDef.MaxTurns(t.value))),
             validate,
-            Engine.capKey(maxTokens.isDefined)
+            Engine.capKey(Engine.CapKeyOverridden(maxTokens.isDefined))
           )
         }
       }
@@ -334,15 +340,15 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   private val MaxModelSwitches = 8
 
   /** Models of a role's chain this run has already been told it passed over (one warning each). */
-  private val warnedSkips = java.util.concurrent.ConcurrentHashMap.newKeySet[String]()
+  private val warnedSkips = java.util.concurrent.ConcurrentHashMap.newKeySet[Picked.Skipped]()
 
   /** The model for the next call of `role`: the first of its chain with allowance left ([[ModelPicker.pick]]). None
     * left = the run pauses until the earliest window frees.
     */
-  private def pickModel(name: com.histmersion.domain.automation.agents.AgentsControllers.ModelName, role: Role): Either[Halt, Picked] =
-    engine.agents.picker.pick(role, run.modelFor(role), onRefresh = n => warn(s"${role.wire}: $n")) match
-      case Left(PickFailure.Unavailable(m))        => Left(Halt.Fail(s"$name: $m"))
-      case Left(PickFailure.Exhausted(m, at, why)) => Left(Halt.Pause(why, s"$name: $m", at))
+  private def pickModel(name: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name, role: Role): Either[Halt, Picked] =
+    engine.agents.picker.pick(role, run.modelFor(role).map(m => AgentsControllers.ModelName(m.value)), onRefresh = n => warn(s"${role.wire}: $n")) match
+      case Left(PickFailure.Unavailable(m))        => Left(Halt.Fail(Halt.Fail.Message(s"$name: $m")))
+      case Left(PickFailure.Exhausted(m, at, why)) => Left(Halt.Pause(why, Halt.Pause.Detail(s"$name: $m"), at))
       case Right(p)                                =>
         p.skipped
           .filter(warnedSkips.add)
@@ -356,14 +362,14 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       prompt: Prompt,
       schema: ResponseSchema[A],
       maxTokens: com.histmersion.domain.automation.agents.RunCtx.MaxTokens,
-      turns: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Turns,
-      validate: (A, com.histmersion.domain.automation.agents.RunCtx.Validate, List[ToolUse]) => Either[List[com.histmersion.domain.automation.agents.RunCtx.Problem], Checked[O]],
-      capKey: String
+      turns: com.histmersion.domain.automation.agents.AgentDef.MaxTurns,
+      validate: (A, com.histmersion.domain.automation.agents.RunCtx.LastAttempt, List[ToolUse]) => Either[List[com.histmersion.domain.automation.agents.RunCtx.Problem], Checked[O]],
+      capKey: Engine.CapKey
   ): Either[Halt, O] =
     val role = agent.role
-    val maxAttempts = 1 + math.max(0, cfg.step.maxRetries)
+    val maxAttempts = 1 + math.max(0, cfg.step.maxRetries.value)
     // a resumed step's earlier attempts count as answers judged: its retries are not handed out twice
-    val before = engine.agents.runs.attempts(run.id, seq)
+    val before = engine.agents.runs.attempts(jobId, seq).value
     // tail-recursive retry loop over attempts; `problems` are the previous attempt's rejections and
     // `tries` counts the answers judged so far (an attempt cut short by a model's allowance or plan
     // limit is not an answer: it moves on to the chain's next model without using up a retry)
@@ -372,45 +378,45 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     def go(
         attempt: Int,
         tries: Int,
-        problems: List[String],
+        problems: List[RunCtx.Problem],
         previous: Option[String],
         seen: List[ToolUse]
     ): Either[Halt, O] =
-      engine.checkControl(run.id).flatMap(_ => engine.checkBudget(run.id)).flatMap(_ => pickModel(name, role)) match
+      engine.checkControl(runId).flatMap(_ => engine.checkBudget(runId)).flatMap(_ => pickModel(name, role)) match
         case Left(h)                                                       => Left(h)
         case Right(_) if attempt - before > maxAttempts + MaxModelSwitches =>
           Left(
-            Halt.Fail(
+            Halt.Fail(Halt.Fail.Message(
               s"$name: ${attempt - before - 1} attempts without an answer; the chain keeps running out mid-step"
-            )
+            ))
           )
         case Right(picked) =>
           val (client, billing) = (picked.client, picked.billing)
           val last = tries + 1 >= maxAttempts
-          val user = if problems.isEmpty then prompt.user else prompt.user + Prompt.retry(problems, previous)
+          val user = if problems.isEmpty then prompt.user else Prompt.User(prompt.user.value + Prompt.retry(problems, previous))
           progress(s"$name (attempt $attempt, ${client.model.wire})")
           val started = java.time.Instant.now(engine.agents.clock)
-          val budget = engine.budgetInterceptor(run.id, billing)
-          val latency = LatencyInterceptor(engine.llmSlots, () => engine.beat(run.id))(using engine.agents.timer)
-          val allowance = AllowanceGuard(picked.headroomTokens, picked.headroomUsd, billing)
+          val budget = engine.budgetInterceptor(runId, billing)
+          val latency = LatencyInterceptor(engine.llmSlots, () => engine.beat(runId))(using engine.agents.timer)
+          val allowance = AllowanceGuard(picked.headroomTokens.map(h => AllowanceGuard.HeadroomTokens(h.value)), picked.headroomUsd, billing)
           val first = FirstCallProbe()
           // the agent's own `max-turns` (or the step's override): a reviewer that must look up 6–10
           // claims needs more than a one-shot step
           val call = LlmCall[A](
-            prompt.system,
-            user,
+            LlmCall.System(prompt.system.value),
+            LlmCall.User(user.value),
             engine.agents.toolbox.tools(engine.offered(run, agent)),
             schema,
-            turns,
+            LlmCall.MaxIterations(turns.value),
             maxTokens,
             List(latency, budget, allowance, first),
             Some(agent),
-            Some(RunScope(run.id, seq))
+            Some(RunScope(RunScope.Run(runId.value), RunScope.Step(seq.value)))
           )
           // a plan pool takes at most its `max-calls-in-flight` calls at once, across every run
           val poolSlot = engine.agents.pools.poolOf(client.model).map(engine.agents.pools.slot)
           AgentsControllers.call(client.model) {
-            poolSlot.foreach(engine.acquireBeating(run.id, _))
+            poolSlot.foreach(engine.acquireBeating(runId, _))
             try client.run(call)
             finally poolSlot.foreach(_.release())
           } match
@@ -431,13 +437,13 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
               )
               go(attempt + 1, tries, problems, previous, seen)
             case Left(Right(e)) =>
-              record(seq, attempt, name, client, prompt, Usage.Zero, billing, None, Some(e.message), started, Nil)
-              Left(Halt.Pause(PauseReason.Provider, s"$name: ${e.message} — fix the provider, then resume"))
+              record(seq, attempt, name, client, prompt, Usage.Zero, billing, None, Some(e.message.value), started, Nil)
+              Left(Halt.Pause(PauseReason.Provider, Halt.Pause.Detail(s"$name: ${e.message} — fix the provider, then resume")))
             case Right(res) =>
               val use = LlmClient.usage(res.usage)
-              val msgs = Trace.messages(res.history, latency.millis, cfg.trace.maxToolResultChars)
-              val served = Served(LlmClient.servedBy(res.llmCalls), first.tokens, Some(res.iterations))
-              val calls = seen ++ res.toolCalls.toList.map(c => ToolUse(c.toolName, c.input))
+              val msgs = Trace.messages(res.history, latency.millis, cfg.trace.maxToolResultChars.value)
+              val served = Served(LlmClient.servedBy(res.llmCalls), first.tokens, Some(AgentRepo.StepRecord.Turns(res.iterations)))
+              val calls = seen ++ res.toolCalls.toList.map(c => ToolUse(ToolUse.Tool(c.toolName), ToolUse.Input(c.input)))
               res.finishReason match
                 case FinishReason.BudgetExceeded =>
                   record(
@@ -449,12 +455,12 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                     use,
                     billing,
                     None,
-                    Some(com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Error("budget exhausted")),
+                    Some("budget exhausted"),
                     started,
                     msgs,
                     served
                   )
-                  Left(Halt.Pause(PauseReason.Budget, s"$name: the run's budget is exhausted"))
+                  Left(Halt.Pause(PauseReason.Budget, Halt.Pause.Detail(s"$name: the run's budget is exhausted")))
                 case FinishReason.Custom(AllowanceGuard.Reason) =>
                   record(
                     seq,
@@ -476,11 +482,11 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                 case _ if res.finalAnswer.isLeft && Engine.outputCapHit(res).isDefined =>
                   // the same cap fails the same way again: a configuration error, not a retry (#1450)
                   val msg = Engine.outputCapMessage(
-                    name,
-                    Engine.outputCapHit(res).getOrElse(maxTokens),
-                    maxTokens,
-                    client.model.wire,
-                    capKey
+                    name.value,
+                    Engine.outputCapHit(res).getOrElse(Engine.OutputCapLimit(maxTokens.value)),
+                    Engine.Count(maxTokens.value),
+                    AgentsControllers.ModelName(client.model.wire.value),
+                    capKey.value
                   )
                   record(
                     seq,
@@ -496,12 +502,12 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                     msgs,
                     served
                   )
-                  Left(Halt.Pause(PauseReason.Provider, msg))
+                  Left(Halt.Pause(PauseReason.Provider, Halt.Pause.Detail(msg)))
                 case _ =>
                   // #941: the decoder's error (path + message) is recorded and goes back with the retry
                   val verdict = res.finalAnswer match
-                    case Left(f)  => Left(List(Engine.answerProblem(f, res.finishReason)))
-                    case Right(a) => validate(a, last, calls)
+                    case Left(f)  => Left(List(RunCtx.Problem(Engine.answerProblem(f, res.finishReason).value)))
+                    case Right(a) => validate(a, RunCtx.LastAttempt(last), calls)
                   // a well-formed answer that failed a check goes back with the problems, to be amended
                   val rejected = res.finalAnswer.toOption.map(a => schema.codec(a).noSpaces)
                   verdict match
@@ -541,7 +547,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                       )
                       if last then
                         Left(
-                          Halt.Fail(s"$name: no valid answer after $attempt attempt(s): ${ps.take(3).mkString("; ")}")
+                          Halt.Fail(Halt.Fail.Message(s"$name: no valid answer after $attempt attempt(s): ${ps.take(3).mkString("; ")}"))
                         )
                       // an answer that did not decode goes back too, so the model fixes the named field
                       // instead of redoing its lookups (#941); it is never recorded as the output (jsonb)
@@ -551,15 +557,12 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   /** What the provider said about an attempt that came back: the model that served it, the input of its first model
     * call, its turns.
     */
-  final private case class Served(model: Option[Served.Model], firstCallTokens: Option[Served.FirstCallTokens], turns: Option[Served.Turns])
+  final private case class Served(
+      model: Option[AgentRepo.StepRecord.ActualModel],
+      firstCallTokens: Option[AgentRepo.StepRecord.FirstCallTokens],
+      turns: Option[AgentRepo.StepRecord.Turns]
+  )
   private object Served:
-    type Model = Model.T
-    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FirstCallTokens = FirstCallTokens.T
-    object FirstCallTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Turns = Turns.T
-    object Turns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     val Unknown: Served = Served(None, None, None)
 
   /** One attempt of an LLM step: done when it carries no `error` (its `output` is then the checkpoint), failed
@@ -567,33 +570,33 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     */
   private def record(
       seq: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq,
-      attempt: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Attempt,
+      attempt: Int,
       name: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name,
       client: LlmClient,
       prompt: Prompt,
       use: Usage,
       billing: Billing,
-      output: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output],
-      error: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Error],
+      output: Option[String],
+      error: Option[String],
       started: java.time.Instant,
       msgs: List[AgentRepo.MessageRecord],
       served: Served = Served.Unknown
   ): Unit =
     val cost = billing.cost(use)
     engine.agents.runs.record(
-      run.id,
+      jobId,
       AgentRepo.StepRecord(
         seq,
-        attempt,
+        AgentRepo.StepRecord.Attempt(attempt),
         name,
         StepKind.Llm,
         if output.isDefined && error.isEmpty then StepStatus.Done else StepStatus.Failed,
-        output,
-        Some(prompt.hash),
-        Some(client.model.wire),
+        output.map(AgentRepo.StepRecord.Output(_)),
+        Some(AgentRepo.StepRecord.PromptHash(prompt.hash.value)),
+        Some(AgentRepo.StepRecord.Model(client.model.wire.value)),
         use,
         cost,
-        error,
+        error.map(AgentRepo.StepRecord.Error(_)),
         started,
         actualModel = served.model,
         firstCallTokens = served.firstCallTokens,
@@ -603,10 +606,10 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     )
 
 object RunCtx:
-  type MaxTokens = MaxTokens.T
-  object MaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Validate = Validate.T
-  object Validate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxTokens = LlmCall.MaxTokens
+  val MaxTokens: LlmCall.MaxTokens.type = LlmCall.MaxTokens
+  type Problem = Prompt.Problem
+  val Problem: Prompt.Problem.type = Prompt.Problem
+  type LastAttempt = LastAttempt.T
+  object LastAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

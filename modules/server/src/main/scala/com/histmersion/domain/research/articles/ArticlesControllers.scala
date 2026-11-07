@@ -89,10 +89,15 @@ final class ArticlesControllers(
 
   /** The formatting problems of an article's body and summary, its links resolved as the page resolves them. */
   def formatting(body: Article.Body, summary: Option[Article.SummaryText]): List[FormatIssue] =
+    val links = pageLinks(
+      MarkdownLint
+        .lookups(MarkdownLint.Scan.Text(body.value) :: summary.map(s => MarkdownLint.Scan.Text(s.value)).toList)
+        .map(t => WikiLinks.Occurrence.Target(t.value))
+    )
     MarkdownLint.ofArticle(
-      body.value,
-      summary.map(_.value),
-      pageLinks(MarkdownLint.lookups(body.value :: summary.map(_.value).toList).map(t => WikiLinks.Occurrence.Target(t.value)))
+      MarkdownLint.Scan.Text(body.value),
+      summary.map(s => ArticleSummaryRow.Summary(s.value)),
+      ck => links(WikiLinks.Occurrence.Target(ck.value))
     )
 
   /** `strict`: refuse a write whose text has a formatting ERROR; otherwise the problems ride along in the response, and
@@ -112,9 +117,9 @@ final class ArticlesControllers(
   def fix(slug: com.histmersion.domain.research.Slug): Either[Api.Error, FormatReport] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("fix_article_format")):
       store.load(store.canonical(slug)).toRight(notFound(slug)).flatMap { a =>
-        val (body, fb) = MarkdownLint.fix(a.body.value, FormatField.Body, MarkdownLint.Context(article = com.histmersion.server.MarkdownLint.Context.Article(true)))
+        val (body, fb) = MarkdownLint.fix(MarkdownLint.Scan.Text(a.body.value), FormatField.Body, MarkdownLint.Context(article = com.histmersion.server.MarkdownLint.Context.Article(true)))
         val (summary, fs) =
-          a.summary.map(t => MarkdownLint.fix(t.value, FormatField.Summary)).fold((None, Nil))((t, f) => (Some(t), f))
+          a.summary.map(t => MarkdownLint.fix(MarkdownLint.Scan.Text(t.value), FormatField.Summary)).fold((None, Nil))((t, f) => (Some(t), f))
         val done = fb.map("body: " + _) ++ fs.map("summary: " + _)
         val write =
           if done.isEmpty then Right(())
@@ -123,8 +128,8 @@ final class ArticlesControllers(
               .patch(
                 slugOf(a),
                 Article.Patch(
-                  body = Some(Article.Body(body)).filter(_ => fb.nonEmpty),
-                  summary = summary.map(Article.SummaryText(_)).filter(_ => fs.nonEmpty),
+                  body = Some(Article.Body(body.value)).filter(_ => fb.nonEmpty),
+                  summary = summary.map(s => Article.SummaryText(s.value)).filter(_ => fs.nonEmpty),
                   ifUpdatedAt = a.updatedAt.map(u => Article.Patch.IfUpdatedAt(u.value))
                 ),
                 Caller.Local
@@ -149,13 +154,13 @@ final class ArticlesControllers(
     * generated and must not be written into the body.
     */
   def bodyCorpus(texts: List[com.histmersion.domain.research.Article.Body], generated: ReviewArticle.BodyCorpus.Generated = ReviewArticle.BodyCorpus.Generated(false)): ReviewArticle.BodyCorpus =
-    val links = pageLinks(MarkdownLint.lookups(texts.map(_.value)).map(t => WikiLinks.Occurrence.Target(t.value)))
+    val links = pageLinks(MarkdownLint.lookups(texts.map(t => MarkdownLint.Scan.Text(t.value))).map(t => WikiLinks.Occurrence.Target(t.value)))
     ReviewArticle.BodyCorpus(
-      t => links(t).exists(_.isInstanceOf[Source.Ref]),
-      t => links(t).isDefined,
+      t => links(WikiLinks.Occurrence.Target(t.value)).exists(_.isInstanceOf[Source.Ref]),
+      t => links(WikiLinks.Occurrence.Target(t.value)).isDefined,
       text =>
         MarkdownLint
-          .ofArticle(text.value, None, links)
+          .ofArticle(MarkdownLint.Scan.Text(text.value), None, ck => links(WikiLinks.Occurrence.Target(ck.value)))
           .filter(_.severity == FormatSeverity.Error)
           .map { i =>
             s"${i.rule.wire} — ${i.message}" + (if i.excerpt.isEmpty then ""
@@ -455,8 +460,8 @@ final class ArticlesControllers(
     */
   def pageLinks(targets: List[WikiLinks.Occurrence.Target]): WikiLinks.Occurrence.Target => Option[LinkTarget] =
     val aliases = sourceStore.resolveLinks(targets)
-    val sourceRefs = sourceStore.refs(aliases.values.toList).map(r => r.citekey.value -> r).toMap
-    val articles = store.refs(targets.flatMap(t => Slug.option(t.value))).map(a => a.slug.value -> a).toMap
+    val sourceRefs = sourceStore.refs(aliases.values.toList).map(r => (r.citekey.value: String) -> r).toMap
+    val articles = store.refs(targets.flatMap(t => Slug.option(t.value))).map(a => (a.slug.value: String) -> a).toMap
     t => aliases.get(t).flatMap(ck => sourceRefs.get(ck.value)).orElse(articles.get(t.value))
 
   /** `GET /api/sources/{ck}/articles` — the compiled articles that cite this source. 404 when the citekey itself is
@@ -553,20 +558,20 @@ final class ArticlesControllers(
   def articleNote(slug: com.histmersion.domain.research.Slug): Either[Api.Error, com.histmersion.domain.research.Article.Note] =
     store
       .load(currentSlug(slug))
-      .map(a => ArticleNote.render(a, coverageOf(a).map(Article.Coverage.exported)))
+      .map(a => ArticleNote.render(a, coverageOf(a).map(c => Article.Coverage.exported(c).value)))
       .toRight(notFound(slug))
 
   /** The edit history of one article. 404 when the slug itself is unknown (so "no versions yet" and "no such article"
     * are different answers).
     */
   def versions(slug: com.histmersion.domain.research.Slug): Either[Api.Error, List[Article.Version]] =
-    get(slug).map(v => store.versions(slugOf(v.article)))
+    get(slug).map(v => store.versions(Slug.assume(v.article.slug.value)))
 
   /** One historical version's full body. 404 when the slug or the version id is unknown. */
   def version(slug: com.histmersion.domain.research.Slug, versionId: ArticleRepo.VersionId): Either[Api.Error, Article.VersionFull] =
     get(slug).flatMap(v =>
       store
-        .version(slugOf(v.article), versionId)
+        .version(Slug.assume(v.article.slug.value), versionId)
         .toRight(error(s"No version $versionId for article '$slug'", Write.CodeNotFound))
     )
 

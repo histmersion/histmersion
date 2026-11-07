@@ -47,8 +47,8 @@ final class EventImportsControllers(
         write = !req.dryRun.value
       ) { (job, progress) =>
         val r = imports.runImport(provider, req, area, progress)
-        jobs.amend(job.id.value)(_.set(EventImportReport.Detail, Some(r)))
-        Right(EventImportReport.summary(r))
+        jobs.amend(Job.Id.assume(job.id.value))(_.set(EventImportReport.Detail, Some(r)))
+        Right(com.histmersion.util.jobs.BackgroundJob.Outcome.Summary(EventImportReport.summary(r)))
       }
     yield job
 
@@ -67,8 +67,8 @@ final class EventImportsControllers(
         write = !req.dryRun.value
       ) { (job, progress) =>
         val r = imports.runRederive(provider, req.dryRun.value, progress)
-        jobs.amend(job.id.value)(_.set(EventRederiveReport.Detail, Some(r)))
-        Right(EventRederiveReport.summary(r))
+        jobs.amend(Job.Id.assume(job.id.value))(_.set(EventRederiveReport.Detail, Some(r)))
+        Right(com.histmersion.util.jobs.BackgroundJob.Outcome.Summary(EventRederiveReport.summary(r)))
       }
     yield job
 

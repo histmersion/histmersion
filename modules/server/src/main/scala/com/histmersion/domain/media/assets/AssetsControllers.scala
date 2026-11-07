@@ -72,9 +72,9 @@ final class AssetsControllers(
 
   // ── the pictures ──
 
-  def mediaGeo(q: Api.MediaGeoQuery): List[MediaGeoHit] = assets.geo(q, MediaRepo.Limit(cfg().limits.page(q.limit.flatMap(l => com.histmersion.PageSize.option(l.value)), com.histmersion.PageSize(200)).value))
+  def mediaGeo(q: Api.MediaGeoQuery): List[MediaGeoHit] = assets.geo(q, AssetService.Limit(cfg().limits.page(q.limit.flatMap(l => com.histmersion.PageSize.option(l.value)), com.histmersion.PageSize(200)).value))
 
-  def list(q: Api.MediaQuery): MediaList = assets.list(q, MediaRepo.Limit(cfg().limits.page(q.limit.flatMap(l => com.histmersion.PageSize.option(l.value)), com.histmersion.PageSize(50)).value))
+  def list(q: Api.MediaQuery): MediaList = assets.list(q, AssetService.Limit(cfg().limits.page(q.limit.flatMap(l => com.histmersion.PageSize.option(l.value)), com.histmersion.PageSize(50)).value))
 
   def facets: MediaFacets = assets.facets
 
@@ -90,15 +90,15 @@ final class AssetsControllers(
 
   /** A place's pictures for its card, through its equivalents. */
   def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id): List[MediaThumb] =
-    assets.placeThumbs(placeId, com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km(cfg().media.sameSiteKm.value), MediaRepo.Limit(AssetsControllers.CardPictures))
+    assets.placeThumbs(placeId, com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km(cfg().media.sameSiteKm.value), AssetService.Limit(AssetsControllers.CardPictures))
 
   /** An event's pictures for its card. */
   def eventThumbs(eventId: com.histmersion.domain.catalogue.Event.Id): List[MediaThumb] =
-    assets.thumbs(AssetService.TargetType(PictureTarget.Event.wire.value), AssetService.TargetId(eventId.value), MediaRepo.Limit(AssetsControllers.CardPictures))
+    assets.thumbs(AssetService.TargetType(PictureTarget.Event.wire.value), AssetService.TargetId(eventId.value), AssetService.Limit(AssetsControllers.CardPictures))
 
   /** A source's picture for its hover card: its cover, else its illustration. */
   def sourceThumb(citekey: com.histmersion.domain.library.Citekey): Option[MediaThumb] =
-    assets.thumbs(AssetService.TargetType(PictureTarget.Source.wire.value), AssetService.TargetId(citekey.value), MediaRepo.Limit(1)).headOption
+    assets.thumbs(AssetService.TargetType(PictureTarget.Source.wire.value), AssetService.TargetId(citekey.value), AssetService.Limit(1)).headOption
 
 object AssetsControllers:
   /** How many pictures a card shows. */

@@ -20,5 +20,5 @@ final class AgentStateControllers(store: AgentStateService, maintenance: WriteGa
 
   def delete(key: com.histmersion.domain.automation.agents.AgentStateRecord.Key): Either[Api.Error, AgentStateDeleted] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("agent_state_delete")):
-      if store.delete(key) then Right(AgentStateDeleted(AgentStateDeleted.Key(key.value), com.histmersion.api.automation.AgentStateDeleted.Deleted(true))) else Left(notFound(key))
+      if store.delete(key) then Right(AgentStateDeleted(com.histmersion.api.Api.AgentState.Key(key.value), com.histmersion.api.automation.AgentStateDeleted.Deleted(true))) else Left(notFound(key))
 

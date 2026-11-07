@@ -28,7 +28,7 @@ object LlmClient:
       b: AgentBuilder[Identity, M, String, String],
       c: LlmCall[Out]
   ): Agent[Identity, String, Out] =
-    b.systemPrompt(c.system)
+    b.systemPrompt(c.system.value)
       .maxIterations(math.max(1, c.maxIterations))
       .maxTokens(math.max(1, c.maxTokens))
       .tools(c.tools)
@@ -37,7 +37,7 @@ object LlmClient:
       .build
 
   /** How the engine builds a client for a model (the seam a test fills with sttp-ai's scripted model). */
-  type Factory = (AgentsConfig, ModelRef) => Either[String, LlmClient]
+  type Factory = (AgentsConfig, ModelRef) => Either[ModelPicker.Problem, LlmClient]
 
   /** The server's factory, resolving the provider through `providers` — the AI-provider registry of the plugin
     * generation the calling thread is pinned to (docs/research-plugins.md §22): a command-line runtime (`claude-code`,
@@ -47,11 +47,11 @@ object LlmClient:
     */
   def factory(
       rt: CliRuntime,
-      providers: () => scala.collection.immutable.ListMap[com.histmersion.domain.automation.ProviderKind.Wire, com.histmersion.plugin.AiProvider],
+      providers: () => scala.collection.immutable.ListMap[com.histmersion.util.plugins.Plugin.Id, com.histmersion.plugin.AiProvider],
       http: com.histmersion.plugin.AiHttp = HostAiHttp()
   ): Factory =
     (cfg, ref) =>
-      BuiltinAi.lookup(ref.provider, providers()).left.map(why => s"${ref.wire}: $why").flatMap {
+      BuiltinAi.lookup(ref.provider, providers()).left.map(why => ModelPicker.Problem(s"${ref.wire}: $why")).flatMap {
         case _: HostAiProvider => host(rt)(cfg, ref)
         case p                 => PluginAiClient.client(ref, p, http, rt.loopback)
       }
@@ -60,14 +60,19 @@ object LlmClient:
   def host(rt: CliRuntime): Factory =
     (cfg, ref) =>
       ref.provider match
-        case ProviderKind.ClaudeCode => ClaudeCode.client(cfg.providers.claudeCode, rt, ref)
-        case ProviderKind.Codex      => Codex.client(cfg.providers.codex, rt, ref)
-        case ProviderKind.Opencode   => Opencode.client(cfg.providers.opencode, rt, ref)
-        case k                       => Left(s"${ref.wire}: ${k.wire} is not one of the host's command-line providers")
+        case ProviderKind.ClaudeCode => ClaudeCode.client(cfg.providers.claudeCode, rt, ref).left.map(p => ModelPicker.Problem(p.value))
+        case ProviderKind.Codex      => Codex.client(cfg.providers.codex, rt, ref).left.map(p => ModelPicker.Problem(p.value))
+        case ProviderKind.Opencode   => Opencode.client(cfg.providers.opencode, rt, ref).left.map(p => ModelPicker.Problem(p.value))
+        case k                       => Left(ModelPicker.Problem(s"${ref.wire}: ${k.wire} is not one of the host's command-line providers"))
 
   /** sttp-ai's usage → ours. */
   def usage(u: TokenUsage): Agents.Usage =
-    Agents.Usage(u.inputTokens.value, u.outputTokens.value, u.cachedInputTokens.value, u.cacheWriteInputTokens.value)
+    Agents.Usage(
+      Agents.Usage.Input(u.inputTokens.value),
+      Agents.Usage.Output(u.outputTokens.value),
+      Agents.Usage.CacheRead(u.cachedInputTokens.value),
+      Agents.Usage.CacheWrite(u.cacheWriteInputTokens.value)
+    )
 
   /** The model the provider reported serving a step (#992): the id each call's response named (an API response's
     * `model`, claude -p's `modelUsage` keys), the busiest (most output tokens) first, joined by ` + ` when several
@@ -77,7 +82,9 @@ object LlmClient:
     val out = calls
       .flatMap(c => c.model.map(_.trim).filter(_.nonEmpty).map(_ -> c.usage.outputTokens.value))
       .groupMapReduce(_._1)(_._2)(_ + _)
-    Option.when(out.nonEmpty)(out.toList.sortBy((m, n) => (-n, m)).map(_._1).mkString(" + "))
+    Option.when(out.nonEmpty)(
+      AgentRepo.StepRecord.ActualModel(out.toList.sortBy((m, n) => (-n, m)).map(_._1).mkString(" + "))
+    )
 
   /** The model's final text, whether or not it parsed as the typed answer. */
   def rawAnswer[Out](a: Either[AgentFailure, Out])(using io.circe.Encoder[Out]): String =

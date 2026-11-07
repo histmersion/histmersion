@@ -43,13 +43,13 @@ trait EngineSite:
   def userPaths: com.histmersion.config.UserPaths = AgentTrees.NoEnvironment
 
   /** The AI providers of the pinned plugin generation, by name. */
-  def aiProviders: () => ListMap[com.histmersion.domain.automation.ProviderKind.Wire, AiProvider]
+  def aiProviders: () => ListMap[com.histmersion.util.plugins.Plugin.Id, AiProvider]
 
   /** How many sources a goal gathers before its articles are planned (`agents.seed.min-sources`). */
-  def sourcesToPlan: com.histmersion.domain.automation.agents.AgentsControllers.SourcesCount = config.libraryAgents.seed.minSources
+  def sourcesToPlan: com.histmersion.domain.automation.agents.AgentsControllers.SourcesCount = AgentsControllers.SourcesCount(config.libraryAgents.seed.minSources.value)
 
   /** The most panel rounds a run or a manager may ask a review for (`agents.review.rounds-cap`). */
-  def roundsCap: com.histmersion.domain.automation.agents.AgentsControllers.RoundsCap = config.researchAgents.review.roundsCap
+  def roundsCap: com.histmersion.domain.automation.agents.AgentsControllers.RoundsCap = AgentsControllers.RoundsCap(config.researchAgents.review.roundsCap.value)
 
   /** What the definitions are held to: the contributed tools and roles. */
   def roster: AgentRoster

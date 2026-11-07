@@ -3,7 +3,7 @@ package com.histmersion.domain.automation.agents
 /** A provider's failure that is already a whole description (`RuntimeException: Claude API error: Overloaded`): a run's
   * error and the log show it as it is, where any other exception is shown as `<its class>: <its message>`.
   */
-final class VerbatimFailure(val description: VerbatimFailure.Description) extends java.io.IOException(description)
+final class VerbatimFailure(val description: VerbatimFailure.Description) extends java.io.IOException(description.value)
 
 object VerbatimFailure:
   type Problem = Problem.T
@@ -15,4 +15,4 @@ object VerbatimFailure:
 
   def describe(e: Throwable): com.histmersion.domain.automation.agents.VerbatimFailure.Problem = e match
     case v: VerbatimFailure => v.description
-    case _                  => s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}"
+    case _                  => Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}")

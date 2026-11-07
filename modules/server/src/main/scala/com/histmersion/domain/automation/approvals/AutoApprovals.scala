@@ -9,8 +9,11 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.AutopilotPolicy.{DraftFacts, GoalPlanFacts, PlannedFacts, Verdict}
 import com.histmersion.api.automation.Goal.Plans.DraftMode
-import com.histmersion.api.automation.Managers.Feed
-import com.histmersion.api.automation.Queue.QueueAdd
+import com.histmersion.api.automation.Managers.{Feed, ManagerEvent}
+import com.histmersion.api.automation.Queue.{QueueAdd, QueueItem}
+import com.histmersion.domain.automation.goals.FocusRepo
+import com.histmersion.domain.automation.{Approval as DomainApproval, Run}
+import com.histmersion.util.jobs.Job
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -40,14 +43,14 @@ final class AutoApprovals(
   private val PerTick = 50
 
   /** The run that opened an approval, and the manager that dispatched that run. */
-  private def runOf(a: ApprovalInfo): Option[RunInfo] = a.runId.flatMap(agents.runs.get(_))
+  private def runOf(a: ApprovalInfo): Option[RunInfo] = a.runId.flatMap(id => Run.Id.option(id.value)).flatMap(agents.runs.get(_))
 
   /** Does the supervisor decide `a`? The manager's `autoApprove` wins; else `agents.approvals.<kind>`. */
   def checked(a: ApprovalInfo, manager: Option[Managers.ManagerInfo]): Boolean =
     a.approvalKind.exists(k =>
       Kinds.contains(k) &&
         manager
-          .flatMap(_.config.autoApprove)
+          .flatMap(_.config.autoApprove.map(_.value))
           .getOrElse(cfg.approvals.checked(k.transformInto[com.histmersion.domain.automation.Approval.Kind]))
     )
 
@@ -58,22 +61,34 @@ final class AutoApprovals(
     // the window is taken among the approvals code decides: those a person decides never crowd it out
     // while goal plans wait (too many unfinished goals), an open one is left alone: not decided, no event
     val kinds = if agents.focus.goalPlansWait().isDefined then Kinds.filterNot(_ == ApprovalKind.GoalPlan) else Kinds
-    val open = agents.approvalStore.openOfKinds(kinds, Int.MaxValue).flatMap { a =>
+    val open = agents.approvalStore.openOfKinds(kinds, ApprovalQuery.Limit(Int.MaxValue)).flatMap { a =>
       val run = runOf(a)
       val mgr = run.flatMap(_.managerId).flatMap(agents.managerStore.get(_))
       Option.when(checked(a, mgr))(Candidate(a, run, mgr))
     }
     val goals = agents.focusStore.goals().map(g => g.slug -> g).toMap
     val linked = agents.focusStore
-      .goalsOf(Goal.Plans.LinkKind.Article.wire, open.flatMap(_.approval.subject).distinct)
+      .goalsOf(
+        com.histmersion.domain.automation.Goal.LinkKind.Article.wire,
+        open.flatMap(_.approval.subject).distinct.map(s => Goal.Plans.GoalLink.Ref(s.value))
+      )
     def goalOf(a: ApprovalInfo) =
-      a.subject.flatMap(s => goals.get(s).orElse(linked.getOrElse(s, Nil).flatMap(goals.get).headOption))
+      a.subject.flatMap(s =>
+        goals
+          .get(FocusRepo.GoalRow.Slug(s.value))
+          .orElse(
+            linked
+              .getOrElse(Goal.Plans.GoalLink.Ref(s.value), Nil)
+              .flatMap(g => goals.get(FocusRepo.GoalRow.Slug(g.value)))
+              .headOption
+          )
+      )
     val ordered = open.sortBy { c =>
       val g = goalOf(c.approval)
       (
-        g.fold(0)(x => -(x.priority + (if x.pinned then SchedulerPolicy.PinBoost else 0))),
-        g.fold("\uffff")(_.createdAt),
-        c.approval.id
+        g.fold(0)(x => -(x.priority.value + (if x.pinned.value then SchedulerPolicy.PinBoost else 0))),
+        g.fold("\uffff")(_.createdAt.value),
+        c.approval.id.value
       )
     }
     ordered.take(PerTick).flatMap { c =>
@@ -96,63 +111,84 @@ final class AutoApprovals(
       run: Option[RunInfo],
       mgr: Option[Managers.ManagerInfo],
       now: Instant
-  ): List[com.histmersion.domain.automation.Approval.Outcome] =
+  ): List[String] =
     val verdict = judge(a, run, mgr, now)
     val what = s"${a.kind} #${a.id}${a.subject.fold("")(s => s" ($s)")}"
+    val runId = a.runId.flatMap(id => Run.Id.option(id.value))
     AutopilotPolicy.note(verdict) match
       case None =>
         val why = verdict match
-          case Verdict.Leave(w) => w
+          case Verdict.Leave(w) => w.value
           case _                => ""
         mgr.foreach { m =>
           val text = s"approval #${a.id} (${a.kind}) left for a person: $why"
-          if !agents.managerStore.lastEventOf(m.id, Feed.Approval).exists(_.text == text) then
-            agents.managerStore.event(m.id, run.flatMap(_.managerItem), a.runId, Feed.Approval, text)
+          if !agents.managerStore.lastEventOf(m.id, ManagerEvent.Kind(Feed.Approval)).exists(_.text.value == text) then
+            agents.managerStore.event(
+              m.id,
+              run.flatMap(_.managerItem),
+              runId,
+              ManagerEvent.Kind(Feed.Approval),
+              ManagerEvent.Text(text)
+            )
         }
         Nil
       case Some(note) =>
         val decision = verdict match
           case Verdict.Approve(_) => Decision.Approve
           case _                  => Decision.Reject
-        agents.decide(a.id, decision.wire, DecisionRequest(Some(note))) match
+        agents.decide(
+          DomainApproval.Id(a.id.value),
+          DomainApproval.Outcome(decision.wire.value),
+          DecisionRequest(Some(DecisionRequest.Note(note.value)))
+        ) match
           case Left(e) =>
             scribe.info(s"autopilot: $what not decided: ${e.message}")
             Nil
           case Right(d) =>
             val text =
               s"$what ${if decision == Decision.Approve then "approved" else "rejected"} by the autopilot's checks: " +
-                note
-                  .stripPrefix(AutopilotPolicy.NotePrefix)
+                note.value
+                  .stripPrefix(AutopilotPolicy.NotePrefix.value)
                   .trim + (if d.state == ApprovalState.Failed.wire then
                              s" — applying it failed: ${d.result.getOrElse("")}"
                            else "")
             mgr.foreach(m =>
-              agents.managerStore.event(m.id, run.flatMap(_.managerItem), a.runId, Feed.Approval, text.take(2000))
+              agents.managerStore.event(
+                m.id,
+                run.flatMap(_.managerItem),
+                runId,
+                ManagerEvent.Kind(Feed.Approval),
+                ManagerEvent.Text(text.take(2000))
+              )
             )
-            val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(s"autopilot: $text".take(1000)))
+            val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(QueueItem.Text(s"autopilot: $text".take(1000))))
             scribe.info(s"autopilot: $text")
             List(s"$what: ${decision.wire}")
 
   /** Today's cap of automatic goal-plan approvals: `goal-plans-per-day`, scaled to the open plans when
     * `goal-plans-backlog-share` is above 0 (at most `goal-plans-ceiling`).
     */
-  def goalPlanCap: com.histmersion.domain.automation.approvals.AutoApprovals.GoalPlanCap =
+  def goalPlanCap: AutopilotPolicy.Cap =
     val c = cfg.approvals.auto
     AutopilotPolicy.scaledCap(
-      c.goalPlansPerDay,
-      agents.approvalStore.openCount(ApprovalKind.GoalPlan),
-      c.goalPlansBacklogShare,
-      c.goalPlansCeiling
+      AutopilotPolicy.Base(c.goalPlansPerDay.value),
+      AutopilotPolicy.Backlog(agents.approvalStore.openCount(ApprovalKind.GoalPlan).value),
+      AutopilotPolicy.Share(c.goalPlansBacklogShare.value),
+      AutopilotPolicy.Cap(c.goalPlansCeiling.value)
     )
 
   /** Today's cap of automatic publishes, scaled the same way to the open drafts. */
   def publishCap: com.histmersion.domain.automation.approvals.ApprovalChecks.PublishCap =
     val c = cfg.approvals.auto
-    AutopilotPolicy.scaledCap(
-      c.publishPerDay,
-      agents.approvalStore.openCount(ApprovalKind.ArticlePublish),
-      c.publishBacklogShare,
-      c.publishCeiling
+    ApprovalChecks.PublishCap(
+      AutopilotPolicy
+        .scaledCap(
+          AutopilotPolicy.Base(c.publishPerDay.value),
+          AutopilotPolicy.Backlog(agents.approvalStore.openCount(ApprovalKind.ArticlePublish).value),
+          AutopilotPolicy.Share(c.publishBacklogShare.value),
+          AutopilotPolicy.Cap(c.publishCeiling.value)
+        )
+        .value
     )
 
   /** The checks of one approval as the corpus is now. */
@@ -169,33 +205,50 @@ final class AutoApprovals(
     a.approvalKind match
       case Some(ApprovalKind.GoalPlan) =>
         (a.plan, agents.focus.goalPlansWait()) match
-          case (_, Some(wait)) => Verdict.Leave(wait)
+          case (_, Some(wait)) => Verdict.Leave(Verdict.Leave.Why(wait.value))
           case (None, _)       => Verdict.Leave(com.histmersion.domain.AutopilotPolicy.Verdict.Leave.Why("the approval carries no readable plan"))
           case (Some(p), _)    =>
-            val goal = a.subject.getOrElse(p.goal)
-            val depth = AutopilotPolicy.depth(goal, s => agents.goals.get(s).flatMap(_.parentSlug))
-            AutopilotPolicy.goalPlan(
-              GoalPlanFacts(goal, p.subGoals.size, p.queries.size, p.works.size, depth),
-              caps.maxGoalDepth,
-              agents.approvalStore.autoApprovedSince(ApprovalKind.GoalPlan, day).size,
-              goalPlanCap
-            ) match
-              // decided by code whatever the focus: only the sub-goals it would open are bounded
-              case v @ Verdict.Approve(_) => agents.focus.goalPlanBlock(goal, p.subGoals.size).fold(v)(Verdict.Leave(_))
-              case v                      => v
+            val raw = a.subject.fold(p.goal.value)(_.value)
+            (com.histmersion.domain.automation.Goal.Slug.option(raw), com.histmersion.domain.research.Slug.option(raw)) match
+              case (Some(goal), Some(slug)) =>
+                val depth = AutopilotPolicy.depth(
+                  slug,
+                  s =>
+                    com.histmersion.domain.automation.Goal.Slug
+                      .option(s.value)
+                      .flatMap(agents.goals.get)
+                      .flatMap(_.parentSlug)
+                      .flatMap(parent => com.histmersion.domain.research.Slug.option(parent.value))
+                )
+                AutopilotPolicy.goalPlan(
+                  GoalPlanFacts(
+                    GoalPlanFacts.Goal(raw),
+                    GoalPlanFacts.SubGoals(p.subGoals.size),
+                    GoalPlanFacts.Queries(p.queries.size),
+                    GoalPlanFacts.Works(p.works.size),
+                    depth
+                  ),
+                  AutopilotPolicy.DepthLimit(caps.maxGoalDepth.value),
+                  AutopilotPolicy.ApprovedToday(agents.approvalStore.autoApprovedSince(ApprovalKind.GoalPlan, day).size),
+                  goalPlanCap
+                ) match
+                  // decided by code whatever the focus: only the sub-goals it would open are bounded
+                  case v @ Verdict.Approve(_) =>
+                    agents.focus
+                      .goalPlanBlock(goal, AutopilotPolicy.Proposed(p.subGoals.size))
+                      .fold(v)(d => Verdict.Leave(Verdict.Leave.Why(d.value)))
+                  case v => v
+              case _ => Verdict.Leave(Verdict.Leave.Why("the approval names no valid goal"))
       case _ => Verdict.Leave(com.histmersion.domain.AutopilotPolicy.Verdict.Leave.Why("not a kind the autopilot decides"))
 
   def checkpoint(run: com.histmersion.domain.automation.Run.Id, step: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name): Option[String] =
     agents.runs
-      .steps(run, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000))
-      .filter(s => s.name == step && s.status == StepStatus.Done.wire)
+      .steps(Job.Id.assume(run.value), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000))
+      .filter(s => s.name.value == step.value && s.status.value == StepStatus.Done.wire.value)
       .lastOption
-      .flatMap(_.output)
+      .flatMap(_.output.map(_.value))
 
   def config: AgentsConfig = cfg
-  def slugExists(slug: com.histmersion.domain.automation.approvals.ApprovalChecks.Slug): Boolean = agents.host.articleExists(slug)
+  def slugExists(slug: com.histmersion.domain.automation.approvals.ApprovalChecks.Slug): Boolean = com.histmersion.domain.research.Slug.option(slug.value).exists(agents.host.articleExists)
   def autoApprovedSince(kind: com.histmersion.domain.automation.Approval.Kind, since: Instant): List[ApprovalInfo] = agents.approvalStore.autoApprovedSince(io.scalaland.chimney.Transformer.derive[com.histmersion.domain.automation.Approval.Kind, ApprovalKind].transform(kind), since)
 
-object AutoApprovals:
-  type GoalPlanCap = GoalPlanCap.T
-  object GoalPlanCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

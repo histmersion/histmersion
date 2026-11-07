@@ -63,7 +63,7 @@ final class CompileArticlePipeline(
   val pipeline: Pipeline = Pipeline.CompileArticle
   import CompileArticlePipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, PipelineDef.RunResultPart2] =
+  def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
     for
       snap <- ctx.code[Snap](StepRecord.Name("snapshot"))(snapshot(ctx, ctx.run.target))
       found <- ctx.code[Found](StepRecord.Name("filter"))(filter(ctx, snap))
@@ -77,7 +77,7 @@ final class CompileArticlePipeline(
             )
           )
         else compile(ctx, snap, found)
-    yield PipelineDef.RunResultPart2(line)
+    yield PipelineDef.Summary(line)
 
   private def compile(ctx: RunCtx, snap: Snap, found: Found): Either[Halt, String] =
     for
@@ -168,19 +168,19 @@ final class CompileArticlePipeline(
 
   private def filter(ctx: RunCtx, s: Snap): Either[String, Found] =
     val af = s.filter.getOrElse(Article.Filter(query = s.query, topics = s.topics, tags = s.tags))
-    val f = af.toFilter.copy(limit = research.compile.maxSources)
+    val f = af.toFilter.copy(limit = com.histmersion.api.library.Filter.Limit(research.compile.maxSources.value))
     val res = site.search.sources(f)
     val line = af.line
     val facts = res.hits.map(x =>
       SourceFact(
         com.histmersion.domain.library.Citekey.assume(x.source.citekey.value),
         Title(x.source.title.value),
-        x.source.year.flatMap(y => com.histmersion.Year.option(y.value)),
+        x.source.year.flatMap(y => com.histmersion.Year.option(y.value.toInt)),
         x.source.status
       )
     )
     // cited, or listed (a hand-written Not used list, or a stored reason): handled already
-    val already = AgentVerify.wikilinks(AgentVerify.Text(s.body.value)).map(_.value).toSet ++ s.reasons.map(_.citekey.value)
+    val already: Set[String] = AgentVerify.wikilinks(AgentVerify.Text(s.body.value)).map(w => w.value: String).toSet ++ s.reasons.map(r => r.citekey.value: String)
     if res.total.value > facts.size then
       ctx.warn(s"filter: $line → ${res.total.value}; only the first ${facts.size} are read (agents.compile.max-sources)")
     Right(Found(ArticleDraft.Filter(line), com.histmersion.RowCount(res.total.value), facts, facts.map(_.citekey).filterNot(ck => already(ck.value))))
@@ -222,7 +222,7 @@ final class CompileArticlePipeline(
                   AgentVerify.SourceBody(text),
                   AgentVerify.MinRatio(lib.verify.quoteMinRatio.value),
                   MaxClaims(research.compile.maxClaims.value),
-                  last
+                  CompileArticle.Last(last.value)
                 )
                 .map(Checked(_, _))
             }
@@ -239,7 +239,7 @@ final class CompileArticlePipeline(
       site.citations
         .neighbors(s.citekey, CompileArticle.DisagreementKinds.toList.map(k => com.histmersion.domain.library.Edge.Kind.Wire(k.value)))
         .filter(n => n.direction.value == "out" && n.target == NeighborTarget.Source)
-        .map(n => EdgeFact(s.citekey, n.kind, n.citekey))
+        .map(n => EdgeFact(s.citekey, Article.Coverage.DisagreementKind(com.histmersion.api.library.Edge.Kind.wireOf(n.kind).value), com.histmersion.domain.library.Citekey.assume(n.citekey.value)))
     }
     CompileArticle.evidence(found.filter, found.total, found.sources, extracted, edges)
 
@@ -281,7 +281,7 @@ final class CompileArticlePipeline(
         )
         val title = Option.when(s.mode == DraftMode.Extend)(s.title).orElse(ctx.run.params.title.map(t => Title(t.value)))
         CompileArticle
-          .checkDraft(a, s.slug, s.mode, s.kind, title, s.body, ev, found.filter, corpus, last)
+          .checkDraft(a, s.slug, s.mode, s.kind, title, s.body, ev, found.filter, corpus, CompileArticle.Last(last.value))
           .map(Checked(_, _))
       }
     }
@@ -343,7 +343,7 @@ final class CompileArticlePipeline(
     * configured) is a warning: the article is written either way.
     */
   private def review(ctx: RunCtx, s: Snap, w: Written): Option[String] =
-    if !w.written.value || !ctx.run.params.chainReview.getOrElse(research.compile.review) then None
+    if !w.written.value || !ctx.run.params.chainReview.map(_.value).getOrElse(research.compile.review.value) then None
     else
       // the run's per-role models carry over to the roles the review uses
       val overrides =
@@ -386,7 +386,7 @@ final class CompileArticlePipeline(
           CompileArticle.Written(w.written.value),
           CompileArticle.Reason(w.why.value),
           review.map(com.histmersion.domain.automation.Run.Id(_)),
-          com.histmersion.domain.automation.Run.Id(ctx.run.id.value)
+          ctx.runId
         )
         .value
     )
@@ -397,7 +397,7 @@ final class CompileArticlePipeline(
 object CompileArticlePipeline:
 
   def written(c: com.histmersion.domain.automation.managers.ManagerContext, run: com.histmersion.domain.automation.Run.Id): Option[Written] =
-    c.stepOutput(run, com.histmersion.domain.automation.managers.ManagerContext.StepOutputStep("write")).flatMap(o => io.circe.parser.decode[Written](o.value).toOption)
+    c.stepOutput(run, StepRecord.Name("write")).flatMap(o => io.circe.parser.decode[Written](o.value).toOption)
 
   /** The kind of a new article when the run names none. */
   val DefaultKind = "concept"

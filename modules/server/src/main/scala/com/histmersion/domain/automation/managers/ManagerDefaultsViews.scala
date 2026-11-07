@@ -9,6 +9,6 @@ object ManagerDefaultsViews:
 
   def scheduler(c: AgentSchedulerConfig): SchedulerDefaults =
     c.into[SchedulerDefaults]
-      .withFieldConst(_.builtInWeights, AgentSchedulerConfig.DefaultWeights)
-      .withFieldConst(_.builtInPriorities, AgentSchedulerConfig.DefaultPriorities)
+      .withFieldConst(_.builtInWeights, SchedulerDefaults.BuiltInWeights(AgentSchedulerConfig.DefaultWeights.value))
+      .withFieldConst(_.builtInPriorities, SchedulerDefaults.BuiltInPriorities(AgentSchedulerConfig.DefaultPriorities.value))
       .transform
