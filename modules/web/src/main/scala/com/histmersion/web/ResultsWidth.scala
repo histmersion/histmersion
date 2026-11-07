@@ -23,10 +23,10 @@ object ResultsWidth:
 
   val StorageKey = "histmersion.resultsWidth"
 
-  def min: com.histmersion.web.ResultsWidth.Width = Width(Layout.sidebarMinWidth.value.value)
+  def min: com.histmersion.web.ResultsWidth.Width = Width(Layout.sidebarMinWidth.value)
 
   /** The widest: `sidebarMaxWidth`, and never more than 60 % of the window, so the map keeps the rest. */
-  def max(viewport: com.histmersion.web.ResultsWidth.ViewportWidth): com.histmersion.web.ResultsWidth.Width = Width(math.max(min.value, math.min(Layout.sidebarMaxWidth.value.value, (viewport.value * 0.6).toInt)))
+  def max(viewport: com.histmersion.web.ResultsWidth.ViewportWidth): com.histmersion.web.ResultsWidth.Width = Width(math.max(min.value, math.min(Layout.sidebarMaxWidth.value, (viewport.value * 0.6).toInt)))
 
   def clamp(w: com.histmersion.web.ResultsWidth.Width, viewport: com.histmersion.web.ResultsWidth.ClampViewport): com.histmersion.web.ResultsWidth.Width = Width(math.max(min.value, math.min(max(viewport).value, w.value)))
 

@@ -225,7 +225,7 @@ object FilterBar:
           cls := "frow-more",
           idAttr := "f-more",
           // in the phone's filters drawer, always shown
-          hidden <-- moreOpen.signal.combineWith(Viewport.narrow).map((open, narrow) => !open && !narrow.value),
+          hidden <-- moreOpen.signal.combineWith(Viewport.narrow).map((open, narrow) => !open && !narrow),
           moreFields.map(chipInput(_, config)),
           yearRangeSlider()
         ),

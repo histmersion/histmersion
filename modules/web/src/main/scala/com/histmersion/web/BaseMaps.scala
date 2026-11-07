@@ -688,7 +688,7 @@ object BaseMaps:
         placement(r.left, r.right, r.bottom, math.min(300.0, dom.window.innerWidth * 0.92), dom.window.innerWidth)
       p.style.setProperty("--map-options-x", s"${x}px")
       p.style.setProperty("--map-options-y", s"${y}px")
-      val minBelow = if Viewport.tabletNow then Layout.mapOptionsMinBelow.value.value.toDouble else 0.0
+      val minBelow = if Viewport.tabletNow then Layout.mapOptionsMinBelow.value.toDouble else 0.0
       panelSide(r.top, r.bottom, dom.window.innerHeight, minBelow) match
         case PanelSide.Above(bottom) =>
           p.classList.add("is-above")

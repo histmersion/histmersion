@@ -27,7 +27,7 @@ object PointKinds:
     val icon = Icon.PointFinding
     val layerLabel = com.histmersion.api.UiLabels.Text("Sources")
     val meaning = com.histmersion.api.UiLabels.Text("a finding (a source’s claim)")
-    def box = (PointKind.BoxPixels(Layout.findingMarkerSize.value.value), PointKind.BoxPixels(Layout.findingMarkerSize.value.value))
+    def box = (PointKind.BoxPixels(Layout.findingMarkerSize.value), PointKind.BoxPixels(Layout.findingMarkerSize.value))
     def key(s: Spot): com.histmersion.web.PointKind.PointKey = PointKind.PointKey(s"${s.lat.value}|${s.lon.value}")
     def at(s: Spot): (com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude) = (Geo.Latitude(s.lat.value), Geo.Longitude(s.lon.value))
     def inner(s: Spot): String =
@@ -77,7 +77,7 @@ object PointKinds:
     val icon = Icon.PointSite
     val layerLabel = com.histmersion.api.UiLabels.Text("sites")
     val meaning = com.histmersion.api.UiLabels.Text("a site")
-    def box = (PointKind.BoxPixels(Layout.siteIconSize.value.value), PointKind.BoxPixels(Layout.siteIconSize.value.value))
+    def box = (PointKind.BoxPixels(Layout.siteIconSize.value), PointKind.BoxPixels(Layout.siteIconSize.value))
     override def pane =
       com.histmersion.api.MapStack.Pane.Sites // above every region: a site inside one still takes the click
     def key(p: SitePoint): com.histmersion.web.PointKind.PointKey = PointKind.PointKey(p.id.fold(s"${p.lat}|${p.lon}")(_.value))
@@ -144,7 +144,7 @@ object PointKinds:
     val icon = Icon.PointEvent
     val layerLabel = com.histmersion.api.UiLabels.Text("events")
     val meaning = com.histmersion.api.UiLabels.Text("an event")
-    def box = (PointKind.BoxPixels(Layout.eventMarkerSize.value.value), PointKind.BoxPixels(Layout.eventMarkerSize.value.value))
+    def box = (PointKind.BoxPixels(Layout.eventMarkerSize.value), PointKind.BoxPixels(Layout.eventMarkerSize.value))
     override def pane = com.histmersion.api.MapStack.Pane.Events
     def key(e: EventGeo): com.histmersion.web.PointKind.PointKey = PointKind.PointKey(e.id.value)
     def at(e: EventGeo): (com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude) = (Geo.Latitude(e.lat.value), Geo.Longitude(e.lon.value))
@@ -216,7 +216,7 @@ object PointKinds:
     val icon = Icon.PointMedia
     val layerLabel = com.histmersion.api.UiLabels.Text("media")
     val meaning = com.histmersion.api.UiLabels.Text("a picture")
-    def box = (PointKind.BoxPixels(Layout.mediaMarkerWidth.value.value), PointKind.BoxPixels(Layout.mediaMarkerHeight.value.value))
+    def box = (PointKind.BoxPixels(Layout.mediaMarkerWidth.value), PointKind.BoxPixels(Layout.mediaMarkerHeight.value))
     def key(h: MediaGeoHit): com.histmersion.web.PointKind.PointKey = PointKind.PointKey(s"${h.uid.value}|${h.lat}|${h.lon}")
     def at(h: MediaGeoHit): (com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude) = (Geo.Latitude(h.lat.value), Geo.Longitude(h.lon.value))
     def inner(h: MediaGeoHit): String = Glyphs.badge(Glyphs.Name(CardIcons.Media)).value

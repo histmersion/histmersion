@@ -21,7 +21,7 @@ object ResultsPanel:
   /** The width, px: the one this browser kept, else the default. */
 
 
-  val width: Var[com.histmersion.web.ResultsWidth.Width] = Var(ResultsWidth.clamp(ResultsWidth.stored.getOrElse(ResultsWidth.Width(Layout.sidebarDefault.value.value)), viewport))
+  val width: Var[com.histmersion.web.ResultsWidth.Width] = Var(ResultsWidth.clamp(ResultsWidth.stored.getOrElse(ResultsWidth.Width(Layout.sidebarDefault.value)), viewport))
 
   private def viewport: com.histmersion.web.ResultsWidth.ViewportWidth = ResultsWidth.ViewportWidth(scala.util.Try(dom.window.innerWidth).getOrElse(Double.MaxValue))
 
