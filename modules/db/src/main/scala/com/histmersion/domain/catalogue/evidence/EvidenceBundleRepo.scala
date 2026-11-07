@@ -170,7 +170,7 @@ private[evidence] object EvidenceBundleRepo:
   /** The attestations, once their sources and what they attest are in: a target by its label here. */
   def attestationsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.es.attestations.filter(t => w.writes(t.uid).value).foreach { t =>
+    w.es.attestations.filter(t => w.writes(t.uid)).foreach { t =>
       val ck = w.citekeyOf(t.sourceUid)
       val target = w.targetLabel(
         BundleImport.Writer.TargetType(t.targetType.value),

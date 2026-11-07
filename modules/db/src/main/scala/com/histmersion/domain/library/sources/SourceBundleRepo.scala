@@ -169,7 +169,7 @@ private[sources] object SourceBundleRepo:
     }
     val localCk = w.local.sources.map(s => s.uid -> s.citekey).toMap ++
       w.merged.renames.map((u, _, to) => u -> to)
-    w.es.sources.filter(s => w.writes(s.uid).value).foreach { s =>
+    w.es.sources.filter(s => w.writes(s.uid)).foreach { s =>
       // renamed over there: the whole rename here first (findings, links, aliases follow)
       localCk.get(s.uid).filter(_ != s.citekey).foreach { old =>
         w.asLocal {
@@ -219,12 +219,12 @@ private[sources] object SourceBundleRepo:
   /** A source's whole edge set travels with it: both sets are emptied for every source written, then its edges. */
   def edgesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.es.sources.filter(s => w.writes(s.uid).value).foreach { s =>
+    w.es.sources.filter(s => w.writes(s.uid)).foreach { s =>
       val ck = s.citekey
       sql"DELETE FROM edges WHERE src = $ck".update.run()
       sql"DELETE FROM unresolved_edges WHERE src = $ck".update.run()
     }
-    w.es.edges.filter(e => w.writes(e.srcUid).value).foreach { e =>
+    w.es.edges.filter(e => w.writes(e.srcUid)).foreach { e =>
       // a target deleted here: the edge is left out (reported by the reference check)
       w.citekeyHere(e.dstUid).foreach { dst =>
         val src = w.citekeyOf(e.srcUid)
@@ -234,7 +234,7 @@ private[sources] object SourceBundleRepo:
 
   def unresolvedEdgesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.es.unresolvedEdges.filter(e => w.writes(e.srcUid).value).foreach { e =>
+    w.es.unresolvedEdges.filter(e => w.writes(e.srcUid)).foreach { e =>
       Edge.Kind.fromWire(e.kind).foreach { k =>
         val _ = SourceRepo.insertEdges(List(Edge(com.histmersion.api.library.Citekey(w.citekeyOf(e.srcUid).value), com.histmersion.api.library.Citekey(e.dst.value), k)))
       }
@@ -253,7 +253,7 @@ private[sources] object SourceBundleRepo:
 
   def findingsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.es.findings.filter(f => w.writes(f.uid).value).foreach { f =>
+    w.es.findings.filter(f => w.writes(f.uid)).foreach { f =>
       w.touchSource(f.sourceUid)
       val ck = w.citekeyOf(f.sourceUid)
       sql"""INSERT INTO findings (uid, origin, id, citekey, claim, region_name, geom, period, period_name,

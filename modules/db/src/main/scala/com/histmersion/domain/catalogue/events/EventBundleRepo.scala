@@ -212,13 +212,13 @@ private[events] object EventBundleRepo:
       e => BundleImport.Writer.Label(e.id.value),
       w.local.events.map(e => e.uid -> BundleImport.Writer.Label(e.id.value)).toMap,
       com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("event")
-    )((from, to) => EventRepo.rename(BEventRow.Id(from.value), BEventRow.Id(to.value)))
+    )((from, to) => EventRepo.rename(BEventRow.Id(from), BEventRow.Id(to)))
 
   /** Events: the rows, then their parents (a parent may come later in uid order), then the sets. */
   def eventsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val placeHere = PlacesCarried.placeHere(w)
-    val events = w.es.events.filter(e => w.writes(e.uid).value)
+    val events = w.es.events.filter(e => w.writes(e.uid))
     events.foreach { e =>
       val names = e.names.getOrElse(Nil)
       sql"""INSERT INTO events (uid, origin, id, label, kind, not_before, begin_by, end_from, not_after,

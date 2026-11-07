@@ -64,7 +64,7 @@ private[assets] object AssetBundleRepo:
   /** Asset metadata whose bytes are already here (same sha): no blob needed. */
   def metadataIn(w: BundleImport.Writer): Unit =
     val localSha = w.local.assets.map(a => a.uid -> a.sha256).toMap
-    w.es.assets.filter(a => w.writes(a.uid).value && localSha.get(a.uid).contains(a.sha256)).foreach(write(w, _, None))
+    w.es.assets.filter(a => w.writes(a.uid) && localSha.get(a.uid).contains(a.sha256)).foreach(write(w, _, None))
 
   /** One asset written: with its bytes when they came in the bundle, else its metadata over the row here. */
   def write(w: BundleImport.Writer, a: Bundle.Asset, bytes: Option[com.histmersion.domain.media.assets.AssetBytesRow.Bytes]): Unit =

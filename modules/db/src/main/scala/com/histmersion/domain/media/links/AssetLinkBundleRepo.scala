@@ -40,7 +40,7 @@ private[links] object AssetLinkBundleRepo:
 
   def assetLinksIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.es.assetLinks.filter(l => w.writes(l.uid).value).foreach { l =>
+    w.es.assetLinks.filter(l => w.writes(l.uid)).foreach { l =>
       val (ck, name) =
         sql"""SELECT citekey, name FROM assets WHERE uid = ${l.assetUid}""".query[(String, String)].run().head
       val target = w.targetLabel(

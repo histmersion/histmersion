@@ -145,7 +145,7 @@ private[places] object FindingPlaceRepo:
     */
   def unresolvedPlaceholdersIn()(using DbCon): List[(com.histmersion.domain.library.Citekey, Placeholder.Detail)] =
     val ph =
-      (Sql.raw(Sql.Text(placeholderFindingsSql)) ++ Sql.raw(" ORDER BY f.citekey, f.id")).frag.query[Placeholder].run().toList
+      (Sql.raw(Sql.Text(placeholderFindingsSql)) ++ Sql.raw(com.histmersion.util.database.Sql.Text(" ORDER BY f.citekey, f.id"))).frag.query[Placeholder].run().toList
     val resolved = resolve(ph).map(_._1).toSet
     ph.filterNot(p => resolved.contains(p.id)).map { p =>
       val at = String.format(java.util.Locale.ROOT, "%.4f N %.4f E", p.lat, p.lon)
@@ -176,7 +176,7 @@ private[places] object FindingPlaceRepo:
     */
   private def placeholders(citekey: Option[com.histmersion.domain.library.Citekey])(using DbCon): (List[Placeholder.Id], List[(Placeholder.Id, com.histmersion.domain.catalogue.places.BPlaceRow.Id)]) =
     val ph = (Sql.raw(Sql.Text(placeholderFindingsSql)) ++
-      citekey.fold(Sql.raw(""))(ck => Sql.of(" AND f.citekey = ?", Param.S(Param.S.V(ck.value))))).frag.query[Placeholder].run().toList
+      citekey.fold(Sql.raw(com.histmersion.util.database.Sql.Text("")))(ck => Sql.of(" AND f.citekey = ?", Param.S(Param.S.V(ck.value))))).frag.query[Placeholder].run().toList
     (ph.map(_.id), resolve(ph))
 
   /** The inserts that define "a finding belongs to a place", shared by the full rebuild and the per-citekey

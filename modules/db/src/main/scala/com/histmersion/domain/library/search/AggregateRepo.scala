@@ -51,7 +51,7 @@ private[search] object AggregateRepo:
             " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE "
         )
       ) ++
-        FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope)
+        FilterSql.sourceWhere(filter) ++ Sql.raw(com.histmersion.util.database.Sql.Text(" AND ")) ++ FilterSql.findingWhere(filter, scope = scope)
     else
       val gate =
         if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(com.histmersion.util.database.Sql.RawText(" AND fp.matched > 0")) else Sql.empty
@@ -65,7 +65,7 @@ private[search] object AggregateRepo:
         )
       ) ++
         FilterSql.findingPeriodWhere(filter) ++
-        Sql.raw(") AS in_window FROM findings f WHERE f.citekey = s.citekey AND ") ++
+        Sql.raw(com.histmersion.util.database.Sql.Text(") AS in_window FROM findings f WHERE f.citekey = s.citekey AND ")) ++
         FilterSql.findingPlaceWhere(filter, scope = scope) ++
         Sql.raw(") fp ON true WHERE ") ++ FilterSql.sourceWhere(filter) ++ gate ++
         Sql.raw(" AND (") ++ ownPeriod ++ Sql.raw(" OR fp.in_window > 0)")
@@ -127,7 +127,7 @@ private[search] object AggregateRepo:
             " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE "
         )
       ) ++
-        FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope) ++
+        FilterSql.sourceWhere(filter) ++ Sql.raw(com.histmersion.util.database.Sql.Text(" AND ")) ++ FilterSql.findingWhere(filter, scope = scope) ++
         Sql.raw(" ") ++ FilterSql.orderBySql(filter)
     else
       val gate =
