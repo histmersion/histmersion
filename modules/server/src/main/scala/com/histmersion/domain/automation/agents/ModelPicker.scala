@@ -42,9 +42,9 @@ final class ModelPicker(
   /** model wire → (skipped until, when its plan reported the limit) */
   private val cooldown = ConcurrentHashMap[ModelRef.Wire, (Long, Long)]()
 
-  private def poolInstant(now: PlanQuotaRepo.EpochMillis): PlanPools.Instant = PlanPools.Instant(now.value)
+  private def poolInstant(now: PlanQuotaRepo.EpochMillis): PlanQuota.Now = PlanQuota.Now(now.value)
 
-  private def poolModel(m: ModelRef): PlanPools.ModelName = PlanPools.ModelName(m.model.value)
+  private def poolModel(m: ModelRef): ChainEntry.Model = ChainEntry.Model(m.model.value)
 
   /** The model hit its plan's limit: skip it until `until` (else the configured cool-down). */
   def cool(model: ModelRef, until: Option[Instant], now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())): Instant =
@@ -264,7 +264,7 @@ final class ModelPicker(
       val (p, v, _) = plan.get
       val (why, until) = v match
         case PlanQuota.Verdict.Blocked(w, u) => (w, u)
-        case _                               => ("", None)
+        case _                               => (PlanQuota.Verdict.Blocked.Reason(""), None)
       ModelState(
         ModelState.Usable(false),
         Some(ModelState.Why(s"the ${p.title} is below its floor: $why")),

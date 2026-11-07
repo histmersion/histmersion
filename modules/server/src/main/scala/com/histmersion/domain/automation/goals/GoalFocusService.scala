@@ -142,12 +142,8 @@ final class GoalFocusService(
       base,
       work,
       agents.focusStore.sourceCounts().map((g, n) => g -> Facts.Sources(n.value)),
-      agents.workflows
-        .linked()
-        .map((g, articles) =>
-          Goal.Slug.assume(g.value) -> articles.map(a => com.histmersion.domain.research.Slug.assume(a.value))
-        ),
-      agents.workflows.finished().map(a => com.histmersion.domain.research.Slug.assume(a.value)),
+      agents.workflows.linked(),
+      agents.workflows.finished(),
       Transactor(ds).read(FocusRepo.compileOpen).map((g, n) => g -> Facts.CompileOpen(n.value)),
       agents.focusStore.lastStops().map((g, why) => g -> Facts.LastStop(why.value))
     )

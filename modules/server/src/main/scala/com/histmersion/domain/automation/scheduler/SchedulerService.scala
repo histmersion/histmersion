@@ -17,7 +17,6 @@ import com.histmersion.api.automation.AgentScheduler.*
 import java.time.Instant
 import javax.sql.DataSource
 import com.histmersion.api.automation.{Agents, AgentScheduler, ApprovalDigest, PlanQuota, Queue, Stalls}
-import com.histmersion.domain.automation.goals.ObjectiveProgress
 import com.histmersion.api.Api
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
@@ -225,7 +224,7 @@ final class SchedulerService(
           Candidate.GoalPriority(info.fold(0)(_.priority)),
           info.flatMap(_.created),
           Candidate.Gathering(info.exists(_.gathering)),
-          i.priority.transformInto[Candidate.ItemPriority],
+          Candidate.ItemPriority(i.priority.value),
           since.getOrElse(now),
           pools.toOption.getOrElse(Nil).map(p => Candidate.Pools(p.wire.value)),
           block,
@@ -292,8 +291,8 @@ final class SchedulerService(
       agents.pools
         .refreshOnSchedule(
           p,
-          com.histmersion.server.agents.PlanPools.Autopilot(autopilotOn),
-          com.histmersion.server.agents.PlanPools.Wanted(wanted.contains(Candidate.Pools(p.wire.value))),
+          PlanReadSchedule.AutopilotOn(autopilotOn),
+          PlanReadSchedule.Wanted(wanted.contains(Candidate.Pools(p.wire.value))),
           now
         )
         .toOption
@@ -544,7 +543,7 @@ final class SchedulerService(
       val idle = last.map(t => java.time.Duration.between(t, now).toDays.toInt)
       val aps = (bySubj
         .getOrElse(Some(ApprovalDigest.Open.Subject(g.slug.value)), Nil) ++ articles
-        .getOrElse(ObjectiveProgress.LinkedResultPart1(g.slug.value), Nil)
+        .getOrElse(DomainGoal.Slug.assume(g.slug.value), Nil)
         .flatMap(a => bySubj.getOrElse(Some(ApprovalDigest.Open.Subject(a.value)), Nil)))
         .map(o => Stalls.Facts.ApprovalId(o.id.value) -> Stalls.Facts.ApprovalKind(o.kind.value))
         .distinct

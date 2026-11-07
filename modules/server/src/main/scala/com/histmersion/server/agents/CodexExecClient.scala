@@ -106,7 +106,7 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
             throw ModelLimitReached(model, until, ModelLimitReached.Message(s"codex exec: $m".take(300)))
           case None => CliOutcomes.result(
               o,
-              CliOutcomes.ResultUser(call.user.value),
+              call.user,
               call.schema,
               Some(ClaudeCode.ModelId(model.model.value))
             )

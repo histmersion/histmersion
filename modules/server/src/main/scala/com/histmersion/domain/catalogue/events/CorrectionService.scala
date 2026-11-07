@@ -34,7 +34,7 @@ object CorrectionService:
         .sortBy(c => (c.status.value != Correction.Status.Conflict, c.targetId.value: String, c.field.value: String))
       val from = math.max(0, offset.value)
       val page = all.slice(from, from + math.max(1, limit.value)).toList.map { c =>
-        val label = Option.when(c.targetKind.value == "event")(s.events.find(_.id.value == c.targetId.value).map(_.label)).flatten
+        val label = Option.when(c.targetKind.value == "event")(s.events.find(_.id.value == c.targetId.value).map(e => Correction.Label(e.label.value))).flatten
         c.modify(_.label).setTo(label)
       }
       Correction.List(Correction.List.Total(all.size), page)

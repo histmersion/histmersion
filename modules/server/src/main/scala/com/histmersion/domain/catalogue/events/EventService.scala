@@ -41,7 +41,7 @@ trait EventService:
   /** The events `selection` selects that the map draws (placed, dated well enough), at most `limit`, with the regional
     * ones' outlines simplified to `tolerance` degrees; the unplaced and the imprecisely dated counted.
     */
-  def geo(selection: EventSelection, limit: com.histmersion.PageSize, tolerance: EventRepo.GeoTolerance): EventGeo.List
+  def geo(selection: EventSelection, limit: com.histmersion.PageSize, tolerance: GeoTolerance): EventGeo.List
 
   /** The events of `ids` the map draws, by id. */
   def geoOf(ids: List[com.histmersion.domain.catalogue.Event.Id]): Map[com.histmersion.domain.catalogue.Event.Id, EventGeo]
@@ -86,7 +86,7 @@ object EventService:
   final private class Implementation(db: Transactor, related: EventSourceFilter) extends EventService:
     def list(selection: EventSelection, limit: com.histmersion.PageSize, offset: com.histmersion.Offset): EventList =
       db.read(EventRepo.list(selection.sql(related), limit, offset))
-    def geo(selection: EventSelection, limit: com.histmersion.PageSize, tolerance: EventRepo.GeoTolerance): EventGeo.List =
+    def geo(selection: EventSelection, limit: com.histmersion.PageSize, tolerance: GeoTolerance): EventGeo.List =
       db.read(EventRepo.geo(selection.sql(related), limit, tolerance))
     def geoOf(ids: List[com.histmersion.domain.catalogue.Event.Id]): Map[com.histmersion.domain.catalogue.Event.Id, EventGeo] = db.read(EventRepo.geoOf(ids.map(i => com.histmersion.domain.catalogue.events.BEventRow.Id(i.value)))).map((k, v) => com.histmersion.domain.catalogue.Event.Id.assume(k.value) -> v)
     def get(id: com.histmersion.domain.catalogue.Event.Id): Option[EventEntry] = db.read(EventRepo.get(com.histmersion.domain.catalogue.events.BEventRow.Id(id.value)))
@@ -205,7 +205,7 @@ object EventService:
 
     private def preciseEnough(e: HeldEvent): Boolean = e.uncertainty.exists(_.value <= EventPrecision.ApproximateUpTo.value)
 
-    def geo(selection: EventSelection, limit: com.histmersion.PageSize, tolerance: EventRepo.GeoTolerance): EventGeo.List =
+    def geo(selection: EventSelection, limit: com.histmersion.PageSize, tolerance: GeoTolerance): EventGeo.List =
       val s = state.get
       val listed = ordered(s.events.filter(selects(s, selection)))
       val placed = listed.filter(_.geometry.isDefined)

@@ -316,7 +316,7 @@ final class CompileArticlePipeline(
             )(Right(Written(written = Written.Value(false), Written.Why(AgentsMarkdown.DryRunNote), None)))
         case DraftMode.Extend =>
           // a stored reason for a source the new text now cites is dropped (an empty reason removes it)
-          val stale = s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.modify(_.reason).setTo(""))
+          val stale = s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.modify(_.reason).setTo(com.histmersion.api.research.Coverage.Entry.Reason("")))
           val patch = Article.Patch(
             append = Some(Article.Patch.Append(d.text.value)),
             section = d.section.map(x => Article.Patch.Section(x.value)),
@@ -389,7 +389,7 @@ final class CompileArticlePipeline(
           d,
           CompileArticle.Written(w.written.value),
           CompileArticle.Reason(w.why.value),
-          review.map(com.histmersion.domain.automation.Run.Id(_)),
+          review.map(com.histmersion.domain.automation.Run.Id.assume(_)),
           ctx.runId
         )
         .value

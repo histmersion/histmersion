@@ -1,5 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Write
 import com.histmersion.api.catalogue.{Latitude, Longitude, ManualPlaceName, PlacesMarkdown, Year}
 import com.histmersion.api.catalogue.Place as ApiPlace

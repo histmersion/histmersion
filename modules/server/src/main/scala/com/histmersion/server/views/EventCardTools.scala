@@ -1,5 +1,6 @@
 package com.histmersion.server.views
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.api.catalogue.EventsMarkdown
@@ -51,12 +52,12 @@ object EventCardTools:
     val From: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
     type To = com.histmersion.api.catalogue.Year
     val To: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
-    type Title = com.histmersion.domain.Title
-    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
-    type Limit = com.histmersion.PageSize
-    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
-    type Offset = com.histmersion.Offset
-    val Offset: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
+    type Title = com.histmersion.api.library.Filter.Title
+    val Title: _root_.com.histmersion.api.library.Filter.Title.type = _root_.com.histmersion.api.library.Filter.Title
+    type Limit = com.histmersion.api.library.Filter.Limit
+    val Limit: _root_.com.histmersion.api.library.Filter.Limit.type = _root_.com.histmersion.api.library.Filter.Limit
+    type Offset = com.histmersion.api.library.Filter.Offset
+    val Offset: _root_.com.histmersion.api.library.Filter.Offset.type = _root_.com.histmersion.api.library.Filter.Offset
 
     given Schema[EventsInput] = KindlingsSchema
       .derived[EventsInput]
@@ -152,7 +153,7 @@ object EventCardTools:
                 .option(raw)
                 .toRight(Api.Error(Api.Error.Message(s"No event '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
                 .flatMap(page.get) match
-                case Right(d) => ToolResult.text(d.markdown)
+                case Right(d) => ToolResult.text(d.markdown.value)
                 case Left(e)  => McpOut.error(e)
             case None =>
               val q = Api.EventQuery(
@@ -204,7 +205,7 @@ object EventCardTools:
                 .flatMap(page.patch(Caller.Local, _, p)) match
                 case Right(d) =>
                   ToolResult.text(
-                    Aliases.note(AliasKinds.EventRecords, Aliases.Id(in.id.value), Aliases.Id(d.event.id.value))(d.markdown)
+                    Aliases.note(AliasKinds.EventRecords, Aliases.Id(in.id.value), Aliases.Id(d.event.id.value))(Aliases.Note(d.markdown.value)).value
                   )
                 case Left(e) => McpOut.error(e)
         }

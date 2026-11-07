@@ -34,7 +34,7 @@ object ClaudeCode:
   /** The one MCP server of a run: the agent endpoint, with the step's run token. */
   def mcpConfig(url: GenSettings.AgentMcpUrl, token: Option[RunGrant.Token]): Json =
     val server = Json.obj(
-      ("type", "http".asJson) :: ("url", url.value.asJson) ::
+      ("type", "http".asJson) :: ("url", Json.fromString(url.value)) ::
         token.toList.map(k => "headers" -> Json.obj("Authorization" -> s"Bearer ${k.value}".asJson))*
     )
     Json.obj("mcpServers" -> Json.obj(McpServer -> server))
@@ -197,7 +197,7 @@ object ClaudeCode:
           val rs = j.hcursor
             .downField("rate_limit_info")
             .focus
-            .map(PlanPools.claudeReadings(_, com.histmersion.api.automation.PlanQuota.Source.Run, PlanPools.Instant(now)))
+            .map(PlanPools.claudeReadings(_, com.histmersion.api.automation.PlanQuota.Source.Run, com.histmersion.api.automation.PlanQuota.Now(now)))
             .getOrElse(Nil)
           pools.record(com.histmersion.api.automation.PlanQuota.PoolId.ClaudePlan, rs)
           pools.blocked(com.histmersion.api.automation.PlanQuota.PoolId.ClaudePlan, None).map(b => CliProcess.Run.Stopped(b._1.value))
@@ -359,7 +359,7 @@ object ClaudeCode:
           c.downField("rate_limit_info")
             .focus
             .foreach(i =>
-              readings ++= PlanPools.claudeReadings(i, com.histmersion.api.automation.PlanQuota.Source.Run, PlanPools.Instant(now))
+              readings ++= PlanPools.claudeReadings(i, com.histmersion.api.automation.PlanQuota.Source.Run, com.histmersion.api.automation.PlanQuota.Now(now))
             )
         // a model that backgrounds a subagent makes TWO result events: the last one is the answer (§3a)
         case "result" =>

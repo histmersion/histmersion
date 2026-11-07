@@ -1,5 +1,6 @@
 package com.histmersion.domain.automation.approvals
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*

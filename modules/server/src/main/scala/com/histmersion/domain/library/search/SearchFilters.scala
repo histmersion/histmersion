@@ -1,5 +1,6 @@
 package com.histmersion.domain.library.search
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Filter
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.{PlaceScope, PlaceService}
@@ -16,7 +17,7 @@ final class SearchFilters(places: PlaceService, cfg: () => AppConfig):
   def page(f: Filter): Filter =
     val c = cfg()
     f.modify(_.limit)
-      .setTo(Filter.Limit(c.limits.page(Some(com.histmersion.PageSize(f.limit.value)), com.histmersion.PageSize(c.limits.search.value)).value))
+      .setTo(Filter.Limit(c.limits.page(com.histmersion.PageSize.option(f.limit.value), com.histmersion.PageSize.applyUnsafe(math.max(1, c.limits.search.value))).value))
       .modify(_.offset)
       .setTo(Filter.Offset(f.offset.value.max(0)))
 

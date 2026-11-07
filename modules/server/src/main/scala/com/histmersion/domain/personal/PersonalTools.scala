@@ -1,5 +1,6 @@
 package com.histmersion.domain.personal
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
 import com.histmersion.api.personal.PersonalMarkdown
 import com.histmersion.domain.Caller

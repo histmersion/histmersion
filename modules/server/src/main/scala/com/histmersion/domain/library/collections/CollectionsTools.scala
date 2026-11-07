@@ -1,5 +1,6 @@
 package com.histmersion.domain.library.collections
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
 import com.histmersion.api.library.*
 import com.histmersion.domain.Caller

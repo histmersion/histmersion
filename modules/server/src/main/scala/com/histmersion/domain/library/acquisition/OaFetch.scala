@@ -26,7 +26,7 @@ object OaFetch:
       scala.collection.immutable.ListMap.from(
         g.registries.sourceFetchers.iterator.map((k, v) => com.histmersion.util.plugins.Plugin.Id.assume(k.value) -> v)
       ),
-      cfg.chainIds.map(c => com.histmersion.util.plugins.Plugin.Id(c.value)),
+      cfg.chainIds.flatMap(c => com.histmersion.util.plugins.Plugin.Id.option(c.value)),
       FetchChain.AllowUnauthorised(cfg.allowUnauthorised.value),
       plugins = g.registered.map(p => com.histmersion.util.plugins.Plugin.Id.assume(p.value))
     )._1

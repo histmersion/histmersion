@@ -240,7 +240,7 @@ final class AcquisitionControllers(
   def wikirefs(url: com.histmersion.api.library.Title): Either[Api.Error, WikirefsResult] =
     wiki.refs(WikiClient.ArticleUrl(url.value)).left.map(e => err(e.value)).map { r =>
       val index = sources.doiIndex
-      r.modify(_.known).setTo(r.dois.filter(d => com.histmersion.domain.library.Doi.option(d.value).exists(index.contains)))
+      r.modify(_.known).setTo(r.dois.filter(d => com.histmersion.domain.library.Doi.option(d.value).exists(index.contains)).map(d => WikirefsResult.Known(d.value)))
     }
 
   /** Fill in `inDb` and keep the citekey the corpus would use. `index` is passed IN so a caller marking a whole page
@@ -428,7 +428,7 @@ final class AcquisitionControllers(
           rwError.set(Some(e.getMessage))
       finally rwRunning.set(false))
       val _ = Thread.ofVirtual().name("retraction-watch-refresh").start(() => work.run())
-      Right(retractionsStatus.modify(_.running).setTo(true))
+      Right(retractionsStatus.modify(_.running).setTo(RetractionsUpdate.Running(true)))
 
   /** How the mirror is doing: how many rows it holds, whether a refresh is in flight, and the last failure if there was
     * one.

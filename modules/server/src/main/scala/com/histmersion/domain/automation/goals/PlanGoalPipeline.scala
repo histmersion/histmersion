@@ -1,5 +1,6 @@
 package com.histmersion.domain.automation.goals
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.util.database.Transactor

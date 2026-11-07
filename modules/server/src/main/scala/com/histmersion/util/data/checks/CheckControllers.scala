@@ -17,7 +17,7 @@ final class CheckControllers(
     checks: CheckRunner,
     config: () => AppConfig,
     ds: DataSource,
-    format: (CheckContext.FormatArg1Arg1 => CheckContext.FormatArg1Result) => FormatChecker,
+    format: (com.histmersion.api.text.WikiLinks.Occurrence.Target => Boolean) => FormatChecker,
     write: GuardedWrite,
     maintenance: WriteGate
 )(using timer: com.histmersion.util.time.Timer):
@@ -51,7 +51,7 @@ final class CheckControllers(
     */
   def lintWithFix(rules: List[com.histmersion.util.data.checks.CheckRule.Name], fix: com.histmersion.util.data.checks.CheckControllers.ApplyFix): Either[Api.Error, LintReport] =
     if !fix.value then lint(rules)
-    else guardedLintFix(rules).flatMap(f => lint(rules).map(_.modify(_.fixed).setTo(f.applied)))
+    else guardedLintFix(rules).flatMap(f => lint(rules).map(_.modify(_.fixed).setTo(f.applied.map(a => com.histmersion.api.checks.Lint.LintReport.Fixed(a.value)))))
 
 object CheckControllers:
   type ApplyFix = ApplyFix.T

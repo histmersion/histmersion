@@ -21,6 +21,11 @@ object UiConfigViews:
   ): UiConfig =
     ui.into[UiConfig]
       .withFieldConst(_.setupDue, setupDue)
+      .withFieldComputed(_.time.min, u => com.histmersion.api.catalogue.Year(u.time.min.value))
+      .withFieldComputed(_.time.max, u => com.histmersion.api.catalogue.Year(u.time.max.value))
+      .withFieldComputed(_.time.defaultFrom, u => com.histmersion.api.catalogue.Year(u.time.defaultFrom.value))
+      .withFieldComputed(_.time.defaultTo, u => com.histmersion.api.catalogue.Year(u.time.defaultTo.value))
+      .withFieldComputed(_.mapStart.mode, u => com.histmersion.api.instance.MapStartMode.Wire(u.mapStart.mode.value))
       .withFieldConst(_.writeKeyRequired, writeKeyRequired)
       .withFieldConst(_.agentsEnabled, agentsEnabled)
       .withFieldConst(_.plugins, plugins)

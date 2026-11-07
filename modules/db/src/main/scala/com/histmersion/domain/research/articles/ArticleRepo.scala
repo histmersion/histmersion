@@ -330,7 +330,7 @@ private[articles] object ArticleRepo:
   /** The articles citing any of `citekeys` (one row per article, its first cited key), at most `limit` — an event's
     * card lists those citing the sources that attest it.
     */
-  def citing(citekeys: List[com.histmersion.domain.library.Citekey], limit: com.histmersion.domain.research.articles.ArticleRepo.Limit)(using DbCon): List[EventArticleRef] =
+  def citing(citekeys: List[com.histmersion.domain.library.Citekey], limit: com.histmersion.PageSize)(using DbCon): List[EventArticleRef] =
     if citekeys.isEmpty then Nil
     else sql"""SELECT DISTINCT ON (a.slug) a.slug, a.title, l.target
             FROM article_links l JOIN articles a ON a.slug = l.src_slug

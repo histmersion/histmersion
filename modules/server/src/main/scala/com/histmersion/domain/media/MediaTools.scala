@@ -1,5 +1,6 @@
 package com.histmersion.domain.media
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.media.MediaMarkdown
 
 import chimp.server.*

@@ -42,7 +42,7 @@ final class EventsControllers(
     current: (AliasKind, Event.Id) => Event.Id,
     resolve: Filter => Filter,
     scope: Filter => PlaceScope,
-    mapView: () => (PageSize, EventRepo.GeoTolerance),
+    mapView: () => (PageSize, GeoTolerance),
     maintenance: WriteGate
 ):
 

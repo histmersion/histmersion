@@ -31,7 +31,6 @@ private[workflows] trait GoalSweep:
     val viaArts = goals
       .refs(goal, com.histmersion.domain.automation.Goal.LinkKind.Article)
       .flatMap(r => site.citedSources(com.histmersion.domain.research.Slug.assume(r.value)))
-      .map(c => com.histmersion.domain.library.Citekey.assume(c.value))
     (direct ++ viaArts).distinct.take(math.max(0, max.value))
 
   /** Every DOI in the acquisition queue (open or done) → its item id. */

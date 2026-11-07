@@ -1,0 +1,61 @@
+## modules/server/src/main/scala/com/histmersion/server/instance/MaintenanceControllers.scala
+113:24 [E008] 113 |      _ <- if req.force || before == 0 then Right(()) else Left(backups.refusal(before)) / |value || is not a member of com.histmersion.api.backup.RestoreRequest.Force
+113:27 [E172] 113 |      _ <- if req.force || before == 0 then Right(()) else Left(backups.refusal(before)) / |Values of types com.histmersion.RowCount and Int cannot be compared with == or !=
+137:34 [E007] 137 |    yield RestoreResult(req.file, v, before, backups.guardedRows, r._1, r._2 ++ role) / |      Found:    (v : com.histmersion.util.database.Migrate.Version) / |      Required: com.histmersion.api.backup.RestoreResult.SchemaVersion
+137:37 [E007] 137 |    yield RestoreResult(req.file, v, before, backups.guardedRows, r._1, r._2 ++ role) / |      Found:    (before : com.histmersion.RowCount) / |      Required: com.histmersion.api.backup.RestoreResult.SourcesBefore
+137:53 [E007] 137 |    yield RestoreResult(req.file, v, before, backups.guardedRows, r._1, r._2 ++ role) / |       Found:    com.histmersion.RowCount / |       Required: com.histmersion.api.backup.RestoreResult.SourcesAfter
+137:68 [E007] 137 |    yield RestoreResult(req.file, v, before, backups.guardedRows, r._1, r._2 ++ role) / |Found:    (r._1 : com.histmersion.util.data.backup.BackupService.RestoreDuration) / |Required: com.histmersion.api.backup².RestoreResult.DurationMs / |where:    backup  is a package in package com.histmersion.util.data / |          backup² is a package in package com.histmersion.api
+137:72 [E007] 137 |    yield RestoreResult(req.file, v, before, backups.guardedRows, r._1, r._2 ++ role) / |Found:    List[com.histmersion.util.data.backup.BackupService.RestoreNote | String] / |Required: List[com.histmersion.api.backup².RestoreResult.Warnings] / |where:    backup  is a package in package com.histmersion.util.data / |          backup² is a package in package com.histmersion.api
+
+## modules/server/src/main/scala/com/histmersion/server/views/EventCardTools.scala
+155:51 [E007] 155 |                case Right(d) => ToolResult.text(d.markdown) / |        Found:    com.histmersion.api.views.EventDetail.MarkdownResult / |        Required: String
+159:65 [E007] 159 |                Filter.of(from = in.from, to = in.to, limit = in.limit, offset = in.offset, title = in.title), / |Found:    (in.limit : / |  Option[com.histmersion.server.views.EventCardTools.EventsInput.Limit]) / |Required: Option[com.histmersion.api.library.Filter.Limit]
+159:84 [E007] 159 |                Filter.of(from = in.from, to = in.to, limit = in.limit, offset = in.offset, title = in.title), / |Found:    (in.offset : / |  Option[com.histmersion.server.views.EventCardTools.EventsInput.Offset]) / |Required: Option[com.histmersion.api.library.Filter.Offset]
+159:103 [E007] 159 |                Filter.of(from = in.from, to = in.to, limit = in.limit, offset = in.offset, title = in.title), / |Found:    (in.title : / |  Option[com.histmersion.server.views.EventCardTools.EventsInput.Title]) / |Required: Option[com.histmersion.api.library.Filter.Title]
+207:115 [E007] 207 |                    Aliases.note(AliasKinds.EventRecords, Aliases.Id(in.id.value), Aliases.Id(d.event.id.value))(d.markdown) / |        Found:    com.histmersion.api.views.EventDetail.MarkdownResult / |        Required: com.histmersion.api.aliases.Aliases.Note
+
+## modules/server/src/main/scala/com/histmersion/server/agents/PlanPools.scala
+309:42 [E007] 309 |      val argv = ClaudeCode.probeArgv(cc, ClaudeCode.ModelId(qc.probeModel.value)) / |          Found:    com.histmersion.server.agents.ClaudeCode.ModelId.T / |          Required: com.histmersion.config.ClaudePlanConfig.ProbeModel
+312:58 [E008] 312 |        env => ClaudeCode.probeEnvironment(cc, ClaudeCode.ProbeEnvironmentMaxTokens(qc.probeMaxTokens.value), env), / |value ProbeEnvironmentMaxTokens is not a member of object com.histmersion.server.agents.ClaudeCode
+417:66 [E007] 417 |        (problem.toList ++ modeProblem).map(_.value).reduceOption(_ + "; " + _).map(PoolStatus.Note(_)), / |                    Found:    String / |                    Required: io.github.iltotore.iron.IronType[String, / |                      io.github.iltotore.iron.constraint.any.Pure]
+544:59 [E008] 544 |    val o = ClaudeCode.parse(run.lines.map(l => ClaudeCode.ParseLines(l.value))) / |value ParseLines is not a member of object com.histmersion.server.agents.ClaudeCode
+557:69 [E008] 557 |          val said = o.result.map(r => (r.text :: r.errors).filter(_.nonEmpty).mkString("; ")).filter(_.nonEmpty) / |value nonEmpty is not a member of com.histmersion.server.agents.ClaudeCode.Result.Errors | / |  com.histmersion.server.agents.ClaudeCode.Result.Text
+
+## modules/server/src/main/scala/com/histmersion/server/OpsTools.scala
+122:50 [E008] 122 |        com.histmersion.server.views.WorkListView.QueueName(list), / |value QueueName is not a member of object com.histmersion.server.views.WorkListView
+126:10 [E006] 126 |          l.markdown.map(_.value).getOrElse(s"_unknown list ${l.list}_") / |          Not found: l
+127:39 [E006] 127 |        case Left(e) => McpOut.refusal(e) / |                                       Not found: e
+
+## modules/server/src/main/scala/com/histmersion/server/Supervisor.scala
+173:102 [E008] 173 |    val dbName = Backup.parseJdbc(Backup.JdbcUrl(cfg.db.url.value)).toOption.map(_.database).filter(_.nonEmpty).getOrElse("histmersion") / |value nonEmpty is not a member of com.histmersion.api.backup.Backup.PgTarget.Database.T
+298:28 [E007] 298 |      q.setString(1, target.database) / |Found:    (target.database : com.histmersion.api.backup.Backup.PgTarget.Database) / |Required: String
+300:44 [E008] 300 |        val quoted = "\"" + target.database.replace("\"", "\"\"") + "\"" / |value replace is not a member of com.histmersion.api.backup.Backup.PgTarget.Database
+
+## modules/server/src/main/scala/com/histmersion/server/views/WorkListView.scala
+16:44 [-] 16 |import com.histmersion.api.automation.{Goal => ApiGoal} / |The import renaming `a => b` is no longer supported ; use `a as b` instead / |This construct can be rewritten automatically under -rewrite -source future-migration.
+58:33 [E172] 58 |            .sortBy(_.item.value) / |No given instance of type Ordering[ / |  io.github.iltotore.iron.IronType[Int, / |    io.github.iltotore.iron.constraint.any.Pure] / |] was found for parameter ord of method sortBy in trait SeqOps. / |I found:
+
+## modules/server/src/main/scala/com/histmersion/domain/automation/scheduler/SchedulerService.scala
+295:50 [E008] 295 |          com.histmersion.server.agents.PlanPools.Autopilot(autopilotOn), / |value Autopilot is not a member of object com.histmersion.server.agents.PlanPools
+296:50 [E008] 296 |          com.histmersion.server.agents.PlanPools.Wanted(wanted.contains(Candidate.Pools(p.wire.value))), / |value Wanted is not a member of object com.histmersion.server.agents.PlanPools
+
+## modules/server/src/main/scala/com/histmersion/server/Composition.scala
+278:54 [E008] 278 |            com.histmersion.server.views.WorkListView.QueueName(Queue.Kind.Acquire.label.value), / |value QueueName is not a member of object com.histmersion.server.views.WorkListView
+329:30 [E134] 329 |    notes.foreach(n => scribe.info(n)) / |None of the overloaded alternatives of method info in trait LoggerSupport with types / | (features: scribe.LogFeature*) / |  (implicit pkg: sourcecode.Pkg, fileName: sourcecode.FileName, / |    name: sourcecode.Name, line: sourcecode.Line, mdc: scribe.mdc².MDC): Unit / | (message: => String)
+
+## modules/server/src/main/scala/com/histmersion/server/agents/ClaudeCodeClient.scala
+46:110 [E007] 46 |          CliProcess.privateFile(dir.resolve("mcp.json"), ClaudeCode.mcpConfig(rt.agentMcpUrl, Some(g.token)).noSpaces) / |      Found:    String / |      Required: com.histmersion.server.agents.CliProcess.PrivateFileText
+70:37 [E007] 70 |          rt.definitions.tools.map(_.value), / |Found:    io.github.iltotore.iron.IronType[String, / |  io.github.iltotore.iron.constraint.string.Match[("[a-z][a-z0-9_]*" : String)]] / |Required: com.histmersion.domain.automation.agents.ToolUse.Tool.T
+
+## modules/server/src/main/scala/com/histmersion/domain/automation/agents/Engine.scala
+255:36 [E007] 255 |          .getOrElse(Pipeline.parse(pipeline).map(_.roles).getOrElse(Nil)) / |Found:    (pipeline : com.histmersion.domain.automation.Pipeline.Wire) / |Required: com.histmersion.api.automation².Pipeline².Wire / |where:    Pipeline    is a object in package com.histmersion.domain.automation / |          Pipeline²   is a object in package com.histmersion.api.automation² / |          automation  is a package in package com.histmersion.domain
+
+## modules/server/src/main/scala/com/histmersion/server/OpsRoutes.scala
+38:46 [E008] 38 |        r <- w.workListView.list(WorkListView.QueueName(list.value), WorkListView.IncludeAll(all), g, j) / |value QueueName is not a member of object com.histmersion.server.views.WorkListView
+
+## modules/server/src/main/scala/com/histmersion/server/agents/BuiltinAi.scala
+41:87 [E007] 41 |  def plugins: List[Plugin] = entries.map(e => HostProvided(e.plugin, _.aiProviders.add(Registry.AddId(e.kind.wire.value), e))) / |Found:    Either[com.histmersion.plugin.Registry.AddResultPart1, Unit] / |Required: Either[com.histmersion.plugin.Plugin.RegisterResultPart1, Unit]
+
+## modules/server/src/main/scala/com/histmersion/server/agents/OpencodeRunClient.scala
+63:26 [E008] 63 |              CliOutcomes.ResultUser(call.user.value), / |value ResultUser is not a member of object com.histmersion.server.agents.CliOutcomes
+

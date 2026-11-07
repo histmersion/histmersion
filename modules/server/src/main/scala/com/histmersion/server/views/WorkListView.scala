@@ -13,7 +13,7 @@ import com.histmersion.domain.automation.worklists.QueueService
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.domain.library.acquisition.AcquireCheckService
 import com.histmersion.api.Api
-import com.histmersion.api.automation.{Goal => ApiGoal}
+import com.histmersion.api.automation.{Goal as ApiGoal}
 import com.histmersion.domain.automation.goals.GoalLinkRepo
 import com.histmersion.domain.library.acquisition.AcquireCheckRow
 import com.histmersion.api.library.Acquire
@@ -55,7 +55,7 @@ final class WorkListView(
             .of(items.map(i => AcquireCheckRow.Item(i.id.value)))
             .values
             .toList
-            .sortBy(_.item.value)
+            .sortBy[Int](_.item.value)
             .map(r =>
               Acquire.Checks.AcquireCheck(
                 Queue.QueueItem.Id(r.item.value),

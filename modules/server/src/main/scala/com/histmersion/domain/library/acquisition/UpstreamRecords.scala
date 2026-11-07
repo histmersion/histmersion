@@ -3,6 +3,21 @@ package com.histmersion.domain.library.acquisition
 import com.histmersion.api
 import com.histmersion.upstreams
 import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.Transformer
+
+private given pluginYearToWire: Transformer[com.histmersion.plugin.Year, api.catalogue.Year] = y => api.catalogue.Year(y.value.toLong)
+private given wireYearToPlugin: Transformer[api.catalogue.Year, com.histmersion.plugin.Year] = y => com.histmersion.plugin.Year(y.value.toInt)
+private given pluginAuthorToWire: Transformer[com.histmersion.plugin.WorkKey.Authors, api.library.AuthorName] = a => api.library.AuthorName(a.value)
+private given wireAuthorToPlugin: Transformer[api.library.AuthorName, com.histmersion.plugin.WorkKey.Authors] = a => com.histmersion.plugin.WorkKey.Authors(a.value)
+private given pluginLicenceToWire: Transformer[com.histmersion.plugin.Licence, api.library.WorkRef.OaLicence] = l => api.library.WorkRef.OaLicence(l.value)
+private given wireLicenceToPlugin: Transformer[api.library.WorkRef.OaLicence, com.histmersion.plugin.Licence] = l => com.histmersion.plugin.Licence(l.value)
+private given arxivToWire: Transformer[upstreams.ArxivId, api.library.FollowupRow.Arxiv] = a => api.library.FollowupRow.Arxiv(a.value)
+private given citedByToWire: Transformer[com.histmersion.domain.library.acquisition.FollowupRow.CitedBy, api.library.Acquire.CitedByCount] =
+  c => api.library.Acquire.CitedByCount(c.value)
+private given refAuthorToWire: Transformer[com.histmersion.domain.library.acquisition.RefRow.Authors, api.library.AuthorName] =
+  a => api.library.AuthorName(a.value)
+private given refRawToWire: Transformer[com.histmersion.domain.library.acquisition.RefRow.Raw, api.library.Refs.ReferenceText] =
+  r => api.library.Refs.ReferenceText(r.value)
 
 extension (w: com.histmersion.domain.library.acquisition.WorkRef)
   /** The work as the wire shows it, keyed by the citekey the corpus gives a work (not in the corpus yet). */

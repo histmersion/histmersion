@@ -49,7 +49,7 @@ trait ArticleService:
   def backlinksForSource(citekey: com.histmersion.domain.library.Citekey): List[Backlink]
 
   /** The articles citing any of `citekeys` (each once, with its first cited key), at most `limit`. */
-  def citing(citekeys: List[com.histmersion.domain.library.Citekey], limit: ArticleRepo.Limit): List[EventArticleRef]
+  def citing(citekeys: List[com.histmersion.domain.library.Citekey], limit: com.histmersion.PageSize): List[EventArticleRef]
 
   /** The sources the article cites, a dangling citekey with no title. */
   def sourcesCited(slug: Slug): List[CitedSource]
@@ -91,7 +91,7 @@ object ArticleService:
     def updatedAtMillis: Map[Slug, CitekeyMillis.Millis] = db.read(ArticleRepo.updatedAtMillis)
     def refs(slugs: List[Slug]): List[Article.Ref] = db.read(ArticleRepo.refs(slugs))
     def backlinksForSource(citekey: com.histmersion.domain.library.Citekey): List[Backlink] = db.read(ArticleRepo.backlinksForSource(citekey))
-    def citing(citekeys: List[com.histmersion.domain.library.Citekey], limit: ArticleRepo.Limit): List[EventArticleRef] =
+    def citing(citekeys: List[com.histmersion.domain.library.Citekey], limit: com.histmersion.PageSize): List[EventArticleRef] =
       if citekeys.isEmpty then Nil else db.read(ArticleRepo.citing(citekeys, limit))
     def sourcesCited(slug: Slug): List[CitedSource] = db.read(ArticleRepo.sourcesCited(slug))
     def versions(slug: Slug): List[Article.Version] = db.read(ArticleRepo.listVersions(slug))
@@ -177,7 +177,7 @@ object ArticleService:
         )
 
     def backlinksForSource(citekey: com.histmersion.domain.library.Citekey): List[Backlink] = Nil
-    def citing(citekeys: List[com.histmersion.domain.library.Citekey], limit: ArticleRepo.Limit): List[EventArticleRef] = Nil
+    def citing(citekeys: List[com.histmersion.domain.library.Citekey], limit: com.histmersion.PageSize): List[EventArticleRef] = Nil
     def sourcesCited(slug: Slug): List[CitedSource] = Nil
 
     def versions(slug: Slug): List[Article.Version] =

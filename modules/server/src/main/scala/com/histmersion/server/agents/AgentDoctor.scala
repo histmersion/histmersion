@@ -157,8 +157,9 @@ final class AgentDoctor(
   // ── the HTTP providers ─────────────────────────────────────────────────────────────────────────
 
   private def http(k: ProviderKind, models: List[ModelRef], online: Boolean): (List[DoctorCheck], List[ProviderDoctor.UpstreamModels]) =
-    val p = cfg
-      .provider(k.transformInto[com.histmersion.domain.automation.ProviderKind])
+    val p = com.histmersion.domain.automation.ProviderKind.values
+      .find(_.wire.value == k.wire.value)
+      .flatMap(cfg.provider)
       .getOrElse(throw IllegalStateException(s"${k.wire} has no HTTP config"))
     val used = models.nonEmpty
     val keyName = k match
@@ -344,7 +345,7 @@ final class AgentDoctor(
       List(
         agentTools,
         generated("codex"),
-        if cc.appServer then
+        if cc.appServer.value then
           ok("plan pool", "read with codex app-server (account/rateLimits/read); see histmersion agent quota")
         else warn("plan pool", "app-server reads are off: the ChatGPT plan's windows are not known")
       )

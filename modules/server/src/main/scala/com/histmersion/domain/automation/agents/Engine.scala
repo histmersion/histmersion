@@ -44,7 +44,7 @@ final class Engine(
   final private case class Queued(id: com.histmersion.domain.automation.Run.Id, work: com.histmersion.util.jobs.Carried[Unit])
   private val queue = LinkedBlockingQueue[Queued]()
 
-  private def jobKind: com.histmersion.util.jobs.Job.Kind = com.histmersion.util.jobs.Job.Kind(JobKind)
+  private def jobKind: com.histmersion.util.jobs.Job.Kind = com.histmersion.util.jobs.Job.Kind.assume(JobKind)
 
   private def rowStatus(s: RunState): com.histmersion.util.jobs.RunRow.Status = com.histmersion.util.jobs.RunRow.Status(s.wire.value)
   val llmSlots: Semaphore = Semaphore(math.max(1, cfg.maxLlmCallsInFlight.value))
@@ -252,17 +252,18 @@ final class Engine(
         val roles = ModelPicker
           .pausedRole(ModelPicker.Problem(error.value))
           .map(List(_))
-          .getOrElse(Pipeline.parse(pipeline).map(_.roles).getOrElse(Nil))
+          .getOrElse(Pipeline.parse(Pipeline.Wire(pipeline.value)).map(_.roles).getOrElse(Nil))
         val notes = List.newBuilder[String]
         // the run's own model for the role: its --model-for, else its --model
         val run = agents.runs.get(id)
-        def modelOf(r: Role) = run.fold(model)(_.modelFor(r))
+        def modelOf(r: Role) =
+          run.fold(model.map(m => AgentsControllers.ModelName(m.value)))(_.modelFor(r).map(m => AgentsControllers.ModelName(m.value)))
         val free = roles.find(r =>
           agents.picker
             .pick(
               r,
               modelOf(r),
-              now.toEpochMilli,
+              PlanQuotaRepo.EpochMillis(now.toEpochMilli),
               Some(PlanQuota.RefreshTrigger.Paused),
               n => notes += s"${r.wire}: $n"
             )

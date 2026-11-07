@@ -24,10 +24,10 @@ object EventsData:
       Lint
         .rule(Rule.Name(EventCorrectionConflict))
         .getOrElse(Rule(Rule.Name(EventCorrectionConflict), Rule.Description(EventCorrectionConflict)))
-    def report(context: CheckContext, maxItems: ItemLimit)(using CheckRun)(using DbCon): LintRuleReport =
+    def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using CheckRun)(using DbCon): LintRuleReport =
       Lint.report(
         rule,
         CorrectionRepo.conflictsIn().map((id, detail) => LintItem(com.histmersion.api.library.Citekey(id.value), detail)),
-        maxItems
+        Lint.ItemLimit(maxItems.value)
       )
 

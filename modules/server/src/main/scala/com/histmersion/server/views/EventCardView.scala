@@ -30,13 +30,10 @@ final class EventCardView(events: EventsControllers, pictures: com.histmersion.d
     events.patch(caller, id, p).map(page)
 
 object EventCardView:
-  type CitationCount = CitationCount.T
-  object CitationCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** An event's card: the catalogue's context (`context`), then the articles citing the sources that attest it. */
 
-  def cited(context: EventEntry => EventEntry, citing: (List[com.histmersion.domain.library.Citekey], com.histmersion.server.views.EventCardView.CitationCount) => List[EventArticleRef])(
+  def cited(context: EventEntry => EventEntry, citing: (List[com.histmersion.domain.library.Citekey], com.histmersion.PageSize) => List[EventArticleRef])(
       e: EventEntry
   ): EventEntry =
     val withContext = context(e)
-    withContext.modify(_.articles).setTo(citing(withContext.sources.map(s => com.histmersion.domain.library.Citekey.assume(s.citekey.value)), com.histmersion.server.views.EventCardView.CitationCount(10)))
+    withContext.modify(_.articles).setTo(citing(withContext.sources.map(s => com.histmersion.domain.library.Citekey.assume(s.citekey.value)), com.histmersion.PageSize(10)))

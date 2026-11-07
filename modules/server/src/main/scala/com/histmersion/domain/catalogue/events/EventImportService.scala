@@ -198,7 +198,7 @@ object EventImportService:
         .filter(_.nonEmpty)
         .distinct
         .map(com.histmersion.domain.catalogue.events.BEventRow.Names(_))
-      val wd = recs.flatMap(_.wikidata).headOption.map(w => HeldEvent.Wikidata(w.value))
+      val wd = recs.flatMap(_.wikidata).headOption.flatMap(w => HeldEvent.Wikidata.option(w.value))
       val catalogue = s.events.find(_.id == eventId).map(_.catalogue)
       def ownerIn(p: HeldEvent.Catalogue): Option[CatalogRecord] =
         val storedKeys = s.catalogueRecords.filter(_._1.value == eventId.value).map(_._2.key).toList

@@ -121,7 +121,7 @@ final class McpTools(
                   f,
                   java.time.Instant.now(h.clock),
                   in.limit.flatMap(com.histmersion.PageSize.option(_)),
-                  in.before.map(com.histmersion.server.views.JobListView.Cursor(_)),
+                  in.before.map(com.histmersion.api.Paging.Cursor(_)),
                   None
                 )
                 .fold(
@@ -131,7 +131,7 @@ final class McpTools(
                       js.toVector,
                       page,
                       f.qualifier.map(q => com.histmersion.api.library.Ingest.JobStatus(q.value)),
-                      Paging.olderLine(page, c => Paging.OlderLine.Text(s"call `job_status` again with the same filters and `before: \"$c\"`"))
+                      Paging.olderLine(page, c => Paging.OlderLine.Text(s"call `job_status` again with the same filters and `before: \"$c\"`")).map(t => com.histmersion.api.library.Ingest.JobAge(t.value))
                     )
                 )
             )

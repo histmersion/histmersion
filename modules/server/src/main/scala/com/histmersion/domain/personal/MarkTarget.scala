@@ -69,8 +69,8 @@ enum MarkTarget:
         lat = Some(lat.transformInto[com.histmersion.api.catalogue.Latitude.T]),
         lon = Some(lon.transformInto[com.histmersion.api.catalogue.Longitude.T]),
         zoom = zoom,
-        from = from.transformInto[Option[com.histmersion.api.catalogue.Year]],
-        to = to.transformInto[Option[com.histmersion.api.catalogue.Year]]
+        from = from.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+        to = to.map(y => com.histmersion.api.catalogue.Year(y.value.toLong))
       )
     case View(state, lat, lon, zoom, from, to) =>
       Target(
@@ -78,15 +78,15 @@ enum MarkTarget:
         lat = lat.transformInto[Option[com.histmersion.api.catalogue.Latitude]],
         lon = lon.transformInto[Option[com.histmersion.api.catalogue.Longitude]],
         zoom = zoom,
-        from = from.transformInto[Option[com.histmersion.api.catalogue.Year]],
-        to = to.transformInto[Option[com.histmersion.api.catalogue.Year]],
+        from = from.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+        to = to.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
         view = state
       )
     case Span(from, to) =>
       Target(
         MarkKind.Period,
-        from = Some(from.transformInto[com.histmersion.api.catalogue.Year.T]),
-        to = Some(to.transformInto[com.histmersion.api.catalogue.Year.T])
+        from = Some(com.histmersion.api.catalogue.Year(from.value.toLong)),
+        to = Some(com.histmersion.api.catalogue.Year(to.value.toLong))
       )
 
 object MarkTarget:
@@ -119,11 +119,11 @@ object MarkTarget:
           lat
             .zip(lon)
             .map((la, lo) =>
-              Point(la, lo, t.zoom, t.from.transformInto[Option[Year]], t.to.transformInto[Option[Year]])
+              Point(la, lo, t.zoom, t.from.map(y => Year(y.value.toInt)), t.to.map(y => Year(y.value.toInt)))
             )
         case MarkKind.View =>
-          Some(View(t.view, lat, lon, t.zoom, t.from.transformInto[Option[Year]], t.to.transformInto[Option[Year]]))
-        case _ => t.from.transformInto[Option[Year]].zip(t.to.transformInto[Option[Year]]).map(Span(_, _))
+          Some(View(t.view, lat, lon, t.zoom, t.from.map(y => Year(y.value.toInt)), t.to.map(y => Year(y.value.toInt))))
+        case _ => t.from.map(y => Year(y.value.toInt)).zip(t.to.map(y => Year(y.value.toInt))).map(Span(_, _))
     yield result
 
   /** A stored row's target; none when the row does not make one (a kind this version does not know). */
