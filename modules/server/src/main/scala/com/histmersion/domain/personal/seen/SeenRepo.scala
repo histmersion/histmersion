@@ -14,7 +14,7 @@ private[seen] object SeenRepo:
 
   def all(using DbCon): Map[SeenBoard, MarkTime] =
     sql"SELECT board, to_char(seen_at AT TIME ZONE 'UTC', $Iso) FROM ui_seen"
-      .query[(SeenBoard, String)]
+      .query[(SeenBoard, MarkTime.Iso)]
       .run()
       .map((b, at) => b -> MarkTime.parse(at))
       .toMap
@@ -25,5 +25,5 @@ private[seen] object SeenRepo:
     MarkTime.parse(
       sql"""INSERT INTO ui_seen (board, seen_at) VALUES ($board, coalesce($asked::timestamptz, now()))
             ON CONFLICT (board) DO UPDATE SET seen_at = greatest(ui_seen.seen_at, EXCLUDED.seen_at)
-            RETURNING to_char(seen_at AT TIME ZONE 'UTC', $Iso)""".query[String].run().head
+            RETURNING to_char(seen_at AT TIME ZONE 'UTC', $Iso)""".query[MarkTime.Iso].run().head
     )

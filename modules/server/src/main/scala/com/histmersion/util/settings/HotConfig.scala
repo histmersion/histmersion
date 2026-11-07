@@ -13,4 +13,4 @@ final case class HotConfig(app: AppConfig, loaded: LoadedConfig)
 
 object HotConfig:
   /** A config with no file behind it (a test's): it can be built from, not reloaded. */
-  def fixed(cfg: AppConfig): HotConfig = HotConfig(cfg, LoadedConfig(cfg, UserConfigFile(None, loaded = false)))
+  def fixed(cfg: AppConfig): HotConfig = HotConfig(cfg, LoadedConfig(cfg, UserConfigFile(None, loaded = UserConfigFile.Loaded(false))))

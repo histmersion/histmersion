@@ -13,15 +13,6 @@ import java.util.jar.{JarEntry, JarOutputStream}
   * first-party plugins only.
   */
 object PluginSetResource:
-  type JarEntryName = JarEntryName.T
-  object JarEntryName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JarEntryText = JarEntryText.T
-  object JarEntryText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-
   private val MetadataPath = "META-INF/native-image/com.histmersion/plugin-set/reachability-metadata.json"
   private val Metadata = s"""{\n  "resources": [ { "glob": "${PluginSet.Resource}" } ]\n}\n"""
 
@@ -29,7 +20,7 @@ object PluginSetResource:
   private val EntryTime = 315532800000L // 1980-01-01, the earliest a zip entry can carry
 
   /** The set on `loader`'s class path; `Right(None)` when there is none, `Left` when it does not parse. */
-  def load(loader: ClassLoader): Either[com.histmersion.util.plugins.PluginSetResource.Problem, Option[PluginSet]] =
+  def load(loader: ClassLoader): Either[PluginKit.Problem, Option[PluginSet]] =
     Option(loader.getResourceAsStream(PluginSet.Resource)) match
       case None     => Right(None)
       case Some(in) =>
@@ -42,7 +33,7 @@ object PluginSetResource:
   def writeJar(out: OutputStream, set: PluginSet): Unit =
     val jar = JarOutputStream(out)
     try
-      def entry(name: com.histmersion.util.plugins.PluginSetResource.JarEntryName, text: com.histmersion.util.plugins.PluginSetResource.JarEntryText): Unit =
+      def entry(name: String, text: String): Unit =
         val e = JarEntry(name)
         e.setTime(EntryTime)
         jar.putNextEntry(e)

@@ -23,26 +23,34 @@ final case class RecordTable(
     uid: Option[RecordTable.Uid],
     aliases: Option[AliasColumns]
 ):
-  private val uidCol = uid.getOrElse("NULL::uuid")
+  private val uidCol = uid.fold("NULL::uuid")(_.value)
+  private val keyCol = key.value
+  private val titleCol = title.value
+  private val tableName = table.value
 
-  private def byKeys(keys: List[com.histmersion.util.identity.RecordTable.Key])(using DbCon): List[(ItemKey, Option[ItemUid], Option[Title])] =
+  private def byKeys(keys: List[ItemKey])(using DbCon): List[(ItemKey, Option[ItemUid], Option[Title])] =
     if keys.isEmpty then Nil
     else
       Sql
-        .of(s"SELECT $key, $uidCol, $title FROM $table t WHERE $key = ANY(?::text[])", Param.A(keys))
+        .of(
+          Sql.Text(s"SELECT $keyCol, $uidCol, $titleCol FROM $tableName t WHERE $keyCol = ANY(?::text[])"),
+          Param.A(keys.map(k => Param.A.V(k.value)))
+        )
         .frag
         .query[(ItemKey, Option[ItemUid], Option[Title])]
         .run()
         .toList
 
   /** Old keys → (the key now, uid, title). */
-  private def byAliases(keys: List[com.histmersion.util.identity.RecordTable.Key])(using DbCon): Map[ItemKey, (ItemKey, Option[ItemUid], Option[Title])] =
+  private def byAliases(keys: List[ItemKey])(using DbCon): Map[ItemKey, (ItemKey, Option[ItemUid], Option[Title])] =
     aliases.filter(_ => keys.nonEmpty).fold(Map.empty) { a =>
       Sql
         .of(
-          s"""SELECT a.${a.alias}, $key, $uidCol, $title FROM ${a.table} a JOIN $table t ON $key = a.${a.target}
-              WHERE a.${a.alias} = ANY(?::text[])""",
-          Param.A(keys)
+          Sql.Text(
+            s"""SELECT a.${a.alias}, $keyCol, $uidCol, $titleCol FROM ${a.table} a JOIN $tableName t ON $keyCol = a.${a.target}
+              WHERE a.${a.alias} = ANY(?::text[])"""
+          ),
+          Param.A(keys.map(k => Param.A.V(k.value)))
         )
         .frag
         .query[(ItemKey, ItemKey, Option[ItemUid], Option[Title])]
@@ -55,8 +63,8 @@ final case class RecordTable(
     uid.filter(_ => uids.nonEmpty).fold(Map.empty) { col =>
       Sql
         .of(
-          s"SELECT $col, $key, $title FROM $table t WHERE $col = ANY(?::uuid[])",
-          Param.A(uids.toList.map(_.toString))
+          Sql.Text(s"SELECT ${col.value}, $keyCol, $titleCol FROM $tableName t WHERE ${col.value} = ANY(?::uuid[])"),
+          Param.A(uids.toList.map(u => Param.A.V(u.toString)))
         )
         .frag
         .query[(ItemUid, ItemKey, Option[Title])]
@@ -71,13 +79,15 @@ final case class RecordTable(
     else
       Sql
         .of(
-          s"""WITH RECURSIVE r(start, uid, hops) AS (
+          Sql.Text(
+            s"""WITH RECURSIVE r(start, uid, hops) AS (
                 SELECT alias_uid, uid, 1 FROM uid_aliases WHERE alias_uid = ANY(?::uuid[])
                 UNION ALL
                 SELECT r.start, a.uid, r.hops + 1 FROM r JOIN uid_aliases a ON a.alias_uid = r.uid
                  WHERE r.hops < ${RecordTable.MaxHops})
-              SELECT DISTINCT ON (start) start, uid FROM r ORDER BY start, hops DESC""",
-          Param.A(uids.toList.map(_.toString))
+              SELECT DISTINCT ON (start) start, uid FROM r ORDER BY start, hops DESC"""
+          ),
+          Param.A(uids.toList.map(u => Param.A.V(u.toString)))
         )
         .frag
         .query[(ItemUid, ItemUid)]
@@ -89,9 +99,11 @@ final case class RecordTable(
     else
       Sql
         .of(
-          s"""SELECT uid, to_char(deleted_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') FROM tombstones
-              WHERE uid = ANY(?::uuid[])""",
-          Param.A(uids.toList.map(_.toString))
+          Sql.Text(
+            s"""SELECT uid, to_char(deleted_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') FROM tombstones
+              WHERE uid = ANY(?::uuid[])"""
+          ),
+          Param.A(uids.toList.map(u => Param.A.V(u.toString)))
         )
         .frag
         .query[(ItemUid, String)]
@@ -100,10 +112,10 @@ final case class RecordTable(
         .toMap
 
   def resolve(k: ItemKey)(using DbCon): Either[com.histmersion.util.identity.RecordTable.Problem, ItemRef] =
-    byKeys(List(k.value)).headOption
+    byKeys(List(k)).headOption
       .map((_, u, _) => ItemRef(kind, k, u))
-      .orElse(byAliases(List(k.value)).get(k).map((_, u, _) => ItemRef(kind, k, u)))
-      .toRight(s"no ${kind.value} '${k.value}'")
+      .orElse(byAliases(List(k)).get(k).map((_, u, _) => ItemRef(kind, k, u)))
+      .toRight(RecordTable.Problem(s"no ${kind.value} '${k.value}'"))
 
   def describe(refs: Set[ItemRef])(using DbCon): Map[ItemRef, Described] =
     val (withUid, withoutUid) = refs.filter(_.kind == kind).partition(_.uid.isDefined)
@@ -127,9 +139,9 @@ final case class RecordTable(
                 .headOption
                 .map(at => ref -> Described(ref.key, None, RecordState.Deleted(at)))
     }
-    val keys = withoutUid.map(_.key.value).toList
+    val keys = withoutUid.map(_.key).toList
     val found = byKeys(keys).map((k, _, t) => k -> t).toMap
-    val renamed = byAliases(keys.filterNot(k => found.contains(ItemKey(k))))
+    val renamed = byAliases(keys.filterNot(k => found.contains(k)))
     val byKey = withoutUid.toList.flatMap { ref =>
       found
         .get(ref.key)

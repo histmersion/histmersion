@@ -10,15 +10,13 @@ import com.augustnagro.magnum.*
 
 /** The `read_marks` table. Takes the connection it runs on. */
 private[reading] object ReadingRepo:
-  type Column = Column.T
-  object Column extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  private def iso(col: com.histmersion.domain.personal.reading.ReadingRepo.Column): com.histmersion.domain.personal.MarkTime.Iso = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
+  private def iso(col: String): String = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
 
   private val Projection =
-    s"""SELECT m.target_kind, m.target_id, m.target_uid, m.target_label, ${iso(com.histmersion.domain.personal.reading.ReadingRepo.Column("m.read_at"))}, ${iso(com.histmersion.domain.personal.reading.ReadingRepo.Column("m.opened_at"))},
-               ${iso(com.histmersion.domain.personal.reading.ReadingRepo.Column("m.created_at"))}, ${iso(com.histmersion.domain.personal.reading.ReadingRepo.Column("m.updated_at"))}
+    s"""SELECT m.target_kind, m.target_id, m.target_uid, m.target_label, ${iso("m.read_at")}, ${iso("m.opened_at")},
+               ${iso("m.created_at")}, ${iso("m.updated_at")}
           FROM read_marks m"""
 
   def list(user: UserId, kind: Option[ItemKind], show: ReadingShow, size: PageSize)(using DbCon): List[MarkRow] =
@@ -26,17 +24,17 @@ private[reading] object ReadingRepo:
       case ReadingShow.Read   => (" AND m.read_at IS NOT NULL", " ORDER BY m.read_at DESC, m.id DESC")
       case ReadingShow.Opened => (" AND m.opened_at IS NOT NULL", " ORDER BY m.opened_at DESC, m.id DESC")
       case ReadingShow.All    => ("", " ORDER BY m.updated_at DESC, m.id DESC")
-    (Sql.of(s"$Projection WHERE m.user_id = ?", Param.S(user.value)) ++
-      kind.fold(Sql.empty)(k => Sql.of(" AND m.target_kind = ?", Param.S(k.value))) ++
-      Sql.raw(where + order) ++ Sql.of(" LIMIT ?", Param.I(size.value))).frag.query[MarkRow].run().toList
+    (Sql.of(Sql.Text(s"$Projection WHERE m.user_id = ?"), Param.S(Param.S.V(user.value))) ++
+      kind.fold(Sql.empty)(k => Sql.of(" AND m.target_kind = ?", Param.S(Param.S.V(k.value)))) ++
+      Sql.raw(where + order) ++ Sql.of(" LIMIT ?", Param.I(Param.I.V(size.value)))).frag.query[MarkRow].run().toList
 
   def get(user: UserId, ref: ItemRef)(using DbCon): Option[MarkRow] =
     Sql
       .of(
-        s"$Projection WHERE m.user_id = ? AND m.target_kind = ? AND m.target_id = ?",
-        Param.S(user.value),
-        Param.S(ref.kind.value),
-        Param.S(ref.key.value)
+        Sql.Text(s"$Projection WHERE m.user_id = ? AND m.target_kind = ? AND m.target_id = ?"),
+        Param.S(Param.S.V(user.value)),
+        Param.S(Param.S.V(ref.kind.value)),
+        Param.S(Param.S.V(ref.key.value))
       )
       .frag
       .query[MarkRow]
@@ -57,7 +55,7 @@ private[reading] object ReadingRepo:
       DbCon
   ): Unit =
     val stamp = at.iso
-    val readAt = Option.when(read)(stamp)
+    val readAt = Option.when(read.value)(stamp)
     sql"""INSERT INTO read_marks (user_id, target_kind, target_id, target_uid, target_label, read_at, created_at, updated_at)
           VALUES (${user.value}, ${ref.kind}, ${ref.key}, ${ref.uid}, $targetLabel, $readAt::timestamptz,
                   $stamp::timestamptz, $stamp::timestamptz)

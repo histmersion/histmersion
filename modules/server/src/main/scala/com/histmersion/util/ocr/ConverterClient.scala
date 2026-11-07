@@ -24,7 +24,7 @@ trait ConverterClient:
     * image codec of its own). A converter that cannot make one says so; the picture is then shown from its own bytes.
     */
   def thumbnail(bytes: com.histmersion.util.ocr.ConverterClient.DocumentBytes, filename: com.histmersion.util.ocr.ConverterClient.Filename, maxPx: com.histmersion.util.ocr.Pixels): Either[com.histmersion.util.ocr.ConverterClient.Problem, ConverterClient.Thumb] =
-    Left("this converter makes no thumbnails")
+    Left(Problem("this converter makes no thumbnails"))
 
 object ConverterClient:
   type DocumentBytes = DocumentBytes.T
@@ -55,7 +55,7 @@ object ConverterClient:
     object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What `/inspect` reports: all pages, and how many of them have no text layer. */
-  final case class PageCount(pages: PageCount.Pages, scanned: PageCount.Scanned = 0)
+  final case class PageCount(pages: PageCount.Pages, scanned: PageCount.Scanned = PageCount.Scanned(0))
 
   object PageCount:
     type Pages = Pages.T
@@ -71,9 +71,10 @@ object ConverterClient:
     val perPage = cfg.perPage.value
     val scaled = count
       .map { c =>
-        val scanned = math.max(0, math.min(c.scanned, c.pages)).toLong
-        val text = math.max(0, c.pages).toLong - scanned
-        if quality then c.pages.toLong * math.max(0, cfg.perPageQuality.value)
+        val pages = c.pages.value
+        val scanned = math.max(0, math.min(c.scanned.value, pages)).toLong
+        val text = math.max(0, pages).toLong - scanned
+        if quality.value then pages.toLong * math.max(0, cfg.perPageQuality.value)
         else text * math.max(0, perPage) + scanned * math.max(0, math.max(perPage, cfg.perScannedPage.value))
       }
       .getOrElse(0L)

@@ -63,7 +63,12 @@ object PersonalTools:
         .input[BookmarksInput]
         .handle(in =>
           personal
-            .listBookmarks(Caller.Local, in.kind, in.query, in.limit)
+            .listBookmarks(
+              Caller.Local,
+              in.kind.map(k => com.histmersion.api.ItemKind.Wire(k.value)),
+              in.query.map(q => com.histmersion.api.personal.PersonalApi.Search(q.value)),
+              in.limit.map(l => com.histmersion.api.Paging.Limit(l.value))
+            )
             .fold(McpOut.error, bs => ToolResult.text(PersonalMarkdown.bookmarks(bs)))
         )
     val notes =
@@ -77,12 +82,18 @@ object PersonalTools:
         )
         .input[NotesInput]
         .handle { in =>
-          in.id.map(_.trim).filter(_.nonEmpty) match
+          in.id.map(_.value.trim).filter(_.nonEmpty) match
             case Some(id) =>
-              personal.note(Caller.Local, id).fold(McpOut.error, n => ToolResult.text(PersonalMarkdown.note(n)))
+              personal.note(Caller.Local, com.histmersion.api.personal.Note.Id(id)).fold(McpOut.error, n => ToolResult.text(PersonalMarkdown.note(n)))
             case None =>
               personal
-                .listNotes(Caller.Local, in.kind, in.item, in.query, in.limit)
+                .listNotes(
+                  Caller.Local,
+                  in.kind.map(k => com.histmersion.api.ItemKind.Wire(k.value)),
+                  in.item.map(i => com.histmersion.api.personal.ItemKey(i.value)),
+                  in.query.map(q => com.histmersion.api.personal.PersonalApi.Search(q.value)),
+                  in.limit.map(l => com.histmersion.api.Paging.Limit(l.value))
+                )
                 .fold(McpOut.error, ns => ToolResult.text(PersonalMarkdown.notes(ns)))
         }
     List(bookmarks, notes)

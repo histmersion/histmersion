@@ -6,7 +6,7 @@ final case class SearchWords(words: List[SearchWords.Words]):
 
   def matches(texts: String*): Boolean =
     val all = texts.mkString(" ").toLowerCase
-    words.forall(all.contains)
+    words.forall(w => all.contains(w.value))
 
 object SearchWords:
   type Query = Query.T
@@ -18,4 +18,4 @@ object SearchWords:
   val Everything: SearchWords = SearchWords(Nil)
 
   def of(q: Option[com.histmersion.domain.personal.SearchWords.Query]): SearchWords =
-    SearchWords(q.toList.flatMap(_.toLowerCase.split("\\s+").toList).map(_.trim).filter(_.nonEmpty))
+    SearchWords(q.toList.flatMap(_.value.toLowerCase.split("\\s+").toList).map(_.trim).filter(_.nonEmpty).map(Words(_)))

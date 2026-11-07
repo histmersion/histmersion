@@ -11,9 +11,14 @@ object ReadingShow:
   object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  def parse(s: Option[com.histmersion.domain.personal.PersonalControllers.ShowMode]): Either[com.histmersion.domain.personal.PersonalControllers.ShowMode, ReadingShow] =
-    s.map(_.trim.toLowerCase)
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def parse(s: Option[Wire]): Either[Problem, ReadingShow] =
+    s.map(_.value.trim.toLowerCase)
       .filter(_.nonEmpty)
-      .fold(Right(Read))(t =>
-        values.find(_.wire == t).toRight(s"show '$t': one of ${values.map(_.wire).mkString(", ")}")
+      .fold[Either[Problem, ReadingShow]](Right(Read))(t =>
+        values
+          .find(_.wire.value == t)
+          .toRight(Problem(s"show '$t': one of ${values.map(_.wire.value).mkString(", ")}"))
       )

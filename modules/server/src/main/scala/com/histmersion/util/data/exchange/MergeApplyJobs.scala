@@ -2,7 +2,8 @@ package com.histmersion.util.data.exchange
 
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult, MergeJobState}
-import com.histmersion.util.jobs.{MergeApplyRuns, WorkCarrier}
+import com.histmersion.api.exchange.{Bundle, MergePlan}
+import com.histmersion.util.jobs.{Job, MergeApplyRuns, WorkCarrier}
 
 import java.util.concurrent.{CompletableFuture, TimeoutException, TimeUnit}
 import com.histmersion.api.Api
@@ -20,16 +21,18 @@ import com.histmersion.api.Api
 final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: WorkCarrier = WorkCarrier.none):
 
   /** Start `run` on its own thread and wait up to `waitSeconds` for it. */
-  def start(bundle: com.histmersion.Sha256, planHash: com.histmersion.util.data.exchange.MergeRow.PlanHash)(
-      run: () => Either[com.histmersion.util.jobs.Job.Id, MergeApplyResult]
+  def start(bundle: com.histmersion.Sha256, planHash: com.histmersion.Sha256)(
+      run: () => Either[MergeApplyRuns.Failure, MergeApplyResult]
   ): Either[Api.Error, MergeApplyJob] =
     synchronized {
       if runs.running then
         Left(
           Api.Error(
-            "a merge apply is still running — follow it with " +
-              "`GET /api/merge/apply/{job}` and apply again when it is done",
-            Some(Backup.CodeMaintenance)
+            Api.Error.Message(
+              "a merge apply is still running — follow it with " +
+                "`GET /api/merge/apply/{job}` and apply again when it is done"
+            ),
+            Some(Api.Error.Code(Backup.CodeMaintenance))
           )
         )
       else
@@ -41,7 +44,7 @@ final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: W
             .Try(run())
             .toEither
             .left
-            .map(e => s"merge apply crashed: ${e.getClass.getSimpleName}: ${e.getMessage}")
+            .map(e => MergeApplyRuns.Failure(s"merge apply crashed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
             .flatten
           try runs.finish(id, outcome)
           catch case e: Exception => scribe.error(s"merge apply $id: could not record its end: ${e.getMessage}", e)
@@ -52,8 +55,8 @@ final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: W
     }.map { (id, done) =>
       try { val _ = done.get(math.max(0, waitSeconds).toLong, TimeUnit.SECONDS) }
       catch case _: TimeoutException => ()
-      status(id).getOrElse(MergeApplyJob(id, MergeJobState.Running, bundle, planHash, 0))
+      status(id).getOrElse(MergeApplyJob(MergeApplyJob.Job(id.value), MergeJobState.Running, Bundle.Name(bundle.value), MergePlan.PlanHash(planHash.value), MergeApplyJob.ElapsedMs(0L)))
     }
 
-  def status(id: com.histmersion.util.jobs.Job.Id): Option[MergeApplyJob] = runs.status(id.trim)
+  def status(id: Job.Id): Option[MergeApplyJob] = runs.status(id)
 

@@ -11,10 +11,6 @@ import java.nio.charset.StandardCharsets
   * transit never reach the disk ([[BasemapLayers]]).
   */
 object Mvt:
-  type Bytes = Bytes.T
-  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FeatureBytes = FeatureBytes.T
-  object FeatureBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GeomType = GeomType.T
   object GeomType extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GeometryCommand = GeometryCommand.T
@@ -23,73 +19,38 @@ object Mvt:
   object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LayerBytes = LayerBytes.T
   object LayerBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayerNameText = LayerNameText.T
-  object LayerNameText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayerName = LayerName.T
+  object LayerName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Others = Others.T
   object Others extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PointX = PointX.T
   object PointX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PointY = PointY.T
   object PointY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = RangeHttp.Problem
+  val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type PropKey = PropKey.T
   object PropKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PropText = PropText.T
   object PropText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SignedNumber = SignedNumber.T
   object SignedNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TagIndex = TagIndex.T
-  object TagIndex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileBytes = TileBytes.T
-  object TileBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileBytes = PmTiles.PlainBytes
+  val TileBytes: PmTiles.PlainBytes.type = PmTiles.PlainBytes
   type Varint = Varint.T
   object Varint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A protobuf field: its number, wire type and raw bytes (the whole field, tag included), and for a length-delimited
     * field its payload's range in `src`.
     */
+  final private case class Field(number: Int, wireType: Int, start: Int, end: Int, payloadStart: Int)
 
-  type StringB = _root_.com.histmersion.util.basemap.Mvt.Bytes
-  val StringB: _root_.com.histmersion.util.basemap.Mvt.Bytes.type = _root_.com.histmersion.util.basemap.Mvt.Bytes
-  type NameB = _root_.com.histmersion.util.basemap.Mvt.Bytes
-  val NameB: _root_.com.histmersion.util.basemap.Mvt.Bytes.type = _root_.com.histmersion.util.basemap.Mvt.Bytes
-  type ThinLayerB = _root_.com.histmersion.util.basemap.Mvt.Bytes
-  val ThinLayerB: _root_.com.histmersion.util.basemap.Mvt.Bytes.type = _root_.com.histmersion.util.basemap.Mvt.Bytes
-  type WithPropsB = _root_.com.histmersion.util.basemap.Mvt.Bytes
-  val WithPropsB: _root_.com.histmersion.util.basemap.Mvt.Bytes.type = _root_.com.histmersion.util.basemap.Mvt.Bytes
-  type TagsB = _root_.com.histmersion.util.basemap.Mvt.Bytes
-  val TagsB: _root_.com.histmersion.util.basemap.Mvt.Bytes.type = _root_.com.histmersion.util.basemap.Mvt.Bytes
-  type StringValueB = _root_.com.histmersion.util.basemap.Mvt.Bytes
-  val StringValueB: _root_.com.histmersion.util.basemap.Mvt.Bytes.type = _root_.com.histmersion.util.basemap.Mvt.Bytes
-  type AnyValueB = _root_.com.histmersion.util.basemap.Mvt.Bytes
-  val AnyValueB: _root_.com.histmersion.util.basemap.Mvt.Bytes.type = _root_.com.histmersion.util.basemap.Mvt.Bytes
-
-  type LayerName = _root_.com.histmersion.util.basemap.Mvt.LayerNameText
-  val LayerName: _root_.com.histmersion.util.basemap.Mvt.LayerNameText.type = _root_.com.histmersion.util.basemap.Mvt.LayerNameText
-
-  final private case class Field(number: Field.Number, wireType: Field.WireType, start: Field.Start, end: Field.End, payloadStart: Field.PayloadStart)
-
-  object Field:
-    type Number = Number.T
-    object Number extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WireType = WireType.T
-    object WireType extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Start = com.histmersion.Offset
-    val Start: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
-    type End = com.histmersion.Offset
-    val End: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
-    type PayloadStart = com.histmersion.Offset
-    val PayloadStart: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
-
-  final private class Reader(val b: Array[Byte], from: Reader.From, until: Reader.Until):
-    var pos: com.histmersion.Offset = from // the next unread byte
+  final private class Reader(val b: Array[Byte], from: Int, until: Int):
+    var pos: Int = from // the next unread byte
 
     def hasNext: Boolean = pos < until
 
-    def varint(): com.histmersion.util.basemap.Mvt.Varint =
+    def varint(): Long =
       var result = 0L
       var shift = 0
       var more = true
@@ -122,32 +83,31 @@ object Mvt:
 
     private def check(): Unit = if pos > until then throw IllegalArgumentException("field past the end")
 
-  object Reader:
-    type From = From.T
-    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Until = Until.T
-    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-  private def fields(b: com.histmersion.util.basemap.Mvt.Bytes, from: com.histmersion.util.basemap.Mvt.Reader.From, until: com.histmersion.util.basemap.Mvt.Reader.Until): Vector[Field] =
+  private def fields(b: Array[Byte], from: Int, until: Int): Vector[Field] =
     val r = Reader(b, from, until)
     val out = Vector.newBuilder[Field]
     while r.hasNext do out += r.field()
     out.result()
 
-  private def string(b: com.histmersion.util.basemap.Mvt.StringB, f: Field): com.histmersion.util.basemap.Mvt.Text =
+  private def string(b: Array[Byte], f: Field): String =
     String(b, f.payloadStart, f.end - f.payloadStart, StandardCharsets.UTF_8)
 
   /** The names of a tile's layers, in order. */
-  def layerNames(tile: com.histmersion.util.basemap.Mvt.TileBytes): Either[com.histmersion.util.basemap.Mvt.Problem, List[com.histmersion.util.basemap.Mvt.LayerNameText]] =
-    attempt(fields(tile, 0, tile.length).filter(f => f.number == 3 && f.wireType == 2).map(l => name(tile, l)).toList)
+  def layerNames(tile: TileBytes): Either[Problem, List[LayerName]] =
+    val bytes = tile.value
+    attempt(
+      fields(bytes, 0, bytes.length)
+        .filter(f => f.number == 3 && f.wireType == 2)
+        .map(l => LayerName(name(bytes, l)))
+        .toList
+    )
 
-  private def name(b: com.histmersion.util.basemap.Mvt.NameB, layer: Field): com.histmersion.util.basemap.Mvt.LayerNameText =
+  private def name(b: Array[Byte], layer: Field): String =
     fields(b, layer.payloadStart, layer.end).find(f => f.number == 1 && f.wireType == 2).map(string(b, _)).getOrElse("")
 
-  private def attempt[A](a: => A): Either[com.histmersion.util.basemap.Mvt.Problem, A] =
+  private def attempt[A](a: => A): Either[Problem, A] =
     try Right(a)
-    catch case e: IllegalArgumentException => Left(s"malformed vector tile: ${e.getMessage}")
+    catch case e: IllegalArgumentException => Left(Problem(s"malformed vector tile: ${e.getMessage}"))
 
   /** Which features of one layer stay: those whose string `kind` is in `keep` (every kind when it is empty) and not in
     * `drop`. A feature without a `kind` stays unless `keep` is given. `props`: only these property keys stay (every one
@@ -156,14 +116,16 @@ object Mvt:
   final case class Rule(
       keep: Set[Rule.Keep] = Set.empty,
       drop: Set[Rule.Drop] = Set.empty,
-      none: Rule.None = false,
+      none: Rule.Empty = Rule.Empty(false),
       geoms: Set[Rule.Geoms] = Set.empty,
-      props: Option[Set[Rule.Props]] = None
+      props: Option[Set[Rule.Props]] = scala.None
   ):
-    def keeps(kind: Option[com.histmersion.util.basemap.Mvt.Kind]): Boolean = kind match
-      case None    => keep.isEmpty
-      case Some(k) => (keep.isEmpty || keep(k)) && !drop(k)
-    def all: Boolean = keep.isEmpty && drop.isEmpty && !none && geoms.isEmpty && props.isEmpty
+    private val keepKinds: Set[String] = keep.map(_.value)
+    private val dropKinds: Set[String] = drop.map(_.value)
+    def keeps(kind: Option[Kind]): Boolean = kind match
+      case scala.None => keep.isEmpty
+      case Some(k)    => (keep.isEmpty || keepKinds(k.value)) && !dropKinds(k.value)
+    def all: Boolean = keep.isEmpty && drop.isEmpty && !none.value && geoms.isEmpty && props.isEmpty
 
   object Rule:
 
@@ -171,8 +133,8 @@ object Mvt:
     object Keep extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Drop = Drop.T
     object Drop extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type None = None.T
-    object None extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Empty = Empty.T
+    object Empty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Geoms = Geoms.T
     object Geoms extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Props = Props.T
@@ -181,30 +143,36 @@ object Mvt:
   /** The tile with the layers `rules` names thinned by their [[Rule]] (a `none` rule drops the layer) and the others
     * kept when `others`, dropped otherwise. A layer left with no feature is dropped too.
     */
-  def filter(tile: com.histmersion.util.basemap.Mvt.TileBytes, rules: Map[com.histmersion.util.basemap.Mvt.LayerNameText, Rule], others: com.histmersion.util.basemap.Mvt.Others = false): Either[com.histmersion.util.basemap.Mvt.Problem, com.histmersion.util.basemap.Mvt.TileBytes] =
+  def filter(tile: TileBytes, rules: Map[LayerName, Rule], others: Others = Others(false)): Either[Problem, TileBytes] =
+    val bytes = tile.value
     attempt {
-      val out = ByteArrayOutputStream(tile.length)
-      fields(tile, 0, tile.length).foreach { f =>
+      val out = ByteArrayOutputStream(bytes.length)
+      fields(bytes, 0, bytes.length).foreach { f =>
         if f.number == 3 && f.wireType == 2 then
-          rules.get(name(tile, f)).orElse(Option.when(others)(Rule())).filterNot(_.none).foreach { rule =>
-            if rule.all then out.write(tile, f.start, f.end - f.start)
-            else thinLayer(tile, f, rule).foreach(l => writeField(out, 3, l))
+          rules.get(LayerName(name(bytes, f))).orElse(Option.when(others.value)(Rule())).filterNot(_.none.value).foreach { rule =>
+            if rule.all then out.write(bytes, f.start, f.end - f.start)
+            else thinLayer(bytes, f, rule).foreach(l => writeField(out, 3, l))
           }
       }
-      out.toByteArray
+      TileBytes(out.toByteArray)
     }
 
   /** One layer with only the features `rule` keeps; `None` when none is left. */
-  private def thinLayer(b: com.histmersion.util.basemap.Mvt.ThinLayerB, layer: Field, rule: Rule): Option[com.histmersion.util.basemap.Mvt.LayerBytes] =
+  private def thinLayer(b: Array[Byte], layer: Field, rule: Rule): Option[Array[Byte]] =
     val fs = fields(b, layer.payloadStart, layer.end)
     val keys = fs.filter(f => f.number == 3 && f.wireType == 2).map(string(b, _))
     val values = fs.filter(f => f.number == 4 && f.wireType == 2).map(v => stringValue(b, v))
     val kindKey = keys.indexOf("kind")
-    def kind(feature: Field): Option[com.histmersion.util.basemap.Mvt.Kind] =
-      if kindKey < 0 then None
+    val geomKinds = rule.geoms.map(_.value)
+    def kind(feature: Field): Option[Kind] =
+      if kindKey < 0 then scala.None
       else
-        tags(b, feature).grouped(2).collectFirst { case Vector(k, v) if k == kindKey => values.lift(v).flatten }.flatten
-    def geomType(feature: Field): com.histmersion.util.basemap.Mvt.GeomType =
+        tags(b, feature)
+          .grouped(2)
+          .collectFirst { case Vector(k, v) if k == kindKey => values.lift(v).flatten }
+          .flatten
+          .map(Kind(_))
+    def geomType(feature: Field): Int =
       fields(b, feature.payloadStart, feature.end)
         .find(f => f.number == 3 && f.wireType == 0)
         .map { f =>
@@ -212,15 +180,15 @@ object Mvt:
         }
         .getOrElse(0)
     def dropped(feature: Field): Boolean =
-      !rule.keeps(kind(feature)) || (rule.geoms.nonEmpty && !rule.geoms(geomType(feature)))
+      !rule.keeps(kind(feature)) || (geomKinds.nonEmpty && !geomKinds(geomType(feature)))
     val features = fs.filter(f => f.number == 2 && f.wireType == 2)
     val gone = features.filter(dropped).map(_.start).toSet
-    if gone.size == features.size then None
+    if gone.size == features.size then scala.None
     else
       rule.props match
-        case Some(wanted)         => Some(withProps(b, fs, keys, gone, wanted))
-        case None if gone.isEmpty => Some(b.slice(layer.payloadStart, layer.end))
-        case None                 =>
+        case Some(wanted)         => Some(withProps(b, fs, keys, gone, wanted.map(_.value)))
+        case scala.None if gone.isEmpty => Some(b.slice(layer.payloadStart, layer.end))
+        case scala.None                 =>
           val out = ByteArrayOutputStream(layer.end - layer.payloadStart)
           fs.foreach(f => if !gone(f.start) then out.write(b, f.start, f.end - f.start))
           Some(out.toByteArray)
@@ -230,12 +198,12 @@ object Mvt:
     * byte for byte.
     */
   private def withProps(
-      b: com.histmersion.util.basemap.Mvt.WithPropsB,
+      b: Array[Byte],
       fs: Vector[Field],
-      keys: Vector[com.histmersion.util.basemap.Mvt.PropKey],
-      gone: Set[com.histmersion.util.basemap.Mvt.TagIndex],
-      wanted: Set[com.histmersion.util.basemap.Mvt.PropKey]
-  ): com.histmersion.util.basemap.Mvt.FeatureBytes =
+      keys: Vector[String],
+      gone: Set[Int],
+      wanted: Set[String]
+  ): Array[Byte] =
     val valueFields = fs.filter(f => f.number == 4 && f.wireType == 2)
     val keyIndex = keys.indices.filter(i => wanted(keys(i))).zipWithIndex.toMap // old key index → new
     val values = scala.collection.mutable.LinkedHashMap.empty[Int, Int] // old value index → new
@@ -266,25 +234,25 @@ object Mvt:
     out.toByteArray
 
   /** A feature's packed `tags` (key index, value index, …). */
-  private def tags(b: com.histmersion.util.basemap.Mvt.TagsB, feature: Field): Vector[com.histmersion.util.basemap.Mvt.TagIndex] =
+  private def tags(b: Array[Byte], feature: Field): Vector[Int] =
     fields(b, feature.payloadStart, feature.end).find(f => f.number == 2 && f.wireType == 2) match
-      case None    => Vector.empty
-      case Some(t) =>
+      case scala.None => Vector.empty
+      case Some(t)    =>
         val r = Reader(b, t.payloadStart, t.end)
         val out = Vector.newBuilder[Int]
         while r.hasNext do out += r.varint().toInt
         out.result()
 
   /** A `Value`'s string, when it is one (field 1). */
-  private def stringValue(b: com.histmersion.util.basemap.Mvt.StringValueB, v: Field): Option[com.histmersion.util.basemap.Mvt.PropText] =
+  private def stringValue(b: Array[Byte], v: Field): Option[String] =
     fields(b, v.payloadStart, v.end).find(f => f.number == 1 && f.wireType == 2).map(string(b, _))
 
-  private def writeField(out: ByteArrayOutputStream, number: com.histmersion.util.basemap.Mvt.Field.Number, payload: com.histmersion.util.basemap.Mvt.Bytes): Unit =
+  private def writeField(out: ByteArrayOutputStream, number: Int, payload: Array[Byte]): Unit =
     writeVarint(out, (number.toLong << 3) | 2)
     writeVarint(out, payload.length.toLong)
     out.write(payload)
 
-  private def writeVarint(out: ByteArrayOutputStream, v: com.histmersion.util.basemap.Mvt.Varint): Unit =
+  private def writeVarint(out: ByteArrayOutputStream, v: Long): Unit =
     var x = v // seven bits at a time
     while (x & ~0x7fL) != 0 do
       out.write(((x & 0x7f) | 0x80).toInt)
@@ -296,26 +264,26 @@ object Mvt:
   /** A layer of `features` (each: its geometry type 1–3, its command-encoded geometry, its string properties). Extent
     * 4096, version 2.
     */
-  def layer(name: com.histmersion.util.basemap.Mvt.LayerName, features: List[(com.histmersion.util.basemap.Mvt.GeomType, Vector[com.histmersion.util.basemap.Mvt.TagIndex], Map[com.histmersion.util.basemap.Mvt.PropKey, com.histmersion.util.basemap.Mvt.PropText])]): com.histmersion.util.basemap.Mvt.LayerBytes =
-    typedLayer(name, features.map((g, c, p) => (g, c, p.toList)))
+  def layer(name: LayerName, features: List[(GeomType, Vector[GeometryCommand], Map[PropKey, PropText])]): LayerBytes =
+    typedLayer(name, features.map((g, c, p) => (g, c, p.toList.map((k, v) => (k, v.value: String | Long)))))
 
   /** The same with text or whole-number properties (a number as `sint_value`, as the Protomaps builds store
     * `min_zoom`), in the order given.
     */
-  def typedLayer(name: com.histmersion.util.basemap.Mvt.LayerNameText, features: List[(com.histmersion.util.basemap.Mvt.GeomType, Vector[com.histmersion.util.basemap.Mvt.TagIndex], List[(com.histmersion.util.basemap.Mvt.PropKey, String | Long)])]): com.histmersion.util.basemap.Mvt.LayerBytes =
-    val keys = features.flatMap(_._3.map(_._1)).distinct.toVector
+  def typedLayer(name: LayerName, features: List[(GeomType, Vector[GeometryCommand], List[(PropKey, String | Long)])]): LayerBytes =
+    val keys = features.flatMap(_._3.map(_._1.value)).distinct.toVector
     val values = features.flatMap(_._3.map(_._2)).distinct.toVector
     val out = ByteArrayOutputStream()
     writeVarint(out, (15L << 3) | 0); writeVarint(out, 2)
-    writeField(out, 1, name.getBytes(StandardCharsets.UTF_8))
+    writeField(out, 1, name.value.getBytes(StandardCharsets.UTF_8))
     features.foreach { (gt, geom, props) =>
       val f = ByteArrayOutputStream()
       val t = ByteArrayOutputStream()
-      props.foreach { (k, v) => writeVarint(t, keys.indexOf(k).toLong); writeVarint(t, values.indexOf(v).toLong) }
+      props.foreach { (k, v) => writeVarint(t, keys.indexOf(k.value).toLong); writeVarint(t, values.indexOf(v).toLong) }
       writeField(f, 2, t.toByteArray)
-      writeVarint(f, (3L << 3) | 0); writeVarint(f, gt.toLong)
+      writeVarint(f, (3L << 3) | 0); writeVarint(f, gt.value.toLong)
       val g = ByteArrayOutputStream()
-      geom.foreach(c => writeVarint(g, c.toLong & 0xffffffffL))
+      geom.foreach(c => writeVarint(g, c.value.toLong & 0xffffffffL))
       writeField(f, 4, g.toByteArray)
       writeField(out, 2, f.toByteArray)
     }
@@ -324,72 +292,79 @@ object Mvt:
       val vb = ByteArrayOutputStream()
       v match
         case s: String => writeField(vb, 1, s.getBytes(StandardCharsets.UTF_8))
-        case n: Long   => writeVarint(vb, (6L << 3) | 0); writeVarint(vb, zigzag(n))
+        case n: Long   => writeVarint(vb, (6L << 3) | 0); writeVarint(vb, zig(n))
       writeField(out, 4, vb.toByteArray)
     }
     writeVarint(out, (5L << 3) | 0); writeVarint(out, 4096)
-    out.toByteArray
+    LayerBytes(out.toByteArray)
 
   /** Protobuf's zig-zag encoding of a signed number (geometry deltas, `sint_value`). Pure. */
-  def zigzag(n: com.histmersion.util.basemap.Mvt.SignedNumber): com.histmersion.util.basemap.Mvt.Varint = (n << 1) ^ (n >> 63)
+  def zigzag(n: SignedNumber): Varint = Varint(zig(n.value))
+
+  private def zig(n: Long): Long = (n << 1) ^ (n >> 63)
 
   /** A point's geometry commands: MoveTo(1) and its zig-zagged position. Pure. */
-  def pointGeometry(x: com.histmersion.util.basemap.Mvt.PointX, y: com.histmersion.util.basemap.Mvt.PointY): Vector[com.histmersion.util.basemap.Mvt.GeometryCommand] = Vector(9, zigzag(x).toInt, zigzag(y).toInt)
+  def pointGeometry(x: PointX, y: PointY): Vector[GeometryCommand] =
+    Vector(GeometryCommand(9), GeometryCommand(zig(x.value.toLong).toInt), GeometryCommand(zig(y.value.toLong).toInt))
 
   /** A (multi)line's geometry commands: per part MoveTo its first point, LineTo the rest — positions as deltas from the
     * previous point, parts of fewer than two points skipped. Pure.
     */
-  def lineGeometry(parts: Seq[Seq[(com.histmersion.util.basemap.Mvt.PointX, com.histmersion.util.basemap.Mvt.PointY)]]): Vector[com.histmersion.util.basemap.Mvt.GeometryCommand] =
+  def lineGeometry(parts: Seq[Seq[(PointX, PointY)]]): Vector[GeometryCommand] =
     val out = Vector.newBuilder[Int]
     // `var`s: the cursor the deltas are taken from, carried across parts as the spec requires
     var cx = 0
     var cy = 0
     parts.filter(_.size >= 2).foreach { part =>
-      val (x0, y0) = part.head
-      out += 9; out += zigzag(x0 - cx).toInt; out += zigzag(y0 - cy).toInt
+      val x0 = part.head._1.value
+      val y0 = part.head._2.value
+      out += 9; out += zig(x0 - cx).toInt; out += zig(y0 - cy).toInt
       cx = x0; cy = y0
       out += (2 | ((part.size - 1) << 3))
-      part.tail.foreach { (x, y) =>
-        out += zigzag(x - cx).toInt; out += zigzag(y - cy).toInt
+      part.tail.foreach { (px, py) =>
+        val x = px.value
+        val y = py.value
+        out += zig(x - cx).toInt; out += zig(y - cy).toInt
         cx = x; cy = y
       }
     }
-    out.result()
+    out.result().map(GeometryCommand(_))
 
   /** A tile of encoded layers. */
-  def tile(layers: List[com.histmersion.util.basemap.Mvt.LayerBytes]): com.histmersion.util.basemap.Mvt.TileBytes =
+  def tile(layers: List[LayerBytes]): TileBytes =
     val out = ByteArrayOutputStream()
-    layers.foreach(writeField(out, 3, _))
-    out.toByteArray
+    layers.foreach(l => writeField(out, 3, l.value))
+    TileBytes(out.toByteArray)
 
   /** Every feature of every layer: its layer, geometry type (1 point, 2 line, 3 polygon) and properties as text
     * (numbers and booleans written out) — what the measuring tools and the tests read. Pure.
     */
-  def features(tile: com.histmersion.util.basemap.Mvt.TileBytes): Either[com.histmersion.util.basemap.Mvt.Problem, List[(com.histmersion.util.basemap.Mvt.LayerNameText, com.histmersion.util.basemap.Mvt.GeomType, Map[com.histmersion.util.basemap.Mvt.PropKey, com.histmersion.util.basemap.Mvt.PropText])]] =
+  def features(tile: TileBytes): Either[Problem, List[(LayerName, GeomType, Map[PropKey, PropText])]] =
+    val bytes = tile.value
     attempt {
-      fields(tile, 0, tile.length).filter(f => f.number == 3 && f.wireType == 2).toList.flatMap { l =>
-        val fs = fields(tile, l.payloadStart, l.end)
-        val keys = fs.filter(f => f.number == 3 && f.wireType == 2).map(string(tile, _))
-        val values = fs.filter(f => f.number == 4 && f.wireType == 2).map(v => anyValue(tile, v))
-        val ln = name(tile, l)
+      fields(bytes, 0, bytes.length).filter(f => f.number == 3 && f.wireType == 2).toList.flatMap { l =>
+        val fs = fields(bytes, l.payloadStart, l.end)
+        val keys = fs.filter(f => f.number == 3 && f.wireType == 2).map(string(bytes, _))
+        val values = fs.filter(f => f.number == 4 && f.wireType == 2).map(v => anyValue(bytes, v))
+        val ln = name(bytes, l)
         fs.filter(f => f.number == 2 && f.wireType == 2).toList.map { f =>
-          val gt = fields(tile, f.payloadStart, f.end)
+          val gt = fields(bytes, f.payloadStart, f.end)
             .find(x => x.number == 3 && x.wireType == 0)
             .map { x =>
-              val r = Reader(tile, x.start, x.end); r.varint(); r.varint().toInt
+              val r = Reader(bytes, x.start, x.end); r.varint(); r.varint().toInt
             }
             .getOrElse(0)
-          val props = tags(tile, f)
+          val props = tags(bytes, f)
             .grouped(2)
-            .collect { case Vector(k, v) => keys.lift(k).getOrElse("?") -> values.lift(v).getOrElse("") }
+            .collect { case Vector(k, v) => PropKey(keys.lift(k).getOrElse("?")) -> PropText(values.lift(v).getOrElse("")) }
             .toMap
-          (ln, gt, props)
+          (LayerName(ln), GeomType(gt), props)
         }
       }
     }
 
   /** A `Value` as text, whatever its type. */
-  private def anyValue(b: com.histmersion.util.basemap.Mvt.AnyValueB, v: Field): com.histmersion.util.basemap.Mvt.PropText =
+  private def anyValue(b: Array[Byte], v: Field): String =
     fields(b, v.payloadStart, v.end).headOption.fold("") { f =>
       f.number match
         case 1 => string(b, f)
@@ -412,19 +387,21 @@ object Mvt:
     }
 
   /** The kinds (string `kind` values) of one layer's features — what a test or a size report reads. */
-  def kinds(tile: com.histmersion.util.basemap.Mvt.TileBytes, layerName: com.histmersion.util.basemap.Mvt.LayerNameText): Either[com.histmersion.util.basemap.Mvt.Problem, List[com.histmersion.util.basemap.Mvt.Kind]] =
+  def kinds(tile: TileBytes, layerName: LayerName): Either[Problem, List[Kind]] =
+    val bytes = tile.value
     attempt {
-      fields(tile, 0, tile.length)
+      fields(bytes, 0, bytes.length)
         .filter(f => f.number == 3 && f.wireType == 2)
-        .filter(l => name(tile, l) == layerName)
+        .filter(l => name(bytes, l) == layerName.value)
         .flatMap { l =>
-          val fs = fields(tile, l.payloadStart, l.end)
-          val keys = fs.filter(f => f.number == 3 && f.wireType == 2).map(string(tile, _))
-          val values = fs.filter(f => f.number == 4 && f.wireType == 2).map(v => stringValue(tile, v))
+          val fs = fields(bytes, l.payloadStart, l.end)
+          val keys = fs.filter(f => f.number == 3 && f.wireType == 2).map(string(bytes, _))
+          val values = fs.filter(f => f.number == 4 && f.wireType == 2).map(v => stringValue(bytes, v))
           val k = keys.indexOf("kind")
           fs.filter(f => f.number == 2 && f.wireType == 2).flatMap { f =>
-            tags(tile, f).grouped(2).collectFirst { case Vector(kk, v) if kk == k => values.lift(v).flatten }.flatten
+            tags(bytes, f).grouped(2).collectFirst { case Vector(kk, v) if kk == k => values.lift(v).flatten }.flatten
           }
         }
         .toList
+        .map(Kind(_))
     }

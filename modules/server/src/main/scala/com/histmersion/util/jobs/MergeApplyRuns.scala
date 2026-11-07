@@ -3,10 +3,12 @@ package com.histmersion.util.jobs
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.api.jobs.JobState
-import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult}
+import com.histmersion.api.exchange.{Bundle, MergeApplyJob, MergeApplyResult, MergePlan}
+import com.histmersion.util.data.exchange.{MergeRepo, MergeRow}
 
 import hearth.kindlings.optics.syntax.*
 
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
 
@@ -19,73 +21,55 @@ trait MergeApplyRuns:
   def running: Boolean
 
   /** A new running row for the bundle and plan; its id. */
-  def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.Run.Bundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.Run.PlanHash): com.histmersion.util.jobs.Job.Id
+  def start(bundle: com.histmersion.Sha256, planHash: com.histmersion.Sha256): Job.Id
 
   /** How the run ended; a row a restart already failed is left as it is. */
-  def finish(id: com.histmersion.util.jobs.Job.Id, outcome: Either[com.histmersion.util.jobs.MergeApplyRuns.FinishOutcomePart1, MergeApplyResult]): Unit
+  def finish(id: Job.Id, outcome: Either[MergeApplyRuns.Failure, MergeApplyResult]): Unit
 
   /** One merge apply as the API answers it; `None` for an unknown id (or another kind of job). */
-  def status(id: com.histmersion.util.jobs.Job.Id): Option[MergeApplyJob]
+  def status(id: Job.Id): Option[MergeApplyJob]
 
 object MergeApplyRuns:
-  type FinishOutcomePart1 = FinishOutcomePart1.T
-  object FinishOutcomePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  /** Why a merge apply failed, as the `jobs` row keeps it. */
+  type Failure = Failure.T
+  object Failure extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(ds: DataSource): MergeApplyRuns = Implementation(ds)
 
   final private class Implementation(ds: DataSource) extends MergeApplyRuns:
     def running: Boolean = Transactor(ds).read(JobRepo.mergeApplyRunning)
-    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.Run.Bundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.Run.PlanHash): com.histmersion.util.jobs.Job.Id =
-      Transactor(ds).transact(JobRepo.startMergeApply(bundle, planHash))
-    def finish(id: com.histmersion.util.jobs.Job.Id, outcome: Either[com.histmersion.util.jobs.MergeApplyRuns.Implementation.FinishOutcomePart1, MergeApplyResult]): Unit =
-      Transactor(ds).transact(JobRepo.finishMergeApply(id, outcome))
-    def status(id: com.histmersion.util.jobs.Job.Id): Option[MergeApplyJob] = Transactor(ds).read(JobRepo.mergeApply(id))
-
-  object Implementation:
-    type FinishOutcomePart1 = FinishOutcomePart1.T
-    object FinishOutcomePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    def start(bundle: com.histmersion.Sha256, planHash: com.histmersion.Sha256): Job.Id =
+      Transactor(ds).transact(JobRepo.startMergeApply(MergeRepo.BundleName(bundle.value), MergeRow.PlanHash(planHash.value)))
+    def finish(id: Job.Id, outcome: Either[MergeApplyRuns.Failure, MergeApplyResult]): Unit =
+      Transactor(ds).transact(JobRepo.finishMergeApply(id, outcome.left.map(f => JobRepo.Problem(f.value))))
+    def status(id: Job.Id): Option[MergeApplyJob] = Transactor(ds).read(JobRepo.mergeApply(id))
 
   /** One run as the in-memory twin keeps it. */
-  final case class Run(bundle: Run.Bundle, planHash: Run.PlanHash, outcome: Option[Either[Run.OutcomePart1, MergeApplyResult]])
-
-  object Run:
-    type Bundle = Bundle.T
-    object Bundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PlanHash = PlanHash.T
-    object PlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OutcomePart1 = OutcomePart1.T
-    object OutcomePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class Run(bundle: com.histmersion.Sha256, planHash: com.histmersion.Sha256, outcome: Option[Either[MergeApplyRuns.Failure, MergeApplyResult]])
 
   /** The rows in memory, keyed by id; ids are numbered in start order. */
-  final class InMemory(state: AtomicReference[Map[InMemory.StateKey, Run]] = AtomicReference(Map.empty[String, Run]))
+  final class InMemory(state: AtomicReference[Map[Job.Id, Run]] = AtomicReference(Map.empty[Job.Id, Run]))
       extends MergeApplyRuns:
+    private def idOf(n: Int): Job.Id = Job.Id.assume(UUID(0L, n.toLong).toString)
+
     def running: Boolean = state.get().values.exists(_.outcome.isEmpty)
 
-    def start(bundle: com.histmersion.util.jobs.MergeApplyRuns.InMemory.StartBundle, planHash: com.histmersion.util.jobs.MergeApplyRuns.InMemory.StartPlanHash): com.histmersion.util.jobs.Job.Id =
-      val next = state.updateAndGet(m => m + (s"merge-apply-${m.size + 1}" -> Run(bundle, planHash, None)))
-      s"merge-apply-${next.size}"
+    def start(bundle: com.histmersion.Sha256, planHash: com.histmersion.Sha256): Job.Id =
+      val next = state.updateAndGet(m => m + (idOf(m.size + 1) -> Run(bundle, planHash, None)))
+      idOf(next.size)
 
-    def finish(id: com.histmersion.util.jobs.Job.Id, outcome: Either[com.histmersion.util.jobs.MergeApplyRuns.InMemory.FinishOutcomePart1, MergeApplyResult]): Unit =
+    def finish(id: Job.Id, outcome: Either[MergeApplyRuns.Failure, MergeApplyResult]): Unit =
       val _ = state.updateAndGet(m =>
         m.get(id).filter(_.outcome.isEmpty).fold(m)(r => m + (id -> r.modify(_.outcome).setTo(Some(outcome))))
       )
 
-    def status(id: com.histmersion.util.jobs.Job.Id): Option[MergeApplyJob] =
-      state.get().get(id.trim).map { r =>
+    def status(id: Job.Id): Option[MergeApplyJob] =
+      state.get().get(id).map { r =>
+        val job = MergeApplyJob.Job(id.value)
+        val bundle = Bundle.Name(r.bundle.value)
+        val plan = MergePlan.PlanHash(r.planHash.value)
         r.outcome match
-          case None =>
-            MergeApplyJob(id.trim, com.histmersion.api.exchange.MergeJobState.Running, r.bundle, r.planHash, 0)
-          case Some(Right(a)) => MergeApplyJob.of(id.trim, JobState.Done, r.bundle, r.planHash, 0, None, Some(a))
-          case Some(Left(e))  => MergeApplyJob.of(id.trim, JobState.Failed, r.bundle, r.planHash, 0, Some(e), None)
+          case None => MergeApplyJob(job, com.histmersion.api.exchange.MergeJobState.Running, bundle, plan, MergeApplyJob.ElapsedMs(0L))
+          case Some(Right(a)) => MergeApplyJob.of(job, JobState.Done, bundle, plan, MergeApplyJob.ElapsedMs(0L), None, Some(a))
+          case Some(Left(e))  => MergeApplyJob.of(job, JobState.Failed, bundle, plan, MergeApplyJob.ElapsedMs(0L), Some(MergeApplyJob.Error(e.value)), None)
       }
-
-  object InMemory:
-    type StateKey = StateKey.T
-    object StateKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-    type StartBundle = _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.Bundle
-    val StartBundle: _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.Bundle.type = _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.Bundle
-    type StartPlanHash = _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.PlanHash
-    val StartPlanHash: _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.PlanHash.type = _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.PlanHash
-    type FinishOutcomePart1 = FinishOutcomePart1.T
-    object FinishOutcomePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

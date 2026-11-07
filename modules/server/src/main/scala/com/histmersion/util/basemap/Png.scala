@@ -5,43 +5,39 @@ import java.util.zip.{CRC32, Deflater, Inflater}
 
 /** PNG, as much as the relief needs: encoding RGB tiles, decoding 8-bit RGB(A) non-interlaced ones. Pure. */
 object Png:
-  type ChunkPayload = ChunkPayload.T
-  object ChunkPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChunkType = ChunkType.T
-  object ChunkType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CompressionLevel = CompressionLevel.T
   object CompressionLevel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Height = Height.T
-  object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Pixels = Pixels.T
-  object Pixels extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PngBytes = PngBytes.T
-  object PngBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Width = Width.T
-  object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-  type DecodeB = _root_.com.histmersion.util.basemap.Png.PngBytes
-  val DecodeB: _root_.com.histmersion.util.basemap.Png.PngBytes.type = _root_.com.histmersion.util.basemap.Png.PngBytes
-
+  type Height = Vp8l.Image.Height
+  val Height: Vp8l.Image.Height.type = Vp8l.Image.Height
+  type Pixels = Vp8l.Image.Pixels
+  val Pixels: Vp8l.Image.Pixels.type = Vp8l.Image.Pixels
+  type PngBytes = PmTiles.TileBytes
+  val PngBytes: PmTiles.TileBytes.type = PmTiles.TileBytes
+  type Problem = Vp8l.Problem
+  val Problem: Vp8l.Problem.type = Vp8l.Problem
+  type Width = Vp8l.Image.Width
+  val Width: Vp8l.Image.Width.type = Vp8l.Image.Width
 
   private val Signature = Array[Byte](0x89.toByte, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a)
 
-  def isPng(b: com.histmersion.util.basemap.Png.PngBytes): Boolean = b.length >= 8 && b.take(8).sameElements(Signature)
+  def isPng(b: PngBytes): Boolean =
+    val a: Array[Byte] = b.value
+    a.length >= 8 && a.take(8).sameElements(Signature)
 
   /** An RGB PNG of `px` (`0x??RRGGBB`, row-major, `w` × `h`), each row filtered by its left neighbour. */
-  def encodeRgb(w: com.histmersion.util.basemap.Png.Width, h: com.histmersion.util.basemap.Png.Height, px: com.histmersion.util.basemap.Png.Pixels, level: com.histmersion.util.basemap.Png.CompressionLevel = 4): com.histmersion.util.basemap.Png.PngBytes =
-    val raw = new Array[Byte](h * (1 + 3 * w))
+  def encodeRgb(w: Width, h: Height, px: Pixels, level: CompressionLevel = CompressionLevel(4)): PngBytes =
+    val width: Int = w.value
+    val height: Int = h.value
+    val pixels: Array[Int] = px.value
+    val raw = new Array[Byte](height * (1 + 3 * width))
     var y = 0
-    while y < h do
-      val row = y * (1 + 3 * w)
+    while y < height do
+      val row = y * (1 + 3 * width)
       raw(row) = 1 // filter: Sub
       var x = 0
       var pr, pg, pb = 0
-      while x < w do
-        val p = px(y * w + x)
+      while x < width do
+        val p = pixels(y * width + x)
         val r = (p >> 16) & 0xff
         val g = (p >> 8) & 0xff
         val b = p & 0xff
@@ -52,7 +48,7 @@ object Png:
         pr = r; pg = g; pb = b
         x += 1
       y += 1
-    val d = Deflater(level)
+    val d = Deflater(level.value)
     d.setInput(raw)
     d.finish()
     val z = ByteArrayOutputStream(raw.length / 4)
@@ -65,8 +61,8 @@ object Png:
     out.write(Signature)
     val ihdr = java.nio.ByteBuffer
       .allocate(13)
-      .putInt(w)
-      .putInt(h)
+      .putInt(width)
+      .putInt(height)
       .put(8.toByte)
       .put(2.toByte)
       .put(0.toByte)
@@ -76,9 +72,9 @@ object Png:
     chunk(out, "IHDR", ihdr)
     chunk(out, "IDAT", z.toByteArray)
     chunk(out, "IEND", Array.emptyByteArray)
-    out.toByteArray
+    PngBytes(out.toByteArray)
 
-  private def chunk(out: ByteArrayOutputStream, kind: com.histmersion.util.basemap.Png.ChunkType, data: com.histmersion.util.basemap.Png.ChunkPayload): Unit =
+  private def chunk(out: ByteArrayOutputStream, kind: String, data: Array[Byte]): Unit =
     val t = kind.getBytes("US-ASCII")
     out.write(java.nio.ByteBuffer.allocate(4).putInt(data.length).array())
     out.write(t)
@@ -89,9 +85,10 @@ object Png:
     out.write(java.nio.ByteBuffer.allocate(4).putInt(c.getValue.toInt).array())
 
   /** An 8-bit RGB or RGBA, non-interlaced PNG's pixels (`0xAARRGGBB`). */
-  def decode(b: com.histmersion.util.basemap.Png.DecodeB): Either[com.histmersion.util.basemap.Png.Problem, Vp8l.Image] =
-    if !isPng(b) then Left("not a PNG")
+  def decode(png: PngBytes): Either[Problem, Vp8l.Image] =
+    if !isPng(png) then Left(Problem("not a PNG"))
     else
+      val b: Array[Byte] = png.value
       def be32(i: Int) = (b(i) & 0xff) << 24 | (b(i + 1) & 0xff) << 16 | (b(i + 2) & 0xff) << 8 | (b(i + 3) & 0xff)
       var i = 8
       var w, h, depth, colour, interlace = -1
@@ -115,7 +112,7 @@ object Png:
         case 6 => 4
         case _ => 0
       if w <= 0 || h <= 0 || depth != 8 || bpp == 0 || interlace != 0 then
-        Left("only 8-bit RGB(A) non-interlaced PNGs are read")
+        Left(Problem("only 8-bit RGB(A) non-interlaced PNGs are read"))
       else
         val stride = w * bpp
         val raw = new Array[Byte](h * (stride + 1))
@@ -125,7 +122,7 @@ object Png:
         while got < raw.length && !inf.finished() && !inf.needsInput() && !inf.needsDictionary() do
           got += inf.inflate(raw, got, raw.length - got)
         inf.end()
-        if got < raw.length then Left("truncated PNG data")
+        if got < raw.length then Left(Problem("truncated PNG data"))
         else
           val cur = new Array[Int](stride)
           val prev = new Array[Int](stride)
@@ -159,4 +156,4 @@ object Png:
               k += 1
             System.arraycopy(cur, 0, prev, 0, stride)
             y += 1
-          Right(Vp8l.Image(w, h, px))
+          Right(Vp8l.Image(Vp8l.Image.Width(w), Vp8l.Image.Height(h), Vp8l.Image.Pixels(px)))

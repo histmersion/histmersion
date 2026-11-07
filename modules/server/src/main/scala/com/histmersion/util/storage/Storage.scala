@@ -36,19 +36,15 @@ object Storage:
   final private class Implementation(roots: Location => Option[Path], temp: () => Path) extends Storage:
     def find(location: Location): Option[Store] = roots(location).map(DiskStore(location, _))
 
-    def scratch(purpose: com.histmersion.util.storage.Storage.Implementation.ScratchPurpose): Scratch =
+    def scratch(purpose: Storage.ScratchPurpose): Scratch =
       val base = temp()
       Files.createDirectories(base)
-      val dir = Files.createTempDirectory(base, purpose)
+      val dir = Files.createTempDirectory(base, purpose.value)
       val s = DiskStore(Location.Scratch, dir)
       new Scratch:
         def store: Store = s
         def close(): Unit =
           val _ = s.deleteTree(Store.Key.Root)
-
-  object Implementation:
-    type ScratchPurpose = ScratchPurpose.T
-    object ScratchPurpose extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Stores in memory, one per location, shared by everyone holding this instance; scratch stores are fresh. */
   final class InMemory extends Storage:
@@ -57,13 +53,9 @@ object Storage:
     def find(location: Location): Option[Store] =
       Some(stores.computeIfAbsent(location, l => MemoryStore(l, s"memory:$l")))
 
-    def scratch(purpose: com.histmersion.util.storage.Storage.InMemory.ScratchPurpose): Scratch =
+    def scratch(purpose: Storage.ScratchPurpose): Scratch =
       val s = MemoryStore(Location.Scratch, s"memory:scratch:$purpose")
       new Scratch:
         def store: Store = s
         def close(): Unit =
           val _ = s.deleteTree(Store.Key.Root)
-
-  object InMemory:
-    type ScratchPurpose = ScratchPurpose.T
-    object ScratchPurpose extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

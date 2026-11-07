@@ -4,8 +4,9 @@ import com.histmersion.api.backup.Backup
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.DataContributions
 import com.histmersion.util.database.Transactor
-import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput}
-import com.histmersion.util.storage.{HandedFile, Location, Storage, Store, TempName}
+import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput, ProcessResult}
+import com.histmersion.RowCount
+import com.histmersion.util.storage.{ByteSource, HandedFile, Location, Storage, Store, TempName}
 
 import java.time.{Instant, ZoneOffset}
 import java.time.format.DateTimeFormatter
@@ -38,7 +39,7 @@ trait BackupService:
   def archive(file: com.histmersion.util.data.backup.PreparedBackup.File): Either[Api.Error, HandedFile]
 
   /** `pg_restore --clean --if-exists` of `archive`: how long it took, and what `pg_restore` complained of. */
-  def restore(archive: Store.Key): Either[Api.Error, (com.histmersion.ByteCount, List[com.histmersion.util.data.backup.BackupService.RestoreNote])]
+  def restore(archive: Store.Key): Either[Api.Error, (BackupService.RestoreDuration, List[BackupService.RestoreNote])]
 
   /** The rows the guarded tables hold: a restore over any of them needs `force`. */
   def guardedRows: com.histmersion.RowCount
@@ -47,24 +48,10 @@ trait BackupService:
   def refusal(rows: com.histmersion.RowCount): Api.Error
 
 object BackupService:
-  type CommandArgument = CommandArgument.T
-  object CommandArgument extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CommandOutput = CommandOutput.T
-  object CommandOutput extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExecutableName = ExecutableName.T
-  object ExecutableName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExitCode = ExitCode.T
-  object ExitCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeepPolicy = KeepPolicy.T
-  object KeepPolicy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LogLine = LogLine.T
-  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PruneOutcome = PruneOutcome.T
-  object PruneOutcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestoreDuration = RestoreDuration.T
+  object RestoreDuration extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RestoreNote = RestoreNote.T
   object RestoreNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepLabel = StepLabel.T
-  object StepLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Over the backups store of `storage`, the client tools found in `backups.pg-bin-dir` (its store) or else on
     * `searchPath`, launched through `processes`; the guarded tables of `registry` counted through `transactor`.
@@ -87,9 +74,13 @@ object BackupService:
 
   private def guards(registry: DataContributions): List[GuardedTable] = registry.backups.flatMap(_._2.guarded)
 
-  private def refusalOver(registry: DataContributions, rows: com.histmersion.RowCount): Api.Error =
+  private def problem(message: String): Api.Error = Api.Error(Api.Error.Message(message))
+
+  private def command(parts: String*): List[ProcessLaunch.Command] = parts.toList.map(ProcessLaunch.Command(_))
+
+  private def refusalOver(registry: DataContributions, rows: RowCount): Api.Error =
     val noun = guards(registry).map(_.noun).distinct.mkString("/")
-    Api.Error(s"the database still holds $rows $noun(s); restoring would drop them — re-run with force")
+    problem(s"the database still holds $rows $noun(s); restoring would drop them — re-run with force")
 
   /** The archives of `store`, newest first; `where` names it in the error. */
   private def listing(store: Store): Either[Api.Error, List[Backup.Info]] =
@@ -100,48 +91,58 @@ object BackupService:
           Backup.newestFirst(
             store
               .names()
-              .map(Store.Key.of(_))
+              .map(n => Store.Key.of(n.value))
               .collect { case Right(k) if store.isFile(k) => k }
-              .flatMap(k => Backup.safeName(k.name).toOption.flatMap(n => store.stat(k).map(s => (n, s))))
-              .map((n, s) => Backup.Info(n, s.size.value, CreatedAt.format(Backup.takenAt(n, s.modified))))
+              .flatMap(k => Backup.safeName(Backup.Name(k.name.value)).toOption.flatMap(n => store.stat(k).map(s => (n, s))))
+              .map((n, s) =>
+                Backup.Info(
+                  n,
+                  com.histmersion.api.ByteCount(s.size.value),
+                  Backup.Info.CreatedAt(CreatedAt.format(Backup.takenAt(n, s.modified)))
+                )
+              )
           )
         )
         .toEither
         .left
-        .map(e => Api.Error(s"cannot list ${store.where()}: ${e.getMessage}"))
+        .map(e => problem(s"cannot list ${store.where().value}: ${e.getMessage}"))
 
   private def resolving(store: Store, file: com.histmersion.util.data.backup.PreparedBackup.File): Either[Api.Error, Store.Key] =
     for
-      name <- Backup.safeName(file).left.map(m => Api.Error(m))
+      name <- Backup.safeName(Backup.Name(file.value)).left.map(m => problem(m.value))
       known <- listing(store)
       _ <- if known.exists(_.file == name) then Right(()) else Left(Backup.missing(name))
-      key <- Store.Key.either(name).left.map(m => Api.Error(m))
+      key <- Store.Key.either(name.value).left.map(m => problem(m))
     yield key
 
   /** The name of a new archive taken at `now`, not taken by an archive nor by a dump being written. */
   private def freshName(store: Store, now: Instant): com.histmersion.util.data.backup.PreparedBackup.File =
-    Backup.uniqueName(
-      Backup.fileName(now),
-      n => store.exists(Store.Key.applyUnsafe(n)) || store.exists(Store.Key.applyUnsafe(n + Pending))
+    PreparedBackup.File(
+      Backup
+        .uniqueName(
+          Backup.Name(Backup.fileName(now).value),
+          n => store.exists(Store.Key.applyUnsafe(n.value)) || store.exists(Store.Key.applyUnsafe(n.value + Pending))
+        )
+        .value
     )
 
   /** Delete the archives beyond `keep` — AFTER a dump succeeded, never the one just written. Best effort: a file that
     * will not go is logged and stays; the backup itself still succeeded.
     */
-  private def pruned(store: Store, keep: com.histmersion.util.data.backup.BackupService.InMemory.Keep, keeping: com.histmersion.util.data.backup.BackupService.KeepPolicy): List[com.histmersion.util.data.backup.BackupService.PruneOutcome] =
+  private def pruned(store: Store, keep: Backup.Retention, keeping: PreparedBackup.File): List[Backup.Result.Pruned] =
     listing(store).toOption.toList.flatMap { rows =>
-      Backup.toPrune(rows.map(_.file), keep).filterNot(_ == keeping).filter { n =>
+      Backup.toPrune(rows.map(_.file), keep).filterNot(_.value == keeping.value).filter { n =>
         scala.util
-          .Try(store.delete(Store.Key.applyUnsafe(n)))
-          .fold(e => { scribe.warn(s"backup: could not prune $n: ${e.getMessage}"); false }, identity)
-      }
+          .Try(store.delete(Store.Key.applyUnsafe(n.value)))
+          .fold(e => { scribe.warn(s"backup: could not prune ${n.value}: ${e.getMessage}"); false }, identity)
+      }.map(n => Backup.Result.Pruned(n.value))
     }
 
   private def usable(store: Store): Either[Api.Error, Store] =
     store
       .makeDirectory()
       .left
-      .map(e => Api.Error(s"backups directory ${store.where()} is not usable: ${e.message}"))
+      .map(e => problem(s"backups directory ${store.where().value} is not usable: ${e.message.value}"))
       .map(_ => store)
 
   final private class Implementation(
@@ -154,28 +155,28 @@ object BackupService:
   ) extends BackupService:
 
     private def backups = settings().backups
-    private def timeoutS = math.max(1, backups.timeoutSeconds)
+    private def timeoutS = math.max(1, backups.timeoutSeconds.value: Int)
     private def store: Store = storage.store(Location.Backups)
 
     /** `backups.pg-bin-dir` wins when set (homebrew's libpq is keg-only, so `pg_dump` is off PATH on a macOS dev box);
       * otherwise the search path. The failure message says exactly what to do.
       */
-    private def exe(name: com.histmersion.util.data.backup.BackupService.ExecutableName): Either[Api.Error, com.histmersion.util.data.backup.BackupService.CommandOutput] =
+    private def exe(name: String): Either[Api.Error, ProcessLaunch.Command] =
       val key = Store.Key.applyUnsafe(name)
-      Option(backups.pgBinDir).map(_.trim).filter(_.nonEmpty).flatMap(_ => storage.find(Location.PostgresTools)) match
-        case Some(tools) if tools.isExecutable(key) => Right(tools.where(key))
+      Option(backups.pgBinDir.value).map(_.trim).filter(_.nonEmpty).flatMap(_ => storage.find(Location.PostgresTools)) match
+        case Some(tools) if tools.isExecutable(key) => Right(ProcessLaunch.Command(tools.where(key).value))
         case Some(tools)                            =>
           Left(
-            Api.Error(
+            problem(
               s"no executable $name at ${tools.where(key)} (histmersion.backups.pg-bin-dir / HISTMERSION_PG_BIN_DIR)"
             )
           )
         case None =>
           searchPath()
             .find(_.isExecutable(key))
-            .map(_.where(key))
+            .map(s => ProcessLaunch.Command(s.where(key).value))
             .toRight(
-              Api.Error(
+              problem(
                 s"$name is not on PATH — install the PostgreSQL client tools, or point " +
                   s"HISTMERSION_PG_BIN_DIR at the directory holding them"
               )
@@ -189,54 +190,60 @@ object BackupService:
       * hung the request forever. Redirecting to a file lets the process write freely (no pipe-buffer deadlock either)
       * while `waitFor` does the actual bounding, and the output is read back afterwards.
       */
-    private def run(cmd: List[com.histmersion.util.data.backup.BackupService.CommandArgument]): Either[Api.Error, (com.histmersion.util.data.backup.BackupService.ExitCode, List[com.histmersion.util.data.backup.BackupService.CommandOutput])] =
-      val scratch = storage.scratch("histmersion-pg-")
+    private def run(cmd: List[ProcessLaunch.Command]): Either[Api.Error, (ProcessResult.ExitCode, List[String])] =
+      val scratch = storage.scratch(Storage.ScratchPurpose("histmersion-pg-"))
       val log = Store.Key.applyUnsafe("pg.log")
       val cfg = settings()
       val launch = ProcessLaunch(
         cmd,
-        environment = Map("PGPASSWORD" -> cfg.db.password, "PGUSER" -> cfg.db.user),
+        environment = Map(
+          ProcessLaunch.EnvironmentKey("PGPASSWORD") -> ProcessLaunch.EnvironmentValue(cfg.db.password.value),
+          ProcessLaunch.EnvironmentKey("PGUSER") -> ProcessLaunch.EnvironmentValue(cfg.db.user.value)
+        ),
         output = ProcessOutput.WriteTo(scratch.store, log)
       )
       try
         scala.util
           .Try {
-            val p = processes.start(launch).fold(e => throw java.io.IOException(e), identity)
-            val ended = p.waitFor(timeoutS.toLong, TimeUnit.SECONDS)
+            val p = processes.start(launch).fold(e => throw java.io.IOException(e.value), identity)
+            val ended = p.waitFor(Processes.WaitTimeout(timeoutS.toLong), TimeUnit.SECONDS)
             if !ended then
               p.destroyForcibly()
-              val _ = p.waitFor(5, TimeUnit.SECONDS) // let the kill land before reading the log
-              (Int.MinValue, tail(scratch.store, log))
+              val _ = p.waitFor(Processes.WaitTimeout(5L), TimeUnit.SECONDS) // let the kill land before reading the log
+              (ProcessResult.ExitCode(Int.MinValue), tail(scratch.store, log))
             else (p.waitFor(), tail(scratch.store, log))
           }
           .toEither
           .left
           .map(e =>
-            Api.Error(s"could not run ${cmd.headOption.getOrElse("")}: ${e.getClass.getSimpleName}: ${e.getMessage}")
+            problem(
+              s"could not run ${cmd.headOption.fold("")(_.value)}: ${e.getClass.getSimpleName}: ${e.getMessage}"
+            )
           )
           .flatMap {
-            case (Int.MinValue, _) => Left(Api.Error(s"${cmd.headOption.getOrElse("")} timed out after ${timeoutS}s"))
-            case ok                => Right(ok)
+            case (code, _) if code.value == Int.MinValue =>
+              Left(problem(s"${cmd.headOption.fold("")(_.value)} timed out after ${timeoutS}s"))
+            case ok => Right(ok)
           }
       finally scratch.close()
 
     /** The captured output, bounded: a `pg_restore` complaining about every statement can write megabytes, and only the
       * last handful of lines ever reaches an error message.
       */
-    private def tail(logs: Store, log: Store.Key): List[com.histmersion.util.data.backup.BackupService.LogLine] =
+    private def tail(logs: Store, log: Store.Key): List[String] =
       scala.util
-        .Try(logs.get(log).fold(List.empty[String])(_.text().linesIterator.toList.takeRight(200)))
+        .Try(logs.get(log).fold(List.empty[String])(b => (b.text().value: String).linesIterator.toList.takeRight(200)))
         .getOrElse(Nil)
 
     private def target: Either[Api.Error, Backup.PgTarget] =
-      Backup.parseJdbc(settings().db.url).left.map(m => Api.Error(s"cannot back up: $m"))
+      Backup.parseJdbc(Backup.JdbcUrl(settings().db.url.value)).left.map(m => problem(s"cannot back up: ${m.value}"))
 
     /** A non-zero exit becomes an `ApiError` quoting the last output lines — the actual `pg_*` message, not a stack
       * trace.
       */
-    private def succeeded(what: com.histmersion.util.data.backup.BackupService.StepLabel, res: (com.histmersion.util.data.backup.BackupService.ExitCode, List[com.histmersion.util.data.backup.BackupService.CommandOutput])): Either[Api.Error, Unit] =
-      if res._1 == 0 then Right(())
-      else Left(Api.Error(s"$what failed (exit ${res._1}): ${res._2.takeRight(5).mkString("; ")}"))
+    private def succeeded(what: String, res: (ProcessResult.ExitCode, List[String])): Either[Api.Error, Unit] =
+      if res._1.value == 0 then Right(())
+      else Left(problem(s"$what failed (exit ${res._1.value}): ${res._2.takeRight(5).mkString("; ")}"))
 
     /** `pg_dump -Fc` into the archive's reservation (`<name>.part`), moved into place only on success, so the listing
       * never shows a half-written archive.
@@ -250,28 +257,31 @@ object BackupService:
       yield PreparedBackup(
         name,
         () =>
-          val key = Store.Key.applyUnsafe(name)
+          val key = Store.Key.applyUnsafe(name.value)
           val started = System.nanoTime()
           for
-            reservation <- dir.reserve(key, TempName.Suffixed(Pending)).left.map(e => Api.Error(e.message))
+            reservation <- dir
+              .reserve(key, TempName.Suffixed(TempName.Suffixed.Suffix(Pending)))
+              .left
+              .map(e => problem(e.message.value))
             stored <-
               try
                 for
-                  part <- reservation.onDisk.left.map(e => Api.Error(e.message))
-                  res <- run(List(pgDump) ++ t.args ++ List("-Fc", "-f", part.toString))
+                  part <- reservation.onDisk.left.map(e => problem(e.message.value))
+                  res <- run(List(pgDump) ++ command(t.args*) ++ command("-Fc", "-f", part.toString))
                   _ <- succeeded("pg_dump", res)
                   done <- reservation
                     .commit()
                     .left
-                    .map(e => Api.Error(s"could not finish ${dir.where(key)}: ${e.message}"))
+                    .map(e => problem(s"could not finish ${dir.where(key).value}: ${e.message.value}"))
                 yield done
               finally reservation.close()
           yield Backup.Result(
-            name,
-            stored.size.value,
-            dir.get(key).fold("")(_.sha256().value),
-            (System.nanoTime() - started) / 1000000L,
-            pruned(dir, backups.keep, keeping = name)
+            Backup.Result.File(name.value),
+            com.histmersion.api.ByteCount(stored.size.value),
+            com.histmersion.api.Sha256(dir.get(key).fold("")(_.sha256().value)),
+            Backup.Result.DurationMs((System.nanoTime() - started) / 1000000L),
+            pruned(dir, Backup.Retention(backups.keep.value), keeping = name)
           )
       )
 
@@ -281,7 +291,7 @@ object BackupService:
 
     def archive(file: com.histmersion.util.data.backup.PreparedBackup.File): Either[Api.Error, HandedFile] =
       val dir = store
-      resolving(dir, file).flatMap(k => dir.onDiskFile(k).left.map(e => Api.Error(e.message)))
+      resolving(dir, file).flatMap(k => dir.onDiskFile(k).left.map(e => problem(e.message.value)))
 
     /** `pg_restore --clean --if-exists`. NOTE: `pg_restore` exits 0 even when it skipped statements the server did not
       * understand (a dump taken by a newer `pg_dump` emits `SET transaction_timeout`, which Postgres < 17 rejects), so
@@ -291,22 +301,26 @@ object BackupService:
       * are skipped, so a dump taken on an installation with other role names loads cleanly. The caller re-issues the
       * read-only role's grants afterwards.
       */
-    def restore(archive: Store.Key): Either[Api.Error, (com.histmersion.ByteCount, List[com.histmersion.util.data.backup.BackupService.RestoreNote])] =
+    def restore(archive: Store.Key): Either[Api.Error, (RestoreDuration, List[RestoreNote])] =
       for
         t <- target
         pgRestore <- exe("pg_restore")
-        file <- store.onDisk(archive).left.map(e => Api.Error(e.message))
+        file <- store.onDisk(archive).left.map(e => problem(e.message.value))
         started = System.nanoTime()
         res <- run(
-          List(pgRestore) ++ t.args ++
-            List("--clean", "--if-exists", "--no-owner", "--no-privileges", file.toString)
+          List(pgRestore) ++ command(t.args*) ++
+            command("--clean", "--if-exists", "--no-owner", "--no-privileges", file.toString)
         )
-        warnings <- Backup.restoreOutcome(res._1, res._2).left.map(m => Api.Error(m))
-      yield ((System.nanoTime() - started) / 1000000L, warnings)
+        warnings <- Backup
+          .restoreOutcome(Backup.ExitCode(res._1.value), res._2.map(Backup.ToolOutput(_)))
+          .left
+          .map(m => problem(m.value))
+      yield (RestoreDuration((System.nanoTime() - started) / 1000000L), warnings.map(o => RestoreNote(o.value)))
 
-    def guardedRows: com.histmersion.RowCount = transactor.read(guards(registry).map(g => BackupRepo.rows(g.table.value)).sum)
+    def guardedRows: RowCount =
+      transactor.read(RowCount(guards(registry).map(g => BackupRepo.rows(g.table).value: Int).sum))
 
-    def refusal(rows: com.histmersion.RowCount): Api.Error = refusalOver(registry, rows)
+    def refusal(rows: RowCount): Api.Error = refusalOver(registry, rows)
 
 
   /** Dumps that are files of `store` holding `dumped` (no `pg_dump` runs), restores that change nothing, and guarded
@@ -316,7 +330,7 @@ object BackupService:
       store: Store,
       keep: InMemory.Keep,
       registry: DataContributions,
-      rows: AtomicReference[InMemory.Rows] = AtomicReference(0),
+      rows: AtomicReference[RowCount] = AtomicReference(RowCount(0)),
       dumped: Array[Byte] = "PGDMP".getBytes("UTF-8")
   ) extends BackupService:
     def prepare(now: Instant): Either[Api.Error, PreparedBackup] =
@@ -325,28 +339,31 @@ object BackupService:
         PreparedBackup(
           name,
           () =>
-            val key = Store.Key.applyUnsafe(name)
+            val key = Store.Key.applyUnsafe(name.value)
             dir
-              .put(key, dumped)
+              .put(key, ByteSource.Content(dumped))
               .left
-              .map(e => Api.Error(s"could not finish ${dir.where(key)}: ${e.message}"))
+              .map(e => problem(s"could not finish ${dir.where(key).value}: ${e.message.value}"))
               .map(s =>
-                Backup.Result(name, s.size.value, dir.get(key).fold("")(_.sha256().value), 0L, pruned(dir, keep, name))
+                Backup.Result(
+                  Backup.Result.File(name.value),
+                  com.histmersion.api.ByteCount(s.size.value),
+                  com.histmersion.api.Sha256(dir.get(key).fold("")(_.sha256().value)),
+                  Backup.Result.DurationMs(0L),
+                  pruned(dir, Backup.Retention(keep.value), name)
+                )
               )
         )
       }
     def list: Either[Api.Error, List[Backup.Info]] = listing(store)
-    def resolve(file: com.histmersion.util.data.backup.PreparedBackup.File): Either[Api.Error, Store.Key] = resolving(store, file)
-    def archive(file: com.histmersion.util.data.backup.PreparedBackup.File): Either[Api.Error, HandedFile] =
-      resolving(store, file).flatMap(k => store.onDiskFile(k).left.map(e => Api.Error(e.message)))
-    def restore(archive: Store.Key): Either[Api.Error, (com.histmersion.ByteCount, List[com.histmersion.util.data.backup.BackupService.RestoreNote])] =
-      store.get(archive).toRight(Backup.missing(archive.value)).map(_ => (0L, Nil))
-    def guardedRows: com.histmersion.RowCount = rows.get
-    def refusal(n: com.histmersion.RowCount): Api.Error = refusalOver(registry, n)
+    def resolve(file: PreparedBackup.File): Either[Api.Error, Store.Key] = resolving(store, file)
+    def archive(file: PreparedBackup.File): Either[Api.Error, HandedFile] =
+      resolving(store, file).flatMap(k => store.onDiskFile(k).left.map(e => problem(e.message.value)))
+    def restore(archive: Store.Key): Either[Api.Error, (RestoreDuration, List[RestoreNote])] =
+      store.get(archive).toRight(Backup.missing(Backup.Result.File(archive.value))).map(_ => (RestoreDuration(0L), Nil))
+    def guardedRows: RowCount = rows.get
+    def refusal(n: RowCount): Api.Error = refusalOver(registry, n)
 
   object InMemory:
     type Keep = Keep.T
     object Keep extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Rows = Rows.T
-    object Rows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-

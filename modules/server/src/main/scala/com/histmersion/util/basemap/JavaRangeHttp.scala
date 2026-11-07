@@ -18,36 +18,36 @@ final class JavaRangeHttp(
     retries: JavaRangeHttp.Retries,
     userAgent: JavaRangeHttp.UserAgent,
     policy: RetryPolicy,
-    sleep: JavaRangeHttp.SleepArg1 => Unit = ms => Thread.sleep(ms)
+    sleep: RetryWait.Ms => Unit = ms => Thread.sleep(ms.value)
 )(using clock: java.time.Clock) extends RangeHttp:
 
-  private def request(url: com.histmersion.util.basemap.BasemapFetch.Source.Url, range: Option[(com.histmersion.ByteOffset, com.histmersion.ByteOffset)]): HttpRequest =
+  private def request(url: RangeHttp.Url, range: Option[(com.histmersion.ByteOffset, com.histmersion.ByteCount)]): HttpRequest =
     val b = HttpRequest
-      .newBuilder(URI.create(url))
+      .newBuilder(URI.create(url.value))
       .GET()
-      .timeout(Duration.ofSeconds(timeoutSeconds.toLong))
-      .header("User-Agent", userAgent)
-    range.foreach((o, l) => b.header("Range", s"bytes=$o-${o + l - 1}"))
+      .timeout(Duration.ofSeconds(timeoutSeconds.value.toLong))
+      .header("User-Agent", userAgent.value)
+    range.foreach((o, l) => b.header("Range", s"bytes=${o.value}-${o.value + l.value - 1}"))
     b.build()
 
   /** Send, asking again on a slow-down answer or a dropped connection. The body is a STREAM, read only once the answer
     * is known to be the one asked for — an answer that is not (a 200 with the whole 100 GB file) is closed unread,
     * which cancels it.
     */
-  private def send(url: com.histmersion.util.basemap.BasemapFetch.Source.Url, req: HttpRequest): Either[com.histmersion.util.basemap.JavaRangeHttp.Problem, HttpResponse[InputStream]] =
-    def attempt(n: Int): Either[com.histmersion.util.basemap.JavaRangeHttp.Problem, HttpResponse[InputStream]] =
+  private def send(url: RangeHttp.Url, req: HttpRequest): Either[RangeHttp.Problem, HttpResponse[InputStream]] =
+    def attempt(n: Int): Either[RangeHttp.Problem, HttpResponse[InputStream]] =
       scala.util.Try(client.send(req, HttpResponse.BodyHandlers.ofInputStream())) match
         case scala.util.Failure(e: InterruptedException) => throw e
         case scala.util.Failure(e)                       =>
-          if n < retries then { sleep(policy.backoffMs(n)); attempt(n + 1) }
-          else Left(s"$url unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
+          if n < retries.value then { sleep(policy.backoffMs(n)); attempt(n + 1) }
+          else Left(RangeHttp.Problem(s"$url unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}"))
         case scala.util.Success(resp) =>
           policy.slowDown(
-            resp.statusCode,
-            Option(resp.headers.firstValue("Retry-After").orElse(null)),
+            RangeHttp.StatusCode(resp.statusCode),
+            Option(resp.headers.firstValue("Retry-After").orElse(null)).map(RetryPolicy.RetryAfterHeader(_)),
             n,
-            retries,
-            300,
+            RetryPolicy.MaxRetries(retries.value),
+            RetryPolicy.RetryAfterCap(300),
             Instant.now(clock)
           ) match
             case Some(RetryWait(ms, why)) =>
@@ -59,21 +59,24 @@ final class JavaRangeHttp(
     attempt(0)
 
   private def meta[T](r: HttpResponse[T], total: com.histmersion.ByteCount): RemoteFile =
-    RemoteFile(total, Option(r.headers.firstValue("ETag").orElse(null)))
+    RemoteFile(
+      RemoteFile.Size(total.value),
+      Option(r.headers.firstValue("ETag").orElse(null)).map(RemoteFile.Etag(_))
+    )
 
   /** The answer's body when `ok` accepts it, closed unread otherwise. */
   private def reading[A](r: HttpResponse[InputStream])(
-      ok: HttpResponse[InputStream] => Either[com.histmersion.util.basemap.JavaRangeHttp.Problem, A]
-  ): Either[com.histmersion.util.basemap.JavaRangeHttp.Problem, A] =
+      ok: HttpResponse[InputStream] => Either[RangeHttp.Problem, A]
+  ): Either[RangeHttp.Problem, A] =
     try ok(r)
     finally r.body.close()
 
-  private def ranged(url: com.histmersion.util.basemap.BasemapFetch.Source.Url, offset: com.histmersion.ByteOffset, length: com.histmersion.ByteCount) =
+  private def ranged(url: RangeHttp.Url, offset: com.histmersion.ByteOffset, length: com.histmersion.ByteCount) =
     send(url, request(url, Some((offset, length)))).flatMap { r =>
       RangeHttp.check(
         url,
-        r.statusCode,
-        Option(r.headers.firstValue("Content-Range").orElse(null)),
+        RangeHttp.StatusCode(r.statusCode),
+        Option(r.headers.firstValue("Content-Range").orElse(null)).map(RangeHttp.ContentRangeHeader(_)),
         offset,
         length
       ) match
@@ -81,60 +84,49 @@ final class JavaRangeHttp(
         case Right(total) => Right((r, total))
     }
 
-  override def file(url: String): Either[String, Option[Array[Byte]]] =
+  override def file(url: RangeHttp.Url): Either[RangeHttp.Problem, Option[RangeHttp.ResponseBytes]] =
     send(url, request(url, None)).flatMap(r =>
       reading(r) { r =>
         r.statusCode match
-          case 200       => Right(Some(r.body.readNBytes(16 * 1024 * 1024)))
+          case 200       => Right(Some(RangeHttp.ResponseBytes(r.body.readNBytes(16 * 1024 * 1024))))
           case 403 | 404 => Right(None)
-          case c         => Left(s"$url: HTTP $c")
+          case c         => Left(RangeHttp.Problem(s"$url: HTTP $c"))
       }
     )
 
-  def text(url: com.histmersion.util.basemap.BasemapFetch.Source.Url): Either[com.histmersion.util.basemap.JavaRangeHttp.Problem, com.histmersion.util.basemap.JavaRangeHttp.Text] =
+  def text(url: RangeHttp.Url): Either[RangeHttp.Problem, RangeHttp.ResponseText] =
     send(url, request(url, None)).flatMap(r =>
       reading(r) { r =>
-        if r.statusCode != 200 then Left(s"$url: HTTP ${r.statusCode}")
-        else Right(String(r.body.readNBytes(16 * 1024 * 1024), "UTF-8"))
+        if r.statusCode != 200 then Left(RangeHttp.Problem(s"$url: HTTP ${r.statusCode}"))
+        else Right(RangeHttp.ResponseText(String(r.body.readNBytes(16 * 1024 * 1024), "UTF-8")))
       }
     )
 
-  def bytes(url: com.histmersion.util.basemap.BasemapFetch.Source.Url, offset: com.histmersion.ByteOffset, length: com.histmersion.ByteCount): Either[com.histmersion.util.basemap.JavaRangeHttp.Problem, (com.histmersion.util.basemap.JavaRangeHttp.Bytes, RemoteFile)] =
+  def bytes(url: RangeHttp.Url, offset: com.histmersion.ByteOffset, length: com.histmersion.ByteCount): Either[RangeHttp.Problem, (RangeHttp.ResponseBytes, RemoteFile)] =
     ranged(url, offset, length).flatMap((r, total) =>
       reading(r) { r =>
-        val want = math.min(offset + length, total) - offset
+        val want = math.min(offset.value + length.value, total.value) - offset.value
         val b = r.body.readNBytes(want.toInt)
-        if b.length == want then Right((b, meta(r, total)))
-        else Left(s"$url sent ${b.length} bytes for a range of $want")
+        if b.length == want then Right((RangeHttp.ResponseBytes(b), meta(r, total)))
+        else Left(RangeHttp.Problem(s"$url sent ${b.length} bytes for a range of $want"))
       }
     )
 
-  def download(url: com.histmersion.util.basemap.BasemapFetch.Source.Url, offset: com.histmersion.ByteOffset, length: com.histmersion.ByteCount, to: Reservation): Either[com.histmersion.util.basemap.JavaRangeHttp.Problem, RemoteFile] =
+  def download(url: RangeHttp.Url, offset: com.histmersion.ByteOffset, length: com.histmersion.ByteCount, to: Reservation): Either[RangeHttp.Problem, RemoteFile] =
     ranged(url, offset, length).flatMap((r, total) =>
       reading(r) { r =>
         val got = Using.resource(to.output())(out => r.body.transferTo(out))
-        if got != length then
+        if got != length.value then
           to.discard()
-          Left(s"$url sent $got bytes for a range of $length")
+          Left(RangeHttp.Problem(s"$url sent $got bytes for a range of $length"))
         else Right(meta(r, total))
       }
     )
 
 object JavaRangeHttp:
-  type Bytes = Bytes.T
-  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
   type TimeoutSeconds = TimeoutSeconds.T
   object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Retries = Retries.T
   object Retries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UserAgent = UserAgent.T
   object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SleepArg1 = com.histmersion.util.basemap.BasemapFetch.Pace.GapMs
-  val SleepArg1: _root_.com.histmersion.util.basemap.BasemapFetch.Pace.GapMs.type = _root_.com.histmersion.util.basemap.BasemapFetch.Pace.GapMs
-

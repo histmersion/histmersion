@@ -23,18 +23,18 @@ final case class Bookmark(
 ):
   /** Its name, its item's title and its item's key hold every word. */
   def matches(words: SearchWords): Boolean =
-    words.matches(label.fold("")(_.value), title.value, target.itemRef.fold("")(_.key.value))
+    words.matches(label.fold("")(_.value), com.histmersion.api.library.Title(title.value), target.itemRef.fold("")(_.key.value))
 
-  def wire: WireBookmark = WireBookmark(id, target.wire, title.value, label, createdAt.iso, updatedAt.iso)
+  def wire: WireBookmark = WireBookmark(id, target.wire, com.histmersion.api.library.Title(title.value), label, WireBookmark.CreatedAt(createdAt.iso.value), WireBookmark.UpdatedAt(updatedAt.iso.value))
 
 object Bookmark:
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The id a client sent, checked here, once: a bookmark's id is a lower-case UUID. */
 
-  def idOf(raw: com.histmersion.domain.personal.bookmarks.Bookmark.Id): Either[com.histmersion.domain.personal.bookmarks.Bookmark.Id, WireBookmark.Id] =
-    val id = Option(raw).fold("")(_.trim.toLowerCase)
-    Either.cond(PersonalUuid.matches(id), WireBookmark.Id(id), s"not a bookmark id: '$raw'")
+  def idOf(raw: WireBookmark.Id): Either[Problem, WireBookmark.Id] =
+    val id = Option(raw).fold("")(_.value.trim.toLowerCase)
+    Either.cond(PersonalUuid.matches(PersonalUuid.Text(id)), WireBookmark.Id(id), Problem(s"not a bookmark id: '$raw'"))
 
   def of(stored: StoredBookmark, described: Map[ItemRef, Described]): Bookmark =
     val (target, title) = stored.target.shown(described, stored.targetLabel)
@@ -43,7 +43,7 @@ object Bookmark:
   /** A live bookmark as the table answers it. */
   final private[bookmarks] case class Row(
       id: com.histmersion.api.personal.Bookmark.Id,
-      kind: Row.Kind,
+      kind: com.histmersion.api.ItemKind.Wire,
       key: Option[ItemKey],
       uid: Option[ItemUid],
       lat: Option[Latitude],
@@ -54,18 +54,10 @@ object Bookmark:
       view: Option[ViewState],
       label: Option[com.histmersion.api.personal.Bookmark.Label],
       targetLabel: Option[TargetLabel],
-      createdAt: Row.CreatedAt,
-      updatedAt: Row.UpdatedAt
+      createdAt: MarkTime.Iso,
+      updatedAt: MarkTime.Iso
   ) derives DbCodec:
     def stored(user: UserId): Option[StoredBookmark] =
       MarkTarget
         .ofColumns(kind, key, uid, lat, lon, zoom, from, to, view)
         .map(t => StoredBookmark(user, id, t, label, targetLabel, MarkTime.parse(createdAt), MarkTime.parse(updatedAt)))
-
-  object Row:
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

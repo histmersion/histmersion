@@ -10,22 +10,30 @@ import com.histmersion.util.storage.Blob
   * sidecar unchanged.
   */
 final class JatsConverter(sidecar: ConverterClient) extends ConverterClient:
-  def convert(file: Blob, filename: com.histmersion.util.ocr.ConverterClient.Filename, quality: com.histmersion.util.ocr.ConverterClient.HighQuality): Either[com.histmersion.util.ocr.JatsConverter.Problem, ConvertedDoc] =
+  def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality): Either[ConverterClient.Problem, ConvertedDoc] =
     val jats =
-      if !filename.toLowerCase.endsWith(".xml") then None
-      else scala.util.Try(file.text()).toOption.filter(Jats.isJats)
+      if !filename.value.toLowerCase.endsWith(".xml") then None
+      else scala.util.Try(Jats.Xml(file.text().value)).toOption.filter(Jats.isJats)
     jats match
       case Some(xml) =>
-        val md = Jats.toMarkdown(xml)
-        if md.trim.isEmpty then Left(s"$filename is a JATS article with no text")
-        else Right(ConvertedDoc(md, pages = 0, images = Nil, filename = Some(filename)))
+        val md = Jats.toMarkdown(xml).value
+        if md.trim.isEmpty then Left(ConverterClient.Problem(s"$filename is a JATS article with no text"))
+        else
+          Right(
+            ConvertedDoc(
+              ConvertedDoc.Markdown(md),
+              pages = ConvertedDoc.Pages(0),
+              images = Nil,
+              filename = Some(ConvertedDoc.Filename(filename.value))
+            )
+          )
       case None => sidecar.convert(file, filename, quality)
 
-  def health: Either[com.histmersion.util.ocr.JatsConverter.Problem, com.histmersion.util.ocr.ConverterClient.HealthSummary] = sidecar.health
+  def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = sidecar.health
 
-  override def thumbnail(bytes: Array[Byte], filename: String, maxPx: Int): Either[String, ConverterClient.Thumb] =
+  override def thumbnail(
+      bytes: ConverterClient.DocumentBytes,
+      filename: ConverterClient.Filename,
+      maxPx: Pixels
+  ): Either[ConverterClient.Problem, ConverterClient.Thumb] =
     sidecar.thumbnail(bytes, filename, maxPx)
-
-object JatsConverter:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

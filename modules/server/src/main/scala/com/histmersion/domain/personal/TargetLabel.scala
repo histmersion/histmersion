@@ -15,6 +15,6 @@ object TargetLabel extends RefinedType[String, Pure]:
 
   /** A name tidied (spaces collapsed, bounded); none when empty. */
   def tidy(raw: com.histmersion.domain.personal.TargetLabel.Label): Option[TargetLabel] =
-    Option(raw).map(_.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty).map(t => TargetLabel(t.take(MaxChars)))
+    Option(raw).map(_.value.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty).map(t => TargetLabel(t.take(MaxChars)))
 
   def tidy(raw: Option[com.histmersion.domain.personal.TargetLabel.Label]): Option[TargetLabel] = raw.flatMap(tidy)

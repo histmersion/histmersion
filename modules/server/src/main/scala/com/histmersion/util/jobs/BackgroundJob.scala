@@ -26,27 +26,10 @@ import com.histmersion.api.Api
   * Outcome.of(…))`, inside `maintenance.guard(kind)` when it writes.
   */
 object BackgroundJob:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Work = Work.T
   object Work extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** How a job ended: its summary (the finished job's progress line) and, when it failed, why. */
-
-  type BusyCode = BusyCode.T
-  object BusyCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartBusyCode = StartBusyCode.T
-  object StartBusyCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LaunchWhat = _root_.com.histmersion.util.jobs.BackgroundJob.Work
-  val LaunchWhat: _root_.com.histmersion.util.jobs.BackgroundJob.Work.type = _root_.com.histmersion.util.jobs.BackgroundJob.Work
-  type LaunchBusyCode = LaunchBusyCode.T
-  object LaunchBusyCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResumeKind = _root_.com.histmersion.util.jobs.Job.Kind
-  val ResumeKind: _root_.com.histmersion.util.jobs.Job.Kind.type = _root_.com.histmersion.util.jobs.Job.Kind
-  type ResumeWhat = _root_.com.histmersion.util.jobs.BackgroundJob.Work
-  val ResumeWhat: _root_.com.histmersion.util.jobs.BackgroundJob.Work.type = _root_.com.histmersion.util.jobs.BackgroundJob.Work
-  type ResumeBusyCode = _root_.com.histmersion.util.jobs.BackgroundJob.LaunchBusyCode
-  val ResumeBusyCode: _root_.com.histmersion.util.jobs.BackgroundJob.LaunchBusyCode.type = _root_.com.histmersion.util.jobs.BackgroundJob.LaunchBusyCode
 
   final case class Outcome(summary: Option[Outcome.Summary], error: Option[Outcome.Error] = None):
     def failed: Boolean = error.isDefined
@@ -67,26 +50,22 @@ object BackgroundJob:
   /** One kind of work that runs one job at a time. `current` names the running one. `held` may be shared with work of
     * the same kind that is not a job (the media import's one-place runs).
     */
-  final class Slot(held: AtomicReference[Option[Slot.Held]] = AtomicReference[Option[String]](None)):
+  final class Slot(held: AtomicReference[Option[Work]] = AtomicReference[Option[Work]](None)):
     def isRunning: Boolean = held.get().isDefined
-    def current: Option[com.histmersion.util.jobs.BackgroundJob.Slot.Held] = held.get()
+    def current: Option[Work] = held.get()
     private[BackgroundJob] def claim(what: com.histmersion.util.jobs.BackgroundJob.Work): Boolean = held.compareAndSet(None, Some(what))
     private[BackgroundJob] def note(what: com.histmersion.util.jobs.BackgroundJob.Work): Unit = held.set(Some(what))
     private[BackgroundJob] def free(): Unit = held.set(None)
 
-  object Slot:
-    type Held = Held.T
-    object Held extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
 
   /** The answer for a job asked for while its slot is held: names the running one. Pure. */
-  def busy(what: com.histmersion.util.jobs.BackgroundJob.Work, current: Option[com.histmersion.util.jobs.BackgroundJob.Slot.Held], code: Option[com.histmersion.util.jobs.BackgroundJob.BusyCode] = None): Api.Error =
-    Api.Error(s"$what is already running (${current.getOrElse("?")}) — see `histmersion jobs`", code)
+  def busy(what: Work, current: Option[Work], code: Option[Api.Error.Code] = None): Api.Error =
+    Api.Error(Api.Error.Message(s"$what is already running (${current.fold("?")(_.value)}) — see `histmersion jobs`"), code)
 
   /** What a thrown exception tells a job's error line. Pure. */
-  def describe(e: Throwable): com.histmersion.util.jobs.BackgroundJob.Problem = e match
-    case _: InterruptedException => "interrupted"
-    case _                       => s"${e.getClass.getSimpleName}: ${e.getMessage}"
+  def describe(e: Throwable): Outcome.Error = e match
+    case _: InterruptedException => Outcome.Error("interrupted")
+    case _                       => Outcome.Error(s"${e.getClass.getSimpleName}: ${e.getMessage}")
 
   /** How a run of a job's body ended, for its row: done or failed with its outcome, or stopped by a person (a job whose
     * body ended by itself after a stop was asked ends as it ended). Pure.
@@ -98,7 +77,7 @@ object BackgroundJob:
       case None               => Right(out)
 
   /** Change the detail the job `id` records. */
-  def amendDetail(ds: DataSource, id: com.histmersion.util.jobs.Job.Id)(change: JobDetail => JobDetail): Unit =
+  def amendDetail(ds: DataSource, id: Job.Id)(change: JobDetail => JobDetail): Unit =
     Transactor(ds)
       .read(JobRepo.get(id))
       .foreach(j => Transactor(ds).transact(JobRepo.setDetail(id, change(j.detail.getOrElse(JobDetail.empty)))))
@@ -114,18 +93,18 @@ object BackgroundJob:
     */
   def start(
       ds: DataSource,
-      kind: com.histmersion.util.jobs.Job.Kind,
+      kind: Job.Kind,
       detail: Option[JobDetail],
       slot: Slot,
-      what: com.histmersion.util.jobs.BackgroundJob.Work,
-      busyCode: Option[com.histmersion.util.jobs.BackgroundJob.StartBusyCode] = None,
+      what: Work,
+      busyCode: Option[Api.Error.Code] = None,
       /** The job runs on the generation (database, config) the caller is pinned to, even across a config reload
         * (docs/research-plugins.md §3.6).
         */
       pins: WorkCarrier = WorkCarrier.none,
       stops: Option[JobStops] = None
-  )(body: (JobInfo, com.histmersion.util.jobs.Job.Id => Unit) => Outcome): Either[Api.Error, JobInfo] =
-    if !slot.claim("starting") then Left(busy(what, slot.current, busyCode))
+  )(body: (JobInfo, JobInfo.Progress => Unit) => Outcome): Either[Api.Error, JobInfo] =
+    if !slot.claim(Work("starting")) then Left(busy(what, slot.current, busyCode))
     else
       val job =
         try Transactor(ds).transact(JobRepo.create(kind, None, None, detail = detail))
@@ -134,7 +113,10 @@ object BackgroundJob:
             slot.free()
             throw e
       launch(ds, job, kind, slot, what, busyCode, pins, stops, JobState.Queued, body)
-      Right(Transactor(ds).read(JobRepo.get(job.id)).getOrElse(job))
+      Right(Transactor(ds).read(JobRepo.get(idOf(job))).getOrElse(job))
+
+  /** A job row's id, as the database keeps it. */
+  private def idOf(job: JobInfo): Job.Id = Job.Id.assume(job.id.value)
 
   /** The job's body on its own daemon thread, its row moved from `from` to running and on to how it ended. The slot is
     * held by the caller and freed when the run ends.
@@ -142,63 +124,77 @@ object BackgroundJob:
   private def launch(
       ds: DataSource,
       job: JobInfo,
-      kind: com.histmersion.util.jobs.Job.Kind,
+      kind: Job.Kind,
       slot: Slot,
-      what: com.histmersion.util.jobs.BackgroundJob.LaunchWhat,
-      busyCode: Option[com.histmersion.util.jobs.BackgroundJob.LaunchBusyCode],
+      what: Work,
+      busyCode: Option[Api.Error.Code],
       pins: WorkCarrier,
       stops: Option[JobStops],
       from: JobState,
-      body: (JobInfo, com.histmersion.util.jobs.Job.Id => Unit) => Outcome
+      body: (JobInfo, JobInfo.Progress => Unit) => Outcome
   ): Unit =
-    slot.note(s"job ${job.id}")
+    val id = idOf(job)
+    slot.note(Work(s"job ${job.id}"))
     val work = pins.carryWork { () =>
-      val last = AtomicReference[Option[String]](None)
+      val last = AtomicReference[Option[JobInfo.Progress]](None)
       // a report closes a part: what it says is kept, and a stop asked meanwhile takes effect there
-      def report(text: com.histmersion.util.jobs.JobRepo.ProgressText): Unit =
+      def report(text: JobInfo.Progress): Unit =
         last.set(Some(text))
-        Transactor(ds).transact(JobRepo.progress(job.id, text))
-        stops.flatMap(_.requestedFor(job.id)).foreach(stop => throw JobStopped(stop))
+        Transactor(ds).transact(JobRepo.progress(id, JobRow.Progress(text.value)))
+        stops.flatMap(_.requestedFor(id)).foreach(stop => throw JobStopped(stop))
       try
         val _ =
-          Transactor(ds).transact(JobRepo.transition(job.id, from, JobState.Running, last.get.orElse(Some("starting"))))
+          Transactor(ds).transact(
+            JobRepo.transition(
+              id,
+              from,
+              JobState.Running,
+              last.get.orElse(Some(JobInfo.Progress("starting"))).map(p => JobRow.Progress(p.value))
+            )
+          )
         val (out, thrown) =
           try (body(job, report), None)
           catch
-            case s: JobStopped => (Outcome.failed("stopped"), Some(s.stop))
+            case s: JobStopped => (Outcome.failed(Outcome.Error("stopped")), Some(s.stop))
             case e: Throwable  =>
               if !e.isInstanceOf[InterruptedException] then
                 scribe.error(s"$kind job ${job.id} died: ${e.getMessage}", e)
               (Outcome.failed(describe(e)), None)
-        val asked = stops.flatMap(_.requestedFor(job.id))
-        stops.foreach(_.answered(job.id))
+        val asked = stops.flatMap(_.requestedFor(id))
+        stops.foreach(_.answered(id))
         val _ = ending(out, thrown, asked) match
           case Right(o) =>
             o.error match
               case None =>
-                Transactor(ds).transact(JobRepo.transition(job.id, JobState.Running, JobState.Done, o.summary))
+                Transactor(ds).transact(JobRepo.transition(id, JobState.Running, JobState.Done, o.summary.map(m => JobRow.Progress(m.value))))
               case Some(e) =>
                 Transactor(ds).transact(
-                  JobRepo.transition(job.id, JobState.Running, JobState.Failed, o.summary, Some(e))
+                  JobRepo.transition(
+                    id,
+                    JobState.Running,
+                    JobState.Failed,
+                    o.summary.map(m => JobRow.Progress(m.value)),
+                    Some(JobRow.Error(e.value))
+                  )
                 )
           case Left(JobStop.Pause) =>
-            stops.foreach(_.pausedWith(job.id, () => resume(ds, job, kind, slot, what, busyCode, pins, stops, body)))
+            stops.foreach(_.pausedWith(id, () => resume(ds, job, kind, slot, what, busyCode, pins, stops, body)))
             Transactor(ds).transact(
               JobRepo.transition(
-                job.id,
+                id,
                 JobState.Running,
                 JobState.Paused,
-                Some(JobControlRules.stoppedLine(JobStop.Pause, last.get))
+                Some(JobRow.Progress(JobControlRules.stoppedLine(JobStop.Pause, last.get).value))
               )
             )
           case Left(JobStop.Cancel) =>
             Transactor(ds).transact(
               JobRepo.transition(
-                job.id,
+                id,
                 JobState.Running,
                 JobState.Cancelled,
-                Some(JobControlRules.stoppedLine(JobStop.Cancel, last.get)),
-                Some(JobControlRules.CancelledByPerson)
+                Some(JobRow.Progress(JobControlRules.stoppedLine(JobStop.Cancel, last.get).value)),
+                Some(JobRow.Error(JobControlRules.CancelledByPerson))
               )
             )
       finally slot.free()
@@ -210,18 +206,18 @@ object BackgroundJob:
   private def resume(
       ds: DataSource,
       job: JobInfo,
-      kind: com.histmersion.util.jobs.BackgroundJob.ResumeKind,
+      kind: Job.Kind,
       slot: Slot,
-      what: com.histmersion.util.jobs.BackgroundJob.ResumeWhat,
-      busyCode: Option[com.histmersion.util.jobs.BackgroundJob.ResumeBusyCode],
+      what: Work,
+      busyCode: Option[Api.Error.Code],
       pins: WorkCarrier,
       stops: Option[JobStops],
-      body: (JobInfo, com.histmersion.util.jobs.Job.Id => Unit) => Outcome
-  ): Either[com.histmersion.util.jobs.BackgroundJob.Problem, Unit] =
-    if !slot.claim("resuming") then
+      body: (JobInfo, JobInfo.Progress => Unit) => Outcome
+  ): Either[JobStops.Problem, Unit] =
+    if !slot.claim(Work("resuming")) then
       // the paused job keeps its way to go on: it can be resumed once the other one ends
-      stops.foreach(_.pausedWith(job.id, () => resume(ds, job, kind, slot, what, busyCode, pins, stops, body)))
-      Left(busy(what, slot.current, busyCode).message)
+      stops.foreach(_.pausedWith(idOf(job), () => resume(ds, job, kind, slot, what, busyCode, pins, stops, body)))
+      Left(JobStops.Problem(busy(what, slot.current, busyCode).message.value))
     else
       launch(ds, job, kind, slot, what, busyCode, pins, stops, JobState.Paused, body)
       Right(())

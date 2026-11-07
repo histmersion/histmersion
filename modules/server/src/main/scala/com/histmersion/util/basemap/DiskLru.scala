@@ -1,6 +1,7 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.util.storage.Store
+import com.histmersion.ByteCount
+import com.histmersion.util.storage.{ByteSource, Store}
 
 import java.io.IOException
 import java.time.Instant
@@ -12,7 +13,7 @@ import java.time.Instant
   *
   * Thread-safe: every operation holds the instance's lock (they are file operations of a few KB).
   */
-final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytesResult, ext: DiskLru.Ext = "webp")(using clock: java.time.Clock):
+final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytes, ext: DiskLru.Ext = DiskLru.Ext("webp"))(using clock: java.time.Clock):
 
   // the index (access-ordered: the eldest is the least recently used) and its byte total, loaded once;
   // `var`s under the instance lock
@@ -20,10 +21,10 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytesResult, ext: D
   private var total = 0L
   private var loaded = false
 
-  private def file(key: com.histmersion.util.basemap.DiskLru.Key, absent: com.histmersion.util.basemap.DiskLru.Absent): Store.Key =
+  private def file(key: String, absent: Boolean): Store.Key =
     Store.Key.applyUnsafe(key + (if absent then ".none" else s".$ext"))
 
-  private def done(written: Either[Store.Error, ?]): Unit = written.left.foreach(e => throw IOException(e.message))
+  private def done(written: Either[Store.Error, ?]): Unit = written.left.foreach(e => throw IOException(e.message.value))
 
   private def load(): Unit = if !loaded then
     loaded = true
@@ -38,7 +39,7 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytesResult, ext: D
 
   private def evict(): Unit =
     val it = index.entrySet().iterator()
-    while total > maxBytes() && it.hasNext do
+    while total > maxBytes().value && it.hasNext do
       val e = it.next()
       it.remove()
       total -= e.getValue
@@ -46,55 +47,50 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytesResult, ext: D
       val _ = store.delete(file(e.getKey, absent = true))
 
   /** `Some(Some(bytes))` a cached tile, `Some(None)` one known to be missing, `None` not cached. */
-  def get(key: com.histmersion.util.basemap.DiskLru.Key): Option[Option[com.histmersion.util.basemap.DiskLru.Bytes]] = synchronized {
+  def get(key: com.histmersion.util.basemap.DiskLru.Key): Option[Option[ByteSource.Content]] = synchronized {
     load()
-    if !index.containsKey(key) then None
+    if !index.containsKey(key.value) then None
     else
-      val _ = index.get(key) // marks it used
-      val f = file(key, absent = false)
+      val _ = index.get(key.value) // marks it used
+      val f = file(key.value, absent = false)
       store.get(f) match
         case Some(b) =>
           store.touch(f, Instant.ofEpochMilli(clock.millis()))
           Some(Some(b.bytes()))
-        case None if store.isFile(file(key, absent = true)) => Some(None)
-        case None => total -= index.remove(key); None // removed behind our back
+        case None if store.isFile(file(key.value, absent = true)) => Some(None)
+        case None => total -= index.remove(key.value); None // removed behind our back
   }
 
   /** Keep `bytes` (`None`: the provider has no such tile) as `key`, then drop the least recently used until the cache
     * is within its ceiling.
     */
-  def put(key: com.histmersion.util.basemap.DiskLru.Key, bytes: Option[com.histmersion.util.basemap.DiskLru.Bytes]): Unit = synchronized {
+  def put(key: com.histmersion.util.basemap.DiskLru.Key, bytes: Option[ByteSource.Content]): Unit = synchronized {
     load()
-    done(store.put(file(key, bytes.isEmpty), bytes.getOrElse(Array.emptyByteArray)))
-    Option(index.put(key, bytes.fold(0L)(_.length.toLong))).foreach(total -= _)
-    total += bytes.fold(0L)(_.length.toLong)
+    done(store.put(file(key.value, bytes.isEmpty), bytes.getOrElse(ByteSource.Content(Array.emptyByteArray))))
+    Option(index.put(key.value, bytes.fold(0L)(_.value.length.toLong))).foreach(total -= _)
+    total += bytes.fold(0L)(_.value.length.toLong)
     evict()
   }
 
-  def entries: com.histmersion.util.basemap.DiskLru.EntryCount = synchronized { load(); index.size.toLong }
-  def bytes: com.histmersion.ByteCount = synchronized { load(); total }
+  def entries: com.histmersion.util.basemap.DiskLru.EntryCount = synchronized { load(); DiskLru.EntryCount(index.size.toLong) }
+  def bytes: com.histmersion.ByteCount = synchronized { load(); ByteCount.applyUnsafe(total) }
 
   /** Everything removed; answers the bytes it held. */
   def clear(): com.histmersion.ByteCount = synchronized {
     val was = store.deleteTree(Store.Key.Root).fold(0L)(_.value)
     index.clear(); total = 0; loaded = false
-    was
+    ByteCount.applyUnsafe(was)
   }
 
 object DiskLru:
-  type Absent = Absent.T
-  object Absent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Bytes = Bytes.T
-  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Bytes = ByteSource.Content
+  val Bytes: ByteSource.Content.type = ByteSource.Content
+  type MaxBytes = MaxBytes.T
+  object MaxBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EntryCount = EntryCount.T
   object EntryCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxBytes = MaxBytes.T
-  object MaxBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type MaxBytesResult = com.histmersion.util.basemap.DiskLru.MaxBytes
-  val MaxBytesResult: _root_.com.histmersion.util.basemap.DiskLru.MaxBytes.type = _root_.com.histmersion.util.basemap.DiskLru.MaxBytes
   type Ext = Ext.T
   object Ext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

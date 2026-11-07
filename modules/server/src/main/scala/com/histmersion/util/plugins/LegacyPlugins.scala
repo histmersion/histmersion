@@ -2,6 +2,7 @@ package com.histmersion.util.plugins
 
 import scala.annotation.tailrec
 import com.histmersion.pluginhost.PluginHost
+import com.histmersion.util.settings.SettingsService
 
 import org.ekrich.config.{Config, ConfigValueFactory}
 
@@ -29,15 +30,13 @@ object LegacyPlugins:
   /** A former plugin id and the plugins that took its place, in their chain order. */
 
 
-  final case class Split(id: Split.Id, into: List[Split.Into])
+  final case class Split(id: Plugin.Id, into: List[Plugin.Id])
 
-  object Split:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Into = Into.T
-    object Into extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  val OaIndex: Split = Split("oa-index", List("oa-unpaywall", "oa-core", "oa-openalex", "oa-landing"))
+  val OaIndex: Split =
+    Split(
+      Plugin.Id("oa-index"),
+      List(Plugin.Id("oa-unpaywall"), Plugin.Id("oa-core"), Plugin.Id("oa-openalex"), Plugin.Id("oa-landing"))
+    )
 
   val All: List[Split] = List(OaIndex)
 
@@ -49,7 +48,9 @@ object LegacyPlugins:
 
   /** The environment variable the host reads for a plugin's `enabled` (its defaults declare it). */
   def enabledEnv(id: com.histmersion.util.plugins.Plugin.Id): com.histmersion.util.process.ProcessLaunch.EnvironmentKey =
-    s"HISTMERSION_PLUGIN_${id.toUpperCase(java.util.Locale.ROOT).replace('-', '_')}_ENABLED"
+    com.histmersion.util.process.ProcessLaunch.EnvironmentKey(
+      s"HISTMERSION_PLUGIN_${id.value.toUpperCase(java.util.Locale.ROOT).replace('-', '_')}_ENABLED"
+    )
 
   final case class Migrated(user: Config, env: Config, warnings: List[Migrated.Warnings])
 
@@ -60,7 +61,7 @@ object LegacyPlugins:
   /** Map every former id's settings onto its successors. `known(id)`: the keys of plugin `id`'s defaults (`enabled`
     * aside), which decide where a key other than `enabled` goes.
     */
-  def migrate(user: Config, env: Config, known: com.histmersion.util.settings.SettingsService.ConfigPath => Set[com.histmersion.util.settings.SettingsService.ConfigPath]): Migrated =
+  def migrate(user: Config, env: Config, known: Plugin.Id => Set[SettingsService.ConfigPath]): Migrated =
     All.foldLeft(Migrated(user, env, Nil)) { (m, split) =>
       val (u1, w1) = block(m.user, split, known)
       val (u2, w2) = order(u1, m.env, split)
@@ -68,12 +69,12 @@ object LegacyPlugins:
       Migrated(u2, e1, m.warnings ++ w1 ++ w2 ++ w3)
     }
 
-  private def path(id: com.histmersion.util.plugins.Plugin.Id): com.histmersion.util.settings.SettingsService.ConfigPath = s"${PluginHost.Root}.$id"
+  private def path(id: Plugin.Id): String = s"${PluginHost.Root}.${id.value}"
 
-  private def has(c: Config, p: com.histmersion.util.settings.SettingsService.ConfigPath): Boolean = Try(c.hasPathOrNull(p)).getOrElse(false)
+  private def has(c: Config, p: String): Boolean = Try(c.hasPathOrNull(p)).getOrElse(false)
 
   /** The former block's keys onto the successors; the block itself removed. */
-  private def block(user: Config, split: Split, known: com.histmersion.util.settings.SettingsService.ConfigPath => Set[com.histmersion.util.settings.SettingsService.ConfigPath]): (Config, List[com.histmersion.util.plugins.LegacyPlugins.Migrated.Warnings]) =
+  private def block(user: Config, split: Split, known: Plugin.Id => Set[SettingsService.ConfigPath]): (Config, List[com.histmersion.util.plugins.LegacyPlugins.Migrated.Warnings]) =
     val from = path(split.id)
     if !has(user, from) then (user, Nil)
     else
@@ -81,15 +82,16 @@ object LegacyPlugins:
         case None =>
           (
             user.withoutPath(from),
-            List(s"$from must be a block { … } — ignored; it is deprecated: " + successors(split))
+            List(Migrated.Warnings(s"$from must be a block { … } — ignored; it is deprecated: " + successors(split)))
           )
         case Some(old) =>
           val keys = old.root.keySet.asScala.toList.sorted
-          @tailrec def carry(rest: List[com.histmersion.util.settings.SettingsService.ConfigPath], acc: Config, ign: List[com.histmersion.util.settings.SettingsService.ConfigPath]): (Config, List[com.histmersion.util.settings.SettingsService.ConfigPath]) =
+          @tailrec def carry(rest: List[String], acc: Config, ign: List[String]): (Config, List[String]) =
             rest match
               case Nil       => (acc, ign)
               case k :: tail =>
-                val targets = if k == "enabled" then split.into else split.into.filter(id => known(id)(k))
+                val targets =
+                  if k == "enabled" then split.into else split.into.filter(id => known(id).contains(SettingsService.ConfigPath(k)))
                 if targets.isEmpty then carry(tail, acc, ign :+ k)
                 else
                   val v = old.root.get(k)
@@ -103,39 +105,48 @@ object LegacyPlugins:
           val warn = s"$from is deprecated: " + successors(split) +
             (if applied.isEmpty then "" else s"; its ${applied.mkString(", ")} applied to them") +
             s" — write ${PluginHost.Root}.<id> instead"
-          (out, warn :: ignored.map(k => s"$from.$k: none of ${split.into.mkString(", ")} has this setting — ignored"))
+          (
+            out,
+            (warn :: ignored.map(k => s"$from.$k: none of ${split.into.map(_.value).mkString(", ")} has this setting — ignored"))
+              .map(Migrated.Warnings(_))
+          )
 
   /** `order`: the former id replaced in place by its successors not listed already. */
   private def order(user: Config, env: Config, split: Split): (Config, List[com.histmersion.util.plugins.LegacyPlugins.Migrated.Warnings]) =
     val at = s"${PluginHost.Root}.${PluginHost.OrderKey}"
     val listed = Try(user.withFallback(env).resolve().getStringList(at).asScala.toList.map(_.trim)).toOption
     listed match
-      case Some(ids) if ids.contains(split.id) =>
-        val replaced = ids.flatMap(id => if id == split.id then split.into.filterNot(ids.contains) else List(id))
+      case Some(ids) if ids.contains(split.id.value) =>
+        val into = split.into.map(_.value)
+        val replaced = ids.flatMap(id => if id == split.id.value then into.filterNot(ids.contains) else List(id))
         (
           user.withValue(at, ConfigValueFactory.fromIterable(replaced.asJava)),
-          List(s"$at names '${split.id}', which is deprecated: ${successors(split)} — listed in its place")
+          List(Migrated.Warnings(s"$at names '${split.id}', which is deprecated: ${successors(split)} — listed in its place"))
         )
       case _ => (user, Nil)
 
   /** The former `enabled` variable for each successor's that is not set. */
   private def environment(env: Config, split: Split): (Config, List[com.histmersion.util.plugins.LegacyPlugins.Migrated.Warnings]) =
-    val old = enabledEnv(split.id)
+    val old = enabledEnv(split.id).value
     Option(env.root.get(old)) match
       case None    => (env, Nil)
       case Some(v) =>
-        val out = split.into.map(enabledEnv).foldLeft(env) { (e, name) =>
+        val out = split.into.map(i => enabledEnv(i).value).foldLeft(env) { (e, name) =>
           if e.root.containsKey(name) then e else e.withValue(ConfigQuote(name), v)
         }
         (
           out,
-          List(s"$old is deprecated: ${successors(split)} — set ${split.into.map(enabledEnv).mkString(", ")} instead")
+          List(
+            Migrated.Warnings(
+              s"$old is deprecated: ${successors(split)} — set ${split.into.map(i => enabledEnv(i).value).mkString(", ")} instead"
+            )
+          )
         )
 
-  private def successors(split: Split): com.histmersion.util.plugins.Plugin.Id =
-    s"'${split.id}' is ${split.into.size} plugins now (${split.into.mkString(", ")})"
+  private def successors(split: Split): String =
+    s"'${split.id}' is ${split.into.size} plugins now (${split.into.map(_.value).mkString(", ")})"
 
   /** A key as one HOCON path element (an environment variable's name or a block's key). */
   private object ConfigQuote:
 
-    def apply(k: com.histmersion.util.settings.SettingsService.ConfigPath): com.histmersion.util.settings.SettingsService.ConfigPath = org.ekrich.config.ConfigUtil.quoteString(k)
+    def apply(k: String): String = org.ekrich.config.ConfigUtil.quoteString(k)

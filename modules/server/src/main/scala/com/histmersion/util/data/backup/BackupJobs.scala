@@ -22,13 +22,11 @@ final class BackupJobs(
     pins: WorkCarrier = WorkCarrier.none
 ):
 
-  final private case class Job(file: Job.File, started: Job.Started, result: CompletableFuture[Either[Api.Error, Backup.Result]])
-
-  object Job:
-    type File = File.T
-    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Started = Started.T
-    object Started extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final private case class Job(
+      file: PreparedBackup.File,
+      started: Long,
+      result: CompletableFuture[Either[Api.Error, Backup.Result]]
+  )
   private val current = AtomicReference[Option[Job]](None)
 
   def running: Boolean = current.get().exists(!_.result.isDone)
@@ -45,7 +43,7 @@ final class BackupJobs(
           // the dump runs on the generation (database) the request was pinned to
           val work = pins.carryWork { () =>
             val _ = f.complete(
-              scala.util.Try(p.run()).toEither.left.map(e => Api.Error(s"backup crashed: ${e.getMessage}")).flatten
+              scala.util.Try(p.run()).toEither.left.map(e => Api.Error(Api.Error.Message(s"backup crashed: ${e.getMessage}"))).flatten
             )
           }
           val _ = Thread.ofPlatform().daemon(true).name("histmersion-backup").start(() => work())
@@ -61,10 +59,11 @@ final class BackupJobs(
   def status: Option[Backup.Status] = current.get().map(statusOf)
 
   private def statusOf(j: Job): Backup.Status =
-    val elapsed = (System.nanoTime() - j.started) / 1000000L
-    if !j.result.isDone then Backup.Status.running(j.file, elapsed)
+    val elapsed = Backup.Result.DurationMs((System.nanoTime() - j.started) / 1000000L)
+    if !j.result.isDone then Backup.Status.running(Backup.Status.RunningFile(j.file.value), elapsed)
     else
       j.result.get() match
         case Right(r) => Backup.Status.done(r)
-        case Left(e)  => Backup.Status.failed(j.file, elapsed, e.message)
+        case Left(e)  =>
+          Backup.Status.failed(Backup.Status.FailedFile(j.file.value), elapsed, Backup.Status.Error(e.message.value))
 

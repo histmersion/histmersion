@@ -6,63 +6,76 @@ import com.histmersion.api.Api
 
 /** Settings as the wire shows them ([[SettingShown]]: a credential's value never crosses). */
 object SettingsViews:
-  type Restartable = Restartable.T
-  object Restartable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SectionId = SectionId.T
-  object SectionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SectionText = SectionText.T
-  object SectionText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-
-  def page(s: SettingsSnapshot, restartable: com.histmersion.util.settings.SettingsViews.Restartable): ConfigEdit.Page =
+  def page(s: SettingsSnapshot, restartable: Boolean): ConfigEdit.Page =
     val fields = s.readings.map(field)
     val sections = fields
       .map(_.section)
       .distinct
-      .map(id => ConfigEdit.Section(id, doc = sectionDoc(id), fields.filter(_.section == id)))
-    ConfigEdit.Page(s.file, s.exists, s.version.value, sections, s.problems, restartable, s.setupDue)
+      .map(id =>
+        ConfigEdit.Section(
+          ConfigEdit.Section.Id(id.value),
+          doc = ConfigEdit.Section.Doc(sectionDoc(id.value)),
+          fields.filter(_.section == id)
+        )
+      )
+    ConfigEdit.Page(
+      s.file.map(f => ConfigEdit.Page.File(f.value)),
+      ConfigEdit.Page.Exists(s.exists.value),
+      ConfigEdit.Page.Version(s.version.value),
+      sections,
+      s.problems.map(p => ConfigEdit.Page.Problems(p.value)),
+      ConfigEdit.Page.Restartable(restartable),
+      ConfigEdit.Page.SetupDue(s.setupDue.value)
+    )
 
-  private def sectionDoc(id: com.histmersion.util.settings.SettingsViews.SectionId): com.histmersion.util.settings.SettingsViews.SectionText =
-    SettingKey.either(s"${SettingKey.Root}.$id").toOption.fold("")(ConfigSchema.reference.blockDoc)
+  private def sectionDoc(id: String): String =
+    SettingKey.either(s"${SettingKey.Root}.$id").toOption.fold("")(k => ConfigSchema.reference.blockDoc(k).value)
 
   def field(r: SettingReading): ConfigEdit.Field =
     val s = SettingShown.of(r)
     ConfigEdit.Field(
-      s.key,
-      s.section,
-      s.kind,
-      s.doc,
-      s.default,
-      s.value,
-      s.effective,
-      s.source,
-      s.envVar,
-      s.restart,
+      ConfigEdit.Field.Key(s.key.value),
+      ConfigEdit.Field.Section(s.section.value),
+      ConfigEdit.Field.Kind(s.kind.value),
+      ConfigEdit.Field.Doc(s.doc.value),
+      s.default.map(d => ConfigEdit.Field.Default(d.value)),
+      s.value.map(v => ConfigEdit.Field.Value(v.value)),
+      s.effective.map(v => ConfigEdit.Field.Effective(v.value)),
+      ConfigEdit.Field.Source(s.source.value),
+      s.envVar.map(e => ConfigEdit.Field.EnvVar(e.value)),
+      s.restart.map(x => ConfigEdit.Field.Restart(x.value)),
       s.credentialForm.map(form =>
-        ConfigEdit.Credential(s.credentialRule.getOrElse("reference"), form, s.credentialShown)
+        ConfigEdit.Credential(
+          ConfigEdit.Credential.Rule(s.credentialRule.fold("reference")(_.value)),
+          ConfigEdit.Credential.Form(form.value),
+          s.credentialShown.map(x => ConfigEdit.Credential.Shown(x.value))
+        )
       ),
-      s.locked
+      s.locked.map(p => ConfigEdit.Field.Locked(p.value))
     )
 
   def written(
       o: WriteOutcome,
       reload: Option[com.histmersion.api.settings.ReloadReport],
-      restartable: com.histmersion.util.settings.SettingsViews.Restartable
+      restartable: Boolean
   ): ConfigEdit.Written =
     ConfigEdit.Written(
-      o.file,
-      o.changed.map(_.value),
-      o.unchanged.map(_.value),
-      o.backup,
-      o.version.value,
-      o.created,
-      o.restart.map((k, why) => ConfigEdit.RestartNote(k.value, why)),
-      o.warnings,
+      ConfigEdit.Written.File(o.file.value),
+      o.changed.map(k => ConfigEdit.Written.Changed(k.value)),
+      o.unchanged.map(k => ConfigEdit.Written.Unchanged(k.value)),
+      o.backup.map(b => ConfigEdit.Written.Backup(b.value)),
+      ConfigEdit.Written.Version(o.version.value),
+      ConfigEdit.Written.Created(o.created.value),
+      o.restart.map((k, why) => ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), ConfigEdit.RestartNote.Why(why.value))),
+      o.warnings.map(w => ConfigEdit.Written.Warnings(w.value)),
       reload,
-      restartable
+      ConfigEdit.Written.Restartable(restartable)
     )
 
-  def error(e: SettingError): Api.Error = e match
-    case SettingError.Changed                        => Api.Error(e.message, Some(ConfigEdit.CodeChanged))
-    case SettingError.NoFile(_) | SettingError.Io(_) => Api.Error(e.message, Some(ConfigEdit.CodeUnavailable))
-    case _                                           => Api.Error(e.message, Some(ConfigEdit.CodeRefused))
+  def error(e: SettingError): Api.Error =
+    def refusal(code: String) = Api.Error(Api.Error.Message(e.message.value), Some(Api.Error.Code(code)))
+    e match
+      case SettingError.Changed                        => refusal(ConfigEdit.CodeChanged)
+      case SettingError.NoFile(_) | SettingError.Io(_) => refusal(ConfigEdit.CodeUnavailable)
+      case _                                           => refusal(ConfigEdit.CodeRefused)

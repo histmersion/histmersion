@@ -13,20 +13,20 @@ object TerrainResample:
   object Metres extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Pixel = Pixel.T
   object Pixel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SamplesPerSide = SamplesPerSide.T
-  object SamplesPerSide extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Vp8l.Problem
+  val Problem: Vp8l.Problem.type = Vp8l.Problem
   type ZoomDelta = ZoomDelta.T
   object ZoomDelta extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Terrarium's elevation of a pixel `0x??RRGGBB`, in metres. Pure. */
+  def metres(p: Pixel): Metres = Metres(metresOf(p.value))
 
-
-  def metres(p: com.histmersion.util.basemap.TerrainResample.Pixel): com.histmersion.util.basemap.TerrainResample.Metres = ((p >> 16) & 0xff) * 256.0 + ((p >> 8) & 0xff) + (p & 0xff) / 256.0 - 32768.0
+  private def metresOf(p: Int): Double = ((p >> 16) & 0xff) * 256.0 + ((p >> 8) & 0xff) + (p & 0xff) / 256.0 - 32768.0
 
   /** The terrarium pixel (`0xffRRGGBB`) of `m` metres. Pure. */
-  def encode(m: com.histmersion.util.basemap.TerrainResample.Metres): com.histmersion.util.basemap.TerrainResample.Pixel =
+  def encode(m: Metres): Pixel = Pixel(encodeOf(m.value))
+
+  private def encodeOf(m: Double): Int =
     val v = math.max(0.0, math.min(65535.996, m + 32768.0))
     val whole = math.floor(v).toInt
     val r = whole >> 8
@@ -37,35 +37,37 @@ object TerrainResample:
   /** The part of an ancestor tile (`src`, `n` × `n` pixels) that tile `(ox, oy)` of the `2^dz` × `2^dz` under it
     * covers, resampled to `n` × `n` pixels bilinearly in metres; terrarium pixels out. Pure.
     */
-  def resample(src: com.histmersion.util.basemap.Png.Pixels, n: com.histmersion.util.basemap.TerrainResample.SamplesPerSide, dz: com.histmersion.util.basemap.TerrainResample.ZoomDelta, ox: com.histmersion.util.basemap.PmTiles.TileColumn, oy: com.histmersion.util.basemap.PmTiles.TileRow): com.histmersion.util.basemap.Png.Pixels =
-    val s = 1L << dz
+  def resample(src: Png.Pixels, n: Vp8l.Image.Width, dz: ZoomDelta, ox: PmTiles.TileColumn, oy: PmTiles.TileRow): Png.Pixels =
+    val side: Int = n.value
+    val from: Array[Int] = src.value
+    val s = 1L << (dz.value: Int)
     val step = 1.0 / s
-    val x0 = (ox % s).toDouble * n / s
-    val y0 = (oy % s).toDouble * n / s
-    val m = new Array[Double](src.length)
+    val x0 = (ox.value % s).toDouble * side / s
+    val y0 = (oy.value % s).toDouble * side / s
+    val m = new Array[Double](from.length)
     var k = 0
-    while k < src.length do
-      m(k) = metres(src(k))
+    while k < from.length do
+      m(k) = metresOf(from(k))
       k += 1
-    val out = new Array[Int](n * n)
-    val hi = n - 1.000001
+    val out = new Array[Int](side * side)
+    val hi = side - 1.000001
     var j = 0
-    while j < n do
+    while j < side do
       val fy = math.max(0.0, math.min(hi, y0 + (j + 0.5) * step - 0.5))
       val iy = fy.toInt
       val ty = fy - iy
       var i = 0
-      while i < n do
+      while i < side do
         val fx = math.max(0.0, math.min(hi, x0 + (i + 0.5) * step - 0.5))
         val ix = fx.toInt
         val tx = fx - ix
-        val a = iy * n + ix
-        val e = (m(a) * (1 - tx) + m(a + 1) * tx) * (1 - ty) + (m(a + n) * (1 - tx) + m(a + n + 1) * tx) * ty
-        out(j * n + i) = encode(e)
+        val a = iy * side + ix
+        val e = (m(a) * (1 - tx) + m(a + 1) * tx) * (1 - ty) + (m(a + side) * (1 - tx) + m(a + side + 1) * tx) * ty
+        out(j * side + i) = encodeOf(e)
         i += 1
       j += 1
-    out
+    Png.Pixels(out)
 
   /** A relief tile's pixels: a lossless WebP or a PNG. Pure. */
-  def decode(bytes: com.histmersion.util.basemap.Png.PngBytes): Either[com.histmersion.util.basemap.TerrainResample.Problem, Vp8l.Image] =
+  def decode(bytes: Png.PngBytes): Either[Problem, Vp8l.Image] =
     if Png.isPng(bytes) then Png.decode(bytes) else Vp8l.decode(bytes)

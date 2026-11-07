@@ -23,10 +23,10 @@ final class MemoryStore private (
   import MemoryStore.{Entry, Files}
 
   def this(location: Location, name: String) =
-    this(location, name, AtomicReference(MemoryStore.Files(Map.empty, Set.empty)), Store.Key.Root)
+    this(location, MemoryStore.Name(name), AtomicReference(MemoryStore.Files(Map.empty, Set.empty)), Store.Key.Root)
 
   private def full(key: Store.Key): Store.Key =
-    if base.isRoot then key else if key.isRoot then base else base.child(key.value)
+    if base.isRoot then key else if key.isRoot then base else base.child(Store.EntryName(key.value))
   private def local(key: Store.Key): Store.Key = key.relativeTo(base)
   private def now: Instant = Instant.EPOCH.plusMillis(MemoryStore.ticks.incrementAndGet())
 
@@ -39,7 +39,7 @@ final class MemoryStore private (
   private def ancestors(k: Store.Key): List[Store.Key] =
     k.segments.inits.toList.drop(1).filter(_.nonEmpty).map(s => Store.Key.applyUnsafe(s.mkString("/")))
 
-  def where(key: Store.Key): com.histmersion.util.storage.Blob.Location = s"$name/${full(key).value}"
+  def where(key: Store.Key): com.histmersion.util.storage.Blob.Location = Blob.Location(s"$name/${full(key).value}")
 
   def sub(prefix: Store.Key): Store = MemoryStore(location, name, state, full(prefix))
 
@@ -76,7 +76,7 @@ final class MemoryStore private (
       .sortBy(_.key.value)
 
   private def store(key: Store.Key, bytes: com.histmersion.util.storage.ByteSource.Content): Stored =
-    val e = Entry(bytes.clone(), now)
+    val e = Entry(ByteSource.Content(bytes.value.clone()), now)
     state.updateAndGet(_.modify(_.files).using(_.updated(full(key), e)))
     Stored(key, Stored.Kind.File, e.size, e.modified)
 
@@ -93,7 +93,7 @@ final class MemoryStore private (
 
   def copy(from: Store.Key, to: Store.Key, keepAttributes: com.histmersion.util.storage.Store.KeepPermissions): Either[Store.Error, Unit] =
     state.get.files.get(full(from)).toRight(Store.Error.NotFound(where(from))).map { e =>
-      val copied = if keepAttributes then e else e.modify(_.modified).setTo(now)
+      val copied = if keepAttributes.value then e else e.modify(_.modified).setTo(now)
       state.updateAndGet(_.modify(_.files).using(_.updated(full(to), copied))): Unit
     }
 
@@ -127,9 +127,9 @@ final class MemoryStore private (
       val counted = held.takeWhile(_ => budget.take())
       Store.Measure(
         ByteCount.applyUnsafe(counted.iterator.map(_.size.value).sum),
-        counted.size.toLong,
-        exists = true,
-        partial = counted.size < held.size
+        Store.Measure.Files(counted.size.toLong),
+        exists = Store.Measure.Exists(true),
+        partial = Store.Measure.Partial(counted.size < held.size)
       )
     else Store.Measure.absent
 
@@ -152,35 +152,34 @@ object MemoryStore:
 
   private val ticks = java.util.concurrent.atomic.AtomicLong()
 
-  final case class Entry(bytes: Entry.Bytes, modified: Instant):
-    def size: ByteCount = ByteCount.applyUnsafe(bytes.length.toLong)
-
-  object Entry:
-    type Bytes = Bytes.T
-    object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class Entry(bytes: ByteSource.Content, modified: Instant):
+    def size: ByteCount = ByteCount.applyUnsafe(bytes.value.length.toLong)
 
   final case class Files(files: Map[Store.Key, Entry], directories: Set[Store.Key])
 
   final class MemoryBlob(val key: Store.Key, val where: MemoryBlob.Where, entry: Entry) extends Blob:
     def size: ByteCount = entry.size
     def modified: Instant = entry.modified
-    def open(): InputStream = ByteArrayInputStream(entry.bytes)
-    def bytes(): com.histmersion.util.storage.ByteSource.Content = entry.bytes.clone()
-    def text(): com.histmersion.util.storage.Blob.Text = String(entry.bytes, UTF_8)
+    def open(): InputStream = ByteArrayInputStream(entry.bytes.value)
+    def bytes(): com.histmersion.util.storage.ByteSource.Content = ByteSource.Content(entry.bytes.value.clone())
+    def text(): com.histmersion.util.storage.Blob.Text = Blob.Text(String(entry.bytes.value, UTF_8))
     def sha256(): Sha256 =
-      Sha256.applyUnsafe(MessageDigest.getInstance("SHA-256").digest(entry.bytes).map(b => f"${b & 0xff}%02x").mkString)
+      Sha256.applyUnsafe(MessageDigest.getInstance("SHA-256").digest(entry.bytes.value).map(b => f"${b & 0xff}%02x").mkString)
     def readAt(offset: ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.storage.ByteSource.Content = reader().read(offset, length)
-    def mapped(): ByteBuffer = ByteBuffer.wrap(entry.bytes).asReadOnlyBuffer()
+    def mapped(): ByteBuffer = ByteBuffer.wrap(entry.bytes.value).asReadOnlyBuffer()
     def reader(): RandomReader = new RandomReader:
       def where: com.histmersion.util.storage.Blob.Location = MemoryBlob.this.where
       def size: ByteCount = entry.size
       def read(offset: ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.storage.ByteSource.Content =
-        if offset.value + length > entry.bytes.length then
-          throw java.io.EOFException(s"$where ends before byte ${offset.value + length}")
-        java.util.Arrays.copyOfRange(entry.bytes, offset.value.toInt, offset.value.toInt + length)
+        val held = entry.bytes.value
+        val len = length.value
+        if offset.value + len > held.length then
+          throw java.io.EOFException(s"$where ends before byte ${offset.value + len}")
+        ByteSource.Content(java.util.Arrays.copyOfRange(held, offset.value.toInt, offset.value.toInt + len))
       def readUpTo(offset: ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.storage.ByteSource.Content =
-        val from = math.min(offset.value, entry.bytes.length.toLong).toInt
-        java.util.Arrays.copyOfRange(entry.bytes, from, math.min(entry.bytes.length, from + length))
+        val held = entry.bytes.value
+        val from = math.min(offset.value, held.length.toLong).toInt
+        ByteSource.Content(java.util.Arrays.copyOfRange(held, from, math.min(held.length, from + length.value)))
       def close(): Unit = ()
 
   object MemoryBlob:
@@ -190,7 +189,7 @@ object MemoryStore:
     val Where: _root_.com.histmersion.util.storage.Blob.Location.type = _root_.com.histmersion.util.storage.Blob.Location
 
 
-  final class MemoryReservation(val key: Store.Key, val where: MemoryReservation.Where, commitTo: (Store.Key, Array[Byte]) => Stored)
+  final class MemoryReservation(val key: Store.Key, val where: MemoryReservation.Where, commitTo: (Store.Key, ByteSource.Content) => Stored)
       extends Reservation:
     private val written = AtomicReference(Array.emptyByteArray)
     @volatile private var done = false
@@ -202,8 +201,9 @@ object MemoryStore:
 
     def writeAt(offset: ByteOffset, bytes: com.histmersion.util.storage.ByteSource.Content): Unit =
       val _ = written.updateAndGet { now =>
-        val out = java.util.Arrays.copyOf(now, math.max(now.length, offset.value.toInt + bytes.length))
-        System.arraycopy(bytes, 0, out, offset.value.toInt, bytes.length)
+        val data = bytes.value
+        val out = java.util.Arrays.copyOf(now, math.max(now.length, offset.value.toInt + data.length))
+        System.arraycopy(data, 0, out, offset.value.toInt, data.length)
         out
       }
 
@@ -211,7 +211,7 @@ object MemoryStore:
 
     def commit(keepPermissions: com.histmersion.util.storage.Store.KeepPermissions): Either[Store.Error, Stored] =
       done = true
-      Right(commitTo(key, written.get))
+      Right(commitTo(key, ByteSource.Content(written.get)))
 
     def discard(): Unit = written.set(Array.emptyByteArray)
     def close(): Unit = if !done then discard()

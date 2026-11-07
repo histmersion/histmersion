@@ -19,11 +19,11 @@ final class WriteGate:
 
   /** Run `f` unless a restore is in progress, in which case answer 503. */
   def guard[A](op: com.histmersion.util.data.maintenance.WriteGate.OperationName)(f: => Either[Api.Error, A]): Either[Api.Error, A] =
-    if active then Left(Backup.maintenance(op)) else f
+    if active then Left(Backup.maintenance(op.value)) else f
 
   /** Run `f` holding the lock; a second concurrent attempt is refused rather than queued. */
   def exclusively[A](op: com.histmersion.util.data.maintenance.WriteGate.OperationName)(f: => Either[Api.Error, A]): Either[Api.Error, A] =
-    if !busy.compareAndSet(false, true) then Left(Backup.maintenance(op))
+    if !busy.compareAndSet(false, true) then Left(Backup.maintenance(op.value))
     else
       try f
       finally busy.set(false)

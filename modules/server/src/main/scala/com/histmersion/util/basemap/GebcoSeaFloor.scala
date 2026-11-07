@@ -1,9 +1,10 @@
 package com.histmersion.util.basemap
 
+import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.api.{BBox, Plural}
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.basemap.Basemap
-import com.histmersion.config.BasemapGebcoConfig
+import com.histmersion.config.{BasemapBathymetryConfig, BasemapGebcoConfig}
 import com.histmersion.util.storage.Store
 
 import java.io.IOException
@@ -16,28 +17,41 @@ import scala.util.Using
   * 0…`gebco.max-zoom`. A tile reaching past the region takes its outside from ETOPO1's tile at `etopoUrl` (one GET), as
   * the ETOPO1 extract has it.
   */
-final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: GebcoSeaFloor.EtopoUrl, http: RangeHttp, maxRequestBytes: GebcoSeaFloor.MaxRequestBytes):
+final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: BasemapBathymetryConfig.Url, http: RangeHttp, maxRequestBytes: ByteCount):
 
   private val HeaderBytes = 256 * 1024
   private val TileSize = 256
   private val PngGuess = 80L * 1024 // a tile, about (the ETOPO1 extract's, 2026-10-20)
 
+  private def human(n: Long): String = Backup.humanBytes(com.histmersion.api.ByteCount(n))
+
+  private def count(n: Long, singular: String, plural: String): Plural.Phrase =
+    Plural.count(Plural.CountN(n), Plural.CountSingular(singular), Plural.CountPlural(plural))
+
   /** The GeoTIFFs of the grid's tiling that meet `bbox`, their headers read. */
-  def plan(bbox: BBox, maxZoom: com.histmersion.util.basemap.GebcoSeaFloor.PlanMaxZoom): Either[com.histmersion.util.basemap.GebcoSeaFloor.Problem, GebcoPlan] =
-    val deg = cfg.tileDegrees
+  def plan(bbox: BBox, maxZoom: PmTiles.Zoom): Either[GebcoSeaFloor.Problem, GebcoPlan] =
+    val deg = cfg.tileDegrees.value
     val cells = for
       west <- (-180 until 180 by deg).toList
       south <- (-90 until 90 by deg).toList
-      if west < bbox.maxLon && west + deg > bbox.minLon && south < bbox.maxLat && south + deg > bbox.minLat
+      if west < bbox.maxLon.value && west + deg > bbox.minLon.value && south < bbox.maxLat.value && south + deg > bbox.minLat.value
     yield (west, south)
     cells
-      .foldLeft[Either[String, List[GebcoPart]]](Right(Nil)) { case (acc, (west, south)) =>
+      .foldLeft[Either[GebcoSeaFloor.Problem, List[GebcoPart]]](Right(Nil)) { case (acc, (west, south)) =>
         acc.flatMap { done =>
-          val url = GebcoSeaFloor.urlOf(cfg.url, west, south, deg)
-          val name = s"${west}_$south"
+          val url = GebcoSeaFloor.urlOf(
+            cfg.url,
+            GebcoSeaFloor.WholeDegrees(west),
+            GebcoSeaFloor.WholeDegrees(south),
+            GebcoSeaFloor.WholeDegrees(deg)
+          )
+          val name = GebcoPart.Name(s"${west}_$south")
           for
-            head <- http.bytes(url, 0, HeaderBytes).map(_._1)
-            grid <- GeoTiffGrid.parse(head, (o, l) => http.bytes(url, o, l).map(_._1)).left.map(e => s"$url: $e")
+            head <- http.bytes(url, ByteOffset.applyUnsafe(0L), ByteCount.applyUnsafe(HeaderBytes.toLong)).map(_._1)
+            grid <- GeoTiffGrid
+              .parse(head, (o, l) => http.bytes(url, o, l).map(_._1))
+              .left
+              .map(e => GebcoSeaFloor.Problem(s"$url: $e"))
           yield grid.window(bbox).fold(done)(w => done :+ GebcoPart(name, url, grid, w, grid.runs(w, maxRequestBytes)))
         }
       }
@@ -47,74 +61,92 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: GebcoSeaFloor.Etopo
       }
 
   /** What a fetch would do, zoom by zoom — the dry run's answer. */
-  def describe(p: GebcoPlan): com.histmersion.util.basemap.GebcoSeaFloor.Description =
-    val byZoom = p.tiles.groupBy(_._2._1).toList.sortBy(_._1).map((z, ts) => s"zoom $z: ${ts.size}").mkString(" · ")
-    s"bathymetry from GEBCO (zoom 0–${p.maxZoom}): would read ${Backup.humanBytes(p.readBytes)} of " +
-      s"${Plural.count(p.parts.size, "GeoTIFF", "GeoTIFFs")} in ${Plural.count(p.parts.map(_.runs.size).sum, "range request", "range requests")}, " +
-      s"and write ${Plural.count(p.tiles.size, "tile", "tiles")} (about ${Backup.humanBytes(p.tiles.size * PngGuess)}; $byZoom), " +
-      s"${p.edge.size} of them completed from ETOPO1 outside the region"
+  def describe(p: GebcoPlan): GebcoSeaFloor.Description =
+    val byZoom =
+      p.tiles.groupBy(_._2._1).toList.sortBy(_._1.value).map((z, ts) => s"zoom ${z.value}: ${ts.size}").mkString(" · ")
+    GebcoSeaFloor.Description(
+      s"bathymetry from GEBCO (zoom 0–${p.maxZoom.value}): would read ${human(p.readBytes.value)} of " +
+        s"${count(p.parts.size.toLong, "GeoTIFF", "GeoTIFFs")} in ${count(p.parts.map(_.runs.size).sum.toLong, "range request", "range requests")}, " +
+        s"and write ${count(p.tiles.size.toLong, "tile", "tiles")} (about ${human(p.tiles.size * PngGuess)}; $byZoom), " +
+        s"${p.edge.size} of them completed from ETOPO1 outside the region"
+    )
 
   /** The bytes a fetch needs on disk at most: the rows read and the tiles written. */
-  def needs(p: GebcoPlan): com.histmersion.ByteCount = p.readBytes + p.tiles.size * PngGuess
+  def needs(p: GebcoPlan): ByteCount = ByteCount.applyUnsafe(p.readBytes.value + p.tiles.size * PngGuess)
 
   /** Read the rows still missing from `work`. */
-  def download(p: GebcoPlan, work: Store, gapMs: com.histmersion.util.basemap.BasemapFetch.Pace.GapMs, note: com.histmersion.util.basemap.GebcoSeaFloor.Note => Unit): Either[com.histmersion.util.basemap.GebcoSeaFloor.Problem, Unit] =
-    work.makeDirectory().left.foreach(e => throw IOException(e.message))
+  def download(p: GebcoPlan, work: Store, gapMs: BasemapFetch.Pace.GapMs, note: GebcoSeaFloor.Note => Unit): Either[GebcoSeaFloor.Problem, Unit] =
+    work.makeDirectory().left.foreach(e => throw IOException(e.message.value))
     val all = p.parts.flatMap(part => part.runs.map(part -> _))
-    all.zipWithIndex.foldLeft[Either[String, Unit]](Right(())) { case (acc, ((part, run), i)) =>
+    all.zipWithIndex.foldLeft[Either[GebcoSeaFloor.Problem, Unit]](Right(())) { case (acc, ((part, run), i)) =>
       acc.flatMap { _ =>
         val f = part.key(run)
-        if work.stat(f).exists(s => s.isFile && s.size.value == run.length) then Right(())
+        if work.stat(f).exists(s => s.isFile && s.size.value == run.length.value) then Right(())
         else
           if Thread.interrupted() then throw InterruptedException()
-          if i > 0 then Thread.sleep(gapMs)
-          note(s"reading GEBCO ${part.name}: part ${i + 1} of ${all.size} (${Backup.humanBytes(run.length)})")
-          Using.resource(work.reserve(f).fold(e => throw IOException(e.message), identity)) { rows =>
-            http.download(part.url, run.offset.value, run.length, rows).flatMap { _ =>
+          if i > 0 then Thread.sleep(gapMs.value)
+          note(GebcoSeaFloor.Note(s"reading GEBCO ${part.name}: part ${i + 1} of ${all.size} (${human(run.length.value)})"))
+          Using.resource(work.reserve(f).fold(e => throw IOException(e.message.value), identity)) { rows =>
+            http.download(part.url, run.offset, ByteCount.applyUnsafe(run.length.value), rows).flatMap { _ =>
               Either
                 .cond(
-                  rows.size.value == run.length,
+                  rows.size.value == run.length.value,
                   (),
-                  s"${part.url}: ${rows.size.value} bytes for a range of ${run.length}"
+                  GebcoSeaFloor.Problem(s"${part.url}: ${rows.size.value} bytes for a range of ${run.length}")
                 )
-                .flatMap(_ => rows.commit().left.map(_.message).map(_ => ()))
+                .flatMap(_ => rows.commit().left.map(e => GebcoSeaFloor.Problem(e.message.value)).map(_ => ()))
             }
           }
       }
     }
 
   /** Every tile of the plan from the rows in `work`, in tile-id order, handed to `add`. */
-  def build(p: GebcoPlan, work: Store, add: (com.histmersion.util.basemap.GebcoSeaFloor.TileKey, com.histmersion.util.basemap.GebcoSeaFloor.Bytes) => Unit, note: com.histmersion.util.basemap.GebcoSeaFloor.Note => Unit): Either[com.histmersion.util.basemap.GebcoSeaFloor.Problem, com.histmersion.ByteCount] =
+  def build(p: GebcoPlan, work: Store, add: (GebcoSeaFloor.TileKey, PmTiles.TileBytes) => Unit, note: GebcoSeaFloor.Note => Unit): Either[GebcoSeaFloor.Problem, BasemapFetch.TileCount] =
     val samplers = p.parts.map(part => GebcoSeaFloor.Rows(part, part.runs.map(r => r -> map(work, part.key(r)))))
     var etopoFailures = 0 // ETOPO1 tiles that could not be read: their outside stays at sea level
     p.tiles.zipWithIndex.foreach { case ((id, (z, x, y)), i) =>
       if Thread.interrupted() then throw InterruptedException()
-      if i % 200 == 0 then note(s"writing tile ${i + 1} of ${p.tiles.size}")
-      lazy val etopo: Option[(Array[Float], com.histmersion.util.basemap.GebcoSeaFloor.GridSize)] =
+      if i % 200 == 0 then note(GebcoSeaFloor.Note(s"writing tile ${i + 1} of ${p.tiles.size}"))
+      lazy val etopo: Option[(Array[Float], Int)] =
         http
-          .file(etopoUrl.replace("{z}", z.toString).replace("{x}", x.toString).replace("{y}", y.toString))
+          .file(
+            RangeHttp.Url(
+              etopoUrl.value
+                .replace("{z}", z.value.toString)
+                .replace("{x}", x.value.toString)
+                .replace("{y}", y.value.toString)
+            )
+          )
           .toOption
           .flatten
-          .flatMap(b => TerrariumPng.decode(b).toOption)
+          .flatMap(b => TerrariumPng.decode(PmTiles.TileBytes(b.value)).toOption)
+          .map((m, w) => (m, w.value))
           .orElse { etopoFailures += 1; None }
       val metres = new Array[Float](TileSize * TileSize)
       for py <- 0 until TileSize; px <- 0 until TileSize do
-        val v = GebcoSeaFloor.sample(samplers, z, x, y, px, py, TileSize)
-        metres(py * TileSize + px) = v.getOrElse {
+        val v = GebcoSeaFloor.sample(
+          samplers,
+          z,
+          x,
+          y,
+          GebcoSeaFloor.PixelX(px),
+          GebcoSeaFloor.PixelY(py),
+          GebcoSeaFloor.GridSize(TileSize)
+        )
+        metres(py * TileSize + px) = v.map(_.value).getOrElse {
           if !p.edge.contains((z, x, y)) then 0f
           else etopo.fold(0f)((m, w) => m((py * w / TileSize) * w + px * w / TileSize))
         }
-      add(id, TerrariumPng.encode(metres, TileSize))
+      add(id, TerrariumPng.encode(metres, TerrariumPng.TileSize(TileSize)))
     }
-    if etopoFailures > 0 then note(s"$etopoFailures edge tile(s) had no ETOPO1 tile: their outside is at sea level")
-    Right(p.tiles.size.toLong)
+    if etopoFailures > 0 then
+      note(GebcoSeaFloor.Note(s"$etopoFailures edge tile(s) had no ETOPO1 tile: their outside is at sea level"))
+    Right(BasemapFetch.TileCount(p.tiles.size.toLong))
 
   private def map(work: Store, f: Store.Key): ByteBuffer =
     work.get(f).getOrElse(throw IOException(s"${work.where(f)}: no such file")).mapped().order(ByteOrder.LITTLE_ENDIAN)
 
 object GebcoSeaFloor:
-  type Bytes = Bytes.T
-  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Column = Column.T
   object Column extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Description = Description.T
@@ -123,117 +155,104 @@ object GebcoSeaFloor:
   object Elevation extends _root_.io.github.iltotore.iron.RefinedType[Short, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GridSize = GridSize.T
   object GridSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Note = BasemapFetch.Note
+  val Note: BasemapFetch.Note.type = BasemapFetch.Note
   type PixelX = PixelX.T
   object PixelX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PixelY = PixelY.T
   object PixelY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = RangeHttp.Problem
+  val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type Row = Row.T
   object Row extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RowIndex = RowIndex.T
-  object RowIndex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SampledElevation = SampledElevation.T
   object SampledElevation extends _root_.io.github.iltotore.iron.RefinedType[Float, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileKey = TileKey.T
-  object TileKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileX = TileX.T
-  object TileX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileY = TileY.T
-  object TileY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlTemplate = UrlTemplate.T
-  object UrlTemplate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileKey = GebcoPlan.TileKey
+  val TileKey: GebcoPlan.TileKey.type = GebcoPlan.TileKey
+  type TileX = GebcoPlan.TileX
+  val TileX: GebcoPlan.TileX.type = GebcoPlan.TileX
+  type TileY = GebcoPlan.TileY
+  val TileY: GebcoPlan.TileY.type = GebcoPlan.TileY
   type WholeDegrees = WholeDegrees.T
   object WholeDegrees extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Zoom = Zoom.T
-  object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Zoom = GebcoPlan.Zoom
+  val Zoom: GebcoPlan.Zoom.type = GebcoPlan.Zoom
 
   /** A GeoTIFF's URL in the grid's tiling: `{north}`, `{south}`, `{west}`, `{east}` as GEBCO writes them (`90.0`). */
-  type BoundsLatT = BoundsLatT.T
-  object BoundsLatT extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-  type EtopoUrl = EtopoUrl.T
-  object EtopoUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxRequestBytes = com.histmersion.util.basemap.BasemapFetch.Pace.MaxRequestBytes
-  val MaxRequestBytes: _root_.com.histmersion.util.basemap.BasemapFetch.Pace.MaxRequestBytes.type = _root_.com.histmersion.util.basemap.BasemapFetch.Pace.MaxRequestBytes
-
-  type PlanMaxZoom = _root_.com.histmersion.util.basemap.GebcoPlan.MaxZoom
-  val PlanMaxZoom: _root_.com.histmersion.util.basemap.GebcoPlan.MaxZoom.type = _root_.com.histmersion.util.basemap.GebcoPlan.MaxZoom
-  type BoundsResultPart1 = BoundsResultPart1.T
-  object BoundsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BoundsResultPart2 = BoundsResultPart2.T
-  object BoundsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BoundsResultPart3 = BoundsResultPart3.T
-  object BoundsResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BoundsResultPart4 = BoundsResultPart4.T
-  object BoundsResultPart4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  def urlOf(template: com.histmersion.util.basemap.GebcoSeaFloor.UrlTemplate, west: com.histmersion.util.basemap.GebcoSeaFloor.WholeDegrees, south: com.histmersion.util.basemap.GebcoSeaFloor.WholeDegrees, deg: com.histmersion.util.basemap.GebcoSeaFloor.WholeDegrees): com.histmersion.util.basemap.GebcoPart.Url =
-    def f(v: com.histmersion.util.basemap.GebcoSeaFloor.WholeDegrees) = String.format(java.util.Locale.ROOT, "%.1f", v.toDouble)
-    template
-      .replace("{north}", f(south + deg))
-      .replace("{south}", f(south))
-      .replace("{west}", f(west))
-      .replace("{east}", f(west + deg))
+  def urlOf(template: BasemapGebcoConfig.Url, west: WholeDegrees, south: WholeDegrees, deg: WholeDegrees): GebcoPart.Url =
+    def f(v: Int) = String.format(java.util.Locale.ROOT, "%.1f", v.toDouble)
+    GebcoPart.Url(
+      template.value
+        .replace("{north}", f(south.value + deg.value))
+        .replace("{south}", f(south.value))
+        .replace("{west}", f(west.value))
+        .replace("{east}", f(west.value + deg.value))
+    )
 
   /** The tiles of zooms 0…`maxZoom` over `b`, in tile-id order (the archive's). */
-  def tiles(b: BBox, maxZoom: com.histmersion.util.basemap.GebcoPlan.MaxZoom): Vector[(com.histmersion.util.basemap.GebcoSeaFloor.TileKey, (com.histmersion.util.basemap.GebcoSeaFloor.Zoom, com.histmersion.util.basemap.GebcoSeaFloor.TileX, com.histmersion.util.basemap.GebcoSeaFloor.TileY))] =
-    (0 to maxZoom).toVector
+  def tiles(b: BBox, maxZoom: PmTiles.Zoom): Vector[(TileKey, (Zoom, TileX, TileY))] =
+    (0 to maxZoom.value).toVector
       .flatMap { z =>
-        val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, z)
-        for x <- x0 to x1; y <- y0 to y1 yield (PmTiles.tileId(z, x, y), (z, x, y))
+        val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, Basemap.Zoom(z))
+        for x <- x0.value to x1.value; y <- y0.value to y1.value
+        yield
+          val tile = (Zoom(z), TileX(x), TileY(y))
+          (PmTiles.tileId(tile._1, tile._2, tile._3), tile)
       }
-      .sortBy(_._1)
+      .sortBy(_._1.value)
 
   /** The west, south, east and north of a tile, in degrees (Web Mercator). */
-  def bounds(z: com.histmersion.util.basemap.GebcoSeaFloor.Zoom, x: com.histmersion.util.basemap.GebcoSeaFloor.TileX, y: com.histmersion.util.basemap.GebcoSeaFloor.TileY): (com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart1, com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart2, com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart3, com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart4) =
-    val n = math.pow(2, z)
-    def lat(t: com.histmersion.util.basemap.GebcoSeaFloor.BoundsLatT) = math.toDegrees(math.atan(math.sinh(math.Pi * (1 - 2 * t / n))))
-    (x / n * 360 - 180, lat(y + 1.0), (x + 1) / n * 360 - 180, lat(y.toDouble))
+  def bounds(z: Zoom, x: TileX, y: TileY): (Degrees, Degrees, Degrees, Degrees) =
+    val n = math.pow(2, z.value)
+    def lat(t: Double) = math.toDegrees(math.atan(math.sinh(math.Pi * (1 - 2 * t / n))))
+    (
+      Degrees(x.value / n * 360 - 180),
+      Degrees(lat(y.value + 1.0)),
+      Degrees((x.value + 1) / n * 360 - 180),
+      Degrees(lat(y.value.toDouble))
+    )
 
   /** A tile wholly inside `b`. */
-  def inside(b: BBox, t: (com.histmersion.util.basemap.GebcoSeaFloor.Zoom, com.histmersion.util.basemap.GebcoSeaFloor.TileX, com.histmersion.util.basemap.GebcoSeaFloor.TileY)): Boolean =
+  def inside(b: BBox, t: (Zoom, TileX, TileY)): Boolean =
     val (w, s, e, n) = bounds(t._1, t._2, t._3)
-    w >= b.minLon && e <= b.maxLon && s >= b.minLat && n <= b.maxLat
+    w.value >= b.minLon.value && e.value <= b.maxLon.value && s.value >= b.minLat.value && n.value <= b.maxLat.value
 
   /** The rows of one part that were read, each run mapped from its file. */
   final case class Rows(part: GebcoPart, runs: List[(RowRun, ByteBuffer)]):
-    private val byRow: com.histmersion.util.basemap.GebcoSeaFloor.RowIndex =
+    private val byRow: Array[Int] =
       val a = Array.fill(part.grid.height.value)(-1)
-      runs.zipWithIndex.foreach { case ((r, _), i) => for row <- r.firstRow until r.firstRow + r.rows do a(row) = i }
+      runs.zipWithIndex.foreach { case ((r, _), i) =>
+        for row <- r.firstRow.value until r.firstRow.value + r.rows.value do a(row) = i
+      }
       a
 
     /** The sample at a column and row, when it was read and is not "no data". */
-    def at(col: com.histmersion.util.basemap.GebcoSeaFloor.Column, row: com.histmersion.util.basemap.GebcoSeaFloor.Row): Option[com.histmersion.util.basemap.GebcoSeaFloor.Elevation] =
+    def at(col: Column, row: Row): Option[Elevation] =
       val w = part.window
-      if row < w.first || row > w.last || col < w.firstCol || col > w.lastCol then None
+      if row.value < w.first.value || row.value > w.last.value || col.value < w.firstCol.value || col.value > w.lastCol.value
+      then None
       else
-        val (run, buf) = runs(byRow(row))
-        val v = buf.getShort(((row - run.firstRow) * part.grid.rowBytes + col * 2L).toInt)
-        Option.when(!part.grid.noData.contains(v))(v)
-
-
+        val (run, buf) = runs(byRow(row.value))
+        val v = buf.getShort(((row.value - run.firstRow.value) * part.grid.rowBytes.value + col.value * 2L).toInt)
+        Option.when(!part.grid.noData.exists(_.value == v))(Elevation(v))
 
   /** The elevation under pixel (`px`, `py`) of tile (`z`, `x`, `y`): the mean of the grid's samples under four points
     * spread over the pixel (a pixel of a low zoom covers many samples). None when the rows read hold none of them.
     */
-  def sample(rows: List[Rows], z: com.histmersion.util.basemap.GebcoSeaFloor.Zoom, x: com.histmersion.util.basemap.GebcoSeaFloor.TileX, y: com.histmersion.util.basemap.GebcoSeaFloor.TileY, px: com.histmersion.util.basemap.GebcoSeaFloor.PixelX, py: com.histmersion.util.basemap.GebcoSeaFloor.PixelY, size: com.histmersion.util.basemap.GebcoSeaFloor.GridSize): Option[com.histmersion.util.basemap.GebcoSeaFloor.SampledElevation] =
-    val n = math.pow(2, z) * size
+  def sample(rows: List[Rows], z: Zoom, x: TileX, y: TileY, px: PixelX, py: PixelY, size: GridSize): Option[SampledElevation] =
+    val n = math.pow(2, z.value) * size.value
     var sum = 0.0 // the samples found under the four points, and how many
     var found = 0
     for (dx, dy) <- List((0.25, 0.25), (0.75, 0.25), (0.25, 0.75), (0.75, 0.75)) do
-      val gx = x * size + px + dx
-      val gy = y * size + py + dy
+      val gx = x.value * size.value + px.value + dx
+      val gy = y.value * size.value + py.value + dy
       val lon = gx / n * 360 - 180
       val lat = math.toDegrees(math.atan(math.sinh(math.Pi * (1 - 2 * gy / n))))
       rows.iterator
         .flatMap { r =>
-          val (c, rr) = r.part.grid.pixelAt(lon, lat)
-          r.at(math.floor(c).toInt, math.floor(rr).toInt)
+          val (c, rr) = r.part.grid.pixelAt(Degrees(lon), Degrees(lat))
+          r.at(Column(math.floor(c.value).toInt), Row(math.floor(rr.value).toInt))
         }
         .nextOption()
-        .foreach { v => sum += v; found += 1 }
-    Option.when(found > 0)((sum / found).toFloat)
+        .foreach { v => sum += v.value; found += 1 }
+    Option.when(found > 0)(SampledElevation((sum / found).toFloat))

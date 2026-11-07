@@ -8,21 +8,10 @@ import java.util.zip.{CRC32, Deflater, Inflater}
   * over red (×256), green (×1) and blue (×1/256), one 8-bit RGB pixel a sample.
   */
 object TerrariumPng:
-  type BytesPerPixel = BytesPerPixel.T
-  object BytesPerPixel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilteredBytes = FilteredBytes.T
-  object FilteredBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InflatedLength = InflatedLength.T
-  object InflatedLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ScanlineBytes = ScanlineBytes.T
-  object ScanlineBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Vp8l.Problem
+  val Problem: Vp8l.Problem.type = Vp8l.Problem
   type TileSize = TileSize.T
   object TileSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-
 
   private val Signature = Array[Byte](0x89.toByte, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n')
   private val RgbColourType = 2
@@ -30,14 +19,15 @@ object TerrariumPng:
   private val SubFilter = 1
 
   /** A square tile of `size` × `size` elevations (row by row, metres) as a Terrarium PNG. */
-  def encode(metres: Array[Float], size: com.histmersion.util.basemap.TerrariumPng.TileSize): com.histmersion.util.basemap.Png.PngBytes =
-    val rowLength = 1 + size * 3
-    val raw = new Array[Byte](rowLength * size)
-    for y <- 0 until size do
+  def encode(metres: Array[Float], size: TileSize): Png.PngBytes =
+    val side: Int = size.value
+    val rowLength = 1 + side * 3
+    val raw = new Array[Byte](rowLength * side)
+    for y <- 0 until side do
       val row = y * rowLength
       raw(row) = SubFilter.toByte
-      for x <- 0 until size do
-        val v = (metres(y * size + x).toDouble + 32768).max(0).min(65535.996)
+      for x <- 0 until side do
+        val v = (metres(y * side + x).toDouble + 32768).max(0).min(65535.996)
         val r = (v / 256).toInt
         val g = v.toInt % 256
         val b = ((v - v.toInt) * 256).toInt
@@ -53,8 +43,8 @@ object TerrariumPng:
       "IHDR",
       ByteBuffer
         .allocate(13)
-        .putInt(size)
-        .putInt(size)
+        .putInt(side)
+        .putInt(side)
         .put(8.toByte)
         .put(RgbColourType.toByte)
         .put(0.toByte)
@@ -64,11 +54,12 @@ object TerrariumPng:
     )
     chunk(out, "IDAT", deflate(raw))
     chunk(out, "IEND", Array.emptyByteArray)
-    out.toByteArray
+    Png.PngBytes(out.toByteArray)
 
   /** A Terrarium PNG's elevations (metres, row by row) and its width: 8-bit RGB or RGBA, not interlaced. */
-  def decode(png: com.histmersion.util.basemap.Png.PngBytes): Either[com.histmersion.util.basemap.TerrariumPng.Problem, (Array[Float], com.histmersion.util.basemap.TerrariumPng.TileSize)] =
-    if png.length < 33 || !java.util.Arrays.equals(png.take(8), Signature) then Left("not a PNG")
+  def decode(file: Png.PngBytes): Either[Problem, (Array[Float], TileSize)] =
+    val png: Array[Byte] = file.value
+    if png.length < 33 || !java.util.Arrays.equals(png.take(8), Signature) then Left(Problem("not a PNG"))
     else
       val b = ByteBuffer.wrap(png)
       val width = b.getInt(16); val height = b.getInt(20)
@@ -78,7 +69,7 @@ object TerrariumPng:
         case RgbaColourType => 4
         case _              => 0
       if depth != 8 || channels == 0 || interlace != 0 then
-        Left(s"a PNG of colour type $colour, depth $depth, interlace $interlace")
+        Left(Problem(s"a PNG of colour type $colour, depth $depth, interlace $interlace"))
       else
         val idat = ByteArrayOutputStream()
         var at = 8 // the next chunk
@@ -92,15 +83,15 @@ object TerrariumPng:
             for i <- m.indices do
               val o = i * channels
               m(i) = ((px(o) & 0xff) * 256 + (px(o + 1) & 0xff) + (px(o + 2) & 0xff) / 256.0 - 32768).toFloat
-            (m, width)
+            (m, TileSize(width))
           }
         }
 
-  private def unfilter(raw: com.histmersion.util.basemap.TerrariumPng.FilteredBytes, width: com.histmersion.util.basemap.Png.Width, height: com.histmersion.util.basemap.Png.Height, bpp: com.histmersion.util.basemap.TerrariumPng.BytesPerPixel): Either[com.histmersion.util.basemap.TerrariumPng.Problem, com.histmersion.util.basemap.TerrariumPng.ScanlineBytes] =
+  private def unfilter(raw: Array[Byte], width: Int, height: Int, bpp: Int): Either[Problem, Array[Byte]] =
     val stride = width * bpp
     val out = new Array[Byte](stride * height)
     (0 until height)
-      .foldLeft[Either[String, Unit]](Right(())) { (acc, y) =>
+      .foldLeft[Either[Problem, Unit]](Right(())) { (acc, y) =>
         acc.flatMap { _ =>
           val f = raw(y * (stride + 1))
           val src = y * (stride + 1) + 1
@@ -108,7 +99,7 @@ object TerrariumPng:
           def left(i: Int) = if i >= bpp then out(dst + i - bpp) & 0xff else 0
           def up(i: Int) = if y > 0 then out(dst - stride + i) & 0xff else 0
           def upLeft(i: Int) = if y > 0 && i >= bpp then out(dst - stride + i - bpp) & 0xff else 0
-          if f < 0 || f > 4 then Left(s"PNG filter $f")
+          if f < 0 || f > 4 then Left(Problem(s"PNG filter $f"))
           else
             for i <- 0 until stride do
               val x = raw(src + i) & 0xff
@@ -129,14 +120,14 @@ object TerrariumPng:
     val (pa, pb, pc) = (math.abs(p - a), math.abs(p - b), math.abs(p - c))
     if pa <= pb && pa <= pc then a else if pb <= pc then b else c
 
-  private def chunk(out: ByteArrayOutputStream, kind: com.histmersion.util.basemap.Png.ChunkType, data: com.histmersion.util.basemap.Png.ChunkPayload): Unit =
+  private def chunk(out: ByteArrayOutputStream, kind: String, data: Array[Byte]): Unit =
     val k = kind.getBytes("US-ASCII")
     val crc = CRC32(); crc.update(k); crc.update(data)
     out.write(ByteBuffer.allocate(4).putInt(data.length).array())
     out.write(k); out.write(data)
     out.write(ByteBuffer.allocate(4).putInt(crc.getValue.toInt).array())
 
-  private def deflate(raw: com.histmersion.util.basemap.PmTiles.PlainBytes): com.histmersion.util.basemap.PmTiles.CompressedBytes =
+  private def deflate(raw: Array[Byte]): Array[Byte] =
     val d = Deflater(Deflater.DEFAULT_COMPRESSION)
     try
       d.setInput(raw); d.finish()
@@ -145,13 +136,15 @@ object TerrariumPng:
       out.toByteArray
     finally d.end()
 
-  private def inflate(z: com.histmersion.util.basemap.PmTiles.CompressedBytes, expected: com.histmersion.util.basemap.TerrariumPng.InflatedLength): Either[com.histmersion.util.basemap.TerrariumPng.Problem, com.histmersion.util.basemap.PmTiles.PlainBytes] =
+  private def inflate(z: Array[Byte], expected: Int): Either[Problem, Array[Byte]] =
     val inf = Inflater()
     try
       inf.setInput(z)
       val out = new Array[Byte](expected)
       var n = 0 // bytes inflated so far
       while n < expected && !inf.finished() && !inf.needsInput() do n += inf.inflate(out, n, expected - n)
-      Either.cond(n == expected, out, s"the PNG's image data holds $n bytes, not $expected")
-    catch case e: java.util.zip.DataFormatException => Left(s"the PNG's image data does not inflate: ${e.getMessage}")
+      Either.cond(n == expected, out, Problem(s"the PNG's image data holds $n bytes, not $expected"))
+    catch
+      case e: java.util.zip.DataFormatException =>
+        Left(Problem(s"the PNG's image data does not inflate: ${e.getMessage}"))
     finally inf.end()

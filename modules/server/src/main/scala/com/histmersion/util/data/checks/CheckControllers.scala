@@ -17,7 +17,7 @@ final class CheckControllers(
     checks: CheckRunner,
     config: () => AppConfig,
     ds: DataSource,
-    format: (CheckControllers.FormatArg1Arg1 => CheckControllers.FormatArg1Result) => FormatChecker,
+    format: (CheckContext.FormatArg1Arg1 => CheckContext.FormatArg1Result) => FormatChecker,
     write: GuardedWrite,
     maintenance: WriteGate
 )(using timer: com.histmersion.util.time.Timer):
@@ -28,7 +28,11 @@ final class CheckControllers(
 
   /** `GET /api/lint` — read-only. */
   def lint(rules: List[com.histmersion.util.data.checks.CheckRule.Name]): Either[Api.Error, LintReport] =
-    checks.select(rules).left.map(m => Api.Error(m)).map(rs => checks.report(rs, context, config().lint.maxItems))
+    checks
+      .select(rules)
+      .left
+      .map(m => Api.Error(Api.Error.Message(m.value)))
+      .map(rs => checks.report(rs, context, CheckRule.MaxItems(config().lint.maxItems.value)))
 
   /** `POST /api/lint/fix` — the repairs that are safe to make without a person, each owner's, in their ranks: the ones
     * that run on every call, and those of the rules `rules` names. Each is bounded per call; `remaining > 0` (or
@@ -40,20 +44,16 @@ final class CheckControllers(
     * through a restore.
     */
   def guardedLintFix(rules: List[com.histmersion.util.data.checks.CheckRule.Name] = Nil): Either[Api.Error, LintFixResult] =
-    maintenance.guard("lint/fix")(Right(lintFix(rules)))
+    maintenance.guard(WriteGate.OperationName("lint/fix"))(Right(lintFix(rules)))
 
   /** Lint, optionally after applying the safe fixes — what `histmersion lint --fix` and the MCP tool do, so the report
     * the caller sees is the state AFTER the repair.
     */
   def lintWithFix(rules: List[com.histmersion.util.data.checks.CheckRule.Name], fix: com.histmersion.util.data.checks.CheckControllers.ApplyFix): Either[Api.Error, LintReport] =
-    if !fix then lint(rules)
+    if !fix.value then lint(rules)
     else guardedLintFix(rules).flatMap(f => lint(rules).map(_.modify(_.fixed).setTo(f.applied)))
 
 object CheckControllers:
   type ApplyFix = ApplyFix.T
   object ApplyFix extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FormatArg1Arg1 = FormatArg1Arg1.T
-  object FormatArg1Arg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FormatArg1Result = FormatArg1Result.T
-  object FormatArg1Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

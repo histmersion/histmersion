@@ -25,7 +25,7 @@ def rank(f):
     return (r, f.rsplit('/', 1)[0], f)
 order = sorted(byfile, key=rank); bundles = [[] for _ in range(agents)]; b = 0; n = 0; used = 0
 for f in order:
-    if n and n + len(byfile[f]) > cap:
+    if n and (n + len(byfile[f]) > cap or len(bundles[b]) >= 32):
         b += 1; n = 0
         if b == agents:
             break

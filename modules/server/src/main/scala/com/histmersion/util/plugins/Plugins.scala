@@ -2,7 +2,8 @@ package com.histmersion.util.plugins
 
 import com.histmersion.pluginhost.{FirstPartySettings, Generation, HostServices, PluginHost, Registries, ReservedNames}
 
-import com.histmersion.config.{AppConfig, HotPlan, LoadedConfig}
+import com.histmersion.config.{AppConfig, ConfigReload, HotPlan, LoadedConfig}
+import com.histmersion.util.settings.SettingsService
 import com.histmersion.api.plugins.{PluginSet, PluginState, PluginStatus}
 import org.ekrich.config.{ConfigFactory, ConfigUtil}
 import hearth.kindlings.optics.syntax.*
@@ -19,36 +20,11 @@ import com.histmersion.plugin.Plugin
 object Plugins:
   type CoreKey = CoreKey.T
   object CoreKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeaderName = HeaderName.T
-  object HeaderName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Message = Message.T
-  object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Warning = Warning.T
-  object Warning extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The config keys the plugin generation is built from: every plugin's block (and `order`), the keys that shape the
     * client every plugin is lent, and the host settings the first-party plugins read ([[FirstPartySettings]]).
     */
-  type OfflineWithGetHPart2 = OfflineWithGetHPart2.T
-  object OfflineWithGetHPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type Keys = KeysValue
-  type KeysValue = KeysValue.T
-  object KeysValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadChanged = _root_.com.histmersion.util.plugins.Plugin.Id
-  val LoadChanged: _root_.com.histmersion.util.plugins.Plugin.Id.type = _root_.com.histmersion.util.plugins.Plugin.Id
-  type Offline = OfflineValue
-  type OfflineValue = OfflineValue.T
-  object OfflineValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Fetchers = FetchersValue
-  type FetchersValue = FetchersValue.T
-  object FetchersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  val Keys: List[com.histmersion.util.plugins.Plugins.Keys] = PluginHost.Root :: FirstPartySettings.hostKeys
+  val Keys: List[ConfigReload.Key] = ConfigReload.Key(PluginHost.Root) :: FirstPartySettings.hostKeys
 
   /** Build the generation for `loaded`, with `provided` beside the class path's plugins. On a config reload, `previous`
     * is the running generation and `changed` the keys that changed: a plugin whose block did not change is carried over
@@ -63,7 +39,7 @@ object Plugins:
       http: () => Plugin.Http,
       quota: HostServices.Quotas,
       previous: Option[Generation] = None,
-      changed: List[com.histmersion.util.plugins.Plugins.LoadChanged] = Nil
+      changed: List[ConfigReload.ChangedKey] = Nil
   ): Generation =
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
     generation(loaded, found ++ provided, errors, http, quota, previous.fold(Map.empty)(carried(_, changed)))
@@ -83,10 +59,10 @@ object Plugins:
   private def generation(
       loaded: LoadedConfig,
       all: List[Plugin],
-      errors: List[com.histmersion.util.plugins.Plugins.Problem],
+      errors: List[PluginHost.Problem],
       http: () => Plugin.Http,
       quota: HostServices.Quotas,
-      carry: Map[com.histmersion.util.plugins.Plugin.Id, (PluginStatus, Registries)]
+      carry: Map[Plugin.Info.Id, (PluginStatus, Registries)]
   ): Generation =
     // a split plugin's former settings (oa-index) mapped onto its successors, with a deprecation warning
     val legacy = LegacyPlugins.migrate(loaded.user, loaded.env, defaultKeys(all))
@@ -99,13 +75,13 @@ object Plugins:
       all,
       legacy.user,
       legacy.env,
-      HostServices(http, loaded.env, log, quota, files = new com.histmersion.pluginhost.DiskLocalFiles, processes = new com.histmersion.pluginhost.SystemProcesses),
-      errors ++ legacy.warnings,
+      HostServices(http, loaded.env, log, quotaOf(quota), files = new com.histmersion.pluginhost.DiskLocalFiles, processes = new com.histmersion.pluginhost.SystemProcesses),
+      errors ++ legacy.warnings.map(w => PluginHost.Problem(w.value)),
       carry,
       fallback = FirstPartySettings.fallback(_, host),
       firstParty = firstParty(set)
     )
-    g.modify(_.report.set).setTo(set).modify(_.report.warnings).using(_ ++ setError)
+    g.modify(_.report.set).setTo(set).modify(_.report.warnings).using(_ ++ setError.map(e => com.histmersion.api.plugins.PluginsReport.Warnings(e.value)))
 
   /** The resolved `histmersion` tree a load read; a load made by hand (a test's) has none, and reads `reference.conf`
     * with its environment instead.
@@ -120,18 +96,22 @@ object Plugins:
   /** First-party: one of Histmersion's own ids ([[ReservedNames.firstPartyPlugins]]) loaded from the image's own class
     * path — not a plugin of the set a relink added under that id.
     */
-  def firstParty(set: Option[PluginSet])(id: com.histmersion.util.plugins.Plugin.Id): Boolean =
-    ReservedNames.firstPartyPlugins(id) && !set.exists(_.jars.exists(_.plugins.exists(_.id == id)))
+  def firstParty(set: Option[PluginSet])(id: Plugin.Info.Id): Boolean =
+    ReservedNames.firstPartyPlugins(ReservedNames.Name(id.value)) && !set.exists(_.jars.exists(_.plugins.exists(_.id.value == id.value)))
 
   /** The keys each plugin's defaults resource declares (`enabled` aside): where a former plugin's key goes. */
-  def defaultKeys(plugins: List[Plugin]): com.histmersion.util.plugins.Plugin.Id => Set[com.histmersion.util.settings.SettingsService.ConfigPath] =
+  def defaultKeys(plugins: List[Plugin]): com.histmersion.util.plugins.Plugin.Id => Set[SettingsService.ConfigPath] =
     val keys = plugins
       .map(p =>
         p.info.id ->
-          PluginHost.defaults(p).toOption.map(_.root.keySet.asScala.toSet - "enabled").getOrElse(Set.empty[String])
+          PluginHost
+            .defaults(p)
+            .toOption
+            .map(_.root.keySet.asScala.toSet.filterNot(_ == "enabled").map(SettingsService.ConfigPath(_)))
+            .getOrElse(Set.empty[SettingsService.ConfigPath])
       )
       .toMap
-    id => keys.getOrElse(id, Set.empty)
+    id => keys.getOrElse(Plugin.Info.Id(id.value), Set.empty)
 
   /** The plugins of `previous` a reload that changed `changed` may carry over unchanged. Pure.
     *
@@ -141,13 +121,15 @@ object Plugins:
     * `events.<catalogue>.*`, the landing step oa-unpaywall's contact; never a media collection or an AI provider, which
     * read theirs at each use), any other plugin the keys that shape the client it is lent.
     */
-  def carried(previous: Generation, changed: List[com.histmersion.util.plugins.Plugin.Id]): Map[com.histmersion.util.plugins.Plugin.Id, (PluginStatus, Registries)] =
+  def carried(previous: Generation, changed: List[ConfigReload.ChangedKey]): Map[Plugin.Info.Id, (PluginStatus, Registries)] =
     val relevant = changed.filter(k => Keys.exists(HotPlan.keyMatches(k, _)))
     // a former plugin's key (oa-index) concerns its successors
     val ids =
-      relevant.map(pluginId).flatMap(_.fold(List(Option.empty[String]))(id => LegacyPlugins.expand(id).map(Some(_))))
+      relevant
+        .map(pluginId)
+        .flatMap(_.fold(List(Option.empty[Plugin.Info.Id]))(id => LegacyPlugins.expand(id).map(i => Some(Plugin.Info.Id(i.value)))))
     val vaults = previous.contributions.collect { case (id, r) if r.secretVaults.nonEmpty => id }.toSet
-    val whole = relevant.exists(k => HotPlan.keyMatches(k, PluginHost.Root))
+    val whole = relevant.exists(k => HotPlan.keyMatches(k, ConfigReload.Key(PluginHost.Root)))
     if ids.flatten.exists(vaults) || (whole && ids.contains(None)) then Map.empty
     else
       val touched = ids.flatten.toSet
@@ -155,22 +137,24 @@ object Plugins:
       // a plugin's block read by another first-party plugin: its key concerns that one too
       val peerKeys = relevant.filter(pluginId(_).isDefined)
       previous.report.plugins
-        .filter { st =>
-          !touched(st.id) && !hostKeys.exists(FirstPartySettings.rebuilds(st.id, _)) &&
-          !peerKeys.exists(k => FirstPartySettings.of(st.id).exists(_.readsHostKey(k))) &&
+        .map(st => Plugin.Info.Id(st.id.value) -> st)
+        .filter { (id, st) =>
+          !touched(id) && !hostKeys.exists(FirstPartySettings.rebuilds(id, _)) &&
+          !peerKeys.exists(k => FirstPartySettings.of(id).exists(_.readsHostKey(k))) &&
           (st.state == PluginState.Disabled.wire ||
-            st.state == PluginState.Registered.wire && !previous.withSecrets(st.id))
+            st.state == PluginState.Registered.wire && !previous.withSecrets(id))
         }
-        .flatMap(st => previous.carry(st.id))
-        .map(c => c._1.id -> c)
+        .flatMap((id, _) => previous.carry(id))
+        .map(c => Plugin.Info.Id(c._1.id.value) -> c)
         .toMap
 
   /** The plugin a changed key belongs to (`histmersion.plugins.<id>.…`); `None` for any other key — `order`, the whole
     * block, a host setting — which concerns every plugin.
     */
-  def pluginId(key: com.histmersion.util.settings.SettingsService.ConfigPath): Option[com.histmersion.util.plugins.Plugin.Id] =
-    scala.util.Try(ConfigUtil.splitPath(key).asScala.toList).toOption match
-      case Some("histmersion" :: "plugins" :: id :: _) if id != PluginHost.OrderKey => Some(id)
+  def pluginId(key: ConfigReload.ChangedKey): Option[com.histmersion.util.plugins.Plugin.Id] =
+    scala.util.Try(ConfigUtil.splitPath(key.value).asScala.toList).toOption match
+      case Some("histmersion" :: "plugins" :: id :: _) if id != PluginHost.OrderKey =>
+        com.histmersion.util.plugins.Plugin.Id.option(id)
       case _                                                                        => None
 
   /** CORE's key as the generation's `oa-core` plugin resolved it (its `api-key` secret reference, else `hostKey`,
@@ -179,12 +163,13 @@ object Plugins:
   def coreKey(g: Generation, hostKey: Option[com.histmersion.util.plugins.Plugins.CoreKey]): Option[com.histmersion.util.plugins.Plugins.CoreKey] =
     Option
       .when(g.registered(CorePlugin))(
-        g.secret(CorePlugin, "api-key").fold(hostKey)(v => Option(v).map(_.trim).filter(_.nonEmpty))
+        g.secret(CorePlugin, PluginHost.ConfigPath("api-key"))
+          .fold(hostKey)(v => Option(v.value).map(_.trim).filter(_.nonEmpty).map(CoreKey(_)))
       )
       .flatten
 
   /** The plugin that keys CORE: its `api-key` serves the new-source search too. */
-  private val CorePlugin = "oa-core"
+  private val CorePlugin = Plugin.Info.Id("oa-core")
 
   /** The generation of a server or a `Deps` built without a config to load plugins from (a test's): the plugins on the
     * class path but the source fetchers, and the host's own `provided` ones, registered through the plugin host with an
@@ -201,7 +186,7 @@ object Plugins:
       extra: List[Plugin],
       user: org.ekrich.config.Config,
       env: org.ekrich.config.Config = ConfigFactory.empty,
-      carried: Map[com.histmersion.util.plugins.Plugin.Id, (PluginStatus, Registries)] = Map.empty
+      carried: Map[Plugin.Info.Id, (PluginStatus, Registries)] = Map.empty
   ): Generation =
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
     val all = found.filterNot(p => Fetchers(p.info.id) || Offline(p.info.id)) ++ provided ++ extra
@@ -211,7 +196,7 @@ object Plugins:
       all,
       user,
       env,
-      services(() => new Plugin.Http { def get(u: com.histmersion.util.plugins.Plugins.Url, h: Map[com.histmersion.util.plugins.Plugins.HeaderName, com.histmersion.util.plugins.Plugins.OfflineWithGetHPart2]) = Left("offline") }, env),
+      services(() => new Plugin.Http { def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(Plugin.Http.GetResultPart1("offline")) }, env),
       errors,
       carried,
       fallback = FirstPartySettings.fallback(_, host),
@@ -221,16 +206,19 @@ object Plugins:
   /** The first-party plugins besides the fetchers an offline generation leaves out: the Calibre library is the user's
     * own, and a test's or a tool's generation must never reach it.
     */
-  private val Offline: Set[com.histmersion.util.plugins.Plugins.Offline] = Set("calibre")
+  private val Offline: Set[Plugin.Info.Id] = Set(Plugin.Info.Id("calibre"))
 
   /** The first-party source fetchers' plugins, which an offline generation leaves out. */
-  private val Fetchers: Set[com.histmersion.util.plugins.Plugins.Fetchers] =
-    Set("archive-org", "oa-unpaywall", "oa-core", "oa-openalex", "oa-landing", "pmc", "arxiv")
+  private val Fetchers: Set[Plugin.Info.Id] =
+    Set("archive-org", "oa-unpaywall", "oa-core", "oa-openalex", "oa-landing", "pmc", "arxiv").map(Plugin.Info.Id(_))
 
   /** The host's services: the one outbound HTTP policy and scribe with the plugin's id on every line. */
   def services(http: () => Plugin.Http, env: org.ekrich.config.Config): HostServices =
     HostServices(http, env, log, files = new com.histmersion.pluginhost.DiskLocalFiles, processes = new com.histmersion.pluginhost.SystemProcesses)
 
-  private def log(id: com.histmersion.util.plugins.Plugin.Id, warn: com.histmersion.util.plugins.Plugins.Warning, message: com.histmersion.util.plugins.Plugins.Message): Unit =
-    val line = if id.isEmpty then s"plugins: $message" else s"plugin $id: $message"
-    if warn then scribe.warn(line) else scribe.info(line)
+  private def quotaOf(quota: HostServices.Quotas): HostServices.QuotaArg1 => com.histmersion.plugin.UpstreamQuota =
+    upstream => quota(upstream.value)
+
+  private def log(id: HostServices.LogArg1, warn: HostServices.LogArg2, message: HostServices.LogArg3): Unit =
+    val line = if id.value.isEmpty then s"plugins: $message" else s"plugin $id: $message"
+    if warn.value then scribe.warn(line) else scribe.info(line)
