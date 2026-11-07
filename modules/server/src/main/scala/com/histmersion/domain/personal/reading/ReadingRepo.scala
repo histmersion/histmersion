@@ -25,7 +25,7 @@ private[reading] object ReadingRepo:
       case ReadingShow.Opened => (" AND m.opened_at IS NOT NULL", " ORDER BY m.opened_at DESC, m.id DESC")
       case ReadingShow.All    => ("", " ORDER BY m.updated_at DESC, m.id DESC")
     (Sql.of(Sql.Text(s"$Projection WHERE m.user_id = ?"), Param.S(Param.S.V(user.value))) ++
-      kind.fold(Sql.empty)(k => Sql.of(" AND m.target_kind = ?", Param.S(Param.S.V(k.value)))) ++
+      kind.fold(Sql.empty)(k => Sql.of(com.histmersion.util.database.Sql.Text(" AND m.target_kind = ?"), Param.S(Param.S.V(k.value)))) ++
       Sql.raw(where + order) ++ Sql.of(" LIMIT ?", Param.I(Param.I.V(size.value)))).frag.query[MarkRow].run().toList
 
   def get(user: UserId, ref: ItemRef)(using DbCon): Option[MarkRow] =

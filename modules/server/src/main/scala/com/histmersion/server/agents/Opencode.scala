@@ -46,16 +46,16 @@ object Opencode:
 
 
   def argv(cfg: OpencodeConfig, model: com.histmersion.server.agents.Opencode.ModelName, agent: com.histmersion.server.agents.Opencode.AgentName, dir: com.histmersion.server.agents.Opencode.WorkingDir): List[com.histmersion.server.agents.Opencode.CommandLine] =
-    List(cfg.command, "run", "--agent", agent, "--format", "json", "-m", model, "--dir", dir)
+    List(cfg.command, com.histmersion.server.agents.Opencode.CommandLine("run"), com.histmersion.server.agents.Opencode.CommandLine("--agent"), agent, com.histmersion.server.agents.Opencode.CommandLine("--format"), com.histmersion.server.agents.Opencode.CommandLine("json"), com.histmersion.server.agents.Opencode.CommandLine("-m"), model, com.histmersion.server.agents.Opencode.CommandLine("--dir"), dir)
 
   /** Isolation (docs/research-agent-runtimes.md §1.3): a global config of its own, the generated config dir, no
     * `.claude` skills, no autoupdate; the run token for the MCP header.
     */
   def environment(xdg: com.histmersion.server.agents.Opencode.XdgDir, configDir: com.histmersion.server.agents.Opencode.ConfigDir, token: Option[com.histmersion.server.agents.Opencode.ApiToken], env: java.util.Map[com.histmersion.server.agents.Opencode.EnvName, com.histmersion.server.agents.Opencode.EnvSetting]): Unit =
-    val _ = env.put("XDG_CONFIG_HOME", xdg)
-    val _ = env.put("OPENCODE_CONFIG_DIR", configDir)
-    val _ = env.put("OPENCODE_DISABLE_CLAUDE_CODE", "1")
-    val _ = env.put("OPENCODE_DISABLE_AUTOUPDATE", "1")
+    val _ = env.put(com.histmersion.server.agents.Opencode.EnvName("XDG_CONFIG_HOME"), xdg)
+    val _ = env.put(com.histmersion.server.agents.Opencode.EnvName("OPENCODE_CONFIG_DIR"), configDir)
+    val _ = env.put(com.histmersion.server.agents.Opencode.EnvName("OPENCODE_DISABLE_CLAUDE_CODE"), com.histmersion.server.agents.Opencode.EnvSetting("1"))
+    val _ = env.put(com.histmersion.server.agents.Opencode.EnvName("OPENCODE_DISABLE_AUTOUPDATE"), com.histmersion.server.agents.Opencode.EnvSetting("1"))
     val _ = env.put(AgentGenerator.TokenEnv, token.getOrElse("none"))
 
   def schemaNote(schema: com.histmersion.server.agents.Opencode.SchemaJson): com.histmersion.server.agents.Opencode.SchemaNote =
@@ -123,5 +123,5 @@ object Opencode:
       Left(s"${ref.wire}: an opencode model is <provider>/<model>, e.g. opencode:openai/gpt-5")
     else if PlanQuota.poolOf(ref, PlanQuota.Logins(opencodeChatgpt = cfg.chatgptLogin)).isDefined && !rt.loopback then
       Left("opencode on a ChatGPT login is refused while the server listens beyond loopback")
-    else if cfg.command.trim.isEmpty then Left("agents.providers.opencode.command is empty")
+    else if cfg.command.trim.isEmpty then Left(com.histmersion.server.agents.Opencode.Problem("agents.providers.opencode.command is empty"))
     else Right(OpencodeRunClient(ref, cfg, rt))

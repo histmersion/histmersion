@@ -38,7 +38,7 @@ final class MaintenanceControllers(
     * finished backup, or `running` when it outlasts the request.
     */
   def backup(): Either[Api.Error, Backup.Status] =
-    maintenance.guard("backup")(backupJobs.start(Instant.now(deps.clock)))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("backup"))(backupJobs.start(Instant.now(deps.clock)))
 
   /** `POST /api/maintenance/vacuum` (#1445) — VACUUM [(ANALYZE)] of the named tables (default
     * `maintenance.vacuum-tables`) as a job (see [[VacuumJobs]]).
@@ -47,10 +47,10 @@ final class MaintenanceControllers(
 
   /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
   def reindex(after: Option[com.histmersion.server.instance.MaintenanceControllers.Cursor], limit: Option[com.histmersion.PageSize]): Either[Api.Error, ReindexResult] =
-    maintenance.guard("reindex"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("reindex")):
       Deps.data
         .task(MaintenanceTask.Name("reindex"))
-        .toRight(Api.Error("no reindex is registered"))
+        .toRight(Api.Error(com.histmersion.api.Api.Error.Message("no reindex is registered")))
         .map(
           _.run(MaintenanceSlice(after.map(_.trim).filter(_.nonEmpty), limit.filter(_ > 0)), MaintenanceSite(ds, cfg))
         )
@@ -60,9 +60,9 @@ final class MaintenanceControllers(
     * and agent runs going on beside it are fine.
     */
   def housekeepingBlock: Option[com.histmersion.server.instance.MaintenanceControllers.Reason] =
-    if maintenance.active then Some("a restore holds the maintenance lock")
-    else if backupJobs.running then Some("a backup is still running")
-    else if vacuumJobs.isRunning then Some("a vacuum is still running")
+    if maintenance.active then Some(com.histmersion.server.instance.MaintenanceControllers.Reason("a restore holds the maintenance lock"))
+    else if backupJobs.running then Some(com.histmersion.server.instance.MaintenanceControllers.Reason("a backup is still running"))
+    else if vacuumJobs.isRunning then Some(com.histmersion.server.instance.MaintenanceControllers.Reason("a vacuum is still running"))
     else None
 
   def backupStatus: Either[Api.Error, Backup.Status] =
@@ -80,17 +80,17 @@ final class MaintenanceControllers(
   def restore(req: RestoreRequest): Either[Api.Error, RestoreResult] =
     if backupJobs.running then
       Left(
-        Api.Error("a backup is still running — wait for `histmersion backup` to finish", Some(Backup.CodeMaintenance))
+        Api.Error(com.histmersion.api.Api.Error.Message("a backup is still running — wait for `histmersion backup` to finish"), Some(Backup.CodeMaintenance))
       )
     else if vacuumJobs.isRunning then
       Left(
         Api.Error(
-          "a vacuum is still running — wait for its job (`histmersion jobs`) to finish",
+          com.histmersion.api.Api.Error.Message("a vacuum is still running — wait for its job (`histmersion jobs`) to finish"),
           Some(Backup.CodeMaintenance)
         )
       )
     else
-      maintenance.exclusively("restore"):
+      maintenance.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore")):
         // The OCR workers hold long transactions and write sources; a job landing mid-restore writes
         // into a schema that is being replaced. Paused for the duration, resumed whatever happens.
         pauseIngest()

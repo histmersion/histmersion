@@ -61,12 +61,12 @@ final class PlanPools(
   def floors(p: PoolId): (Floors, com.histmersion.server.agents.PlanPools.WindowName, Option[com.histmersion.server.agents.PlanPools.Problem]) =
     val saved = Transactor(ds).read(PlanQuotaRepo.pool(p)).floors
     saved.map(Floors.parse) match
-      case Some(Right(f)) => (f, "saved", None)
-      case Some(Left(m))  => (Floors.Empty, "saved", Some(s"saved floors do not parse: $m"))
+      case Some(Right(f)) => (f, com.histmersion.server.agents.PlanPools.WindowName("saved"), None)
+      case Some(Left(m))  => (Floors.Empty, com.histmersion.server.agents.PlanPools.WindowName("saved"), Some(s"saved floors do not parse: $m"))
       case None           =>
         Floors.parse(poolCfg(p)._1) match
-          case Right(f) => (f, "config", None)
-          case Left(m)  => (Floors.Empty, "config", Some(s"agents.quota.${p.wire}.floors: $m"))
+          case Right(f) => (f, com.histmersion.server.agents.PlanPools.WindowName("config"), None)
+          case Left(m)  => (Floors.Empty, com.histmersion.server.agents.PlanPools.WindowName("config"), Some(s"agents.quota.${p.wire}.floors: $m"))
 
   def rules(p: PoolId): Rules =
     Rules(floors(p)._1, cfg.quota.defaultFloor, staleMs, cfg.quota.margin)
@@ -112,7 +112,7 @@ final class PlanPools(
     val (v, states) = verdict(p, model, now)
     if need(p, model, now).isEmpty then (v, states, None)
     else
-      refreshPool(p, trigger, model, force = false, now) match
+      refreshPool(p, trigger, model, force = com.histmersion.server.agents.PlanPools.Force(false), now) match
         // not taken — perhaps because the caller waited while another took one: ask again either way
         case Left(_) =>
           val (v2, s2) = verdict(p, model, System.currentTimeMillis())
@@ -145,7 +145,7 @@ final class PlanPools(
     * in the runs' CODEX_HOME for the ChatGPT plan (the file is never read) — checked at most once per `poll-seconds`
     * (`force`: now).
     */
-  def login(p: PoolId, now: com.histmersion.server.agents.PlanPools.Instant = System.currentTimeMillis(), force: com.histmersion.server.agents.PlanPools.Force = false): Login =
+  def login(p: PoolId, now: com.histmersion.server.agents.PlanPools.Instant = System.currentTimeMillis(), force: com.histmersion.server.agents.PlanPools.Force = com.histmersion.server.agents.PlanPools.Force(false)): Login =
     val every = math.max(1, cfg.quota.pollSeconds).toLong * 1000L
     Option(logins.get(p)).filter((at, _) => !force && now - at < every).map(_._2).getOrElse {
       val l = p match
@@ -158,7 +158,7 @@ final class PlanPools(
   private def claudeLogin(): Login =
     val cc = cfg.providers.claudeCode
     seams.runCommand(
-      List(cc.command, "auth", "status"),
+      List(cc.command, com.histmersion.server.agents.PlanPools.CommandLine("auth"), com.histmersion.server.agents.PlanPools.CommandLine("status")),
       PlanPools.claudeEnv(cc),
       math.max(1, cfg.doctorTimeoutSeconds)
     ) match
@@ -243,7 +243,7 @@ final class PlanPools(
       p: PoolId,
       trigger: RefreshTrigger,
       model: Option[com.histmersion.server.agents.PlanPools.ModelName] = None,
-      force: com.histmersion.server.agents.PlanPools.Force = false,
+      force: com.histmersion.server.agents.PlanPools.Force = com.histmersion.server.agents.PlanPools.Force(false),
       now: com.histmersion.server.agents.PlanPools.Instant = System.currentTimeMillis()
   ): Either[com.histmersion.server.agents.PlanPools.Problem, Refreshed] =
     gate.exclusive(p, now) { last =>
@@ -273,10 +273,10 @@ final class PlanPools(
   /** One reading of `p`, recorded: the Claude probe or the ChatGPT app-server read. */
   private def take(p: PoolId, now: com.histmersion.server.agents.PlanPools.Instant): Refreshed = p match
     case PoolId.ChatgptPlan =>
-      poll(now, force = true) match
-        case Some(why) => Refreshed("app-server", ok = false, why)
+      poll(now, force = com.histmersion.server.agents.PlanPools.Force(true)) match
+        case Some(why) => Refreshed(com.histmersion.server.agents.Refreshed.Mode("app-server"), ok = com.histmersion.server.agents.Refreshed.Ok(false), why)
         case None      =>
-          Refreshed("app-server", ok = true, PlanPools.summary(Transactor(ds).read(PlanQuotaRepo.readings(p)), now))
+          Refreshed(com.histmersion.server.agents.Refreshed.Mode("app-server"), ok = com.histmersion.server.agents.Refreshed.Ok(true), PlanPools.summary(Transactor(ds).read(PlanQuotaRepo.readings(p)), now))
     case PoolId.ClaudePlan =>
       val cc = cfg.providers.claudeCode
       val qc = cfg.quota.claudePlan
@@ -287,25 +287,25 @@ final class PlanPools(
         ClaudeCode.ProbePrompt,
         math.max(5, qc.probeTimeoutSeconds)
       ) match
-        case Left(why)  => Refreshed("probe", ok = false, why)
+        case Left(why)  => Refreshed(com.histmersion.server.agents.Refreshed.Mode("probe"), ok = com.histmersion.server.agents.Refreshed.Ok(false), why)
         case Right(run) =>
           PlanPools.probeReadings(run, now, cc.limitCooldownMinutes) match
-            case Left(why) => Refreshed("probe", ok = false, why)
+            case Left(why) => Refreshed(com.histmersion.server.agents.Refreshed.Mode("probe"), ok = com.histmersion.server.agents.Refreshed.Ok(false), why)
             case Right(rs) =>
               record(PoolId.ClaudePlan, rs)
-              Refreshed("probe", ok = true, PlanPools.summary(rs, now))
+              Refreshed(com.histmersion.server.agents.Refreshed.Mode("probe"), ok = com.histmersion.server.agents.Refreshed.Ok(true), PlanPools.summary(rs, now))
 
   /** Read the ChatGPT plan through `codex app-server` (it generates nothing), at most once per `poll-seconds`, and only
     * with `app-server` on and a CODEX_HOME to read.
     */
-  def poll(now: com.histmersion.server.agents.PlanPools.Instant, force: com.histmersion.server.agents.PlanPools.Force = false): Option[com.histmersion.server.agents.PlanPools.Outcome] =
+  def poll(now: com.histmersion.server.agents.PlanPools.Instant, force: com.histmersion.server.agents.PlanPools.Force = com.histmersion.server.agents.PlanPools.Force(false)): Option[com.histmersion.server.agents.PlanPools.Outcome] =
     val every = math.max(1, cfg.quota.pollSeconds).toLong * 1000L
     val last = lastPoll.get()
-    if !cfg.providers.codex.appServer then Some("app-server reads are off (agents.providers.codex.app-server)")
+    if !cfg.providers.codex.appServer then Some(com.histmersion.server.agents.PlanPools.Outcome("app-server reads are off (agents.providers.codex.app-server)"))
     else if (!force && now - last < every) || !lastPoll.compareAndSet(last, now) then None
     else
       codexHome() match
-        case None       => Some("no CODEX_HOME to read")
+        case None       => Some(com.histmersion.server.agents.PlanPools.Outcome("no CODEX_HOME to read"))
         case Some(home) =>
           Codex.Home.using(home)(
             seams.readCodex(cfg.providers.codex.command, home, math.max(5, cfg.doctorTimeoutSeconds))
@@ -326,9 +326,9 @@ final class PlanPools(
     val src = Source.parse(report.source).filter(s => s == Source.Mod || s == Source.Interactive).getOrElse(Source.Mod)
     record(PoolId.ClaudePlan, PlanPools.modReadings(report.rateLimits, src, now))
     verdict(PoolId.ClaudePlan, None, now)._1 match
-      case Verdict.Usable(_)           => GuardAnswer(allow = true)
+      case Verdict.Usable(_)           => GuardAnswer(allow = com.histmersion.api.automation.PlanQuota.GuardAnswer.Allow(true))
       case Verdict.Blocked(why, until) =>
-        GuardAnswer(allow = false, Some(why), until.map(java.time.Instant.ofEpochMilli(_).toString))
+        GuardAnswer(allow = com.histmersion.api.automation.PlanQuota.GuardAnswer.Allow(false), Some(why), until.map(java.time.Instant.ofEpochMilli(_).toString))
 
   /** Every plan pool, as `agent quota` shows it. Takes no fresh reading (looking is free). */
   def statuses(covers: PoolId => List[com.histmersion.server.agents.PlanPools.ModelName], now: com.histmersion.server.agents.PlanPools.Instant = System.currentTimeMillis()): List[PoolStatus] =
@@ -373,7 +373,7 @@ final class PlanPools(
       PoolStatus(
         p.wire,
         p.title,
-        "plan",
+        com.histmersion.api.automation.PlanQuota.PoolStatus.Kind("plan"),
         covers(p),
         f.text,
         src,
@@ -460,7 +460,7 @@ object PlanPools:
   object ReadRequestsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def scheduleText(schedule: ScheduledRefresh): com.histmersion.server.agents.PlanPools.ScheduleText = schedule match
-    case ScheduledRefresh.Off             => ""
+    case ScheduledRefresh.Off             => com.histmersion.server.agents.PlanPools.ScheduleText("")
     case ScheduledRefresh.Every(interval) =>
       s", and every ${interval.value} min while the autopilot has queued work for it"
 
@@ -471,7 +471,7 @@ object PlanPools:
       readCodex: (Seams.ReadCodexArg1, java.nio.file.Path, Seams.ReadCodexArg3) => Either[Seams.ReadCodexResultPart1, Json],
       runProbe: (List[Seams.RunProbeArg1], java.util.Map[Seams.RunProbeArg2Arg1Key, Seams.RunProbeArg2Arg1Value] => Unit, Seams.RunProbeArg3, Seams.RunProbeArg4) => Either[Seams.RunProbeResultPart1, CliProcess.Run],
       runCommand: (List[Seams.RunCommandArg1], Map[Seams.RunCommandArg2Key, Option[Seams.RunCommandArg2Value]], Seams.RunCommandArg3) => Either[Seams.RunCommandResultPart1, (Seams.RunCommandResultPart2Part1, Seams.RunCommandResultPart2Part2)],
-      refreshes: Seams.Refreshes = true
+      refreshes: Seams.Refreshes = com.histmersion.server.agents.PlanPools.Seams.Refreshes(true)
   )
 
   object Seams:
@@ -516,10 +516,10 @@ object PlanPools:
     /** Nothing is started: no read, no fresh reading taken, logins not known (so nothing is made unavailable).
       */
     val Offline: Seams = Seams(
-      (_, _, _) => Left("no app-server read in this context"),
-      (_, _, _, _) => Left("no probe in this context"),
-      (_, _, _) => Left("not checked in this context"),
-      refreshes = false
+      (_, _, _) => Left(com.histmersion.server.agents.PlanPools.Problem("no app-server read in this context")),
+      (_, _, _, _) => Left(com.histmersion.server.agents.PlanPools.Problem("no probe in this context")),
+      (_, _, _) => Left(com.histmersion.server.agents.PlanPools.Problem("not checked in this context")),
+      refreshes = com.histmersion.server.agents.PlanPools.Seams.Refreshes(false)
     )
 
   /** The one `claude -p` probe: in an empty scratch directory, its output read whole. */
@@ -530,7 +530,7 @@ object PlanPools:
       timeoutSeconds: com.histmersion.server.agents.PlanPools.TimeoutSeconds
   ): Either[com.histmersion.server.agents.PlanPools.Problem, CliProcess.Run] =
     try
-      CliProcess.withDir("histmersion-probe-") { dir =>
+      CliProcess.withDir(com.histmersion.server.agents.CliProcess.WithDirPrefix("histmersion-probe-")) { dir =>
         Right(
           CliProcess.run(
             argv,
@@ -568,7 +568,7 @@ object PlanPools:
 
   /** The runs' CODEX_HOME has a login when its `auth.json` exists (it is never read). */
   def codexLogin(home: Option[java.nio.file.Path], command: com.histmersion.server.agents.PlanPools.CommandLine): Login = home match
-    case None    => Login.Missing("no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home")
+    case None    => Login.Missing(com.histmersion.api.automation.PlanQuota.Login.Missing.Why("no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home"))
     case Some(h) =>
       if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then Login.Present(s"$h has a login")
       else Login.Missing(s"$h has none — run `CODEX_HOME=\"$h\" $command login` once")
@@ -585,7 +585,7 @@ object PlanPools:
         case Some(l) =>
           val until =
             l.until.map(_.toEpochMilli).filter(_ > now).getOrElse(now + math.max(1, cooldownMinutes).toLong * 60000L)
-          Right(List(Reading("claude", "usage_limit", 100, Some(until), rejected = true, now, Source.Probe)))
+          Right(List(Reading(com.histmersion.api.automation.PlanQuota.Reading.Limit("claude"), com.histmersion.api.automation.PlanQuota.Reading.Kind("usage_limit"), com.histmersion.api.automation.PlanQuota.Reading.UsedPct(100), Some(until), rejected = com.histmersion.api.automation.PlanQuota.Reading.Rejected(true), now, Source.Probe)))
         case None =>
           val said = o.result.map(r => (r.text :: r.errors).filter(_.nonEmpty).mkString("; ")).filter(_.nonEmpty)
           Left(
@@ -596,7 +596,7 @@ object PlanPools:
   /** "five_hour 12% used, seven_day 42% used" — what a refresh read. */
   def summary(rs: List[Reading], now: com.histmersion.server.agents.PlanPools.Instant): com.histmersion.server.agents.PlanPools.Summary =
     val cur = PlanQuota.current(rs, now)
-    if cur.isEmpty then "no window reported"
+    if cur.isEmpty then com.histmersion.server.agents.PlanPools.Summary("no window reported")
     else
       cur
         .map { r =>
@@ -621,7 +621,7 @@ object PlanPools:
     val repReset = c.downField("resetsAt").as[Long].toOption.map(_ * 1000)
     val unified = c.downField("unifiedWindows").focus.flatMap(_.asObject).toList.flatMap(_.toList)
     val fromUnified = unified.flatMap { (kind, w) =>
-      num(w, "utilization").map { u =>
+      num(w, com.histmersion.server.agents.PlanPools.JsonKey("utilization")).map { u =>
         Reading(
           "claude",
           kind,
@@ -636,10 +636,10 @@ object PlanPools:
     if fromUnified.nonEmpty then fromUnified
     else
       repKind.toList.flatMap { kind =>
-        val used = num(info, "utilization").map(_ * 100)
+        val used = num(info, com.histmersion.server.agents.PlanPools.JsonKey("utilization")).map(_ * 100)
         // without a utilization the representative window says only "allowed" or "rejected"
         if status.contains("rejected") then
-          List(Reading("claude", kind, used.getOrElse(100.0), repReset, rejected = true, now, source))
+          List(Reading(com.histmersion.api.automation.PlanQuota.Reading.Limit("claude"), kind, used.getOrElse(100.0), repReset, rejected = com.histmersion.api.automation.PlanQuota.Reading.Rejected(true), now, source))
         else used.map(u => Reading("claude", kind, u, repReset, rejected = false, now, source)).toList
       }
 
@@ -647,7 +647,7 @@ object PlanPools:
   def modReadings(ws: List[ModWindow], source: Source, now: com.histmersion.server.agents.PlanPools.Instant): List[Reading] =
     ws.map { w =>
       val reset = w.resetsAt.flatMap(t => scala.util.Try(java.time.Instant.parse(t).toEpochMilli).toOption)
-      Reading("claude", w.kind, w.percentUsed, reset, rejected = false, now, source)
+      Reading(com.histmersion.api.automation.PlanQuota.Reading.Limit("claude"), w.kind, w.percentUsed, reset, rejected = com.histmersion.api.automation.PlanQuota.Reading.Rejected(false), now, source)
     }
 
   /** `account/rateLimits/read`'s result → readings (windows keyed by LENGTH, `300m`/`10080m`: primary is not always the
@@ -722,7 +722,7 @@ object PlanPools:
             .find(j => j.hcursor.downField("id").as[Int].toOption.contains(2))
         }
         reader.get(math.max(1, timeoutSeconds).toLong, TimeUnit.SECONDS) match
-          case None    => Left("codex app-server ended without answering account/rateLimits/read")
+          case None    => Left(com.histmersion.server.agents.PlanPools.Problem("codex app-server ended without answering account/rateLimits/read"))
           case Some(j) =>
             j.hcursor
               .downField("result")

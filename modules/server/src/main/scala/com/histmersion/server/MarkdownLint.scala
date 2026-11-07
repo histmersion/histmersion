@@ -142,7 +142,7 @@ object MarkdownLint:
     */
   def ofArticle(body: com.histmersion.server.MarkdownLint.Scan.Text, summary: Option[com.histmersion.domain.research.articles.ArticleSummaryRow.Summary], links: com.histmersion.domain.library.Citekey => Option[LinkTarget]): List[FormatIssue] =
     issues(body, FormatField.Body, resolving(links, article = com.histmersion.server.MarkdownLint.ResolvingArticle(true))) ++
-      summary.toList.flatMap(issues(_, FormatField.Summary, resolving(links, article = false)))
+      summary.toList.flatMap(issues(_, FormatField.Summary, resolving(links, article = com.histmersion.server.MarkdownLint.ResolvingArticle(false))))
 
   /** A source's summary and notes — the two texts an agent writes about one source. */
   def ofSource(summary: Option[com.histmersion.domain.library.Source.Summary], notes: Option[com.histmersion.domain.library.sources.SourceNote.Text], links: com.histmersion.domain.library.Citekey => Option[LinkTarget]): List[FormatIssue] =

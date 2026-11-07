@@ -26,7 +26,7 @@ object UiRepo:
   private def iso(col: com.histmersion.server.instance.UiRepo.ColumnName): SqlLiteral =
     SqlLiteral(s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')""")
 
-  private val Latest = iso("b.latest")
+  private val Latest = iso(com.histmersion.server.instance.UiRepo.ColumnName("b.latest"))
 
   /** Every board's counter, in [[Board]]'s order, with the reader's `seen` marks (board → ISO instant). A board with no
     * rows yet counts 0 and has no `latest`; one never opened has no `seen`.

@@ -81,8 +81,8 @@ final class InstanceControllers(
   def health: Health =
     val conv = converter()
     Try(com.histmersion.util.database.Migrate.current(deps.ds)) match
-      case scala.util.Success(v) => Health(if conv.healthy then "ok" else "degraded", "ok", v, Some(conv.render))
-      case scala.util.Failure(e) => Health("degraded", s"error: ${e.getMessage}", None, Some(conv.render))
+      case scala.util.Success(v) => Health(if conv.healthy then com.histmersion.api.instance.Health.Status("ok") else com.histmersion.api.instance.Health.Status("degraded"), com.histmersion.api.instance.Health.Db("ok"), v, Some(conv.render))
+      case scala.util.Failure(e) => Health(com.histmersion.api.instance.Health.Status("degraded"), s"error: ${e.getMessage}", None, Some(conv.render))
 
   /** `GET /api/about` — the build, the health report, the job queue, the newest backup and the store's counts. Each
     * part that cannot be read becomes a `problems` line, never a failed request: this is the page someone opens BECAUSE
@@ -91,10 +91,10 @@ final class InstanceControllers(
   def about(now: Instant = Instant.now(deps.clock)): About =
     def attempt[A](what: com.histmersion.server.instance.InstanceControllers.Operation)(a: => A): Either[com.histmersion.server.instance.InstanceControllers.Problem, A] =
       Try(a).toEither.left.map(e => s"$what: ${e.getMessage}")
-    val jobs = attempt("job counts")(
+    val jobs = attempt(com.histmersion.server.instance.InstanceControllers.Operation("job counts"))(
       JobCounts.of(diagnostics.figures(JobsData.owner).counts.map(c => c.noun -> c.count.toInt))
     )
-    val counts = attempt("store counts")(corpusCounts)
+    val counts = attempt(com.histmersion.server.instance.InstanceControllers.Operation("store counts"))(corpusCounts)
     val listed = backups.list.left.map(e => s"backups: ${e.message}")
     val last = listed.toOption.flatMap(_.headOption)
     val age = last
@@ -129,13 +129,13 @@ final class InstanceControllers(
     val figures = Deps.data.owners.filterNot(_ == JobsData.owner).map(diagnostics.figures)
     def count(noun: com.histmersion.server.instance.InstanceControllers.Noun): com.histmersion.RowCount = figures.flatMap(_.count(noun)).headOption.fold(0)(_.toInt)
     CorpusCounts(
-      count("sources"),
-      count("findings"),
-      count("articles"),
-      count("events"),
-      count("places"),
-      count("periods"),
-      count("presets")
+      count(com.histmersion.server.instance.InstanceControllers.Noun("sources")),
+      count(com.histmersion.server.instance.InstanceControllers.Noun("findings")),
+      count(com.histmersion.server.instance.InstanceControllers.Noun("articles")),
+      count(com.histmersion.server.instance.InstanceControllers.Noun("events")),
+      count(com.histmersion.server.instance.InstanceControllers.Noun("places")),
+      count(com.histmersion.server.instance.InstanceControllers.Noun("periods")),
+      count(com.histmersion.server.instance.InstanceControllers.Noun("presets"))
     )
 
   /** The last storage measurement, with its age as of `now`. */
@@ -161,7 +161,7 @@ final class InstanceControllers(
     * counters after the mark moved.
     */
   def markSeen(board: com.histmersion.server.instance.InstanceControllers.Board, mark: UiNotices.SeenMark): Either[Api.Error, UiNotices.Counters] =
-    deps.maintenance.guard("mark_seen"):
+    deps.maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("mark_seen")):
       for
         b <- UiNotices.Board
           .parse(board)

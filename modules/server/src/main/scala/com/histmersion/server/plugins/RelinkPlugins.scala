@@ -87,24 +87,24 @@ object RelinkPlugins:
     catch
       case NonFatal(e) =>
         console.errorLine(s"pluginTool: ${e.getClass.getSimpleName}: ${e.getMessage}")
-        3
+        com.histmersion.server.plugins.RelinkPlugins.ExitCode(3)
 
   private def run(args: List[com.histmersion.server.plugins.RelinkPlugins.Argument])(using console: Console): com.histmersion.server.plugins.RelinkPlugins.ExitCode = args match
     case cmd :: "--lib" :: lib :: rest => run(cmd, rest, dependencyJars(Path.of(lib)))(using console)
     case cmd :: rest                   => run(cmd, rest, Nil)(using console)
-    case Nil                           => console.errorLine(Usage); 1
+    case Nil                           => console.errorLine(Usage); com.histmersion.server.plugins.RelinkPlugins.ExitCode(1)
 
   private def run(cmd: com.histmersion.server.plugins.RelinkPlugins.Command, args: List[com.histmersion.server.plugins.RelinkPlugins.Argument], deps: List[Path])(using console: Console): com.histmersion.server.plugins.RelinkPlugins.ExitCode =
     val loader = withDependencies(deps, getClass.getClassLoader)
     (cmd, args) match
       case ("describe", jars) if jars.nonEmpty =>
         console.writeLine(PluginKit.renderJars(jars.map(j => describe(Path.of(j), loader))))
-        0
+        com.histmersion.server.plugins.RelinkPlugins.ExitCode(0)
       case ("check", kit :: jars) =>
         val (lines, problems) = check(Path.of(kit), jars.map(Path.of(_)), deps, loader)
         lines.foreach(l => console.writeLine(l))
         problems.foreach(p => console.writeLine(s"refused: $p"))
-        if problems.isEmpty then 0 else 2
+        if problems.isEmpty then com.histmersion.server.plugins.RelinkPlugins.ExitCode(0) else com.histmersion.server.plugins.RelinkPlugins.ExitCode(2)
       case ("plugin-set", out :: record :: mode :: kit :: jars) if Set("native", "jvm")(mode) =>
         val described = jars.map(j => describe(Path.of(j), loader))
         val label = kitLabel(Path.of(kit))
@@ -119,16 +119,16 @@ object RelinkPlugins:
         writePluginSet(Path.of(out), set)
         val _ = Files.writeString(Path.of(record), PluginKit.renderSet(set) + "\n")
         console.writeLine(set.digest)
-        0
+        com.histmersion.server.plugins.RelinkPlugins.ExitCode(0)
       case ("kit-manifest", kit :: version :: commit :: graalvm :: Nil) =>
         val m = kitManifest(Path.of(kit), version, Option(commit).filter(c => c != "-" && c.nonEmpty), graalvm)
         val _ = Files.writeString(Path.of(kit).resolve("kit.json"), PluginKit.renderKit(m) + "\n")
         val _ = Files.writeString(Path.of(kit).resolve("SHA256SUMS"), PluginKit.sha256sums(m.files))
         console.writeLine(s"kit ${m.label}: ${m.files.size} files, GraalVM ${m.graalvm}, plugin SPI ${m.spiVersion}")
-        0
+        com.histmersion.server.plugins.RelinkPlugins.ExitCode(0)
       case _ =>
         console.errorLine(Usage)
-        1
+        com.histmersion.server.plugins.RelinkPlugins.ExitCode(1)
 
   // ── the plugins' dependencies ─────────────────────────────────────────────────────────────────
 
@@ -186,12 +186,12 @@ object RelinkPlugins:
             instance.flatMap(PluginHost.described) match
               case Right(p) => dryRun(p)
               case Left(e)  =>
-                PluginDescription("", "", 0, error = Some(s"${prov.`type`().getName}: ${PluginHost.failure(e)}"))
+                PluginDescription(com.histmersion.api.plugins.PluginDescription.Id(""), com.histmersion.api.plugins.PluginDescription.Version(""), com.histmersion.api.plugins.PluginDescription.SpiVersion(0), error = Some(s"${prov.`type`().getName}: ${PluginHost.failure(e)}"))
           }
       catch
         case e: java.util.ServiceConfigurationError =>
-          List(PluginDescription("", "", 0, error = Some(PluginHost.failure(e))))
-        case e: LinkageError => List(PluginDescription("", "", 0, error = Some(PluginHost.failure(e))))
+          List(PluginDescription(com.histmersion.api.plugins.PluginDescription.Id(""), com.histmersion.api.plugins.PluginDescription.Version(""), com.histmersion.api.plugins.PluginDescription.SpiVersion(0), error = Some(PluginHost.failure(e))))
+        case e: LinkageError => List(PluginDescription(com.histmersion.api.plugins.PluginDescription.Id(""), com.histmersion.api.plugins.PluginDescription.Version(""), com.histmersion.api.plugins.PluginDescription.SpiVersion(0), error = Some(PluginHost.failure(e))))
     PluginJar(abs.getFileName.toString, sha256(abs), plugins)
 
   private def fromJar(c: Class[?], jar: Path): Boolean =

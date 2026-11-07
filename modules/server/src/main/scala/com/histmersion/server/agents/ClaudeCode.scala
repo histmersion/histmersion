@@ -480,7 +480,7 @@ object ClaudeCode:
       user: com.histmersion.server.agents.ClaudeCode.ResultUser,
       schema: ResponseSchema[Out]
   ): Either[Limit, AgentResult[Either[AgentFailure, Out]]] =
-    val r = o.result.getOrElse(Result("missing", isError = true, "", None, 0, None, Nil, Nil))
+    val r = o.result.getOrElse(Result(com.histmersion.server.agents.ClaudeCode.Result.Subtype("missing"), isError = com.histmersion.server.agents.ClaudeCode.Result.IsError(true), com.histmersion.server.agents.ClaudeCode.Result.Text(""), None, com.histmersion.server.agents.ClaudeCode.Result.Turns(0), None, Nil, Nil))
     usageLimit(r) match
       case Some(l) => Left(l)
       case None    =>
@@ -527,7 +527,7 @@ object ClaudeCode:
           "your Claude plan. Bind to 127.0.0.1 (HISTMERSION_BIND), or — when every client of this server is " +
           "you — set agents.providers.claude-code.allow-non-loopback (HISTMERSION_AGENTS_CLAUDE_ALLOW_NON_LOOPBACK)"
       )
-    else if cfg.command.trim.isEmpty then Left("agents.providers.claude-code.command is empty")
+    else if cfg.command.trim.isEmpty then Left(com.histmersion.server.agents.ClaudeCode.Problem("agents.providers.claude-code.command is empty"))
     else Right(ClaudeCodeClient(ref, cfg, rt))
 
   /** Whether the server listens on loopback only — the `claude-code` (and every plan-login) provider's precondition:

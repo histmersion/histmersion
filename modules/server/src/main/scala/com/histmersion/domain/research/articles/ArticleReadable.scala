@@ -23,7 +23,7 @@ final class ArticleReadable(db: Transactor) extends Readable:
   def unread(read: Set[ItemRef], size: PageSize, from: Offset): UnreadItems =
     db.read:
       val rows = (Sql.raw(com.histmersion.util.database.Sql.Text("SELECT i.slug, i.title, lower(i.period), upper(i.period) - 1")) ++ notRead(read) ++
-        Sql.of(" ORDER BY lower(i.title), i.slug LIMIT ? OFFSET ?", Param.I(size.value), Param.I(from.value))).frag
+        Sql.of(com.histmersion.util.database.Sql.Text(" ORDER BY lower(i.title), i.slug LIMIT ? OFFSET ?"), Param.I(size.value), Param.I(from.value))).frag
         .query[(String, String, Option[Long], Option[Long])]
         .run()
         .toList

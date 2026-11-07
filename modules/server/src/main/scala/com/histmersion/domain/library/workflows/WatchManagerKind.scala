@@ -187,7 +187,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
                   s"; auto-ingest of legal open access: ${Plural.count(allowed, com.histmersion.api.Plural.CountSingular("work"))} left today" +
                     shared.fold("")(n => s" (all watchers: $n left)") +
                     (if all > 0 then
-                       s"; ${Plural.count(all, "work")} wait in the ingest backlog first" +
+                       s"; ${Plural.count(all, com.histmersion.api.Plural.CountSingular("work"))} wait in the ingest backlog first" +
                          (if mine > 0 then s" ($mine of them its own)" else "")
                      else "") +
                     "; the open-access picks past it wait in the backlog"

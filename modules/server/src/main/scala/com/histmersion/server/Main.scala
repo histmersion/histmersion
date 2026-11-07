@@ -77,7 +77,7 @@ import com.histmersion.util.console.Console
   // server again when it exits with an error: there, Settings can restart it by ending it with that code
   val underService =
     environment.get(com.histmersion.config.Environment.VariablesKey("XPC_SERVICE_NAME")).exists(_.contains("histmersion")) || environment
-      .get("INVOCATION_ID")
+      .get(com.histmersion.config.Environment.VariablesKey("INVOCATION_ID"))
       .isDefined
   val restart = Option.when(underService) { () =>
     val code = cfg.server.restartExitCode

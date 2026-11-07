@@ -131,12 +131,12 @@ object CliProcess:
       all.foreach { d =>
         val _ = d.destroy()
       }
-      if grouped then signalGroup(p.pid, "TERM")
+      if grouped then signalGroup(p.pid, com.histmersion.server.agents.CliProcess.SignalGroupSig("TERM"))
       p.destroy()
       if !p.waitFor(5, TimeUnit.SECONDS) then { val _ = p.destroyForcibly() }
       // re-check: a descendant that ignored the TERM, or one started in the meantime
       look()
-      if grouped then signalGroup(p.pid, "KILL")
+      if grouped then signalGroup(p.pid, com.histmersion.server.agents.CliProcess.SignalGroupSig("KILL"))
       seen.asScala.filter(_.isAlive).foreach { d =>
         val _ = d.destroyForcibly()
       }
@@ -241,11 +241,11 @@ object CliProcess:
     finally
       if p.isAlive || tree.seen.asScala.exists(_.isAlive) then tree.kill()
       // a member of its group nobody saw (started and orphaned between two looks) goes too
-      else if grouped then signalGroup(p.pid, "KILL")
+      else if grouped then signalGroup(p.pid, com.histmersion.server.agents.CliProcess.SignalGroupSig("KILL"))
       h.foreach(_.unregister(p))
 
   /** Kill `p` and every descendant it has now (the descendants first, then the parent, then a check). */
-  def kill(p: Process): Unit = ProcessTree(p, grouped = false).kill()
+  def kill(p: Process): Unit = ProcessTree(p, grouped = com.histmersion.server.agents.CliProcess.ProcessTree.Grouped(false)).kill()
 
   /** A scratch working directory, removed with everything in it afterwards. */
   def withDir[A](prefix: com.histmersion.server.agents.CliProcess.WithDirPrefix)(f: Path => A): A =

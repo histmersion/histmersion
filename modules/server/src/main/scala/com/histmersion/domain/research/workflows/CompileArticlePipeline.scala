@@ -83,7 +83,7 @@ final class CompileArticlePipeline(
       ev <- ctx.code[Evidence](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("evidence"))(Right(evidenceOf(found, extracted)))
       line <-
         if ev.used.isEmpty then
-          ctx.code[String]("close")(
+          ctx.code[String](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("close"))(
             log(
               ctx,
               s"compile-article [[${snap.slug}]]: no claim of the ${found.toExtract.size} " +
@@ -94,7 +94,7 @@ final class CompileArticlePipeline(
           for
             draft <- draft(ctx, snap, found, ev, extracted)
             decided <- ctx.approval(
-              "approve",
+              com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("approve"),
               ApprovalKind.ArticlePublish,
               snap.slug,
               io.scalaland.chimney.Transformer

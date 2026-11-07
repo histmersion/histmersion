@@ -157,7 +157,7 @@ final class Bootstrap(
             periodImports
               .applySeed(replace = com.histmersion.domain.catalogue.periods.PeriodImports.Replace(false))
               .map(withSkipped)
-              .map(r => s"${Plural.count(r.periods, "period")}, ${Plural.count(r.presets, "preset")}" + skippedNote(r))
+              .map(r => s"${Plural.count(r.periods, com.histmersion.api.Plural.CountSingular("period"))}, ${Plural.count(r.presets, com.histmersion.api.Plural.CountSingular("preset"))}" + skippedNote(r))
           )
         )
       ).flatten ++ p.fetch.map(s =>

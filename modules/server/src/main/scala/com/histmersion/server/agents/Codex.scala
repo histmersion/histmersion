@@ -74,20 +74,20 @@ object Codex:
   ): List[com.histmersion.server.agents.Codex.CommandLine] =
     List(
       cfg.command,
-      "exec",
-      "--json",
-      "-p",
+      com.histmersion.server.agents.Codex.CommandLine("exec"),
+      com.histmersion.server.agents.Codex.CommandLine("--json"),
+      com.histmersion.server.agents.Codex.CommandLine("-p"),
       agent,
-      "-m",
+      com.histmersion.server.agents.Codex.CommandLine("-m"),
       model,
-      "--output-schema",
+      com.histmersion.server.agents.Codex.CommandLine("--output-schema"),
       schemaFile,
-      "--skip-git-repo-check",
-      "-C",
+      com.histmersion.server.agents.Codex.CommandLine("--skip-git-repo-check"),
+      com.histmersion.server.agents.Codex.CommandLine("-C"),
       cwd,
-      "-o",
+      com.histmersion.server.agents.Codex.CommandLine("-o"),
       lastFile,
-      "-"
+      com.histmersion.server.agents.Codex.CommandLine("-")
     )
 
   /** The CLI's environment: its own CODEX_HOME (its login, never a copied `auth.json`), the run token the MCP server
@@ -98,7 +98,7 @@ object Codex:
       List("OPENAI_API_KEY", "CODEX_API_KEY").foreach { k =>
         val _ = env.remove(k)
       }
-    val _ = env.put("CODEX_HOME", home)
+    val _ = env.put(com.histmersion.server.agents.Codex.EnvName("CODEX_HOME"), home)
     // the base config makes Histmersion's MCP server required: a step with no tools still starts it
     val _ = env.put(AgentGenerator.TokenEnv, token.getOrElse("none"))
 
@@ -162,7 +162,7 @@ object Codex:
     if ref.provider != ProviderKind.Codex then Left(s"${ref.wire} is not a codex model")
     else if !rt.loopback then
       Left("codex is refused while the server listens beyond loopback: another client could spend your ChatGPT plan")
-    else if cfg.command.trim.isEmpty then Left("agents.providers.codex.command is empty")
+    else if cfg.command.trim.isEmpty then Left(com.histmersion.server.agents.Codex.Problem("agents.providers.codex.command is empty"))
     else Right(CodexExecClient(ref, cfg, rt))
 
   /** Who uses the runs' Codex home, and its retention (#2582, [[CodexRetention]]).
@@ -203,8 +203,8 @@ object Codex:
     /** What a pass did: `skipped` says why it did nothing. */
     final case class Report(
         skipped: Option[Report.Skipped] = None,
-        deleted: Report.Deleted = 0,
-        freedBytes: Report.FreedBytes = 0,
+        deleted: Report.Deleted = com.histmersion.server.agents.Codex.Home.Report.Deleted(0),
+        freedBytes: Report.FreedBytes = com.histmersion.server.agents.Codex.Home.Report.FreedBytes(0),
         vacuumed: List[(Report.VacuumedPart1, Report.VacuumedPart2, Report.VacuumedPart3)] = Nil,
         problems: List[Report.Problems] = Nil
     ):
@@ -213,7 +213,7 @@ object Codex:
           s"$n ${com.histmersion.api.backup.Backup.humanBytes(b)} → ${com.histmersion.api.backup.Backup.humanBytes(a)}"
         )
         (List(
-          s"${Plural.count(deleted, "transcript")} deleted (${com.histmersion.api.backup.Backup.humanBytes(freedBytes)})"
+          s"${Plural.count(deleted, com.histmersion.api.Plural.CountSingular("transcript"))} deleted (${com.histmersion.api.backup.Backup.humanBytes(freedBytes)})"
         ) ++
           Option.when(v.nonEmpty)(s"vacuumed ${v.mkString(", ")}") ++ problems).mkString("; ")
       }
@@ -273,7 +273,7 @@ object Codex:
     ): Report =
       val w = lock(home).writeLock()
       if !Files.isDirectory(home) then Report(skipped = Some(s"no Codex home at $home"))
-      else if !w.tryLock() then Report(skipped = Some("a Codex run is using the home — not now"))
+      else if !w.tryLock() then Report(skipped = Some(com.histmersion.server.agents.Codex.Home.Report.SkipReason("a Codex run is using the home — not now")))
       else
         try
           val problems = List.newBuilder[String]

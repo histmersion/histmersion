@@ -19,4 +19,4 @@ final class FormatView(articles: => ArticlesControllers, sources: => SourcesCont
       case FormatField.Summary =>
         MarkdownLint.ofSource(Some(text), None, articles.pageLinks(MarkdownLint.lookups(List(text))))
       case FormatField.Notes => sources.formatIssues(None, Some(text))
-    FormatReport("text", issues, done, Option.when(in.fix)(text))
+    FormatReport(com.histmersion.api.checks.FormatReport.Subject("text"), issues, done, Option.when(in.fix)(text))
