@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.monovore.decline.Command
 import com.histmersion.config.*
 
@@ -12,9 +14,9 @@ class OutputSuite extends munit.FunSuite:
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
 
   test("render prints the DTO's own codec with --json, its Markdown without"):
-    val item = Queue.QueueItem(7, "tasks", "Read Cline", None, "open", None, Some("2026-10-17T00:00:00Z"), None)
-    assertEquals(Output.render(json = false, item)(i => s"#${i.id}"), "#7")
-    val js = Output.render(json = true, item)(_ => "unused")
+    val item = Queue.QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(7), com.histmersion.api.automation.Queue.QueueItem.List("tasks"), com.histmersion.api.automation.Queue.QueueItem.Text("Read Cline"), None, com.histmersion.api.automation.Queue.QueueItem.Status("open"), None, Some(com.histmersion.api.automation.Queue.QueueItem.CreatedAt("2026-10-17T00:00:00Z")), None)
+    assertEquals(Output.render(json = com.histmersion.cli.Cli.JsonOutput(false), item)(i => s"#${i.id}"), "#7")
+    val js = Output.render(json = com.histmersion.cli.Cli.JsonOutput(true), item)(_ => "unused")
     assert(js.startsWith("{\n  \"id\" : 7,"), js)
     assert(js.contains("\"reason\" : null"), "an absent field is printed as null, as the server sends it: " + js)
 
@@ -26,15 +28,15 @@ class OutputSuite extends munit.FunSuite:
   test("calibre search --json keeps the field names it always printed"):
     val b =
       Calibre.Book(
-        3,
-        "Title",
-        List("A"),
-        Some("1999-01-01"),
+        com.histmersion.cli.Calibre.Book.Id(3),
+        com.histmersion.cli.Calibre.Book.Title("Title"),
+        List(com.histmersion.api.library.AuthorName("A")),
+        Some(com.histmersion.cli.Calibre.Book.Pubdate("1999-01-01")),
         None,
-        List("t"),
+        List(com.histmersion.api.library.CollectionEntry.Tags("t")),
         None,
         Map("doi" -> "10.1/x"),
-        List("PDF")
+        List(com.histmersion.api.library.CollectionEntry.Formats("PDF"))
       )
     val js = Output.json(List(Calibre.Json.Book.of(b)))
     assertEquals(
@@ -44,10 +46,10 @@ class OutputSuite extends munit.FunSuite:
     assert(js.contains("\"year\" : 1999"), js)
 
   test("calibre update --all --json names each outcome as before"):
-    val ch = Calibre.Change(Calibre.Field.values.head, "a", "b")
-    val r = Calibre.Json.UpdateRow.of(UpdateEntry(3, List("ck"), UpdateOutcome.Failed(List(ch), "locked")))
+    val ch = Calibre.Change(Calibre.Field.values.head, com.histmersion.cli.Calibre.Change.From("a"), com.histmersion.cli.Calibre.Change.To("b"))
+    val r = Calibre.Json.UpdateRow.of(UpdateEntry(com.histmersion.cli.UpdateEntry.CalibreId(3), List(com.histmersion.cli.UpdateEntry.Citekeys("ck")), UpdateOutcome.Failed(List(ch), com.histmersion.cli.UpdateOutcome.Failed.Reason("locked"))))
     assertEquals((r.state, r.reason, r.changes.map(_.from)), ("failed", Some("locked"), List("a")))
-    assertEquals(Calibre.Json.UpdateRow.of(UpdateEntry(3, Nil, UpdateOutcome.UpToDate)).state, "up-to-date")
+    assertEquals(Calibre.Json.UpdateRow.of(UpdateEntry(com.histmersion.cli.UpdateEntry.CalibreId(3), Nil, UpdateOutcome.UpToDate)).state, "up-to-date")
 
   test("no command prints JSON or declares --json its own way"):
     val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", ".")).resolve("modules/cli/src/main/scala")
@@ -85,8 +87,8 @@ class OutputSuite extends munit.FunSuite:
         summon[com.histmersion.util.console.Console].writeLine()
         summon[com.histmersion.util.console.Console].writeLine(null)
         List("a", "b").foreach(summon[com.histmersion.util.console.Console].writeLine)
-        Output.emit(json = false, "answer")(identity)
-        Output.emit(json = true, "answer")(_ => fail("JSON must not render Markdown"))
+        Output.emit(json = com.histmersion.cli.Cli.JsonOutput(false), "answer")(identity)
+        Output.emit(json = com.histmersion.cli.Cli.JsonOutput(true), "answer")(_ => fail("JSON must not render Markdown"))
       }
     }
     val nl = System.lineSeparator()
@@ -126,8 +128,8 @@ class OutputSuite extends munit.FunSuite:
     val a = new java.io.ByteArrayOutputStream
     val b = new java.io.ByteArrayOutputStream
     val errors = new java.io.ByteArrayOutputStream
-    val first = com.histmersion.util.console.Console.streams(new java.io.PrintStream(a, true, "UTF-8"), new java.io.PrintStream(errors, true, "UTF-8"), () => "yes")
-    val second = com.histmersion.util.console.Console.streams(new java.io.PrintStream(b, true, "UTF-8"), new java.io.PrintStream(errors, true, "UTF-8"), () => "no")
+    val first = com.histmersion.util.console.Console.streams(new java.io.PrintStream(a, true, "UTF-8"), new java.io.PrintStream(errors, true, "UTF-8"), () => com.histmersion.util.console.Console.StreamsInputResult("yes"))
+    val second = com.histmersion.util.console.Console.streams(new java.io.PrintStream(b, true, "UTF-8"), new java.io.PrintStream(errors, true, "UTF-8"), () => com.histmersion.util.console.Console.StreamsInputResult("no"))
     def answer(text: String)(using com.histmersion.util.console.Console): Unit = {
       Cli.out.println(text)
       Cli.out.flush()
@@ -148,8 +150,8 @@ class OutputSuite extends munit.FunSuite:
   test("injected terminal prompts use supplied streams and input") {
     val out = new java.io.ByteArrayOutputStream
     val err = new java.io.ByteArrayOutputStream
-    val console = com.histmersion.util.console.Console.streams(new java.io.PrintStream(out), new java.io.PrintStream(err), () => "yes")
-    assertEquals(console.readTerminalLine("Proceed? "), Some("yes"))
+    val console = com.histmersion.util.console.Console.streams(new java.io.PrintStream(out), new java.io.PrintStream(err), () => com.histmersion.util.console.Console.StreamsInputResult("yes"))
+    assertEquals(console.readTerminalLine(com.histmersion.util.console.Console.Prompt("Proceed? ")), Some("yes"))
     assertEquals(out.toString("UTF-8"), "")
     assertEquals(err.toString("UTF-8"), "Proceed? ")
   }

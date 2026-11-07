@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.given
 
 import java.nio.file.{Files, Path}
@@ -32,11 +34,11 @@ class DirSizeSuite extends munit.FunSuite:
 
   tmp.test("a missing directory is not there — zero, never an error"): d =>
     val r = DirSize.measure(d.resolve("nope"), DirSize.Budget.unlimited)
-    assertEquals(r, DirSize.Result(0L, 0L, exists = false))
+    assertEquals(r, DirSize.Result(com.histmersion.cli.DirSize.Result.Bytes(0L), com.histmersion.cli.DirSize.Result.Files(0L), exists = com.histmersion.cli.DirSize.Result.Exists(false)))
 
   tmp.test("a regular file as the root is its own size"): d =>
     val f = file(d.resolve("one.pmtiles"), 1234)
-    assertEquals(DirSize.measure(f, DirSize.Budget.unlimited), DirSize.Result(1234L, 1L, exists = true))
+    assertEquals(DirSize.measure(f, DirSize.Budget.unlimited), DirSize.Result(com.histmersion.cli.DirSize.Result.Bytes(1234L), com.histmersion.cli.DirSize.Result.Files(1L), exists = com.histmersion.cli.DirSize.Result.Exists(true)))
 
   tmp.test("links inside the tree are neither followed nor counted; a loop cannot hang the walk"): d =>
     val big = file(d.resolve("elsewhere/big.bin"), 10000).getParent
@@ -55,7 +57,7 @@ class DirSizeSuite extends munit.FunSuite:
 
   tmp.test("the entry cap stops the walk: partial, with a lower bound"): d =>
     (1 to 50).foreach(i => file(d.resolve(f"f$i%02d.bin"), 10))
-    val b = DirSize.Budget(10, Long.MaxValue)
+    val b = DirSize.Budget(com.histmersion.cli.DirSize.Budget.MaxEntries(10), Long.MaxValue)
     val r = DirSize.measure(d, b)
     assert(r.partial, r)
     assert(r.bytes < 500L && r.files < 50L, r)
@@ -68,7 +70,7 @@ class DirSizeSuite extends munit.FunSuite:
     (1 to 20).foreach(i => file(d.resolve(s"f$i.bin"), 10))
     // a clock that passes the deadline after five reads
     var t = 0L
-    val b = DirSize.Budget(Long.MaxValue, 5L, () => { t += 1; t })
+    val b = DirSize.Budget(Long.MaxValue, com.histmersion.cli.DirSize.Budget.DeadlineNanos(5L), () => { t += 1; t })
     val r = DirSize.measure(d, b)
     assert(r.partial, r)
     assert(r.files < 20L, r)

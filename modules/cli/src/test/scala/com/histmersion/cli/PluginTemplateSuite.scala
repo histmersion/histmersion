@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import java.nio.file.{Files, Path}
@@ -324,7 +326,7 @@ class PluginTemplateSuite extends munit.FunSuite:
       )
       assertEquals(
         PluginAuthoring
-          .repository(Some("https://example.org/m2"), Left(Cli.Error("no install")), Left(Cli.Error("no HOME")))
+          .repository(Some("https://example.org/m2"), Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("no install"))), Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("no HOME"))))
           .map(_._1),
         Right(TemplateRepository.Remote(PluginRepository.parse("https://example.org/m2", _ => false).toOption.get))
       )

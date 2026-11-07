@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import java.nio.file.Path
@@ -54,19 +56,19 @@ class CalibreSuite extends munit.FunSuite:
     val b = Calibre
       .parseMachineJson(fixture("calibredb_machine.json"))
       .fold(fail(_), _.head)
-      .copy(formats = List("/lib/x.epub", "/lib/x.pdf"))
+      .copy(formats = List(com.histmersion.api.library.CollectionEntry.Formats("/lib/x.epub"), com.histmersion.api.library.CollectionEntry.Formats("/lib/x.pdf")))
     assertEquals(b.pick(None).map(_.takeRight(4)), Some(".pdf"))
-    assertEquals(b.pick(Some("epub")).map(_.takeRight(5)), Some(".epub"))
+    assertEquals(b.pick(Some(com.histmersion.cli.Calibre.Book.Format("epub"))).map(_.takeRight(5)), Some(".epub"))
     assertEquals(b.modify(_.formats).setTo(List("/lib/x.mobi")).pick(None), None)
 
   // ── the metadata guard ──────────────────────────────────────────────────────────────────────
   test("the metadata guard refuses empty and Unknown title/author"):
-    assert(Calibre.guard("A Real Title", List("A Real Author")).isRight)
-    assert(Calibre.guard("", List("Author")).isLeft)
-    assert(Calibre.guard("Untitled", List("Author")).isLeft)
-    assert(Calibre.guard("Title", Nil).isLeft)
-    assert(Calibre.guard("Title", List("Unknown Author")).isLeft)
-    val both = Calibre.guard("unknown", List("  ")).left.getOrElse("")
+    assert(Calibre.guard(com.histmersion.api.library.Title("A Real Title"), List(com.histmersion.api.library.AuthorName("A Real Author"))).isRight)
+    assert(Calibre.guard(com.histmersion.api.library.Title(""), List(com.histmersion.api.library.AuthorName("Author"))).isLeft)
+    assert(Calibre.guard(com.histmersion.api.library.Title("Untitled"), List(com.histmersion.api.library.AuthorName("Author"))).isLeft)
+    assert(Calibre.guard(com.histmersion.api.library.Title("Title"), Nil).isLeft)
+    assert(Calibre.guard(com.histmersion.api.library.Title("Title"), List(com.histmersion.api.library.AuthorName("Unknown Author"))).isLeft)
+    val both = Calibre.guard(com.histmersion.api.library.Title("unknown"), List(com.histmersion.api.library.AuthorName("  "))).left.getOrElse("")
     assert(both.contains("title") && both.contains("author"), both)
 
   test("blankness is case- and whitespace-insensitive"):
@@ -82,7 +84,7 @@ class CalibreSuite extends munit.FunSuite:
 
   test("SQL literals are escaped, so a quote in a search term cannot break the query"):
     assertEquals(Calibre.sqlLiteral("O'Brien"), "'O''Brien'")
-    val q = Calibre.sqliteQuery(s"b.title LIKE ${Calibre.sqlLiteral("%O'Brien%")}", 5)
+    val q = Calibre.sqliteQuery(s"b.title LIKE ${Calibre.sqlLiteral("%O'Brien%")}", com.histmersion.api.Paging.Limit(5))
     assert(q.contains("'%O''Brien%'"), q)
     assert(q.contains("LIMIT 5"))
     assert(!q.contains("\n"))
@@ -106,13 +108,13 @@ class CalibreSuite extends munit.FunSuite:
       if cmd.contains("list") then Right(onShelf) else Right("")
 
   private val meta = Calibre.Push(
-    "Perspectives on Hittite Civilization",
-    List("Güterbock, Hans G.", "Hoffner, Harry A."),
-    doi = Some("10.1/x"),
-    year = Some(1997),
-    publisher = Some("Oriental Institute"),
-    summary = Some("our summary"),
-    tags = List("hittite")
+    com.histmersion.cli.Calibre.Push.Title("Perspectives on Hittite Civilization"),
+    List(com.histmersion.api.library.AuthorName("Güterbock, Hans G."), com.histmersion.api.library.AuthorName("Hoffner, Harry A.")),
+    doi = Some(com.histmersion.api.library.Doi("10.1/x")),
+    year = Some(com.histmersion.api.catalogue.Year(1997)),
+    publisher = Some(com.histmersion.api.library.CollectionEntry.Publisher("Oriental Institute")),
+    summary = Some(com.histmersion.api.library.Source.Summary("our summary")),
+    tags = List(com.histmersion.api.library.CollectionEntry.Tags("hittite"))
   )
 
   private def shelf(
@@ -176,11 +178,11 @@ class CalibreSuite extends munit.FunSuite:
     val _ = Calibre(cfg(), held).update(1567, meta.modify(_.isbn).setTo(Some("9999999999999")))
     assert(fields(held).contains("identifiers:asin:B000X,doi:10.1/x,google:abcDEF,isbn:9780918986672"), fields(held))
     assertEquals(
-      Calibre.mergeIdentifiers(Map("google" -> "g"), Some("10.1/x"), Some("978")),
+      Calibre.mergeIdentifiers(Map("google" -> "g"), Some(com.histmersion.api.library.Doi("10.1/x")), Some(com.histmersion.api.library.CalibreGap.Isbn("978"))),
       Map("google" -> "g", "doi" -> "10.1/x", "isbn" -> "978")
     )
     assertEquals(
-      Calibre.mergeIdentifiers(Map.empty, Some("10.1/a,b"), None),
+      Calibre.mergeIdentifiers(Map.empty, Some(com.histmersion.api.library.Doi("10.1/a,b")), None),
       Map.empty[String, String],
       "a comma cannot cross --field identifiers:"
     )
@@ -216,7 +218,7 @@ class CalibreSuite extends munit.FunSuite:
       Right(Nil)
     )
     assert(!same.commands.exists(_.contains("set_metadata")), same.commands)
-    assertEquals(Calibre.mergeIdentifiers(Map("doi" -> "10.1/ABC"), Some("10.1/abc"), None), Map("doi" -> "10.1/ABC"))
+    assertEquals(Calibre.mergeIdentifiers(Map("doi" -> "10.1/ABC"), Some(com.histmersion.api.library.Doi("10.1/abc")), None), Map("doi" -> "10.1/ABC"))
     val renamed = LibraryShell(
       shelf(
         "1997-01-01T00:00:00+00:00",
@@ -244,7 +246,7 @@ class CalibreSuite extends munit.FunSuite:
     assertEquals(n("King, Martin Luther, Jr."), "Martin Luther King Jr.")
     assertEquals(n("Smith, Ed"), "Ed Smith", "a man called Ed is not an editor")
     assertEquals(n("Walter Burkert"), "Walter Burkert")
-    assertEquals(Calibre.normaliseAuthors(List("Burkert, Walter", "Walter Burkert (ed.)", " ")), List("Walter Burkert"))
+    assertEquals(Calibre.normaliseAuthors(List(com.histmersion.api.library.AuthorName("Burkert, Walter"), com.histmersion.api.library.AuthorName("Walter Burkert (ed.)"), com.histmersion.api.library.AuthorName(" "))), List("Walter Burkert"))
 
   // ── update --all (#831) ─────────────────────────────────────────────────────────────────────
   private def libraryOf(books: String*) = LibraryShell(books.mkString("[", ",", "]"))
@@ -252,22 +254,22 @@ class CalibreSuite extends munit.FunSuite:
     s"""{"id":$id,"title":"$title","authors":"$authors","pubdate":"$pubdate","publisher":"P","comments":"c","tags":["t"],"identifiers":{},"formats":[]}"""
   private val linked = List(
     LinkedRecord(
-      "burkert1985_greek",
-      10,
-      Calibre.Push("Greek Religion", List("Burkert, Walter"), year = Some(1985), tags = List("t"))
+      com.histmersion.cli.LinkedRecord.Citekey("burkert1985_greek"),
+      com.histmersion.cli.LinkedRecord.CalibreId(10),
+      Calibre.Push(com.histmersion.cli.Calibre.Push.Title("Greek Religion"), List(com.histmersion.api.library.AuthorName("Burkert, Walter")), year = Some(com.histmersion.api.catalogue.Year(1985)), tags = List("t"))
     ),
     LinkedRecord(
-      "page1959_history",
-      11,
-      Calibre.Push("History and the Homeric Iliad", List("Page, Denys"), year = Some(1959), tags = List("t"))
+      com.histmersion.cli.LinkedRecord.Citekey("page1959_history"),
+      com.histmersion.cli.LinkedRecord.CalibreId(11),
+      Calibre.Push(com.histmersion.cli.Calibre.Push.Title("History and the Homeric Iliad"), List(com.histmersion.api.library.AuthorName("Page, Denys")), year = Some(com.histmersion.api.catalogue.Year(1959)), tags = List("t"))
     ),
-    LinkedRecord("guterbock1948_kumarbi", 12, Calibre.Push("Kumarbi", List("Güterbock, Hans G."), tags = List("t"))),
+    LinkedRecord(com.histmersion.cli.LinkedRecord.Citekey("guterbock1948_kumarbi"), com.histmersion.cli.LinkedRecord.CalibreId(12), Calibre.Push(com.histmersion.cli.Calibre.Push.Title("Kumarbi"), List(com.histmersion.api.library.AuthorName("Güterbock, Hans G.")), tags = List(com.histmersion.api.library.CollectionEntry.Tags("t")))),
     LinkedRecord(
-      "guterbock1997_perspectives",
-      12,
-      Calibre.Push("Perspectives", List("Güterbock, Hans G."), tags = List("t"))
+      com.histmersion.cli.LinkedRecord.Citekey("guterbock1997_perspectives"),
+      com.histmersion.cli.LinkedRecord.CalibreId(12),
+      Calibre.Push(com.histmersion.cli.Calibre.Push.Title("Perspectives"), List(com.histmersion.api.library.AuthorName("Güterbock, Hans G.")), tags = List(com.histmersion.api.library.CollectionEntry.Tags("t")))
     ),
-    LinkedRecord("gone2000_x", 13, Calibre.Push("Gone", List("Someone")))
+    LinkedRecord(com.histmersion.cli.LinkedRecord.Citekey("gone2000_x"), com.histmersion.cli.LinkedRecord.CalibreId(13), Calibre.Push(com.histmersion.cli.Calibre.Push.Title("Gone"), List(com.histmersion.api.library.AuthorName("Someone"))))
   )
   private val shelfAll = Seq(
     entry(10, "Greek Religion", "Walter Burkert", "1985-01-01T00:00:00+00:00"),
@@ -284,14 +286,14 @@ class CalibreSuite extends munit.FunSuite:
       out.map(e => e.calibreId -> e.outcome),
       List(
         10 -> UpdateOutcome.UpToDate,
-        11 -> UpdateOutcome.Change(List(Calibre.Change(Calibre.Field.Pubdate, "1963", "1959-01-01"))),
+        11 -> UpdateOutcome.Change(List(Calibre.Change(Calibre.Field.Pubdate, com.histmersion.cli.Calibre.Change.From("1963"), com.histmersion.cli.Calibre.Change.To("1959-01-01")))),
         12 -> UpdateOutcome.Shared,
         13 -> UpdateOutcome.Missing
       )
     )
     assertEquals(shell.commands.count(_.contains("list")), 1, "one listing of the library, not one per entry")
     assert(!shell.commands.exists(_.contains("set_metadata")), shell.commands)
-    val md = Calibre.markdownUpdateAll(out, applied = false)
+    val md = Calibre.markdownUpdateAll(out, applied = com.histmersion.api.library.CollectionUpdateAll.Applied(false))
     assert(md.contains("| 11 | page1959_history | pubdate | 1963 | 1959-01-01 |"), md)
     assert(md.contains("guterbock1948_kumarbi, guterbock1997_perspectives") && md.contains("--apply"), md)
 
@@ -300,7 +302,7 @@ class CalibreSuite extends munit.FunSuite:
     val out = Calibre(cfg(), shell).updateAll(linked, apply = true).fold(fail(_), identity)
     assertEquals(
       out.find(_.calibreId == 11).map(_.outcome),
-      Some(UpdateOutcome.Applied(List(Calibre.Change(Calibre.Field.Pubdate, "1963", "1959-01-01"))))
+      Some(UpdateOutcome.Applied(List(Calibre.Change(Calibre.Field.Pubdate, com.histmersion.cli.Calibre.Change.From("1963"), com.histmersion.cli.Calibre.Change.To("1959-01-01")))))
     )
     assertEquals(
       shell.commands.filter(_.contains("set_metadata")),
@@ -366,11 +368,11 @@ class CalibreSuite extends munit.FunSuite:
     assertEquals(Calibre.citekeyFor(v2), "cluniesross2018_christian_v2")
 
   test("volume numbers: arabic and roman, and words that merely start with 'vol' are not volumes"):
-    assertEquals(Calibre.volumeOf("Prolonged Echoes: Volume 1, The Myths"), Some(1))
-    assertEquals(Calibre.volumeOf("Collected Papers, Vol. IV"), Some(4))
-    assertEquals(Calibre.volumeOf("vol 12"), Some(12))
-    assertEquals(Calibre.volumeOf("Volcanic Winters and the Volvic spring"), None)
-    assertEquals(Calibre.volumeOf("The Iliad"), None)
+    assertEquals(Calibre.volumeOf(com.histmersion.api.library.Title("Prolonged Echoes: Volume 1, The Myths")), Some(1))
+    assertEquals(Calibre.volumeOf(com.histmersion.api.library.Title("Collected Papers, Vol. IV")), Some(4))
+    assertEquals(Calibre.volumeOf(com.histmersion.api.library.Title("vol 12")), Some(12))
+    assertEquals(Calibre.volumeOf(com.histmersion.api.library.Title("Volcanic Winters and the Volvic spring")), None)
+    assertEquals(Calibre.volumeOf(com.histmersion.api.library.Title("The Iliad")), None)
 
   test("import citekeys transliterate accented letters instead of dropping them (#830)"):
     assertEquals(
@@ -407,23 +409,23 @@ class CalibreSuite extends munit.FunSuite:
     assertEquals(Calibre.citekeyFor(b), "youngnd_twilight")
 
   test("import refuses to merge a second Calibre entry into an existing record unless --citekey says so"):
-    assertEquals(Calibre.importTarget("k", 1806, explicit = false, None), Right(ImportTarget.Create))
+    assertEquals(Calibre.importTarget(com.histmersion.api.library.Citekey("k"), com.histmersion.cli.Calibre.Book.Id(1806), explicit = com.histmersion.cli.ImportTarget.Explicit(false), None), Right(ImportTarget.Create))
     assertEquals(
-      Calibre.importTarget("k", 1806, explicit = false, Some(Some("1806"))),
+      Calibre.importTarget(com.histmersion.api.library.Citekey("k"), com.histmersion.cli.Calibre.Book.Id(1806), explicit = com.histmersion.cli.ImportTarget.Explicit(false), Some(Some(com.histmersion.api.library.Source.CalibreId("1806")))),
       Right(ImportTarget.Update(None))
     )
-    val e = Calibre.importTarget("k", 1806, explicit = false, Some(Some("1805"))).swap.toOption.get
+    val e = Calibre.importTarget(com.histmersion.api.library.Citekey("k"), com.histmersion.cli.Calibre.Book.Id(1806), explicit = com.histmersion.cli.ImportTarget.Explicit(false), Some(Some(com.histmersion.api.library.Source.CalibreId("1805")))).swap.toOption.get
     assert(e.contains("Calibre id 1805") && e.contains("--citekey"), e)
     assert(
-      Calibre.importTarget("k", 1806, explicit = false, Some(None)).isLeft,
+      Calibre.importTarget(com.histmersion.api.library.Citekey("k"), com.histmersion.cli.Calibre.Book.Id(1806), explicit = com.histmersion.cli.ImportTarget.Explicit(false), Some(None)).isLeft,
       "an unlinked record is not merged silently either"
     )
     // #721: an explicit --citekey re-links the record to the imported entry
     assertEquals(
-      Calibre.importTarget("k", 1806, explicit = true, Some(Some("1805"))),
-      Right(ImportTarget.Update(Some("1805")))
+      Calibre.importTarget(com.histmersion.api.library.Citekey("k"), com.histmersion.cli.Calibre.Book.Id(1806), explicit = com.histmersion.cli.ImportTarget.Explicit(true), Some(Some(com.histmersion.api.library.Source.CalibreId("1805")))),
+      Right(ImportTarget.Update(Some(com.histmersion.cli.ImportTarget.Update.Previous("1805"))))
     )
-    assertEquals(Calibre.importTarget("k", 1806, explicit = true, Some(None)), Right(ImportTarget.Update(None)))
+    assertEquals(Calibre.importTarget(com.histmersion.api.library.Citekey("k"), com.histmersion.cli.Calibre.Book.Id(1806), explicit = com.histmersion.cli.ImportTarget.Explicit(true), Some(None)), Right(ImportTarget.Update(None)))
 
   // ── push --replace (#652) ───────────────────────────────────────────────────────────────────
   private def tmpFile(ext: String) =
@@ -450,7 +452,7 @@ class CalibreSuite extends munit.FunSuite:
     assert(Calibre(cfg(), quiet).replaceFormat(1, tmpFile("mobi")).isLeft)
     assertEquals(quiet.commands, Nil)
 
-  private def cfg() = com.histmersion.config.CalibreCliConfig(lib, "calibredb", "sqlite3", "")
+  private def cfg() = com.histmersion.config.CalibreCliConfig(lib, com.histmersion.config.CalibreCliConfig.Calibredb("calibredb"), com.histmersion.config.CalibreCliConfig.Sqlite("sqlite3"), com.histmersion.config.CalibreCliConfig.OriginalsDir(""))
 
   /** A [[Shell]] that records instead of executing. */
   private class RecordingShell(running: Boolean = false) extends Shell:
@@ -481,19 +483,19 @@ class CalibreSuite extends munit.FunSuite:
       book(5, "Linked", List("C"), "2010-01-01"),
       book(7, "Middle", List("D"), "2015-01-01")
     )
-    assertEquals(Calibre.unlinked(books, Set(5), 10).map(_.id), List(9, 7, 3))
-    assertEquals(Calibre.unlinked(books, Set(5), 2).map(_.id), List(9, 7))
-    assertEquals(Calibre.unlinked(books, books.map(_.id).toSet, 10), Nil)
+    assertEquals(Calibre.unlinked(books, Set(com.histmersion.cli.Calibre.Book.Id(5)), com.histmersion.api.Paging.Limit(10)).map(_.id), List(9, 7, 3))
+    assertEquals(Calibre.unlinked(books, Set(com.histmersion.cli.Calibre.Book.Id(5)), com.histmersion.api.Paging.Limit(2)).map(_.id), List(9, 7))
+    assertEquals(Calibre.unlinked(books, books.map(_.id).toSet, com.histmersion.api.Paging.Limit(10)), Nil)
 
   test("unlinked listing: title, authors, year and the file path of each entry"):
     val b =
       book(9, "Newest", List("Kristiansen, K."), "2020-01-01").modify(_.formats).setTo(List(s"$lib/K/Newest (9)/Newest.pdf"))
-    val md = Calibre.markdownUnlinked(List(b), total = 3)
+    val md = Calibre.markdownUnlinked(List(b), total = com.histmersion.api.Paging.Page.Total(3))
     assert(md.contains("1 of 3 Calibre entries not linked"), md)
     assert(md.contains("**9** · Newest (2020) — Kristiansen, K."), md)
     assert(md.contains(s"`$lib/K/Newest (9)/Newest.pdf`"), md)
     assert(md.contains("histmersion calibre import <id>"), md)
-    assertEquals(Calibre.markdownUnlinked(Nil, 0), "_Every Calibre entry is linked to a source._")
+    assertEquals(Calibre.markdownUnlinked(Nil, com.histmersion.api.Paging.Page.Total(0)), "_Every Calibre entry is linked to a source._")
 
   test("calibre search takes a query or --unlinked; calibre import takes --acquire-item, but not with --no-convert"):
     val top = com.monovore.decline.Command("histmersion", "test")(CalibreCmd.all)
@@ -516,26 +518,26 @@ class CalibreSuite extends munit.FunSuite:
       .fold(fail(_), _.head)
     assertEquals(b.cover, Some("/lib/A/T (7)/cover.jpg"))
     val s = Calibre
-      .parseSqliteJson("""[{"id":7,"title":"T","authors":"A","cover":"A/T (7)/cover.jpg"}]""", "/lib")
+      .parseSqliteJson("""[{"id":7,"title":"T","authors":"A","cover":"A/T (7)/cover.jpg"}]""", com.histmersion.config.CalibreCliConfig.LibraryDir("/lib"))
       .fold(fail(_), _.head)
     assertEquals(s.cover, Some("/lib/A/T (7)/cover.jpg"))
     assertEquals(
       Calibre
-        .parseSqliteJson("""[{"id":7,"title":"T","authors":"A","cover":null}]""", "/lib")
+        .parseSqliteJson("""[{"id":7,"title":"T","authors":"A","cover":null}]""", com.histmersion.config.CalibreCliConfig.LibraryDir("/lib"))
         .fold(fail(_), _.head)
         .cover,
       None
     )
-    assert(Calibre.sqliteQuery("1=1", 1).contains("has_cover"))
+    assert(Calibre.sqliteQuery("1=1", com.histmersion.api.Paging.Limit(1)).contains("has_cover"))
 
   test("#1446: the Calibre-linked sources `media covers` reads — a citekey quoted, covered ones skipped"):
-    val q = MediaCovers.linkedQuery(Some("o'brien2001"), refresh = false)
+    val q = MediaCovers.linkedQuery(Some("o'brien2001"), refresh = com.histmersion.api.media.MediaImportRequest.Refresh(false))
     assert(q.contains("s.citekey = 'o''brien2001'"), q)
     assert(q.contains("m.role = 'cover'") && q.contains("'^[0-9]+$'"), q)
-    assert(!MediaCovers.linkedQuery(None, refresh = true).contains("NOT EXISTS"))
+    assert(!MediaCovers.linkedQuery(None, refresh = com.histmersion.api.media.MediaImportRequest.Refresh(true)).contains("NOT EXISTS"))
 
   test("an import into an existing record keeps a compiled summary (#896)"):
-    assertEquals(Calibre.importSummary(Some("Calibre blurb (Friedrich et al."), Some("Compiled summary.")), None)
-    assertEquals(Calibre.importSummary(Some("Calibre blurb"), None), Some("Calibre blurb"))
-    assertEquals(Calibre.importSummary(Some("Calibre blurb"), Some("  ")), Some("Calibre blurb"))
+    assertEquals(Calibre.importSummary(Some(com.histmersion.api.library.Source.Summary("Calibre blurb (Friedrich et al.")), Some(com.histmersion.api.library.Source.Summary("Compiled summary."))), None)
+    assertEquals(Calibre.importSummary(Some(com.histmersion.api.library.Source.Summary("Calibre blurb")), None), Some("Calibre blurb"))
+    assertEquals(Calibre.importSummary(Some(com.histmersion.api.library.Source.Summary("Calibre blurb")), Some(com.histmersion.api.library.Source.Summary("  "))), Some("Calibre blurb"))
     assertEquals(Calibre.importSummary(None, None), None)

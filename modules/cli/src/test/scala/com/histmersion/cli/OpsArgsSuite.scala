@@ -12,21 +12,21 @@ class OpsArgsSuite extends munit.FunSuite:
   private def parse(args: String*) = QueueArgs.parse(args.toList, None, None, all = false)
 
   test("`queue <list>` shows that list"):
-    assertEquals(parse("acquire"), Right(QueueCmd.Show("acquire", false)))
-    assertEquals(parse("tasks"), Right(QueueCmd.Show("tasks", false)))
-    assertEquals(parse("log"), Right(QueueCmd.Show("log", false)))
+    assertEquals(parse("acquire"), Right(QueueCmd.Show(com.histmersion.api.automation.Queue.Kind.Label("acquire"), false)))
+    assertEquals(parse("tasks"), Right(QueueCmd.Show(com.histmersion.api.automation.Queue.Kind.Label("tasks"), false)))
+    assertEquals(parse("log"), Right(QueueCmd.Show(com.histmersion.api.automation.Queue.Kind.Label("log"), false)))
 
   test("--all is carried into the show command"):
-    assertEquals(QueueArgs.parse(List("tasks"), None, None, all = true), Right(QueueCmd.Show("tasks", true)))
+    assertEquals(QueueArgs.parse(List("tasks"), None, None, all = true), Right(QueueCmd.Show(com.histmersion.api.automation.Queue.Kind.Label("tasks"), true)))
 
   test("`queue <list> add \"text\"` adds, with --topic when given"):
     assertEquals(
       parse("acquire", "add", "Eller, Myth of Matriarchal Prehistory"),
-      Right(QueueCmd.Add("acquire", "Eller, Myth of Matriarchal Prehistory", None, None))
+      Right(QueueCmd.Add(com.histmersion.api.automation.Queue.Kind.Label("acquire"), com.histmersion.api.automation.Queue.QueueItem.Text("Eller, Myth of Matriarchal Prehistory"), None, None))
     )
     assertEquals(
       QueueArgs.parse(List("tasks", "add", "enrich x"), Some("Backlog"), None, all = false),
-      Right(QueueCmd.Add("tasks", "enrich x", Some("Backlog"), None))
+      Right(QueueCmd.Add(com.histmersion.api.automation.Queue.Kind.Label("tasks"), com.histmersion.api.automation.Queue.QueueItem.Text("enrich x"), Some(com.histmersion.api.automation.Queue.QueueItem.Topic("Backlog")), None))
     )
 
   test("`add` without text is a usage error, not an empty item"):
@@ -34,14 +34,14 @@ class OpsArgsSuite extends munit.FunSuite:
     assert(parse("acquire", "add").left.exists(_.contains("needs the item text")))
 
   test("done / rm take an integer id"):
-    assertEquals(parse("done", "12"), Right(QueueCmd.Done(12)))
-    assertEquals(parse("rm", "3"), Right(QueueCmd.Rm(3)))
+    assertEquals(parse("done", "12"), Right(QueueCmd.Done(com.histmersion.api.automation.Queue.Id(12))))
+    assertEquals(parse("rm", "3"), Right(QueueCmd.Rm(com.histmersion.api.automation.Queue.Id(3))))
     assert(parse("done", "twelve").left.exists(_.contains("is not an item id")))
 
   test("edit takes an id and the new text (the article's one review item is rewritten, #934)"):
     assertEquals(
       parse("edit", "12", "review-article x: 1 open MAJOR — R1: y"),
-      Right(QueueCmd.Edit(12, "review-article x: 1 open MAJOR — R1: y"))
+      Right(QueueCmd.Edit(com.histmersion.api.automation.Queue.Id(12), com.histmersion.api.automation.Queue.QueueItem.Text("review-article x: 1 open MAJOR — R1: y")))
     )
     assert(parse("edit", "12").left.exists(_.contains("takes an item id and the new text")))
     assert(parse("edit", "12", "  ").left.exists(_.contains("needs the new text")))
@@ -120,7 +120,7 @@ class OpsArgsSuite extends munit.FunSuite:
     assert(QueueArgs.parse(List("tasks"), None, None, all = false, noWait = true).left.exists(_.contains("--no-wait")))
     assertEquals(
       QueueArgs.parse(List("acquire"), None, None, all = true),
-      Right(QueueCmd.Show("acquire", true)),
+      Right(QueueCmd.Show(com.histmersion.api.automation.Queue.Kind.Label("acquire"), true)),
       "--all without recheck still shows the done items"
     )
     val cmd = com.monovore.decline.Command("histmersion", "test")(Ops.queue)

@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.monovore.decline.Command
 import com.histmersion.config.*
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, FormatReport, FormatRule, FormatSeverity}
@@ -38,28 +40,28 @@ class FormatCmdSuite extends munit.FunSuite:
     assertEquals(FileFormat.splitFrontmatter(note), ("---\ntype: concept\nslug: x\n---\n", "\n# X\n\nText.\n"))
     val (h, b) = FileFormat.splitFrontmatter(note)
     assertEquals(h + b, note)
-    assertEquals(FileFormat.splitFrontmatter("# X\n\nText.\n"), ("", "# X\n\nText.\n"))
+    assertEquals(FileFormat.splitFrontmatter(com.histmersion.cli.FileFormat.Text("# X\n\nText.\n")), ("", "# X\n\nText.\n"))
     // an opening `---` with no closing one is not a frontmatter block
-    assertEquals(FileFormat.splitFrontmatter("---\nnot closed\n"), ("", "---\nnot closed\n"))
+    assertEquals(FileFormat.splitFrontmatter(com.histmersion.cli.FileFormat.Text("---\nnot closed\n")), ("", "---\nnot closed\n"))
 
   test("the Markdown rendering of a report: counts, one line per problem, the fix"):
     val i = FormatIssue(
       FormatRule.TableNotRendered,
       FormatSeverity.Error,
       FormatField.Body,
-      4,
-      1,
-      "| a | b |",
-      "no blank line",
-      Some("insert a blank line before the table")
+      com.histmersion.api.checks.FormatIssue.Line(4),
+      com.histmersion.api.checks.FormatIssue.Column(1),
+      com.histmersion.api.checks.FormatIssue.Excerpt("| a | b |"),
+      com.histmersion.api.checks.FormatIssue.Message("no blank line"),
+      Some(com.histmersion.api.checks.FormatIssue.Fix("insert a blank line before the table"))
     )
-    val md = FormatMarkdown.report(FormatReport("sea_peoples", List(i)))
+    val md = FormatMarkdown.report(FormatReport(com.histmersion.api.checks.FormatReport.Subject("sea_peoples"), List(i)))
     assert(md.startsWith("### sea_peoples: 1 formatting problem (1 error(s), 0 warning(s))"), md)
     assert(
       md.contains("- body L4:1 error table-not-rendered — no blank line · `| a | b |` · fix: insert a blank line"),
       md
     )
-    assertEquals(FormatMarkdown.report(FormatReport("x", Nil)), "### x: no formatting problems")
+    assertEquals(FormatMarkdown.report(FormatReport(com.histmersion.api.checks.FormatReport.Subject("x"), Nil)), "### x: no formatting problems")
     assertEquals(FormatMarkdown.notice(Nil), "")
     assert(
       FormatMarkdown.notice(List(i)).contains("## Formatting: 1 formatting problem (1 will not display as intended)")

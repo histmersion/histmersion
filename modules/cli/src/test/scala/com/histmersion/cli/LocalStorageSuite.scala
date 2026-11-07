@@ -13,15 +13,15 @@ import com.histmersion.api.maintenance.Storage
 class LocalStorageSuite extends munit.FunSuite:
 
   private val about = About(
-    "histmersion",
-    BuildStamp("1"),
-    Health("ok", "ok", None, None),
+    com.histmersion.api.instance.About.Name("histmersion"),
+    BuildStamp(com.histmersion.api.instance.BuildStamp.Version("1")),
+    Health(com.histmersion.api.instance.Health.Status("ok"), com.histmersion.api.instance.Health.Db("ok"), None, None),
     JobCounts(),
     None,
     None,
     None,
     storage =
-      Storage.Report(entries = List(Storage.Entry("backups", "backups", "backups", Some("/srv/backups"), (Some(10L)).map(com.histmersion.api.ByteCount.apply))))
+      Storage.Report(entries = List(Storage.Entry(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), com.histmersion.api.maintenance.Storage.Entry.Label("backups"), com.histmersion.api.maintenance.Storage.Entry.Group("backups"), Some(com.histmersion.api.maintenance.Storage.Entry.Path("/srv/backups")), (Some(10L)).map(com.histmersion.api.ByteCount.apply))))
   )
 
   private def config(originals: Path, install: Path): AppConfig =
@@ -33,7 +33,7 @@ class LocalStorageSuite extends munit.FunSuite:
 
   test("a server on another machine: nothing of this machine is mixed in"):
     val d = Files.createTempDirectory("local-storage")
-    val a = LocalStorage.add(about, "https://histmersion.example.org", config(d, d), _ => None, "Linux", None)
+    val a = LocalStorage.add(about, com.histmersion.cli.Client.ServerUrl("https://histmersion.example.org"), config(d, d), _ => None, com.histmersion.config.UserPaths.OsName("Linux"), None)
     assertEquals(a, about)
 
   test("on this machine: the originals folder and the install, measured, marked as this machine's"):
@@ -46,10 +46,10 @@ class LocalStorageSuite extends munit.FunSuite:
     val cfg = config(d.resolve("originals"), d.resolve("install"))
     val a = LocalStorage.add(
       about,
-      "http://127.0.0.1:8000",
+      com.histmersion.cli.Client.ServerUrl("http://127.0.0.1:8000"),
       cfg.modify(_.runtime).setTo(cfg.runtime.modify(_.dataDir).setTo(d.resolve("data").toString)),
       env,
-      "Linux",
+      com.histmersion.config.UserPaths.OsName("Linux"),
       None
     )
     val local = a.storage.entries.filter(_.host == "cli")
@@ -60,13 +60,13 @@ class LocalStorageSuite extends munit.FunSuite:
     // the server reports the install already: not listed twice
     val known = about.modify(_.storage).setTo(about.storage.modify(_.entries).setTo(about.storage.entries :+
           Storage.Entry(
-            "install",
-            "install",
-            "install",
+            com.histmersion.api.maintenance.Storage.Entry.Key("install"),
+            com.histmersion.api.maintenance.Storage.Entry.Label("install"),
+            com.histmersion.api.maintenance.Storage.Entry.Group("install"),
             Some(d.resolve("install").toAbsolutePath.normalize.toString),
             (Some(100L)).map(com.histmersion.api.ByteCount.apply)
           )
       )
     )
-    val again = LocalStorage.add(known, "http://localhost:8000", cfg, env, "Linux", None)
+    val again = LocalStorage.add(known, com.histmersion.cli.Client.ServerUrl("http://localhost:8000"), cfg, env, com.histmersion.config.UserPaths.OsName("Linux"), None)
     assertEquals(again.storage.entries.filter(_.host == "cli").map(_.key), List("calibre-originals"))

@@ -30,15 +30,15 @@ class BundleCmdSuite extends munit.FunSuite:
   test("the manifest of a bundle on disk is its first entry; anything else is refused"):
     val m = Bundle.Manifest(
       Bundle.Format,
-      1,
-      "33",
+      com.histmersion.api.exchange.Bundle.Manifest.FormatVersion(1),
+      com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("33"),
       UUID.randomUUID(),
-      Bundle.Instance(UUID.randomUUID(), Some("w")),
+      Bundle.Instance(UUID.randomUUID(), Some(com.histmersion.api.exchange.Bundle.Instance.Label("w"))),
       None,
       None,
       Nil,
-      Bundle.Blobs(0, 0),
-      Bundle.Reference(0, "", 0, "")
+      Bundle.Blobs(com.histmersion.api.exchange.Bundle.Blobs.Count(0), com.histmersion.api.ByteCount(0)),
+      Bundle.Reference(com.histmersion.api.exchange.Bundle.Reference.Places(0), com.histmersion.api.exchange.Bundle.Reference.PlacesDigest(""), com.histmersion.api.exchange.Bundle.Reference.Periods(0), com.histmersion.api.exchange.Bundle.Reference.PeriodsDigest(""))
     )
     val f = Files.createTempFile("bundle", ".hmx")
     val out = Files.newOutputStream(f)
@@ -52,7 +52,7 @@ class BundleCmdSuite extends munit.FunSuite:
     val out2 = Files.newOutputStream(g)
     try
       val w = BundleTar.Writer(out2)
-      val _ = w.bytes("entities/goals.ndjson", Array.emptyByteArray)
+      val _ = w.bytes(com.histmersion.util.data.exchange.BundleTar.Entry.Name("entities/goals.ndjson"), Array.emptyByteArray)
       w.finish()
     finally out2.close()
     assert(BundleCmd.manifestOf(g).isLeft)
