@@ -20,13 +20,13 @@ object PlaybackBuckets:
   /** Pure: the bucket of `yearsPerSecond` × `seconds`, up to a round 1, 2 or 5 × 10ⁿ years (at least 1). */
 
   def years(yearsPerSecond: com.histmersion.web.PlaybackBuckets.YearsPerSecond, seconds: com.histmersion.web.PlaybackBuckets.Seconds): com.histmersion.web.PlaybackBuckets.BucketYears =
-    val raw = math.max(1.0, math.abs(yearsPerSecond) * seconds)
+    val raw = math.max(1.0, math.abs(yearsPerSecond.value) * seconds.value)
     val p = math.pow(10, math.floor(math.log10(raw)))
     val step = List(1.0, 2.0, 5.0, 10.0).map(_ * p).find(_ >= raw).getOrElse(10 * p)
-    math.max(1L, math.round(step))
+    com.histmersion.web.PlaybackBuckets.BucketYears(math.max(1L, math.round(step)))
 
   /** Pure: `span` widened outwards to whole buckets of `bucket` years. */
   def widen(span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical), bucket: com.histmersion.web.PlaybackBuckets.BucketYears): (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical) =
-    val (lo, hi) = (span._1.min(span._2), span._1.max(span._2))
-    val b = bucket.max(1)
-    (Math.floorDiv(lo, b) * b, Math.floorDiv(hi, b) * b + b - 1)
+    val (lo, hi) = (span._1.value.min(span._2.value), span._1.value.max(span._2.value))
+    val b = bucket.value.max(1)
+    (com.histmersion.api.Years.Astronomical(Math.floorDiv(lo, b) * b), com.histmersion.api.Years.Astronomical(Math.floorDiv(hi, b) * b + b - 1))

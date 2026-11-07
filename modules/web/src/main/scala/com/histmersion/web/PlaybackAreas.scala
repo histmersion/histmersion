@@ -21,22 +21,22 @@ object PlaybackAreas:
     */
 
   def alpha(ph: com.histmersion.web.PlaybackAreas.FractionalYear, start: com.histmersion.web.PlaybackAreas.FractionalYear, end: com.histmersion.web.PlaybackAreas.FractionalYear, fade: com.histmersion.web.PlaybackAreas.FadeYears): com.histmersion.web.PlaybackAreas.Opacity =
-    if ph >= start && ph <= end then 1.0
-    else if fade <= 0 then 0.0
+    if ph.value >= start.value && ph.value <= end.value then com.histmersion.web.PlaybackAreas.Opacity(1.0)
+    else if fade.value <= 0 then com.histmersion.web.PlaybackAreas.Opacity(0.0)
     else
-      val d = if ph < start then start - ph else ph - end
-      math.max(0.0, 1.0 - d / fade)
+      val d = if ph.value < start.value then start.value - ph.value else ph.value - end.value
+      com.histmersion.web.PlaybackAreas.Opacity(math.max(0.0, 1.0 - d / fade.value))
 
   /** Pure: the alpha drawn — `a` in steps of 1/`steps`, so a frame restyles only the states whose look changed (the map
     * recolours a state per change).
     */
-  def step(a: com.histmersion.web.PlaybackAreas.Opacity, steps: com.histmersion.web.PlaybackAreas.StepCount = com.histmersion.web.PlaybackAreas.StepCount(20)): com.histmersion.web.PlaybackAreas.Opacity = math.round(a * steps).toDouble / steps
+  def step(a: com.histmersion.web.PlaybackAreas.Opacity, steps: com.histmersion.web.PlaybackAreas.StepCount = com.histmersion.web.PlaybackAreas.StepCount(20)): com.histmersion.web.PlaybackAreas.Opacity = com.histmersion.web.PlaybackAreas.Opacity(math.round(a.value * steps.value).toDouble / steps.value)
 
   /** Pure: a playback state's key: its place and its years (one place's versions are different shapes). */
   def key(id: com.histmersion.web.PlaybackAreas.AreaKey, start: Option[com.histmersion.web.PlaybackAreas.FractionalYear], end: Option[com.histmersion.web.PlaybackAreas.FractionalYear]): com.histmersion.web.PlaybackAreas.AreaKey =
-    s"$id@${start.fold("")(_.toLong.toString)}..${end.fold("")(_.toLong.toString)}"
+    com.histmersion.web.PlaybackAreas.AreaKey(s"${id.value}@${start.fold("")(_.value.toLong.toString)}..${end.fold("")(_.value.toLong.toString)}")
 
   /** Pure: whether a state of years [`start`, `end`] still counts once the playhead is at `ph` (it ended no more than
     * `fade` years ago).
     */
-  def live(ph: com.histmersion.web.PlaybackAreas.FractionalYear, end: com.histmersion.web.PlaybackAreas.FractionalYear, fade: com.histmersion.web.PlaybackAreas.FadeYears): Boolean = end + fade >= ph
+  def live(ph: com.histmersion.web.PlaybackAreas.FractionalYear, end: com.histmersion.web.PlaybackAreas.FractionalYear, fade: com.histmersion.web.PlaybackAreas.FadeYears): Boolean = end.value + fade.value >= ph.value

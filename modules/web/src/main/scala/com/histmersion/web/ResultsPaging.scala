@@ -21,21 +21,22 @@ object ResultsPaging:
     */
 
   def countLine(shown: com.histmersion.api.Paging.Shown, total: com.histmersion.api.Paging.Page.Total, singular: com.histmersion.api.Plural.Noun.Singular, plural: com.histmersion.api.Plural.Noun.Plural = com.histmersion.api.Plural.Noun.Plural(""), extras: List[com.histmersion.api.UiLabels.Text] = Nil): com.histmersion.api.UiLabels.Text =
-    val many = if plural.nonEmpty then plural else singular + "s"
+    val many = if plural.value.nonEmpty then plural.value else singular.value + "s"
+    val count = Plural.Count(total.value.toLong)
     val head =
-      if total <= 0 then s"no $many"
-      else if shown < total then s"showing 1–$shown of ${Plural.count(total.toLong, singular, many)}"
-      else Plural.count(total.toLong, singular, many)
-    (head :: extras.filter(_.nonEmpty)).mkString(" · ")
+      if total.value <= 0 then s"no $many"
+      else if shown.value < total.value then s"showing 1–$shown of ${Plural.count(count, singular, Plural.Noun.Plural(many))}"
+      else Plural.count(count, singular, Plural.Noun.Plural(many)).value
+    com.histmersion.api.UiLabels.Text((head :: extras.map(_.value).filter(_.nonEmpty)).mkString(" · "))
 
   /** The button's label: `show 20 more (265 left)` — how many the next click brings (at most `page`) and how many are
     * left; `None` when nothing is.
     */
   def moreLabel(left: com.histmersion.api.RowCount, page: com.histmersion.web.ResultsPaging.PageNumber): Option[com.histmersion.api.UiLabels.Text] =
-    Option.when(left > 0)(s"show ${math.min(page, left)} more ($left left)")
+    Option.when(left.value > 0)(com.histmersion.api.UiLabels.Text(s"show ${math.min(page.value, left.value)} more ($left left)"))
 
   /** The filter's time window, as every tab's count line ends: `1475 BCE → 1465 BCE`. */
-  def span(from: Option[com.histmersion.api.Years.Astronomical], to: Option[com.histmersion.api.Years.Astronomical]): com.histmersion.api.UiLabels.Text = s"${Fmt.yr(from)} → ${Fmt.yr(to)}"
+  def span(from: Option[com.histmersion.api.catalogue.Year], to: Option[com.histmersion.api.catalogue.Year]): com.histmersion.api.UiLabels.Text = com.histmersion.api.UiLabels.Text(s"${Fmt.yr(from)} → ${Fmt.yr(to)}")
 
   /** The count line's element (`.count`; `is-loading` adds `· loading…`, `is-error` colours a failure). `id` keeps the
     * sources tab's `#count`, which the map's tests wait on.
@@ -49,9 +50,9 @@ object ResultsPaging:
     div(
       id.map(idAttr := _),
       cls := "count",
-      cls("is-loading") <-- loading,
-      cls("is-error") <-- error,
-      child.text <-- text
+      cls("is-loading") <-- loading.map(_.value),
+      cls("is-error") <-- error.map(_.value),
+      child.text <-- text.map(_.value)
     )
 
   /** The button under the rows: `label` (none = no button), disabled and reading `loading…` while a page is on its way.
@@ -64,8 +65,8 @@ object ResultsPaging:
           button(
             typ := "button",
             cls := "btn btn--block more",
-            child.text <-- loading.map(b => if b then "loading…" else l),
-            disabled <-- loading,
+            child.text <-- loading.map(b => if b.value then "loading…" else l.value),
+            disabled <-- loading.map(_.value),
             onClick --> (_ => onMore())
           )
         )

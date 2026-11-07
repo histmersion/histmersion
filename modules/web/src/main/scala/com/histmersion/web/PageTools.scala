@@ -20,12 +20,12 @@ object PageTools:
     )
 
   def choose(w: PageWidth): Unit =
-    if w == PageWidth.Reading then Store.Browser.remove(StorageKey) else Store.Browser.put(StorageKey, w.wire)
+    if w == PageWidth.Reading then Store.Browser.remove(StorageKey) else Store.Browser.put(StorageKey, w.wire.value)
     apply(w)
 
   /** Read the stored width, apply it, and put the tools above the page's text. */
   def install(): Unit =
-    apply(PageWidth.fromWire(Store.Browser.get(StorageKey).orNull))
+    apply(PageWidth.fromWire(PageWidth.Wire(Store.Browser.get(StorageKey).orNull)))
     Option(dom.document.getElementById("page-content")).foreach { content =>
       val holder = dom.document.createElement("div")
       content.parentNode.insertBefore(holder, content)
@@ -45,9 +45,9 @@ object PageTools:
           button(
             typ := "button",
             cls := "btn btn--toggle btn--sm page-width-btn",
-            dataAttr("width") := w.wire,
+            dataAttr("width") := w.wire.value,
             aria.pressed <-- width.signal.map(x => (x == w).toString),
-            w.label,
+            w.label.value,
             onClick --> (_ => choose(w))
           )
         )

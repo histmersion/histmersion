@@ -21,7 +21,7 @@ object ThemeChoice:
   val Label: _root_.com.histmersion.api.UiLabels.Text.type = _root_.com.histmersion.api.UiLabels.Text
 
 
-  def fromWire(s: String): ThemeChoice = values.find(_.wire == Option(s).fold("")(_.trim.toLowerCase)).getOrElse(System)
+  def fromWire(s: String): ThemeChoice = values.find(_.wire == Wire(Option(s).fold("")(_.trim.toLowerCase))).getOrElse(System)
 
   /** The button's next choice: system → light → dark → system. */
   def next(c: ThemeChoice): ThemeChoice = c match
@@ -31,8 +31,8 @@ object ThemeChoice:
 
   /** What a press does, read out and shown on hover: the current choice and the one a press picks. */
   def tooltip(c: ThemeChoice): com.histmersion.api.UiLabels.Text =
-    s"${c.label}. Click for ${next(c) match
+    com.histmersion.api.UiLabels.Text(s"${c.label}. Click for ${next(c) match
         case System => "the system's setting"
         case Light  => "light"
         case Dark   => "dark"
-      }."
+      }.")

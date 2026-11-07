@@ -16,7 +16,7 @@ object PlaybackFeed:
     */
 
   def chunkYears(windowHalf: com.histmersion.web.PlaybackFeed.WindowHalfYears, yearsPerSecond: com.histmersion.web.PlaybackBuckets.YearsPerSecond, seconds: com.histmersion.web.PlaybackBuckets.Seconds): com.histmersion.web.PlaybackBuckets.BucketYears =
-    math.max(8 * math.max(1L, windowHalf), math.ceil(math.abs(yearsPerSecond) * seconds).toLong)
+    com.histmersion.web.PlaybackBuckets.BucketYears(math.max(8 * math.max(1L, windowHalf.value), math.ceil(math.abs(yearsPerSecond.value) * seconds.value).toLong))
 
   /** Pure: the next period to ask for, given the findings held cover the years up to `coveredTo` (`None`: nothing yet),
     * the playhead `ph`, the window's half `wh`, the stretch `chunk` and the last year played `end`: the first stretch
@@ -24,11 +24,13 @@ object PlaybackFeed:
     * once the end is covered.
     */
   def next(coveredTo: Option[com.histmersion.api.Years.Astronomical], ph: com.histmersion.api.Years.Astronomical, wh: com.histmersion.web.PlaybackFeed.WindowHalfYears, chunk: com.histmersion.web.PlaybackBuckets.BucketYears, end: com.histmersion.api.Years.Astronomical): Option[(com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)] =
-    val last = end + wh
-    coveredTo match
-      case None                                  => Some((ph - wh, math.min(last, ph + wh + chunk)))
+    val last = end.value + wh.value
+    val a = com.histmersion.api.Years.Astronomical
+    coveredTo.map(_.value) match
+      case None                                  => Some((a(ph.value - wh.value), a(math.min(last, ph.value + wh.value + chunk.value))))
       case Some(hi) if hi >= last                => None
-      case Some(hi) if ph + wh + chunk / 2 >= hi => Some((hi + 1, math.min(last, math.max(hi + 1, ph + wh) + chunk)))
+      case Some(hi) if ph.value + wh.value + chunk.value / 2 >= hi =>
+        Some((a(hi + 1), a(math.min(last, math.max(hi + 1, ph.value + wh.value) + chunk.value))))
       case _                                     => None
 
   /** Pure: the years an answer to `asked` covers. The feed is ordered by start year and capped at `limit`: a full
@@ -36,15 +38,20 @@ object PlaybackFeed:
     * is in it); a shorter one covers all it was asked for.
     */
   def covered(asked: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical), got: Seq[GeoHit], limit: com.histmersion.api.Paging.Limit): com.histmersion.api.Years.Astronomical =
-    if got.size < limit then asked._2
-    else got.flatMap(_.periodStart).maxOption.fold(asked._2)(s => math.max(asked._1 - 1, math.min(asked._2, s - 1)))
+    if got.size < limit.value then asked._2
+    else
+      got
+        .flatMap(_.periodStart)
+        .map(_.value)
+        .maxOption
+        .fold(asked._2)(s => com.histmersion.api.Years.Astronomical(math.max(asked._1.value - 1, math.min(asked._2.value, s - 1))))
 
   /** Pure: the findings dated within [`lo`, `hi`] (overlapping it, as the server's period filter does; an undated
     * finding is never in a window).
     */
   def inWindow(points: Iterable[GeoHit], lo: com.histmersion.api.Years.Astronomical, hi: com.histmersion.api.Years.Astronomical): List[GeoHit] =
-    points.iterator.filter(p => p.periodStart.exists(_ <= hi) && p.periodEnd.exists(_ >= lo)).toList
+    points.iterator.filter(p => p.periodStart.exists(_.value <= hi.value) && p.periodEnd.exists(_.value >= lo.value)).toList
 
   /** Pure: what is worth keeping once the window starts at `lo` — every finding that ends at or after it. */
   def keep(points: Iterable[GeoHit], lo: com.histmersion.api.Years.Astronomical): List[GeoHit] =
-    points.iterator.filter(p => p.periodEnd.forall(_ >= lo)).toList
+    points.iterator.filter(p => p.periodEnd.forall(_.value >= lo.value)).toList

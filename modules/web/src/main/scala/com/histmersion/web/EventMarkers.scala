@@ -43,11 +43,11 @@ object EventMarkers:
       com.histmersion.api.catalogue.TilesApi.TileQuery.Z(0),
       com.histmersion.api.catalogue.TilesApi.TileQuery.X(0),
       com.histmersion.api.catalogue.TilesApi.TileQuery.Y(0),
-      filter.modify(_.period).setTo(Some(Period(tiles._1, tiles._2))).modify(_.limit).setTo(Filter().limit).modify(_.offset).setTo(0).modify(_.sort).setTo(Filter().sort),
+      filter.modify(_.period).setTo(Some(Period(tiles._1, tiles._2))).modify(_.limit).setTo(Filter().limit).modify(_.offset).setTo(Filter.Offset(0)).modify(_.sort).setTo(Filter().sort),
       kind = kind.map(k => TilesApi.TileQuery.Kind(k.value)),
       tier = tier.map(t => TilesApi.TileQuery.Tier(t.value)),
       context = Some(com.histmersion.api.catalogue.TilesApi.TileQuery.Context(true)),
-      undated = Option.when(undated.value)(true)
+      undated = Option.when(undated.value)(TilesApi.TileQuery.Undated(true))
     )
 
   /** Load the events of `tiles` (a span, playback's widened to its bucket), drawn for `span`. */
@@ -55,6 +55,6 @@ object EventMarkers:
     layer.load(
       ApiClient.tileTemplate(
         query(UiState.toFilter(), tiles, UiState.eventKind.now().map(com.histmersion.api.Api.EventQuery.Kind(_)), UiState.eventTier.now().map(com.histmersion.api.Api.EventQuery.Tier(_)), Undated(UiState.eventsUndated.now()))
-      ),
+      ).value,
       span
     )

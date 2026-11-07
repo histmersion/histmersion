@@ -274,11 +274,11 @@ object GoalsView:
                 case scala.util.Failure(_) => ApiClient.putGoal(ApiClient.GoalSlug(a.slug.value), a.put)
               }
               .flatMap { _ =>
-                val planned = if a.plan then
+                val planned = if a.plan.value then
                   ApiClient.startRun(Agents.RunRequest(Agents.RunRequest.Pipeline(Pipeline.PlanGoal.wire.value), Agents.RunRequest.Target(a.slug.value))).map(_ => true)
                 else scala.concurrent.Future.successful(false)
                 planned.flatMap { p =>
-                  val seeded = if a.seed then
+                  val seeded = if a.seed.value then
                     ApiClient.managerCreate(Managers.ManagerCreate(Managers.ManagerCreate.Kind("seed"), Some(a.slug))).map(m => Some(m))
                   else scala.concurrent.Future.successful(None)
                   seeded.flatMap { sd =>
@@ -299,7 +299,7 @@ object GoalsView:
               }
           created.onComplete { r =>
             busy.set(false)
-            msg.set(Some(r.fold(e => Left(e.getMessage), Right(_))))
+            msg.set(Some(r.fold(e => Left(e.getMessage), n => Right(n.value))))
             if r.isSuccess then
               name.set(""); slug.set(""); notes.set(""); tags.set(""); watch.set(false); ingest.set(false);
               perDay.set("")
@@ -610,7 +610,7 @@ object GoalsView:
   ): HtmlElement =
     def editor(k: ScheduleKind): HtmlElement =
       val current = ss.find(_.kind == k)
-      val cron = Var(current.map(_.cron.value).getOrElse(defaultCron(k).value))
+      val cron = Var[String](current.map(_.cron.value).getOrElse(defaultCron(k).value))
       val on = Var(current.forall(_.enabled.value))
       val budget = Var(current.flatMap(_.budgetUsd).fold("")(b => AgentsMarkdown.usd(b.value)))
       li(

@@ -18,26 +18,20 @@ import org.scalajs.dom
   * drawn as a marker answers through its element.
   */
 object PlaceHover:
-  type ChosenNow = ChosenNow.T
-  object ChosenNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeyboardDriven = KeyboardDriven.T
-  object KeyboardDriven extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceId = PlaceId.T
-  object PlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceId = Pages.PlaceId
+  val PlaceId: Pages.PlaceId.type = Pages.PlaceId
   type PlaceKind = PlaceKind.T
   object PlaceKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PointerType = PointerType.T
   object PointerType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ScreenPixels = ScreenPixels.T
-  object ScreenPixels extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShapeSetName = ShapeSetName.T
-  object ShapeSetName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShapeSetName = ShapeHit.Set
+  val ShapeSetName: ShapeHit.Set.type = ShapeHit.Set
 
   // `var`s: where the pointer last was over a place, and what kind of pointer last pressed the map
 
 
-  private var lastX: com.histmersion.web.PlaceHover.ScreenPixels = com.histmersion.web.PlaceHover.ScreenPixels(0)
-  private var lastY: com.histmersion.web.PlaceHover.ScreenPixels = com.histmersion.web.PlaceHover.ScreenPixels(0)
+  private var lastX: Preview.ScreenPixels = Preview.ScreenPixels(0)
+  private var lastY: Preview.ScreenPixels = Preview.ScreenPixels(0)
   private var lastPointer: com.histmersion.web.PlaceHover.PointerType = com.histmersion.web.PlaceHover.PointerType("mouse")
   private var hovered: Option[Preview.Target] = None
   // `var`s: the map, once installed (installing twice must not double-bind), and the shape hovered
@@ -45,37 +39,18 @@ object PlaceHover:
   private var hoveredShape: Option[ShapeHit] = None
 
   private val intent =
-    HoverIntent[Preview.Target](Layout.hoverDelayMs, t => if hovered.contains(t) then Preview.showAt(t, lastX, lastY))
+    HoverIntent[Preview.Target](HoverIntent.DelayMs(Layout.hoverDelayMs.value), t => if hovered.contains(t) then Preview.showAt(t, lastX, lastY))
 
   /** A set of shapes whose shapes are places: `place(id)` is the place a shape stands for. */
-  final case class Places(place: Places.PlaceArg1 => Option[(Places.PlaceResultPart1, Places.PlaceResultPart2, Places.PlaceResultPart3)], asOf: () => Option[Places.AsOfResult])
+  final case class Places(place: PlaceId => Option[(PlaceId, com.histmersion.api.UiLabels.Text, PlaceKind)], asOf: () => Option[com.histmersion.api.Years.Astronomical])
 
-  object Places:
-    type Body = Body.T
-    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ImportKind = ImportKind.T
-    object ImportKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SeedDir = SeedDir.T
-    object SeedDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SeedFile = SeedFile.T
-    object SeedFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PlaceArg1 = com.histmersion.web.PlaceHover.PlaceId
-    val PlaceArg1: _root_.com.histmersion.web.PlaceHover.PlaceId.type = _root_.com.histmersion.web.PlaceHover.PlaceId
-    type PlaceResultPart1 = com.histmersion.web.PlaceHover.PlaceId
-    val PlaceResultPart1: _root_.com.histmersion.web.PlaceHover.PlaceId.type = _root_.com.histmersion.web.PlaceHover.PlaceId
-    type PlaceResultPart2 = com.histmersion.api.UiLabels.Text
-    val PlaceResultPart2: _root_.com.histmersion.api.UiLabels.Text.type = _root_.com.histmersion.api.UiLabels.Text
-    type PlaceResultPart3 = com.histmersion.web.PlaceHover.PlaceKind
-    val PlaceResultPart3: _root_.com.histmersion.web.PlaceHover.PlaceKind.type = _root_.com.histmersion.web.PlaceHover.PlaceKind
-    type AsOfResult = com.histmersion.api.Years.Astronomical
-    val AsOfResult: _root_.com.histmersion.api.Years.Astronomical.type = _root_.com.histmersion.api.Years.Astronomical
-  private val shapeSets = scala.collection.mutable.LinkedHashMap.empty[String, Places]
+  private val shapeSets = scala.collection.mutable.LinkedHashMap.empty[ShapeHit.Set, Places]
 
   /** The shapes of set `set` answer as the places `place` names. */
   def shapes(set: com.histmersion.web.PlaceHover.ShapeSetName, places: Places): Unit = shapeSets(set) = places
 
   /** Is this pointer type a finger? (`pen` hovers like a mouse.) */
-  private[web] def isTouch(pointerType: com.histmersion.web.PlaceHover.PointerType): Boolean = pointerType == "touch"
+  private[web] def isTouch(pointerType: com.histmersion.web.PlaceHover.PointerType): Boolean = pointerType.value == "touch"
 
   /** The place shape topmost under `p`, if any. */
   private def placeAt(p: ScreenPt): Option[(ShapeHit, (com.histmersion.web.PlaceHover.PlaceId, com.histmersion.api.UiLabels.Text, com.histmersion.web.PlaceHover.PlaceKind), Places)] =
@@ -84,7 +59,7 @@ object PlaceHover:
       surface
         .shapesAt(p)
         .iterator
-        .flatMap(h => shapeSets.get(h.set).flatMap(ps => ps.place(h.id).map(pl => (h, pl, ps))))
+        .flatMap(h => shapeSets.get(h.set).flatMap(ps => ps.place(PlaceId(h.id.value)).map(pl => (h, pl, ps))))
         .nextOption()
 
   /** Once per map: remember the pointer type of each press, the shapes' hover and click, and drop a tapped card when
@@ -95,11 +70,11 @@ object PlaceHover:
       surface = m
       m.container.addEventListener(
         "pointerdown",
-        (e: dom.PointerEvent) => lastPointer = e.pointerType,
+        (e: dom.PointerEvent) => lastPointer = PointerType(e.pointerType),
         useCapture = true
       )
       m.on(MapEventKind.PointerMove) { e =>
-        e.clientXY.foreach { (x, y) => lastX = x; lastY = y }
+        e.clientXY.foreach { (x, y) => lastX = Preview.ScreenPixels(x.value); lastY = Preview.ScreenPixels(y.value) }
         val hit = if e.overMarker || isTouch(lastPointer) then None else e.point.flatMap(placeAt)
         if hit.map(_._1) != hoveredShape then
           hoveredShape.foreach(_ => dropHover())
@@ -117,13 +92,13 @@ object PlaceHover:
       }
       m.on(MapEventKind.Click) { e =>
         if !e.overMarker then
-          e.clientXY.foreach { (x, y) => lastX = x; lastY = y }
+          e.clientXY.foreach { (x, y) => lastX = Preview.ScreenPixels(x.value); lastY = Preview.ScreenPixels(y.value) }
           e.point.flatMap(placeAt) match
             case Some((_, (id, label, kind), ps)) =>
               val on = PlacesInput.toggleFromMap(id, label, kind)
               val anchor =
                 e.at.map(anchorAt).getOrElse { val (x, y) = (lastX, lastY); () => Some(Preview.Anchor.At(x, y)) }
-              settle(Preview.Target.Place(id, ps.asOf()), on, anchor, None, keyboard = com.histmersion.web.PlaceHover.KeyboardDriven(false))
+              settle(Preview.Target.Place(id, ps.asOf()), on, anchor, None, keyboard = Preview.KeyboardDriven(false))
             case None =>
               // a click on the empty map lets every card go
               hovered = None
@@ -139,26 +114,35 @@ object PlaceHover:
     Option(surface).flatMap { m =>
       val p = m.project(ll)
       val r = m.container.getBoundingClientRect()
-      PinRules.inView(p.x, p.y, r.left, r.top, r.width, r.height).map((x, y) => Preview.Anchor.At(x, y))
+      PinRules
+        .inView(
+          PinRules.ScreenPixels(p.x.value),
+          PinRules.ScreenPixels(p.y.value),
+          PinRules.ScreenPixels(r.left),
+          PinRules.ScreenPixels(r.top),
+          PinRules.ElementSize(r.width),
+          PinRules.ElementSize(r.height)
+        )
+        .map((x, y) => Preview.Anchor.At(Preview.ScreenPixels(x.value), Preview.ScreenPixels(y.value)))
     }
 
   /** A pinned card's anchor at an element's centre (a keyboard pin), `None` once it is gone. */
   private def anchorOn(el: dom.Element): () => Option[Preview.Anchor] = () =>
     Option.when(el.isConnected) {
       val r = el.getBoundingClientRect()
-      Preview.Anchor.At(r.left + r.width / 2, r.top + r.height / 2)
+      Preview.Anchor.At(Preview.ScreenPixels(r.left + r.width / 2), Preview.ScreenPixels(r.top + r.height / 2))
     }
 
   /** Pin `t`'s card after a click or Enter that left the place `chosenNow`, or close it. */
   private def settle(
       t: Preview.Target,
-      chosenNow: com.histmersion.web.PlaceHover.ChosenNow,
+      chosenNow: Boolean,
       anchor: () => Option[Preview.Anchor],
       owner: Option[dom.Element],
-      keyboard: com.histmersion.web.PlaceHover.KeyboardDriven
+      keyboard: Preview.KeyboardDriven
   ): Unit =
     intent.cancelPending()
-    if PinRules.pinAfterClick(chosenNow) then
+    if PinRules.pinAfterClick(PinRules.ChosenNow(chosenNow)) then
       hovered = Some(t)
       Preview.pin(t, anchor, owner, keyboard)
     else
@@ -167,14 +151,14 @@ object PlaceHover:
       Preview.unpin(restoreFocus = com.histmersion.web.Preview.RestoreFocus(false))
 
   private def at(e: dom.MouseEvent): Unit =
-    lastX = e.clientX
-    lastY = e.clientY
+    lastX = Preview.ScreenPixels(e.clientX)
+    lastY = Preview.ScreenPixels(e.clientY)
 
   /** Where a marker's event happened on the map. */
   private def latLonOf(e: dom.MouseEvent): Option[LatLon] =
     Option(surface).map { m =>
       val r = m.container.getBoundingClientRect()
-      m.unproject(ScreenPt(e.clientX - r.left, e.clientY - r.top))
+      m.unproject(ScreenPt(ScreenPt.X(e.clientX - r.left), ScreenPt.Y(e.clientY - r.top)))
     }
 
   /** A place drawn as a MARKER (a point-only region's name, a chosen place's point): its card on hover, a click (or
@@ -193,14 +177,14 @@ object PlaceHover:
         val on = choose()
         val anchor =
           latLonOf(e).map(anchorAt).getOrElse { val (x, y) = (lastX, lastY); () => Some(Preview.Anchor.At(x, y)) }
-        settle(target, on, anchor, None, keyboard = com.histmersion.web.PlaceHover.KeyboardDriven(false))
+        settle(target, on, anchor, None, keyboard = Preview.KeyboardDriven(false))
       override def focus(e: dom.FocusEvent): Unit = focusCard(m.el, target)
       override def blur(e: dom.FocusEvent): Unit = dropHover()
       override def key(e: dom.KeyboardEvent): Unit =
-        if PinRules.activates(e.key) then
+        if PinRules.activates(PinRules.KeyName(e.key)) then
           e.preventDefault()
-          settle(target, choose(), anchorOn(m.el), Some(m.el), keyboard = com.histmersion.web.PlaceHover.KeyboardDriven(true))
-    button(m.el, s"$label — show only this place and pin its card")
+          settle(target, choose(), anchorOn(m.el), Some(m.el), keyboard = Preview.KeyboardDriven(true))
+    button(m.el, s"${label.value} — show only this place and pin its card")
 
   /** A place's NAME (an area's label on the map): a keyboard button for the place it names — the pointer passes through
     * it to the shape under it.
@@ -212,12 +196,12 @@ object PlaceHover:
       override def focus(e: dom.FocusEvent): Unit = focusCard(el, target)
       override def blur(e: dom.FocusEvent): Unit = dropHover()
       override def key(e: dom.KeyboardEvent): Unit =
-        if PinRules.activates(e.key) then
+        if PinRules.activates(PinRules.KeyName(e.key)) then
           e.preventDefault()
-          settle(target, PlacesInput.toggleFromMap(id, label, kind), anchorOn(el), Some(el), keyboard = com.histmersion.web.PlaceHover.KeyboardDriven(true))
-    button(el, s"$label — show only this place and pin its card")
+          settle(target, PlacesInput.toggleFromMap(id, label, kind), anchorOn(el), Some(el), keyboard = Preview.KeyboardDriven(true))
+    button(el, s"${label.value} — show only this place and pin its card")
 
-  private def button(el: dom.Element, label: com.histmersion.api.UiLabels.Text): Unit =
+  private def button(el: dom.Element, label: String): Unit =
     el.setAttribute("tabindex", "0")
     el.setAttribute("role", "button")
     el.setAttribute("aria-label", label)
@@ -237,7 +221,7 @@ object PlaceHover:
   private def focusCard(el: dom.Element, t: Preview.Target): Unit =
     val r = el.getBoundingClientRect()
     hovered = Some(t)
-    Preview.showAt(t, r.left + r.width / 2, r.top + r.height / 2)
+    Preview.showAt(t, Preview.ScreenPixels(r.left + r.width / 2), Preview.ScreenPixels(r.top + r.height / 2))
 
   /** Forget the hovered target: its pending card is cancelled, its showing card hidden. */
   private def dropHover(): Unit =
@@ -272,13 +256,13 @@ object PlaceHover:
       override def focus(e: dom.FocusEvent): Unit = target().foreach(t => focusCard(el, t))
       override def blur(e: dom.FocusEvent): Unit = dropHover()
       override def key(e: dom.KeyboardEvent): Unit =
-        if PinRules.activates(e.key) then
+        if PinRules.activates(PinRules.KeyName(e.key)) then
           e.preventDefault()
           intent.cancelPending()
           Preview.hide()
           activate(Activation(keyboard = com.histmersion.web.Activation.Keyboard(true), Some(el), None))
     m.onRemoved(() => if target().exists(t => hovered.contains(t)) then dropHover())
-    button(el, label())
+    button(el, label().value)
 
   /** A place's point activated (a click or Enter): it is chosen as THE place filter and its card pinned there — beside
     * the point clicked, or on the focused element with the focus moving in; activating the chosen place again lets it

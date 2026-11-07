@@ -19,15 +19,10 @@ object Pages:
   object EventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type JobId = JobId.T
   object JobId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkActive = LinkActive.T
-  object LinkActive extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceId = PlaceId.T
   object PlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UrlQuery = UrlQuery.T
   object UrlQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type ResearchGoal = _root_.com.histmersion.api.automation.Goal.Ref
-  val ResearchGoal: _root_.com.histmersion.api.automation.Goal.Ref.type = _root_.com.histmersion.api.automation.Goal.Ref
 
   private val currentAttr = htmlAttr("aria-current", StringAsIsCodec)
 
@@ -35,7 +30,7 @@ object Pages:
     // a Research page's query (`?goal=`) is part of what it shows
     val shown = Router.route
       .combineWith(Router.missingSignal, Router.search)
-      .map((r, missing, s) => (r, missing, if r.place == PlaceTab.Research then s else ""))
+      .map((r, missing, s) => (r, missing, if r.place == PlaceTab.Research then s else UrlQuery("")))
       .distinct
     div(
       cls := "place-page",
@@ -52,7 +47,7 @@ object Pages:
     case Route.Event(id)   => single(eventPage(id))
     case Route.Source(_) | Route.Article(_) => single(p(cls := "muted", "Loading…"))
     case _                                  =>
-      layout(com.histmersion.api.UiLabels.Text("Research sections"), researchSide(ui, r), None, research(ui, r, ActivityView.param(search, com.histmersion.web.ActivityView.ParamName("goal"))))
+      layout(com.histmersion.api.UiLabels.Text("Research sections"), researchSide(ui, r), None, research(ui, r, ActivityView.param(search, com.histmersion.web.ActivityView.ParamName("goal")).map(g => com.histmersion.api.automation.Goal.Slug(g.value))))
 
   // ── the frame ───────────────────────────────────────────────────────────────────────────────────
 
@@ -64,11 +59,11 @@ object Pages:
   ): HtmlElement =
     div(
       cls := "page-layout",
-      navTag(cls := "side-nav", aria.label := navName, side),
+      navTag(cls := "side-nav", aria.label := navName.value, side),
       mainTag(
         cls := "page-main wm-content",
         idAttr := "page-main",
-        heading.map(h => h1(cls := "page-title", h)),
+        heading.map(h => h1(cls := "page-title", h.value)),
         body
       )
     )
@@ -76,23 +71,23 @@ object Pages:
   private def single(body: HtmlElement): HtmlElement =
     div(cls := "page-layout page-single", mainTag(cls := "page-main wm-content", idAttr := "page-main", body))
 
-  private def sideLink(r: Route, label: com.histmersion.api.UiLabels.Text, on: com.histmersion.web.Pages.LinkActive, mods: Modifier[HtmlElement]*): HtmlElement =
+  private def sideLink(r: Route, label: com.histmersion.api.UiLabels.Text, on: Boolean, mods: Modifier[HtmlElement]*): HtmlElement =
     RouteLink(
       r,
       cls := "side-link",
       cls("on") := on,
       currentAttr := (if on then "page" else "false"),
-      span(cls := "side-label", label),
+      span(cls := "side-label", label.value),
       mods
     )
 
-  private def group(name: com.histmersion.api.UiLabels.Text): HtmlElement = div(cls := "side-group", name)
+  private def group(name: com.histmersion.api.UiLabels.Text): HtmlElement = div(cls := "side-group", name.value)
 
   /** A watched list's link: bold while it has something new, with the count of what waits on someone. */
   private def notice(b: Board): Modifier[HtmlElement] =
     val c = Notices.counter(b)
     List(
-      cls("has-news") <-- c.map(_.exists(_.fresh)),
+      cls("has-news") <-- c.map(_.exists(_.fresh.value)),
       child.maybe <-- c
         .map(_.flatMap(x => UiNotices.badge(x.count)))
         .distinct
@@ -105,7 +100,7 @@ object Pages:
             )
           )
         ),
-      child.maybe <-- c.map(Notices.spoken).distinct.map(s => Option.when(s.nonEmpty)(span(cls := "sr-only", s", $s")))
+      child.maybe <-- c.map(Notices.spoken).distinct.map(s => Option.when(s.value.nonEmpty)(span(cls := "sr-only", s", ${s.value}")))
     )
 
   // ── Library ─────────────────────────────────────────────────────────────────────────────────────
@@ -132,7 +127,7 @@ object Pages:
     def item(s: ResearchSection, mods: Modifier[HtmlElement]*) =
       val target = if s == ResearchSection.Activity then Route.Activity(ActivityTab.Everything) else Route.Research(s)
       sideLink(target, s.label, on.contains(s), mods)
-    ResearchSection.values.toList.filter(s => ui.agentsEnabled || !s.agents).map { s =>
+    ResearchSection.values.toList.filter(s => ui.agentsEnabled.value || !s.agents.value).map { s =>
       s match
         case ResearchSection.Decisions => item(s, notice(Board.Approvals))
         case ResearchSection.Goals     => item(s, notice(Board.Goals))
@@ -145,37 +140,37 @@ object Pages:
       "The backlog holds the agents' next steps. “To acquire” holds books and papers only you can get."
     )
 
-  private def research(ui: UiConfig, r: Route, goal: Option[com.histmersion.web.Pages.ResearchGoal]): HtmlElement = r match
+  private def research(ui: UiConfig, r: Route, goal: Option[com.histmersion.api.automation.Goal.Slug]): HtmlElement = r match
     case Route.Research(s) =>
       val body = s match
         case ResearchSection.Overview  => ResearchOverview.pane(ui)
         case ResearchSection.Decisions =>
-          if ui.agentsEnabled then ApprovalsView.pane
+          if ui.agentsEnabled.value then ApprovalsView.pane
           else agentsOff(com.histmersion.api.UiLabels.Text("Nothing waits for a decision: the research agents are off on this server."))
         case ResearchSection.Goals   => GoalsView.pane
-        case ResearchSection.Backlog => QueueView.pane(Queue.Kind.Tasks, goal)
-        case ResearchSection.Acquire => QueueView.pane(Queue.Kind.Acquire, goal)
+        case ResearchSection.Backlog => QueueView.pane(Queue.Kind.Tasks, goal.map(g => com.histmersion.api.automation.Goal.Ref(g.value)))
+        case ResearchSection.Acquire => QueueView.pane(Queue.Kind.Acquire, goal.map(g => com.histmersion.api.automation.Goal.Ref(g.value)))
         case ResearchSection.Models  =>
-          if ui.agentsEnabled then ModelsView.pane
+          if ui.agentsEnabled.value then ModelsView.pane
           else agentsOff(com.histmersion.api.UiLabels.Text("No AI models are used: the research agents are off on this server."))
         case ResearchSection.Activity => RunsView.pane
       section(Router.title(r), body)
     case Route.Activity(t) => section(com.histmersion.api.UiLabels.Text("Activity"), activity(ui, t, goal))
     case Route.Goal(slug)  => item(r, GoalPage.pane(ui, slug))
-    case Route.Run(id)     => item(r, RunsView.runPane(id))
-    case Route.Manager(id) => item(r, ManagersView.managerPane(id))
+    case Route.Run(id)     => item(r, RunsView.runPane(com.histmersion.api.automation.Agents.RunInfo.Id(id.value)))
+    case Route.Manager(id) => item(r, ManagersView.managerPane(com.histmersion.api.automation.Managers.ManagerInfo.Id(id.value)))
     case Route.Job(id)     => item(r, jobPage(id))
     case _                 => notFound
 
-  private def section(heading: com.histmersion.api.UiLabels.Text, body: HtmlElement): HtmlElement = div(h1(cls := "page-title", heading), body)
+  private def section(heading: com.histmersion.api.UiLabels.Text, body: HtmlElement): HtmlElement = div(h1(cls := "page-title", heading.value), body)
 
   private def agentsOff(text: com.histmersion.api.UiLabels.Text): HtmlElement =
-    p(cls := "muted", text, " Their settings are ", code("agents.enabled"), " in the server's configuration.")
+    p(cls := "muted", text.value, " Their settings are ", code("agents.enabled"), " in the server's configuration.")
 
   /** The merged list through one of its chips — or one of the detailed lists it sums up, under the chips and a way back
     * to the list.
     */
-  private def activity(ui: UiConfig, t: ActivityTab, goal: Option[com.histmersion.api.automation.Goal.Ref]): HtmlElement =
+  private def activity(ui: UiConfig, t: ActivityTab, goal: Option[com.histmersion.api.automation.Goal.Slug]): HtmlElement =
     if t.isChip then ActivityView.pane(ui, t, goal)
     else
       div(
@@ -188,7 +183,7 @@ object Pages:
         ),
         t match
           case ActivityTab.Runs =>
-            if ui.agentsEnabled then RunsView.pane
+            if ui.agentsEnabled.value then RunsView.pane
             else agentsOff(com.histmersion.api.UiLabels.Text("No agent runs: the research agents are off on this server."))
           case ActivityTab.Worklog => QueueView.pane(Queue.Kind.Log)
           case _                   => JobsView.pane
@@ -204,7 +199,7 @@ object Pages:
       Router.titles.filter(_._1 == r).map(_._2) --> heading.writer,
       div(
         cls := "item-head",
-        h1(cls := "page-title", child.text <-- heading.signal),
+        h1(cls := "page-title", child.text <-- heading.signal.map(_.value)),
         Route
           .window(r)
           .map(key =>
@@ -233,16 +228,16 @@ object Pages:
   private def jobPage(id: com.histmersion.web.Pages.JobId): HtmlElement =
     val job = Var(Option.empty[Either[String, JobInfo]])
     div(
-      onMountCallback(_ => ApiClient.job(com.histmersion.api.SpatialHierarchyResult.Job.Id(id)).onComplete(r => job.set(Some(r.toEither.left.map(_.getMessage))))),
+      onMountCallback(_ => ApiClient.job(JobInfo.Id(id.value)).onComplete(r => job.set(Some(r.toEither.left.map(_.getMessage))))),
       child <-- job.signal.map {
         case None          => p(cls := "muted", "Loading…")
         case Some(Left(m)) => p(cls := "form-error", role := "alert", s"Could not read job $id: $m")
         case Some(Right(j)) if j.kind == com.histmersion.api.automation.AgentJobKinds.Agent.kind =>
-          Router.go(Route.Run(j.id.value), push = com.histmersion.web.Router.Push(false))
+          Router.go(Route.Run(Route.Run.Id(j.id.value)), push = com.histmersion.web.Router.Push(false))
           p(cls := "muted", "Loading…")
         case Some(Right(j)) =>
-          Router.retitle(Route.Job(id), Wording.jobKindOf(j.kind.value))
-          div(ul(cls := "job-list", JobsView.row(j, mine = com.histmersion.web.JobsView.Mine(false))), jobControls(j), QueueView.ofJob(j.id.value))
+          Router.retitle(Route.Job(id), Wording.jobKindOf(j.kind))
+          div(ul(cls := "job-list", JobsView.row(j, mine = false)), jobControls(j), QueueView.ofJob(JobId(j.id.value)))
       },
       p(RouteLink(Route.Activity(ActivityTab.JobList), "All background jobs"))
     )
@@ -250,17 +245,22 @@ object Pages:
   /** Pause, resume and cancel of a long background job, on its page. */
   private def jobControls(j: JobInfo): HtmlElement =
     val e = com.histmersion.api.automation.Activity.Entry(
-      s"job:${j.id}", com.histmersion.api.automation.Activity.Entry.Kind("job"), j.createdAt, state = j.status, what = j.kind.value, job = Some(j.id.value)
+      com.histmersion.api.automation.Activity.Entry.Key(s"job:${j.id.value}"),
+      com.histmersion.api.automation.Activity.Entry.Kind("job"),
+      com.histmersion.api.automation.Activity.Entry.At(j.createdAt.value),
+      state = com.histmersion.api.automation.Activity.Entry.State(j.status.value),
+      what = com.histmersion.api.automation.Activity.Entry.What(j.kind.value),
+      job = Some(j.id)
     )
     ActivityView.actions(e) match
       case Nil => div()
       case _   =>
-        ul(cls := "activity-list job-controls", ActivityView.row(e, () => Router.go(Route.Job(j.id.value), push = com.histmersion.web.Router.Push(false))))
+        ul(cls := "activity-list job-controls", ActivityView.row(e, () => Router.go(Route.Job(Route.Job.Id(j.id.value)), push = com.histmersion.web.Router.Push(false))))
 
   // ── Settings ────────────────────────────────────────────────────────────────────────────────────
 
   private def settingsSide(on: SettingsSection): List[Modifier[HtmlElement]] =
-    val (common, rare) = SettingsSection.values.toList.partition(!_.rare)
+    val (common, rare) = SettingsSection.values.toList.partition(s => !s.rare.value)
     common.map(s => sideLink(Route.Settings(s), s.label, s == on)) ++ List(group(com.histmersion.api.UiLabels.Text("Rarely needed"))) ++
       rare.map(s => sideLink(Route.Settings(s), s.label, s == on)) ++
       List(RouteLink(Route.Setup, cls := "side-link setup-again", span(cls := "side-label", "Run the setup again")))
@@ -280,7 +280,7 @@ object Pages:
         case None           => p(cls := "muted", "Loading…")
         case Some(Left(m))  => p(cls := "form-error", role := "alert", s"Could not read it: $m")
         case Some(Right(c)) =>
-          Router.retitle(route, c.title)
+          Router.retitle(route, com.histmersion.api.UiLabels.Text(c.title.value))
           div(cls := "cite-tooltip place-tip card-page-card", Preview.cardView(c))
       }
     )
@@ -291,12 +291,12 @@ object Pages:
       Route.Place(id),
       a(
         cls := "btn",
-        href := s"${Route.Explore.path}#placeId=${scala.scalajs.js.URIUtils.encodeURIComponent(id)}",
+        href := s"${Route.Explore.path}#placeId=${scala.scalajs.js.URIUtils.encodeURIComponent(id.value)}",
         "Show on the map",
         onClick --> { ev =>
           if Router.plain(ev) then
             ev.preventDefault()
-            UiState.set(UiState.placeIds := List(id))()
+            UiState.set(UiState.placeIds := List(id.value))()
             PlacesInput.sync()
             Router.go(Route.Explore)
         }

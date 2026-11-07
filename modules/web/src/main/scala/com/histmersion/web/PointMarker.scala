@@ -20,4 +20,4 @@ object PointMarker:
     s"${k.classes(a)}|${k.attrs(a)}|${k.inner(a)}|${k.title(a).getOrElse("")}"
 
   /** Pure: a point's accessible name: what it is, then what activating it does. */
-  def ariaLabel[A](k: PointKind[A], a: A): com.histmersion.api.UiLabels.Text = s"${k.label(a)} — ${k.action(a)}"
+  def ariaLabel[A](k: PointKind[A], a: A): com.histmersion.api.UiLabels.Text = com.histmersion.api.UiLabels.Text(s"${k.label(a).value} — ${k.action(a).value}")

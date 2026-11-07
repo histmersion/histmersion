@@ -39,7 +39,7 @@ object DotCluster:
 
   final case class Contents(members: List[Member]):
     def total: com.histmersion.web.DotCluster.Total = Total(members.map(_.n.value).sum)
-    def counts: Map[DotKind, com.histmersion.web.DotCluster.KindCount] = members.groupMapReduce(_.kind)(_.n.value)(_ + _).map((k, n) => k -> KindCount(n))
+    def counts: Map[DotKind, com.histmersion.web.DotCluster.KindCount] = members.groupMapReduce[DotKind, Int](_.kind)(_.n.value)(_ + _).map((k, n) => k -> KindCount(n))
     def findings: List[GeoHit] = members.flatMap(_.findings)
     def entries: List[DotEntry] = members.flatMap(_.entry)
 

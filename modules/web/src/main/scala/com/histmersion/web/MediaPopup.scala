@@ -22,42 +22,41 @@ object MediaPopup:
   object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PeriodText = PeriodText.T
   object PeriodText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TitleHtml = TitleHtml.T
-  object TitleHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** Pure: what the picture's full-size view shows. */
 
 
   def full(h: MediaGeoHit): Option[Lightbox.Item] =
     h.fileUrl.map(u =>
       Lightbox.Item(
-        u,
-        h.assetName,
-        Some(h.assetName),
-        h.credit,
-        h.author,
-        h.license,
-        h.licenseUrl,
-        h.sourceUrl,
-        h.provider
+        u.value,
+        h.assetName.value,
+        Some(h.assetName.value),
+        h.credit.map(_.value),
+        h.author.map(_.value),
+        h.license.map(_.value),
+        h.licenseUrl.map(_.value),
+        h.sourceUrl.map(_.value),
+        h.provider.map(_.value)
       )
     )
 
   def html(h: MediaGeoHit, period: com.histmersion.web.MediaPopup.PeriodText, caption: com.histmersion.web.MediaPopup.Caption): com.histmersion.web.MediaPopup.Html =
-    val kind = Fmt.display(h.kind.getOrElse("media"))
-    def title(inner: com.histmersion.web.MediaPopup.TitleHtml) =
-      s"""<div class="cite-tip-title media-popup-title">${CardIcons.html(CardIcons.Media)}$inner</div>"""
-    h.citekey match
+    val kind = Fmt.display(com.histmersion.api.UiLabels.Text(h.kind.map(_.value).getOrElse("media")))
+    def title(inner: String) =
+      s"""<div class="cite-tip-title media-popup-title">${CardIcons.html(Glyphs.Name(CardIcons.Media))}$inner</div>"""
+    Html(h.citekey match
       case Some(ck) =>
         // the source as the app's one source link: its card on hover, its window on a click
-        title(s"""${SourceLink.html(ck, None, ck)} / ${Fmt.esc(h.assetName)}""") + s"$kind · $period$caption"
+        title(s"""${SourceLink.html(ck, None, com.histmersion.api.UiLabels.Text(ck.value))} / ${Fmt.esc(h.assetName.value)}""") + s"$kind · $period$caption"
       case None =>
         val zoom = full(h).fold("")(i => s""" title="open full size"${Lightbox.attrs(i)}""")
         val img = h.thumbUrl.fold("")(u =>
           s"""<img class="media-popup-thumb${if zoom.nonEmpty then " is-zoomable" else ""}" src="${Fmt.esc(
-              u
-            )}" alt="${Fmt.esc(h.assetName)}" loading="lazy"$zoom><br>"""
+              u.value
+            )}" alt="${Fmt.esc(h.assetName.value)}" loading="lazy"$zoom><br>"""
         )
-        val credit = h.credit.fold("")(c => s"""<span class="media-credit">${Fmt.esc(c)}</span><br>""")
-        val lic = h.license.fold("")(l => s"""${LicenseName.html(l, h.licenseUrl)} · """)
-        title(Fmt.esc(h.assetName)) +
-          s"""$img$credit$lic${Fmt.esc(MediaProvider.title(h.provider.getOrElse("")))}<br>$kind · $period$caption"""
+        val credit = h.credit.fold("")(c => s"""<span class="media-credit">${Fmt.esc(c.value)}</span><br>""")
+        val lic = h.license.fold("")(l => s"""${LicenseName.html(l.value, h.licenseUrl.map(_.value))} · """)
+        title(Fmt.esc(h.assetName.value)) +
+          s"""$img$credit$lic${Fmt.esc(MediaProvider.title(MediaProvider.Id(h.provider.map(_.value).getOrElse(""))).value)}<br>$kind · $period$caption"""
+    )

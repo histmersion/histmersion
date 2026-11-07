@@ -47,55 +47,21 @@ import com.histmersion.api.library.Source
   * Left is always THIS collection ("here"), right the bundle — the plan's own vocabulary.
   */
 object MergeView:
-  type ActionLabel = ActionLabel.T
-  object ActionLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BundleText = BundleText.T
-  object BundleText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Description = Description.T
   object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditedText = EditedText.T
-  object EditedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FieldName = FieldName.T
   object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FileName = FileName.T
-  object FileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IssueId = IssueId.T
-  object IssueId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KindLabel = KindLabel.T
   object KindLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Left = Left.T
-  object Left extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Line = Line.T
-  object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MarkedText = MarkedText.T
   object MarkedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolvedCount = ResolvedCount.T
-  object ResolvedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResultText = ResultText.T
   object ResultText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Side = Side.T
-  object Side extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileCount = TileCount.T
-  object TileCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TotalCount = TotalCount.T
-  object TotalCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Who = Who.T
-  object Who extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Width = Width.T
-  object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** How the issue list is grouped, in the order it is shown. */
 
-  type SetIssue = _root_.com.histmersion.web.MergeView.IssueId
-  val SetIssue: _root_.com.histmersion.web.MergeView.IssueId.type = _root_.com.histmersion.web.MergeView.IssueId
-  type SetText = _root_.com.histmersion.web.MergeView.Text
-  val SetText: _root_.com.histmersion.web.MergeView.Text.type = _root_.com.histmersion.web.MergeView.Text
 
   enum Group(val title: Group.Title):
     case Open extends Group(com.histmersion.web.MergeView.Group.Title("to decide"))
@@ -124,18 +90,18 @@ object MergeView:
   /** How each of the bundle's sources was matched. */
   def matched(p: MergePlan): List[Source.Match] = RegisteredPlanMatches.kind.all(p.sources)
 
-  def counter(p: MergePlan): (com.histmersion.web.MergeView.ResolvedCount, com.histmersion.web.MergeView.TotalCount) =
+  def counter(p: MergePlan): (Int, Int) =
     val blocking = p.issues.filter(i => i.severity == MergeIssue.Severity.Blocking && i.condition.isEmpty)
     (blocking.count(_.decision.isEmpty), blocking.size)
 
   /** The issues a filter text keeps: it matches the id, the kind, the title or either side's label. */
-  def filtered(issues: List[MergeIssue], text: com.histmersion.web.MergeView.Text): List[MergeIssue] =
+  def filtered(issues: List[MergeIssue], text: String): List[MergeIssue] =
     val t = text.trim.toLowerCase
     if t.isEmpty then issues
     else
       issues.filter(i =>
-        (List(i.id, MergeIssue.Kind.wireOf(i.kind), i.title, i.entity.wire) ++
-          i.left.map(_.label).toList ++ i.right.map(_.label).toList).exists(_.toLowerCase.contains(t))
+        (List(i.id.value, MergeIssue.Kind.wireOf(i.kind).value, i.title.value, i.entity.wire.value) ++
+          i.left.map(_.label.value).toList ++ i.right.map(_.label.value).toList).exists(_.toLowerCase.contains(t))
       )
 
   /** The resolutions with `issue` decided `decision` (and its merged text, for `file:`), replacing an earlier decision
@@ -143,38 +109,38 @@ object MergeView:
     */
   def decide(
       r: MergeResolutions,
-      issue: com.histmersion.web.MergeView.IssueId,
+      issue: MergeIssue.Id,
       decision: Option[MergeDecision],
-      text: Option[com.histmersion.web.MergeView.Text] = None
+      text: Option[MergeResolution.Text] = None
   ): MergeResolutions =
-    val rest = r.resolve.filterNot(_.issue == issue)
+    val rest = r.resolve.filterNot(_.issue.value == issue.value)
     r.modify(_.resolve)
       .setTo(
-        (rest ++ decision.map(d => MergeResolution(issue, d.wire, text.filter(_ => d.kind == MergeDecision.Kind.File))))
+        (rest ++ decision.map(d => MergeResolution(MergeResolution.Issue(issue.value), MergeResolution.Decision(d.wire.value), text.filter(_ => d.kind == MergeDecision.Kind.File))))
           .sortBy(_.issue)
       )
 
   /** The decision a person made for an issue (not a default, a policy or a remembered one). */
-  def chosen(r: MergeResolutions, issue: com.histmersion.web.MergeView.IssueId): Option[MergeDecision] =
-    r.resolve.find(_.issue == issue).flatMap(x => MergeDecision.parse(x.decision).toOption)
+  def chosen(r: MergeResolutions, issue: MergeIssue.Id): Option[MergeDecision] =
+    r.resolve.find(_.issue.value == issue.value).flatMap(x => MergeDecision.parse(MergeDecision.Wire(x.decision.value)).toOption)
 
   /** What a decision kind means, in words. */
   def describe(k: MergeDecision.Kind): com.histmersion.web.MergeView.Description = k match
-    case MergeDecision.Kind.KeepLeft       => "keep this collection's"
-    case MergeDecision.Kind.KeepRight      => "take the bundle's"
+    case MergeDecision.Kind.KeepLeft       => com.histmersion.web.MergeView.Description("keep this collection's")
+    case MergeDecision.Kind.KeepRight      => com.histmersion.web.MergeView.Description("take the bundle's")
     case MergeDecision.Kind.Both           => com.histmersion.web.MergeView.Description("keep both")
     case MergeDecision.Kind.Concat         => com.histmersion.web.MergeView.Description("join both texts")
     case MergeDecision.Kind.Hull           => com.histmersion.web.MergeView.Description("the span covering both")
     case MergeDecision.Kind.Map            => com.histmersion.web.MergeView.Description("one source, under")
-    case MergeDecision.Kind.RenameRight    => "keep both, the bundle's under a new key"
-    case MergeDecision.Kind.RenameLeft     => "keep both, this collection's under a new key"
+    case MergeDecision.Kind.RenameRight    => com.histmersion.web.MergeView.Description("keep both, the bundle's under a new key")
+    case MergeDecision.Kind.RenameLeft     => com.histmersion.web.MergeView.Description("keep both, this collection's under a new key")
     case MergeDecision.Kind.File           => com.histmersion.web.MergeView.Description("the merged text, as edited here")
     case MergeDecision.Kind.Merge          => com.histmersion.web.MergeView.Description("make them one")
     case MergeDecision.Kind.Drop           => com.histmersion.web.MergeView.Description("drop it")
     case MergeDecision.Kind.KeepUnanchored => com.histmersion.web.MergeView.Description("keep it without a place in the text")
 
   /** An issue kind in words (`changed-both-sides` → `changed both sides`). */
-  def kindText(k: MergeIssue.Kind): com.histmersion.web.MergeView.KindLabel = MergeIssue.Kind.wireOf(k).replace('-', ' ')
+  def kindText(k: MergeIssue.Kind): com.histmersion.web.MergeView.KindLabel = com.histmersion.web.MergeView.KindLabel(MergeIssue.Kind.wireOf(k).value.replace('-', ' '))
 
   /** The row of a field table an issue is about (`status` for a status question, `citekey` for the same-work and
     * collision questions), if it is about one.
@@ -198,22 +164,22 @@ object MergeView:
     * still to decide); for the other rows nothing — the merge's own rules fold them (the richer title, tags unioned…),
     * the server's business.
     */
-  def resultOf(i: MergeIssue, f: IssueField, d: Option[MergeDecision]): Option[Either[com.histmersion.web.MergeView.Text, com.histmersion.web.MergeView.ResultText]] =
-    if !fieldOf(i.kind).contains(f.field) then None
+  def resultOf(i: MergeIssue, f: IssueField, d: Option[MergeDecision]): Option[Either[com.histmersion.web.MergeView.ResultText, com.histmersion.web.MergeView.ResultText]] =
+    if !fieldOf(i.kind).map(_.value).contains(f.field.value) then None
     else
       Some(d.map(_.kind) match
-        case Some(MergeDecision.Kind.KeepLeft)  => Right(f.left.getOrElse("—"))
-        case Some(MergeDecision.Kind.KeepRight) => Right(f.right.getOrElse("—"))
-        case Some(MergeDecision.Kind.Concat)    => Right(List(f.left, f.right).flatten.mkString("\n\n"))
+        case Some(MergeDecision.Kind.KeepLeft)  => Right(ResultText(f.left.map(_.value).getOrElse("—")))
+        case Some(MergeDecision.Kind.KeepRight) => Right(ResultText(f.right.map(_.value).getOrElse("—")))
+        case Some(MergeDecision.Kind.Concat)    => Right(ResultText(List(f.left.map(_.value), f.right.map(_.value)).flatten.mkString("\n\n")))
         case Some(MergeDecision.Kind.Hull)      => Right(com.histmersion.web.MergeView.ResultText("the span covering both"))
-        case Some(MergeDecision.Kind.Map)       => Right(d.flatMap(_.argument).getOrElse("—"))
-        case Some(MergeDecision.Kind.Both) => Right("two records: " + List(f.left, f.right).flatten.mkString(" and "))
+        case Some(MergeDecision.Kind.Map)       => Right(ResultText(d.flatMap(_.argument).map(_.value).getOrElse("—")))
+        case Some(MergeDecision.Kind.Both) => Right(ResultText("two records: " + List(f.left.map(_.value), f.right.map(_.value)).flatten.mkString(" and ")))
         case Some(MergeDecision.Kind.RenameRight) =>
-          Right(s"${f.left.getOrElse("")} here, ${d.flatMap(_.argument).getOrElse("")} for the bundle's")
+          Right(ResultText(s"${f.left.map(_.value).getOrElse("")} here, ${d.flatMap(_.argument).map(_.value).getOrElse("")} for the bundle's"))
         case Some(MergeDecision.Kind.RenameLeft) =>
-          Right(s"${d.flatMap(_.argument).getOrElse("")} here, ${f.right.getOrElse("")} for the bundle's")
-        case Some(other) => Right(MergeDecision.Kind.wireOf(other))
-        case None        => Left("to decide"))
+          Right(ResultText(s"${d.flatMap(_.argument).map(_.value).getOrElse("")} here, ${f.right.map(_.value).getOrElse("")} for the bundle's"))
+        case Some(other) => Right(ResultText(MergeDecision.Kind.wireOf(other).value))
+        case None        => Left(ResultText("to decide")))
 
   /** The rows of a field table worth a person's eye: the ones that differ come first. */
   def rows(fs: List[IssueField]): List[(IssueField, Boolean)] =
@@ -224,44 +190,44 @@ object MergeView:
     * around this collection's and the bundle's lines (and the common version's).
     */
   def markedText(t: IssueText): com.histmersion.web.MergeView.MarkedText =
-    t.hunks
+    MarkedText(t.hunks
       .flatMap { h =>
-        if !h.conflict then h.left
+        if !h.conflict.value then h.left.map(_.value)
         else
-          (("<<<<<<< here" :: h.left) ++ (if h.base.nonEmpty then "||||||| common version" :: h.base else Nil) ++
-            ("=======" :: h.right) :+ ">>>>>>> bundle"
+          (("<<<<<<< here" :: h.left.map(_.value)) ++ (if h.base.nonEmpty then "||||||| common version" :: h.base.map(_.value) else Nil) ++
+            ("=======" :: h.right.map(_.value)) :+ ">>>>>>> bundle"
         )
       }
-      .mkString("\n")
+      .mkString("\n"))
 
   /** Conflict markers still in an edited text: it is not merged yet. */
-  def hasMarkers(text: com.histmersion.web.MergeView.Text): Boolean =
+  def hasMarkers(text: String): Boolean =
     text.linesIterator.exists(l => l.startsWith("<<<<<<< ") || l == "=======" || l.startsWith(">>>>>>> "))
 
   /** The argument a `file:` decision made on this screen names (no file exists: the text travels in the decision, and
     * in the resolution file's `texts:`).
     */
-  def fileName(i: MergeIssue): com.histmersion.web.MergeView.FileName =
-    s"merged/${i.left.orElse(i.right).map(_.label).getOrElse(i.id)}.md"
+  def fileName(i: MergeIssue): MergeDecision.Argument =
+    MergeDecision.Argument(s"merged/${i.left.orElse(i.right).map(_.label.value).getOrElse(i.id.value)}.md")
 
   /** May the plan be applied now? Nothing open, nothing wrong, something to do. */
   def applicable(p: MergePlan): Boolean =
-    p.open.isEmpty && p.problems.isEmpty && p.resolutionErrors.isEmpty && p.changes > 0
+    p.open.isEmpty && p.problems.isEmpty && p.resolutionErrors.isEmpty && p.changes.value > 0
 
   /** A span as a bar on a common axis: left offset and width in per cent of `[lo, hi]`. */
-  def bar(s: IssueSpan, lo: com.histmersion.api.Years.Astronomical, hi: com.histmersion.api.Years.Astronomical): (com.histmersion.web.MergeView.Left, com.histmersion.web.MergeView.Width) =
-    val w = math.max(1L, hi - lo).toDouble
-    val a = s.start.getOrElse(lo)
-    val b = s.end.getOrElse(hi)
-    (100.0 * (a - lo) / w, math.max(1.0, 100.0 * (b - a) / w))
+  def bar(s: IssueSpan, lo: com.histmersion.api.catalogue.Year, hi: com.histmersion.api.catalogue.Year): (Double, Double) =
+    val w = math.max(1L, hi.value - lo.value).toDouble
+    val a = s.start.getOrElse(lo).value
+    val b = s.end.getOrElse(hi).value
+    (100.0 * (a - lo.value) / w, math.max(1.0, 100.0 * (b - a) / w))
 
   /** The axis of two spans: their hull, open ends given a margin of a tenth. */
-  def axis(spans: List[IssueSpan]): Option[(com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)] =
+  def axis(spans: List[IssueSpan]): Option[(com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year)] =
     val ends = spans.flatMap(s => s.start.toList ++ s.end.toList)
     Option.when(ends.nonEmpty) {
-      val (lo, hi) = (ends.min, ends.max)
-      val m = math.max(10L, (hi - lo) / 10)
-      (lo - m, hi + m)
+      val (lo, hi) = (ends.minBy(_.value), ends.maxBy(_.value))
+      val m = math.max(10L, (hi.value - lo.value) / 10)
+      (com.histmersion.api.catalogue.Year(lo.value - m), com.histmersion.api.catalogue.Year(hi.value + m))
     }
 
   // ── state ───────────────────────────────────────────────────────────────────────────────────────
@@ -270,7 +236,7 @@ object MergeView:
   private val upload = Var(Option.empty[com.histmersion.api.exchange.Bundle.Upload])
   private val plan = Var(Option.empty[MergePlan])
   private val res = Var(MergeResolutions())
-  private val selected = Var(Option.empty[String])
+  private val selected = Var(Option.empty[MergeIssue.Id])
   private val filter = Var("")
   private val planning = Var(false)
   private val progress = Var(Option.empty[Double])
@@ -280,7 +246,7 @@ object MergeView:
   private val confirm = Var(false)
 
   /** The base map's tiles, from `/api/config` ([[configure]]). */
-  private var tiles: Option[(com.histmersion.web.MergeView.Label, com.histmersion.web.MergeView.TileCount)] = None
+  private var tiles: Option[(UiConfig.Tiles, UiConfig.TilesMaxZoom)] = None
 
   /** The latest plan request: an answer to an older one is dropped (a `var`: it counts requests). */
   private var planReq = 0
@@ -292,9 +258,9 @@ object MergeView:
   /** Where a map with nothing to show opens (`ui.map-start`); set from `/api/config` like `tiles`. */
   private var startView = MapStartConfig()
 
-  private def bundle: Option[com.histmersion.web.MergeView.BundleText] = UiState.mergeBundle.now()
+  private def bundle: Option[com.histmersion.api.Sha256] = UiState.mergeBundle.now().map(com.histmersion.api.Sha256(_))
 
-  private def fail(what: com.histmersion.web.MergeView.ActionLabel)(e: Throwable): Unit = failure.set(Some(s"$what: ${e.getMessage}"))
+  private def fail(what: String)(e: Throwable): Unit = failure.set(Some(s"$what: ${e.getMessage}"))
 
   /** Open a bundle that is on the server: its draft, then its plan. */
   private def load(sha: com.histmersion.api.Sha256): Unit =
@@ -307,7 +273,7 @@ object MergeView:
       planReq += 1
       val mine = planReq
       planning.set(true)
-      ApiClient.mergePlan(MergePlan.Request(sha, res.now())).onComplete { r =>
+      ApiClient.mergePlan(MergePlan.Request(MergePlan.Request.Bundle(sha.value), res.now())).onComplete { r =>
         if mine == planReq then
           planning.set(false)
           r.fold(
@@ -323,7 +289,7 @@ object MergeView:
     }
 
   /** Keep a decision (on the server), then plan again. */
-  private def set(issue: com.histmersion.web.MergeView.SetIssue, d: Option[MergeDecision], text: Option[com.histmersion.web.MergeView.SetText] = None): Unit =
+  private def set(issue: MergeIssue.Id, d: Option[MergeDecision], text: Option[MergeResolution.Text] = None): Unit =
     val next = decide(res.now(), issue, d, text)
     res.set(next)
     message.set(None)
@@ -337,14 +303,14 @@ object MergeView:
     ApiClient.uploadBundle(f, p => progress.set(Some(p))).onComplete { r =>
       progress.set(None)
       r.fold(
-        fail(com.histmersion.web.MergeView.ActionLabel("the upload")),
+        fail("the upload"),
         u => {
           if u.manifest.isEmpty then
             failure.set(Some(s"${f.name} is not a readable bundle: ${u.problems.mkString("; ")}"))
           else
             upload.set(Some(u))
             plan.set(None); selected.set(None)
-            UiState.set(UiState.mergeBundle := Some(u.sha256))()
+            UiState.set(UiState.mergeBundle := Some(u.sha256.value))()
             load(u.sha256)
         }
       )
@@ -353,7 +319,7 @@ object MergeView:
   private def download(): Unit =
     plan.now().foreach { p =>
       val text = MergeResolutions.Text.template(p, res.now())
-      val blob = dom.Blob(js.Array(text), new dom.BlobPropertyBag { `type` = "application/yaml" })
+      val blob = dom.Blob(js.Array(text.value), new dom.BlobPropertyBag { `type` = "application/yaml" })
       val url = dom.URL.createObjectURL(blob)
       val a = dom.document.createElement("a").asInstanceOf[dom.HTMLAnchorElement]
       a.href = url
@@ -379,7 +345,7 @@ object MergeView:
           r => {
             val next = res.now().overriddenBy(r)
             res.set(next)
-            message.set(Some(s"${Plural.count(r.resolve.size, "decision")} read from ${f.name}"))
+            message.set(Some(s"${Plural.count(Plural.CountN(r.resolve.size.toLong), Plural.CountSingular("decision"))} read from ${f.name}"))
             bundle.foreach(sha =>
               ApiClient.putMergeSession(sha, next).onComplete(_.fold(fail("keeping the decisions"), _ => replan()))
             )
@@ -391,14 +357,14 @@ object MergeView:
     for sha <- bundle; p <- plan.now() do
       confirm.set(false)
       failure.set(None)
-      ApiClient.mergeApply(MergeApplyRequest(sha, p.planHash, res.now())).onComplete(_.fold(fail("the merge"), follow))
+      ApiClient.mergeApply(MergeApplyRequest(MergeApplyRequest.Bundle(sha.value), p.planHash, res.now())).onComplete(_.fold(fail("the merge"), follow))
 
   /** Follow an apply job (its backup comes first) until it is done. */
   private def follow(j: MergeApplyJob): Unit =
     job.set(Some(j))
     if j.state == MergeJobState.Running then
       dom.window.setTimeout(() => ApiClient.mergeApplyStatus(j.job).onComplete(_.fold(fail("the merge"), follow)), 2000)
-    else if j.result.exists(r => r.applied && r.mergeId.isDefined) then
+    else if j.result.exists(r => r.applied.value && r.mergeId.isDefined) then
       res.set(MergeResolutions())
       replan()
     // a restart cut it short: it committed or rolled back as a whole — planning again shows which
@@ -452,7 +418,7 @@ object MergeView:
           strong(MergeMarkdown.who(p.from)),
           s" into ",
           strong(MergeMarkdown.who(p.into)),
-          span(cls := "muted", s" · plan ${p.planHash}" + p.asOf.fold("")(a => s" · as of ${a.take(10)}"))
+          span(cls := "muted", s" · plan ${p.planHash}" + p.asOf.fold("")(a => s" · as of ${a.value.take(10)}"))
         )
       }),
       child.maybe <-- plan.signal.map(
@@ -501,9 +467,9 @@ object MergeView:
         span(cls := "merge-counter", cls("done") := open == 0, s"$open of $total to decide"),
         span(
           cls := "muted",
-          s" · ${Plural.count(p.matches.sources, com.histmersion.api.Plural.CountSingular("source"))}: ${p.matches.byUid} the same record · ${p.matches.byLedger} by ledger · " +
+          s" · ${Plural.count(Plural.CountN(p.matches.sources.value.toLong), com.histmersion.api.Plural.CountSingular("source"))}: ${p.matches.byUid} the same record · ${p.matches.byLedger} by ledger · " +
             s"${p.matches.byStrongKey} by DOI/file/ISBN · ${p.matches.byScore} by score · ${p.matches.unmatched} new" +
-            s" · ${Plural.count(p.changes, "change")} to write"
+            s" · ${Plural.count(Plural.CountN(p.changes.value.toLong), Plural.CountSingular("change"))} to write"
         ),
         child.maybe <-- planning.signal.map(b => Option.when(b)(span(cls := "muted", " · planning…")))
       ),
@@ -512,7 +478,7 @@ object MergeView:
           cls := "merge-problems",
           role := "alert",
           strong("No decision fixes these: "),
-          ul(p.problems.map(x => li(x)))
+          ul(p.problems.map(x => li(x.value)))
         )
       ),
       Option.when(p.resolutionErrors.nonEmpty)(
@@ -520,7 +486,7 @@ object MergeView:
           cls := "merge-problems",
           role := "alert",
           strong("Decisions that could not be used: "),
-          ul(p.resolutionErrors.map(x => li(x)))
+          ul(p.resolutionErrors.map(x => li(x.value)))
         )
       ),
       div(
@@ -564,16 +530,16 @@ object MergeView:
                   button(
                     typ := "button",
                     cls := "link-btn",
-                    code(i.id),
+                    code(i.id.value),
                     " ",
-                    span(cls := "merge-entity", i.entity.wire),
+                    span(cls := "merge-entity", i.entity.wire.value),
                     " ",
-                    span(i.left.orElse(i.right).map(_.label).getOrElse("")),
-                    div(cls := "muted", i.title),
+                    span(i.left.orElse(i.right).map(_.label.value).getOrElse("")),
+                    div(cls := "muted", i.title.value),
                     i.decision.map(d =>
                       div(
                         cls := "merge-decided",
-                        s"→ ${d.wire}" + i.decidedBy.fold("")(b => s" (${b.toString.toLowerCase})")
+                        s"→ ${d.wire.value}" + i.decidedBy.fold("")(b => s" (${b.toString.toLowerCase})")
                       )
                     ),
                     onClick --> { _ =>
@@ -596,7 +562,7 @@ object MergeView:
         htmlTag("details")(
           cls := "merge-info",
           htmlTag("summary")(s"information (${p.info.size})"),
-          ul(p.info.map(x => li(x)))
+          ul(p.info.map(x => li(x.value)))
         )
       ),
       Option.when(!p.sources.isEmpty)(
@@ -608,7 +574,7 @@ object MergeView:
           ul(
             matched(p).map(m =>
               li(
-                code(m.rightCitekey),
+                code(m.rightCitekey.value),
                 m.leftCitekey.fold(span(" — new"))(l => span(" → ", SourceLink(l))),
                 span(
                   cls := "muted",
@@ -624,16 +590,16 @@ object MergeView:
   // ── one issue ──
 
   private def review(i: MergeIssue): HtmlElement =
-    val mine = res.now().resolve.find(_.issue == i.id)
+    val mine = res.now().resolve.find(_.issue.value == i.id.value)
     div(
       cls := "merge-issue-review",
       h3(
-        code(i.id),
+        code(i.id.value),
         " ",
-        kindText(i.kind),
+        kindText(i.kind).value,
         span(cls := "muted", s" · ${i.entity.wire} · ${i.severity.toString.toLowerCase}")
       ),
-      p_(i.title),
+      p_(i.title.value),
       i.condition.map(c =>
         p_(
           cls := "muted",
@@ -646,8 +612,8 @@ object MergeView:
           )
         )
       ),
-      div(cls := "merge-sides", side(com.histmersion.web.MergeView.Who("here"), i.left, i.entity), side(com.histmersion.web.MergeView.Who("bundle"), i.right, i.entity)),
-      Option.when(i.why.nonEmpty)(div(cls := "merge-why", h5("why"), ul(i.why.map(w => li(w))))),
+      div(cls := "merge-sides", side("here", i.left, i.entity), side("bundle", i.right, i.entity)),
+      Option.when(i.why.nonEmpty)(div(cls := "merge-why", h5("why"), ul(i.why.map(w => li(w.value))))),
       i.detail.toList.flatMap(d =>
         d.fields.headOption.map(_ => fieldTable(i, d.fields)).toList ++
           d.text.map(t => articleView(i, t, mine.flatMap(_.text))).toList ++
@@ -656,14 +622,14 @@ object MergeView:
       decisions(i)
     )
 
-  private def side(who: com.histmersion.web.MergeView.Who, s: Option[IssueSide], entity: Bundle.Kind): HtmlElement =
+  private def side(who: String, s: Option[IssueSide], entity: Bundle.Kind): HtmlElement =
     div(
       cls := s"merge-side merge-$who",
       h5(who),
       s.fold(span(cls := "muted", "nothing")) { x =>
         div(
-          if who == "here" && entity == Bundle.Kind.Source then SourceLink(x.label) else code(x.label),
-          x.lines.map(l => div(cls := "muted", l))
+          if who == "here" && entity == Bundle.Kind.Source then SourceLink(x.label) else code(x.label.value),
+          x.lines.map(l => div(cls := "muted", l.value))
         )
       }
     )
@@ -675,13 +641,13 @@ object MergeView:
       tbody(rows(fs).map { (f, differs) =>
         tr(
           cls("differs") := differs,
-          td(f.field),
-          td(f.left.getOrElse("—")),
+          td(f.field.value),
+          td(f.left.map(_.value).getOrElse("—")),
           resultOf(i, f, i.decision) match
-            case Some(Right(v)) => td(cls := "merge-result", v)
-            case Some(Left(v))  => td(cls := "merge-result pending", v)
+            case Some(Right(v)) => td(cls := "merge-result", v.value)
+            case Some(Left(v))  => td(cls := "merge-result pending", v.value)
             case None           => td(cls := "merge-result"),
-          td(f.right.getOrElse("—"))
+          td(f.right.map(_.value).getOrElse("—"))
         )
       })
     )
@@ -689,28 +655,28 @@ object MergeView:
   /** The diff3 view: the agreed regions folded, each conflict as here | common | bundle; and the editor the merged text
     * is written in (`file:`).
     */
-  private def articleView(i: MergeIssue, t: IssueText, edited: Option[com.histmersion.web.MergeView.EditedText]): HtmlElement =
-    val draft = Var(edited.getOrElse(markedText(t)))
-    def lines(ls: List[com.histmersion.web.MergeView.Line]) = pre(cls := "merge-lines", ls.mkString("\n"))
+  private def articleView(i: MergeIssue, t: IssueText, edited: Option[MergeResolution.Text]): HtmlElement =
+    val draft = Var[String](edited.map(_.value).getOrElse(markedText(t).value))
+    def lines(ls: List[String]) = pre(cls := "merge-lines", ls.mkString("\n"))
     div(
       cls := "merge-diff",
       h5(if t.base.isDefined then "the two versions against their common version"
       else "the two versions (no common version)"),
       t.hunks.map { h =>
-        if !h.conflict then
+        if !h.conflict.value then
           htmlTag("details")(
             cls := "merge-agreed",
-            htmlTag("summary")(s"${Plural.count(h.left.size, com.histmersion.api.Plural.CountSingular("line"))} the same on both sides"),
-            lines(h.left)
+            htmlTag("summary")(s"${Plural.count(Plural.CountN(h.left.size.toLong), com.histmersion.api.Plural.CountSingular("line"))} the same on both sides"),
+            lines(h.left.map(_.value))
           )
         else
           div(
             cls := "merge-hunk",
-            div(cls := "merge-col merge-here", h5("here"), lines(h.left)),
+            div(cls := "merge-col merge-here", h5("here"), lines(h.left.map(_.value))),
             Option.when(h.base.nonEmpty || t.base.isDefined)(
-              div(cls := "merge-col merge-base", h5("common version"), lines(h.base))
+              div(cls := "merge-col merge-base", h5("common version"), lines(h.base.map(_.value)))
             ),
-            div(cls := "merge-col merge-bundle", h5("bundle"), lines(h.right))
+            div(cls := "merge-col merge-bundle", h5("bundle"), lines(h.right.map(_.value)))
           )
       },
       h5("the merged text"),
@@ -733,7 +699,7 @@ object MergeView:
                 if hasMarkers(d) then "resolve every <<<<<<< … >>>>>>> region first" else "decide file: with this text"
               ),
               onClick --> (_ =>
-                set(i.id, Some(MergeDecision.withArg(MergeDecision.Kind.File, fileName(i))), Some(draft.now()))
+                set(i.id, Some(MergeDecision.withArg(MergeDecision.Kind.File, fileName(i))), Some(MergeResolution.Text(draft.now())))
               )
             )
         ),
@@ -748,7 +714,7 @@ object MergeView:
     val spans = x.leftSpan.toList ++ x.rightSpan.toList
     div(
       cls := "merge-place",
-      Option.when(x.leftGeometry.isDefined || x.rightGeometry.isDefined)(miniMap(x.leftGeometry, x.rightGeometry)),
+      Option.when(x.leftGeometry.isDefined || x.rightGeometry.isDefined)(miniMap(x.leftGeometry.map(_.value), x.rightGeometry.map(_.value))),
       div(
         cls := "merge-legend",
         span(cls := "merge-swatch merge-left"),
@@ -778,14 +744,14 @@ object MergeView:
       }
     )
 
-  private def miniMap(left: Option[com.histmersion.web.MergeView.Side], right: Option[com.histmersion.web.MergeView.Side]): HtmlElement =
+  private def miniMap(left: Option[String], right: Option[String]): HtmlElement =
     // a `var`: the map lives as long as the element; created on mount, removed on unmount
     var map: Option[MapSurface] = None
     div(
       cls := "merge-map",
       onMountUnmountCallback(
         mount = ctx =>
-          val m = Engines.surface(ctx.thisNode.ref, tiles.fold(12.0)(_._2.toDouble), _ => None)
+          val m = Engines.surface(ctx.thisNode.ref, tiles.fold(12.0)(_._2.value.toDouble), _ => None)
           m.setBaseMap(BaseMaps.current)
           val geoms = List("left" -> left, "right" -> right).collect { case (who, Some(g)) =>
             val geo = js.JSON.parse(g)
@@ -832,14 +798,15 @@ object MergeView:
         ),
         labelText,
         " ",
-        code(d.wire)
+        code(d.wire.value)
       )
     def withArgument(k: MergeDecision.Kind): HtmlElement =
-      val arg = Var(
+      val arg = Var[String](
         current
           .filter(_.kind == k)
           .flatMap(_.argument)
           .orElse(i.suggested.filter(_.kind == k).flatMap(_.argument))
+          .map(_.value)
           .getOrElse("")
       )
       div(
@@ -850,15 +817,15 @@ object MergeView:
             nameAttr := name,
             checked := i.decision.exists(_.kind == k),
             onChange --> (_ =>
-              Option(arg.now().trim).filter(_.nonEmpty).foreach(a => set(i.id, Some(MergeDecision.withArg(k, a))))
+              Option(arg.now().trim).filter(_.nonEmpty).foreach(a => set(i.id, Some(MergeDecision.withArg(k, MergeDecision.Argument(a)))))
             )
           ),
-          describe(k)
+          describe(k).value
         ),
         input(
           typ := "text",
           cls := "field",
-          aria.label := describe(k),
+          aria.label := describe(k).value,
           placeholder := (if i.entity == Bundle.Kind.Event then "a new event id" else "a new citekey"),
           controlled(value <-- arg.signal, onInput.mapToValue --> arg.writer)
         ),
@@ -867,7 +834,7 @@ object MergeView:
           cls := "btn",
           "set",
           onClick --> (_ =>
-            Option(arg.now().trim).filter(_.nonEmpty).foreach(a => set(i.id, Some(MergeDecision.withArg(k, a))))
+            Option(arg.now().trim).filter(_.nonEmpty).foreach(a => set(i.id, Some(MergeDecision.withArg(k, MergeDecision.Argument(a)))))
           )
         )
       )
@@ -883,10 +850,10 @@ object MergeView:
                 div(
                   List(i.left, i.right).flatten.map(s =>
                     radio(
-                      MergeDecision.withArg(MergeDecision.Kind.Map, s.label),
-                      describe(MergeDecision.Kind.Map),
+                      MergeDecision.withArg(MergeDecision.Kind.Map, MergeDecision.Argument(s.label.value)),
+                      describe(MergeDecision.Kind.Map).value,
                       " ",
-                      strong(s.label)
+                      strong(s.label.value)
                     )
                   )
                 )
@@ -900,12 +867,12 @@ object MergeView:
                     checked := i.decision.exists(_.kind == MergeDecision.Kind.File),
                     disabled := true
                   ),
-                  describe(MergeDecision.Kind.File),
+                  describe(MergeDecision.Kind.File).value,
                   span(cls := "muted", " — write it above and press “use this text”")
                 )
-              case k => radio(MergeDecision.of(k), describe(k))
+              case k => radio(MergeDecision.of(k), describe(k).value)
             },
-            i.suggested.filter(_ => i.decision.isEmpty).map(s => p_(cls := "muted", "suggested: ", code(s.wire))),
+            i.suggested.filter(_ => i.decision.isEmpty).map(s => p_(cls := "muted", "suggested: ", code(s.wire.value))),
             Option.when(current.isDefined)(
               button(typ := "button", cls := "btn", "take the decision back", onClick --> (_ => set(i.id, None)))
             )
@@ -922,10 +889,10 @@ object MergeView:
         case Some(j) if j.state == MergeJobState.Running =>
           p_(
             cls := "muted",
-            s"Applying plan ${j.planHash}: ${j.elapsedMs / 1000} s so far — the backup is taken first."
+            s"Applying plan ${j.planHash}: ${j.elapsedMs.value / 1000} s so far — the backup is taken first."
           )
         case Some(j) if j.state == MergeJobState.Failed || j.state == MergeJobState.Interrupted =>
-          p_(cls := "form-error", role := "alert", j.error.getOrElse("the merge failed"))
+          p_(cls := "form-error", role := "alert", j.error.map(_.value).getOrElse("the merge failed"))
         case Some(j) => j.result.fold(emptyNode)(appliedReport)
         case None    => emptyNode
       },
@@ -935,14 +902,14 @@ object MergeView:
         else if !applicable(p) then
           p_(
             cls := "muted",
-            if p.changes == 0 && p.open.isEmpty then "Nothing to apply: the bundle is merged already."
+            if p.changes.value == 0 && p.open.isEmpty then "Nothing to apply: the bundle is merged already."
             else "Apply waits until every question is decided and nothing is wrong."
           )
         else if asking then
           div(
             cls := "form-row merge-confirm",
             span(
-              s"Merge ${MergeMarkdown.who(p.from)} into this collection: ${Plural.count(p.changes, com.histmersion.api.Plural.CountSingular("change"))}, " +
+              s"Merge ${MergeMarkdown.who(p.from)} into this collection: ${Plural.count(Plural.CountN(p.changes.value.toLong), com.histmersion.api.Plural.CountSingular("change"))}, " +
                 s"plan ${p.planHash}. A backup is taken first."
             ),
             button(
@@ -958,7 +925,7 @@ object MergeView:
           button(
             typ := "button",
             cls := "btn btn--primary merge-apply-btn",
-            s"apply the merge (${Plural.count(p.changes, com.histmersion.api.Plural.CountSingular("change"))})",
+            s"apply the merge (${Plural.count(Plural.CountN(p.changes.value.toLong), com.histmersion.api.Plural.CountSingular("change"))})",
             disabled := running,
             onClick --> (_ => confirm.set(true))
           )
@@ -967,8 +934,8 @@ object MergeView:
 
   private def appliedReport(r: MergeApplyResult): HtmlElement =
     val t = r.tally
-    if !r.applied then
-      div(cls := "form-error", role := "alert", p_("Not merged: nothing was written."), ul(r.problems.map(x => li(x))))
+    if !r.applied.value then
+      div(cls := "form-error", role := "alert", p_("Not merged: nothing was written."), ul(r.problems.map(x => li(x.value))))
     else if r.mergeId.isEmpty then p_(cls := "form-ok", "Nothing to merge: the bundle is merged already.")
     else
       div(
@@ -976,7 +943,7 @@ object MergeView:
         p_(s"Merged as ${r.mergeId.fold("")(_.toString.take(8))}" + r.backup.fold("")(b => s" (backup $b)") + "."),
         ul(
           li(
-            s"${Plural.count(t.sourcesMerged, com.histmersion.api.Plural.CountSingular("source"))} merged (${t.sourcesByScore} by score), ${t.sourcesRenamed} renamed, ${t.aliases} old citekeys"
+            s"${Plural.count(Plural.CountN(t.sourcesMerged.value.toLong), com.histmersion.api.Plural.CountSingular("source"))} merged (${t.sourcesByScore} by score), ${t.sourcesRenamed} renamed, ${t.aliases} old citekeys"
           ),
           li(
             s"${t.findingsMerged} findings and ${t.assetsMerged} figures merged; ${t.attestationsReanchored} attestations re-anchored, ${t.attestationsDropped} dropped"
@@ -989,8 +956,8 @@ object MergeView:
           ),
           Option.when(r.reviews.nonEmpty)(li(s"queued for review: ${r.reviews.mkString(", ")}")),
           r.replanChanges.map(n =>
-            li(if n == 0 then "planned again: nothing left to do"
-            else s"planned again: ${Plural.count(n, com.histmersion.api.Plural.CountSingular("change"))} left — report it")
+            li(if n.value == 0 then "planned again: nothing left to do"
+            else s"planned again: ${Plural.count(Plural.CountN(n.value.toLong), com.histmersion.api.Plural.CountSingular("change"))} left — report it")
           )
         )
       )

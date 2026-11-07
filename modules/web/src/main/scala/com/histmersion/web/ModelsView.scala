@@ -16,89 +16,49 @@ import com.histmersion.api.automation.{Agents, AgentsMarkdown, PlanQuota}
   * (nothing is spent).
   */
 object ModelsView:
-  type AgeText = AgeText.T
-  object AgeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Amount = Amount.T
-  object Amount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AmountText = AmountText.T
-  object AmountText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BarLeft = BarLeft.T
-  object BarLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BarWidth = BarWidth.T
-  object BarWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Busy = Busy.T
-  object Busy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChainEntry = ChainEntry.T
-  object ChainEntry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChainText = ChainText.T
-  object ChainText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EntryState = EntryState.T
-  object EntryState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FloorsText = FloorsText.T
-  object FloorsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LimitsText = LimitsText.T
-  object LimitsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Offline = Offline.T
-  object Offline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReserveText = ReserveText.T
-  object ReserveText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReservedCount = ReservedCount.T
-  object ReservedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Seconds = Seconds.T
-  object Seconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UsedPercent = UsedPercent.T
-  object UsedPercent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** A chain as typed: `a > b > c` (commas also separate). */
 
-  type BodyBusy = _root_.com.histmersion.web.ModelsView.Busy
-  val BodyBusy: _root_.com.histmersion.web.ModelsView.Busy.type = _root_.com.histmersion.web.ModelsView.Busy
-  type ChainRowBusy = _root_.com.histmersion.web.ModelsView.Busy
-  val ChainRowBusy: _root_.com.histmersion.web.ModelsView.Busy.type = _root_.com.histmersion.web.ModelsView.Busy
-  type AllowanceRowBusy = _root_.com.histmersion.web.ModelsView.Busy
-  val AllowanceRowBusy: _root_.com.histmersion.web.ModelsView.Busy.type = _root_.com.histmersion.web.ModelsView.Busy
 
-  def chainInput(s: com.histmersion.web.ModelsView.ChainText): List[com.histmersion.web.ModelsView.ChainEntry] = s.split("[>,]").toList.map(_.trim).filter(_.nonEmpty)
+  def chainInput(s: String): List[ChainEntry.Model] = s.split("[>,]").toList.map(_.trim).filter(_.nonEmpty).map(ChainEntry.Model(_))
 
   /** Limits as typed: `2M tokens/5h, 5 usd/day` → their wire form, or the first problem. */
-  def limitsInput(s: com.histmersion.web.ModelsView.LimitsText): Either[com.histmersion.web.ModelsView.Problem, List[LimitSpec]] =
-    s.split(',').toList.map(_.trim).filter(_.nonEmpty).map(Limit.parse).partitionMap(identity) match
+  def limitsInput(s: String): Either[String, List[LimitSpec]] =
+    s.split(',').toList.map(_.trim).filter(_.nonEmpty).map(t => Limit.parse(Limit.Spec(t))).partitionMap(identity) match
       case (Nil, ls) => Right(ls.map(_.spec))
-      case (errs, _) => Left(errs.mkString("; "))
+      case (errs, _) => Left(errs.map(_.value).mkString("; "))
 
   /** A reserve as typed: 0..99, blank = 0. */
-  def reserveInput(s: com.histmersion.web.ModelsView.ReserveText): Either[com.histmersion.web.ModelsView.Problem, com.histmersion.web.ModelsView.ReservedCount] =
+  def reserveInput(s: String): Either[String, AllowanceSet.ReservePct] =
     val t = s.trim.stripSuffix("%").trim
-    if t.isEmpty then Right(com.histmersion.web.ModelsView.ReservedCount(0))
-    else t.toIntOption.filter(r => r >= 0 && r <= 99).toRight(s"'$s' is not a reserve of 0 to 99 %")
+    if t.isEmpty then Right(AllowanceSet.ReservePct(0))
+    else t.toIntOption.filter(r => r >= 0 && r <= 99).map(AllowanceSet.ReservePct(_)).toRight(s"'$s' is not a reserve of 0 to 99 %")
 
   /** How much of a limit is used, 0..100 (a bar's width). */
-  def usedPct(l: LimitStatus): com.histmersion.web.ModelsView.UsedPercent =
-    if l.amount <= 0 then com.histmersion.web.ModelsView.UsedPercent(100) else math.max(0, math.min(100, math.round(l.used / l.amount * 100).toInt))
+  def usedPct(l: LimitStatus): Int =
+    if l.amount.value <= 0 then 100 else math.max(0, math.min(100, math.round(l.used.value / l.amount.value * 100).toInt))
 
   /** The state class of one chained model. */
-  def entryState(e: ChainEntry): com.histmersion.web.ModelsView.EntryState =
-    if e.usable then com.histmersion.web.ModelsView.EntryState("is-usable") else if !e.ready then com.histmersion.web.ModelsView.EntryState("is-unready") else com.histmersion.web.ModelsView.EntryState("is-paused")
+  def entryState(e: ChainEntry): String =
+    if e.usable.value then "is-usable" else if !e.ready.value then "is-unready" else "is-paused"
 
   /** A plan window's bar: how much is used (0..100) and where its floor sits, as the share USED at which the floor is
     * reached (a floor of 25 % left sits at 75 %).
     */
-  def windowBar(w: PlanQuota.WindowStatus): (com.histmersion.web.ModelsView.BarLeft, com.histmersion.web.ModelsView.BarWidth) =
-    (math.max(0, math.min(100, math.round(w.usedPct).toInt)), math.max(0, math.min(100, 100 - w.floor)))
+  def windowBar(w: PlanQuota.WindowStatus): (Int, Int) =
+    (math.max(0, math.min(100, math.round(w.usedPct.value).toInt)), math.max(0, math.min(100, 100 - w.floor.value)))
 
   /** How old a reading is, in words. */
-  def ageText(seconds: com.histmersion.web.ModelsView.Seconds): com.histmersion.web.ModelsView.AgeText =
+  def ageText(seconds: Long): String =
     if seconds < 120 then s"$seconds s ago"
     else if seconds < 7200 then s"${seconds / 60} min ago"
     else if seconds < 172800 then s"${seconds / 3600} h ago"
     else s"${seconds / 86400} d ago"
 
   /** The allowance's limits as one editable line (what [[limitsInput]] reads back). */
-  def limitsText(a: AllowanceStatus): com.histmersion.web.ModelsView.LimitsText = a.limits.map(_.limit).mkString(", ")
+  def limitsText(a: AllowanceStatus): String = a.limits.map(_.limit.value).mkString(", ")
 
   // ── the window ──────────────────────────────────────────────────────────────────────────────────
 
@@ -124,9 +84,9 @@ object ModelsView:
         load()
       }
 
-    def check(offline: com.histmersion.web.ModelsView.Offline): Unit =
+    def check(offline: Boolean): Unit =
       busy.set(true)
-      ApiClient.agentDoctor(offline).onComplete { r =>
+      ApiClient.agentDoctor(ApiClient.Offline(offline)).onComplete { r =>
         busy.set(false)
         r.fold(e => failure.set(Some(e.getMessage)), d => doctor.set(Some(d)))
       }
@@ -143,7 +103,7 @@ object ModelsView:
           disabled <-- busy.signal,
           title := "keys, the free model listing, prices, the claude CLI and its login — nothing is spent",
           "check providers",
-          onClick --> (_ => check(offline = com.histmersion.web.ModelsView.Offline(false)))
+          onClick --> (_ => check(offline = false))
         )
       ),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
@@ -155,9 +115,9 @@ object ModelsView:
       }
     )
 
-  private def body(m: ModelsInfo, busy: Signal[com.histmersion.web.ModelsView.BodyBusy], write: (=> Future[Any]) => Unit): HtmlElement =
+  private def body(m: ModelsInfo, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =
     div(
-      Option.when(!m.enabled)(
+      Option.when(!m.enabled.value)(
         p(
           cls := "muted",
           "Embedded agents are off on this server (agents.enabled); chains and allowances can still be set."
@@ -185,27 +145,27 @@ object ModelsView:
         p(cls := "muted", "No allowance: every model may be used up to the runs' and the day's budgets.")
       else ul(cls := "allowance-list", m.allowances.map(a => allowanceRow(a, busy, write))),
       allowanceForm(None, busy, write),
-      Option.when(m.problems.nonEmpty)(div(cls := "run-warnings", h4("Problems"), ul(m.problems.map(li(_)))))
+      Option.when(m.problems.nonEmpty)(div(cls := "run-warnings", h4("Problems"), ul(m.problems.map(x => li(x.value)))))
     )
 
   /** The subscription pools: one bar per window with its floor marker, the reset, how old the reading is and where it
     * came from, and the hold switch (behind the write gate).
     */
   /** `five_hour=25, seven_day=40` → `5-hour limit 25 %, this week's limit 40 %`: the floors as limits. */
-  def floorsText(floors: com.histmersion.web.ModelsView.FloorsText): com.histmersion.web.ModelsView.FloorsText =
-    floors
+  def floorsText(floors: PlanQuota.PoolStatus.Floors): String =
+    floors.value
       .split(",")
       .toList
       .map(_.trim)
       .filter(_.nonEmpty)
       .map { f =>
         f.split("=", 2) match
-          case Array(k, v) => s"${Wording.allowanceWindow(k.trim).toLowerCase} ${v.trim.stripSuffix("%")} %"
+          case Array(k, v) => s"${Wording.allowanceWindow(PlanQuota.WindowStatus.Kind(k.trim)).toLowerCase} ${v.trim.stripSuffix("%")} %"
           case _           => f
       }
       .mkString(", ")
 
-  private def plansBlock(q: PlanQuota.QuotaInfo, busy: Signal[com.histmersion.web.ModelsView.Busy], write: (=> Future[Any]) => Unit): HtmlElement =
+  private def plansBlock(q: PlanQuota.QuotaInfo, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =
     div(
       cls := "plan-pools",
       h4("Subscription plans"),
@@ -218,19 +178,19 @@ object ModelsView:
         cls := "allowance-list",
         q.plans.map { pl =>
           li(
-            cls := s"allowance ${if pl.usable then "is-usable" else "is-paused"}",
+            cls := s"allowance ${if pl.usable.value then "is-usable" else "is-paused"}",
             div(
               cls := "allowance-head",
-              strong(pl.title),
+              strong(pl.title.value),
               span(
                 cls := "muted",
-                title := pl.floors,
-                s" · floors ${if pl.floors.isEmpty then "none" else floorsText(pl.floors)} (${pl.floorsSource})" +
+                title := pl.floors.value,
+                s" · floors ${if pl.floors.value.isEmpty then "none" else floorsText(pl.floors)} (${pl.floorsSource})" +
                   pl.planType.fold("")(t => s" · plan $t")
               ),
-              if !pl.available then span(cls := "run-paused", s" · ${pl.reason.getOrElse("unavailable: no login")}")
-              else if pl.held then span(cls := "run-paused", " · held")
-              else if pl.usable then span(cls := "muted", pl.reason.fold(" · usable")(r => s" · usable ($r)"))
+              if !pl.available.value then span(cls := "run-paused", s" · ${pl.reason.getOrElse("unavailable: no login")}")
+              else if pl.held.value then span(cls := "run-paused", " · held")
+              else if pl.usable.value then span(cls := "muted", pl.reason.fold(" · usable")(r => s" · usable ($r)"))
               else
                 span(
                   cls := "run-paused",
@@ -246,10 +206,10 @@ object ModelsView:
                       typ := "button",
                       cls := "link-btn",
                       disabled <-- busy,
-                      title := (if pl.held then "let agent runs use this plan again"
+                      title := (if pl.held.value then "let agent runs use this plan again"
                                 else "pause every agent use of this plan"),
-                      if pl.held then "release" else "hold",
-                      onClick --> (_ => write(ApiClient.setPool(pl.pool, PlanQuota.PoolSet(hold = Some(!pl.held)))))
+                      if pl.held.value then "release" else "hold",
+                      onClick --> (_ => write(ApiClient.setPool(pl.pool, PlanQuota.PoolSet(hold = Some(PlanQuota.PoolSet.Hold(!pl.held.value))))))
                     ),
                     " · ",
                     button(
@@ -265,13 +225,13 @@ object ModelsView:
                   )
               )
             ),
-            pl.note.map(n => div(cls := "muted", n)),
+            pl.note.map(n => div(cls := "muted", n.value)),
             div(
               cls := "muted",
               pl.refresh.fold("No fresh reading is taken (refresh off)")(m => s"Fresh reading by $m") +
-                s" · refreshed ${pl.refreshesToday} time${if pl.refreshesToday == 1 then "" else "s"} today" +
+                s" · refreshed ${pl.refreshesToday} time${if pl.refreshesToday.value == 1 then "" else "s"} today" +
                 pl.lastRefresh.fold("")(r =>
-                  s" · last ${r.at} (${r.trigger}): ${if r.ok then "" else "failed — "}${r.detail}"
+                  s" · last ${r.at} (${r.trigger}): ${if r.ok.value then "" else "failed — "}${r.detail}"
                 )
             ),
             if pl.windows.isEmpty then
@@ -284,11 +244,11 @@ object ModelsView:
                   span(
                     cls := "allowance-name",
                     title := s"${w.limit} ${w.kind}",
-                    if w.limit == "claude" || w.limit == "codex" then Wording.allowanceWindow(w.kind)
-                    else s"${Wording.humanize(w.limit)}: ${Wording.allowanceWindow(w.kind).toLowerCase}"
+                    if w.limit.value == "claude" || w.limit.value == "codex" then Wording.allowanceWindow(w.kind)
+                    else s"${Wording.humanize(Wording.Id(w.limit.value))}: ${Wording.allowanceWindow(w.kind).toLowerCase}"
                   ),
                   div(
-                    cls := s"allowance-bar plan-bar ${if w.usable then "" else "is-over"}",
+                    cls := s"allowance-bar plan-bar ${if w.usable.value then "" else "is-over"}",
                     styleAttr := s"--pct:$used%; --floor:$floorAt%",
                     role := "img",
                     aria.label := s"$used % used, floor at ${w.floor} % left"
@@ -296,7 +256,7 @@ object ModelsView:
                   span(
                     cls := "muted",
                     s"$used % used · floor ${w.floor} % left" + w.resetsAt.fold("")(t => s" · resets $t") +
-                      s" · read ${ageText(w.ageSeconds)} from ${w.source}" + (if w.stale then " (stale)" else "")
+                      s" · read ${ageText(w.ageSeconds.value)} from ${w.source}" + (if w.stale.value then " (stale)" else "")
                   )
                 )
               })
@@ -310,13 +270,13 @@ object ModelsView:
       )
     )
 
-  private def chainRow(c: RoleChain, busy: Signal[com.histmersion.web.ModelsView.ChainRowBusy], write: (=> Future[Any]) => Unit): HtmlElement =
+  private def chainRow(c: RoleChain, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =
     val editing = Var(false)
-    val draft = Var(c.models.map(_.model).mkString(" > "))
+    val draft = Var[String](c.models.map(_.model.value).mkString(" > "))
     tr(
-      td(c.role),
+      td(c.role.value),
       td(
-        if c.models.isEmpty then span(cls := "muted", c.problem.getOrElse("no model"))
+        if c.models.isEmpty then span(cls := "muted", c.problem.map(_.value).getOrElse("no model"))
         else
           span(
             cls := "chain",
@@ -327,7 +287,7 @@ object ModelsView:
                   title := Option((e.problem.toList ++ e.billing.toList).mkString(" · "))
                     .filter(_.nonEmpty)
                     .getOrElse("usable"),
-                  e.model,
+                  e.model.value,
                   e.freesAt.map(t => span(cls := "muted", s" until $t"))
                 )
             }
@@ -371,22 +331,22 @@ object ModelsView:
             )
         }
       ),
-      td(c.active.getOrElse(if c.models.isEmpty then "—" else "none: would pause")),
-      td(cls := "muted", c.source)
+      td(c.active.map(_.value).getOrElse(if c.models.isEmpty then "—" else "none: would pause")),
+      td(cls := "muted", c.source.value)
     )
 
-  private def amount(v: com.histmersion.web.ModelsView.Amount, m: Measure): com.histmersion.web.ModelsView.AmountText = m match
+  private def amount(v: Double, m: Measure): String = m match
     case Measure.Tokens => Limit.compact(BigDecimal(math.round(v)))
     case Measure.Usd    => s"${AgentsMarkdown.usd(v)} USD"
 
-  private def allowanceRow(a: AllowanceStatus, busy: Signal[com.histmersion.web.ModelsView.AllowanceRowBusy], write: (=> Future[Any]) => Unit): HtmlElement =
+  private def allowanceRow(a: AllowanceStatus, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =
     li(
-      cls := s"allowance ${if a.usable then "is-usable" else "is-paused"}",
+      cls := s"allowance ${if a.usable.value then "is-usable" else "is-paused"}",
       div(
         cls := "allowance-head",
-        code(a.target),
-        span(cls := "muted", s" · ${a.source}${if a.reservePct > 0 then s" · reserve ${a.reservePct}%" else ""}"),
-        if a.usable then span(cls := "muted", " · has headroom")
+        code(a.target.value),
+        span(cls := "muted", s" · ${a.source}${if a.reservePct.value > 0 then s" · reserve ${a.reservePct}%" else ""}"),
+        if a.usable.value then span(cls := "muted", " · has headroom")
         else
           span(
             cls := "run-paused",
@@ -409,21 +369,21 @@ object ModelsView:
           else span()
         )
       ),
-      a.note.map(n => div(cls := "muted", n)),
+      a.note.map(n => div(cls := "muted", n.value)),
       a.limits.map { l =>
         div(
           cls := "allowance-limit",
-          span(cls := "allowance-name", title := l.limit, Wording.allowanceWindow(l.limit)),
+          span(cls := "allowance-name", title := l.limit.value, Wording.allowanceWindow(PlanQuota.WindowStatus.Kind(l.limit.value))),
           div(
-            cls := s"allowance-bar ${if l.usable then "" else "is-over"}",
+            cls := s"allowance-bar ${if l.usable.value then "" else "is-over"}",
             styleAttr := s"--pct:${usedPct(l)}%",
             role := "img",
             aria.label := s"${usedPct(l)} % used"
           ),
           span(
             cls := "muted",
-            s"${amount(l.used, l.measure)} used · ${amount(l.remaining, l.measure)} left" +
-              (if l.reserve > 0 then s" · reserve ${amount(l.reserve, l.measure)}" else "") + l.freesAt.fold("")(t =>
+            s"${amount(l.used.value, l.measure)} used · ${amount(l.remaining.value, l.measure)} left" +
+              (if l.reserve.value > 0 then s" · reserve ${amount(l.reserve.value, l.measure)}" else "") + l.freesAt.fold("")(t =>
                 s" · frees $t"
               )
           )
@@ -435,12 +395,12 @@ object ModelsView:
   /** Set an allowance: a new one (`None`), or change an existing one (prefilled). */
   private def allowanceForm(
       of: Option[AllowanceStatus],
-      busy: Signal[com.histmersion.web.ModelsView.Busy],
+      busy: Signal[Boolean],
       write: (=> Future[Any]) => Unit
   ): HtmlElement =
-    val target = Var(of.map(_.target).getOrElse(""))
-    val limits = Var(of.map(limitsText).getOrElse(""))
-    val reserve = Var(of.map(_.reservePct.toString).getOrElse(""))
+    val target = Var[String](of.map(_.target.value).getOrElse(""))
+    val limits = Var[String](of.map(limitsText).getOrElse(""))
+    val reserve = Var[String](of.map(_.reservePct.value.toString).getOrElse(""))
     val problem = Var(Option.empty[String])
     val open = Var(false)
     def submit(): Unit =
@@ -449,7 +409,7 @@ object ModelsView:
         case (_, Left(m))          => problem.set(Some(m))
         case (Right(ls), Right(r)) =>
           problem.set(None); open.set(false)
-          write(ApiClient.setAllowance(AllowanceSet(target.now().trim, ls, r)))
+          write(ApiClient.setAllowance(AllowanceSet(AllowanceSet.Target(target.now().trim), ls, r)))
     div(
       cls := "allowance-edit",
       child <-- Auth.writable.combineWith(open.signal).map { (w, o) =>
@@ -496,21 +456,21 @@ object ModelsView:
     )
 
   private def doctorBlock(d: DoctorReport): HtmlElement =
-    def level(l: CheckLevel) = span(cls := s"doctor-level level-${l.wire}", l.wire)
+    def level(l: CheckLevel) = span(cls := s"doctor-level level-${l.wire}", l.wire.value)
     def checks(cs: List[Agents.DoctorCheck]) =
       ul(cls := "doctor-checks", cs.map(c => li(level(c.level), s" ${c.name}: ${c.detail}")))
     div(
       cls := "doctor",
-      h4(s"Provider check${if d.online then "" else " (offline)"}"),
+      h4(s"Provider check${if d.online.value then "" else " (offline)"}"),
       checks(d.checks),
       d.providers.map { p =>
         htmlTag[org.scalajs.dom.HTMLElement]("details")(
           // a used provider with a problem starts unfolded
-          onMountCallback(ctx => if p.used && p.level != CheckLevel.Ok then ctx.thisNode.ref.setAttribute("open", "")),
+          onMountCallback(ctx => if p.used.value && p.level != CheckLevel.Ok then ctx.thisNode.ref.setAttribute("open", "")),
           htmlTag("summary")(
             level(p.level),
             s" ${p.provider}",
-            span(cls := "muted", if p.used then s" · used by ${p.models.mkString(", ")}" else " · no role uses it")
+            span(cls := "muted", if p.used.value then s" · used by ${p.models.mkString(", ")}" else " · no role uses it")
           ),
           checks(p.checks)
         )

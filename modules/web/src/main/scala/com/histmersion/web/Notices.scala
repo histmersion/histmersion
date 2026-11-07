@@ -24,47 +24,38 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   *     browser agrees.
   */
 object Notices:
-  type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Mark = Mark.T
-  object Mark extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Spoken = Spoken.T
   object Spoken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Timestamp = Timestamp.T
-  object Timestamp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** The board a window watches: its wire key is the window's own; other windows watch none. */
-  type MarkAt = _root_.com.histmersion.web.Notices.Timestamp
-  val MarkAt: _root_.com.histmersion.web.Notices.Timestamp.type = _root_.com.histmersion.web.Notices.Timestamp
-
-  def boardOf(key: WindowKey): Option[Board] = Board.parse(key.wire)
+  def boardOf(key: WindowKey): Option[Board] = Board.parse(Board.Wire(key.wire.value))
 
   /** The boards to mark seen now: those whose window is open and that have news, at their `latest`. */
-  def toMark(open: List[WindowKey], cs: Map[com.histmersion.web.Notices.Key, Counter]): List[(Board, com.histmersion.web.Notices.Mark)] =
+  def toMark(open: List[WindowKey], cs: Map[Board.Wire, Counter]): List[(Board, Counter.Latest)] =
     open.flatMap(boardOf).distinct.flatMap { b =>
-      cs.get(b.wire).filter(_.fresh).flatMap(_.latest).map(b -> _)
+      cs.get(b.wire).filter(_.fresh.value).flatMap(_.latest).map(b -> _)
     }
 
   /** A counter once its window showed the items up to `at`. */
-  def seenAt(c: Counter, at: com.histmersion.web.Notices.Timestamp): Counter =
+  def seenAt(c: Counter, at: Counter.Seen): Counter =
     val s = UiNotices.advance(c.seen, at)
-    c.modify(_.seen).setTo(Some(s)).modify(_.fresh).setTo(UiNotices.fresh(c.latest, Some(s)))
+    c.modify(_.seen).setTo(Some(s)).modify(_.fresh).setTo(Counter.Fresh(UiNotices.fresh(c.latest, Some(s))))
 
   /** Is any board among `shown` new? (What the phone's tools button marks.) */
-  def anyFresh(cs: Map[com.histmersion.web.Notices.Key, Counter], shown: Board => Boolean): Boolean =
-    cs.values.exists(c => c.fresh && Board.parse(c.key).exists(shown))
+  def anyFresh(cs: Map[Board.Wire, Counter], shown: Board => Boolean): Boolean =
+    cs.values.exists(c => c.fresh.value && Board.parse(c.key).exists(shown))
 
   /** What a board's button says to a screen reader beside its label. */
-  def spoken(c: Option[Counter]): com.histmersion.web.Notices.Spoken =
+  def spoken(c: Option[Counter]): Spoken =
     val count = c.flatMap(x => UiNotices.badge(x.count)).map(n => s"$n open")
-    val news = Option.when(c.exists(_.fresh))("something new")
-    (count.toList ++ news).mkString(", ")
+    val news = Option.when(c.exists(_.fresh.value))("something new")
+    Spoken((count.toList ++ news).mkString(", "))
 
   // ── state ───────────────────────────────────────────────────────────────────────────────────────
 
-  private val boards = Var(Map.empty[String, Counter])
+  private val boards = Var(Map.empty[Board.Wire, Counter])
   private val glance = Var(Option.empty[UiNotices.AgentsGlance])
 
   /** What the research agents are doing (none where the server runs no agents). */
@@ -78,7 +69,7 @@ object Notices:
   // `var`s: answers to a superseded request are dropped; the debounce timer; the marks on their way
   private var generation = 0
   private var soon = 0
-  private val sending = mutable.Map.empty[Board, String]
+  private val sending = mutable.Map.empty[Board, Counter.Latest]
   private var installed = false
 
   private def apply(cs: Counters): Unit =
@@ -86,7 +77,7 @@ object Notices:
     glance.set(cs.agents)
 
   /** Re-read the counters; `after` sees them once they are in. */
-  def refresh(after: Map[com.histmersion.web.Notices.Key, Counter] => Unit = _ => ()): Unit =
+  def refresh(after: Map[Board.Wire, Counter] => Unit = _ => ()): Unit =
     generation += 1
     val mine = generation
     ApiClient.uiCounters().foreach { cs =>
@@ -98,30 +89,30 @@ object Notices:
   /** Re-read the counters shortly — after a change the page made (several in a row read once). */
   def refreshSoon(): Unit =
     dom.window.clearTimeout(soon)
-    soon = dom.window.setTimeout(() => refresh(), Layout.countersRefreshMs)
+    soon = dom.window.setTimeout(() => refresh(), Layout.countersRefreshMs.value)
 
   /** The page itself changed something on `b` from a window that is not `b`'s own (a goal edited in its own window, an
     * approval decided in a goal's): when `b` had no news before, the only change since is this one, which is not news
     * to the reader who made it.
     */
   def ownWrite(b: Board): Unit =
-    val had = boards.now().get(b.wire).exists(_.fresh)
+    val had = boards.now().get(b.wire).exists(_.fresh.value)
     dom.window.clearTimeout(soon)
     soon = dom.window.setTimeout(
       () =>
         refresh { cs =>
-          if !had then cs.get(b.wire).filter(_.fresh).flatMap(_.latest).foreach(at => mark(b, at))
+          if !had then cs.get(b.wire).filter(_.fresh.value).flatMap(_.latest).foreach(at => mark(b, at))
         },
-      Layout.countersRefreshMs
+      Layout.countersRefreshMs.value
     )
 
   /** Mark `b` seen at `at`: on the page now, then on the server. */
-  private def mark(b: Board, at: com.histmersion.web.Notices.MarkAt): Unit =
-    boards.update(m => m.get(b.wire).fold(m)(c => m.updated(b.wire, seenAt(c, at))))
-    if !sending.get(b).exists(_ >= at) then
+  private def mark(b: Board, at: Counter.Latest): Unit =
+    boards.update(m => m.get(b.wire).fold(m)(c => m.updated(b.wire, seenAt(c, Counter.Seen(at.value)))))
+    if !sending.get(b).exists(_.value >= at.value) then
       sending(b) = at
       generation += 1 // a poll already on its way read the mark from before this one
-      ApiClient.markSeen(b.wire, at).onComplete { r =>
+      ApiClient.markSeen(ApiClient.Board(b.wire.value), ApiClient.SeenAt(at.value)).onComplete { r =>
         if sending.get(b).contains(at) then sending.remove(b)
         r.fold(_ => refresh(), cs => { generation += 1; apply(cs) })
       }
@@ -131,7 +122,7 @@ object Notices:
     if !installed then
       installed = true
       refresh()
-      val every = math.max(5, ui.countersPollSeconds) * 1000
+      val every = math.max(5, ui.countersPollSeconds.value) * 1000
       dom.window.setInterval(() => if !dom.document.hidden then refresh(), every)
       dom.document.addEventListener("visibilitychange", (_: dom.Event) => if !dom.document.hidden then refresh())
       // a list is read while its page is shown, or its window open

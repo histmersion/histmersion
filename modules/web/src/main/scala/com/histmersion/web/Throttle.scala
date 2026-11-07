@@ -13,22 +13,23 @@ import scala.scalajs.js
 final class Throttle[A](
     intervalMs: Throttle.IntervalMs,
     f: A => Unit,
-    now: () => Throttle.NowResult = () => js.Date.now(),
-    later: (Throttle.LaterArg1, () => Unit) => Throttle.LaterResult = (ms, g) => dom.window.setTimeout(() => g(), ms),
-    cancel: Throttle.CancelArg1 => Unit = id => dom.window.clearTimeout(id)
+    now: () => ResearchOverview.EpochMillis = () => ResearchOverview.EpochMillis(js.Date.now()),
+    later: (Throttle.DelayMs, () => Unit) => Throttle.TimerId = (ms, g) =>
+      Throttle.TimerId(dom.window.setTimeout(() => g(), ms.value)),
+    cancel: Throttle.TimerId => Unit = id => dom.window.clearTimeout(id.value)
 ):
-  private var lastRun: com.histmersion.web.ResearchOverview.EpochMillis = Double.NegativeInfinity
+  private var lastRun: com.histmersion.web.ResearchOverview.EpochMillis = ResearchOverview.EpochMillis(Double.NegativeInfinity)
   private var pending: Option[A] = None
-  private var timer: Int = 0
+  private var timer: Throttle.TimerId = Throttle.TimerId(0)
 
   def apply(a: A): Unit =
     val t = now()
-    val wait = lastRun + intervalMs - t
+    val wait = lastRun.value + intervalMs.value - t.value
     if wait <= 0 && pending.isEmpty then run(a, t)
     else
       val scheduled = pending.isDefined
       pending = Some(a)
-      if !scheduled then timer = later(wait.max(0), () => pending.foreach(p => run(p, now())))
+      if !scheduled then timer = later(Throttle.DelayMs(wait.max(0)), () => pending.foreach(p => run(p, now())))
 
   /** Drop a scheduled trailing run. */
   def cancelPending(): Unit =
@@ -43,12 +44,8 @@ final class Throttle[A](
 object Throttle:
   type IntervalMs = IntervalMs.T
   object IntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NowResult = com.histmersion.web.ResearchOverview.EpochMillis
-  val NowResult: _root_.com.histmersion.web.ResearchOverview.EpochMillis.type = _root_.com.histmersion.web.ResearchOverview.EpochMillis
-  type LaterArg1 = com.histmersion.web.ResearchOverview.EpochMillis
-  val LaterArg1: _root_.com.histmersion.web.ResearchOverview.EpochMillis.type = _root_.com.histmersion.web.ResearchOverview.EpochMillis
-  type LaterResult = LaterResult.T
-  object LaterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CancelArg1 = CancelArg1.T
-  object CancelArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DelayMs = DelayMs.T
+  object DelayMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimerId = TimerId.T
+  object TimerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -204,10 +204,10 @@ object MergeCmd:
         )
         hash = expected.map(h => MergePlan.PlanHash(h.trim)).getOrElse(plan.planHash)
         _ <- Either.cond(
-          yes || plan.changes == 0 ||
+          yes || plan.changes.value == 0 ||
             Cli.confirm(
               s"Merge ${MergeMarkdown.who(plan.from)} into this collection (plan $hash, " +
-                s"${Plural.count(plan.changes, com.histmersion.api.Plural.CountSingular("change"))})? A backup is taken first."
+                s"${Plural.count(com.histmersion.api.Plural.CountN(plan.changes.value.toLong), com.histmersion.api.Plural.CountSingular("change"))})? A backup is taken first."
             ),
           (),
           Cli.Error(Cli.Error.Message("aborted"), exitCode = ExitCode.Usage)

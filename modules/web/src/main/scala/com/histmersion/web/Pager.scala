@@ -13,27 +13,23 @@ object Pager:
   object RangeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The line a page shows: `a–b of n`, or `none` for an empty one. Pure. */
-  type PreviousLimit = _root_.com.histmersion.api.Paging.Limit
-  val PreviousLimit: _root_.com.histmersion.api.Paging.Limit.type = _root_.com.histmersion.api.Paging.Limit
-  type ApplyLimit = _root_.com.histmersion.api.Paging.Limit
-  val ApplyLimit: _root_.com.histmersion.api.Paging.Limit.type = _root_.com.histmersion.api.Paging.Limit
 
   def range(offset: com.histmersion.api.Offset, shown: com.histmersion.api.Paging.Shown, total: com.histmersion.api.Paging.Page.Total): com.histmersion.web.Pager.RangeText =
-    if total <= 0 || shown <= 0 then com.histmersion.web.Pager.RangeText("none")
-    else s"${offset + 1}–${offset + shown} of $total"
+    if total.value <= 0 || shown.value <= 0 then com.histmersion.web.Pager.RangeText("none")
+    else com.histmersion.web.Pager.RangeText(s"${offset.value + 1}–${offset.value + shown.value} of ${total.value}")
 
   /** The offset of the previous page (never below 0), and of the next one (None past the end). Pure. */
-  def previous(offset: com.histmersion.api.Offset, limit: com.histmersion.web.Pager.PreviousLimit): com.histmersion.api.Offset = math.max(0, offset - math.max(1, limit))
+  def previous(offset: com.histmersion.api.Offset, limit: com.histmersion.api.Paging.Limit): com.histmersion.api.Offset = com.histmersion.api.Offset(math.max(0, offset.value - math.max(1, limit.value)))
   def next(offset: com.histmersion.api.Offset, limit: com.histmersion.api.Paging.Limit, total: com.histmersion.api.Paging.Page.Total): Option[com.histmersion.api.Offset] =
-    Option(offset + math.max(1, limit)).filter(_ < total)
+    Option(com.histmersion.api.Offset(offset.value + math.max(1, limit.value))).filter(_.value < total.value)
 
   /** The controls: `offset` moves; `limit` and `total` come from the last page read. */
-  def apply(label: com.histmersion.web.Pager.Label, offset: Var[com.histmersion.api.Offset], limit: com.histmersion.web.Pager.ApplyLimit, shown: Signal[com.histmersion.api.Paging.Shown], total: Signal[com.histmersion.api.Paging.Page.Total]): HtmlElement =
+  def apply(label: com.histmersion.web.Pager.Label, offset: Var[com.histmersion.api.Offset], limit: com.histmersion.api.Paging.Limit, shown: Signal[com.histmersion.api.Paging.Shown], total: Signal[com.histmersion.api.Paging.Page.Total]): HtmlElement =
     div(
       cls := "toolbar pager",
       span(
         cls := "muted pager-range",
-        child.text <-- offset.signal.combineWith(shown, total).map((o, s, t) => s"$label ${range(o, s, t)}")
+        child.text <-- offset.signal.combineWith(shown, total).map((o, s, t) => s"${label.value} ${range(o, s, t).value}")
       ),
       div(
         cls := "btn-group",
@@ -41,7 +37,7 @@ object Pager:
           typ := "button",
           cls := "btn btn--sm",
           "previous",
-          disabled <-- offset.signal.map(_ <= 0),
+          disabled <-- offset.signal.map(_.value <= 0),
           onClick --> (_ => offset.update(previous(_, limit)))
         ),
         button(
@@ -49,7 +45,7 @@ object Pager:
           cls := "btn btn--sm",
           "next",
           disabled <-- offset.signal.combineWith(total).map((o, t) => next(o, limit, t).isEmpty),
-          onClick --> (_ => offset.update(o => o + limit))
+          onClick --> (_ => offset.update(o => com.histmersion.api.Offset(o.value + limit.value)))
         )
       )
     )
