@@ -11,8 +11,8 @@ import scala.scalajs.js
   * `.map-tone-dark`: dark text on a light halo, or the inverse).
   */
 enum MapTone(val wire: MapTone.Wire):
-  case Light extends MapTone("light")
-  case Dark extends MapTone("dark")
+  case Light extends MapTone(com.histmersion.web.MapTone.Wire("light"))
+  case Dark extends MapTone(com.histmersion.web.MapTone.Wire("dark"))
 
 object MapTone:
   /** Pure: `ui.tiles-tone`'s value; anything but "dark" is the light default (OSM's own tiles). */

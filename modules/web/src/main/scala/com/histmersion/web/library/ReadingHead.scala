@@ -92,7 +92,7 @@ object ReadingHead:
     ReadingHead(
       line(Some("Article"), Some(Wording.capitalize(Label.display(a.kind)))),
       a.title,
-      "",
+      com.histmersion.web.library.ReadingHead.Authors(""),
       None,
       YearFmt.period(a.periodStart, a.periodEnd),
       regions(a.regions),
@@ -104,7 +104,7 @@ object ReadingHead:
     ReadingHead(
       line(Some("Article"), Some(Wording.capitalize(Label.display(a.kind)))),
       a.title,
-      "",
+      com.histmersion.web.library.ReadingHead.Authors(""),
       None,
       YearFmt.period(a.periodStart, a.periodEnd),
       regions(a.regions),

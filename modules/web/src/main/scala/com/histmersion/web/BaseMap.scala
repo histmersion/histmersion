@@ -19,12 +19,12 @@ enum BaseMap(
     val vector: Option[com.histmersion.web.map.VectorStyle],
     val url: Option[BaseMap.Url]
 ):
-  case Readable extends BaseMap("readable", "Readable", Some(com.histmersion.web.map.VectorStyle.Readable), None)
-  case Physical extends BaseMap("physical", "Physical", Some(com.histmersion.web.map.VectorStyle.Physical), None)
-  case Standard extends BaseMap("standard", "Standard (online)", None, None)
+  case Readable extends BaseMap(com.histmersion.web.BaseMap.Wire("readable"), com.histmersion.web.BaseMap.Label("Readable"), Some(com.histmersion.web.map.VectorStyle.Readable), None)
+  case Physical extends BaseMap(com.histmersion.web.BaseMap.Wire("physical"), com.histmersion.web.BaseMap.Label("Physical"), Some(com.histmersion.web.map.VectorStyle.Physical), None)
+  case Standard extends BaseMap(com.histmersion.web.BaseMap.Wire("standard"), com.histmersion.web.BaseMap.Label("Standard (online)"), None, None)
   case Muted
-      extends BaseMap("muted", "Muted (online)", None, Some("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"))
-  case Dark extends BaseMap("dark", "Dark (online)", None, None)
+      extends BaseMap(com.histmersion.web.BaseMap.Wire("muted"), com.histmersion.web.BaseMap.Label("Muted (online)"), None, Some(com.histmersion.web.BaseMap.Url("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png")))
+  case Dark extends BaseMap(com.histmersion.web.BaseMap.Wire("dark"), com.histmersion.web.BaseMap.Label("Dark (online)"), None, None)
 
   def online: Boolean = vector.isEmpty
 

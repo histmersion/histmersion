@@ -54,4 +54,3 @@ final class AcquireClient(c: Client):
   def calibrePushed(req: CalibrePushRequest): Either[Cli.Error, CalibrePushResult] =
     c.call(AcquireApi.calibrePushed)(req)
 
-object AcquireClient:

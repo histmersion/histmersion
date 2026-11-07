@@ -28,7 +28,7 @@ object DirSize:
     * @param unreadable
     *   directories or files that could not be read
     */
-  final case class Result(bytes: Result.Bytes, files: Result.Files, exists: Result.Exists, partial: Result.Partial = false, unreadable: Result.Unreadable = 0)
+  final case class Result(bytes: Result.Bytes, files: Result.Files, exists: Result.Exists, partial: Result.Partial = com.histmersion.cli.DirSize.Result.Partial(false), unreadable: Result.Unreadable = com.histmersion.cli.DirSize.Result.Unreadable(0))
 
   object Result:
     type Bytes = com.histmersion.api.ByteCount
@@ -67,11 +67,11 @@ object DirSize:
     val unlimited: Budget = Budget(Long.MaxValue, Long.MaxValue)
 
   def measure(root: Path, budget: Budget): Result =
-    if !Files.exists(root) then Result(0L, 0L, exists = false)
+    if !Files.exists(root) then Result(com.histmersion.cli.DirSize.Result.Bytes(0L), com.histmersion.cli.DirSize.Result.Files(0L), exists = com.histmersion.cli.DirSize.Result.Exists(false))
     else if Files.isRegularFile(root) then
       val _ = budget.take()
-      Result(scala.util.Try(Files.size(root)).getOrElse(0L), 1L, exists = true)
-    else if budget.exhausted then Result(0L, 0L, exists = true, partial = true)
+      Result(scala.util.Try(Files.size(root)).getOrElse(0L), com.histmersion.cli.DirSize.Result.Files(1L), exists = com.histmersion.cli.DirSize.Result.Exists(true))
+    else if budget.exhausted then Result(com.histmersion.cli.DirSize.Result.Bytes(0L), com.histmersion.cli.DirSize.Result.Files(0L), exists = com.histmersion.cli.DirSize.Result.Exists(true), partial = com.histmersion.cli.DirSize.Result.Partial(true))
     else
       // the walk's running sums: a visitor is callback-shaped, so it accumulates into locals
       var bytes = 0L
@@ -96,7 +96,7 @@ object DirSize:
       try
         val _ = Files.walkFileTree(start, java.util.EnumSet.noneOf(classOf[FileVisitOption]), Int.MaxValue, visitor)
       catch case _: IOException => unreadable += 1
-      Result(bytes, files, exists = true, partial, unreadable)
+      Result(bytes, files, exists = com.histmersion.cli.DirSize.Result.Exists(true), partial, unreadable)
 
   /** `p`, or the nearest of its parents that exists (a directory not made yet is on its parent's volume). */
   def existing(p: Path): Option[Path] =

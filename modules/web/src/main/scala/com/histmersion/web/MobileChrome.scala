@@ -80,7 +80,7 @@ object MobileChrome:
   val drawer: Var[Option[Drawer]] = Var(None)
 
   /** Whether the timeline is unfolded under the bar. */
-  val timelineOpen: Var[com.histmersion.web.MobileChrome.TimelineOpen] = Var(false)
+  val timelineOpen: Var[com.histmersion.web.MobileChrome.TimelineOpen] = Var(com.histmersion.web.MobileChrome.TimelineOpen(false))
 
   def open(d: Drawer): Unit = drawer.set(Some(d))
   def close(): Unit = drawer.set(None)

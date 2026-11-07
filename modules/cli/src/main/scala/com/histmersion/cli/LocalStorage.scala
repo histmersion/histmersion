@@ -55,7 +55,7 @@ object LocalStorage:
         Storage.Entry(
           key,
           label,
-          if key == "install" then "install" else "corpus",
+          if key == "install" then com.histmersion.api.maintenance.Storage.Entry.Group("install") else com.histmersion.api.maintenance.Storage.Entry.Group("corpus"),
           Some(p.toString),
           bytes = (Option.when(r.exists)(r.bytes)).map(com.histmersion.api.ByteCount.apply),
           files = (Option.when(r.exists)(r.files)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),

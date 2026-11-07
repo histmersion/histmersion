@@ -76,7 +76,7 @@ object IconSelect:
       key match
         case "ArrowDown" => Some((at + 1).min(n - 1))
         case "ArrowUp"   => Some((at - 1).max(0))
-        case "Home"      => Some(0)
+        case "Home"      => Some(com.histmersion.web.IconSelect.Index(0))
         case "End"       => Some(n - 1)
         case _           => None
 
@@ -90,8 +90,8 @@ object IconSelect:
       name: com.histmersion.web.IconSelect.Name,
       field: Field[Option[com.histmersion.web.IconSelect.Field]],
       options: Signal[List[Opt]],
-      disabled: Signal[com.histmersion.web.IconSelect.Disabled] = Val(false),
-      why: com.histmersion.web.IconSelect.Reason = ""
+      disabled: Signal[com.histmersion.web.IconSelect.Disabled] = Val(com.histmersion.web.IconSelect.Disabled(false)),
+      why: com.histmersion.web.IconSelect.Reason = com.histmersion.web.IconSelect.Reason("")
   ): HtmlElement =
     seq += 1
     val id = s"isel-$seq"
@@ -136,7 +136,7 @@ object IconSelect:
       val f: scala.scalajs.js.Function1[dom.Event, Unit] = (e: dom.Event) =>
         e.target match
           case n: dom.Node if listEl.contains(n) || buttonEl.contains(n) => ()
-          case _                                                         => close(refocus = false)
+          case _                                                         => close(refocus = com.histmersion.web.IconSelect.Refocus(false))
       outside = Some(f)
       dom.document.addEventListener("pointerdown", f, useCapture = true)
 
@@ -149,7 +149,7 @@ object IconSelect:
 
     def choose(i: com.histmersion.web.IconSelect.Index): Unit =
       opts.now().lift(i).foreach(o => UiState.set(field := Option(o.value).filter(_.nonEmpty))())
-      close(refocus = true)
+      close(refocus = com.histmersion.web.IconSelect.Refocus(true))
 
     def onListKey(e: dom.KeyboardEvent): Unit =
       val n = opts.now().size
@@ -161,8 +161,8 @@ object IconSelect:
         case None =>
           e.key match
             case "Enter" | " " => e.preventDefault(); choose(active.now())
-            case "Escape"      => e.preventDefault(); e.stopPropagation(); close(refocus = true)
-            case "Tab"         => close(refocus = false)
+            case "Escape"      => e.preventDefault(); e.stopPropagation(); close(refocus = com.histmersion.web.IconSelect.Refocus(true))
+            case "Tab"         => close(refocus = com.histmersion.web.IconSelect.Refocus(false))
             case k if k.length == 1 && !e.ctrlKey && !e.metaKey && !e.altKey =>
               val now = scala.scalajs.js.Date.now()
               typed = if now - typedAt > 700 then k else typed + k
@@ -194,7 +194,7 @@ object IconSelect:
         ),
         span(cls := "icon-select-label", child.text <-- current.map(o => s"$name: ${o.fold("")(_.label)}")),
         span(cls := "icon-select-caret", aria.hidden := true, "▾"),
-        onClick --> { _ => if isOpen.now() then close(refocus = true) else openList() },
+        onClick --> { _ => if isOpen.now() then close(refocus = com.histmersion.web.IconSelect.Refocus(true)) else openList() },
         onKeyDown --> { e =>
           if e.key == "ArrowDown" || e.key == "ArrowUp" then
             e.preventDefault()
@@ -235,6 +235,6 @@ object IconSelect:
         }
       ),
       windowEvents(_.onResize) --> { _ => if isOpen.now() then place() },
-      disabled --> { d => if d then close(refocus = false) },
-      onUnmountCallback(_ => close(refocus = false))
+      disabled --> { d => if d then close(refocus = com.histmersion.web.IconSelect.Refocus(false)) },
+      onUnmountCallback(_ => close(refocus = com.histmersion.web.IconSelect.Refocus(false)))
     )

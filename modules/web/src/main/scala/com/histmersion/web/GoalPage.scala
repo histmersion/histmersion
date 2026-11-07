@@ -83,9 +83,9 @@ object GoalPage:
   def days(thenMs: com.histmersion.web.GoalPage.Millis, nowMs: com.histmersion.web.GoalPage.Millis): com.histmersion.web.GoalPage.DaysText =
     def day(ms: com.histmersion.web.GoalPage.Millis) = ((ms - new js.Date(ms).getTimezoneOffset() * 60000) / 86400000).floor.toLong
     val d = day(nowMs) - day(thenMs)
-    if d == 0 then "today"
-    else if d > 0 then (if d == 1 then "yesterday" else s"$d days ago")
-    else if d == -1 then "tomorrow"
+    if d == 0 then com.histmersion.web.GoalPage.DaysText("today")
+    else if d > 0 then (if d == 1 then com.histmersion.web.GoalPage.DaysText("yesterday") else s"$d days ago")
+    else if d == -1 then com.histmersion.web.GoalPage.DaysText("tomorrow")
     else s"in ${-d} days"
 
   /** When it was last checked for new publications and when next: the currency schedule, else the watcher. */
@@ -131,7 +131,7 @@ object GoalPage:
           val mine = all.filter(_.goal.contains(slug))
           managers.set(mine)
           scala.concurrent.Future
-            .sequence(mine.map(m => ApiClient.managerItems(m.id, None, 0, StepLimit)))
+            .sequence(mine.map(m => ApiClient.managerItems(m.id, None, com.histmersion.api.Offset(0), StepLimit)))
             .foreach(pages => items.set(pages.flatMap(_.items)))
         }
 
@@ -146,7 +146,7 @@ object GoalPage:
     def pauseOrResume(): Unit = write { () =>
       val resume = paused(managers.now())
       scala.concurrent.Future
-        .sequence(managers.now().map(m => ApiClient.managerAction(m.id, if resume then "resume" else "pause")))
+        .sequence(managers.now().map(m => ApiClient.managerAction(m.id, if resume then com.histmersion.web.ApiClient.ManagerAction("resume") else com.histmersion.web.ApiClient.ManagerAction("pause"))))
         .onComplete { r =>
           note.set(
             r.failed.toOption
@@ -291,7 +291,7 @@ object GoalPage:
             if !ui.agentsEnabled then "Research agents are off on this server: no step runs."
             else
               v.plan.fold("No steps yet: the goal's agents have not planned its work.")(pl =>
-                s"Approved plan: ${Plural.count(pl.subGoals.size, "sub-goal")}, ${Plural.count(pl.queries.size, "query", "queries")}, " +
+                s"Approved plan: ${Plural.count(pl.subGoals.size, com.histmersion.api.Plural.CountSingular("sub-goal"))}, ${Plural.count(pl.queries.size, com.histmersion.api.Plural.CountSingular("query"), com.histmersion.api.Plural.CountPlural("queries"))}, " +
                   s"${Plural.count(pl.works.size, "work")} to read."
               )
           )
@@ -339,7 +339,7 @@ object GoalPage:
           onClick --> (_ =>
             write { () =>
               busy.set(true)
-              i.runId.foreach(id => ApiClient.jobControl(id, "pause").onComplete(_ => busy.set(false)))
+              i.runId.foreach(id => ApiClient.jobControl(id, com.histmersion.api.Api.JobControl.Action("pause")).onComplete(_ => busy.set(false)))
             }
           )
         )
@@ -393,7 +393,7 @@ object GoalPage:
         span(
           a(
             href := libraryOf(slug),
-            Plural.count(sources, "source"),
+            Plural.count(sources, com.histmersion.api.Plural.CountSingular("source")),
             onClick --> { ev =>
               if Router.plain(ev) then {
                 ev.preventDefault(); showFiltered(slug, Route.Library(LibrarySection.Sources))
@@ -413,12 +413,12 @@ object GoalPage:
       div(
         cls := "li",
         span(cls := "li-what", "Open backlog items"),
-        countLink(backlog, "item", "items", listOf(ResearchSection.Backlog, slug))
+        countLink(backlog, com.histmersion.api.Plural.Noun.Singular("item"), com.histmersion.api.Plural.Noun.Plural("items"), listOf(ResearchSection.Backlog, slug))
       ),
       div(
         cls := "li",
         span(cls := "li-what", "Waiting for you to acquire"),
-        countLink(acquire, "item", "items", listOf(ResearchSection.Acquire, slug))
+        countLink(acquire, com.histmersion.api.Plural.Noun.Singular("item"), com.histmersion.api.Plural.Noun.Plural("items"), listOf(ResearchSection.Acquire, slug))
       )
     )
 

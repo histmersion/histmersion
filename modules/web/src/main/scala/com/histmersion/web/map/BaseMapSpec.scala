@@ -22,13 +22,13 @@ enum BaseMapSpec:
       names: BaseMapSpec.Vector.Names,
       contours: BaseMapSpec.Vector.Contours,
       seaDepth: BaseMapSpec.Vector.SeaDepth,
-      reduced: BaseMapSpec.Vector.Reduced = false
+      reduced: BaseMapSpec.Vector.Reduced = com.histmersion.web.map.BaseMapSpec.Vector.Reduced(false)
   )
 
   /** An online raster map: its tile URL template (`{s}` for its subdomains), its deepest zoom, its credits (HTML),
     * drawn inverted (`dark`: the light tiles as a dark map) at `opacity`.
     */
-  case Raster(template: BaseMapSpec.Raster.Template, maxZoom: BaseMapSpec.Raster.MaxZoom, attribution: BaseMapSpec.Raster.Attribution, dark: BaseMapSpec.Raster.Dark = false, opacity: BaseMapSpec.Raster.Opacity = 0.85)
+  case Raster(template: BaseMapSpec.Raster.Template, maxZoom: BaseMapSpec.Raster.MaxZoom, attribution: BaseMapSpec.Raster.Attribution, dark: BaseMapSpec.Raster.Dark = com.histmersion.web.map.BaseMapSpec.Raster.Dark(false), opacity: BaseMapSpec.Raster.Opacity = 0.85)
 
 object BaseMapSpec:
   object Vector:

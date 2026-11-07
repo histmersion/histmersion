@@ -55,19 +55,19 @@ object CardIcons:
   /** Pure: a source kind's icon ([[SourceKinds]]); `unknown` the generic document on a card, the exclamation mark on
     * the map (`marker = true`).
     */
-  def sourceKind(kind: com.histmersion.web.CardIcons.SourceKind, marker: com.histmersion.web.CardIcons.WithMarker = false): com.histmersion.web.CardIcons.SourceIcon = kind match
-    case Source.Kinds.Book    => "book"
-    case Source.Kinds.Chapter => "book-open"
-    case Source.Kinds.Paper   => "file-text"
-    case Source.Kinds.Thesis  => "graduation-cap"
-    case Source.Kinds.Dataset => "database"
+  def sourceKind(kind: com.histmersion.web.CardIcons.SourceKind, marker: com.histmersion.web.CardIcons.WithMarker = com.histmersion.web.CardIcons.WithMarker(false)): com.histmersion.web.CardIcons.SourceIcon = kind match
+    case Source.Kinds.Book    => com.histmersion.web.CardIcons.SourceIcon("book")
+    case Source.Kinds.Chapter => com.histmersion.web.CardIcons.SourceIcon("book-open")
+    case Source.Kinds.Paper   => com.histmersion.web.CardIcons.SourceIcon("file-text")
+    case Source.Kinds.Thesis  => com.histmersion.web.CardIcons.SourceIcon("graduation-cap")
+    case Source.Kinds.Dataset => com.histmersion.web.CardIcons.SourceIcon("database")
     case _                    => if marker then Unknown else GenericSource
 
   /** Pure: what a source is, from its record ([[SourceKinds.of]]). */
-  def kindOf(s: Source.Detail, hasCover: com.histmersion.web.CardIcons.HasCover = false): com.histmersion.web.CardIcons.SourceKind =
+  def kindOf(s: Source.Detail, hasCover: com.histmersion.web.CardIcons.HasCover = com.histmersion.web.CardIcons.HasCover(false)): com.histmersion.web.CardIcons.SourceKind =
     Source.Kinds.of(s.doi.map(_.value), s.venue.map(_.value), s.provenance, s.tags, s.topics, hasCover)
 
-  def source(s: Source.Detail, hasCover: com.histmersion.web.CardIcons.SourceHasCover = false): com.histmersion.web.CardIcons.SourceIcon = sourceKind(kindOf(s, hasCover))
+  def source(s: Source.Detail, hasCover: com.histmersion.web.CardIcons.SourceHasCover = com.histmersion.web.CardIcons.SourceHasCover(false)): com.histmersion.web.CardIcons.SourceIcon = sourceKind(kindOf(s, hasCover))
 
   /** Pure: a place's icon — a site its type's (the one its marker draws, else a pin), a natural feature its type's when
     * it has one (a cave) else a mountain, a region or polity a map, a people a group.

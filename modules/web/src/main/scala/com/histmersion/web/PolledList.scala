@@ -32,12 +32,12 @@ final class PolledList[A](
 )(using ExecutionContext):
 
   val listing: Var[ListPaging.Listing[A]] = Var(ListPaging.Listing.empty[A])
-  val loaded: Var[com.histmersion.web.PolledList.Loaded] = Var(false)
-  val older: Var[com.histmersion.web.PolledList.Older] = Var(false)
+  val loaded: Var[com.histmersion.web.PolledList.Loaded] = Var(com.histmersion.web.PolledList.Loaded(false))
+  val older: Var[com.histmersion.web.PolledList.Older] = Var(com.histmersion.web.PolledList.Older(false))
   val failure: Var[Option[com.histmersion.web.PolledList.Problem]] = Var(None)
 
   /** A restart (a filter changed) is on its way: the rows shown are the previous filter's until it lands. */
-  private val restarting: Var[com.histmersion.web.PolledList.Restarting] = Var(false)
+  private val restarting: Var[com.histmersion.web.PolledList.Restarting] = Var(com.histmersion.web.PolledList.Restarting(false))
   def loading: Signal[Boolean] = restarting.signal
   private val latest = Latest()
   // `var`s: the one pending poll, its delay, and whether the window is there to be refreshed
@@ -46,27 +46,27 @@ final class PolledList[A](
   private var mounted: Boolean = false
 
   /** The window opened: load the newest page (and poll while anything is live). */
-  def open(): Unit = { mounted = true; loaded.set(false); restart() }
+  def open(): Unit = { mounted = true; loaded.set(com.histmersion.web.PolledList.Loaded(false)); restart() }
 
   /** The window closed: no poll, and an answer still on its way is dropped. */
-  def close(): Unit = { mounted = false; cancel(timer); delay = None; latest.cancel(); restarting.set(false) }
+  def close(): Unit = { mounted = false; cancel(timer); delay = None; latest.cancel(); restarting.set(com.histmersion.web.PolledList.Restarting(false)) }
 
   /** The two lifecycle hooks, for the window's root element. */
   def lifecycle: Modifier[HtmlElement] = List(onMountCallback(_ => open()), onUnmountCallback(_ => close()))
 
   /** Start over from the newest page: the window opened, a filter changed, or "refresh". */
-  def restart(): Unit = load(reset = true, changed = true)
+  def restart(): Unit = load(reset = com.histmersion.web.PolledList.Reset(true), changed = com.histmersion.web.Poll.DataChanged(true))
 
   /** A poll — or an outside change (a decision, a job started here): the rows shown, current again. */
-  def refresh(changed: com.histmersion.web.Poll.DataChanged = false): Unit = load(reset = false, changed)
+  def refresh(changed: com.histmersion.web.Poll.DataChanged = com.histmersion.web.Poll.DataChanged(false)): Unit = load(reset = com.histmersion.web.PolledList.Reset(false), changed)
 
   private def load(reset: com.histmersion.web.PolledList.Reset, changed: com.histmersion.web.Poll.DataChanged): Unit =
     if mounted then
       cancel(timer)
       val cur = listing.now()
       val upTo = if reset then None else ListPaging.pollUpTo(cur, id)
-      older.set(false)
-      if reset then restarting.set(true)
+      older.set(com.histmersion.web.PolledList.Older(false))
+      if reset then restarting.set(com.histmersion.web.PolledList.Restarting(true))
       val ticket = latest.start()
       fetch(upTo, None).onComplete(r =>
         if mounted && latest.isCurrent(ticket) then answered(r, cur, upTo, reset, changed)
@@ -79,7 +79,7 @@ final class PolledList[A](
       reset: com.histmersion.web.PolledList.Reset,
       changed: com.histmersion.web.Poll.DataChanged
   ): Unit =
-    restarting.set(false)
+    restarting.set(com.histmersion.web.PolledList.Restarting(false))
     r match
       // the last row shown is gone (the server cannot page from there): start over
       case Failure(_) if upTo.isDefined => restart()
@@ -93,7 +93,7 @@ final class PolledList[A](
         if !reset && loaded.now() then after(cur, rows)
         failure.set(None)
         listing.set(next)
-        loaded.set(true)
+        loaded.set(com.histmersion.web.PolledList.Loaded(true))
         schedule(Poll.next(delay, live(rows, page), moved))
 
   /** "Show older": the next page, appended. A poll on its way is superseded (and rescheduled here). */
@@ -101,17 +101,17 @@ final class PolledList[A](
     listing.now().page.next.foreach { cursor =>
       if mounted then
         cancel(timer)
-        older.set(true)
+        older.set(com.histmersion.web.PolledList.Older(true))
         val ticket = latest.start()
         fetch(None, Some(cursor)).onComplete { r =>
           if mounted && latest.isCurrent(ticket) then
-            older.set(false)
+            older.set(com.histmersion.web.PolledList.Older(false))
             r match
               case Failure(e)            => failure.set(Some(e.getMessage)); schedule(Some(Poll.MaxMs))
               case Success((rows, page)) =>
                 failure.set(None)
                 listing.update(ListPaging.appended(_, rows, page, id))
-                schedule(Poll.next(delay, live(listing.now().rows, page), changed = false))
+                schedule(Poll.next(delay, live(listing.now().rows, page), changed = com.histmersion.web.Poll.DataChanged(false)))
         }
     }
 
@@ -172,7 +172,7 @@ object PolledList:
   )(using ExecutionContext): PolledList[A] =
     PolledList[A](
       fetch = (_, _) => fetch().map(a => (List(a), Paging.Page.empty)),
-      id = _ => "",
+      id = _ => com.histmersion.web.PolledList.IdResult(""),
       live = (rows, _) => rows.exists(live),
       after = (cur, rows) => rows.headOption.foreach(after(cur.rows.headOption, _)),
       later = later,

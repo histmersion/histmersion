@@ -41,7 +41,7 @@ object SavedViews:
     val span = Fmt.periodStr(from, to)
     List(words.map(_.trim).filter(_.nonEmpty).map(w => s"“$w”"), Option(span).filter(_.nonEmpty)).flatten
       .mkString(", ") match
-      case "" => "My view"
+      case "" => com.histmersion.web.marks.SavedViews.Name("My view")
       case s  => s
 
   val saved: Signal[List[Bookmark]] = MyItems.bookmarks.signal.map(_.filter(_.target.kind == ItemKind.View))

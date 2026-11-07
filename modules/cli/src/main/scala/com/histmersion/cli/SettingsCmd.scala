@@ -97,7 +97,7 @@ object SettingsCmd:
     "Take a setting out of the settings file (back to its default), in place; then the server applies it"
   ) {
     (Opts.argument[String]("key"), local, noReload, Output.jsonFlag).mapN { (key, onlyLocal, nr, json) => (c: Client) =>
-      change(key, None, onlyLocal, !nr, consent = false, json, c)
+      change(key, None, onlyLocal, !nr, consent = com.histmersion.cli.Settings.Consent(false), json, c)
     }
   }
 

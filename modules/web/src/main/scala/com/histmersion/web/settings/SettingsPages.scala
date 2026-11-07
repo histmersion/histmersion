@@ -14,14 +14,14 @@ object SettingsPages:
   /** What a section's page says under its title. Pure. */
 
   def lead(s: SettingsSection): Option[com.histmersion.web.settings.SettingsPages.Lead] = s match
-    case SettingsSection.General => Some("How Histmersion looks and where the map opens.")
+    case SettingsSection.General => Some(com.histmersion.web.settings.SettingsPages.Lead("How Histmersion looks and where the map opens."))
     case SettingsSection.Finders => Some("Where Histmersion looks for the free, legal copy of a paper you add.")
-    case SettingsSection.Agents  => Some("Research agents that read, enrich and write for you — optional.")
+    case SettingsSection.Agents  => Some(com.histmersion.web.settings.SettingsPages.Lead("Research agents that read, enrich and write for you — optional."))
     case SettingsSection.Keys    =>
       Some("Keys and passwords: whether each is set, and where it is kept. Never the key itself.")
     case SettingsSection.Calibre => Some("The Calibre library that keeps your originals, and the server's folders.")
-    case SettingsSection.Backups => Some("Copies of the database, kept on this computer.")
-    case SettingsSection.Plugins => Some("What the plugins add, each on or off.")
+    case SettingsSection.Backups => Some(com.histmersion.web.settings.SettingsPages.Lead("Copies of the database, kept on this computer."))
+    case SettingsSection.Plugins => Some(com.histmersion.web.settings.SettingsPages.Lead("What the plugins add, each on or off."))
     case _                       => None
 
   def page(ui: UiConfig, s: SettingsSection): HtmlElement =

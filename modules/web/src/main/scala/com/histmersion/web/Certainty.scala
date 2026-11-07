@@ -58,8 +58,8 @@ object Certainty:
 
   /** The marker class of an unstated dot (its dashed edge, `style.css`); none for a stated one. */
   def markerClass(c: Certainty): com.histmersion.web.Certainty.MarkerClass = c match
-    case Unstated  => "hd-unstated"
-    case Stated(_) => ""
+    case Unstated  => com.histmersion.web.Certainty.MarkerClass("hd-unstated")
+    case Stated(_) => com.histmersion.web.Certainty.MarkerClass("")
 
   /** The legend's word for an unstated confidence. */
   val UnstatedLabel = "not stated"

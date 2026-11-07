@@ -47,8 +47,8 @@ object DataSection:
   object RowDetail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def share(used: com.histmersion.web.settings.DataSection.ShareUsed, free: com.histmersion.web.settings.DataSection.ShareFree): com.histmersion.web.settings.DataSection.SharePercent =
-    if used <= 0 then 0
-    else if free <= 0 then 100
+    if used <= 0 then com.histmersion.web.settings.DataSection.SharePercent(0)
+    else if free <= 0 then com.histmersion.web.settings.DataSection.SharePercent(100)
     else math.min(100, math.round(used.toDouble * 100 / free.toDouble).toInt)
 
   def pane(ui: UiConfig): HtmlElement =
@@ -64,7 +64,7 @@ object DataSection:
       ApiClient.placeSources().foreach(sources.set)
       ApiClient.eventCatalogues().foreach(cats.set)
       ApiClient.mediaProviders().foreach(media.set)
-    def act(text: com.histmersion.web.settings.DataSection.ActionLabel, what: com.histmersion.web.settings.DataSection.ActionWhat, job: => Future[JobInfo], primary: com.histmersion.web.settings.DataSection.PaneActPrimary = false): HtmlElement =
+    def act(text: com.histmersion.web.settings.DataSection.ActionLabel, what: com.histmersion.web.settings.DataSection.ActionWhat, job: => Future[JobInfo], primary: com.histmersion.web.settings.DataSection.PaneActPrimary = com.histmersion.web.settings.DataSection.PaneActPrimary(false)): HtmlElement =
       starter.act(text, what, job, primary)
     div(
       cls := "settings-section data-section",
@@ -84,9 +84,9 @@ object DataSection:
         case Left(why) => com.histmersion.web.ErrorLine.text(why)
         case Right(m)  => p(cls := "settings-saved-line", role := "status", m)
       }),
-      card("Downloading now", DownloadJobs.panel),
+      card(com.histmersion.web.settings.DataSection.CardTitle("Downloading now"), DownloadJobs.panel),
       card(
-        "Maps",
+        com.histmersion.web.settings.DataSection.CardTitle("Maps"),
         div(
           child <-- basemap.signal.map {
             case None    => p(cls := "muted", "Loading…")
@@ -100,35 +100,35 @@ object DataSection:
         )
       ),
       card(
-        "Places, periods and events",
+        com.histmersion.web.settings.DataSection.CardTitle("Places, periods and events"),
         div(
           child <-- about.signal.map(a =>
             row(
-              "Ancient places, regions and named periods",
+              com.histmersion.web.settings.DataSection.RowTitle("Ancient places, regions and named periods"),
               "Pleiades, the historical boundaries and the named periods (PeriodO)" +
                 a.flatMap(_.counts)
                   .fold("")(c =>
-                    s" · ${Plural.count(c.places.toInt, "place")} · ${Plural.count(c.periods.toInt, "period")}"
+                    s" · ${Plural.count(c.places.toInt, com.histmersion.api.Plural.CountSingular("place"))} · ${Plural.count(c.periods.toInt, com.histmersion.api.Plural.CountSingular("period"))}"
                   ),
               span(
                 cls := (if a.flatMap(_.counts).exists(_.places > 0) then "data-state"
                         else "data-state data-state--off"),
                 a.flatMap(_.counts).fold("")(c => if c.places > 0 then "Installed" else "Not loaded yet")
               ),
-              act("Update now", "boundaries", ApiClient.initData(fetch = true))
+              act(com.histmersion.web.settings.DataSection.ActionLabel("Update now"), com.histmersion.web.settings.DataSection.ActionWhat("boundaries"), ApiClient.initData(fetch = com.histmersion.web.ApiClient.Fetch(true)))
             )
           ),
           children <-- sources.signal.map(
             _.filter(_.kind != Gazetteer.Kind.Lpf).map(s =>
               row(
                 s.title,
-                (s.licence.toList ++ s.places.map(n => Plural.count(n, "place")).toList).mkString(" · "),
+                (s.licence.toList ++ s.places.map(n => Plural.count(n, com.histmersion.api.Plural.CountSingular("place"))).toList).mkString(" · "),
                 span(
                   cls := (if s.importedAt.isDefined then "data-state" else "data-state data-state--off"),
                   s.importedAt.fold("Not loaded")(t => s"Loaded ${t.take(10)}")
                 ),
                 act(
-                  if s.importedAt.isDefined then "Update now" else "Load",
+                  if s.importedAt.isDefined then com.histmersion.web.settings.DataSection.ActionLabel("Update now") else com.histmersion.web.settings.DataSection.ActionLabel("Load"),
                   s"places-${s.key}",
                   ApiClient.loadPlaces(s.key)
                 )
@@ -141,14 +141,14 @@ object DataSection:
                 c.title,
                 c.licence,
                 span(cls := "data-state", ""),
-                act("Update now", s"events-${c.id}", ApiClient.importEvents(c.id))
+                act(com.histmersion.web.settings.DataSection.ActionLabel("Update now"), s"events-${c.id}", ApiClient.importEvents(c.id))
               )
             )
           )
         )
       ),
       card(
-        "Pictures of places and objects",
+        com.histmersion.web.settings.DataSection.CardTitle("Pictures of places and objects"),
         div(
           children <-- media.signal.map(ms =>
             ms.map { m =>
@@ -160,7 +160,7 @@ object DataSection:
                   cls := (if on then "data-state" else "data-state data-state--off"),
                   if on then "" else "Turned off: see Plugins and Keys"
                 ),
-                if on then act("Fetch new pictures", s"media-${m.name}", ApiClient.importMedia(m.name)) else span()
+                if on then act(com.histmersion.web.settings.DataSection.ActionLabel("Fetch new pictures"), s"media-${m.name}", ApiClient.importMedia(m.name)) else span()
               )
             }
           )
@@ -187,7 +187,7 @@ object DataSection:
   /** Starts a download and says what became of the request. */
   final private class Starter:
     val said = Var(Option.empty[Either[String, String]])
-    def act(text: com.histmersion.web.settings.DataSection.ActionLabel, what: com.histmersion.web.settings.DataSection.ActionWhat, job: => Future[JobInfo], primary: com.histmersion.web.settings.DataSection.Starter.ActPrimary = false): HtmlElement =
+    def act(text: com.histmersion.web.settings.DataSection.ActionLabel, what: com.histmersion.web.settings.DataSection.ActionWhat, job: => Future[JobInfo], primary: com.histmersion.web.settings.DataSection.Starter.ActPrimary = com.histmersion.web.settings.DataSection.Starter.ActPrimary(false)): HtmlElement =
       button(
         typ := "button",
         cls := (if primary then "btn btn--primary data-action" else "btn data-action"),
@@ -203,7 +203,7 @@ object DataSection:
           case Right(j)
               if j.detail.flatMap(JobDetail.Purpose.of).exists(_.startsWith("dry run")) || what.endsWith("-check") =>
             said.set(Some(Right(s"$text: checking…")))
-            follow(text, j.id, 0)
+            follow(text, j.id, com.histmersion.web.settings.DataSection.Starter.FollowN(0))
           case Right(_) =>
             said.set(Some(Right(s"$text: started. It is listed under “Downloading now”.")))
             DownloadJobs.refresh()
@@ -248,10 +248,10 @@ object DataSection:
           cls := (if main.exists(_.present) then "data-state" else "data-state data-state--off"),
           if main.exists(_.present) then s"Installed${when(main)}" else "Not downloaded"
         ),
-        act("Check for update", "basemap-check", ApiClient.basemapFetch(Basemap.FetchQuery(dryRun = true)), false),
+        act(com.histmersion.web.settings.DataSection.ActionLabel("Check for update"), com.histmersion.web.settings.DataSection.ActionWhat("basemap-check"), ApiClient.basemapFetch(Basemap.FetchQuery(dryRun = com.histmersion.api.basemap.Basemap.FetchQuery.DryRun(true))), com.histmersion.web.settings.DataSection.MapsActPrimary(false)),
         act(
-          if main.exists(_.present) then "Update" else "Download",
-          "basemap",
+          if main.exists(_.present) then com.histmersion.web.settings.DataSection.ActionLabel("Update") else com.histmersion.web.settings.DataSection.ActionLabel("Download"),
+          com.histmersion.web.settings.DataSection.ActionWhat("basemap"),
           ApiClient.basemapFetch(Basemap.FetchQuery()),
           !main.exists(_.present)
         ),
@@ -264,7 +264,7 @@ object DataSection:
               disabled <-- Auth.writable.map(!_),
               onClick --> (_ =>
                 if removeAll.now() then
-                  ApiClient.basemapRemove(Basemap.RemoveQuery("all")).foreach(_ => removeAll.set(false))
+                  ApiClient.basemapRemove(Basemap.RemoveQuery(com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("all"))).foreach(_ => removeAll.set(false))
                 else removeAll.set(true)
               )
             )
@@ -272,7 +272,7 @@ object DataSection:
           .getOrElse(span())
       ),
       row(
-        "Sea depth",
+        com.histmersion.web.settings.DataSection.RowTitle("Sea depth"),
         "The sea floor's depth, coloured on the Physical map" + (if sea.exists(_.present) then s" · ${size(sea)}"
                                                                  else ""),
         span(
@@ -280,10 +280,10 @@ object DataSection:
           if sea.exists(_.present) then s"Installed${when(sea)}" else "Not downloaded"
         ),
         act(
-          if sea.exists(_.present) then "Update" else "Download",
-          "bathymetry",
+          if sea.exists(_.present) then com.histmersion.web.settings.DataSection.ActionLabel("Update") else com.histmersion.web.settings.DataSection.ActionLabel("Download"),
+          com.histmersion.web.settings.DataSection.ActionWhat("bathymetry"),
           ApiClient.basemapFetch(Basemap.FetchQuery(layer = Basemap.Layer.Bathymetry.wire)),
-          false
+          com.histmersion.web.settings.DataSection.MapsActPrimary(false)
         )
       )
     )

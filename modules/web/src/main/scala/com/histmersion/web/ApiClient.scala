@@ -239,7 +239,7 @@ object ApiClient:
   def facets(field: com.histmersion.api.Api.Facets.Field, prefix: Option[com.histmersion.api.Api.Facets.Prefix], f: Filter): Future[List[Facet]] =
     call(Api.facets)((field, prefix, f))
   def resolveId(id: com.histmersion.web.ApiClient.Id): Future[ResolvedId] = call(Api.resolveId)(id)
-  def getSource(ck: com.histmersion.web.ApiClient.Citekey, body: com.histmersion.web.ApiClient.IncludeBody = true): Future[Source.WithFindings] =
+  def getSource(ck: com.histmersion.web.ApiClient.Citekey, body: com.histmersion.web.ApiClient.IncludeBody = com.histmersion.web.ApiClient.IncludeBody(true)): Future[Source.WithFindings] =
     call(Api.getSource)((ck, body))
 
   /** The articles that cite a source (`GET /api/sources/{citekey}/articles`). */
@@ -254,10 +254,10 @@ object ApiClient:
   def neighbors(ck: com.histmersion.web.ApiClient.Citekey, kinds: List[com.histmersion.web.ApiClient.EdgeKind] = Nil): Future[List[NeighborRow]] =
     call(Api.neighbors)((ck, kinds))
   def articles(q: Api.ArticleQuery): Future[Article.List] = call(Api.articles)(q)
-  def getArticle(slug: com.histmersion.web.ApiClient.ArticleSlug, brief: com.histmersion.web.ApiClient.Brief = false): Future[Article.View] = call(Api.getArticle)((slug, brief))
+  def getArticle(slug: com.histmersion.web.ApiClient.ArticleSlug, brief: com.histmersion.web.ApiClient.Brief = com.histmersion.web.ApiClient.Brief(false)): Future[Article.View] = call(Api.getArticle)((slug, brief))
   def places(q: Option[com.histmersion.api.Api.Search.Text], asOf: Option[com.histmersion.api.Api.AggregateQuery.AsOf], limit: Option[com.histmersion.api.Paging.Limit]): Future[List[Place.Hit]] =
     call(Api.places)((q, asOf, limit))
-  def place(id: com.histmersion.api.catalogue.Place.Id, asOf: Option[com.histmersion.api.Api.AggregateQuery.AsOf], counts: com.histmersion.web.ApiClient.Counts = false): Future[PlaceDetail] =
+  def place(id: com.histmersion.api.catalogue.Place.Id, asOf: Option[com.histmersion.api.Api.AggregateQuery.AsOf], counts: com.histmersion.web.ApiClient.Counts = com.histmersion.web.ApiClient.Counts(false)): Future[PlaceDetail] =
     call(Api.place)((id, asOf, Option.when(counts)(true)))
   def about(): Future[About] = call(Api.about)(())
   def basemap(): Future[Basemap.Status] = call(BasemapApi.status)(())
@@ -268,9 +268,9 @@ object ApiClient:
   def markSeen(board: com.histmersion.web.ApiClient.Board, at: com.histmersion.web.ApiClient.SeenAt): Future[UiNotices.Counters] =
     call(UiApi.markSeen)((board, UiNotices.SeenMark(Some(at))))
 
-  def queueList(list: com.histmersion.web.ApiClient.QueueName, all: com.histmersion.web.ApiClient.All = false): Future[QueueListing] =
+  def queueList(list: com.histmersion.web.ApiClient.QueueName, all: com.histmersion.web.ApiClient.All = com.histmersion.web.ApiClient.All(false)): Future[QueueListing] =
     call(OpsApi.queueList)((list, all, None, None))
-  def queueForGoal(list: com.histmersion.web.ApiClient.QueueName, goal: com.histmersion.web.ApiClient.GoalSlug, all: com.histmersion.web.ApiClient.All = false): Future[QueueListing] =
+  def queueForGoal(list: com.histmersion.web.ApiClient.QueueName, goal: com.histmersion.web.ApiClient.GoalSlug, all: com.histmersion.web.ApiClient.All = com.histmersion.web.ApiClient.All(false)): Future[QueueListing] =
     call(OpsApi.queueList)((list, all, Some(goal), None))
   def queueOfJob(list: com.histmersion.web.ApiClient.QueueName, job: com.histmersion.web.ApiClient.JobId): Future[QueueListing] =
     call(OpsApi.queueList)((list, true, None, Some(job)))
@@ -299,7 +299,7 @@ object ApiClient:
     call(personal.PersonalApi.editNote)((id, e))
   def removeNote(id: com.histmersion.web.ApiClient.NoteId): Future[personal.Note] = call(personal.PersonalApi.removeNote)(id)
   def readMarks(): Future[List[personal.ReadMark]] =
-    call(personal.PersonalApi.reading)((None, Some("all"), Some(personal.PersonalIds.MaxLimit)))
+    call(personal.PersonalApi.reading)((None, Some(com.histmersion.api.automation.Activity.Show.Wire("all")), Some(personal.PersonalIds.MaxLimit)))
   def setRead(m: com.histmersion.api.personal.ReadMark.Set): Future[personal.ReadMark] =
     call(personal.PersonalApi.setRead)(m)
   def opened(o: personal.ReadOpened): Future[personal.ReadMark] = call(personal.PersonalApi.opened)(o)
@@ -315,15 +315,15 @@ object ApiClient:
   def backups(): Future[List[Backup.Info]] = call(Api.backups)(())
   def initData(fetch: com.histmersion.web.ApiClient.Fetch): Future[JobInfo] = call(Api.init)(fetch)
   def placeSources(): Future[List[Gazetteer.SourceInfo]] = call(Api.placeSources)(())
-  def loadPlaces(source: com.histmersion.api.Api.ExternalPlaces.Source): Future[JobInfo] = call(Api.loadPlaces)((source, true))
+  def loadPlaces(source: com.histmersion.api.Api.ExternalPlaces.Source): Future[JobInfo] = call(Api.loadPlaces)((source, com.histmersion.api.Api.Apply(true)))
   def eventCatalogues(): Future[List[CatalogProviderInfo]] = call(EventsApi.catalogues)(())
   def importEvents(provider: com.histmersion.web.ApiClient.Provider): Future[JobInfo] =
-    call(EventsApi.importEvents)(EventImportRequest(provider, dryRun = false))
+    call(EventsApi.importEvents)(EventImportRequest(provider, dryRun = com.histmersion.api.catalogue.EventImportRequest.DryRun(false)))
   def mediaProviders(): Future[List[MediaProvider.Info]] = call(Api.mediaProviders)(())
   def importMedia(provider: com.histmersion.web.ApiClient.Provider): Future[JobInfo] =
-    call(Api.mediaImportJob)(MediaImportRequest(provider, dryRun = false))
+    call(Api.mediaImportJob)(MediaImportRequest(provider, dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false)))
   def setAgentMode(mode: AgentMode): Future[AutopilotStatus] =
-    call(AutopilotApi.setMode)(AgentMode.ModeSet(mode.wire, Some("web")))
+    call(AutopilotApi.setMode)(AgentMode.ModeSet(mode.wire, Some(com.histmersion.api.automation.AgentMode.ModeSet.By("web"))))
   def acquireRecheck(in: Acquire.Checks.RecheckRequest): Future[Acquire.Checks.RecheckResult] =
     call(com.histmersion.api.library.AcquisitionWorkApi.acquireRecheck)(in)
   def queuePatch(id: com.histmersion.web.ApiClient.QueueItemId, p: Queue.QueuePatch): Future[Queue.QueueItem] =
@@ -367,7 +367,7 @@ object ApiClient:
   ): Future[(List[JobInfo], Paging.Page)] =
     call(Api.jobs)((f, limit, before, upTo))
 
-  def patchSource(ck: com.histmersion.web.ApiClient.Citekey, p: Source.Patch): Future[Source.WithFindings] = call(Api.patchSource)((ck, p, false))
+  def patchSource(ck: com.histmersion.web.ApiClient.Citekey, p: Source.Patch): Future[Source.WithFindings] = call(Api.patchSource)((ck, p, com.histmersion.api.Api.Apply(false)))
 
   // ── embedded agents ──────────────────────────────────────────────────────────────────────────────
 
@@ -454,7 +454,7 @@ object ApiClient:
       else
         val decoded = io.circe.parser.decode[Api.Error](body).toOption
         result.failure(refuse(ApiFailure.of(xhr.status, decoded)))
-    xhr.onerror = (_: dom.Event) => result.failure(ApiFailure.of(0, None))
+    xhr.onerror = (_: dom.Event) => result.failure(ApiFailure.of(com.histmersion.web.ApiFailure.OfStatus(0), None))
     xhr.send(file)
     result.future
 
@@ -495,7 +495,7 @@ object ApiClient:
       else
         val decoded = io.circe.parser.decode[Api.Error](body).toOption
         result.failure(refuse(ApiFailure.of(xhr.status, decoded)))
-    xhr.onerror = (_: dom.Event) => result.failure(ApiFailure.of(0, None))
+    xhr.onerror = (_: dom.Event) => result.failure(ApiFailure.of(com.histmersion.web.ApiFailure.OfStatus(0), None))
     xhr.send(file)
     result.future
 
@@ -504,21 +504,21 @@ object ApiClient:
   def managers: Future[List[Managers.ManagerInfo]] = call(ManagersApi.list)(())
   def autopilot: Future[AutopilotStatus] = call(AutopilotApi.autopilot)(())
   def setAutopilot(on: com.histmersion.web.ApiClient.On): Future[AutopilotStatus] =
-    call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on, Some("web")))
+    call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on, Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("web"))))
 
   /** The autopilot's focus: pin/unpin/priority a goal, or the cap (`max`; no value: the config's). */
   def setFocus(action: com.histmersion.web.ApiClient.FocusAction, goal: Option[com.histmersion.web.ApiClient.GoalSlug] = None, value: Option[com.histmersion.web.ApiClient.FocusLevel] = None): Future[Autopilot.FocusInfo] =
-    call(ManagersApi.setFocus)(Autopilot.FocusSet(action, goal, value, Some("web")))
+    call(ManagersApi.setFocus)(Autopilot.FocusSet(action, goal, value, Some(com.histmersion.api.automation.Autopilot.FocusSet.By("web"))))
 
   /** The central scheduler: its status and queue (`limit` waiting items), a live strategy switch, one item's why. */
   def scheduler(limit: Option[com.histmersion.api.Paging.Limit] = None): Future[AgentScheduler.SchedulerStatus] = call(ManagersApi.scheduler)(limit)
   def setScheduler(strategy: com.histmersion.web.ApiClient.Strategy): Future[AgentScheduler.SchedulerStatus] =
-    call(ManagersApi.setScheduler)(AgentScheduler.SchedulerSet(strategy, Some("web")))
+    call(ManagersApi.setScheduler)(AgentScheduler.SchedulerSet(strategy, Some(com.histmersion.api.automation.AgentScheduler.SchedulerSet.By("web"))))
   def schedulerWhy(item: com.histmersion.web.ApiClient.ItemId): Future[AgentScheduler.WhyInfo] = call(ManagersApi.schedulerWhy)(item)
 
   /** Drain (nothing new starts while the runs in flight finish) or lift it. */
   def drain(on: com.histmersion.web.ApiClient.Drain): Future[AutopilotStatus] =
-    call(AutopilotApi.drain)(Autopilot.DrainSet(on, Some("web")))
+    call(AutopilotApi.drain)(Autopilot.DrainSet(on, Some(com.histmersion.api.automation.Autopilot.DrainSet.By("web"))))
 
   /** The goals with no progress in `days` days, why, and what unblocks them. */
   def stalls(days: Option[com.histmersion.web.ApiClient.Days] = None): Future[Stalls.StallReport] = call(ManagersApi.stalls)(days)
@@ -530,7 +530,7 @@ object ApiClient:
     call(ManagersApi.update)((id, in))
 
   /** pause | resume | stop; `runs` = a pause takes its runs in flight with it. */
-  def managerAction(id: com.histmersion.web.ApiClient.ManagerActionId, action: com.histmersion.web.ApiClient.ManagerAction, runs: com.histmersion.web.ApiClient.Runs = false): Future[Managers.ManagerInfo] =
+  def managerAction(id: com.histmersion.web.ApiClient.ManagerActionId, action: com.histmersion.web.ApiClient.ManagerAction, runs: com.histmersion.web.ApiClient.Runs = com.histmersion.web.ApiClient.Runs(false)): Future[Managers.ManagerInfo] =
     call(ManagersApi.action)((id, action, Option.when(runs)(true)))
   def managerItems(id: com.histmersion.web.ApiClient.ManagerItemsId, status: Option[com.histmersion.web.ApiClient.ItemStatus], offset: com.histmersion.api.Offset, limit: com.histmersion.api.Paging.Limit): Future[Managers.ItemPage] =
     call(ManagersApi.items)((id, status, Some(offset), Some(limit)))
@@ -546,7 +546,7 @@ object ApiClient:
     * manager of its kind, first in line.
     */
   def enqueue(kind: Managers.EnqueueKind, target: com.histmersion.web.ApiClient.Target): Future[Managers.EnqueueResult] =
-    call(ManagersApi.enqueue)(Managers.EnqueueRequest(kind.wire, target, Some(10)))
+    call(ManagersApi.enqueue)(Managers.EnqueueRequest(kind.wire, target, Some(com.histmersion.api.automation.Managers.EnqueueRequest.Priority(10))))
 
   /** The article window's Review button: the article goes to the review manager, first in line. */
   def enqueueReview(slug: com.histmersion.web.ApiClient.ArticleSlug): Future[Managers.EnqueueResult] = enqueue(Managers.EnqueueKind.Review, slug)

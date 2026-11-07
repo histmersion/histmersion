@@ -397,9 +397,9 @@ object LabelPlacement:
 
   /** A name's size class (`.hd-map-label--s/m/l`): small shapes get small names. */
   enum Tier(val css: Tier.Css):
-    case S extends Tier("hd-map-label--s")
-    case M extends Tier("hd-map-label--m")
-    case L extends Tier("hd-map-label--l")
+    case S extends Tier(com.histmersion.web.LabelPlacement.Tier.Css("hd-map-label--s"))
+    case M extends Tier(com.histmersion.web.LabelPlacement.Tier.Css("hd-map-label--m"))
+    case L extends Tier(com.histmersion.web.LabelPlacement.Tier.Css("hd-map-label--l"))
 
   object Tier:
     type Css = Css.T

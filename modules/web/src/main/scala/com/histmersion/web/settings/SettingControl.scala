@@ -81,7 +81,7 @@ object SettingControl:
   /** The default, in words: "On by default" for a flag, else "Default: …". Pure. */
   def defaultText(kind: com.histmersion.web.settings.SettingControl.DefaultTextKind, default: com.histmersion.web.settings.SettingControl.DefaultTextDefault): com.histmersion.web.settings.SettingControl.Text =
     if kind == "flag" then s"${if Draft.isOn(default) then "On" else "Off"} by default."
-    else if default.isEmpty then "Default: (empty)."
+    else if default.isEmpty then com.histmersion.web.settings.SettingControl.Text("Default: (empty).")
     else s"Default: $default."
 
   private def status(f: ConfigEdit.Field, draft: Draft): HtmlElement =

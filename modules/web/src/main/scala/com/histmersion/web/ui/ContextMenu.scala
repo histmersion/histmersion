@@ -53,7 +53,7 @@ object ContextMenu:
   final case class Entry(
       label: Entry.Label,
       run: () => Unit,
-      disabled: Entry.Disabled = false,
+      disabled: Entry.Disabled = com.histmersion.web.ui.ContextMenu.Entry.Disabled(false),
       hint: Option[Entry.Hint] = None,
       pressed: Option[Entry.Pressed] = None
   )
@@ -69,7 +69,7 @@ object ContextMenu:
     object Pressed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A line between groups of actions. */
-  val Separator: Entry = Entry("", () => ())
+  val Separator: Entry = Entry(com.histmersion.web.ui.ContextMenu.Entry.Label(""), () => ())
 
   final private case class Open(
       title: Open.Title,
@@ -97,7 +97,7 @@ object ContextMenu:
   /** Where a menu of `w`×`h` opened at (`x`, `y`) stands so that it stays inside a `vw`×`vh` viewport (with a margin),
     * flipped to the other side of the point where it would not fit. Pure.
     */
-  def place(x: com.histmersion.web.ui.ContextMenu.PlaceX, y: com.histmersion.web.ui.ContextMenu.PlaceY, w: com.histmersion.web.ui.ContextMenu.PlaceW, h: com.histmersion.web.ui.ContextMenu.PlaceH, vw: com.histmersion.web.ui.ContextMenu.PlaceVw, vh: com.histmersion.web.ui.ContextMenu.PlaceVh, margin: com.histmersion.web.ui.ContextMenu.PlaceMargin = 8): (com.histmersion.web.ui.ContextMenu.Position, com.histmersion.web.ui.ContextMenu.Position) =
+  def place(x: com.histmersion.web.ui.ContextMenu.PlaceX, y: com.histmersion.web.ui.ContextMenu.PlaceY, w: com.histmersion.web.ui.ContextMenu.PlaceW, h: com.histmersion.web.ui.ContextMenu.PlaceH, vw: com.histmersion.web.ui.ContextMenu.PlaceVw, vh: com.histmersion.web.ui.ContextMenu.PlaceVh, margin: com.histmersion.web.ui.ContextMenu.PlaceMargin = com.histmersion.web.ui.ContextMenu.PlaceMargin(8)): (com.histmersion.web.ui.ContextMenu.Position, com.histmersion.web.ui.ContextMenu.Position) =
     val px = if x + w + margin > vw then math.max(margin, x - w) else x
     val py = if y + h + margin > vh then math.max(margin, y - h) else y
     (math.max(margin, math.min(px, vw - w - margin)), math.max(margin, math.min(py, vh - h - margin)))
@@ -105,7 +105,7 @@ object ContextMenu:
   def show(title: com.histmersion.web.ui.ContextMenu.ShowTitle, entries: List[Entry], x: com.histmersion.web.ui.ContextMenu.ShowX, y: com.histmersion.web.ui.ContextMenu.ShowY, back: Option[dom.HTMLElement]): Unit =
     open.set(Some(Open(title, entries, x, y, back)))
 
-  def close(returnFocus: com.histmersion.web.ui.ContextMenu.CloseReturnFocus = true): Unit =
+  def close(returnFocus: com.histmersion.web.ui.ContextMenu.CloseReturnFocus = com.histmersion.web.ui.ContextMenu.CloseReturnFocus(true)): Unit =
     val was = open.now()
     open.set(None)
     if returnFocus then was.flatMap(_.back).filter(_.isConnected).foreach(_.focus())
@@ -147,7 +147,7 @@ object ContextMenu:
     )
 
   /** The visible way in: a "⋯" button that opens the same menu under itself. */
-  def button(title: com.histmersion.web.ui.ContextMenu.ButtonTitle, entries: () => List[Entry], extraCls: com.histmersion.web.ui.ContextMenu.ButtonExtraCls = ""): HtmlElement =
+  def button(title: com.histmersion.web.ui.ContextMenu.ButtonTitle, entries: () => List[Entry], extraCls: com.histmersion.web.ui.ContextMenu.ButtonExtraCls = com.histmersion.web.ui.ContextMenu.ButtonExtraCls("")): HtmlElement =
     L.button(
       typ := "button",
       cls := s"btn btn--icon btn--sm menu-btn $extraCls".trim,
@@ -158,7 +158,7 @@ object ContextMenu:
       com.histmersion.web.Icon(com.histmersion.web.Icon.More),
       onClick --> { ev =>
         ev.stopPropagation()
-        if open.now().exists(_.title == title) then close(returnFocus = false)
+        if open.now().exists(_.title == title) then close(returnFocus = com.histmersion.web.ui.ContextMenu.CloseReturnFocus(false))
         else showUnder(ev.currentTarget.asInstanceOf[dom.HTMLElement], title, entries())
       }
     )
@@ -191,7 +191,7 @@ object ContextMenu:
       },
       documentEvents(_.onPointerDown) --> { ev =>
         val t = ev.target.asInstanceOf[dom.Element]
-        if t.closest(".context-menu") == null && t.closest(".menu-btn") == null then close(returnFocus = false)
+        if t.closest(".context-menu") == null && t.closest(".menu-btn") == null then close(returnFocus = com.histmersion.web.ui.ContextMenu.CloseReturnFocus(false))
       },
       onKeyDown --> { ev =>
         val el = ev.currentTarget.asInstanceOf[dom.Element]
@@ -201,10 +201,10 @@ object ContextMenu:
         ev.key match
           case "ArrowDown" => go(at + 1)
           case "ArrowUp"   => go(if at < 0 then all.size - 1 else at - 1)
-          case "Home"      => go(0)
+          case "Home"      => go(com.histmersion.web.ui.ContextMenu.MenuGoI(0))
           case "End"       => go(all.size - 1)
           case "Escape"    => ev.preventDefault(); ev.stopPropagation(); close()
-          case "Tab"       => close(returnFocus = false)
+          case "Tab"       => close(returnFocus = com.histmersion.web.ui.ContextMenu.CloseReturnFocus(false))
           case _           => ()
       },
       p(cls := "context-menu-title", o.title),

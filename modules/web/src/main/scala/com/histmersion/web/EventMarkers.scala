@@ -45,13 +45,13 @@ object EventMarkers:
       tiles: (com.histmersion.web.EventMarkers.TileX, com.histmersion.web.EventMarkers.TileY),
       kind: Option[com.histmersion.api.Api.EventQuery.Kind],
       tier: Option[com.histmersion.api.Api.EventQuery.Tier],
-      undated: com.histmersion.web.EventMarkers.Undated = false
+      undated: com.histmersion.web.EventMarkers.Undated = com.histmersion.web.EventMarkers.Undated(false)
   ): TilesApi.TileQuery =
     TilesApi.TileQuery(
       TileLayer.Events.wire,
-      0,
-      0,
-      0,
+      com.histmersion.api.catalogue.TilesApi.TileQuery.Z(0),
+      com.histmersion.api.catalogue.TilesApi.TileQuery.X(0),
+      com.histmersion.api.catalogue.TilesApi.TileQuery.Y(0),
       filter.modify(_.period).setTo(Some(Period(tiles._1, tiles._2))).modify(_.limit).setTo(Filter().limit).modify(_.offset).setTo(0).modify(_.sort).setTo(Filter().sort),
       kind = kind,
       tier = tier,

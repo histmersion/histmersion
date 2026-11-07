@@ -208,8 +208,8 @@ object GraphPanel:
         n.depth,
         r * Math.cos(angle),
         r * Math.sin(angle),
-        0,
-        0,
+        com.histmersion.web.GraphPanel.SimNode.Vx(0),
+        com.histmersion.web.GraphPanel.SimNode.Vy(0),
         n.id == g.root
       )
     }.toArray
@@ -398,12 +398,12 @@ object GraphPanel:
         ctx.fillStyle = ThemeTokens(Palette.status(n.status.getOrElse(Source.Status.Unassessed).wire))
         ctx.fill()
         if on then
-          ctx.strokeStyle = ThemeTokens("--graph-hover")
+          ctx.strokeStyle = ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--graph-hover"))
           ctx.lineWidth = 2
           ctx.stroke()
         val label = if n.title.length > GL.labelMaxLen then n.title.take(GL.labelTruncLen) + "…" else n.title
         ctx.font = if on then "bold 11px system-ui" else "10px system-ui"
-        ctx.fillStyle = ThemeTokens(if on then "--graph-label-hover" else "--graph-label")
+        ctx.fillStyle = ThemeTokens(if on then com.histmersion.web.ui.ThemeTokens.Name("--graph-label-hover") else com.histmersion.web.ui.ThemeTokens.Name("--graph-label"))
         ctx.textAlign = "center"
         ctx.fillText(label + n.year.fold("")(y => s" ($y)"), n.x, n.y + radius(i) + 12)
       ctx.restore()

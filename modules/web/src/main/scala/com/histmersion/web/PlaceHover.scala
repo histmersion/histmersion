@@ -36,9 +36,9 @@ object PlaceHover:
   // `var`s: where the pointer last was over a place, and what kind of pointer last pressed the map
 
 
-  private var lastX: com.histmersion.web.PlaceHover.ScreenPixels = 0
-  private var lastY: com.histmersion.web.PlaceHover.ScreenPixels = 0
-  private var lastPointer: com.histmersion.web.PlaceHover.PointerType = "mouse"
+  private var lastX: com.histmersion.web.PlaceHover.ScreenPixels = com.histmersion.web.PlaceHover.ScreenPixels(0)
+  private var lastY: com.histmersion.web.PlaceHover.ScreenPixels = com.histmersion.web.PlaceHover.ScreenPixels(0)
+  private var lastPointer: com.histmersion.web.PlaceHover.PointerType = com.histmersion.web.PlaceHover.PointerType("mouse")
   private var hovered: Option[Preview.Target] = None
   // `var`s: the map, once installed (installing twice must not double-bind), and the shape hovered
   private var surface: MapSurface = null
@@ -123,12 +123,12 @@ object PlaceHover:
               val on = PlacesInput.toggleFromMap(id, label, kind)
               val anchor =
                 e.at.map(anchorAt).getOrElse { val (x, y) = (lastX, lastY); () => Some(Preview.Anchor.At(x, y)) }
-              settle(Preview.Target.Place(id, ps.asOf()), on, anchor, None, keyboard = false)
+              settle(Preview.Target.Place(id, ps.asOf()), on, anchor, None, keyboard = com.histmersion.web.PlaceHover.KeyboardDriven(false))
             case None =>
               // a click on the empty map lets every card go
               hovered = None
               Preview.hide()
-              Preview.unpin(restoreFocus = false)
+              Preview.unpin(restoreFocus = com.histmersion.web.Preview.RestoreFocus(false))
       }
       // a pinned card stays at its place while the map moves under it
       m.on(MapEventKind.Move)(_ => Preview.reposition())
@@ -164,7 +164,7 @@ object PlaceHover:
     else
       hovered = None
       Preview.hide()
-      Preview.unpin(restoreFocus = false)
+      Preview.unpin(restoreFocus = com.histmersion.web.Preview.RestoreFocus(false))
 
   private def at(e: dom.MouseEvent): Unit =
     lastX = e.clientX
@@ -193,13 +193,13 @@ object PlaceHover:
         val on = choose()
         val anchor =
           latLonOf(e).map(anchorAt).getOrElse { val (x, y) = (lastX, lastY); () => Some(Preview.Anchor.At(x, y)) }
-        settle(target, on, anchor, None, keyboard = false)
+        settle(target, on, anchor, None, keyboard = com.histmersion.web.PlaceHover.KeyboardDriven(false))
       override def focus(e: dom.FocusEvent): Unit = focusCard(m.el, target)
       override def blur(e: dom.FocusEvent): Unit = dropHover()
       override def key(e: dom.KeyboardEvent): Unit =
         if PinRules.activates(e.key) then
           e.preventDefault()
-          settle(target, choose(), anchorOn(m.el), Some(m.el), keyboard = true)
+          settle(target, choose(), anchorOn(m.el), Some(m.el), keyboard = com.histmersion.web.PlaceHover.KeyboardDriven(true))
     button(m.el, s"$label — show only this place and pin its card")
 
   /** A place's NAME (an area's label on the map): a keyboard button for the place it names — the pointer passes through
@@ -214,7 +214,7 @@ object PlaceHover:
       override def key(e: dom.KeyboardEvent): Unit =
         if PinRules.activates(e.key) then
           e.preventDefault()
-          settle(target, PlacesInput.toggleFromMap(id, label, kind), anchorOn(el), Some(el), keyboard = true)
+          settle(target, PlacesInput.toggleFromMap(id, label, kind), anchorOn(el), Some(el), keyboard = com.histmersion.web.PlaceHover.KeyboardDriven(true))
     button(el, s"$label — show only this place and pin its card")
 
   private def button(el: dom.Element, label: com.histmersion.api.UiLabels.Text): Unit =
@@ -268,7 +268,7 @@ object PlaceHover:
         intent.cancelPending()
         hovered = None
         Preview.hide()
-        activate(Activation(keyboard = false, Some(el), latLonOf(e)))
+        activate(Activation(keyboard = com.histmersion.web.Activation.Keyboard(false), Some(el), latLonOf(e)))
       override def focus(e: dom.FocusEvent): Unit = target().foreach(t => focusCard(el, t))
       override def blur(e: dom.FocusEvent): Unit = dropHover()
       override def key(e: dom.KeyboardEvent): Unit =
@@ -276,7 +276,7 @@ object PlaceHover:
           e.preventDefault()
           intent.cancelPending()
           Preview.hide()
-          activate(Activation(keyboard = true, Some(el), None))
+          activate(Activation(keyboard = com.histmersion.web.Activation.Keyboard(true), Some(el), None))
     m.onRemoved(() => if target().exists(t => hovered.contains(t)) then dropHover())
     button(el, label())
 

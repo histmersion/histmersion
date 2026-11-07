@@ -20,9 +20,9 @@ object TilePlaceholder:
   type YValue = YValue.T
   object YValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val Z: com.histmersion.web.TilePlaceholder.Z = 900000001
-  val X: com.histmersion.web.TilePlaceholder.X = 900000002L
-  val Y: com.histmersion.web.TilePlaceholder.Y = 900000003L
+  val Z: com.histmersion.web.TilePlaceholder.Z = com.histmersion.web.TilePlaceholder.Z(900000001)
+  val X: com.histmersion.web.TilePlaceholder.X = com.histmersion.web.TilePlaceholder.X(900000002L)
+  val Y: com.histmersion.web.TilePlaceholder.Y = com.histmersion.web.TilePlaceholder.Y(900000003L)
 
   /** `uri` with the placeholder tile replaced by `{z}/{x}/{y}`. */
   def fill(uri: String): String = uri.replace(s"/$Z/$X/$Y", "/{z}/{x}/{y}")

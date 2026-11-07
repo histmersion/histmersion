@@ -28,7 +28,7 @@ object AboutView:
       value: Row.Value,
       state: Option[ServiceState] = None,
       detail: Option[Row.Detail] = None,
-      depth: Row.Depth = 0,
+      depth: Row.Depth = com.histmersion.web.AboutView.Row.Depth(0),
       href: Option[Row.Href] = None
   )
 
@@ -58,21 +58,21 @@ object AboutView:
   def sections(a: About): List[Section] =
     val b = a.build
     val build = Section(
-      "Server",
+      com.histmersion.web.AboutView.Section.Title("Server"),
       List(
-        Row("version", s"${a.name} ${b.version}"),
-        Row("commit", b.gitCommit.fold("unknown")(c => if b.dirty then s"$c (with uncommitted changes)" else c)),
-        Row("commit date", b.commitDate.getOrElse("unknown")),
-        Row("licence", b.licence.getOrElse("unknown")),
+        Row(com.histmersion.web.AboutView.Row.Label("version"), s"${a.name} ${b.version}"),
+        Row(com.histmersion.web.AboutView.Row.Label("commit"), b.gitCommit.fold("unknown")(c => if b.dirty then s"$c (with uncommitted changes)" else c)),
+        Row(com.histmersion.web.AboutView.Row.Label("commit date"), b.commitDate.getOrElse("unknown")),
+        Row(com.histmersion.web.AboutView.Row.Label("licence"), b.licence.getOrElse("unknown")),
         Row(
-          "source",
+          com.histmersion.web.AboutView.Row.Label("source"),
           b.sourceUrl.fold("unknown")(_ => "the code of this version"),
           href = b.sourceUrl,
           detail = b.sourceUrl
         ),
-        Row("schema version", a.health.schemaVersion.getOrElse("unknown")),
+        Row(com.histmersion.web.AboutView.Row.Label("schema version"), a.health.schemaVersion.getOrElse("unknown")),
         Row(
-          "config file",
+          com.histmersion.web.AboutView.Row.Label("config file"),
           a.configFile.path.fold("none")(_ => if a.configFile.loaded then "read" else "not found"),
           detail = a.configFile.path.map(p =>
             if a.configFile.unknownKeys.isEmpty then p
@@ -82,19 +82,19 @@ object AboutView:
       )
     )
     val health = Section(
-      "Health",
+      com.histmersion.web.AboutView.Section.Title("Health"),
       List(
-        Row("overall", a.health.status, Some(ServiceState.of(Some(a.health.status)))),
-        check("database", Some(a.health.db)),
-        check("converter", a.health.converter)
+        Row(com.histmersion.web.AboutView.Row.Label("overall"), a.health.status, Some(ServiceState.of(Some(a.health.status)))),
+        check(com.histmersion.web.AboutView.CheckLabel("database"), Some(a.health.db)),
+        check(com.histmersion.web.AboutView.CheckLabel("converter"), a.health.converter)
       )
     )
     val j = a.jobs
-    val jobs = Section("Job queue", JobState.values.toList.map(s => Row(s.wire, j.of(s).toString)))
+    val jobs = Section(com.histmersion.web.AboutView.Section.Title("Job queue"), JobState.values.toList.map(s => Row(s.wire, j.of(s).toString)))
     val backup = Section(
-      "Backups",
+      com.histmersion.web.AboutView.Section.Title("Backups"),
       List(
-        a.lastBackup.fold(Row("last backup", "none yet"))(bk =>
+        a.lastBackup.fold(Row(com.histmersion.web.AboutView.Row.Label("last backup"), com.histmersion.web.AboutView.Row.Value("none yet")))(bk =>
           Row(
             "last backup",
             a.lastBackupAgeSeconds.fold("unknown age")(s => s"${AboutMarkdown.age(s)} ago"),
@@ -105,20 +105,20 @@ object AboutView:
     )
     val store = a.counts.toList.map(c =>
       Section(
-        "Store",
+        com.histmersion.web.AboutView.Section.Title("Store"),
         List(
-          Row("sources", c.sources.toString),
-          Row("findings", c.findings.toString),
-          Row("articles", c.articles.toString),
-          Row("events", c.events.toString),
-          Row("gazetteer places", c.places.toString),
-          Row("periods", c.periods.toString),
-          Row("period presets", c.presets.toString)
+          Row(com.histmersion.web.AboutView.Row.Label("sources"), c.sources.toString),
+          Row(com.histmersion.web.AboutView.Row.Label("findings"), c.findings.toString),
+          Row(com.histmersion.web.AboutView.Row.Label("articles"), c.articles.toString),
+          Row(com.histmersion.web.AboutView.Row.Label("events"), c.events.toString),
+          Row(com.histmersion.web.AboutView.Row.Label("gazetteer places"), c.places.toString),
+          Row(com.histmersion.web.AboutView.Row.Label("periods"), c.periods.toString),
+          Row(com.histmersion.web.AboutView.Row.Label("period presets"), c.presets.toString)
         )
       )
     )
     val problems = Option.when(a.problems.nonEmpty)(
-      Section(if a.problems.size == 1 then "Problem" else "Problems", a.problems.map(p => Row("", p)))
+      Section(if a.problems.size == 1 then com.histmersion.web.AboutView.Section.Title("Problem") else com.histmersion.web.AboutView.Section.Title("Problems"), a.problems.map(p => Row(com.histmersion.web.AboutView.Row.Label(""), p)))
     )
     List(build, health, jobs, backup) ++ store ++ storage(a.storage) ++ plugins(a.plugins).toList ++ problems.toList
 
@@ -132,7 +132,7 @@ object AboutView:
       val when = (r.ageSeconds.map(_.value.toLong).map(s => s"measured ${AboutMarkdown.age(s)} ago") ++
         Option.when(r.measuring)("measuring…")).mkString(" · ")
       val total = Option.when(r.entries.nonEmpty)(
-        Row("in all", Backup.humanBytes(Storage.total(r.entries).value.toLong), detail = Option.when(when.nonEmpty)(when))
+        Row(com.histmersion.web.AboutView.Row.Label("in all"), Backup.humanBytes(Storage.total(r.entries).value.toLong), detail = Option.when(when.nonEmpty)(when))
       )
       val rows = Storage.shown(r.entries).map { (e, depth) =>
         Row(
@@ -143,7 +143,7 @@ object AboutView:
           depth = depth
         )
       }
-      val waiting = Option.when(r.entries.isEmpty && r.measuring)(Row("", "measuring…"))
+      val waiting = Option.when(r.entries.isEmpty && r.measuring)(Row(com.histmersion.web.AboutView.Row.Label(""), com.histmersion.web.AboutView.Row.Value("measuring…")))
       val disks = r.volumes.map { v =>
         val low = v.freeBytes.value.toLong < r.lowFreeBytes.value.toLong
         Row(
@@ -153,8 +153,8 @@ object AboutView:
           detail = Some(s"of ${Backup.humanBytes(v.totalBytes.value.toLong)}")
         )
       }
-      val notes = r.hints.map(h => Row("", h)) ++ r.problems.map(p => Row("", p))
-      List(Section("Storage", total.toList ++ waiting.toList ++ rows)) ++
+      val notes = r.hints.map(h => Row(com.histmersion.web.AboutView.Row.Label(""), h)) ++ r.problems.map(p => Row(com.histmersion.web.AboutView.Row.Label(""), p))
+      List(Section(com.histmersion.web.AboutView.Section.Title("Storage"), total.toList ++ waiting.toList ++ rows)) ++
         Option.when(disks.nonEmpty || notes.nonEmpty)(Section("Disk space", disks ++ notes)).toList
 
   /** The plugins in this binary (#2018): one row each — its id, what became of it (a badge: registered ok, disabled
@@ -165,7 +165,7 @@ object AboutView:
   private[web] def plugins(r: PluginsReport): Option[Section] =
     Option.when(r.plugins.nonEmpty || r.warnings.nonEmpty)(
       Section(
-        "Plugins",
+        com.histmersion.web.AboutView.Section.Title("Plugins"),
         r.plugins.map { p =>
           val st = PluginState.parse(p.state) match
             case Some(PluginState.Registered)                   => ServiceState.Ok
@@ -179,7 +179,7 @@ object AboutView:
             Option.when(p.warnings.nonEmpty)(p.warnings.mkString("; "))
           ).flatten.mkString(" · ")
           Row(Wording.plugin(p.id), Wording.capitalize(p.state), Some(st), Some(s"${p.id} · $detail"))
-        } ++ r.warnings.map(w => Row("", w))
+        } ++ r.warnings.map(w => Row(com.histmersion.web.AboutView.Row.Label(""), w))
       )
     )
 

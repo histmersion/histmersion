@@ -28,9 +28,9 @@ object MotionPref:
   // `var`s: read by `animate()` from anywhere, at once — a Var's value set inside an Airstream transaction
   // would read the old one until it ends
   private var choiceNow: MapMotion = MapMotion.System
-  private var systemNow: com.histmersion.web.map.MotionPref.SystemNow = false
+  private var systemNow: com.histmersion.web.map.MotionPref.SystemNow = com.histmersion.web.map.MotionPref.SystemNow(false)
   private var installed = false
-  private val state: Var[(MapMotion, com.histmersion.web.map.MotionPref.SystemReduced)] = Var((MapMotion.System, false))
+  private val state: Var[(MapMotion, com.histmersion.web.map.MotionPref.SystemReduced)] = Var((MapMotion.System, com.histmersion.web.map.MotionPref.SystemReduced(false)))
 
   /** Read the system's setting and follow its changes (once; also done by the first read). */
   def install(): Unit =

@@ -22,7 +22,7 @@ trait ShapeSet:
   def ids: Seq[com.histmersion.web.map.ShapeFeature.Id]
 
   /** How many times the shapes' outlines were sent to the map (a restyle sends none; diagnostics). */
-  def uploads: com.histmersion.web.map.ShapeSet.UploadCount = 0
+  def uploads: com.histmersion.web.map.ShapeSet.UploadCount = com.histmersion.web.map.ShapeSet.UploadCount(0)
 
   /** A drawn shape's colour and visibility (diagnostics). */
   def styleOf(id: com.histmersion.web.map.ShapeFeature.Id): Option[(com.histmersion.web.map.ShapeStyle.Colour, com.histmersion.web.map.ShapeFeature.Alpha)] = None

@@ -9,10 +9,10 @@ import scala.scalajs.js
   * claim), a circle a site, a square an event, a landscape photo print (a white mat) a picture.
   */
 enum Shape(val cls: Shape.Cls):
-  case Diamond extends Shape("diamond")
-  case Circle extends Shape("circle")
-  case Square extends Shape("square")
-  case Photo extends Shape("photo")
+  case Diamond extends Shape(com.histmersion.web.Shape.Cls("diamond"))
+  case Circle extends Shape(com.histmersion.web.Shape.Cls("circle"))
+  case Square extends Shape(com.histmersion.web.Shape.Cls("square"))
+  case Photo extends Shape(com.histmersion.web.Shape.Cls("photo"))
 
 object Shape:
   type Cls = Cls.T

@@ -20,10 +20,10 @@ object JobFollow:
   type BackupPollMsValue = BackupPollMsValue.T
   object BackupPollMsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val PollMs: com.histmersion.cli.JobFollow.PollMs = 1000
+  val PollMs: com.histmersion.cli.JobFollow.PollMs = com.histmersion.cli.JobFollow.PollMs(1000)
 
   /** How often a backup is asked for: a dump runs for minutes, and each answer prints a line. */
-  val BackupPollMs: com.histmersion.cli.JobFollow.BackupPollMs = 5000
+  val BackupPollMs: com.histmersion.cli.JobFollow.BackupPollMs = com.histmersion.cli.JobFollow.BackupPollMs(5000)
 
   /** One rewritten progress line on stderr, always the same width. */
   object Progress:

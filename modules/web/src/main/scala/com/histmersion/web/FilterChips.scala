@@ -32,7 +32,7 @@ object FilterChips:
 
   /** The label a chip's field reads as. */
   private def labelOf(c: UiState.ActiveChip): com.histmersion.web.FilterChips.Label = c.key match
-    case k if k == UiState.q.key => "Words"
+    case k if k == UiState.q.key => com.histmersion.web.FilterChips.Label("Words")
     case _                       => Wording.capitalize(c.label)
 
   /** One active filter's chip; a chosen place is named by its label, never by its id. */
@@ -54,7 +54,7 @@ object FilterChips:
         UiState.from.now().getOrElse(config.time.defaultFrom),
         UiState.to.now().getOrElse(config.time.defaultTo)
       ),
-      prefix = Some("Period: "),
+      prefix = Some(com.histmersion.web.Chip.Prefix("Period: ")),
       extraCls = "chip-period",
       remove = Some(() =>
         UiState

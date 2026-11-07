@@ -140,7 +140,7 @@ object WindowManager:
         val x0 =
           math.max(if key == WindowKey.Merge then 8 else 20, math.min((vw - beside - w0) / 2 + offset, vw - w0 - 8))
         val y0 = math.max(20, (if key == WindowKey.Merge then 30 else 60) + offset)
-        val ws = WinState(wid, key, key.initialTitle, x0, y0, w0, h0, nextZ, minimized = false)
+        val ws = WinState(wid, key, key.initialTitle, x0, y0, w0, h0, nextZ, minimized = com.histmersion.web.WindowManager.WinState.Minimized(false))
         shown += key -> wid
         dom.document.activeElement match
           case el: dom.HTMLElement if el != dom.document.body => openers += wid -> el
@@ -197,7 +197,7 @@ object WindowManager:
     key match
       case WindowKey.Source(_) | WindowKey.Article(_) =>
         val id = key.subject.getOrElse("")
-        val fetchUrl = buildUrl(key, fragment = true, extraParams)
+        val fetchUrl = buildUrl(key, fragment = com.histmersion.web.WindowManager.BuildUrlFragment(true), extraParams)
         ApiClient.fetchHtml(fetchUrl).foreach { html =>
           val contentEl = document.getElementById(s"wm-content-$wid")
           if contentEl != null then
@@ -288,7 +288,7 @@ object WindowManager:
         span("Graph"),
         onClick --> (_ => open(WindowKey.Graph(ck)))
       ),
-      WriteButton(Icon.Edit, "Edit", "Edit this source's metadata", () => open(WindowKey.EditSource(ck)))
+      WriteButton(Icon.Edit, com.histmersion.web.WriteButton.ApplyLabel("Edit"), "Edit this source's metadata", () => open(WindowKey.EditSource(ck)))
     )
 
   private def focus(wid: com.histmersion.web.WindowManager.Stacked.Id): Unit =
@@ -305,7 +305,7 @@ object WindowManager:
   /** Close one window. `returnFocus` when a person closed it (Escape, its ✕): the focus goes back to what opened it, if
     * that is still on the page and not inside the window being closed.
     */
-  private def closeWin(wid: com.histmersion.web.WindowManager.Stacked.Id, returnFocus: com.histmersion.web.WindowManager.CloseWinReturnFocus = false): Unit =
+  private def closeWin(wid: com.histmersion.web.WindowManager.Stacked.Id, returnFocus: com.histmersion.web.WindowManager.CloseWinReturnFocus = com.histmersion.web.WindowManager.CloseWinReturnFocus(false)): Unit =
     val key = shown.collectFirst { case (k, id) if id == wid => k }
     key.foreach(k => shown -= k)
     val opener = openers.get(wid)
@@ -452,7 +452,7 @@ object WindowManager:
             cls := "btn btn--bare btn--icon btn--sm wm-btn wm-close",
             "✕",
             title := "Close (Escape)",
-            onClick.stopPropagation --> { _ => closeWin(wid, returnFocus = true) }
+            onClick.stopPropagation --> { _ => closeWin(wid, returnFocus = com.histmersion.web.WindowManager.CloseWinReturnFocus(true)) }
           )
         )
       ),

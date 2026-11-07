@@ -14,7 +14,7 @@ import scala.collection.mutable
 final class BoundedCache[K, V](
     val maxEntries: BoundedCache.MaxEntries,
     val maxWeight: BoundedCache.MaxWeight = Long.MaxValue,
-    weigh: V => BoundedCache.WeighResult = (_: V) => 0L
+    weigh: V => BoundedCache.WeighResult = (_: V) => com.histmersion.web.BoundedCache.WeighResult(0L)
 ):
   require(maxEntries > 0, "a cache holds at least one entry")
   // insertion order is recency: an entry read or written moves to the end

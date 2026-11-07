@@ -10,9 +10,9 @@ import scala.jdk.CollectionConverters.*
   * configured ones — for the plugin itself and for its dependencies.
   */
 final case class AddOptions(
-    yes: AddOptions.Yes = false,
-    unsigned: AddOptions.Unsigned = false,
-    verify: AddOptions.Verify = false,
+    yes: AddOptions.Yes = com.histmersion.cli.AddOptions.Yes(false),
+    unsigned: AddOptions.Unsigned = com.histmersion.cli.AddOptions.Unsigned(false),
+    verify: AddOptions.Verify = com.histmersion.cli.AddOptions.Verify(false),
     sha256: Option[AddOptions.Sha256] = None,
     repos: List[AddOptions.Repos] = Nil
 )

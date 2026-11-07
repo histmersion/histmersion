@@ -17,8 +17,8 @@ object PluginsSection:
   /** What became of a plugin, in words. Pure. */
 
   def state(p: PluginStatus): com.histmersion.web.settings.PluginsSection.State = PluginState.parse(p.state) match
-    case Some(PluginState.Registered) => "Working"
-    case Some(PluginState.Disabled)   => "Turned off"
+    case Some(PluginState.Registered) => com.histmersion.web.settings.PluginsSection.State("Working")
+    case Some(PluginState.Disabled)   => com.histmersion.web.settings.PluginsSection.State("Turned off")
     case Some(PluginState.Failed)     => s"Not working: ${p.error.getOrElse("no reason given")}"
     case Some(PluginState.Refused)    => s"Not loaded: ${p.error.getOrElse("no reason given")}"
     case None                         => Wording.humanize(p.state)
@@ -26,11 +26,11 @@ object PluginsSection:
   /** What a plugin adds, in words (`source-fetcher:oa-core` → "Finds papers"). Pure. */
   def provides(p: PluginStatus): List[com.histmersion.web.settings.PluginsSection.Capability] =
     p.provides.map(_.takeWhile(_ != ':')).distinct.map {
-      case "source-fetcher"   => "Finds papers"
-      case "media-collection" => "Pictures"
-      case "event-catalogue"  => "Events"
-      case "ai-provider"      => "An AI provider"
-      case "secret-vault"     => "A password manager"
+      case "source-fetcher"   => com.histmersion.web.settings.PluginsSection.Capability("Finds papers")
+      case "media-collection" => com.histmersion.web.settings.PluginsSection.Capability("Pictures")
+      case "event-catalogue"  => com.histmersion.web.settings.PluginsSection.Capability("Events")
+      case "ai-provider"      => com.histmersion.web.settings.PluginsSection.Capability("An AI provider")
+      case "secret-vault"     => com.histmersion.web.settings.PluginsSection.Capability("A password manager")
       case other              => Wording.humanize(other)
     }
 
@@ -39,7 +39,7 @@ object PluginsSection:
     div(
       cls := "settings-section",
       SettingsForm(
-        "Built-in plugins",
+        com.histmersion.web.settings.SettingsForm.ApplyTitle("Built-in plugins"),
         Some(
           "Turn a plugin on or off; the server applies it at once. A plugin that needs a key of your own (Europeana, " +
             "Smithsonian) works once the key is in Keys and passwords."

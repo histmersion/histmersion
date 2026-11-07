@@ -14,7 +14,7 @@ final case class MapListRow(
     icon: MapListRow.Icon,
     href: MapListRow.Href,
     open: () => Unit,
-    undated: MapListRow.Undated = false,
+    undated: MapListRow.Undated = com.histmersion.web.MapListRow.Undated(false),
     kind: com.histmersion.api.ItemKind = com.histmersion.api.ItemKind.Place
 )
 

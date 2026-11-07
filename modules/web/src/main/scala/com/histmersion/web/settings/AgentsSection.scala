@@ -25,18 +25,18 @@ object AgentsSection:
         "."
       ),
       SettingsForm(
-        "Research agents",
+        com.histmersion.web.settings.SettingsForm.ApplyTitle("Research agents"),
         None,
         List(
-          SettingsForm.Item("agents.enabled", Some("Run research agents on this server")),
-          SettingsForm.Item("agents.max-concurrent-runs", Some("Agent runs at once")),
-          SettingsForm.Item("agents.budgets.run-tokens", Some("Tokens one run may use")),
-          SettingsForm.Item("agents.budgets.daily-usd", Some("Money all runs together may spend a day (USD)"))
+          SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("agents.enabled"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("Run research agents on this server"))),
+          SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("agents.max-concurrent-runs"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("Agent runs at once"))),
+          SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("agents.budgets.run-tokens"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("Tokens one run may use"))),
+          SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("agents.budgets.daily-usd"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("Money all runs together may spend a day (USD)")))
         )
       ),
       SettingsForm(
-        "AI providers",
-        Some("Where each provider is reached, and how long one answer may take."),
+        com.histmersion.web.settings.SettingsForm.ApplyTitle("AI providers"),
+        Some(com.histmersion.web.settings.SettingsForm.Intro("Where each provider is reached, and how long one answer may take.")),
         Providers.flatMap(p =>
           List(
             SettingsForm
@@ -48,8 +48,8 @@ object AgentsSection:
           )
         ) ++
           List(
-            SettingsForm.Item("agents.providers.claude-code.command", Some("Claude Code: the claude command")),
-            SettingsForm.Item("agents.providers.codex.command", Some("Codex: the codex command"))
+            SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("agents.providers.claude-code.command"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("Claude Code: the claude command"))),
+            SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("agents.providers.codex.command"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("Codex: the codex command")))
           )
       )
     )

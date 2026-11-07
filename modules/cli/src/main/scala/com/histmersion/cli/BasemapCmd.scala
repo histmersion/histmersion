@@ -64,7 +64,7 @@ object BasemapCmd:
     )
       .mapN { (layer, z, tz, bbox, focus, dry, keepAll, noWait) => (c: Client) =>
         c.basemapFetch(
-          Basemap.FetchQuery(if focus.isDefined then "terrain" else layer, z, tz, bbox, dry, keepAll, focus)
+          Basemap.FetchQuery(if focus.isDefined then com.histmersion.api.basemap.Basemap.FetchQuery.Layer("terrain") else layer, z, tz, bbox, dry, keepAll, focus)
         ).flatMap { j =>
           Cli.out.println(
             s"base-map job `${j.id}` started: ${j.detail.flatMap(JobDetail.Purpose.of).getOrElse("")} (`histmersion jobs` lists it)"

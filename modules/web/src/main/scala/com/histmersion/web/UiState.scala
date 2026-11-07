@@ -89,130 +89,130 @@ object UiState:
   import FieldCodec.given
 
   // ── the fields ────────────────────────────────────────────────────────────────────────────────
-  val q = Field[Option[String]]("q", "q", None, Persist.Hash, Role.Filter, Some("search"))
-  val tags = Field[List[String]]("tags", "tag", Nil, Persist.Hash, Role.Filter, Some("tag"))
-  val authors = Field[List[String]]("authors", "author", Nil, Persist.Hash, Role.Filter, Some("author"))
-  val places = Field[List[String]]("places", "place", Nil, Persist.Hash, Role.Filter, Some("place"))
-  val placeIds = Field[List[String]]("placeIds", "placeId", Nil, Persist.Hash, Role.Filter, Some("place"))
-  val topics = Field[List[String]]("topics", "topic", Nil, Persist.Hash, Role.Filter, Some("topic"))
-  val status = Field[List[String]]("status", "status", Nil, Persist.Hash, Role.Filter, Some("status"))
-  val yearFrom = Field[Option[Long]]("yearFrom", "yearFrom", None, Persist.Hash, Role.Filter, Some("published from"))
-  val yearTo = Field[Option[Long]]("yearTo", "yearTo", None, Persist.Hash, Role.Filter, Some("published to"))
-  val sort = Field[Option[String]]("sort", "sort", None, Persist.Hash, Role.Filter, Some("sort"), chip = false)
+  val q = Field[Option[String]](com.histmersion.web.Field.Key("q"), com.histmersion.web.Field.HashKey("q"), None, Persist.Hash, Role.Filter, Some(com.histmersion.web.Field.Label("search")))
+  val tags = Field[List[String]](com.histmersion.web.Field.Key("tags"), com.histmersion.web.Field.HashKey("tag"), Nil, Persist.Hash, Role.Filter, Some(com.histmersion.web.Field.Label("tag")))
+  val authors = Field[List[String]](com.histmersion.web.Field.Key("authors"), com.histmersion.web.Field.HashKey("author"), Nil, Persist.Hash, Role.Filter, Some(com.histmersion.web.Field.Label("author")))
+  val places = Field[List[String]](com.histmersion.web.Field.Key("places"), com.histmersion.web.Field.HashKey("place"), Nil, Persist.Hash, Role.Filter, Some(com.histmersion.web.Field.Label("place")))
+  val placeIds = Field[List[String]](com.histmersion.web.Field.Key("placeIds"), com.histmersion.web.Field.HashKey("placeId"), Nil, Persist.Hash, Role.Filter, Some(com.histmersion.web.Field.Label("place")))
+  val topics = Field[List[String]](com.histmersion.web.Field.Key("topics"), com.histmersion.web.Field.HashKey("topic"), Nil, Persist.Hash, Role.Filter, Some(com.histmersion.web.Field.Label("topic")))
+  val status = Field[List[String]](com.histmersion.web.Field.Key("status"), com.histmersion.web.Field.HashKey("status"), Nil, Persist.Hash, Role.Filter, Some(com.histmersion.web.Field.Label("status")))
+  val yearFrom = Field[Option[Long]](com.histmersion.web.Field.Key("yearFrom"), com.histmersion.web.Field.HashKey("yearFrom"), None, Persist.Hash, Role.Filter, Some(com.histmersion.web.Field.Label("published from")))
+  val yearTo = Field[Option[Long]](com.histmersion.web.Field.Key("yearTo"), com.histmersion.web.Field.HashKey("yearTo"), None, Persist.Hash, Role.Filter, Some(com.histmersion.web.Field.Label("published to")))
+  val sort = Field[Option[String]](com.histmersion.web.Field.Key("sort"), com.histmersion.web.Field.HashKey("sort"), None, Persist.Hash, Role.Filter, Some(com.histmersion.web.Field.Label("sort")), chip = com.histmersion.web.Field.Chip(false))
 
   /** The title quick-filter above the tabs: narrows every list by its items' own title (a source's title, an article's
     * title, an event's label). A filter the user typed, so "clear all" clears it; not a chip, because the input showing
     * it is always on screen.
     */
-  val title = Field[Option[String]]("title", "title", None, Persist.Hash, Role.Filter, Some("title"), chip = false)
+  val title = Field[Option[String]](com.histmersion.web.Field.Key("title"), com.histmersion.web.Field.HashKey("title"), None, Persist.Hash, Role.Filter, Some(com.histmersion.web.Field.Label("title")), chip = com.histmersion.web.Field.Chip(false))
 
   /** A research goal's sources only (its goal page's "sources brought in", in Library or on the map). */
-  val goal = Field[Option[String]]("goal", "goal", None, Persist.Hash, Role.Filter, Some("goal"))
-  val from = Field[Option[Long]]("from", "from", None, Persist.Hash, Role.Span)
-  val to = Field[Option[Long]]("to", "to", None, Persist.Hash, Role.Span)
-  val bbox = Field[Option[String]]("bbox", "bbox", None, Persist.Hash, Role.Span)
-  val inView = Field[Boolean]("inView", "inView", false, Persist.Hash, Role.Span)
+  val goal = Field[Option[String]](com.histmersion.web.Field.Key("goal"), com.histmersion.web.Field.HashKey("goal"), None, Persist.Hash, Role.Filter, Some(com.histmersion.web.Field.Label("goal")))
+  val from = Field[Option[Long]](com.histmersion.web.Field.Key("from"), com.histmersion.web.Field.HashKey("from"), None, Persist.Hash, Role.Span)
+  val to = Field[Option[Long]](com.histmersion.web.Field.Key("to"), com.histmersion.web.Field.HashKey("to"), None, Persist.Hash, Role.Span)
+  val bbox = Field[Option[String]](com.histmersion.web.Field.Key("bbox"), com.histmersion.web.Field.HashKey("bbox"), None, Persist.Hash, Role.Span)
+  val inView = Field[Boolean](com.histmersion.web.Field.Key("inView"), com.histmersion.web.Field.HashKey("inView"), false, Persist.Hash, Role.Span)
 
   /** The open windows — written by [[WindowManager]]. */
-  val open = Field[List[WindowKey]]("open", "open", Nil, Persist.Hash, Role.View)
+  val open = Field[List[WindowKey]](com.histmersion.web.Field.Key("open"), com.histmersion.web.Field.HashKey("open"), Nil, Persist.Hash, Role.View)
 
   /** Library's order of its sources ([[library.LibrarySort]]): a view of the list, not a filter. */
-  val librarySort = Field[Option[String]]("librarySort", "lsort", None, Persist.Hash, Role.View)
-  val tab = Field[Option[String]]("tab", "tab", None, Persist.Hash, Role.View)
-  val layers = Field[Set[MapLayer]]("layers", "layers", Set.empty, Persist.Local, Role.View)
+  val librarySort = Field[Option[String]](com.histmersion.web.Field.Key("librarySort"), com.histmersion.web.Field.HashKey("lsort"), None, Persist.Hash, Role.View)
+  val tab = Field[Option[String]](com.histmersion.web.Field.Key("tab"), com.histmersion.web.Field.HashKey("tab"), None, Persist.Hash, Role.View)
+  val layers = Field[Set[MapLayer]](com.histmersion.web.Field.Key("layers"), com.histmersion.web.Field.HashKey("layers"), Set.empty, Persist.Local, Role.View)
 
   /** The finding markers ("sources") on the map. Not a [[MapLayer]]: it is ON by default, and a browser that already
     * remembers a `layers` set (every one saved before this switch existed) would restore it without the markers. A key
     * of its own that is absent until first toggled keeps them on.
     */
-  val sources = Field[Boolean]("sources", "sources", true, Persist.Local, Role.View)
-  val baseMap = Field[BaseMap]("baseMap", "baseMap", BaseMap.Standard, Persist.Local, Role.View)
+  val sources = Field[Boolean](com.histmersion.web.Field.Key("sources"), com.histmersion.web.Field.HashKey("sources"), true, Persist.Local, Role.View)
+  val baseMap = Field[BaseMap](com.histmersion.web.Field.Key("baseMap"), com.histmersion.web.Field.HashKey("baseMap"), BaseMap.Standard, Persist.Local, Role.View)
 
   /** The viewer's options over the vector styles ([[BaseMaps]]): names, their language, contours. Per device. */
-  val mapOptions = Field[MapPrefs]("mapOptions", "mapOptions", MapPrefs(), Persist.Local, Role.View)
+  val mapOptions = Field[MapPrefs](com.histmersion.web.Field.Key("mapOptions"), com.histmersion.web.Field.HashKey("mapOptions"), MapPrefs(), Persist.Local, Role.View)
 
   /** The media layer's provider and licence filters (#1446): `None` = every one. Per device. */
-  val mediaProvider = Field[Option[String]]("mediaProvider", "mediaProvider", None, Persist.Local, Role.View)
-  val mediaLicense = Field[Option[String]]("mediaLicense", "mediaLicense", None, Persist.Local, Role.View)
+  val mediaProvider = Field[Option[String]](com.histmersion.web.Field.Key("mediaProvider"), com.histmersion.web.Field.HashKey("mediaProvider"), None, Persist.Local, Role.View)
+  val mediaLicense = Field[Option[String]](com.histmersion.web.Field.Key("mediaLicense"), com.histmersion.web.Field.HashKey("mediaLicense"), None, Persist.Local, Role.View)
 
   /** The events layer's filters (#1449): a kind or a group (`natural` | `human`), and the tier (`attested` |
     * `catalogue`); `None` = every one. The sites layer's: one site type. Per device.
     */
-  val eventKind = Field[Option[String]]("eventKind", "eventKind", None, Persist.Local, Role.View)
-  val eventTier = Field[Option[String]]("eventTier", "eventTier", None, Persist.Local, Role.View)
-  val siteType = Field[Option[String]]("siteType", "siteType", None, Persist.Local, Role.View)
+  val eventKind = Field[Option[String]](com.histmersion.web.Field.Key("eventKind"), com.histmersion.web.Field.HashKey("eventKind"), None, Persist.Local, Role.View)
+  val eventTier = Field[Option[String]](com.histmersion.web.Field.Key("eventTier"), com.histmersion.web.Field.HashKey("eventTier"), None, Persist.Local, Role.View)
+  val siteType = Field[Option[String]](com.histmersion.web.Field.Key("siteType"), com.histmersion.web.Field.HashKey("siteType"), None, Persist.Local, Role.View)
 
   /** "Also show sites (events) with no known date": drawn beneath the dated ones, outlined dashed. Off by default; per
     * device.
     */
-  val sitesUndated = Field[Boolean]("sitesUndated", "sitesUndated", false, Persist.Local, Role.View)
-  val eventsUndated = Field[Boolean]("eventsUndated", "eventsUndated", false, Persist.Local, Role.View)
+  val sitesUndated = Field[Boolean](com.histmersion.web.Field.Key("sitesUndated"), com.histmersion.web.Field.HashKey("sitesUndated"), false, Persist.Local, Role.View)
+  val eventsUndated = Field[Boolean](com.histmersion.web.Field.Key("eventsUndated"), com.histmersion.web.Field.HashKey("eventsUndated"), false, Persist.Local, Role.View)
 
   /** How the boundaries layer reads the period ([[GeoPick]]): a snapshot at its middle (the default), start or end, or
     * every state in it with its earliest or latest shape. Sites follow a snapshot's year and the middle otherwise;
     * playback always draws one year. Per device.
     */
-  val areaPick = Field[GeoPick]("areaPick", "areaPick", GeoPick.Mid, Persist.Local, Role.View)
+  val areaPick = Field[GeoPick](com.histmersion.web.Field.Key("areaPick"), com.histmersion.web.Field.HashKey("areaPick"), GeoPick.Mid, Persist.Local, Role.View)
 
   /** The map's motion (#4718): follow the system's reduced-motion setting (the default), always animate, or never. Per
     * device; [[MotionPref]] answers "does the map animate now?" from it.
     */
-  val mapMotion = Field[MapMotion]("mapMotion", "mapMotion", MapMotion.System, Persist.Local, Role.View)
+  val mapMotion = Field[MapMotion](com.histmersion.web.Field.Key("mapMotion"), com.histmersion.web.Field.HashKey("mapMotion"), MapMotion.System, Persist.Local, Role.View)
 
   /** The sidebar's bottom sheet in the narrow layout (a per-device preference, never in a link). */
-  val sheet = Field[Sheet]("sheet", "sheet", Sheet.Peek, Persist.Local, Role.View)
+  val sheet = Field[Sheet](com.histmersion.web.Field.Key("sheet"), com.histmersion.web.Field.HashKey("sheet"), Sheet.Peek, Persist.Local, Role.View)
 
   /** The jobs window's filters (core `ListFilters.JobFilter`): the state (`None` = every job), the kinds (any of), the
     * start dates and the subject text.
     */
-  val jobStatus = Field[Option[JobState]]("jobStatus", "jobs", None, Persist.Hash, Role.View)
-  val jobKinds = Field[List[String]]("jobKinds", "jobKind", Nil, Persist.Hash, Role.View)
-  val jobSince = Field[Option[String]]("jobSince", "jobSince", None, Persist.Hash, Role.View)
-  val jobUntil = Field[Option[String]]("jobUntil", "jobUntil", None, Persist.Hash, Role.View)
-  val jobSubject = Field[Option[String]]("jobSubject", "jobSubject", None, Persist.Hash, Role.View)
+  val jobStatus = Field[Option[JobState]](com.histmersion.web.Field.Key("jobStatus"), com.histmersion.web.Field.HashKey("jobs"), None, Persist.Hash, Role.View)
+  val jobKinds = Field[List[String]](com.histmersion.web.Field.Key("jobKinds"), com.histmersion.web.Field.HashKey("jobKind"), Nil, Persist.Hash, Role.View)
+  val jobSince = Field[Option[String]](com.histmersion.web.Field.Key("jobSince"), com.histmersion.web.Field.HashKey("jobSince"), None, Persist.Hash, Role.View)
+  val jobUntil = Field[Option[String]](com.histmersion.web.Field.Key("jobUntil"), com.histmersion.web.Field.HashKey("jobUntil"), None, Persist.Hash, Role.View)
+  val jobSubject = Field[Option[String]](com.histmersion.web.Field.Key("jobSubject"), com.histmersion.web.Field.HashKey("jobSubject"), None, Persist.Hash, Role.View)
 
   /** The agent runs window's filters (`ListFilters.RunFilter`): the state (`None` = every run), the pipelines and
     * origins (any of), one manager, provider, model and goal, the start dates, the target text.
     */
-  val runStatus = Field[Option[Agents.RunState]]("runStatus", "runs", None, Persist.Hash, Role.View)
-  val runPipelines = Field[List[String]]("runPipelines", "runPipeline", Nil, Persist.Hash, Role.View)
-  val runOrigins = Field[List[String]]("runOrigins", "runOrigin", Nil, Persist.Hash, Role.View)
-  val runManager = Field[Option[String]]("runManager", "runManager", None, Persist.Hash, Role.View)
-  val runProvider = Field[Option[String]]("runProvider", "runProvider", None, Persist.Hash, Role.View)
-  val runModel = Field[Option[String]]("runModel", "runModel", None, Persist.Hash, Role.View)
-  val runGoal = Field[Option[String]]("runGoal", "runGoal", None, Persist.Hash, Role.View)
-  val runSince = Field[Option[String]]("runSince", "runSince", None, Persist.Hash, Role.View)
-  val runUntil = Field[Option[String]]("runUntil", "runUntil", None, Persist.Hash, Role.View)
-  val runSubject = Field[Option[String]]("runSubject", "runSubject", None, Persist.Hash, Role.View)
+  val runStatus = Field[Option[Agents.RunState]](com.histmersion.web.Field.Key("runStatus"), com.histmersion.web.Field.HashKey("runs"), None, Persist.Hash, Role.View)
+  val runPipelines = Field[List[String]](com.histmersion.web.Field.Key("runPipelines"), com.histmersion.web.Field.HashKey("runPipeline"), Nil, Persist.Hash, Role.View)
+  val runOrigins = Field[List[String]](com.histmersion.web.Field.Key("runOrigins"), com.histmersion.web.Field.HashKey("runOrigin"), Nil, Persist.Hash, Role.View)
+  val runManager = Field[Option[String]](com.histmersion.web.Field.Key("runManager"), com.histmersion.web.Field.HashKey("runManager"), None, Persist.Hash, Role.View)
+  val runProvider = Field[Option[String]](com.histmersion.web.Field.Key("runProvider"), com.histmersion.web.Field.HashKey("runProvider"), None, Persist.Hash, Role.View)
+  val runModel = Field[Option[String]](com.histmersion.web.Field.Key("runModel"), com.histmersion.web.Field.HashKey("runModel"), None, Persist.Hash, Role.View)
+  val runGoal = Field[Option[String]](com.histmersion.web.Field.Key("runGoal"), com.histmersion.web.Field.HashKey("runGoal"), None, Persist.Hash, Role.View)
+  val runSince = Field[Option[String]](com.histmersion.web.Field.Key("runSince"), com.histmersion.web.Field.HashKey("runSince"), None, Persist.Hash, Role.View)
+  val runUntil = Field[Option[String]](com.histmersion.web.Field.Key("runUntil"), com.histmersion.web.Field.HashKey("runUntil"), None, Persist.Hash, Role.View)
+  val runSubject = Field[Option[String]](com.histmersion.web.Field.Key("runSubject"), com.histmersion.web.Field.HashKey("runSubject"), None, Persist.Hash, Role.View)
 
   /** The approvals window's filters (`ListFilters.ApprovalFilter`): the state (`None` = the open ones, `all` = every
     * one), the kinds and deciders (any of), the subject text.
     */
-  val approvalState = Field[Option[String]]("approvalState", "apprState", None, Persist.Hash, Role.View)
-  val approvalKinds = Field[List[String]]("approvalKinds", "apprKind", Nil, Persist.Hash, Role.View)
-  val approvalBy = Field[List[String]]("approvalBy", "apprBy", Nil, Persist.Hash, Role.View)
-  val approvalSubject = Field[Option[String]]("approvalSubject", "apprSubject", None, Persist.Hash, Role.View)
+  val approvalState = Field[Option[String]](com.histmersion.web.Field.Key("approvalState"), com.histmersion.web.Field.HashKey("apprState"), None, Persist.Hash, Role.View)
+  val approvalKinds = Field[List[String]](com.histmersion.web.Field.Key("approvalKinds"), com.histmersion.web.Field.HashKey("apprKind"), Nil, Persist.Hash, Role.View)
+  val approvalBy = Field[List[String]](com.histmersion.web.Field.Key("approvalBy"), com.histmersion.web.Field.HashKey("apprBy"), Nil, Persist.Hash, Role.View)
+  val approvalSubject = Field[Option[String]](com.histmersion.web.Field.Key("approvalSubject"), com.histmersion.web.Field.HashKey("apprSubject"), None, Persist.Hash, Role.View)
 
   /** The scheduler panel's filters over its queue: the job types and the reasons (any of), the target text. */
-  val schedTypes = Field[List[String]]("schedTypes", "schedType", Nil, Persist.Hash, Role.View)
-  val schedCodes = Field[List[String]]("schedCodes", "schedWhy", Nil, Persist.Hash, Role.View)
-  val schedSubject = Field[Option[String]]("schedSubject", "schedSubject", None, Persist.Hash, Role.View)
+  val schedTypes = Field[List[String]](com.histmersion.web.Field.Key("schedTypes"), com.histmersion.web.Field.HashKey("schedType"), Nil, Persist.Hash, Role.View)
+  val schedCodes = Field[List[String]](com.histmersion.web.Field.Key("schedCodes"), com.histmersion.web.Field.HashKey("schedWhy"), Nil, Persist.Hash, Role.View)
+  val schedSubject = Field[Option[String]](com.histmersion.web.Field.Key("schedSubject"), com.histmersion.web.Field.HashKey("schedSubject"), None, Persist.Hash, Role.View)
 
   /** The acquisition window also lists the items already done. */
-  val acquireDone = Field[Boolean]("acquireDone", "acqDone", false, Persist.Hash, Role.View)
+  val acquireDone = Field[Boolean](com.histmersion.web.Field.Key("acquireDone"), com.histmersion.web.Field.HashKey("acqDone"), false, Persist.Hash, Role.View)
 
   /** The backlog window also lists the tasks already done. */
-  val tasksDone = Field[Boolean]("tasksDone", "tasksDone", false, Persist.Hash, Role.View)
+  val tasksDone = Field[Boolean](com.histmersion.web.Field.Key("tasksDone"), com.histmersion.web.Field.HashKey("tasksDone"), false, Persist.Hash, Role.View)
 
   /** The bundle the merge review screen is reviewing — its sha256 on the server, so a reload (or a link) reopens the
     * same review.
     */
-  val mergeBundle = Field[Option[String]]("mergeBundle", "bundle", None, Persist.Hash, Role.View)
+  val mergeBundle = Field[Option[String]](com.histmersion.web.Field.Key("mergeBundle"), com.histmersion.web.Field.HashKey("bundle"), None, Persist.Hash, Role.View)
 
   /** The API key writes are sent with, when the server asks for one ([[Auth]]). In this browser's storage only — never
     * in the URL, so a shared link cannot carry it.
     */
-  val apiKey = Field[Option[String]]("apiKey", "apiKey", None, Persist.Local, Role.View)
+  val apiKey = Field[Option[String]](com.histmersion.web.Field.Key("apiKey"), com.histmersion.web.Field.HashKey("apiKey"), None, Persist.Local, Role.View)
 
   private val fields: List[Field[?]] =
     List(
@@ -301,12 +301,12 @@ object UiState:
   def setPreview(p: Option[Preview]): Unit =
     if preview.now() != p then
       preview.set(p)
-      bump(byPreview = true)
+      bump(byPreview = com.histmersion.web.UiState.BumpByPreview(true))
 
   // `var`s: whether the newest change was only a hovered suggestion's preview, and how long a reload
   // waits after one (`ui.debounce.preview-ms`, known once `/api/config` has answered)
-  private var previewChange: com.histmersion.web.UiState.PreviewChange = false
-  private[web] var previewMs: com.histmersion.web.UiState.PreviewMs = 0
+  private var previewChange: com.histmersion.web.UiState.PreviewChange = com.histmersion.web.UiState.PreviewChange(false)
+  private[web] var previewMs: com.histmersion.web.UiState.PreviewMs = com.histmersion.web.UiState.PreviewMs(0)
 
   /** How long a reload scheduled NOW waits: `normalMs`, or less after a preview — the pointer resting on a suggestion
     * should see its lists at once, not after the typing debounce.
@@ -320,27 +320,27 @@ object UiState:
 
   // ── history sequence (the timeline's back/forward buttons read it) ─────────────────────────────
 
-  private var seq: com.histmersion.web.UiState.ChangeSeq = 0
-  private var high: com.histmersion.web.UiState.High = 0
+  private var seq: com.histmersion.web.UiState.ChangeSeq = com.histmersion.web.UiState.ChangeSeq(0)
+  private var high: com.histmersion.web.UiState.High = com.histmersion.web.UiState.High(0)
 
   def currentSeq: com.histmersion.web.UiState.ChangeSeq = seq
   def maxSeq: com.histmersion.web.UiState.ChangeSeq = high
 
   // ── committing ────────────────────────────────────────────────────────────────────────────────
 
-  private val changeSignal: Var[com.histmersion.web.UiState.ChangeSignal] = Var(0)
+  private val changeSignal: Var[com.histmersion.web.UiState.ChangeSignal] = Var(com.histmersion.web.UiState.ChangeSignal(0))
 
   /** Ticks after every committed change: the app reloads what depends on the filter. */
   def signal: Signal[com.histmersion.web.UiState.SignalResult] = changeSignal.signal
 
-  private def bump(byPreview: com.histmersion.web.UiState.BumpByPreview = false): Unit =
+  private def bump(byPreview: com.histmersion.web.UiState.BumpByPreview = com.histmersion.web.UiState.BumpByPreview(false)): Unit =
     previewChange = byPreview
     changeSignal.update(_ + 1)
 
   // `var`: tests swap the browser's storage for a Store.Memory
   private[web] var store: Store = Store.Browser
   // `var`: tests run in Node, which has no location/history to mirror the hash into
-  private[web] var mirrorHash: com.histmersion.web.UiState.MirrorHash = true
+  private[web] var mirrorHash: com.histmersion.web.UiState.MirrorHash = com.histmersion.web.UiState.MirrorHash(true)
 
   private val LocalPrefix = "histmersion.ui."
 
@@ -351,7 +351,7 @@ object UiState:
     * reload its button and layer came back off). The mirroring is therefore a transaction of its own, queued after the
     * assignments; outside any transaction (tests, start-up) it runs at once, as before.
     */
-  def set(assigns: Assign*)(push: com.histmersion.web.UiState.SetPush = false): Unit =
+  def set(assigns: Assign*)(push: com.histmersion.web.UiState.SetPush = com.histmersion.web.UiState.SetPush(false)): Unit =
     assigns.foreach(_.run())
     Transaction { _ =>
       writeHash(push)
@@ -384,12 +384,12 @@ object UiState:
     val box = if keep("bbox") && inView.now() then bbox.now().flatMap(parseBbox) else None
     val f = Filter.of(
       q = if keep("q") then q.now() else None,
-      tags = if keep("tags", "tag") then withPreview("tags", tags.now()) else Nil,
-      authors = if keep("authors", "author") then withPreview("authors", authors.now()) else Nil,
-      places = (if keep("places", "place") then withPreview("places", places.now()) else Nil) ++
+      tags = if keep("tags", "tag") then withPreview(com.histmersion.web.UiState.WithPreviewKey("tags"), tags.now()) else Nil,
+      authors = if keep("authors", "author") then withPreview(com.histmersion.web.UiState.WithPreviewKey("authors"), authors.now()) else Nil,
+      places = (if keep("places", "place") then withPreview(com.histmersion.web.UiState.WithPreviewKey("places"), places.now()) else Nil) ++
         (if keep("placeIds", "place") then placeIds.now() else Nil),
-      topics = if keep("topics", "topic") then withPreview("topics", topics.now()) else Nil,
-      status = if keep("status") then withPreview("status", status.now()) else Nil,
+      topics = if keep("topics", "topic") then withPreview(com.histmersion.web.UiState.WithPreviewKey("topics"), topics.now()) else Nil,
+      status = if keep("status") then withPreview(com.histmersion.web.UiState.WithPreviewKey("status"), status.now()) else Nil,
       yearFrom = if keep("yearFrom") then yearFrom.now() else None,
       yearTo = if keep("yearTo") then yearTo.now() else None,
       from = if keep("from") then from.now() else None,
@@ -429,7 +429,7 @@ object UiState:
 
   def clearFilters(): Unit =
     fields.filter(_.role == Role.Filter).foreach(_.clear())
-    writeHash(push = false)
+    writeHash(push = com.histmersion.web.UiState.WriteHashPush(false))
     bump()
 
   case class ActiveChip(key: ActiveChip.Key, label: ActiveChip.Label, value: ActiveChip.Value, shown: Option[ActiveChip.Shown] = None)
@@ -451,7 +451,7 @@ object UiState:
 
   def removeChip(key: com.histmersion.web.UiState.RemoveChipKey, value: com.histmersion.web.UiState.FilterTerm): Unit =
     fields.find(_.key == key).foreach(_.remove(value))
-    writeHash(push = false)
+    writeHash(push = com.histmersion.web.UiState.WriteHashPush(false))
     bump()
 
   // ── the URL hash ──────────────────────────────────────────────────────────────────────────────
@@ -547,7 +547,7 @@ object UiState:
       { (e: dom.PopStateEvent) =>
         val state = e.state
         seq = if state != null then Try(state.asInstanceOf[js.Dynamic].histmersionSeq.asInstanceOf[Int]).getOrElse(0)
-        else 0
+        else com.histmersion.web.UiState.ChangeSeq(0)
         loadHash(window.location.hash)
         bump()
       }

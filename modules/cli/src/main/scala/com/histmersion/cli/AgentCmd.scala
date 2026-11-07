@@ -60,7 +60,7 @@ object AgentCmd:
     )
       .mapN { (target, limits, reserve, remove) => (c: Client) =>
         if remove then
-          if limits.nonEmpty then Left(Cli.Error("--remove takes no --limit", exitCode = ExitCode.Usage))
+          if limits.nonEmpty then Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("--remove takes no --limit"), exitCode = ExitCode.Usage))
           else
             c.call(AgentsApi.removeAllowance)(target)
               .map(r =>
@@ -103,7 +103,7 @@ object AgentCmd:
         .argument[String]("pool")
         .map(p =>
           (c: Client) =>
-            c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(hold = Some(true))))
+            c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(hold = Some(com.histmersion.api.automation.PlanQuota.PoolSet.Hold(true)))))
               .map(x => Cli.out.println(AgentsMarkdown.pool(x)))
         )
     }
@@ -112,7 +112,7 @@ object AgentCmd:
         .argument[String]("pool")
         .map(p =>
           (c: Client) =>
-            c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(hold = Some(false))))
+            c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(hold = Some(com.histmersion.api.automation.PlanQuota.PoolSet.Hold(false)))))
               .map(x => Cli.out.println(AgentsMarkdown.pool(x)))
         )
     }
@@ -127,8 +127,8 @@ object AgentCmd:
       )
         .mapN { (p, f, reset) => (c: Client) =>
           (f, reset) match
-            case (None, false)   => Left(Cli.Error("give the floors, or --reset", exitCode = ExitCode.Usage))
-            case (Some(_), true) => Left(Cli.Error("--reset takes no floors", exitCode = ExitCode.Usage))
+            case (None, false)   => Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("give the floors, or --reset"), exitCode = ExitCode.Usage))
+            case (Some(_), true) => Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("--reset takes no floors"), exitCode = ExitCode.Usage))
             case _               =>
               c.call(AgentsApi.setPool)((p, PlanQuota.PoolSet(floors = Some(f.getOrElse("")))))
                 .map(x => Cli.out.println(AgentsMarkdown.pool(x)))
@@ -400,7 +400,7 @@ object AgentCmd:
     ) {
       models orElse allowance orElse quota orElse generate orElse doctor orElse probe orElse run orElse runs orElse show orElse
         compare orElse
-        control("pause", "Pause a run before its next step") orElse
+        control(com.histmersion.api.automation.Agents.Action("pause"), "Pause a run before its next step") orElse
         control("resume", "Resume a paused run (finished steps are replayed, not re-run)") orElse
         control("cancel", "Cancel a run") orElse approvals orElse
         decide(

@@ -9,9 +9,9 @@ import scala.scalajs.js
   * button cycles them in that order, as the documentation site's does.
   */
 enum ThemeChoice(val wire: ThemeChoice.Wire, val label: ThemeChoice.Label, val icon: Icon):
-  case System extends ThemeChoice("system", "Theme: follows the system", Icon.ThemeSystem)
-  case Light extends ThemeChoice("light", "Theme: light", Icon.ThemeLight)
-  case Dark extends ThemeChoice("dark", "Theme: dark", Icon.ThemeDark)
+  case System extends ThemeChoice(com.histmersion.web.ThemeChoice.Wire("system"), com.histmersion.web.ThemeChoice.Label("Theme: follows the system"), Icon.ThemeSystem)
+  case Light extends ThemeChoice(com.histmersion.web.ThemeChoice.Wire("light"), com.histmersion.web.ThemeChoice.Label("Theme: light"), Icon.ThemeLight)
+  case Dark extends ThemeChoice(com.histmersion.web.ThemeChoice.Wire("dark"), com.histmersion.web.ThemeChoice.Label("Theme: dark"), Icon.ThemeDark)
 
 object ThemeChoice:
   /** A stored or attribute value; anything unknown (nothing stored, an old value) is the system's. */

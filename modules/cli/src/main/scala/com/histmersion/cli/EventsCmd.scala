@@ -58,7 +58,7 @@ object EventsCmd:
     )
       .mapN { (q, kind, hist, place, tier, ctx, f, json) => (c: Client) =>
         c.listEvents(
-          Api.EventQuery(f, q.map(_.trim).filter(_.nonEmpty), kind, hist, place, tier, Option.when(ctx)(true))
+          Api.EventQuery(f, q.map(_.trim).filter(_.nonEmpty), kind, hist, place, tier, Option.when(ctx)(com.histmersion.api.Api.EventQuery.Context(true)))
         ).map(r => Output.emit(json, r)(EventsMarkdown.eventList))
       }
   }

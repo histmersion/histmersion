@@ -86,7 +86,7 @@ object MediaCovers:
       book.cover,
       p => Files.isRegularFile(Path.of(p)),
       book.isbn.toList,
-      book.identifiers.get("oclc")
+      book.identifiers.get(com.histmersion.cli.Calibre.Book.IdentifiersKey("oclc"))
     ) match
       case Some(CoverChoice.Pick.Calibre(path)) =>
         val line = MediaSourceLine(ck, MediaRole.Cover, MediaProvider.Calibre, s"Calibre id ${book.id}")
@@ -99,8 +99,8 @@ object MediaCovers:
                 case Right(_) => Outcome.Uploaded(line)
                 case Left(e)  => Outcome.Failed(s"$ck: ${e.message}")
       case Some(CoverChoice.Pick.OpenLibrary("isbn", isbn)) => Outcome.AskOpenLibrary(ck, isbn)
-      case Some(CoverChoice.Pick.OpenLibrary(_, _))         => Outcome.Skipped("no cover file in Calibre")
-      case None                                             => Outcome.Skipped("no cover file in Calibre, no ISBN")
+      case Some(CoverChoice.Pick.OpenLibrary(_, _))         => Outcome.Skipped(com.histmersion.cli.MediaCovers.Outcome.Skipped.Reason("no cover file in Calibre"))
+      case None                                             => Outcome.Skipped(com.histmersion.cli.MediaCovers.Outcome.Skipped.Reason("no cover file in Calibre, no ISBN"))
 
   /** The Calibre step over the linked sources: what was uploaded, what Open Library is to be asked for (by the server),
     * and the counts.
@@ -114,7 +114,7 @@ object MediaCovers:
       limit: Option[com.histmersion.api.Paging.Limit]
   ): Either[Cli.Error, (MediaCoversReport, List[(com.histmersion.cli.MediaCovers.Problem, com.histmersion.cli.MediaCovers.Message)])] =
     if !cal.libraryExists then
-      Right((MediaCoversReport(dryRun, skipped = List(MediaCount("no Calibre library here", 1))), Nil))
+      Right((MediaCoversReport(dryRun, skipped = List(MediaCount(com.histmersion.api.media.MediaCount.Key("no Calibre library here"), com.histmersion.api.media.MediaCount.N(1)))), Nil))
     else
       for
         links <- linked(c, only, refresh)

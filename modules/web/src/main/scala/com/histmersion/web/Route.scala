@@ -106,11 +106,8 @@ object Route:
     val Id: _root_.com.histmersion.web.Pages.JobId.type = _root_.com.histmersion.web.Pages.JobId
 
   type ParsePath = String
-  val ParsePath: String.type = String
   type LegacyPath = String
-  val LegacyPath: String.type = String
   type IsAppPathPath = String
-  val IsAppPathPath: String.type = String
 
   def front(p: PlaceTab): Route = p match
     case PlaceTab.Explore  => Explore

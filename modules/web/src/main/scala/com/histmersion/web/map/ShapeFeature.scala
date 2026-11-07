@@ -10,8 +10,8 @@ import scala.scalajs.js
 final case class ShapeFeature(
     id: ShapeFeature.Id,
     geometry: js.Any,
-    colour: ShapeFeature.Colour = "",
-    dashed: ShapeFeature.Dashed = false,
+    colour: ShapeFeature.Colour = com.histmersion.web.map.ShapeFeature.Colour(""),
+    dashed: ShapeFeature.Dashed = com.histmersion.web.map.ShapeFeature.Dashed(false),
     alpha: ShapeFeature.Alpha = 1.0
 )
 

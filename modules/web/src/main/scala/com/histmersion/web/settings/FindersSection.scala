@@ -19,13 +19,13 @@ object FindersSection:
 
   /** The built-in finders, also when they are off (an off plugin registers nothing). */
   val FinderIds: Set[com.histmersion.web.settings.FindersSection.FinderIds] =
-    Set("archive-org", "oa-unpaywall", "oa-core", "oa-openalex", "oa-landing", "pmc", "arxiv")
+    Set(com.histmersion.web.settings.FindersSection.FinderIdsValue("archive-org"), com.histmersion.web.settings.FindersSection.FinderIdsValue("oa-unpaywall"), com.histmersion.web.settings.FindersSection.FinderIdsValue("oa-core"), com.histmersion.web.settings.FindersSection.FinderIdsValue("oa-openalex"), com.histmersion.web.settings.FindersSection.FinderIdsValue("oa-landing"), com.histmersion.web.settings.FindersSection.FinderIdsValue("pmc"), com.histmersion.web.settings.FindersSection.FinderIdsValue("arxiv"))
 
   def pane(ui: UiConfig): HtmlElement =
     div(
       cls := "settings-section",
       SettingsForm(
-        "Your contact e-mail",
+        com.histmersion.web.settings.SettingsForm.ApplyTitle("Your contact e-mail"),
         Some(
           "Crossref, OpenAlex and Unpaywall ask the people who use them for an e-mail address, so that they can " +
             "write if something goes wrong. Histmersion sends it to those three services only — as the address they " +
@@ -33,7 +33,7 @@ object FindersSection:
             "answer more slowly."
         ),
         List(
-          SettingsForm.Item("acquire.contact-email", Some("E-mail address"), Some("Leave it empty to stay anonymous."))
+          SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("acquire.contact-email"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("E-mail address")), Some(com.histmersion.web.settings.SettingsForm.Item.Help("Leave it empty to stay anonymous.")))
         )
       ),
       SettingsForm(

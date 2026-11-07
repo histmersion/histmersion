@@ -18,7 +18,7 @@ object ItemActions:
 
   def bookmark(ref: ItemRef): Unit = writing(MyItems.toggle(ref))
 
-  def bookmarkButton(ref: ItemRef, compact: com.histmersion.web.marks.ItemActions.BookmarkButtonCompact = false): HtmlElement =
+  def bookmarkButton(ref: ItemRef, compact: com.histmersion.web.marks.ItemActions.BookmarkButtonCompact = com.histmersion.web.marks.ItemActions.BookmarkButtonCompact(false)): HtmlElement =
     val on = MyItems.bookmarked(ref)
     button(
       typ := "button",
@@ -34,7 +34,7 @@ object ItemActions:
       onClick --> { ev => ev.stopPropagation(); bookmark(ref) }
     )
 
-  def apply(ref: ItemRef, byline: com.histmersion.web.library.TableRow.Byline = ""): HtmlElement =
+  def apply(ref: ItemRef, byline: com.histmersion.web.library.TableRow.Byline = com.histmersion.web.library.TableRow.Byline("")): HtmlElement =
     val read = MyItems.isRead(ref)
     div(
       cls := "btn-group item-actions",
@@ -56,8 +56,8 @@ object ItemActions:
           Icon(Icon.Read),
           cls("is-on") <-- read,
           child.text <-- read.map(r => if r then "Mark as unread" else "Mark as read"),
-          onClick --> (_ => writing(MyItems.setRead(ref, !MyItems.readNow(ref.identity.getOrElse("")))))
+          onClick --> (_ => writing(MyItems.setRead(ref, !MyItems.readNow(ref.identity.getOrElse(com.histmersion.web.marks.ItemRef.Identity(""))))))
         )
       ),
-      ContextMenu.button(s"More: ${ref.title}", () => ItemMenu.entries(ref, byline), "item-more")
+      ContextMenu.button(s"More: ${ref.title}", () => ItemMenu.entries(ref, byline), com.histmersion.web.ui.ContextMenu.ButtonExtraCls("item-more"))
     )

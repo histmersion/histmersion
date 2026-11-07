@@ -27,7 +27,7 @@ object ResearchOverview:
   /** A goal's progress: its managers' work items done, of all of them (done and still open). */
 
   final case class Progress(done: Progress.Done, total: Progress.Total):
-    def pct: com.histmersion.web.ResearchOverview.Percent = if total <= 0 then 0 else (done * 100 / total).max(0).min(100)
+    def pct: com.histmersion.web.ResearchOverview.Percent = if total <= 0 then com.histmersion.web.ResearchOverview.Percent(0) else (done * 100 / total).max(0).min(100)
 
   object Progress:
 
@@ -87,8 +87,8 @@ object ResearchOverview:
   /** `5 hours`, `2 days`: how long the oldest decision has waited. */
   def waited(createdMs: com.histmersion.web.ResearchOverview.EpochMillis, nowMs: com.histmersion.web.ResearchOverview.EpochMillis): com.histmersion.api.UiLabels.Text =
     val h = math.max(0L, ((nowMs - createdMs) / 3600000).toLong)
-    if h < 1 then "less than an hour"
-    else if h < 48 then (if h == 1 then "1 hour" else s"$h hours")
+    if h < 1 then com.histmersion.api.UiLabels.Text("less than an hour")
+    else if h < 48 then (if h == 1 then com.histmersion.api.UiLabels.Text("1 hour") else s"$h hours")
     else s"${h / 24} days"
 
   /** The weekly limit left, per plan pool that reports one: `Claude plan: 61% of this week's limit left`. */
@@ -210,7 +210,7 @@ object ResearchOverview:
     val open = Var(Option.empty[List[ApprovalInfo]])
     def load(): Unit =
       ApiClient
-        .approvals(ListFilters.ApprovalFilter(), Some(200))
+        .approvals(ListFilters.ApprovalFilter(), Some(com.histmersion.api.Paging.Limit(200)))
         .onComplete(r => open.set(Some(r.toOption.fold(Nil)(_._1))))
     sectionTag(
       cls := "card research-decisions",
@@ -302,7 +302,7 @@ object ResearchOverview:
         ActivityView.shortChips(ui),
         RouteLink(Route.Activity(ActivityTab.Everything), cls := "ch-link", "Full history")
       ),
-      ActivityView.short(6)
+      ActivityView.short(com.histmersion.api.Paging.Limit(6))
     )
 
   /** The page. */

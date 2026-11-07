@@ -39,7 +39,7 @@ object EventMarker:
     ).flatten.mkString(" · ")
 
   /** Pure: the tier's class name — anything but `catalogue` is drawn attested. */
-  def tierClass(tier: com.histmersion.api.Api.EventQuery.Tier): com.histmersion.web.EventMarker.TierClass = if tier == EventTier.Catalogue then "catalogue" else "attested"
+  def tierClass(tier: com.histmersion.api.Api.EventQuery.Tier): com.histmersion.web.EventMarker.TierClass = if tier == EventTier.Catalogue then com.histmersion.web.EventMarker.TierClass("catalogue") else com.histmersion.web.EventMarker.TierClass("attested")
 
   /** Pure: where an event sits on the period ramp of the span shown (0 = its start, 1 = its end): the middle of its
     * outer span.

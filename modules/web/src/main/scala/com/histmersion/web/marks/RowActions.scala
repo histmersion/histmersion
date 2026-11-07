@@ -11,9 +11,9 @@ import com.raquo.laminar.api.L.*
 object RowActions:
 
 
-  def apply(ref: ItemRef, href: com.histmersion.web.marks.ItemRef.Href, byline: com.histmersion.web.library.TableRow.Byline = ""): Modifier[HtmlElement] =
+  def apply(ref: ItemRef, href: com.histmersion.web.marks.ItemRef.Href, byline: com.histmersion.web.library.TableRow.Byline = com.histmersion.web.library.TableRow.Byline("")): Modifier[HtmlElement] =
     List(
       cls("has-actions") := true,
       ContextMenu.on(s"Actions: ${ref.title}", () => ItemMenu.entries(ref, byline)),
-      div(cls := "row-actions", ItemActions.bookmarkButton(ref, compact = true), NewTabLink(href, ref.title))
+      div(cls := "row-actions", ItemActions.bookmarkButton(ref, compact = com.histmersion.web.marks.ItemActions.BookmarkButtonCompact(true)), NewTabLink(href, ref.title))
     )

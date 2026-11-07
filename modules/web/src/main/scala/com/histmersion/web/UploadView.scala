@@ -51,13 +51,13 @@ object UploadView:
 
   final case class Draft(
       fileName: Option[Draft.FileName] = None,
-      citekey: Draft.Citekey = "",
-      title: Draft.Title = "",
+      citekey: Draft.Citekey = com.histmersion.web.UploadView.Draft.Citekey(""),
+      title: Draft.Title = com.histmersion.web.UploadView.Draft.Title(""),
       authors: List[Draft.Authors] = Nil,
-      year: Draft.Year = "",
-      doi: Draft.Doi = "",
-      quality: Draft.Quality = false,
-      force: Draft.Force = false,
+      year: Draft.Year = com.histmersion.web.UploadView.Draft.Year(""),
+      doi: Draft.Doi = com.histmersion.web.UploadView.Draft.Doi(""),
+      quality: Draft.Quality = com.histmersion.web.UploadView.Draft.Quality(false),
+      force: Draft.Force = com.histmersion.web.UploadView.Draft.Force(false),
       forItem: Option[Queue.QueueItem] = None
   )
 
@@ -157,7 +157,7 @@ object UploadView:
     )
 
   /** The picker's label for an item: its id and the first line of its text, shortened. */
-  def itemLabel(item: Queue.QueueItem, max: com.histmersion.web.UploadView.ItemLabelMax = 110): com.histmersion.web.UploadView.ItemLabel =
+  def itemLabel(item: Queue.QueueItem, max: com.histmersion.web.UploadView.ItemLabelMax = com.histmersion.web.UploadView.ItemLabelMax(110)): com.histmersion.web.UploadView.ItemLabel =
     val line = item.text.linesIterator.nextOption().getOrElse("").replace("**", "").trim
     s"#${item.id} " + (if line.length > max then line.take(max - 1).trim + "…" else line)
 
@@ -275,7 +275,7 @@ object UploadView:
 
   private def loadItems(): Unit =
     ApiClient
-      .queueList(Queue.Kind.Acquire.label, false)
+      .queueList(Queue.Kind.Acquire.label, com.histmersion.web.ApiClient.All(false))
       .foreach(l => openItems.set(l.items.filter(_.status == Queue.Open)))
 
   /** "from the acquisition queue…": type to narrow, pick to fill the form in. */
@@ -359,23 +359,23 @@ object UploadView:
           )
         ),
       textField(
-        "citekey",
+        com.histmersion.web.UploadView.FieldLabel("citekey"),
         _.citekey,
         (d, v) => d.modify(_.citekey).setTo(v),
-        "e.g. anthony2007_horse",
+        com.histmersion.web.UploadView.TextFieldHint("e.g. anthony2007_horse"),
         Some(Field.Citekey)
       ),
-      textField("title", _.title, (d, v) => d.modify(_.title).setTo(v), "optional — read from the document otherwise"),
+      textField(com.histmersion.web.UploadView.FieldLabel("title"), _.title, (d, v) => d.modify(_.title).setTo(v), com.histmersion.web.UploadView.TextFieldHint("optional — read from the document otherwise")),
       div(
         cls := "form-field",
         label("authors"),
         ChipInput(
           ChipInput.Config(
-            field = "authors",
-            label = "authors",
-            placeholder = "add an author…",
-            debounceMs = 150,
-            getSuggestions = prefix => ApiClient.facets("authors", Some(prefix), Filter()),
+            field = com.histmersion.web.ChipInput.Config.Field("authors"),
+            label = com.histmersion.web.ChipInput.Config.Label("authors"),
+            placeholder = com.histmersion.web.ChipInput.Config.Placeholder("add an author…"),
+            debounceMs = com.histmersion.web.ChipInput.Config.DebounceMs(150),
+            getSuggestions = prefix => ApiClient.facets(com.histmersion.api.Api.Facets.Field("authors"), Some(prefix), Filter()),
             onChange = vs => draft.update(_.modify(_.authors).setTo(vs))
           ),
           authors.signal
@@ -383,14 +383,14 @@ object UploadView:
       ),
       div(
         cls := "form-pair",
-        textField("year", _.year, (d, v) => d.modify(_.year).setTo(v), "e.g. 2007", Some(Field.Year)),
-        textField("DOI", _.doi, (d, v) => d.modify(_.doi).setTo(v), "10.…", Some(Field.Doi))
+        textField(com.histmersion.web.UploadView.FieldLabel("year"), _.year, (d, v) => d.modify(_.year).setTo(v), com.histmersion.web.UploadView.TextFieldHint("e.g. 2007"), Some(Field.Year)),
+        textField(com.histmersion.web.UploadView.FieldLabel("DOI"), _.doi, (d, v) => d.modify(_.doi).setTo(v), com.histmersion.web.UploadView.TextFieldHint("10.…"), Some(Field.Doi))
       ),
       div(
         cls := "form-checks",
-        checkbox("slower, higher-quality OCR", _.quality, (d, v) => d.modify(_.quality).setTo(v)),
+        checkbox(com.histmersion.web.UploadView.CheckboxText("slower, higher-quality OCR"), _.quality, (d, v) => d.modify(_.quality).setTo(v)),
         checkbox(
-          "store it even if the same file is already stored under another citekey",
+          com.histmersion.web.UploadView.CheckboxText("store it even if the same file is already stored under another citekey"),
           _.force,
           (d, v) => d.modify(_.force).setTo(v)
         )

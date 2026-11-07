@@ -11,11 +11,8 @@ object PageCmd:
     * dropped; a value with a space or quote is single-quoted for the shell.
     */
   type OlderCommand = String
-  val OlderCommand: String.type = String
   type OlderOptsPart1 = String
-  val OlderOptsPart1: String.type = String
   type OlderOptsPart2 = String
-  val OlderOptsPart2: String.type = String
 
   def next(command: String, opts: List[(String, Option[String])], cursor: com.histmersion.api.Paging.Cursor): com.histmersion.cli.Output.Text =
     val set = opts.collect { case (k, Some(v)) => s"--$k ${quote(v)}" }

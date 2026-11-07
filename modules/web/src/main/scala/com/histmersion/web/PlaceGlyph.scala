@@ -48,10 +48,10 @@ object PlaceGlyph:
     else Dot
 
   /** The words under a point-only region's name. */
-  val NoBoundary: com.histmersion.web.PlaceGlyph.NoBoundary = "no boundary yet"
+  val NoBoundary: com.histmersion.web.PlaceGlyph.NoBoundary = com.histmersion.web.PlaceGlyph.NoBoundary("no boundary yet")
 
   /** The words under a people's name. */
-  val People: com.histmersion.web.PlaceGlyph.People = "people"
+  val People: com.histmersion.web.PlaceGlyph.People = com.histmersion.web.PlaceGlyph.People("people")
 
   /** Pure: the label's markup (escaped) for a place of `kind`; `hidden` starts it culled, for a label the map's name
     * pass ([[MapLabels]]) shows — it then fades and grows in.
@@ -59,7 +59,7 @@ object PlaceGlyph:
   def labelHtml(
       label: com.histmersion.api.UiLabels.Text,
       kind: com.histmersion.web.PlaceGlyph.PlaceKind = com.histmersion.api.catalogue.Place.Kind.Region,
-      hidden: com.histmersion.web.PlaceGlyph.LabelHidden = false
+      hidden: com.histmersion.web.PlaceGlyph.LabelHidden = com.histmersion.web.PlaceGlyph.LabelHidden(false)
   ): String =
     val (note, title) =
       if Place.Shape.isPeople(kind) then (People, Place.Shape.PeopleNote) else (NoBoundary, Place.Shape.NoBoundaryNote)
@@ -80,7 +80,7 @@ object PlaceGlyph:
       label: com.histmersion.web.PlaceGlyph.LabelMarkerLabel,
       kind: com.histmersion.web.PlaceGlyph.LabelMarkerKind = com.histmersion.api.catalogue.Place.Kind.Region,
       wrapClass: String = "hd-area-point-wrap",
-      hidden: com.histmersion.web.PlaceGlyph.LabelMarkerHidden = false
+      hidden: com.histmersion.web.PlaceGlyph.LabelMarkerHidden = com.histmersion.web.PlaceGlyph.LabelMarkerHidden(false)
   ): DomMarker =
     DomMarker(lat, lon, DomMarker.element(wrapClass, labelHtml(label, kind, hidden)))
 

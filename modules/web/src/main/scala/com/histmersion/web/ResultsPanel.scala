@@ -70,7 +70,7 @@ object ResultsPanel:
         aria.pressed <-- UiState.inView.signal.map(_.toString),
         "On the map",
         title := "Only what lies in the map's view",
-        onClick --> (_ => ViewportToggle.setInView(true))
+        onClick --> (_ => ViewportToggle.setInView(com.histmersion.web.ViewportToggle.SetInViewOn(true)))
       ),
       button(
         typ := "button",
@@ -79,7 +79,7 @@ object ResultsPanel:
         aria.pressed <-- UiState.inView.signal.map(v => (!v).toString),
         "Everywhere",
         title := "Wherever it is",
-        onClick --> (_ => ViewportToggle.setInView(false))
+        onClick --> (_ => ViewportToggle.setInView(com.histmersion.web.ViewportToggle.SetInViewOn(false)))
       )
     )
 
@@ -129,7 +129,7 @@ object ResultsPanel:
           val target = ev.target.asInstanceOf[dom.HTMLElement]
           target.setPointerCapture(ev.pointerId)
           val move = { (me: dom.PointerEvent) =>
-            resizeTo(startW - (me.clientX - startX).toInt, keep = false)
+            resizeTo(startW - (me.clientX - startX).toInt, keep = com.histmersion.web.ResultsPanel.KeepWidth(false))
           }: js.Function1[dom.PointerEvent, Unit]
           val up = { (_: dom.PointerEvent) =>
             target.removeEventListener("pointermove", move)
@@ -167,10 +167,10 @@ object ResultsPanel:
         div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Sources), ResultsList.element),
         div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Articles), ArticlesTab.pane),
         div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Events), EventsTab.pane),
-        div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Places), MapLists.pane(MapLists.places, "places")),
+        div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Places), MapLists.pane(MapLists.places, com.histmersion.web.MapLists.PaneName("places"))),
         div(
           cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Pictures),
-          MapLists.pane(MapLists.pictures, "pictures")
+          MapLists.pane(MapLists.pictures, com.histmersion.web.MapLists.PaneName("pictures"))
         )
       ),
       child.maybe <-- selected.signal.map(_.map(ResultDetail.element))

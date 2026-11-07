@@ -17,7 +17,7 @@ final class Field[A](
     val persist: Persist,
     val role: Role,
     val label: Option[Field.Label] = None,
-    val chip: Field.Chip = true
+    val chip: Field.Chip = com.histmersion.web.Field.Chip(true)
 )(using val codec: FieldCodec[A]):
   private val v = Var(initial)
   // `var`: `from`/`to` default to the CONFIGURED span, known only once `/api/config` has answered

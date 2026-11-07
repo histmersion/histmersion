@@ -98,7 +98,7 @@ object MapRegionsView:
                 job.set(Some(j))
                 if !j.isTerminal then poll(id, dry)
                 else
-                  if j.succeeded then dry.foreach(q => checked.set(Some(q.copy(dryRun = false))))
+                  if j.succeeded then dry.foreach(q => checked.set(Some(q.copy(dryRun = com.histmersion.api.basemap.Basemap.FetchQuery.DryRun(false)))))
                   load()
               }
             )
@@ -113,7 +113,7 @@ object MapRegionsView:
   private val canDownload: Signal[com.histmersion.web.MapRegionsView.CanDownload] =
     checked.signal.combineWith(box.signal, content.signal, depth.signal, pick.signal, job.signal, Auth.writable).map {
       (ok, _, _, _, _, j, writable) =>
-        writable && !j.exists(!_.isTerminal) && ok.exists(q => current(dryRun = false).toOption.contains(q))
+        writable && !j.exists(!_.isTerminal) && ok.exists(q => current(dryRun = com.histmersion.web.MapRegionsView.DryRun(false)).toOption.contains(q))
     }
 
   private val busy: Signal[com.histmersion.web.MapRegionsView.Busy] = job.signal.map(_.exists(!_.isTerminal))
@@ -193,7 +193,7 @@ object MapRegionsView:
             cls := "btn map-region-check",
             "check the size",
             disabled <-- busy,
-            onClick --> (_ => start(dryRun = true))
+            onClick --> (_ => start(dryRun = com.histmersion.web.MapRegionsView.StartDryRun(true)))
           ),
           button(
             typ := "button",
@@ -201,7 +201,7 @@ object MapRegionsView:
             "download",
             title := "check the size first",
             disabled <-- canDownload.map(!_),
-            onClick --> (_ => start(dryRun = false))
+            onClick --> (_ => start(dryRun = com.histmersion.web.MapRegionsView.StartDryRun(false)))
           )
         )
       ),
@@ -258,7 +258,7 @@ object MapRegionsView:
               cls := "btn btn--sm btn--danger map-region-remove-all",
               child.text <-- confirmAll.signal.map(c => if c then "remove everything — sure?" else "remove everything"),
               disabled <-- Auth.writable.combineWith(busy).map((w, b) => !w || b),
-              onClick --> (_ => if confirmAll.now() then remove(Basemap.RemoveQuery("all")) else confirmAll.set(true))
+              onClick --> (_ => if confirmAll.now() then remove(Basemap.RemoveQuery(com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("all"))) else confirmAll.set(true))
             )
           )
         )
@@ -274,7 +274,7 @@ object MapRegionsView:
               dataAttr("region") := f.name,
               "remove",
               disabled <-- Auth.writable.combineWith(busy).map((w, b) => !w || b),
-              onClick --> (_ => remove(Basemap.RemoveQuery("none", focus = Some(f.name))))
+              onClick --> (_ => remove(Basemap.RemoveQuery(com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("none"), focus = Some(f.name))))
             )
           )
         )

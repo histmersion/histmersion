@@ -133,8 +133,8 @@ object MapLabels:
   /** What the names hold, for [[Diagnostics]]: the names placed, their per-name state, the shapes. */
   def stats: List[(com.histmersion.web.MapLabels.Key, BoundedCache.Stats)] =
     List(
-      "labels.entries" -> BoundedCache.Stats(entries.size, 0, 0L, 0L),
-      "labels.state" -> BoundedCache.Stats(state.size, 0, 0L, 0L),
+      "labels.entries" -> BoundedCache.Stats(entries.size, com.histmersion.web.BoundedCache.Stats.MaxEntries(0), com.histmersion.web.BoundedCache.Stats.Weight(0L), com.histmersion.web.BoundedCache.Stats.MaxWeight(0L)),
+      "labels.state" -> BoundedCache.Stats(state.size, com.histmersion.web.BoundedCache.Stats.MaxEntries(0), com.histmersion.web.BoundedCache.Stats.Weight(0L), com.histmersion.web.BoundedCache.Stats.MaxWeight(0L)),
       "labels.shapes" -> BoundedCache.stats(shapes)
     )
   private def live(k: com.histmersion.web.MapLabels.Key): Live = state.getOrElseUpdate(k, Live())
@@ -217,7 +217,7 @@ object MapLabels:
             val f = todo.dequeue()
             shapeOf(f).foreach(known(f) = _)
             release(f)
-          timed("hd-label-shapes", t0)
+          timed(com.histmersion.web.MapLabels.Name("hd-label-shapes"), t0)
           // named once all are placed: each naming is a diff of every area and a layout pass
           if todo.nonEmpty then { val _ = dom.window.setTimeout(() => slice(), 0) }
           else name()
@@ -465,12 +465,12 @@ object MapLabels:
         before.get(k).foreach(w0 => st.s = LabelMotion.rebase(st.s, w0, st.w, reduced))
       }
     }
-    timed("hd-label-place", tPlace)
+    timed(com.histmersion.web.MapLabels.Name("hd-label-place"), tPlace)
     settledZoom = z
     settled = !moving
     // 4. the first frame of it, now, so a class change and its size compensation land together
     frame(now(), reduced)
-    timed("hd-labels", t0)
+    timed(com.histmersion.web.MapLabels.Name("hd-labels"), t0)
     loop()
 
   // ── the frames ─────────────────────────────────────────────────────────────────────────────────
@@ -485,7 +485,7 @@ object MapLabels:
   private val tick: js.Function1[com.histmersion.web.MapLabels.Time, Unit] = (_: Double) =>
     val t = now()
     val busy = frame(t, reducedMotion())
-    timed("hd-label-frame", t)
+    timed(com.histmersion.web.MapLabels.Name("hd-label-frame"), t)
     if busy || moving then dom.window.requestAnimationFrame(tick)
     else looping = false
 
@@ -565,15 +565,15 @@ object MapLabels:
       el: dom.HTMLElement,
       s: LabelPlacement.Shape,
       scale: com.histmersion.web.MapLabels.Scale,
-      reduced: com.histmersion.web.MapLabels.Reduced = false
+      reduced: com.histmersion.web.MapLabels.Reduced = com.histmersion.web.MapLabels.Reduced(false)
   ): Unit =
     if st.motion != null then
-      write(st, el, 0, "--dx", (st.motion.p.x - s.home.x) * scale, 0.05, "px")
-      write(st, el, 1, "--dy", (st.motion.p.y - s.home.y) * scale, 0.05, "px")
-    write(st, el, 2, "--s", st.s * LabelMotion.appearScale(st.a, reduced), 0.002, "")
+      write(st, el, 0, com.histmersion.web.MapLabels.Name("--dx"), (st.motion.p.x - s.home.x) * scale, 0.05, com.histmersion.web.MapLabels.Unit("px"))
+      write(st, el, 1, com.histmersion.web.MapLabels.Name("--dy"), (st.motion.p.y - s.home.y) * scale, 0.05, com.histmersion.web.MapLabels.Unit("px"))
+    write(st, el, 2, com.histmersion.web.MapLabels.Name("--s"), st.s * LabelMotion.appearScale(st.a, reduced), 0.002, com.histmersion.web.MapLabels.Unit(""))
     writeO(st, el, st.a)
 
-  private def writeO(st: Live, el: dom.HTMLElement, a: com.histmersion.web.MapLabels.Opacity): Unit = write(st, el, 3, "--o", a, 0.005, "")
+  private def writeO(st: Live, el: dom.HTMLElement, a: com.histmersion.web.MapLabels.Opacity): Unit = write(st, el, 3, com.histmersion.web.MapLabels.Name("--o"), a, 0.005, com.histmersion.web.MapLabels.Unit(""))
 
   private def write(st: Live, el: dom.HTMLElement, i: Int, name: com.histmersion.web.MapLabels.Name, v: com.histmersion.web.MapLabels.Amount, eps: com.histmersion.web.MapLabels.Epsilon, unit: com.histmersion.web.MapLabels.Unit): Unit =
     val last = st.wrote(i)

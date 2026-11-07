@@ -14,10 +14,10 @@ trait MapSurface:
 
   /** The container's size, CSS pixels. */
   def size: (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension)
-  def setView(at: LatLon, zoom: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.MapSurface.SetViewAnimate = false): Unit
-  def setZoom(zoom: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.MapSurface.SetZoomAnimate = true): Unit = setView(center, zoom, animate)
-  def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.MapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.MaxZoom, animate: com.histmersion.web.map.MapSurface.FitBoundsAnimate = true): Unit
-  def panBy(dx: com.histmersion.web.map.MapSurface.PanByDx, dy: com.histmersion.web.map.MapSurface.PanByDy, animate: com.histmersion.web.map.MapSurface.PanByAnimate = false): Unit
+  def setView(at: LatLon, zoom: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.MapSurface.SetViewAnimate = com.histmersion.web.map.MapSurface.SetViewAnimate(false)): Unit
+  def setZoom(zoom: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.MapSurface.SetZoomAnimate = com.histmersion.web.map.MapSurface.SetZoomAnimate(true)): Unit = setView(center, zoom, animate)
+  def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.MapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.MaxZoom, animate: com.histmersion.web.map.MapSurface.FitBoundsAnimate = com.histmersion.web.map.MapSurface.FitBoundsAnimate(true)): Unit
+  def panBy(dx: com.histmersion.web.map.MapSurface.PanByDx, dy: com.histmersion.web.map.MapSurface.PanByDy, animate: com.histmersion.web.map.MapSurface.PanByAnimate = com.histmersion.web.map.MapSurface.PanByAnimate(false)): Unit
   def project(p: LatLon): ScreenPt
   def unproject(p: ScreenPt): LatLon
 
@@ -39,7 +39,7 @@ trait MapSurface:
   def setLocked(locked: com.histmersion.web.map.MapSurface.SetLockedLocked): Unit = ()
 
   /** How many times a change of the container's size was taken (diagnostics). */
-  def resizeCount: com.histmersion.web.map.MapSurface.ResizeCount = 0
+  def resizeCount: com.histmersion.web.map.MapSurface.ResizeCount = com.histmersion.web.map.MapSurface.ResizeCount(0)
   def isMoving: Boolean
 
   /** Still, and every tile of the view drawn. */
@@ -73,7 +73,7 @@ trait MapSurface:
     * `maxZoom` (MapLibre's 512-pixel zoom; a deeper view reads those). Made once per id.
     */
   def pointTiles(id: com.histmersion.web.map.MapSurface.LayerId, layer: com.histmersion.web.map.MapSurface.LayerId, maxZoom: com.histmersion.web.map.MapSurface.PointTilesMaxZoom): PointTiles
-  def popup(at: LatLon, html: com.histmersion.web.map.MapSurface.PopupHtml, cls: com.histmersion.web.map.MapSurface.PopupCls = ""): Popup
+  def popup(at: LatLon, html: com.histmersion.web.map.MapSurface.PopupHtml, cls: com.histmersion.web.map.MapSurface.PopupCls = com.histmersion.web.map.MapSurface.PopupCls("")): Popup
   def closePopups(): Unit
 
   /** The base map's names placed in the view now, their text as drawn (the regressions read it). */

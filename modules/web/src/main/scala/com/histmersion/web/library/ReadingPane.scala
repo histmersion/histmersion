@@ -63,14 +63,14 @@ object ReadingPane:
 
   private def readSource(ck: com.histmersion.web.library.ReadingPane.ReadSourceCk): Future[SourceReading] =
     cached(sourceReads, ck) {
-      val record = ApiClient.getSource(ck, body = false)
+      val record = ApiClient.getSource(ck, body = com.histmersion.web.ApiClient.IncludeBody(false))
       val edges = ApiClient.neighbors(ck)
       val articles = ApiClient.sourceArticles(ck)
       for r <- record; e <- edges; a <- articles yield SourceReading(r, CitationCounts.of(e, a.size))
     }
 
   private def readArticle(slug: com.histmersion.web.library.ReadingPane.ArticleSlug): Future[Article.View] =
-    cached(articleReads, slug)(ApiClient.getArticle(slug, brief = true))
+    cached(articleReads, slug)(ApiClient.getArticle(slug, brief = com.histmersion.web.ApiClient.Brief(true)))
 
   def element(section: LibrarySection, chosen: Signal[Option[com.histmersion.web.library.ReadingPane.RowKey]]): HtmlElement =
     htmlTag("aside")(
@@ -169,7 +169,7 @@ object ReadingPane:
         .now()
         .flatMap(_.toOption)
         .flatMap(r => bounds(r.source.findings))
-        .foreach(b => TheMap.surface.fitBounds(b, 40, Layout.fitMaxZoom))
+        .foreach(b => TheMap.surface.fitBounds(b, com.histmersion.web.map.MapSurface.FitBoundsPadding(40), Layout.fitMaxZoom))
     val ref0 = marks.ItemRef.source(ck, row.map(_.title.value).getOrElse(ck))
     // the item's own title once its record is read (the row is not on the page when the address chose it)
     val ref = reading.signal
@@ -254,7 +254,7 @@ object ReadingPane:
         .amend(title := "The sources that challenge, refute, update or supersede it"),
       countLink(
         s"$page#cited-by",
-        if c.articles == 1 then "Cited in 1 article" else s"Cited in ${c.articles} articles",
+        if c.articles == 1 then com.histmersion.web.library.ReadingPane.CountLinkText("Cited in 1 article") else s"Cited in ${c.articles} articles",
         c.articles
       )
     )
@@ -276,7 +276,7 @@ object ReadingPane:
       cls := "reading-item",
       dataAttr("key") := slug,
       com.histmersion.web.ui.ContextMenu
-        .on(s"Actions: ${ref0.title}", () => marks.ItemMenu.entries(refOf(reading.now()), "")),
+        .on(s"Actions: ${ref0.title}", () => marks.ItemMenu.entries(refOf(reading.now()), com.histmersion.web.marks.ItemMenu.EntriesByline(""))),
       onMountCallback { _ =>
         readArticle(slug).onComplete { r =>
           reading.set(Some(r.toEither.left.map(message)))
@@ -289,7 +289,7 @@ object ReadingPane:
         () => WindowManager.open(WindowKey.Article(slug)),
         () => showOnMap(),
         ref,
-        ""
+        com.histmersion.web.library.TableRow.Byline("")
       ),
       div(
         cls := "reading-body",

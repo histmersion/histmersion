@@ -22,9 +22,9 @@ object ResultsList:
   val HitRowInPanel: _root_.com.histmersion.web.ResultsList.InPanel.type = _root_.com.histmersion.web.ResultsList.InPanel
 
   case class SourceRenderOpts(
-      findings: SourceRenderOpts.Findings = 0,
-      total: SourceRenderOpts.Total = 0,
-      inView: SourceRenderOpts.InView = false,
+      findings: SourceRenderOpts.Findings = com.histmersion.web.ResultsList.SourceRenderOpts.Findings(0),
+      total: SourceRenderOpts.Total = com.histmersion.web.ResultsList.SourceRenderOpts.Total(0),
+      inView: SourceRenderOpts.InView = com.histmersion.web.ResultsList.SourceRenderOpts.InView(false),
       params: Option[Filter] = None
   )
 
@@ -109,7 +109,7 @@ object ResultsList:
     isError.set(false)
 
     countText.set(countLine())
-    content.set(if hits.isEmpty then List(emptyState()) else hits.map(hitRow(_, inPanel = true)))
+    content.set(if hits.isEmpty then List(emptyState()) else hits.map(hitRow(_, inPanel = com.histmersion.web.ResultsList.HitRowInPanel(true))))
     moreLoading.set(false)
     moreLabel.set(nextLabel())
 
@@ -170,8 +170,8 @@ object ResultsList:
         tabIndex := 0,
         div(cls := "ck", pickIcon(CardIcons.GenericSource, "finding"), SourceLink(ck, pts.head.doi)),
         div(cls := "title", ttl),
-        div(cls := "meta", s"${plural(pts.size, "finding")}" + (if per.nonEmpty then s" · $per" else "")),
-        div(cls := "claim", Fmt.clip(pts.head.claim, 140)),
+        div(cls := "meta", s"${plural(pts.size, com.histmersion.api.Plural.Noun.Singular("finding"))}" + (if per.nonEmpty then s" · $per" else "")),
+        div(cls := "claim", Fmt.clip(pts.head.claim, com.histmersion.api.Markdown.CharLimit(140))),
         onClick --> { _ => ArticleModal.open(ck, Map("q" -> UiState.q.now().getOrElse(""))) },
         onKeyDown --> { ev =>
           if ev.key == "Enter" || ev.key == " " then
@@ -217,13 +217,13 @@ object ResultsList:
 
   private def countLine(): com.histmersion.api.UiLabels.Text =
     val findings = pageOpts match
-      case Some(o) if o.inView => s"${Plural.count(o.findings, "finding")} in view / ${o.total} total"
-      case Some(o)             => Plural.count(o.findings, "finding")
+      case Some(o) if o.inView => s"${Plural.count(o.findings, com.histmersion.api.Plural.CountSingular("finding"))} in view / ${o.total} total"
+      case Some(o)             => Plural.count(o.findings, com.histmersion.api.Plural.CountSingular("finding"))
       case None                => ""
     ResultsPaging.countLine(
       pageHits.length,
       pageTotal.value,
-      "source",
+      com.histmersion.api.Plural.Noun.Singular("source"),
       extras = List(findings, ResultsPaging.span(UiState.from.now(), UiState.to.now()))
     )
 
@@ -242,7 +242,7 @@ object ResultsList:
           pageTotal = r.total
           pageHits = pageHits ++ r.hits
           countText.set(countLine())
-          content.set(pageHits.map(hitRow(_, inPanel = true)))
+          content.set(pageHits.map(hitRow(_, inPanel = com.histmersion.web.ResultsList.HitRowInPanel(true))))
           moreLoading.set(false)
           moreLabel.set(nextLabel())
         case scala.util.Failure(e) =>
@@ -254,7 +254,7 @@ object ResultsList:
   /** A source's row: its link (in Explore's results a plain click shows its detail there; elsewhere it opens its
     * window), what it is, why it matched, and "open in a new tab".
     */
-  private[web] def hitRow(h: Hit, inPanel: com.histmersion.web.ResultsList.HitRowInPanel = false): HtmlElement =
+  private[web] def hitRow(h: Hit, inPanel: com.histmersion.web.ResultsList.HitRowInPanel = com.histmersion.web.ResultsList.HitRowInPanel(false)): HtmlElement =
     val src = h.source
     val period = Fmt.periodStr(src.periodStart, src.periodEnd)
     val meta = List(
@@ -293,7 +293,7 @@ object ResultsList:
             shownMatches.map { m =>
               val mwhy = m.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(w).isDefined)
               li(
-                span(cls := "claim", Fmt.clip(m.claim, 160)),
+                span(cls := "claim", Fmt.clip(m.claim, com.histmersion.api.Markdown.CharLimit(160))),
                 Fmt.periodStr(m.periodStart, m.periodEnd) match
                   case "" => emptyNode
                   case p  => span(cls := "p", s" $p"),
@@ -331,7 +331,7 @@ object ResultsList:
     val causes = scala.collection.mutable.ListBuffer.empty[String]
     if UiState.inView.now() then causes += "the map viewport (\"only sources in view\" is on)"
     causes += s"the span ${Fmt.yr(UiState.from.now())} → ${Fmt.yr(UiState.to.now())}"
-    if chips.nonEmpty then causes += s"${plural(chips.length, "filter")} below"
+    if chips.nonEmpty then causes += s"${plural(chips.length, com.histmersion.api.Plural.Noun.Singular("filter"))} below"
 
     div(
       cls := "empty",

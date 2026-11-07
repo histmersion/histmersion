@@ -65,7 +65,7 @@ object BundleCmd:
     (Opts.argument[String]("file.hmx"), Output.jsonFlag).mapN { (file, json) => (c: Client) =>
       existing(file).flatMap(c.verifyBundle).flatMap { r =>
         Output.emit(json, r)(BundleMarkdown.verify)
-        if r.ok then Right(()) else Left(Cli.Error("the bundle did not verify", exitCode = ExitCode.Refused))
+        if r.ok then Right(()) else Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("the bundle did not verify"), exitCode = ExitCode.Refused))
       }
     }
   }
@@ -91,7 +91,7 @@ object BundleCmd:
           yield x
       run.flatMap { r =>
         Output.emit(json, r)(BundleMarkdown.importResult)
-        if r.problems.isEmpty then Right(()) else Left(Cli.Error("the import was refused", exitCode = ExitCode.Refused))
+        if r.problems.isEmpty then Right(()) else Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("the import was refused"), exitCode = ExitCode.Refused))
       }
     }
   }

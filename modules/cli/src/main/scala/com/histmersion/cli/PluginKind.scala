@@ -6,11 +6,11 @@ import io.github.iltotore.iron.*
   * name, and what `histmersion plugin add` reports it provides.
   */
 enum PluginKind(val name: PluginKind.Name, val classSuffix: PluginKind.ClassSuffix, val provides: PluginKind.Provides):
-  case SourceFetcher extends PluginKind("source-fetcher", "Fetcher", "source-fetcher")
-  case MediaCollection extends PluginKind("media-collection", "Collection", "media-collection")
-  case EventCatalogue extends PluginKind("event-catalogue", "Catalogue", "event-catalogue")
-  case AiProvider extends PluginKind("ai-provider", "Provider", "ai-provider")
-  case SecretVault extends PluginKind("secret-vault", "Vault", "secret-vault")
+  case SourceFetcher extends PluginKind(com.histmersion.cli.PluginKind.Name("source-fetcher"), com.histmersion.cli.PluginKind.ClassSuffix("Fetcher"), com.histmersion.cli.PluginKind.Provides("source-fetcher"))
+  case MediaCollection extends PluginKind(com.histmersion.cli.PluginKind.Name("media-collection"), com.histmersion.cli.PluginKind.ClassSuffix("Collection"), com.histmersion.cli.PluginKind.Provides("media-collection"))
+  case EventCatalogue extends PluginKind(com.histmersion.cli.PluginKind.Name("event-catalogue"), com.histmersion.cli.PluginKind.ClassSuffix("Catalogue"), com.histmersion.cli.PluginKind.Provides("event-catalogue"))
+  case AiProvider extends PluginKind(com.histmersion.cli.PluginKind.Name("ai-provider"), com.histmersion.cli.PluginKind.ClassSuffix("Provider"), com.histmersion.cli.PluginKind.Provides("ai-provider"))
+  case SecretVault extends PluginKind(com.histmersion.cli.PluginKind.Name("secret-vault"), com.histmersion.cli.PluginKind.ClassSuffix("Vault"), com.histmersion.cli.PluginKind.Provides("secret-vault"))
 
 object PluginKind:
   type Problem = Problem.T

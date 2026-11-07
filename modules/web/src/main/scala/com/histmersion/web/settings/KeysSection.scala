@@ -28,11 +28,11 @@ object KeysSection:
   object ReferenceEntry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Form(val scheme: Form.Scheme, val label: Form.Label, val hint: Form.Hint):
-    case Env extends Form("env", "Environment variable", "its name, e.g. HISTMERSION_CORE_KEY")
-    case Keepassxc extends Form("keepassxc", "KeePassXC entry", "Group/Entry#attribute")
-    case OnePass extends Form("1password", "1Password item", "op://Vault/Item/field")
-    case Bitwarden extends Form("bitwarden", "Bitwarden item", "the item's name or id[#field]")
-    case Value extends Form("value", "The value itself, in the settings file", "the key or password")
+    case Env extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("env"), com.histmersion.web.settings.KeysSection.Form.Label("Environment variable"), com.histmersion.web.settings.KeysSection.Form.Hint("its name, e.g. HISTMERSION_CORE_KEY"))
+    case Keepassxc extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("keepassxc"), com.histmersion.web.settings.KeysSection.Form.Label("KeePassXC entry"), com.histmersion.web.settings.KeysSection.Form.Hint("Group/Entry#attribute"))
+    case OnePass extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("1password"), com.histmersion.web.settings.KeysSection.Form.Label("1Password item"), com.histmersion.web.settings.KeysSection.Form.Hint("op://Vault/Item/field"))
+    case Bitwarden extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("bitwarden"), com.histmersion.web.settings.KeysSection.Form.Label("Bitwarden item"), "the item's name or id[#field]")
+    case Value extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("value"), com.histmersion.web.settings.KeysSection.Form.Label("The value itself, in the settings file"), com.histmersion.web.settings.KeysSection.Form.Hint("the key or password"))
 
   object Form:
     type Scheme = Scheme.T
@@ -76,12 +76,12 @@ object KeysSection:
 
   /** How a credential is held, in words. Pure. */
   def state(c: ConfigEdit.Credential): com.histmersion.web.settings.KeysSection.State = c.form match
-    case "unset" => "Not set"
-    case "env"   => "Set · from an environment variable"
+    case "unset" => com.histmersion.web.settings.KeysSection.State("Not set")
+    case "env"   => com.histmersion.web.settings.KeysSection.State("Set · from an environment variable")
     case "vault" =>
       s"Set · from ${c.shown.flatMap(_.split(':').headOption).map(v => Wording.plugin(v)).getOrElse("a password manager")}"
-    case "value" => "Set · the value is written in the settings file"
-    case _       => "Set"
+    case "value" => com.histmersion.web.settings.KeysSection.State("Set · the value is written in the settings file")
+    case _       => com.histmersion.web.settings.KeysSection.State("Set")
 
   def pane: HtmlElement =
     div(

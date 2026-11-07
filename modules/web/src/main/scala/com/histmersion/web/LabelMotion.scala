@@ -75,7 +75,7 @@ object LabelMotion:
   final case class Motion(p: Pt, vx: Motion.Vx, vy: Motion.Vy):
     /** Toward `target` by `dt` seconds; snaps when `reduced`. */
     def toward(target: Pt, dt: com.histmersion.web.LabelMotion.Step, reduced: com.histmersion.web.LabelMotion.Reduced): Motion =
-      if reduced then Motion(target, 0, 0)
+      if reduced then Motion(target, com.histmersion.web.LabelMotion.Motion.Vx(0), com.histmersion.web.LabelMotion.Motion.Vy(0))
       else
         val (x, vx1) = damp(p.x, vx, target.x, dt)
         val (y, vy1) = damp(p.y, vy, target.y, dt)
@@ -100,7 +100,7 @@ object LabelMotion:
     type Vy = Vy.T
     object Vy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def at(p: Pt): Motion = Motion(p, 0, 0)
+    def at(p: Pt): Motion = Motion(p, com.histmersion.web.LabelMotion.Motion.Vx(0), com.histmersion.web.LabelMotion.Motion.Vy(0))
 
   /** The visibility `a` (0 hidden … 1 shown) after `dt` seconds of fading toward `shown`: linear, so a name reversed
     * mid-fade turns around where it is.

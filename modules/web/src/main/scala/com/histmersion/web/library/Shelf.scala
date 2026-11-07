@@ -4,11 +4,11 @@ package com.histmersion.web.library
   * read, and what they opened lately.
   */
 enum Shelf(val wire: Shelf.Wire, val label: Shelf.Label):
-  case Everything extends Shelf("all", "Everything")
-  case Bookmarks extends Shelf("bookmarks", "Bookmarks")
-  case Notes extends Shelf("notes", "My notes")
-  case Unread extends Shelf("unread", "Not read yet")
-  case Recent extends Shelf("recent", "Recently opened")
+  case Everything extends Shelf(com.histmersion.web.library.Shelf.Wire("all"), com.histmersion.web.library.Shelf.Label("Everything"))
+  case Bookmarks extends Shelf(com.histmersion.web.library.Shelf.Wire("bookmarks"), com.histmersion.web.library.Shelf.Label("Bookmarks"))
+  case Notes extends Shelf(com.histmersion.web.library.Shelf.Wire("notes"), com.histmersion.web.library.Shelf.Label("My notes"))
+  case Unread extends Shelf(com.histmersion.web.library.Shelf.Wire("unread"), com.histmersion.web.library.Shelf.Label("Not read yet"))
+  case Recent extends Shelf(com.histmersion.web.library.Shelf.Wire("recent"), com.histmersion.web.library.Shelf.Label("Recently opened"))
 
 object Shelf:
   type Wire = Wire.T

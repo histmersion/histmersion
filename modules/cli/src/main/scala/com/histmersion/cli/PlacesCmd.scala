@@ -88,7 +88,7 @@ object PlacesCmd:
           val total = groups.size
           groups.zipWithIndex
             .foldLeft[Either[Cli.Error, com.histmersion.api.catalogue.Place.ImportResult]](
-              Right(com.histmersion.api.catalogue.Place.ImportResult(0, 0, 0, Nil))
+              Right(com.histmersion.api.catalogue.Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(0), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), Nil))
             ) { case (acc, (g, i)) =>
               acc.flatMap { sum =>
                 if total > 1 then

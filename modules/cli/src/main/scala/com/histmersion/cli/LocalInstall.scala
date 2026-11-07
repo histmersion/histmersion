@@ -54,7 +54,7 @@ object LocalInstall:
       exe: Option[Path]
   ): Either[com.histmersion.cli.LocalInstall.DataDir, LocalInstall] =
     def kitAt(p: Path) = Files.isRegularFile(p.resolve("bin").resolve("histmersion-relink"))
-    val home = env("HOME").getOrElse("")
+    val home = env(com.histmersion.cli.LocalInstall.EnvVariable("HOME")).getOrElse("")
     val configured = Option(cfg.installDir)
       .map(_.trim)
       .filter(_.nonEmpty)

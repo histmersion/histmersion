@@ -54,7 +54,7 @@ object LibraryAddress:
   def search(item: Option[com.histmersion.web.library.LibraryAddress.ItemKey], shelf: Shelf = Shelf.Everything): com.histmersion.web.library.LibraryAddress.SearchQuery =
     val parts = Option.when(shelf != Shelf.Everything)(s"$ShelfKey=${shelf.wire}").toList ++
       item.map(_.trim).filter(_.nonEmpty).map(i => s"$Key=${js.URIUtils.encodeURIComponent(i)}").toList
-    if parts.isEmpty then "" else parts.mkString("?", "&", "")
+    if parts.isEmpty then com.histmersion.web.library.LibraryAddress.SearchQuery("") else parts.mkString("?", "&", "")
 
   /** The address of a list with `item` chosen. */
   def href(section: LibrarySection, item: Option[com.histmersion.web.library.LibraryAddress.HrefItem], shelf: Shelf = Shelf.Everything): com.histmersion.web.library.LibraryAddress.Href =

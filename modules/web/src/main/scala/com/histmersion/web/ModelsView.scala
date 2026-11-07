@@ -73,16 +73,16 @@ object ModelsView:
   /** A reserve as typed: 0..99, blank = 0. */
   def reserveInput(s: com.histmersion.web.ModelsView.ReserveText): Either[com.histmersion.web.ModelsView.Problem, com.histmersion.web.ModelsView.ReservedCount] =
     val t = s.trim.stripSuffix("%").trim
-    if t.isEmpty then Right(0)
+    if t.isEmpty then Right(com.histmersion.web.ModelsView.ReservedCount(0))
     else t.toIntOption.filter(r => r >= 0 && r <= 99).toRight(s"'$s' is not a reserve of 0 to 99 %")
 
   /** How much of a limit is used, 0..100 (a bar's width). */
   def usedPct(l: LimitStatus): com.histmersion.web.ModelsView.UsedPercent =
-    if l.amount <= 0 then 100 else math.max(0, math.min(100, math.round(l.used / l.amount * 100).toInt))
+    if l.amount <= 0 then com.histmersion.web.ModelsView.UsedPercent(100) else math.max(0, math.min(100, math.round(l.used / l.amount * 100).toInt))
 
   /** The state class of one chained model. */
   def entryState(e: ChainEntry): com.histmersion.web.ModelsView.EntryState =
-    if e.usable then "is-usable" else if !e.ready then "is-unready" else "is-paused"
+    if e.usable then com.histmersion.web.ModelsView.EntryState("is-usable") else if !e.ready then com.histmersion.web.ModelsView.EntryState("is-unready") else com.histmersion.web.ModelsView.EntryState("is-paused")
 
   /** A plan window's bar: how much is used (0..100) and where its floor sits, as the share USED at which the floor is
     * reached (a floor of 25 % left sits at 75 %).
@@ -143,7 +143,7 @@ object ModelsView:
           disabled <-- busy.signal,
           title := "keys, the free model listing, prices, the claude CLI and its login — nothing is spent",
           "check providers",
-          onClick --> (_ => check(offline = false))
+          onClick --> (_ => check(offline = com.histmersion.web.ModelsView.Offline(false)))
         )
       ),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),

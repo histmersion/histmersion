@@ -21,7 +21,7 @@ object DoiIngest:
   def request(typed: com.histmersion.web.library.DoiIngest.RequestTyped): Either[com.histmersion.web.library.DoiIngest.Problem, Ingest.Request] =
     val t = typed.trim.replaceFirst(DoiLink, "").replaceFirst("(?i)^doi:\\s*", "")
     if t.isEmpty then Left("Type a DOI (e.g. 10.1017/S0003598X00000001) or an arXiv id (e.g. arxiv:2101.01234).")
-    else if t.matches(Doi) then Right(Ingest.Request(id = t, legalOnly = true))
+    else if t.matches(Doi) then Right(Ingest.Request(id = t, legalOnly = com.histmersion.api.library.Ingest.Request.LegalOnly(true)))
     else if t.matches(Arxiv) then
       Right(Ingest.Request(id = if t.toLowerCase.startsWith("arxiv:") then t else s"arxiv:$t", legalOnly = true))
     else Left(s"“$typed” is neither a DOI (10.…/…) nor an arXiv id.")

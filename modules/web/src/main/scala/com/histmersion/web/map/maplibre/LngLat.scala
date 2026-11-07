@@ -12,4 +12,3 @@ trait LngLat extends js.Object:
   val lat: com.histmersion.api.Geo.Latitude = js.native
   def wrap(): LngLat = js.native
 
-object LngLat:

@@ -33,19 +33,19 @@ object TimelinePlayback:
 
   private var frameId: Int = 0
   private var lastTs: com.histmersion.web.ResearchOverview.EpochMillis = 0.0
-  private var spanFrom: com.histmersion.api.Years.Astronomical = 0
-  private var spanTo: com.histmersion.api.Years.Astronomical = 0
+  private var spanFrom: com.histmersion.api.Years.Astronomical = com.histmersion.api.Years.Astronomical(0)
+  private var spanTo: com.histmersion.api.Years.Astronomical = com.histmersion.api.Years.Astronomical(0)
 
   /** The playback speeds offered, slowest first; 1× plays the shown span in `Layout.playbackDuration`. */
   private[web] val Speeds: List[com.histmersion.web.TimelinePlayback.Speeds] = List(0.25, 0.5, 1.0, 2.0, 4.0)
 
   /** How a speed reads in the menu: in plain words. Pure. */
   private[web] def speedWords(s: com.histmersion.web.TimelinePlayback.SpeedWordsS): com.histmersion.api.UiLabels.Text = s match
-    case 0.25 => "Very slow"
-    case 0.5  => "Slow"
-    case 1.0  => "Normal speed"
-    case 2.0  => "Fast"
-    case 4.0  => "Very fast"
+    case 0.25 => com.histmersion.api.UiLabels.Text("Very slow")
+    case 0.5  => com.histmersion.api.UiLabels.Text("Slow")
+    case 1.0  => com.histmersion.api.UiLabels.Text("Normal speed")
+    case 2.0  => com.histmersion.api.UiLabels.Text("Fast")
+    case 4.0  => com.histmersion.api.UiLabels.Text("Very fast")
     case _    => speedLabel(s)
 
   /** `0.25×`, `1×`: a speed's option value. Pure. */
@@ -125,7 +125,7 @@ object TimelinePlayback:
       )
     )
 
-  private var overlayWasOn: com.histmersion.web.TimelinePlayback.OverlayWasOn = false
+  private var overlayWasOn: com.histmersion.web.TimelinePlayback.OverlayWasOn = com.histmersion.web.TimelinePlayback.OverlayWasOn(false)
 
   private def start(): Unit =
     val (sf, st) = TimelineView.currentSpan
@@ -135,8 +135,8 @@ object TimelinePlayback:
     // playback reads the polities: boundaries go on for its duration (the toggle shows it) and
     // back off afterwards unless the reader had them on already
     overlayWasOn = UiState.layers.now().contains(MapLayer.Boundaries)
-    if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, true)
-    MapView.setPlaybackMode(true)
+    if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, com.histmersion.web.UiState.SetLayerOn(true))
+    MapView.setPlaybackMode(com.histmersion.web.MapView.Playback(true))
     // the filter's events over the span played, fetched once; each frame then draws them locally
     if eventsConfig != null then
       EventLayer.start(eventsConfig, Api.EventQuery(UiState.toFilter().copy(period = Some(Period(sf, st)))))
@@ -153,9 +153,9 @@ object TimelinePlayback:
     playheadPos.set(None)
     feed.reset()
     dom.window.cancelAnimationFrame(frameId)
-    MapView.setPlaybackMode(false)
+    MapView.setPlaybackMode(com.histmersion.web.MapView.Playback(false))
     EventLayer.stop()
-    if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, false)
+    if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, com.histmersion.web.UiState.SetLayerOn(false))
     // the last frame drew the playhead's window: the map shows the whole span again (findings, legend,
     // sites, pictures, events, boundaries), whether playback ran out or ⏹ stopped it
     val (sf, st) = TimelineView.currentSpan

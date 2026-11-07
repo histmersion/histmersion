@@ -55,7 +55,7 @@ trait PointKind[A]:
 
   /** The card its hover shows, read at the map's year. */
   def target(a: A, asOf: Option[com.histmersion.api.Years.Astronomical]): Option[Preview.Target]
-  def zIndex(a: A): com.histmersion.web.PointKind.ZIndex = 0
+  def zIndex(a: A): com.histmersion.web.PointKind.ZIndex = com.histmersion.web.PointKind.ZIndex(0)
 
   /** A click or Enter on it. */
   def activate(a: A, how: Activation): Unit

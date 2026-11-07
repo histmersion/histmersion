@@ -146,7 +146,7 @@ object Cli:
         skipped: List[String]
     )(using console: Console): SeedResult =
       rest match
-        case Nil       => SeedResult(imported, failed, 0, skipped)
+        case Nil       => SeedResult(imported, failed, com.histmersion.api.library.SeedResult.EdgesResolved(0), skipped)
         case f :: tail =>
           val ck = f.getFileName.toString.stripSuffix(".md")
           Cli.out.println(s"$number/$total $ck")
@@ -180,7 +180,7 @@ object Cli:
         if !Files.isRegularFile(p) then
           Left(com.histmersion.cli.Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
         // an explicit `put` is always deliberate → force past the "newer in DB" guard
-        else c.importNote(Notes.toImport(p, force = true)).map(report)
+        else c.importNote(Notes.toImport(p, force = com.histmersion.api.Api.Overwrite(true))).map(report)
       }
     }
 
@@ -454,7 +454,7 @@ object Cli:
           if json then
             Left(
               com.histmersion.cli.Cli.Error(
-                "--json prints the whole record; drop --section/--heading/--offset/--chars",
+                com.histmersion.cli.Cli.Error.Message("--json prints the whole record; drop --section/--heading/--offset/--chars"),
                 exitCode = ExitCode.Usage
               )
             )
@@ -573,7 +573,7 @@ object Cli:
       Opts.flag("yes", "Do not ask for confirmation").orFalse
     ).mapN { (file, force, yes) => (c: Client) =>
       if !yes && !confirm(s"Restore '$file' into the server's database? This DROPS what is there.")
-      then Left(com.histmersion.cli.Cli.Error("aborted", exitCode = ExitCode.Usage))
+      then Left(com.histmersion.cli.Cli.Error(com.histmersion.cli.Cli.Error.Message("aborted"), exitCode = ExitCode.Usage))
       else c.restore(RestoreRequest(file, force)).map(r => Cli.out.println(Markdown.restored(r)))
     }
   }

@@ -133,7 +133,7 @@ object PlacesInput:
 
   // the chosen places' and the previewed place's drawing: shapes on the map, a point-only region's name
   // as a marker; `layer` is whether the map is up for them
-  private var layer: com.histmersion.web.PlacesInput.LayerVisible = false
+  private var layer: com.histmersion.web.PlacesInput.LayerVisible = com.histmersion.web.PlacesInput.LayerVisible(false)
   private val pickNames = scala.collection.mutable.ListBuffer.empty[DomMarker]
   private val previewNames = scala.collection.mutable.ListBuffer.empty[DomMarker]
   private val drawnPlaces = scala.collection.mutable.HashMap.empty[String, (String, String, String)]
@@ -214,7 +214,7 @@ object PlacesInput:
                   p.kind,
                   Some(p.findings),
                   p.contested,
-                  textFallback = false,
+                  textFallback = com.histmersion.web.PlacesInput.SuggestItem.TextFallback(false),
                   p.periodStart,
                   p.periodEnd
                 )
@@ -222,7 +222,7 @@ object PlacesInput:
             // the fallback row is always last unless it duplicates an existing text chip
             val fallback =
               if texts().contains(q) then Nil
-              else List(SuggestItem("", q, "", None, contested = false, textFallback = true))
+              else List(SuggestItem(com.histmersion.web.PlacesInput.SuggestItem.Id(""), q, com.histmersion.web.PlacesInput.SuggestItem.Kind(""), None, contested = com.histmersion.web.PlacesInput.SuggestItem.Contested(false), textFallback = com.histmersion.web.PlacesInput.SuggestItem.TextFallback(true)))
             items = gaz ++ fallback
             activeIdx = -1
             itemsVar.set(items)
@@ -244,26 +244,26 @@ object PlacesInput:
     * suggestion's (`.hd-place-preview`, dotted). A point is drawn as a site's dot.
     */
   private def pickSet: ShapeSet = TheMap.surface.shapes(
-    "place-pick",
+    com.histmersion.web.map.MapSurface.ShapesId("place-pick"),
     ShapeStyle(
       fillOpacity = 0.06,
-      lineWidth = 2,
+      lineWidth = com.histmersion.web.map.ShapeStyle.LineWidth(2),
       lineOpacity = 0.9,
-      colour = Some(com.histmersion.web.ui.ThemeTokens("--place-pick")),
-      dash = List(4, 3),
+      colour = Some(com.histmersion.web.ui.ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--place-pick"))),
+      dash = List(com.histmersion.web.map.ShapeStyle.Dash(4), com.histmersion.web.map.ShapeStyle.Dash(3)),
       dashedLineOpacity = Some(0.7),
       circleRadius = uiConfig.markerRadius.toDouble,
-      interactive = true
+      interactive = com.histmersion.web.map.ShapeStyle.Interactive(true)
     )
   )
   private def previewSet: ShapeSet = TheMap.surface.shapes(
-    "place-preview",
+    com.histmersion.web.map.MapSurface.ShapesId("place-preview"),
     ShapeStyle(
       fillOpacity = 0.05,
-      lineWidth = 2,
+      lineWidth = com.histmersion.web.map.ShapeStyle.LineWidth(2),
       lineOpacity = 0.9,
-      colour = Some(com.histmersion.web.ui.ThemeTokens("--place-preview")),
-      dash = List(1, 2),
+      colour = Some(com.histmersion.web.ui.ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--place-preview"))),
+      dash = List(com.histmersion.web.map.ShapeStyle.Dash(1), com.histmersion.web.map.ShapeStyle.Dash(2)),
       circleRadius = uiConfig.markerRadius.toDouble,
       interactive = true
     )
@@ -279,7 +279,7 @@ object PlacesInput:
   ): Option[ShapeFeature] =
     drawnPlaces(id) = (id, d.place.label, d.place.kind)
     val t = if js.isUndefined(geo.selectDynamic("type")) then "" else geo.selectDynamic("type").toString
-    if (t == "Point" || t == "MultiPoint") && PlaceGlyph.of(d.place.kind, "Point") == PlaceGlyph.Label then
+    if (t == "Point" || t == "MultiPoint") && PlaceGlyph.of(d.place.kind, com.histmersion.web.PlaceGlyph.GeometryType("Point")) == PlaceGlyph.Label then
       val c = if t == "Point" then geo.coordinates else geo.coordinates.selectDynamic("0")
       val m = PlaceGlyph.labelMarker(
         c.selectDynamic("1").asInstanceOf[Double],
@@ -324,7 +324,7 @@ object PlacesInput:
             pickSet.set(shapes)
             if fit && bounds.nonEmpty then
               val all = bounds.reduceLeft(_.extend(_))
-              if all.valid then TheMap.surface.fitBounds(all, 20, 9)
+              if all.valid then TheMap.surface.fitBounds(all, com.histmersion.web.map.MapSurface.FitBoundsPadding(20), com.histmersion.web.map.MapSurface.MaxZoom(9))
         }
 
   // ── public API ─────────────────────────────────────────────────────────────
@@ -344,8 +344,8 @@ object PlacesInput:
             if isText then
               Chip(
                 label,
-                prefix = Some("text: "),
-                extraCls = "place place-text",
+                prefix = Some(com.histmersion.web.Chip.Prefix("text: ")),
+                extraCls = com.histmersion.web.Chip.ExtraClass("place place-text"),
                 tip = Some("matched as text against the finding's region name"),
                 remove = Some { () =>
                   // text chips come after gaz chips; compute text index
@@ -482,9 +482,9 @@ object PlacesInput:
       onMountCallback { _ =>
         layer = TheMap.isUp
         if layer then
-          PlaceHover.shapes("place-pick", PlaceHover.Places(drawnPlaces.get, () => asOf()))
-          PlaceHover.shapes("place-preview", PlaceHover.Places(drawnPlaces.get, () => asOf()))
-        draw(fit = true)
+          PlaceHover.shapes(com.histmersion.web.PlaceHover.ShapeSetName("place-pick"), PlaceHover.Places(drawnPlaces.get, () => asOf()))
+          PlaceHover.shapes(com.histmersion.web.PlaceHover.ShapeSetName("place-preview"), PlaceHover.Places(drawnPlaces.get, () => asOf()))
+        draw(fit = com.histmersion.web.PlacesInput.FitToView(true))
 
         // Subscribe to UiState changes
         var lastIds = js.JSON.stringify(ids().toJSArray)
@@ -503,7 +503,7 @@ object PlacesInput:
 
   /** Re-render chips from state (called by FilterBar after "clear all"). */
   def sync(): Unit =
-    draw(fit = false)
+    draw(fit = com.histmersion.web.PlacesInput.FitToView(false))
 
   /** Draw ONE place's shape as a TRANSIENT overlay and fit the map to it. Toggle behavior: same id clears it.
     */
@@ -535,7 +535,7 @@ object PlacesInput:
   private var chosenOnMap = false
 
   /** Remember what a gazetteer id is called, so its chip reads as a name the moment it appears. */
-  def remember(id: com.histmersion.web.PlacesInput.RememberId, label: com.histmersion.web.PlacesInput.RememberLabel, kind: com.histmersion.web.PlacesInput.RememberKind, contested: com.histmersion.web.PlacesInput.RememberContested = false): Unit =
+  def remember(id: com.histmersion.web.PlacesInput.RememberId, label: com.histmersion.web.PlacesInput.RememberLabel, kind: com.histmersion.web.PlacesInput.RememberKind, contested: com.histmersion.web.PlacesInput.RememberContested = com.histmersion.web.PlacesInput.RememberContested(false)): Unit =
     if label.trim.nonEmpty then learn(id, KnownPlace(label, kind, contested))
 
   /** A click on place `id` on the map: it becomes the place filter — the same `UiState.placeIds` the box above sets, so

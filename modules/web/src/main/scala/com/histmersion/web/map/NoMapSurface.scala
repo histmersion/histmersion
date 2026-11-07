@@ -42,12 +42,12 @@ final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capab
   def maxZoom: com.histmersion.web.map.MapSurface.MaxZoom = maxZ
   def setMaxZoom(v: com.histmersion.web.map.MapSurface.MaxZoom): Unit = maxZ = v
   def center: LatLon = at
-  def bounds: GeoBounds = GeoBounds(-85, -180, 85, 180)
+  def bounds: GeoBounds = GeoBounds(com.histmersion.web.map.GeoBounds.South(-85), com.histmersion.web.map.GeoBounds.West(-180), com.histmersion.web.map.GeoBounds.North(85), com.histmersion.web.map.GeoBounds.East(180))
   def size: (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension) = (0.0, 0.0)
-  def setView(p: LatLon, zoom: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.NoMapSurface.SetViewAnimate = false): Unit = { at = p; z = zoom.min(maxZ) }
-  def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.NoMapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.MaxZoom, animate: com.histmersion.web.map.NoMapSurface.FitBoundsAnimate = true): Unit =
+  def setView(p: LatLon, zoom: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.NoMapSurface.SetViewAnimate = com.histmersion.web.map.MapSurface.SetViewAnimate(false)): Unit = { at = p; z = zoom.min(maxZ) }
+  def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.NoMapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.MaxZoom, animate: com.histmersion.web.map.NoMapSurface.FitBoundsAnimate = com.histmersion.web.map.MapSurface.FitBoundsAnimate(true)): Unit =
     at = LatLon((b.south + b.north) / 2, (b.west + b.east) / 2)
-  def panBy(dx: com.histmersion.web.map.NoMapSurface.PanByDx, dy: com.histmersion.web.map.NoMapSurface.PanByDy, animate: com.histmersion.web.map.NoMapSurface.PanByAnimate = false): Unit = ()
+  def panBy(dx: com.histmersion.web.map.NoMapSurface.PanByDx, dy: com.histmersion.web.map.NoMapSurface.PanByDy, animate: com.histmersion.web.map.NoMapSurface.PanByAnimate = com.histmersion.web.map.MapSurface.PanByAnimate(false)): Unit = ()
   // far outside any view: a marker placed here is hidden, never moved ([[MarkerPane]])
   def project(p: LatLon): ScreenPt = ScreenPt(-1e6, -1e6)
   def unproject(p: ScreenPt): LatLon = at
@@ -63,7 +63,7 @@ final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capab
   def shapeSet(id: com.histmersion.web.map.NoMapSurface.ShapeSetId): Option[ShapeSet] = sets.get(id)
   def shapesAt(p: ScreenPt): Seq[ShapeHit] = Nil
   def pointTiles(id: com.histmersion.web.map.MapSurface.LayerId, layer: com.histmersion.web.map.MapSurface.LayerId, maxZoom: com.histmersion.web.map.NoMapSurface.PointTilesMaxZoom): PointTiles = NoMap.Tiles
-  def popup(at: LatLon, html: com.histmersion.web.map.NoMapSurface.PopupHtml, cls: com.histmersion.web.map.NoMapSurface.PopupCls = ""): Popup = new Popup:
+  def popup(at: LatLon, html: com.histmersion.web.map.NoMapSurface.PopupHtml, cls: com.histmersion.web.map.NoMapSurface.PopupCls = com.histmersion.web.map.MapSurface.PopupCls("")): Popup = new Popup:
     def close(): Unit = ()
     def isOpen: Boolean = false
     def element: Option[dom.HTMLElement] = None
@@ -72,7 +72,7 @@ final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capab
   def baseMapAreasAt(p: ScreenPt): Seq[com.histmersion.web.map.MapSurface.LayerId] = Nil
   def baseMapLabels: Seq[(com.histmersion.web.map.MapSurface.LabelText, com.histmersion.web.map.MapSurface.LabelText, ScreenPt)] = Nil
   def baseMapLayer(id: com.histmersion.web.map.MapSurface.LayerId): Option[com.histmersion.web.map.MapSurface.LayerId] = None
-  def baseMapDrawn(id: com.histmersion.web.map.MapSurface.LayerId): com.histmersion.web.map.MapSurface.DrawnCount = 0
+  def baseMapDrawn(id: com.histmersion.web.map.MapSurface.LayerId): com.histmersion.web.map.MapSurface.DrawnCount = com.histmersion.web.map.MapSurface.DrawnCount(0)
   def capabilities: Capabilities = caps
   def destroy(): Unit = { note.remove(); overlay.remove() }
 

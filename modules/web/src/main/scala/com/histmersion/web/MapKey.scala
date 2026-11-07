@@ -72,32 +72,32 @@ object MapKey:
     // the same icons as the toolbar's layer switches
     val shapes = PointKinds.all.map(k => Icon.html(k.icon) -> k.meaning) ++ List(
       Icon.html(Icon.Region) -> "a region or polity (its boundary)",
-      DotCluster.bubbleHtml(5, 20, ("var(--accent)", "var(--accent)"), "hdb-key", "hd-key-cluster", None) ->
+      DotCluster.bubbleHtml(com.histmersion.web.DotCluster.Count(5), com.histmersion.web.DotCluster.Size(20), (com.histmersion.web.DotCluster.StartLabel("var(--accent)"), com.histmersion.web.DotCluster.EndLabel("var(--accent)")), com.histmersion.web.DotCluster.Id("hdb-key"), com.histmersion.web.DotCluster.ExtraClass("hd-key-cluster"), None) ->
         "several nearby (click to list)",
       // the clusters of events keep the event's square (#1647)
       DotCluster.bubbleHtml(
-        5,
-        20,
-        ("var(--accent)", "var(--accent)"),
-        "hdb-key-ev",
-        "hd-key-cluster",
+        com.histmersion.web.DotCluster.Count(5),
+        com.histmersion.web.DotCluster.Size(20),
+        (com.histmersion.web.DotCluster.StartLabel("var(--accent)"), com.histmersion.web.DotCluster.EndLabel("var(--accent)")),
+        com.histmersion.web.DotCluster.Id("hdb-key-ev"),
+        com.histmersion.web.DotCluster.ExtraClass("hd-key-cluster"),
         None,
         BubbleForm.Events
       ) ->
         "several events nearby",
       DotCluster.bubbleHtml(
-        5,
-        20,
-        ("var(--accent)", "var(--accent)"),
-        "hdb-key-mix",
-        "hd-key-cluster",
+        com.histmersion.web.DotCluster.Count(5),
+        com.histmersion.web.DotCluster.Size(20),
+        (com.histmersion.web.DotCluster.StartLabel("var(--accent)"), com.histmersion.web.DotCluster.EndLabel("var(--accent)")),
+        com.histmersion.web.DotCluster.Id("hdb-key-mix"),
+        com.histmersion.web.DotCluster.ExtraClass("hd-key-cluster"),
         None,
         BubbleForm.WithEvents
       ) ->
         "several nearby, events among them"
     )
     val kinds = Source.Kinds.all.map(k =>
-      badge("diamond", Glyphs.badge(CardIcons.sourceKind(k, marker = true))) ->
+      badge(com.histmersion.web.MapKey.BadgeShape("diamond"), Glyphs.badge(CardIcons.sourceKind(k, marker = com.histmersion.web.CardIcons.WithMarker(true)))) ->
         (if k == Source.Kinds.Unknown then "source of unknown kind" else k)
     )
     def list(items: List[(com.histmersion.web.MapKey.ItemLabel, com.histmersion.web.MapKey.ItemHtml)]) =
@@ -110,7 +110,7 @@ object MapKey:
         )}</ul></div>"""
 
   /** The key's markup: the shapes, then the icons of the layers on. */
-  def html(events: com.histmersion.web.MapKey.Events, sites: com.histmersion.web.MapKey.Sites, undated: com.histmersion.web.MapKey.Undated = false): com.histmersion.web.MapKey.Html =
+  def html(events: com.histmersion.web.MapKey.Events, sites: com.histmersion.web.MapKey.Sites, undated: com.histmersion.web.MapKey.Undated = com.histmersion.web.MapKey.Undated(false)): com.histmersion.web.MapKey.Html =
     val body = shapesHtml + (if events then eventsHtml else "") + (if sites then sitesHtml else "")
     (if undated then undatedHtml else "") + s"""<details class="hd-key"><summary>key</summary>$body</details>"""
 

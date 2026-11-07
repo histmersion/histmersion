@@ -88,10 +88,10 @@ object NoteMarkdown:
       case Heading(h, t) :: rest   => loop(rest, Block.Heading(h.length, inlines(t.trim)) :: out)
       case (l @ Bullet(_)) :: rest =>
         val (more, after) = rest.span { case Bullet(_) => true; case _ => false }
-        loop(after, Block.Items(false, (l :: more).collect { case Bullet(t) => inlines(t) }) :: out)
+        loop(after, Block.Items(com.histmersion.web.marks.NoteMarkdown.Block.Items.Ordered(false), (l :: more).collect { case Bullet(t) => inlines(t) }) :: out)
       case (l @ Number(_)) :: rest =>
         val (more, after) = rest.span { case Number(_) => true; case _ => false }
-        loop(after, Block.Items(true, (l :: more).collect { case Number(t) => inlines(t) }) :: out)
+        loop(after, Block.Items(com.histmersion.web.marks.NoteMarkdown.Block.Items.Ordered(true), (l :: more).collect { case Number(t) => inlines(t) }) :: out)
       case (l @ QuoteL(_)) :: rest =>
         val (more, after) = rest.span { case QuoteL(_) => true; case _ => false }
         loop(after, Block.Quote(inlines((l :: more).collect { case QuoteL(t) => t }.mkString(" "))) :: out)

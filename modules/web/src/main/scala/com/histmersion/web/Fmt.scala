@@ -38,7 +38,7 @@ object Fmt:
 
   /** Pure: `t` on a ramp of RGB stops, as `rgb(r,g,b)`; `""` on an empty ramp (no stylesheet). */
   def colorOn(stops: Vector[(com.histmersion.api.Wcag.Channel, com.histmersion.api.Wcag.Channel, com.histmersion.api.Wcag.Channel)], t: com.histmersion.web.Fmt.RampPosition): com.histmersion.api.Wcag.Hex =
-    if stops.isEmpty then ""
+    if stops.isEmpty then com.histmersion.api.Wcag.Hex("")
     else
       val ct = max(0.0, min(1.0, t))
       val f = ct * (stops.length - 1)

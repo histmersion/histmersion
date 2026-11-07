@@ -77,7 +77,7 @@ object DeleteCmd:
       else if d.filesFailed.nonEmpty then
         Left(
           Cli.Error(
-            s"deleted, but ${Plural.count(d.filesFailed.size, "stored file")} could not be removed",
+            s"deleted, but ${Plural.count(d.filesFailed.size, com.histmersion.api.Plural.CountSingular("stored file"))} could not be removed",
             exitCode = ExitCode.Refused
           )
         )

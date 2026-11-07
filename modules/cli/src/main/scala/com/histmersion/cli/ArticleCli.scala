@@ -115,7 +115,7 @@ object ArticleCli:
         skipped: List[String]
     )(using console: Console): SeedResult =
       rest match
-        case Nil               => SeedResult(imported, failed, 0, skipped)
+        case Nil               => SeedResult(imported, failed, com.histmersion.api.library.SeedResult.EdgesResolved(0), skipped)
         case (f, kind) :: tail =>
           val name = f.getFileName.toString.stripSuffix(".md")
           Cli.out.println(s"$number/$total $kind/$name")
@@ -218,7 +218,7 @@ object ArticleCli:
           else
             // an explicit `put` is always deliberate → force past the "newer in DB" guard
             val fallback = kind.getOrElse(kindOf(p.toAbsolutePath.getParent))
-            val req = toImport(p, fallback, force = true).modify(_.strict).setTo(strict)
+            val req = toImport(p, fallback, force = com.histmersion.api.Api.Overwrite(true)).modify(_.strict).setTo(strict)
             c.importArticle(req).map { r =>
               report(r)
               // the import answers with counts only: ask for the article's formatting problems by the
@@ -287,7 +287,7 @@ object ArticleCli:
           read(b).map(t =>
             Article.Edits.ArticleCheckRequest(body = Some(FileFormat.splitFrontmatter(t)._2), kind = kind)
           )
-        case _ => Left(Cli.Error("give --edits-file or --body-file (one of them)", exitCode = ExitCode.Usage))
+        case _ => Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("give --edits-file or --body-file (one of them)"), exitCode = ExitCode.Usage))
       req.flatMap(c.checkArticle(slug, _)).map(r => Output.emit(json, r)(Article.Edits.markdown))
     }
   }

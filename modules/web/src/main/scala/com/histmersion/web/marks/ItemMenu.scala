@@ -41,13 +41,13 @@ object ItemMenu:
     val origin = dom.window.location.origin
     val marked = ref.identity.exists(i => MyItems.bookmarks.now().exists(_.target.identity.contains(i)))
     List(
-      ContextMenu.Entry("Copy the text", () => Clipboard.copy(text(ref, byline), "the text")),
-      ContextMenu.Entry("Copy as Markdown", () => Clipboard.copy(markdown(origin, ref, byline), "the Markdown")),
-      ContextMenu.Entry("Copy the link", () => Clipboard.copy(link(origin, ref), "the link")),
+      ContextMenu.Entry(com.histmersion.web.ui.ContextMenu.Entry.Label("Copy the text"), () => Clipboard.copy(text(ref, byline), com.histmersion.web.ui.Clipboard.CopyWhat("the text"))),
+      ContextMenu.Entry(com.histmersion.web.ui.ContextMenu.Entry.Label("Copy as Markdown"), () => Clipboard.copy(markdown(origin, ref, byline), com.histmersion.web.ui.Clipboard.CopyWhat("the Markdown"))),
+      ContextMenu.Entry(com.histmersion.web.ui.ContextMenu.Entry.Label("Copy the link"), () => Clipboard.copy(link(origin, ref), com.histmersion.web.ui.Clipboard.CopyWhat("the link"))),
       ContextMenu.Separator,
-      ContextMenu.Entry(if marked then "Remove the bookmark" else "Bookmark", () => ItemActions.bookmark(ref)),
+      ContextMenu.Entry(if marked then com.histmersion.web.ui.ContextMenu.Entry.Label("Remove the bookmark") else com.histmersion.web.ui.ContextMenu.Entry.Label("Bookmark"), () => ItemActions.bookmark(ref)),
       ContextMenu.Entry(
-        "Open in a new tab",
+        com.histmersion.web.ui.ContextMenu.Entry.Label("Open in a new tab"),
         () => { val _ = dom.window.open(ItemRef.page(ref.target), "_blank", "noopener") }
       )
     )

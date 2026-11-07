@@ -25,7 +25,7 @@ object MapStart:
 
   /** The view kept in the browser, as stored: `lat,lon,zoom`. Pure. */
   def encode(at: LatLon, zoom: com.histmersion.web.map.MapStart.Zoom): com.histmersion.web.map.MapStart.Encoded =
-    s"${round(at.lat, 5)},${round(at.lon, 5)},${round(zoom, 2)}"
+    s"${round(at.lat, com.histmersion.web.map.MapStart.RoundPlaces(5))},${round(at.lon, com.histmersion.web.map.MapStart.RoundPlaces(5))},${round(zoom, com.histmersion.web.map.MapStart.RoundPlaces(2))}"
 
   /** A number with at most `places` decimals, written the same in every locale. */
   private def round(v: com.histmersion.web.map.MapStart.Coordinate, places: com.histmersion.web.map.MapStart.RoundPlaces): com.histmersion.web.map.MapStart.Rounded =

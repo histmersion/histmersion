@@ -21,7 +21,7 @@ object Diagnostics:
       "ident" -> IdentLink.cacheStats,
       "places.labels" -> PlacesInput.cacheStats
     ) ++ Preview.cacheStats ++ MapLabels.stats ++
-      List("findings.kept" -> BoundedCache.Stats(App.keptFindings, 0, 0L, 0L))
+      List("findings.kept" -> BoundedCache.Stats(App.keptFindings, com.histmersion.web.BoundedCache.Stats.MaxEntries(0), com.histmersion.web.BoundedCache.Stats.Weight(0L), com.histmersion.web.BoundedCache.Stats.MaxWeight(0L)))
 
   /** Pure: the figures as a plain object (one per cache: entries, maxEntries, weight, maxWeight). */
   def toJs(cs: List[(com.histmersion.web.Diagnostics.CacheName, BoundedCache.Stats)]): js.Object =

@@ -38,7 +38,7 @@ object PluginAuthoring:
     * (`m2Local`) look for artifacts installed on this machine.
     */
   def mavenLocal(env: com.histmersion.cli.LocalInstall.EnvVariable => Option[com.histmersion.cli.LocalInstall.EnvSetting]): Either[Cli.Error, Path] =
-    env("HOME")
+    env(com.histmersion.cli.LocalInstall.EnvVariable("HOME"))
       .map(_.trim)
       .filter(_.nonEmpty)
       .map(h => Path.of(h, ".m2", "repository"))

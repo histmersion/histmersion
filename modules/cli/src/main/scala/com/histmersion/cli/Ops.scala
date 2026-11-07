@@ -42,7 +42,7 @@ object Ops:
     /** `queue acquire recheck`: the acquisition list's legal re-check now — of every open item (`all`) or the due ones
       * the caps allow; a pass of more than one item is a server job, followed unless `noWait`.
       */
-    case Recheck(dryRun: QueueCmd.Recheck.DryRun, limit: Option[QueueCmd.Recheck.Limit], id: Option[QueueCmd.Recheck.Id], all: QueueCmd.Recheck.All = false, noWait: QueueCmd.Recheck.NoWait = false)
+    case Recheck(dryRun: QueueCmd.Recheck.DryRun, limit: Option[QueueCmd.Recheck.Limit], id: Option[QueueCmd.Recheck.Id], all: QueueCmd.Recheck.All = false, noWait: QueueCmd.Recheck.NoWait = com.histmersion.cli.Ops.QueueCmd.Recheck.NoWait(false))
 
   object QueueCmd:
     object Show:
@@ -110,10 +110,10 @@ object Ops:
         topic: Option[com.histmersion.cli.Queue.Topic],
         reason: Option[com.histmersion.cli.Queue.Reason],
         all: com.histmersion.cli.Queue.All,
-        dryRun: com.histmersion.cli.Cli.DryRun = false,
+        dryRun: com.histmersion.cli.Cli.DryRun = com.histmersion.cli.Cli.DryRun(false),
         limit: Option[com.histmersion.api.Paging.Limit] = None,
         item: Option[com.histmersion.cli.Queue.ItemId] = None,
-        noWait: com.histmersion.cli.Cli.NoWait = false
+        noWait: com.histmersion.cli.Cli.NoWait = com.histmersion.cli.Cli.NoWait(false)
     ): Either[com.histmersion.cli.Ops.QueueArgs.Problem, QueueCmd] =
       def id(s: String): Either[com.histmersion.cli.Ops.QueueArgs.Problem, com.histmersion.cli.Queue.ItemId] =
         s.toIntOption.toRight(s"'$s' is not an item id — $usage")
@@ -354,10 +354,10 @@ object Ops:
     case QueueCmd.Export(dir) =>
       writeMeta(c, Path.of(dir)).map(fs => Cli.out.println(s"wrote ${fs.mkString(", ")} to $dir"))
     case QueueCmd.Import(dir) =>
-      readMeta(c, Path.of(dir), replace = true).map(_.foreach(l => Cli.out.println(s"  $l")))
+      readMeta(c, Path.of(dir), replace = com.histmersion.api.Api.Overwrite(true)).map(_.foreach(l => Cli.out.println(s"  $l")))
     case QueueCmd.Recheck(dryRun, limit, id, all, noWait) =>
       c.call(com.histmersion.api.library.AcquisitionWorkApi.acquireRecheck)(
-        Acquire.Checks.RecheckRequest(dryRun, limit, id, Some("cli"), all)
+        Acquire.Checks.RecheckRequest(dryRun, limit, id, Some(com.histmersion.api.library.Acquire.Checks.RecheckRequest.By("cli")), all)
       ).flatMap { r =>
         Output.emit(json, r)(AcquireChecksMarkdown.result)
         r.job match

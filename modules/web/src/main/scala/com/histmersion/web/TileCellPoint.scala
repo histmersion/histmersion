@@ -19,7 +19,7 @@ final case class TileCellPoint(
     midLo: Option[TileCellPoint.MidLo],
     midHi: Option[TileCellPoint.MidHi],
     box: GeoBounds,
-    undated: TileCellPoint.Undated = 0
+    undated: TileCellPoint.Undated = com.histmersion.web.TileCellPoint.Undated(0)
 )
 
 object TileCellPoint:

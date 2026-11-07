@@ -88,10 +88,10 @@ object TimelineView:
   // the points each curve was drawn through (the hover reads them)
   private var ovPts: Vector[TimelineCurve.Pt] = Vector.empty
   private var dtPts: Vector[TimelineCurve.Pt] = Vector.empty
-  private var lastOvWidth: com.histmersion.web.TimelineView.ElementSize = 0
-  private var lastDtWidth: com.histmersion.web.TimelineView.ElementSize = 0
-  private var lastOvHeight: com.histmersion.web.TimelineView.ElementSize = 0
-  private var lastDtHeight: com.histmersion.web.TimelineView.ElementSize = 0
+  private var lastOvWidth: com.histmersion.web.TimelineView.ElementSize = com.histmersion.web.TimelineView.ElementSize(0)
+  private var lastDtWidth: com.histmersion.web.TimelineView.ElementSize = com.histmersion.web.TimelineView.ElementSize(0)
+  private var lastOvHeight: com.histmersion.web.TimelineView.ElementSize = com.histmersion.web.TimelineView.ElementSize(0)
+  private var lastDtHeight: com.histmersion.web.TimelineView.ElementSize = com.histmersion.web.TimelineView.ElementSize(0)
   private var lastOvBarsLen: Int = -1
   private var lastDtBarsLen: Int = -1
   private var ovResizeRaf: Int = 0
@@ -101,11 +101,11 @@ object TimelineView:
   private var dtResizeRaf: Int = 0
 
   /** The span the current `detailBars` were fetched for — not the span on screen. */
-  private var dtBarsRange: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical) = (0L, 0L)
+  private var dtBarsRange: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical) = (com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(0L))
   private var lastOvFilterKey: String = ""
 
   /** What the detail curve layer was drawn for: (from, to, width). */
-  private var dtDrawn: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical, com.histmersion.web.TimelineView.ElementSize) = (0L, 0L, 0.0)
+  private var dtDrawn: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical, com.histmersion.web.TimelineView.ElementSize) = (com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(0L), 0.0)
 
   private enum DragKind:
     case LeftHandle, RightHandle, PanRange, ZoomDetail
@@ -135,7 +135,7 @@ object TimelineView:
 
   /** Whether the timeline is folded to its one line of controls (kept by this browser). */
   val folded: Var[com.histmersion.web.TimelineView.Folded] = Var(try Option(dom.window.localStorage.getItem(foldedKey)).contains("1")
-  catch case _: Exception => false)
+  catch case _: Exception => com.histmersion.web.TimelineView.Folded(false))
 
   def setFolded(on: com.histmersion.web.TimelineView.SetFoldedOn): Unit =
     folded.set(on)
@@ -157,17 +157,17 @@ object TimelineView:
     (a, Math.max(a + MIN_SPAN, b))
 
   /** Locked, the timeline keeps its span: no drag, wheel, click or menu of its own changes it. */
-  val locked: Var[com.histmersion.web.TimelineView.Locked] = Var(false)
+  val locked: Var[com.histmersion.web.TimelineView.Locked] = Var(com.histmersion.web.TimelineView.Locked(false))
 
   def setLocked(on: com.histmersion.web.TimelineView.SetLockedOn): Unit =
     locked.set(on)
-    ui.Flash.say(if on then "The timeline is locked: its years stay until you unlock it."
-    else "The timeline moves again.")
+    ui.Flash.say(if on then com.histmersion.web.ui.Flash.Text("The timeline is locked: its years stay until you unlock it.")
+    else com.histmersion.web.ui.Flash.Text("The timeline moves again."))
 
   /** The person's own periods ([[marks.PeriodMarks]]) and the naming of a new one, in the presets menu. */
   private val namingPeriod = Var(Option.empty[String])
 
-  private def setSpan(from: com.histmersion.api.Years.Astronomical, to: com.histmersion.api.Years.Astronomical, push: com.histmersion.web.Router.Push = true): Unit =
+  private def setSpan(from: com.histmersion.api.Years.Astronomical, to: com.histmersion.api.Years.Astronomical, push: com.histmersion.web.Router.Push = com.histmersion.web.Router.Push(true)): Unit =
     val (nf, nt) = clamp(from, to)
     if locked.now() then bumpRender()
     else if nf == spanFrom && nt == spanTo then ()
@@ -185,7 +185,7 @@ object TimelineView:
 
   private def scheduleDetail(): Unit =
     dom.window.clearTimeout(timer)
-    timer = dom.window.setTimeout(() => loadDetail(), UiState.reloadDelay(150))
+    timer = dom.window.setTimeout(() => loadDetail(), UiState.reloadDelay(com.histmersion.web.UiState.ReloadDelayNormalMs(150)))
 
   /** What the detail strip was last asked for: the filter over the span on screen. */
   private var lastDtKey: String = ""
@@ -302,7 +302,7 @@ object TimelineView:
       gradId: String
   ): Vector[TimelineCurve.Pt] =
     val ns = "http://www.w3.org/2000/svg"
-    val pts = TimelineCurve.points(bs, from, to, w, baseY, top = 4)
+    val pts = TimelineCurve.points(bs, from, to, w, baseY, top = com.histmersion.web.TimelineCurve.ScreenPixels(4))
     if pts.nonEmpty then
       val defs = dom.document.createElementNS(ns, "defs")
       val grad = dom.document.createElementNS(ns, "linearGradient")
@@ -351,7 +351,7 @@ object TimelineView:
   /** Pure: what the hover marker says of a bucket. */
   private[web] def hoverText(b: TimeBucket): com.histmersion.api.UiLabels.Text =
     val years = if b.start == b.end then Fmt.yr(b.start) else s"${Fmt.yr(b.start)}–${Fmt.yr(b.end)}"
-    s"$years: ${Plural.count(b.count, "source")}"
+    s"$years: ${Plural.count(b.count, com.histmersion.api.Plural.CountSingular("source"))}"
 
   private def showHover(layer: dom.Element, at: Option[(com.histmersion.web.TimelineView.ScreenPixels, TimelineCurve.Pt)], w: com.histmersion.web.TimelineView.ElementSize): Unit =
     if layer != null then
@@ -434,7 +434,7 @@ object TimelineView:
 
   /** Stretch the drawn overview curve to the current width at once; the exact redraw follows. */
   private def alignOverviewCurve(w: com.histmersion.web.TimelineView.ElementSize): Unit =
-    val stale = applyTransform(ovCurveLayer, 0, if lastOvWidth > 0 then w / lastOvWidth else 1)
+    val stale = applyTransform(ovCurveLayer, com.histmersion.web.TimelineView.ScreenPixels(0), if lastOvWidth > 0 then w / lastOvWidth else 1)
     if stale then ovCurveLayer.classList.add("tl-stale") else ovCurveLayer.classList.remove("tl-stale")
 
   private def renderOverviewSelection(): Unit =
@@ -688,7 +688,7 @@ object TimelineView:
     val (a, b) = (spanFrom, spanTo)
     List(
       ui.ContextMenu.Entry(
-        if locked.now() then "Unlock the timeline" else "Lock the timeline",
+        if locked.now() then com.histmersion.web.ui.ContextMenu.Entry.Label("Unlock the timeline") else com.histmersion.web.ui.ContextMenu.Entry.Label("Lock the timeline"),
         () => setLocked(!locked.now()),
         pressed = Some(locked.now())
       ),
@@ -698,7 +698,7 @@ object TimelineView:
         hint = Some("The years the timeline opens on, for everyone who opens Histmersion from this server")
       ),
       ui.ContextMenu.Entry(
-        "Add these years to my periods…",
+        com.histmersion.web.ui.ContextMenu.Entry.Label("Add these years to my periods…"),
         () => {
           presetView.set(ViewportToggle.viewBox)
           loadPresets()
@@ -762,7 +762,7 @@ object TimelineView:
       // folded to its line of controls (a wide screen), as this browser left it
       cls("is-folded") <-- folded.signal,
       cls("is-locked") <-- locked.signal,
-      ui.ContextMenu.on("Timeline actions", () => menuEntries(config)),
+      ui.ContextMenu.on(com.histmersion.web.ui.ContextMenu.OnTitle("Timeline actions"), () => menuEntries(config)),
       // ── Overview bar (full range, draggable handles) ──────────────────────────────────────
       div(
         cls := "tl-overview-wrap",
@@ -821,17 +821,17 @@ object TimelineView:
                 val w = if rect.width > 0 then rect.width else 600.0
                 showHover(
                   ovHoverLayer,
-                  hoverAt(ovPts, e.clientX - rect.left, 0, if lastOvWidth > 0 then w / lastOvWidth else 1),
+                  hoverAt(ovPts, e.clientX - rect.left, com.histmersion.web.TimelineView.ScreenPixels(0), if lastOvWidth > 0 then w / lastOvWidth else 1),
                   w
                 )
           )
-          svg.addEventListener("pointerleave", (_: dom.PointerEvent) => showHover(ovHoverLayer, None, 0))
+          svg.addEventListener("pointerleave", (_: dom.PointerEvent) => showHover(ovHoverLayer, None, com.histmersion.web.TimelineView.ElementSize(0)))
 
           svg.addEventListener(
             "pointermove",
             (e: dom.PointerEvent) =>
               dragState.now().foreach { d =>
-                showHover(ovHoverLayer, None, 0)
+                showHover(ovHoverLayer, None, com.histmersion.web.TimelineView.ElementSize(0))
                 val rect = svg.getBoundingClientRect()
                 val w = if rect.width > 0 then rect.width else 600.0
                 val cur = e.clientX - rect.left
@@ -842,11 +842,11 @@ object TimelineView:
                   case DragKind.LeftHandle =>
                     val yearDelta = ((cur - d.startX) * pxToYear).toLong
                     val nf = Math.max(limits.min, Math.min(d.origTo - MIN_SPAN, d.origFrom + yearDelta))
-                    setSpan(nf, d.origTo, push = false)
+                    setSpan(nf, d.origTo, push = com.histmersion.web.Router.Push(false))
                   case DragKind.RightHandle =>
                     val yearDelta = ((cur - d.startX) * pxToYear).toLong
                     val nt = Math.min(limits.max, Math.max(d.origFrom + MIN_SPAN, d.origTo + yearDelta))
-                    setSpan(d.origFrom, nt, push = false)
+                    setSpan(d.origFrom, nt, push = com.histmersion.web.Router.Push(false))
                   case DragKind.PanRange =>
                     val yearDelta = ((cur - d.startX) * pxToYear).toLong
                     val rangeWidth = d.origTo - d.origFrom
@@ -854,7 +854,7 @@ object TimelineView:
                     var nt = d.origTo + yearDelta
                     if nf < limits.min then { nf = limits.min; nt = nf + rangeWidth }
                     if nt > limits.max then { nt = limits.max; nf = nt - rangeWidth }
-                    setSpan(nf, nt, push = false)
+                    setSpan(nf, nt, push = com.histmersion.web.Router.Push(false))
                   case _ => ()
               }
           )
@@ -952,13 +952,13 @@ object TimelineView:
                 val (tx, scale) = realign(dtDrawn, (spanFrom, spanTo, w))
                 showHover(dtHoverLayer, hoverAt(dtPts, e.clientX - rect.left, tx, scale), w)
           )
-          svg.addEventListener("pointerleave", (_: dom.PointerEvent) => showHover(dtHoverLayer, None, 0))
+          svg.addEventListener("pointerleave", (_: dom.PointerEvent) => showHover(dtHoverLayer, None, com.histmersion.web.TimelineView.ElementSize(0)))
 
           svg.addEventListener(
             "pointermove",
             (e: dom.PointerEvent) =>
               dragState.now().foreach { d =>
-                showHover(dtHoverLayer, None, 0)
+                showHover(dtHoverLayer, None, com.histmersion.web.TimelineView.ElementSize(0))
                 if d.kind == DragKind.ZoomDetail then
                   val rect = svg.getBoundingClientRect()
                   val cur = e.clientX - rect.left
@@ -1044,7 +1044,7 @@ object TimelineView:
         role := "status",
         Icon(Icon.Lock),
         span("The timeline is locked"),
-        button(typ := "button", cls := "btn btn--sm tl-unlock", "Unlock", onClick --> (_ => setLocked(false)))
+        button(typ := "button", cls := "btn btn--sm tl-unlock", "Unlock", onClick --> (_ => setLocked(com.histmersion.web.TimelineView.SetLockedOn(false))))
       ),
       // ── Controls: playback · the span shown · zoom to a period, show all time, fold
       div(
@@ -1079,7 +1079,7 @@ object TimelineView:
             ),
             presetsDropdown
           ),
-          ui.ContextMenu.button("Timeline actions", () => menuEntries(config), "tl-menu-btn"),
+          ui.ContextMenu.button(com.histmersion.web.ui.ContextMenu.ButtonTitle("Timeline actions"), () => menuEntries(config), com.histmersion.web.ui.ContextMenu.ButtonExtraCls("tl-menu-btn")),
           button(
             typ := "button",
             cls := "btn btn--ghost tl-all-time",

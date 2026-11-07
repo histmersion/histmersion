@@ -14,7 +14,7 @@ final case class DotEntry(
     label: DotEntry.Label,
     icon: DotEntry.Icon,
     mid: Option[DotEntry.Mid],
-    note: DotEntry.Note = ""
+    note: DotEntry.Note = com.histmersion.web.DotEntry.Note("")
 )
 
 object DotEntry:

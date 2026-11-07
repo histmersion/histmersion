@@ -36,7 +36,7 @@ final class TiledPoints[A](
   // `var`s: the URL template and span asked for, whether the layer is on, the map's tiles once made, the
   // span the features shown were read for
   private var template: Option[String] = None
-  private var span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical) = (0L, 1L)
+  private var span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical) = (com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(1L))
   private var on = false
   private var tiles: Option[PointTiles] = None
   private var shown: (Seq[A], Seq[TileCellPoint]) = (Nil, Nil)
@@ -110,16 +110,16 @@ final class TiledPoints[A](
   /** Ticks whenever what is shown changes (a tile read, the layer switched off): the lists of what is on the map follow
     * it.
     */
-  val changed: com.raquo.laminar.api.L.Var[com.histmersion.web.Poll.Revision] = com.raquo.laminar.api.L.Var(0)
+  val changed: com.raquo.laminar.api.L.Var[com.histmersion.web.Poll.Revision] = com.raquo.laminar.api.L.Var(com.histmersion.web.Poll.Revision(0))
 
   /** What is shown in the map's view now: the items drawn as themselves, and how many more its cells there count.
     * Nothing while the layer is off.
     */
   def inViewNow(): (Seq[A], com.histmersion.api.RowCount) =
-    if !on || !TheMap.isUp then (Nil, 0)
+    if !on || !TheMap.isUp then (Nil, com.histmersion.api.RowCount(0))
     else
       val s = TheMap.surface
-      def seen(p: (com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude)) = Clustering.inView(s, LatLon(p._1, p._2), 0)
+      def seen(p: (com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude)) = Clustering.inView(s, LatLon(p._1, p._2), com.histmersion.web.map.Clustering.InViewMargin(0))
       (shown._1.filter(a => seen(items.kind.at(a))), shown._2.filter(c => seen((c.lat, c.lon))).map(_.n).sum)
 
   /** How many items and cells are shown, and the items the cells count (diagnostics). */

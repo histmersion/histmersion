@@ -117,14 +117,14 @@ object JobsView:
 
   /** What each job state means for a person, and what comes next; a tooltip on its filter button. */
   def stateMeaning(s: JobState): com.histmersion.web.JobsView.StateMeaning = s match
-    case JobState.Queued  => "Waiting for a free worker; it starts by itself."
-    case JobState.Running => "A worker is doing it now; its progress line says how far it got."
+    case JobState.Queued  => com.histmersion.web.JobsView.StateMeaning("Waiting for a free worker; it starts by itself.")
+    case JobState.Running => com.histmersion.web.JobsView.StateMeaning("A worker is doing it now; its progress line says how far it got.")
     case JobState.Done    => "Finished without an error; an ingest's source is stored now."
     case JobState.Failed  =>
       "Ended with the error shown on its row, was cancelled before it started, or was interrupted by a server restart."
     case JobState.Paused =>
       "A person paused it after one of its parts; resumed, it goes on with the parts it had not done."
-    case JobState.Cancelled => "A person cancelled it; it stopped after the part it was on."
+    case JobState.Cancelled => com.histmersion.web.JobsView.StateMeaning("A person cancelled it; it stopped after the part it was on.")
 
   /** What a job without a citekey is about, from its stored [[JobDetail]] (#770): an init job names what it imports.
     * `None` for a job that has a citekey, or no detail.
@@ -137,7 +137,7 @@ object JobsView:
     j.detail.filter(SkippedPeriod.SkippedCount.of(_) > 0).map { d =>
       val ids = SkippedPeriod.Skipped.of(d).map(_.id)
       val more = SkippedPeriod.SkippedCount.of(d) - ids.size
-      s"skipped ${Plural.count(SkippedPeriod.SkippedCount.of(d), "period definition")}: ${ids.mkString(", ")}" +
+      s"skipped ${Plural.count(SkippedPeriod.SkippedCount.of(d), com.histmersion.api.Plural.CountSingular("period definition"))}: ${ids.mkString(", ")}" +
         (if more > 0 then s" and $more more" else "")
     }
 
@@ -158,7 +158,7 @@ object JobsView:
 
   private def agoOf(iso: com.histmersion.web.JobsView.Iso): com.histmersion.web.JobsView.AgoText =
     val t = js.Date.parse(iso)
-    if iso.isEmpty || t.isNaN then "" else ago(t, js.Date.now())
+    if iso.isEmpty || t.isNaN then com.histmersion.web.JobsView.AgoText("") else ago(t, js.Date.now())
 
   // ── state ───────────────────────────────────────────────────────────────────────────────────────
 
@@ -195,7 +195,7 @@ object JobsView:
   /** A job this page started (an upload): show it, and poll quickly again. */
   def track(jobId: com.histmersion.web.JobsView.JobId): Unit =
     started.set(Some(jobId))
-    list.refresh(changed = true)
+    list.refresh(changed = com.histmersion.web.Poll.DataChanged(true))
 
   // ── view ────────────────────────────────────────────────────────────────────────────────────────
 
@@ -213,8 +213,8 @@ object JobsView:
       div(
         cls := "toolbar list-filters",
         ListFilterBar.chips(
-          "kind",
-          listing.signal.map(_.page.facet("kind")),
+          com.histmersion.web.ListFilterBar.Label("kind"),
+          listing.signal.map(_.page.facet(com.histmersion.api.library.Facet.Name("kind"))),
           UiState.jobKinds,
           kindLabel,
           kindMeaning,
@@ -222,20 +222,20 @@ object JobsView:
         ),
         div(
           cls := "btn-group",
-          ListFilterBar.text("subject: a citekey, a target, an id", UiState.jobSubject),
-          ListFilterBar.day("started on or after", UiState.jobSince),
-          ListFilterBar.day("started on or before", UiState.jobUntil),
+          ListFilterBar.text(com.histmersion.web.ListFilterBar.Label("subject: a citekey, a target, an id"), UiState.jobSubject),
+          ListFilterBar.day(com.histmersion.web.ListFilterBar.Label("started on or after"), UiState.jobSince),
+          ListFilterBar.day(com.histmersion.web.ListFilterBar.Label("started on or before"), UiState.jobUntil),
           ListFilterBar.clearButton(filterFields)
         )
       ),
-      list.errorLine("Could not list jobs"),
+      list.errorLine(com.histmersion.api.UiLabels.Text("Could not list jobs")),
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
         Option.when(isLoaded && l.rows.nonEmpty)(
           p(
             cls := "muted list-heading",
             ListPaging.heading(
               l,
-              "job",
+              com.histmersion.api.Plural.Noun.Singular("job"),
               filter.map(_.wire),
               _.status,
               filter.map(stateLabel).toList ++ currentFilter().normalized.kind.map(kindLabel)
@@ -288,7 +288,7 @@ object JobsView:
       cls := "btn-group jobs-filter",
       role := "group",
       aria.label := "state",
-      btn("All", None, listing.signal.map(l => ListPaging.count(l, None, _.status))),
+      btn(com.histmersion.web.JobsView.ButtonLabel("All"), None, listing.signal.map(l => ListPaging.count(l, None, _.status))),
       JobState.values.toList.map(s =>
         btn(stateLabel(s), Some(s), listing.signal.map(l => ListPaging.count(l, Some(s.wire), _.status)))
       )

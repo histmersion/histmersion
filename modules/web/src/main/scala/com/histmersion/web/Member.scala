@@ -17,7 +17,7 @@ final case class Member(
     findings: List[GeoHit] = Nil,
     entry: Option[DotEntry] = None,
     cell: Option[com.histmersion.web.map.GeoBounds] = None,
-    undated: Member.Undated = 0
+    undated: Member.Undated = com.histmersion.web.Member.Undated(0)
 ):
   /** A CELL of a server tile ([[TileCellPoint]]): `n` items counted there, none of them to list — their box (`cell`) is
     * where a click zooms.

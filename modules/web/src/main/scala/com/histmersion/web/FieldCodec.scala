@@ -42,7 +42,7 @@ object FieldCodec:
     override def multi = true
 
   given bool: FieldCodec[Boolean]:
-    def encode(a: Boolean) = if a then List("true") else Nil
+    def encode(a: Boolean) = if a then List(com.histmersion.web.FieldCodec.Token("true")) else Nil
     def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = Some(clean(vs).headOption.contains("true"))
 
   given mapLayers: FieldCodec[Set[MapLayer]]:

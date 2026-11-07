@@ -70,7 +70,7 @@ object ArticlePatches:
       places: Option[FilterFlags.Places] = None,
       period: Option[FilterFlags.Period] = None,
       extraQueries: List[FilterFlags.ExtraQueries] = Nil,
-      clear: FilterFlags.Clear = false
+      clear: FilterFlags.Clear = com.histmersion.cli.ArticlePatches.FilterFlags.Clear(false)
   ):
     def anyGiven: Boolean = query.isDefined || topics.isDefined || tags.isDefined || status.isDefined ||
       places.isDefined || period.isDefined || extraQueries.nonEmpty

@@ -138,13 +138,13 @@ object BaseMaps:
   val status: Var[Option[Basemap.Status]] = Var(None)
 
   /** Whether the page has only the local maps (`ui.base-map-source` resolved to `local`). */
-  val localOnly: Var[com.histmersion.web.BaseMaps.LocalOnly] = Var(false)
+  val localOnly: Var[com.histmersion.web.BaseMaps.LocalOnly] = Var(com.histmersion.web.BaseMaps.LocalOnly(false))
 
   /** The base map drawn — the choice as [[effective]] maps it: what the names' tone follows. */
   val shown: Var[BaseMap] = Var(BaseMap.Standard)
 
   /** The browser draws its WebGL in software: the cheapest drawing of every map. */
-  val software: Var[com.histmersion.web.BaseMaps.Software] = Var(false)
+  val software: Var[com.histmersion.web.BaseMaps.Software] = Var(com.histmersion.web.BaseMaps.Software(false))
 
   /** The map's view, once it is still (its zoom and region): what the contours' line follows. */
   val view: Var[Option[(com.histmersion.web.BaseMaps.MapZoom, GeoBounds)]] = Var(None)
@@ -183,7 +183,7 @@ object BaseMaps:
     "This browser draws maps without a GPU: the relief is left out to keep the map quick."
 
   /** The docs section the notice links to, under `ui.docs-url`. */
-  def docsLink(docsUrl: com.histmersion.web.BaseMaps.DocsUrl, page: com.histmersion.web.BaseMaps.DocsPage = "exploring/web-ui.md#the-base-map"): com.histmersion.web.BaseMaps.DocsLink =
+  def docsLink(docsUrl: com.histmersion.web.BaseMaps.DocsUrl, page: com.histmersion.web.BaseMaps.DocsPage = com.histmersion.web.BaseMaps.DocsPage("exploring/web-ui.md#the-base-map")): com.histmersion.web.BaseMaps.DocsLink =
     val base = if docsUrl.isEmpty || docsUrl.endsWith("/") then docsUrl else docsUrl + "/"
     s"$base$page"
 
@@ -223,7 +223,7 @@ object BaseMaps:
       room: com.histmersion.web.BaseMaps.NoticeRoom = Double.MaxValue
   ): com.histmersion.web.BaseMaps.NoticeLift =
     val lift = if noticeRight > creditsLeft && creditsRight > noticeLeft then creditsHeight + 4 else 0
-    if lift > room then 0 else lift
+    if lift > room then com.histmersion.web.BaseMaps.NoticeLift(0) else lift
 
   /** The languages offered for the names: English, each place's own, and those both the map's data and Natural Earth's
     * names carry.
@@ -373,7 +373,7 @@ object BaseMaps:
   private def foldAfterMove(): Unit =
     noticeEl.foreach { box =>
       if footOpen.isEmpty && !notice.exists(_._2) then
-        MapFold.set(box, false)
+        MapFold.set(box, com.histmersion.web.MapFold.Open(false))
         dom.window.requestAnimationFrame((_: Double) => fitNotice())
     }
 
@@ -389,9 +389,9 @@ object BaseMaps:
       // reader's first pan or zoom; opened with the button it shows the notice about the past landscape too
       val open = footOpenNow(footOpen, moved, notice.exists(_._2))
       box.innerHTML = MapFold.toggleHtml(
-        "btn--icon map-foot-toggle",
-        "map-foot-body",
-        if notice.nonEmpty then "about this map: its terrain and credits" else "map credits",
+        com.histmersion.web.MapFold.ClassName("btn--icon map-foot-toggle"),
+        com.histmersion.web.MapFold.ControlsId("map-foot-body"),
+        if notice.nonEmpty then com.histmersion.web.MapFold.Label("about this map: its terrain and credits") else com.histmersion.web.MapFold.Label("map credits"),
         Icon.html(Icon.Info),
         open
       )
@@ -416,7 +416,7 @@ object BaseMaps:
         p.textContent = text
         val a = dom.document.createElement("a").asInstanceOf[dom.HTMLAnchorElement]
         a.href = if lacking then docsLink(ui.docsUrl, OfflinePage)
-        else if warn then docsLink(ui.docsUrl, "how-to/offline.md")
+        else if warn then docsLink(ui.docsUrl, com.histmersion.web.BaseMaps.DocsPage("how-to/offline.md"))
         else docsLink(ui.docsUrl)
         a.target = "_blank"
         a.rel = "noopener"
@@ -496,7 +496,7 @@ object BaseMaps:
 
   // ── the controls ────────────────────────────────────────────────────────────────────────────────
 
-  private val open: Var[com.histmersion.web.BaseMaps.Open] = Var(false)
+  private val open: Var[com.histmersion.web.BaseMaps.Open] = Var(com.histmersion.web.BaseMaps.Open(false))
 
   private val onVector: Signal[com.histmersion.web.BaseMaps.VectorShown] = shown.signal.map(_.vector.isDefined)
 
@@ -547,7 +547,7 @@ object BaseMaps:
     )
 
   /** The names' language unless the viewer chose one: `basemap.labels.language`, as the server reports it. */
-  private def defaultLanguage: com.histmersion.web.BaseMaps.MapLanguage = if ui == null || ui.mapLanguage.isEmpty then "en" else ui.mapLanguage
+  private def defaultLanguage: com.histmersion.web.BaseMaps.MapLanguage = if ui == null || ui.mapLanguage.isEmpty then com.histmersion.web.BaseMaps.MapLanguage("en") else ui.mapLanguage
 
   /** The languages the menu offers: [[Languages]], and the configured default when it is not among them. Pure. */
   def languageChoices(default: com.histmersion.web.BaseMaps.MapLanguage): List[(com.histmersion.web.BaseMaps.MapLanguage, com.histmersion.web.BaseMaps.LanguageLabel)] =
@@ -572,8 +572,8 @@ object BaseMaps:
     * (`basemap.terrain.on-demand`). Pure.
     */
   def contoursWhy(b: BaseMap, s: Option[Basemap.Status], soft: com.histmersion.web.BaseMaps.SoftFallback): Option[com.histmersion.web.BaseMaps.ContoursWhy] =
-    if b != BaseMap.Physical then Some("Physical draws contours")
-    else if soft then Some("not drawn without a GPU")
+    if b != BaseMap.Physical then Some(com.histmersion.web.BaseMaps.ContoursWhy("Physical draws contours"))
+    else if soft then Some(com.histmersion.web.BaseMaps.ContoursWhy("not drawn without a GPU"))
     else
       relief(s) match
         case None                        => Some(s"no relief downloaded — `${Basemap.FetchCommand} --layer terrain`")
@@ -609,7 +609,7 @@ object BaseMaps:
     */
   def seaDepthWhy(b: BaseMap, s: Option[Basemap.Status], soft: com.histmersion.web.BaseMaps.SoftFallback): Option[com.histmersion.web.BaseMaps.SeaDepthWhy] =
     if b.vector.isEmpty then Some("Readable and Physical draw the sea's depth")
-    else if soft then Some("not drawn without a GPU")
+    else if soft then Some(com.histmersion.web.BaseMaps.SeaDepthWhy("not drawn without a GPU"))
     else if !s.exists(_.layers.exists(l => l.layer == Basemap.Layer.Bathymetry.wire && l.present && l.error.isEmpty))
     then Some(s"no sea floor downloaded — `${Basemap.FetchCommand} --layer bathymetry`")
     else None
@@ -814,7 +814,7 @@ object BaseMaps:
         case PanelSide.Below(_) => p.classList.remove("is-above")
 
   private def close(): Unit =
-    open.set(false)
+    open.set(com.histmersion.web.BaseMaps.Open(false))
     Option(dom.document.getElementById("map-options-button")).foreach(_.asInstanceOf[dom.HTMLElement].focus())
 
   /** The base-map controls of the map's toolbar: the menu and the options. */
@@ -828,7 +828,7 @@ object BaseMaps:
       documentEvents(_.onKeyDown) --> { e => if e.key == "Escape" && open.now() then close() },
       documentEvents(_.onPointerDown) --> { e =>
         val t = e.target.asInstanceOf[dom.Element]
-        if open.now() && t != null && t.closest(".map-options-anchor") == null then open.set(false)
+        if open.now() && t != null && t.closest(".map-options-anchor") == null then open.set(com.histmersion.web.BaseMaps.Open(false))
       },
       open.signal.changes.filter(identity) --> { _ =>
         place()

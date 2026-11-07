@@ -36,7 +36,7 @@ object ListPaging:
 
   /** What is shown: the rows, newest first, and the last page's word on the rest of the list. */
 
-  final case class Listing[A](rows: List[A], page: Paging.Page, extended: Listing.Extended = false):
+  final case class Listing[A](rows: List[A], page: Paging.Page, extended: Listing.Extended = com.histmersion.web.ListPaging.Listing.Extended(false)):
     def hasOlder: Boolean = page.hasMore
 
   object Listing:
@@ -54,7 +54,7 @@ object ListPaging:
     */
   def appended[A](cur: Listing[A], rows: List[A], page: Paging.Page, id: A => com.histmersion.web.ListPaging.Id): Listing[A] =
     val shown = cur.rows.iterator.map(id).toSet
-    Listing(cur.rows ++ rows.filterNot(r => shown(id(r))), page, extended = true)
+    Listing(cur.rows ++ rows.filterNot(r => shown(id(r))), page, extended = com.histmersion.web.ListPaging.Listing.Extended(true))
 
   /** The answer to a poll ([[pollUpTo]]): it replaces the rows; still extended if it was. */
   def polled[A](cur: Listing[A], rows: List[A], page: Paging.Page): Listing[A] =

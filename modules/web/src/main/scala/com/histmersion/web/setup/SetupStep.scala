@@ -1,14 +1,14 @@
 package com.histmersion.web.setup
 
 /** The first-run setup's seven steps, in order. */
-enum SetupStep(val label: SetupStep.Label, val optional: SetupStep.Optional = false):
-  case Welcome extends SetupStep("Welcome")
-  case Papers extends SetupStep("Finding open papers")
-  case Maps extends SetupStep("Maps")
-  case Background extends SetupStep("Background data")
-  case Agents extends SetupStep("Research agents", optional = true)
-  case Calibre extends SetupStep("Calibre library", optional = true)
-  case Ready extends SetupStep("Ready")
+enum SetupStep(val label: SetupStep.Label, val optional: SetupStep.Optional = com.histmersion.web.setup.SetupStep.Optional(false)):
+  case Welcome extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Welcome"))
+  case Papers extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Finding open papers"))
+  case Maps extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Maps"))
+  case Background extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Background data"))
+  case Agents extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Research agents"), optional = com.histmersion.web.setup.SetupStep.Optional(true))
+  case Calibre extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Calibre library"), optional = com.histmersion.web.setup.SetupStep.Optional(true))
+  case Ready extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Ready"))
 
   def number: com.histmersion.web.setup.SetupStep.Number = ordinal + 1
   def next: Option[SetupStep] = SetupStep.values.lift(ordinal + 1)

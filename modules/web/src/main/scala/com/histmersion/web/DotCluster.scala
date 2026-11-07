@@ -76,7 +76,6 @@ object DotCluster:
     /** How many of what it holds have no known date. */
     def undated: com.histmersion.web.DotCluster.Undated = members.map(_.undated).sum
 
-  object Contents:
 
   /** Pure: what a bubble holds, in words — "12 findings · 3 sites · 2 events", the kinds in a fixed order, those it has
     * none of left out.
@@ -155,7 +154,7 @@ object DotCluster:
         s"""<defs><linearGradient id="$id" x1="0" y1="0" x2="1" y2="1">""" +
         """<stop offset="0" class="hd-bubble-g0"/><stop offset="1" class="hd-bubble-g1"/></linearGradient></defs>""" +
         ring("hd-bubble-fill", 0, s""" fill="url(#$id)"""") +
-        ring("hd-bubble-line", 0.5) + ring("hd-bubble-coin", 2.5) + ring("hd-bubble-line", 4.5) + tab +
+        ring("hd-bubble-line", com.histmersion.web.DotCluster.RingOutset(0).5) + ring("hd-bubble-coin", 2.5) + ring("hd-bubble-line", 4.5) + tab +
         "</svg>"
     val classes = List("hd-dot hd-cluster", form.cls, extraClass).filter(_.nonEmpty).mkString(" ")
     s"""<span class="$classes" style="--d:${d}px;--fs:${math.min(12, d / 2)}px;--ring:${Ring}px;""" +

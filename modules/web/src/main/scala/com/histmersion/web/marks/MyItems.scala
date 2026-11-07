@@ -38,7 +38,7 @@ object MyItems:
 
   /** The last change that did not go through, and why. */
   val problem: Var[Option[com.histmersion.web.marks.MyItems.Problem]] = Var(None)
-  val loaded: Var[com.histmersion.web.marks.MyItems.Loaded] = Var(false)
+  val loaded: Var[com.histmersion.web.marks.MyItems.Loaded] = Var(com.histmersion.web.marks.MyItems.Loaded(false))
 
   private def markKey(m: ReadMark): com.histmersion.web.marks.MyItems.MarkKey = s"${m.kind.wire}:${m.id.value}"
 
@@ -47,7 +47,7 @@ object MyItems:
       bookmarks.set(bs)
       notes.set(ns)
       marks.set(ms.map(m => markKey(m) -> m).toMap)
-      loaded.set(true)
+      loaded.set(com.histmersion.web.marks.MyItems.Loaded(true))
     }
 
   private def refused(e: Throwable): Unit =

@@ -30,7 +30,7 @@ object MapLibreEngine extends MapEngine:
           .orElse(Option(dom.document.createElement("canvas").asInstanceOf[dom.HTMLCanvasElement].getContext("webgl")))
           .map(_.asInstanceOf[js.Dynamic])
         gl match
-          case None    => Capabilities(webgl = false, software = true, renderer = "", webgl2 = false)
+          case None    => Capabilities(webgl = com.histmersion.web.map.Capabilities.Webgl(false), software = com.histmersion.web.map.Capabilities.Software(true), renderer = com.histmersion.web.map.Capabilities.Renderer(""), webgl2 = com.histmersion.web.map.Capabilities.Webgl2(false))
           case Some(g) =>
             // RENDERER names the GPU in Firefox (which warns that the debug extension is going away); Chromium
             // answers a generic name there and the GPU only through the extension
@@ -43,7 +43,7 @@ object MapLibreEngine extends MapEngine:
                 else plain
             // the probe's context is left to the garbage collector: losing it on purpose makes Firefox warn
             Capabilities(
-              webgl = true,
+              webgl = com.histmersion.web.map.Capabilities.Webgl(true),
               software = Capabilities.isSoftware(renderer),
               renderer = renderer,
               webgl2 = gl2.isDefined

@@ -9,13 +9,13 @@ import scala.scalajs.js
   */
 enum BubbleForm(val cls: BubbleForm.Cls):
   /** No events in it: the round count. */
-  case Round extends BubbleForm("")
+  case Round extends BubbleForm(com.histmersion.web.BubbleForm.Cls(""))
 
   /** Events only: the count on a rounded SQUARE, its rings squares about the same centre. */
-  case Events extends BubbleForm("hd-cluster--events")
+  case Events extends BubbleForm(com.histmersion.web.BubbleForm.Cls("hd-cluster--events"))
 
   /** Events among other kinds: the round count with a small square tab at its upper right. */
-  case WithEvents extends BubbleForm("hd-cluster--with-events")
+  case WithEvents extends BubbleForm(com.histmersion.web.BubbleForm.Cls("hd-cluster--with-events"))
 
 object BubbleForm:
   type Cls = Cls.T

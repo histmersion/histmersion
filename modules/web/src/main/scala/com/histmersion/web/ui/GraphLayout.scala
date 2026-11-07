@@ -30,9 +30,9 @@ object GraphLayout:
   val restLen: com.histmersion.web.ui.GraphLayout.RestLen = 120.0
   val damping: com.histmersion.web.ui.GraphLayout.Damping = 0.92
   val centering: com.histmersion.web.ui.GraphLayout.Centering = 0.01
-  val maxTicks: com.histmersion.web.ui.GraphLayout.MaxTicks = 300
+  val maxTicks: com.histmersion.web.ui.GraphLayout.MaxTicks = com.histmersion.web.ui.GraphLayout.MaxTicks(300)
   val rootRadius: com.histmersion.web.ui.GraphLayout.RootRadius = 8.0
   val depth1Radius: com.histmersion.web.ui.GraphLayout.Depth1Radius = 6.0
   val leafRadius: com.histmersion.web.ui.GraphLayout.LeafRadius = 4.5
-  val labelMaxLen: com.histmersion.web.ui.GraphLayout.LabelMaxLen = 30
-  val labelTruncLen: com.histmersion.web.ui.GraphLayout.LabelTruncLen = 28
+  val labelMaxLen: com.histmersion.web.ui.GraphLayout.LabelMaxLen = com.histmersion.web.ui.GraphLayout.LabelMaxLen(30)
+  val labelTruncLen: com.histmersion.web.ui.GraphLayout.LabelTruncLen = com.histmersion.web.ui.GraphLayout.LabelTruncLen(28)

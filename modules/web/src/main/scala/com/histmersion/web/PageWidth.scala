@@ -7,8 +7,8 @@ import org.scalajs.dom
   * browser.
   */
 enum PageWidth(val wire: PageWidth.Wire, val label: PageWidth.Label):
-  case Reading extends PageWidth("reading", "Reading width")
-  case Wide extends PageWidth("wide", "Page wide")
+  case Reading extends PageWidth(com.histmersion.web.PageWidth.Wire("reading"), com.histmersion.web.PageWidth.Label("Reading width"))
+  case Wide extends PageWidth(com.histmersion.web.PageWidth.Wire("wide"), com.histmersion.web.PageWidth.Label("Page wide"))
 
 object PageWidth:
   /** A stored value; anything else is the reading width. Pure. */

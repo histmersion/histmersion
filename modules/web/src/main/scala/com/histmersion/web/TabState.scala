@@ -10,9 +10,9 @@ final case class TabState[Row](
     rows: List[Row] = Nil,
     total: com.histmersion.api.RowCount = com.histmersion.api.RowCount(0),
     shown: com.histmersion.api.RowCount = com.histmersion.api.RowCount(0),
-    loading: TabState.Loading = false,
+    loading: TabState.Loading = com.histmersion.web.TabState.Loading(false),
     error: Option[TabState.Error] = None,
-    loaded: TabState.Loaded = false,
+    loaded: TabState.Loaded = com.histmersion.web.TabState.Loaded(false),
     extras: List[TabState.Extras] = Nil
 ):
 
@@ -24,7 +24,7 @@ final case class TabState[Row](
 
   /** The count line ([[ResultsPaging.countLine]]); `loading…` before the first answer. */
   def countLine(singular: com.histmersion.api.Plural.Noun.Singular, plural: com.histmersion.api.Plural.Noun.Plural): com.histmersion.api.UiLabels.Text =
-    if !loaded then "loading…"
+    if !loaded then com.histmersion.api.UiLabels.Text("loading…")
     else ResultsPaging.countLine(shown.value, math.max(total.value, rows.size), singular, plural, extras)
 
 object TabState:
@@ -41,7 +41,7 @@ object TabState:
   type Extras = Extras.T
   object Extras extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def loading[Row](s: TabState[Row]): TabState[Row] = s.copy(loading = true, error = None)
+  def loading[Row](s: TabState[Row]): TabState[Row] = s.copy(loading = com.histmersion.web.TabState.Loading(true), error = None)
 
   /** The first page of a query's answer. */
   def first[Row](p: TabPage[Row], page: com.histmersion.web.ResultsPaging.PageNumber): TabState[Row] =
@@ -54,14 +54,14 @@ object TabState:
       rows = rows,
       total = p.total,
       shown = com.histmersion.api.RowCount(math.min(s.shown.value + page, rows.size)),
-      loading = false,
+      loading = com.histmersion.web.TabState.Loading(false),
       error = None,
       extras = p.extras
     )
 
   /** A request failed: loading ends, the error is shown, the rows already there stay. */
   def failed[Row](s: TabState[Row], message: com.histmersion.web.TabState.Problem): TabState[Row] =
-    s.copy(loading = false, error = Some(message), loaded = true)
+    s.copy(loading = com.histmersion.web.TabState.Loading(false), error = Some(message), loaded = com.histmersion.web.TabState.Loaded(true))
 
   /** "show more": reveal the next `page` loaded rows, or — when the loaded rows run out before the total —
     * `Left(offset)`, the next page to ask the server for (rows past the first fetch used to be unreachable).

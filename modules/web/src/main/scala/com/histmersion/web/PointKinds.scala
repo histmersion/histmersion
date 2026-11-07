@@ -23,14 +23,14 @@ object PointKinds:
     val dot = DotKind.Finding
     val shape = Shape.Diamond
     val icon = Icon.PointFinding
-    val layerLabel = "Sources"
-    val meaning = "a finding (a source’s claim)"
+    val layerLabel = com.histmersion.api.UiLabels.Text("Sources")
+    val meaning = com.histmersion.api.UiLabels.Text("a finding (a source’s claim)")
     def box = (Layout.findingMarkerSize.value, Layout.findingMarkerSize.value)
     def key(s: Spot): com.histmersion.web.PointKind.PointKey = s"${s.lat}|${s.lon}"
     def at(s: Spot): (com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude) = (s.lat, s.lon)
     def inner(s: Spot): String =
       if s.items.size > 1 then s"""<span class="hd-find-count">${s.items.size}</span>"""
-      else Glyphs.badge(CardIcons.sourceKind(s.items.head.sourceKind.getOrElse(Source.Kinds.Unknown), marker = true))
+      else Glyphs.badge(CardIcons.sourceKind(s.items.head.sourceKind.getOrElse(Source.Kinds.Unknown), marker = com.histmersion.web.CardIcons.WithMarker(true)))
     override def classes(s: Spot): String =
       val n = s.items.size
       val span = if n == 1 then for a <- s.items.head.periodStart; b <- s.items.head.periodEnd yield b - a else None
@@ -50,14 +50,14 @@ object PointKinds:
     def label(s: Spot): com.histmersion.api.UiLabels.Text = s.items match
       case List(one) => MapView.markerLabel(one)
       case many      => s"${many.size} findings here"
-    def action(s: Spot): com.histmersion.api.UiLabels.Text = if s.items.size == 1 then "open this finding" else "list them"
+    def action(s: Spot): com.histmersion.api.UiLabels.Text = if s.items.size == 1 then com.histmersion.api.UiLabels.Text("open this finding") else com.histmersion.api.UiLabels.Text("list them")
     override def title(s: Spot): Option[String] = MapView.markerTitle(s.items)
     def target(s: Spot, asOf: Option[com.histmersion.api.Years.Astronomical]): Option[Preview.Target] =
       MapView.hoverSource(s.items).map(Preview.Target.Source(_))
 
     /** One finding: its popup; several: their list. */
     def activate(s: Spot, how: Activation): Unit =
-      Preview.unpin(restoreFocus = false)
+      Preview.unpin(restoreFocus = com.histmersion.web.Preview.RestoreFocus(false))
       s.items match
         case List(one) => MapView.popup(s.lat, s.lon, MapView.popupHtml(one))
         case _         => ResultsList.pick(s.items, s"${s.items.size} findings at ${s.lat}, ${s.lon}", None)
@@ -72,8 +72,8 @@ object PointKinds:
     val dot = DotKind.Site
     val shape = Shape.Circle
     val icon = Icon.PointSite
-    val layerLabel = "sites"
-    val meaning = "a site"
+    val layerLabel = com.histmersion.api.UiLabels.Text("sites")
+    val meaning = com.histmersion.api.UiLabels.Text("a site")
     def box = (Layout.siteIconSize.value, Layout.siteIconSize.value)
     override def pane =
       com.histmersion.api.MapStack.Pane.Sites // above every region: a site inside one still takes the click
@@ -81,7 +81,7 @@ object PointKinds:
     def at(p: SitePoint): (com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude) = (p.lat, p.lon)
     def inner(p: SitePoint): String = Glyphs.badge(CardIcons.siteMarker(p.known.map(_.id)))
     override def classes(p: SitePoint): String =
-      MapView.placeClasses("hd-site-icon hd-site-marker", p.basis) + (if p.undated then s" ${MapView.UndatedClass}"
+      MapView.placeClasses(com.histmersion.web.MapView.ClassName("hd-site-icon hd-site-marker"), p.basis) + (if p.undated then s" ${MapView.UndatedClass}"
                                                                       else "")
     // a site of no known date beneath the dated ones
     override def zIndex(p: SitePoint): Int = if p.undated then -100 else 0
@@ -98,14 +98,14 @@ object PointKinds:
     def member(p: SitePoint): Member =
       Member(
         DotKind.Site,
-        1,
+        com.histmersion.web.Member.N(1),
         p.mid.toList,
         Certainty.NoSay,
         undated = if p.undated then 1 else 0,
         entry = Some(DotEntry(DotKind.Site, key(p), p.name, CardIcons.place(p.kind, p.known.map(_.id)), p.mid, note(p)))
       )
     def label(p: SitePoint): com.histmersion.api.UiLabels.Text = s"${p.name} · ${p.known.fold("site")(_.label)}"
-    def action(p: SitePoint): com.histmersion.api.UiLabels.Text = "show only this place and pin its card"
+    def action(p: SitePoint): com.histmersion.api.UiLabels.Text = com.histmersion.api.UiLabels.Text("show only this place and pin its card")
     def target(p: SitePoint, asOf: Option[com.histmersion.api.Years.Astronomical]): Option[Preview.Target] = p.id.map(Preview.Target.Place(_, asOf))
     def activate(p: SitePoint, how: Activation): Unit =
       p.id.foreach(id => PlaceHover.activatePlace(id, p.name, p.kind, () => MapView.spanMid(), how))
@@ -124,8 +124,8 @@ object PointKinds:
     val dot = DotKind.Event
     val shape = Shape.Square
     val icon = Icon.PointEvent
-    val layerLabel = "events"
-    val meaning = "an event"
+    val layerLabel = com.histmersion.api.UiLabels.Text("events")
+    val meaning = com.histmersion.api.UiLabels.Text("an event")
     def box = (Layout.eventMarkerSize.value, Layout.eventMarkerSize.value)
     override def pane = com.histmersion.api.MapStack.Pane.Events
     def key(e: EventGeo): com.histmersion.web.PointKind.PointKey = e.id.value
@@ -144,14 +144,14 @@ object PointKinds:
     def member(e: EventGeo): Member =
       Member(
         DotKind.Event,
-        1,
+        com.histmersion.web.Member.N(1),
         mid(e).toList,
         Certainty.NoSay,
         undated = if undated(e) then 1 else 0,
         entry = Some(DotEntry(DotKind.Event, e.id.value, e.label, CardIcons.event(e.kind), mid(e), EventPlayback.note(e)))
       )
     def label(e: EventGeo): com.histmersion.api.UiLabels.Text = EventMarker.describe(e)
-    def action(e: EventGeo): com.histmersion.api.UiLabels.Text = "pin its card"
+    def action(e: EventGeo): com.histmersion.api.UiLabels.Text = com.histmersion.api.UiLabels.Text("pin its card")
     def target(e: EventGeo, asOf: Option[com.histmersion.api.Years.Astronomical]): Option[Preview.Target] = Some(Preview.Target.Event(e.id.value))
 
     /** Drawn at a year only when dated well enough — the feed already leaves the imprecise out
@@ -185,8 +185,8 @@ object PointKinds:
     val dot = DotKind.Media
     val shape = Shape.Photo
     val icon = Icon.PointMedia
-    val layerLabel = "media"
-    val meaning = "a picture"
+    val layerLabel = com.histmersion.api.UiLabels.Text("media")
+    val meaning = com.histmersion.api.UiLabels.Text("a picture")
     def box = (Layout.mediaMarkerWidth.value, Layout.mediaMarkerHeight.value)
     def key(h: MediaGeoHit): com.histmersion.web.PointKind.PointKey = s"${h.uid}|${h.lat}|${h.lon}"
     def at(h: MediaGeoHit): (com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude) = (h.lat, h.lon)
@@ -194,7 +194,7 @@ object PointKinds:
     override def classes(h: MediaGeoHit): String = "hd-media-dot"
     private def mid(h: MediaGeoHit): Option[com.histmersion.web.PlaybackAreas.FractionalYear] = DotCluster.mid(h.periodStart, h.periodEnd)
     def fill(h: MediaGeoHit, span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): String =
-      mid(h).fold(s"var(${Palette.media(h.kind.getOrElse("scan"))})")(m => MapView.viridisAt(m, span))
+      mid(h).fold(s"var(${Palette.media(h.kind.getOrElse(com.histmersion.api.media.MediaItem.Kind("scan")))})")(m => MapView.viridisAt(m, span))
     private def note(h: MediaGeoHit): com.histmersion.api.UiLabels.Text =
       List(Fmt.display(h.kind.getOrElse("media")), Fmt.periodStr(h.periodStart, h.periodEnd))
         .filter(_.nonEmpty)
@@ -202,13 +202,13 @@ object PointKinds:
     def member(h: MediaGeoHit): Member =
       Member(
         DotKind.Media,
-        1,
+        com.histmersion.web.Member.N(1),
         mid(h).toList,
         Certainty.NoSay,
         entry = Some(DotEntry(DotKind.Media, h.uid, h.assetName, CardIcons.Media, mid(h), note(h)))
       )
     def label(h: MediaGeoHit): com.histmersion.api.UiLabels.Text = s"${h.assetName} · ${note(h)}"
-    def action(h: MediaGeoHit): com.histmersion.api.UiLabels.Text = "open this picture"
+    def action(h: MediaGeoHit): com.histmersion.api.UiLabels.Text = com.histmersion.api.UiLabels.Text("open this picture")
     def target(h: MediaGeoHit, asOf: Option[com.histmersion.api.Years.Astronomical]): Option[Preview.Target] = h.citekey.map(Preview.Target.Source(_))
     private def popup(h: MediaGeoHit): Unit =
       val period = Fmt.periodStr(h.periodStart, h.periodEnd)
