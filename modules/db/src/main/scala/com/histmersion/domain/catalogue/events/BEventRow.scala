@@ -3,6 +3,7 @@ package com.histmersion.domain.catalogue.events
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** An event as its bundle line reads it: the row, its parent's and its source's uids. */
 final private[events] case class BEventRow(

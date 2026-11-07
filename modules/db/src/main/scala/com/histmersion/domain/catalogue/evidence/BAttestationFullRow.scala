@@ -3,6 +3,7 @@ package com.histmersion.domain.catalogue.evidence
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** An attestation, as its bundle line reads it: the row, its source's and its target's uids. */
 final private[evidence] case class BAttestationFullRow(

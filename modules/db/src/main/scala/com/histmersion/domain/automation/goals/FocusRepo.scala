@@ -145,7 +145,7 @@ object FocusRepo:
     sql"""SELECT m.goal_slug, count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
           WHERE m.kind = 'seed' AND m.goal_slug IS NOT NULL AND i.kind = 'article-compile'
             AND i.status IN ('pending', 'held', 'active')
-          GROUP BY m.goal_slug""".query[(String, Int)].run().map((goal, n) => com.histmersion.domain.automation.Goal.Slug(goal) -> com.histmersion.RowCount(n)).toMap
+          GROUP BY m.goal_slug""".query[(String, Int)].run().map((goal, n) => com.histmersion.domain.automation.Goal.Slug.assume(goal) -> com.histmersion.RowCount(n)).toMap
 
   /** Per goal: the outcome of its LAST settled model-using item when that one stopped or failed (a goal whose newest
     * settled item is done has no stop to report).
@@ -157,7 +157,7 @@ object FocusRepo:
             WHERE m.goal_slug IS NOT NULL AND i.kind NOT IN ('oa-ingest', 'currency-check')
               AND i.status IN ('done', 'stopped', 'failed')
             ORDER BY m.goal_slug, i.updated_at DESC, i.id DESC) t
-          WHERE status IN ('stopped', 'failed')""".query[(String, String)].run().map((goal, why) => com.histmersion.domain.automation.Goal.Slug(goal) -> GoalRow.LeftWhy(why)).toMap
+          WHERE status IN ('stopped', 'failed')""".query[(String, String)].run().map((goal, why) => com.histmersion.domain.automation.Goal.Slug.assume(goal) -> GoalRow.LeftWhy(why)).toMap
 
   /** Open goal-plan approvals (what a person has to decide). */
   def openGoalPlans(using DbCon): com.histmersion.RowCount =
@@ -172,7 +172,7 @@ object FocusRepo:
     sql"""SELECT goal_slug, count(*)::int FROM goal_links WHERE kind = 'source' GROUP BY goal_slug"""
       .query[(String, Int)]
       .run()
-      .map((goal, n) => com.histmersion.domain.automation.Goal.Slug(goal) -> com.histmersion.RowCount(n))
+      .map((goal, n) => com.histmersion.domain.automation.Goal.Slug.assume(goal) -> com.histmersion.RowCount(n))
       .toMap
 
   /** The goals linked to each of `refs` by a link of `kind` (source: a citekey, article: a slug). */
@@ -184,7 +184,7 @@ object FocusRepo:
         .query[(String, String)]
         .run()
         .toList
-        .groupMap(row => com.histmersion.api.automation.Goal.Plans.GoalLink.Ref(row._1))(row => com.histmersion.domain.automation.Goal.Slug(row._2))
+        .groupMap(row => com.histmersion.api.automation.Goal.Plans.GoalLink.Ref(row._1))(row => com.histmersion.domain.automation.Goal.Slug.assume(row._2))
 
   /** The targets of a manager's newest runs, newest first (what the fair order counts on from). */
   def recentTargets(managerId: com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ManagerId, n: com.histmersion.PageSize)(using DbCon): List[com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Target] =

@@ -1,6 +1,7 @@
 package com.histmersion.domain.media.assets
 
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.NewtypeColumns.given
 
 final private[assets] case class MediaThumbRow(
     uid: MediaThumbRow.Uid,

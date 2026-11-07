@@ -3,6 +3,7 @@ package com.histmersion.domain.catalogue.events
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.EventDating
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A source's dating of an event. */
 final private[events] case class EventDatingRow(

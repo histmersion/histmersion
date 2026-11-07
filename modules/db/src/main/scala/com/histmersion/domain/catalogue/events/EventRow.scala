@@ -3,12 +3,13 @@ package com.histmersion.domain.catalogue.events
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.{EventPrecision, EventScale, EventSummary}
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** An `events` row as the reads select it, with what its scale is derived from (its place's kind, its geometry's type)
   * and its tier.
   */
 final private[events] case class EventRow(
-    id: EventRow.Id,
+    id: BEventRow.Id,
     label: EventRow.Label,
     kind: EventRow.Kind,
     notBefore: Option[EventRow.NotBefore],
@@ -62,8 +63,6 @@ final private[events] case class EventRow(
     )
 
 object EventRow:
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Kind = Kind.T

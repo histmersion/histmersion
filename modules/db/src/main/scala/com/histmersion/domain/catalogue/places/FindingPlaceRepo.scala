@@ -167,7 +167,7 @@ private[places] object FindingPlaceRepo:
         Geocoder
           .resolveIn(name, Geocode.KindHint.Region, at, DefaultPlaceholderMin)
           .toList
-          .flatMap(r => fs.map((_, f) => f.id -> r.placeId))
+          .flatMap(r => fs.map((_, f) => f.id -> BPlaceRow.Id(r.placeId.value)))
       }
 
   /** The placeholder findings ([[placeholderSql]]) — of `citekey`, or all — and, for those whose place NAME the
@@ -176,7 +176,7 @@ private[places] object FindingPlaceRepo:
     */
   private def placeholders(citekey: Option[com.histmersion.domain.library.Citekey])(using DbCon): (List[Placeholder.Id], List[(Placeholder.Id, com.histmersion.domain.catalogue.places.BPlaceRow.Id)]) =
     val ph = (Sql.raw(Sql.Text(placeholderFindingsSql)) ++
-      citekey.fold(Sql.raw(com.histmersion.util.database.Sql.Text("")))(ck => Sql.of(" AND f.citekey = ?", Param.S(Param.S.V(ck.value))))).frag.query[Placeholder].run().toList
+      citekey.fold(Sql.raw(com.histmersion.util.database.Sql.Text("")))(ck => Sql.of(Sql.Text(" AND f.citekey = ?"), Param.S(Param.S.V(ck.value))))).frag.query[Placeholder].run().toList
     (ph.map(_.id), resolve(ph))
 
   /** The inserts that define "a finding belongs to a place", shared by the full rebuild and the per-citekey

@@ -31,6 +31,6 @@ object EventMergeRules extends MergeRules:
   )(using DbCon): MergePlanner.Input =
     val named = (bundle.events.map(_.id) ++ bundle.eventAliases.map(_.alias)).map(id => BEventRow.Id(id.value))
     in.modify(_.labels.events)
-      .setTo(EventBundleRepo.eventsNamed(named))
+      .setTo(EventBundleRepo.eventsNamed(named).map((id, uid) => com.histmersion.api.exchange.Bundle.Event.Id(id.value) -> uid))
       .modify(_.labels.eventAliases)
-      .setTo(EventBundleRepo.oldIdsNamed(named))
+      .setTo(EventBundleRepo.oldIdsNamed(named).map((id, uid) => com.histmersion.api.exchange.Bundle.EventAlias.Alias(id.value) -> uid))

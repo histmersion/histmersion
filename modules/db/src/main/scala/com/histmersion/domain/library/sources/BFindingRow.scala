@@ -6,6 +6,7 @@ import com.histmersion.util.database.given
 import com.histmersion.domain.library.Confidence
 import com.augustnagro.magnum.*
 import java.util.UUID
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A finding as the bundle reads it, with its source's uid. */
 final private[sources] case class BFindingRow(

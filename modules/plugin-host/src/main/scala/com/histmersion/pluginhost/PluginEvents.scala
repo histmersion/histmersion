@@ -88,8 +88,8 @@ object PluginEvents:
       endFrom <- opt(r.timeSpan.endFrom)(y => year(y.value))
       notAfter <- opt(r.timeSpan.notAfter)(y => year(y.value))
       central <- opt(r.central)(y => year(y.value))
-      lat <- opt(r.lat)(l => com.histmersion.Latitude.option(l.value).flatMap(SpiValues.latitude))
-      lon <- opt(r.lon)(l => com.histmersion.Longitude.option(l.value).flatMap(SpiValues.longitude))
+      lat <- opt(r.lat)(l => SpiValues.latitude(com.histmersion.plugin.Latitude(l.value)))
+      lon <- opt(r.lon)(l => SpiValues.longitude(com.histmersion.plugin.Longitude(l.value)))
       wikidata <- opt(r.wikidata)(q => com.histmersion.domain.catalogue.places.Wikidata.Id.option(q.value).flatMap(SpiValues.wikidata))
     yield CatalogueEvent(
       CatalogueEvent.Id(r.providerId.value),
@@ -133,11 +133,12 @@ object PluginEvents:
       SpiValues.yearBound(to),
       area.flatMap(b =>
         for
-          w <- com.histmersion.Longitude.option(b.minLon.value)
-          s <- com.histmersion.Latitude.option(b.minLat.value)
-          e <- com.histmersion.Longitude.option(b.maxLon.value)
-          n <- com.histmersion.Latitude.option(b.maxLat.value)
-          a <- SpiValues.area(w, s, e, n)
+          a <- SpiValues.area(
+            com.histmersion.plugin.Longitude(b.minLon.value),
+            com.histmersion.plugin.Latitude(b.minLat.value),
+            com.histmersion.plugin.Longitude(b.maxLon.value),
+            com.histmersion.plugin.Latitude(b.maxLat.value)
+          )
         yield a
       )
     )
@@ -188,7 +189,7 @@ object PluginEvents:
       polite
         .get(
           HttpTransport.Url(url.value),
-          headers.map((k, v) => com.histmersion.domain.CoreQuota.HeaderName(k.value) -> HttpTransport.GetHeadersPart2(v.value))
+          headers.map((k, v) => com.histmersion.domain.CoreQuota.HeaderName(k.value) -> com.histmersion.domain.CoreQuota.HeaderValue(v.value))
         )
         .left
         .map(e => Plugin.Http.GetResultPart1(e.value))

@@ -2,6 +2,7 @@ package com.histmersion.domain.catalogue.periods
 
 import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetRegion}
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A `periods` row as the reads select it: the span's inclusive bounds read back. */
 final private[periods] case class PeriodRow(

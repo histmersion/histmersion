@@ -6,6 +6,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** Flat projection of `jobs` (positional, like the other write-path rows). */
 final private[jobs] case class JobRow(

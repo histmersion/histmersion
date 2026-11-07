@@ -24,5 +24,5 @@ final class WorkListSourceReferrer extends SourceReferrer:
         .collect { case (id, text, reason) if source.linkedIn(SourceKeys.Text(text + "\n" + reason)) => DeleteReport.Mentions(id) }
     )
 
-  override def recorded(source: SourceKeys, line: SourceReferrers.Line, day: SourceReferrers.Day)(using DbCon): Option[com.histmersion.RowCount] =
-    Some(com.histmersion.RowCount(QueueRepo.insert(Queue.Kind.Log, Queue.QueueAdd(Queue.QueueItem.Text(line.value), topic = Some(Queue.QueueItem.Topic(day.value)))).id.value))
+  override def recorded(source: SourceKeys, line: SourceReferrers.Line, day: SourceReferrers.Day)(using DbCon): Option[SourceReferrers.Entry] =
+    Some(SourceReferrers.Entry(QueueRepo.insert(Queue.Kind.Log, Queue.QueueAdd(Queue.QueueItem.Text(line.value), topic = Some(Queue.QueueItem.Topic(day.value)))).id.value))

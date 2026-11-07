@@ -1,6 +1,7 @@
 package com.histmersion.domain.media.assets
 
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A figure's row as its listing reads it (Magnum maps a SELECT's columns positionally). */
 final private[assets] case class AssetInfoRow(

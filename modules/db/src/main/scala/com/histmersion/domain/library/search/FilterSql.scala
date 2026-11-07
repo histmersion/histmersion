@@ -20,6 +20,7 @@ import com.histmersion.api.library.{Filter, SearchHit, Sort}
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Facet
 import com.histmersion.api.library.Finding
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** `Filter` → SQL, as a **pure function** (plan §1.0/§2.2): every builder here returns a value that can be asserted on
   * in a unit test without a database. `SourceRepo` is the only thing that turns one into a Magnum [[Frag]] and runs it.

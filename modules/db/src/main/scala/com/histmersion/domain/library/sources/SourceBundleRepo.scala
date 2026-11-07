@@ -321,5 +321,5 @@ private[sources] object SourceBundleRepo:
           )
         )
       case BlobUse.Original(_, ext) =>
-        Some(BlobSink.Streamed(in => files.store(sha, ContentStore.Ext(ext.value), in).left.toOption.map(m => s"original $sha: $m")))
+        Some(BlobSink.Streamed(in => files.store(sha, ContentStore.Ext(ext.value), in).left.toOption.map(m => ImportAbort.Problem(s"original $sha: $m"))))
       case _ => None

@@ -23,10 +23,13 @@ final class SourceReferrers(val all: List[SourceReferrer]):
   def deleting(source: SourceKeys, report: DeleteReport)(using DbCon): Unit = all.foreach(_.deleting(source, report))
 
   /** The first entry a referrer kept of the deletion. */
-  def recorded(source: SourceKeys, line: com.histmersion.domain.library.sources.referrers.SourceReferrers.Line, day: com.histmersion.domain.library.sources.referrers.SourceReferrers.Day)(using DbCon): Option[com.histmersion.RowCount] =
+  def recorded(source: SourceKeys, line: com.histmersion.domain.library.sources.referrers.SourceReferrers.Line, day: com.histmersion.domain.library.sources.referrers.SourceReferrers.Day)(using DbCon): Option[com.histmersion.domain.library.sources.referrers.SourceReferrers.Entry] =
     all.iterator.map(_.recorded(source, line, day)).collectFirst { case Some(id) => id }
 
 object SourceReferrers:
+  /** The entry a referrer kept of a deletion: its number in the domain's own log. */
+  type Entry = Entry.T
+  object Entry extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Day = Day.T
   object Day extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Line = Line.T

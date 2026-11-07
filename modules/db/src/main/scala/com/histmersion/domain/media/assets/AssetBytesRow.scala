@@ -1,6 +1,7 @@
 package com.histmersion.domain.media.assets
 
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.NewtypeColumns.given
 
 final private[assets] case class AssetBytesRow(mime: AssetBytesRow.Mime, bytes: AssetBytesRow.Bytes) derives DbCodec
 

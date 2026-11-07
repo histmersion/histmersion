@@ -2,6 +2,7 @@ package com.histmersion.domain.research.articles
 
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** An article's version as a bundle reads it: its body by digest and length, carried as a blob. */
 final private[articles] case class BVersionRow(

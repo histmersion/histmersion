@@ -5,6 +5,7 @@ import com.histmersion.util.database.Sql
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A source's figures take the source's licence (#1446): the figures with no licence whose source records one. Runs on
   * the connection it is given.

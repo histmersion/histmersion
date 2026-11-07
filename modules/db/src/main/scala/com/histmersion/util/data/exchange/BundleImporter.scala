@@ -185,9 +185,9 @@ object BundleImporter:
         es,
         decided,
         decisionOf,
-        u => BundleImport.Writer.WritesResult(writes(u)),
+        writes,
         input.local,
-        planned.skipAliases.map(c => BundleImport.Writer.SkipAliases(c.value)),
+        planned.skipAliases.map(c => com.histmersion.domain.library.Citekey.assume(c.value)),
         planned.apply,
         opts,
         kinds
@@ -235,7 +235,7 @@ object BundleImporter:
               val sinks = uses.flatMap(kinds.sink(_, sha, w, files))
               val held = sinks.collect { case BlobSink.Held(write) => write }
               val streamed = sinks.collect { case BlobSink.Streamed(store) => store }
-              if held.isEmpty then streamed.foreach(store => store(tar.stream).foreach(f => failures += ImportAbort.Problem(f.toString)))
+              if held.isEmpty then streamed.foreach(store => store(tar.stream).foreach(f => failures += f))
               else
                 val bytes = tar.readAll()
                 val actual = BundleFormat.sha256Hex(bytes)
@@ -243,7 +243,7 @@ object BundleImporter:
                   failures += ImportAbort.Problem(s"blob ${sha.value}: its content hashes to ${actual.value}")
                 else
                   held.foreach(_(bytes))
-                  streamed.foreach(store => store(java.io.ByteArrayInputStream(bytes)).foreach(f => failures += ImportAbort.Problem(f.toString)))
+                  streamed.foreach(store => store(java.io.ByteArrayInputStream(bytes)).foreach(f => failures += f))
           loop()
     loop()
     failures.result()
@@ -349,7 +349,7 @@ object BundleImporter:
       notes = planned.notes.map(n => MergeApplyResult.Notes(n.value))
     )
     if problems.nonEmpty then base
-    else if plan.changes.value == 0 then base.modify(_.applied).setTo(true).modify(_.replanChanges).setTo(Some(0)).modify(_.tally).setTo(MergeTally())
+    else if plan.changes.value == 0 then base.modify(_.applied).setTo(MergeApplyResult.Applied(true)).modify(_.replanChanges).setTo(Some(MergeApplyResult.ReplanChanges(0))).modify(_.tally).setTo(MergeTally())
     else
       backup() match
         case Left(e) =>
@@ -361,7 +361,7 @@ object BundleImporter:
           MergeRepo.tombstone(ap.tombstones)
           val folded = planned.rows.filter(r => r.decision == Decision.FastForward && ap.touch(r.uid))
           folded.groupBy(_.kind).foreach((k, rs) => MergeRepo.touch(kinds.tableOf(k), rs.map(_.uid).distinct))
-          val report = base.modify(_.applied).setTo(true).modify(_.backup).setTo(Some(MergeApplyResult.Backup(dump))).modify(_.problems).setTo(Nil)
+          val report = base.modify(_.applied).setTo(MergeApplyResult.Applied(true)).modify(_.backup).setTo(Some(MergeApplyResult.Backup(dump))).modify(_.problems).setTo(Nil)
           val mergeId = MergeRepo
             .record(
               m,
@@ -386,5 +386,5 @@ object BundleImporter:
           // the same bundle, planned again over what was just written: nothing should be left to do
           val (_, again) = MergePlans.plan(bundle, m, loaded, resolutions, merge, files, opts.chunkChars, kinds, rules)
           report.modify(
-            _.mergeId).setTo(Some(mergeId)).modify(_.reviews).setTo(reviews).modify(_.logEntry).setTo(Some(logEntry)).modify(_.replanChanges).setTo(Some(MergeApplyResult.ReplanChanges(again.plan.changes.value))
+            _.mergeId).setTo(Some(mergeId)).modify(_.reviews).setTo(reviews.map(s => MergeApplyResult.Reviews(s.value))).modify(_.logEntry).setTo(Some(MergeApplyResult.LogEntry(logEntry.value))).modify(_.replanChanges).setTo(Some(MergeApplyResult.ReplanChanges(again.plan.changes.value))
           )

@@ -53,12 +53,12 @@ final class Polite(
   /** One GET, paced and retried. `headers` are sent as given, except the User-Agent: always the configured one (a
     * plugin's request too).
     */
-  def get(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, HttpTransport.GetHeadersPart2] = Map.empty): Either[HttpTransport.Problem, HttpAnswer] =
+  def get(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.domain.CoreQuota.HeaderValue] = Map.empty): Either[HttpTransport.Problem, HttpAnswer] =
     val h = host(url)
     val sent =
       headers.filterNot(_._1.value.equalsIgnoreCase("User-Agent")) +
         (com.histmersion.domain.CoreQuota.HeaderName("User-Agent") ->
-          HttpTransport.GetHeadersPart2(HttpPolicy.userAgent(HttpPolicy.UserAgent(cfg.userAgent.value)).value))
+          com.histmersion.domain.CoreQuota.HeaderValue(HttpPolicy.userAgent(HttpPolicy.UserAgent(cfg.userAgent.value)).value))
     def attempt(n: com.histmersion.domain.HttpPolicy.Attempt, refusals: Int): Either[HttpTransport.Problem, HttpAnswer] =
       pace(h)
       count += 1
@@ -97,7 +97,7 @@ final class Polite(
   /** One GET answered as JSON. `headers` as for [[get]] — a key-gated API's key travels in one, never in the URL (which
     * an error line or a log may show).
     */
-  def json(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, HttpTransport.GetHeadersPart2] = Map.empty): Either[HttpTransport.Problem, Json] =
+  def json(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.domain.CoreQuota.HeaderValue] = Map.empty): Either[HttpTransport.Problem, Json] =
     get(url, headers).flatMap(a =>
       io.circe.parser.parse(a.text.value).left.map(e => HttpTransport.Problem(s"${host(url).value}: unparseable JSON (${e.getMessage})"))
     )

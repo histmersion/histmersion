@@ -2,6 +2,7 @@ package com.histmersion.domain.library.sources
 
 import com.augustnagro.magnum.*
 import java.util.UUID
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A source's assessment as the bundle reads it, with the source's uid. */
 final private[sources] case class BAssessmentRow(

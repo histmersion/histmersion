@@ -1,6 +1,7 @@
 package com.histmersion.domain.research.articles
 
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** An article's slug and its last write in epoch milliseconds. */
 final private[articles] case class SlugMillis(slug: SlugMillis.Slug, millis: SlugMillis.Millis) derives DbCodec

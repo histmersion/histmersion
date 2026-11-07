@@ -3,6 +3,7 @@ package com.histmersion.domain.research.articles
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** Flat projection of the whole article row, for the domain read (`load`). */
 final private[articles] case class FullArticleRow(

@@ -1,32 +1,20 @@
 package com.histmersion.plugin.testkit
 
 import com.histmersion.plugin.*
+import com.histmersion.pluginhost.Registries
 
 /** What the plugin registered, by extension point, each under the id the server lists it by. */
 final case class Contributions(
-    sourceFetchers: List[Contributions.SourceFetchers],
-    mediaCollections: List[Contributions.MediaCollections],
-    eventCatalogues: List[Contributions.EventCatalogues],
-    aiProviders: List[Contributions.AiProviders],
-    secretVaults: List[Contributions.SecretVaults]
+    sourceFetchers: List[Registries.SourceFetchersKey],
+    mediaCollections: List[Registries.MediaCollectionsKey],
+    eventCatalogues: List[Registries.EventCataloguesKey],
+    aiProviders: List[Registries.AiProvidersKey],
+    secretVaults: List[Registries.SecretVaultsKey]
 ):
   /** As `histmersion plugin add` and `histmersion about` show them: `source-fetcher:oapen`, … */
-  def provides: List[com.histmersion.plugin.testkit.Contributions.RegistryKey] =
-    sourceFetchers.map("source-fetcher:" + _) ++ mediaCollections.map("media-collection:" + _) ++
-      eventCatalogues.map("event-catalogue:" + _) ++ aiProviders.map("ai-provider:" + _) ++
-      secretVaults.map("secret-vault:" + _)
-
-object Contributions:
-  type RegistryKey = RegistryKey.T
-  object RegistryKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type SourceFetchers = SourceFetchers.T
-  object SourceFetchers extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MediaCollections = MediaCollections.T
-  object MediaCollections extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventCatalogues = EventCatalogues.T
-  object EventCatalogues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AiProviders = AiProviders.T
-  object AiProviders extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SecretVaults = SecretVaults.T
-  object SecretVaults extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  def provides: List[Registries.RegistryKey] =
+    sourceFetchers.map(k => Registries.RegistryKey("source-fetcher:" + k.value)) ++
+      mediaCollections.map(k => Registries.RegistryKey("media-collection:" + k.value)) ++
+      eventCatalogues.map(k => Registries.RegistryKey("event-catalogue:" + k.value)) ++
+      aiProviders.map(k => Registries.RegistryKey("ai-provider:" + k.value)) ++
+      secretVaults.map(k => Registries.RegistryKey("secret-vault:" + k.value))

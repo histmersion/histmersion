@@ -6,6 +6,7 @@ import com.histmersion.util.database.given
 import com.histmersion.domain.library.Confidence
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A finding's row with its id, as a write path reads it back. */
 final private[sources] case class FindingIdRow(

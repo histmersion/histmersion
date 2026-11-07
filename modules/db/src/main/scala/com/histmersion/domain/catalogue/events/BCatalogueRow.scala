@@ -3,6 +3,7 @@ package com.histmersion.domain.catalogue.events
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** What a catalogue says about an event, as its bundle line reads it. */
 final private[events] case class BCatalogueRow(

@@ -1,6 +1,7 @@
 package com.histmersion.domain.library.sources
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A source's last write, in epoch milliseconds. */
 final private[sources] case class CitekeyMillis(citekey: com.histmersion.domain.library.Citekey, millis: CitekeyMillis.Millis) derives DbCodec

@@ -246,7 +246,7 @@ object JobRepo:
           Sql.raw(Sql.RawText(" WHERE true")) ++ conds(q).all,
           "",
           "jobs",
-          com.histmersion.PageSize(math.max(1, limit.value)),
+          limit,
           before.map(c => Param.S(Param.S.V(c.value))),
           upTo.map(c => Param.S(Param.S.V(c.value))),
           r => Param.S(Param.S.V(r.id.value))

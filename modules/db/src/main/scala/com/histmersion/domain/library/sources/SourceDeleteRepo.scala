@@ -43,9 +43,9 @@ private[sources] object SourceDeleteRepo:
         val p = p0.modify(_.deletion).setTo(d0.modify(_.files).setTo(files(p0)))
         val source = keysOf(requested, p.keys.flatMap(k => com.histmersion.domain.library.Citekey.option(k.value)))
         deleteNow(p, source, referrers)
-        val d = p.deletion.modify(_.applied).setTo(true)
+        val d = p.deletion.modify(_.applied).setTo(Source.Deletion.Applied(true))
         val log = referrers.recorded(source, SourceReferrers.Line(Source.Delete.logText(d).value), logTopic)
-        Right(p.modify(_.deletion).setTo(d.modify(_.logEntry).setTo(log)))
+        Right(p.modify(_.deletion).setTo(d.modify(_.logEntry).setTo(log.map(e => Source.Deletion.LogEntry(e.value)))))
     }
 
   final private case class Row(citekey: com.histmersion.domain.library.Citekey, title: Row.Title, calibreId: Option[Row.CalibreId], sha256: Option[com.histmersion.Sha256])

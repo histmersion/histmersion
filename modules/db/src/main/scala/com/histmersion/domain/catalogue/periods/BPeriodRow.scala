@@ -3,6 +3,7 @@ package com.histmersion.domain.catalogue.periods
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A named period of this collection's own, as its bundle line reads it. */
 final private[periods] case class BPeriodRow(

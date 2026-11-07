@@ -231,13 +231,13 @@ private[places] object PlaceBundleRepo:
     w.followRenames(
       w.es.places,
       _.uid,
-      p => BundleImport.Writer.Label(p.id.value),
-      w.local.places.map(p => p.uid -> BundleImport.Writer.Label(p.id.value)).toMap,
+      _.id,
+      w.local.places.map(p => p.uid -> p.id).toMap,
       com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("place")
     )((from, to) =>
       PlaceRepo.renameIn(
-        com.histmersion.domain.catalogue.Place.Id.assume(from),
-        com.histmersion.domain.catalogue.Place.Id.assume(to)
+        com.histmersion.domain.catalogue.Place.Id.assume(from.value),
+        com.histmersion.domain.catalogue.Place.Id.assume(to.value)
       )
     )
 

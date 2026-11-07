@@ -17,7 +17,7 @@ trait MergeRules:
   def kind: Bundle.Kind
 
   /** SQL for the label of the record here whose uid is `l.local_uid`, as `merge ledger` shows it. */
-  def ledgerLabel: Option[com.histmersion.util.data.exchange.LedgerRow.Label] = None
+  def ledgerLabel: Option[String] = None
 
   /** Lines of other kinds refer to its records by uid. */
   def referable: Boolean = false

@@ -80,3 +80,10 @@ Also check: `ModelChains.headroom` returns `Option[LimitState.FreesAt]` for a to
 - Dropped or changed: CitationRepo.graph drops a stored edge with an unknown kind; ImportRepo.targets/collectionTargets re-parse with `.option`, so an invalid trimmed id falls to the next branch instead of "No place ..."; ContentStore.hex throws on a digest that is not 32 bytes.
 - Reads that can fail on stored data: Doi in CandidateRepo.dois, AcquireCheckRepo.heldByDoi; Citekey in BundleImport.citekeyOf/citekeyHere, CoverRepo; Run.Id in ManagerRepo.dispatchIn; Place.Id, Event.Id in ImportRepo, AssetLink, Tree; Latitude/Longitude in placeFacts.
 - BlobSink.Streamed.StoreResult is Sha256 but carries an error message. BundleRepo.digest holds an md5.
+
+## From the db finisher
+
+- `NewtypeColumns.given` is now on 66 row classes that derive DbCodec, so constrained values (Citekey, Place.Id, Event.Id, Goal.Slug, Latitude, Longitude, ...) throw on read where these rows used to read raw strings. One bad stored value fails a whole list. Install blocker: run every row read against a restored *_test copy before deploying, and decide per column between lenient read and data repair.
+- Hand-written stored reads use `.assume`: Goal.Slug in FocusRepo, GoalRepo; Place.Id in PlaceRepo, PlaceBundleRepo; Event.Id in EventRepo; Citekey in BundleImporter; Doi in OaFetcher.fetchWork. Review each.
+- Reported mangled and fixed, to compare with master: EventRepo regional filter id; PlaceMergeRules renamedIds lookup; JobRepo limit; lens setTo values; SourceReferrers.Entry and Queue.QueueItem.Id in MergeFollowUps.
+- server PluginCollection.place and SpiValuesSuite must pass spi.Latitude/Longitude.

@@ -2,6 +2,7 @@ package com.histmersion.domain.automation.managers
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** An open acquisition item a watcher's sweep created, found by structure: the sweep run that picked the DOI, the
   * watcher, the goal it linked the item to, and the pick as the ranking saw it (`isOa` = it marked the work open

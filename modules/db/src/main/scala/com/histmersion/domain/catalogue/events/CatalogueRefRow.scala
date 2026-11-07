@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A catalogue's row of one event, as its card lists it. */
 final private[events] case class CatalogueRefRow(

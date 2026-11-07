@@ -1,6 +1,7 @@
 package com.histmersion.plugin.testkit
 
 import com.histmersion.plugin.*
+import com.histmersion.pluginhost.PluginEvents
 
 /** One import of an event catalogue, read as the server reads it: its parts, each part page by page.
   *
@@ -15,30 +16,22 @@ import com.histmersion.plugin.*
   *   is no item)
   */
 final case class CatalogueReport(
-    parts: List[CatalogueReport.Parts],
-    pages: List[(CatalogueReport.PagesPart1, Either[CatalogueReport.PagesPart2Part1, CatalogueReport.PagesPart2Part2])],
+    parts: List[PluginEvents.PartName],
+    pages: List[(PluginEvents.PartName, Either[PluginEvents.Problem, CatalogueReport.Events])],
     accepted: List[AcceptedEvent],
     refused: List[CatalogueReport.Refused],
     leftOut: List[CatalogueReport.LeftOut],
     failure: Option[CatalogueReport.Failure],
     log: List[LogLine],
-    requests: List[CatalogueReport.Requests]
+    requests: List[PluginHarness.Request]
 )
 
 object CatalogueReport:
-  type Parts = Parts.T
-  object Parts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PagesPart1 = PagesPart1.T
-  object PagesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PagesPart2Part1 = PagesPart2Part1.T
-  object PagesPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PagesPart2Part2 = PagesPart2Part2.T
-  object PagesPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Events = Events.T
+  object Events extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Refused = Refused.T
   object Refused extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LeftOut = LeftOut.T
   object LeftOut extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Failure = Failure.T
   object Failure extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Requests = Requests.T
-  object Requests extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

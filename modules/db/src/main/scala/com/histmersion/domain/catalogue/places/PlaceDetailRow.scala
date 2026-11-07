@@ -5,6 +5,7 @@ import com.histmersion.domain.catalogue.places.PlaceColumns.given
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** One row of [[PlaceRepo.get]] — a [[PlaceSummary]] plus the geometry and the finding count. */
 final private[places] case class PlaceDetailRow(

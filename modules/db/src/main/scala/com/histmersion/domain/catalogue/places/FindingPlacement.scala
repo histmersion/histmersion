@@ -31,7 +31,7 @@ object FindingPlacement:
   /** The findings on a placeholder point whose place name the geocoder does not resolve, or that have none: (citekey,
     * line), by citekey and finding id.
     */
-  def unresolvedPlaceholdersIn()(using DbCon): List[(com.histmersion.domain.catalogue.places.FindingPlaceRepo.Placeholder.Id, com.histmersion.domain.catalogue.places.FindingPlaceRepo.Placeholder.Name)] = FindingPlaceRepo.unresolvedPlaceholdersIn()
+  def unresolvedPlaceholdersIn()(using DbCon): List[(com.histmersion.domain.library.Citekey, com.histmersion.domain.catalogue.places.FindingPlaceRepo.Placeholder.Detail)] = FindingPlaceRepo.unresolvedPlaceholdersIn()
 
   /** The findings whose stored point is the one the old geocoder chose for their place name, as
     * `lint --rule finding-geocode` reads them.

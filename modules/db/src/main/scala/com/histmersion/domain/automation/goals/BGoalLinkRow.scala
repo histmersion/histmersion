@@ -4,6 +4,7 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 
 import java.util.UUID
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A goal's link as a bundle reads it, the linked record by its uid (Magnum maps a SELECT's columns positionally). */
 final private[histmersion] case class BGoalLinkRow(

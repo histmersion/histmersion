@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The facts one event's lead is computed from: its dates, tier and size, the findings near it, the sources proposed
   * and confirmed.

@@ -39,9 +39,8 @@ object SpiValues:
       period <- spi.Period.from(start, end).toOption
     yield period
 
-  def latitude(l: com.histmersion.Latitude): Option[spi.Latitude] = com.histmersion.Latitude.option(l.value).map(ok => spi.Latitude(ok.value))
-  def longitude(l: com.histmersion.Longitude): Option[spi.Longitude] =
-    com.histmersion.Longitude.option(l.value).map(ok => spi.Longitude(ok.value))
+  def latitude(l: spi.Latitude): Option[spi.Latitude] = com.histmersion.Latitude.option(l.value).map(_ => l)
+  def longitude(l: spi.Longitude): Option[spi.Longitude] = com.histmersion.Longitude.option(l.value).map(_ => l)
 
   /** A DOI as the host holds it, trimmed; `None` when it is none. */
   def doi(d: com.histmersion.domain.library.Doi): Option[spi.Doi] = com.histmersion.domain.library.Doi.option(d.value.trim).map(ok => spi.Doi(ok.value))
@@ -51,10 +50,10 @@ object SpiValues:
 
   /** An area `(minLon, minLat, maxLon, maxLat)`; `None` when a corner is off the globe. */
   def area(
-      minLon: com.histmersion.Longitude,
-      minLat: com.histmersion.Latitude,
-      maxLon: com.histmersion.Longitude,
-      maxLat: com.histmersion.Latitude
+      minLon: spi.Longitude,
+      minLat: spi.Latitude,
+      maxLon: spi.Longitude,
+      maxLat: spi.Latitude
   ): Option[(spi.Longitude, spi.Latitude, spi.Longitude, spi.Latitude)] =
     for
       w <- longitude(minLon)

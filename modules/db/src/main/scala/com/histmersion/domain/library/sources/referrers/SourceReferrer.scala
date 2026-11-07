@@ -20,5 +20,5 @@ trait SourceReferrer:
   def deleting(source: SourceKeys, report: DeleteReport)(using DbCon): Unit = ()
 
   /** The source went: the entry this domain keeps of it (the log's), with `line` as its text and `day` as its topic. */
-  def recorded(source: SourceKeys, line: com.histmersion.domain.library.sources.referrers.SourceReferrers.Line, day: com.histmersion.domain.library.sources.referrers.SourceReferrers.Day)(using DbCon): Option[com.histmersion.RowCount] = None
+  def recorded(source: SourceKeys, line: com.histmersion.domain.library.sources.referrers.SourceReferrers.Line, day: com.histmersion.domain.library.sources.referrers.SourceReferrers.Day)(using DbCon): Option[com.histmersion.domain.library.sources.referrers.SourceReferrers.Entry] = None
 

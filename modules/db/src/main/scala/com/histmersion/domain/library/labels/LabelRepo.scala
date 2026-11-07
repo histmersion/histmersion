@@ -6,6 +6,7 @@ import com.histmersion.domain.library.search.FilterSql
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.{Facet, Filter}
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The labels' vocabulary: the values of one dimension (tags, authors, places, topics, statuses, provenances) with the
   * sources each would leave inside a filter.

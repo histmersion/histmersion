@@ -15,7 +15,7 @@ final case class GazetteerReport(
     refused: List[GazetteerReport.Refused],
     failure: Option[GazetteerReport.Failure],
     log: List[LogLine],
-    requests: List[GazetteerReport.Requests]
+    requests: List[PluginHarness.Request]
 )
 
 object GazetteerReport:
@@ -23,5 +23,3 @@ object GazetteerReport:
   object Refused extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Failure = Failure.T
   object Failure extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Requests = Requests.T
-  object Requests extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

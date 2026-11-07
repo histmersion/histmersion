@@ -974,7 +974,7 @@ private[places] object PlaceRepo:
                           AND ($lo::bigint IS NULL
                                OR r.period && int8range($lo::bigint, $hi::bigint, '[]'))
                       )
-                      SELECT d.id FROM d JOIN places p ON p.id = d.id""".query[String].run().toList.map(PlaceScope.ByValueValue(_))
+                      SELECT d.id FROM d JOIN places p ON p.id = d.id""".query[String].run().toList.map(PlaceScope.ByValueValue.assume(_))
           }.toMap,
           labels
         )
