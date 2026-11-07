@@ -126,3 +126,9 @@ Master's `[a-z][a-z0-9]*_.+` refuses the seed's own bare ids (`anatolia`, `aegea
 - PlacesControllers.renamed 400 on a new id outside the pattern; merge refuses an invalid `into` as not found; PlaceService.InMemory.scopeFor drops invalid ids; CorrectionsTools refuses a malformed event id (old: matched nothing). PlacesRoutes: malformed id 404, and empty list for placeNames and placeOverrides. PlacesTools PlaceOverrideInput periodStart/periodEnd went Long to Int.
 - GazetteerLoad.load records the file's lowercase sha rather than the manifest text. AcquisitionSweepPipeline's dry-run Ingested holds a non-citekey via Citekey.assume. AcquisitionControllers.updateRetractionsNow filter through Ident.doi removed to match master; check the normalisation note from core.
 - db tests: four suites had "no-such-job" replaced with an all-zero UUID. Rerun db tests after server (JobRepo changed).
+
+## From server, wave 3 (events)
+
+- API defect: `EventsApi.corrections` input tuple types are in the wrong order against the wire order status, event, limit, offset (`Event.Id`, `Status`, `UnreadPage.Offset`, `EventList.Limit`), read by position in EventImportsRoutes: fix the API type. `UnreadPage.Offset` is used as an event list's offset in EventList.of.
+- HeldEvent.pointOf: an out-of-range point is treated as no point. EventsRoutes delete and EventLinksRoutes: an invalid id gives 404. EventImportsRoutes corrections: negative offset 400, non-positive limit uses the default (old code let both reach the database). EventService.InMemory.put/patch drops invalid placeId, citekey, wikidata. AttestationsControllers.list: invalid citekey gives an empty list. rename: an id over the domain length gives 400.
+- MapLayer.features takes MapTiles.TileKey, a wrong concept: check.
