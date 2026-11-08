@@ -38,7 +38,7 @@ object Certainty:
 
   /** The certainty a group of dots is drawn with: its weakest; [[NoSay]] for none. */
   def worst(items: Iterable[Certainty]): Certainty =
-    items.foldLeft(NoSay)((w, c) => if rank(c).value < rank(w).value then c else w)
+    items.foldLeft(NoSay)((w, c) => if rank(c) < rank(w) then c else w)
 
   /** The certainty of a group of findings ([[worst]] of [[of]]). */
   def ofAll(items: Iterable[Option[Confidence]]): Certainty = worst(items.map(of))

@@ -59,7 +59,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
             val rows = AcquireParse.s2Citations(j).map(_.wire)
             val kept = acc ++ rows.filter(r => since.forall(y => r.year.forall(_.value >= y.value)))
             AcquireParse.s2Next(j) match
-              case Some(next) if rows.nonEmpty && next.value > offset.value => page(next, kept)
+              case Some(next) if rows.nonEmpty && next > offset => page(next, kept)
               case _                                                        => Right(kept)
           }
     page(Offset(0), Nil)

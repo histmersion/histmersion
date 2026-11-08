@@ -213,7 +213,7 @@ final class OnDemandTiles(
         case Some(e) if !e.isLeaf  => Right(Some(e))
         case Some(_) if depth >= 3 => Left(OnDemandTiles.Problem("PMTiles directories nested too deep"))
         case Some(e)               => leaf(r, e).flatMap(walk(_, depth + 1))
-    if z.value < r.header.minZoom.value || z.value > r.header.maxZoom.value then Right(None) else walk(r.root, 0)
+    if z < r.header.minZoom || z > r.header.maxZoom then Right(None) else walk(r.root, 0)
 
   private def read(
       z: PmTiles.Zoom,

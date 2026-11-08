@@ -124,7 +124,7 @@ object EventService:
       s.attestations.exists(a => a.targetType.value == "event" && a.targetId.value == id.value)
 
     private def overlaps(e: HeldEvent, period: Option[Period]): Boolean =
-      period.forall(p => e.outer.forall((a, b) => a.value <= p.end.value && b.value >= p.start.value))
+      period.forall(p => e.outer.forall((a, b) => a <= p.end && b >= p.start))
 
     private def containsText(field: Option[String], t: String): Boolean =
       field.exists(_.toLowerCase(Locale.ROOT).contains(t.toLowerCase(Locale.ROOT)))
@@ -211,7 +211,7 @@ object EventService:
         )
       }
 
-    private def preciseEnough(e: HeldEvent): Boolean = e.uncertainty.exists(_.value <= EventPrecision.ApproximateUpTo.value)
+    private def preciseEnough(e: HeldEvent): Boolean = e.uncertainty.exists(_ <= EventPrecision.ApproximateUpTo)
 
     def geo(selection: EventSelection, limit: PageSize, tolerance: GeoTolerance): EventGeo.List =
       val s = state.get
@@ -221,7 +221,7 @@ object EventService:
       EventGeo.List(
         items,
         EventGeo.List.Unplaced(listed.count(e => e.geometry.isEmpty && preciseEnough(e))),
-        EventGeo.List.Imprecise(placed.count(e => e.uncertainty.exists(_.value > EventPrecision.ApproximateUpTo.value)))
+        EventGeo.List.Imprecise(placed.count(e => e.uncertainty.exists(_ > EventPrecision.ApproximateUpTo)))
       )
 
     def geoOf(ids: List[Event.Id]): Map[Event.Id, EventGeo] =

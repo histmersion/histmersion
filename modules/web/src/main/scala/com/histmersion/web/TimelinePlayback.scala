@@ -170,7 +170,7 @@ object TimelinePlayback:
       val advance = (yearsPerSecond * dt).toLong.max(1)
       val next = Years.Astronomical(playhead.now().value + advance)
 
-      if next.value >= spanTo.value then
+      if next >= spanTo then
         playhead.set(spanTo)
         playheadPos.set(Some(spanTo))
         stop()

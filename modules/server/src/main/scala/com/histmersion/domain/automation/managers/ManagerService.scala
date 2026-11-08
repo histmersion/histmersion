@@ -496,7 +496,7 @@ object ManagerService:
                 .setTo(ManagerItemRecord.Origin(origin.wire.value))
                 .modify(_.updatedAt)
                 .setTo(at)
-              s.modify(_.items).using(_.map(i => if i.id.value == old.id.value then again else i))
+              s.modify(_.items).using(_.map(i => if i.id == old.id then again else i))
       }
       result
     def item(id: ManagerItem.Id): Option[ManagerItem] = items.find(_.id.value == id.value).map(viewItem)

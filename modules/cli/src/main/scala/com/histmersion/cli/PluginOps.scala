@@ -421,7 +421,7 @@ final class PluginOps(using console: Console)(
     val gone = linked.keys
       .filterNot(f => jars.exists(_.getFileName.toString == f.value))
       .toList
-      .sortBy(_.value)
+      .sorted
       .map(f => s"- $f — removed from the directory, still in the binary")
     val deps =
       scala.util.Try(Files.readAllLines(install.lib.resolve("classpath")).asScala.count(_.trim.nonEmpty)).getOrElse(0)

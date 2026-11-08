@@ -113,7 +113,7 @@ object SourceEditor:
         if orig.periodStart.isDefined then errs += Field.Period -> cannotClear("the period")
         None
       case (Right(Some(a)), Right(Some(b))) =>
-        if a.value > b.value then {
+        if a > b then {
           errs += Field.Period -> s"the period starts (${YearFmt(a)}) after it ends (${YearFmt(b)})"; None
         } else Option.when(!(orig.periodStart.contains(a) && orig.periodEnd.contains(b)))(Period.Input(a, b))
       case _ => errs += Field.Period -> "give both the start and the end of the period"; None

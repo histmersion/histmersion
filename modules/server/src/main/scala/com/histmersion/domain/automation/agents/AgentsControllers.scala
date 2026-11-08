@@ -1057,7 +1057,7 @@ final class AgentsControllers(
       )
       l <- goals
         .links(slug)
-        .find(l => l.kind == in.kind && l.ref.value == r.value)
+        .find(l => l.kind == in.kind && l.ref == r)
         .toRight(Api.Error(Api.Error.Message(s"the link to $r was not recorded")))
     yield l
 

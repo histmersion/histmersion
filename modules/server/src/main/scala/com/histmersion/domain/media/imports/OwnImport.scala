@@ -204,7 +204,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
     }
 
     val accepted = verdicts.collect { case (k, Verdict(_, Right(v))) => k -> v }
-    val toFetch = accepted.keys.filterNot(k => known.contains(providerKey(k))).toList.sortBy(_.value)
+    val toFetch = accepted.keys.filterNot(k => known.contains(providerKey(k))).toList.sorted
     val completed =
       try col.completeAll(toFetch.flatMap(accepted.get).map(_._1), PluginMedia.http(fetch))
       catch

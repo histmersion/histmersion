@@ -81,7 +81,7 @@ final class SearchControllers(
     // the window to bucket = the filter's deep-time range, defaulted (half-open bounds included)
     val a = Filter.lowerGiven(q.filter.period).getOrElse(Year(t.defaultFrom.value))
     val b = Filter.upperGiven(q.filter.period).getOrElse(Year(t.defaultTo.value))
-    val (lo, hi) = if a.value <= b.value then (a, b) else (b, a)
+    val (lo, hi) = if a <= b then (a, b) else (b, a)
     val (from, to) = (clampToSpan(lo, t.min.value, t.max.value), clampToSpan(hi, t.min.value, t.max.value))
     val size = q.size
       .map(_.value)

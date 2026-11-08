@@ -85,7 +85,7 @@ final class ModelPicker(
     */
   def cooldowns(now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())): List[(ModelRef.Wire, Instant)] =
     import scala.jdk.CollectionConverters.*
-    cooldown.keySet.asScala.toList.sortBy(_.value).flatMap(w =>
+    cooldown.keySet.asScala.toList.sorted.flatMap(w =>
       ModelRef
         .parse(w, known())
         .toOption
@@ -475,7 +475,7 @@ object ModelPicker:
     * nothing about a reset — and only when that pool's verdict for the model is usable (#1827).
     */
   def lifts(since: PlanQuotaRepo.EpochMillis, observed: Option[PlanQuotaRepo.EpochMillis], usable: PoolUsable): Boolean =
-    usable.value && observed.exists(_.value > since.value)
+    usable.value && observed.exists(_ > since)
 
   /** When a chain whose every model is out of headroom gets one back by itself, and the clause the pause message says
     * it with: the EARLIEST time any of its models frees — a model that never frees by itself (a held pool, a reserve as

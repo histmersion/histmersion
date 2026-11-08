@@ -137,7 +137,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
           .flatMap(s =>
             Either
               .cond(
-                m.goal.forall(_.value == s.value),
+                m.goal.forall(_ == s),
                 ManagerContext.ItemTarget(s.value),
                 Api.Error(Api.Error.Message(s"manager ${m.id} watches ${m.goal.fold("?")(_.value)}, not $s"))
               )

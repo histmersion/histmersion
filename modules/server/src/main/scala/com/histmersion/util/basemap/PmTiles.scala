@@ -390,7 +390,7 @@ object PmTiles:
     var at = -1 // the last entry with tileId ≤ id so far
     while lo <= hi do
       val mid = (lo + hi) >>> 1
-      if entries(mid).tileId.value <= id.value then
+      if entries(mid).tileId <= id then
         at = mid
         lo = mid + 1
       else hi = mid - 1

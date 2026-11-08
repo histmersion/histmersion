@@ -58,7 +58,7 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
     this
       .modify(_.items)
       .using(_.map { cur =>
-        if cur.id.value != next.id.value then cur
+        if cur.id != next.id then cur
         else
           val doneAt = if next.status.value == Queue.Done then cur.doneAt.orElse(Some(QueueItem.DoneAt(WorkListState.stamp(now)))) else None
           next.modify(_.doneAt).using(_ => doneAt)

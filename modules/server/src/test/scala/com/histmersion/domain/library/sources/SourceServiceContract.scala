@@ -265,14 +265,14 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     assertEquals(s.sources.addEdges(edges, Me), 2)
     assertEquals(s.sources.addEdges(edges, Me), 0, "an edge stored already is not new")
     assertEquals(s.sources.addEdges(Nil, Me), 0)
-    assertEquals(s.sources.load(A).map(_.edges.map(_.dst).sortBy(_.value)), Some(List("zq_not_yet", B)))
+    assertEquals(s.sources.load(A).map(_.edges.map(_.dst).sorted), Some(List("zq_not_yet", B)))
   }
 
   stest("the citekey of a DOI: case and spaces ignored, the first by citekey of two holders, none for an unknown one") {
     s =>
       val _ = s.sources.put(source(B, Title("Cove")).modify(_.doi).setTo(Some(Doi("10.5555/ZQ.Both"))), Me)
       val _ = s.sources.put(source(A, Title("Walls")).modify(_.doi).setTo(Some(Doi("10.5555/zq.both"))), Me)
-      assertEquals(s.sources.citekeyOfDoi(com.histmersion.domain.library.Doi.assume(" 10.5555/zq.BOTH ")), Some(List(A, B).minBy(_.value)))
+      assertEquals(s.sources.citekeyOfDoi(com.histmersion.domain.library.Doi.assume(" 10.5555/zq.BOTH ")), Some(List(A, B).min))
       assertEquals(s.sources.citekeyOfDoi(com.histmersion.domain.library.Doi("10.5555/zq.none")), None)
   }
 

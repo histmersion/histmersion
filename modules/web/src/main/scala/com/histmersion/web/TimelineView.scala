@@ -618,7 +618,7 @@ object TimelineView:
             g.appendChild(dragRect)
       }
       TimelinePlayback.playheadNow.foreach { ph =>
-        if ph.value >= sf.value && ph.value <= st.value then
+        if ph >= sf && ph <= st then
           val px = xOf(ph.value.toDouble)
           val line = dom.document.createElementNS(ns, "line")
           line.setAttribute("class", "tl-playhead")

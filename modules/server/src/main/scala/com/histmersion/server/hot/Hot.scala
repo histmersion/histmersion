@@ -330,7 +330,7 @@ object Hot:
     /** What is still draining from earlier generations. */
     def stillDraining: List[Instance.Description] =
       import scala.jdk.CollectionConverters.*
-      draining.keySet.asScala.toList.map(_.describe).sortBy(_.value)
+      draining.keySet.asScala.toList.map(_.describe).sorted
 
     /** Close every component (dependents first) — the server's shutdown, a test's end. In-use ones are waited for up to
       * `bound`, then closed anyway (the process is ending).

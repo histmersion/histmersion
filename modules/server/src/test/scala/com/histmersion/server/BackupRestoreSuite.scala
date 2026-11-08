@@ -253,7 +253,7 @@ class BackupRestoreSuite extends DbSuite:
         // 8. …and search finds it again, findings and all
         val after = h.library.search.sources(Filter(tags = List(Filter.Tags("zz-backup-test")), limit = Filter.Limit(10)))
         assertEquals((after.total.value: Int), 2)
-        assertEquals(after.hits.map(_.source.citekey).sortBy(_.value), List("zz_backup_a", "zz_backup_b"))
+        assertEquals(after.hits.map(_.source.citekey).sorted, List("zz_backup_a", "zz_backup_b"))
         val got = h.library.sources.get(Citekey("zz_backup_a")).toOption.get
         assertEquals(got.source.title, "The Kept One")
         assertEquals(got.findings.map(_.claim), List("zz_backup_a says something"))

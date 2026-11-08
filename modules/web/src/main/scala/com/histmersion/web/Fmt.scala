@@ -56,7 +56,7 @@ object Fmt:
     Wcag.Hex(ConfidenceStyle.desaturate(ConfidenceStyle.Rgb(rgbStr.value), confidence).value)
 
   def worstConf(items: Iterable[Confidence]): Confidence =
-    items.foldLeft(Confidence.High)((w, c) => if ConfidenceStyle.rank(c).value < ConfidenceStyle.rank(w).value then c else w)
+    items.foldLeft(Confidence.High)((w, c) => if ConfidenceStyle.rank(c) < ConfidenceStyle.rank(w) then c else w)
 
   def display(s: UiLabels.Text): UiLabels.Text = UiLabels.Text(Label.display(Label.Text(s.value)).value)
   def displayTag(s: Fmt.DisplayTagS): UiLabels.Text = display(s)

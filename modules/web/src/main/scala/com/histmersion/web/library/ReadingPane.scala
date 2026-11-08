@@ -147,7 +147,7 @@ object ReadingPane:
   // ── a source ────────────────────────────────────────────────────────────────────────────────────
 
   private def sourcePane(ck: Citekey): HtmlElement =
-    val row = LibraryLists.sources.now().rows.find(_.source.citekey.value == ck.value).map(_.source)
+    val row = LibraryLists.sources.now().rows.find(_.source.citekey == ck).map(_.source)
     val reading = Var(Option.empty[Either[ErrorLine.Problem, SourceReading]])
     val page = SourceLink.href(ck)
     def showOnMap(): Unit =

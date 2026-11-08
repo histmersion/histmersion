@@ -77,7 +77,7 @@ object EventImportService:
           )
         }
 
-    private def merged(names: List[BEventRow.Names], more: List[BEventRow.Names]): List[BEventRow.Names] = (names ++ more).distinct.sortBy(_.value)
+    private def merged(names: List[BEventRow.Names], more: List[BEventRow.Names]): List[BEventRow.Names] = (names ++ more).distinct.sorted
 
     private def keyOrder(r: CatalogRecord): (String, String) = (r.key._1.value, r.key._2.value)
 
