@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Plural
@@ -10,6 +11,11 @@ import sttp.tapir.Schema
 
 import com.histmersion.api.research.Article.Plans.FilterProposal
 import com.histmersion.api.research.Article
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.automation.Run
 
 /** The `infer-filter` pipeline's typed answer and its pure checks (docs/research-process-managers.md §4 (a), phase 2):
   * an article that records no coverage filter (#958) gets one proposed by a model — free text, topics, tags and the
@@ -20,13 +26,13 @@ import com.histmersion.api.research.Article
   */
 object FilterInference:
   type Last = Last.T
-  object Last extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Last extends RefinedType[Boolean, Pure]
   type LogLine = LogLine.T
-  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LogLine extends RefinedType[String, Pure]
   type Outcome = Outcome.T
-  object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Outcome extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
 
   final case class FilterAnswer(
@@ -38,7 +44,7 @@ object FilterInference:
   ) derives KindlingsCodecAsObject
   object FilterAnswer:
     type Rationale = Rationale.T
-    object Rationale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rationale extends RefinedType[String, Pure]
 
     given Schema[FilterAnswer] = KindlingsSchema
       .derived[FilterAnswer]
@@ -58,11 +64,11 @@ object FilterInference:
 
   object Limits:
     type MinHits = MinHits.T
-    object MinHits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MinHits extends RefinedType[Int, Pure]
     type MaxHits = MaxHits.T
-    object MaxHits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxHits extends RefinedType[Int, Pure]
     type MinCitedShare = MinCitedShare.T
-    object MinCitedShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MinCitedShare extends RefinedType[Double, Pure]
 
   /** What the pipeline checkpoints: the proposal that passed, or None with why nothing did. */
   final case class Inferred(proposal: Option[FilterProposal], problems: List[Problem] = Nil)
@@ -83,13 +89,13 @@ object FilterInference:
     * on the `last` attempt a failing filter becomes `Inferred(None, problems)` — nothing is proposed.
     */
   def judge(
-      slug: com.histmersion.domain.research.Slug,
+      slug: Slug,
       f: Article.Filter,
-      rationale: com.histmersion.domain.FilterInference.FilterAnswer.Rationale,
+      rationale: FilterAnswer.Rationale,
       total: FilterProposal.Total,
-      cited: List[com.histmersion.domain.library.Citekey],
-      citedIn: Set[com.histmersion.domain.library.Citekey],
-      sample: List[com.histmersion.domain.library.Citekey],
+      cited: List[Citekey],
+      citedIn: Set[Citekey],
+      sample: List[Citekey],
       limits: Limits,
       last: Last
   ): Either[List[Problem], Inferred] =
@@ -137,5 +143,5 @@ object FilterInference:
     else Left(problems)
 
   /** The worklog line of a run. */
-  def logLine(slug: com.histmersion.domain.research.Slug, outcome: com.histmersion.domain.FilterInference.Outcome, runId: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.FilterInference.LogLine =
+  def logLine(slug: Slug, outcome: Outcome, runId: Run.Id): LogLine =
     LogLine(s"infer-filter [[$slug]]: $outcome (agent run ${runId.value.take(8)})")

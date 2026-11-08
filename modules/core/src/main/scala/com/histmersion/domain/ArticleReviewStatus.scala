@@ -1,9 +1,13 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.Plural
 import com.histmersion.api.research.{ReviewApproval, ReviewBadge, ReviewFinding, ReviewRound, ReviewState}
 import com.histmersion.domain.ReviewLedger.{Entry, Ledger}
 import com.histmersion.domain.automation.ItemStatus
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.automation.Run
 
 /** Where an article stands with the review panel, derived from what the review manager and the review ledger record
   * about it — pure; the server reads the facts (one cheap query for a whole list page, the ledger itself for one
@@ -11,23 +15,23 @@ import com.histmersion.domain.automation.ItemStatus
   */
 object ArticleReviewStatus:
   type OutcomeSuffix = OutcomeSuffix.T
-  object OutcomeSuffix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OutcomeSuffix extends RefinedType[String, Pure]
   type Progress = Progress.T
-  object Progress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.research.ReviewRound.{StartedAt as RunStart}
+  object Progress extends RefinedType[String, Pure]
+  export ReviewRound.{StartedAt as RunStart}
   type StatusLine = StatusLine.T
-  object StatusLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StatusLine extends RefinedType[String, Pure]
 
   /** The review manager's `article-review` item for the article: its status, its last outcome line and how many runs it
     * started.
     */
-  final case class ItemFacts(status: ItemStatus, outcome: Option[ItemFacts.Outcome] = None, attempts: ItemFacts.Attempts = com.histmersion.domain.ArticleReviewStatus.ItemFacts.Attempts(0))
+  final case class ItemFacts(status: ItemStatus, outcome: Option[ItemFacts.Outcome] = None, attempts: ItemFacts.Attempts = ItemFacts.Attempts(0))
 
   object ItemFacts:
     type Outcome = Outcome.T
-    object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Outcome extends RefinedType[String, Pure]
     type Attempts = Attempts.T
-    object Attempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Attempts extends RefinedType[Int, Pure]
 
   /** The ledger's findings counted: the open MAJOR and minor ones, all of them, and the runs that raised or closed one.
     */
@@ -45,10 +49,10 @@ object ArticleReviewStatus:
 
     def of(l: Ledger): LedgerFacts =
       LedgerFacts(
-        LedgerFacts.OpenMajors(l.openMajors.size),
-        LedgerFacts.OpenMinors(l.open.count(!_.major)),
-        LedgerFacts.Findings(l.entries.size),
-        LedgerFacts.Runs(runOrder(l, Map.empty).size)
+        OpenMajors(l.openMajors.size),
+        OpenMinors(l.open.count(!_.major)),
+        Findings(l.entries.size),
+        Runs(runOrder(l, Map.empty).size)
       )
 
   /** `round`: the pass the item's run is in now (its latest `snapshot-<n>` step), while it runs; `waiting`: the
@@ -70,7 +74,7 @@ object ArticleReviewStatus:
     */
   def badge(f: Facts): ReviewBadge =
     val item = f.item.filter(_.status != ItemStatus.Cancelled)
-    val counts = f.ledger.getOrElse(LedgerFacts(com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMajors(0), com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMinors(0), com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Findings(0), com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Runs(0)))
+    val counts = f.ledger.getOrElse(LedgerFacts(LedgerFacts.OpenMajors(0), LedgerFacts.OpenMinors(0), LedgerFacts.Findings(0), LedgerFacts.Runs(0)))
     val runNo = item.map(_.attempts).filter(_.value > 0)
     val (state, label, detail) = item.map(_.status) match
       case Some(ItemStatus.Active) =>
@@ -91,7 +95,7 @@ object ArticleReviewStatus:
         (
           ReviewState.Stopped,
           s"review $how",
-          s"Review $how after ${Plural.count(Plural.CountN(math.max(runNo.map(_.value).getOrElse(0), counts.runs.value).toLong), com.histmersion.api.Plural.CountSingular("run"))}" +
+          s"Review $how after ${Plural.count(Plural.CountN(math.max(runNo.map(_.value).getOrElse(0), counts.runs.value).toLong), Plural.CountSingular("run"))}" +
             s"${outcomeSuffix(item.flatMap(_.outcome))} ${majorsLine(counts)} A person decides what happens next."
         )
       case _ if item.isEmpty && f.ledger.forall(_.findings.value == 0) =>
@@ -103,16 +107,16 @@ object ArticleReviewStatus:
       case _ if counts.openMajors.value > 0 =>
         (
           ReviewState.MajorsOpen,
-          s"${Plural.count(Plural.CountN(counts.openMajors.value.toLong), com.histmersion.api.Plural.CountSingular("major"))} open",
-          s"Reviewed: ${majorsLine(counts)} Found over ${Plural.count(Plural.CountN(counts.runs.value.toLong), com.histmersion.api.Plural.CountSingular("run"))}" +
+          s"${Plural.count(Plural.CountN(counts.openMajors.value.toLong), Plural.CountSingular("major"))} open",
+          s"Reviewed: ${majorsLine(counts)} Found over ${Plural.count(Plural.CountN(counts.runs.value.toLong), Plural.CountSingular("run"))}" +
             s"${outcomeSuffix(item.flatMap(_.outcome))}"
         )
       case _ =>
         val minors = if counts.openMinors.value > 0 then
-          s" ${Plural.count(Plural.CountN(counts.openMinors.value.toLong), com.histmersion.api.Plural.CountSingular("minor finding"))} still open."
+          s" ${Plural.count(Plural.CountN(counts.openMinors.value.toLong), Plural.CountSingular("minor finding"))} still open."
         else ""
         val total = if counts.findings.value > 0 then
-          s" ${Plural.count(Plural.CountN(counts.findings.value.toLong), com.histmersion.api.Plural.CountSingular("finding"))} raised over ${Plural.count(Plural.CountN(counts.runs.value.toLong), com.histmersion.api.Plural.CountSingular("run"))}."
+          s" ${Plural.count(Plural.CountN(counts.findings.value.toLong), Plural.CountSingular("finding"))} raised over ${Plural.count(Plural.CountN(counts.runs.value.toLong), Plural.CountSingular("run"))}."
         else ""
         (
           ReviewState.Passed,
@@ -132,16 +136,16 @@ object ArticleReviewStatus:
       f.round.filter(_ => state == ReviewState.InReview)
     )
 
-  private def soFar(c: LedgerFacts): com.histmersion.domain.ArticleReviewStatus.Progress =
-    if c.findings.value == 0 then com.histmersion.domain.ArticleReviewStatus.Progress("") else com.histmersion.domain.ArticleReviewStatus.Progress(s" Open so far: ${c.openMajors} MAJOR, ${c.openMinors} minor.")
+  private def soFar(c: LedgerFacts): Progress =
+    if c.findings.value == 0 then Progress("") else Progress(s" Open so far: ${c.openMajors} MAJOR, ${c.openMinors} minor.")
 
-  private def majorsLine(c: LedgerFacts): com.histmersion.domain.ArticleReviewStatus.StatusLine =
-    StatusLine(s"${Plural.count(Plural.CountN(c.openMajors.value.toLong), com.histmersion.api.Plural.CountSingular("MAJOR finding"))} ${if c.openMajors.value == 1 then "is" else "are"} still open.")
+  private def majorsLine(c: LedgerFacts): StatusLine =
+    StatusLine(s"${Plural.count(Plural.CountN(c.openMajors.value.toLong), Plural.CountSingular("MAJOR finding"))} ${if c.openMajors.value == 1 then "is" else "are"} still open.")
 
   /** `: <outcome>.` after a sentence still open, or ` <lead><outcome>.` after a finished one; `none` when the manager
     * recorded no outcome. The manager's own leading `stopped:`/`failed:` is dropped.
     */
-  private def outcomeSuffix(outcome: Option[com.histmersion.domain.ArticleReviewStatus.ItemFacts.Outcome], lead: String = "", none: String = "."): com.histmersion.domain.ArticleReviewStatus.OutcomeSuffix =
+  private def outcomeSuffix(outcome: Option[ItemFacts.Outcome], lead: String = "", none: String = "."): OutcomeSuffix =
     OutcomeSuffix(
       outcome
         .map(_.value.trim.stripPrefix("stopped:").stripPrefix("failed:").trim)
@@ -155,14 +159,14 @@ object ArticleReviewStatus:
     * (`runStarts`, run id → UTC time), a run whose record is gone before those, and otherwise in the order the ledger
     * first names them (it only ever appends).
     */
-  def runOrder(l: Ledger, runStarts: Map[com.histmersion.domain.automation.Run.Id, com.histmersion.domain.ArticleReviewStatus.RunStart]): List[com.histmersion.domain.automation.Run.Id] =
+  def runOrder(l: Ledger, runStarts: Map[Run.Id, ArticleReviewStatus.RunStart]): List[Run.Id] =
     val named = l.entries.flatMap(e => e.run :: e.closed.map(_.run).toList).filter(_.value.nonEmpty).distinct
     named.zipWithIndex.sortBy((run, i) => (runStarts.get(run).map(_.value), i)).map(_._1)
 
   /** The findings grouped by the pass that first raised them, in time order: run by run ([[runOrder]]), pass by pass,
     * each with what became of it.
     */
-  def history(l: Ledger, runStarts: Map[com.histmersion.domain.automation.Run.Id, com.histmersion.domain.ArticleReviewStatus.RunStart]): List[ReviewRound] =
+  def history(l: Ledger, runStarts: Map[Run.Id, ArticleReviewStatus.RunStart]): List[ReviewRound] =
     val order = runOrder(l, runStarts)
     val number = order.zipWithIndex.map((r, i) => r -> (i + 1)).toMap
     l.entries
@@ -179,7 +183,7 @@ object ArticleReviewStatus:
         )
       }
 
-  private def finding(e: Entry, number: Map[com.histmersion.domain.automation.Run.Id, Int]): ReviewFinding =
+  private def finding(e: Entry, number: Map[Run.Id, Int]): ReviewFinding =
     val f = e.finding
     ReviewFinding(
       id = ReviewFinding.Id(f.id.value),

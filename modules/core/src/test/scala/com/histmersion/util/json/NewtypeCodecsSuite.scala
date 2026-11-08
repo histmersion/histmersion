@@ -1,4 +1,5 @@
-package com.histmersion.util.json
+package com.histmersion
+package util.json
 import com.histmersion.util.jobs.Job as JobInfo
 
 import com.histmersion.api.json.NewtypeCodecs.given

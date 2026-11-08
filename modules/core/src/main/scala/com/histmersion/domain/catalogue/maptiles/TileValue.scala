@@ -1,4 +1,8 @@
-package com.histmersion.domain.catalogue.maptiles
+package com.histmersion
+package domain.catalogue.maptiles
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A tile feature's property value, as the vector tile format types it. */
 enum TileValue:
@@ -10,13 +14,13 @@ enum TileValue:
 object TileValue:
   object Text:
     type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends RefinedType[String, Pure]
   object Whole:
     type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends RefinedType[Long, Pure]
   object Real:
     type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends RefinedType[Double, Pure]
   object Flag:
     type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends RefinedType[Boolean, Pure]

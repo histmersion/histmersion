@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.api.exchange.EditionsPolicy
 
@@ -11,6 +12,7 @@ import com.histmersion.util.text.MinHash
 
 import scala.annotation.tailrec
 import java.util.UUID
+import com.histmersion.domain.library.Citekey
 
 /** Several runs as one, each stage in the order the runs are given: what one kind's run answers first is the answer. */
 final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
@@ -45,8 +47,8 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
   override def bodyIssue(right: UUID): Option[MergeIssue.Id] = runs.iterator.flatMap(_.bodyIssue(right)).nextOption()
 
   override def pairFirst(
-      right: com.histmersion.api.exchange.Bundle.Source,
-      left: com.histmersion.api.exchange.Bundle.Source,
+      right: Bundle.Source,
+      left: Bundle.Source,
       cond: Option[IssueCondition],
       cfg: MergeSettings,
       questions: PairQuestions
@@ -59,14 +61,14 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
   /** Every run folds; the folded source takes the bundle's body when one of them says so. */
   override def foldSources(
-      right: com.histmersion.api.exchange.Bundle.Source,
-      left: com.histmersion.api.exchange.Bundle.Source,
-      citekey: com.histmersion.domain.library.Citekey,
+      right: Bundle.Source,
+      left: Bundle.Source,
+      citekey: Citekey,
       folds: PlanFolds
   ): Boolean =
     runs.map(_.foldSources(right, left, citekey, folds)).exists(identity)
 
-  override def renamed(source: UUID, citekey: com.histmersion.domain.library.Citekey): Unit = runs.foreach(_.renamed(source, citekey))
+  override def renamed(source: UUID, citekey: Citekey): Unit = runs.foreach(_.renamed(source, citekey))
 
   override def relabelFirst(fates: Map[UUID, SourceFate], relabels: PlanRelabels): Unit =
     runs.foreach(_.relabelFirst(fates, relabels))
@@ -75,13 +77,13 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
     runs.iterator.flatMap(_.ownerSource(foreign, kind)).nextOption()
 
   override def bodiesWanted(
-      pairs: List[(com.histmersion.api.exchange.Bundle.Source, com.histmersion.api.exchange.Bundle.Source)]
+      pairs: List[(Bundle.Source, Bundle.Source)]
   ): Set[Bundle.Source.BodySha256] =
     runs.flatMap(_.bodiesWanted(pairs)).toSet
 
   override def pair(
-      right: com.histmersion.api.exchange.Bundle.Source,
-      left: com.histmersion.api.exchange.Bundle.Source,
+      right: Bundle.Source,
+      left: Bundle.Source,
       cond: Option[IssueCondition],
       bodyIssue: Option[MergeIssue.Id],
       questions: PairQuestions
@@ -103,15 +105,15 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
   override def pairIssue(kind: MergeIssue.Kind): Boolean = runs.exists(_.pairIssue(kind))
 
   override def foldPairFirst(
-      right: com.histmersion.api.exchange.Bundle.Source,
-      left: com.histmersion.api.exchange.Bundle.Source,
+      right: Bundle.Source,
+      left: Bundle.Source,
       keepsBundleBody: Boolean,
       folds: PlanFolds
   ): Unit = runs.foreach(_.foldPairFirst(right, left, keepsBundleBody, folds))
 
   override def foldPair(
-      right: com.histmersion.api.exchange.Bundle.Source,
-      left: com.histmersion.api.exchange.Bundle.Source,
+      right: Bundle.Source,
+      left: Bundle.Source,
       alt: Option[MergeDecision.Kind],
       folds: PlanFolds
   ): Unit =
@@ -138,7 +140,7 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
   override def relinked(
       text: Bundle.Article.Body,
-      citekeys: Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey]
+      citekeys: Map[Citekey, Citekey]
   ): Bundle.Article.Body =
     @tailrec def loop(rest: List[PlanRun], t: Bundle.Article.Body): Bundle.Article.Body = rest match
       case r :: tail => loop(tail, r.relinked(t, citekeys))

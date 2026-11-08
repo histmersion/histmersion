@@ -1,6 +1,9 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import java.util.UUID
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A record of the bundle that a kind's rules found to be one with a record here before anything is decided — an event
   * with the same dating and place, a place with the same geometry: what `merge apply` folds, and what the plan says
@@ -12,12 +15,12 @@ trait PlanMerge:
   def fold(foreign: UUID, here: UUID, folds: PlanFolds): Unit
 
   /** The plan's line about it: `label` is the record's label here, `bundleLabel` the bundle's. */
-  def info(label: com.histmersion.util.data.exchange.PlanMerge.InfoLabel, bundleLabel: com.histmersion.util.data.exchange.PlanMerge.InfoBundleLabel): com.histmersion.util.data.exchange.PlanMerge.InfoResult
+  def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoResult
 
 object PlanMerge:
   type InfoResult = InfoResult.T
-  object InfoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InfoResult extends RefinedType[String, Pure]
   type InfoLabel = InfoLabel.T
-  object InfoLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InfoLabel extends RefinedType[String, Pure]
   type InfoBundleLabel = InfoBundleLabel.T
-  object InfoBundleLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InfoBundleLabel extends RefinedType[String, Pure]

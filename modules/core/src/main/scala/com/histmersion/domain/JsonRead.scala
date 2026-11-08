@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.Period
 
@@ -6,23 +7,25 @@ import io.circe.ACursor
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Shared reading helpers for the collection APIs. Pure. */
 private[domain] object JsonRead:
   type Encoded = Encoded.T
-  object Encoded extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Encoded extends RefinedType[String, Pure]
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]
   type Number = Number.T
-  object Number extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Number extends RefinedType[Long, Pure]
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
   type Unencoded = Unencoded.T
-  object Unencoded extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Unencoded extends RefinedType[String, Pure]
 
-  def str(c: ACursor, k: com.histmersion.domain.JsonRead.Key): Option[com.histmersion.domain.JsonRead.Text] =
+  def str(c: ACursor, k: Key): Option[Text] =
     c.downField(k.value).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).map(_.trim).filter(_.nonEmpty).map(Text(_))
-  def strs(c: ACursor, k: com.histmersion.domain.JsonRead.Key): List[com.histmersion.domain.JsonRead.Text] =
+  def strs(c: ACursor, k: Key): List[Text] =
     c.downField(k.value)
       .focus
       .toList
@@ -30,12 +33,12 @@ private[domain] object JsonRead:
       .map(_.trim)
       .filter(_.nonEmpty)
       .map(Text(_))
-  def long(c: ACursor, k: com.histmersion.domain.JsonRead.Key): Option[com.histmersion.domain.JsonRead.Number] =
+  def long(c: ACursor, k: Key): Option[Number] =
     c.downField(k.value).focus.flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.trim.toLongOption))).map(Number(_))
-  def bool(c: ACursor, k: com.histmersion.domain.JsonRead.Key): Option[Boolean] =
+  def bool(c: ACursor, k: Key): Option[Boolean] =
     c.downField(k.value).focus.flatMap(j => j.asBoolean.orElse(j.asString.map(_.trim.equalsIgnoreCase("true"))))
-  def enc(s: com.histmersion.domain.JsonRead.Unencoded): com.histmersion.domain.JsonRead.Encoded = Encoded(URLEncoder.encode(s.value, UTF_8))
-  def range(a: Option[com.histmersion.domain.DeepTime.SignedYear], b: Option[com.histmersion.domain.DeepTime.SignedYear]): Option[Period] =
+  def enc(s: Unencoded): Encoded = Encoded(URLEncoder.encode(s.value, UTF_8))
+  def range(a: Option[DeepTime.SignedYear], b: Option[DeepTime.SignedYear]): Option[Period] =
     (a, b) match
       case (Some(x), Some(y)) => DeepTime.span(x, y)
       case (Some(x), None)    => DeepTime.span(x, x)

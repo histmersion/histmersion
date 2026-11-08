@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -23,7 +24,7 @@ class LicenceFamilySuite extends munit.FunSuite:
       )
     )
     Licence.Family.values.foreach(f => assertEquals(Licence.Family.fromWire(f.wire), Some(f)))
-    assertEquals(Licence.Family.fromWire(com.histmersion.domain.Licence.Family.Wire("CC-BY")), None)
+    assertEquals(Licence.Family.fromWire(Licence.Family.Wire("CC-BY")), None)
 
   test("an allowlist may name every family but the two never stored"):
     assertEquals(Licence.Family.allowable.size, 9)
@@ -50,12 +51,12 @@ class LicenceFamilySuite extends munit.FunSuite:
 
   test("a statement is a URL or a name, read by the one classification"):
     assertEquals(
-      Licence.ofStatement(com.histmersion.domain.Licence.Statement("https://creativecommons.org/licenses/by/4.0/")),
-      Licence.ofUrl(com.histmersion.domain.Licence.Url("https://creativecommons.org/licenses/by/4.0/"))
+      Licence.ofStatement(Licence.Statement("https://creativecommons.org/licenses/by/4.0/")),
+      Licence.ofUrl(Licence.Url("https://creativecommons.org/licenses/by/4.0/"))
     )
-    assertEquals(Licence.ofStatement(com.histmersion.domain.Licence.Statement("CC BY 4.0")), Licence(Licence.Id("CC-BY-4.0"), Licence.Family.CcBy))
-    assertEquals(Licence.unknown(com.histmersion.domain.Licence.Statement("odd")), Licence(Licence.Id("odd"), Licence.Family.Unknown))
+    assertEquals(Licence.ofStatement(Licence.Statement("CC BY 4.0")), Licence(Licence.Id("CC-BY-4.0"), Licence.Family.CcBy))
+    assertEquals(Licence.unknown(Licence.Statement("odd")), Licence(Licence.Id("odd"), Licence.Family.Unknown))
 
   test("an attribution the host states itself"):
-    assertEquals(Attribution.cc0(None, com.histmersion.domain.Attribution.Cc0Credit("c")).licence.family, Licence.Family.Cc0)
-    assertEquals(Attribution.publicDomain(Some(com.histmersion.domain.AuthorName("a")), com.histmersion.domain.Attribution.PublicDomainCredit("c")).licenceUrl, Some(Attribution.PdmUrl))
+    assertEquals(Attribution.cc0(None, Attribution.Cc0Credit("c")).licence.family, Licence.Family.Cc0)
+    assertEquals(Attribution.publicDomain(Some(AuthorName("a")), Attribution.PublicDomainCredit("c")).licenceUrl, Some(Attribution.PdmUrl))

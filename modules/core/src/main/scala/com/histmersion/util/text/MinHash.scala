@@ -1,4 +1,8 @@
-package com.histmersion.util.text
+package com.histmersion
+package util.text
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A MinHash signature (Broder 1997): the minimum of each of `k` hash functions over a text's word shingles. */
 final case class MinHash(mins: Vector[MinHash.Mins]):
@@ -11,16 +15,16 @@ final case class MinHash(mins: Vector[MinHash.Mins]):
 object MinHash:
 
   type Similarity = Similarity.T
-  object Similarity extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Similarity extends RefinedType[Double, Pure]
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
   type Size = Size.T
-  object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Size extends RefinedType[Int, Pure]
   type ShingleLength = ShingleLength.T
-  object ShingleLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ShingleLength extends RefinedType[Int, Pure]
 
   type Mins = Mins.T
-  object Mins extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Mins extends RefinedType[Int, Pure]
 
   /** Signature of a text: folded word 5-shingles, `k` seeded MurmurHash3 functions. A text shorter than one shingle is
     * hashed as one. Pure and deterministic.

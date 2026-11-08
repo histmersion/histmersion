@@ -1,10 +1,14 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import scala.annotation.tailrec
 import io.circe.Decoder
 import io.circe.parser.decode
 import com.histmersion.domain.automation.agents.OutputComparison
 import com.histmersion.util.text.ComparedText
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Year
 
 /** `agent compare` (#992): the pure half. Reads two or more runs' recorded steps (their FULL outputs) and lays them
   * side by side; `billing` names how a configured model is paid for (a plan pool or a price — the server knows, from
@@ -12,21 +16,21 @@ import com.histmersion.util.text.ComparedText
   */
 object CompareRuns:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Similarity = Similarity.T
-  object Similarity extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Similarity extends RefinedType[Double, Pure]
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
 
   // ── what is compared: the recorded runs ──────────────────────────────────────────────────────
 
   /** Tokens, as a provider reports them; `input` includes the cached ones. */
 
   type Seconds = Seconds.T
-  object Seconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.domain.CompareRuns.Step.{Name as OutputName}
+  object Seconds extends RefinedType[Long, Pure]
+  export Step.{Name as OutputName}
 
-  final case class Tokens(input: Tokens.Input = com.histmersion.domain.CompareRuns.Tokens.Input(0), output: Tokens.Output = com.histmersion.domain.CompareRuns.Tokens.Output(0), cacheRead: Tokens.CacheRead = com.histmersion.domain.CompareRuns.Tokens.CacheRead(0), cacheWrite: Tokens.CacheWrite = com.histmersion.domain.CompareRuns.Tokens.CacheWrite(0)):
+  final case class Tokens(input: Tokens.Input = Tokens.Input(0), output: Tokens.Output = Tokens.Output(0), cacheRead: Tokens.CacheRead = Tokens.CacheRead(0), cacheWrite: Tokens.CacheWrite = Tokens.CacheWrite(0)):
     def +(o: Tokens): Tokens =
       Tokens(
         Tokens.Input(input.value + o.input.value),
@@ -37,13 +41,13 @@ object CompareRuns:
 
   object Tokens:
     type Input = Input.T
-    object Input extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Input extends RefinedType[Long, Pure]
     type Output = Output.T
-    object Output extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Output extends RefinedType[Long, Pure]
     type CacheRead = CacheRead.T
-    object CacheRead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CacheRead extends RefinedType[Long, Pure]
     type CacheWrite = CacheWrite.T
-    object CacheWrite extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CacheWrite extends RefinedType[Long, Pure]
 
     val Zero: Tokens = Tokens()
 
@@ -52,9 +56,9 @@ object CompareRuns:
 
   object ModelChoice:
     type Role = Role.T
-    object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Role extends RefinedType[String, Pure]
     type Model = Model.T
-    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Model extends RefinedType[String, Pure]
 
   /** A run as compared: what it ran on, its state, and the models it was given. */
   final case class RunHead(
@@ -69,18 +73,18 @@ object CompareRuns:
 
   object RunHead:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    object Id extends RefinedType[String, Pure]:
       extension (id: Id) def short: String = id.value.take(8)
     type Pipeline = Pipeline.T
-    object Pipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Pipeline extends RefinedType[String, Pure]
     type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Target extends RefinedType[String, Pure]
     type Status = com.histmersion.domain.automation.Run.State.Wire
-    val Status: _root_.com.histmersion.domain.automation.Run.State.Wire.type = _root_.com.histmersion.domain.automation.Run.State.Wire
+    val Status: com.histmersion.domain.automation.Run.State.Wire.type = com.histmersion.domain.automation.Run.State.Wire
     type DryRun = DryRun.T
-    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DryRun extends RefinedType[Boolean, Pure]
     type Model = Model.T
-    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Model extends RefinedType[String, Pure]
 
   /** One attempt of one step, with its full recorded output. `firstCallTokens` and `turns` are None where nothing was
     * recorded (a provider that cannot tell, or a run recorded before they were kept).
@@ -102,27 +106,27 @@ object CompareRuns:
 
   object Step:
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
     type Status = com.histmersion.domain.automation.Step.Status.Wire
-    val Status: _root_.com.histmersion.domain.automation.Step.Status.Wire.type = _root_.com.histmersion.domain.automation.Step.Status.Wire
+    val Status: com.histmersion.domain.automation.Step.Status.Wire.type = com.histmersion.domain.automation.Step.Status.Wire
     type Model = Model.T
-    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Model extends RefinedType[String, Pure]
     type ActualModel = ActualModel.T
-    object ActualModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ActualModel extends RefinedType[String, Pure]
     type CostUsd = CostUsd.T
-    object CostUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CostUsd extends RefinedType[Double, Pure]
     type StartedAt = StartedAt.T
-    object StartedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object StartedAt extends RefinedType[String, Pure]
     type FinishedAt = FinishedAt.T
-    object FinishedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FinishedAt extends RefinedType[String, Pure]
     type FirstCallTokens = FirstCallTokens.T
-    object FirstCallTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FirstCallTokens extends RefinedType[Long, Pure]
     type Turns = Turns.T
-    object Turns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Turns extends RefinedType[Int, Pure]
     type Output = Output.T
-    object Output extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Output extends RefinedType[String, Pure]
     type Error = Error.T
-    object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Error extends RefinedType[String, Pure]
 
   final case class Run(run: RunHead, steps: List[Step])
 
@@ -143,22 +147,22 @@ object CompareRuns:
   )
 
   object RunSide:
-    type Id = _root_.com.histmersion.domain.CompareRuns.RunHead.Id
-    val Id: _root_.com.histmersion.domain.CompareRuns.RunHead.Id.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Id
-    type Status = _root_.com.histmersion.domain.CompareRuns.RunHead.Status
-    val Status: _root_.com.histmersion.domain.CompareRuns.RunHead.Status.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Status
-    type DryRun = _root_.com.histmersion.domain.CompareRuns.RunHead.DryRun
-    val DryRun: _root_.com.histmersion.domain.CompareRuns.RunHead.DryRun.type = _root_.com.histmersion.domain.CompareRuns.RunHead.DryRun
-    type Model = _root_.com.histmersion.domain.CompareRuns.RunHead.Model
-    val Model: _root_.com.histmersion.domain.CompareRuns.RunHead.Model.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Model
-    type CostUsd = _root_.com.histmersion.domain.CompareRuns.Step.CostUsd
-    val CostUsd: _root_.com.histmersion.domain.CompareRuns.Step.CostUsd.type = _root_.com.histmersion.domain.CompareRuns.Step.CostUsd
-    type Seconds = _root_.com.histmersion.domain.CompareRuns.Seconds
-    val Seconds: _root_.com.histmersion.domain.CompareRuns.Seconds.type = _root_.com.histmersion.domain.CompareRuns.Seconds
+    type Id = RunHead.Id
+    val Id: RunHead.Id.type = RunHead.Id
+    type Status = RunHead.Status
+    val Status: RunHead.Status.type = RunHead.Status
+    type DryRun = RunHead.DryRun
+    val DryRun: RunHead.DryRun.type = RunHead.DryRun
+    type Model = RunHead.Model
+    val Model: RunHead.Model.type = RunHead.Model
+    type CostUsd = Step.CostUsd
+    val CostUsd: Step.CostUsd.type = Step.CostUsd
+    type Seconds = CompareRuns.Seconds
+    val Seconds: CompareRuns.Seconds.type = CompareRuns.Seconds
     type Attempts = Attempts.T
-    object Attempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Attempts extends RefinedType[Int, Pure]
     type Failures = Failures.T
-    object Failures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Failures extends RefinedType[Int, Pure]
 
   /** One step of one run, every attempt summed. `billing` names how each configured model is paid for. */
   final case class StepSide(
@@ -175,31 +179,31 @@ object CompareRuns:
   )
 
   object StepSide:
-    type Models = _root_.com.histmersion.domain.CompareRuns.Step.Model
-    val Models: _root_.com.histmersion.domain.CompareRuns.Step.Model.type = _root_.com.histmersion.domain.CompareRuns.Step.Model
-    type Actual = _root_.com.histmersion.domain.CompareRuns.Step.ActualModel
-    val Actual: _root_.com.histmersion.domain.CompareRuns.Step.ActualModel.type = _root_.com.histmersion.domain.CompareRuns.Step.ActualModel
+    type Models = Step.Model
+    val Models: Step.Model.type = Step.Model
+    type Actual = Step.ActualModel
+    val Actual: Step.ActualModel.type = Step.ActualModel
     type Billing = Billing.T
-    object Billing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CostUsd = _root_.com.histmersion.domain.CompareRuns.Step.CostUsd
-    val CostUsd: _root_.com.histmersion.domain.CompareRuns.Step.CostUsd.type = _root_.com.histmersion.domain.CompareRuns.Step.CostUsd
-    type Seconds = _root_.com.histmersion.domain.CompareRuns.Seconds
-    val Seconds: _root_.com.histmersion.domain.CompareRuns.Seconds.type = _root_.com.histmersion.domain.CompareRuns.Seconds
-    type Attempts = _root_.com.histmersion.domain.CompareRuns.RunSide.Attempts
-    val Attempts: _root_.com.histmersion.domain.CompareRuns.RunSide.Attempts.type = _root_.com.histmersion.domain.CompareRuns.RunSide.Attempts
-    type Failures = _root_.com.histmersion.domain.CompareRuns.RunSide.Failures
-    val Failures: _root_.com.histmersion.domain.CompareRuns.RunSide.Failures.type = _root_.com.histmersion.domain.CompareRuns.RunSide.Failures
-    type FirstCallTokens = _root_.com.histmersion.domain.CompareRuns.Step.FirstCallTokens
-    val FirstCallTokens: _root_.com.histmersion.domain.CompareRuns.Step.FirstCallTokens.type = _root_.com.histmersion.domain.CompareRuns.Step.FirstCallTokens
-    type Turns = _root_.com.histmersion.domain.CompareRuns.Step.Turns
-    val Turns: _root_.com.histmersion.domain.CompareRuns.Step.Turns.type = _root_.com.histmersion.domain.CompareRuns.Step.Turns
+    object Billing extends RefinedType[String, Pure]
+    type CostUsd = Step.CostUsd
+    val CostUsd: Step.CostUsd.type = Step.CostUsd
+    type Seconds = CompareRuns.Seconds
+    val Seconds: CompareRuns.Seconds.type = CompareRuns.Seconds
+    type Attempts = RunSide.Attempts
+    val Attempts: RunSide.Attempts.type = RunSide.Attempts
+    type Failures = RunSide.Failures
+    val Failures: RunSide.Failures.type = RunSide.Failures
+    type FirstCallTokens = Step.FirstCallTokens
+    val FirstCallTokens: Step.FirstCallTokens.type = Step.FirstCallTokens
+    type Turns = Step.Turns
+    val Turns: Step.Turns.type = Step.Turns
 
   /** One step name, and that step in each run (None = the run has no such step). */
   final case class StepRow(name: StepRow.Name, runs: List[Option[StepSide]])
 
   object StepRow:
-    type Name = _root_.com.histmersion.domain.CompareRuns.Step.Name
-    val Name: _root_.com.histmersion.domain.CompareRuns.Step.Name.type = _root_.com.histmersion.domain.CompareRuns.Step.Name
+    type Name = Step.Name
+    val Name: Step.Name.type = Step.Name
 
   /** enrich-source's outputs; the period is the classify step's, in signed years. */
   final case class EnrichSide(
@@ -209,8 +213,8 @@ object CompareRuns:
       placesAsked: EnrichSide.PlacesAsked,
       placesResolved: EnrichSide.PlacesResolved,
       datedFindings: EnrichSide.DatedFindings,
-      periodStart: Option[com.histmersion.api.catalogue.Year],
-      periodEnd: Option[com.histmersion.api.catalogue.Year],
+      periodStart: Option[Year],
+      periodEnd: Option[Year],
       summaryChars: EnrichSide.SummaryChars,
       notesChars: EnrichSide.NotesChars,
       uniqueClaims: List[EnrichSide.UniqueClaims]
@@ -218,43 +222,43 @@ object CompareRuns:
 
   object EnrichSide:
     type Findings = Findings.T
-    object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Findings extends RefinedType[Int, Pure]
     type QuotesChecked = QuotesChecked.T
-    object QuotesChecked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object QuotesChecked extends RefinedType[Int, Pure]
     type QuotesPassed = QuotesPassed.T
-    object QuotesPassed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object QuotesPassed extends RefinedType[Int, Pure]
     type PlacesAsked = PlacesAsked.T
-    object PlacesAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PlacesAsked extends RefinedType[Int, Pure]
     type PlacesResolved = PlacesResolved.T
-    object PlacesResolved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PlacesResolved extends RefinedType[Int, Pure]
     type DatedFindings = DatedFindings.T
-    object DatedFindings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DatedFindings extends RefinedType[Int, Pure]
     type SummaryChars = SummaryChars.T
-    object SummaryChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SummaryChars extends RefinedType[Int, Pure]
     type NotesChars = NotesChars.T
-    object NotesChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NotesChars extends RefinedType[Int, Pure]
     type UniqueClaims = UniqueClaims.T
-    object UniqueClaims extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UniqueClaims extends RefinedType[String, Pure]
 
   final case class ReviewerSide(reviewer: ReviewerSide.Reviewer, verdict: Option[ReviewerSide.Verdict], majors: ReviewerSide.Majors, minors: ReviewerSide.Minors)
 
   object ReviewerSide:
     type Reviewer = Reviewer.T
-    object Reviewer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reviewer extends RefinedType[String, Pure]
     type Verdict = Verdict.T
-    object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Verdict extends RefinedType[String, Pure]
     type Majors = Majors.T
-    object Majors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Majors extends RefinedType[Int, Pure]
     type Minors = Minors.T
-    object Minors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Minors extends RefinedType[Int, Pure]
 
   final case class KindCount(kind: KindCount.Kind, count: KindCount.Count)
 
   object KindCount:
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Count = Count.T
-    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Count extends RefinedType[Int, Pure]
 
   /** review-article's outputs: the last round's verdict, the rounds, round 1 per reviewer and by kind. */
   final case class ReviewSide(
@@ -267,28 +271,28 @@ object CompareRuns:
 
   object ReviewSide:
     type Verdict = Verdict.T
-    object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Verdict extends RefinedType[String, Pure]
     type Rounds = Rounds.T
-    object Rounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rounds extends RefinedType[Int, Pure]
     type Majors = Majors.T
-    object Majors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Majors extends RefinedType[String, Pure]
 
   /** Round 1's major findings two runs share; `pairs` shows each match as `<a's id> ↔ <b's id>`. */
   final case class MajorOverlap(a: MajorOverlap.A, b: MajorOverlap.B, aMajors: MajorOverlap.AMajors, bMajors: MajorOverlap.BMajors, shared: MajorOverlap.Shared, pairs: List[MajorOverlap.Pairs])
 
   object MajorOverlap:
     type A = A.T
-    object A extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object A extends RefinedType[String, Pure]
     type B = B.T
-    object B extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object B extends RefinedType[String, Pure]
     type AMajors = AMajors.T
-    object AMajors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AMajors extends RefinedType[Int, Pure]
     type BMajors = BMajors.T
-    object BMajors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object BMajors extends RefinedType[Int, Pure]
     type Shared = Shared.T
-    object Shared extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Shared extends RefinedType[Int, Pure]
     type Pairs = Pairs.T
-    object Pairs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Pairs extends RefinedType[String, Pure]
 
   final case class Comparison(
       pipeline: Comparison.Pipeline,
@@ -302,21 +306,21 @@ object CompareRuns:
   )
 
   object Comparison:
-    type Pipeline = _root_.com.histmersion.domain.CompareRuns.RunHead.Pipeline
-    val Pipeline: _root_.com.histmersion.domain.CompareRuns.RunHead.Pipeline.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Pipeline
-    type Target = _root_.com.histmersion.domain.CompareRuns.RunHead.Target
-    val Target: _root_.com.histmersion.domain.CompareRuns.RunHead.Target.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Target
+    type Pipeline = RunHead.Pipeline
+    val Pipeline: RunHead.Pipeline.type = RunHead.Pipeline
+    type Target = RunHead.Target
+    val Target: RunHead.Target.type = RunHead.Target
     type Notes = Notes.T
-    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Notes extends RefinedType[String, Pure]
 
   // ── comparing ────────────────────────────────────────────────────────────────────────────────
 
   /** `outputs` compares what the runs' workflow produced (its owner's, [[OutputComparison]]). */
   def compare(
       runs: List[Run],
-      billing: com.histmersion.domain.CompareRuns.Step.Model => Option[com.histmersion.domain.CompareRuns.StepSide.Billing],
+      billing: Step.Model => Option[StepSide.Billing],
       outputs: OutputComparison
-  ): Either[com.histmersion.domain.CompareRuns.Problem, Comparison] =
+  ): Either[Problem, Comparison] =
     for
       _ <- Either.cond(runs.size >= 2, (), Problem("give at least two runs to compare"))
       _ <- Either.cond(runs.map(_.run.id).distinct.size == runs.size, (), Problem("a run is given twice"))
@@ -352,10 +356,10 @@ object CompareRuns:
   /** Every list's names in one order: the first list's, each later name placed after the name it follows in its own
     * list (a run with more rounds or windows slots its extra steps in).
     */
-  def unionInOrder(lists: List[List[com.histmersion.domain.CompareRuns.Step.Name]]): List[com.histmersion.domain.CompareRuns.Step.Name] =
+  def unionInOrder(lists: List[List[Step.Name]]): List[Step.Name] =
     lists
       .foldLeft(Vector.empty[Step.Name]) { (acc, names) =>
-        @tailrec def place(rest: List[com.histmersion.domain.CompareRuns.Step.Name], a: Vector[com.histmersion.domain.CompareRuns.Step.Name], pos: Int): Vector[com.histmersion.domain.CompareRuns.Step.Name] =
+        @tailrec def place(rest: List[Step.Name], a: Vector[Step.Name], pos: Int): Vector[Step.Name] =
           rest match
             case Nil       => a
             case n :: tail =>
@@ -367,7 +371,7 @@ object CompareRuns:
       .toList
 
   /** A step's duration in whole seconds (the store keeps seconds); 0 when a time is unreadable. */
-  def seconds(s: Step): com.histmersion.domain.CompareRuns.Seconds =
+  def seconds(s: Step): Seconds =
     Seconds(
       (for
         a <- scala.util.Try(java.time.Instant.parse(s.startedAt.value)).toOption
@@ -383,7 +387,7 @@ object CompareRuns:
 
   private def sum(us: List[Tokens]): Tokens = us.foldLeft(Tokens.Zero)(_ + _)
 
-  def stepSide(attempts: List[Step], billing: com.histmersion.domain.CompareRuns.Step.Model => Option[com.histmersion.domain.CompareRuns.StepSide.Billing]): StepSide =
+  def stepSide(attempts: List[Step], billing: Step.Model => Option[StepSide.Billing]): StepSide =
     val models = attempts.flatMap(_.model).distinct
     StepSide(
       models,
@@ -414,7 +418,7 @@ object CompareRuns:
     )
 
   /** The checkpoint of step `name`: its last finished attempt's output, decoded. */
-  def output[O: Decoder](d: Run, name: com.histmersion.domain.CompareRuns.OutputName): Option[O] =
+  def output[O: Decoder](d: Run, name: CompareRuns.OutputName): Option[O] =
     d.steps
       .filter(s => s.name == name && s.status == com.histmersion.domain.automation.Step.Status.Done.wire)
       .lastOption
@@ -425,6 +429,6 @@ object CompareRuns:
     ComparedText.normalise(ComparedText.NormaliseS(Option(s).getOrElse(""))).value.split("[^\\p{L}\\p{N}]+").filter(_.length > 2).toSet
 
   /** Jaccard similarity of two texts' words (0 when both have none). */
-  def similarity(a: com.histmersion.domain.CompareRuns.Text, b: com.histmersion.domain.CompareRuns.Text): com.histmersion.domain.CompareRuns.Similarity =
+  def similarity(a: Text, b: Text): Similarity =
     val (x, y) = (words(a.value), words(b.value))
     Similarity(if x.isEmpty && y.isEmpty then 0.0 else x.intersect(y).size.toDouble / x.union(y).size)

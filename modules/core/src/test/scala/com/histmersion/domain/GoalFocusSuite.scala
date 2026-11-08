@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -13,6 +14,7 @@ import com.histmersion.domain.GoalFocus.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.{Autopilot, AutopilotMarkdown}
 import com.histmersion.domain.automation.{Goal, ItemStatus}
+import com.histmersion.domain.research.Slug
 
 /** The autopilot's focus, pure (docs/research-process-managers.md "As built: the focus"): the selection order (closest
   * to done, depth-first, pins, a person's priority, ties), the sticky active set and what frees a slot (reviewed,
@@ -43,7 +45,7 @@ class GoalFocusSuite extends munit.FunSuite:
   ) =
     Facts(slug, parent, status, created, sources, articles, unreviewed, compile, work, stop, pinned, priority, active)
 
-  private val s3 = Settings(max = com.histmersion.domain.GoalFocus.Settings.Max(3), minSources = com.histmersion.domain.GoalFocus.Settings.MinSources(3))
+  private val s3 = Settings(max = GoalFocus.Settings.Max(3), minSources = GoalFocus.Settings.MinSources(3))
 
   private def active(p: Plan) = p.active.map(_.slug)
 
@@ -184,8 +186,8 @@ class GoalFocusSuite extends munit.FunSuite:
     assertEquals(p.waiting.map((s, c, _) => s -> c).toMap, Map("stuck" -> Code.Stuck, "idle" -> Code.Idle))
 
   test("waiting only for a person frees the slot; waiting for the autopilot's checks keeps it"):
-    val person = Work(com.histmersion.domain.GoalFocus.Work.ItemId(5), ManagerItem.Kind(PlanGoalItem), com.histmersion.domain.automation.ItemStatus.Wire("active"), com.histmersion.domain.GoalFocus.Work.Target("x"), approval = Some(Work.Approval(41)), approvalByPerson = Work.ApprovalByPerson(true))
-    val auto = Work(com.histmersion.domain.GoalFocus.Work.ItemId(6), ManagerItem.Kind(ArticleCompile), com.histmersion.domain.automation.ItemStatus.Wire("active"), com.histmersion.domain.GoalFocus.Work.Target("y"), approval = Some(Work.Approval(42)))
+    val person = Work(GoalFocus.Work.ItemId(5), ManagerItem.Kind(PlanGoalItem), ItemStatus.Wire("active"), GoalFocus.Work.Target("x"), approval = Some(Work.Approval(41)), approvalByPerson = Work.ApprovalByPerson(true))
+    val auto = Work(GoalFocus.Work.ItemId(6), ManagerItem.Kind(ArticleCompile), ItemStatus.Wire("active"), GoalFocus.Work.Target("y"), approval = Some(Work.Approval(42)))
     val goals =
       List(g(Goal.Slug("byperson"), active = Facts.Active(true), work = List(person)), g(Goal.Slug("byauto"), active = Facts.Active(true), work = List(auto)), g(Goal.Slug("next")))
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
@@ -242,17 +244,17 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("holds: a queued goal's pending model items are held; an active goal's focus holds released; in flight never"):
     val goals = List(g(Goal.Slug("on"), active = Facts.Active(true)), g(Goal.Slug("off")))
-    val plan = Plan(active = List(Pick(com.histmersion.domain.automation.Goal.Slug("on"), Stage.Gathering, com.histmersion.domain.GoalFocus.Reason(""))))
+    val plan = Plan(active = List(Pick(Goal.Slug("on"), Stage.Gathering, GoalFocus.Reason(""))))
     val items = List(
-      Item(com.histmersion.domain.GoalFocus.Work.ItemId(1), ManagerItem.Kind(ProposeArticles), com.histmersion.domain.automation.ItemStatus.Wire("pending"), List(com.histmersion.domain.automation.Goal.Slug("off"))),
-      Item(com.histmersion.domain.GoalFocus.Work.ItemId(2), ManagerItem.Kind(AcquisitionSweep), com.histmersion.domain.automation.ItemStatus.Wire("active"), List(com.histmersion.domain.automation.Goal.Slug("off"))),
-      Item(com.histmersion.domain.GoalFocus.Work.ItemId(3), ManagerItem.Kind(ArticleCompile), com.histmersion.domain.automation.ItemStatus.Wire("held"), List(com.histmersion.domain.automation.Goal.Slug("on")), focusHeld = Work.FocusHeld(true)),
-      Item(com.histmersion.domain.GoalFocus.Work.ItemId(4), ManagerItem.Kind(CurrencyCheck), com.histmersion.domain.automation.ItemStatus.Wire("pending"), List(com.histmersion.domain.automation.Goal.Slug("off"))),
-      Item(com.histmersion.domain.GoalFocus.Work.ItemId(5), ManagerItem.Kind(PlanGoalItem), com.histmersion.domain.automation.ItemStatus.Wire("pending"), List(com.histmersion.domain.automation.Goal.Slug("off")), person = com.histmersion.domain.GoalFocus.Work.Person(true)),
-      Item(com.histmersion.domain.GoalFocus.Work.ItemId(6), ManagerItem.Kind(ArticleReview), com.histmersion.domain.automation.ItemStatus.Wire("pending"), List(com.histmersion.domain.automation.Goal.Slug("off"), com.histmersion.domain.automation.Goal.Slug("on"))),
-      Item(com.histmersion.domain.GoalFocus.Work.ItemId(7), ManagerItem.Kind(ArticleReview), com.histmersion.domain.automation.ItemStatus.Wire("pending"), Nil),
-      Item(com.histmersion.domain.GoalFocus.Work.ItemId(8), ManagerItem.Kind(ArticleReview), com.histmersion.domain.automation.ItemStatus.Wire("held"), List(com.histmersion.domain.automation.Goal.Slug("off")), focusHeld = Work.FocusHeld(true)),
-      Item(com.histmersion.domain.GoalFocus.Work.ItemId(9), ManagerItem.Kind(ArticleCompile), com.histmersion.domain.automation.ItemStatus.Wire("held"), List(com.histmersion.domain.automation.Goal.Slug("on")))
+      Item(GoalFocus.Work.ItemId(1), ManagerItem.Kind(ProposeArticles), ItemStatus.Wire("pending"), List(Goal.Slug("off"))),
+      Item(GoalFocus.Work.ItemId(2), ManagerItem.Kind(AcquisitionSweep), ItemStatus.Wire("active"), List(Goal.Slug("off"))),
+      Item(GoalFocus.Work.ItemId(3), ManagerItem.Kind(ArticleCompile), ItemStatus.Wire("held"), List(Goal.Slug("on")), focusHeld = Work.FocusHeld(true)),
+      Item(GoalFocus.Work.ItemId(4), ManagerItem.Kind(CurrencyCheck), ItemStatus.Wire("pending"), List(Goal.Slug("off"))),
+      Item(GoalFocus.Work.ItemId(5), ManagerItem.Kind(PlanGoalItem), ItemStatus.Wire("pending"), List(Goal.Slug("off")), person = GoalFocus.Work.Person(true)),
+      Item(GoalFocus.Work.ItemId(6), ManagerItem.Kind(ArticleReview), ItemStatus.Wire("pending"), List(Goal.Slug("off"), Goal.Slug("on"))),
+      Item(GoalFocus.Work.ItemId(7), ManagerItem.Kind(ArticleReview), ItemStatus.Wire("pending"), Nil),
+      Item(GoalFocus.Work.ItemId(8), ManagerItem.Kind(ArticleReview), ItemStatus.Wire("held"), List(Goal.Slug("off")), focusHeld = Work.FocusHeld(true)),
+      Item(GoalFocus.Work.ItemId(9), ManagerItem.Kind(ArticleCompile), ItemStatus.Wire("held"), List(Goal.Slug("on")))
     )
     val hs = holds(items, plan, goals)
     assertEquals(hs.hold.map(_._1), List(1L))
@@ -264,13 +266,13 @@ class GoalFocusSuite extends munit.FunSuite:
     "holds: a finished goal's items and library work are released; a person's item runs; an active parent holds all but its plan"
   ):
     val goals = List(g(Goal.Slug("fin"), status = Goal.Status.Wire(Goal.Status.Reviewed)), g(Goal.Slug("p"), active = Facts.Active(true)), g(Goal.Slug("k"), Some(Goal.Slug("p"))))
-    val plan = Plan(active = List(Pick(com.histmersion.domain.automation.Goal.Slug("p"), Stage.Gathering, com.histmersion.domain.GoalFocus.Reason(""))))
+    val plan = Plan(active = List(Pick(Goal.Slug("p"), Stage.Gathering, GoalFocus.Reason(""))))
     val items = List(
-      Item(com.histmersion.domain.GoalFocus.Work.ItemId(1), ManagerItem.Kind(AcquisitionSweep), com.histmersion.domain.automation.ItemStatus.Wire("held"), List(com.histmersion.domain.automation.Goal.Slug("fin")), focusHeld = Work.FocusHeld(true)),
-      Item(com.histmersion.domain.GoalFocus.Work.ItemId(2), ManagerItem.Kind(ArticleReview), com.histmersion.domain.automation.ItemStatus.Wire("held"), List(com.histmersion.domain.automation.Goal.Slug("k")), person = com.histmersion.domain.GoalFocus.Work.Person(true), focusHeld = com.histmersion.domain.GoalFocus.Work.FocusHeld(true)),
-      Item(com.histmersion.domain.GoalFocus.Work.ItemId(3), ManagerItem.Kind(ProposeArticles), com.histmersion.domain.automation.ItemStatus.Wire("pending"), List(com.histmersion.domain.automation.Goal.Slug("p"))),
-      Item(com.histmersion.domain.GoalFocus.Work.ItemId(4), ManagerItem.Kind(PlanGoalItem), com.histmersion.domain.automation.ItemStatus.Wire("pending"), List(com.histmersion.domain.automation.Goal.Slug("p"))),
-      Item(com.histmersion.domain.GoalFocus.Work.ItemId(5), ManagerItem.Kind(OaIngest), com.histmersion.domain.automation.ItemStatus.Wire("held"), List(com.histmersion.domain.automation.Goal.Slug("k")), focusHeld = Work.FocusHeld(true))
+      Item(GoalFocus.Work.ItemId(1), ManagerItem.Kind(AcquisitionSweep), ItemStatus.Wire("held"), List(Goal.Slug("fin")), focusHeld = Work.FocusHeld(true)),
+      Item(GoalFocus.Work.ItemId(2), ManagerItem.Kind(ArticleReview), ItemStatus.Wire("held"), List(Goal.Slug("k")), person = GoalFocus.Work.Person(true), focusHeld = GoalFocus.Work.FocusHeld(true)),
+      Item(GoalFocus.Work.ItemId(3), ManagerItem.Kind(ProposeArticles), ItemStatus.Wire("pending"), List(Goal.Slug("p"))),
+      Item(GoalFocus.Work.ItemId(4), ManagerItem.Kind(PlanGoalItem), ItemStatus.Wire("pending"), List(Goal.Slug("p"))),
+      Item(GoalFocus.Work.ItemId(5), ManagerItem.Kind(OaIngest), ItemStatus.Wire("held"), List(Goal.Slug("k")), focusHeld = Work.FocusHeld(true))
     )
     val hs = holds(items, plan, goals)
     assertEquals(hs.release.toSet, Set(1L, 2L, 5L))
@@ -282,23 +284,23 @@ class GoalFocusSuite extends munit.FunSuite:
   test("fair order: ratio to one, counted on from the last starts; the order inside each class kept"):
     val cs = List("f1", "o1", "f2", "f3", "o2", "f4", "f5")
     val f = (s: String) => s.startsWith("f")
-    assertEquals(fairOrder(cs, f, Nil, com.histmersion.domain.GoalFocus.Ratio(3)), List("f1", "f2", "f3", "o1", "f4", "f5", "o2"))
-    assertEquals(fairOrder(cs, f, List(com.histmersion.domain.GoalFocus.Recent(true), com.histmersion.domain.GoalFocus.Recent(true), com.histmersion.domain.GoalFocus.Recent(true)), com.histmersion.domain.GoalFocus.Ratio(3)), List("o1", "f1", "f2", "f3", "o2", "f4", "f5"))
-    assertEquals(fairOrder(cs, f, List(com.histmersion.domain.GoalFocus.Recent(true), com.histmersion.domain.GoalFocus.Recent(false), com.histmersion.domain.GoalFocus.Recent(true)), com.histmersion.domain.GoalFocus.Ratio(3)), List("f1", "f2", "o1", "f3", "f4", "f5", "o2"))
-    assertEquals(fairOrder(cs, f, Nil, com.histmersion.domain.GoalFocus.Ratio(0)), List("f1", "f2", "f3", "f4", "f5", "o1", "o2"), "0: active goals first")
-    assertEquals(fairOrder(List("o1", "o2"), f, List(com.histmersion.domain.GoalFocus.Recent(true)), com.histmersion.domain.GoalFocus.Ratio(3)), List("o1", "o2"), "no starvation without focus items")
+    assertEquals(fairOrder(cs, f, Nil, GoalFocus.Ratio(3)), List("f1", "f2", "f3", "o1", "f4", "f5", "o2"))
+    assertEquals(fairOrder(cs, f, List(GoalFocus.Recent(true), GoalFocus.Recent(true), GoalFocus.Recent(true)), GoalFocus.Ratio(3)), List("o1", "f1", "f2", "f3", "o2", "f4", "f5"))
+    assertEquals(fairOrder(cs, f, List(GoalFocus.Recent(true), GoalFocus.Recent(false), GoalFocus.Recent(true)), GoalFocus.Ratio(3)), List("f1", "f2", "o1", "f3", "f4", "f5", "o2"))
+    assertEquals(fairOrder(cs, f, Nil, GoalFocus.Ratio(0)), List("f1", "f2", "f3", "f4", "f5", "o1", "o2"), "0: active goals first")
+    assertEquals(fairOrder(List("o1", "o2"), f, List(GoalFocus.Recent(true)), GoalFocus.Ratio(3)), List("o1", "o2"), "no starvation without focus items")
 
   // ── the facts and what is shown ────────────────────────────────────────────────────────────────
 
   test("build: the per-goal counts and every item of the goals it belongs to"):
-    val base = List(Facts(com.histmersion.domain.automation.Goal.Slug("a")), Facts(com.histmersion.domain.automation.Goal.Slug("b")))
+    val base = List(Facts(Goal.Slug("a")), Facts(Goal.Slug("b")))
     val work = List(List(Goal.Slug("a")) -> w(Work.ItemId(2)), List(Goal.Slug("a"), Goal.Slug("b")) -> w(Work.ItemId(1), ManagerItem.Kind(ArticleReview)), List(Goal.Slug("x")) -> w(Work.ItemId(3)))
     val fs = build(
       base,
       work,
       Map(Goal.Slug("a") -> Facts.Sources(4)),
-      Map(Goal.Slug("a") -> List(com.histmersion.domain.research.Slug("art1"), com.histmersion.domain.research.Slug("art2"))),
-      Set(com.histmersion.domain.research.Slug("art1")),
+      Map(Goal.Slug("a") -> List(Slug("art1"), Slug("art2"))),
+      Set(Slug("art1")),
       Map(Goal.Slug("b") -> Facts.CompileOpen(2)),
       Map(Goal.Slug("b") -> Facts.LastStop("stopped"))
     )
@@ -309,10 +311,10 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("doing: runs in flight, the approvals waited for and who decides, the next item"):
     val ws = List(
-      Work(com.histmersion.domain.GoalFocus.Work.ItemId(1), ManagerItem.Kind(ArticleCompile), com.histmersion.domain.automation.ItemStatus.Wire("active"), com.histmersion.domain.GoalFocus.Work.Target("x")),
-      Work(com.histmersion.domain.GoalFocus.Work.ItemId(2), ManagerItem.Kind(PlanGoalItem), com.histmersion.domain.automation.ItemStatus.Wire("active"), com.histmersion.domain.GoalFocus.Work.Target("g"), approval = Some(Work.Approval(7)), approvalByPerson = Work.ApprovalByPerson(true)),
-      Work(com.histmersion.domain.GoalFocus.Work.ItemId(3), ManagerItem.Kind(ArticleReview), com.histmersion.domain.automation.ItemStatus.Wire("pending"), com.histmersion.domain.GoalFocus.Work.Target("y")),
-      Work(com.histmersion.domain.GoalFocus.Work.ItemId(4), ManagerItem.Kind(ProposeArticles), com.histmersion.domain.automation.ItemStatus.Wire("held"), com.histmersion.domain.GoalFocus.Work.Target("g"), focusHeld = Work.FocusHeld(true))
+      Work(GoalFocus.Work.ItemId(1), ManagerItem.Kind(ArticleCompile), ItemStatus.Wire("active"), GoalFocus.Work.Target("x")),
+      Work(GoalFocus.Work.ItemId(2), ManagerItem.Kind(PlanGoalItem), ItemStatus.Wire("active"), GoalFocus.Work.Target("g"), approval = Some(Work.Approval(7)), approvalByPerson = Work.ApprovalByPerson(true)),
+      Work(GoalFocus.Work.ItemId(3), ManagerItem.Kind(ArticleReview), ItemStatus.Wire("pending"), GoalFocus.Work.Target("y")),
+      Work(GoalFocus.Work.ItemId(4), ManagerItem.Kind(ProposeArticles), ItemStatus.Wire("held"), GoalFocus.Work.Target("g"), focusHeld = Work.FocusHeld(true))
     )
     assertEquals(
       doing(ws),
@@ -322,29 +324,29 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("a goal plan under the focus: only for an active goal, within the open sub-goals"):
     assert(
-      AutopilotPolicy.goalPlanFocus(com.histmersion.domain.automation.Goal.Slug("g"), active = false, com.histmersion.domain.AutopilotPolicy.OpenCount(0), com.histmersion.domain.AutopilotPolicy.Proposed(0), com.histmersion.domain.AutopilotPolicy.Limit(5)).exists(_.value.contains("not one of the active goals"))
+      AutopilotPolicy.goalPlanFocus(Goal.Slug("g"), active = false, AutopilotPolicy.OpenCount(0), AutopilotPolicy.Proposed(0), AutopilotPolicy.Limit(5)).exists(_.value.contains("not one of the active goals"))
     )
-    assertEquals(AutopilotPolicy.goalPlanFocus(com.histmersion.domain.automation.Goal.Slug("g"), active = true, com.histmersion.domain.AutopilotPolicy.OpenCount(2), com.histmersion.domain.AutopilotPolicy.Proposed(3), com.histmersion.domain.AutopilotPolicy.Limit(5)), None)
+    assertEquals(AutopilotPolicy.goalPlanFocus(Goal.Slug("g"), active = true, AutopilotPolicy.OpenCount(2), AutopilotPolicy.Proposed(3), AutopilotPolicy.Limit(5)), None)
     assert(
       AutopilotPolicy
-        .goalPlanFocus(com.histmersion.domain.automation.Goal.Slug("g"), active = true, com.histmersion.domain.AutopilotPolicy.OpenCount(3), com.histmersion.domain.AutopilotPolicy.Proposed(3), com.histmersion.domain.AutopilotPolicy.Limit(5))
+        .goalPlanFocus(Goal.Slug("g"), active = true, AutopilotPolicy.OpenCount(3), AutopilotPolicy.Proposed(3), AutopilotPolicy.Limit(5))
         .exists(_.value.contains("has 3 unfinished sub-goals and the plan adds 3"))
     )
     assertEquals(
-      AutopilotPolicy.goalPlanFocus(com.histmersion.domain.automation.Goal.Slug("g"), active = true, com.histmersion.domain.AutopilotPolicy.OpenCount(9), com.histmersion.domain.AutopilotPolicy.Proposed(0), com.histmersion.domain.AutopilotPolicy.Limit(5)),
+      AutopilotPolicy.goalPlanFocus(Goal.Slug("g"), active = true, AutopilotPolicy.OpenCount(9), AutopilotPolicy.Proposed(0), AutopilotPolicy.Limit(5)),
       None,
       "queries and works only: no new sub-goal"
     )
 
   test("goal plans by policy whatever the focus (#3762 proposal 2): only the sub-goals they open are bounded"):
-    assertEquals(AutopilotPolicy.goalPlanSubGoals(com.histmersion.domain.automation.Goal.Slug("g"), com.histmersion.domain.AutopilotPolicy.OpenCount(0), com.histmersion.domain.AutopilotPolicy.Proposed(0), com.histmersion.domain.AutopilotPolicy.Limit(5)), None)
-    assertEquals(AutopilotPolicy.goalPlanSubGoals(com.histmersion.domain.automation.Goal.Slug("g"), com.histmersion.domain.AutopilotPolicy.OpenCount(2), com.histmersion.domain.AutopilotPolicy.Proposed(3), com.histmersion.domain.AutopilotPolicy.Limit(5)), None)
+    assertEquals(AutopilotPolicy.goalPlanSubGoals(Goal.Slug("g"), AutopilotPolicy.OpenCount(0), AutopilotPolicy.Proposed(0), AutopilotPolicy.Limit(5)), None)
+    assertEquals(AutopilotPolicy.goalPlanSubGoals(Goal.Slug("g"), AutopilotPolicy.OpenCount(2), AutopilotPolicy.Proposed(3), AutopilotPolicy.Limit(5)), None)
     assert(
       AutopilotPolicy
-        .goalPlanSubGoals(com.histmersion.domain.automation.Goal.Slug("g"), com.histmersion.domain.AutopilotPolicy.OpenCount(3), com.histmersion.domain.AutopilotPolicy.Proposed(3), com.histmersion.domain.AutopilotPolicy.Limit(5))
+        .goalPlanSubGoals(Goal.Slug("g"), AutopilotPolicy.OpenCount(3), AutopilotPolicy.Proposed(3), AutopilotPolicy.Limit(5))
         .exists(_.value.contains("has 3 unfinished sub-goals and the plan adds 3"))
     )
-    assertEquals(AutopilotPolicy.goalPlanSubGoals(com.histmersion.domain.automation.Goal.Slug("g"), com.histmersion.domain.AutopilotPolicy.OpenCount(9), com.histmersion.domain.AutopilotPolicy.Proposed(0), com.histmersion.domain.AutopilotPolicy.Limit(5)), None, "queries and works only")
+    assertEquals(AutopilotPolicy.goalPlanSubGoals(Goal.Slug("g"), AutopilotPolicy.OpenCount(9), AutopilotPolicy.Proposed(0), AutopilotPolicy.Limit(5)), None, "queries and works only")
 
   test("usesModel: only the currency check and the ingest backlog run without a model"):
     assertEquals(
@@ -365,25 +367,25 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("Markdown: the active goals with why, now and pace; the queue; who cannot use a slot"):
     val f = FocusInfo(
-      on = com.histmersion.api.automation.Autopilot.FocusInfo.On(true),
-      max = com.histmersion.api.automation.Autopilot.FocusInfo.Max(2),
+      on = FocusInfo.On(true),
+      max = FocusInfo.Max(2),
       active = List(
         FocusGoal(
-          com.histmersion.api.automation.Autopilot.FocusGoal.Slug("a"),
-          status = com.histmersion.api.automation.Autopilot.FocusGoal.Status("seeding"),
-          stage = com.histmersion.api.automation.Autopilot.FocusGoal.Stage("reviewing"),
-          why = com.histmersion.api.automation.Autopilot.FocusGoal.Why("reviewing: 1 of 2"),
-          doing = Some(com.histmersion.api.automation.Autopilot.FocusGoal.Doing("running article-review x")),
-          open = com.histmersion.api.automation.Autopilot.FocusGoal.Open(3),
-          doneLast7 = com.histmersion.api.automation.Autopilot.FocusGoal.DoneLast7(7),
-          etaDays = Some(com.histmersion.api.automation.Autopilot.FocusGoal.EtaDays(3))
+          FocusGoal.Slug("a"),
+          status = FocusGoal.Status("seeding"),
+          stage = FocusGoal.Stage("reviewing"),
+          why = FocusGoal.Why("reviewing: 1 of 2"),
+          doing = Some(FocusGoal.Doing("running article-review x")),
+          open = FocusGoal.Open(3),
+          doneLast7 = FocusGoal.DoneLast7(7),
+          etaDays = Some(FocusGoal.EtaDays(3))
         ),
-        FocusGoal(com.histmersion.api.automation.Autopilot.FocusGoal.Slug("b"), status = com.histmersion.api.automation.Autopilot.FocusGoal.Status("seeding"), stage = com.histmersion.api.automation.Autopilot.FocusGoal.Stage("gathering"), why = com.histmersion.api.automation.Autopilot.FocusGoal.Why("pinned by a person"), pinned = com.histmersion.api.automation.Autopilot.FocusGoal.Pinned(true))
+        FocusGoal(FocusGoal.Slug("b"), status = FocusGoal.Status("seeding"), stage = FocusGoal.Stage("gathering"), why = FocusGoal.Why("pinned by a person"), pinned = FocusGoal.Pinned(true))
       ),
-      queue = List(FocusGoal(com.histmersion.api.automation.Autopilot.FocusGoal.Slug("c"), stage = com.histmersion.api.automation.Autopilot.FocusGoal.Stage("ready"), why = com.histmersion.api.automation.Autopilot.FocusGoal.Why("ready: 5 sources"))),
-      queued = com.histmersion.api.automation.Autopilot.FocusInfo.Queued(4),
-      waiting = List(FocusWaiting(com.histmersion.api.automation.Autopilot.FocusWaiting.Slug("d"), com.histmersion.api.automation.Autopilot.FocusWaiting.Code("person"), com.histmersion.api.automation.Autopilot.FocusWaiting.Why("waits for a person: approval #1")), FocusWaiting(com.histmersion.api.automation.Autopilot.FocusWaiting.Slug("e"), com.histmersion.api.automation.Autopilot.FocusWaiting.Code("person"), com.histmersion.api.automation.Autopilot.FocusWaiting.Why("x"))),
-      held = com.histmersion.api.automation.Autopilot.FocusInfo.Held(12)
+      queue = List(FocusGoal(FocusGoal.Slug("c"), stage = FocusGoal.Stage("ready"), why = FocusGoal.Why("ready: 5 sources"))),
+      queued = FocusInfo.Queued(4),
+      waiting = List(FocusWaiting(FocusWaiting.Slug("d"), FocusWaiting.Code("person"), FocusWaiting.Why("waits for a person: approval #1")), FocusWaiting(FocusWaiting.Slug("e"), FocusWaiting.Code("person"), FocusWaiting.Why("x"))),
+      held = FocusInfo.Held(12)
     )
     val md = AutopilotMarkdown.focus(f)
     assert(md.contains("## Focus: at most 2 active goals (agents.autopilot.max-active-goals)"), md)
@@ -410,7 +412,7 @@ class GoalFocusSuite extends munit.FunSuite:
     val why =
       "goal plans wait until the unfinished goals drop to 10: 60 goals with an approved plan are not reviewed yet"
     val st =
-      Autopilot.EngineStatus(on = com.histmersion.api.automation.Autopilot.EngineStatus.On(true), agentsEnabled = com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled(true), managersEnabled = com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled(true), goalPlansWait = Some(Autopilot.EngineStatus.GoalPlansWait(why)))
+      Autopilot.EngineStatus(on = Autopilot.EngineStatus.On(true), agentsEnabled = Autopilot.EngineStatus.AgentsEnabled(true), managersEnabled = Autopilot.EngineStatus.ManagersEnabled(true), goalPlansWait = Some(Autopilot.EngineStatus.GoalPlansWait(why)))
     assert(
       AutopilotMarkdown.status(st).contains(s"- **$why; a person may still approve a plan**"),
       AutopilotMarkdown.status(st)

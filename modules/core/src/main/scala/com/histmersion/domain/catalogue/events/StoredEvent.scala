@@ -1,6 +1,12 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.api.TimeSpan
+import com.histmersion.domain.catalogue.Event
+import com.histmersion.api.catalogue.CatalogRecord
+import com.histmersion.api.catalogue.EventCatalogueRef
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 // ── merging: one event per thing, whichever catalogues know it ──────────────────────────────────
 
@@ -8,21 +14,21 @@ import com.histmersion.api.TimeSpan
   * it, and whether an import made it (`catalogue`) — a compiled event is matched, never overwritten.
   */
 final case class StoredEvent(
-    id: com.histmersion.domain.catalogue.Event.Id,
+    id: Event.Id,
     kind: StoredEvent.Kind,
     timeSpan: TimeSpan,
-    lat: Option[com.histmersion.Latitude],
-    lon: Option[com.histmersion.Longitude],
-    wikidata: Option[com.histmersion.api.catalogue.CatalogRecord.Wikidata],
-    keys: Set[(com.histmersion.api.catalogue.CatalogRecord.Provider, com.histmersion.api.catalogue.EventCatalogueRef.ProviderId)],
+    lat: Option[Latitude],
+    lon: Option[Longitude],
+    wikidata: Option[CatalogRecord.Wikidata],
+    keys: Set[(CatalogRecord.Provider, EventCatalogueRef.ProviderId)],
     catalogue: StoredEvent.Catalogue,
-    label: StoredEvent.Label = com.histmersion.domain.catalogue.events.StoredEvent.Label("")
+    label: StoredEvent.Label = StoredEvent.Label("")
 )
 
 object StoredEvent:
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Catalogue = Catalogue.T
-  object Catalogue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Catalogue extends RefinedType[Boolean, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]

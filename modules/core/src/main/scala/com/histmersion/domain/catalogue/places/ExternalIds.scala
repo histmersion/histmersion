@@ -1,15 +1,20 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.catalogue.Place
 
 /** Gazetteer ids in the URI forms providers write them. Pure. */
 object ExternalIds:
   type Scheme = Scheme.T
-  object Scheme extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Scheme extends RefinedType[String, Pure]
   type ExternalId = ExternalId.T
-  object ExternalId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExternalId extends RefinedType[String, Pure]
   type Uri = Uri.T
-  object Uri extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Uri extends RefinedType[String, Pure]
   type Shown = Shown.T
-  object Shown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Shown extends RefinedType[String, Pure]
 
   val Pleiades: Scheme = Scheme("pleiades")
   val GeoNames: Scheme = Scheme("geonames")
@@ -28,7 +33,7 @@ object ExternalIds:
 
   /** Pure: the id a gazetteer place id carries itself (`pleiades_570491`, `geonames_390903`, `wikidata_q132564`).
     */
-  def ofPlaceId(placeId: com.histmersion.domain.catalogue.Place.Id): Option[(Scheme, ExternalId)] =
+  def ofPlaceId(placeId: Place.Id): Option[(Scheme, ExternalId)] =
     val s = placeId.value.trim
     def num(prefix: String) = Option.when(s.startsWith(prefix))(s.drop(prefix.length)).filter(_.matches("[0-9]+"))
     num("pleiades_")

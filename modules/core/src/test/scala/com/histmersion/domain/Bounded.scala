@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.config.*
 import com.histmersion.api.given

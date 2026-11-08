@@ -1,4 +1,5 @@
-package com.histmersion.util.json
+package com.histmersion
+package util.json
 
 import com.histmersion.testsupport.ComparedByValue.given
 

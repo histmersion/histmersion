@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.Plural
 
@@ -9,6 +10,8 @@ import com.histmersion.domain.automation.ItemStatus
 import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.Manager
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The pure half of the autopilot (docs/research-process-managers.md "As built: the autopilot"): the code checks that
   * decide an approval without a person, the rule that moves a research goal's status on from the facts, the managers
@@ -17,51 +20,51 @@ import com.histmersion.domain.automation.Manager
   */
 object AutopilotPolicy:
   type ApprovedToday = ApprovedToday.T
-  object ApprovedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ApprovedToday extends RefinedType[Int, Pure]
   type Backlog = Backlog.T
-  object Backlog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Backlog extends RefinedType[Int, Pure]
   type Base = Base.T
-  object Base extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Base extends RefinedType[Int, Pure]
   type Cap = Cap.T
-  object Cap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Cap extends RefinedType[Int, Pure]
   type CooldownDays = CooldownDays.T
-  object CooldownDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CooldownDays extends RefinedType[Int, Pure]
   type CooldownHours = CooldownHours.T
-  object CooldownHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CooldownHours extends RefinedType[Int, Pure]
   type Cron = Cron.T
-  object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Cron extends RefinedType[String, Pure]
   type Days = Days.T
-  object Days extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Days extends RefinedType[Int, Pure]
   type DepthLimit = DepthLimit.T
-  object DepthLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DepthLimit extends RefinedType[Int, Pure]
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
   type DoneLast7 = DoneLast7.T
-  object DoneLast7 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DoneLast7 extends RefinedType[Int, Pure]
   type EveryHours = EveryHours.T
-  object EveryHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EveryHours extends RefinedType[Int, Pure]
   type IngestedToday = IngestedToday.T
-  object IngestedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IngestedToday extends RefinedType[Int, Pure]
   type Left = Left.T
-  object Left extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Left extends RefinedType[Int, Pure]
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]
   type MinSources = MinSources.T
-  object MinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinSources extends RefinedType[Int, Pure]
   type NewSources = NewSources.T
-  object NewSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NewSources extends RefinedType[Int, Pure]
   type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Note extends RefinedType[String, Pure]
   type OpenCount = OpenCount.T
-  object OpenCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OpenCount extends RefinedType[Int, Pure]
   type Proposed = Proposed.T
-  object Proposed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Proposed extends RefinedType[Int, Pure]
   type Reason = Reason.T
-  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reason extends RefinedType[String, Pure]
   type Share = Share.T
-  object Share extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Share extends RefinedType[Double, Pure]
   type Unfinished = Unfinished.T
-  object Unfinished extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Unfinished extends RefinedType[Int, Pure]
 
   private def counted(n: Int, singular: String, plural: String = ""): Plural.Phrase =
     Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(singular), Plural.CountPlural(plural))
@@ -72,17 +75,17 @@ object AutopilotPolicy:
     * person (or for tomorrow, when only a daily cap stood in the way).
     */
 
-  type CapTextBase = _root_.com.histmersion.domain.AutopilotPolicy.Base
-  val CapTextBase: _root_.com.histmersion.domain.AutopilotPolicy.Base.type = _root_.com.histmersion.domain.AutopilotPolicy.Base
-  type CapTextBacklog = _root_.com.histmersion.domain.AutopilotPolicy.Backlog
-  val CapTextBacklog: _root_.com.histmersion.domain.AutopilotPolicy.Backlog.type = _root_.com.histmersion.domain.AutopilotPolicy.Backlog
-  type CapTextShare = _root_.com.histmersion.domain.AutopilotPolicy.Share
-  val CapTextShare: _root_.com.histmersion.domain.AutopilotPolicy.Share.type = _root_.com.histmersion.domain.AutopilotPolicy.Share
-  type CapTextCeiling = _root_.com.histmersion.domain.AutopilotPolicy.Cap
-  val CapTextCeiling: _root_.com.histmersion.domain.AutopilotPolicy.Cap.type = _root_.com.histmersion.domain.AutopilotPolicy.Cap
+  type CapTextBase = Base
+  val CapTextBase: Base.type = Base
+  type CapTextBacklog = Backlog
+  val CapTextBacklog: Backlog.type = Backlog
+  type CapTextShare = Share
+  val CapTextShare: Share.type = Share
+  type CapTextCeiling = Cap
+  val CapTextCeiling: Cap.type = Cap
   type NotePrefix = NotePrefixValue
   type NotePrefixValue = NotePrefixValue.T
-  object NotePrefixValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NotePrefixValue extends RefinedType[String, Pure]
 
   enum Verdict:
     case Approve(reason: Verdict.Approve.Reason)
@@ -91,28 +94,28 @@ object AutopilotPolicy:
 
   object Verdict:
     object Approve:
-      export com.histmersion.domain.AutopilotPolicy.Reason
+      export AutopilotPolicy.Reason
     object Reject:
-      export com.histmersion.domain.AutopilotPolicy.Reason
+      export AutopilotPolicy.Reason
     object Leave:
-      export com.histmersion.domain.AutopilotPolicy.{Reason as Why}
+      export AutopilotPolicy.{Reason as Why}
 
   /** One article of an `article-plan`, as it stands NOW: its slug still free, its filter's hits. */
   final case class PlannedFacts(slug: PlannedFacts.Slug, slugFree: PlannedFacts.SlugFree, hits: PlannedFacts.Hits)
 
   object PlannedFacts:
     type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Slug extends RefinedType[String, Pure]
     type SlugFree = SlugFree.T
-    object SlugFree extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SlugFree extends RefinedType[Boolean, Pure]
     type Hits = Hits.T
-    object Hits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Hits extends RefinedType[Int, Pure]
 
   /** An `article-plan` (propose-articles): approved when every article's slug is still free and its filter returns at
     * least `minSources`, and the area's planned articles approved today stay within `cap`; a plan larger than the cap
     * is a person's.
     */
-  def articlePlan(articles: List[PlannedFacts], minSources: com.histmersion.domain.AutopilotPolicy.MinSources, approvedToday: com.histmersion.domain.AutopilotPolicy.ApprovedToday, cap: com.histmersion.domain.AutopilotPolicy.Cap): Verdict =
+  def articlePlan(articles: List[PlannedFacts], minSources: MinSources, approvedToday: ApprovedToday, cap: Cap): Verdict =
     val n = articles.size
     val bad = articles.flatMap { a =>
       if !a.slugFree.value then Some(s"${a.slug}: the slug is taken now")
@@ -120,7 +123,7 @@ object AutopilotPolicy:
         Some(s"${a.slug}: its filter returns ${a.hits} source(s), fewer than $minSources")
       else None
     }
-    if n == 0 then Verdict.Reject(com.histmersion.domain.AutopilotPolicy.Verdict.Reject.Reason("the plan names no article"))
+    if n == 0 then Verdict.Reject(Verdict.Reject.Reason("the plan names no article"))
     else if bad.nonEmpty then Verdict.Reject(Reason(s"checks failed — ${bad.mkString("; ")}"))
     else if n > cap.value then
       Verdict.Leave(Reason(s"${counted(n, "article")} exceed the daily cap of $cap for one research area"))
@@ -150,27 +153,27 @@ object AutopilotPolicy:
 
   object DraftFacts:
     type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Slug extends RefinedType[String, Pure]
     type Create = Create.T
-    object Create extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Create extends RefinedType[Boolean, Pure]
     type FilterRecorded = FilterRecorded.T
-    object FilterRecorded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FilterRecorded extends RefinedType[Boolean, Pure]
     type Hits = Hits.T
-    object Hits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Hits extends RefinedType[Int, Pure]
     type Problems = Problems.T
-    object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Problems extends RefinedType[String, Pure]
     type Cited = Cited.T
-    object Cited extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Cited extends RefinedType[Int, Pure]
     type SlugFree = SlugFree.T
-    object SlugFree extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SlugFree extends RefinedType[Boolean, Pure]
 
   /** An `article-publish`: approved when the run recorded a filter that returns at least `minSources` sources, the code
     * self-check left no problem, the text cites a source and (a new article) the slug is still free — within `cap`
     * drafts a day. A failed check rejects it (the seeding manager compiles again); a reached cap leaves it for
     * tomorrow.
     */
-  def articlePublish(d: DraftFacts, minSources: com.histmersion.domain.AutopilotPolicy.MinSources, approvedToday: com.histmersion.domain.AutopilotPolicy.ApprovedToday, cap: com.histmersion.domain.AutopilotPolicy.Cap): Verdict =
-    if !d.filterRecorded.value then Verdict.Reject(com.histmersion.domain.AutopilotPolicy.Verdict.Reject.Reason("the run records no coverage filter"))
+  def articlePublish(d: DraftFacts, minSources: MinSources, approvedToday: ApprovedToday, cap: Cap): Verdict =
+    if !d.filterRecorded.value then Verdict.Reject(Verdict.Reject.Reason("the run records no coverage filter"))
     else if d.hits.forall(_.value < minSources.value) then
       Verdict.Reject(
         Reason(s"its filter returns ${d.hits.fold("an unknown number of")(_.toString)} source(s), fewer than $minSources")
@@ -179,7 +182,7 @@ object AutopilotPolicy:
       Verdict.Reject(
         Reason(s"the self-check left ${counted(d.problems.size, "problem")}: ${d.problems.take(3).mkString("; ").take(600)}")
       )
-    else if d.cited.value == 0 then Verdict.Reject(com.histmersion.domain.AutopilotPolicy.Verdict.Reject.Reason("the text cites no source"))
+    else if d.cited.value == 0 then Verdict.Reject(Verdict.Reject.Reason("the text cites no source"))
     else if d.create.value && !d.slugFree.value then Verdict.Reject(Reason(s"the slug ${d.slug} is taken now"))
     else if approvedToday.value >= cap.value then Verdict.Leave(Reason(s"the daily cap of $cap drafts is reached; decided tomorrow"))
     else
@@ -195,21 +198,21 @@ object AutopilotPolicy:
 
   object GoalPlanFacts:
     type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Goal extends RefinedType[String, Pure]
     type SubGoals = SubGoals.T
-    object SubGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SubGoals extends RefinedType[Int, Pure]
     type Queries = Queries.T
-    object Queries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Queries extends RefinedType[Int, Pure]
     type Works = Works.T
-    object Works extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Works extends RefinedType[Int, Pure]
     type Depth = Depth.T
-    object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Depth extends RefinedType[Int, Pure]
 
   /** A `goal-plan`: approved when it proposes something, and sub-goals only for a goal less than `maxDepth` deep —
     * within `cap` plans a day.
     */
-  def goalPlan(p: GoalPlanFacts, maxDepth: com.histmersion.domain.AutopilotPolicy.DepthLimit, approvedToday: com.histmersion.domain.AutopilotPolicy.ApprovedToday, cap: com.histmersion.domain.AutopilotPolicy.Cap): Verdict =
-    if p.subGoals.value + p.queries.value + p.works.value == 0 then Verdict.Reject(com.histmersion.domain.AutopilotPolicy.Verdict.Reject.Reason("the plan proposes nothing"))
+  def goalPlan(p: GoalPlanFacts, maxDepth: DepthLimit, approvedToday: ApprovedToday, cap: Cap): Verdict =
+    if p.subGoals.value + p.queries.value + p.works.value == 0 then Verdict.Reject(Verdict.Reject.Reason("the plan proposes nothing"))
     else if p.subGoals.value > 0 && p.depth.value >= maxDepth.value then
       Verdict.Reject(
         Reason(
@@ -230,7 +233,7 @@ object AutopilotPolicy:
     * when its goal is one of the active goals and its unfinished sub-goals (`openSubGoals`, every level below it) plus
     * the `proposed` new ones stay within `limit`; else why it waits for a person.
     */
-  def goalPlanFocus(goal: com.histmersion.domain.automation.Goal.Slug, active: Boolean, openSubGoals: com.histmersion.domain.AutopilotPolicy.OpenCount, proposed: com.histmersion.domain.AutopilotPolicy.Proposed, limit: com.histmersion.domain.AutopilotPolicy.Limit): Option[com.histmersion.domain.AutopilotPolicy.Description] =
+  def goalPlanFocus(goal: Goal.Slug, active: Boolean, openSubGoals: OpenCount, proposed: Proposed, limit: Limit): Option[Description] =
     if !active then Some(Description(s"focus: goal $goal is not one of the active goals; its plan waits for a person or its turn"))
     else if proposed.value > 0 && openSubGoals.value + proposed.value > math.max(0, limit.value) then
       Some(
@@ -246,7 +249,7 @@ object AutopilotPolicy:
     * (`agents.autopilot.max-open-sub-goals`); else why it waits for a person. Queries and works alone are always within
     * it.
     */
-  def goalPlanSubGoals(goal: com.histmersion.domain.automation.Goal.Slug, openSubGoals: com.histmersion.domain.AutopilotPolicy.OpenCount, proposed: com.histmersion.domain.AutopilotPolicy.Proposed, limit: com.histmersion.domain.AutopilotPolicy.Limit): Option[com.histmersion.domain.AutopilotPolicy.Description] =
+  def goalPlanSubGoals(goal: Goal.Slug, openSubGoals: OpenCount, proposed: Proposed, limit: Limit): Option[Description] =
     Option.when(proposed.value > 0 && openSubGoals.value + proposed.value > math.max(0, limit.value))(
       Description(
         s"goal $goal has ${counted(openSubGoals.value, "unfinished sub-goal")} and the plan adds $proposed; at most " +
@@ -257,14 +260,14 @@ object AutopilotPolicy:
   /** The goals with an approved plan that are not finished yet (neither reviewed nor done): what a new goal plan would
     * add to. `goals` = every goal's slug and status.
     */
-  def unfinishedPlanned(goals: List[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.Status.Wire)], planned: Set[com.histmersion.domain.automation.Goal.Slug]): com.histmersion.domain.AutopilotPolicy.Unfinished =
+  def unfinishedPlanned(goals: List[(Goal.Slug, Goal.Status.Wire)], planned: Set[Goal.Slug]): Unfinished =
     Unfinished(goals.count((slug, status) => planned(slug) && !finished(status)))
 
   /** Why goal plans are not offered now, if they are not: more goals with an approved plan are unfinished than `limit`
     * (0 = no limit). While so, no plan-goal run starts for an unplanned goal and code decides no open goal plan; a
     * person still may.
     */
-  def goalPlansWait(unfinished: com.histmersion.domain.AutopilotPolicy.Unfinished, limit: com.histmersion.domain.AutopilotPolicy.Limit): Option[com.histmersion.domain.AutopilotPolicy.Description] =
+  def goalPlansWait(unfinished: Unfinished, limit: Limit): Option[Description] =
     Option.when(limit.value > 0 && unfinished.value > limit.value)(
       Description(
         s"goal plans wait until the unfinished goals drop to $limit: ${counted(unfinished.value, "goal")} with an approved " +
@@ -275,7 +278,7 @@ object AutopilotPolicy:
   /** A daily cap scaled to the backlog (#3762 proposal 3): `share` ≤ 0 keeps `base`; else
     * `max(base, ⌈backlog × share⌉)`, never above `ceiling` (when it is above 0) — and never below 0.
     */
-  def scaledCap(base: com.histmersion.domain.AutopilotPolicy.Base, backlog: com.histmersion.domain.AutopilotPolicy.Backlog, share: com.histmersion.domain.AutopilotPolicy.Share, ceiling: com.histmersion.domain.AutopilotPolicy.Cap): com.histmersion.domain.AutopilotPolicy.Cap =
+  def scaledCap(base: Base, backlog: Backlog, share: Share, ceiling: Cap): Cap =
     val b = math.max(0, base.value)
     if share.value <= 0 then Cap(b)
     else
@@ -283,7 +286,7 @@ object AutopilotPolicy:
       Cap(if ceiling.value > 0 then math.min(scaled, math.max(b, ceiling.value)) else scaled)
 
   /** The cap as the status shows it: `5 a day`, or `5 a day, 22 today for a backlog of 64 (at most 50)`. */
-  def capText(base: com.histmersion.domain.AutopilotPolicy.CapTextBase, backlog: com.histmersion.domain.AutopilotPolicy.CapTextBacklog, share: com.histmersion.domain.AutopilotPolicy.CapTextShare, ceiling: com.histmersion.domain.AutopilotPolicy.CapTextCeiling): com.histmersion.domain.AutopilotPolicy.Description =
+  def capText(base: CapTextBase, backlog: CapTextBacklog, share: CapTextShare, ceiling: CapTextCeiling): Description =
     val n = scaledCap(base, backlog, share, ceiling)
     Description(
       if share.value <= 0 then s"$base a day"
@@ -309,18 +312,18 @@ object AutopilotPolicy:
 
   object NextFacts:
     type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Goal extends RefinedType[String, Pure]
     type Articles = Articles.T
-    object Articles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Articles extends RefinedType[Int, Pure]
     type Unreviewed = Unreviewed.T
-    object Unreviewed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Unreviewed extends RefinedType[Int, Pure]
     type CompileOpen = CompileOpen.T
-    object CompileOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CompileOpen extends RefinedType[Int, Pure]
 
   /** Why a goal's articles are still in progress — what keeps a new proposal back (#3763: no new work while the goal
     * still has unfinished articles); None when they are all done (or it has none).
     */
-  def articlesInProgress(unreviewed: com.histmersion.domain.AutopilotPolicy.NextFacts.Unreviewed, compileOpen: com.histmersion.domain.AutopilotPolicy.NextFacts.CompileOpen): Option[com.histmersion.domain.AutopilotPolicy.Description] =
+  def articlesInProgress(unreviewed: NextFacts.Unreviewed, compileOpen: NextFacts.CompileOpen): Option[Description] =
     Option.when(unreviewed.value > 0 || compileOpen.value > 0)(
       Description(
         "its articles in progress come first (" + List(
@@ -336,7 +339,7 @@ object AutopilotPolicy:
     * least `cooldownHours` ago (0 = never). A person's goal status `done` ends it. The proposal then goes through the
     * approvals policy like any other (`article-plan`).
     */
-  def nextArticle(f: NextFacts, now: java.time.Instant, cooldownHours: com.histmersion.domain.AutopilotPolicy.CooldownHours): Option[com.histmersion.domain.AutopilotPolicy.Description] =
+  def nextArticle(f: NextFacts, now: java.time.Instant, cooldownHours: CooldownHours): Option[Description] =
     val open = f.proposeStatus.exists(st => ItemStatus.parse(st).exists(!_.isFinal))
     val cooled = f.proposeSettled.forall(t => !t.plusSeconds(math.max(0, cooldownHours.value).toLong * 3600L).isAfter(now))
     Option.when(
@@ -351,20 +354,20 @@ object AutopilotPolicy:
       )
     )
 
-  private def depthText(d: com.histmersion.domain.AutopilotPolicy.GoalPlanFacts.Depth): String = if d.value == 0 then "at the root" else s"$d level(s) below a root"
+  private def depthText(d: GoalPlanFacts.Depth): String = if d.value == 0 then "at the root" else s"$d level(s) below a root"
 
   /** The note an automatic decision carries — what marks it as the autopilot's (and what the daily caps count).
     */
-  val NotePrefix: com.histmersion.domain.AutopilotPolicy.NotePrefix = NotePrefixValue(Approval.DecidedBy.AutopilotNote)
-  def note(v: Verdict): Option[com.histmersion.domain.AutopilotPolicy.Note] = v match
+  val NotePrefix: NotePrefix = NotePrefixValue(Approval.DecidedBy.AutopilotNote)
+  def note(v: Verdict): Option[Note] = v match
     case Verdict.Approve(r) => Some(Note(s"$NotePrefix approved — $r"))
     case Verdict.Reject(r)  => Some(Note(s"$NotePrefix rejected — $r"))
     case Verdict.Leave(_)   => None
 
   /** How deep a goal is: the number of parents above it (a cycle or a missing parent stops the walk). */
-  def depth(slug: com.histmersion.domain.research.Slug, parentOf: com.histmersion.domain.research.Slug => Option[com.histmersion.domain.research.Slug]): com.histmersion.domain.AutopilotPolicy.GoalPlanFacts.Depth =
+  def depth(slug: com.histmersion.domain.research.Slug, parentOf: com.histmersion.domain.research.Slug => Option[com.histmersion.domain.research.Slug]): GoalPlanFacts.Depth =
     @annotation.tailrec
-    def go(s: com.histmersion.domain.research.Slug, seen: Set[com.histmersion.domain.research.Slug], n: Int): com.histmersion.domain.AutopilotPolicy.GoalPlanFacts.Depth = parentOf(s) match
+    def go(s: com.histmersion.domain.research.Slug, seen: Set[com.histmersion.domain.research.Slug], n: Int): GoalPlanFacts.Depth = parentOf(s) match
       case Some(p) if !seen(p) && n < 64 => go(p, seen + p, n + 1)
       case _                             => GoalPlanFacts.Depth(n)
     go(slug, Set(slug), 0)
@@ -388,15 +391,15 @@ object AutopilotPolicy:
 
   object GoalFacts:
     type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Slug extends RefinedType[String, Pure]
     type Managed = Managed.T
-    object Managed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Managed extends RefinedType[Boolean, Pure]
     type Articles = Articles.T
-    object Articles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Articles extends RefinedType[Int, Pure]
     type CompileOpen = CompileOpen.T
-    object CompileOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CompileOpen extends RefinedType[Boolean, Pure]
     type Reviewed = Reviewed.T
-    object Reviewed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reviewed extends RefinedType[Boolean, Pure]
 
   private def rank(s: Goal.Status.Wire): Int = Goal.Status.all.indexOf(s)
 
@@ -405,7 +408,7 @@ object AutopilotPolicy:
     * compiled) and nothing is left to compile; reviewed once every article passed its review and every sub-goal is
     * reviewed. With why, for the log.
     */
-  def advance(f: GoalFacts): Option[(com.histmersion.domain.automation.Goal.Status.Wire, com.histmersion.domain.AutopilotPolicy.Reason)] =
+  def advance(f: GoalFacts): Option[(Goal.Status.Wire, Reason)] =
     val cur = rank(f.status)
     if cur < 0 || f.status.value == Goal.Status.Done then None
     else
@@ -442,7 +445,7 @@ object AutopilotPolicy:
 
   object GoalRow:
     type NeedsPlan = NeedsPlan.T
-    object NeedsPlan extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NeedsPlan extends RefinedType[Boolean, Pure]
 
   /** A manager as the autopilot sees it. `planItem` = it has a plan-goal item (any status). */
   final case class ManagerRow(
@@ -452,19 +455,19 @@ object AutopilotPolicy:
       state: Manager.State.Wire,
       cron: Option[Cron],
       autoIngest: Option[ManagerRow.AutoIngest],
-      planItem: ManagerRow.PlanItem = com.histmersion.domain.AutopilotPolicy.ManagerRow.PlanItem(false),
+      planItem: ManagerRow.PlanItem = ManagerRow.PlanItem(false),
       extendMinNew: Option[Settings.ExtendMinNew] = None
   )
 
   object ManagerRow:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-      def seed(goal: com.histmersion.domain.automation.Goal.Slug): ManagerRow.Id = Id(s"seed:${goal.value}")
-      def watch(goal: com.histmersion.domain.automation.Goal.Slug): ManagerRow.Id = Id(s"watch:${goal.value}")
+    object Id extends RefinedType[String, Pure]:
+      def seed(goal: Goal.Slug): Id = Id(s"seed:${goal.value}")
+      def watch(goal: Goal.Slug): Id = Id(s"watch:${goal.value}")
     type AutoIngest = AutoIngest.T
-    object AutoIngest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AutoIngest extends RefinedType[Boolean, Pure]
     type PlanItem = PlanItem.T
-    object PlanItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PlanItem extends RefinedType[Boolean, Pure]
 
   /** The settings `ensure` works with. */
   final case class Settings(
@@ -477,9 +480,9 @@ object AutopilotPolicy:
 
   object Settings:
     type WatchIngestPerDay = WatchIngestPerDay.T
-    object WatchIngestPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object WatchIngestPerDay extends RefinedType[Int, Pure]
     type ExtendMinNew = ExtendMinNew.T
-    object ExtendMinNew extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ExtendMinNew extends RefinedType[Int, Pure]
 
   /** One change `ensure` asks for. */
   enum Step:
@@ -509,31 +512,31 @@ object AutopilotPolicy:
   object Step:
     object CreateSeed:
       export com.histmersion.domain.automation.Goal.{Slug as Goal}
-      export com.histmersion.domain.AutopilotPolicy.Cron
-      export com.histmersion.domain.AutopilotPolicy.GoalRow.{NeedsPlan as PlanFirst}
+      export AutopilotPolicy.Cron
+      export GoalRow.{NeedsPlan as PlanFirst}
     object CreateWatch:
       export com.histmersion.domain.automation.Goal.{Slug as Goal}
-      export com.histmersion.domain.AutopilotPolicy.Cron
-      export com.histmersion.domain.AutopilotPolicy.Settings.{WatchIngestPerDay as PerDay}
+      export AutopilotPolicy.Cron
+      export Settings.{WatchIngestPerDay as PerDay}
     object Resume:
-      export com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
+      export ManagerRow.Id
     object SetCron:
-      export com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
-      export com.histmersion.domain.AutopilotPolicy.Cron
+      export ManagerRow.Id
+      export AutopilotPolicy.Cron
     object AutoIngestOn:
-      export com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
-      export com.histmersion.domain.AutopilotPolicy.Settings.{WatchIngestPerDay as PerDay}
+      export ManagerRow.Id
+      export Settings.{WatchIngestPerDay as PerDay}
     object AddPlanItem:
-      export com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
+      export ManagerRow.Id
       export com.histmersion.domain.automation.Goal.{Slug as Goal}
     object ExtendMinNew:
-      export com.histmersion.domain.AutopilotPolicy.ManagerRow.Id
-      export com.histmersion.domain.AutopilotPolicy.Settings.{ExtendMinNew as N}
+      export ManagerRow.Id
+      export Settings.{ExtendMinNew as N}
 
   /** Finished: reviewed or done — such a goal keeps a watcher (new sources, the currency check), no new seeding
     * manager.
     */
-  def finished(status: com.histmersion.domain.automation.Goal.Status.Wire): Boolean = status.value == Goal.Status.Reviewed || status.value == Goal.Status.Done
+  def finished(status: Goal.Status.Wire): Boolean = status.value == Goal.Status.Reviewed || status.value == Goal.Status.Done
 
   /** What must change so every goal has its managers (idempotent: nothing, when they are there). Library-wide: `review`
     * and `enrich` active (`review` with the extend threshold). Every unfinished goal: a seeding manager (a plan-goal
@@ -544,7 +547,7 @@ object AutopilotPolicy:
   def ensure(
       goals: List[GoalRow],
       managers: List[ManagerRow],
-      pausedByAutopilot: Set[com.histmersion.domain.AutopilotPolicy.ManagerRow.Id],
+      pausedByAutopilot: Set[ManagerRow.Id],
       s: Settings
   ): List[Step] =
     val byId = managers.map(m => m.id -> m).toMap
@@ -583,7 +586,7 @@ object AutopilotPolicy:
   /** The managers the autopilot pauses when it is turned off: the active seeding managers and watchers (the
     * library-wide ones and a person's paused ones are left as they are).
     */
-  def toPause(managers: List[ManagerRow]): List[com.histmersion.domain.AutopilotPolicy.ManagerRow.Id] =
+  def toPause(managers: List[ManagerRow]): List[ManagerRow.Id] =
     managers
       .filter(m =>
         m.state == Manager.State.Active.wire && (m.kind == Manager.Kind.Seed.wire || m.kind == Manager.Kind.Watch.wire)
@@ -593,12 +596,12 @@ object AutopilotPolicy:
   // ── crons spread per goal ──────────────────────────────────────────────────────────────────────
 
   /** A stable non-negative hash of `key` (the same on every machine and every run). */
-  def spread(key: com.histmersion.domain.AutopilotPolicy.ManagerRow.Id): Int = key.value.foldLeft(17)((h, c) => 31 * h + c) & Int.MaxValue
+  def spread(key: ManagerRow.Id): Int = key.value.foldLeft(17)((h, c) => 31 * h + c) & Int.MaxValue
 
   /** `@daily`, `@weekly` and `@monthly` as five fields at a minute, hour (and weekday or day of the month) of `key`'s
     * own, so dozens of managers with the same cron do not fire in the same minute; any other cron is kept as given.
     */
-  def stagger(base: com.histmersion.domain.AutopilotPolicy.Cron, key: com.histmersion.domain.AutopilotPolicy.ManagerRow.Id): com.histmersion.domain.AutopilotPolicy.Cron =
+  def stagger(base: Cron, key: ManagerRow.Id): Cron =
     val h = spread(key)
     val (min, hour, day) = (h % 60, (h / 60) % 24, h / 1440)
     Cron(base.value.trim.toLowerCase match
@@ -614,12 +617,12 @@ object AutopilotPolicy:
     * reason for, and it was not extended in the last `cooldownDays`. `min` 0 = never.
     */
   def extendDue(
-      newSources: com.histmersion.domain.AutopilotPolicy.NewSources,
-      min: com.histmersion.domain.AutopilotPolicy.Settings.ExtendMinNew,
+      newSources: NewSources,
+      min: Settings.ExtendMinNew,
       lastExtend: Option[Instant],
-      cooldownDays: com.histmersion.domain.AutopilotPolicy.CooldownDays,
+      cooldownDays: CooldownDays,
       now: Instant
-  ): Option[com.histmersion.domain.AutopilotPolicy.Description] =
+  ): Option[Description] =
     if min.value <= 0 || newSources.value < min.value then None
     else if lastExtend.exists(t => t.plus(Duration.ofDays(math.max(0, cooldownDays.value).toLong)).isAfter(now)) then None
     else Some(Description(s"its filter returns ${counted(newSources.value, "source")} it neither cites nor gives a reason for"))
@@ -627,15 +630,15 @@ object AutopilotPolicy:
   // ── caps, housekeeping, throughput ─────────────────────────────────────────────────────────────
 
   /** What is left today of the ingests all watchers share (None: no shared cap). */
-  def sharedIngestLeft(cap: com.histmersion.domain.AutopilotPolicy.Cap, ingestedToday: com.histmersion.domain.AutopilotPolicy.IngestedToday): Option[com.histmersion.domain.AutopilotPolicy.Left] =
+  def sharedIngestLeft(cap: Cap, ingestedToday: IngestedToday): Option[Left] =
     Option.when(cap.value > 0)(Left(math.max(0, cap.value - math.max(0, ingestedToday.value))))
 
   /** Is a housekeeping job due: never run, or `everyHours` passed since (0 = never). */
-  def due(last: Option[Instant], everyHours: com.histmersion.domain.AutopilotPolicy.EveryHours, now: Instant): Boolean =
+  def due(last: Option[Instant], everyHours: EveryHours, now: Instant): Boolean =
     everyHours.value > 0 && last.forall(l => !l.plus(Duration.ofHours(everyHours.value.toLong)).isAfter(now))
 
   /** Days until `open` items are done at the pace of the last week (`doneLast7` items); None when nothing is open or
     * nothing was done.
     */
-  def etaDays(open: com.histmersion.domain.AutopilotPolicy.OpenCount, doneLast7: com.histmersion.domain.AutopilotPolicy.DoneLast7): Option[com.histmersion.domain.AutopilotPolicy.Days] =
+  def etaDays(open: OpenCount, doneLast7: DoneLast7): Option[Days] =
     Option.when(open.value > 0 && doneLast7.value > 0)(Days(math.max(1, math.ceil(open.value * 7.0 / doneLast7.value).toInt)))

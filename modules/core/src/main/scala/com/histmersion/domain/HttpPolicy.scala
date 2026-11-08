@@ -1,7 +1,10 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import java.time.{Instant, ZonedDateTime}
 import java.time.format.DateTimeFormatter
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The ONE outbound-HTTP policy (#1946): how every request the server makes to a third party — the acquisition APIs,
   * the media and event catalogues, the gazetteer downloads — identifies itself and what it does with a "slow down"
@@ -21,29 +24,29 @@ import java.time.format.DateTimeFormatter
   */
 object HttpPolicy:
   type MaxRetries = MaxRetries.T
-  object MaxRetries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxRetries extends RefinedType[Int, Pure]
   type MaxRetryAfterSeconds = MaxRetryAfterSeconds.T
-  object MaxRetryAfterSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxRetryAfterSeconds extends RefinedType[Int, Pure]
   type OsName = OsName.T
-  object OsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OsName extends RefinedType[String, Pure]
   type PemCertificate = PemCertificate.T
-  object PemCertificate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PemCertificate extends RefinedType[Array[Byte], Pure]
   type PemText = PemText.T
-  object PemText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PemText extends RefinedType[String, Pure]
   type RetryAfter = RetryAfter.T
-  object RetryAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RetryAfter extends RefinedType[String, Pure]
   type SlowDown = SlowDown.T
-  object SlowDown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SlowDown extends RefinedType[String, Pure]
   type StatusCode = StatusCode.T
-  object StatusCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StatusCode extends RefinedType[Int, Pure]
   type SystemTrust = SystemTrust.T
-  object SystemTrust extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SystemTrust extends RefinedType[Boolean, Pure]
   type UserAgent = UserAgent.T
-  object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UserAgent extends RefinedType[String, Pure]
 
   /** The number of the answer a step follows, counted from 0. */
   type Attempt = Attempt.T
-  object Attempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Attempt extends RefinedType[Int, Pure]
 
   /** What to do with an answer. */
   enum Step:
@@ -54,12 +57,12 @@ object HttpPolicy:
   object Step:
     object Wait:
       type Ms = Ms.T
-      object Ms extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Ms extends RefinedType[Long, Pure]
       type Why = Why.T
-      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Why extends RefinedType[String, Pure]
     object GiveUp:
       type Why = Why.T
-      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Why extends RefinedType[String, Pure]
 
   /** The answers that mean "try again later". */
   val Throttled: Set[StatusCode] = Set(StatusCode(429), StatusCode(502), StatusCode(503), StatusCode(504))
@@ -68,7 +71,7 @@ object HttpPolicy:
     * comment) removed — so a setting that once carried a contact can never put it on the wire. A blank result falls
     * back to `fallback`.
     */
-  def userAgent(configured: com.histmersion.domain.HttpPolicy.UserAgent, fallback: com.histmersion.domain.HttpPolicy.UserAgent = com.histmersion.domain.HttpPolicy.UserAgent("Histmersion")): com.histmersion.domain.HttpPolicy.UserAgent =
+  def userAgent(configured: UserAgent, fallback: UserAgent = UserAgent("Histmersion")): UserAgent =
     val cleaned = Option(configured.value)
       .getOrElse("")
       .replaceAll("""\(\s*mailto:[^)]*\)""", "")
@@ -79,10 +82,10 @@ object HttpPolicy:
     if cleaned.isEmpty then fallback else UserAgent(cleaned)
 
   /** The wait before asking again after the `attempt`-th (0-based) slow-down: 1, 2, 4 … s. */
-  def backoffMs(attempt: Attempt): com.histmersion.domain.HttpPolicy.Step.Wait.Ms = Step.Wait.Ms((1L << attempt.value.max(0).min(10)) * 1000L)
+  def backoffMs(attempt: Attempt): Step.Wait.Ms = Step.Wait.Ms((1L << attempt.value.max(0).min(10)) * 1000L)
 
   /** A `Retry-After` value — delay seconds or an HTTP date — as milliseconds from `now`. */
-  def retryAfterMs(v: Option[com.histmersion.domain.HttpPolicy.RetryAfter], now: Instant): Option[com.histmersion.domain.HttpPolicy.Step.Wait.Ms] =
+  def retryAfterMs(v: Option[RetryAfter], now: Instant): Option[Step.Wait.Ms] =
     v.map(_.value.trim).filter(_.nonEmpty).flatMap { s =>
       s.toLongOption
         .map(_ * 1000L)
@@ -98,13 +101,13 @@ object HttpPolicy:
     * code does not (MediaWiki's `maxlag` comes back as a 200), named `why`.
     */
   def decide(
-      code: com.histmersion.domain.HttpPolicy.StatusCode,
-      retryAfter: Option[com.histmersion.domain.HttpPolicy.RetryAfter],
+      code: StatusCode,
+      retryAfter: Option[RetryAfter],
       attempt: Attempt,
-      maxRetries: com.histmersion.domain.HttpPolicy.MaxRetries,
-      maxRetryAfterSeconds: com.histmersion.domain.HttpPolicy.MaxRetryAfterSeconds,
+      maxRetries: MaxRetries,
+      maxRetryAfterSeconds: MaxRetryAfterSeconds,
       now: Instant,
-      slowDown: Option[com.histmersion.domain.HttpPolicy.SlowDown] = None
+      slowDown: Option[SlowDown] = None
   ): Step =
     if Throttled(code) || slowDown.isDefined then
       val why = slowDown.fold(s"HTTP $code")(_.value)
@@ -136,13 +139,13 @@ object HttpPolicy:
   object Trust:
     object Keychains:
       type Paths = Paths.T
-      object Paths extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Paths extends RefinedType[String, Pure]
     object Bundle:
       type Paths = Paths.T
-      object Paths extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Paths extends RefinedType[String, Pure]
     object PemFile:
       type Path = Path.T
-      object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Path extends RefinedType[String, Pure]
 
   /** The macOS keychains that hold the system's roots: Apple's, and those an administrator added. */
   val MacKeychains: List[Trust.Keychains.Paths] =
@@ -155,7 +158,7 @@ object HttpPolicy:
   /** The trust sources of a configuration on an OS (`os.name`): the JDK's always; the system's when `systemTrust`
     * (macOS keychains, else the Linux bundles); a PEM file when one is named.
     */
-  def trust(systemTrust: com.histmersion.domain.HttpPolicy.SystemTrust, extraCaFile: Option[com.histmersion.domain.HttpPolicy.Trust.PemFile.Path], osName: com.histmersion.domain.HttpPolicy.OsName): List[Trust] =
+  def trust(systemTrust: SystemTrust, extraCaFile: Option[Trust.PemFile.Path], osName: OsName): List[Trust] =
     val mac = osName.value.toLowerCase(java.util.Locale.ROOT).contains("mac")
     val system = Option.when(systemTrust.value)(if mac then Trust.Keychains(MacKeychains) else Trust.Bundle(LinuxBundles))
     Trust.Jdk :: system.toList ++ extraCaFile.map(Trust.PemFile(_)).toList
@@ -166,7 +169,7 @@ object HttpPolicy:
   /** The DER bytes of every certificate in a PEM text, in order; anything else (keys, comments, `security`'s chatter, a
     * block that is not base64) is skipped.
     */
-  def pemCertificates(text: com.histmersion.domain.HttpPolicy.PemText): List[com.histmersion.domain.HttpPolicy.PemCertificate] =
+  def pemCertificates(text: PemText): List[PemCertificate] =
     PemCert.findAllMatchIn(Option(text.value).getOrElse("")).toList.flatMap { m =>
       scala.util
         .Try(java.util.Base64.getMimeDecoder.decode(m.group(1).replaceAll("\\s+", "")))

@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.Plural
 import com.histmersion.api.automation.ManagersMarkdown
@@ -10,6 +11,12 @@ import java.time.{Duration, Instant}
 import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.Manager
 import com.histmersion.domain.automation.Run
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Managers
+import com.histmersion.domain.automation.Pipeline
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.automation.Goal
 
 /** The pure half of the process managers (docs/research-process-managers.md §3.4): what to do with an item after its
   * run settled, the order items are dispatched in, how many runs a manager may start, the backoff, and the hold
@@ -17,67 +24,67 @@ import com.histmersion.domain.automation.Run
   */
 object ManagerPolicy:
   type ActiveAll = ActiveAll.T
-  object ActiveAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ActiveAll extends RefinedType[Int, Pure]
   type BlockReason = BlockReason.T
-  object BlockReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BlockReason extends RefinedType[String, Pure]
   type Capacity = Capacity.T
-  object Capacity extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Capacity extends RefinedType[Int, Pure]
   type DueCount = DueCount.T
-  object DueCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DueCount extends RefinedType[Int, Pure]
   type InFlightCount = InFlightCount.T
-  object InFlightCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InFlightCount extends RefinedType[Int, Pure]
   type InstantText = InstantText.T
-  object InstantText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InstantText extends RefinedType[String, Pure]
   type ItemId = ItemId.T
-  object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ItemId extends RefinedType[Long, Pure]
   type MaxConcurrent = MaxConcurrent.T
-  object MaxConcurrent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxConcurrent extends RefinedType[Int, Pure]
   type MinIntervalMinutes = MinIntervalMinutes.T
-  object MinIntervalMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinIntervalMinutes extends RefinedType[Int, Pure]
   type MineOpen = MineOpen.T
-  object MineOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MineOpen extends RefinedType[Int, Pure]
   type MineRunning = MineRunning.T
-  object MineRunning extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MineRunning extends RefinedType[Int, Pure]
   type PendingCount = PendingCount.T
-  object PendingCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PendingCount extends RefinedType[Int, Pure]
   type PoolCap = PoolCap.T
-  object PoolCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PoolCap extends RefinedType[Int, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Quota = Quota.T
-  object Quota extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Quota extends RefinedType[Int, Pure]
   type Room = Room.T
-  object Room extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Room extends RefinedType[Int, Pure]
   type StatusNote = StatusNote.T
-  object StatusNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StatusNote extends RefinedType[String, Pure]
   type StepLabel = StepLabel.T
-  object StepLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StepLabel extends RefinedType[String, Pure]
   type Tag = Tag.T
-  object Tag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tag extends RefinedType[String, Pure]
   type Topic = Topic.T
-  object Topic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Topic extends RefinedType[String, Pure]
   type Attempts = Attempts.T
-  object Attempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Attempts extends RefinedType[Int, Pure]
   type ApprovalId = ApprovalId.T
-  object ApprovalId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ApprovalId extends RefinedType[Long, Pure]
   type ItemNote = ItemNote.T
-  object ItemNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ItemNote extends RefinedType[String, Pure]
   type ItemOutcome = ItemOutcome.T
-  object ItemOutcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ItemOutcome extends RefinedType[String, Pure]
   type ItemTask = ItemTask.T
-  object ItemTask extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ItemTask extends RefinedType[String, Pure]
 
   /** What an item of a manager does: reviews an article, infers its coverage filter, plans a goal, proposes its articles,
     * sweeps for acquisitions or checks currency.
     */
   type ItemKind = ItemKind.T
-  object ItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-    val ArticleReview: ItemKind = ItemKind(com.histmersion.api.automation.Managers.ArticleReview)
-    val InferFilter: ItemKind = ItemKind(com.histmersion.api.automation.Managers.InferFilter)
-    val ProposeArticles: ItemKind = ItemKind(com.histmersion.api.automation.Managers.ProposeArticles)
-    val PlanGoalItem: ItemKind = ItemKind(com.histmersion.api.automation.Managers.PlanGoalItem)
-    val AcquisitionSweep: ItemKind = ItemKind(com.histmersion.api.automation.Managers.AcquisitionSweep)
-    val CurrencyCheck: ItemKind = ItemKind(com.histmersion.api.automation.Managers.CurrencyCheck)
+  object ItemKind extends RefinedType[String, Pure]:
+    val ArticleReview: ItemKind = ItemKind(Managers.ArticleReview)
+    val InferFilter: ItemKind = ItemKind(Managers.InferFilter)
+    val ProposeArticles: ItemKind = ItemKind(Managers.ProposeArticles)
+    val PlanGoalItem: ItemKind = ItemKind(Managers.PlanGoalItem)
+    val AcquisitionSweep: ItemKind = ItemKind(Managers.AcquisitionSweep)
+    val CurrencyCheck: ItemKind = ItemKind(Managers.CurrencyCheck)
 
   /** The count of `n` `singular` (`3 runs`). */
   private[domain] def counted(n: Int, singular: String): Plural.Phrase =
@@ -101,53 +108,53 @@ object ManagerPolicy:
       maxFailures: ReviewSettings.MaxFailures,
       backoffMinutes: ReviewSettings.BackoffMinutes,
       maxBackoffMinutes: ReviewSettings.MaxBackoffMinutes,
-      staleAfterDays: ReviewSettings.StaleAfterDays = com.histmersion.domain.ManagerPolicy.ReviewSettings.StaleAfterDays(0),
-      inferFilter: ReviewSettings.InferFilter = com.histmersion.domain.ManagerPolicy.ReviewSettings.InferFilter(false)
+      staleAfterDays: ReviewSettings.StaleAfterDays = ReviewSettings.StaleAfterDays(0),
+      inferFilter: ReviewSettings.InferFilter = ReviewSettings.InferFilter(false)
   )
 
   object ReviewSettings:
     /** The settings of a manager of kind `k`. */
     type MaxRuns = MaxRuns.T
-    object MaxRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxRuns extends RefinedType[Int, Pure]
     type MaxOpen = MaxOpen.T
-    object MaxOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxOpen extends RefinedType[Int, Pure]
     type Rounds = Rounds.T
-    object Rounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rounds extends RefinedType[Int, Pure]
     type MaxRunsPerArticle = MaxRunsPerArticle.T
-    object MaxRunsPerArticle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxRunsPerArticle extends RefinedType[Int, Pure]
     type NoProgressRuns = NoProgressRuns.T
-    object NoProgressRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NoProgressRuns extends RefinedType[Int, Pure]
     type ReopenLimit = ReopenLimit.T
-    object ReopenLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ReopenLimit extends RefinedType[Int, Pure]
     type CooldownMinutes = CooldownMinutes.T
-    object CooldownMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CooldownMinutes extends RefinedType[Int, Pure]
     type LowWater = LowWater.T
-    object LowWater extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LowWater extends RefinedType[Int, Pure]
     type RefillBatch = RefillBatch.T
-    object RefillBatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object RefillBatch extends RefinedType[Int, Pure]
     type MaxFailures = MaxFailures.T
-    object MaxFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxFailures extends RefinedType[Int, Pure]
     type BackoffMinutes = BackoffMinutes.T
-    object BackoffMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object BackoffMinutes extends RefinedType[Int, Pure]
     type MaxBackoffMinutes = MaxBackoffMinutes.T
-    object MaxBackoffMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxBackoffMinutes extends RefinedType[Int, Pure]
     type StaleAfterDays = StaleAfterDays.T
-    object StaleAfterDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object StaleAfterDays extends RefinedType[Int, Pure]
     type InferFilter = InferFilter.T
-    object InferFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object InferFilter extends RefinedType[Boolean, Pure]
 
     def forKind(k: Manager.Kind, c: ManagerConfig, m: ManagerDefaults): ReviewSettings =
       val maxRuns = math.max(0, c.maxRuns.fold(simple(k, m).maxRuns.value)(_.value))
       ReviewSettings(
         MaxRuns(maxRuns),
         MaxOpen(math.max(maxRuns, c.maxOpen.fold(2 * maxRuns)(_.value))),
-        com.histmersion.domain.ManagerPolicy.ReviewSettings.Rounds(1),
-        com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxRunsPerArticle(1),
-        com.histmersion.domain.ManagerPolicy.ReviewSettings.NoProgressRuns(1),
-        com.histmersion.domain.ManagerPolicy.ReviewSettings.ReopenLimit(1),
+        Rounds(1),
+        MaxRunsPerArticle(1),
+        NoProgressRuns(1),
+        ReopenLimit(1),
         CooldownMinutes(math.max(0, c.cooldownMinutes.fold(0)(_.value))),
-        com.histmersion.domain.ManagerPolicy.ReviewSettings.LowWater(0),
-        com.histmersion.domain.ManagerPolicy.ReviewSettings.RefillBatch(0),
+        LowWater(0),
+        RefillBatch(0),
         MaxFailures(math.max(1, c.maxFailures.fold(m.maxFailures.value)(_.value))),
         BackoffMinutes(math.max(1, m.backoffMinutes.value)),
         MaxBackoffMinutes(math.max(1, m.maxBackoffMinutes.value))
@@ -197,7 +204,7 @@ object ManagerPolicy:
   /** A cron a person sets: it parses, and it fires no more often than every `minIntervalMinutes`
     * (`agents.scheduler.min-interval-minutes`).
     */
-  def checkCron(text: Cron.Text, now: Instant, minIntervalMinutes: com.histmersion.domain.ManagerPolicy.MinIntervalMinutes): Either[Cron.Problem, Cron] =
+  def checkCron(text: Cron.Text, now: Instant, minIntervalMinutes: MinIntervalMinutes): Either[Cron.Problem, Cron] =
     Cron.parse(text).flatMap { c =>
       c.shortestGapMinutes(now).filter(_.value < minIntervalMinutes.value) match
         case Some(gap) =>
@@ -217,11 +224,11 @@ object ManagerPolicy:
   /** Why a manager starts nothing more today, if it does not: its runs' metered spend this UTC day reached its daily
     * cap. Plan-billed calls cost 0 USD, so this caps metered spend only.
     */
-  def dailyBlock(cap: Option[ManagerConfig.DailyUsd], spentToday: BigDecimal): Option[com.histmersion.domain.ManagerPolicy.BlockReason] =
+  def dailyBlock(cap: Option[ManagerConfig.DailyUsd], spentToday: BigDecimal): Option[BlockReason] =
     cap
       .filter(c => spentToday >= BigDecimal(c.value))
       .map(c =>
-        com.histmersion.domain.ManagerPolicy.BlockReason(
+        BlockReason(
           s"budget: its spend today (${ManagersMarkdown.usd(spentToday.toDouble)} USD, metered calls only) reached its daily-usd " +
             s"(${ManagersMarkdown.usd(c.value)}); it starts again tomorrow (UTC)"
         )
@@ -252,10 +259,10 @@ object ManagerPolicy:
   object Next:
     object Retry:
       type Failures = Failures.T
-      object Failures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Failures extends RefinedType[Int, Pure]
 
   /** `base · 2^(failures-1)` minutes, at most `max`. */
-  def backoff(baseMinutes: com.histmersion.domain.ManagerPolicy.ReviewSettings.BackoffMinutes, maxMinutes: com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxBackoffMinutes, failures: com.histmersion.domain.ManagerPolicy.Next.Retry.Failures): Duration =
+  def backoff(baseMinutes: ReviewSettings.BackoffMinutes, maxMinutes: ReviewSettings.MaxBackoffMinutes, failures: Next.Retry.Failures): Duration =
     val exp = math.min(30, math.max(0, failures.value - 1))
     val mins = math.min(maxMinutes.value.toLong, baseMinutes.value.toLong * (1L << exp))
     Duration.ofMinutes(math.max(1L, mins))
@@ -282,13 +289,13 @@ object ManagerPolicy:
     */
   def evaluateStep(
       s: ReviewSettings,
-      label: com.histmersion.domain.ManagerPolicy.StepLabel,
-      target: com.histmersion.domain.ManagerPolicy.Candidate.Target,
-      failures: com.histmersion.domain.ManagerPolicy.Next.Retry.Failures,
+      label: StepLabel,
+      target: Candidate.Target,
+      failures: Next.Retry.Failures,
       state: ItemState,
-      run: com.histmersion.domain.automation.Run.Id,
+      run: Run.Id,
       status: Run.State,
-      error: Option[com.histmersion.domain.ManagerPolicy.Problem],
+      error: Option[Problem],
       facts: => StepFacts,
       now: Instant
   ): Next =
@@ -339,7 +346,7 @@ object ManagerPolicy:
           )
 
   /** How an approval a held item waits for was decided, as its outcome (None: still open). */
-  def decided(state: com.histmersion.domain.automation.Approval.State.Wire, result: Option[com.histmersion.domain.automation.Approval.Outcome]): Option[com.histmersion.domain.automation.Approval.Outcome] =
+  def decided(state: Approval.State.Wire, result: Option[Approval.Outcome]): Option[Approval.Outcome] =
     Approval.State.parse(state).filter(_ != Approval.State.Open).map { st =>
       Approval.Outcome(st.wire.value + result.map(_.value).filter(_.nonEmpty).fold("")(r => s": ${r.take(300)}"))
     }
@@ -348,7 +355,7 @@ object ManagerPolicy:
     * still open (pending, held or active), a goal's article proposal while its plan-goal item is? `open` = the
     * manager's open items (kind, target).
     */
-  def waitsFor(kind: ItemKind, target: com.histmersion.domain.ManagerPolicy.Candidate.Target, open: List[(ItemKind, com.histmersion.domain.ManagerPolicy.Candidate.Target)]): Boolean =
+  def waitsFor(kind: ItemKind, target: Candidate.Target, open: List[(ItemKind, Candidate.Target)]): Boolean =
     (kind == ItemKind.ArticleReview && open.contains((ItemKind.InferFilter, target))) ||
       (kind == ItemKind.ProposeArticles && open.contains((ItemKind.PlanGoalItem, target)))
 
@@ -361,7 +368,7 @@ object ManagerPolicy:
     * and acquisition items), so a plan waiting days for a person does not stop its watcher, nor a sweep the proposal
     * (which waits for the plan through [[waitsFor]]).
     */
-  def blocks(kind: ItemKind, pipeline: com.histmersion.domain.automation.Pipeline.Wire, unsettled: Seq[com.histmersion.domain.automation.Pipeline.Wire]): Boolean =
+  def blocks(kind: ItemKind, pipeline: Pipeline.Wire, unsettled: Seq[Pipeline.Wire]): Boolean =
     if GoalKinds(kind) then unsettled.contains(pipeline) else unsettled.nonEmpty
 
   // ── dispatch ───────────────────────────────────────────────────────────────────────────────────
@@ -371,12 +378,12 @@ object ManagerPolicy:
 
   object Candidate:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
+    object Id extends RefinedType[Long, Pure]:
+      given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
     type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Target extends RefinedType[String, Pure]
     type Priority = Priority.T
-    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Priority extends RefinedType[Int, Pure]
 
   /** May it start now? */
   def due(c: Candidate, now: Instant): Boolean = c.notBefore.forall(!_.isAfter(now))
@@ -392,15 +399,15 @@ object ManagerPolicy:
     * waiting included), and its pools' (`poolCap`, the calls its models' plan pools take at once). Never negative.
     */
   def capacity(
-      maxConcurrent: com.histmersion.domain.ManagerPolicy.MaxConcurrent,
-      activeAll: com.histmersion.domain.ManagerPolicy.ActiveAll,
-      maxRuns: com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxRuns,
-      mineRunning: com.histmersion.domain.ManagerPolicy.MineRunning,
-      maxOpen: com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxOpen,
-      mineOpen: com.histmersion.domain.ManagerPolicy.MineOpen,
-      poolCap: Option[com.histmersion.domain.ManagerPolicy.PoolCap]
-  ): com.histmersion.domain.ManagerPolicy.Capacity =
-    com.histmersion.domain.ManagerPolicy.Capacity(
+      maxConcurrent: MaxConcurrent,
+      activeAll: ActiveAll,
+      maxRuns: ReviewSettings.MaxRuns,
+      mineRunning: MineRunning,
+      maxOpen: ReviewSettings.MaxOpen,
+      mineOpen: MineOpen,
+      poolCap: Option[PoolCap]
+  ): Capacity =
+    Capacity(
       List(
         maxConcurrent.value - activeAll.value,
         maxRuns.value - mineRunning.value,
@@ -412,7 +419,7 @@ object ManagerPolicy:
   /** Several managers sharing the global room: one item from each in turn (in the order given), each within its own
     * `cap`, until `room` is used or nothing is left.
     */
-  def roundRobin[M, A](queues: List[(M, com.histmersion.domain.ManagerPolicy.Quota, List[A])], room: com.histmersion.domain.ManagerPolicy.Room): List[(M, A)] =
+  def roundRobin[M, A](queues: List[(M, Quota, List[A])], room: Room): List[(M, A)] =
     @annotation.tailrec
     def go(qs: List[(M, Int, List[A])], left: Int, acc: Vector[(M, A)]): Vector[(M, A)] =
       val live = qs.filter((_, cap, as) => cap > 0 && as.nonEmpty)
@@ -429,17 +436,17 @@ object ManagerPolicy:
   /** Is a hold over: its date passed, or the source it waits for exists. A hold with neither waits for a person's
     * release.
     */
-  def released(h: Hold, now: Instant, sourceExists: com.histmersion.domain.library.Citekey => Boolean): Boolean =
+  def released(h: Hold, now: Instant, sourceExists: Citekey => Boolean): Boolean =
     h.until
       .flatMap(u => parseInstant(InstantText(u.value)))
       .exists(!_.isAfter(now)) || h.untilSource
       .map(_.value.trim)
       .filter(_.nonEmpty)
-      .map(com.histmersion.domain.library.Citekey.assume(_))
+      .map(Citekey.assume(_))
       .exists(sourceExists)
 
   /** `2026-11-01` (UTC midnight) or an ISO instant. */
-  def parseInstant(s: com.histmersion.domain.ManagerPolicy.InstantText): Option[Instant] =
+  def parseInstant(s: InstantText): Option[Instant] =
     val t = s.value.trim
     scala.util
       .Try(Instant.parse(t))
@@ -449,20 +456,20 @@ object ManagerPolicy:
   /** The status line a manager shows. */
   def statusNote(
       state: Manager.State,
-      starved: Option[com.histmersion.domain.ManagerPolicy.StatusNote],
-      capacity: com.histmersion.domain.ManagerPolicy.Capacity,
-      pending: com.histmersion.domain.ManagerPolicy.PendingCount,
-      due: com.histmersion.domain.ManagerPolicy.DueCount,
-      inFlight: com.histmersion.domain.ManagerPolicy.InFlightCount,
-      budget: Option[com.histmersion.domain.ManagerPolicy.BlockReason]
-  ): com.histmersion.domain.ManagerPolicy.StatusNote =
-    if state == Manager.State.Stopped then com.histmersion.domain.ManagerPolicy.StatusNote("stopped")
+      starved: Option[StatusNote],
+      capacity: Capacity,
+      pending: PendingCount,
+      due: DueCount,
+      inFlight: InFlightCount,
+      budget: Option[BlockReason]
+  ): StatusNote =
+    if state == Manager.State.Stopped then StatusNote("stopped")
     else if state == Manager.State.Paused then
-      com.histmersion.domain.ManagerPolicy.StatusNote(
+      StatusNote(
         if inFlight.value > 0 then s"paused (${counted(inFlight.value, "run")} in flight)" else "paused"
       )
     else
-      com.histmersion.domain.ManagerPolicy.StatusNote(
+      StatusNote(
         budget.map(_.value).orElse(starved.map(s => s"starved: $s")).getOrElse {
           if pending.value == 0 && inFlight.value == 0 then "idle"
           else if due.value > 0 && capacity.value == 0 then
@@ -476,7 +483,7 @@ object ManagerPolicy:
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 
   /** Does a structured hint effect name this target (by slug, or by one of its tags/topics/goals)? */
-  def matches(e: HintEffect, target: com.histmersion.domain.ManagerPolicy.Candidate.Target, tags: List[com.histmersion.domain.ManagerPolicy.Tag], topics: List[com.histmersion.domain.ManagerPolicy.Topic], goals: List[com.histmersion.domain.automation.Goal.Slug]): Boolean =
+  def matches(e: HintEffect, target: Candidate.Target, tags: List[Tag], topics: List[Topic], goals: List[Goal.Slug]): Boolean =
     def eq(a: String, b: String) = a.trim.equalsIgnoreCase(b.trim)
     e.targets.exists(t => eq(t.value, target.value)) || e.tag.exists(t => tags.exists(x => eq(x.value, t.value))) ||
     e.topic.exists(t => topics.exists(x => eq(x.value, t.value))) || e.goal.exists(g => goals.exists(x => eq(x.value, g.value)))
@@ -484,5 +491,5 @@ object ManagerPolicy:
   /** The notes a run is given: the manager's live standing hints and unconsumed once-hints, manager-wide or about this
     * item, oldest first.
     */
-  def notesFor(hints: List[ManagerHint], itemId: com.histmersion.domain.ManagerPolicy.ItemId): List[ManagerHint] =
+  def notesFor(hints: List[ManagerHint], itemId: ItemId): List[ManagerHint] =
     hints.filter(h => h.retiredAt.isEmpty && h.itemId.forall(_.value == itemId.value) && h.text.value.trim.nonEmpty).sortBy(h => h.id.value: Long)

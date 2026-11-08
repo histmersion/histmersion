@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.api.exchange.MergeDecision
 
@@ -6,6 +7,8 @@ import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.domain.MergePlanner
 
 import java.util.UUID
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a kind's rules can ask and add while a plan looks at what a pair of sources owns: the input, the revs, which
   * uids are here, and the issues the kind adds.
@@ -29,8 +32,8 @@ trait PairQuestions:
   def ask(issue: MergeIssue, importable: Set[MergeDecision.Kind]): Unit
 
   /** A line of the plan's notes. */
-  def info(line: com.histmersion.util.data.exchange.PairQuestions.InfoLine): Unit
+  def info(line: PairQuestions.InfoLine): Unit
 
 object PairQuestions:
   type InfoLine = InfoLine.T
-  object InfoLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InfoLine extends RefinedType[String, Pure]

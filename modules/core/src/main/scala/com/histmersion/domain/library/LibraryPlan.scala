@@ -1,4 +1,5 @@
-package com.histmersion.domain.library
+package com.histmersion
+package domain.library
 
 import com.histmersion.domain.MergePlanner
 import com.histmersion.domain.library.findings.FindingPlan

@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -23,6 +24,10 @@ import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.{IssueHunk, IssueSpan, MergeResolution, MergeResolutions}
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.MergeIssue as Issue
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.exchange.IssueField
+import com.histmersion.api.research.Article
 
 /** What the merge carries and decides beyond M4–M5 (docs/research-merge-import.md §7.8): places and named periods of a
   * collection's own, events matched across two ids, a goal's plan, links and schedules (#881), old article slugs, and
@@ -52,42 +57,42 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
       label: Bundle.Place.Label,
       geom: Option[Bundle.Place.Geom] = Some(PointA),
       origin: java.util.UUID = work
-  ): com.histmersion.api.exchange.Bundle.Place =
-    com.histmersion.api.exchange.Bundle.Place(
+  ): Bundle.Place =
+    Bundle.Place(
       uid(id),
       origin,
       pid,
       label,
-      com.histmersion.api.exchange.Bundle.Place.Kind("site"),
+      Bundle.Place.Kind("site"),
       geom,
-      Some(com.histmersion.api.exchange.Bundle.Range(Some(com.histmersion.api.catalogue.Year(-1650)), Some(com.histmersion.api.catalogue.Year(-1180)))),
+      Some(Bundle.Range(Some(Year(-1650)), Some(Year(-1180)))),
       None,
       None,
-      List(com.histmersion.api.exchange.Bundle.PlaceName(com.histmersion.api.exchange.Bundle.PlaceName.Name(label.value), None, None)),
+      List(Bundle.PlaceName(Bundle.PlaceName.Name(label.value), None, None)),
       Nil,
       Nil,
       Nil,
-      com.histmersion.api.exchange.Bundle.Place.UpdatedAt(At)
+      Bundle.Place.UpdatedAt(At)
     )
 
   private def period(
       id: String,
       pid: Bundle.Period.Id,
       label: Bundle.Period.Label,
-      from: com.histmersion.api.catalogue.Year,
-      to: com.histmersion.api.catalogue.Year,
+      from: Year,
+      to: Year,
       origin: java.util.UUID = work
-  ): com.histmersion.api.exchange.Bundle.Period =
-    com.histmersion.api.exchange.Bundle.Period(
+  ): Bundle.Period =
+    Bundle.Period(
       uid(id),
       origin,
       pid,
       label,
-      Some(com.histmersion.api.exchange.Bundle.Period.Authority("me")),
-      Some(com.histmersion.api.exchange.Bundle.Range(Some(from), Some(to))),
+      Some(Bundle.Period.Authority("me")),
+      Some(Bundle.Range(Some(from), Some(to))),
       None,
       None,
-      com.histmersion.api.exchange.Bundle.Period.UpdatedAt(At)
+      Bundle.Period.UpdatedAt(At)
     )
 
   // ── places ────────────────────────────────────────────────────────────────────────────────────
@@ -96,7 +101,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val fresh = place("w-p1", Bundle.Place.Id("zz_hattusa"), Bundle.Place.Label("Hattusa"))
     val same = place("w-p2", Bundle.Place.Id("zz_kanesh"), Bundle.Place.Label("Kanesh"))
     val ours = same.modify(
-      _.uid).setTo(uid("h-p2")).modify(_.origin).setTo(home).modify(_.names).setTo(List(com.histmersion.api.exchange.Bundle.PlaceName(com.histmersion.api.exchange.Bundle.PlaceName.Name("Kültepe"), Some(com.histmersion.api.exchange.Bundle.PlaceName.Lang("tr")), None))
+      _.uid).setTo(uid("h-p2")).modify(_.origin).setTo(home).modify(_.names).setTo(List(Bundle.PlaceName(Bundle.PlaceName.Name("Kültepe"), Some(Bundle.PlaceName.Lang("tr")), None))
     )
     val r = run(foreign.modify(_.places).setTo(List(fresh, same)), in => in.modify(_.local).setTo(in.local.modify(_.places).setTo(List(ours))))
     assertEquals(r.rows.find(_.foreignUid == fresh.uid).map(_.decision), Some(Decision.Insert))
@@ -133,7 +138,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
   test("places: a place matched here under another id (label and geometry) is one, and events point at ours"):
     val theirs = place("w-p4", Bundle.Place.Id("work_troy"), Bundle.Place.Label("Troy"))
     val ours = place("h-p4", Bundle.Place.Id("pleiades_550595"), Bundle.Place.Label("Troy"), origin = home)
-    val ev = event("w-ev-troy", "zz_troy_fire", "Troy burns").copy(placeId = Some(com.histmersion.api.catalogue.Place.Id("work_troy")))
+    val ev = event("w-ev-troy", "zz_troy_fire", "Troy burns").copy(placeId = Some(Place.Id("work_troy")))
     val r = run(
       foreign.copy(places = List(theirs), events = List(ev)),
       i => i.modify(_.local).setTo(i.local.modify(_.places).setTo(List(ours))).modify(_.placeMatches).setTo(Map(theirs.uid -> Bundle.Place.Id("pleiades_550595")))
@@ -144,8 +149,8 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
 
   test("places: an event whose place only the bundle carries is no problem; one nobody has still is"):
     val p = place("w-p5", Bundle.Place.Id("zz_new_site"), Bundle.Place.Label("New site"))
-    val ok = event("w-ev-ok", "zz_ev_ok", "At the new site").copy(placeId = Some(com.histmersion.api.catalogue.Place.Id("zz_new_site")))
-    val no = event("w-ev-no", "zz_ev_no", "Nowhere").copy(placeId = Some(com.histmersion.api.catalogue.Place.Id("zz_nowhere")))
+    val ok = event("w-ev-ok", "zz_ev_ok", "At the new site").copy(placeId = Some(Place.Id("zz_new_site")))
+    val no = event("w-ev-no", "zz_ev_no", "Nowhere").copy(placeId = Some(Place.Id("zz_nowhere")))
     val r = run(foreign.copy(places = List(p), events = List(ok, no)))
     assertEquals(r.plan.problems.filter(_.value.contains("gazetteer")).map(_.value.takeWhile(_ != ':')), List("event zz_ev_no"))
 
@@ -166,7 +171,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
   test("places: a rename over there is followed — the new id is written, events keep pointing at it"):
     val ours = place("h-p8", Bundle.Place.Id("zz_old_site"), Bundle.Place.Label("Site"), origin = home)
     val theirs = ours.modify(_.id).setTo(Bundle.Place.Id("zz_new_site"))
-    val ev = event("w-ev-site", "zz_at_site", "At the site").copy(placeId = Some(com.histmersion.api.catalogue.Place.Id("zz_new_site")))
+    val ev = event("w-ev-site", "zz_at_site", "At the site").copy(placeId = Some(Place.Id("zz_new_site")))
     val r = run(
       foreign.copy(places = List(theirs), events = List(ev)),
       i => i.modify(_.local).setTo(i.local.modify(_.places).setTo(List(ours)))
@@ -184,7 +189,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val ours = place("h-p9", Bundle.Place.Id("zz_old_site"), Bundle.Place.Label("Site"), origin = home)
     val other = place("h-p10", Bundle.Place.Id("zz_new_site"), Bundle.Place.Label("Another site"), Some(PointB), origin = home)
     val theirs = ours.modify(_.id).setTo(Bundle.Place.Id("zz_new_site"))
-    val ev = event("w-ev-site2", "zz_at_site2", "At the site").copy(placeId = Some(com.histmersion.api.catalogue.Place.Id("zz_new_site")))
+    val ev = event("w-ev-site2", "zz_at_site2", "At the site").copy(placeId = Some(Place.Id("zz_new_site")))
     val r = run(
       foreign.copy(places = List(theirs), events = List(ev)),
       i => i.modify(_.local).setTo(i.local.modify(_.places).setTo(List(ours, other)))
@@ -199,13 +204,13 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     )
 
   test("named periods: the same id and span is one; a different span asks; a match by label folds"):
-    val same = period("w-n1", Bundle.Period.Id("zz_lba"), Bundle.Period.Label("Late Bronze Age"), com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1200))
-    val differ = period("w-n2", Bundle.Period.Id("zz_iron"), Bundle.Period.Label("Iron Age"), com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-550))
-    val other = period("w-n3", Bundle.Period.Id("work_mba"), Bundle.Period.Label("Middle Bronze Age"), com.histmersion.api.catalogue.Year(-2000), com.histmersion.api.catalogue.Year(-1600))
+    val same = period("w-n1", Bundle.Period.Id("zz_lba"), Bundle.Period.Label("Late Bronze Age"), Year(-1600), Year(-1200))
+    val differ = period("w-n2", Bundle.Period.Id("zz_iron"), Bundle.Period.Label("Iron Age"), Year(-1200), Year(-550))
+    val other = period("w-n3", Bundle.Period.Id("work_mba"), Bundle.Period.Label("Middle Bronze Age"), Year(-2000), Year(-1600))
     val local = List(
       same.modify(_.uid).setTo(uid("h-n1")).modify(_.origin).setTo(home),
-      period("h-n2", Bundle.Period.Id("zz_iron"), Bundle.Period.Label("Iron Age"), com.histmersion.api.catalogue.Year(-1150), com.histmersion.api.catalogue.Year(-586), home),
-      period("h-n3", Bundle.Period.Id("periodo_mba"), Bundle.Period.Label("Middle Bronze Age"), com.histmersion.api.catalogue.Year(-2100), com.histmersion.api.catalogue.Year(-1550), home)
+      period("h-n2", Bundle.Period.Id("zz_iron"), Bundle.Period.Label("Iron Age"), Year(-1150), Year(-586), home),
+      period("h-n3", Bundle.Period.Id("periodo_mba"), Bundle.Period.Label("Middle Bronze Age"), Year(-2100), Year(-1550), home)
     )
     val r = run(
       foreign.modify(_.periods).setTo(List(same, differ, other)),
@@ -221,8 +226,8 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
 
   test("events: the same label, overlapping dates and the same place under two ids are one event"):
     val theirs =
-      event("w-ev-k", "work_kadesh", "Battle of Kadesh", from = -1274, to = -1274).copy(placeId = Some(com.histmersion.api.catalogue.Place.Id("zz_kadesh")))
-    val ours = event("h-ev-k", "kadesh_1274", "battle of  Kadesh", home, -1275, -1274).copy(placeId = Some(com.histmersion.api.catalogue.Place.Id("zz_kadesh")))
+      event("w-ev-k", "work_kadesh", "Battle of Kadesh", from = -1274, to = -1274).copy(placeId = Some(Place.Id("zz_kadesh")))
+    val ours = event("h-ev-k", "kadesh_1274", "battle of  Kadesh", home, -1275, -1274).copy(placeId = Some(Place.Id("zz_kadesh")))
     val elsewhere = theirs.modify(_.uid).setTo(uid("w-ev-k2")).modify(_.id).setTo(Bundle.Event.Id("work_kadesh2")).modify(_.placeId).setTo(Some(Bundle.Event.PlaceId("zz_other")))
     val in: MergePlanner.Input => MergePlanner.Input =
       i => i.modify(_.local).setTo(i.local.modify(_.events).setTo(i.local.events :+ ours)).modify(_.places).setTo(Set(MergePlanner.Input.Places("zz_kadesh"), MergePlanner.Input.Places("zz_other")))
@@ -277,19 +282,19 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     "MergeFold.keepLocalSchedules: links unioned (by uid, else label), our schedules kept, theirs only where we have none"
   ):
     val l = goal("g", "g", "G").copy(
-      links = Some(List(com.histmersion.api.exchange.Bundle.GoalLink(com.histmersion.api.exchange.Bundle.GoalLink.Kind("source"), com.histmersion.api.exchange.Bundle.GoalLink.Ref("a2001_x"), Some(uid("s-a")), None, com.histmersion.api.exchange.Bundle.GoalLink.CreatedAt(At)))),
-      schedules = Some(List(com.histmersion.api.exchange.Bundle.GoalSchedule(com.histmersion.api.exchange.Bundle.GoalSchedule.Kind("currency"), com.histmersion.api.exchange.Bundle.GoalSchedule.Cron("@weekly"), com.histmersion.api.exchange.Bundle.GoalSchedule.Enabled(true), None)))
+      links = Some(List(Bundle.GoalLink(Bundle.GoalLink.Kind("source"), Bundle.GoalLink.Ref("a2001_x"), Some(uid("s-a")), None, Bundle.GoalLink.CreatedAt(At)))),
+      schedules = Some(List(Bundle.GoalSchedule(Bundle.GoalSchedule.Kind("currency"), Bundle.GoalSchedule.Cron("@weekly"), Bundle.GoalSchedule.Enabled(true), None)))
     )
     val r = l.modify(
       _.links).setTo(Some(
         List(
-          com.histmersion.api.exchange.Bundle.GoalLink(com.histmersion.api.exchange.Bundle.GoalLink.Kind("source"), com.histmersion.api.exchange.Bundle.GoalLink.Ref("a2001_old"), Some(uid("s-a")), Some(com.histmersion.api.exchange.Bundle.GoalLink.Note("theirs")), com.histmersion.api.exchange.Bundle.GoalLink.CreatedAt(At)),
-          com.histmersion.api.exchange.Bundle.GoalLink(com.histmersion.api.exchange.Bundle.GoalLink.Kind("query"), com.histmersion.api.exchange.Bundle.GoalLink.Ref("hittite storm god"), None, None, com.histmersion.api.exchange.Bundle.GoalLink.CreatedAt(At))
+          Bundle.GoalLink(Bundle.GoalLink.Kind("source"), Bundle.GoalLink.Ref("a2001_old"), Some(uid("s-a")), Some(Bundle.GoalLink.Note("theirs")), Bundle.GoalLink.CreatedAt(At)),
+          Bundle.GoalLink(Bundle.GoalLink.Kind("query"), Bundle.GoalLink.Ref("hittite storm god"), None, None, Bundle.GoalLink.CreatedAt(At))
         )
       )).modify(_.schedules).setTo(Some(
         List(
-          com.histmersion.api.exchange.Bundle.GoalSchedule(com.histmersion.api.exchange.Bundle.GoalSchedule.Kind("currency"), com.histmersion.api.exchange.Bundle.GoalSchedule.Cron("@daily"), com.histmersion.api.exchange.Bundle.GoalSchedule.Enabled(false), Some(com.histmersion.api.exchange.Bundle.GoalSchedule.BudgetUsd(1.5))),
-          com.histmersion.api.exchange.Bundle.GoalSchedule(com.histmersion.api.exchange.Bundle.GoalSchedule.Kind("acquisition"), com.histmersion.api.exchange.Bundle.GoalSchedule.Cron("@monthly"), com.histmersion.api.exchange.Bundle.GoalSchedule.Enabled(true), None)
+          Bundle.GoalSchedule(Bundle.GoalSchedule.Kind("currency"), Bundle.GoalSchedule.Cron("@daily"), Bundle.GoalSchedule.Enabled(false), Some(Bundle.GoalSchedule.BudgetUsd(1.5))),
+          Bundle.GoalSchedule(Bundle.GoalSchedule.Kind("acquisition"), Bundle.GoalSchedule.Cron("@monthly"), Bundle.GoalSchedule.Enabled(true), None)
         )
       )
     )
@@ -306,12 +311,12 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
   ):
     val g0 =
       localGoal.modify(
-        _.plan).setTo(Some(planA)).modify(_.schedules).setTo(Some(List(com.histmersion.api.exchange.Bundle.GoalSchedule(com.histmersion.api.exchange.Bundle.GoalSchedule.Kind("currency"), com.histmersion.api.exchange.Bundle.GoalSchedule.Cron("@weekly"), com.histmersion.api.exchange.Bundle.GoalSchedule.Enabled(true), None)))
+        _.plan).setTo(Some(planA)).modify(_.schedules).setTo(Some(List(Bundle.GoalSchedule(Bundle.GoalSchedule.Kind("currency"), Bundle.GoalSchedule.Cron("@weekly"), Bundle.GoalSchedule.Enabled(true), None)))
       )
     val theirs = goal("w-goal", "zz_goal_both", "Goal created at work").copy(
       plan = Some(planB),
-      schedules = Some(List(com.histmersion.api.exchange.Bundle.GoalSchedule(com.histmersion.api.exchange.Bundle.GoalSchedule.Kind("currency"), com.histmersion.api.exchange.Bundle.GoalSchedule.Cron("@daily"), com.histmersion.api.exchange.Bundle.GoalSchedule.Enabled(true), None))),
-      links = Some(List(com.histmersion.api.exchange.Bundle.GoalLink(com.histmersion.api.exchange.Bundle.GoalLink.Kind("query"), com.histmersion.api.exchange.Bundle.GoalLink.Ref("ahhiyawa"), None, None, com.histmersion.api.exchange.Bundle.GoalLink.CreatedAt(At))))
+      schedules = Some(List(Bundle.GoalSchedule(Bundle.GoalSchedule.Kind("currency"), Bundle.GoalSchedule.Cron("@daily"), Bundle.GoalSchedule.Enabled(true), None))),
+      links = Some(List(Bundle.GoalLink(Bundle.GoalLink.Kind("query"), Bundle.GoalLink.Ref("ahhiyawa"), None, None, Bundle.GoalLink.CreatedAt(At))))
     )
     val es = foreign.modify(_.goals).setTo(List(theirs))
     val in: MergePlanner.Input => MergePlanner.Input = i => i.modify(_.local).setTo(i.local.modify(_.goals).setTo(List(goalHere, g0)))
@@ -338,8 +343,8 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val linked = goal("w-goal-l", "zz_goal_linked", "Linked").copy(
       links = Some(
         List(
-          com.histmersion.api.exchange.Bundle
-            .GoalLink(com.histmersion.api.exchange.Bundle.GoalLink.Kind("source"), com.histmersion.api.exchange.Bundle.GoalLink.Ref("guterbock1997_perspectives"), Some(uid("w-guterbock")), None, com.histmersion.api.exchange.Bundle.GoalLink.CreatedAt(At))
+          Bundle
+            .GoalLink(Bundle.GoalLink.Kind("source"), Bundle.GoalLink.Ref("guterbock1997_perspectives"), Some(uid("w-guterbock")), None, Bundle.GoalLink.CreatedAt(At))
         )
       )
     )
@@ -352,8 +357,8 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
   // ── old article slugs ─────────────────────────────────────────────────────────────────────────
 
   test("old article slugs travel; one that names another article here is left out and said"):
-    val ok = com.histmersion.api.exchange.Bundle.ArticleAlias(com.histmersion.api.exchange.Bundle.ArticleAlias.Alias("bronze_collapse_old"), uid("w-bac"), com.histmersion.api.exchange.Bundle.ArticleAlias.CreatedAt(At))
-    val taken = com.histmersion.api.exchange.Bundle.ArticleAlias(com.histmersion.api.exchange.Bundle.ArticleAlias.Alias("zz_same_text"), uid("w-bac"), com.histmersion.api.exchange.Bundle.ArticleAlias.CreatedAt(At))
+    val ok = Bundle.ArticleAlias(Bundle.ArticleAlias.Alias("bronze_collapse_old"), uid("w-bac"), Bundle.ArticleAlias.CreatedAt(At))
+    val taken = Bundle.ArticleAlias(Bundle.ArticleAlias.Alias("zz_same_text"), uid("w-bac"), Bundle.ArticleAlias.CreatedAt(At))
     val r = run(foreign.modify(_.articleAliases).setTo(List(ok, taken)))
     assertEquals(r.localized.articleAliases.map(_.alias), List("bronze_collapse_old"))
     assert(r.notes.exists(_.value.contains("old slug zz_same_text")), r.notes.mkString("\n"))
@@ -369,17 +374,17 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
       goals = List(gl),
       places = List(pl),
       eventAliases = List(
-        com.histmersion.api.exchange.Bundle.EventAlias(com.histmersion.api.exchange.Bundle.EventAlias.Alias("zz_ev_before"), ev.uid, com.histmersion.api.exchange.Bundle.EventAlias.CreatedAt(At)),
-        com.histmersion.api.exchange.Bundle.EventAlias(com.histmersion.api.exchange.Bundle.EventAlias.Alias("zz_ev_taken"), ev.uid, com.histmersion.api.exchange.Bundle.EventAlias.CreatedAt(At))
+        Bundle.EventAlias(Bundle.EventAlias.Alias("zz_ev_before"), ev.uid, Bundle.EventAlias.CreatedAt(At)),
+        Bundle.EventAlias(Bundle.EventAlias.Alias("zz_ev_taken"), ev.uid, Bundle.EventAlias.CreatedAt(At))
       ),
       goalAliases = List(
-        com.histmersion.api.exchange.Bundle.GoalAlias(com.histmersion.api.exchange.Bundle.GoalAlias.Alias("zz_goal_before"), gl.uid, com.histmersion.api.exchange.Bundle.GoalAlias.CreatedAt(At)),
-        com.histmersion.api.exchange.Bundle.GoalAlias(com.histmersion.api.exchange.Bundle.GoalAlias.Alias("zz_goal_taken"), gl.uid, com.histmersion.api.exchange.Bundle.GoalAlias.CreatedAt(At))
+        Bundle.GoalAlias(Bundle.GoalAlias.Alias("zz_goal_before"), gl.uid, Bundle.GoalAlias.CreatedAt(At)),
+        Bundle.GoalAlias(Bundle.GoalAlias.Alias("zz_goal_taken"), gl.uid, Bundle.GoalAlias.CreatedAt(At))
       ),
       placeAliases = List(
-        com.histmersion.api.exchange.Bundle.PlaceAlias(com.histmersion.api.exchange.Bundle.PlaceAlias.Alias("zz_place_before"), pl.uid, com.histmersion.api.exchange.Bundle.PlaceAlias.CreatedAt(At)),
-        com.histmersion.api.exchange.Bundle.PlaceAlias(com.histmersion.api.exchange.Bundle.PlaceAlias.Alias("zz_place_taken"), pl.uid, com.histmersion.api.exchange.Bundle.PlaceAlias.CreatedAt(At)),
-        com.histmersion.api.exchange.Bundle.PlaceAlias(com.histmersion.api.exchange.Bundle.PlaceAlias.Alias("zz_place_old_here"), pl.uid, com.histmersion.api.exchange.Bundle.PlaceAlias.CreatedAt(At))
+        Bundle.PlaceAlias(Bundle.PlaceAlias.Alias("zz_place_before"), pl.uid, Bundle.PlaceAlias.CreatedAt(At)),
+        Bundle.PlaceAlias(Bundle.PlaceAlias.Alias("zz_place_taken"), pl.uid, Bundle.PlaceAlias.CreatedAt(At)),
+        Bundle.PlaceAlias(Bundle.PlaceAlias.Alias("zz_place_old_here"), pl.uid, Bundle.PlaceAlias.CreatedAt(At))
       )
     )
     // here: a record of each kind already answers to the `…_taken` label, and an old id of another place
@@ -403,7 +408,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     ).foreach(n => assert(r.notes.exists(_.value.contains(n)), s"$n: ${r.notes.mkString("\n")}"))
     // an old label that already names THIS record here is kept (a re-import of the same rename)
     val again = run(
-      es.modify(_.eventAliases).setTo(List(com.histmersion.api.exchange.Bundle.EventAlias(com.histmersion.api.exchange.Bundle.EventAlias.Alias("zz_ev_mine"), ev.uid, com.histmersion.api.exchange.Bundle.EventAlias.CreatedAt(At)))),
+      es.modify(_.eventAliases).setTo(List(Bundle.EventAlias(Bundle.EventAlias.Alias("zz_ev_mine"), ev.uid, Bundle.EventAlias.CreatedAt(At)))),
       i => i.modify(_.labels).setTo(i.labels.modify(_.eventAliases).setTo(Map(Bundle.EventAlias.Alias("zz_ev_mine") -> ev.uid)))
     )
     assertEquals(again.localized.eventAliases.map(_.alias), List("zz_ev_mine"))
@@ -414,7 +419,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val r = run(
       foreign.copy(
         places = List(theirs),
-        placeAliases = List(com.histmersion.api.exchange.Bundle.PlaceAlias(com.histmersion.api.exchange.Bundle.PlaceAlias.Alias("work_troy_old"), theirs.uid, com.histmersion.api.exchange.Bundle.PlaceAlias.CreatedAt(At)))
+        placeAliases = List(Bundle.PlaceAlias(Bundle.PlaceAlias.Alias("work_troy_old"), theirs.uid, Bundle.PlaceAlias.CreatedAt(At)))
       ),
       i => i.modify(_.local).setTo(i.local.modify(_.places).setTo(List(ours))).modify(_.placeMatches).setTo(Map(theirs.uid -> Bundle.Place.Id("pleiades_550596")))
     )
@@ -422,9 +427,9 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
 
   test("the alias files round-trip through a bundle's payloads, and an old bundle without them reads as none"):
     val es = BundleEntities(
-      eventAliases = List(com.histmersion.api.exchange.Bundle.EventAlias(com.histmersion.api.exchange.Bundle.EventAlias.Alias("a"), uid("e"), com.histmersion.api.exchange.Bundle.EventAlias.CreatedAt(At))),
-      goalAliases = List(com.histmersion.api.exchange.Bundle.GoalAlias(com.histmersion.api.exchange.Bundle.GoalAlias.Alias("b"), uid("g"), com.histmersion.api.exchange.Bundle.GoalAlias.CreatedAt(At))),
-      placeAliases = List(com.histmersion.api.exchange.Bundle.PlaceAlias(com.histmersion.api.exchange.Bundle.PlaceAlias.Alias("c"), uid("p"), com.histmersion.api.exchange.Bundle.PlaceAlias.CreatedAt(At)))
+      eventAliases = List(Bundle.EventAlias(Bundle.EventAlias.Alias("a"), uid("e"), Bundle.EventAlias.CreatedAt(At))),
+      goalAliases = List(Bundle.GoalAlias(Bundle.GoalAlias.Alias("b"), uid("g"), Bundle.GoalAlias.CreatedAt(At))),
+      placeAliases = List(Bundle.PlaceAlias(Bundle.PlaceAlias.Alias("c"), uid("p"), Bundle.PlaceAlias.CreatedAt(At)))
     )
     val (back, problems) = BundleEntities.decode(es.payloads.toMap)
     assertEquals(problems, Nil)
@@ -433,17 +438,17 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
       (es.eventAliases, es.goalAliases, es.placeAliases)
     )
     val old = es.payloads.toMap -- List(
-      com.histmersion.api.exchange.Bundle.Files.EventAliases,
-      com.histmersion.api.exchange.Bundle.Files.GoalAliases,
-      com.histmersion.api.exchange.Bundle.Files.PlaceAliases
+      Bundle.Files.EventAliases,
+      Bundle.Files.GoalAliases,
+      Bundle.Files.PlaceAliases
     )
     assertEquals(BundleEntities.decode(old)._1.placeAliases, Nil)
     assert(
-      com.histmersion.api.exchange.Bundle.Files.all.containsSlice(
+      Bundle.Files.all.containsSlice(
         List(
-          com.histmersion.api.exchange.Bundle.Files.EventAliases,
-          com.histmersion.api.exchange.Bundle.Files.GoalAliases,
-          com.histmersion.api.exchange.Bundle.Files.PlaceAliases
+          Bundle.Files.EventAliases,
+          Bundle.Files.GoalAliases,
+          Bundle.Files.PlaceAliases
         )
       )
     )
@@ -457,27 +462,27 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val p = run(foreign).plan
     val gate = p.issues.find(_.kind == Issue.Kind.SameWork).get
     val fields = gate.detail.map(_.fields).getOrElse(Nil)
-    assertEquals(fields.find(_.field == com.histmersion.api.exchange.IssueField.Field("year")).map(f => (f.left, f.right)), Some((Some("1959"), Some("2024"))))
+    assertEquals(fields.find(_.field == IssueField.Field("year")).map(f => (f.left, f.right)), Some((Some("1959"), Some("2024"))))
     val art = p.issues.find(i => i.kind == Issue.Kind.ArticleDiverged && i.severity == Issue.Severity.Blocking).get
     val text = art.detail.flatMap(_.text).getOrElse(fail(art.toString))
     assertEquals(text.left, "Home's account of the collapse.")
     assert(text.hunks.exists(_.conflict.value), text.hunks.toString)
     val ev = p.issues.find(i => i.kind == Issue.Kind.LabelTaken && i.entity == Bundle.Kind.Event).get
-    assertEquals(ev.detail.flatMap(_.place).flatMap(_.rightSpan), Some(IssueSpan(Some(com.histmersion.api.catalogue.Year(-1200)), Some(com.histmersion.api.catalogue.Year(-1190)))))
+    assertEquals(ev.detail.flatMap(_.place).flatMap(_.rightSpan), Some(IssueSpan(Some(Year(-1200)), Some(Year(-1190)))))
     // the detail is not part of the plan hash: dropping it changes nothing the apply checks
     assert(p.issues.forall(i => i.id.value.matches("[A-Z]-[0-9a-f]{8}")))
 
   test("articleText: the regions of a three-way merge, agreed and conflicting"):
-    val t = MergePlanner.articleText(Some(com.histmersion.api.research.Article.Body("a\nb\nc")), com.histmersion.api.exchange.Bundle.Article.Body("a\nB\nc"), com.histmersion.api.exchange.Bundle.Article.Body("a\nβ\nc"))
+    val t = MergePlanner.articleText(Some(Article.Body("a\nb\nc")), Bundle.Article.Body("a\nB\nc"), Bundle.Article.Body("a\nβ\nc"))
     assertEquals(
       t.hunks,
       List(
-        IssueHunk(com.histmersion.api.exchange.IssueHunk.Conflict(false), left = List(com.histmersion.api.exchange.IssueHunk.Left("a"))),
-        IssueHunk(com.histmersion.api.exchange.IssueHunk.Conflict(true), List(com.histmersion.api.exchange.IssueHunk.Base("b")), List(com.histmersion.api.exchange.IssueHunk.Left("B")), List(com.histmersion.api.exchange.IssueHunk.Right("β"))),
-        IssueHunk(com.histmersion.api.exchange.IssueHunk.Conflict(false), left = List(com.histmersion.api.exchange.IssueHunk.Left("c")))
+        IssueHunk(IssueHunk.Conflict(false), left = List(IssueHunk.Left("a"))),
+        IssueHunk(IssueHunk.Conflict(true), List(IssueHunk.Base("b")), List(IssueHunk.Left("B")), List(IssueHunk.Right("β"))),
+        IssueHunk(IssueHunk.Conflict(false), left = List(IssueHunk.Left("c")))
       )
     )
-    assertEquals(MergePlanner.articleText(None, com.histmersion.api.exchange.Bundle.Article.Body("x"), com.histmersion.api.exchange.Bundle.Article.Body("y")).hunks, List(IssueHunk(com.histmersion.api.exchange.IssueHunk.Conflict(true), Nil, List(com.histmersion.api.exchange.IssueHunk.Left("x")), List(com.histmersion.api.exchange.IssueHunk.Right("y")))))
+    assertEquals(MergePlanner.articleText(None, Bundle.Article.Body("x"), Bundle.Article.Body("y")).hunks, List(IssueHunk(IssueHunk.Conflict(true), Nil, List(IssueHunk.Left("x")), List(IssueHunk.Right("y")))))
 
   test("the resolution file carries a merged text (texts:) and reads it back exactly — the web screen's download"):
     val p = run(foreign).plan
@@ -490,7 +495,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
       "# not a comment: x\n"
     )
       .foreach { t =>
-        val res = MergeResolutions(List(MergeResolution(MergeResolution.Issue(id.value), com.histmersion.api.exchange.MergeResolution.Decision("file:merged.md"), Some(MergeResolution.Text(t)))))
+        val res = MergeResolutions(List(MergeResolution(MergeResolution.Issue(id.value), MergeResolution.Decision("file:merged.md"), Some(MergeResolution.Text(t)))))
         val yaml = MergeResolutions.Text.template(p, res)
         assert(yaml.value.contains("texts:"), yaml)
         assertEquals(MergeResolutionsFile.parse(MergeResolutionsFile.Text(yaml.value)).map(_.resolve), Right(res.resolve), yaml)

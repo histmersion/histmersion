@@ -1,4 +1,8 @@
-package com.histmersion.domain.catalogue.maptiles
+package com.histmersion
+package domain.catalogue.maptiles
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a tile's query answers before the tile is written: ONE item (`key` the item's, `n` 1) or a CELL of `n` items
   * (`key` the cell's), at `x`/`y` in tile units (a cell's: its items' mean), the least and greatest middle of their
@@ -16,31 +20,31 @@ final case class TileCell(
     south: TileCell.South,
     east: TileCell.East,
     north: TileCell.North,
-    undated: TileCell.Undated = com.histmersion.domain.catalogue.maptiles.TileCell.Undated(0)
+    undated: TileCell.Undated = TileCell.Undated(0)
 ):
   def isItem: Boolean = n.value == 1
 
 object TileCell:
 
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type X = com.histmersion.domain.catalogue.maptiles.TilePoint.X
-  val X: _root_.com.histmersion.domain.catalogue.maptiles.TilePoint.X.type = _root_.com.histmersion.domain.catalogue.maptiles.TilePoint.X
-  type Y = com.histmersion.domain.catalogue.maptiles.TilePoint.Y
-  val Y: _root_.com.histmersion.domain.catalogue.maptiles.TilePoint.Y.type = _root_.com.histmersion.domain.catalogue.maptiles.TilePoint.Y
+  object Key extends RefinedType[String, Pure]
+  type X = TilePoint.X
+  val X: TilePoint.X.type = TilePoint.X
+  type Y = TilePoint.Y
+  val Y: TilePoint.Y.type = TilePoint.Y
   type N = N.T
-  object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object N extends RefinedType[Int, Pure]
   type MidLo = MidLo.T
-  object MidLo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MidLo extends RefinedType[Double, Pure]
   type MidHi = MidHi.T
-  object MidHi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MidHi extends RefinedType[Double, Pure]
   type West = West.T
-  object West extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object West extends RefinedType[Double, Pure]
   type South = South.T
-  object South extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object South extends RefinedType[Double, Pure]
   type East = East.T
-  object East extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object East extends RefinedType[Double, Pure]
   type North = North.T
-  object North extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object North extends RefinedType[Double, Pure]
   type Undated = Undated.T
-  object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Undated extends RefinedType[Int, Pure]

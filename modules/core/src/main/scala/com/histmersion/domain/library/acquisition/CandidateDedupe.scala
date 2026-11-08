@@ -1,18 +1,21 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.api.library.{Candidates, WorkRef}
 import com.histmersion.domain.library.Doi
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The works an acquisition search found, one per work: keyed by DOI, the richer record kept. */
 object CandidateDedupe:
 
   /** The search that found a work. */
   type FoundBy = FoundBy.T
-  object FoundBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FoundBy extends RefinedType[String, Pure]
   type SkipReason = SkipReason.T
-  object SkipReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SkipReason extends RefinedType[String, Pure]
   type SkipCount = SkipCount.T
-  object SkipCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SkipCount extends RefinedType[Int, Pure]
 
   /** An arXiv preprint without a DOI gets arXiv's DataCite DOI (`10.48550/arxiv.<id>`), so the same preprint from two
     * indexes is one.

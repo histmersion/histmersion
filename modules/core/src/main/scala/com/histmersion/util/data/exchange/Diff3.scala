@@ -1,4 +1,8 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A line-based three-way merge (diff3; Khanna, Kunal & Pierce 2007), for article bodies that changed on both sides
   * since a common base (docs/research-merge-import.md §5.4). Pure.
@@ -12,11 +16,11 @@ package com.histmersion.util.data.exchange
 object Diff3:
 
   type MergeBase = MergeBase.T
-  object MergeBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MergeBase extends RefinedType[String, Pure]
   type MergeLeft = MergeLeft.T
-  object MergeLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MergeLeft extends RefinedType[String, Pure]
   type MergeRight = MergeRight.T
-  object MergeRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MergeRight extends RefinedType[String, Pure]
 
   /** One region of the merge: agreed text, or a conflict between the two sides over a base. */
   enum Hunk:
@@ -26,14 +30,14 @@ object Diff3:
   object Hunk:
     object Agreed:
       type Lines = Lines.T
-      object Lines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Lines extends RefinedType[String, Pure]
     object Conflict:
       type Base = Base.T
-      object Base extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Base extends RefinedType[String, Pure]
       type Left = Left.T
-      object Left extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Left extends RefinedType[String, Pure]
       type Right = Right.T
-      object Right extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Right extends RefinedType[String, Pure]
 
   final case class Result(hunks: List[Hunk]):
     def conflicts: Result.ConflictCount = Result.ConflictCount(hunks.count(_.isInstanceOf[Hunk.Conflict]))
@@ -58,15 +62,15 @@ object Diff3:
 
   object Result:
     type ConflictCount = ConflictCount.T
-    object ConflictCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ConflictCount extends RefinedType[Int, Pure]
     type MergedText = MergedText.T
-    object MergedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MergedText extends RefinedType[String, Pure]
     type MarkedText = MarkedText.T
-    object MarkedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MarkedText extends RefinedType[String, Pure]
     type MarkedLeftName = MarkedLeftName.T
-    object MarkedLeftName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MarkedLeftName extends RefinedType[String, Pure]
     type MarkedRightName = MarkedRightName.T
-    object MarkedRightName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MarkedRightName extends RefinedType[String, Pure]
 
   /** Lines of a text; a final newline is not an extra empty line. */
   private def lines(s: String): Vector[String] = s.split("\n", -1).toVector

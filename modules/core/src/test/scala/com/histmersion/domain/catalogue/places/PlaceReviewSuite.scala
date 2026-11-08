@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -54,26 +55,26 @@ class PlaceReviewSuite extends munit.FunSuite:
       pal,
       Some(
         Proposal.Reclassify(
-          com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Id("pleiades_1001939"),
-          com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Label("Palaestina I (late Roman province)"),
+          Evidence.Id("pleiades_1001939"),
+          Evidence.Label("Palaestina I (late Roman province)"),
           Place.Kind.Wire(Place.Kind.Region),
           Place.Kind.Wire(Place.Kind.Polity),
           None,
-          com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Reason("an administrative unit (a polity)"),
-          List(com.histmersion.domain.catalogue.places.PlaceReview.Proposal.EvidenceLine("Pleiades types: province"))
+          Proposal.Reason("an administrative unit (a polity)"),
+          List(Proposal.EvidenceLine("Pleiades types: province"))
         )
       )
     )
     // a linked Wikidata item dates an undated one
     val gs = PlaceReview.propose(
       ev(
-        com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Id("pleiades_1000"),
-        com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Label("Germania Superior"),
+        Evidence.Id("pleiades_1000"),
+        Evidence.Label("Germania Superior"),
         "province",
-        items = List(LinkedItem(com.histmersion.domain.catalogue.places.PlaceReview.LinkedItem.Ref("wikidata:Q153553"), Some(com.histmersion.domain.catalogue.places.PlaceReview.LinkedItem.ItemClass("Q1620908")), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(83L), com.histmersion.domain.DeepTime.SignedYear(297L))))
+        items = List(LinkedItem(LinkedItem.Ref("wikidata:Q153553"), Some(LinkedItem.ItemClass("Q1620908")), DeepTime.span(DeepTime.SignedYear(83L), DeepTime.SignedYear(297L))))
       )
     )
-    assertEquals(gs.collect { case r: Proposal.Reclassify => r.period }.flatten, DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(83L), com.histmersion.domain.DeepTime.SignedYear(297L)))
+    assertEquals(gs.collect { case r: Proposal.Reclassify => r.period }.flatten, DeepTime.span(DeepTime.SignedYear(83L), DeepTime.SignedYear(297L)))
     assert(gs.get.describe.value.contains("period 83 CE–297 CE"), gs.get.describe)
     assert(gs.get.describe.value.contains("wikidata:Q153553: historical region 83 CE–297 CE"), gs.get.describe)
     // Pleiades' "still extant" 2100 is no end for a palace district
@@ -97,8 +98,8 @@ class PlaceReviewSuite extends munit.FunSuite:
     assertEquals(
       PlaceReview.propose(
         ev(
-          com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Id("pleiades_1001939"),
-          com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Label("Palaestina I"),
+          Evidence.Id("pleiades_1001939"),
+          Evidence.Label("Palaestina I"),
           "province",
           kind = Place.Kind.Wire(Place.Kind.Polity),
           start = Some(DeepTime.SignedYear(300L)),
@@ -128,22 +129,22 @@ class PlaceReviewSuite extends munit.FunSuite:
 
   test("a linked historical country is evidence for a person, not a fix (Wikidata files Brittany as one)"):
     val p = PlaceReview.propose(
-      ev(Evidence.Id("curated_brittany"), Evidence.Label("Brittany"), "", items = List(LinkedItem(com.histmersion.domain.catalogue.places.PlaceReview.LinkedItem.Ref("wikidata:Q327"), Some(com.histmersion.domain.catalogue.places.PlaceReview.LinkedItem.ItemClass("Q3024240")), None)))
+      ev(Evidence.Id("curated_brittany"), Evidence.Label("Brittany"), "", items = List(LinkedItem(LinkedItem.Ref("wikidata:Q327"), Some(LinkedItem.ItemClass("Q3024240")), None)))
     )
     assert(p.exists(!_.fixable), p.toString)
     assert(p.get.describe.value.contains("historical country"), p.get.describe)
     assertEquals(
-      PlaceReview.propose(ev(Evidence.Id("curated_y"), Evidence.Label("Y"), "", items = List(LinkedItem(com.histmersion.domain.catalogue.places.PlaceReview.LinkedItem.Ref("wikidata:Q2"), Some(com.histmersion.domain.catalogue.places.PlaceReview.LinkedItem.ItemClass("Q1620908")), None)))),
+      PlaceReview.propose(ev(Evidence.Id("curated_y"), Evidence.Label("Y"), "", items = List(LinkedItem(LinkedItem.Ref("wikidata:Q2"), Some(LinkedItem.ItemClass("Q1620908")), None)))),
       None
     )
 
   test("a withdrawn duplicate merges into the one seed place of its name; otherwise a person decides"):
     val dup = ev(Evidence.Id("pleiades_981515"), Evidence.Label("Withdrawn (duplicate): Creta et Cyrene"), "province")
     assertEquals(PlaceReview.duplicateOf(dup.label), Some("Creta et Cyrene"))
-    assertEquals(PlaceReview.duplicateOf(com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Label("Withdrawn duplicate: Moesia Superior")), Some("Moesia Superior"))
-    assertEquals(PlaceReview.duplicateOf(com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Label("Withdrawn: Untitled")), None)
-    assertEquals(PlaceReview.duplicateKeys(com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Label("Peiros/Piros (river)")), List("peiros piros", "peiros", "piros"))
-    val into = Candidate(com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Id("pleiades_981517"), com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Label("Creta et Cyrene (Roman province)"), Place.Kind.Wire(Place.Kind.Polity))
+    assertEquals(PlaceReview.duplicateOf(Evidence.Label("Withdrawn duplicate: Moesia Superior")), Some("Moesia Superior"))
+    assertEquals(PlaceReview.duplicateOf(Evidence.Label("Withdrawn: Untitled")), None)
+    assertEquals(PlaceReview.duplicateKeys(Evidence.Label("Peiros/Piros (river)")), List("peiros piros", "peiros", "piros"))
+    val into = Candidate(Evidence.Id("pleiades_981517"), Evidence.Label("Creta et Cyrene (Roman province)"), Place.Kind.Wire(Place.Kind.Polity))
     val m = PlaceReview.propose(dup, List(into))
     assertEquals(m.map(_.getClass.getSimpleName), Some("Merge"))
     assertEquals(
@@ -153,7 +154,7 @@ class PlaceReviewSuite extends munit.FunSuite:
     assert(m.get.fixable)
     val none = PlaceReview.propose(dup, Nil).get
     assert(!none.fixable && none.describe.value.contains("no seed place has that name"), none.describe)
-    val two = PlaceReview.propose(dup, List(into, Candidate(com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Id("pleiades_2"), com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Label("Creta et Cyrene"), Place.Kind.Wire(Place.Kind.Region)))).get
+    val two = PlaceReview.propose(dup, List(into, Candidate(Evidence.Id("pleiades_2"), Evidence.Label("Creta et Cyrene"), Place.Kind.Wire(Place.Kind.Region)))).get
     assert(!two.fixable && two.describe.value.contains("2 seed places have that name"), two.describe)
     val withdrawn = PlaceReview.propose(ev(Evidence.Id("pleiades_9"), Evidence.Label("Withdrawn: Untitled"), "", kind = Place.Kind.Wire(Place.Kind.Site))).get
     assert(!withdrawn.fixable && withdrawn.describe.value.contains("no replacement named"), withdrawn.describe)

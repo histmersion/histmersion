@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import hearth.kindlings.optics.syntax.*
 
@@ -7,6 +8,9 @@ import com.histmersion.api.Plural
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.ItemStatus
 import com.histmersion.domain.automation.Goal
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.research.Slug
 
 /** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"), pure: which research goals are
   * ACTIVE for model work — at most `max` at a time — which wait and why, which of their items are held, and in which
@@ -29,34 +33,34 @@ import com.histmersion.domain.automation.Goal
   */
 object GoalFocus:
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
   type Ratio = Ratio.T
-  object Ratio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Ratio extends RefinedType[Int, Pure]
   type Reason = Reason.T
-  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reason extends RefinedType[String, Pure]
   type Recent = Recent.T
-  object Recent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Recent extends RefinedType[Boolean, Pure]
   type WaitCode = WaitCode.T
-  object WaitCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WaitCode extends RefinedType[String, Pure]
 
   private def counted(n: Int, singular: String): String =
     Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(singular)).value
 
   /** How close a goal is to done (lower = closer). */
   enum Stage(val rank: Stage.Rank, val wire: Stage.Wire):
-    case Reviewing extends Stage(com.histmersion.domain.GoalFocus.Stage.Rank(0), com.histmersion.domain.GoalFocus.Stage.Wire("reviewing"))
-    case Compiling extends Stage(com.histmersion.domain.GoalFocus.Stage.Rank(1), com.histmersion.domain.GoalFocus.Stage.Wire("compiling"))
-    case Ready extends Stage(com.histmersion.domain.GoalFocus.Stage.Rank(2), com.histmersion.domain.GoalFocus.Stage.Wire("ready"))
-    case Gathering extends Stage(com.histmersion.domain.GoalFocus.Stage.Rank(3), com.histmersion.domain.GoalFocus.Stage.Wire("gathering"))
+    case Reviewing extends Stage(Stage.Rank(0), Stage.Wire("reviewing"))
+    case Compiling extends Stage(Stage.Rank(1), Stage.Wire("compiling"))
+    case Ready extends Stage(Stage.Rank(2), Stage.Wire("ready"))
+    case Gathering extends Stage(Stage.Rank(3), Stage.Wire("gathering"))
 
   object Stage:
     type Rank = Rank.T
-    object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rank extends RefinedType[Int, Pure]
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
 
-    def parse(s: com.histmersion.domain.GoalFocus.Stage.Wire): Option[Stage] = values.find(_.wire == Wire(s.value.trim.toLowerCase))
+    def parse(s: Wire): Option[Stage] = values.find(_.wire == Wire(s.value.trim.toLowerCase))
 
   /** Whether an item kind's pipeline calls a model (the currency check and the ingest backlog do not: they run for
     * every goal whatever the focus).
@@ -75,12 +79,12 @@ object GoalFocus:
       itemId: Work.ItemId,
       kind: ManagerItem.Kind,
       status: ItemStatus.Wire,
-      target: Work.Target = com.histmersion.domain.GoalFocus.Work.Target(""),
-      person: Work.Person = com.histmersion.domain.GoalFocus.Work.Person(false),
-      focusHeld: Work.FocusHeld = com.histmersion.domain.GoalFocus.Work.FocusHeld(false),
-      personHeld: Work.PersonHeld = com.histmersion.domain.GoalFocus.Work.PersonHeld(false),
+      target: Work.Target = Work.Target(""),
+      person: Work.Person = Work.Person(false),
+      focusHeld: Work.FocusHeld = Work.FocusHeld(false),
+      personHeld: Work.PersonHeld = Work.PersonHeld(false),
       approval: Option[Work.Approval] = None,
-      approvalByPerson: Work.ApprovalByPerson = com.histmersion.domain.GoalFocus.Work.ApprovalByPerson(false)
+      approvalByPerson: Work.ApprovalByPerson = Work.ApprovalByPerson(false)
   ):
     def waitsForPerson: Boolean = approval.isDefined && approvalByPerson.value
 
@@ -90,21 +94,21 @@ object GoalFocus:
   object Work:
 
     type ItemId = ItemId.T
-    object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    object ItemId extends RefinedType[Long, Pure]:
       given Ordering[T] = Ordering.by[T, Long](_.value)
     type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Target extends RefinedType[String, Pure]
     type Person = Person.T
-    object Person extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Person extends RefinedType[Boolean, Pure]
     type FocusHeld = FocusHeld.T
-    object FocusHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FocusHeld extends RefinedType[Boolean, Pure]
     type PersonHeld = PersonHeld.T
-    object PersonHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PersonHeld extends RefinedType[Boolean, Pure]
     type Approval = Approval.T
-    object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    object Approval extends RefinedType[Long, Pure]:
       given Ordering[T] = Ordering.by[T, Long](_.value)
     type ApprovalByPerson = ApprovalByPerson.T
-    object ApprovalByPerson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ApprovalByPerson extends RefinedType[Boolean, Pure]
 
   /** A goal as the focus sees it. `articles` = its linked articles that exist, `unreviewed` = those not passed their
     * review; `compileOpen` = its approved articles not compiled yet; `work` = its open model-using items; `lastStop` =
@@ -115,56 +119,56 @@ object GoalFocus:
       slug: Goal.Slug,
       parent: Option[Goal.Slug] = None,
       status: Goal.Status.Wire = Goal.Status.Wire(Goal.Status.Seeding),
-      createdAt: Facts.CreatedAt = com.histmersion.domain.GoalFocus.Facts.CreatedAt(""),
-      sources: Facts.Sources = com.histmersion.domain.GoalFocus.Facts.Sources(0),
-      articles: Facts.Articles = com.histmersion.domain.GoalFocus.Facts.Articles(0),
-      unreviewed: Facts.Unreviewed = com.histmersion.domain.GoalFocus.Facts.Unreviewed(0),
-      compileOpen: Facts.CompileOpen = com.histmersion.domain.GoalFocus.Facts.CompileOpen(0),
+      createdAt: Facts.CreatedAt = Facts.CreatedAt(""),
+      sources: Facts.Sources = Facts.Sources(0),
+      articles: Facts.Articles = Facts.Articles(0),
+      unreviewed: Facts.Unreviewed = Facts.Unreviewed(0),
+      compileOpen: Facts.CompileOpen = Facts.CompileOpen(0),
       work: List[Work] = Nil,
       lastStop: Option[Facts.LastStop] = None,
-      pinned: Facts.Pinned = com.histmersion.domain.GoalFocus.Facts.Pinned(false),
-      priority: Facts.Priority = com.histmersion.domain.GoalFocus.Facts.Priority(0),
-      active: Facts.Active = com.histmersion.domain.GoalFocus.Facts.Active(false),
+      pinned: Facts.Pinned = Facts.Pinned(false),
+      priority: Facts.Priority = Facts.Priority(0),
+      active: Facts.Active = Facts.Active(false),
       since: Option[Facts.Since] = None
   )
 
   object Facts:
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreatedAt extends RefinedType[String, Pure]
     type Sources = Sources.T
-    object Sources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Sources extends RefinedType[Int, Pure]
     type Articles = Articles.T
-    object Articles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Articles extends RefinedType[Int, Pure]
     type Unreviewed = Unreviewed.T
-    object Unreviewed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Unreviewed extends RefinedType[Int, Pure]
     type CompileOpen = CompileOpen.T
-    object CompileOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CompileOpen extends RefinedType[Int, Pure]
     type LastStop = LastStop.T
-    object LastStop extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LastStop extends RefinedType[String, Pure]
     type Pinned = Pinned.T
-    object Pinned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Pinned extends RefinedType[Boolean, Pure]
     type Priority = Priority.T
-    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Priority extends RefinedType[Int, Pure]
     type Active = Active.T
-    object Active extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Active extends RefinedType[Boolean, Pure]
     type Since = Since.T
-    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Since extends RefinedType[String, Pure]
 
   /** `max` goals at most (≤ 0: no cap); `minSources` = what a proposed article needs (`agents.seed.min-sources`);
     * `plansByPerson` = a person decides goal plans (`agents.approvals.goal-plan = manual`) and `openPersonPlans` of
     * them are open — at `max` such open plans, no further goal is activated only to ask for one more.
     */
-  final case class Settings(max: Settings.Max, minSources: Settings.MinSources, plansByPerson: Settings.PlansByPerson = com.histmersion.domain.GoalFocus.Settings.PlansByPerson(false), openPersonPlans: Settings.OpenPersonPlans = com.histmersion.domain.GoalFocus.Settings.OpenPersonPlans(0))
+  final case class Settings(max: Settings.Max, minSources: Settings.MinSources, plansByPerson: Settings.PlansByPerson = Settings.PlansByPerson(false), openPersonPlans: Settings.OpenPersonPlans = Settings.OpenPersonPlans(0))
 
   object Settings:
     type Max = Max.T
-    object Max extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Max extends RefinedType[Int, Pure]
     type MinSources = MinSources.T
-    object MinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MinSources extends RefinedType[Int, Pure]
     type PlansByPerson = PlansByPerson.T
-    object PlansByPerson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PlansByPerson extends RefinedType[Boolean, Pure]
     type OpenPersonPlans = OpenPersonPlans.T
-    object OpenPersonPlans extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object OpenPersonPlans extends RefinedType[Int, Pure]
 
   /** Where a goal stands: finished, a candidate at a stage, or waiting (a code and why). */
   enum Fit:
@@ -174,7 +178,7 @@ object GoalFocus:
 
   object Fit:
     object Waits:
-      export com.histmersion.domain.GoalFocus.{WaitCode as Code, Reason as Why}
+      export GoalFocus.{WaitCode as Code, Reason as Why}
 
   /** The codes of [[Fit.Waits]]. */
   object Code:
@@ -211,8 +215,8 @@ object GoalFocus:
       goals: List[Facts],
       work: List[(List[Goal.Slug], Work)],
       sources: Map[Goal.Slug, Facts.Sources],
-      articles: Map[Goal.Slug, List[research.Slug]],
-      passed: Set[research.Slug],
+      articles: Map[Goal.Slug, List[Slug]],
+      passed: Set[Slug],
       compileOpen: Map[Goal.Slug, Facts.CompileOpen],
       lastStops: Map[Goal.Slug, Facts.LastStop]
   ): List[Facts] =
@@ -227,7 +231,7 @@ object GoalFocus:
   /** What an active goal is doing or waiting for, in a line: its runs in flight, the approvals it waits for (and who
     * decides them), its next item.
     */
-  def doing(work: List[Work]): Option[com.histmersion.domain.GoalFocus.Description] =
+  def doing(work: List[Work]): Option[Description] =
     def name(w: Work) = s"${w.kind} ${w.target}".trim
     val running = work.filter(w => w.status == ItemStatus.Active.wire && w.approval.isEmpty)
     val waiting = work.filter(_.approval.isDefined)
@@ -252,7 +256,7 @@ object GoalFocus:
     Option.when(parts.nonEmpty)(Description(parts.mkString("; ")))
 
   /** The stage the facts put a goal at. */
-  def stage(f: Facts, minSources: com.histmersion.domain.GoalFocus.Settings.MinSources): Stage =
+  def stage(f: Facts, minSources: Settings.MinSources): Stage =
     if f.unreviewed.value > 0 then Stage.Reviewing
     else if f.compileOpen.value > 0 then Stage.Compiling
     else if f.sources.value >= math.max(1, minSources.value) then Stage.Ready
@@ -286,13 +290,13 @@ object GoalFocus:
         f.lastStop match
           case Some(o) => Fit.Waits(Code.Stuck, Reason(s"stuck: its last item stopped — ${o.value.take(300)}"))
           case None    =>
-            Fit.Waits(Code.Idle, com.histmersion.domain.GoalFocus.Fit.Waits.Why("idle: nothing for a model to do until its cron fires or new sources arrive"))
+            Fit.Waits(Code.Idle, Fit.Waits.Why("idle: nothing for a model to do until its cron fires or new sources arrive"))
       else if runnable.isEmpty then
         val ids = (allowed ++ allowed
           .flatMap(blockers(_, f.work))).flatMap(w => w.approval.filter(_ => w.approvalByPerson.value)).distinct.sorted
         if ids.nonEmpty then
           Fit.Waits(Code.Person, Reason(s"waits for a person: ${ids.map(i => s"approval #$i").mkString(", ")}"))
-        else Fit.Waits(Code.Held, com.histmersion.domain.GoalFocus.Fit.Waits.Why("its items are held by a person"))
+        else Fit.Waits(Code.Held, Fit.Waits.Why("its items are held by a person"))
       else if !f.active.value && !f.pinned.value && s.plansByPerson.value && s.max.value > 0 && s.openPersonPlans.value >= s.max.value &&
         runnable.forall(w => w.kind.value == PlanGoalItem && w.status == ItemStatus.Pending.wire)
       then
@@ -511,7 +515,7 @@ object GoalFocus:
     * items to one of any other, counting on from the last starts (`recent`, newest first: true = an active goal's). The
     * order inside each class is kept. `ratio` ≤ 0: the active goals' first, the others only after them.
     */
-  def fairOrder[A](cs: List[A], focus: A => Boolean, recent: List[com.histmersion.domain.GoalFocus.Recent], ratio: com.histmersion.domain.GoalFocus.Ratio): List[A] =
+  def fairOrder[A](cs: List[A], focus: A => Boolean, recent: List[Recent], ratio: Ratio): List[A] =
     val (fs, os) = cs.partition(focus)
     if ratio.value <= 0 || fs.isEmpty || os.isEmpty then fs ++ os
     else

@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.api.exchange.Bundle
 
@@ -8,6 +9,8 @@ import com.histmersion.api.exchange.IssueDetail
 import com.histmersion.util.data.exchange.BundleEntities
 
 import java.util.UUID
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a kind's rules of a plan can ask and add while the plan collects its questions about the rows, before any is
   * decided: besides a pair's questions, the bundle's lines as they came and in this collection's terms, which lines
@@ -41,9 +44,9 @@ trait PlanQuestions extends PairQuestions:
       kind: Bundle.Kind,
       rows: List[A],
       uid: A => UUID,
-      label: A => com.histmersion.util.data.exchange.PlanQuestions.LabelTakenLabelResult,
+      label: A => PlanQuestions.LabelTakenLabelResult,
       owner: A => Option[UUID],
-      what: com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat,
+      what: PlanQuestions.LabelTakenWhat,
       options: List[MergeDecision.Kind],
       merge: (A, UUID) => Option[PlanMerge],
       detailOf: (A, UUID) => Option[IssueDetail]
@@ -51,6 +54,6 @@ trait PlanQuestions extends PairQuestions:
 
 object PlanQuestions:
   type LabelTakenLabelResult = LabelTakenLabelResult.T
-  object LabelTakenLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LabelTakenLabelResult extends RefinedType[String, Pure]
   type LabelTakenWhat = LabelTakenWhat.T
-  object LabelTakenWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LabelTakenWhat extends RefinedType[String, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.workflows
+package com.histmersion
+package domain.research.workflows
 
 import hearth.kindlings.optics.syntax.*
 
@@ -10,6 +11,10 @@ import com.histmersion.domain.ReviewLedger.Ledger
 
 import java.time.{Duration, Instant}
 import com.histmersion.domain.automation.Run
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.research.Slug
+import com.histmersion.api.automation.Agents
 
 /** The review manager's pure rules (docs/research-process-managers.md §3.4): its settings over research's defaults,
   * what to do with a review item after its run settled — the stop rules over the article's review ledger —, the
@@ -18,11 +23,11 @@ import com.histmersion.domain.automation.Run
   */
 object ReviewManagerPolicy:
   type OpenPairs = OpenPairs.T
-  object OpenPairs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OpenPairs extends RefinedType[Int, Pure]
 
   /** How many sources an article's coverage filter returns. */
   type FilterHits = FilterHits.T
-  object FilterHits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FilterHits extends RefinedType[Int, Pure]
 
   /** A review manager's settings in effect: its saved config over research's defaults (`d`) and the engine's (`m`). */
   def settings(c: ManagerConfig, d: ReviewManagerDefaults, m: ManagerDefaults): ReviewSettings =
@@ -77,15 +82,15 @@ object ReviewManagerPolicy:
 
   object ReviewFacts:
     type OpenMajors = OpenMajors.T
-    object OpenMajors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object OpenMajors extends RefinedType[Int, Pure]
     type MaxReopened = MaxReopened.T
-    object MaxReopened extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxReopened extends RefinedType[Int, Pure]
     type Escalated = Escalated.T
-    object Escalated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Escalated extends RefinedType[Int, Pure]
     type OnlyMissingCritiques = OnlyMissingCritiques.T
-    object OnlyMissingCritiques extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object OnlyMissingCritiques extends RefinedType[Boolean, Pure]
     type OpenPairs = OpenPairs.T
-    object OpenPairs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object OpenPairs extends RefinedType[Int, Pure]
 
     /** The facts of `l`, with the checklist's open pairs counted by the caller. */
     def of(l: Ledger, openPairs: Option[OpenPairs] = None): ReviewFacts =
@@ -130,7 +135,7 @@ object ReviewManagerPolicy:
     */
   def evaluateReview(
       s: ReviewSettings,
-      slug: com.histmersion.domain.research.Slug,
+      slug: Slug,
       attempts: ManagerPolicy.Attempts,
       failures: Next.Retry.Failures,
       state: ItemState,
@@ -152,7 +157,7 @@ object ReviewManagerPolicy:
           )
         )
         val mark = RunMark(
-          com.histmersion.api.automation.Agents.RunInfo.Id(run.value),
+          Agents.RunInfo.Id(run.value),
           state.before.map(b => RunMark.Before(b.value)),
           RunMark.After(f.openMajors.value),
           RunMark.MaxReopened(f.maxReopened.value),
@@ -219,11 +224,11 @@ object ReviewManagerPolicy:
   // ── selection (the review manager's refill) ────────────────────────────────────────────────────
 
   /** One item the selection adds: its kind, target (the article's slug), priority, and why (for the event). */
-  final case class Pick(kind: ManagerPolicy.ItemKind, target: com.histmersion.domain.research.Slug, priority: ManagerPolicy.Candidate.Priority, why: Pick.Why)
+  final case class Pick(kind: ManagerPolicy.ItemKind, target: Slug, priority: ManagerPolicy.Candidate.Priority, why: Pick.Why)
 
   object Pick:
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
 
   /** The priorities of what the selection picks: open MAJORs, never reviewed, stale (a person's enqueue is 10, a
     * chained review 2 — both above).
@@ -238,13 +243,13 @@ object ReviewManagerPolicy:
     * one too, at its review's priority: the review waits for it ([[waitsFor]]).
     */
   def select(
-      majors: List[(com.histmersion.domain.research.Slug, ReviewFacts.OpenMajors)],
-      unreviewed: List[com.histmersion.domain.research.Slug],
-      stale: List[(com.histmersion.domain.research.Slug, Pick.Why)],
+      majors: List[(Slug, ReviewFacts.OpenMajors)],
+      unreviewed: List[Slug],
+      stale: List[(Slug, Pick.Why)],
       batch: ReviewSettings.RefillBatch,
       inferFilter: ReviewSettings.InferFilter,
-      hasFilter: com.histmersion.domain.research.Slug => Boolean,
-      inferredBefore: com.histmersion.domain.research.Slug => Boolean
+      hasFilter: Slug => Boolean,
+      inferredBefore: Slug => Boolean
   ): List[Pick] =
     val reviews =
       (majors.map((slug, n) => Pick(ManagerPolicy.ItemKind.ArticleReview, slug, MajorsPriority, Pick.Why(counted(n.value, "open MAJOR").value))) ++

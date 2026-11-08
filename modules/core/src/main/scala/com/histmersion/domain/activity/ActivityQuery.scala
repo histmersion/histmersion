@@ -1,8 +1,11 @@
-package com.histmersion.domain.activity
+package com.histmersion
+package domain.activity
 
 import com.histmersion.api.automation.Activity
 
 import java.time.Instant
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One page of the activity list asked for: what to show, from when on, of which research goal, how many entries, and
   * older than which.
@@ -17,10 +20,10 @@ final case class ActivityQuery(
 
 object ActivityQuery:
   type Show = Show.T
-  object Show extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Show extends RefinedType[String, Pure]
   type Since = Since.T
-  object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Since extends RefinedType[String, Pure]
   type Goal = Goal.T
-  object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Goal extends RefinedType[String, Pure]
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]

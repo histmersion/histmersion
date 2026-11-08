@@ -1,7 +1,10 @@
-package com.histmersion.domain.catalogue.maptiles
+package com.histmersion
+package domain.catalogue.maptiles
 
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Writes Mapbox vector tiles (version 2, https://github.com/mapbox/vector-tile-spec) of point layers. Each key and
   * value is stored once per layer. Pure.
@@ -9,11 +12,11 @@ import java.nio.charset.StandardCharsets
 object VectorTileWriter:
 
   type VectorTile = VectorTile.T
-  object VectorTile extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object VectorTile extends RefinedType[Array[Byte], Pure]
   type LayerMessage = LayerMessage.T
-  object LayerMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LayerMessage extends RefinedType[Array[Byte], Pure]
   type LayerName = LayerName.T
-  object LayerName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LayerName extends RefinedType[String, Pure]
 
   /** A tile of the `layers` given (name → its points); an empty layer is left out. */
   def tile(layers: Seq[(LayerName, Seq[TilePoint])]): VectorTile =

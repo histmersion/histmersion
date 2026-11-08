@@ -1,7 +1,10 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import java.time.{Instant, LocalDate, ZoneOffset}
 import java.time.temporal.ChronoUnit
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A five-field cron expression, in UTC — the schedule of a goal's currency check or acquisition sweep
   * (docs/research-embedded-agents.md §14). `minute hour day-of-month month day-of-week`, each `*`, a number, a range
@@ -54,33 +57,33 @@ final case class Cron(
   /** The shortest gap between the next `n` firings after `from`, in minutes (`None` if it fires less than twice) — how
     * a schedule that would run too often is refused.
     */
-  def shortestGapMinutes(from: Instant, n: com.histmersion.domain.Cron.SampleCount = com.histmersion.domain.Cron.SampleCount(48)): Option[com.histmersion.domain.Cron.GapMinutes] =
+  def shortestGapMinutes(from: Instant, n: Cron.SampleCount = Cron.SampleCount(48)): Option[Cron.GapMinutes] =
     val times = Iterator.iterate(next(from))(_.flatMap(next)).takeWhile(_.isDefined).map(_.get).take(n.value).toList
     times.zip(times.drop(1)).map((a, b) => ChronoUnit.MINUTES.between(a, b)).minOption.map(Cron.GapMinutes(_))
 
 object Cron:
   type GapMinutes = GapMinutes.T
-  object GapMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GapMinutes extends RefinedType[Long, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type SampleCount = SampleCount.T
-  object SampleCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SampleCount extends RefinedType[Int, Pure]
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
   type Minutes = Minutes.T
-  object Minutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Minutes extends RefinedType[Int, Pure]
   type Hours = Hours.T
-  object Hours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Hours extends RefinedType[Int, Pure]
   type Days = Days.T
-  object Days extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Days extends RefinedType[Int, Pure]
   type Months = Months.T
-  object Months extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Months extends RefinedType[Int, Pure]
   type Weekdays = Weekdays.T
-  object Weekdays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Weekdays extends RefinedType[Int, Pure]
   type AnyDay = AnyDay.T
-  object AnyDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AnyDay extends RefinedType[Boolean, Pure]
   type AnyWeekday = AnyWeekday.T
-  object AnyWeekday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AnyWeekday extends RefinedType[Boolean, Pure]
 
   /** How far ahead [[Cron.next]] looks: four years and a day covers every leap-day expression. */
   val HorizonDays = 4 * 366 + 1
@@ -133,7 +136,7 @@ object Cron:
       case None    => Right(each.collect { case Right(v) => v }.flatten.toSet)
 
   /** Parse an expression (or a shortcut). */
-  def parse(raw: com.histmersion.domain.Cron.Text): Either[com.histmersion.domain.Cron.Problem, Cron] =
+  def parse(raw: Text): Either[Problem, Cron] =
     val t = Option(raw).map(_.value.trim).getOrElse("")
     val expr = Shortcuts.getOrElse(t.toLowerCase, t)
     val parts = expr.split("\\s+").toList.filter(_.nonEmpty)

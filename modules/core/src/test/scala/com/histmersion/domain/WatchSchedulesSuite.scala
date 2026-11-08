@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -13,6 +14,9 @@ import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.WatchSchedules.*
 
 import java.time.Instant
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.automation.Managers
+import com.histmersion.api.automation.Agents
 
 /** Goal schedules into watchers (phase 3): what a goal's `goal_schedules` rows become, and how a watcher reads as the
   * schedules the goal surfaces still show.
@@ -27,7 +31,7 @@ class WatchSchedulesSuite extends munit.FunSuite:
       usd: Option[GoalSchedule.BudgetUsd] = None,
       next: Option[GoalSchedule.NextRunAt] = None
   ) =
-    GoalSchedule(com.histmersion.api.automation.Goal.Slug("tin"), k, cron, on, usd, next)
+    GoalSchedule(Goal.Slug("tin"), k, cron, on, usd, next)
 
   test(
     "a new watcher: the enabled schedules' kinds, the cron that fires most often (its next firing), the acquisition budget"
@@ -60,9 +64,9 @@ class WatchSchedulesSuite extends munit.FunSuite:
 
   test("an existing watcher keeps its own cron, next firing, sweeps and budget; it gains the enabled kinds"):
     val e = Existing(
-      ManagerConfig(sweeps = Some(List(com.histmersion.api.automation.Managers.Sweep.Wire("currency"))), budgetUsd = Some(ManagerConfig.BudgetUsd(1.0))),
-      Some(com.histmersion.domain.Cron.Text("@weekly")),
-      Some(com.histmersion.domain.ManagerPolicy.InstantText("2026-10-18T00:00:00Z"))
+      ManagerConfig(sweeps = Some(List(Managers.Sweep.Wire("currency"))), budgetUsd = Some(ManagerConfig.BudgetUsd(1.0))),
+      Some(Cron.Text("@weekly")),
+      Some(ManagerPolicy.InstantText("2026-10-18T00:00:00Z"))
     )
     val p = migrate(Some(e), List(sch(ScheduleKind.Acquisition, GoalSchedule.Cron("@daily"), usd = Some(GoalSchedule.BudgetUsd(0.2)))), now)
     assertEquals(
@@ -73,13 +77,13 @@ class WatchSchedulesSuite extends munit.FunSuite:
 
   test("view: one schedule per sweep, the watcher's cron and next firing; paused says how to make it fire"):
     val m = ManagerInfo(
-      watchId(com.histmersion.api.automation.Goal.Ref("tin")),
-      com.histmersion.api.automation.Managers.ManagerInfo.Kind("watch"),
-      Some(com.histmersion.api.automation.Goal.Slug("tin")),
+      watchId(Goal.Ref("tin")),
+      Managers.ManagerInfo.Kind("watch"),
+      Some(Goal.Slug("tin")),
       State.Paused.wire,
-      config = ManagerConfig(sweeps = Some(List(com.histmersion.api.automation.Managers.Sweep.Wire("currency"))), budgetUsd = Some(ManagerConfig.BudgetUsd(0.5))),
-      cron = Some(com.histmersion.api.automation.Managers.ManagerInfo.Cron("@daily")),
-      nextTickAt = Some(com.histmersion.api.automation.Managers.ManagerInfo.NextTickAt("2026-10-18T00:00:00Z"))
+      config = ManagerConfig(sweeps = Some(List(Managers.Sweep.Wire("currency"))), budgetUsd = Some(ManagerConfig.BudgetUsd(0.5))),
+      cron = Some(Managers.ManagerInfo.Cron("@daily")),
+      nextTickAt = Some(Managers.ManagerInfo.NextTickAt("2026-10-18T00:00:00Z"))
     )
     val v = view(m, Nil)
     assertEquals(
@@ -88,14 +92,14 @@ class WatchSchedulesSuite extends munit.FunSuite:
     )
     assert(v.head.lastNote.exists(_.value.contains("paused")), v.head.lastNote)
     val it = ManagerItem(
-      com.histmersion.api.automation.Managers.ManagerItem.Id(1),
+      Managers.ManagerItem.Id(1),
       m.id,
       ManagerItem.Kind(CurrencyCheck),
-      com.histmersion.api.automation.Managers.ManagerItem.Target("tin"),
-      com.histmersion.api.automation.Managers.ManagerItem.Status("done"),
-      runId = Some(com.histmersion.api.automation.Agents.RunInfo.Id("run-1")),
-      outcome = Some(com.histmersion.api.automation.Managers.ManagerItem.Outcome("currency-check goal tin: …")),
-      updatedAt = com.histmersion.api.automation.Managers.ManagerItem.UpdatedAt("2026-10-17T00:00:00Z")
+      Managers.ManagerItem.Target("tin"),
+      Managers.ManagerItem.Status("done"),
+      runId = Some(Agents.RunInfo.Id("run-1")),
+      outcome = Some(Managers.ManagerItem.Outcome("currency-check goal tin: …")),
+      updatedAt = Managers.ManagerItem.UpdatedAt("2026-10-17T00:00:00Z")
     )
     val active = view(m.modify(_.state).setTo(State.Active.wire).modify(_.config).setTo(ManagerConfig()), List(it))
     assertEquals(active.map(_.kind), List(ScheduleKind.Acquisition, ScheduleKind.Currency))

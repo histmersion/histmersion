@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -40,8 +41,8 @@ class BackupSuite extends munit.FunSuite:
     val mtime = Instant.parse("2026-10-02T12:00:00Z")
     val keep = Backup.Result.File("keep-before-schema-024-20260925T085045Z.dump")
     assertEquals(Backup.takenAt(keep, mtime), Instant.parse("2026-09-25T08:50:45Z"))
-    assertEquals(Backup.takenAt(com.histmersion.api.backup.Backup.Result.File("my-own.dump"), mtime), mtime) // no stamp in the name: its mtime
-    def info(n: Backup.Result.File, at: Backup.Info.CreatedAt) = Backup.Info(n, com.histmersion.api.ByteCount(1), at)
+    assertEquals(Backup.takenAt(Backup.Result.File("my-own.dump"), mtime), mtime) // no stamp in the name: its mtime
+    def info(n: Backup.Result.File, at: Backup.Info.CreatedAt) = Backup.Info(n, ByteCount(1), at)
     val rows = List(
       info(keep, Backup.Info.CreatedAt("2026-09-25T08:50:45Z")),
       info(Backup.Result.File("histmersion-20261001T080000Z.dump"), Backup.Info.CreatedAt("2026-10-01T08:00:00Z")),
@@ -78,9 +79,9 @@ class BackupSuite extends munit.FunSuite:
   // ── the path-traversal gate ──────────────────────────────────────────────────────────────────
 
   test("safeName accepts a plain dump file name"):
-    assertEquals(Backup.safeName(com.histmersion.api.backup.Backup.Name("histmersion-20260825T145112Z.dump")), Right("histmersion-20260825T145112Z.dump"))
-    assertEquals(Backup.safeName(com.histmersion.api.backup.Backup.Name("  histmersion-20260825T145112Z.dump  ")), Right("histmersion-20260825T145112Z.dump"))
-    assertEquals(Backup.safeName(com.histmersion.api.backup.Backup.Name("my_copy-2.dump")), Right("my_copy-2.dump"))
+    assertEquals(Backup.safeName(Backup.Name("histmersion-20260825T145112Z.dump")), Right("histmersion-20260825T145112Z.dump"))
+    assertEquals(Backup.safeName(Backup.Name("  histmersion-20260825T145112Z.dump  ")), Right("histmersion-20260825T145112Z.dump"))
+    assertEquals(Backup.safeName(Backup.Name("my_copy-2.dump")), Right("my_copy-2.dump"))
 
   test("safeName rejects every path component"):
     val bad = List(
@@ -101,52 +102,52 @@ class BackupSuite extends munit.FunSuite:
     bad.foreach(n => assert(Backup.safeName(Backup.Name(n)).isLeft, s"should have been rejected: '$n'"))
 
   test("safeName rejects a missing name, a wrong extension and an over-long name"):
-    assert(Backup.safeName(com.histmersion.api.backup.Backup.Name("")).isLeft)
-    assert(Backup.safeName(com.histmersion.api.backup.Backup.Name("   ")).isLeft)
-    assert(Backup.safeName(com.histmersion.api.backup.Backup.Name("histmersion.sql")).isLeft)
-    assert(Backup.safeName(com.histmersion.api.backup.Backup.Name(".dump")).isLeft) // extension only
+    assert(Backup.safeName(Backup.Name("")).isLeft)
+    assert(Backup.safeName(Backup.Name("   ")).isLeft)
+    assert(Backup.safeName(Backup.Name("histmersion.sql")).isLeft)
+    assert(Backup.safeName(Backup.Name(".dump")).isLeft) // extension only
     assert(Backup.safeName(Backup.Name("a" * 200 + ".dump")).isLeft)
 
   test("safeName's message says what is wrong"):
-    assert(Backup.safeName(com.histmersion.api.backup.Backup.Name("../x.dump")).left.exists(_.value.contains("no directories")))
-    assert(Backup.safeName(com.histmersion.api.backup.Backup.Name("x.sql")).left.exists(_.value.contains(".dump")))
+    assert(Backup.safeName(Backup.Name("../x.dump")).left.exists(_.value.contains("no directories")))
+    assert(Backup.safeName(Backup.Name("x.sql")).left.exists(_.value.contains(".dump")))
 
   // ── JDBC URL → pg_dump arguments ─────────────────────────────────────────────────────────────
 
   test("parseJdbc: host, port and database"):
-    val t = Backup.parseJdbc(com.histmersion.api.backup.Backup.JdbcUrl("jdbc:postgresql://db.internal:6000/histmersion")).toOption.get
+    val t = Backup.parseJdbc(Backup.JdbcUrl("jdbc:postgresql://db.internal:6000/histmersion")).toOption.get
     assertEquals(t.host, Some("db.internal"))
     assertEquals(t.port, Some(6000))
     assertEquals(t.database, "histmersion")
     assertEquals(t.args, List("-h", "db.internal", "-p", "6000", "-d", "histmersion", "-w"))
 
   test("parseJdbc: query parameters are not part of the database name"):
-    val t = Backup.parseJdbc(com.histmersion.api.backup.Backup.JdbcUrl("jdbc:postgresql://h:6000/histmersion?ssl=true&ApplicationName=x")).toOption.get
+    val t = Backup.parseJdbc(Backup.JdbcUrl("jdbc:postgresql://h:6000/histmersion?ssl=true&ApplicationName=x")).toOption.get
     assertEquals(t.database, "histmersion")
 
   test("parseJdbc: a missing port is left to libpq (no -p, and no port literal in the code)"):
-    val t = Backup.parseJdbc(com.histmersion.api.backup.Backup.JdbcUrl("jdbc:postgresql://h/histmersion")).toOption.get
+    val t = Backup.parseJdbc(Backup.JdbcUrl("jdbc:postgresql://h/histmersion")).toOption.get
     assertEquals(t.port, None)
     assertEquals(t.args, List("-h", "h", "-d", "histmersion", "-w"))
 
   test("parseJdbc: the host-less form"):
-    val t = Backup.parseJdbc(com.histmersion.api.backup.Backup.JdbcUrl("jdbc:postgresql:histmersion")).toOption.get
+    val t = Backup.parseJdbc(Backup.JdbcUrl("jdbc:postgresql:histmersion")).toOption.get
     assertEquals(t.host, None)
     assertEquals(t.port, None)
     assertEquals(t.args, List("-d", "histmersion", "-w"))
 
   test("parseJdbc: bracketed IPv6, with and without a port"):
-    val a = Backup.parseJdbc(com.histmersion.api.backup.Backup.JdbcUrl("jdbc:postgresql://[::1]:6000/histmersion")).toOption.get
+    val a = Backup.parseJdbc(Backup.JdbcUrl("jdbc:postgresql://[::1]:6000/histmersion")).toOption.get
     assertEquals((a.host, a.port), (Some("[::1]"), Some(6000)))
-    val b = Backup.parseJdbc(com.histmersion.api.backup.Backup.JdbcUrl("jdbc:postgresql://[::1]/histmersion")).toOption.get
+    val b = Backup.parseJdbc(Backup.JdbcUrl("jdbc:postgresql://[::1]/histmersion")).toOption.get
     assertEquals((b.host, b.port), (Some("[::1]"), None))
 
   test("parseJdbc: rejects a non-postgres URL, a missing database and a non-numeric port"):
-    assert(Backup.parseJdbc(com.histmersion.api.backup.Backup.JdbcUrl("jdbc:mysql://h:3306/histmersion")).isLeft)
-    assert(Backup.parseJdbc(com.histmersion.api.backup.Backup.JdbcUrl("jdbc:postgresql://h:6000/")).isLeft)
-    assert(Backup.parseJdbc(com.histmersion.api.backup.Backup.JdbcUrl("jdbc:postgresql://h:6000")).isLeft)
-    assert(Backup.parseJdbc(com.histmersion.api.backup.Backup.JdbcUrl("jdbc:postgresql://h:not-a-port/histmersion")).isLeft)
-    assert(Backup.parseJdbc(com.histmersion.api.backup.Backup.JdbcUrl("")).isLeft)
+    assert(Backup.parseJdbc(Backup.JdbcUrl("jdbc:mysql://h:3306/histmersion")).isLeft)
+    assert(Backup.parseJdbc(Backup.JdbcUrl("jdbc:postgresql://h:6000/")).isLeft)
+    assert(Backup.parseJdbc(Backup.JdbcUrl("jdbc:postgresql://h:6000")).isLeft)
+    assert(Backup.parseJdbc(Backup.JdbcUrl("jdbc:postgresql://h:not-a-port/histmersion")).isLeft)
+    assert(Backup.parseJdbc(Backup.JdbcUrl("")).isLeft)
 
   test("the configured default URL parses (reference.conf and the parser agree)"):
     assert(Backup.parseJdbc(Backup.JdbcUrl(AppConfig.load().db.url.value)).isRight)
@@ -160,37 +161,37 @@ class BackupSuite extends munit.FunSuite:
   )
 
   test("restoreOutcome: a clean run has no warnings"):
-    assertEquals(Backup.restoreOutcome(com.histmersion.api.backup.Backup.ExitCode(0), Nil), Right(Nil))
+    assertEquals(Backup.restoreOutcome(Backup.ExitCode(0), Nil), Right(Nil))
 
   test("restoreOutcome: exit 1 WITH the 'errors ignored' summary is success with warnings"):
     // this is the pg_dump-18-into-Postgres-16 case: the data restores, one SET is skipped
-    val out = Backup.restoreOutcome(com.histmersion.api.backup.Backup.ExitCode(1), skew)
+    val out = Backup.restoreOutcome(Backup.ExitCode(1), skew)
     assert(out.isRight, out.toString)
     assertEquals(out.toOption.get.size, 2) // the error line and the summary; not the bare "Command was:"
     assert(out.toOption.get.exists(_.value.contains("transaction_timeout")), out.toString)
 
   test("restoreOutcome: exit 1 WITHOUT that summary is a failure, quoting the output"):
-    val out = Backup.restoreOutcome(com.histmersion.api.backup.Backup.ExitCode(1), List(com.histmersion.api.backup.Backup.ToolOutput("pg_restore: error: could not open input file: No such file")))
+    val out = Backup.restoreOutcome(Backup.ExitCode(1), List(Backup.ToolOutput("pg_restore: error: could not open input file: No such file")))
     assert(out.isLeft, out.toString)
     assert(out.left.exists(_.value.contains("could not open input file")), out.toString)
     assert(out.left.exists(_.value.contains("exit 1")), out.toString)
 
   test("restoreOutcome: a failure with no output at all still says something"):
-    assert(Backup.restoreOutcome(com.histmersion.api.backup.Backup.ExitCode(2), Nil).left.exists(_.value.contains("exit 2")))
+    assert(Backup.restoreOutcome(Backup.ExitCode(2), Nil).left.exists(_.value.contains("exit 2")))
 
   test("restoreOutcome: warnings keep only the notable lines, trimmed"):
-    val out = Backup.restoreOutcome(com.histmersion.api.backup.Backup.ExitCode(0), List(com.histmersion.api.backup.Backup.ToolOutput(""), com.histmersion.api.backup.Backup.ToolOutput("  pg_restore: warning: x  "), com.histmersion.api.backup.Backup.ToolOutput("chatter")))
+    val out = Backup.restoreOutcome(Backup.ExitCode(0), List(Backup.ToolOutput(""), Backup.ToolOutput("  pg_restore: warning: x  "), Backup.ToolOutput("chatter")))
     assertEquals(out, Right(List("pg_restore: warning: x")))
 
   // ── rendering ────────────────────────────────────────────────────────────────────────────────
 
   test("humanBytes uses decimal units"):
-    assertEquals(Backup.humanBytes(com.histmersion.api.ByteCount(0)), "0 B")
-    assertEquals(Backup.humanBytes(com.histmersion.api.ByteCount(999)), "999 B")
-    assertEquals(Backup.humanBytes(com.histmersion.api.ByteCount(1000)), "1.0 kB")
-    assertEquals(Backup.humanBytes(com.histmersion.api.ByteCount(1500)), "1.5 kB")
-    assertEquals(Backup.humanBytes(com.histmersion.api.ByteCount(2500000)), "2.5 MB")
-    assertEquals(Backup.humanBytes(com.histmersion.api.ByteCount(3200000000L)), "3.2 GB")
+    assertEquals(Backup.humanBytes(ByteCount(0)), "0 B")
+    assertEquals(Backup.humanBytes(ByteCount(999)), "999 B")
+    assertEquals(Backup.humanBytes(ByteCount(1000)), "1.0 kB")
+    assertEquals(Backup.humanBytes(ByteCount(1500)), "1.5 kB")
+    assertEquals(Backup.humanBytes(ByteCount(2500000)), "2.5 MB")
+    assertEquals(Backup.humanBytes(ByteCount(3200000000L)), "3.2 GB")
 
   // The size lands in a Markdown API response, so it must read the same on every machine. JDK 25's
   // CLDR gives `en_PL` a decimal COMMA, which silently turned "2.5 MB" into "2,5 MB" on the JDK bump.
@@ -198,11 +199,11 @@ class BackupSuite extends munit.FunSuite:
     val saved = Locale.getDefault
     try
       Locale.setDefault(Locale.forLanguageTag("pl-PL"))
-      assertEquals(Backup.humanBytes(com.histmersion.api.ByteCount(2500000)), "2.5 MB")
+      assertEquals(Backup.humanBytes(ByteCount(2500000)), "2.5 MB")
     finally Locale.setDefault(saved)
 
   test("Markdown.backup names the file, the size and the checksum"):
-    val md = Markdown.backup(Backup.Result(com.histmersion.api.backup.Backup.Result.File("histmersion-20260825T145112Z.dump"), com.histmersion.api.ByteCount(2500000), com.histmersion.api.Sha256("abc123"), com.histmersion.api.backup.Backup.Result.DurationMs(812)))
+    val md = Markdown.backup(Backup.Result(Backup.Result.File("histmersion-20260825T145112Z.dump"), ByteCount(2500000), Sha256("abc123"), Backup.Result.DurationMs(812)))
     assert(md.contains("histmersion-20260825T145112Z.dump"), md)
     assert(md.contains("2.5 MB"), md)
     assert(md.contains("abc123"), md)
@@ -212,15 +213,15 @@ class BackupSuite extends munit.FunSuite:
     assertEquals(Markdown.backups(Vector.empty), "_No backups on the server yet._")
     val md = Markdown.backups(
       Vector(
-        Backup.Info(com.histmersion.api.backup.Backup.Info.File("histmersion-20260825T145112Z.dump"), com.histmersion.api.ByteCount(1000), com.histmersion.api.backup.Backup.Info.CreatedAt("2026-08-25T14:51:12Z")),
-        Backup.Info(com.histmersion.api.backup.Backup.Info.File("histmersion-20260824T145112Z.dump"), com.histmersion.api.ByteCount(2000), com.histmersion.api.backup.Backup.Info.CreatedAt("2026-08-24T14:51:12Z"))
+        Backup.Info(Backup.Info.File("histmersion-20260825T145112Z.dump"), ByteCount(1000), Backup.Info.CreatedAt("2026-08-25T14:51:12Z")),
+        Backup.Info(Backup.Info.File("histmersion-20260824T145112Z.dump"), ByteCount(2000), Backup.Info.CreatedAt("2026-08-24T14:51:12Z"))
       )
     )
     assert(md.startsWith("### 2 backup(s)"), md)
     assert(md.indexOf("20260825") < md.indexOf("20260824"), md)
 
   test("Markdown.restored reports the schema version, the counts and any ignored errors"):
-    val r = RestoreResult(com.histmersion.api.backup.RestoreResult.File("histmersion-20260825T145112Z.dump"), com.histmersion.api.backup.RestoreResult.SchemaVersion("4"), com.histmersion.api.backup.RestoreResult.SourcesBefore(0), com.histmersion.api.backup.RestoreResult.SourcesAfter(137), com.histmersion.api.backup.RestoreResult.DurationMs(4200), List(com.histmersion.api.backup.RestoreResult.Warnings("pg_restore: warning: x")))
+    val r = RestoreResult(RestoreResult.File("histmersion-20260825T145112Z.dump"), RestoreResult.SchemaVersion("4"), RestoreResult.SourcesBefore(0), RestoreResult.SourcesAfter(137), RestoreResult.DurationMs(4200), List(RestoreResult.Warnings("pg_restore: warning: x")))
     val md = Markdown.restored(r)
     assert(md.contains("schema version:** 4"), md)
     assert(md.contains("0 → 137"), md)
@@ -236,24 +237,24 @@ class BackupSuite extends munit.FunSuite:
       Backup.Result.File("histmersion-20260102T000000Z.dump")
     )
     assertEquals(
-      Backup.toPrune(names, com.histmersion.api.backup.Backup.Retention(2)),
+      Backup.toPrune(names, Backup.Retention(2)),
       List("histmersion-20260101T000000Z.dump", "histmersion-20260102T000000Z.dump")
     )
     // the -2 file is the NEWER of the same-second pair, although it sorts first as text
     assertEquals(
-      Backup.toPrune(names, com.histmersion.api.backup.Backup.Retention(1)),
+      Backup.toPrune(names, Backup.Retention(1)),
       List(
         "histmersion-20260101T000000Z.dump",
         "histmersion-20260102T000000Z.dump",
         "histmersion-20260103T000000Z.dump"
       )
     )
-    assertEquals(Backup.toPrune(names, com.histmersion.api.backup.Backup.Retention(0)), Nil)
-    assertEquals(Backup.toPrune(names, com.histmersion.api.backup.Backup.Retention(10)), Nil)
+    assertEquals(Backup.toPrune(names, Backup.Retention(0)), Nil)
+    assertEquals(Backup.toPrune(names, Backup.Retention(10)), Nil)
 
   test("the default keeps five archives"):
     assertEquals(AppConfig.load().backups.keep, 5)
 
   test("maintenance and missing carry the codes the endpoints map to 503 / 404"):
     assertEquals(Backup.maintenance("seed").code, Some(Backup.CodeMaintenance))
-    assertEquals(Backup.missing(com.histmersion.api.backup.Backup.Result.File("x.dump")).code, Some(Write.CodeNotFound))
+    assertEquals(Backup.missing(Backup.Result.File("x.dump")).code, Some(Write.CodeNotFound))

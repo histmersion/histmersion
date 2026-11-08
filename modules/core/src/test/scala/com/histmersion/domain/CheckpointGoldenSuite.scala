@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import io.circe.parser.decode
 import io.circe.syntax.*

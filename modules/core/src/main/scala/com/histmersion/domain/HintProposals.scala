@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.given
@@ -8,6 +9,8 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 import com.histmersion.api.automation.Managers.{HintEffect, ManagerConfig}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** LLM-proposed hint effects (docs/research-process-managers.md §3.6, phase 3): a person writes a hint in words; a
   * model reads it and proposes the structured action it asks for — hold, prioritise or skip some of the manager's
@@ -17,20 +20,20 @@ import com.histmersion.api.automation.Managers.{HintEffect, ManagerConfig}
   */
 object HintProposals:
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
   type Item = Item.T
-  object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Item extends RefinedType[String, Pure]
   type Last = Last.T
-  object Last extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Last extends RefinedType[Boolean, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   /** The `hint-effect` step's typed answer. `action` "none" = the hint asks for no structured action. */
 
 
   final case class HintAnswer(
       action: HintAnswer.Action,
-      why: HintAnswer.Why = com.histmersion.domain.HintProposals.HintAnswer.Why(""),
+      why: HintAnswer.Why = HintAnswer.Why(""),
       targets: List[HintAnswer.Targets] = Nil,
       tag: Option[HintAnswer.Tag] = None,
       until: Option[HintAnswer.Until] = None,
@@ -40,21 +43,21 @@ object HintProposals:
   ) derives KindlingsCodecAsObject
   object HintAnswer:
     type Action = Action.T
-    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Action extends RefinedType[String, Pure]
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
     type Targets = Targets.T
-    object Targets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Targets extends RefinedType[String, Pure]
     type Tag = Tag.T
-    object Tag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Tag extends RefinedType[String, Pure]
     type Until = Until.T
-    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Until extends RefinedType[String, Pure]
     type UntilSource = UntilSource.T
-    object UntilSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UntilSource extends RefinedType[String, Pure]
     type Priority = Priority.T
-    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Priority extends RefinedType[Int, Pure]
     type Settings = Settings.T
-    object Settings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Settings extends RefinedType[String, Pure]
 
     given Schema[HintAnswer] = KindlingsSchema
       .derived[HintAnswer]
@@ -84,15 +87,15 @@ object HintProposals:
     */
   def check(
       a: HintAnswer,
-      known: com.histmersion.domain.HintProposals.Item => Boolean,
-      item: Option[com.histmersion.domain.HintProposals.Item],
-      last: com.histmersion.domain.HintProposals.Last
-  ): Either[List[com.histmersion.domain.HintProposals.Problem], (Option[HintEffect], List[com.histmersion.domain.HintProposals.Description])] =
+      known: Item => Boolean,
+      item: Option[Item],
+      last: Last
+  ): Either[List[Problem], (Option[HintEffect], List[Description])] =
     val action = Option(a.action).map(_.value.trim.toLowerCase).getOrElse("")
     val targets = a.targets.map(_.value.trim).filter(_.nonEmpty).distinct.map(Item(_))
     val (good, unknown) = targets.partition(known)
     val tag = a.tag.map(_.value.trim).filter(_.nonEmpty)
-    def fail(ps: List[com.histmersion.domain.HintProposals.Problem]): Either[List[com.histmersion.domain.HintProposals.Problem], (Option[HintEffect], List[com.histmersion.domain.HintProposals.Description])] =
+    def fail(ps: List[Problem]): Either[List[Problem], (Option[HintEffect], List[Description])] =
       if last.value then Right((None, ps.map(p => Description(s"nothing proposed: $p")))) else Left(ps)
     if action == "none" || action.isEmpty then Right((None, Nil))
     else if !HintEffect.Proposable.contains(action) then
@@ -152,4 +155,4 @@ object HintProposals:
 
   object Proposed:
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]

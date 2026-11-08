@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.maptiles
+package com.histmersion
+package domain.catalogue.maptiles
 
 /** A layer's tile features, from its cells and the records of its items ([[com.histmersion.api.catalogue.TileProps]]).
   * Pure.
@@ -88,7 +89,7 @@ object TileFeatures:
     * item's key; an item whose record is gone since its cell was read is left out), every one with the tile's zoom.
     */
   def of[A](
-      zoom: com.histmersion.domain.catalogue.maptiles.TileCoord.Z,
+      zoom: TileCoord.Z,
       cells: Seq[TileCell],
       record: TileCell.Key => Option[A],
       feature: (TileCell, A) => TilePoint

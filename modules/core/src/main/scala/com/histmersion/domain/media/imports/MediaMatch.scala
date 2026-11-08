@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.imports
+package com.histmersion
+package domain.media.imports
 
 import com.histmersion.api.catalogue.Geocode
 import com.histmersion.domain.DeepTime
@@ -6,6 +7,8 @@ import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.Period
 
 import java.util.Locale
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** How a collection record is tied to a place on the map — conservatively, and with the reason recorded (#1446). Pure.
   *
@@ -25,29 +28,29 @@ object MediaMatch:
 
   /** Why a record is not tied to the place. */
   type Refusal = Refusal.T
-  object Refusal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Refusal extends RefinedType[String, Pure]
   /** What ties a record to the place: the field and value (or the id) that name it, and the dates. */
   type Basis = Basis.T
-  object Basis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Basis extends RefinedType[String, Pure]
   /** A period as a person reads it (`1400–1200 BCE`). */
   type PeriodText = PeriodText.T
-  object PeriodText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PeriodText extends RefinedType[String, Pure]
   /** One signed year as a person reads it (`1500 CE`). */
   type YearText = YearText.T
-  object YearText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object YearText extends RefinedType[String, Pure]
   type GeographySpecific = GeographySpecific.T
-  object GeographySpecific extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GeographySpecific extends RefinedType[Boolean, Pure]
 
   /** A place the import asks about: its id and label, the keys of every name it goes by, its period. */
   final case class PlaceInfo(id: PlaceInfo.Id, label: PlaceInfo.Label, keys: Set[PlaceInfo.Keys], period: Option[Period])
 
   object PlaceInfo:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type Keys = Keys.T
-    object Keys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Keys extends RefinedType[String, Pure]
 
   private val Uncertain =
     List("?", "probably", "possibly", "perhaps", "said to be", "attributed", "likely", "uncertain")
@@ -73,7 +76,7 @@ object MediaMatch:
     )
 
   /** Pure: one signed year as a person reads it (`1500 CE`, `1200 BCE`). */
-  def year(v: com.histmersion.Year): YearText = YearText(if v.value < 0 then s"${-v.value} BCE" else s"${v.value} CE")
+  def year(v: Year): YearText = YearText(if v.value < 0 then s"${-v.value} BCE" else s"${v.value} CE")
 
   /** What a value names on the map: the ids of the map places with that name key, equivalents of one site counted once
     * — the caller's lookup.
@@ -84,7 +87,7 @@ object MediaMatch:
     * `specific` = museum rule (the most specific naming field decides); otherwise the map rule (any field naming the
     * target alone).
     */
-  def geography(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, specific: com.histmersion.domain.media.imports.MediaMatch.GeographySpecific): Either[Refusal, Basis] =
+  def geography(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, specific: GeographySpecific): Either[Refusal, Basis] =
     val named = rec.geography.flatMap((f, v) => Option(keyOf(v)).filter(_.value.nonEmpty).map(k => (f, v.value.trim, k)))
     if named.isEmpty then Left(Refusal("no place on the record"))
     else if specific.value then
@@ -104,16 +107,16 @@ object MediaMatch:
       rec: MediaRecord,
       target: PlaceInfo,
       resolve: Resolve,
-      latest: Option[com.histmersion.Year] = None
+      latest: Option[Year] = None
   ): Either[Refusal, Basis] =
-    geography(rec, target, resolve, specific = com.histmersion.domain.media.imports.MediaMatch.GeographySpecific(true)).flatMap(dated(_, rec, target, latest))
+    geography(rec, target, resolve, specific = GeographySpecific(true)).flatMap(dated(_, rec, target, latest))
 
   /** Pure: the dates half of a match, after the place half (`basis`): the record must be dated; with a `latest` year (a
     * collection's `max-year`: the last year the research is about), made by then — a record made later is refused
     * whatever place it names, so a 19th-century specimen or print is not filed under a place whose gazetteer span runs
     * to the present — and its dates must overlap the place's period, read up to `latest`.
     */
-  def dated(basis: Basis, rec: MediaRecord, target: PlaceInfo, latest: Option[com.histmersion.Year]): Either[Refusal, Basis] =
+  def dated(basis: Basis, rec: MediaRecord, target: PlaceInfo, latest: Option[Year]): Either[Refusal, Basis] =
     (rec.period, target.period) match
       case (None, _)                                                => Left(Refusal("no dates on the record"))
       case (Some(r), _) if latest.exists(y => r.end.value > y.value) => Left(Refusal(s"made after ${year(latest.get)}"))
@@ -149,7 +152,7 @@ object MediaMatch:
       resolveId: ResolveId,
       resolve: Resolve,
       deeper: Set[MediaRecord.GeographyPart1],
-      latest: Option[com.histmersion.Year] = None
+      latest: Option[Year] = None
   ): Either[Refusal, Basis] =
     val byId = rec.ids.map(id => id -> resolveId(id)).filter(_._2.nonEmpty)
     val idAlone = byId.find(_._2 == Set(target.id)).map((id, _) => Basis(s"${ExternalIds.show(id)} (the record's place id)"))
@@ -166,12 +169,12 @@ object MediaMatch:
           case Some(basis)                                   => Right(basis)
           case None if byId.exists(_._2.contains(target.id)) => Left(Refusal("its place id is ambiguous on the map"))
           case None if byId.nonEmpty                         => Left(Refusal("its place id names another place on the map"))
-          case None                                          => geography(rec, target, resolve, specific = com.histmersion.domain.media.imports.MediaMatch.GeographySpecific(true))
+          case None                                          => geography(rec, target, resolve, specific = GeographySpecific(true))
     geo.flatMap(dated(_, rec, target, latest))
 
   /** Pure: the map rule — a location naming the target, a map made by `maxYear` (public domain). */
-  def map(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, maxYear: com.histmersion.Year): Either[Refusal, Basis] =
+  def map(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, maxYear: Year): Either[Refusal, Basis] =
     rec.period match
       case None                                   => Left(Refusal("no date on the map"))
       case Some(p) if p.end.value > maxYear.value => Left(Refusal(s"made after $maxYear"))
-      case Some(p) => geography(rec, target, resolve, specific = com.histmersion.domain.media.imports.MediaMatch.GeographySpecific(false)).map(geo => Basis(s"$geo; map of ${years(p)}"))
+      case Some(p) => geography(rec, target, resolve, specific = GeographySpecific(false)).map(geo => Basis(s"$geo; map of ${years(p)}"))

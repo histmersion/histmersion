@@ -1,4 +1,8 @@
-package com.histmersion.domain.catalogue.maptiles
+package com.histmersion
+package domain.catalogue.maptiles
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The items of one layer in one square of a tile's grid (the squares a crowded tile counts its items by: `gx`/`gy` on
   * the grid of the whole world at the tile's zoom), summed so that two such counts of the same square add up: how many
@@ -26,32 +30,32 @@ final case class GridCell(
 
 object GridCell:
   type Gx = Gx.T
-  object Gx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Gx extends RefinedType[Long, Pure]
   type Gy = Gy.T
-  object Gy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Gy extends RefinedType[Long, Pure]
   type N = N.T
-  object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object N extends RefinedType[Int, Pure]
   type Dup = Dup.T
-  object Dup extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Dup extends RefinedType[Int, Pure]
   type SumX = SumX.T
-  object SumX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SumX extends RefinedType[Double, Pure]
   type SumY = SumY.T
-  object SumY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SumY extends RefinedType[Double, Pure]
   type DupX = DupX.T
-  object DupX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DupX extends RefinedType[Double, Pure]
   type DupY = DupY.T
-  object DupY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DupY extends RefinedType[Double, Pure]
   type MidLo = MidLo.T
-  object MidLo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MidLo extends RefinedType[Double, Pure]
   type MidHi = MidHi.T
-  object MidHi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MidHi extends RefinedType[Double, Pure]
   type West = West.T
-  object West extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object West extends RefinedType[Double, Pure]
   type South = South.T
-  object South extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object South extends RefinedType[Double, Pure]
   type East = East.T
-  object East extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object East extends RefinedType[Double, Pure]
   type North = North.T
-  object North extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object North extends RefinedType[Double, Pure]
   type One = One.T
-  object One extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object One extends RefinedType[String, Pure]

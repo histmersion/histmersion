@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import com.histmersion.domain.catalogue.AttestationTarget
 
@@ -6,6 +7,10 @@ import com.histmersion.api.Plural
 import com.histmersion.api.catalogue.{EventLinkCandidate, EventPassage, EventTaxonomy}
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.catalogue.Attestation
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.library.Title
 
 /** The matcher. Pure: the database gives it the findings near an event and the passages naming it. */
 object EventMatcher:
@@ -26,32 +31,32 @@ object EventMatcher:
 
   object Weights:
     type Km = Km.T
-    object Km extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Km extends RefinedType[Double, Pure]
     type Years = Years.T
-    object Years extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Years extends RefinedType[Long, Pure]
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[Double, Pure]
     type Finding = Finding.T
-    object Finding extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Finding extends RefinedType[Double, Pure]
     type MinScore = MinScore.T
-    object MinScore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MinScore extends RefinedType[Double, Pure]
     type MinNameChars = MinNameChars.T
-    object MinNameChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MinNameChars extends RefinedType[Int, Pure]
     type MaxCandidates = MaxCandidates.T
-    object MaxCandidates extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxCandidates extends RefinedType[Int, Pure]
 
   /** One finding near the event: its id, source, distance and the years between its period and the event's span (0 when
     * they overlap).
     */
-  final case class NearFinding(id: NearFinding.Id, citekey: com.histmersion.domain.library.Citekey, km: NearFinding.Km, yearGap: NearFinding.YearGap)
+  final case class NearFinding(id: NearFinding.Id, citekey: Citekey, km: NearFinding.Km, yearGap: NearFinding.YearGap)
 
   object NearFinding:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
     type Km = Km.T
-    object Km extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Km extends RefinedType[Double, Pure]
     type YearGap = YearGap.T
-    object YearGap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object YearGap extends RefinedType[Long, Pure]
 
   /** Pure: the names worth searching a body for — distinct ignoring case, at least `minChars` long and more than a bare
     * kind word ("Battle", "Siege"), longest first (a longer name is the stronger match).
@@ -65,7 +70,7 @@ object EventMatcher:
       .sortBy(n => (-n.length, n))
 
   type FindingWeight = FindingWeight.T
-  object FindingWeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FindingWeight extends RefinedType[Double, Pure]
 
   /** Pure: how much one finding says — 1 at the event's place and time, falling linearly to 0 at `km` away and at
     * `years` apart.
@@ -83,11 +88,11 @@ object EventMatcher:
     * best first.
     */
   def candidates(
-      eventId: com.histmersion.domain.catalogue.Event.Id,
+      eventId: Event.Id,
       near: List[NearFinding],
-      named: Map[com.histmersion.domain.library.Citekey, List[EventPassage]],
+      named: Map[Citekey, List[EventPassage]],
       w: Weights,
-      titles: Map[com.histmersion.domain.library.Citekey, com.histmersion.api.library.Title] = Map.empty
+      titles: Map[Citekey, Title] = Map.empty
   ): List[EventLinkCandidate] =
     val byCk = near.groupBy(_.citekey)
     (byCk.keySet ++ named.keySet).toList
@@ -138,7 +143,7 @@ object EventMatcher:
   /** Pure: the attestation a confirmed passage becomes — the quote and its offsets (W3C TextQuoteSelector +
     * TextPositionSelector), and a note saying how it was found.
     */
-  def attestation(eventId: com.histmersion.domain.catalogue.Event.Id, citekey: com.histmersion.domain.library.Citekey, p: EventPassage): Attestation.Put =
+  def attestation(eventId: Event.Id, citekey: Citekey, p: EventPassage): Attestation.Put =
     Attestation.Put(
       com.histmersion.api.library.Citekey(citekey.value),
       Attestation.TargetType(AttestationTarget.Event),

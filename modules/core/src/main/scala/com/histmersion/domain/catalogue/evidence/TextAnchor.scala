@@ -1,7 +1,10 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import com.histmersion.util.ocr.{Chunk, Chunker}
 import com.histmersion.util.text.Anchor
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Finding a quoted passage again in another text — the W3C Web Annotation TextQuoteSelector (`exact` + `prefix` +
   * `suffix`), as an attestation stores it (`quote`/`prefix`/`suffix`). Used when a merge keeps one OCR body and the
@@ -14,27 +17,27 @@ import com.histmersion.util.text.Anchor
   */
 object TextAnchor:
   type ChunkChars = ChunkChars.T
-  object ChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ChunkChars extends RefinedType[Int, Pure]
   type Prefix = Prefix.T
-  object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Prefix extends RefinedType[String, Pure]
   type Quote = Quote.T
-  object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Quote extends RefinedType[String, Pure]
   type Suffix = Suffix.T
-  object Suffix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Suffix extends RefinedType[String, Pure]
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
 
-  type ReanchorText = _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.Text
-  val ReanchorText: _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.Text.type = _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.Text
+  type ReanchorText = Text
+  val ReanchorText: Text.type = Text
   type ReanchorHint = ReanchorHint.T
-  object ReanchorHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ReanchorHint extends RefinedType[Int, Pure]
 
   def reanchor(
-      text: com.histmersion.domain.catalogue.evidence.TextAnchor.ReanchorText,
-      quote: com.histmersion.domain.catalogue.evidence.TextAnchor.Quote,
-      prefix: Option[com.histmersion.domain.catalogue.evidence.TextAnchor.Prefix],
-      suffix: Option[com.histmersion.domain.catalogue.evidence.TextAnchor.Suffix],
-      hint: Option[com.histmersion.domain.catalogue.evidence.TextAnchor.ReanchorHint]
+      text: ReanchorText,
+      quote: Quote,
+      prefix: Option[Prefix],
+      suffix: Option[Suffix],
+      hint: Option[ReanchorHint]
   ): Option[Anchor] =
     val body = text.value
     val exactQuote = quote.value
@@ -102,7 +105,7 @@ object TextAnchor:
     * is the n-th in the text, and the chunks are searched for the n-th one in document order. `None` when the chunking
     * cannot tell (a quote cut by a chunk boundary).
     */
-  def chunkOf(text: com.histmersion.domain.catalogue.evidence.TextAnchor.Text, anchor: Anchor, chunkChars: com.histmersion.domain.catalogue.evidence.TextAnchor.ChunkChars): Option[Chunk.Ord] =
+  def chunkOf(text: Text, anchor: Anchor, chunkChars: ChunkChars): Option[Chunk.Ord] =
     if chunkChars.value <= 0 then None
     else
       val body = text.value

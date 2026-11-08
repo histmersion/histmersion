@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 
@@ -50,6 +51,9 @@ import com.histmersion.api.exchange.EditionsPolicy
 import com.histmersion.api.library.MatchOutcome
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.Bundle
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.exchange.PlanMatches
 
 /** `merge plan` as a pure function (docs/research-merge-import.md §5–§6, milestones M3–M5): of the bundle's entities,
   * what this collection knows (its rows, labels, ledger, redirects, tombstones, article histories and remembered
@@ -86,7 +90,7 @@ import com.histmersion.api.exchange.Bundle
   */
 object MergePlanner:
   type IssueExtra = IssueExtra.T
-  object IssueExtra extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IssueExtra extends RefinedType[String, Pure]
 
   /** One row of `merge_ledger`: the foreign rev merged, the local uid it maps to, the local rev left. */
 
@@ -117,8 +121,8 @@ object MergePlanner:
   )
 
   final case class Input(
-      manifest: com.histmersion.api.exchange.Bundle.Manifest,
-      here: com.histmersion.api.exchange.Bundle.Instance,
+      manifest: Bundle.Manifest,
+      here: Bundle.Instance,
       /** Format and schema against this server (`BundleFormat.compatible`). */
       compat: List[Input.Compat],
       /** What reading the bundle found wrong (bad lines, checksums, missing blobs). */
@@ -133,13 +137,13 @@ object MergePlanner:
         */
       local: BundleEntities,
       /** Every source here, for the matcher. */
-      sources: List[com.histmersion.api.exchange.Bundle.Source],
+      sources: List[Bundle.Source],
       labels: Labels,
       /** Uids alive here, among those the bundle's lines refer to. */
       live: Set[UUID],
       /** Gazetteer ids present here, among those the bundle's events name. */
       places: Set[Input.Places],
-      reference: com.histmersion.api.exchange.Bundle.Reference,
+      reference: Bundle.Reference,
       /** Old citekeys dropped here by renaming back (V050), with when — ISO-8601 UTC, as bundle timestamps are written,
         * so the two compare as strings.
         */
@@ -165,19 +169,19 @@ object MergePlanner:
     def ownBundle: Boolean = manifest.instance.id == here.id
 
     /** How the other collection is named in what the merge writes ("work"). */
-    def fromLabel: com.histmersion.domain.MergePlanner.Row.Label =
+    def fromLabel: Row.Label =
       Row.Label(manifest.instance.label.map(_.value.trim).filter(_.nonEmpty).getOrElse(manifest.instance.id.toString.take(8)))
 
   object Input:
 
     type Compat = Compat.T
-    object Compat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Compat extends RefinedType[String, Pure]
     type ReadProblems = ReadProblems.T
-    object ReadProblems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ReadProblems extends RefinedType[String, Pure]
     type Places = Places.T
-    object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Places extends RefinedType[String, Pure]
     type AliasTombstonesValue = AliasTombstonesValue.T
-    object AliasTombstonesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AliasTombstonesValue extends RefinedType[String, Pure]
 
   /** A line's fate, for the importer: its uid in the bundle and here, its revs, the decision. */
   final case class Row(
@@ -194,9 +198,9 @@ object MergePlanner:
 
   object Row:
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type Tombstone = Tombstone.T
-    object Tombstone extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Tombstone extends RefinedType[Boolean, Pure]
 
   /** A record of the bundle folded into one here: its uid becomes a redirect (`uid_aliases`). */
   final case class Fold(kind: Bundle.Kind, foreignUid: UUID, localUid: UUID)
@@ -208,7 +212,7 @@ object MergePlanner:
 
   object AttestationFix:
     type Drop = Drop.T
-    object Drop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Drop extends RefinedType[Boolean, Pure]
 
   /** A version to record for an article here: the bundle's text, so the next merge finds it in this collection's
     * history (a common base).
@@ -224,7 +228,7 @@ object MergePlanner:
       snapshots: Set[UUID] = Set.empty,
       versions: List[ExtraVersion] = Nil,
       /** Articles added beside one here (`both` on an article changed on both sides): a new record. */
-      copies: List[com.histmersion.api.exchange.Bundle.Article] = Nil,
+      copies: List[Bundle.Article] = Nil,
       attestations: List[AttestationFix] = Nil,
       /** Bundle records left out for good (an attestation dropped): recorded as deleted here, so the next plan does not
         * bring them back. (uid, kind, origin.)
@@ -261,9 +265,9 @@ object MergePlanner:
 
   object Result:
     type NeedsApply = NeedsApply.T
-    object NeedsApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NeedsApply extends RefinedType[String, Pure]
     type Notes = Notes.T
-    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Notes extends RefinedType[String, Pure]
 
   // ── identity ────────────────────────────────────────────────────────────────────────────────
 
@@ -294,7 +298,7 @@ object MergePlanner:
     * replaced by the local one, and a mapped row's label by its local label — after a merge the local citekey (slug,
     * id) wins. Lines with no mapping are left as they are.
     */
-  def localize(es: BundleEntities, mapped: Map[UUID, UUID], localLabel: Map[UUID, com.histmersion.domain.MergePlanner.Row.Label]): BundleEntities =
+  def localize(es: BundleEntities, mapped: Map[UUID, UUID], localLabel: Map[UUID, Row.Label]): BundleEntities =
     if mapped.isEmpty then es
     else
       val m = mapped.map((f, l) => f.toString -> l.toString)
@@ -423,7 +427,7 @@ object MergePlanner:
   private def relinkGoals(es: BundleEntities, in: Input): BundleEntities =
     val citekeys = in.sources.map(s => s.uid -> s.citekey).toMap ++ es.sources.map(s => s.uid -> s.citekey)
     val slugs = in.local.articles.map(a => a.uid -> a.slug).toMap ++ es.articles.map(a => a.uid -> a.slug)
-    def label(k: com.histmersion.api.exchange.Bundle.GoalLink): Option[Bundle.GoalLink.Ref] = k.kind.value match
+    def label(k: Bundle.GoalLink): Option[Bundle.GoalLink.Ref] = k.kind.value match
       case "source"  => k.refUid.flatMap(citekeys.get).map(c => Bundle.GoalLink.Ref(c.value))
       case "article" => k.refUid.flatMap(slugs.get).map(s => Bundle.GoalLink.Ref(s.value))
       case _         => None
@@ -671,7 +675,7 @@ object MergePlanner:
     val localQueue = in.local.queue.map(q => q.uid -> q).toMap
     val rawArticle = fes.articles.map(a => a.uid -> a).toMap
     def foreignHistory(f: UUID): Set[Sha256] = fes.versions.filter(_.articleUid == f).map(v => Sha256.assume(v.bodySha256.value)).toSet
-    def outcome(local: com.histmersion.api.exchange.Bundle.Article, foreignUid: UUID): ArticleOutcome =
+    def outcome(local: Bundle.Article, foreignUid: UUID): ArticleOutcome =
       MergeFold.articleOutcome(
         MergeFold.ArticleBody(local.body.value),
         in.articleHistory
@@ -1190,9 +1194,9 @@ object MergePlanner:
     val foldMap = scala.collection.mutable.LinkedHashMap.empty[UUID, (UUID, Bundle.Kind)]
     val overrides = scala.collection.mutable.Map.empty[UUID, Decision]
     type Line[A] = BundleEntities => A
-    val articleLine = scala.collection.mutable.Map.empty[UUID, Line[com.histmersion.api.exchange.Bundle.Article]]
-    val goalLine = scala.collection.mutable.Map.empty[UUID, Line[com.histmersion.api.exchange.Bundle.Goal]]
-    val queueLine = scala.collection.mutable.Map.empty[UUID, Line[com.histmersion.api.exchange.Bundle.QueueItem]]
+    val articleLine = scala.collection.mutable.Map.empty[UUID, Line[Bundle.Article]]
+    val goalLine = scala.collection.mutable.Map.empty[UUID, Line[Bundle.Goal]]
+    val queueLine = scala.collection.mutable.Map.empty[UUID, Line[Bundle.QueueItem]]
     def articleIn(es: BundleEntities, u: UUID) = es.articles.find(_.uid == u).get
     def goalIn(es: BundleEntities, u: UUID) = es.goals.find(_.uid == u).get
     def queueIn(es: BundleEntities, u: UUID) = es.queue.find(_.uid == u).get
@@ -1200,7 +1204,7 @@ object MergePlanner:
     val renames = List.newBuilder[(UUID, Citekey, Citekey)]
     val snapshots = scala.collection.mutable.LinkedHashSet.empty[UUID]
     val versions = List.newBuilder[ExtraVersion]
-    val copies = List.newBuilder[Line[com.histmersion.api.exchange.Bundle.Article]]
+    val copies = List.newBuilder[Line[Bundle.Article]]
     val reviews = scala.collection.mutable.LinkedHashSet.empty[Bundle.Article.Slug]
     var tally = MergeTally() // the apply's report, added to as each fold is decided
     def fold(f: UUID, l: UUID, kind: Bundle.Kind): Unit = foldMap(f) = l -> kind
@@ -1416,7 +1420,7 @@ object MergePlanner:
       Option.when(
         raw.citekey != finalCitekey(f) && !citekeysHere(raw.citekey) &&
           in.labels.aliases.get(raw.citekey).forall(_ == l) && !fes.aliases.exists(_.alias == raw.citekey)
-      )(com.histmersion.api.exchange.Bundle.Alias(raw.citekey, l, Bundle.Alias.CreatedAt(raw.updatedAt.value)))
+      )(Bundle.Alias(raw.citekey, l, Bundle.Alias.CreatedAt(raw.updatedAt.value)))
     }
     // …and where it cannot, it is said
     foldedSources.foreach { (f, l) =>
@@ -1465,7 +1469,7 @@ object MergePlanner:
         localGoal.get(g.uid).filter(_ => !goalLine.contains(g.uid)).fold(g) { l =>
           val k = MergeFold.keepLocalSchedules(l, g)
           if k.links == g.links && k.schedules == g.schedules then g
-          else g.copy(links = k.links, schedules = k.schedules, rev = com.histmersion.api.exchange.Bundle.Goal.Rev(""))
+          else g.copy(links = k.links, schedules = k.schedules, rev = Bundle.Goal.Rev(""))
         }
       },
       queue = replaced(es0.queue, _.uid, queueLine),
@@ -1508,7 +1512,7 @@ object MergePlanner:
     val dropped = run.dropped // bundle uids left out for good
     val finalRevs = finalEs.revs
     // a merged source whose own line is unchanged is still written when its edge set grows
-    def edgeSet(es: List[com.histmersion.api.exchange.Bundle.Edge], u: UUID) = es.filter(_.srcUid == u).toSet
+    def edgeSet(es: List[Bundle.Edge], u: UUID) = es.filter(_.srcUid == u).toSet
     val edgesGrow: Set[UUID] = foldedHere.filter(u =>
       edgeSet(finalEs.edges, u) != edgeSet(in.local.edges, u) ||
         finalEs.unresolvedEdges.filter(_.srcUid == u).toSet != in.local.unresolvedEdges.filter(_.srcUid == u).toSet
@@ -1651,7 +1655,7 @@ object MergePlanner:
     // ── counts and info ──
     @annotation.tailrec
     def countMatches(
-        rest: List[com.histmersion.api.exchange.Bundle.Source],
+        rest: List[Bundle.Source],
         byUid: Int,
         byLedger: Int,
         byStrongKey: Int,
@@ -1718,7 +1722,7 @@ object MergePlanner:
         case Merges.GoalFold =>
           info += s"goal $label: the same goal on both sides — the status further along, notes joined"
         case Merges.QueueFold =>
-          info += s"queue item «${MergeIssue.Detail.preview(label, com.histmersion.api.exchange.MergeIssue.Detail.ClipLength(50))}»: the same item on both sides — one item, done if done anywhere"
+          info += s"queue item «${MergeIssue.Detail.preview(label, MergeIssue.Detail.ClipLength(50))}»: the same item on both sides — one item, done if done anywhere"
         case Merges.Contributed(m) =>
           info += m.info(PlanMerge.InfoLabel(label), PlanMerge.InfoBundleLabel(rawRevs.get(f).fold("")(_.label))).value
     }
@@ -1771,7 +1775,7 @@ object MergePlanner:
         in.manifest.asOf.map(a => MergePlan.AsOf(a.value)),
         MergePlan.PlanHash(hash),
         counts,
-        com.histmersion.api.exchange.PlanMatches.empty,
+        PlanMatches.empty,
         sorted,
         (info.result() ++ notes.result()).map(line => MergePlan.Info(line)),
         problems.map(p => MergePlan.Problems(p)),

@@ -1,7 +1,11 @@
-package com.histmersion.domain.media.imports
+package com.histmersion
+package domain.media.imports
 
 import com.histmersion.domain.Attribution
 import com.histmersion.Period
+import com.histmersion.domain.catalogue.places.ExternalIds
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One object or map of an open-access collection (#1446), as its API describes it — the pure, provider-neutral shape
   * every collection parser produces and the import judges.
@@ -41,31 +45,31 @@ final case class MediaRecord(
     rights: Either[MediaRecord.RightsPart1, Attribution],
     geography: List[(MediaRecord.GeographyPart1, MediaRecord.GeographyPart2)],
     period: Option[Period],
-    ids: List[(com.histmersion.domain.catalogue.places.ExternalIds.Scheme, com.histmersion.domain.catalogue.places.ExternalIds.ExternalId)] = Nil,
+    ids: List[(ExternalIds.Scheme, ExternalIds.ExternalId)] = Nil,
     withheld: Option[MediaRecord.Withheld] = None,
     role: Option[MediaRecord.Role] = None
 )
 
 object MediaRecord:
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]
   type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Title extends RefinedType[String, Pure]
   type PageUrl = PageUrl.T
-  object PageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PageUrl extends RefinedType[String, Pure]
   type ImageUrl = ImageUrl.T
-  object ImageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ImageUrl extends RefinedType[String, Pure]
   type ThumbUrl = ThumbUrl.T
-  object ThumbUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ThumbUrl extends RefinedType[String, Pure]
   type OriginalUrl = OriginalUrl.T
-  object OriginalUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OriginalUrl extends RefinedType[String, Pure]
   type RightsPart1 = RightsPart1.T
-  object RightsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RightsPart1 extends RefinedType[String, Pure]
   type GeographyPart1 = GeographyPart1.T
-  object GeographyPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GeographyPart1 extends RefinedType[String, Pure]
   type GeographyPart2 = GeographyPart2.T
-  object GeographyPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GeographyPart2 extends RefinedType[String, Pure]
   type Withheld = Withheld.T
-  object Withheld extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Withheld extends RefinedType[String, Pure]
   type Role = Role.T
-  object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Role extends RefinedType[String, Pure]

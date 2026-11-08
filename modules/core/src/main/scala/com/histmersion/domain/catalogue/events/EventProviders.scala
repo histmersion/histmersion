@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{CatalogRecord, EventTaxonomy}
@@ -7,6 +8,9 @@ import io.circe.Json
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.EventSummary
 
 /** The rules the host's event import runs every catalogue's records through (#1449) — the thresholds, the parts read
   * under them — and Wikidata's `wbgetentities`, which the host asks for the labels and aliases of Wikidata's events and
@@ -14,24 +18,24 @@ import java.nio.charset.StandardCharsets.UTF_8
   */
 object EventProviders:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type WikidataProperty = WikidataProperty.T
-  object WikidataProperty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WikidataProperty extends RefinedType[String, Pure]
 
 
   private def enc(s: String): String = URLEncoder.encode(s, UTF_8)
 
   object WikidataEvents:
     type Problem = Problem.T
-    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Problem extends RefinedType[String, Pure]
     /** Pure: the kind an item read in two classes keeps — the one whose class comes first in `order` (the configured
       * classes, the most specific first: a naval battle is also a battle, and stays a naval battle whichever class is
       * read last); a kind not in `order` yields to one that is.
       */
 
 
-    def moreSpecific(order: List[com.histmersion.api.catalogue.EventSummary.Kind], a: com.histmersion.api.catalogue.EventSummary.Kind, b: com.histmersion.api.catalogue.EventSummary.Kind): com.histmersion.api.catalogue.EventSummary.Kind =
-      def rank(k: com.histmersion.api.catalogue.EventSummary.Kind) = order.indexOf(EventTaxonomy.canonical(k)) match
+    def moreSpecific(order: List[EventSummary.Kind], a: EventSummary.Kind, b: EventSummary.Kind): EventSummary.Kind =
+      def rank(k: EventSummary.Kind) = order.indexOf(EventTaxonomy.canonical(k)) match
         case -1 => Int.MaxValue
         case i  => i
       if rank(b) < rank(a) then b else a
@@ -100,13 +104,13 @@ object EventProviders:
 
   object Thresholds:
     type RegionVei = RegionVei.T
-    object RegionVei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object RegionVei extends RefinedType[Int, Pure]
     type OutsideVei = OutsideVei.T
-    object OutsideVei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object OutsideVei extends RefinedType[Int, Pure]
     type RegionMagnitude = RegionMagnitude.T
-    object RegionMagnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object RegionMagnitude extends RefinedType[Double, Pure]
     type OutsideMagnitude = OutsideMagnitude.T
-    object OutsideMagnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object OutsideMagnitude extends RefinedType[Double, Pure]
 
   /** #6561: what a read part was kept under. A part is recorded as read together with the thresholds that judged its
     * records, so widening the region (or lowering a VEI or magnitude floor) makes every part due again instead of
@@ -125,12 +129,12 @@ object EventProviders:
     val suffix = s" @ $scope"
     recorded.collect { case k if k.endsWith(suffix) => k.dropRight(suffix.length) }
 
-  def keep(r: CatalogRecord, t: Thresholds): Either[com.histmersion.domain.catalogue.events.EventProviders.Problem, Unit] =
+  def keep(r: CatalogRecord, t: Thresholds): Either[Problem, Unit] =
     (r.lat, r.lon) match
       case (Some(la), Some(lo)) =>
         def in(b: BBox) = b.contains(lo, la)
         val inRegion = t.region.forall(in)
-        if t.area.exists(b => !in(b)) then Left(com.histmersion.domain.catalogue.events.EventProviders.Problem("outside --bbox"))
+        if t.area.exists(b => !in(b)) then Left(Problem("outside --bbox"))
         else
           r.kind.value match
             case EventTaxonomy.Eruption =>
@@ -144,4 +148,4 @@ object EventProviders:
                 Left(Problem(s"magnitude below $min${if inRegion then "" else " outside the region"}"))
               else Right(())
             case _ => Right(())
-      case _ => Left(com.histmersion.domain.catalogue.events.EventProviders.Problem("no position"))
+      case _ => Left(Problem("no position"))

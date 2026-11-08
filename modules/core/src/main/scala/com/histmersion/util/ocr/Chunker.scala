@@ -1,4 +1,8 @@
-package com.histmersion.util.ocr
+package com.histmersion
+package util.ocr
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Splits a Markdown body into FTS chunks — pure, no I/O, no config lookups.
   *
@@ -19,13 +23,13 @@ object Chunker:
 
 
   type ChunkMarkdown = ChunkMarkdown.T
-  object ChunkMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ChunkMarkdown extends RefinedType[String, Pure]
   type ChunkMaxChars = ChunkMaxChars.T
-  object ChunkMaxChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ChunkMaxChars extends RefinedType[Int, Pure]
 
   private val Heading = """^(#{1,6})\s+(.*?)\s*#*\s*$""".r
 
-  def chunk(markdown: com.histmersion.util.ocr.Chunker.ChunkMarkdown, maxChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars): List[Chunk] =
+  def chunk(markdown: ChunkMarkdown, maxChars: ChunkMaxChars): List[Chunk] =
     val max = math.max(1, maxChars.value)
     val text = Option(markdown.value).getOrElse("").replace("\u0000", "").replace("\r\n", "\n").replace('\r', '\n')
     if text.isBlank then Nil

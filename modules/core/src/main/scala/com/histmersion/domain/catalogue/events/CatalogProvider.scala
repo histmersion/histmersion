@@ -1,10 +1,13 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.api.catalogue.CatalogProviderInfo
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object CatalogProvider:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   private val GvpName = "gvp"
   private val NoaaName = "noaa"
@@ -20,31 +23,31 @@ object CatalogProvider:
     // Use allow non-commercial, educational use with attribution, and the GVP asks to be cited as below.
     CatalogProviderInfo(
       Gvp,
-      com.histmersion.api.catalogue.CatalogProviderInfo.Title("Smithsonian Global Volcanism Program"),
-      com.histmersion.api.catalogue.CatalogProviderInfo.Licence("Smithsonian Terms of Use (non-commercial use with attribution)"),
+      CatalogProviderInfo.Title("Smithsonian Global Volcanism Program"),
+      CatalogProviderInfo.Licence("Smithsonian Terms of Use (non-commercial use with attribution)"),
       CatalogProviderInfo.Citation(
         "Global Volcanism Program, Volcanoes of the World (v. 5.x), Smithsonian Institution, compiled by Venzke, E. " +
           "https://doi.org/10.5479/si.GVP.VOTW5-2024.5.2"
       ),
-      com.histmersion.api.catalogue.CatalogProviderInfo.Home("https://volcano.si.edu")
+      CatalogProviderInfo.Home("https://volcano.si.edu")
     ),
     // a U.S. federal work: public domain; NCEI asks to be cited
     CatalogProviderInfo(
       Noaa,
-      com.histmersion.api.catalogue.CatalogProviderInfo.Title("NOAA NCEI Natural Hazards"),
-      com.histmersion.api.catalogue.CatalogProviderInfo.Licence("public-domain"),
+      CatalogProviderInfo.Title("NOAA NCEI Natural Hazards"),
+      CatalogProviderInfo.Licence("public-domain"),
       CatalogProviderInfo.Citation(
         "National Geophysical Data Center / World Data Service: NCEI/WDS Global Significant Earthquake, Tsunami " +
           "and Volcano Databases. NOAA National Centers for Environmental Information. https://doi.org/10.7289/V5TD9V7K"
       ),
-      com.histmersion.api.catalogue.CatalogProviderInfo.Home("https://www.ngdc.noaa.gov/hazard/")
+      CatalogProviderInfo.Home("https://www.ngdc.noaa.gov/hazard/")
     ),
     CatalogProviderInfo(
       Wikidata,
-      com.histmersion.api.catalogue.CatalogProviderInfo.Title("Wikidata"),
-      com.histmersion.api.catalogue.CatalogProviderInfo.Licence("CC0-1.0"),
-      com.histmersion.api.catalogue.CatalogProviderInfo.Citation("Wikidata (CC0), https://www.wikidata.org"),
-      com.histmersion.api.catalogue.CatalogProviderInfo.Home("https://www.wikidata.org")
+      CatalogProviderInfo.Title("Wikidata"),
+      CatalogProviderInfo.Licence("CC0-1.0"),
+      CatalogProviderInfo.Citation("Wikidata (CC0), https://www.wikidata.org"),
+      CatalogProviderInfo.Home("https://www.wikidata.org")
     )
   )
 

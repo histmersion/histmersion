@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -8,6 +9,10 @@ import com.histmersion.config.given
 
 import AcquisitionSweepRules.*
 import com.histmersion.api.library.WorkRef
+import com.histmersion.api.library.Doi
+import com.histmersion.api.library.Title
+import com.histmersion.api.catalogue.Year
+import com.histmersion.domain.automation.Goal
 
 /** An acquisition sweep's pure rules: what it may offer the ranking, how a ranking is checked, which picks are
   * ingested.
@@ -15,17 +20,17 @@ import com.histmersion.api.library.WorkRef
 class AcquisitionSweepRulesSuite extends munit.FunSuite:
 
   test("a sweep never offers what the corpus or the queue has; each work once; capped"):
-    val w = (doi: String, inDb: WorkRef.InDb) => WorkRef(doi = (Some(doi)).map(com.histmersion.api.library.Doi.apply), title = (Some(doi)).map(com.histmersion.api.library.Title.apply), inDb = inDb)
+    val w = (doi: String, inDb: WorkRef.InDb) => WorkRef(doi = (Some(doi)).map(Doi.apply), title = (Some(doi)).map(Title.apply), inDb = inDb)
     val found = List(
       Candidate.Query("q1") -> w("10.1000/a", WorkRef.InDb(false)),
       Candidate.Query("q1") -> w("10.1000/b", WorkRef.InDb(true)),
       Candidate.Query("q2") -> w("10.1000/a", WorkRef.InDb(false)),
       Candidate.Query("q2") -> w("10.1000/c", WorkRef.InDb(false)),
-      Candidate.Query("q2") -> WorkRef(title = (Some("no doi")).map(com.histmersion.api.library.Title.apply)),
+      Candidate.Query("q2") -> WorkRef(title = (Some("no doi")).map(Title.apply)),
       Candidate.Query("q2") -> w("10.1000/d", WorkRef.InDb(false)),
-      Candidate.Query("q2") -> WorkRef(doi = (Some("10.1000/e")).map(com.histmersion.api.library.Doi.apply), isRetracted = com.histmersion.api.library.WorkRef.IsRetracted(true))
+      Candidate.Query("q2") -> WorkRef(doi = (Some("10.1000/e")).map(Doi.apply), isRetracted = WorkRef.IsRetracted(true))
     )
-    val (cs, skipped) = candidates(found, queued = Set(com.histmersion.domain.library.Doi("10.1000/c")), max = com.histmersion.domain.library.workflows.AcquisitionSweepRules.Limit(1))
+    val (cs, skipped) = candidates(found, queued = Set(com.histmersion.domain.library.Doi("10.1000/c")), max = Limit(1))
     assertEquals(cs.map(c => (c.doi, c.query)), List((com.histmersion.domain.library.Doi("10.1000/a"), Candidate.Query("q1"))))
     assertEquals(
       skipped,
@@ -33,42 +38,42 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
     )
 
   test("a ranking may only pick listed candidates"):
-    val c = Candidate(com.histmersion.domain.library.Doi("10.1000/a"), com.histmersion.api.library.Title("A"), Some(com.histmersion.api.catalogue.Year(2020)), Nil, None, isOa = com.histmersion.api.library.WorkRef.IsOa(true), com.histmersion.domain.library.workflows.AcquisitionSweepRules.Candidate.Query("q"), None)
+    val c = Candidate(com.histmersion.domain.library.Doi("10.1000/a"), Title("A"), Some(Year(2020)), Nil, None, isOa = WorkRef.IsOa(true), Candidate.Query("q"), None)
     val ok = checkRanking(
-      Ranking(List(Pick(com.histmersion.domain.library.workflows.AcquisitionSweepRules.Pick.DoiText("https://doi.org/10.1000/A"), com.histmersion.domain.library.workflows.AcquisitionSweepRules.Pick.Why("fits")), Pick(com.histmersion.domain.library.workflows.AcquisitionSweepRules.Pick.DoiText("10.1000/a"), com.histmersion.domain.library.workflows.AcquisitionSweepRules.Pick.Why("twice")))),
+      Ranking(List(Pick(Pick.DoiText("https://doi.org/10.1000/A"), Pick.Why("fits")), Pick(Pick.DoiText("10.1000/a"), Pick.Why("twice")))),
       List(c),
-      last = com.histmersion.domain.library.workflows.AcquisitionSweepRules.LastAttempt(false)
+      last = LastAttempt(false)
     )
     assertEquals(ok.map(_._1), Right(List((c, "fits"))))
-    assert(checkRanking(Ranking(List(Pick(com.histmersion.domain.library.workflows.AcquisitionSweepRules.Pick.DoiText("10.9999/zzz"), com.histmersion.domain.library.workflows.AcquisitionSweepRules.Pick.Why("invented")))), List(c), last = com.histmersion.domain.library.workflows.AcquisitionSweepRules.LastAttempt(false)).isLeft)
+    assert(checkRanking(Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), Pick.Why("invented")))), List(c), last = LastAttempt(false)).isLeft)
     assertEquals(
-      checkRanking(Ranking(List(Pick(com.histmersion.domain.library.workflows.AcquisitionSweepRules.Pick.DoiText("10.9999/zzz"), com.histmersion.domain.library.workflows.AcquisitionSweepRules.Pick.Why("invented")))), List(c), last = com.histmersion.domain.library.workflows.AcquisitionSweepRules.LastAttempt(true)).map(_._1),
+      checkRanking(Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), Pick.Why("invented")))), List(c), last = LastAttempt(true)).map(_._1),
       Right(Nil)
     )
-    assertEquals(acquireText(c, com.histmersion.domain.automation.Goal.Slug("g"), com.histmersion.domain.library.workflows.AcquisitionSweepRules.Pick.Why("fits")), "(2020). A. https://doi.org/10.1000/a (open access) — for goal g: fits")
+    assertEquals(acquireText(c, Goal.Slug("g"), Pick.Why("fits")), "(2020). A. https://doi.org/10.1000/a (open access) — for goal g: fits")
 
   test("ingestPicks: open-access picks in order until the cap of SUCCESSFUL ingests; a failure tries the next"):
     val picks = List("a" -> true, "b" -> false, "c" -> true, "d" -> true, "e" -> true)
     val tried = scala.collection.mutable.ListBuffer.empty[String]
-    val got = AcquisitionSweepRules.ingestPicks(picks, (_: (String, Boolean))._2, com.histmersion.domain.library.workflows.AcquisitionSweepRules.Allowance(2)) { (n, _) =>
+    val got = AcquisitionSweepRules.ingestPicks(picks, (_: (String, Boolean))._2, Allowance(2)) { (n, _) =>
       tried += n
       Option.when(n != "c")(n.toUpperCase)
     }
     assertEquals(got.map(_._2), List("A", "D"))
     assertEquals(tried.toList, List("a", "c", "d"), "closed ones are never offered, nothing past the cap")
-    assertEquals(AcquisitionSweepRules.ingestPicks(picks, (_: (String, Boolean))._2, com.histmersion.domain.library.workflows.AcquisitionSweepRules.Allowance(0))(p => Some(p._1)), Nil)
+    assertEquals(AcquisitionSweepRules.ingestPicks(picks, (_: (String, Boolean))._2, Allowance(0))(p => Some(p._1)), Nil)
 
   test(
     "ingestOa: the same order and cap as ingestPicks, and what failed with why (the unoffered rest is the caller's)"
   ):
     val picks = List("a" -> true, "b" -> false, "c" -> true, "d" -> true, "e" -> true)
-    val (ok, ko) = AcquisitionSweepRules.ingestOa(picks, (_: (String, Boolean))._2, com.histmersion.domain.library.workflows.AcquisitionSweepRules.Allowance(2)) { (n, _) =>
-      if n == "c" then Left(com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestFailure("no legal open-access copy of c")) else Right(n.toUpperCase)
+    val (ok, ko) = AcquisitionSweepRules.ingestOa(picks, (_: (String, Boolean))._2, Allowance(2)) { (n, _) =>
+      if n == "c" then Left(IngestFailure("no legal open-access copy of c")) else Right(n.toUpperCase)
     }
     assertEquals(ok.map(_._2), List("A", "D"))
     assertEquals(ko.map((p, why) => (p._1, why)), List("c" -> "no legal open-access copy of c"))
     assertEquals(
-      AcquisitionSweepRules.ingestOa(picks, (_: (String, Boolean))._2, com.histmersion.domain.library.workflows.AcquisitionSweepRules.Allowance(0))(p => Right(p._1)),
+      AcquisitionSweepRules.ingestOa(picks, (_: (String, Boolean))._2, Allowance(0))(p => Right(p._1)),
       (Nil, Nil),
       "nothing offered at 0"
     )

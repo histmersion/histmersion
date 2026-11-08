@@ -1,15 +1,17 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.media.{DataCredit, DataCredits}
+import com.histmersion.api.media.MediaItem
 
 /** The datasets' credits read as the reuse they allow: the stated licence classified, its URL read when the statement
   * names none, the credit line kept, and what the credits page shows unchanged.
   */
 class DatasetAttributionSuite extends munit.FunSuite:
 
-  private def credit(licence: DataCredit.Licence, url: Option[DataCredit.LicenceUrl]) = DataCredit(com.histmersion.api.media.DataCredit.Name("Zq"), com.histmersion.api.media.DataCredit.UsedFor("zq"), licence, url, com.histmersion.api.media.MediaItem.Credit("© Zq"), com.histmersion.api.media.DataCredit.Url("https://zq"))
+  private def credit(licence: DataCredit.Licence, url: Option[DataCredit.LicenceUrl]) = DataCredit(DataCredit.Name("Zq"), DataCredit.UsedFor("zq"), licence, url, MediaItem.Credit("© Zq"), DataCredit.Url("https://zq"))
 
   test("a stated Creative Commons licence is classified; the credit line and URL are kept"):
     val a = Attribution.ofDataset(credit(DataCredit.Licence("CC BY 4.0"), Some(DataCredit.LicenceUrl("https://creativecommons.org/licenses/by/4.0/"))))

@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import hearth.kindlings.optics.syntax.*
 
@@ -8,6 +9,8 @@ import com.histmersion.api.automation.Managers.*
 import java.time.Instant
 import com.histmersion.api.automation.ScheduleKind
 import com.histmersion.api.automation.Manager
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Goal schedules are research-area watchers since phase 3 (docs/research-process-managers.md §4 (c)): the pure half of
   * moving a `goal_schedules` row into its goal's `watch:<goal>` manager, and of showing a watcher as the schedules the
@@ -35,7 +38,7 @@ object WatchSchedules:
 
   object Plan:
     type Notes = Notes.T
-    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Notes extends RefinedType[String, Pure]
 
   /** A goal's schedules into its watcher. The watcher's own settings win (an existing one keeps its cron; as a bundle
     * import keeps this collection's schedules, #881): its sweeps gain the ENABLED schedules' kinds; a disabled schedule

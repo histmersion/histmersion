@@ -1,6 +1,9 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.util.data.exchange.MatchWeights
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MergeSettings(
     autoMerge: MergeSettings.AutoMerge,
@@ -15,16 +18,16 @@ final case class MergeSettings(
 
 object MergeSettings:
   type AutoMerge = AutoMerge.T
-  object AutoMerge extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AutoMerge extends RefinedType[Double, Pure]
   type NewAtMost = NewAtMost.T
-  object NewAtMost extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NewAtMost extends RefinedType[Double, Pure]
   type MinhashSize = MinhashSize.T
-  object MinhashSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinhashSize extends RefinedType[Int, Pure]
   type FindingNearAtLeast = FindingNearAtLeast.T
-  object FindingNearAtLeast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FindingNearAtLeast extends RefinedType[Double, Pure]
   type FindingWithinKm = FindingWithinKm.T
-  object FindingWithinKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FindingWithinKm extends RefinedType[Double, Pure]
   type PlaceWithinKm = PlaceWithinKm.T
-  object PlaceWithinKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlaceWithinKm extends RefinedType[Double, Pure]
   type PlaceOverlapAtLeast = PlaceOverlapAtLeast.T
-  object PlaceOverlapAtLeast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlaceOverlapAtLeast extends RefinedType[Double, Pure]

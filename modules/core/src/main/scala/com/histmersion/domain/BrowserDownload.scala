@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.library.WorkRef
 
@@ -7,6 +8,7 @@ import com.histmersion.domain.library.{Citekey, Doi}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Not
 import io.github.iltotore.iron.constraint.string.{Blank, Match}
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A gold open-access work whose publisher refuses scripts (`acquire.landing.browser-download-hosts`): the acquisition
   * list carries it as a download in the browser, where the person reads it under its licence, and then an ingest of the
@@ -23,7 +25,7 @@ final case class BrowserDownload(
 ):
 
   /** The acquisition item's text: it names the DOI as a doi.org link, which is what finds the item again. */
-  def text: com.histmersion.domain.BrowserDownload.Description =
+  def text: BrowserDownload.Description =
     BrowserDownload.Description(
       s"${citation.value} https://doi.org/${doi.value} — ${oaStatus.value} open access" +
         licence.fold("")(l => s", licence ${l.value}") +
@@ -33,15 +35,15 @@ final case class BrowserDownload(
 
 object BrowserDownload:
   type Citation = Citation.T
-  object Citation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Citation extends RefinedType[String, Pure]
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
   /** An open-access location of a work, as the work lists it. */
   type Location = Location.T
-  object Location extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Location extends RefinedType[String, Pure]
   /** The host of a location, as the configuration names it. */
   type Host = Host.T
-  object Host extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Host extends RefinedType[String, Pure]
 
   type LandingUrl = LandingUrl.T
   object LandingUrl extends RefinedType[String, Match["(?i)https?://\\S+"]]
@@ -84,7 +86,7 @@ object BrowserDownload:
     )
 
   /** `Author et al. (2019). Title.` — the DOI stands in for a missing title. */
-  def citationOf(work: WorkRef, doi: Doi): com.histmersion.domain.BrowserDownload.Citation =
+  def citationOf(work: WorkRef, doi: Doi): Citation =
     val who = work.authors.headOption.map(a => if work.authors.size > 1 then s"${a.value} et al." else a.value)
     val head = List(who, work.year.map(y => s"($y)")).flatten.mkString(" ")
     val title = work.title.map(_.value.trim).filter(_.nonEmpty).getOrElse(doi.value)

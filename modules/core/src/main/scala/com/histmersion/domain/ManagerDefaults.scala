@@ -1,4 +1,8 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ManagerDefaults(
     maxFailures: ManagerDefaults.MaxFailures,
@@ -13,10 +17,10 @@ final case class ManagerDefaults(
 
 object ManagerDefaults:
   type MaxFailures = MaxFailures.T
-  object MaxFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxFailures extends RefinedType[Int, Pure]
   type BackoffMinutes = BackoffMinutes.T
-  object BackoffMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BackoffMinutes extends RefinedType[Int, Pure]
   type MaxBackoffMinutes = MaxBackoffMinutes.T
-  object MaxBackoffMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxBackoffMinutes extends RefinedType[Int, Pure]
   type DailyUsd = DailyUsd.T
-  object DailyUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DailyUsd extends RefinedType[Double, Pure]
