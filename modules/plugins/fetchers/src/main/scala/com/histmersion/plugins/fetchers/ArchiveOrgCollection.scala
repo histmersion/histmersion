@@ -11,49 +11,49 @@ import com.histmersion.upstreams.ArchiveId
   * file. A lending-only item is described (`restricted`), never downloaded: it is borrowed on archive.org.
   */
 final class ArchiveOrgCollection(client: () => ArchiveOrg) extends SourceCollection:
-  val title: SourceCollection.TitleResult = SourceCollection.TitleResult("archive.org")
-  override val description: SourceCollection.DescriptionResult =
-    SourceCollection.DescriptionResult("archive.org's public texts (lending-only items are refused)")
+  val title: SourceCollection.Title = SourceCollection.Title("archive.org")
+  override val description: SourceCollection.Description =
+    SourceCollection.Description("archive.org's public texts (lending-only items are refused)")
 
-  def search(query: CollectionQuery): Either[SourceCollection.SearchResultPart1, List[CollectionItem]] =
+  def search(query: CollectionQuery): Either[Problem, List[CollectionItem]] =
     client()
       .search(
         ArchiveOrg.SearchQuery(query.text.fold("")(_.value)),
         PageSize(query.limit.getOrElse(ArchiveOrgCollection.Rows).value)
       )
       .left
-      .map(e => SourceCollection.SearchResultPart1(e.value))
+      .map(e => Problem(e.value))
       .map(_.map(ArchiveOrgCollection.item))
 
-  def item(id: CollectionId): Either[SourceCollection.ItemResultPart1, Option[CollectionItem]] =
+  def item(id: CollectionId): Either[Problem, Option[CollectionItem]] =
     client()
       .info(ArchiveId(id.value))
       .left
-      .map(e => SourceCollection.ItemResultPart1(e.value))
+      .map(e => Problem(e.value))
       .map(i => Some(ArchiveOrgCollection.item(i)))
 
   def file(
       item: CollectionItem,
       format: Option[SourceCollection.FileFormat]
-  ): Either[SourceCollection.FileResultPart1, CollectionFile] =
+  ): Either[Problem, CollectionFile] =
     AcquireParse
       .pickArchiveFile(
         item.files.map(ArchiveOrgCollection.archiveFile),
         format.map(f => AcquireParse.WantedFileKind(f.value))
       )
       .map(ArchiveOrgCollection.collectionFile)
-      .toRight(SourceCollection.FileResultPart1(s"'${item.id.value}' has no epub/pdf file to download"))
+      .toRight(Problem(s"'${item.id.value}' has no epub/pdf file to download"))
 
-  def original(item: CollectionItem, file: CollectionFile): Either[SourceCollection.OriginalResultPart1, FetchedFile] =
+  def original(item: CollectionItem, file: CollectionFile): Either[Problem, FetchedFile] =
     if item.restricted.value then
       Left(
-        SourceCollection.OriginalResultPart1(s"'${item.id.value}' is a lending-only item — borrow it on archive.org")
+        Problem(s"'${item.id.value}' is a lending-only item — borrow it on archive.org")
       )
     else
       client()
         .download(ArchiveId(item.id.value), ArchiveOrg.DownloadFile(file.name.value))
         .left
-        .map(e => SourceCollection.OriginalResultPart1(e.value))
+        .map(e => Problem(e.value))
 
 object ArchiveOrgCollection:
   /** The hits a search answers when the host does not say. */

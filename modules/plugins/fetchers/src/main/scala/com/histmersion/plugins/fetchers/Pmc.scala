@@ -1,6 +1,8 @@
 package com.histmersion
 package plugins.fetchers
 
+import com.histmersion.plugin.Header
+
 import com.histmersion.plugin.{FetchedFile, SourceFetcher}
 import com.histmersion.upstreams.http.{json, text}
 import com.histmersion.upstreams.parse.AcquireParse
@@ -26,8 +28,8 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
   /** The PMC hosts get the project's public identity — no contact e-mail, no `email` parameter. */
   private def pmcHeaders: Map[String, String] = Map("User-Agent" -> cfg.publicUserAgent.value)
 
-  private def pmcGetHeaders: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2] =
-    pmcHeaders.map((k, v) => Plugin.Http.GetHeadersPart1(k) -> Plugin.Http.GetHeadersPart2(v))
+  private def pmcGetHeaders: Map[Header.Name, Header.Value] =
+    pmcHeaders.map((k, v) => Header.Name(k) -> Header.Value(v))
 
   /** Everything PMC can offer for one DOI, asked lazily and at most once per fetch.
     *
@@ -87,7 +89,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
         .flatMap(_.pdfUrls)
         .iterator
         .map(u =>
-          Downloads(http).pdf(ctx.log, FetchedFile.Source("europepmc"), Plugin.Http.GetUrl(u.value), pmcGetHeaders)
+          Downloads(http).pdf(ctx.log, FetchedFile.Source("europepmc"), Plugin.Http.Url(u.value), pmcGetHeaders)
         )
         .collectFirst { case Some(f) => f }
         .orElse(record.flatMap(_.pdf).flatMap(o => dataset(o, FetchedFile.Extension("pdf"))(Downloads.looksLikePdf)))
@@ -101,7 +103,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
         ok: FetchedFile.Bytes => Boolean
     ): Option[FetchedFile] =
       val url = s"${cfg.pmcDataset.url}/${o.key}"
-      http.get(Plugin.Http.GetUrl(url), pmcGetHeaders).map(body => FetchedFile.Bytes(body.value)) match
+      http.get(Plugin.Http.Url(url), pmcGetHeaders).map(body => FetchedFile.Bytes(body.value)) match
         case Left(e) =>
           ctx.log.info(Plugin.Log.InfoMessage(s"pmc fetch failed ($e)")); None
         case Right(b) if !ok(b) =>

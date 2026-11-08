@@ -12,6 +12,6 @@ final class ArxivFetcher(cfg: UpstreamSettings, http: () => Plugin.Http) extends
   def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
     work.arxiv.fold[Fetch](Fetch.Miss(Fetch.Miss.Why("arxiv needs an arXiv id"))) { id =>
       Downloads(http())
-        .pdf(ctx.log, FetchedFile.Source("arxiv"), Plugin.Http.GetUrl(s"${cfg.arxiv.url}/pdf/$id"))
+        .pdf(ctx.log, FetchedFile.Source("arxiv"), Plugin.Http.Url(s"${cfg.arxiv.url}/pdf/$id"))
         .fold[Fetch](Fetch.Miss(Fetch.Miss.Why(s"arxiv has no PDF of $id")))(Fetch.Found(_))
     }

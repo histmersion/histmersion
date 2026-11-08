@@ -41,7 +41,7 @@ final class EchoPlugin(
       Plugin.Info(Plugin.Info.Id("echo"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
 ) extends Plugin:
   type Config = EchoConfig
-  override def defaultsResource = Plugin.DefaultsResourceResult("META-INF/histmersion/plugins/echo.conf")
+  override def defaultsResource = Plugin.DefaultsResource("META-INF/histmersion/plugins/echo.conf")
   def register(c: EchoConfig, ctx: Plugin.Context) =
     seen += s"${c.greeting}|${c.maxItems}|${c.mirrors.mkString(",")}|${c.token.map(ctx.secret)}"
     Right(())
@@ -56,19 +56,19 @@ final class MakerPlugin(
 ) extends Plugin:
   type Config = MakerConfig
   val info = Plugin.Info(id, Plugin.Info.Version("0.2.0"), Plugin.Info.SpiVersion(Spi.Version))
-  override def defaultsResource = Plugin.DefaultsResourceResult("META-INF/histmersion/plugins/maker.conf")
+  override def defaultsResource = Plugin.DefaultsResource("META-INF/histmersion/plugins/maker.conf")
   def register(c: MakerConfig, ctx: Plugin.Context) =
     escape += ctx
     val vault = new Secret.Vault:
-      val name = Secret.Vault.NameResult(c.vault)
+      val name = Secret.Vault.Name(c.vault)
       def resolve(ref: Secret.Vault.ResolveRef) =
         calls.incrementAndGet()
-        if ref.value == "missing" then Left(Secret.Vault.ResolveResultPart1(s"no entry '$ref'"))
+        if ref.value == "missing" then Left(Problem(s"no entry '$ref'"))
         else if ref.value == "boom" then throw new IllegalStateException("kaput")
-        else Right(Secret.Vault.ResolveResultPart2(s"v($ref)"))
+        else Right(Secret.Resolved(s"v($ref)"))
     for
-      _ <- ctx.secretVaults.add(Registry.AddId(c.vault), vault).left.map(e => Plugin.RegisterResultPart1(e.value))
-      _ <- if c.fail.isEmpty then Right(()) else Left(Plugin.RegisterResultPart1(c.fail))
+      _ <- ctx.secretVaults.add(Registry.AddId(c.vault), vault).left.map(e => Problem(e.value))
+      _ <- if c.fail.isEmpty then Right(()) else Left(Problem(c.fail))
     yield ()
 
 /** Registers a vault that answers in batches: every `resolveAll` call is recorded with what it asked; `missing` is an
@@ -81,28 +81,28 @@ final class BatchVaultPlugin(
 ) extends Plugin:
   type Config = MakerConfig
   val info = Plugin.Info(id, Plugin.Info.Version("0.3.0"), Plugin.Info.SpiVersion(Spi.Version))
-  override def defaultsResource = Plugin.DefaultsResourceResult("META-INF/histmersion/plugins/maker.conf")
+  override def defaultsResource = Plugin.DefaultsResource("META-INF/histmersion/plugins/maker.conf")
   def register(c: MakerConfig, ctx: Plugin.Context) =
     ctx.secretVaults
       .add(
         Registry.AddId(c.vault),
         new Secret.Vault:
-          val name = Secret.Vault.NameResult(c.vault)
+          val name = Secret.Vault.Name(c.vault)
           def resolve(ref: Secret.Vault.ResolveRef) = {
-            singles.incrementAndGet(); Right(Secret.Vault.ResolveResultPart2(s"one($ref)"))
+            singles.incrementAndGet(); Right(Secret.Resolved(s"one($ref)"))
           }
-          override def resolveAll(refs: List[Secret.Vault.ResolveAllRefs]) =
+          override def resolveAll(refs: List[Secret.Vault.ResolveRef]) =
             batches += refs.map(_.value)
             refs
               .filterNot(_.value == "unanswered")
               .map(r =>
-                r -> (if r.value == "missing" then Left(Secret.Vault.ResolveAllResultPart2Part1(s"no entry '$r'"))
-                      else Right(Secret.Vault.ResolveAllResultPart2Part2(s"b($r)")))
+                r -> (if r.value == "missing" then Left(Problem(s"no entry '$r'"))
+                      else Right(Secret.Resolved(s"b($r)")))
               )
               .toMap
       )
       .left
-      .map(e => Plugin.RegisterResultPart1(e.value))
+      .map(e => Problem(e.value))
 
 final case class ConsumerConfig(token: Secret, extra: List[Secret]) derives ConfigReader
 
@@ -113,7 +113,7 @@ final class ConsumerPlugin(
 ) extends Plugin:
   type Config = ConsumerConfig
   val info = Plugin.Info(id, Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
-  override def defaultsResource = Plugin.DefaultsResourceResult("META-INF/histmersion/plugins/consumer.conf")
+  override def defaultsResource = Plugin.DefaultsResource("META-INF/histmersion/plugins/consumer.conf")
   def register(c: ConsumerConfig, ctx: Plugin.Context) =
     (c.token :: c.extra).foreach(s => ctx.secret(s).foreach(v => got += v.value))
     Right(())
@@ -121,14 +121,14 @@ final class ConsumerPlugin(
 final class ThrowingPlugin extends Plugin:
   type Config = MakerConfig
   val info = Plugin.Info(Plugin.Info.Id("thrower"), Plugin.Info.Version("0"), Plugin.Info.SpiVersion(Spi.Version))
-  override def defaultsResource = Plugin.DefaultsResourceResult("META-INF/histmersion/plugins/maker.conf")
+  override def defaultsResource = Plugin.DefaultsResource("META-INF/histmersion/plugins/maker.conf")
   def register(c: MakerConfig, ctx: Plugin.Context) = throw new RuntimeException("bang")
 
 /** Uses a library that is not on the class path: what a plugin installed without its dependencies does. */
 final class MissingLibraryPlugin extends Plugin:
   type Config = MakerConfig
   val info = Plugin.Info(Plugin.Info.Id("needs-lib"), Plugin.Info.Version("0"), Plugin.Info.SpiVersion(Spi.Version))
-  override def defaultsResource = Plugin.DefaultsResourceResult("META-INF/histmersion/plugins/maker.conf")
+  override def defaultsResource = Plugin.DefaultsResource("META-INF/histmersion/plugins/maker.conf")
   def register(c: MakerConfig, ctx: Plugin.Context) = throw new NoClassDefFoundError("org/example/xml/Elem")
 
 class PluginHostSuite extends munit.FunSuite:
@@ -140,8 +140,8 @@ class PluginHostSuite extends munit.FunSuite:
     val services = HostServices(
       () =>
         new Plugin.Http {
-          def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
-            Left(Plugin.Http.GetResultPart1("offline"))
+          def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
+            Left(Problem("offline"))
         },
       ConfigFactory.empty,
       (id, warn, m) => lines += s"${if warn.value then "W" else "I"} $id: $m",
@@ -328,9 +328,9 @@ class PluginHostSuite extends munit.FunSuite:
 
   test("resolve: value: is the literal, env: the variable, a vault its answer; errors name the reference only"):
     val vault = new Secret.Vault {
-      val name = Secret.Vault.NameResult("kp");
-      def resolve(r: Secret.Vault.ResolveRef) = if r.value == "x" then Right(Secret.Vault.ResolveResultPart2("vx"))
-      else Left(Secret.Vault.ResolveResultPart1("locked"))
+      val name = Secret.Vault.Name("kp");
+      def resolve(r: Secret.Vault.ResolveRef) = if r.value == "x" then Right(Secret.Resolved("vx"))
+      else Left(Problem("locked"))
     }
     val e = env("TOKEN" -> "t0k")
     assertEquals(PluginHost.resolve(Secret.Ref.Value(Secret.Ref.Value.Literal("lit")), e, Map.empty), Right("lit"))
@@ -532,8 +532,8 @@ class PluginHostSuite extends munit.FunSuite:
       escaped.head.secretVaults.add(
         Registry.AddId("late"),
         new Secret.Vault {
-          val name = Secret.Vault.NameResult("late");
-          def resolve(r: Secret.Vault.ResolveRef) = Right(Secret.Vault.ResolveResultPart2(""))
+          val name = Secret.Vault.Name("late");
+          def resolve(r: Secret.Vault.ResolveRef) = Right(Secret.Resolved(""))
         }
       )
     assert(late.left.exists(_.value.contains("registration is over")), late)
@@ -628,10 +628,10 @@ class PluginHostSuite extends munit.FunSuite:
     assertEquals(got.toList, List("b(ok)"))
     assertEquals(batches.size, 1)
     val throwing = new Secret.Vault:
-      val name = Secret.Vault.NameResult("t")
+      val name = Secret.Vault.Name("t")
       def resolve(r: Secret.Vault.ResolveRef) = if r.value == "b" then throw new IllegalStateException("kaput")
-      else Right(Secret.Vault.ResolveResultPart2(s"one($r)"))
-      override def resolveAll(refs: List[Secret.Vault.ResolveAllRefs]) = throw new IllegalStateException("kaput")
+      else Right(Secret.Resolved(s"one($r)"))
+      override def resolveAll(refs: List[Secret.Vault.ResolveRef]) = throw new IllegalStateException("kaput")
     assertEquals(
       PluginHost
         .resolveAll(Secret.Ref.Vault.Value("t"), List(Secret.Ref.Vault.Ref("a"), Secret.Ref.Vault.Ref("b")), throwing),
@@ -640,9 +640,9 @@ class PluginHostSuite extends munit.FunSuite:
 
   test("a vault without resolveAll (an SPI-2 plugin compiled before it) is asked one reference at a time"):
     val default = new Secret.Vault {
-      val name = Secret.Vault.NameResult("d");
-      def resolve(r: Secret.Vault.ResolveRef) = if r.value == "x" then Left(Secret.Vault.ResolveResultPart1("locked"))
-      else Right(Secret.Vault.ResolveResultPart2(s"v($r)"))
+      val name = Secret.Vault.Name("d");
+      def resolve(r: Secret.Vault.ResolveRef) = if r.value == "x" then Left(Problem("locked"))
+      else Right(Secret.Resolved(s"v($r)"))
     }
     assertEquals(
       PluginHost.resolveAll(

@@ -1,8 +1,10 @@
 package com.histmersion
 package plugin.testkit
 
+import com.histmersion.plugin.Header
+
 import com.histmersion.domain.CoreQuota
-import com.histmersion.plugin.{AiHttp, WorkKey}
+import com.histmersion.plugin.{AiHttp, Plugin, WorkKey}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Doi
 
@@ -17,11 +19,11 @@ final class ScriptedAiHttp(answers: Either[ScriptedAiHttp.Problem, AiHttp.Respon
   def requests: List[AiHttpRequest] = synchronized(seen.result())
 
   def post(
-      url: AiHttp.PostUrl,
-      headers: Map[AiHttp.PostHeadersPart1, AiHttp.PostHeadersPart2],
+      url: Plugin.Http.Url,
+      headers: Map[Header.Name, Header.Value],
       body: AiHttp.PostBody,
-      timeoutSeconds: AiHttp.PostTimeoutSeconds
-  ): Either[AiHttp.PostResultPart1, AiHttp.Response] =
+      timeoutSeconds: AiHttp.TimeoutSeconds
+  ): Either[plugin.Problem, AiHttp.Response] =
     next(
       AiHttpRequest(
         AiHttpRequest.Method("POST"),
@@ -29,13 +31,13 @@ final class ScriptedAiHttp(answers: Either[ScriptedAiHttp.Problem, AiHttp.Respon
         ScriptedAiHttp.masked(headers.map((k, v) => CoreQuota.HeaderName(k.value) -> CoreQuota.HeaderValue(v.value))),
         Some(AiHttpRequest.Body(body.value))
       )
-    ).left.map(p => AiHttp.PostResultPart1(p.value))
+    ).left.map(p => plugin.Problem(p.value))
 
   def get(
-      url: AiHttp.GetUrl,
-      headers: Map[AiHttp.GetHeadersPart1, AiHttp.GetHeadersPart2],
-      timeoutSeconds: AiHttp.GetTimeoutSeconds
-  ): Either[AiHttp.GetResultPart1, AiHttp.Response] =
+      url: Plugin.Http.Url,
+      headers: Map[Header.Name, Header.Value],
+      timeoutSeconds: AiHttp.TimeoutSeconds
+  ): Either[plugin.Problem, AiHttp.Response] =
     next(
       AiHttpRequest(
         AiHttpRequest.Method("GET"),
@@ -43,7 +45,7 @@ final class ScriptedAiHttp(answers: Either[ScriptedAiHttp.Problem, AiHttp.Respon
         ScriptedAiHttp.masked(headers.map((k, v) => CoreQuota.HeaderName(k.value) -> CoreQuota.HeaderValue(v.value))),
         None
       )
-    ).left.map(p => AiHttp.GetResultPart1(p.value))
+    ).left.map(p => plugin.Problem(p.value))
 
   private def next(r: AiHttpRequest): Either[ScriptedAiHttp.Problem, AiHttp.Response] = synchronized {
     seen += r

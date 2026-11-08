@@ -58,14 +58,14 @@ object PluginMedia:
     * of the request.
     */
   def http(polite: Polite): Plugin.Http = new Plugin.Http:
-    def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+    def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
       polite
         .get(
           HttpTransport.Url(url.value),
           headers.map((k, v) => CoreQuota.HeaderName(k.value) -> CoreQuota.HeaderValue(v.value))
         )
         .left
-        .map(e => Plugin.Http.GetResultPart1(e.value))
+        .map(e => plugin.Problem(e.value))
         .map(a => Plugin.HttpResponse.Body(a.body.value))
 
   /** A plugin's answer, or what it threw as a failure of that call. */
@@ -93,7 +93,7 @@ object PluginMedia:
           )
     val stated: Either[Problem, MediaRights] =
       Option(it.rights)
-        .getOrElse(Left(MediaItem.RightsPart1("no rights statement")))
+        .getOrElse(Left(plugin.Problem("no rights statement")))
         .left
         .map(why => Problem(why.value))
     MediaRecord(

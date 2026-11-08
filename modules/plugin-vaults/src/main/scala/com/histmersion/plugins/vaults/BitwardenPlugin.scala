@@ -15,20 +15,20 @@ final class BitwardenPlugin extends Plugin:
   val info =
     Plugin.Info(Plugin.Info.Id("bitwarden"), Plugin.Info.Version(Vaults.Version), Plugin.Info.SpiVersion(Spi.Version))
 
-  def register(c: BitwardenConfig, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
+  def register(c: BitwardenConfig, ctx: Plugin.Context): Either[Problem, Unit] =
     given files: LocalFiles = ctx.files
     given processes: Processes = ctx.processes
     for
       exe <- Subprocess
-        .locate(Subprocess.Tool(c.cli.value), ctx.env(Plugin.Context.EnvName("PATH")))
+        .locate(Subprocess.Tool(c.cli.value), ctx.env(EnvVar.Name("PATH")))
         .left
-        .map(e => Plugin.RegisterResultPart1(e.value))
-      session <- Vaults.optional(c.session, ctx).left.map(e => Plugin.RegisterResultPart1(e.value))
+        .map(e => Problem(e.value))
+      session <- Vaults.optional(c.session, ctx).left.map(e => Problem(e.value))
       _ <- ctx.secretVaults
         .add(
           Registry.AddId(info.id.value),
           BitwardenVault(
-            Secret.Vault.NameResult(info.id.value),
+            Secret.Vault.Name(info.id.value),
             exe,
             session,
             Vaults.Field(c.field.value),
@@ -36,5 +36,5 @@ final class BitwardenPlugin extends Plugin:
           )
         )
         .left
-        .map(e => Plugin.RegisterResultPart1(e.value))
+        .map(e => Problem(e.value))
     yield ()

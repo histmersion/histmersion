@@ -1,6 +1,8 @@
 package com.histmersion
 package server
 
+import com.histmersion.plugin.Problem
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -144,7 +146,7 @@ class AcquireHandlerSuite extends DbSuite:
   private def archiveService(archived: ArchiveItem, h: AcquisitionControllers) =
     import com.histmersion.plugin.{CollectionFile, CollectionId, CollectionItem, CollectionQuery}
     val collection = new SourceCollection:
-      def title = SourceCollection.TitleResult("archive.org")
+      def title = SourceCollection.Title("archive.org")
       private val one = CollectionItem(
         CollectionId(archived.identifier.value),
         archived.title.map(t => CollectionItem.Title(t.value)),
@@ -166,9 +168,9 @@ class AcquireHandlerSuite extends DbSuite:
         i.files
           .find(_.name.value.endsWith(".epub"))
           .orElse(i.files.headOption)
-          .toRight(SourceCollection.FileResultPart1("no file"))
+          .toRight(Problem("no file"))
       def original(i: CollectionItem, f: CollectionFile) = Left(
-        SourceCollection.OriginalResultPart1("the chain downloads it")
+        Problem("the chain downloads it")
       )
     val library = new RefusingCollectionLibrary:
       override def archiveImport(i: ArchiveItem, f: ArchiveFile, req: ArchiveImportRequest) = h.archiveImport(i, f, req)

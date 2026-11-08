@@ -28,39 +28,11 @@ final case class MediaPlace(
     lat: Option[Latitude] = None,
     lon: Option[Longitude] = None,
     period: Option[Period] = None,
-    ids: List[(MediaPlace.IdsPart1, MediaPlace.IdsPart2)] = Nil
-):
-  /** The place as a host of SPI 2's first release described it: no gazetteer ids. */
-  def this(
-      id: String,
-      label: String,
-      wikidata: Option[WikidataId],
-      lat: Option[Latitude],
-      lon: Option[Longitude],
-      period: Option[Period]
-  ) = this(MediaPlace.Id(id), MediaPlace.Label(label), wikidata, lat, lon, period, Nil)
+    ids: List[(GazetteerRef.Scheme, GazetteerRef.Id)] = Nil
+)
 
 object MediaPlace:
-  /** The place as a host of SPI 2's first release described it: no gazetteer ids. */
-  type ApplyId = Id
-  val ApplyId: Id.type = Id
-  type ApplyLabel = Label
-  val ApplyLabel: Label.type = Label
-
   type Id = Id.T
   object Id extends Newtype[String, Pure]
   type Label = Label.T
   object Label extends Newtype[String, Pure]
-  type IdsPart1 = IdsPart1.T
-  object IdsPart1 extends Newtype[String, Pure]
-  type IdsPart2 = IdsPart2.T
-  object IdsPart2 extends Newtype[String, Pure]
-
-  def apply(
-      id: ApplyId,
-      label: ApplyLabel,
-      wikidata: Option[WikidataId],
-      lat: Option[Latitude],
-      lon: Option[Longitude],
-      period: Option[Period]
-  ): MediaPlace = new MediaPlace(id, label, wikidata, lat, lon, period, Nil)

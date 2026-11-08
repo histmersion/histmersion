@@ -56,13 +56,13 @@ object Commons:
       width: File.Width,
       maxlag: Settings.Maxlag,
       meta: ImageInfoUrlMeta
-  ): Plugin.Http.GetUrl =
+  ): Plugin.Http.Url =
     val props = if meta.value then "url|size|mime|extmetadata" else "url|size|mime"
     val ext = if meta.value then
       s"&iiextmetadatafilter=${MetaFields.map(_.value).mkString("|").enc}&iiextmetadatalanguage=en"
     else ""
     val lag = if maxlag.value > 0 then s"&maxlag=${maxlag.value}" else ""
-    Plugin.Http.GetUrl(
+    Plugin.Http.Url(
       s"${api.value}?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=${props.enc}&iiurlwidth=${width.value}" +
         s"$ext&titles=${titles.map(_.value).mkString("|").enc}$lag"
     )
@@ -151,18 +151,18 @@ object Commons:
     * Commons picture ([[CommonsFiles]]); the host judges them against `media.depicts.licences`.
     */
   final class Depictions(media: MediaSettings, licences: LicenceReader) extends MediaCollection:
-    val title = MediaCollection.TitleResult("Commons depictions")
-    override val description = MediaCollection.DescriptionResult(
+    val title = MediaCollection.Title("Commons depictions")
+    override val description = MediaCollection.Description(
       "Pictures that depict events: Wikimedia Commons files whose structured data says P180 'depicts' the event's " +
         "Wikidata item, and the images of the works its item lists as P1299 'depicted by'; licence read from Commons"
     )
     val role = MediaItem.Role(MediaCollection.Depiction)
     override def matchRule = MediaMatchRule.Own
     override def asks = Set(MediaTarget.Events)
-    override def requestIntervalMs = MediaCollection.RequestIntervalMsResult(media.requestIntervalMs.value)
+    override def requestIntervalMs = MediaCollection.RequestIntervalMs(media.requestIntervalMs.value)
 
-    private def entitiesUrl(ids: List[WikidataId], wikidata: WikidataSettings): Plugin.Http.GetUrl =
-      Plugin.Http.GetUrl(
+    private def entitiesUrl(ids: List[WikidataId], wikidata: WikidataSettings): Plugin.Http.Url =
+      Plugin.Http.Url(
         WikidataEntities
           .url(
             WikidataEntities.Api(wikidata.apiUrl.value),
@@ -173,7 +173,7 @@ object Commons:
       )
 
     def search(place: MediaPlace, http: Plugin.Http) = Left(
-      MediaCollection.SearchResultPart1("the depictions are about events")
+      plugin.Problem("the depictions are about events")
     )
 
     override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
@@ -276,9 +276,9 @@ object Commons:
         qid: WikidataId,
         limit: DepictsSettings.SearchLimit,
         maxlag: Settings.Maxlag
-    ): Plugin.Http.GetUrl =
+    ): Plugin.Http.Url =
       val lag = if maxlag.value > 0 then s"&maxlag=${maxlag.value}" else ""
-      Plugin.Http.GetUrl(
+      Plugin.Http.Url(
         s"${api.value}?action=query&format=json&formatversion=2&list=search&srnamespace=6&srlimit=${limit.value.max(1)}" +
           s"&srsearch=${s"haswbstatement:$Depicts=${qid.value}".enc}$lag"
       )
@@ -417,11 +417,11 @@ object Commons:
         MediaItem.Title(title.value.stripPrefix("File:")),
         MediaItem.PageUrl(""),
         None,
-        Left(MediaItem.RightsPart1("no answer from Commons"))
+        Left(plugin.Problem("no answer from Commons"))
       )
       answer match
         case None              => bare
-        case Some(Left(why))   => bare.copy(rights = Left(MediaItem.RightsPart1(why.value)))
+        case Some(Left(why))   => bare.copy(rights = Left(plugin.Problem(why.value)))
         case Some(Right(info)) =>
           def field(k: File.MetaKey): Option[String] =
             info.meta.get(k).map(v => MediaText.plain(MediaText.Html(v.value)).value).filter(_.nonEmpty)

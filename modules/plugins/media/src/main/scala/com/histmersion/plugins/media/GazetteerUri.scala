@@ -1,6 +1,8 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.plugin.GazetteerRef
+
 import com.histmersion.plugin.MediaItem
 import com.histmersion.plugin.GazetteerPlace
 
@@ -13,9 +15,9 @@ object GazetteerUri:
   private val GeoNamesUri = """^https?://(?:www\.|sws\.)?geonames\.org/([0-9]+)(?:[/#?].*)?$""".r
   private val WikidataUri = """^https?://(?:www\.)?wikidata\.org/(?:entity|wiki)/(Q[1-9][0-9]*)(?:[/#?].*)?$""".r
 
-  def of(uri: GazetteerPlace.Id): Option[(MediaItem.IdsPart1, MediaItem.IdsPart2)] =
+  def of(uri: GazetteerPlace.Id): Option[(GazetteerRef.Scheme, GazetteerRef.Id)] =
     Option(uri).map(_.value.trim).getOrElse("") match
-      case PleiadesUri(id) => Some(MediaItem.IdsPart1("pleiades") -> MediaItem.IdsPart2(id))
-      case GeoNamesUri(id) => Some(MediaItem.IdsPart1("geonames") -> MediaItem.IdsPart2(id))
-      case WikidataUri(id) => Some(MediaItem.IdsPart1("wikidata") -> MediaItem.IdsPart2(id))
+      case PleiadesUri(id) => Some(GazetteerRef.Scheme("pleiades") -> GazetteerRef.Id(id))
+      case GeoNamesUri(id) => Some(GazetteerRef.Scheme("geonames") -> GazetteerRef.Id(id))
+      case WikidataUri(id) => Some(GazetteerRef.Scheme("wikidata") -> GazetteerRef.Id(id))
       case _               => None

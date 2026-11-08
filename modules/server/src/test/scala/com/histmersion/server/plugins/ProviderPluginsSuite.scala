@@ -57,8 +57,8 @@ class ProviderPluginsSuite extends munit.FunSuite:
     registered.map((k, c) => CatalogRecord.Provider(k.value) -> c)
 
   private val offline = new Plugin.Http {
-    def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
-      Left(Plugin.Http.GetResultPart1("offline"))
+    def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
+      Left(Problem("offline"))
   }
 
   /** The class path's plugins (the first-party media collections among them, supplied the host's settings) and `extra`,
@@ -76,22 +76,22 @@ class ProviderPluginsSuite extends munit.FunSuite:
     type Config = PortalConfig
     val info =
       Plugin.Info(Plugin.Info.Id("zq-plugin"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
-    override def defaultsResource = Plugin.DefaultsResourceResult("zq-none.conf")
+    override def defaultsResource = Plugin.DefaultsResource("zq-none.conf")
     def register(c: PortalConfig, ctx: Plugin.Context) =
       for
-        _ <- ctx.mediaCollections.add(collection, Collection(role)).left.map(e => Plugin.RegisterResultPart1(e.value))
-        _ <- ctx.eventCatalogues.add(catalogue, Catalogue).left.map(e => Plugin.RegisterResultPart1(e.value))
+        _ <- ctx.mediaCollections.add(collection, Collection(role)).left.map(e => Problem(e.value))
+        _ <- ctx.eventCatalogues.add(catalogue, Catalogue).left.map(e => Problem(e.value))
       yield ()
 
   final private class Collection(val role: MediaItem.Role) extends MediaCollection:
-    val title = MediaCollection.TitleResult("Zq portal objects")
+    val title = MediaCollection.Title("Zq portal objects")
     def search(place: MediaPlace, http: Plugin.Http) = Right(Nil)
 
   private object Catalogue extends EventCatalogue:
-    val title = EventCatalogue.TitleResult("Zq quakes"); val licence = Licence("CC0-1.0");
-    val citation = EventCatalogue.CitationResult("Zq (2026)");
-    val home = EventCatalogue.HomeResult("https://zq.example")
-    def parts(q: CatalogueQuery) = List(EventCatalogue.PartsResult("all"))
+    val title = EventCatalogue.Title("Zq quakes"); val licence = Licence("CC0-1.0");
+    val citation = EventCatalogue.Citation("Zq (2026)");
+    val home = EventCatalogue.Home("https://zq.example")
+    def parts(q: CatalogueQuery) = List(EventCatalogue.ReadPart("all"))
     def read(part: EventCatalogue.ReadPart, q: CatalogueQuery, http: Plugin.Http) = Right(CataloguePage(Nil))
 
   private val portalOn = "histmersion.plugins.zq-plugin.enabled = true"
@@ -414,8 +414,8 @@ class ProviderPluginsSuite extends munit.FunSuite:
         def info(m: Plugin.Log.InfoMessage) = ()
         def warn(m: Plugin.Log.WarnMessage) = ()
       }
-      def env(n: Plugin.Context.EnvName) = None
-      def secret(s: Secret) = Left(Plugin.Context.SecretResultPart1("none"))
+      def env(n: EnvVar.Name) = None
+      def secret(s: Secret) = Left(Problem("none"))
       def secretVaults = Registry.refusing(Registry.RefusingWhy("x"))
     assert(ctx.mediaCollections.add(Registry.AddId("x"), Collection(MediaItem.Role("object"))).isLeft)
     assert(ctx.eventCatalogues.add(Registry.AddId("x"), Catalogue).isLeft)
@@ -531,9 +531,9 @@ class ProviderPluginsSuite extends munit.FunSuite:
       MediaItem.PageUrl("https://zq.example/k1"),
       Some(MediaItem.ImageUrl(" https://zq.example/k1.jpg ")),
       Right(MediaRights(Licence("CC0"), credit = MediaRights.Credit("Zq"))),
-      geography = List(MediaItem.GeographyPart1("find-spot") -> MediaItem.GeographyPart2("Zqenai")),
+      geography = List(MediaItem.Geography.Field("find-spot") -> MediaItem.Geography.Value("Zqenai")),
       period = Period.from(Year(-1400), Year(-1300)).toOption,
-      ids = List(MediaItem.IdsPart1("pleiades") -> MediaItem.IdsPart2("1"))
+      ids = List(GazetteerRef.Scheme("pleiades") -> GazetteerRef.Id("1"))
     )
     val r: MediaRecord = PluginMedia.record(it)
     assertEquals(
@@ -548,7 +548,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(r.rights.map(_.licence.family), Right(com.histmersion.domain.Licence.Family.Cc0))
     assertEquals(r.ids, List("pleiades" -> "1"))
     assertEquals(
-      PluginMedia.record(it.modify(_.rights).setTo(Left(MediaItem.RightsPart1("not open access")))).rights,
+      PluginMedia.record(it.modify(_.rights).setTo(Left(Problem("not open access")))).rights,
       Left("not open access")
     )
 
@@ -725,19 +725,19 @@ class ProviderPluginsSuite extends munit.FunSuite:
 
   test("a plugin catalogue's limits: the present, and its own floor when it states one"):
     val floored = new EventCatalogue:
-      val title = EventCatalogue.TitleResult("t"); val licence = Licence("l");
-      val citation = EventCatalogue.CitationResult("c"); val home = EventCatalogue.HomeResult("h")
+      val title = EventCatalogue.Title("t"); val licence = Licence("l");
+      val citation = EventCatalogue.Citation("c"); val home = EventCatalogue.Home("h")
       override def floorYear = Some(Year(-9700))
       def parts(q: CatalogueQuery) = Nil
       def read(p: EventCatalogue.ReadPart, q: CatalogueQuery, h: Plugin.Http) =
-        Left(EventCatalogue.ReadResultPart1("no"))
+        Left(Problem("no"))
     val throws = new EventCatalogue:
-      val title = EventCatalogue.TitleResult("t"); val licence = Licence("l");
-      val citation = EventCatalogue.CitationResult("c"); val home = EventCatalogue.HomeResult("h")
+      val title = EventCatalogue.Title("t"); val licence = Licence("l");
+      val citation = EventCatalogue.Citation("c"); val home = EventCatalogue.Home("h")
       override def floorYear = throw IllegalStateException("boom")
       def parts(q: CatalogueQuery) = Nil
       def read(p: EventCatalogue.ReadPart, q: CatalogueQuery, h: Plugin.Http) =
-        Left(EventCatalogue.ReadResultPart1("no"))
+        Left(Problem("no"))
     import com.histmersion.upstreams.dating.CatalogDating.Limits
     assertEquals(
       PluginEvents.limits(Some(floored), DeepTime.SignedYear(2026)),

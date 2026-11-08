@@ -1,6 +1,10 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.plugin.EnvVar
+
+import com.histmersion.plugin.Problem
+
 import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Processes.Result
 import java.io.{InputStream, IOException}
@@ -14,15 +18,15 @@ import scala.util.Try
 final class SystemProcesses extends Processes:
   def run(
       argv: List[Processes.RunArgv],
-      env: Map[Processes.RunEnvPart1, Processes.RunEnvPart2],
+      env: Map[EnvVar.Name, EnvVar.Value],
       stdin: Option[Processes.RunStdin],
       timeout: FiniteDuration
-  ): Either[Processes.RunResultPart1, Result] =
+  ): Either[Problem, Result] =
     val tool = argv.headOption.map(a => Path.of(a.value).getFileName.toString).getOrElse("?")
     val pb = new ProcessBuilder(argv.map(_.value).asJava)
     env.foreach((k, v) => pb.environment().put(k.value, v.value))
     Try(pb.start()).toEither.left
-      .map(e => Processes.RunResultPart1(s"$tool could not be started: ${e.getMessage}"))
+      .map(e => Problem(s"$tool could not be started: ${e.getMessage}"))
       .flatMap { proc =>
         val out = drain(proc.getInputStream)
         val err = drain(proc.getErrorStream)
@@ -38,7 +42,7 @@ final class SystemProcesses extends Processes:
             val _ = p.destroyForcibly()
           }
           val _ = proc.destroyForcibly()
-          Left(Processes.RunResultPart1(s"$tool did not answer within ${timeout.toSeconds} s"))
+          Left(Problem(s"$tool did not answer within ${timeout.toSeconds} s"))
         else Right(Result(Result.Exit(proc.exitValue), Result.Out(out()), Result.Err(err())))
       }
 
@@ -64,22 +68,20 @@ final class SystemProcesses extends Processes:
       val _ = Thread.ofVirtual().start(() => pump(proc.getErrorStream, errBytes))
 
     /** Everything the tool printed to stdout / stderr so far. */
-    def out: Processes.Session.OutResult = Processes.Session.OutResult(lock.synchronized(outBytes.toString(UTF_8)))
-    def err: Processes.Session.ErrResult = Processes.Session.ErrResult(lock.synchronized(errBytes.toString(UTF_8)))
-    def alive: Processes.Session.AliveResult = Processes.Session.AliveResult(proc.isAlive)
+    def out: Processes.Result.Out = Processes.Result.Out(lock.synchronized(outBytes.toString(UTF_8)))
+    def err: Processes.Result.Err = Processes.Result.Err(lock.synchronized(errBytes.toString(UTF_8)))
+    def alive: Boolean = proc.isAlive
 
     /** Write one line to the tool's stdin. */
-    def send(line: Processes.Session.SendLine): Either[Processes.Session.SendResultPart1, Unit] =
+    def send(line: Processes.Session.SendLine): Either[Problem, Unit] =
       try { in.write((line.value + "\n").getBytes(UTF_8)); in.flush(); Right(()) }
-      catch case e: IOException => Left(Processes.Session.SendResultPart1(s"$tool stopped reading its input"))
+      catch case e: IOException => Left(Problem(s"$tool stopped reading its input"))
 
     /** Wait until `ready` holds for stdout, the tool has exited, or `timeout` passed; true = `ready`. */
     def awaitOut(timeout: FiniteDuration)(
-        ready: Processes.Session.AwaitOutReadyArg1 => Processes.Session.AwaitOutReadyResult
-    ): Processes.Session.AwaitOutResult =
-      Processes.Session.AwaitOutResult(
-        await(timeout, () => ready(Processes.Session.AwaitOutReadyArg1(out.value)).value)
-      )
+        ready: Processes.Result.Out => Boolean
+    ): Boolean =
+      await(timeout, () => ready(Processes.Result.Out(out.value)))
 
     /** Wait until stderr has grown past `length` characters, the tool has exited, or `timeout` passed. */
     def awaitErr(length: Processes.Session.AwaitErrLength, timeout: FiniteDuration): Unit = {
@@ -98,10 +100,10 @@ final class SystemProcesses extends Processes:
       }
 
     /** Close the tool's stdin and wait for it to exit within `timeout` (killed otherwise); its exit code. */
-    def close(timeout: FiniteDuration): Option[Processes.Session.CloseResult] =
+    def close(timeout: FiniteDuration): Option[Processes.Result.Exit] =
       try in.close()
       catch case _: IOException => ()
-      if proc.waitFor(timeout.toMillis, TimeUnit.MILLISECONDS) then Some(Processes.Session.CloseResult(proc.exitValue))
+      if proc.waitFor(timeout.toMillis, TimeUnit.MILLISECONDS) then Some(Processes.Result.Exit(proc.exitValue))
       else
         proc.descendants().forEach { p =>
           val _ = p.destroyForcibly()
@@ -110,19 +112,19 @@ final class SystemProcesses extends Processes:
         None
 
     /** The exit code once the tool has exited within `timeout`. */
-    def exit(timeout: FiniteDuration): Option[Processes.Session.ExitResult] =
-      Option.when(proc.waitFor(timeout.toMillis, TimeUnit.MILLISECONDS))(Processes.Session.ExitResult(proc.exitValue))
+    def exit(timeout: FiniteDuration): Option[Processes.Result.Exit] =
+      Option.when(proc.waitFor(timeout.toMillis, TimeUnit.MILLISECONDS))(Processes.Result.Exit(proc.exitValue))
 
   object Session:
     def start(
         argv: List[Processes.StartArgv],
-        env: Map[Processes.StartEnvPart1, Processes.StartEnvPart2]
-    ): Either[Processes.StartResultPart1, Session] =
+        env: Map[EnvVar.Name, EnvVar.Value]
+    ): Either[Problem, Session] =
       val tool = argv.headOption.map(a => Path.of(a.value).getFileName.toString).getOrElse("?")
       val pb = new ProcessBuilder(argv.map(_.value).asJava)
       env.foreach((k, v) => pb.environment().put(k.value, v.value))
       Try(pb.start()).toEither.left
-        .map(e => Processes.StartResultPart1(s"$tool could not be started: ${e.getMessage}"))
+        .map(e => Problem(s"$tool could not be started: ${e.getMessage}"))
         .map { proc =>
           val s = new Session(proc, tool)
           s.startReaders()
@@ -139,10 +141,10 @@ final class SystemProcesses extends Processes:
 
   def start(
       argv: List[Processes.StartArgv],
-      env: Map[Processes.StartEnvPart1, Processes.StartEnvPart2]
-  ): Either[Processes.StartResultPart1, Processes.Session] = Session.start(argv, env)
+      env: Map[EnvVar.Name, EnvVar.Value]
+  ): Either[Problem, Processes.Session] = Session.start(argv, env)
 
-  def capture(argv: List[Processes.CaptureArgv]): Either[Processes.CaptureResultPart1, Result] =
+  def capture(argv: List[Processes.CaptureArgv]): Either[Problem, Result] =
     val tool = argv.headOption.map(a => Path.of(a.value).getFileName.toString).getOrElse("?")
     Try {
       val proc = new ProcessBuilder(argv.map(_.value).asJava).start()
@@ -151,4 +153,4 @@ final class SystemProcesses extends Processes:
       proc.getOutputStream.close()
       val exit = proc.waitFor()
       Result(Result.Exit(exit), Result.Out(out()), Result.Err(err()))
-    }.toEither.left.map(e => Processes.CaptureResultPart1(s"$tool could not be run: ${e.getMessage}"))
+    }.toEither.left.map(e => Problem(s"$tool could not be run: ${e.getMessage}"))

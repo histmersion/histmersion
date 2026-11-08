@@ -29,8 +29,7 @@ final class FetchChain(
     steps: List[FetchChain.Step],
     allowUnauthorised: FetchChain.AllowUnauthorised,
     log: HostLog = HostLog.scribe,
-    registered: Fetch.Context.RegisteredPluginId => Fetch.Context.RegisteredResult = _ =>
-      Fetch.Context.RegisteredResult(false)
+    registered: Fetch.Context.RegisteredPluginId => Boolean = _ => false
 ) extends OaFetcher:
 
   /** The fetchers in the order they run, with their access — what `--self-check` and the log show. */
@@ -95,7 +94,7 @@ final class FetchChain(
           FetchChain.this.log.info(HostLog.Line(s"acquire: ${s.id.value}: ${message.value}"))
         def warn(message: Plugin.Log.WarnMessage) =
           FetchChain.this.log.warn(HostLog.Line(s"acquire: ${s.id.value}: ${message.value}"))
-      override def registered(pluginId: Fetch.Context.RegisteredPluginId): Fetch.Context.RegisteredResult =
+      override def registered(pluginId: Fetch.Context.RegisteredPluginId): Boolean =
         FetchChain.this.registered(pluginId)
     val answer =
       try s.fetcher.fetch(work, ctx)
@@ -180,8 +179,7 @@ object FetchChain:
       steps: List[(Step.Id, SourceFetcher)],
       allowUnauthorised: AllowUnauthorised = AllowUnauthorised(false),
       log: HostLog = HostLog.scribe,
-      registered: Fetch.Context.RegisteredPluginId => Fetch.Context.RegisteredResult = _ =>
-        Fetch.Context.RegisteredResult(false)
+      registered: Fetch.Context.RegisteredPluginId => Boolean = _ => false
   ): FetchChain =
     new FetchChain(steps.map(Step(_, _)), allowUnauthorised, log, registered)
 
@@ -211,7 +209,7 @@ object FetchChain:
         ids.map(id => Step.Id(id.value) -> registered(id)),
         allowUnauthorised,
         log,
-        pluginId => Fetch.Context.RegisteredResult(known.contains(pluginId.value))
+        pluginId => known.contains(pluginId.value)
       ),
       unknown ++ off
     )

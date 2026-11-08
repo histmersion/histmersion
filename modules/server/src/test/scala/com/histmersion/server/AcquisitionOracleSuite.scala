@@ -1,6 +1,8 @@
 package com.histmersion
 package server
 
+import com.histmersion.plugin.Problem
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -341,7 +343,7 @@ class AcquisitionOracleSuite extends DbSuite:
     type Config = ZqOracleConfig
     val info =
       Plugin.Info(Plugin.Info.Id("zq-unauthorised"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
-    override def defaultsResource = Plugin.DefaultsResourceResult("zq-none.conf")
+    override def defaultsResource = Plugin.DefaultsResource("zq-none.conf")
     def register(c: ZqOracleConfig, ctx: Plugin.Context) =
       ctx.sourceFetchers
         .add(
@@ -353,14 +355,14 @@ class AcquisitionOracleSuite extends DbSuite:
               Fetch.Miss(Fetch.Miss.Why("the zq fixture has no copy"))
         )
         .left
-        .map(e => Plugin.RegisterResultPart1(e.value))
+        .map(e => Problem(e.value))
 
   /** An open fetcher a plugin adds: it has one work, and states that copy's licence. */
   final private class ZqShelfPlugin extends Plugin:
     type Config = ZqOracleConfig
     val info =
       Plugin.Info(Plugin.Info.Id("zq-shelf"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
-    override def defaultsResource = Plugin.DefaultsResourceResult("zq-none.conf")
+    override def defaultsResource = Plugin.DefaultsResource("zq-none.conf")
     def register(c: ZqOracleConfig, ctx: Plugin.Context) =
       ctx.sourceFetchers
         .add(
@@ -381,7 +383,7 @@ class AcquisitionOracleSuite extends DbSuite:
               else Fetch.Miss(Fetch.Miss.Why("the zq shelf has only one work"))
         )
         .left
-        .map(e => Plugin.RegisterResultPart1(e.value))
+        .map(e => Problem(e.value))
 
   // ── the converter: every document converts, deterministically ──────────────────────────────
 

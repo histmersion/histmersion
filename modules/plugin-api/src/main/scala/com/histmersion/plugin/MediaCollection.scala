@@ -21,23 +21,23 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 trait MediaCollection:
   /** What the import is called in jobs and lists: "Portal objects". */
-  def title: MediaCollection.TitleResult
+  def title: MediaCollection.Title
 
   /** One sentence for `histmersion media providers`: what it brings and on what terms. */
-  def description: MediaCollection.DescriptionResult = MediaCollection.DescriptionResult("")
+  def description: MediaCollection.Description = MediaCollection.Description("")
 
   /** The role its pictures play for a place: [[MediaCollection.Object]] (a museum's object), [[MediaCollection.Map]] or
     * [[MediaCollection.Image]] (a photograph of the place itself).
     */
-  def role: MediaCollection.RoleResult
+  def role: MediaItem.Role
 
   def matchRule: MediaMatchRule = MediaMatchRule.Museum
 
   /** Records kept per place at most, in the collection's own relevance order. */
-  def perPlace: MediaCollection.PerPlaceResult = MediaCollection.PerPlaceResult(3)
+  def perPlace: MediaCollection.PerPlace = MediaCollection.PerPlace(3)
 
   /** The least time between two requests to one host, in milliseconds (the provider's own terms). */
-  def requestIntervalMs: MediaCollection.RequestIntervalMsResult = MediaCollection.RequestIntervalMsResult(1000)
+  def requestIntervalMs: MediaCollection.RequestIntervalMs = MediaCollection.RequestIntervalMs(1000)
 
   /** The records a search for `place` answers; one record may be unreadable on its own (`Left` inside). `http` is the
     * host's polite client of this import (its pace, the User-Agent, Retry-After; a bot challenge stops the request) —
@@ -46,17 +46,17 @@ trait MediaCollection:
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]]
+  ): Either[Problem, List[Either[Problem, MediaItem]]]
 
   /** An item about to be stored, completed by what a search does not answer (its files, the licence read again from the
     * full record). Only items the host decided to store pay for it; the host judges the completed item's licence again.
     */
-  def complete(item: MediaItem, http: Plugin.Http): Either[MediaCollection.CompleteResultPart1, MediaItem] = Right(item)
+  def complete(item: MediaItem, http: Plugin.Http): Either[Problem, MediaItem] = Right(item)
 
   /** The roles its pictures may play — [[role]] alone, unless its items name others ([[MediaItem.role]]): a Wikidata
     * item's image, locator map and plan are one collection's.
     */
-  def roles: Set[MediaCollection.RolesResult] = Set(role)
+  def roles: Set[MediaItem.Role] = Set(role)
 
   /** What it asks about: places (the default), events with a Wikidata item, or both. A collection that asks about both
     * is asked about the places on the map one per Wikidata item, and the events with one.
@@ -64,19 +64,19 @@ trait MediaCollection:
   def asks: Set[MediaTarget] = Set(MediaTarget.Places)
 
   /** The records a search for `event` answers ([[asks]] must name events); none by default. */
-  def searchEvent(event: MediaEvent, http: Plugin.Http): Either[MediaCollection.SearchEventResultPart1, List[
-    Either[MediaCollection.SearchEventResultPart2Part1, MediaItem]
+  def searchEvent(event: MediaEvent, http: Plugin.Http): Either[Problem, List[
+    Either[Problem, MediaItem]
   ]] = Right(Nil)
 
   /** Whether it can be asked now — a key configured, its own switch on — asked before an import: its refusal is the
     * import's ("Europeana images needs a key …"), and nothing is sent.
     */
-  def check: Either[MediaCollection.CheckResultPart1, Unit] = Right(())
+  def check: Either[Problem, Unit] = Right(())
 
   /** How long to wait after a host refuses (HTTP 403) before asking it again, each step in turn, in milliseconds: a
     * provider that rate-limits with refusals. Empty (the default): a refusal is final.
     */
-  def refusalBackoffMs: List[MediaCollection.RefusalBackoffMsResult] = Nil
+  def refusalBackoffMs: List[MediaCollection.RefusalBackoffMs] = Nil
 
   /** The last year an object may be made in, for the museum and gazetteer-id rules ([[matchRule]]); `None`: any. */
   def latestYear: Option[Year] = None
@@ -84,7 +84,7 @@ trait MediaCollection:
   /** Only places that carry an id of this gazetteer (`"pleiades"`: their own `pleiades_…` id or an exact link) are
     * asked about, each with its ids ([[MediaPlace.ids]]); `None` (the default): every place on the map.
     */
-  def placesCarrying: Option[MediaCollection.PlacesCarryingResult] = None
+  def placesCarrying: Option[MediaCollection.PlacesCarrying] = None
 
   /** A collection of its targets' own pictures ([[MediaMatchRule.Own]]) is asked about a batch at once: what it found
     * for each. By default, [[search]] for each place and [[searchEvent]] for each event, in order.
@@ -121,35 +121,18 @@ trait MediaCollection:
     )
 
 object MediaCollection:
-  type TitleResult = TitleResult.T
-  object TitleResult extends Newtype[String, Pure]
-  type DescriptionResult = DescriptionResult.T
-  object DescriptionResult extends Newtype[String, Pure]
-  type RoleResult = MediaItem.Role
-  val RoleResult: MediaItem.Role.type = MediaItem.Role
-  type PerPlaceResult = PerPlaceResult.T
-  object PerPlaceResult extends Newtype[Int, Pure]
-  type RequestIntervalMsResult = RequestIntervalMsResult.T
-  object RequestIntervalMsResult extends Newtype[Int, Pure]
-  type SearchResultPart1 = SearchResultPart1.T
-  object SearchResultPart1 extends Newtype[String, Pure]
-  type SearchResultPart2Part1 = SearchResultPart2Part1.T
-  object SearchResultPart2Part1 extends Newtype[String, Pure]
-  type CompleteResultPart1 = CompleteResultPart1.T
-  object CompleteResultPart1 extends Newtype[String, Pure]
-  type RolesResult = MediaItem.Role
-  val RolesResult: MediaItem.Role.type = MediaItem.Role
-  type SearchEventResultPart1 = SearchResultPart1
-  val SearchEventResultPart1: SearchResultPart1.type = SearchResultPart1
-  type SearchEventResultPart2Part1 = SearchResultPart2Part1
-  val SearchEventResultPart2Part1: SearchResultPart2Part1.type = SearchResultPart2Part1
-  type CheckResultPart1 = CheckResultPart1.T
-  object CheckResultPart1 extends Newtype[String, Pure]
-  type RefusalBackoffMsResult = RefusalBackoffMsResult.T
-  object RefusalBackoffMsResult extends Newtype[Long, Pure]
-  type PlacesCarryingResult = PlacesCarryingResult.T
-  object PlacesCarryingResult extends Newtype[String, Pure]
-  type Roles = MediaItem.Role
+  type Title = Title.T
+  object Title extends Newtype[String, Pure]
+  type Description = Description.T
+  object Description extends Newtype[String, Pure]
+  type PerPlace = PerPlace.T
+  object PerPlace extends Newtype[Int, Pure]
+  type RequestIntervalMs = RequestIntervalMs.T
+  object RequestIntervalMs extends Newtype[Int, Pure]
+  type RefusalBackoffMs = RefusalBackoffMs.T
+  object RefusalBackoffMs extends Newtype[Long, Pure]
+  type PlacesCarrying = PlacesCarrying.T
+  object PlacesCarrying extends Newtype[String, Pure]
 
   val Object = "object"
   val Map = "map"
@@ -161,7 +144,7 @@ object MediaCollection:
   val Depiction = "depiction"
 
   /** The roles a collection's pictures may play: the ones the host stores. */
-  val Roles: Set[Roles] = Set(
+  val Roles: Set[MediaItem.Role] = Set(
     MediaItem.Role(Object),
     MediaItem.Role(Map),
     MediaItem.Role(Image),

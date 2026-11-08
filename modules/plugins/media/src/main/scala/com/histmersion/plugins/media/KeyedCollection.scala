@@ -25,25 +25,24 @@ abstract class KeyedCollection(
     needs: KeyedCollection.Needs,
     settings: KeyedCollection.Settings
 ) extends MediaCollection:
-  override def perPlace: MediaCollection.PerPlaceResult = MediaCollection.PerPlaceResult(conf.perPlace.value)
-  override def requestIntervalMs: MediaCollection.RequestIntervalMsResult =
-    MediaCollection.RequestIntervalMsResult(conf.requestIntervalMs.value)
-  override def refusalBackoffMs: List[MediaCollection.RefusalBackoffMsResult] =
-    conf.refusalBackoffMs.map(ms => MediaCollection.RefusalBackoffMsResult(ms.value))
+  override def perPlace: MediaCollection.PerPlace = MediaCollection.PerPlace(conf.perPlace.value)
+  override def requestIntervalMs: MediaCollection.RequestIntervalMs =
+    MediaCollection.RequestIntervalMs(conf.requestIntervalMs.value)
+  override def refusalBackoffMs: List[MediaCollection.RefusalBackoffMs] =
+    conf.refusalBackoffMs.map(ms => MediaCollection.RefusalBackoffMs(ms.value))
   override def latestYear: Option[Year] = conf.latestYear.map(y => Year(y.value))
   val role = MediaItem.Role(MediaCollection.Object)
 
   /** What `histmersion media providers` says of it: its description, and that it is not asked without a key. */
-  protected def described(text: String): MediaCollection.DescriptionResult =
-    MediaCollection.DescriptionResult(text + (if key.isEmpty then " — NO KEY SET: not asked" else ""))
+  protected def described(text: String): MediaCollection.Description =
+    MediaCollection.Description(text + (if key.isEmpty then " — NO KEY SET: not asked" else ""))
 
-  override def check: Either[MediaCollection.CheckResultPart1, Unit] =
-    if !conf.enabled.value then
-      Left(MediaCollection.CheckResultPart1(s"${title.value} is switched off (${settings.value}.enabled = false)"))
+  override def check: Either[Problem, Unit] =
+    if !conf.enabled.value then Left(Problem(s"${title.value} is switched off (${settings.value}.enabled = false)"))
     else
       key
         .toRight(
-          MediaCollection.CheckResultPart1(
+          Problem(
             s"${title.value} needs ${needs.value}: set histmersion.plugins.${plugin.value}.api-key to a secret " +
               "reference (\"env:<NAME>\" or a vault's, e.g. \"keepassxc:<entry>#password\"); it was not asked"
           )

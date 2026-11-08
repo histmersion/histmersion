@@ -18,10 +18,10 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 trait GazetteerSource:
   /** What to call it: "Seshat Cliopatria polity polygons". */
-  def title: GazetteerSource.TitleResult
+  def title: GazetteerSource.Title
 
   /** One sentence: what it brings and on what terms. */
-  def description: GazetteerSource.DescriptionResult = GazetteerSource.DescriptionResult("")
+  def description: GazetteerSource.Description = GazetteerSource.Description("")
 
   /** The dataset's licence and credit, as its provider states them. The credit is the provenance line stored with each
     * place that does not state its own ([[GazetteerPlace.source]]).
@@ -32,12 +32,10 @@ trait GazetteerSource:
     * relation finds it). `http` is the host's client for gazetteer downloads (its User-Agent and timeouts); a dataset
     * is one large download, so [[Plugin.Http.fetch]] (one request, the answer's status as it came) suits it best.
     */
-  def fetch(http: Plugin.Http): Either[GazetteerSource.FetchResultPart1, List[GazetteerPlace]]
+  def fetch(http: Plugin.Http): Either[Problem, List[GazetteerPlace]]
 
 object GazetteerSource:
-  type TitleResult = TitleResult.T
-  object TitleResult extends Newtype[String, Pure]
-  type DescriptionResult = DescriptionResult.T
-  object DescriptionResult extends Newtype[String, Pure]
-  type FetchResultPart1 = FetchResultPart1.T
-  object FetchResultPart1 extends Newtype[String, Pure]
+  type Title = Title.T
+  object Title extends Newtype[String, Pure]
+  type Description = Description.T
+  object Description extends Newtype[String, Pure]

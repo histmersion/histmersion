@@ -1,6 +1,8 @@
 package com.histmersion
 package plugins.vaults
 
+import com.histmersion.plugin.EnvVar
+
 import java.io.{InputStream, IOException}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
@@ -27,7 +29,6 @@ object Subprocess:
   type Tool = Tool.T
   object Tool extends Newtype[String, Pure]
 
-  export com.histmersion.plugin.Processes.{RunEnvPart1, RunEnvPart2, RunResultPart1}
   type ValueResult = ValueResult.T
   object ValueResult extends Newtype[String, Pure]
   type ValueOut = ValueOut.T
@@ -39,14 +40,12 @@ object Subprocess:
   /** Pure: the executable for `tool` — a path as given (`/opt/kp/keepassxc-cli`), or a bare name looked up in `path`
     * (the PATH the server started with).
     */
-  def locate(tool: Tool, path: Option[Plugin.Context.EnvResult])(using
+  def locate(tool: Tool, path: Option[EnvVar.Value])(using
       files: LocalFiles
   ): Either[Problem, Vaults.Path] =
     val t = Option((tool).value).getOrElse("").trim
     def runnable(p: Path) =
-      ((files.isFile(p)) == LocalFiles.IsFileResult(true)) && ((files.isExecutable(p)) == LocalFiles.IsExecutableResult(
-        true
-      ))
+      files.isFile(p) && files.isExecutable(p)
     if t.isEmpty then Left(Problem("no command is configured (cli = \"…\")"))
     else if t.contains('/') then
       val p = Path.of(t)
@@ -69,10 +68,10 @@ object Subprocess:
     */
   def run(
       argv: List[Processes.RunArgv],
-      env: Map[RunEnvPart1, RunEnvPart2],
+      env: Map[EnvVar.Name, EnvVar.Value],
       stdin: Option[Processes.RunStdin],
       timeout: FiniteDuration
-  )(using processes: Processes): Either[RunResultPart1, Result] =
+  )(using processes: Processes): Either[plugin.Problem, Result] =
     processes.run(argv, env, stdin, timeout)
 
   /** A tool kept running to answer several requests (`keepassxc-cli open`'s interactive mode): lines written to its
@@ -83,11 +82,9 @@ object Subprocess:
 
   object Session:
     /** Start `argv` (no shell) with `env` added to the server's environment. */
-    export Processes.{StartEnvPart1, StartEnvPart2, StartResultPart1}
-
-    def start(argv: List[Processes.StartArgv], env: Map[StartEnvPart1, StartEnvPart2])(using
+    def start(argv: List[Processes.StartArgv], env: Map[EnvVar.Name, EnvVar.Value])(using
         processes: Processes
-    ): Either[StartResultPart1, Session] =
+    ): Either[plugin.Problem, Session] =
       processes.start(argv, env)
 
   /** Read a stream to its end on a thread of its own (a full pipe would block the tool), and hand the text over when

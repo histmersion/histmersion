@@ -86,9 +86,9 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
         ctx,
         records(ctx, d),
         Option
-          .when(ctx.registered(OpenAccess.Unpaywall).value)(unpaywallEmail)
+          .when(ctx.registered(OpenAccess.Unpaywall))(unpaywallEmail)
           .flatMap(e => unpaywallRecord(ctx, d, e)),
-        ctx.registered(OpenAccess.OpenAlex).value
+        ctx.registered(OpenAccess.OpenAlex)
       )
   )
 
@@ -96,7 +96,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
     record.toList
       .map(AcquireParse.unpaywall)
       .flatMap(_._1)
-      .flatMap(u => downloads.pdf(ctx.log, FetchedFile.Source("unpaywall"), Plugin.Http.GetUrl(u.value)))
+      .flatMap(u => downloads.pdf(ctx.log, FetchedFile.Source("unpaywall"), Plugin.Http.Url(u.value)))
       .headOption
 
   private def corePdf(
@@ -122,7 +122,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
           AcquireParse
             .coreDownloadUrls(json)
             .iterator
-            .flatMap(u => downloads.pdf(ctx.log, FetchedFile.Source("core"), Plugin.Http.GetUrl(u.value)))
+            .flatMap(u => downloads.pdf(ctx.log, FetchedFile.Source("core"), Plugin.Http.Url(u.value)))
             .nextOption()
             .fold(Fetch.Miss(Fetch.Miss.Why(s"core has no copy of $doi")))(Fetch.Found(_))
     }
@@ -130,7 +130,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
   private def openalexOa(ctx: Fetch.Context, r: OaRecords): Option[FetchedFile] =
     r.openalex.toList
       .flatMap(AcquireParse.openalexPdfUrls)
-      .flatMap(u => downloads.pdf(ctx.log, FetchedFile.Source("openalex"), Plugin.Http.GetUrl(u.value)))
+      .flatMap(u => downloads.pdf(ctx.log, FetchedFile.Source("openalex"), Plugin.Http.Url(u.value)))
       .headOption
 
   // ── repository landing pages ────────────────────────────────────────────────────────────────
@@ -240,7 +240,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
       case None                                 =>
         val oaPub = RepositoryLanding.oaPublisherPage(c, rules)
         val source = FetchedFile.Source(if oaPub then "publisher" else "repository")
-        http.get(Plugin.Http.GetUrl(c.url.value)) match
+        http.get(Plugin.Http.Url(c.url.value)) match
           case Left(e) =>
             ctx.log.info(Plugin.Log.InfoMessage(s"landing: ${c.url} failed ($e)")); None
           case Right(b) if Downloads.looksLikePdf(FetchedFile.Bytes(b.value)) =>
@@ -269,7 +269,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
                 "names no citation_pdf_url"
               else "is not a repository's page"
               ctx.log.info(Plugin.Log.InfoMessage(s"landing: ${c.url} $why — skipping"))
-            pdfs.iterator.map(u => downloads.pdf(ctx.log, source, Plugin.Http.GetUrl(u.value))).collectFirst {
+            pdfs.iterator.map(u => downloads.pdf(ctx.log, source, Plugin.Http.Url(u.value))).collectFirst {
               case Some(f) => f
             }
 
@@ -283,7 +283,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
         if files.isEmpty then ctx.log.info(Plugin.Log.InfoMessage(s"zenodo: record $id has no open PDF"))
         files.iterator
           .map { f =>
-            downloads.pdf(ctx.log, FetchedFile.Source("zenodo"), Plugin.Http.GetUrl(f.url.value)).filter { got =>
+            downloads.pdf(ctx.log, FetchedFile.Source("zenodo"), Plugin.Http.Url(f.url.value)).filter { got =>
               val ok = f.md5.forall(m => Downloads.md5(got.bytes).forall(_.value == m.value))
               if !ok then
                 ctx.log.warn(

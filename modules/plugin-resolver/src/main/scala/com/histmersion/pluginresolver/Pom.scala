@@ -24,14 +24,12 @@ object Pom:
   object ElementText extends Newtype[String, Pure]
 
   /** The POM's own coordinates; a group or version it does not state is its parent's, as in Maven. */
-  export Resolver.Problem as CoordinatesResultPart1
   export PluginArtifact.{Pom as CoordinatesXml, Pom as EmbeddedResult, Pom as OfResult}
-  export Resolver.Problem as ParseResultPart1
   export PluginArtifact.Pom as ParseXml
   type TextName = ElementName
   val TextName: ElementName.type = ElementName
 
-  def coordinates(xml: Pom.CoordinatesXml): Either[Pom.CoordinatesResultPart1, ModuleCoordinates] =
+  def coordinates(xml: Pom.CoordinatesXml): Either[Resolver.Problem, ModuleCoordinates] =
     for
       project <- parse(xml)
       parent = child(project, ElementName("parent"))
@@ -69,7 +67,7 @@ object Pom:
       finally zip.close()
     }.toOption.flatten[String]).map(refactorValue => PluginArtifact.Pom(refactorValue))
 
-  private def parse(xml: Pom.ParseXml): Either[Pom.ParseResultPart1, Element] =
+  private def parse(xml: Pom.ParseXml): Either[Resolver.Problem, Element] =
     Try {
       val factory = DocumentBuilderFactory.newInstance()
       // a POM is data from the network: no DOCTYPE, so no external entity is ever resolved

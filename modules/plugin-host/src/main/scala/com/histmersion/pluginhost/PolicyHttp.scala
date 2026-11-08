@@ -1,6 +1,10 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.plugin.Header
+
+import com.histmersion.plugin.Problem
+
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.CoreQuota
 import com.histmersion.domain.HttpPolicy
@@ -98,23 +102,23 @@ final class PolicyHttp(
     * budget meters is sent [[once]], answered with its status and headers.
     */
   def plugin: Plugin.Http = new Plugin.Http:
-    private def sent(headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+    private def sent(headers: Map[Header.Name, Header.Value]) =
       headers.map((k, v) => CoreQuota.HeaderName(k.value) -> CoreQuota.HeaderValue(v.value))
-    def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+    def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
       bytes(HttpTransport.Url(url.value), sent(headers)).left
-        .map(e => Plugin.Http.GetResultPart1(e.value))
+        .map(e => Problem(e.value))
         .map(b => Plugin.HttpResponse.Body(b.value))
     override def fetch(
-        url: Plugin.Http.FetchUrl,
-        headers: Map[Plugin.Http.FetchHeadersPart1, Plugin.Http.FetchHeadersPart2]
+        url: Plugin.Http.Url,
+        headers: Map[Header.Name, Header.Value]
     ) =
       once(HttpTransport.Url(url.value), sent(headers)).left
-        .map(e => Plugin.Http.FetchResultPart1(e.value))
+        .map(e => Problem(e.value))
         .map(a =>
           Plugin.HttpResponse(
             Plugin.HttpResponse.Status(a.code.value),
             a.headers
-              .map((k, v) => Plugin.HttpResponse.HeadersKey(k.value) -> Plugin.HttpResponse.HeadersValue(v.value)),
+              .map((k, v) => Header.Name(k.value) -> Header.Value(v.value)),
             Plugin.HttpResponse.Body(a.body.value)
           )
         )

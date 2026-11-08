@@ -119,7 +119,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
             .option(t.id.value)
             .flatMap(carried.get)
             .getOrElse(Nil)
-            .map(e => MediaPlace.IdsPart1(s.value) -> MediaPlace.IdsPart2(e.value))
+            .map(e => GazetteerRef.Scheme(s.value) -> GazetteerRef.Id(e.value))
         )
       )
     )
@@ -202,7 +202,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
       refresh: ImportService.Refresh,
       db: MediaStore,
       failed: scala.collection.mutable.Builder[String, List[String]],
-      categories: List[(MediaFound.CategoriesPart1, MediaFound.CategoriesPart2)],
+      categories: List[(MediaFound.Category.Target, MediaFound.Category.Name)],
       byId: Map[MediaTarget.Id, Target]
   ): MediaImportReport =
     val known = db.known(ImportService.Provider(provider), verdicts.keys.toList.map(providerKey))

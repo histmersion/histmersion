@@ -9,7 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * catalogue's host, as the host's own client words it.
   */
 final class CatalogueJson(http: Plugin.Http):
-  def apply(url: Plugin.Http.GetUrl): Either[CatalogueJson.Problem, Json] =
+  def apply(url: Plugin.Http.Url): Either[CatalogueJson.Problem, Json] =
     http
       .get(url)
       .left
@@ -27,5 +27,5 @@ object CatalogueJson:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
 
-  def host(url: Plugin.Http.GetUrl): Host =
+  def host(url: Plugin.Http.Url): Host =
     Host(scala.util.Try(java.net.URI.create(url.value).getHost).toOption.flatMap(Option(_)).getOrElse(url.value))

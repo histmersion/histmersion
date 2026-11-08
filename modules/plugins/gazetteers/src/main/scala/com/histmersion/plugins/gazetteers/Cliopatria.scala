@@ -20,11 +20,11 @@ object Cliopatria extends DownloadedGazetteer:
   type Ordinal = Ordinal.T
   object Ordinal extends Newtype[Int, Pure]
 
-  val title = GazetteerSource.TitleResult("Seshat Cliopatria polity polygons")
+  val title = GazetteerSource.Title("Seshat Cliopatria polity polygons")
   override val description =
-    GazetteerSource.DescriptionResult("Seshat Cliopatria polity polygons (CC BY 4.0, ~13K features from 3400 BCE)")
+    GazetteerSource.Description("Seshat Cliopatria polity polygons (CC BY 4.0, ~13K features from 3400 BCE)")
   val url =
-    Plugin.Http.GetUrl("https://github.com/Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip")
+    Plugin.Http.Url("https://github.com/Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip")
   val rights: GazetteerRights = GazetteerRights(
     Licence("CC BY 4.0"),
     GazetteerRights.Credit("Cliopatria (Seshat Databank), CC BY 4.0"),

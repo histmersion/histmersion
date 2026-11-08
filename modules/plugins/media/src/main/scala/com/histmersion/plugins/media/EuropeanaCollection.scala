@@ -17,7 +17,7 @@ final class EuropeanaCollection(conf: CollectionSettings, key: Option[KeyedColle
       KeyedCollection.Needs("a Europeana personal API key"),
       KeyedCollection.Settings("media.europeana")
     ):
-  val title = MediaCollection.TitleResult("Europeana images")
+  val title = MediaCollection.Title("Europeana images")
   override val description = described(
     "Europeana's openly licensed images (reusability=open: CC0, PDM, CC BY, CC BY-SA), each record's own " +
       "edm:rights read from the search and again from the Record API; tied to a place on the map by its " +
@@ -32,23 +32,23 @@ final class EuropeanaCollection(conf: CollectionSettings, key: Option[KeyedColle
     CollectionSettings.items(conf.excludeTypes).map(i => Europeana.Exclusions.Types(i.value))
   )
   private def headers = Map(
-    Plugin.Http.GetHeadersPart1(Europeana.KeyHeader) -> Plugin.Http.GetHeadersPart2(apiKey.value)
+    Header.Name(Europeana.KeyHeader) -> Header.Value(apiKey.value)
   )
 
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  ): Either[Problem, List[Either[Problem, MediaItem]]] =
     http
       .askJson(Europeana.searchUrl(conf.apiUrl, place.label, conf.candidates, exclusions), headers)
       .flatMap(j => Europeana.records(j, conf.apiUrl, licences, exclusions).left.map(_.value))
       .left
-      .map(e => MediaCollection.SearchResultPart1(explain(KeyedCollection.Problem(e)).value))
-      .map(_.map(_.left.map(e => MediaCollection.SearchResultPart2Part1(e.value))))
+      .map(e => Problem(explain(KeyedCollection.Problem(e)).value))
+      .map(_.map(_.left.map(e => Problem(e.value))))
 
-  override def complete(item: MediaItem, http: Plugin.Http): Either[MediaCollection.CompleteResultPart1, MediaItem] =
+  override def complete(item: MediaItem, http: Plugin.Http): Either[Problem, MediaItem] =
     http
       .askJson(Europeana.recordUrl(conf.apiUrl, item.key), headers)
       .flatMap(j => Europeana.item(j, item, licences, exclusions).left.map(_.value))
       .left
-      .map(e => MediaCollection.CompleteResultPart1(explain(KeyedCollection.Problem(e)).value))
+      .map(e => Problem(explain(KeyedCollection.Problem(e)).value))

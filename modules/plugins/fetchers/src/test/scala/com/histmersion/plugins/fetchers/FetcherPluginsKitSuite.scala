@@ -21,7 +21,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
       id: Plugin.Info.Id,
       stubs: Map[HttpTransport.Url, StubAnswer] = Map.empty,
       config: String = "",
-      secrets: Map[Secret.Ref.ParseText, Secret.Vault.ResolveResultPart2] = Map.empty
+      secrets: Map[Secret.Ref.ParseText, Secret.Resolved] = Map.empty
   ) =
     PluginHarness
       .load(id, config, http = HttpMode.Stub(stubs), secrets = secrets, env = Map.empty)
@@ -143,7 +143,7 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
           .ok(HttpAnswer.Body(Pdf), CoreQuota.HeaderValue("application/pdf"))
       ),
       "api-key = \"env:ZQ_CORE_KEY\"",
-      Map(Secret.Ref.ParseText("env:ZQ_CORE_KEY") -> Secret.Vault.ResolveResultPart2("k-secret"))
+      Map(Secret.Ref.ParseText("env:ZQ_CORE_KEY") -> Secret.Resolved("k-secret"))
     )
     val r = h.fetch(WorkKey(doi = Some(Doi.applyUnsafe("10.1/core"))))
     assertEquals(r.file.map(_.source), Some("core"), r.toString)

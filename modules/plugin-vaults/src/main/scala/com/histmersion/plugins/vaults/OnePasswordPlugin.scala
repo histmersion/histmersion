@@ -15,20 +15,20 @@ final class OnePasswordPlugin extends Plugin:
   val info =
     Plugin.Info(Plugin.Info.Id("1password"), Plugin.Info.Version(Vaults.Version), Plugin.Info.SpiVersion(Spi.Version))
 
-  def register(c: OnePasswordConfig, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
+  def register(c: OnePasswordConfig, ctx: Plugin.Context): Either[Problem, Unit] =
     given files: LocalFiles = ctx.files
     given processes: Processes = ctx.processes
     for
       exe <- Subprocess
-        .locate(Subprocess.Tool(c.cli.value), ctx.env(Plugin.Context.EnvName("PATH")))
+        .locate(Subprocess.Tool(c.cli.value), ctx.env(EnvVar.Name("PATH")))
         .left
-        .map(e => Plugin.RegisterResultPart1(e.value))
-      token <- Vaults.optional(c.serviceAccountToken, ctx).left.map(e => Plugin.RegisterResultPart1(e.value))
+        .map(e => Problem(e.value))
+      token <- Vaults.optional(c.serviceAccountToken, ctx).left.map(e => Problem(e.value))
       _ <- ctx.secretVaults
         .add(
           Registry.AddId(info.id.value),
           OnePasswordVault(
-            Secret.Vault.NameResult(info.id.value),
+            Secret.Vault.Name(info.id.value),
             exe,
             Option(c.account).map(_.value.trim).filter(_.nonEmpty).map(OnePasswordConfig.Account(_)),
             token,
@@ -36,5 +36,5 @@ final class OnePasswordPlugin extends Plugin:
           )
         )
         .left
-        .map(e => Plugin.RegisterResultPart1(e.value))
+        .map(e => Problem(e.value))
     yield ()

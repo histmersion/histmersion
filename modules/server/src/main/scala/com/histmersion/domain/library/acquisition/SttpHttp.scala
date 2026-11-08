@@ -44,7 +44,7 @@ object SttpHttp:
       tls: Option[javax.net.ssl.SSLContext] = None
   ): SttpHttp =
     new SttpHttp(
-      PolicyHttp(
+      new PolicyHttp(
         HttpPolicy.UserAgent(cfg.userAgent.value),
         SttpTransport(SttpTransport.TimeoutSeconds(cfg.timeoutSeconds.value), tls),
         tries,

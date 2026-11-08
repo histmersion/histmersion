@@ -28,7 +28,7 @@ final case class MediaFound(
     read: MediaFound.Read = MediaFound.Read(0),
     failed: List[MediaFound.Failed] = Nil,
     notTaken: List[MediaFound.NotTaken] = Nil,
-    categories: List[(MediaFound.CategoriesPart1, MediaFound.CategoriesPart2)] = Nil
+    categories: List[(MediaFound.Category.Target, MediaFound.Category.Name)] = Nil
 )
 
 object MediaFound:
@@ -38,7 +38,9 @@ object MediaFound:
   object Failed extends Newtype[String, Pure]
   type NotTaken = NotTaken.T
   object NotTaken extends Newtype[String, Pure]
-  type CategoriesPart1 = CategoriesPart1.T
-  object CategoriesPart1 extends Newtype[String, Pure]
-  type CategoriesPart2 = CategoriesPart2.T
-  object CategoriesPart2 extends Newtype[String, Pure]
+
+  object Category:
+    type Target = Target.T
+    object Target extends Newtype[String, Pure]
+    type Name = Name.T
+    object Name extends Newtype[String, Pure]

@@ -53,7 +53,7 @@ final class HostCollection(val name: HostCollection.Name, collection: SourceColl
     else guarded(collection.updateAll(links, apply))(_.value)
   def set(
       id: CollectionId,
-      fields: List[(SourceCollection.SetFieldsPart1, SourceCollection.SetFieldsPart2)]
+      fields: List[(SourceCollection.FieldName, SourceCollection.FieldValue)]
   ): Either[HostCollection.Problem, Unit] =
     writing(CollectionCapability.Update)(collection.set(id, fields))(_.value)
 

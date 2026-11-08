@@ -1,6 +1,8 @@
 package com.histmersion
 package plugins.fetchers
 
+import com.histmersion.plugin.Header
+
 import com.histmersion.plugin.FetchedFile
 import com.histmersion.plugin.Plugin
 import io.github.iltotore.iron.constraint.any.Pure
@@ -11,8 +13,8 @@ final class Downloads(http: Plugin.Http):
   def pdf(
       log: Plugin.Log,
       source: FetchedFile.Source,
-      url: Plugin.Http.GetUrl,
-      headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2] = Map.empty
+      url: Plugin.Http.Url,
+      headers: Map[Header.Name, Header.Value] = Map.empty
   ): Option[FetchedFile] =
     http.get(url, headers).map(body => FetchedFile.Bytes(body.value)) match
       case Right(b) if Downloads.looksLikePdf(b) =>

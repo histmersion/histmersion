@@ -34,11 +34,11 @@ class CollectionsServiceSuite extends munit.FunSuite:
   /** A shelf of three books that records what it was asked to write. */
   final private class Shelf(writes: Boolean) extends SourceCollection:
     val written = scala.collection.mutable.ListBuffer.empty[String]
-    def title = SourceCollection.TitleResult("Calibre")
+    def title = SourceCollection.Title("Calibre")
     override def capabilities =
       if writes then Set(CollectionCapability.Read, CollectionCapability.Add, CollectionCapability.Update)
       else Set(CollectionCapability.Read)
-    override def readOnlyReason = SourceCollection.ReadOnlyReasonResult("write-back is off")
+    override def readOnlyReason = Problem("write-back is off")
     private val books = List(
       book(CollectionId("1"), CollectionItem.Title("One")),
       book(CollectionId("2"), CollectionItem.Title("Two")),

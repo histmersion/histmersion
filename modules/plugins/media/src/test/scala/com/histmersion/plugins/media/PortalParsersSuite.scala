@@ -269,44 +269,44 @@ class PortalParsersSuite extends munit.FunSuite:
   test("Pleiades: a referenced URL is a Commons file, a picture not taken (and why), or not a picture"):
     import PleiadesLinks.classify
     assertEquals(
-      classify(Plugin.Http.GetUrl("https://commons.wikimedia.org/wiki/File:Temple_d%27Apollon,_Oppidum_de_Gaujac.JPG")),
+      classify(Plugin.Http.Url("https://commons.wikimedia.org/wiki/File:Temple_d%27Apollon,_Oppidum_de_Gaujac.JPG")),
       Some(Right("File:Temple d'Apollon, Oppidum de Gaujac.JPG"))
     )
     assertEquals(
       classify(
-        Plugin.Http.GetUrl(
+        Plugin.Http.Url(
           "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Lions_Gate.jpg/330px-Lions_Gate.jpg"
         )
       ),
       Some(Right("File:Lions Gate.jpg"))
     )
     assertEquals(
-      classify(Plugin.Http.GetUrl("https://upload.wikimedia.org/wikipedia/commons/a/ab/Lions_Gate.jpg")),
+      classify(Plugin.Http.Url("https://upload.wikimedia.org/wikipedia/commons/a/ab/Lions_Gate.jpg")),
       Some(Right("File:Lions Gate.jpg"))
     )
     assertEquals(
-      classify(Plugin.Http.GetUrl("https://it.wikipedia.org/wiki/Vara_(fiume)#/media/File:Brugnato-IMG_0146.JPG")),
+      classify(Plugin.Http.Url("https://it.wikipedia.org/wiki/Vara_(fiume)#/media/File:Brugnato-IMG_0146.JPG")),
       Some(Right("File:Brugnato-IMG 0146.JPG"))
     )
     assertEquals(
-      classify(Plugin.Http.GetUrl("https://en.wikipedia.org/wiki/File:Afrin,Huri.jpg")),
+      classify(Plugin.Http.Url("https://en.wikipedia.org/wiki/File:Afrin,Huri.jpg")),
       Some(Right("File:Afrin,Huri.jpg"))
     )
     assertEquals(
-      classify(Plugin.Http.GetUrl("https://commons.wikimedia.org/wiki/Category:Msoura?uselang=en")),
+      classify(Plugin.Http.Url("https://commons.wikimedia.org/wiki/Category:Msoura?uselang=en")),
       Some(Left(PleiadesLinks.Category))
     )
     assertEquals(
-      classify(Plugin.Http.GetUrl("https://www.flickr.com/photos/dandiffendale/8039595644/")),
+      classify(Plugin.Http.Url("https://www.flickr.com/photos/dandiffendale/8039595644/")),
       Some(Left(PleiadesLinks.OnFlickr))
     )
     assertEquals(
-      classify(Plugin.Http.GetUrl("=https://elexikon.ch/RE/X,2_2449.png")),
+      classify(Plugin.Http.Url("=https://elexikon.ch/RE/X,2_2449.png")),
       Some(Left(PleiadesLinks.Problem("a picture on elexikon.ch (no documented keyless licence API)")))
     )
-    assertEquals(classify(Plugin.Http.GetUrl("https://en.wikipedia.org/wiki/Mycenae")), None)
-    assertEquals(classify(Plugin.Http.GetUrl("http://www.worldcat.org/oclc/43970336")), None)
-    assertEquals(classify(Plugin.Http.GetUrl("https://www.wikidata.org/wiki/Q87276897")), None)
+    assertEquals(classify(Plugin.Http.Url("https://en.wikipedia.org/wiki/Mycenae")), None)
+    assertEquals(classify(Plugin.Http.Url("http://www.worldcat.org/oclc/43970336")), None)
+    assertEquals(classify(Plugin.Http.Url("https://www.wikidata.org/wiki/Q87276897")), None)
 
   test("Pleiades: a place record's picture links, in its order, with their citation type"):
     val ls = PleiadesLinks.links(fixture("pleiades-place.json")).fold(e => fail(e.value), identity)

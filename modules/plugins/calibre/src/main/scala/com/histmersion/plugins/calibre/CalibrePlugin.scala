@@ -1,6 +1,10 @@
 package com.histmersion
 package plugins.calibre
 
+import com.histmersion.plugin.EnvVar
+
+import com.histmersion.plugin.Problem
+
 import com.histmersion.plugin.{Plugin, Spi}
 import com.histmersion.plugin.LocalFiles
 import com.histmersion.plugin.Processes
@@ -17,20 +21,20 @@ final class CalibrePlugin extends Plugin:
     Plugin.Info.Version(CalibrePlugin.Version),
     Plugin.Info.SpiVersion(Spi.Version)
   )
-  def register(c: Calibre.Settings, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
+  def register(c: Calibre.Settings, ctx: Plugin.Context): Either[Problem, Unit] =
     given files: LocalFiles = ctx.files
     given processes: Processes = ctx.processes
     ctx.sourceCollections
       .add(
         Registry.AddId("calibre"),
         CalibreCollection(
-          c.library(ctx.env(Plugin.Context.EnvName("HOME")), ctx.env(Plugin.Context.EnvName("PATH"))),
+          c.library(ctx.env(EnvVar.Name("HOME")), ctx.env(EnvVar.Name("PATH"))),
           CalibreCollection.WriteBack(c.writeBack.value),
           Shell.system
         )
       )
       .left
-      .map(e => Plugin.RegisterResultPart1(e.value))
+      .map(e => Problem(e.value))
 
 object CalibrePlugin:
   val Version = "0.1.0"

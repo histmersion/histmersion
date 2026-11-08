@@ -1,6 +1,10 @@
 package com.histmersion
 package server.events
 
+import com.histmersion.plugin.Header
+
+import com.histmersion.plugin.Problem
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -61,19 +65,19 @@ class PluginCatalogueSuite extends DbSuite:
     type Config = ZqCatalogueConfig
     val info =
       Plugin.Info(Plugin.Info.Id("zq-plugin"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
-    override def defaultsResource = Plugin.DefaultsResourceResult("zq-none.conf")
+    override def defaultsResource = Plugin.DefaultsResource("zq-none.conf")
     def register(c: ZqCatalogueConfig, ctx: Plugin.Context) =
-      ctx.eventCatalogues.add(CatalogueAdd, ZqQuakes).left.map(e => Plugin.RegisterResultPart1(e.value))
+      ctx.eventCatalogues.add(CatalogueAdd, ZqQuakes).left.map(e => Problem(e.value))
 
   // `var`: whether the API answers part p2 (it fails on the first import)
   @volatile private var p2Up = false
 
   private object ZqQuakes extends EventCatalogue:
-    val title = EventCatalogue.TitleResult("Zq battle catalogue"); val licence = spi.Licence("CC0-1.0");
-    val citation = EventCatalogue.CitationResult("Zq et al. (2026)");
-    val home = EventCatalogue.HomeResult("https://zq.example")
-    override val requestIntervalMs = EventCatalogue.RequestIntervalMsResult(0)
-    def parts(q: CatalogueQuery) = List(EventCatalogue.PartsResult("p1"), EventCatalogue.PartsResult("p2"))
+    val title = EventCatalogue.Title("Zq battle catalogue"); val licence = spi.Licence("CC0-1.0");
+    val citation = EventCatalogue.Citation("Zq et al. (2026)");
+    val home = EventCatalogue.Home("https://zq.example")
+    override val requestIntervalMs = EventCatalogue.RequestIntervalMs(0)
+    def parts(q: CatalogueQuery) = List(EventCatalogue.ReadPart("p1"), EventCatalogue.ReadPart("p2"))
     private def ev(id: CatalogueEvent.Id, label: CatalogueEvent.Label, year: Year) =
       CatalogueEvent(
         id,
@@ -88,9 +92,9 @@ class PluginCatalogueSuite extends DbSuite:
       )
     def read(part: EventCatalogue.ReadPart, q: CatalogueQuery, http: Plugin.Http) =
       http
-        .get(Plugin.Http.GetUrl(s"https://zq.example/api/$part"), Map.empty)
+        .get(Plugin.Http.Url(s"https://zq.example/api/$part"), Map.empty)
         .left
-        .map(e => EventCatalogue.ReadResultPart1(e.value))
+        .map(e => Problem(e.value))
         .flatMap { _ =>
           part.value match
             case "p1" =>
@@ -114,8 +118,8 @@ class PluginCatalogueSuite extends DbSuite:
                 Right(
                   CataloguePage(List(ev(CatalogueEvent.Id("b3"), CatalogueEvent.Label("Zq Battle Three"), Year(-1100))))
                 )
-              else Left(EventCatalogue.ReadResultPart1("upstream down"))
-            case other => Left(EventCatalogue.ReadResultPart1(s"no part $other"))
+              else Left(Problem("upstream down"))
+            case other => Left(Problem(s"no part $other"))
         }
 
   private def fake = FakeMediaHttp(url =>
@@ -217,12 +221,12 @@ class PluginCatalogueSuite extends DbSuite:
     * only by its stated year ±.
     */
   private object ZqFloods extends EventCatalogue:
-    val title = EventCatalogue.TitleResult("Zq flood catalogue"); val licence = spi.Licence("CC0-1.0");
-    val citation = EventCatalogue.CitationResult("Zq (2026)");
-    val home = EventCatalogue.HomeResult("https://zq.example")
-    override val requestIntervalMs = EventCatalogue.RequestIntervalMsResult(0)
+    val title = EventCatalogue.Title("Zq flood catalogue"); val licence = spi.Licence("CC0-1.0");
+    val citation = EventCatalogue.Citation("Zq (2026)");
+    val home = EventCatalogue.Home("https://zq.example")
+    override val requestIntervalMs = EventCatalogue.RequestIntervalMs(0)
     override val floorYear = Some(Year(-3000))
-    def parts(q: CatalogueQuery) = List(EventCatalogue.PartsResult("all"))
+    def parts(q: CatalogueQuery) = List(EventCatalogue.ReadPart("all"))
     private def ev(id: CatalogueEvent.Id, nb: Option[Year], na: Option[Year]) =
       CatalogueEvent(
         id,
@@ -236,9 +240,9 @@ class PluginCatalogueSuite extends DbSuite:
       )
     def read(part: EventCatalogue.ReadPart, q: CatalogueQuery, http: Plugin.Http) =
       http
-        .get(Plugin.Http.GetUrl("https://zq.example/api/floods"), Map.empty)
+        .get(Plugin.Http.Url("https://zq.example/api/floods"), Map.empty)
         .left
-        .map(e => EventCatalogue.ReadResultPart1(e.value))
+        .map(e => Problem(e.value))
         .map(_ =>
           CataloguePage(
             List(
@@ -260,9 +264,9 @@ class PluginCatalogueSuite extends DbSuite:
     type Config = ZqCatalogueConfig
     val info =
       Plugin.Info(Plugin.Info.Id("zq-floods-plugin"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
-    override def defaultsResource = Plugin.DefaultsResourceResult("zq-none.conf")
+    override def defaultsResource = Plugin.DefaultsResource("zq-none.conf")
     def register(c: ZqCatalogueConfig, ctx: Plugin.Context) =
-      ctx.eventCatalogues.add(FloodsAdd, ZqFloods).left.map(e => Plugin.RegisterResultPart1(e.value))
+      ctx.eventCatalogues.add(FloodsAdd, ZqFloods).left.map(e => Problem(e.value))
 
   private def floodsGeneration: Generation =
     PluginHost.build(
@@ -272,8 +276,8 @@ class PluginCatalogueSuite extends DbSuite:
       Plugins.services(
         () =>
           new Plugin.Http {
-            def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
-              Left(Plugin.Http.GetResultPart1("no"))
+            def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
+              Left(Problem("no"))
           },
         ConfigFactory.empty
       )

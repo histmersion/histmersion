@@ -15,14 +15,12 @@ object ServerModules:
   type ParseEntriesLines = Resolver.ManifestLine
   val ParseEntriesLines: Resolver.ManifestLine.type = Resolver.ManifestLine
 
-  type ParseResultPart1 = Resolver.Problem
-  val ParseResultPart1: Resolver.Problem.type = Resolver.Problem
   type ParseModules = Resolver.ManifestLine
   val ParseModules: Resolver.ManifestLine.type = Resolver.ManifestLine
   type ParseExcludes = Resolver.ManifestLine
   val ParseExcludes: Resolver.ManifestLine.type = Resolver.ManifestLine
 
-  def parse(modules: List[ParseModules], excludes: List[ParseExcludes]): Either[ParseResultPart1, ServerModules] =
+  def parse(modules: List[ParseModules], excludes: List[ParseExcludes]): Either[Resolver.Problem, ServerModules] =
     def entries(lines: List[ParseEntriesLines]) =
       lines.map((_).value.trim).filter(l => l.nonEmpty && !l.startsWith("#"))
     for

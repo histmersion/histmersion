@@ -22,7 +22,7 @@ object PluginAi:
   def check(provider: AiProvider, model: ModelName): Either[Problem, Unit] =
     try
       Option(provider.check(AiProvider.CheckModel(model.value)))
-        .getOrElse(Left(AiProvider.CheckResultPart1("its check answered null")))
+        .getOrElse(Left(plugin.Problem("its check answered null")))
         .left
         .map(e => Problem(e.value))
     catch

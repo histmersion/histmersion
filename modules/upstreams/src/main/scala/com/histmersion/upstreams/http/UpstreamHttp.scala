@@ -1,5 +1,7 @@
 package com.histmersion
 package upstreams.http
+
+import com.histmersion.plugin.Header
 import io.circe.Json
 
 import java.nio.charset.StandardCharsets.UTF_8
@@ -10,9 +12,9 @@ extension (http: Plugin.Http)
   def text(url: String, headers: Map[String, String] = Map.empty): Either[String, String] =
     http
       .get(
-        Plugin.Http.GetUrl(url),
+        Plugin.Http.Url(url),
         (headers).iterator.map { case (refactorKey, refactorItem) =>
-          (Plugin.Http.GetHeadersPart1(refactorKey), Plugin.Http.GetHeadersPart2(refactorItem))
+          (Header.Name(refactorKey), Header.Value(refactorItem))
         }.toMap
       )
       .map(body => String(body.value, UTF_8))

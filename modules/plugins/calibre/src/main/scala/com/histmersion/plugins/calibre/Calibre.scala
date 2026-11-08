@@ -1,6 +1,8 @@
 package com.histmersion
 package plugins.calibre
 
+import com.histmersion.plugin.EnvVar
+
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -31,7 +33,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
   /** The Calibre GUI holds an exclusive lock on the library for writes. */
   def guiRunning: Boolean = shell.isRunning(cfg.guiProcess)
 
-  def libraryExists: Boolean = files.isFile(Path.of(cfg.library.value, "metadata.db")).value
+  def libraryExists: Boolean = files.isFile(Path.of(cfg.library.value, "metadata.db"))
 
   // ── reading ─────────────────────────────────────────────────────────────────────────────────
 
@@ -94,7 +96,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
     for
       _ <- Calibre.guard(meta.title, meta.authors)
       _ <- Either.cond(!guiRunning, (), GuiRunning)
-      _ <- Either.cond(files.isFile(file).value, (), Calibre.Problem(s"no such file: $file"))
+      _ <- Either.cond(files.isFile(file), (), Calibre.Problem(s"no such file: $file"))
       out <- shell.run(addCmd(file, meta))
       id <- Calibre
         .parseAddedId(out)
@@ -166,7 +168,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
     for
       fmt <- Calibre.formatOf(file)
       _ <- Either.cond(!guiRunning, (), GuiRunning)
-      _ <- Either.cond(files.isFile(file).value, (), Calibre.Problem(s"no such file: $file"))
+      _ <- Either.cond(files.isFile(file), (), Calibre.Problem(s"no such file: $file"))
       _ <- byId(id).flatMap(_.toRight(Calibre.Problem(s"there is no Calibre entry $id")))
       _ <- shell.run(Calibre.replaceFormatCmd(cfg.calibredb, libArgs, id, file))
     yield fmt
@@ -846,14 +848,14 @@ object Calibre:
     /** The settings as the library is reached, `~` read against `home`, a bare `calibredb` found on `searchPath` or in
       * Calibre's install directories (kept bare when it is in none, so the failure names it as configured).
       */
-    def library(home: Option[Plugin.Context.EnvResult], searchPath: Option[Plugin.Context.EnvResult] = None)(using
+    def library(home: Option[EnvVar.Value], searchPath: Option[EnvVar.Value] = None)(using
         files: LocalFiles
     ): Library =
-      library(home, searchPath, path => files.isExecutable(path).value)
+      library(home, searchPath, path => files.isExecutable(path))
 
     def library(
-        home: Option[Plugin.Context.EnvResult],
-        searchPath: Option[Plugin.Context.EnvResult],
+        home: Option[EnvVar.Value],
+        searchPath: Option[EnvVar.Value],
         executable: Path => Boolean
     ): Library =
       val path = libraryPath.value.trim match
@@ -897,8 +899,8 @@ object Calibre:
       */
     def locate(
         name: Calibredb,
-        home: Option[Plugin.Context.EnvResult],
-        searchPath: Option[Plugin.Context.EnvResult],
+        home: Option[EnvVar.Value],
+        searchPath: Option[EnvVar.Value],
         executable: Path => Boolean
     ): ExecutablePath =
       if name.value.contains('/') || name.value.isBlank then ExecutablePath(name.value)

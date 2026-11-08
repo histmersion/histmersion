@@ -1,6 +1,8 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.plugin.Header
+
 import io.circe.Json
 
 import java.net.URI
@@ -12,8 +14,8 @@ extension (http: Plugin.Http)
     * the client sends them — a key-gated API's key travels in one, never in the URL.
     */
   def askJson(
-      url: Plugin.Http.GetUrl,
-      headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2] = Map.empty
+      url: Plugin.Http.Url,
+      headers: Map[Header.Name, Header.Value] = Map.empty
   ): Either[String, Json] =
     http
       .get(url, headers)

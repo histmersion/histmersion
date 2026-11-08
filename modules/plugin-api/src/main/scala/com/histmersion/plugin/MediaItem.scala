@@ -41,78 +41,18 @@ final case class MediaItem(
     title: MediaItem.Title,
     pageUrl: MediaItem.PageUrl,
     imageUrl: Option[MediaItem.ImageUrl],
-    rights: Either[MediaItem.RightsPart1, MediaRights],
+    rights: Either[Problem, MediaRights],
     thumbUrl: Option[MediaItem.ThumbUrl] = None,
     originalUrl: Option[MediaItem.OriginalUrl] = None,
-    geography: List[(MediaItem.GeographyPart1, MediaItem.GeographyPart2)] = Nil,
+    geography: List[(MediaItem.Geography.Field, MediaItem.Geography.Value)] = Nil,
     period: Option[Period] = None,
-    ids: List[(MediaItem.IdsPart1, MediaItem.IdsPart2)] = Nil,
+    ids: List[(GazetteerRef.Scheme, GazetteerRef.Id)] = Nil,
     withheld: Option[MediaItem.Withheld] = None,
     role: Option[MediaItem.Role] = None,
     rendition: Option[MediaRendition] = None
-):
-  /** The item as a plugin built against SPI 2's first release made it: no role of its own, no rendition. */
-  def this(
-      key: String,
-      title: String,
-      pageUrl: String,
-      imageUrl: Option[String],
-      rights: Either[String, MediaRights],
-      thumbUrl: Option[String],
-      originalUrl: Option[String],
-      geography: List[(String, String)],
-      period: Option[Period],
-      ids: List[(String, String)],
-      withheld: Option[String]
-  ) = this(
-    MediaItem.Key(key),
-    MediaItem.Title(title),
-    MediaItem.PageUrl(pageUrl),
-    (imageUrl).map(refactorValue => MediaItem.ImageUrl(refactorValue)),
-    (rights).left.map(refactorError => MediaItem.RightsPart1(refactorError)),
-    (thumbUrl).map(refactorValue3 => MediaItem.ThumbUrl(refactorValue3)),
-    (originalUrl).map(refactorValue4 => MediaItem.OriginalUrl(refactorValue4)),
-    (geography).map { refactorValue5 =>
-      val refactorTuple = refactorValue5;
-      (MediaItem.GeographyPart1(refactorTuple._1), MediaItem.GeographyPart2(refactorTuple._2))
-    },
-    period,
-    (ids).map { refactorValue6 =>
-      val refactorTuple2 = refactorValue6;
-      (MediaItem.IdsPart1(refactorTuple2._1), MediaItem.IdsPart2(refactorTuple2._2))
-    },
-    (withheld).map(refactorValue7 => MediaItem.Withheld(refactorValue7)),
-    None,
-    None
-  )
+)
 
 object MediaItem:
-  /** The item as a plugin built against SPI 2's first release made it: no role of its own, no rendition. */
-  type ApplyKey = Key
-  val ApplyKey: Key.type = Key
-  type ApplyTitle = Title
-  val ApplyTitle: Title.type = Title
-  type ApplyPageUrl = PageUrl
-  val ApplyPageUrl: PageUrl.type = PageUrl
-  type ApplyImageUrl = ImageUrl
-  val ApplyImageUrl: ImageUrl.type = ImageUrl
-  type ApplyRightsPart1 = RightsPart1
-  val ApplyRightsPart1: RightsPart1.type = RightsPart1
-  type ApplyThumbUrl = ThumbUrl
-  val ApplyThumbUrl: ThumbUrl.type = ThumbUrl
-  type ApplyOriginalUrl = OriginalUrl
-  val ApplyOriginalUrl: OriginalUrl.type = OriginalUrl
-  type ApplyGeographyPart1 = GeographyPart1
-  val ApplyGeographyPart1: GeographyPart1.type = GeographyPart1
-  type ApplyGeographyPart2 = GeographyPart2
-  val ApplyGeographyPart2: GeographyPart2.type = GeographyPart2
-  type ApplyIdsPart1 = IdsPart1
-  val ApplyIdsPart1: IdsPart1.type = IdsPart1
-  type ApplyIdsPart2 = IdsPart2
-  val ApplyIdsPart2: IdsPart2.type = IdsPart2
-  type ApplyWithheld = Withheld
-  val ApplyWithheld: Withheld.type = Withheld
-
   type Key = Key.T
   object Key extends Newtype[String, Pure]
   type Title = Title.T
@@ -121,36 +61,17 @@ object MediaItem:
   object PageUrl extends Newtype[String, Pure]
   type ImageUrl = ImageUrl.T
   object ImageUrl extends Newtype[String, Pure]
-  type RightsPart1 = RightsPart1.T
-  object RightsPart1 extends Newtype[String, Pure]
   type ThumbUrl = ThumbUrl.T
   object ThumbUrl extends Newtype[String, Pure]
   type OriginalUrl = OriginalUrl.T
   object OriginalUrl extends Newtype[String, Pure]
-  type GeographyPart1 = GeographyPart1.T
-  object GeographyPart1 extends Newtype[String, Pure]
-  type GeographyPart2 = GeographyPart2.T
-  object GeographyPart2 extends Newtype[String, Pure]
-  type IdsPart1 = IdsPart1.T
-  object IdsPart1 extends Newtype[String, Pure]
-  type IdsPart2 = IdsPart2.T
-  object IdsPart2 extends Newtype[String, Pure]
+  object Geography:
+    type Field = Field.T
+    object Field extends Newtype[String, Pure]
+    type Value = Value.T
+    object Value extends Newtype[String, Pure]
+
   type Withheld = Withheld.T
   object Withheld extends Newtype[String, Pure]
   type Role = Role.T
   object Role extends Newtype[String, Pure]
-
-  def apply(
-      key: ApplyKey,
-      title: ApplyTitle,
-      pageUrl: ApplyPageUrl,
-      imageUrl: Option[ApplyImageUrl],
-      rights: Either[ApplyRightsPart1, MediaRights],
-      thumbUrl: Option[ApplyThumbUrl],
-      originalUrl: Option[ApplyOriginalUrl],
-      geography: List[(ApplyGeographyPart1, ApplyGeographyPart2)],
-      period: Option[Period],
-      ids: List[(ApplyIdsPart1, ApplyIdsPart2)],
-      withheld: Option[ApplyWithheld]
-  ): MediaItem =
-    new MediaItem(key, title, pageUrl, imageUrl, rights, thumbUrl, originalUrl, geography, period, ids, withheld)

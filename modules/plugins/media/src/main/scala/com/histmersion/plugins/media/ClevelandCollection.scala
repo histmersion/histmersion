@@ -16,22 +16,22 @@ final class ClevelandCollection(conf: CollectionSettings)
       MuseumCollection.Provider("The Cleveland Museum of Art"),
       MuseumCollection.Key("media.cleveland")
     ):
-  val title = MediaCollection.TitleResult("Cleveland Museum of Art objects")
+  val title = MediaCollection.Title("Cleveland Museum of Art objects")
   override val description =
-    MediaCollection.DescriptionResult("The Cleveland Museum of Art (CC0, share_license_status)" + MetCollection.Museum)
-  val role = MediaCollection.RoleResult(MediaCollection.Object)
+    MediaCollection.Description("The Cleveland Museum of Art (CC0, share_license_status)" + MetCollection.Museum)
+  val role = MediaItem.Role(MediaCollection.Object)
 
   def search(
       place: MediaPlace,
       http: Plugin.Http
-  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  ): Either[Problem, List[Either[Problem, MediaItem]]] =
     http
       .askJson(
         ClevelandCollection
-          .searchUrl(Plugin.Http.GetUrl(conf.apiUrl.value), CollectionQuery.Text(place.label.value), conf.candidates)
+          .searchUrl(Plugin.Http.Url(conf.apiUrl.value), CollectionQuery.Text(place.label.value), conf.candidates)
       )
       .left
-      .map(e => MediaCollection.SearchResultPart1(e))
+      .map(e => Problem(e))
       .flatMap(ClevelandCollection.records)
 
 object ClevelandCollection:
@@ -52,31 +52,31 @@ object ClevelandCollection:
   ).mkString(",")
 
   def searchUrl(
-      api: Plugin.Http.GetUrl,
+      api: Plugin.Http.Url,
       name: CollectionQuery.Text,
       limit: CollectionSettings.Candidates
-  ): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(
+  ): Plugin.Http.Url =
+    Plugin.Http.Url(
       s"${api.value.stripSuffix("/")}/artworks/?q=${name.value.enc}&cc0=1&has_image=1&limit=${limit.value.max(1)}&fields=$Fields"
     )
 
   /** Pure: the records of a search answer. */
   def records(
       json: Json
-  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  ): Either[Problem, List[Either[Problem, MediaItem]]] =
     val c = json.hcursor
     c.downField("data").focus.flatMap(_.asArray) match
       case None =>
         Left(
-          MediaCollection.SearchResultPart1(c.str("detail").orElse(c.str("message")).getOrElse("no data in the answer"))
+          Problem(c.str("detail").orElse(c.str("message")).getOrElse("no data in the answer"))
         )
       case Some(rows) => Right(rows.toList.map(record))
 
-  def record(json: Json): Either[MediaCollection.SearchResultPart2Part1, MediaItem] =
+  def record(json: Json): Either[Problem, MediaItem] =
     val c = json.hcursor
     c.str("accession_number")
       .orElse(c.str("id"))
-      .toRight(MediaCollection.SearchResultPart2Part1("no accession number"))
+      .toRight(Problem("no accession number"))
       .map { acc =>
         val title = c.str("title").getOrElse(acc)
         val creator = c
@@ -95,7 +95,7 @@ object ClevelandCollection:
             Right(MediaRights.cc0(creator.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
           else
             Left(
-              MediaItem.RightsPart1(
+              Problem(
                 s"not Open Access (share_license_status ${c.str("share_license_status").getOrElse("missing")})"
               )
             )
@@ -109,7 +109,7 @@ object ClevelandCollection:
           url("web").map(u => MediaItem.ImageUrl(u)),
           rights,
           originalUrl = url("print").orElse(url("full")).map(u => MediaItem.OriginalUrl(u)),
-          geography = geo.map((f, v) => (MediaItem.GeographyPart1(f), MediaItem.GeographyPart2(v))),
+          geography = geo.map((f, v) => (MediaItem.Geography.Field(f), MediaItem.Geography.Value(v))),
           period = Period.range(c.long("creation_date_earliest"), c.long("creation_date_latest"))
         )
       }

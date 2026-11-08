@@ -1,6 +1,10 @@
 package com.histmersion
 package util.plugins
 
+import com.histmersion.plugin.Header
+
+import com.histmersion.plugin.Problem
+
 import com.histmersion.pluginhost.{FirstPartySettings, Generation, HostServices, PluginHost, Registries, ReservedNames}
 
 import com.histmersion.config.{AppConfig, ConfigReload, HotPlan, LoadedConfig}
@@ -217,8 +221,8 @@ object Plugins:
       services(
         () =>
           new Plugin.Http {
-            def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
-              Left(Plugin.Http.GetResultPart1("offline"))
+            def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
+              Left(Problem("offline"))
           },
         env
       ),

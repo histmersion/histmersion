@@ -25,7 +25,7 @@ class MediaPluginsKitSuite extends munit.FunSuite:
 
   private def json(s: String) = StubAnswer.text(HttpAnswer.Text(s), CoreQuota.HeaderValue("application/json"))
 
-  private def at(url: Plugin.Http.GetUrl) = HttpTransport.Url(url.value)
+  private def at(url: Plugin.Http.Url) = HttpTransport.Url(url.value)
 
   private def load(
       id: Plugin.Info.Id,

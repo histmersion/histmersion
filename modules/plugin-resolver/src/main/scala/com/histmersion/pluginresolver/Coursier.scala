@@ -20,7 +20,7 @@ final class Coursier(repositories: List[RepositoryUrl], cache: Option[Path]):
   def resolve(
       roots: List[ModuleCoordinates],
       excluded: Set[ModuleKey]
-  ): Either[Coursier.ResolveResultPart1, List[(ModuleCoordinates, Option[Path])]] =
+  ): Either[Resolver.Problem, List[(ModuleCoordinates, Option[Path])]] =
     val params = excluded.foldLeft(ResolutionParams.create())((p, k) => p.addExclusion(k.group.value, k.artifact.value))
     val fetch = Fetch
       .create()
@@ -46,10 +46,6 @@ object Coursier:
   object JarPath extends Newtype[String, Pure]
 
   /** Maven's version order (`1.10` after `1.9`, `1.0-RC1` before `1.0`). */
-  type ResolveResultPart1 = Resolver.Problem
-  val ResolveResultPart1: Resolver.Problem.type = Resolver.Problem
-  type PluginRepositoryResultPart1 = Resolver.Problem
-  val PluginRepositoryResultPart1: Resolver.Problem.type = Resolver.Problem
 
   val order: Resolution.VersionOrder = (a, b) => Version.compare(a.value, b.value)
 
@@ -69,7 +65,7 @@ object Coursier:
   def pluginRepository(
       dir: Path,
       plugins: List[PluginArtifact]
-  ): Either[PluginRepositoryResultPart1, List[(PluginArtifact, ModuleCoordinates)]] =
+  ): Either[Resolver.Problem, List[(PluginArtifact, ModuleCoordinates)]] =
     traverse(plugins.flatMap(p => p.pom.map(p -> _))) { (plugin, pom) =>
       Pom.coordinates(pom).left.map(e => Resolver.Problem(s"${plugin.fileName}: its POM: $e")).map { c =>
         val jar = dir.resolve((jarPath(c)).value.drop(1))

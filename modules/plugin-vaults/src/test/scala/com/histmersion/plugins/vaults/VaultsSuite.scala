@@ -40,22 +40,22 @@ class VaultsSuite extends munit.FunSuite:
     var vaults: List[(String, Secret.Vault)] = Nil // what the plugin registered (test-local)
     var infos: List[String] = Nil // what it logged at info (test-local)
     def http = new Plugin.Http {
-      def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
-        Left(Plugin.Http.GetResultPart1("no network in tests"))
+      def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
+        Left(Problem("no network in tests"))
     }
     val log = new Plugin.Log {
       def info(m: Plugin.Log.InfoMessage) = infos = infos :+ m.value
       def warn(m: Plugin.Log.WarnMessage) = ()
     }
-    def env(name: Plugin.Context.EnvName) = envVars.get(name.value).map(Plugin.Context.EnvResult(_))
+    def env(name: EnvVar.Name) = envVars.get(name.value).map(EnvVar.Value(_))
     def secret(s: Secret) =
       secrets
         .get(s.ref)
-        .map(Plugin.Context.SecretResultPart2(_))
-        .toRight(Plugin.Context.SecretResultPart1(s"no value for ${s.ref.shown}"))
+        .map(Secret.Resolved(_))
+        .toRight(Problem(s"no value for ${s.ref.shown}"))
     val secretVaults = new Registry[Secret.Vault]:
-      def add(id: Registry.AddId, a: Secret.Vault): Either[Registry.AddResultPart1, Unit] =
-        if vaults.exists(_._1 == id.value) then Left(Registry.AddResultPart1("dup"))
+      def add(id: Registry.AddId, a: Secret.Vault): Either[Problem, Unit] =
+        if vaults.exists(_._1 == id.value) then Left(Problem("dup"))
         else { vaults = vaults :+ (id.value -> a); Right(()) }
 
   private def decode(p: Plugin, hocon: String): p.Config =
@@ -74,13 +74,13 @@ class VaultsSuite extends munit.FunSuite:
     val d = bin()
     val t = script(d, "tool", "exit 0\n")
     assertEquals(
-      Subprocess.locate(Subprocess.Tool("tool"), Some(Plugin.Context.EnvResult(s"/nonexistent:$d"))),
+      Subprocess.locate(Subprocess.Tool("tool"), Some(EnvVar.Value(s"/nonexistent:$d"))),
       Right(t.toString)
     )
     assertEquals(Subprocess.locate(Subprocess.Tool(t.toString), None), Right(t.toString))
     assert(
       Subprocess
-        .locate(Subprocess.Tool("tool"), Some(Plugin.Context.EnvResult("/nonexistent")))
+        .locate(Subprocess.Tool("tool"), Some(EnvVar.Value("/nonexistent")))
         .left
         .exists(_.value.contains("not found on the PATH"))
     )
@@ -91,7 +91,7 @@ class VaultsSuite extends munit.FunSuite:
         .left
         .exists(_.value.contains("not an executable"))
     )
-    assert(Subprocess.locate(Subprocess.Tool(" "), Some(Plugin.Context.EnvResult(d.toString))).isLeft)
+    assert(Subprocess.locate(Subprocess.Tool(" "), Some(EnvVar.Value(d.toString))).isLeft)
 
   test("run: argv without a shell, stdin, extra env, exit code and both streams"):
     val d = bin()
@@ -102,7 +102,7 @@ class VaultsSuite extends munit.FunSuite:
     )
     val r = Subprocess.run(
       List(Processes.RunArgv(t.toString), Processes.RunArgv("a b; rm -rf /tmp/x")),
-      Map(Processes.RunEnvPart1("EXTRA") -> Processes.RunEnvPart2("e")),
+      Map(EnvVar.Name("EXTRA") -> EnvVar.Value("e")),
       Some(Processes.RunStdin("in\n")),
       5.seconds
     )
@@ -144,8 +144,8 @@ class VaultsSuite extends munit.FunSuite:
     assertEquals(Vaults.entryAndField(Secret.Vault.ResolveRef("A#B#c"), Vaults.Field("password")), ("A#B", "c"))
     assertEquals(Vaults.entryAndField(Secret.Vault.ResolveRef("A/B"), Vaults.Field("password")), ("A/B", "password"))
     assertEquals(Vaults.entryAndField(Secret.Vault.ResolveRef("A/B#"), Vaults.Field("password")), ("A/B", "password"))
-    assertEquals(Vaults.expand(Vaults.Path("~/x.kdbx"), Some(Plugin.Context.EnvResult("/h"))), "/h/x.kdbx")
-    assertEquals(Vaults.expand(Vaults.Path("/a/~/x"), Some(Plugin.Context.EnvResult("/h"))), "/a/~/x")
+    assertEquals(Vaults.expand(Vaults.Path("~/x.kdbx"), Some(EnvVar.Value("/h"))), "/h/x.kdbx")
+    assertEquals(Vaults.expand(Vaults.Path("/a/~/x"), Some(EnvVar.Value("/h"))), "/a/~/x")
 
   // ── KeePassXC ───────────────────────────────────────────────────────────────────────────────
 
@@ -533,9 +533,9 @@ class VaultsSuite extends munit.FunSuite:
   // ── KeePassXC: one open for many references ────────────────────────────────────────────────
 
   test("keepassxc session: the prompt, escaping for the interactive line, the answer without its echo"):
-    assertEquals(KeePassXcSession.prompt(Processes.Session.OutResult("v.kdbx> ")), Some("v.kdbx> "))
-    assertEquals(KeePassXcSession.prompt(Processes.Session.OutResult("Please touch\nResearch> ")), Some("Research> "))
-    assertEquals(KeePassXcSession.prompt(Processes.Session.OutResult("v.kdbx")), None)
+    assertEquals(KeePassXcSession.prompt(Processes.Result.Out("v.kdbx> ")), Some("v.kdbx> "))
+    assertEquals(KeePassXcSession.prompt(Processes.Result.Out("Please touch\nResearch> ")), Some("Research> "))
+    assertEquals(KeePassXcSession.prompt(Processes.Result.Out("v.kdbx")), None)
     assertEquals(KeePassXcSession.escape("A/Two words \"q\" b\\s\tt"), "A/Two\\ words\\ \\\"q\\\"\\ b\\\\s\\\tt")
     assertEquals(
       KeePassXcSession.command(Vaults.Field("password"), KeePassXcSession.Entry("A/Two words")),
@@ -550,7 +550,7 @@ class VaultsSuite extends munit.FunSuite:
     val out = "v.kdbx> show -q -a password A\nsecret\nv.kdbx> "
     assertEquals(
       KeePassXcSession.segment(
-        Processes.Session.OutResult(out),
+        Processes.Result.Out(out),
         KeePassXcSession.SegmentFrom(8),
         KeePassXcSession.Prompt("v.kdbx> ")
       ),
@@ -558,7 +558,7 @@ class VaultsSuite extends munit.FunSuite:
     )
     assertEquals(
       KeePassXcSession.segment(
-        Processes.Session.OutResult(out.dropRight(8)),
+        Processes.Result.Out(out.dropRight(8)),
         KeePassXcSession.SegmentFrom(8),
         KeePassXcSession.Prompt("v.kdbx> ")
       ),
@@ -567,7 +567,7 @@ class VaultsSuite extends munit.FunSuite:
     )
     assertEquals(
       KeePassXcSession.segment(
-        Processes.Session.OutResult("v.kdbx> "),
+        Processes.Result.Out("v.kdbx> "),
         KeePassXcSession.SegmentFrom(8),
         KeePassXcSession.Prompt("v.kdbx> ")
       ),
@@ -695,7 +695,7 @@ class VaultsSuite extends munit.FunSuite:
     )
 
   test("keepassxc batch against the installed keepassxc-cli and a throwaway database (HISTMERSION_TEST_KEEPASSXC=1)"):
-    val cli = Subprocess.locate(Subprocess.Tool("keepassxc-cli"), sys.env.get("PATH").map(Plugin.Context.EnvResult(_)))
+    val cli = Subprocess.locate(Subprocess.Tool("keepassxc-cli"), sys.env.get("PATH").map(EnvVar.Value(_)))
     val why = if !sys.env.get("HISTMERSION_TEST_KEEPASSXC").contains("1") then Some("set HISTMERSION_TEST_KEEPASSXC=1")
     else cli.left.toOption.map(_.value)
     why.foreach(w => println(s"SKIPPED VaultsSuite real keepassxc-cli: $w"))

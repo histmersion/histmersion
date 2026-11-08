@@ -48,14 +48,14 @@ trait Plugin:
     * key the plugin reads has a default in it (`null` for an optional value such as an optional [[Secret]]), and a key
     * the user sets that it lacks is reported as unknown. `enabled` is the host's key; absent, the plugin is disabled.
     */
-  def defaultsResource: Plugin.DefaultsResourceResult =
-    Plugin.DefaultsResourceResult(s"META-INF/histmersion/plugins/${info.id}.conf")
+  def defaultsResource: Plugin.DefaultsResource =
+    Plugin.DefaultsResource(s"META-INF/histmersion/plugins/${info.id}.conf")
 
   /** Called once per generation, only when enabled, after the host decoded the block into `config` and resolved every
     * [[Secret]] in it. Adds the plugin's contributions to `ctx`'s registries. The registries are STAGED: a `Left` (or
     * an exception) discards everything this plugin added.
     */
-  def register(config: Config, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit]
+  def register(config: Config, ctx: Plugin.Context): Either[Problem, Unit]
 
 object Plugin:
 
@@ -65,21 +65,19 @@ object Plugin:
     * com.histmersion.plugin.Plugin.Config.given`); lexical-scope givens win over the companion defaults. Without them
     * an env override of a number fails with "Expected NUMBER but got STRING".
     */
-  type DefaultsResourceResult = DefaultsResourceResult.T
-  object DefaultsResourceResult extends Newtype[String, Pure]
-  type RegisterResultPart1 = RegisterResultPart1.T
-  object RegisterResultPart1 extends Newtype[String, Pure]
+  type DefaultsResource = DefaultsResource.T
+  object DefaultsResource extends Newtype[String, Pure]
 
   object Config:
     type LenientName = LenientName.T
     object LenientName extends Newtype[String, Pure]
-    type LenientParseArg1 = LenientParseArg1.T
-    object LenientParseArg1 extends Newtype[String, Pure]
+    type LenientText = LenientText.T
+    object LenientText extends Newtype[String, Pure]
 
     private def lenient[A](
         name: LenientName,
         strict: ConfigReader[A],
-        parse: LenientParseArg1 => Option[A]
+        parse: LenientText => Option[A]
     ): ConfigReader[A] =
       new ConfigReader[A]:
         def from(v: org.ekrich.config.ConfigValue) =
@@ -89,7 +87,7 @@ object Plugin:
               ConfigReader.stringReader
                 .from(v)
                 .flatMap(s =>
-                  parse(LenientParseArg1(s.trim))
+                  parse(LenientText(s.trim))
                     .toRight(ConfigDecodingError.CannotConvert(Nil, s"'$s' is not a $name", None))
                 )
             )
@@ -122,12 +120,12 @@ object Plugin:
     /** The host's environment as it was read at startup (on the main thread: a native image reads it once). For what a
       * plugin needs to run a tool (`PATH`), never for credentials — those are [[Secret]]s in the config.
       */
-    def env(name: Context.EnvName): Option[Context.EnvResult]
+    def env(name: EnvVar.Name): Option[EnvVar.Value]
 
     /** A secret's value. Every [[Secret]] inside the decoded config was resolved before [[Plugin.register]] was called,
       * so for those this is a lookup; another one is resolved now. Never log the value.
       */
-    def secret(s: Secret): Either[Context.SecretResultPart1, Context.SecretResultPart2]
+    def secret(s: Secret): Either[Problem, Secret.Resolved]
 
     /** Named secret backends: `<name>:<ref>` references are resolved by the vault registered as `name`. */
     def secretVaults: Registry[Secret.Vault]
@@ -185,14 +183,6 @@ object Plugin:
       Registry.refusing(Registry.RefusingWhy("this host has no source collections"))
 
   object Context:
-    type EnvResult = EnvResult.T
-    object EnvResult extends Newtype[String, Pure]
-    type EnvName = EnvName.T
-    object EnvName extends Newtype[String, Pure]
-    type SecretResultPart1 = SecretResultPart1.T
-    object SecretResultPart1 extends Newtype[String, Pure]
-    type SecretResultPart2 = SecretResultPart2.T
-    object SecretResultPart2 extends Newtype[String, Pure]
     type QuotaUpstream = QuotaUpstream.T
     object QuotaUpstream extends Newtype[String, Pure]
 
@@ -202,9 +192,9 @@ object Plugin:
       * challenge ending the request): the body of a 2xx answer, or why there is none.
       */
     def get(
-        url: Http.GetUrl,
-        headers: Map[Http.GetHeadersPart1, Http.GetHeadersPart2] = Map.empty
-    ): Either[Http.GetResultPart1, Http.GetResultPart2]
+        url: Http.Url,
+        headers: Map[Header.Name, Header.Value] = Map.empty
+    ): Either[Problem, HttpResponse.Body]
 
     /** One GET with the host's identity, answered as it came — its status and headers, a slow-down or an error answer
       * included — and never asked again: for an upstream whose own budget decides when to ask again (an
@@ -214,31 +204,14 @@ object Plugin:
       * A host that has only bodies answers through [[get]]: status 200 and no headers, or its `Left`.
       */
     def fetch(
-        url: Http.FetchUrl,
-        headers: Map[Http.FetchHeadersPart1, Http.FetchHeadersPart2] = Map.empty
-    ): Either[Http.FetchResultPart1, HttpResponse] =
+        url: Http.Url,
+        headers: Map[Header.Name, Header.Value] = Map.empty
+    ): Either[Problem, HttpResponse] =
       get(url, headers).map(HttpResponse(HttpResponse.Status(200), Map.empty, _))
 
   object Http:
-    type GetResultPart2 = HttpResponse.Body
-    val GetResultPart2: HttpResponse.Body.type = HttpResponse.Body
-
-    type GetResultPart1 = GetResultPart1.T
-    object GetResultPart1 extends Newtype[String, Pure]
-    type GetUrl = GetUrl.T
-    object GetUrl extends Newtype[String, Pure]
-    type GetHeadersPart1 = GetHeadersPart1.T
-    object GetHeadersPart1 extends Newtype[String, Pure]
-    type GetHeadersPart2 = GetHeadersPart2.T
-    object GetHeadersPart2 extends Newtype[String, Pure]
-    type FetchResultPart1 = GetResultPart1
-    val FetchResultPart1: GetResultPart1.type = GetResultPart1
-    type FetchUrl = GetUrl
-    val FetchUrl: GetUrl.type = GetUrl
-    type FetchHeadersPart1 = GetHeadersPart1
-    val FetchHeadersPart1: GetHeadersPart1.type = GetHeadersPart1
-    type FetchHeadersPart2 = GetHeadersPart2
-    val FetchHeadersPart2: GetHeadersPart2.type = GetHeadersPart2
+    type Url = Url.T
+    object Url extends Newtype[String, Pure]
 
   /** One HTTP answer as it came: its status, its headers (names in lower case, the first value of each) and its body.
     *
@@ -251,28 +224,19 @@ object Plugin:
     */
   final case class HttpResponse(
       status: HttpResponse.Status,
-      headers: Map[HttpResponse.HeadersKey, HttpResponse.HeadersValue],
+      headers: Map[Header.Name, Header.Value],
       body: HttpResponse.Body
   ):
     /** A header by name, in any case. */
-    def header(name: HttpResponse.HeaderName): Option[HttpResponse.HeaderResult] =
-      headers.get(HttpResponse.HeadersKey((name).value.toLowerCase(Locale.ROOT)))
+    def header(name: Header.Name): Option[Header.Value] =
+      headers.get(Header.Name(name.value.toLowerCase(Locale.ROOT)))
 
   object HttpResponse:
-    type HeaderResult = HeadersValue
-    val HeaderResult: HeadersValue.type = HeadersValue
-    type HeaderName = HeaderName.T
-    object HeaderName extends Newtype[String, Pure]
-
     type Body = Body.T
     object Body extends Newtype[Array[Byte], Pure]
 
     type Status = Status.T
     object Status extends Newtype[Int, Pure]
-    type HeadersKey = HeadersKey.T
-    object HeadersKey extends Newtype[String, Pure]
-    type HeadersValue = HeadersValue.T
-    object HeadersValue extends Newtype[String, Pure]
 
   /** @param id
     *   the config key (`histmersion.plugins.<id>`) and the name in logs and reports; kebab-case, `[a-z0-9][a-z0-9-]*`

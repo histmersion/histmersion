@@ -114,12 +114,12 @@ class CalibreCollectionSuite extends munit.FunSuite:
     assertEquals(
       c.set(
         CollectionId("1"),
-        List(SourceCollection.SetFieldsPart1("languages") -> SourceCollection.SetFieldsPart2("eng"))
+        List(SourceCollection.FieldName("languages") -> SourceCollection.FieldValue("eng"))
       ),
       Right(())
     )
     assert(
-      c.set(CollectionId("1"), List(SourceCollection.SetFieldsPart1("bogus") -> SourceCollection.SetFieldsPart2("x")))
+      c.set(CollectionId("1"), List(SourceCollection.FieldName("bogus") -> SourceCollection.FieldValue("x")))
         .left
         .exists(_.value.startsWith("cannot set bogus"))
     )
@@ -169,7 +169,7 @@ class CalibreCollectionSuite extends munit.FunSuite:
       c.updateAll(Nil, apply = SourceCollection.UpdateAllApply(true)),
       c.set(
         CollectionId("1"),
-        List(SourceCollection.SetFieldsPart1("languages") -> SourceCollection.SetFieldsPart2("eng"))
+        List(SourceCollection.FieldName("languages") -> SourceCollection.FieldValue("eng"))
       )
     )
     refusals.foreach(r => assert(r.left.exists(_.value.contains("histmersion.plugins.calibre.write-back = true")), r))
@@ -242,13 +242,13 @@ class CalibreCollectionSuite extends munit.FunSuite:
       override def files: LocalFiles = summon[LocalFiles]
       override def processes: Processes = summon[Processes]
       def http = new Plugin.Http {
-        def get(u: Plugin.Http.GetUrl, hs: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
-          Left(Plugin.Http.GetResultPart1("offline"))
+        def get(u: Plugin.Http.Url, hs: Map[Header.Name, Header.Value]) =
+          Left(Problem("offline"))
       }
       def log = new Plugin.Log { def info(m: Plugin.Log.InfoMessage) = (); def warn(m: Plugin.Log.WarnMessage) = () }
-      def env(name: Plugin.Context.EnvName) =
-        Option.when(name.value == "HOME")(Plugin.Context.EnvResult("/home/someone"))
-      def secret(s: Secret) = Left(Plugin.Context.SecretResultPart1("none"))
+      def env(name: EnvVar.Name) =
+        Option.when(name.value == "HOME")(EnvVar.Value("/home/someone"))
+      def secret(s: Secret) = Left(Problem("none"))
       def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
       override def sourceCollections = new Registry[SourceCollection]:
         def add(id: Registry.AddId, a: SourceCollection) = Right(added += id.value -> a)

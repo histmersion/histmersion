@@ -9,7 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * asks for verbatim failures and for the loop's iteration notes, which the API is sent as user messages.
   */
 final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
-  def title: AiProvider.TitleResult = AiProvider.TitleResult("Anthropic API")
+  def title: AiProvider.Title = AiProvider.Title("Anthropic API")
 
   override def capabilities: AiCapabilities =
     AiCapabilities(
@@ -22,14 +22,14 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
   private def base: Either[BaseUrl.Problem, BaseUrl] =
     BaseUrl.parse(settings.baseUrl, BaseUrl.Setting("agents.providers.anthropic.base-url"))
 
-  override def check(model: AiProvider.CheckModel): Either[AiProvider.CheckResultPart1, Unit] =
+  override def check(model: AiProvider.CheckModel): Either[Problem, Unit] =
     base.left
-      .map(p => AiProvider.CheckResultPart1(p.value))
+      .map(p => Problem(p.value))
       .flatMap(_ =>
         Either.cond(
           settings.apiKey.value.nonEmpty,
           (),
-          AiProvider.CheckResultPart1("no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment")
+          Problem("no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment")
         )
       )
 
@@ -45,15 +45,15 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
       )
       answer <- http
         .post(
-          AiHttp.PostUrl(url.value),
+          Plugin.Http.Url(url.value),
           AnthropicProvider.headers(settings.apiKey),
           body.body,
-          AiHttp.PostTimeoutSeconds(math.max(1, settings.timeoutSeconds.value))
+          AiHttp.TimeoutSeconds(math.max(1, settings.timeoutSeconds.value))
         )
         .left
         .map(e =>
           SendFailure(SendFailure.Reported(e.value))
-            .describe(SendFailure.Method("POST"), AiHttp.GetUrl(url.value))
+            .describe(SendFailure.Method("POST"), Plugin.Http.Url(url.value))
             .value
         )
       turn <- AnthropicAnswer(
@@ -70,11 +70,11 @@ object AnthropicProvider:
 
   val Version = "2023-06-01"
 
-  def headers(key: ProviderSettings.ApiKey): Map[AiHttp.PostHeadersPart1, AiHttp.PostHeadersPart2] =
+  def headers(key: ProviderSettings.ApiKey): Map[Header.Name, Header.Value] =
     Map(
-      AiHttp.PostHeadersPart1("x-api-key") -> AiHttp.PostHeadersPart2(key.value),
-      AiHttp.PostHeadersPart1("anthropic-version") -> AiHttp.PostHeadersPart2(Version),
-      AiHttp.PostHeadersPart1("content-type") -> AiHttp.PostHeadersPart2("application/json")
+      Header.Name("x-api-key") -> Header.Value(key.value),
+      Header.Name("anthropic-version") -> Header.Value(Version),
+      Header.Name("content-type") -> Header.Value("application/json")
     )
 
   /** The models known NOT to give structured output (older than Claude 4.1); any other model is taken to. */

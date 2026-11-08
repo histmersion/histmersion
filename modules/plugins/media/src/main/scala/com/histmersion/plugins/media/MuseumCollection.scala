@@ -19,16 +19,16 @@ abstract class MuseumCollection(
     provider: MuseumCollection.Provider,
     key: MuseumCollection.Key
 ) extends MediaCollection:
-  override def perPlace: MediaCollection.PerPlaceResult = MediaCollection.PerPlaceResult(conf.perPlace.value)
-  override def requestIntervalMs: MediaCollection.RequestIntervalMsResult =
-    MediaCollection.RequestIntervalMsResult(conf.requestIntervalMs.value)
-  override def refusalBackoffMs: List[MediaCollection.RefusalBackoffMsResult] =
-    conf.refusalBackoffMs.map(ms => MediaCollection.RefusalBackoffMsResult(ms.value))
-  override def check: Either[MediaCollection.CheckResultPart1, Unit] =
+  override def perPlace: MediaCollection.PerPlace = MediaCollection.PerPlace(conf.perPlace.value)
+  override def requestIntervalMs: MediaCollection.RequestIntervalMs =
+    MediaCollection.RequestIntervalMs(conf.requestIntervalMs.value)
+  override def refusalBackoffMs: List[MediaCollection.RefusalBackoffMs] =
+    conf.refusalBackoffMs.map(ms => MediaCollection.RefusalBackoffMs(ms.value))
+  override def check: Either[Problem, Unit] =
     Either.cond(
       conf.enabled.value,
       (),
-      MediaCollection.CheckResultPart1(s"${provider.value} is switched off (${key.value}.enabled = false)")
+      Problem(s"${provider.value} is switched off (${key.value}.enabled = false)")
     )
 
 object MuseumCollection:

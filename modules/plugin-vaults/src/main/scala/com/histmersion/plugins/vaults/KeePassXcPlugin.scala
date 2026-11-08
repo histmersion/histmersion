@@ -16,24 +16,24 @@ final class KeePassXcPlugin extends Plugin:
   val info =
     Plugin.Info(Plugin.Info.Id("keepassxc"), Plugin.Info.Version(Vaults.Version), Plugin.Info.SpiVersion(Spi.Version))
 
-  def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
+  def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[Problem, Unit] =
     given files: LocalFiles = ctx.files
     given processes: Processes = ctx.processes
-    def failed(why: String) = Plugin.RegisterResultPart1(why)
-    val home = ctx.env(Plugin.Context.EnvName("HOME"))
+    def failed(why: String) = Problem(why)
+    val home = ctx.env(EnvVar.Name("HOME"))
     for
       db <- Option(c.database.value)
         .map(_.trim)
         .filter(_.nonEmpty)
         .map(d => Vaults.expand(Vaults.Path(d), home))
         .toRight(failed("set database = \"<path to the .kdbx file>\""))
-      _ <- Either.cond(files.isFile(Path.of(db.value)).value, (), failed(s"database ${db.value} does not exist"))
+      _ <- Either.cond(files.isFile(Path.of(db.value)), (), failed(s"database ${db.value} does not exist"))
       key = Option(c.keyFile.value).map(_.trim).filter(_.nonEmpty).map(k => Vaults.expand(Vaults.Path(k), home))
-      _ <- key.fold[Either[Plugin.RegisterResultPart1, Unit]](Right(()))(k =>
-        Either.cond(files.isFile(Path.of(k.value)).value, (), failed(s"key-file ${k.value} does not exist"))
+      _ <- key.fold[Either[Problem, Unit]](Right(()))(k =>
+        Either.cond(files.isFile(Path.of(k.value)), (), failed(s"key-file ${k.value} does not exist"))
       )
       exe <- Subprocess
-        .locate(Subprocess.Tool(c.cli.value), ctx.env(Plugin.Context.EnvName("PATH")))
+        .locate(Subprocess.Tool(c.cli.value), ctx.env(EnvVar.Name("PATH")))
         .left
         .map(e => failed(e.value))
       yks <- YubiKey
@@ -46,7 +46,7 @@ final class KeePassXcPlugin extends Plugin:
         .add(
           Registry.AddId(info.id.value),
           KeePassXcVault(
-            Secret.Vault.NameResult(info.id.value),
+            Secret.Vault.Name(info.id.value),
             exe,
             db,
             key,
@@ -69,7 +69,7 @@ final class KeePassXcPlugin extends Plugin:
   private def detector(
       ykman: KeePassXcConfig.Ykman,
       ctx: Plugin.Context
-  ): Either[Plugin.RegisterResultPart1, Option[Vaults.Path]] =
+  ): Either[Problem, Option[Vaults.Path]] =
     given files: LocalFiles = ctx.files
     val t = Option(ykman).map((_).value.trim).getOrElse("")
     if t.isEmpty then
@@ -78,7 +78,7 @@ final class KeePassXcPlugin extends Plugin:
       )
       Right(None)
     else
-      Subprocess.locate(Subprocess.Tool(t), ctx.env(Plugin.Context.EnvName("PATH"))) match
+      Subprocess.locate(Subprocess.Tool(t), ctx.env(EnvVar.Name("PATH"))) match
         case Right(p)                    => Right(Some(p))
         case Left(_) if !t.contains('/') =>
           ctx.log.info(
@@ -88,4 +88,4 @@ final class KeePassXcPlugin extends Plugin:
             )
           )
           Right(None)
-        case Left(e) => Left(Plugin.RegisterResultPart1(s"ykman: ${e.value}"))
+        case Left(e) => Left(Problem(s"ykman: ${e.value}"))

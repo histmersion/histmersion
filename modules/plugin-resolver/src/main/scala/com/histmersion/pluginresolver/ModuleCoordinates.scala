@@ -13,13 +13,11 @@ object ModuleCoordinates:
   object Text extends Newtype[String, Pure]
 
   /** `group:artifact:version`. */
-  type ParseResultPart1 = Resolver.Problem
-  val ParseResultPart1: Resolver.Problem.type = Resolver.Problem
 
-  def parse(raw: Text): Either[ParseResultPart1, ModuleCoordinates] = (raw).value.trim.split(':').toList match
+  def parse(raw: Text): Either[Resolver.Problem, ModuleCoordinates] = (raw).value.trim.split(':').toList match
     case List(g, a, v) =>
       for
         key <- ModuleKey.parse(ModuleKey.Text(s"$g:$a"))
         version <- ModuleVersion.either(v).left.map(e => Resolver.Problem(s"'$raw': version $e"))
       yield ModuleCoordinates(key, version)
-    case _ => Left(ParseResultPart1(s"not group:artifact:version: '$raw'"))
+    case _ => Left(Resolver.Problem(s"not group:artifact:version: '$raw'"))

@@ -18,10 +18,10 @@ object Awmc extends DownloadedGazetteer:
   type Ordinal = Ordinal.T
   object Ordinal extends Newtype[Int, Pure]
 
-  val title = GazetteerSource.TitleResult("AWMC classical-world regional names and features")
+  val title = GazetteerSource.Title("AWMC classical-world regional names and features")
   override val description =
-    GazetteerSource.DescriptionResult("AWMC classical-world regional names and features (ODbL, ~2600 features)")
-  val url = Plugin.Http.GetUrl(
+    GazetteerSource.Description("AWMC classical-world regional names and features (ODbL, ~2600 features)")
+  val url = Plugin.Http.Url(
     "https://raw.githubusercontent.com/AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson"
   )
   val rights: GazetteerRights = GazetteerRights(

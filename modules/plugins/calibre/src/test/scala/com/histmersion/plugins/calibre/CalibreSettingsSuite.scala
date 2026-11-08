@@ -1,6 +1,8 @@
 package com.histmersion
 package plugins.calibre
 
+import com.histmersion.plugin.EnvVar
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.file.Path
@@ -28,8 +30,8 @@ class CalibreSettingsSuite extends munit.FunSuite:
 
   test("a bare name on the search path wins over the install directories"):
     val lib = settings.library(
-      Some(Plugin.Context.EnvResult("/home/someone")),
-      Some(Plugin.Context.EnvResult("/usr/bin:/custom/bin")),
+      Some(EnvVar.Value("/home/someone")),
+      Some(EnvVar.Value("/usr/bin:/custom/bin")),
       only("/custom/bin/calibredb", "/Applications/calibre.app/Contents/MacOS/calibredb")
     )
     assertEquals(lib.calibredb, "/custom/bin/calibredb")
@@ -37,15 +39,15 @@ class CalibreSettingsSuite extends munit.FunSuite:
 
   test("a bare name not on the search path is found in the macOS app"):
     val lib = settings.library(
-      Some(Plugin.Context.EnvResult("/home/someone")),
-      Some(Plugin.Context.EnvResult("/usr/bin:/bin")),
+      Some(EnvVar.Value("/home/someone")),
+      Some(EnvVar.Value("/usr/bin:/bin")),
       only("/Applications/calibre.app/Contents/MacOS/calibredb")
     )
     assertEquals(lib.calibredb, "/Applications/calibre.app/Contents/MacOS/calibredb")
 
   test("the user's own Applications folder is read against the home directory"):
     val lib = settings.library(
-      Some(Plugin.Context.EnvResult("/home/someone")),
+      Some(EnvVar.Value("/home/someone")),
       None,
       only("/home/someone/Applications/calibre.app/Contents/MacOS/calibredb")
     )
@@ -54,7 +56,7 @@ class CalibreSettingsSuite extends munit.FunSuite:
   test("found nowhere, the name stays as configured"):
     assertEquals(
       settings
-        .library(Some(Plugin.Context.EnvResult("/home/someone")), Some(Plugin.Context.EnvResult("/usr/bin")), only())
+        .library(Some(EnvVar.Value("/home/someone")), Some(EnvVar.Value("/usr/bin")), only())
         .calibredb,
       "calibredb"
     )
@@ -68,5 +70,5 @@ class CalibreSettingsSuite extends munit.FunSuite:
         writeBack = Calibre.Settings.WriteBack(true),
         Calibre.Settings.GuiProcess("gui")
       )
-      .library(None, Some(Plugin.Context.EnvResult("/usr/bin")), _ => true)
+      .library(None, Some(EnvVar.Value("/usr/bin")), _ => true)
     assertEquals(lib.calibredb, "/somewhere/calibredb")

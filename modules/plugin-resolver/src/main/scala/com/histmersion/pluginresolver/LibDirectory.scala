@@ -12,17 +12,14 @@ import scala.jdk.CollectionConverters.*
   */
 object LibDirectory:
   export Resolver.{
-    FileName as WriteInputsPart1,
-    Problem as StoredRepositoriesResultPart1,
-    Sha256 as Sha256Result,
-    Sha256 as WriteInputsPart2
+    Sha256 as Sha256Result
   }
 
   val Classpath = "classpath"
   val Inputs = "inputs"
   val Repositories = "repositories"
 
-  def storedRepositories(lib: Path): Either[LibDirectory.StoredRepositoriesResultPart1, List[RepositoryUrl]] =
+  def storedRepositories(lib: Path): Either[Resolver.Problem, List[RepositoryUrl]] =
     val f = lib.resolve(Repositories)
     if !Files.isRegularFile(f) then Right(Nil)
     else
@@ -35,7 +32,7 @@ object LibDirectory:
   def write(
       lib: Path,
       deps: List[Dependency],
-      inputs: List[(LibDirectory.WriteInputsPart1, LibDirectory.WriteInputsPart2)],
+      inputs: List[(Resolver.FileName, Resolver.Sha256)],
       repositories: List[RepositoryUrl]
   ): Unit =
     Files.createDirectories(lib)

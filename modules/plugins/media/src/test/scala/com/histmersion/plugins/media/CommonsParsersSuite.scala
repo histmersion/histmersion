@@ -90,7 +90,7 @@ class CommonsParsersSuite extends munit.FunSuite:
   /** Commons' answer for one file, `File:X.jpg`, with this `extmetadata`; every request recorded. */
   final private class OneFile(meta: Map[String, String]) extends Plugin.Http:
     val asked = scala.collection.mutable.ListBuffer.empty[String]
-    def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+    def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
       asked += url.value
       val ext = Json.fromFields(meta.toList.map((k, v) => k -> Json.obj("value" -> Json.fromString(v))))
       val body =
@@ -165,7 +165,7 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   test("a file Commons does not answer for, or does not have, is stated with the reason it cannot be used"):
     val http = new Plugin.Http:
-      def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+      def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
         Right(
           Plugin.HttpResponse.Body("""{"query":{"pages":[{"title":"File:Gone.jpg","missing":true}]}}""".getBytes(UTF_8))
         )
@@ -176,8 +176,8 @@ class CommonsParsersSuite extends munit.FunSuite:
     assertEquals(items(Commons.File.Title("File:Gone.jpg")).rights, Left("missing on Commons"))
     assertEquals(items(Commons.File.Title("File:Other.jpg")).rights, Left("no answer from Commons"))
     val down = new Plugin.Http {
-      def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
-        Left(Plugin.Http.GetResultPart1("HTTP 503"))
+      def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
+        Left(Problem("HTTP 503"))
     }
     val (none, lines) = Commons.Files(down, media, HostLicences).items(List(Commons.File.Title("File:A.jpg")))
     assertEquals(none(Commons.File.Title("File:A.jpg")).rights, Left("no answer from Commons"))

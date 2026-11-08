@@ -19,20 +19,16 @@ import io.github.iltotore.iron.constraint.any.Pure
   * [[Period.from]] (the start must not be after the end) or [[Period.point]].
   */
 final case class Period private (start: Year, end: Year) derives CanEqual:
-  def isPoint: Period.IsPointResult = Period.IsPointResult(start == end)
+  def isPoint: Boolean = start == end
 
 object Period:
   /** The period from `start` to `end`, or why there is none (it would end before it starts). */
-  type IsPointResult = IsPointResult.T
-  object IsPointResult extends Newtype[Boolean, Pure]
-  type FromResultPart1 = FromResultPart1.T
-  object FromResultPart1 extends Newtype[String, Pure]
 
-  def from(start: Year, end: Year): Either[FromResultPart1, Period] =
+  def from(start: Year, end: Year): Either[Problem, Period] =
     Either.cond(
       start <= end,
       new Period(start, end),
-      FromResultPart1(s"the period ends (${end.value}) before it starts (${start.value})")
+      Problem(s"the period ends (${end.value}) before it starts (${start.value})")
     )
 
   /** The period of one year. */

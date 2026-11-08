@@ -5,21 +5,21 @@ import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 
 final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasToken) extends AiProvider:
-  val title = _root_.com.histmersion.plugin.AiProvider.TitleResult("Hello AI (scripted test provider)")
+  val title = _root_.com.histmersion.plugin.AiProvider.Title("Hello AI (scripted test provider)")
   override val description =
-    _root_.com.histmersion.plugin.AiProvider.DescriptionResult("answers from its config; calls no model")
+    _root_.com.histmersion.plugin.AiProvider.Description("answers from its config; calls no model")
   override val capabilities =
     AiCapabilities(tools = AiCapabilities.Tools(true), structuredOutput = AiCapabilities.StructuredOutput(false))
 
-  override def check(model: AiProvider.CheckModel): Either[AiProvider.CheckResultPart1, Unit] =
+  override def check(model: AiProvider.CheckModel): Either[Problem, Unit] =
     Either.cond(
       model.value != "broken",
       (),
-      AiProvider.CheckResultPart1("the model 'broken' cannot be built (a test of the check)")
+      Problem("the model 'broken' cannot be built (a test of the check)")
     )
 
-  override def models(http: AiHttp): Either[AiProvider.ModelsResultPart1, List[AiProvider.ModelsResultPart2]] =
-    Right(List(AiProvider.ModelsResultPart2("echo"), AiProvider.ModelsResultPart2("limited")))
+  override def models(http: AiHttp): Either[Problem, List[AiProvider.ModelName]] =
+    Right(List(AiProvider.ModelName("echo"), AiProvider.ModelName("limited")))
 
   override def doctor(online: AiProvider.DoctorOnline, http: AiHttp): List[AiCheck] =
     List(

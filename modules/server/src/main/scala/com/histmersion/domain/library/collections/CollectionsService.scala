@@ -611,9 +611,7 @@ object CollectionsService:
       linking(name).flatMap(
         _.set(
           CollectionId(req.id.value),
-          req.fields.map(f =>
-            SourceCollection.SetFieldsPart1(f.name.value) -> SourceCollection.SetFieldsPart2(f.value.value)
-          )
+          req.fields.map(f => SourceCollection.FieldName(f.name.value) -> SourceCollection.FieldValue(f.value.value))
         ).left
           .map(failed)
           .map(_ =>

@@ -1,6 +1,10 @@
 package com.histmersion
 package server.plugins
 
+import com.histmersion.plugin.Header
+
+import com.histmersion.plugin.Problem
+
 import scala.annotation.tailrec
 import com.histmersion.pluginhost.{HostServices, PluginHost}
 
@@ -208,8 +212,8 @@ object RelinkPlugins:
     Try(Path.of(c.getProtectionDomain.getCodeSource.getLocation.toURI).toAbsolutePath.normalize == jar).getOrElse(false)
 
   private val NoHttp: Plugin.Http = new Plugin.Http:
-    def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(
-      Plugin.Http.GetResultPart1("no HTTP while a plugin is being described")
+    def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) = Left(
+      Problem("no HTTP while a plugin is being described")
     )
 
   /** Register `p` alone, enabled, with its defaults, into throw-away registries: what it provides and the access its
