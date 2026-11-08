@@ -86,6 +86,15 @@ class ArchitectureSuite extends munit.FunSuite:
     assertEquals(Ratchet.risenRules(listed, grown), List("filesystem 3 -> 4"))
     assertEquals(Ratchet.exceptionsFile(listed.reverse), Ratchet.Header :: Ratchet.DirectionNote :: listed)
 
+  test("the code a check reads is the same however the formatter breaks a string over lines"):
+    def words(text: String): List[String] = Blank(text).split("\\s+").toList.filter(_.nonEmpty)
+    val oneLine = "val a = s\"$owner${if (x).value then \" (here)\" else \"\"} until ${y.value}\".size"
+    val broken = "val a = s\"$owner${\n    if (x).value then \" (here)\" else \"\"\n  } until ${y.value}\".size"
+    assertEquals(words(broken), words(oneLine))
+    assertEquals(words(oneLine), List("val", "a", "=", "s", ".size"))
+    assertEquals(words("f(\"a\\\"b\", /* c */ d) // e"), List("f(", ",", "d)"))
+    assertEquals(words("val t = \"\"\"x \"y\" ${z}\"\"\" + 1"), List("val", "t", "=", "+", "1"))
+
 object ArchitectureSuite:
 
   val Modules: List[String] = List("api", "config", "files", "core", "db", "server")
@@ -119,39 +128,72 @@ object ArchitectureSuite:
         }
         .sortBy(_.key)
 
-  /** The text with every comment and string literal replaced by spaces. */
+  /** The text with every comment and string literal replaced by spaces. An interpolated string is blanked whole, its
+    * splices (`s"…${expr}…"`) with it, and wherever the formatter breaks it over lines: a check reads the same code
+    * whatever the layout. (A splice's code is not read: `.value` in one is the string's rendering, not an unwrap.)
+    */
   object Blank:
     def apply(text: String): String =
       val out = new StringBuilder(text.length)
       val n = text.length
       def keep(c: Char): Char = if c == '\n' then '\n' else ' '
-      var i = 0
-      while i < n do
-        val c = text(i)
-        if text.startsWith("//", i) then while i < n && text(i) != '\n' do { out += ' '; i += 1 }
-        else if text.startsWith("/*", i) then
-          var depth = 0
-          while i < n && (depth > 0 || text.startsWith("/*", i)) do
-            if text.startsWith("/*", i) then { depth += 1; out ++= "  "; i += 2 }
-            else if text.startsWith("*/", i) then { depth -= 1; out ++= "  "; i += 2 }
-            else { out += keep(text(i)); i += 1 }
-        else if text.startsWith("\"\"\"", i) then
-          out ++= "   "
-          i += 3
-          while i < n && !text.startsWith("\"\"\"", i) do { out += keep(text(i)); i += 1 }
-          while i < n && text(i) == '"' do { out += ' '; i += 1 }
-        else if c == '"' then
-          out += ' '
-          i += 1
-          while i < n && text(i) != '"' && text(i) != '\n' do
-            if text(i) == '\\' && i + 1 < n then { out ++= "  "; i += 2 }
-            else { out += ' '; i += 1 }
-          if i < n && text(i) == '"' then { out += ' '; i += 1 }
-        else if c == '\'' && i + 2 < n && (text(i + 2) == '\'' || text(i + 1) == '\\') then
-          val end = text.indexOf('\'', i + 2)
-          val stop = if end < 0 || end - i > 8 then i + 1 else end + 1
-          while i < stop do { out += ' '; i += 1 }
-        else { out += c; i += 1 }
+      def blankTo(stop: Int, from: Int): Int =
+        var i = from
+        while i < stop do { out += keep(text(i)); i += 1 }
+        i
+
+      /** Code from `from`, kept (or blanked, in a splice); a splice ends before the `}` that closes it. Returns where
+        * it stopped.
+        */
+      def code(from: Int, splice: Boolean): Int =
+        var i = from
+        var depth = 0
+        var done = false
+        while i < n && !done do
+          val c = text(i)
+          if text.startsWith("//", i) then while i < n && text(i) != '\n' do { out += ' '; i += 1 }
+          else if text.startsWith("/*", i) then
+            var nested = 0
+            while i < n && (nested > 0 || text.startsWith("/*", i)) do
+              if text.startsWith("/*", i) then { nested += 1; out ++= "  "; i += 2 }
+              else if text.startsWith("*/", i) then { nested -= 1; out ++= "  "; i += 2 }
+              else { out += keep(text(i)); i += 1 }
+          else if c == '"' then i = string(i)
+          else if c == '\'' && i + 2 < n && (text(i + 2) == '\'' || text(i + 1) == '\\') then
+            val end = text.indexOf('\'', i + 2)
+            i = blankTo(if end < 0 || end - i > 8 then i + 1 else end + 1, i)
+          else if splice && c == '}' && depth == 0 then done = true
+          else
+            if splice && c == '{' then depth += 1
+            else if splice && c == '}' then depth -= 1
+            out += (if splice then keep(c) else c)
+            i += 1
+        i
+
+      /** A string literal at `from` (its opening quote); returns the offset after its closing quote. */
+      def string(from: Int): Int =
+        val interpolated = from > 0 && (text(from - 1).isLetterOrDigit || text(from - 1) == '_')
+        val triple = text.startsWith("\"\"\"", from)
+        var i = blankTo(from + (if triple then 3 else 1), from)
+        var done = false
+        while i < n && !done do
+          val c = text(i)
+          if triple && text.startsWith("\"\"\"", i) then
+            i = blankTo(i + 3, i)
+            while i < n && text(i) == '"' do { out += ' '; i += 1 }
+            done = true
+          else if !triple && (c == '"' || c == '\n') then
+            if c == '"' then { out += ' '; i += 1 }
+            done = true
+          else if interpolated && text.startsWith("$$", i) then i = blankTo(i + 2, i)
+          else if interpolated && text.startsWith("${", i) then
+            i = code(blankTo(i + 2, i), splice = true)
+            if i < n then i = blankTo(i + 1, i)
+          else if !triple && c == '\\' && i + 1 < n && text(i + 1) != '\n' then i = blankTo(i + 2, i)
+          else { out += keep(c); i += 1 }
+        i
+
+      val _ = code(0, splice = false)
       out.toString
 
   object Place:
@@ -273,7 +315,7 @@ object ArchitectureSuite:
       * capitalised name, so the word is that type's own vocabulary, never the top-level type of the same name — which a
       * package path (`api.Place`) or the bare name reaches.
       */
-    private val Member = "[A-Z]\\w*\\.$".r
+    private val Member = "[A-Z]\\w*\\s*\\.\\s*$".r
 
     private def isMember(code: String, start: Int): Boolean =
       Member.findFirstIn(code.substring(math.max(0, start - 64), start)).isDefined

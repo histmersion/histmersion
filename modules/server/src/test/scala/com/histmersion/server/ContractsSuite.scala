@@ -83,6 +83,30 @@ class ContractsSuite extends munit.FunSuite:
     val sigs = Rules.signatures(code).map(s => s.name -> s.params.map(_._1))
     assertEquals(sigs, List("find" -> List("citekey", "limit"), "doi" -> List("x")))
 
+  test("a signature broken before its result type still has the result"):
+    val code =
+      """trait FooService:
+        |  def find(
+        |      citekey: String
+        |  )
+        |      : Option[String] = None
+        |""".stripMargin
+    assertEquals(
+      Rules.signatures(code).map(s => (s.name, s.params.map(_._1), s.result)),
+      List(("find", List("citekey"), "Option[String]"))
+    )
+
+  test("a case of a sealed type is one with its parent however its header is laid out"):
+    def oneType(text: String): List[String] =
+      val file =
+        ArchitectureSuite.SourceFile("core:x/Shape.scala", "com.histmersion.x", ArchitectureSuite.Blank(text), text)
+      Rules.all(List(file)).filter(_.rule == "one-type").map(_.detail)
+    val oneLine = "sealed trait Shape\nfinal case class Circle(r: Int = 1) extends Shape\nobject Other\n"
+    val broken =
+      "sealed trait Shape\nfinal case class Circle(\n    r: Int = 1\n) extends Shape\n    derives CanEqual\nobject Other\n"
+    assertEquals(oneType(oneLine), List("Shape Other"))
+    assertEquals(oneType(broken), oneType(oneLine))
+
   test("a parameter names a concept by its newtype's name, or by its last words"):
     val concepts = Set("Citekey", "Doi", "JobId", "Slug", "GoalSlug")
     assertEquals(Rules.conceptOf("citekeys", concepts), Some("Citekey"))
@@ -219,10 +243,11 @@ object ContractsSuite:
               if depth == 0 && c == ')' then
                 Param.findAllMatchIn(chunk.toString).foreach(p => params += (p.group(1) -> p.group(2).trim))
               else chunk += c
+            else if depth == 0 && c == '\n' && continues(code, i) then chunk += c
             else if depth == 0 && (c == '=' && !code.startsWith("=>", i) || c == '\n' || c == '{') then stop = true
             else chunk += c
             i += 1
-          val tail = code.substring(m.end, i - 1)
+          val tail = code.substring(m.end, i - 1).replaceAll("\\)\\s*:", "):")
           val result = tail.lastIndexOf("):") match
             case -1 if !tail.trim.startsWith("(") && tail.contains(":") => tail.substring(tail.indexOf(':') + 1).trim
             case -1                                                     => ""
@@ -230,6 +255,11 @@ object ContractsSuite:
           Signature(m.group(1), m.start, params.result(), result)
         }
         .toList
+
+    /** A signature broken over lines goes on: the next line starts with its result type (`: T`) or a parameter list. */
+    private def continues(code: String, newline: Int): Boolean =
+      val next = code.indexWhere(c => !c.isWhitespace, newline)
+      next >= 0 && (code(next) == '(' || code(next) == ':' && !code.startsWith("::", next))
 
     private val Primitive =
       "^(?:(?:Option|List|Set|Seq|Vector|Iterable|NonEmptyList|Chunk)\\[)?(?:String|Int|Long)\\]?$".r
@@ -298,6 +328,28 @@ object ContractsSuite:
     private def copies(s: SourceFile): List[Violation] =
       counted("copy", s, ".copy(", "\\.copy\\(".r.findAllMatchIn(s.code).map(_.start).toList)
 
+    /** A definition's header, however it is broken over lines: from its keyword to its body (`:` ending a line, `{`,
+      * `=`) or to the next line that does not continue it (a blank line, or one that starts at the margin).
+      */
+    private def header(code: String, at: Int): String =
+      val n = code.length
+      def restBlank(from: Int): Boolean =
+        val k = code.indexWhere(c => c == '\n' || !c.isWhitespace, from)
+        k < 0 || code(k) == '\n'
+      def ends(i: Int): Boolean = code(i) match
+        case '{'  => true
+        case '='  => !code.startsWith("=>", i) && !code.startsWith("==", i)
+        case ':'  => restBlank(i + 1)
+        case '\n' => i + 1 >= n || !code(i + 1).isWhitespace || restBlank(i + 1)
+        case _    => false
+      var i = at
+      var depth = 0
+      while i < n && !(depth == 0 && ends(i)) do
+        if code(i) == '(' || code(i) == '[' then depth += 1
+        else if code(i) == ')' || code(i) == ']' then depth -= 1
+        i += 1
+      code.substring(at, i)
+
     private def oneType(s: SourceFile): List[Violation] =
       val defs = topLevel(s)
       val sealedNames = defs.collect { case (k, n, at) if s.code.startsWith("sealed", at) => n }.toSet
@@ -305,9 +357,8 @@ object ContractsSuite:
       val parents = sealedNames ++ enums
       val cases = defs.collect {
         case (_, n, at)
-            if parents.exists(p =>
-              ("^[^\\n]*\\bextends\\s+" + p + "\\b").r.findFirstIn(s.code.substring(at)).isDefined
-            ) && !parents(n) =>
+            if parents.exists(p => ("\\bextends\\s+" + p + "\\b").r.findFirstIn(header(s.code, at)).isDefined) &&
+              !parents(n) =>
           n
       }.toSet
       val all = defs.map(_._2).distinct
