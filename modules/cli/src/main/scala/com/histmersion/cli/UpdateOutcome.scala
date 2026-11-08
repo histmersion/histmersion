@@ -23,8 +23,6 @@ object UpdateOutcome:
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   object Failed:
-    type Reason = com.histmersion.cli.UpdateOutcome.Problem
-    val Reason: _root_.com.histmersion.cli.UpdateOutcome.Problem.type = _root_.com.histmersion.cli.UpdateOutcome.Problem
+    export com.histmersion.cli.UpdateOutcome.{Problem as Reason}
   object Refused:
-    type Reason = com.histmersion.cli.UpdateOutcome.Problem
-    val Reason: _root_.com.histmersion.cli.UpdateOutcome.Problem.type = _root_.com.histmersion.cli.UpdateOutcome.Problem
+    export com.histmersion.cli.UpdateOutcome.{Problem as Reason}
