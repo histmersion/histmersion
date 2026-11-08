@@ -37,7 +37,7 @@ final class MediaWiring(deps: Deps, http: HttpTransport, converter: ConverterCli
 
   val assets: AssetsControllers = AssetsControllers(assetStore, sources, () => deps.cfg, deps.maintenance)
 
-  val iiif: IiifControllers = IiifControllers(assetStore, () => IiifControllers.BaseUrl(deps.cfg.server.publicUrl.value.stripSuffix("/")))
+  val iiif: IiifControllers = new IiifControllers(assetStore, () => IiifControllers.BaseUrl(deps.cfg.server.publicUrl.value.stripSuffix("/")))
 
   val links: AssetLinksControllers =
     AssetLinksControllers(

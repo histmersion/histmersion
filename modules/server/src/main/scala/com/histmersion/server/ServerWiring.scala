@@ -436,7 +436,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
 
   /** What attests a data point: the attestations' operations. */
   lazy val attestations: AttestationsControllers =
-    AttestationsControllers(
+    new AttestationsControllers(
       AttestationService(deps.transactor),
       deps.passages,
       (k, id) =>
