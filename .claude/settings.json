@@ -1,0 +1,14 @@
+{
+  "extraKnownMarketplaces": {
+    "virtuslab-cellar": {
+      "source": { "source": "github", "repo": "virtuslab/cellar" }
+    },
+    "virtuslab-scala-skill": {
+      "source": { "source": "github", "repo": "virtuslab/scala-skill" }
+    }
+  },
+  "enabledPlugins": {
+    "cellar@virtuslab-cellar": true,
+    "direct-style-scala@virtuslab-scala-skill": true
+  }
+}
