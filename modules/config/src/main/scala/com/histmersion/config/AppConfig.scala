@@ -1,4 +1,5 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import org.ekrich.config.ConfigFactory
 import hearth.kindlings.sconfigderivation.ConfigReader

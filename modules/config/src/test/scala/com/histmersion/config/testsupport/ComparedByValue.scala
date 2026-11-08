@@ -1,4 +1,5 @@
-package com.histmersion.config.testsupport
+package com.histmersion
+package config.testsupport
 
 import munit.Compare
 

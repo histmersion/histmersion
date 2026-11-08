@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 given ConfigReader[ScheduledRefresh] = summon[ConfigReader[Minutes]].emap(m => ScheduledRefresh.fromMinutes(m).left.map(_.value))
 
@@ -45,20 +48,20 @@ final case class AgentsConfig(
 
 object AgentsConfig:
   type Enabled = Enabled.T
-  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Enabled extends RefinedType[Boolean, Pure]
   type AutoEnrich = AutoEnrich.T
-  object AutoEnrich extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AutoEnrich extends RefinedType[Boolean, Pure]
   type PromptsDir = PromptsDir.T
-  object PromptsDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PromptsDir extends RefinedType[String, Pure]
   type Prices = Prices.T
-  object Prices extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Prices extends RefinedType[String, Pure]
   type Allowances = Allowances.T
-  object Allowances extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Allowances extends RefinedType[String, Pure]
   type AllowanceCheckSeconds = AllowanceCheckSeconds.T
-  object AllowanceCheckSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AllowanceCheckSeconds extends RefinedType[Int, Pure]
   type DoctorTimeoutSeconds = DoctorTimeoutSeconds.T
-  object DoctorTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DoctorTimeoutSeconds extends RefinedType[Int, Pure]
   type MaxConcurrentRuns = MaxConcurrentRuns.T
-  object MaxConcurrentRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxConcurrentRuns extends RefinedType[Int, Pure]
   type MaxLlmCallsInFlight = MaxLlmCallsInFlight.T
-  object MaxLlmCallsInFlight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxLlmCallsInFlight extends RefinedType[Int, Pure]

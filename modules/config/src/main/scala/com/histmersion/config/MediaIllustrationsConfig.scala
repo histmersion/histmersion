@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** How a paper's illustration is chosen among its figures (`media.illustrations`). */
 final case class MediaIllustrationsConfig(
@@ -15,14 +18,14 @@ final case class MediaIllustrationsConfig(
 
 object MediaIllustrationsConfig:
   type MinSide = MinSide.T
-  object MinSide extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinSide extends RefinedType[Int, Pure]
   type MinArea = MinArea.T
-  object MinArea extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinArea extends RefinedType[Int, Pure]
   type MaxAspect = MaxAspect.T
-  object MaxAspect extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxAspect extends RefinedType[Double, Pure]
   type MaxRefs = MaxRefs.T
-  object MaxRefs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxRefs extends RefinedType[Int, Pure]
   type EarlyPages = EarlyPages.T
-  object EarlyPages extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EarlyPages extends RefinedType[Int, Pure]
   type PageScanMin = PageScanMin.T
-  object PageScanMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PageScanMin extends RefinedType[Int, Pure]

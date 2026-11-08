@@ -1,4 +1,8 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Whether a change may be written at all, against the schema: the key is a setting, the value is of its kind, a
   * credential is a reference (`value:` only with `literalConsent`). The warnings say what works but should be known (a
@@ -6,18 +10,18 @@ package com.histmersion.config.edit
   */
 object SettingPolicy:
   type LiteralConsent = LiteralConsent.T
-  object LiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LiteralConsent extends RefinedType[Boolean, Pure]
   type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Note extends RefinedType[String, Pure]
 
   /** [[check]] of every edit, the first refusal ending it; the warnings of all of them. */
 
-  type CheckLiteralConsent = _root_.com.histmersion.config.edit.SettingPolicy.LiteralConsent
-  val CheckLiteralConsent: _root_.com.histmersion.config.edit.SettingPolicy.LiteralConsent.type = _root_.com.histmersion.config.edit.SettingPolicy.LiteralConsent
+  type CheckLiteralConsent = LiteralConsent
+  val CheckLiteralConsent: LiteralConsent.type = LiteralConsent
 
-  def all(edits: List[SettingEdit], schema: ConfigSchema, literalConsent: com.histmersion.config.edit.SettingPolicy.LiteralConsent): Either[SettingError, List[com.histmersion.config.edit.SettingPolicy.Note]] =
+  def all(edits: List[SettingEdit], schema: ConfigSchema, literalConsent: LiteralConsent): Either[SettingError, List[Note]] =
     @scala.annotation.tailrec
-    def loop(rest: List[SettingEdit], notes: List[com.histmersion.config.edit.SettingPolicy.Note]): Either[SettingError, List[com.histmersion.config.edit.SettingPolicy.Note]] = rest match
+    def loop(rest: List[SettingEdit], notes: List[Note]): Either[SettingError, List[Note]] = rest match
       case Nil       => Right(notes)
       case e :: tail =>
         check(e, schema, literalConsent) match
@@ -25,7 +29,7 @@ object SettingPolicy:
           case Right(ns) => loop(tail, notes ++ ns)
     loop(edits, Nil)
 
-  def check(edit: SettingEdit, schema: ConfigSchema, literalConsent: com.histmersion.config.edit.SettingPolicy.CheckLiteralConsent): Either[SettingError, List[com.histmersion.config.edit.SettingPolicy.Note]] =
+  def check(edit: SettingEdit, schema: ConfigSchema, literalConsent: CheckLiteralConsent): Either[SettingError, List[Note]] =
     val key = edit.key
     for
       field <- schema
@@ -38,7 +42,7 @@ object SettingPolicy:
         case SettingEdit.Set(_, v) => value(field, v, literalConsent)
     yield notes
 
-  private def value(field: SettingField, v: SettingValue, literalConsent: com.histmersion.config.edit.SettingPolicy.LiteralConsent): Either[SettingError, List[com.histmersion.config.edit.SettingPolicy.Note]] =
+  private def value(field: SettingField, v: SettingValue, literalConsent: LiteralConsent): Either[SettingError, List[Note]] =
     val key = field.key
     val kindOk = field.kind == SettingKind.Any || field.kind == v.kind
     if !kindOk then Left(SettingError.WrongKind(key, field.kind, v.kind))

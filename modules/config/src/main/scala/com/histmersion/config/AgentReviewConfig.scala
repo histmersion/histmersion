@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `review-article`: at most `maxRounds` panel rounds per run (a run may ask for fewer, never more than `roundsCap`),
   * the article body is sent up to `articleChars` characters (a longer one is reviewed cut, and never revised), and the
@@ -33,26 +36,26 @@ final case class AgentReviewConfig(
 
 object AgentReviewConfig:
   type MaxRounds = MaxRounds.T
-  object MaxRounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxRounds extends RefinedType[Int, Pure]
   type RoundsCap = RoundsCap.T
-  object RoundsCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RoundsCap extends RefinedType[Int, Pure]
   type ArticleChars = ArticleChars.T
-  object ArticleChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ArticleChars extends RefinedType[Int, Pure]
   type FixerMaxTokens = FixerMaxTokens.T
-  object FixerMaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FixerMaxTokens extends RefinedType[Int, Pure]
   type FixerTurnsPerFinding = FixerTurnsPerFinding.T
-  object FixerTurnsPerFinding extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FixerTurnsPerFinding extends RefinedType[Int, Pure]
   type FixerTurnsCap = FixerTurnsCap.T
-  object FixerTurnsCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FixerTurnsCap extends RefinedType[Int, Pure]
   type RecheckTurns = RecheckTurns.T
-  object RecheckTurns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RecheckTurns extends RefinedType[Int, Pure]
   type LedgerClosedLines = LedgerClosedLines.T
-  object LedgerClosedLines extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LedgerClosedLines extends RefinedType[Int, Pure]
   type FinalPanel = FinalPanel.T
-  object FinalPanel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FinalPanel extends RefinedType[String, Pure]
   type SpotChecks = SpotChecks.T
-  object SpotChecks extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SpotChecks extends RefinedType[Int, Pure]
   type CritiquePairs = CritiquePairs.T
-  object CritiquePairs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CritiquePairs extends RefinedType[Int, Pure]
   type CritiqueReasoned = CritiqueReasoned.T
-  object CritiqueReasoned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CritiqueReasoned extends RefinedType[Int, Pure]

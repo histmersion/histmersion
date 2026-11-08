@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The `codex` provider: the person's own `codex` CLI (`codex exec --json`), on the ChatGPT plan login of a
   * `CODEX_HOME` of its own (the generated `<runtimes>/codex/home`, or `home`), never a copied `auth.json`
@@ -39,24 +42,24 @@ final case class CodexConfig(
 object CodexConfig:
 
   type Command = Command.T
-  object Command extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Command extends RefinedType[String, Pure]
   type Home = Home.T
-  object Home extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Home extends RefinedType[String, Pure]
   type UseApiKey = UseApiKey.T
-  object UseApiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UseApiKey extends RefinedType[Boolean, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimeoutSeconds extends RefinedType[Int, Pure]
   type AppServer = AppServer.T
-  object AppServer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AppServer extends RefinedType[Boolean, Pure]
   type ToolOutputTokens = ToolOutputTokens.T
-  object ToolOutputTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ToolOutputTokens extends RefinedType[Int, Pure]
   type BaseInstructions = BaseInstructions.T
-  object BaseInstructions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BaseInstructions extends RefinedType[String, Pure]
   type KeepSessionsDays = KeepSessionsDays.T
-  object KeepSessionsDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object KeepSessionsDays extends RefinedType[Int, Pure]
   type Vacuum = Vacuum.T
-  object Vacuum extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Vacuum extends RefinedType[Boolean, Pure]
   type RetentionEveryHours = RetentionEveryHours.T
-  object RetentionEveryHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RetentionEveryHours extends RefinedType[Int, Pure]
   type Sqlite = Sqlite.T
-  object Sqlite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Sqlite extends RefinedType[String, Pure]

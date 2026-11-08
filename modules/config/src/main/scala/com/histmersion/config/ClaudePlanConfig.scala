@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The Claude plan pool: [[PlanPoolConfig]]'s two, and how it takes a fresh reading when a run wants the pool and its
   * last one is too old to decide on (docs/research-plan-quotas.md §8). `refresh` is `auto` (a zero-cost read if the CLI
@@ -21,14 +24,14 @@ final case class ClaudePlanConfig(
 
 object ClaudePlanConfig:
   type Floors = Floors.T
-  object Floors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Floors extends RefinedType[String, Pure]
   type MaxCallsInFlight = MaxCallsInFlight.T
-  object MaxCallsInFlight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxCallsInFlight extends RefinedType[Int, Pure]
   type Refresh = Refresh.T
-  object Refresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Refresh extends RefinedType[String, Pure]
   type ProbeModel = ProbeModel.T
-  object ProbeModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ProbeModel extends RefinedType[String, Pure]
   type ProbeMaxTokens = ProbeMaxTokens.T
-  object ProbeMaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ProbeMaxTokens extends RefinedType[Int, Pure]
   type ProbeTimeoutSeconds = ProbeTimeoutSeconds.T
-  object ProbeTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ProbeTimeoutSeconds extends RefinedType[Int, Pure]

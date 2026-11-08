@@ -1,4 +1,8 @@
-package com.histmersion.config
+package com.histmersion
+package config
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where the sea floor's extract comes from (`basemap.bathymetry.source`). */
 enum SeaFloorSource(val wire: SeaFloorSource.Wire):
@@ -10,12 +14,12 @@ enum SeaFloorSource(val wire: SeaFloorSource.Wire):
 
 object SeaFloorSource:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
 
 
-  def parse(s: com.histmersion.config.SeaFloorSource.Wire): Either[com.histmersion.config.SeaFloorSource.Problem, SeaFloorSource] =
+  def parse(s: Wire): Either[Problem, SeaFloorSource] =
     values
       .find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
       .toRight(Problem(s"'${s.value}' is not a sea-floor source (${values.map(_.wire.value).mkString(", ")})"))

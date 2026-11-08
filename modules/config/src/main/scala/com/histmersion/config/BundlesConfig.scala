@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `bundle export|verify|import` (docs/research-merge-import.md): where the server builds a bundle before it is
   * downloaded and keeps an uploaded one while it is read, and how long a finished export is left there for its download
@@ -11,6 +14,6 @@ final case class BundlesConfig(dir: BundlesConfig.Dir, staleMinutes: BundlesConf
 
 object BundlesConfig:
   type Dir = Dir.T
-  object Dir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Dir extends RefinedType[String, Pure]
   type StaleMinutes = StaleMinutes.T
-  object StaleMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StaleMinutes extends RefinedType[Int, Pure]

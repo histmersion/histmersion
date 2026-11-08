@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventsNoaaConfig(
     url: EventsNoaaConfig.Url,
@@ -14,14 +17,14 @@ final case class EventsNoaaConfig(
 
 object EventsNoaaConfig:
   type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Url extends RefinedType[String, Pure]
   type PageSize = PageSize.T
-  object PageSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PageSize extends RefinedType[Int, Pure]
   type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RequestIntervalMs extends RefinedType[Int, Pure]
   type Datasets = Datasets.T
-  object Datasets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Datasets extends RefinedType[String, Pure]
   type RegionMinMagnitude = RegionMinMagnitude.T
-  object RegionMinMagnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RegionMinMagnitude extends RefinedType[Double, Pure]
   type OutsideMinMagnitude = OutsideMinMagnitude.T
-  object OutsideMinMagnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OutsideMinMagnitude extends RefinedType[Double, Pure]

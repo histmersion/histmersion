@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Application config, modelled as case classes and read from HOCON (sconfig) via Kindlings derivation. Defaults + env
   * overrides live in `reference.conf`; nothing is hardcoded elsewhere.
@@ -26,16 +29,16 @@ final case class ServerConfig(
 
 object ServerConfig:
   type Host = Host.T
-  object Host extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Host extends RefinedType[String, Pure]
   type Port = Port.T
-  object Port extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Port extends RefinedType[Int, Pure]
   type PublicUrl = PublicUrl.T
-  object PublicUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PublicUrl extends RefinedType[String, Pure]
   type RequestTimeoutSeconds = RequestTimeoutSeconds.T
-  object RequestTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RequestTimeoutSeconds extends RefinedType[Int, Pure]
   type ShutdownGraceSeconds = ShutdownGraceSeconds.T
-  object ShutdownGraceSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ShutdownGraceSeconds extends RefinedType[Int, Pure]
   type SourceUrl = SourceUrl.T
-  object SourceUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SourceUrl extends RefinedType[String, Pure]
   type RestartExitCode = RestartExitCode.T
-  object RestartExitCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RestartExitCode extends RefinedType[Int, Pure]

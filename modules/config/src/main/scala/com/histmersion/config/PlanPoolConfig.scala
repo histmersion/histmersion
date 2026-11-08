@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One plan pool: a floor (% that must stay LEFT) per window kind (`five_hour=25, seven_day=25`; Codex windows by
   * length, `300m`, `10080m`), how many LLM calls may draw on it at once, and how often it is read while the autopilot
@@ -15,6 +18,6 @@ final case class PlanPoolConfig(
 
 object PlanPoolConfig:
   type Floors = Floors.T
-  object Floors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Floors extends RefinedType[String, Pure]
   type MaxCallsInFlight = MaxCallsInFlight.T
-  object MaxCallsInFlight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxCallsInFlight extends RefinedType[Int, Pure]

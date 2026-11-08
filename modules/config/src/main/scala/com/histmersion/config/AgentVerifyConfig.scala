@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The deterministic verifiers (§4.4). `quoteMinRatio` is the OCR-tolerant quote match threshold (1.0 = verbatim after
   * normalisation); `maxAbsYear` bounds a signed year a model may propose.
@@ -10,6 +13,6 @@ final case class AgentVerifyConfig(quoteMinRatio: AgentVerifyConfig.QuoteMinRati
 
 object AgentVerifyConfig:
   type QuoteMinRatio = QuoteMinRatio.T
-  object QuoteMinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object QuoteMinRatio extends RefinedType[Double, Pure]
   type MaxAbsYear = MaxAbsYear.T
-  object MaxAbsYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxAbsYear extends RefinedType[Long, Pure]

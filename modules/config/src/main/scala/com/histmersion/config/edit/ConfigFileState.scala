@@ -1,6 +1,9 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
 
 import org.ekrich.config.{Config, ConfigOrigin}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The config file as read: its text (`None`: not there yet), its version, and its settings as parsed with its
   * includes, unresolved — what a change is made against. `own` says which origins are the file itself (not a file it
@@ -24,4 +27,4 @@ final case class ConfigFileState(
 object ConfigFileState:
 
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
 
 class SecretFormSuite extends munit.FunSuite:
   private def key(s: SettingKey.ParseRaw) = SettingKey.parse(s).toOption.get

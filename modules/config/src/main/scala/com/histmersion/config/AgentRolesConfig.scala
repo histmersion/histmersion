@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Step role → its model CHAIN, `provider:model > provider:model > …` (one model is a chain of one;
   * [[ModelChains.parseChain]]). Empty = no model configured for that role; a step that needs it is refused with a
@@ -20,18 +23,18 @@ final case class AgentRolesConfig(
 
 object AgentRolesConfig:
   type Probe = Probe.T
-  object Probe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Probe extends RefinedType[String, Pure]
   type Extractor = Extractor.T
-  object Extractor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Extractor extends RefinedType[String, Pure]
   type Reviewer = Reviewer.T
-  object Reviewer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reviewer extends RefinedType[String, Pure]
   type ColdReader = ColdReader.T
-  object ColdReader extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ColdReader extends RefinedType[String, Pure]
   type Skeptic = Skeptic.T
-  object Skeptic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Skeptic extends RefinedType[String, Pure]
   type Fixer = Fixer.T
-  object Fixer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Fixer extends RefinedType[String, Pure]
   type Planner = Planner.T
-  object Planner extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Planner extends RefinedType[String, Pure]
   type Writer = Writer.T
-  object Writer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Writer extends RefinedType[String, Pure]

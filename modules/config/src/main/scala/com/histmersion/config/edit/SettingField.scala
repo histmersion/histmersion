@@ -1,4 +1,8 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One setting the config file may hold, as reference.conf documents it.
   *
@@ -19,15 +23,15 @@ final case class SettingField(
     secret: SecretRule
 ):
   /** The top-level block it is in (`backups` of `histmersion.backups.keep`). */
-  def section: com.histmersion.config.edit.SettingField.Section = SettingField.Section(key.segments.lift(1).map(_.value).getOrElse(""))
+  def section: SettingField.Section = SettingField.Section(key.segments.lift(1).map(_.value).getOrElse(""))
 
 object SettingField:
   type Section = Section.T
-  object Section extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Section extends RefinedType[String, Pure]
 
   type Doc = Doc.T
-  object Doc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Doc extends RefinedType[String, Pure]
   type EnvVar = EnvVar.T
-  object EnvVar extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EnvVar extends RefinedType[String, Pure]
   type Restart = Restart.T
-  object Restart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Restart extends RefinedType[String, Pure]

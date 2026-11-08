@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The gazetteer (plan §1.6a). `pointToleranceKm` is how close a finding must be to a POINT place (a Pleiades site has
   * no extent) to count as inside it; polygons use exact containment. The limits bound what `/api/places` and the
@@ -34,41 +37,41 @@ final case class PlacesConfig(
     fetchConnectTimeoutSeconds: PlacesConfig.FetchConnectTimeoutSeconds
 ) derives ConfigReader:
   /** `/api/places/geo`'s `limit` into `[1, geoMaxLimit]`; absent or `<= 0` is `dflt` (itself capped). */
-  def geoLimit(requested: Option[com.histmersion.config.PlacesConfig.GeoLimit], dflt: com.histmersion.config.PlacesConfig.GeoLimit): com.histmersion.config.PlacesConfig.GeoLimit =
+  def geoLimit(requested: Option[PlacesConfig.GeoLimit], dflt: PlacesConfig.GeoLimit): PlacesConfig.GeoLimit =
     val cap = geoMaxLimit.atLeastOne
     requested.filter(_.isPositive).getOrElse(dflt).atLeastOne.atMost(cap)
 
 object PlacesConfig:
   type GeoLimit = GeoLimit.T
-  object GeoLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+  object GeoLimit extends RefinedType[Int, Pure]:
     extension (l: T)
       def isPositive: Boolean = l.value > 0
       def atLeastOne: T = GeoLimit(l.value.max(1))
       def atMost(cap: T): T = GeoLimit(l.value.min(cap.value))
 
   type PointToleranceKm = PointToleranceKm.T
-  object PointToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PointToleranceKm extends RefinedType[Double, Pure]
   type SearchLimit = SearchLimit.T
-  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SearchLimit extends RefinedType[Int, Pure]
   type ChildrenLimit = ChildrenLimit.T
-  object ChildrenLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ChildrenLimit extends RefinedType[Int, Pure]
   type TreeLimit = TreeLimit.T
-  object TreeLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TreeLimit extends RefinedType[Int, Pure]
   type TreeDepth = TreeDepth.T
-  object TreeDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TreeDepth extends RefinedType[Int, Pure]
   type SeedDir = SeedDir.T
-  object SeedDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SeedDir extends RefinedType[String, Pure]
   type ImportBatch = ImportBatch.T
-  object ImportBatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ImportBatch extends RefinedType[Int, Pure]
   type GeocodePlaceholderMin = GeocodePlaceholderMin.T
-  object GeocodePlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GeocodePlaceholderMin extends RefinedType[Int, Pure]
   type GeocodeRepairKm = GeocodeRepairKm.T
-  object GeocodeRepairKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GeocodeRepairKm extends RefinedType[Double, Pure]
   type ModernFrom = ModernFrom.T
-  object ModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ModernFrom extends RefinedType[Long, Pure]
   type PlaceholderAreaShare = PlaceholderAreaShare.T
-  object PlaceholderAreaShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlaceholderAreaShare extends RefinedType[Double, Pure]
   type FetchTimeoutSeconds = FetchTimeoutSeconds.T
-  object FetchTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FetchTimeoutSeconds extends RefinedType[Int, Pure]
   type FetchConnectTimeoutSeconds = FetchConnectTimeoutSeconds.T
-  object FetchConnectTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FetchConnectTimeoutSeconds extends RefinedType[Int, Pure]

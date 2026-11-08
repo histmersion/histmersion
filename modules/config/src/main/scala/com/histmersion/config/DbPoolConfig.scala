@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `pool.max` sizes the HikariCP pool behind every [[com.histmersion.db.Db]] DataSource. Pooling is not a
   * micro-optimisation here: without it every repo call opened a fresh TCP connection and did the whole startup
@@ -11,4 +14,4 @@ final case class DbPoolConfig(max: DbPoolConfig.Max) derives ConfigReader
 
 object DbPoolConfig:
   type Max = Max.T
-  object Max extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Max extends RefinedType[Int, Pure]

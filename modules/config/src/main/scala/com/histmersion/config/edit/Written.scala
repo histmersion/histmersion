@@ -1,4 +1,5 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
 
 import org.ekrich.config.ConfigValue
 
@@ -17,4 +18,4 @@ enum Written:
 
 object Written:
   object Elsewhere:
-    export com.histmersion.config.edit.SettingsFile.{Path as File}
+    export SettingsFile.{Path as File}

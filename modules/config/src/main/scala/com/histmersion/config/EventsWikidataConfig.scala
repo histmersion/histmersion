@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventsWikidataConfig(
     sparqlUrl: EventsWikidataConfig.SparqlUrl,
@@ -12,23 +15,23 @@ final case class EventsWikidataConfig(
     languages: EventsWikidataConfig.Languages,
     batch: EventsWikidataConfig.Batch
 ) derives ConfigReader:
-  def languageList: List[com.histmersion.config.EventsWikidataConfig.Language] = languages.value.split(",").map(_.trim).filter(_.nonEmpty).toList.map(EventsWikidataConfig.Language(_))
+  def languageList: List[EventsWikidataConfig.Language] = languages.value.split(",").map(_.trim).filter(_.nonEmpty).toList.map(EventsWikidataConfig.Language(_))
 
 object EventsWikidataConfig:
   type Language = Language.T
-  object Language extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Language extends RefinedType[String, Pure]
 
   type SparqlUrl = SparqlUrl.T
-  object SparqlUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SparqlUrl extends RefinedType[String, Pure]
   type ApiUrl = ApiUrl.T
-  object ApiUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ApiUrl extends RefinedType[String, Pure]
   type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RequestIntervalMs extends RefinedType[Int, Pure]
   type ApiIntervalMs = ApiIntervalMs.T
-  object ApiIntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ApiIntervalMs extends RefinedType[Int, Pure]
   type Classes = Classes.T
-  object Classes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Classes extends RefinedType[String, Pure]
   type Languages = Languages.T
-  object Languages extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Languages extends RefinedType[String, Pure]
   type Batch = Batch.T
-  object Batch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Batch extends RefinedType[Int, Pure]

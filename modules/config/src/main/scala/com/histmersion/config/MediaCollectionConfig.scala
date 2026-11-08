@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One open-access collection (`media.met`, `.cleveland`, `.aic`, `.loc`, `.pleiades`, `.open-context`, `.smithsonian`,
   * `.europeana`): its API, its own pace, how many records are looked at and kept per place, and the licence families it
@@ -31,7 +34,7 @@ final case class MediaCollectionConfig(
     excludeTypes: MediaCollectionConfig.ExcludeTypes = MediaCollectionConfig.ExcludeTypes("")
 ) derives ConfigReader:
   /** [[refusalBackoffSeconds]] as milliseconds; an entry that is not a positive number is dropped. */
-  def refusalBackoffMs: List[com.histmersion.config.MediaCollectionConfig.RefusalBackoffMs] =
+  def refusalBackoffMs: List[MediaCollectionConfig.RefusalBackoffMs] =
     Option(refusalBackoffSeconds).toList
       .flatMap(_.value.split(","))
       .map(_.trim)
@@ -41,31 +44,31 @@ final case class MediaCollectionConfig(
 
 object MediaCollectionConfig:
   type RefusalBackoffMs = RefusalBackoffMs.T
-  object RefusalBackoffMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RefusalBackoffMs extends RefinedType[Long, Pure]
 
   type Enabled = Enabled.T
-  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Enabled extends RefinedType[Boolean, Pure]
   type ApiUrl = ApiUrl.T
-  object ApiUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ApiUrl extends RefinedType[String, Pure]
   type ImageUrl = ImageUrl.T
-  object ImageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ImageUrl extends RefinedType[String, Pure]
   type Candidates = Candidates.T
-  object Candidates extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Candidates extends RefinedType[Int, Pure]
   type PerPlace = PerPlace.T
-  object PerPlace extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PerPlace extends RefinedType[Int, Pure]
   type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RequestIntervalMs extends RefinedType[Int, Pure]
   type DisplayPx = DisplayPx.T
-  object DisplayPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DisplayPx extends RefinedType[Int, Pure]
   type MaxYear = MaxYear.T
-  object MaxYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxYear extends RefinedType[Int, Pure]
   type Licences = Licences.T
-  object Licences extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Licences extends RefinedType[String, Pure]
   type RefusalBackoffSeconds = RefusalBackoffSeconds.T
-  object RefusalBackoffSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RefusalBackoffSeconds extends RefinedType[String, Pure]
   type ExcludeProviders = ExcludeProviders.T
-  object ExcludeProviders extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExcludeProviders extends RefinedType[String, Pure]
   type ExcludeDataProviders = ExcludeDataProviders.T
-  object ExcludeDataProviders extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExcludeDataProviders extends RefinedType[String, Pure]
   type ExcludeTypes = ExcludeTypes.T
-  object ExcludeTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExcludeTypes extends RefinedType[String, Pure]

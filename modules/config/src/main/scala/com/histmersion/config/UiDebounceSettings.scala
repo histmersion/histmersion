@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `ui.debounce`: the quiet periods before the page acts on typing and state changes; `previewMs` is the one before a
   * HOVERED suggestion's preview reloads the lists.
@@ -10,10 +13,10 @@ final case class UiDebounceSettings(suggestMs: UiDebounceSettings.SuggestMs, sea
 
 object UiDebounceSettings:
   type SuggestMs = SuggestMs.T
-  object SuggestMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SuggestMs extends RefinedType[Int, Pure]
   type SearchMs = SearchMs.T
-  object SearchMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SearchMs extends RefinedType[Int, Pure]
   type ReloadMs = ReloadMs.T
-  object ReloadMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ReloadMs extends RefinedType[Int, Pure]
   type PreviewMs = PreviewMs.T
-  object PreviewMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PreviewMs extends RefinedType[Int, Pure]

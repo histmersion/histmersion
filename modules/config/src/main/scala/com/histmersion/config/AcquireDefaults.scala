@@ -1,4 +1,5 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.Year
 import hearth.kindlings.sconfigderivation.ConfigReader

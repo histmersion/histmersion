@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The OCR sidecar (plan §1.8). `dpi`/`maxImagePx` are passed through to `POST /convert`; `spoolDir` is where the
   * server keeps an uploaded original so `reocr` can re-convert it without a second upload.
@@ -34,24 +37,24 @@ final case class ConverterConfig(
 
 object ConverterConfig:
   type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Url extends RefinedType[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimeoutSeconds extends RefinedType[Int, Pure]
   type Parallelism = Parallelism.T
-  object Parallelism extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Parallelism extends RefinedType[Int, Pure]
   type Dpi = Dpi.T
-  object Dpi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Dpi extends RefinedType[Int, Pure]
   type MaxImagePx = MaxImagePx.T
-  object MaxImagePx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxImagePx extends RefinedType[Int, Pure]
   type SpoolDir = SpoolDir.T
-  object SpoolDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SpoolDir extends RefinedType[String, Pure]
   type HealthTimeoutMs = HealthTimeoutMs.T
-  object HealthTimeoutMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HealthTimeoutMs extends RefinedType[Int, Pure]
   type HealthCacheMs = HealthCacheMs.T
-  object HealthCacheMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HealthCacheMs extends RefinedType[Int, Pure]
   type SecondsPerPage = SecondsPerPage.T
-  object SecondsPerPage extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SecondsPerPage extends RefinedType[Int, Pure]
   type SecondsPerPageQuality = SecondsPerPageQuality.T
-  object SecondsPerPageQuality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SecondsPerPageQuality extends RefinedType[Int, Pure]
   type SecondsPerScannedPage = SecondsPerScannedPage.T
-  object SecondsPerScannedPage extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SecondsPerScannedPage extends RefinedType[Int, Pure]

@@ -1,17 +1,20 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The timeline's span (`ui.time`): the earliest and latest year it reaches, and the years it opens on. */
 final case class UiTimeSettings(min: UiTimeSettings.Min, max: UiTimeSettings.Max, defaultFrom: UiTimeSettings.DefaultFrom, defaultTo: UiTimeSettings.DefaultTo) derives ConfigReader
 
 object UiTimeSettings:
   type Min = Min.T
-  object Min extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Min extends RefinedType[Long, Pure]
   type Max = Max.T
-  object Max extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Max extends RefinedType[Long, Pure]
   type DefaultFrom = DefaultFrom.T
-  object DefaultFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DefaultFrom extends RefinedType[Long, Pure]
   type DefaultTo = DefaultTo.T
-  object DefaultTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DefaultTo extends RefinedType[Long, Pure]

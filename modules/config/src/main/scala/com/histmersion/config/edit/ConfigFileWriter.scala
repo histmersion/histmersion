@@ -1,4 +1,5 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
 
 import org.ekrich.config.Config
 
@@ -17,7 +18,7 @@ final class ConfigFileWriter(val file: SettingsFile, env: Config, schema: Config
   def write(
       edits: List[SettingEdit],
       expected: Option[FileVersion],
-      literalConsent: com.histmersion.config.edit.SettingPolicy.LiteralConsent
+      literalConsent: SettingPolicy.LiteralConsent
   ): Either[SettingError, WriteOutcome] =
     ConfigFileWriter.lock.synchronized {
       for

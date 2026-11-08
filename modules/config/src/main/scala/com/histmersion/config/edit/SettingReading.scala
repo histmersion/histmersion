@@ -1,4 +1,8 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One setting as it stands: what the settings file writes for it, what applies (the environment, the file, the
   * default), and where that comes from. For a credential, `credential` is how it is held (`shown` the reference, where
@@ -17,4 +21,4 @@ final case class SettingReading(
 
 object SettingReading:
   type Shown = Shown.T
-  object Shown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Shown extends RefinedType[String, Pure]

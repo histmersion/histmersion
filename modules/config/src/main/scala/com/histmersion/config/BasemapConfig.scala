@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Reloading the config in place (docs/research-plugins.md §3.5): `histmersion config reload`, or — with `watch` — by
   * itself when the config file changes, `watchDebounceMs` after the last change. `drainSeconds` is how long a reload
@@ -34,24 +37,24 @@ final case class BasemapConfig(
 
 object BasemapConfig:
   type Dir = Dir.T
-  object Dir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Dir extends RefinedType[String, Pure]
   type Bbox = Bbox.T
-  object Bbox extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Bbox extends RefinedType[String, Pure]
   type MinFreeGb = MinFreeGb.T
-  object MinFreeGb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinFreeGb extends RefinedType[Double, Pure]
   type RequestGapMs = RequestGapMs.T
-  object RequestGapMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RequestGapMs extends RefinedType[Int, Pure]
   type MaxRequestMb = MaxRequestMb.T
-  object MaxRequestMb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxRequestMb extends RefinedType[Int, Pure]
   type Overfetch = Overfetch.T
-  object Overfetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Overfetch extends RefinedType[Double, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimeoutSeconds extends RefinedType[Int, Pure]
   type Retries = Retries.T
-  object Retries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Retries extends RefinedType[Int, Pure]
   type TileCacheSeconds = TileCacheSeconds.T
-  object TileCacheSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TileCacheSeconds extends RefinedType[Int, Pure]
   type MapMaxZoom = MapMaxZoom.T
-  object MapMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MapMaxZoom extends RefinedType[Int, Pure]
   type SetupAreas = SetupAreas.T
-  object SetupAreas extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SetupAreas extends RefinedType[String, Pure]

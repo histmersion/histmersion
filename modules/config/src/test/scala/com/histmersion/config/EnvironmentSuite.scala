@@ -1,4 +1,5 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import org.ekrich.config.ConfigFactory
 import com.histmersion.config.testsupport.ComparedByValue.given
@@ -27,13 +28,13 @@ class EnvironmentSuite extends munit.FunSuite:
     assertEquals(loaded, Environment(Map(Environment.VariablesKey("HOME") -> Environment.VariablesValue("/home/ada"), Environment.VariablesKey("N") -> Environment.VariablesValue("3"))))
 
   test("the paths of one environment are the pure resolver's"):
-    val paths = UserPaths(env, com.histmersion.config.UserPaths.OsName("Linux"))
-    assertEquals(paths.dataDir(com.histmersion.config.RuntimeConfig.DataDir("")), Some(Path.of("/home/ada/.local/share/histmersion")))
-    assertEquals(paths.dataDir(com.histmersion.config.RuntimeConfig.DataDir("/srv/h")), Some(Path.of("/srv/h")))
+    val paths = UserPaths(env, UserPaths.OsName("Linux"))
+    assertEquals(paths.dataDir(RuntimeConfig.DataDir("")), Some(Path.of("/home/ada/.local/share/histmersion")))
+    assertEquals(paths.dataDir(RuntimeConfig.DataDir("/srv/h")), Some(Path.of("/srv/h")))
     assertEquals(paths.cacheDir, Some(Path.of("/home/ada/.cache/histmersion")))
     assertEquals(paths.configFile, Some(Path.of("/home/ada/.config/histmersion/histmersion.conf")))
     assertEquals(
-      UserPaths(env, com.histmersion.config.UserPaths.OsName("Mac OS X")).defaultDataDir,
+      UserPaths(env, UserPaths.OsName("Mac OS X")).defaultDataDir,
       Some(Path.of("/home/ada/Library/Application Support/Histmersion"))
     )
-    assertEquals(UserPaths(Environment.empty, com.histmersion.config.UserPaths.OsName("Linux")).dataDir(com.histmersion.config.RuntimeConfig.DataDir("")), None)
+    assertEquals(UserPaths(Environment.empty, UserPaths.OsName("Linux")).dataDir(RuntimeConfig.DataDir("")), None)

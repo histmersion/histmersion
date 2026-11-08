@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Subscription pools (docs/research-plan-quotas.md §5): a snapshot older than `staleMinutes` is unknown; a window with
   * no floor of its own has `defaultFloor`; a stale reading lets a run go on only with `margin` points to spare;
@@ -19,12 +22,12 @@ final case class QuotaConfig(
 
 object QuotaConfig:
   type StaleMinutes = StaleMinutes.T
-  object StaleMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StaleMinutes extends RefinedType[Int, Pure]
   type DefaultFloor = DefaultFloor.T
-  object DefaultFloor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DefaultFloor extends RefinedType[Int, Pure]
   type Margin = Margin.T
-  object Margin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Margin extends RefinedType[Int, Pure]
   type PollSeconds = PollSeconds.T
-  object PollSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PollSeconds extends RefinedType[Int, Pure]
   type Fallthrough = Fallthrough.T
-  object Fallthrough extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Fallthrough extends RefinedType[String, Pure]

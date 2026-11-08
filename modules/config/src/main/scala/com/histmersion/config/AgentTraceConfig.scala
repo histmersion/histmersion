@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a run's trace keeps: a tool result is truncated to `maxToolResultChars` before it is stored, and traced
   * messages older than `keepMessagesDays` are deleted (0 = keep them all) — checked when the run pool starts and then
@@ -12,8 +15,8 @@ final case class AgentTraceConfig(maxToolResultChars: AgentTraceConfig.MaxToolRe
 
 object AgentTraceConfig:
   type MaxToolResultChars = MaxToolResultChars.T
-  object MaxToolResultChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxToolResultChars extends RefinedType[Int, Pure]
   type KeepMessagesDays = KeepMessagesDays.T
-  object KeepMessagesDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object KeepMessagesDays extends RefinedType[Int, Pure]
   type PruneEveryMinutes = PruneEveryMinutes.T
-  object PruneEveryMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PruneEveryMinutes extends RefinedType[Int, Pure]

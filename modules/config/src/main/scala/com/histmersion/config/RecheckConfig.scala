@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The acquisition list's legal re-check: on or off, the days an item's check holds, the items tried a day and a pass,
   * the minutes between passes, the share (percent) of the autopilot's shared daily legal ingest allowance it may take,
@@ -19,4 +22,4 @@ final case class RecheckConfig(
 
 object RecheckConfig:
   type Enabled = Enabled.T
-  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Enabled extends RefinedType[Boolean, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import io.github.iltotore.iron.RefinedType
 import hearth.kindlings.sconfigderivation.ConfigReader

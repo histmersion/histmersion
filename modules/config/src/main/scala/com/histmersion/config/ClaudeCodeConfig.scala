@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The `claude-code` provider: the person's own `claude` CLI, run headlessly (`claude -p`) on their own Claude login
   * (docs/research-model-providers.md §1 — their own machine, their own use).
@@ -36,30 +39,30 @@ final case class ClaudeCodeConfig(
     env: Map[ClaudeCodeConfig.EnvKey, Option[ClaudeCodeConfig.EnvValue]]
 ) derives ConfigReader:
   /** [[env]] as changes to an environment, sorted by name: `Some(value)` sets, `None` removes. */
-  def envChanges: List[(com.histmersion.config.ClaudeCodeConfig.EnvKey, Option[com.histmersion.config.ClaudeCodeConfig.EnvValue])] =
+  def envChanges: List[(ClaudeCodeConfig.EnvKey, Option[ClaudeCodeConfig.EnvValue])] =
     env.toList.map((k, v) => ClaudeCodeConfig.EnvKey(k.value.trim) -> v.filter(_.value.trim.nonEmpty)).filter(_._1.value.nonEmpty).sortBy(_._1.value)
 
 object ClaudeCodeConfig:
   type Command = Command.T
-  object Command extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Command extends RefinedType[String, Pure]
   type ConfigDir = ConfigDir.T
-  object ConfigDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ConfigDir extends RefinedType[String, Pure]
   type ExtraArgs = ExtraArgs.T
-  object ExtraArgs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExtraArgs extends RefinedType[String, Pure]
   type UseApiKey = UseApiKey.T
-  object UseApiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UseApiKey extends RefinedType[Boolean, Pure]
   type AllowNonLoopback = AllowNonLoopback.T
-  object AllowNonLoopback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AllowNonLoopback extends RefinedType[Boolean, Pure]
   type McpUrl = McpUrl.T
-  object McpUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object McpUrl extends RefinedType[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimeoutSeconds extends RefinedType[Int, Pure]
   type LimitCooldownMinutes = LimitCooldownMinutes.T
-  object LimitCooldownMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LimitCooldownMinutes extends RefinedType[Int, Pure]
   type DisableSlashCommands = DisableSlashCommands.T
-  object DisableSlashCommands extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DisableSlashCommands extends RefinedType[Boolean, Pure]
   type EnvKey = EnvKey.T
-  object EnvKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+  object EnvKey extends RefinedType[String, Pure]:
     given ConfigReader[Map[EnvKey, Option[EnvValue]]] =
       ConfigReader.derived[Map[String, Option[EnvValue]]].emap { byName =>
         byName.foldLeft[Either[String, Map[EnvKey, Option[EnvValue]]]](Right(Map.empty)) { case (acc, (name, v)) =>
@@ -70,4 +73,4 @@ object ClaudeCodeConfig:
         }
       }
   type EnvValue = EnvValue.T
-  object EnvValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EnvValue extends RefinedType[String, Pure]

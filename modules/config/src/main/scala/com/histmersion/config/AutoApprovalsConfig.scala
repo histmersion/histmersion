@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The caps and the thresholds of the checked auto approvals ([[AgentApprovalsConfig.checked]]): at most
   * `articlesPerGoalPerDay` planned articles of one research area, `publishPerDay` article drafts and `goalPlansPerDay`
@@ -27,20 +30,20 @@ final case class AutoApprovalsConfig(
 
 object AutoApprovalsConfig:
   type ArticlesPerGoalPerDay = ArticlesPerGoalPerDay.T
-  object ArticlesPerGoalPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ArticlesPerGoalPerDay extends RefinedType[Int, Pure]
   type PublishPerDay = PublishPerDay.T
-  object PublishPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PublishPerDay extends RefinedType[Int, Pure]
   type GoalPlansPerDay = GoalPlansPerDay.T
-  object GoalPlansPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GoalPlansPerDay extends RefinedType[Int, Pure]
   type PublishMinSources = PublishMinSources.T
-  object PublishMinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PublishMinSources extends RefinedType[Int, Pure]
   type MaxGoalDepth = MaxGoalDepth.T
-  object MaxGoalDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxGoalDepth extends RefinedType[Int, Pure]
   type GoalPlansBacklogShare = GoalPlansBacklogShare.T
-  object GoalPlansBacklogShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GoalPlansBacklogShare extends RefinedType[Double, Pure]
   type GoalPlansCeiling = GoalPlansCeiling.T
-  object GoalPlansCeiling extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GoalPlansCeiling extends RefinedType[Int, Pure]
   type PublishBacklogShare = PublishBacklogShare.T
-  object PublishBacklogShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PublishBacklogShare extends RefinedType[Double, Pure]
   type PublishCeiling = PublishCeiling.T
-  object PublishCeiling extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PublishCeiling extends RefinedType[Int, Pure]

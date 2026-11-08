@@ -1,4 +1,5 @@
-package com.histmersion.config.edit
+package com.histmersion
+package config.edit
 
 /** What a credential's setting holds, as far as it may be told: whether one is set and how it is referred to — never
   * the value.

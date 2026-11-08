@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Host-side Calibre integration (the ONE local integration the CLI is allowed — Calibre lives on the user's machine,
   * not in the container).
@@ -22,16 +25,16 @@ final case class CalibreCliConfig(libraryDir: CalibreCliConfig.LibraryDir, calib
   private def expand(p: String): String =
     if p.startsWith("~") then System.getProperty("user.home") + p.drop(1) else p
 
-  def library: com.histmersion.config.CalibreCliConfig.LibraryDir = CalibreCliConfig.LibraryDir(expand(libraryDir.value))
-  def originals: Option[com.histmersion.config.CalibreCliConfig.OriginalsDir] = Option(originalsDir).map(d => expand(d.value).trim).filter(_.nonEmpty).map(CalibreCliConfig.OriginalsDir(_))
+  def library: CalibreCliConfig.LibraryDir = CalibreCliConfig.LibraryDir(expand(libraryDir.value))
+  def originals: Option[CalibreCliConfig.OriginalsDir] = Option(originalsDir).map(d => expand(d.value).trim).filter(_.nonEmpty).map(CalibreCliConfig.OriginalsDir(_))
 
 object CalibreCliConfig:
 
   type LibraryDir = LibraryDir.T
-  object LibraryDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LibraryDir extends RefinedType[String, Pure]
   type Calibredb = Calibredb.T
-  object Calibredb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Calibredb extends RefinedType[String, Pure]
   type Sqlite = Sqlite.T
-  object Sqlite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Sqlite extends RefinedType[String, Pure]
   type OriginalsDir = OriginalsDir.T
-  object OriginalsDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OriginalsDir extends RefinedType[String, Pure]

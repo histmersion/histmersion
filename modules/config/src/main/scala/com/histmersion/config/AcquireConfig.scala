@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Configuration for the acquisition & assessment toolset (plan §5.2, stream 2.6).
   *
@@ -47,29 +50,29 @@ final case class AcquireConfig(
   /** The contact e-mail, when one is configured. It is a per-install setting (never in the repo), so a blank default
     * means "anonymous": no polite pool, and no Unpaywall, which refuses requests without an e-mail.
     */
-  def contact: Option[com.histmersion.config.AcquireConfig.ContactEmail] = Option(contactEmail).map(_.value.trim).filter(_.nonEmpty).map(AcquireConfig.ContactEmail(_))
+  def contact: Option[AcquireConfig.ContactEmail] = Option(contactEmail).map(_.value.trim).filter(_.nonEmpty).map(AcquireConfig.ContactEmail(_))
 
   /** The `mailto` value; empty without a contact, and `Url` drops an empty parameter. */
-  def mailto: com.histmersion.config.AcquireConfig.ContactEmail = contact.getOrElse(AcquireConfig.ContactEmail(""))
+  def mailto: AcquireConfig.ContactEmail = contact.getOrElse(AcquireConfig.ContactEmail(""))
 
   /** The acquisition chain's order: the source-fetcher ids `chain` lists (comma-separated); fetchers it does not name
     * run after these, in plugin registration order.
     */
-  def chainIds: List[com.histmersion.config.AcquireConfig.ChainId] = chain.entries.map(e => AcquireConfig.ChainId(e.value))
+  def chainIds: List[AcquireConfig.ChainId] = chain.entries.map(e => AcquireConfig.ChainId(e.value))
 
 object AcquireConfig:
   type ChainId = ChainId.T
-  object ChainId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ChainId extends RefinedType[String, Pure]
 
   type ContactEmail = ContactEmail.T
-  object ContactEmail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ContactEmail extends RefinedType[String, Pure]
   type PublicUserAgent = PublicUserAgent.T
-  object PublicUserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PublicUserAgent extends RefinedType[String, Pure]
   type AllowUnauthorised = AllowUnauthorised.T
-  object AllowUnauthorised extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AllowUnauthorised extends RefinedType[Boolean, Pure]
   type UserAgent = UserAgent.T
-  object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UserAgent extends RefinedType[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimeoutSeconds extends RefinedType[Int, Pure]
   type SpoolDir = SpoolDir.T
-  object SpoolDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SpoolDir extends RefinedType[String, Pure]

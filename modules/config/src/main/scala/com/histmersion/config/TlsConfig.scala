@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which certificate authorities an acquisition request trusts beyond the JDK's own (#1568). Both are opt-in and ADD
   * roots; neither turns verification off ([[HttpPolicy.trust]]).
@@ -13,7 +16,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   *   a PEM file of further roots (`~` expanded); "" = none
   */
 final case class TlsConfig(systemTrust: TlsConfig.SystemTrust, extraCaFile: TlsConfig.ExtraCaFile) derives ConfigReader:
-  def extraCa: Option[com.histmersion.config.TlsConfig.ExtraCaFile] =
+  def extraCa: Option[TlsConfig.ExtraCaFile] =
     Option(extraCaFile)
       .map(_.value.trim)
       .filter(_.nonEmpty)
@@ -26,6 +29,6 @@ final case class TlsConfig(systemTrust: TlsConfig.SystemTrust, extraCaFile: TlsC
 object TlsConfig:
 
   type SystemTrust = SystemTrust.T
-  object SystemTrust extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SystemTrust extends RefinedType[Boolean, Pure]
   type ExtraCaFile = ExtraCaFile.T
-  object ExtraCaFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExtraCaFile extends RefinedType[String, Pure]

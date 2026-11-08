@@ -1,7 +1,10 @@
-package com.histmersion.config
+package com.histmersion
+package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The autopilot (docs/research-process-managers.md "As built: the autopilot"): ONE switch, kept in the database
   * (`histmersion agent autopilot on|off`), that makes the managers carry every research goal from planned to reviewed.
@@ -56,40 +59,40 @@ final case class AgentAutopilotConfig(
 
 object AgentAutopilotConfig:
   type EnsureMinutes = EnsureMinutes.T
-  object EnsureMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EnsureMinutes extends RefinedType[Int, Pure]
   type IngestPerDay = IngestPerDay.T
-  object IngestPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IngestPerDay extends RefinedType[Int, Pure]
   type WatchIngestPerDay = WatchIngestPerDay.T
-  object WatchIngestPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WatchIngestPerDay extends RefinedType[Int, Pure]
   type WatchCron = WatchCron.T
-  object WatchCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WatchCron extends RefinedType[String, Pure]
   type SeedCron = SeedCron.T
-  object SeedCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SeedCron extends RefinedType[String, Pure]
   type FinishedWatchCron = FinishedWatchCron.T
-  object FinishedWatchCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FinishedWatchCron extends RefinedType[String, Pure]
   type ExtendMinNew = ExtendMinNew.T
-  object ExtendMinNew extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExtendMinNew extends RefinedType[Int, Pure]
   type BackupHours = BackupHours.T
-  object BackupHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BackupHours extends RefinedType[Int, Pure]
   type LintHours = LintHours.T
-  object LintHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LintHours extends RefinedType[Int, Pure]
   type MaxActiveGoals = MaxActiveGoals.T
-  object MaxActiveGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxActiveGoals extends RefinedType[Int, Pure]
   type FocusRatio = FocusRatio.T
-  object FocusRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FocusRatio extends RefinedType[Int, Pure]
   type MaxOpenSubGoals = MaxOpenSubGoals.T
-  object MaxOpenSubGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxOpenSubGoals extends RefinedType[Int, Pure]
   type FocusQueueShown = FocusQueueShown.T
-  object FocusQueueShown extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FocusQueueShown extends RefinedType[Int, Pure]
   type IngestBacklogShare = IngestBacklogShare.T
-  object IngestBacklogShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IngestBacklogShare extends RefinedType[Double, Pure]
   type IngestCeiling = IngestCeiling.T
-  object IngestCeiling extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IngestCeiling extends RefinedType[Int, Pure]
   type DigestHour = DigestHour.T
-  object DigestHour extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DigestHour extends RefinedType[Int, Pure]
   type StallDays = StallDays.T
-  object StallDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StallDays extends RefinedType[Int, Pure]
   type NextArticleHours = NextArticleHours.T
-  object NextArticleHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NextArticleHours extends RefinedType[Int, Pure]
   type MaxUnfinishedGoals = MaxUnfinishedGoals.T
-  object MaxUnfinishedGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxUnfinishedGoals extends RefinedType[Int, Pure]
