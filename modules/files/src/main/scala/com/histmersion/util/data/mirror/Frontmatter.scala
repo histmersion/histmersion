@@ -1,6 +1,9 @@
-package com.histmersion.util.data.mirror
+package com.histmersion
+package util.data.mirror
 
 import org.yaml.snakeyaml.{DumperOptions, Yaml}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A Markdown mirror note's YAML frontmatter: its keys in the order they are written (a value is a plain or Java value
   * snakeyaml writes; `null` writes `null`), and the note it heads.
@@ -22,15 +25,15 @@ final case class Frontmatter(fields: List[(Frontmatter.Key, Any)]):
     Frontmatter.Block(new Yaml(opts).dump(m))
 
   /** The whole note: the fenced frontmatter, then the body after a blank line when there is one. */
-  def note(body: Option[com.histmersion.util.data.mirror.Frontmatter.NoteBody]): Frontmatter.Note = Frontmatter.Note(s"---\n${yaml.value}---\n" + body.fold("")(b => s"\n${b.value}\n"))
+  def note(body: Option[Frontmatter.NoteBody]): Frontmatter.Note = Frontmatter.Note(s"---\n${yaml.value}---\n" + body.fold("")(b => s"\n${b.value}\n"))
 
 object Frontmatter:
   type Block = Block.T
-  object Block extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Block extends RefinedType[String, Pure]
   type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Note extends RefinedType[String, Pure]
   type NoteBody = NoteBody.T
-  object NoteBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NoteBody extends RefinedType[String, Pure]
 
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]

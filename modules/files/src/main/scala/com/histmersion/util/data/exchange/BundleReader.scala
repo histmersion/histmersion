@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.ByteCount
 import com.histmersion.api.Sha256
@@ -20,7 +21,7 @@ import com.histmersion.api.exchange.Bundle
 object BundleReader:
 
   final case class Loaded(
-      manifest: Option[com.histmersion.api.exchange.Bundle.Manifest],
+      manifest: Option[Bundle.Manifest],
       entities: BundleEntities,
       /** sha256 → size of every blob entry found. */
       blobs: Map[Sha256, ByteCount],
@@ -35,7 +36,7 @@ object BundleReader:
     val blobs = scala.collection.mutable.LinkedHashMap.empty[Sha256, ByteCount]
 
     // a var: the manifest is the first entry, and is only known once read
-    var manifest: Option[com.histmersion.api.exchange.Bundle.Manifest] = None
+    var manifest: Option[Bundle.Manifest] = None
 
     @annotation.tailrec
     def loop(first: Boolean): Unit =
@@ -52,7 +53,7 @@ object BundleReader:
               BundleFormat.parseManifest(tar.readAll()) match
                 case Right(m) => manifest = Some(m)
                 case Left(p)  => problems += p.value
-            case p if com.histmersion.api.exchange.Bundle.Files.all.contains(p) =>
+            case p if Bundle.Files.all.contains(p) =>
               if payloads.contains(p) then problems += s"$p appears twice"
               payloads(p) = tar.readAll()
             case p =>
@@ -105,7 +106,7 @@ object BundleReader:
   /** Verification of a whole bundle: format and schema against this server, checksums, revs, blobs, and — for a full
     * bundle (no `since`) — that every reference resolves inside it.
     */
-  def verify(in: InputStream, serverSchema: Option[Bundle.Manifest.SchemaVersion]): com.histmersion.api.exchange.Bundle.VerifyResult =
+  def verify(in: InputStream, serverSchema: Option[Bundle.Manifest.SchemaVersion]): Bundle.VerifyResult =
     val l = read(in, hashBlobs = true)
     val compat = l.manifest.toList.flatMap(BundleFormat.compatible(_, serverSchema))
     val dangling =
@@ -113,7 +114,7 @@ object BundleReader:
         l.entities.dangling.map(r => s"${r.from}: ${r.kind.wire} ${r.uid} is not in the bundle")
       else Nil
     val problems = compat ++ l.problems ++ dangling
-    com.histmersion.api.exchange.Bundle
+    Bundle
       .VerifyResult(
         Bundle.VerifyResult.Ok(l.manifest.isDefined && problems.isEmpty),
         l.manifest,

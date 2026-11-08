@@ -1,4 +1,5 @@
-package com.histmersion.util.plugins
+package com.histmersion
+package util.plugins
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 
@@ -10,6 +11,9 @@ import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import com.histmersion.api.plugins.{PluginDescription, PluginFile, PluginJar, PluginSet}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.ProviderKind
 
 /** The pure half of user-added plugins and the relink kit (docs/research-plugins.md §7, §8): the plugin-set digest and
   * what `histmersion plugin status` concludes from it, the plugins directory's index, Maven coordinates, and the kit's
@@ -18,7 +22,7 @@ import com.histmersion.api.plugins.{PluginDescription, PluginFile, PluginJar, Pl
   */
 object PluginKit:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   extension (id: PluginDescription.Id)
     private def isEmpty: Boolean = id.value.isEmpty
@@ -32,7 +36,7 @@ object PluginKit:
   private def hex(bytes: Array[Byte]): String =
     MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"$b%02x").mkString
 
-  def sha256Hex(bytes: Array[Byte]): com.histmersion.Sha256 = com.histmersion.Sha256.applyUnsafe(hex(bytes))
+  def sha256Hex(bytes: Array[Byte]): Sha256 = Sha256.applyUnsafe(hex(bytes))
 
   /** One digest of a plugin set — `(jar file name, its SHA-256)` pairs, order-independent: SHA-256 over the sorted
     * `<name> <sha256>\n` lines. The empty set's is [[PluginSet.EmptyDigest]].
@@ -165,11 +169,11 @@ object PluginKit:
 
   object Coordinates:
     type Group = Group.T
-    object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Group extends RefinedType[String, Pure]
     type Artifact = Artifact.T
-    object Artifact extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Artifact extends RefinedType[String, Pure]
     type Version = Version.T
-    object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Version extends RefinedType[String, Pure]
 
   private val Part = "[A-Za-z0-9_.\\-+]+"
 
@@ -189,10 +193,10 @@ object PluginKit:
   object Origin:
     object File:
       type Path = Path.T
-      object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Path extends RefinedType[String, Pure]
     object Url:
       type Value = Value.T
-      object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Value extends RefinedType[String, Pure]
 
   /** Pure: what `plugin add <arg>` names. An `http(s)://` URL is downloaded; anything that exists as a file, ends with
     * `.jar` or holds a `/` is a path; else Maven coordinates.
@@ -240,15 +244,15 @@ object PluginKit:
 
   object Installed:
     type File = PluginJar.File
-    val File: _root_.com.histmersion.api.automation.ProviderKind.Plugin.FilePath.type = PluginJar.File
+    val File: ProviderKind.Plugin.FilePath.type = PluginJar.File
     type Sha256 = com.histmersion.Sha256
-    val Sha256: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
+    val Sha256: com.histmersion.Sha256.type = com.histmersion.Sha256
     type Source = Source.T
-    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Source extends RefinedType[String, Pure]
     type AddedAt = AddedAt.T
-    object AddedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AddedAt extends RefinedType[String, Pure]
     type Signer = Signer.T
-    object Signer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Signer extends RefinedType[String, Pure]
 
   final case class Index(jars: List[Installed] = Nil) derives KindlingsCodecAsObject:
     def put(i: Installed): Index = Index((jars.filterNot(_.file == i.file) :+ i).sortBy(_.file.value))
@@ -314,9 +318,9 @@ object PluginKit:
 
   object KitFile:
     type File = File.T
-    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object File extends RefinedType[String, Pure]
     type Sha256 = com.histmersion.Sha256
-    val Sha256: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
+    val Sha256: com.histmersion.Sha256.type = com.histmersion.Sha256
 
   /** `kit/kit.json`: what the kit is (version, commit, the GraalVM it must be linked with, the SPI it speaks, the main
     * class) and the SHA-256 of every file in it (paths relative to `kit/`).
@@ -334,15 +338,15 @@ object PluginKit:
 
   object KitManifest:
     type Format = Format.T
-    object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Format extends RefinedType[Int, Pure]
     type Version = Version.T
-    object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Version extends RefinedType[String, Pure]
     type Commit = Commit.T
-    object Commit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Commit extends RefinedType[String, Pure]
     type Graalvm = Graalvm.T
-    object Graalvm extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Graalvm extends RefinedType[String, Pure]
     type MainClass = MainClass.T
-    object MainClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MainClass extends RefinedType[String, Pure]
 
   val KitFormat: KitManifest.Format = KitManifest.Format(1)
 

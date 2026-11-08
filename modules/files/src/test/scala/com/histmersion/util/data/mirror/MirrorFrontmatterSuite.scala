@@ -1,4 +1,5 @@
-package com.histmersion.util.data.mirror
+package com.histmersion
+package util.data.mirror
 
 import scala.jdk.CollectionConverters.*
 import com.histmersion.testsupport.ComparedByValue.given

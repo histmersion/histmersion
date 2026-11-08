@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 import com.histmersion.api.given
 
 import com.histmersion.util.data.mirror.Frontmatter as MirrorFrontmatter

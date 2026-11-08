@@ -1,10 +1,13 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.api.given
 
 import java.io.{EOFException, FilterInputStream, InputStream, OutputStream}
 import java.nio.charset.StandardCharsets.{US_ASCII, UTF_8}
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The container of a `.hmx` bundle: a POSIX ustar archive, gzip-compressed — written and read as a STREAM, so 1.6 GB
   * of assets never sit in memory, and DETERMINISTIC, so two exports of an unchanged database are byte-identical: every
@@ -19,16 +22,16 @@ import java.util.zip.{GZIPInputStream, GZIPOutputStream}
   */
 object BundleTar:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   val Block = 512
   val MaxName = 100
 
   /** 11 octal digits. */
-  val MaxSize: com.histmersion.ByteCount = com.histmersion.ByteCount.applyUnsafe((1L << 33) - 1)
+  val MaxSize: ByteCount = ByteCount.applyUnsafe((1L << 33) - 1)
 
   /** One ustar header for a regular file. Pure. */
-  def header(name: Entry.Name, size: com.histmersion.ByteCount): Either[Problem, Array[Byte]] =
+  def header(name: Entry.Name, size: ByteCount): Either[Problem, Array[Byte]] =
     val nameBytes = name.value.getBytes(UTF_8)
     if nameBytes.length > MaxName then Left(Problem(s"$name: name longer than $MaxName bytes"))
     else if size.value < 0 || size.value > MaxSize.value then Left(Problem(s"$name: size $size is outside 0..$MaxSize"))
@@ -55,9 +58,9 @@ object BundleTar:
 
   object Entry:
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Size = com.histmersion.ByteCount
-    val Size: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
+    object Name extends RefinedType[String, Pure]
+    type Size = ByteCount
+    val Size: ByteCount.type = ByteCount
 
   /** Parse a header block. `Right(None)` is the end-of-archive (an all-zero block). Pure. */
   def parseHeader(h: Array[Byte]): Either[Problem, Option[Entry]] =
@@ -79,9 +82,9 @@ object BundleTar:
       if !stored.contains(actual) then Left(Problem(s"$name: header checksum mismatch"))
       else if typeflag != '0' && typeflag != '\u0000' then Left(Problem(s"$name: not a regular file (type '$typeflag')"))
       else
-        octal(124, 12).flatMap(com.histmersion.ByteCount.option(_)).toRight(Problem(s"$name: unreadable size")).map(size => Some(Entry(Entry.Name(name), size)))
+        octal(124, 12).flatMap(ByteCount.option(_)).toRight(Problem(s"$name: unreadable size")).map(size => Some(Entry(Entry.Name(name), size)))
 
-  def padding(size: com.histmersion.ByteCount): Int = ((Block - (size.value % Block)) % Block).toInt
+  def padding(size: ByteCount): Int = ((Block - (size.value % Block)) % Block).toInt
 
   // ── writing ────────────────────────────────────────────────────────────────────────────────
 
@@ -89,7 +92,7 @@ object BundleTar:
   final class Writer(out: OutputStream):
     private val gz = GZIPOutputStream(out, 1 << 16)
 
-    def entry(name: Entry.Name, size: com.histmersion.ByteCount)(body: OutputStream => Unit): Either[Problem, Unit] =
+    def entry(name: Entry.Name, size: ByteCount)(body: OutputStream => Unit): Either[Problem, Unit] =
       header(name, size).flatMap { h =>
         gz.write(h)
         val counted = Counting(gz)
@@ -101,7 +104,7 @@ object BundleTar:
       }
 
     def bytes(name: Entry.Name, data: Array[Byte]): Either[Problem, Unit] =
-      entry(name, com.histmersion.ByteCount.applyUnsafe(data.length.toLong))(_.write(data))
+      entry(name, ByteCount.applyUnsafe(data.length.toLong))(_.write(data))
 
     /** Two zero blocks end the archive; then the gzip trailer. Does not close `out`. */
     def finish(): Unit =

@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.api.given
 
@@ -10,6 +11,7 @@ import java.security.MessageDigest
 import java.util.UUID
 import com.histmersion.api.Sha256
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.ByteCount
 
 /** The pure half of the `.hmx` bundle (docs/research-merge-import.md §4): canonical JSON, record revisions, the
   * deterministic bundle id, and the checks a manifest must pass. The tar stream is [[BundleTar]]; reading the database
@@ -144,7 +146,7 @@ object BundleFormat:
     else lines.mkString("", "\n", "\n").getBytes(UTF_8)
 
   def fileInfo(path: Bundle.FileInfo.Path, payload: Array[Byte]): Bundle.FileInfo =
-    Bundle.FileInfo(path, lines(payload), com.histmersion.api.ByteCount(payload.length.toLong), sha256Hex(payload))
+    Bundle.FileInfo(path, lines(payload), ByteCount(payload.length.toLong), sha256Hex(payload))
 
   def lines(payload: Array[Byte]): Bundle.FileInfo.Lines = Bundle.FileInfo.Lines(payload.count(_ == '\n'.toByte))
 
