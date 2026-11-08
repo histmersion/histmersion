@@ -2,7 +2,7 @@ package com.histmersion
 package util.database
 
 import io.github.iltotore.iron.constraint.any.Pure
-enum Param:
+enum Param derives CanEqual:
   case S(v: Param.S.V)
   case L(v: Param.L.V)
   case I(v: Param.I.V)

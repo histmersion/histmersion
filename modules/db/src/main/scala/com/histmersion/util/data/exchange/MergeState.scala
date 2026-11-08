@@ -38,6 +38,8 @@ import com.histmersion.domain.catalogue.evidence.TextAnchor
   * two together.
   */
 object MergeState:
+  private given CanEqual[UUID, UUID] = CanEqual.derived
+
 
 
   private def ids(us: Iterable[UUID]): List[String] = us.iterator.map(_.toString).toList.distinct

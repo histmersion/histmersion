@@ -16,7 +16,7 @@ object NewtypeColumns:
     def queryRepr: String = base.queryRepr
     def readSingle(rs: ResultSet, pos: Int): T =
       val raw = base.readSingle(rs, pos)
-      if raw == null then raw.asInstanceOf[T]
+      if Option(raw).isEmpty then raw.asInstanceOf[T]
       else
         m.ops
           .either(raw)

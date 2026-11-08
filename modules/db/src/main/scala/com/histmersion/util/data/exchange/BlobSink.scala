@@ -4,7 +4,7 @@ package util.data.exchange
 import java.io.InputStream
 
 /** Where an import puts the bytes of one blob use. */
-enum BlobSink:
+enum BlobSink derives CanEqual:
   /** Into the database: the bytes are held in memory and checked against their digest first. */
   case Held(write: Array[Byte] => Unit)
 

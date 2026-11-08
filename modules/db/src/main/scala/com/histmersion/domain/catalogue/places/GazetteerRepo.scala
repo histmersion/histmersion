@@ -109,7 +109,7 @@ private[places] object GazetteerRepo:
     def toMatch: Place.Match = Place.Match(id, importSource)
 
   /** Where one record's names go. */
-  enum Placement:
+  enum Placement derives CanEqual:
     /** A new place, the record's own. */
     case Create(placeId: Place.Id)
 
