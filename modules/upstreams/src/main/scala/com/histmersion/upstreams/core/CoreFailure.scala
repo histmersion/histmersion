@@ -14,10 +14,8 @@ object CoreFailure:
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   object Skipped:
-    type Why = com.histmersion.upstreams.core.CoreFailure.Problem
-    val Why: _root_.com.histmersion.upstreams.core.CoreFailure.Problem.type = _root_.com.histmersion.upstreams.core.CoreFailure.Problem
+    export com.histmersion.upstreams.core.CoreFailure.{Problem as Why}
 
   object Failed:
-    type Why = com.histmersion.upstreams.core.CoreFailure.Problem
-    val Why: _root_.com.histmersion.upstreams.core.CoreFailure.Problem.type = _root_.com.histmersion.upstreams.core.CoreFailure.Problem
+    export com.histmersion.upstreams.core.CoreFailure.{Problem as Why}
 

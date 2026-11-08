@@ -62,20 +62,13 @@ object RepositoryLanding:
   val GeneratorsHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
   type CitationPdfUrlsHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
   val CitationPdfUrlsHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
-  type CitationPdfUrlsPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
-  val CitationPdfUrlsPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
-  type IsRepositoryPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
-  val IsRepositoryPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
+  export com.histmersion.upstreams.landing.RepositoryLanding.Candidate.{Url as CitationPdfUrlsPageUrl, Url as IsRepositoryPageUrl}
   type IsRepositoryHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
   val IsRepositoryHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
-  type PdfsOfPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
-  val PdfsOfPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
-  type PdfsOfIndexSaysRepository = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository
-  val PdfsOfIndexSaysRepository: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository
+  export com.histmersion.upstreams.landing.RepositoryLanding.Candidate.{Url as PdfsOfPageUrl, Repository as PdfsOfIndexSaysRepository}
   type PdfsOfHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
   val PdfsOfHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
-  type GalleyPdfUrlsPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
-  val GalleyPdfUrlsPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
+  export com.histmersion.upstreams.landing.RepositoryLanding.Candidate.{Url as GalleyPdfUrlsPageUrl}
 
   final case class Candidate(url: Candidate.Url, repository: Candidate.Repository, publisher: Candidate.Publisher = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Publisher(false), open: Candidate.Open = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Open(false))
 
